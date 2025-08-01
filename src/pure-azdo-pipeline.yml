@@ -135,3 +135,78 @@ stages:
                 version: '$(Build.Buildnumber)'
                 downloadPath: '$(System.DefaultWorkingDirectory)/tests'
                 extract: true
+# Deploying to UAT
+- stage: 'UAT'
+  displayName: 'UAT'
+  jobs:
+    - deployment: 'DeployToUAT'
+      pool:
+        vmImage: 'windows-latest'
+      environment: 'UAT'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: DownloadPackage@1
+              displayName: 'Download Database Package'
+              inputs:
+                packageType: 'nuget'
+                feed: '$(AzureFeedName)'
+                view: 'Local'
+                definition: 'ChurchBulletin.Database'
+                version: '$(Build.BuildNumber)'
+                downloadPath: '$(System.DefaultWorkingDirectory)'
+                extract: true
+            - task: PowerShell@2
+              displayName: 'Create database schema'
+              inputs:
+                targetType: filePath
+                filePath: ./scripts/UpdateAzurePipelineSql.ps1
+                arguments: -DatabaseServer "$(DatabaseServerUAT)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "uat" -DatabasePassword "$(DatabasePassword)"
+
+
+            - task: AzureCLI@2
+              displayName: 'Add revision to container app'
+              inputs:
+                azureSubscription: '$(AzureSubscription)'
+                scriptType: 'ps'
+                scriptLocation: 'inlineScript'
+                inlineScript: az containerapp update --name $(containerAppName) --resource-group bootcamp-uat --image $(containerImage) 
+
+# Deploying to PROD
+- stage: 'PROD'
+  displayName: 'PROD'
+  jobs:
+    - deployment: 'DeployToPROD'
+      pool:
+        vmImage: 'windows-latest'
+      environment: 'PROD'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: DownloadPackage@1
+              displayName: 'Download Database Package'
+              inputs:
+                packageType: 'nuget'
+                feed: '$(AzureFeedName)'
+                view: 'Local'
+                definition: 'ChurchBulletin.Database'
+                version: '$(Build.BuildNumber)'
+                downloadPath: '$(System.DefaultWorkingDirectory)'
+                extract: true
+            - task: PowerShell@2
+              displayName: 'Create database schema'
+              inputs:
+                targetType: filePath
+                filePath: ./scripts/UpdateAzurePipelineSql.ps1
+                arguments: -DatabaseServer "$(DatabaseServerPROD)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "prod" -DatabasePassword "$(DatabasePassword)"
+
+
+            - task: AzureCLI@2
+              displayName: 'Add revision to container app'
+              inputs:
+                azureSubscription: '$(AzureSubscription)'
+                scriptType: 'ps'
+                scriptLocation: 'inlineScript'
+                inlineScript: az containerapp update --name $(containerAppName) --resource-group bootcamp-prod --image $(containerImage) 
