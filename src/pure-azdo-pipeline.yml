@@ -114,7 +114,7 @@ stages:
               inputs:
                 targetType: filePath
                 filePath: ./scripts/UpdateAzurePipelineSql.ps1
-                arguments: -DatabaseServer $(DatabaseServer) -DatabaseName ChurchBulletin -DatabaseAction Update -DatabaseUser tdd -DatabasePassword ${env:DATABASEPASSWORD}
+                arguments: -DatabaseServer "$(DatabaseServer)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "tdd" -DatabasePassword "${env:DATABASEPASSWORD}"
 
 
             - task: AzureCLI@2
