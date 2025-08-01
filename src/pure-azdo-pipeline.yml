@@ -86,3 +86,4 @@ stages:
           Dockerfile: '**/Dockerfile'
           tags: |
             $(Build.BuildNumber)
+ #Azure junk db passwords - hsimpson123! - user is the name of the environment
