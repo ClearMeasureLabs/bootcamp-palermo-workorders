@@ -358,3 +358,4 @@ coverage.cobertura.xml
 
 #Ignore the Flyway CLI
 /flyway/
+/build
