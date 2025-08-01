@@ -29,9 +29,8 @@ builder.ConfigureContainer<ServiceRegistry>(
         registry.IncludeRegistry<UIClientServiceRegistry>());
 
 
-var url = builder.Configuration.GetValue<string>("RemoteBusUrl") ??
-          throw new InvalidOperationException("Must have config value 'RemoteBusUrl'");
-builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(url) });
+var url = builder.HostEnvironment.BaseAddress;
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(url) });
 var app = builder.Build();
 await app.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync();
 await app.RunAsync();
