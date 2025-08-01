@@ -74,7 +74,7 @@ stages:
           packageType: 'nuget'
           feed: '$(AzureFeedName)'
           view: 'Local'
-          definition: 'ClearMeasure.Bootcamp.ChurchBulletin.UI.Server'
+          definition: 'ChurchBulletin.UI'
           version: '$(Build.BuildNumber)'
           downloadPath: '$(System.DefaultWorkingDirectory)/built'
           extract: true
@@ -82,7 +82,7 @@ stages:
       - task: Docker@2
         inputs:
           containerRegistry: '$(AzureContainerRegistry)'
-          repository: 'ClearMeasure.Bootcamp.ChurchBulletin.UI.Server'
+          repository: 'ChurchBulletin.UI'
           command: 'buildAndPush'
           Dockerfile: '**/Dockerfile'
           tags: |
