@@ -1,0 +1,17 @@
+{
+  "solution": {
+    "path": "ChurchBulletin.sln",
+    "projects": [
+      "AcceptanceTests\\AcceptanceTests.csproj",
+      "Core\\Core.csproj",
+      "DataAccess\\DataAccess.csproj",
+      "Database\\Database.csproj",
+      "IntegrationTests\\IntegrationTests.csproj",
+      "UI.Wpf\\UI.Wpf.csproj",
+      "UI\\Api\\UI.Api.csproj",
+      "UI\\Client\\UI.Client.csproj",
+      "UI\\Server\\UI.Server.csproj",
+      "UnitTests\\UnitTests.csproj"
+    ]
+  }
+}

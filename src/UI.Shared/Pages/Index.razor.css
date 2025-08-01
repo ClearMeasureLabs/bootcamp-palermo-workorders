@@ -1,0 +1,242 @@
+.church-hero {
+    background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 50%, #87ceeb 100%);
+    min-height: 80vh;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    color: white;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.church-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="90" r="1" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+    opacity: 0.3;
+}
+
+.church-header {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 2rem;
+}
+
+.church-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.church-title {
+    font-size: 3rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    font-family: 'Georgia', serif;
+}
+
+.church-subtitle {
+    font-size: 1.3rem;
+    opacity: 0.9;
+    font-style: italic;
+    margin-bottom: 2rem;
+}
+
+.church-welcome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto 3rem;
+    gap: 3rem;
+    position: relative;
+    z-index: 2;
+}
+
+.welcome-message {
+    flex: 1;
+    text-align: left;
+}
+
+.welcome-message h2 {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.welcome-message p {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.lovejoy-quote {
+    font-style: italic;
+    font-size: 1.1rem;
+    background: rgba(255,255,255,0.1);
+    padding: 1rem;
+    border-radius: 10px;
+    border-left: 4px solid #ffd700;
+    margin: 1.5rem 0;
+}
+
+.attribution {
+    text-align: right;
+    font-weight: bold;
+    margin-top: 0.5rem;
+    color: #ffd700;
+}
+
+.church-illustration {
+    flex: 0 0 300px;
+    height: 300px;
+    position: relative;
+}
+
+.church-building {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.church-steeple {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 120px;
+    background: linear-gradient(to bottom, #8b4513, #654321);
+    border-radius: 5px 5px 0 0;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.cross {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    color: #ffd700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.church-main {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 150px;
+    background: linear-gradient(to bottom, #deb887, #d2691e);
+    border-radius: 10px 10px 0 0;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+.church-door {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 80px;
+    background: linear-gradient(to bottom, #654321, #4a2c2a);
+    border-radius: 20px 20px 0 0;
+    border: 2px solid #8b4513;
+}
+
+.church-window {
+    position: absolute;
+    top: 30px;
+    width: 30px;
+    height: 40px;
+    background: linear-gradient(45deg, #87ceeb, #4169e1);
+    border-radius: 15px 15px 0 0;
+    border: 2px solid #4169e1;
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+}
+
+.church-window.left {
+    left: 30px;
+}
+
+.church-window.right {
+    right: 30px;
+}
+
+.church-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+    position: relative;
+    z-index: 2;
+}
+
+.info-card {
+    background: rgba(255,255,255,0.1);
+    padding: 2rem;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.info-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #ffd700;
+}
+
+.info-card p {
+    font-size: 1rem;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+.church-footer {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    font-style: italic;
+    position: relative;
+    z-index: 2;
+}
+
+@media (max-width: 768px) {
+    .church-welcome {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .welcome-message {
+        text-align: center;
+    }
+
+    .church-title {
+        font-size: 2rem;
+    }
+
+    .church-illustration {
+        flex: none;
+        width: 250px;
+        height: 250px;
+        margin: 0 auto;
+    }
+
+    .church-info {
+        grid-template-columns: 1fr;
+    }
+}

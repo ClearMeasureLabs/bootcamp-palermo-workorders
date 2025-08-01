@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+	  <AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
+	  <RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BlazorApplicationInsights" Version="3.2.1" />
+    <PackageReference Include="BlazorMvc" Version="2.1.1" />
+    <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.1" />
+	  <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.7" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\Core.csproj" />
+    <ProjectReference Include="..\..\UI.Shared\UI.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

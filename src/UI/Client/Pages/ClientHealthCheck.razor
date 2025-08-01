@@ -1,0 +1,75 @@
+﻿@page "/_clienthealthcheck"
+@using Microsoft.Extensions.Diagnostics.HealthChecks
+
+<style>
+    .health-status-healthy {
+        color: green;
+        font-weight: bold;
+    }
+    
+    .health-status-degraded {
+        color: #ffa500;
+        font-weight: bold;
+    }
+    
+    .health-status-unhealthy {
+        color: red;
+        font-weight: bold;
+    }
+</style>
+
+<h3>Application Health Status</h3>
+
+@if (_report == null)
+{
+    <p>Loading health report...</p>
+}
+else
+{
+    <p><strong>Overall Status:</strong> <span data-testid="@ClientHealthCheck.Elements.Status">@_report.Status</span></p>
+    <ul>
+        @foreach (var entry in _report.Entries)
+        {
+            <li>
+                <strong>@entry.Key</strong><br />
+                Status: <span class="@GetStatusCssClass(entry.Value.Status)">@entry.Value.Status</span><br />
+                Description: @entry.Value.Description<br />
+                Duration: @entry.Value.Duration<br />
+                @if (entry.Value.Exception != null)
+                {
+                    <span style="color:red">Exception: @entry.Value.Exception.Message</span>
+        
+                    <br />
+                }
+            </li>
+        }
+    </ul>
+}
+
+@code {
+
+    public enum Elements
+    {
+        Status
+    }
+
+    private HealthReport _report = null!;
+
+    [Inject] public HealthCheckService Service { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _report = await Service.CheckHealthAsync();
+    }
+
+    private string GetStatusCssClass(HealthStatus status)
+    {
+        return status switch
+        {
+            HealthStatus.Healthy => "health-status-healthy",
+            HealthStatus.Degraded => "health-status-degraded",
+            HealthStatus.Unhealthy => "health-status-unhealthy",
+            _ => ""
+        };
+    }
+}

@@ -1,0 +1,105 @@
+﻿<PageTitle>Church Weather Report</PageTitle>
+
+<div class="weather-page">
+    <div class="weather-container">
+        <div class="weather-header">
+            <h2>🌤️ Springfield Weather Report</h2>
+            <div class="weather-subtitle">Weather conditions for church events and maintenance planning</div>
+        </div>
+
+        @if (Model == null)
+        {
+            <div class="loading-card">
+                <div class="loading-icon">⏳</div>
+                <p>Loading weather forecast...</p>
+            </div>
+        }
+        else
+        {
+            <div class="weather-card">
+                <div class="weather-table-header">
+                    📅 5-Day Weather Forecast
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="weather-table">
+                        <thead>
+                            <tr>
+                                <th>📅 Date</th>
+                                <th>🌡️ Temp (C)</th>
+                                <th>🌡️ Temp (F)</th>
+                                <th>☁️ Conditions</th>
+                                <th>📋 Church Planning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var forecast in Model)
+                            {
+                                <tr class="weather-row">
+                                    <td class="date-cell">
+                                        <strong>@forecast.Date.ToString("ddd, MMM dd")</strong>
+                                    </td>
+                                    <td class="temp-cell">@forecast.TemperatureC°</td>
+                                    <td class="temp-cell">@forecast.TemperatureF°</td>
+                                    <td class="summary-cell">
+                                        <span class="weather-badge">@GetWeatherIcon(forecast.Summary) @forecast.Summary</span>
+                                    </td>
+                                    <td class="planning-cell">@GetChurchPlanning(forecast)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="weather-info">
+                <div class="info-section">
+                    <h4>⛪ Weather-Based Church Planning</h4>
+                    <p>Use this weather forecast to plan church activities and maintenance work:</p>
+                    <ul>
+                        <li><strong>Sunny days:</strong> Perfect for outdoor events and exterior maintenance</li>
+                        <li><strong>Rainy weather:</strong> Focus on indoor activities and interior work</li>
+                        <li><strong>Cold temperatures:</strong> Check heating systems and winterize facilities</li>
+                        <li><strong>Hot weather:</strong> Ensure air conditioning is working and provide shade for outdoor events</li>
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string GetWeatherIcon(string? summary)
+    {
+        if (string.IsNullOrEmpty(summary)) return "🌤️";
+        
+        return summary.ToLower() switch
+        {
+            var s when s.Contains("sun") => "☀️",
+            var s when s.Contains("rain") => "🌧️",
+            var s when s.Contains("cloud") => "☁️",
+            var s when s.Contains("snow") => "❄️",
+            var s when s.Contains("storm") => "⛈️",
+            var s when s.Contains("wind") => "💨",
+            var s when s.Contains("fog") => "🌫️",
+            _ => "🌤️"
+        };
+    }
+    
+    private string GetChurchPlanning(WeatherForecast forecast)
+    {
+        var temp = forecast.TemperatureC;
+        var summary = forecast.Summary?.ToLower() ?? "";
+        
+        if (summary.Contains("rain") || summary.Contains("storm"))
+            return "Indoor activities recommended";
+        else if (temp > 25)
+            return "Great for outdoor services";
+        else if (temp < 5)
+            return "Check heating systems";
+        else if (summary.Contains("sun"))
+            return "Perfect for outdoor maintenance";
+        else
+            return "Normal operations";
+    }
+}

@@ -1,0 +1,56 @@
+﻿@page "/counter"
+
+<PageTitle>Counter - Church Activity Tracker</PageTitle>
+
+<div class="counter-page">
+    <div class="counter-container">
+        <div class="counter-header">
+            <h2>📊 Church Activity Counter</h2>
+            <div class="counter-subtitle">Track church maintenance activities</div>
+        </div>
+
+        <div class="counter-card">
+            <div class="counter-display">
+                <div class="counter-icon">🔢</div>
+                <div class="counter-value">@currentCount</div>
+                <div class="counter-label">Activities Completed</div>
+            </div>
+            
+            <div class="counter-actions">
+                <button class="btn btn-primary counter-btn" @onclick="IncrementCount">
+                    ➕ Add Activity
+                </button>
+                <button class="btn btn-secondary counter-btn" @onclick="ResetCount">
+                    🔄 Reset Counter
+                </button>
+            </div>
+        </div>
+
+        <div class="counter-info">
+            <div class="info-section">
+                <h4>📋 About This Counter</h4>
+                <p>This counter helps track various church maintenance and administrative activities completed by our dedicated volunteers and staff.</p>
+                <ul>
+                    <li>Work orders completed</li>
+                    <li>Maintenance tasks finished</li>
+                    <li>Administrative duties fulfilled</li>
+                    <li>Community service hours</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+
+    private void ResetCount()
+    {
+        currentCount = 0;
+    }
+}

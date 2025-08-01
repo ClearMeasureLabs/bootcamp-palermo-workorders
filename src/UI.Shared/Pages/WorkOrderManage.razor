@@ -1,0 +1,119 @@
+<div class="work-order-container">
+    <div class="work-order-header">
+        <h2>Work Order #<span data-testid="@Elements.WorkOrderNumber">@Model.WorkOrderNumber</span>
+            (<span data-testid="@Elements.Status">@Model.Status</span>)
+        </h2>
+    </div>
+
+    <EditForm Model="@Model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+
+        <div class="form-container">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Creator:</label>
+                    <div>
+                        <span class="value">@Model.CreatorFullName</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="AssignedToUserName" class="form-label">Assigned To:</label>
+                    <div>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <InputSelect data-testid="@Elements.Assignee" id="AssignedToUserName" 
+                                         @bind-Value="Model.AssignedToUserName"
+                                         disabled="@(Model.WorkOrder != null && !Model.WorkOrder.CanReassign())"
+                                         class="form-control input-select">
+                                @foreach (var user in UserOptions)
+                                {
+                                    <option value="@user.Value">@user.Text</option>
+                                }
+                            </InputSelect>
+                        }
+                        else
+                        {
+                            <span data-testid="@Elements.AssigneeFullName" class="value">@Model.WorkOrder?.Assignee?.GetFullName()</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Title" class="form-label">Title:</label>
+                    <div>
+                        <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Description" class="form-label">Description:</label>
+                    <div>
+                        <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="RoomNumber" class="form-label">Room Number:</label>
+                    <div>
+                        <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="readonly-info">
+                <span class="label">Created Date:</span>
+                <span data-testid="@Elements.CreatedDate" class="value">@Model.CreatedDate</span>
+
+                <span class="label">Assigned Date:</span>
+                <span data-testid="@Elements.AssignedDate" class="value">@Model.AssignedDate</span>
+                
+                <span class="label">Completed Date:</span>
+                <span data-testid="@Elements.CompletedDate" class="value">@Model.CompletedDate</span>
+
+
+            </div>
+        </div>
+
+        <div class="action-section">
+            @if (Model.IsReadOnly)
+            {
+                <div data-testid="@Elements.ReadOnlyMessage" class="readonly-message">This work order is read-only for you at this time.</div>
+            }
+            else
+            {
+                <div class="action-buttons">
+                    @foreach (var command in ValidCommands)
+                    {
+                        var buttonTestId = Elements.CommandButton + command.TransitionVerbPresentTense;
+                        <button data-testid="@buttonTestId" type="submit" @onclick="@(() => SelectedCommand = command.TransitionVerbPresentTense)" class="btn btn-primary">
+                            @command.TransitionVerbPresentTense
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </EditForm>
+</div>
+
+@code
+{
+
+    public enum Elements
+    {
+        Assignee,
+        Title,
+        AssigneeFullName,
+        RoomNumber,
+        Description,
+        AssignedDate,
+        CompletedDate,
+        CreatedDate,
+        AuditEntriesTable,
+        ReadOnlyMessage,
+        CommandButton,
+        WorkOrderNumber,
+        Status
+    }
+}

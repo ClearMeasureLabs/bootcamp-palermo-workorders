@@ -1,0 +1,239 @@
+.weather-page {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.weather-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.weather-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.weather-header h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    font-family: 'Georgia', serif;
+    margin-bottom: 0.5rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.weather-subtitle {
+    font-size: 1.1rem;
+    color: #718096;
+    font-style: italic;
+}
+
+.loading-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 3rem;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+
+.loading-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.loading-card p {
+    font-size: 1.2rem;
+    color: #4a5568;
+    font-style: italic;
+}
+
+.weather-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 2rem;
+}
+
+.weather-table-header {
+    background: linear-gradient(135deg, #7b68ee 0%, #4a90e2 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.weather-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.weather-table thead th {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    color: #4a5568;
+    font-weight: 600;
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.weather-row {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.weather-row:hover {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.weather-row:nth-child(odd) {
+    background: #fafbfc;
+}
+
+.weather-row:nth-child(even) {
+    background: white;
+}
+
+.weather-row:hover:nth-child(odd),
+.weather-row:hover:nth-child(even) {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.weather-table td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    color: #2d3748;
+}
+
+.date-cell {
+    font-weight: 600;
+    color: #7b68ee;
+}
+
+.temp-cell {
+    font-weight: 600;
+    text-align: center;
+}
+
+.summary-cell {
+    text-align: center;
+}
+
+.weather-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+    color: #4a5568;
+    display: inline-block;
+}
+
+.planning-cell {
+    font-style: italic;
+    color: #718096;
+    font-weight: 500;
+}
+
+.weather-info {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 2rem;
+    border: 1px solid #e2e8f0;
+}
+
+.info-section h4 {
+    color: #2d3748;
+    font-family: 'Georgia', serif;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.info-section p {
+    color: #4a5568;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.info-section ul {
+    color: #4a5568;
+    line-height: 1.6;
+    padding-left: 1.5rem;
+}
+
+.info-section ul li {
+    margin-bottom: 0.75rem;
+}
+
+.info-section strong {
+    color: #2d3748;
+    font-weight: 600;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .weather-page {
+        padding: 1rem;
+    }
+    
+    .weather-header h2 {
+        font-size: 2rem;
+    }
+    
+    .weather-table-header {
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .weather-table {
+        font-size: 0.85rem;
+    }
+    
+    .weather-table thead th,
+    .weather-table td {
+        padding: 1rem;
+    }
+    
+    .weather-table thead th {
+        font-size: 0.8rem;
+    }
+    
+    .weather-badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .weather-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .weather-table thead th,
+    .weather-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .weather-table {
+        font-size: 0.8rem;
+    }
+    
+    .weather-badge {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+    }
+}

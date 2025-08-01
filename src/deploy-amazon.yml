@@ -1,0 +1,67 @@
+steps:
+- task: DownloadSecureFile@1
+  inputs:
+    secureFile: 'release.keystore'  
+  name: 'keystore'
+
+- task: AzureCLI@2
+  displayName: Set up env vars
+  inputs:
+    azureSubscription: 'onion-architecture-maui-azure-dotnet-8'
+    scriptType: 'ps'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      az config set extension.use_dynamic_install=yes_without_prompt
+      $prodURL = az containerapp show --resource-group $(Prod-Resource-Group) --name $(Prod-App-Name) --query properties.configuration.ingress.fqdn
+      $prodURL = $prodURL -replace '"', ''
+      $prodURL = "https://$prodURL"
+      [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
+      $splitVersion = $env:Version -split "\."
+      $stringVer = $splitVersion[-1]
+      $intVer = [int]$stringVer
+      Write-Host "##vso[task.setvariable variable=IntegerVersion]$intVer"
+
+      $appSettingsPath = "./src/UI/Maui/appsettings.json"
+      $appSettings = Get-Content $appSettingsPath | ConvertFrom-Json
+      $appSettings.BaseAddress = $prodURL
+      $json = $appSettings | ConvertTo-Json
+      Set-Content -Path $appSettingsPath -Value $json
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build and sign Android target'
+  inputs:
+    command: 'publish'
+    projects: '**/Ui.Maui.csproj'
+    publishWebProjects: false
+    arguments: '-c Release -f net8.0-android -p:AndroidPackageFormat=apk -p:AndroidKeyStore=True -p:AndroidSigningKeyStore=$(keystore.secureFilePath) -p:AndroidSigningStorePass=OnionArch8 -p:AndroidSigningKeyAlias=release -p:AndroidSigningKeyPass=OnionArch8 -o ./build -p:TreatWarningsAsErrors=True'
+
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      Add-Type -AssemblyName System.IO.Compression.FileSystem
+      $zipfile = "./build/Maui.zip"
+      $outdir = "./build"
+      [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outdir)
+      Write-Output "build:"
+      Get-ChildItem -Path ./build -File
+
+- task: AmazonAppStorePrepareTask@0
+  inputs:
+    clientId: $(AmazonStoreClientID)
+    clientSecret: $(AmazonStoreClientSecret)
+    appId: $(AmazonAppID)
+- task: AmazonAppStoreEditTask@0
+  inputs:
+    appId: '$(AmazonAppID)'
+    language: 'en-US'
+    recentChanges: "Version bump to test automated publish"
+    
+- task: AmazonAppStoreReplaceApkTask@0
+  inputs:
+    appId: $(AmazonAppID)
+    apkFilePath: './build/com.companyname.ui.cmmaui-Signed.apk'
+
+- task: AmazonAppStoreCommitTask@0
+  inputs:
+    appId: $(AmazonAppID)

@@ -1,0 +1,160 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "containerappName": {
+      "defaultValue": "mycontainerapp",
+      "type": "String"
+    },
+    "location": {
+      "defaultValue": "canadacentral",
+      "type": "String"
+    },
+    "environment_name": {
+      "defaultValue": "myenvironment",
+      "type": "String"
+    },
+    "container_image": {
+      "defaultValue": "onionarchitecturedotnet8flywayazuresccr.azurecr.io/churchbulletin.ui:1.1.66",
+      "type": "String"
+    },
+    "registry_password": {
+      "defaultValue": "registryPass",
+      "type": "SecureString"
+    },
+    "appInsightsConnectionString": {
+      "defaultValue": "",
+      "type": "String"
+    },
+    "connection_string": {
+      "defaultValue": "connStr",
+      "type": "SecureString"
+    },
+    "aspnetcore_environment": {
+      "defaultValue": "tdd",
+      "type": "String"
+    },
+    "http_port": {
+      "defaultValue": 80,
+      "type": "int"
+    },
+    "registry_login_server": {
+      "defaultValue": "registryLogin",
+      "type": "string"
+    },
+    "subscriptionId": {
+      "defaultValue": "registryLogin",
+      "type": "string"
+    },
+    "app_id": {
+      "defaultValue": "appId",
+      "type": "string"
+    },
+    "uamiName": {
+      "defaultValue": "appId",
+      "type": "string"
+    },
+    "uamiRGName": {
+      "defaultValue": "appId",
+      "type": "string"
+    }
+  },
+  "variables": {
+
+    "uami": "[resourceId(parameters('uamiRGName'), 'Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('uamiName') )]"
+
+  },
+  "resources": [
+    {
+      "apiVersion": "2023-05-02-preview",
+      "type": "Microsoft.App/containerApps",
+      "name": "[parameters('containerappName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[variables('uami')]" :{}
+        }
+      },
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('environment_name'))]",
+        "configuration": {
+          "secrets": [
+            {
+              "name": "registrypassword",
+              "value": "[parameters('registry_password')]"
+            }
+          ],
+          "ingress": {
+            "external": true,
+            "targetPort": "[parameters('http_port')]",
+            "allowInsecure": false,
+            "traffic": [
+              {
+                "latestRevision": true,
+                "weight": 100
+              }
+            ]
+          },
+          "registries": [
+            {
+
+              "identity": "[variables('uami')]",
+              "server": "[parameters('registry_login_server')]"
+
+            }
+          ],
+          "dapr": {
+            "enabled": true,
+            "appId": "churchbulletin"
+          }
+        },
+        "template": {
+          "revisionSuffix": "[uniqueString(resourceGroup().id, deployment().name)]",
+          "containers": [
+            {
+              "name": "main",
+              "image": "[parameters('container_image')]",
+              "env": [
+                {
+                  "name": "HTTP_PORT",
+                  "value": "8080"
+                },
+                {
+                  "name": "OpenTelemetry.ConnectionString",
+                  "value": "[parameters('appInsightsConnectionString')]"
+                },
+                {
+                  "name": "ConnectionStrings__SqlConnectionString",
+                  "value": "[parameters('connection_string')]"
+                },
+                {
+                  "name": "ASPNETCORE_ENVIRONMENT",
+                  "value": "[parameters('aspnetcore_environment')]"
+                }
+              ],
+              "resources": {
+                "cpu": 0.25,
+                "memory": "0.5Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": 0,
+            "maxReplicas": 1,
+            "rules": [
+              {
+                "name": "http-rule",
+                "http": {
+                  "metadata": {
+                    "concurrentRequests": "1"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

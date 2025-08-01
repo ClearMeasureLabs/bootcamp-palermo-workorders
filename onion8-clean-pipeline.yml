@@ -1,0 +1,387 @@
+trigger:
+    #Commenting out branch trigger during testing
+    #- "second-azdo-pipeline"
+    - none
+    
+variables:
+    major: 2
+    minor: 4
+name: $(major).$(minor).$(Rev:r)
+
+stages:
+- stage: 'Integration_Build'
+  displayName: 'Build Application'
+
+  jobs:
+    - job: 'Build'
+      displayName: 'Build job'
+      pool:
+        vmImage: 'windows-latest'
+      variables:
+      - group: onion8-from-scratch-tdd
+      steps:
+      # Dependencies
+      - task: UseDotNet@2
+        displayName: 'Install SDK 8.0.100'
+        inputs:
+          packageType: 'sdk'
+          version: '8.0.100'
+      - task: UseDotNet@2
+        inputs:
+          packageType: 'runtime'
+          version: '6.0.0'
+      - task: UseDotNet@2
+        inputs:
+          packageType: 'runtime'
+          version: '8.0.0'
+      # Set environment variables
+      - task: PowerShell@2
+        inputs:
+          targetType: 'inline'
+          script: |
+            [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
+            echo $env:Version
+            echo $(Build.BuildNumber)
+
+      - task: PowerShell@2
+        displayName: Build.ps1
+        inputs:
+          targetType: filePath
+          filePath: ./build.ps1
+          arguments: '; CIBuild'
+      - task: PublishTestResults@2
+        displayName: 'Publish Test Results ./build/test/*.trx'
+        inputs:
+          testResultsFormat: VSTest
+          testResultsFiles: 'build/test/**/*.trx'
+          mergeTestResults: true
+          testRunTitle: 'CI Tests'
+        continueOnError: true
+        condition: succeededOrFailed()
+      - task: PublishCodeCoverageResults@1
+        displayName: 'Publish code coverage UnitTests'
+        inputs:
+          codeCoverageTool: Cobertura
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/build/test/**/In/**/coverage.cobertura.xml'
+        
+      # - task: PublishPipelineArtifact@1
+      #   displayName: Publish Ui to Pipeline
+      #   inputs:
+      #     targetPath: .\build\WebApp
+      #     artifactName: ChurchBulletin.Ui
+
+      # - task: PublishPipelineArtifact@1
+      #   displayName: Publish Database to Pipeline
+      #   inputs:
+      #     targetPath: .\build\WebApp
+      #     artifactName: ChurchBulletin.Database
+      
+      - task: NuGetCommand@2
+        inputs:
+          command: 'push'
+          packagesToPush: '.\build\*.nupkg'
+          publishVstsFeed: '$(AzureFeedName)'
+
+    - job: 'DockerBuildandPush'
+      pool:
+        vmImage: 'ubuntu-latest'
+      variables:
+        - group: onion8-from-scratch-tdd
+      dependsOn: Build
+ 
+      steps:
+      - task: DownloadPackage@1
+        displayName: 'Download UI Package'
+        inputs:
+          packageType: 'nuget'
+          feed: '$(AzureFeedName)'
+          view: 'Local'
+          definition: 'ChurchBulletin.UI'
+          version: '$(Build.BuildNumber)'
+          downloadPath: '$(System.DefaultWorkingDirectory)/built'
+          extract: true
+
+      # - task: DownloadPipelineArtifact@2
+      #   displayName: Publish Ui to Pipeline
+      #   inputs:
+      #     targetPath: $(System.DefaultWorkingDirectory)/built
+      #     artifactName: ChurchBulletin.Ui
+
+      - task: Docker@2
+        inputs:
+          containerRegistry: 'onion8-from-scratch-docker-sc'
+          repository: 'ChurchBulletin.UI'
+          command: 'buildAndPush'
+          Dockerfile: '**/Dockerfile'
+          tags: |
+            $(Build.BuildNumber)
+
+# Deploying to TDD
+- stage: 'TDD'
+  displayName: 'TDD'
+  jobs:
+    - deployment: 'DeployToTDD'
+      pool:
+        vmImage: 'windows-latest'
+      variables:
+      - group: onion8-from-scratch-tdd
+      - name: branch
+        value: $[coalesce(variables['system.pullRequest.sourceBranch'], variables['build.sourceBranch'])]
+      - name: TDDResourceGroup
+        value: '$(ResourceGroupName)-$(Build.BuildNumber)'
+      - name: Environment
+        value: 'tdd'
+      # - name: databaseServerName
+      #   value: $(databaseServerName)
+      # - name: databaseUser
+      #   value: '$(databaseUser)'
+      # - name: databasePassword
+      #   value: '$(databasePassword)'
+      # - name: databaseName
+      #   value: '$(databaseName)'
+      # - name: containerAppName
+      #   value: '$(ContainerAppName)'
+      # - name: containerImage
+      #   value: '$(registryLoginServer)/churchbulletin.ui:$(Build.BuildNumber)'
+      - name: containerAppLogAnalyticsName
+        value: 'tdd-Log-Analytics'
+      - name: appInsightsName
+        value: 'onion8-clean-tdd-insights'
+      # - name: appInsightsConnectionString
+      #   value: $(appInsightsConnectionStringTDD)
+      - name: AspnetcoreEnvironment
+        value: $(AspnetcoreEnvironmentTest)
+
+      environment: 'TDD'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            
+            - template: .\deploy-env.yml
+            
+            - task: DownloadPackage@1
+              displayName: 'Download Acceptance Test Package'
+              inputs:
+                packageType: 'nuget'
+                feed: '$(AzureFeedName)'
+                view: 'Local'
+                definition: 'ChurchBulletin.AcceptanceTests'
+                version: '$(Build.Buildnumber)'
+                downloadPath: '$(System.DefaultWorkingDirectory)/tests'
+                extract: true
+
+            - task: PowerShell@2
+              displayName: 'Download Playwright'
+              inputs:
+                targetType: filePath
+                filePath: ./tests/playwright.ps1
+                arguments: 'install'
+
+            # - task: VSTest@2
+            #   displayName: 'VsTest - AcceptanceTests'
+            #   inputs:
+            #     testSelector: 'testAssemblies'
+            #     testAssemblyVer2: |
+            #       **\*AcceptanceTests.dll
+            #       !**\*TestAdapter.dll
+            #       !**\obj\**
+            #       searchFolder: '$(System.DefaultWorkingDirectory)/tests'
+            #     uiTests: true
+            #     codeCoverageEnabled: true
+            #     testRunTitle: 'Acceptance Tests'
+            #     diagnosticsEnabled: True
+
+- stage: 'DeleteTDD'
+  displayName: 'DeleteTDD'
+  dependsOn: TDD
+  jobs: 
+    - deployment: 'DeleteTDD'
+      pool:
+        vmImage: 'windows-latest'
+      variables:
+      - group: onion8-from-scratch-tdd
+      - name: branch
+        value: $[coalesce(variables['system.pullRequest.sourceBranch'], variables['build.sourceBranch'])] 
+      - name: TDD-Resource-Group
+        value: '$(ResourceGroupName)-$(Build.BuildNumber)'
+      - name: TDD-App-Name
+        value: tdd-ui 
+      environment: 'TDD'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+
+            # - task: AzureCLI@2
+            #   inputs:
+            #     azureSubscription: 'onion8-from-scratch-sc'
+            #     scriptType: 'ps'
+            #     scriptLocation: 'inlineScript'
+            #     inlineScript: |
+            #       az config set extension.use_dynamic_install=yes_without_prompt
+            #       $containerAppURL = az containerapp show --resource-group $(TDD-Resource-Group) --name $(TDD-App-Name) --query properties.configuration.ingress.fqdn
+            #       $containerAppURL = $containerAppURL -replace '"', ''
+            #       [System.Environment]::SetEnvironmentVariable("containerAppURL", $containerAppURL, "User")
+
+            - task: AzureCLI@2
+              displayName: 'Delete TDD Resources'
+              inputs:
+                azureSubscription: 'onion8-from-scratch-sc'
+                scriptType: 'ps'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az group delete -n $(TDD-Resource-Group) --yes
+
+- stage: 'UAT'
+  displayName: 'UAT'
+  # dependsOn: TDD
+  jobs:
+    - deployment: 'DeployToUAT'
+      pool:
+        vmImage: 'windows-latest'
+      variables:
+      - group: onion8-from-scratch-uat
+      - name: branch
+        value: $[coalesce(variables['system.pullRequest.sourceBranch'], variables['build.sourceBranch'])]
+      - name: TDDResourceGroup
+        value: '$(ResourceGroupName)'
+      - name: Environment
+        value: 'uat'
+      # - name: DatabaseUser
+      #   value: '$(DatabaseUserUAT)'
+      # - name: DatabasePassword
+      #   value: '$(DatabasePasswordTest)'
+      # - name: DatabaseName
+      #   value: '$(DatabaseNameUAT)'
+      # - name: ContainerAppName
+      #   value: '$(ContainerAppNameUAT)'
+      # - name: ContainerImage
+      #   value: '$(RegistryLoginServer)/churchbulletin.ui:$(Build.BuildNumber)'
+      - name: AppInsightsConnectionString
+        value: '$(AppInsightsConnectionStringUAT)'
+      - name: appInsightsName
+        value: 'onion-architecture-maui-azure-dotnet-8-UAT-Insights'
+      - name: containerAppLogAnalyticsName
+        value: 'UAT-Log-Analytics'
+      # - name: SubscriptionId
+      #   value: $(SubscriptionId)
+      # - name: AppInsightsConnectionString
+      #   value: $(AppInsightsConnectionStringUAT)
+      # - name: AspnetcoreEnvironment
+      #   value: $(AspnetcoreEnvironmentUAT)
+      # - name: serviceConnection
+      #   value: $(serviceConnection)
+      environment: 'UAT'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            
+            - template: .\deploy-env.yml
+            
+            - task: DownloadPackage@1
+              displayName: 'Download Acceptance Test Package'
+              inputs:
+                packageType: 'nuget'
+                feed: '$(AzureFeedName)'
+                view: 'Local'
+                definition: 'ChurchBulletin.AcceptanceTests'
+                version: '$(Build.Buildnumber)'
+                downloadPath: '$(System.DefaultWorkingDirectory)/tests'
+                extract: true
+
+            - task: PowerShell@2
+              displayName: 'Download Playwright'
+              inputs:
+                targetType: filePath
+                filePath: ./tests/playwright.ps1
+                arguments: 'install'
+
+            # - task: VSTest@2
+            #   displayName: 'VsTest - AcceptanceTests'
+            #   inputs:
+            #     testSelector: 'testAssemblies'
+            #     testAssemblyVer2: |
+            #       **\*AcceptanceTests.dll
+            #       !**\*TestAdapter.dll
+            #       !**\obj\**
+            #       searchFolder: '$(System.DefaultWorkingDirectory)/tests'
+            #     uiTests: true
+            #     codeCoverageEnabled: true
+            #     testRunTitle: 'Acceptance Tests'
+            #     diagnosticsEnabled: True
+
+- stage: 'Production'
+  displayName: 'Prod'
+  jobs:
+    - deployment: 'DeployToProd'
+      pool:
+        vmImage: 'windows-latest'
+      variables:
+      - group: onion8-from-scratch-prod
+      - name: branch
+        value: $[coalesce(variables['system.pullRequest.sourceBranch'], variables['build.sourceBranch'])]
+      - name: TDDResourceGroup
+        value: '$(ResourceGroupName)'
+      - name: Environment
+        value: 'prod'
+      # # - name: DatabaseUser
+      # #   value: '$(DatabaseUserProd)'
+      # # - name: DatabasePassword
+      # #   value: '$(DatabasePasswordTest)'
+      # # - name: DatabaseName
+      # #   value: '$(DatabaseNameProd)'
+      # # - name: ContainerAppName
+      # #   value: '$(ContainerAppNameProd)'
+      - name: AppInsightsConnectionString
+        value: '$(AppInsightsConnectionStringProd)'
+      - name: appInsightsName
+        value: 'onion-architecture-maui-azure-dotnet-8-Prod-Insights'
+      - name: containerAppLogAnalyticsName
+        value: 'Prod-Log-Analytics'
+      # # - name: ContainerImage
+      # #   value: '$(RegistryLoginServer)/churchbulletin.ui:$(Build.BuildNumber)'
+      # - name: AspnetcoreEnvironment
+      #   value: $(AspnetcoreEnvironmentProd)
+      # - name: serviceConnection
+      #   value: $(serviceConnection)
+      environment: 'Prod'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            
+            - template: .\deploy-env.yml
+            
+            - task: DownloadPackage@1
+              displayName: 'Download Acceptance Test Package'
+              inputs:
+                packageType: 'nuget'
+                feed: '$(AzureFeedName)'
+                view: 'Local'
+                definition: 'ChurchBulletin.AcceptanceTests'
+                version: '$(Build.Buildnumber)'
+                downloadPath: '$(System.DefaultWorkingDirectory)/tests'
+                extract: true
+
+            - task: PowerShell@2
+              displayName: 'Download Playwright'
+              inputs:
+                targetType: filePath
+                filePath: ./tests/playwright.ps1
+                arguments: 'install'
+
+            # - task: VSTest@2
+            #   displayName: 'VsTest - AcceptanceTests'
+            #   inputs:
+            #     testSelector: 'testAssemblies'
+            #     testAssemblyVer2: |
+            #       **\*AcceptanceTests.dll
+            #       !**\*TestAdapter.dll
+            #       !**\obj\**
+            #       searchFolder: '$(System.DefaultWorkingDirectory)/tests'
+            #     uiTests: true
+            #     codeCoverageEnabled: true
+            #     testRunTitle: 'Acceptance Tests'
+            #     diagnosticsEnabled: True

@@ -1,0 +1,57 @@
+@using System.Runtime.CompilerServices
+@using System.Security.Principal
+@using Palermo.BlazorMvc
+@inherits Palermo.BlazorMvc.MvcLayoutComponentBase
+
+<div class="modern-app">
+    <aside class="modern-sidebar">
+        <div class="sidebar-header">
+            <div class="church-brand">
+                <div class="church-icon">
+                    <i class="bi bi-building" aria-hidden="true"></i>
+                </div>
+                <div class="brand-text">
+                    <h4>First Church</h4>
+                    <span>Springfield</span>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <NavMenu/>
+        </nav>
+        <div class="sidebar-footer">
+            <HealthCheckLink/>
+        </div>
+    </aside>
+
+    <div class="main-container">
+        <header class="modern-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h3>Work Order Management</h3>
+                    <span class="subtitle">Church Maintenance Portal</span>
+                </div>
+                <div class="header-actions">
+                    <AuthorizeView>
+                        <Authorized>
+                            <div class="user-section">
+                                <Logout />
+                            </div>
+                        </Authorized>
+                        <NotAuthorized>
+                            <div class="auth-section">
+                                <LoginLink/>
+                            </div>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </div>
+            </div>
+        </header>
+
+        <main class="modern-main">
+            <div class="content-wrapper">
+                @Body
+            </div>
+        </main>
+    </div>
+</div>

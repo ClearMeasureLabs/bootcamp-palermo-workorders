@@ -1,0 +1,123 @@
+steps:
+
+- task: AzureCLI@2
+  displayName: 'Query and store subscription id for unique resource name'
+  inputs:
+    azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      SUBSCRIPTION_ID=$(az account show --query id --output tsv)
+      echo "##vso[task.setvariable variable=SubscriptionId]$SUBSCRIPTION_ID"
+
+- checkout: self
+
+# - task: AzureCLI@2
+#   displayName: 'Create resource group'
+#   inputs:
+#     azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+#     scriptType: 'ps'
+#     scriptLocation: 'inlineScript'
+#     inlineScript: az group create --name $(TDDResourceGroup) --location $(AzureLocation)
+
+- task: AzureResourceGroupDeployment@2
+  displayName: 'Create container app environment'
+  inputs:
+    azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+    resourceGroupName: $(TDDResourceGroup)
+    location: $(AzureLocation)
+    csmFile: src/Core/ContainerEnvironmentARM.json
+    overrideParameters: -location $(AzureLocation) -environment_name $(containerAppEnvironmentName) -appInsightsConnectionString $(AppInsightsConnectionString) -containerAppLogAnalyticsName $(containerAppLogAnalyticsName) -subscriptionId $(SubscriptionId) -ResourceGroupName $(TDDResourceGroup)
+
+- task: PowerShell@2
+  displayName: 'Generate version integer for database server name'
+  inputs:
+    targetType: 'inline'
+    script: |
+      [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
+      $splitVersion = $env:Version -split "\."
+      $stringVer = $splitVersion[-1]
+      $intVer = [int]$stringVer
+      Write-Host "##vso[task.setvariable variable=IntegerVersion]$intVer"
+
+- task: AzureResourceGroupDeployment@2
+  displayName: 'Create database resource in Azure'
+  inputs:
+    azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+    resourceGroupName: $(TDDResourceGroup)
+    location: $(AzureLocation)
+    csmFile: src/Database/DatabaseARM.json
+    overrideParameters: -databaseserverName $(databaseName) -databaseLogin $(DatabaseUser) -databaseLoginPassword $(DatabasePassword) -skuCapacity 1 -databaseName onioncleandb-$(Environment) -requestedServiceObjectiveName $(DatabasePerformanceLevel)
+
+- task: PowerShell@2
+  displayName: 'Create database schema'
+  inputs:
+    targetType: filePath
+    filePath: src/Database/scripts/UpdateAzurePipelineSql.ps1
+    arguments: -DatabaseServer '$(databaseName).database.windows.net' -DatabaseName 'onioncleandb-$(Environment)' -DatabaseAction '$(DatabaseAction)' -DatabaseUser '$(databaseUser)' -DatabasePassword '$(databasePassword)'
+
+- task: AzureCLI@2
+  displayName: 'Get database connection string'
+  inputs: 
+    azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+    scriptType: 'ps'
+    scriptLocation: 'inlineScript' 
+    inlineScript: |
+      az config set extension.use_dynamic_install=yes_without_prompt
+      $connstring = az sql db show-connection-string --server $(SubscriptionId)-dotnet8-$(Environment) --name $(DatabaseName) --client ado.net
+      $connstring = $connstring -replace '<username>', '$(DatabaseUser)' -replace '<password>', '$(DatabasePassword)' -replace '"', ''
+      Write-Host "##vso[task.setvariable variable=DbConnString]$connstring"
+
+- task: AzureResourceGroupDeployment@2
+  displayName: 'Create container app environment'
+  inputs:
+    azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+    resourceGroupName: $(TDDResourceGroup)
+    location: $(AzureLocation)
+    csmFile: src/Core/ContainerEnvironmentARM.json
+    overrideParameters: -location $(AzureLocation) -environment_name $(containerAppEnvironmentName)-$(Environment)-cae -appInsightsConnectionString $(appInsightsConnectionString) -containerAppLogAnalyticsName $(containerAppLogAnalyticsName) -subscriptionId $(SubscriptionId) -ResourceGroupName $(TDDResourceGroup)
+
+- task: AzureResourceGroupDeployment@2
+  displayName: 'Create container app'
+  inputs:
+    azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+    resourceGroupName: $(TDDResourceGroup)
+    location: $(AzureLocation)
+    csmFile: src/Core/ContainerARM.json
+    #overrideParameters: -containerappName "$(ContainerAppName)" -location "$(AzureLocation)" -environment_name "$(ResourceGroupName)-$(Environment)-cae" -container_image "$(RegistryLoginServer)/churchbulletin.ui:$(Build.BuildNumber)" -registry_password "$(ContainerRegistryPassword)" -connection_string "$(DbConnString)" -http_port "$(HttpPort)" -appInsightsConnectionString "$(AppInsightsConnectionString)" -registry_login_server "$(RegistryLoginServer)" -app_id "$(AcrContainerAppId)"
+    overrideParameters: -app_id "$(containerAdmin)" -aspnetcore_environment "$(AspnetcoreEnvironment)" -appInsightsConnectionString "$(appInsightsConnectionString)" -connection_string "$(DbConnString)" -containerappName "$(ContainerAppName)" -container_image "$(registryLoginServer)/churchbulletin.ui:$(Build.BuildNumber)" -environment_name "$(containerAppEnvironmentName)" -http_port "$(HttpPort)" -location "$(AzureLocation)" -registry_login_server "$(registryLoginServer)" -registry_password "$(containerAdminSecret)" -uamiName "$(uamiName)" -SubscriptionId "$(SubscriptionId)" -uamiRGName "$(uamiRGName)"
+
+- task: AzureCLI@2
+  displayName: 'Get the Fully Qualified Domain Name for the container app'
+  inputs:
+    azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+    scriptType: 'ps'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      $fqdn = az containerapp show --name $(ContainerAppName) --resource-group $(TDDResourceGroup) --query properties.configuration.ingress.fqdn
+      $fqdn = $fqdn -replace '"', ''
+      [System.Environment]::SetEnvironmentVariable("containerAppURL", $fqdn, "User")
+      Write-Host "##vso[task.setvariable variable=fullyQualifiedDomainName]$fqdn"
+      echo $fqdn
+
+- task: AzureCLI@2
+  displayName: 'Add revision to container app'
+  inputs:
+    azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+    scriptType: 'ps'
+    scriptLocation: 'inlineScript'
+    inlineScript: az containerapp update --name $(containerAppName) --resource-group $(TDDResourceGroup) --image $(containerImage) --set-env-vars ConnectionStrings__SqlConnectionString="$(DbConnString)" HTTP_PORT=$(HttpPort) 
+
+#- task: PowerShell@2
+#  displayName: 'Check version of deployed app'
+#  inputs:
+#    targetType: 'filePath'
+#    filePath: src/UI/Server/CheckVersion.ps1
+#    arguments: -server '$(fullyQualifiedDomainName)' -version '$(Build.BuildNumber)'
+
+#- task: PowerShell@2
+#  displayName: 'Perform healthcheck for server on container app'
+#  inputs:
+#    targetType: 'filePath'
+#    filePath: src/UI/Server/CallHealthCheckEndpoint.ps1
+#    arguments: -server '$(fullyQualifiedDomainName)'

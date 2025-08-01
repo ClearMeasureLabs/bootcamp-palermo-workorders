@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<IsPackable>false</IsPackable>
+
+		<AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
+		<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+
+		<Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="TestResults\**" />
+		<EmbeddedResource Remove="TestResults\**" />
+		<None Remove="TestResults\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="coverage.cobertura.xml" />
+		<None Remove="coverage.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AutoBogus.Conventions" Version="2.13.1" />
+		<PackageReference Include="coverlet.msbuild" Version="6.0.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.7" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+		<PackageReference Include="NUnit" Version="4.3.2" />
+		<PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
+		<PackageReference Include="NUnit.Analyzers" Version="4.9.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="coverlet.collector" Version="6.0.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Shouldly" Version="4.3.0" />
+		<PackageReference Include="bunit" Version="1.40.0" />
+		<PackageReference Include="MediatR" Version="12.4.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Core\Core.csproj" />
+		<ProjectReference Include="..\UI\Client\UI.Client.csproj" />
+		<ProjectReference Include="..\UI\Api\UI.Api.csproj" />
+		<ProjectReference Include="..\UI\Server\UI.Server.csproj" />
+		<ProjectReference Include="..\UI.Shared\UI.Shared.csproj" />
+	</ItemGroup>
+
+</Project>

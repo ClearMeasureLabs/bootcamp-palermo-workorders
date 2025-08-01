@@ -1,0 +1,125 @@
+<div class="search-page">
+    <div class="search-container">
+        <div class="search-header">
+            <h2>Work Order Search</h2>
+            <div class="search-subtitle">Find and manage church maintenance requests</div>
+        </div>
+
+        <div class="search-filters-card">
+            <EditForm Model="@Model" OnValidSubmit="OnSearch!">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label class="filter-label" for="creator">Creator</label>
+                        <InputSelect id="@WorkOrderSearch.Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
+                            <option value="">All</option>
+                            @foreach (var user in UserOptions)
+                            {
+                                <option value="@user.Value">@user.Text</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label" for="assignee">Assignee</label>
+                        <InputSelect id="@WorkOrderSearch.Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
+                            <option value="">All</option>
+                            @foreach (var user in UserOptions)
+                            {
+                                <option value="@user.Value">@user.Text</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label" for="status">Status</label>
+                        <InputSelect id="@WorkOrderSearch.Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
+                            <option value="">All</option>
+                            @foreach (var status in StatusOptions)
+                            {
+                                <option value="@status.Value">@status.Text</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <button id="@WorkOrderSearch.Elements.SearchButton" type="submit" class="btn btn-primary">
+                            <i class="bi bi-search" aria-hidden="true"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+
+        <div class="results-card">
+            <div class="results-header">
+                <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length work orders)
+            </div>
+            
+            @if (Model.Results.Length == 0)
+            {
+                <div class="empty-results">
+                    <div class="empty-results-icon">
+                        <i class="bi bi-inbox" aria-hidden="true"></i>
+                    </div>
+                    <p>No work orders found matching your search criteria.</p>
+                    <p>Try adjusting your filters or create a new work order.</p>
+                </div>
+            }
+            else
+            {
+                <table class="grid-data">
+                    <thead>
+                    <tr>
+                        <th>WO #</th>
+                        <th>Creator</th>
+                        <th>Assignee</th>
+                        <th>Status</th>
+                        <th>Title</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @{
+                        var i = 0;
+                        foreach (var order in Model.Results)
+                        {
+                            var rowClass = i++ % 2 == 0 ? "odd" : "even";
+                            <tr class="@rowClass">
+                                <td>
+                                    @{
+                                        var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
+                                    }
+                                    <a data-testid="@workOrderLinkTestId" href="/workorder/manage/@order.Number?mode=Edit">
+                                        @order.Number
+                                    </a>
+                                </td>
+                                <td>@order.Creator?.GetFullName()</td>
+                                <td>@order.Assignee?.GetFullName()</td>
+                                <td>
+                                    <span class="status-badge">@order.Status</span>
+                                </td>
+                                <td>@order.Title</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    public enum Elements
+    {
+        CreatorSelect,
+        AssigneeSelect,
+        StatusSelect,
+        SearchButton,
+        WorkOrderLink
+    }
+
+    public WorkOrderSearchModel Model { get; set; } = new();
+    public List<SelectListItem> UserOptions { get; set; } = new();
+    public List<SelectListItem> StatusOptions { get; set; } = new();
+    public Func<Task>? OnSearch { get; set; }
+}

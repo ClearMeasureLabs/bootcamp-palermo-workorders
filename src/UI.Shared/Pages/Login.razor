@@ -1,0 +1,50 @@
+<PageTitle>Login</PageTitle>
+
+<div class="login-container">
+    <div class="login-card card">
+        <div class="login-header">
+            <h3>Church Staff Portal</h3>
+            <div class="login-subtitle">First Church of Springfield</div>
+        </div>
+        <div class="login-body">
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator/>
+                <ValidationSummary/>
+
+                <div class="form-group">
+                    <label for="employee">Select Church Member</label>
+                    <InputSelect data-testid="@Elements.User" @bind-Value="loginModel.Username" class="form-control">
+                        <option value="">-- Select a parishioner or staff member --</option>
+                        @foreach (var employee in employees)
+                        {
+                            <option value="@employee.UserName">@employee.GetFullName()</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => loginModel.Username)"/>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger">@errorMessage</div>
+                }
+
+                <div class="text-center">
+                    <button data-testid="@Elements.LoginButton" type="submit" class="btn btn-primary">Enter Church Portal</button>
+                </div>
+            </EditForm>
+            
+            <div class="church-blessing">
+                "May your service to the church be blessed and your work orders be few."
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    public enum Elements
+    {
+        User,
+        LoginButton
+    }
+}

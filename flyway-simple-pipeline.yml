@@ -1,0 +1,242 @@
+trigger:
+  branches:
+    include:
+      - "*"
+    
+variables:
+    major: 2
+    minor: 4
+    FLYWAY_CACHE_FOLDER: $(Pipeline.Workspace)/flyway
+name: $(major).$(minor).$(Rev:r)
+
+stages:
+- stage: 'Integration_Build'
+  displayName: 'Build Application'
+  jobs:
+    - job: 'Build'
+      displayName: 'Build job'
+      pool:
+        vmImage: 'windows-latest'
+      variables:
+      - group: onion8-from-scratch-flyway-tdd
+      steps:
+      # Dependencies
+      
+      - task: UseDotNet@2
+        displayName: 'Install SDK 8.0.100'
+        inputs:
+          packageType: 'sdk'
+          version: '8.0.100'
+      - task: UseDotNet@2
+        inputs:
+          packageType: 'runtime'
+          version: '6.0.0'
+      - task: UseDotNet@2
+        inputs:
+          packageType: 'runtime'
+          version: '8.0.0'
+      # Set environment variables
+      - task: PowerShell@2
+        inputs:
+          targetType: 'inline'
+          script: |
+            [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
+            echo $env:Version
+            echo $(Build.BuildNumber)
+         
+      - task: PowerShell@2
+        displayName: Build.ps1
+        inputs:
+          targetType: filePath
+          filePath: ./build.ps1
+          arguments: '; CIBuild'
+      - task: PublishTestResults@2
+        displayName: 'Publish Test Results ./build/test/*.trx'
+        inputs:
+          testResultsFormat: VSTest
+          testResultsFiles: 'build/test/**/*.trx'
+          mergeTestResults: true
+          testRunTitle: 'CI Tests'
+        continueOnError: true
+        condition: succeededOrFailed()
+      - task: PublishCodeCoverageResults@1
+        displayName: 'Publish code coverage UnitTests'
+        inputs:
+          codeCoverageTool: Cobertura
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/build/test/**/In/**/coverage.cobertura.xml'
+        
+      - task: NuGetCommand@2
+        inputs:
+          command: 'push'
+          packagesToPush: '.\build\*.nupkg'
+          publishVstsFeed: '$(AzureFeedName)'
+
+
+    - job: 'DockerBuildandPush'
+      pool:
+        vmImage: 'ubuntu-latest'
+      variables:
+        - group: onion8-from-scratch-flyway-tdd
+      dependsOn: Build
+ 
+      steps:
+      - task: DownloadPackage@1
+        displayName: 'Download UI Package'
+        inputs:
+          packageType: 'nuget'
+          feed: '$(AzureFeedName)'
+          view: 'Local'
+          definition: 'ChurchBulletin.UI'
+          version: '$(Build.BuildNumber)'
+          downloadPath: '$(System.DefaultWorkingDirectory)/built'
+          extract: true
+
+      - task: Docker@2
+        displayName: 'Build & Push Docker Image'
+        inputs:
+          containerRegistry: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-CR'
+          repository: 'ChurchBulletin.UI'
+          command: 'buildAndPush'
+          Dockerfile: '**/Dockerfile'
+          tags: |
+            $(Build.BuildNumber)
+
+- stage: 'TDD'
+  displayName: 'TDD (via Octopus Deploy)'
+  jobs: 
+    - deployment: 'DeployToTDD'
+      pool:
+        vmImage: 'windows-latest'
+      variables:
+      - group: Integration-Build    
+
+      - name: branch
+        value: $[coalesce(variables['system.pullRequest.sourceBranch'], variables['build.sourceBranch'])] 
+      
+      - name: TDD-Resource-Group
+        value: onion-architecture-dotnet-8-flyway-azure-$(Build.BuildNumber)
+      - name: TDD-App-Name
+        value: tdd-ui 
+      environment: 
+        name: 'TDD'
+        resourceType: 'VirtualMachine'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+
+            - task: OctoInstaller@5
+              displayName: 'Install octo cli tools on Windows agent'
+              inputs:
+                version: '*'
+
+            - task: OctopusCreateRelease@5
+              name: 'CreateRelease'
+              inputs:
+                OctoConnectedServiceName: 'octoServiceConnection'
+                Space: '$(OctoSpace)'
+                ProjectGroup: '$(OctoProjectGroup)'
+                ProjectName: '$(OctoProjectName)'
+                ReleaseNumber: '$(Build.BuildNumber)'
+                Channel: 'Default'
+                GitRef: '$(branch)'
+                DeployToEnvironment: 'TDD'
+                DeploymentProgress: true
+                AdditionalArguments: '--deploymenttimeout=00:30:00 --variable=ResourceGroupName:$(TDD-Resource-Group) --variable=container_app_name:$(TDD-App-Name)' 
+            - task: AzureCLI@2
+              inputs:
+                azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+                scriptType: 'ps'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az config set extension.use_dynamic_install=yes_without_prompt
+                  $containerAppURL = az containerapp show --resource-group $(TDD-Resource-Group) --name $(TDD-App-Name) --query properties.configuration.ingress.fqdn
+                  $containerAppURL = $containerAppURL -replace '"', ''
+                  [System.Environment]::SetEnvironmentVariable("containerAppURL", $containerAppURL, "User")
+            - task: DownloadPackage@1
+              displayName: 'Download Acceptance Test Package'
+              inputs:
+                packageType: 'nuget'
+                feed: '$(FeedName)'
+                view: 'Local'
+                definition: 'ChurchBulletin.AcceptanceTests'
+                version: '$(Build.BuildNumber)'
+                downloadPath: '$(System.DefaultWorkingDirectory)/tests'
+                extract: true
+            - task: AzureCLI@2
+              displayName: 'Delete TDD Resources'
+              inputs:
+                azureSubscription: 'Onion-Architecture-Dotnet-8-Flyway-Azure-SC-ARM-MVP'
+                scriptType: 'ps'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az group delete -n $(TDD-Resource-Group) --yes
+
+
+- stage: 'UAT'
+  displayName: 'UAT'
+  jobs: 
+    - deployment: 'DeployToUAT'
+      pool:
+        vmImage: 'windows-latest'
+      variables:
+        - group: Integration-Build    
+      environment: 'UAT'  
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+
+            - task: OctoInstaller@5
+              displayName: 'Install octo cli tools on Windows agent'
+              inputs:
+                version: '*'
+
+
+
+            - task: OctopusDeployRelease@5
+              name: deploytoUAT
+              inputs:
+                OctoConnectedServiceName: 'octoServiceConnection'
+                Space: '$(OctoSpace)'
+                ProjectGroup: '$(OctoProjectGroup)'
+                Project: '$(OctoProjectName)'
+                ReleaseNumber: '$(Build.BuildNumber)'
+                Environments: 'UAT'
+                ShowProgress: true
+                AdditionalArguments: '--deploymenttimeout=00:30:00'
+
+
+
+- stage: 'Production'
+  displayName: 'Prod'  
+  jobs: 
+    - deployment: 'DeployToProd'
+      pool:
+        vmImage: 'windows-latest'
+      variables:
+        - group: Integration-Build    
+      environment: 'Prod'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+      
+            - task: OctoInstaller@5
+              displayName: 'Install octo cli tools on Windows agent'
+              inputs:
+                version: '*'
+
+
+
+            - task: OctopusDeployRelease@5
+              name: deploytoProd
+              inputs:
+                OctoConnectedServiceName: 'octoServiceConnection'
+                Space: '$(OctoSpace)'
+                ProjectGroup: '$(OctoProjectGroup)'
+                Project: '$(OctoProjectName)'
+                ReleaseNumber: '$(Build.BuildNumber)'
+                Environments: 'Prod'
+                ShowProgress: true 
+                AdditionalArguments: '--deploymenttimeout=00:30:00'

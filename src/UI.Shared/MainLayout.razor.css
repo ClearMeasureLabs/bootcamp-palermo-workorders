@@ -1,0 +1,333 @@
+﻿/* Modern App Container */
+.modern-app {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Modern Sidebar */
+.modern-sidebar {
+    width: 280px;
+    background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e0 50%, #a0aec0 100%);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.modern-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modern-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modern-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.modern-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    padding: 2rem 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.church-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #2d3748;
+}
+
+.church-icon {
+    font-size: 2.5rem;
+    color: #4a5568;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.brand-text h4 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    font-family: 'Georgia', serif;
+    color: #2d3748;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.brand-text span {
+    font-size: 0.9rem;
+    color: #4a5568;
+    font-style: italic;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+    flex: 1;
+    padding: 1rem 0;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.sidebar-footer ::deep a {
+    color: #4a5568;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+.sidebar-footer ::deep a:hover {
+    color: #2d3748;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-footer ::deep a i {
+    font-size: 1rem;
+}
+
+/* Health Check Link Specific Styling */
+.health-check-link {
+    position: static !important;
+    color: #4a5568 !important;
+    text-decoration: none !important;
+    font-size: 0.875rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.health-check-link:hover {
+    color: #2d3748 !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Main Container */
+.main-container {
+    flex: 1;
+    margin-left: 280px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Modern Header */
+.modern-header {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    max-width: 100%;
+}
+
+.header-title {
+    flex: 1;
+}
+
+.header-title h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #2d3748;
+    font-family: 'Georgia', serif;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: #718096;
+    font-style: italic;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-section, .auth-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.user-section ::deep span {
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.user-section ::deep a,
+.auth-section ::deep a {
+    color: #4a5568;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+.user-section ::deep a:hover,
+.auth-section ::deep a:hover {
+    background: #e2e8f0;
+    color: #2d3748;
+    text-decoration: none;
+}
+
+/* Modern Main Content */
+.modern-main {
+    flex: 1;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: calc(100vh - 120px);
+}
+
+.content-wrapper {
+    padding: 2rem;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .modern-sidebar {
+        width: 260px;
+    }
+    
+    .main-container {
+        margin-left: 260px;
+    }
+    
+    .header-content {
+        padding: 1rem 1.5rem;
+    }
+    
+    .content-wrapper {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .modern-sidebar {
+        width: 100%;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        position: fixed;
+    }
+    
+    .modern-sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .main-container {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+        padding: 1rem;
+    }
+    
+    .header-title {
+        text-align: center;
+    }
+    
+    .header-title h3 {
+        font-size: 1.5rem;
+    }
+    
+    .content-wrapper {
+        padding: 1rem;
+    }
+    
+    .user-section, .auth-section {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-title h3 {
+        font-size: 1.3rem;
+    }
+    
+    .subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .content-wrapper {
+        padding: 0.5rem;
+    }
+}
+
+/* Focus states for accessibility */
+.user-section ::deep a:focus,
+.auth-section ::deep a:focus {
+    outline: 2px solid #4a5568;
+    outline-offset: 2px;
+}
+
+/* Animation for smooth transitions */
+.modern-app * {
+    transition: all 0.2s ease;
+}
+
+/* Dark mode support (if needed later) */
+@media (prefers-color-scheme: dark) {
+    .modern-app {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    }
+    
+    .modern-header {
+        background: #2d3748;
+        border-bottom-color: #4a5568;
+    }
+    
+    .header-title h3 {
+        color: #f7fafc;
+    }
+    
+    .subtitle {
+        color: #a0aec0;
+    }
+    
+    .modern-main {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    }
+}

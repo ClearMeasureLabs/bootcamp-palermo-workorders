@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
+		<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+		<Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.1" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\Core\Core.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "defaultValue": "canadacentral",
+      "type": "String"
+    },
+    "environment_name": {
+      "defaultValue": "myenvironment",
+      "type": "String"
+    }, 
+    "appInsightsConnectionString": {
+      "defaultValue": "",
+      "type": "String"
+    },
+    "containerAppLogAnalyticsName": {
+      "defaultValue": "defaultoinionmauilaw",
+      "type": "String"
+    },
+    "appInsightsName": {
+      "defaultValue": "defaultoinionmauiappins",
+      "type": "String"
+    },
+    "subscriptionId": {
+      "defaultValue": "",
+      "type": "String"
+    },
+    "ResourceGroupName": {
+      "defaultValue": "",
+      "type": "String"
+    }
+  },
+  "variables": {},
+  "resources": [
+
+      {
+        "name": "[parameters('containerAppLogAnalyticsName')]",
+        "type": "Microsoft.OperationalInsights/workspaces",
+        "apiVersion": "2015-11-01-preview",
+        "location": "[parameters('location')]",
+        "tags": {},
+        "properties": {
+          "sku": {
+            "name": "PerGB2018"
+          },
+          "retentionInDays": 30
+        }
+    },
+
+    {
+        "apiVersion": "2014-04-01",
+        "name": "[parameters('appInsightsName')]",
+        "type": "Microsoft.Insights/components",
+        "location": "[resourceGroup().location]",
+        "properties": {
+            "applicationId": "[parameters('appInsightsName')]"
+        }
+    },
+
+
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2022-03-01",
+      "name": "[parameters('environment_name')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('containerAppLogAnalyticsName'))]"
+      ],
+
+      "properties": {
+        "appLogsConfiguration": {
+          "destination": "log-analytics",
+          "logAnalyticsConfiguration": {
+            "customerId": "[reference(resourceId(parameters('subscriptionId'), parameters('ResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')),'2022-10-01').customerId]",
+            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2022-10-01').primarySharedKey]"
+          },
+          "daprAIConnectionString": "[parameters('appInsightsConnectionString')]"
+        }
+      }
+    }
+  ]
+}

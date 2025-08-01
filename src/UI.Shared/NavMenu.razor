@@ -1,0 +1,91 @@
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">UI</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <i class="bi bi-house-door-fill nav-icon" aria-hidden="true"></i>
+                <span class="nav-text">Home</span>
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="counter">
+                <i class="bi bi-calculator-fill nav-icon" aria-hidden="true"></i>
+                <span class="nav-text">Counter</span>
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="fetchdata">
+                <i class="bi bi-cloud-arrow-down-fill nav-icon" aria-hidden="true"></i>
+                <span class="nav-text">Fetch data</span>
+            </NavLink>
+        </div>
+        
+        @if (CurrentUser != null && CurrentUser.CanCreateWorkOrder())
+        {
+            <div class="nav-item px-3">
+                <NavLink data-testid="@Elements.NewWorkOrder" class="nav-link" href="workorder/manage?mode=New">
+                    <i class="bi bi-file-earmark-plus-fill nav-icon" aria-hidden="true"></i>
+                    <span class="nav-text">New Work Order</span>
+                </NavLink>
+            </div>
+        }
+
+        @if (CurrentUser != null)
+        {
+            <div class="nav-item px-3">
+                <NavLink data-testid="@Elements.Search" class="nav-link" href="workorder/search">
+                    <i class="bi bi-search nav-icon" aria-hidden="true"></i>
+                    <span class="nav-text">Search</span>
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink data-testid="@Elements.MyWorkOrders" class="nav-link" href="@($"workorder/search?Creator={CurrentUser?.UserName}")">
+                    <i class="bi bi-person-badge-fill nav-icon" aria-hidden="true"></i>
+                    <span class="nav-text"><MyWorkOrders/></span>
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink data-testid="@Elements.WorkOrdersAssignedToMe" class="nav-link" href="@($"workorder/search?Assignee={CurrentUser?.UserName}")">
+                    <i class="bi bi-person-check-fill nav-icon" aria-hidden="true"></i>
+                    <span class="nav-text">Assigned To Me</span>
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink data-testid="@Elements.AllAssignedWorkOrders" class="nav-link" href="@($"workorder/search?Status={WorkOrderStatus.Assigned.Key}")">
+                    <i class="bi bi-clipboard2-check-fill nav-icon" aria-hidden="true"></i>
+                    <span class="nav-text">All Assigned</span>
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink data-testid="@Elements.AllWorkOrdersInProgress" class="nav-link" href="@($"workorder/search?Status={WorkOrderStatus.InProgress.Key}")">
+                    <i class="bi bi-gear-fill nav-icon" aria-hidden="true"></i>
+                    <span class="nav-text">In Progress</span>
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <span class="nav-text"><LastWorkOrder/></span>
+            </div>
+        }
+    </nav>
+</div>
+@code
+{
+    public enum Elements
+    {
+        MyWorkOrders,
+        WorkOrdersAssignedToMe,
+        AllAssignedWorkOrders,
+        AllWorkOrdersInProgress,
+        Search,
+        NewWorkOrder,
+        LastWorkOrder
+    }
+}

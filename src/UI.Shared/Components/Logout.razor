@@ -1,0 +1,28 @@
+@inject CustomAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+<span data-testid="@Elements.WelcomeText">
+    Welcome
+    @{
+        var userIdentity = AuthStateProvider.GetUsername();
+    }
+    @userIdentity!
+</span>
+<a data-testid="@Logout.Elements.LogoutLink" href="#" @onclick="HandleLogout" class="ms-3">Logout</a>
+
+@code {
+
+    private void HandleLogout()
+    {
+        AuthStateProvider.Logout();
+        EventBus.Notify(new UserLoggedOutEvent(AuthStateProvider.GetUsername()));
+        NavigationManager.NavigateTo("/login");
+    }
+
+    public enum Elements
+    {
+        LogoutLink,
+        WelcomeText
+    }
+
+}
