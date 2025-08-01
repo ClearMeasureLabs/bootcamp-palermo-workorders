@@ -1,0 +1,14 @@
+databaseType = "SqlServer"
+id = "1ac75b7d-eef3-461d-a18a-dabfbf7c3640"
+name = "FlywayDemo"
+
+[flyway]
+
+# This is needed for the initial execution
+baselineOnMigrate = true
+defaultSchema = "dbo"
+locations = [ "filesystem:migrations" ]
+mixed = true
+outOfOrder = true
+schemaModelLocation = "schema-model"
+validateMigrationNaming = true
