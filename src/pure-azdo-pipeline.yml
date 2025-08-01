@@ -23,9 +23,8 @@ stages:
           packageType: 'sdk'
           version: '9.0.302'
       - task: UseDotNet@2
-        displayName: 'Install SDK 6.0.0'
         inputs:
-          packageType: 'sdk'
+          packageType: 'runtime'
           version: '6.0.0'
       # Set environment variables
       - task: PowerShell@2
