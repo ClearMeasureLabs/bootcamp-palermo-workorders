@@ -87,3 +87,33 @@ stages:
           tags: |
             $(Build.BuildNumber)
  #Azure junk db passwords - hsimpson123! - user is the name of the environment
+# Deploying to TDD
+- stage: 'TDD'
+  displayName: 'TDD'
+  jobs:
+    - deployment: 'DeployToTDD'
+      pool:
+        vmImage: 'windows-latest'
+      environment: 'TDD'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: AzureCLI@2
+              displayName: 'Add revision to container app'
+              inputs:
+                azureSubscription: '$(AzureSubscription)'
+                scriptType: 'ps'
+                scriptLocation: 'inlineScript'
+                inlineScript: az containerapp update --name $(containerAppName) --resource-group $(Release.EnvironmentName) --image $(containerImage) --set-env-vars ConnectionStrings__SqlConnectionString="$(DbConnString)" 
+
+            - task: DownloadPackage@1
+              displayName: 'Download Acceptance Test Package'
+              inputs:
+                packageType: 'nuget'
+                feed: '$(AzureFeedName)'
+                view: 'Local'
+                definition: 'ChurchBulletin.AcceptanceTests'
+                version: '$(Build.Buildnumber)'
+                downloadPath: '$(System.DefaultWorkingDirectory)/tests'
+                extract: true
