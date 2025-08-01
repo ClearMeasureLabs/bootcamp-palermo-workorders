@@ -20,18 +20,10 @@ stages:
       steps:
       # Dependencies
       - task: UseDotNet@2
-        displayName: 'Install SDK 8.0.100'
+        displayName: 'Install SDK 9.0.302'
         inputs:
           packageType: 'sdk'
-          version: '8.0.100'
-      - task: UseDotNet@2
-        inputs:
-          packageType: 'runtime'
-          version: '6.0.0'
-      - task: UseDotNet@2
-        inputs:
-          packageType: 'runtime'
-          version: '8.0.0'
+          version: '9.0.302'
       # Set environment variables
       - task: PowerShell@2
         inputs:
@@ -81,15 +73,15 @@ stages:
           packageType: 'nuget'
           feed: '$(AzureFeedName)'
           view: 'Local'
-          definition: 'ChurchBulletin.UI'
+          definition: 'ClearMeasure.Bootcamp.ChurchBulletin.UI.Server'
           version: '$(Build.BuildNumber)'
           downloadPath: '$(System.DefaultWorkingDirectory)/built'
           extract: true
 
       - task: Docker@2
         inputs:
-          containerRegistry: 'OnionArchitectureMauiDotnet8AzDO'
-          repository: 'ChurchBulletin.UI'
+          containerRegistry: 'ClearMeasureBootcamp'
+          repository: 'ClearMeasure.Bootcamp.ChurchBulletin.UI.Server'
           command: 'buildAndPush'
           Dockerfile: '**/Dockerfile'
           tags: |
@@ -97,6 +89,7 @@ stages:
 
 # Deploying to TDD
 - stage: 'TDD'
+  condition: false
   displayName: 'TDD'
   jobs:
     - deployment: 'DeployToTDD'
@@ -171,6 +164,7 @@ stages:
                 diagnosticsEnabled: True
 
 - stage: 'DeleteTDD'
+  condition: false
   displayName: 'DeleteTDD'
   dependsOn: TDD
   jobs: 
@@ -212,6 +206,7 @@ stages:
                   az group delete -n $(TDD-Resource-Group) --yes
 
 - stage: 'UAT'
+  condition: false
   displayName: 'UAT'
   # dependsOn: TDD
   jobs:
@@ -291,6 +286,7 @@ stages:
                 diagnosticsEnabled: True
 
 - stage: 'Production'
+  condition: false
   displayName: 'Prod'
   jobs:
     - deployment: 'DeployToProd'
@@ -363,39 +359,3 @@ stages:
                 codeCoverageEnabled: true
                 testRunTitle: 'Acceptance Tests'
                 diagnosticsEnabled: True
-
-#- stage: 'AmazonAppStore'
-#  displayName: 'AmazonAppStore' 
-#  dependsOn: [Production]
-#  jobs: 
-#    - job: 'DeployToAmazonStore'
-#      displayName: 'DeployToAmazonStore'
-#      pool:
-#        vmImage: 'windows-latest'
-#      variables:
-#      - group: Integration-Build 
-#      - name: Prod-Resource-Group
-#        value: onion-architecture-maui-azure-dotnet-8-prod
-#      - name: Prod-App-Name
-#       value: prod-ui   
-#      condition: and(succeeded(), eq(variables['AmazonStoreDeploy'], true))      
-#      steps:
-#      - template: deploy-amazon.yml
-
-#- stage: 'PlayStore'
-#  displayName: 'PlayStore' 
-#  dependsOn: Production
-#  jobs: 
-#    - job: 'DeployToPlayStore'
-#      displayName: 'DeployToPlayStore'
-#      pool:
-#        vmImage: 'windows-latest'
-#      variables:
-#     - group: Integration-Build 
-#     - name: Prod-Resource-Group
-#       value: onion-architecture-maui-azure-dotnet-8-prod
-#      - name: Prod-App-Name
-#       value: prod-ui   
-#      condition: and(succeeded(), eq(variables['PlayStoreDeploy'], true))      
-#      steps:
-#      - template: deploy-google.yml
