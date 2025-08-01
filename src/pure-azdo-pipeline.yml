@@ -99,6 +99,24 @@ stages:
         runOnce:
           deploy:
             steps:
+            - task: DownloadPackage@1
+              displayName: 'Download Database Package'
+              inputs:
+                packageType: 'nuget'
+                feed: '$(AzureFeedName)'
+                view: 'Local'
+                definition: 'ChurchBulletin.Database'
+                version: '$(Build.BuildNumber)'
+                downloadPath: '$(System.DefaultWorkingDirectory)'
+                extract: true
+            - task: PowerShell@2
+              displayName: 'Create database schema'
+              inputs:
+                targetType: filePath
+                filePath: ./scripts/AliaSQL.ps1
+                arguments: Update $(DatabaseServer) ChurchBulletin .\ $(DatabaseUser) ${env:DATABASEPASSWORD} 
+
+
             - task: AzureCLI@2
               displayName: 'Add revision to container app'
               inputs:
