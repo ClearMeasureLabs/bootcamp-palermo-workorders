@@ -7,4 +7,4 @@ RUN ls -lsa /app
 
 
 USER $APP_UID
-ENTRYPOINT ["dotnet", "ProgrammingWithPalermo.ChurchBulletin.UI.Server.dll"]
+ENTRYPOINT ["dotnet", "ClearMeasure.Bootcamp.UI.Server.dll"]
