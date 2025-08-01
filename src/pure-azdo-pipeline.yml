@@ -105,7 +105,7 @@ stages:
                 azureSubscription: '$(AzureSubscription)'
                 scriptType: 'ps'
                 scriptLocation: 'inlineScript'
-                inlineScript: az containerapp update --name $(containerAppName) --resource-group bootcamp-tdd --image $(containerImage)" 
+                inlineScript: az containerapp update --name $(containerAppName) --resource-group bootcamp-tdd --image $(containerImage) 
 
             - task: DownloadPackage@1
               displayName: 'Download Acceptance Test Package'
