@@ -113,8 +113,8 @@ stages:
               displayName: 'Create database schema'
               inputs:
                 targetType: filePath
-                filePath: ./scripts/AliaSQL.ps1
-                arguments: Update $(DatabaseServer) ChurchBulletin .\ $(DatabaseUser) ${env:DATABASEPASSWORD} 
+                filePath: ./scripts/UpdateAzurePipelineSql.ps1
+                arguments: -DatabaseServer $(DatabaseServer) -DatabaseName ChurchBulletin -DatabaseAction Update -DatabaseUser tdd -DatabasePassword ${env:DATABASEPASSWORD}
 
 
             - task: AzureCLI@2
