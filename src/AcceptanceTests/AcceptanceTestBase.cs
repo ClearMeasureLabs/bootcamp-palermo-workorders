@@ -43,7 +43,7 @@ public abstract class AcceptanceTestBase : PageTest
         });
 
         var context = await browser.NewContextAsync(ContextOptions());
-        context.SetDefaultTimeout(10_000);
+        context.SetDefaultTimeout(30_000);
         Page = await context.NewPageAsync().ConfigureAwait(false);
         await Page.GotoAsync("/");
         await Page.WaitForURLAsync("/");
@@ -71,7 +71,7 @@ public abstract class AcceptanceTestBase : PageTest
     {
         return new BrowserNewContextOptions
         {
-            BaseURL = ServerFixture.ApplicationLocalBaseURL
+            BaseURL = ServerFixture.ApplicationBaseUrl
         };
     }
 
@@ -169,8 +169,14 @@ public abstract class AcceptanceTestBase : PageTest
         await Click(saveButtonTestId);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
-        
+        WorkOrder? rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
+        if (rehyratedOrder == null)
+        {
+            await Task.Delay(1000); 
+            rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
+        }
+        rehyratedOrder.ShouldNotBeNull();
+
         return rehyratedOrder;
     }
 

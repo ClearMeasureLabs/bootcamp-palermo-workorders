@@ -14,6 +14,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Counter\**" />
+	  <EmbeddedResource Remove="Counter\**" />
+	  <None Remove="Counter\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Remove="coverage.cobertura.xml" />
 		<None Remove="coverage.json" />
 	</ItemGroup>
@@ -44,7 +50,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Counter\" />
+	  <None Update="appsettings.acceptancetests.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 </Project>

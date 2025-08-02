@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests;
 
@@ -7,18 +8,25 @@ public class ServerFixture
 {
     private const string ProjectPath = "../../../../UI/Server";
     private const int WaitTimeoutSeconds = 60;
-    public const string ApplicationLocalBaseURL = "https://localhost:7174";
+    public bool StartLocalServer { get; set; }
+    public static string ApplicationBaseUrl { get; private set; } = string.Empty;
     private Process? _serverProcess;
+
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
+        var configuration = TestHost.GetRequiredService<IConfiguration>();
+        ApplicationBaseUrl = configuration["ApplicationBaseUrl"] ?? throw new InvalidOperationException();
+        StartLocalServer = configuration.GetValue<bool>("StartLocalServer");
+        if (!StartLocalServer) return;
+
         _serverProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"run --no-build --urls={ApplicationLocalBaseURL}",
+                Arguments = $"run --no-build --urls={ApplicationBaseUrl}",
                 WorkingDirectory = ProjectPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -30,7 +38,7 @@ public class ServerFixture
 
         // Wait for server to be ready
         using var client = new HttpClient();
-        var baseUrl = ApplicationLocalBaseURL;
+        var baseUrl = ApplicationBaseUrl;
         var timeout = TimeSpan.FromSeconds(WaitTimeoutSeconds);
         var start = DateTime.UtcNow;
         Exception? lastException = null;
@@ -45,6 +53,7 @@ public class ServerFixture
             catch (Exception ex)
             {
                 lastException = ex;
+                throw;
             }
 
             await Task.Delay(1000);

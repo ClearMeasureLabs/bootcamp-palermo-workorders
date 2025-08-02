@@ -28,6 +28,7 @@ public static class TestHost
 
     public static T GetRequiredService<T>(bool newScope = true) where T : notnull
     {
+        EnsureDependenciesRegistered();
         if (newScope)
         {
             var serviceScope = Instance.Services.CreateScope();
@@ -51,6 +52,7 @@ public static class TestHost
                 config
                     .AddJsonFile("appsettings.test.json", false, true)
                     .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true)
+                    .AddJsonFile("appsettings.acceptancetests.json", true, true)
                     .AddEnvironmentVariables();
             })
             .ConfigureServices(s =>
