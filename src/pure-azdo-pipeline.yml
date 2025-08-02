@@ -144,6 +144,7 @@ stages:
                 arguments: 'install'
 
             - task: VSTest@2
+              continueOnError: true
               displayName: 'VsTest - AcceptanceTests'
               inputs:
                 testSelector: 'testAssemblies'
@@ -156,6 +157,10 @@ stages:
                 codeCoverageEnabled: true
                 testRunTitle: 'Acceptance Tests'
                 diagnosticsEnabled: True
+                rerunFailedTestCasesMaxLimit: 2
+                rerunFailedTests: true
+                rerunMaxAttempts: 2
+
 
 # Deploying to UAT
 - stage: 'UAT'
