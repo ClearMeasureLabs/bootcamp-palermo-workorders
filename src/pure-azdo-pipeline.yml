@@ -135,6 +135,28 @@ stages:
                 version: '$(Build.Buildnumber)'
                 downloadPath: '$(System.DefaultWorkingDirectory)/tests'
                 extract: true
+
+            - task: PowerShell@2
+              displayName: 'Install Playwright'
+              inputs:
+                targetType: filePath
+                filePath: ./tests/playwright.ps1
+                arguments: 'install'
+
+            - task: VSTest@2
+              displayName: 'VsTest - AcceptanceTests'
+              inputs:
+                testSelector: 'testAssemblies'
+                testAssemblyVer2: |
+                  **\*AcceptanceTests.dll
+                  !**\*TestAdapter.dll
+                  !**\obj\**
+                  searchFolder: '$(System.DefaultWorkingDirectory)/tests'
+                uiTests: true
+                codeCoverageEnabled: true
+                testRunTitle: 'Acceptance Tests'
+                diagnosticsEnabled: True
+
 # Deploying to UAT
 - stage: 'UAT'
   displayName: 'UAT'
