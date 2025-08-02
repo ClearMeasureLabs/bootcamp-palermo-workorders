@@ -14,7 +14,7 @@ public abstract class AcceptanceTestBase : PageTest
     public Employee CurrentUser { get; set; } = null!;
     protected virtual bool? Headless { get; set; } = true;
     protected virtual bool LoadDataOnSetup { get; set; } = true;
-    protected virtual bool SkipScreenshotsForSpeed { get; set; } = true;
+    protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
     protected new IPage Page { get; private set; }
     public IBus Bus => TestHost.GetRequiredService<IBus>();
 
@@ -75,13 +75,13 @@ public abstract class AcceptanceTestBase : PageTest
         };
     }
 
-    protected async Task TakeScreenshotAsync(int stepNumber, string? stepName = null)
+    protected async Task TakeScreenshotAsync(int stepNumber=0, string? stepName = null)
     {
         if (SkipScreenshotsForSpeed) return;
 
         var test = TestContext.CurrentContext.Test;
         var testName = test.ClassName + "-" + test.Name;
-        var fileName = $"{testName}-{stepNumber}{stepName}.png";
+        var fileName = $"{testName}-{stepNumber}{stepName}{Guid.NewGuid()}.png";
         await Page.ScreenshotAsync(new PageScreenshotOptions
         {
             Path = fileName
@@ -97,7 +97,7 @@ public abstract class AcceptanceTestBase : PageTest
     protected async Task LoginAsCurrentUser()
     {
         var username = CurrentUser.UserName;
-
+        await TakeScreenshotAsync();
         await Click(nameof(LoginLink.Elements.LoginLink));
         await Page.WaitForURLAsync("**/login");
         await Expect(Page.GetByTestId(nameof(Login.Elements.User))).ToBeVisibleAsync();
@@ -106,9 +106,11 @@ public abstract class AcceptanceTestBase : PageTest
         await Select(nameof(Login.Elements.User), username);
 
         // Submit form
+        await TakeScreenshotAsync();
         await Click(nameof(Login.Elements.LoginButton));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
+        await TakeScreenshotAsync();
         // Assert: Should be redirected to home and see welcome message
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
         await Expect(welcomeTextLocator).ToContainTextAsync($"Welcome {CurrentUser.UserName}");
@@ -117,6 +119,7 @@ public abstract class AcceptanceTestBase : PageTest
 
     protected async Task Click(string elementTestId)
     {
+        await TakeScreenshotAsync();
         ILocator locator = Page.GetByTestId(elementTestId);
         if(!await locator.IsVisibleAsync()) await locator.WaitForAsync();
         if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
