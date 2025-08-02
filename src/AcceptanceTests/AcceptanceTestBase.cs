@@ -39,7 +39,7 @@ public abstract class AcceptanceTestBase : PageTest
         var browser = await GetBrowserTypeInstance(playwright).LaunchAsync(new BrowserTypeLaunchOptions
         {
             Headless = Headless,
-            SlowMo = 100//milliseconds delay to thwart race conditions (slower computer needs higher number)
+            SlowMo = ServerFixture.SlowMo//milliseconds delay to thwart race conditions (slower computer needs higher number)
         });
 
         var context = await browser.NewContextAsync(ContextOptions());
