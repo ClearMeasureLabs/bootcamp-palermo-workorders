@@ -153,6 +153,11 @@ public class ZDataLoader
         lennyLeonard.AddRole(parishioner);
         db.Add(lennyLeonard);
 
+        // Ms. Albright - Church basement sunday school teacher
+        var msAlbright = new Employee("malbright", "Ms.", "Albright", "albright@firstchurchspringfield.com");
+        msAlbright.AddRole(choir);
+        db.Add(msAlbright);
+
         db.SaveChanges();
 
         // Create Christmas Concert Work Orders
