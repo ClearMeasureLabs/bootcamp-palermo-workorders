@@ -1,6 +1,6 @@
 using ClearMeasure.Bootcamp.Core;
-using Microsoft.AspNetCore.Mvc;
 using ClearMeasure.Bootcamp.UI.Client;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Controllers;
@@ -10,7 +10,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Controllers;
 public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger = null)
     : ControllerBase
 {
-    private readonly ILogger<SingleApiController> _logger = logger?? new NullLogger<SingleApiController>();
+    private readonly ILogger<SingleApiController> _logger = logger ?? new NullLogger<SingleApiController>();
 
     [HttpPost]
     public async Task<string> Post(WebServiceMessage webServiceMessage)
