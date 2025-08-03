@@ -1,5 +1,3 @@
-using ClearMeasure.Bootcamp.Core.Model;
-
 namespace ClearMeasure.Bootcamp.Core.Model
 {
     public class WorkOrder : EntityBase<WorkOrder>
@@ -20,7 +18,7 @@ namespace ClearMeasure.Bootcamp.Core.Model
 
         public Employee? Creator { get; set; } = null;
 
-        public Employee? Assignee { get; set; } = null; 
+        public Employee? Assignee { get; set; } = null;
 
         public string? Number { get; set; } = null!;
 
@@ -36,7 +34,10 @@ namespace ClearMeasure.Bootcamp.Core.Model
         private string? getTruncatedString(string? value)
         {
             if (value == null)
+            {
                 return string.Empty;
+            }
+
             var maxLength = Math.Min(4000, value.Length);
             return value.Substring(0, maxLength);
         }

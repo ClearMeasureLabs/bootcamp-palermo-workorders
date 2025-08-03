@@ -1,5 +1,3 @@
-using ClearMeasure.Bootcamp.Core.Model;
-
 namespace ClearMeasure.Bootcamp.Core.Model
 {
     public class Employee : EntityBase<Employee>, IComparable<Employee>
@@ -34,10 +32,10 @@ namespace ClearMeasure.Bootcamp.Core.Model
 
         public int CompareTo(Employee? other)
         {
-            int compareResult = String.Compare(LastName, other!.LastName, StringComparison.Ordinal);
+            var compareResult = string.Compare(LastName, other!.LastName, StringComparison.Ordinal);
             if (compareResult == 0)
             {
-                compareResult = String.Compare(FirstName, other.FirstName, StringComparison.Ordinal);
+                compareResult = string.Compare(FirstName, other.FirstName, StringComparison.Ordinal);
             }
 
             return compareResult;
@@ -55,7 +53,7 @@ namespace ClearMeasure.Bootcamp.Core.Model
 
         public bool CanCreateWorkOrder()
         {
-            foreach (Role role in Roles)
+            foreach (var role in Roles)
             {
                 if (role.CanCreateWorkOrder)
                 {
@@ -68,7 +66,7 @@ namespace ClearMeasure.Bootcamp.Core.Model
 
         public bool CanFulfilWorkOrder()
         {
-            foreach (Role role in Roles)
+            foreach (var role in Roles)
             {
                 if (role.CanFulfillWorkOrder)
                 {

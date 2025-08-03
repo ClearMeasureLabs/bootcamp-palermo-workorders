@@ -1,7 +1,7 @@
 namespace ClearMeasure.Bootcamp.Core.Model
 {
     /// <summary>
-    /// Template class from sample app - moved from UI.Shared
+    ///     Template class from sample app - moved from UI.Shared
     /// </summary>
     public record WeatherForecast
     {
