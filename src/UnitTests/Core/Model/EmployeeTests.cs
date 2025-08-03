@@ -4,7 +4,7 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
 [TestFixture]
-public class EmployeeTester
+public class EmployeeTests
 {
     [Test]
     public void PropertiesShouldInitializeProperly()

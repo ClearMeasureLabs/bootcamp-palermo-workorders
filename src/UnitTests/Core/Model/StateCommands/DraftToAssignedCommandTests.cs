@@ -5,7 +5,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
 [TestFixture]
-public class SaveDraftCommandTester : StateCommandBaseTester
+public class DraftToAssignedCommandTests : StateCommandBaseTests
 {
     [Test]
     public void ShouldNotBeValidInWrongStatus()
@@ -15,7 +15,7 @@ public class SaveDraftCommandTester : StateCommandBaseTester
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new SaveDraftCommand(order, employee);
+        var command = new DraftToAssignedCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -25,9 +25,10 @@ public class SaveDraftCommandTester : StateCommandBaseTester
         var order = new WorkOrder();
         order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
-        order.Creator = employee;
+        var differentEmployee = new Employee();
+        order.Assignee = employee;
 
-        var command = new SaveDraftCommand(order, new Employee());
+        var command = new DraftToAssignedCommand(order, differentEmployee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -39,7 +40,7 @@ public class SaveDraftCommandTester : StateCommandBaseTester
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new SaveDraftCommand(order, employee);
+        var command = new DraftToAssignedCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -52,15 +53,15 @@ public class SaveDraftCommandTester : StateCommandBaseTester
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new SaveDraftCommand(order, employee);
+        var command = new DraftToAssignedCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Draft));
-        Assert.That(order.CreatedDate, Is.Not.Null);
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+        Assert.That(order.AssignedDate, Is.Not.Null);
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new SaveDraftCommand(order, employee);
+        return new DraftToAssignedCommand(order, employee);
     }
 }

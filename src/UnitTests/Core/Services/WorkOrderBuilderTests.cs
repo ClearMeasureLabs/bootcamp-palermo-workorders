@@ -5,7 +5,7 @@ using ClearMeasure.Bootcamp.Core.Services.Impl;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Services;
 
 [TestFixture]
-public class WorkOrderBuilderTester
+public class WorkOrderBuilderTests
 {
     [Test]
     public void ShouldCorrectlyBuildAWorkOrder()

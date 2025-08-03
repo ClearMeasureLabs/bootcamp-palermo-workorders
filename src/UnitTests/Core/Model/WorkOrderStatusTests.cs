@@ -5,7 +5,7 @@ using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
 [TestFixture]
-public class WorkOrderStatusTester
+public class WorkOrderStatusTests
 {
     [Test]
     public void ShouldListAllStatuses()

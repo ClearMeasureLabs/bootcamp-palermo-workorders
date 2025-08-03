@@ -4,7 +4,7 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 
 [TestFixture]
-public class CustomAuthenticationStateProviderTester
+public class CustomAuthenticationStateProviderTests
 {
     [Test]
     public async Task ShouldReturnUnauthenticatedUserWhenNotLoggedIn()

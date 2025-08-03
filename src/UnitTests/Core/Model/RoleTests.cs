@@ -3,7 +3,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
 [TestFixture]
-public class RoleTester
+public class RoleTests
 {
     [Test]
     public void Role_defaults_properly()

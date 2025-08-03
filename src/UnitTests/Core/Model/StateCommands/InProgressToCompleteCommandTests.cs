@@ -5,7 +5,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
 [TestFixture]
-public class InProgressToCompleteCommandTester : StateCommandBaseTester
+public class InProgressToCompleteCommandTests : StateCommandBaseTests
 {
     [Test]
     public void ShouldNotBeValidInWrongStatus()

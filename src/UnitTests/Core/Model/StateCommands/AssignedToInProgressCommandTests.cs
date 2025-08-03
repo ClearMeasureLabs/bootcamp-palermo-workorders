@@ -5,17 +5,17 @@ using ClearMeasure.Bootcamp.Core.Services;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
 [TestFixture]
-public class DraftToAssignedCommandTester : StateCommandBaseTester
+public class AssignedToInProgressCommandTests : StateCommandBaseTests
 {
     [Test]
     public void ShouldNotBeValidInWrongStatus()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Complete;
+        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
-        order.Creator = employee;
+        order.Assignee = employee;
 
-        var command = new DraftToAssignedCommand(order, employee);
+        var command = new AssignedToInProgressCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -23,12 +23,11 @@ public class DraftToAssignedCommandTester : StateCommandBaseTester
     public void ShouldNotBeValidWithWrongEmployee()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
+        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
-        var differentEmployee = new Employee();
         order.Assignee = employee;
 
-        var command = new DraftToAssignedCommand(order, differentEmployee);
+        var command = new AssignedToInProgressCommand(order, new Employee());
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -36,11 +35,11 @@ public class DraftToAssignedCommandTester : StateCommandBaseTester
     public void ShouldBeValid()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
+        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
-        order.Creator = employee;
+        order.Assignee = employee;
 
-        var command = new DraftToAssignedCommand(order, employee);
+        var command = new AssignedToInProgressCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -49,19 +48,18 @@ public class DraftToAssignedCommandTester : StateCommandBaseTester
     {
         var order = new WorkOrder();
         order.Number = "123";
-        order.Status = WorkOrderStatus.Draft;
+        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
-        order.Creator = employee;
+        order.Assignee = employee;
 
-        var command = new DraftToAssignedCommand(order, employee);
+        var command = new AssignedToInProgressCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
-        Assert.That(order.AssignedDate, Is.Not.Null);
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.InProgress));
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new DraftToAssignedCommand(order, employee);
+        return new AssignedToInProgressCommand(order, employee);
     }
 }

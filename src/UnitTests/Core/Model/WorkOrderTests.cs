@@ -3,7 +3,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
 [TestFixture]
-public class WorkOrderTester
+public class WorkOrderTests
 {
     [Test]
     public void PropertiesShouldInitializeToProperDefaults()

@@ -3,7 +3,7 @@ using ClearMeasure.Bootcamp.Core.Services.Impl;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Services;
 
 [TestFixture]
-public class WorkOrderNumberGeneratorTester
+public class WorkOrderNumberGeneratorTests
 {
     [Test]
     public void ShouldBeFiveInLength()
