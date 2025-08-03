@@ -11,7 +11,7 @@ public class WorkOrderMappingTests
     [Test]
     public void ShouldMapWorkOrderBasicProperties()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
         var workOrder = new WorkOrder
@@ -52,7 +52,7 @@ public class WorkOrderMappingTests
     [Test]
     public async Task ShouldSaveWorkOrder()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var creator = new Employee("1", "1", "1", "1");
         var assignee = new Employee("2", "2", "2", "2");
@@ -98,7 +98,7 @@ public class WorkOrderMappingTests
     [Test]
     public async Task ShouldSaveAuditEntries()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var creator = new Employee("1", "1", "1", "1");
         var assignee = new Employee("2", "2", "2", "2");
@@ -135,7 +135,7 @@ public class WorkOrderMappingTests
     [Test]
     public void ShouldMapWorkOrderWithCreatorAndAssignee()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
         var assignee = new Employee("assignee1", "Jane", "Smith", "jane@example.com");
@@ -173,7 +173,7 @@ public class WorkOrderMappingTests
     [Test]
     public void ShouldMapWorkOrderStatusConversion()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
         var workOrder = new WorkOrder
@@ -205,7 +205,7 @@ public class WorkOrderMappingTests
     [Test]
     public void ShouldEnforceRequiredProperties()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
         var workOrder = new WorkOrder
@@ -225,7 +225,7 @@ public class WorkOrderMappingTests
     [Test]
     public void ShouldRespectMaxLengthConstraints()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
         var workOrder = new WorkOrder
@@ -248,7 +248,7 @@ public class WorkOrderMappingTests
     [Test]
     public void ShouldEagerFetchCreatorAndAssigneeByDefault()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
         var assignee = new Employee("assignee1", "Jane", "Smith", "jane@example.com");

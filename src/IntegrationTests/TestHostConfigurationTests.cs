@@ -4,7 +4,7 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 
 [TestFixture]
-public class TestHostConfigurationTester
+public class TestHostConfigurationTests
 {
     [Test]
     public void ShouldReadVariableFromConfigFile()

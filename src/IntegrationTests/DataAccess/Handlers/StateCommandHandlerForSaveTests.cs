@@ -12,7 +12,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
     [Test]
     public async Task ShouldSaveWorkOrderBySavingDraft()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var currentUser = Faker<Employee>();
         currentUser.Id = Guid.NewGuid();
@@ -44,7 +44,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
     [Test]
     public async Task ShouldSaveWorkOrderWithAssigneeAndCreator()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var workOrder = Faker<WorkOrder>();
         var currentUser = Faker<Employee>();
@@ -81,7 +81,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
     [Test]
     public async Task ShouldUpdateWorkOrderWithAssigneeAndCreator()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var workOrder = Faker<WorkOrder>();
         var currentUser = Faker<Employee>();
@@ -120,7 +120,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
     [Test]
     public async Task ShouldUpdateWorkOrderWithAssigneeAndCreatorWithRemotedOrder()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var workOrder = Faker<WorkOrder>();
         var currentUser = Faker<Employee>();

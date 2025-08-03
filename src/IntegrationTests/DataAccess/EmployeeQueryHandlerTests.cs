@@ -13,7 +13,7 @@ public class EmployeeQueryHandlerTests
     [Test]
     public async Task ShouldFindEmployeeByUsername()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var one = new Employee("1", "first1", "last1", "email1");
         var two = new Employee("2", "first2", "last2", "email2");
@@ -35,7 +35,7 @@ public class EmployeeQueryHandlerTests
     [Test]
     public async Task ShouldGetAllEmployees()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var one = new Employee("1", "first1", "last1", "email1");
         var two = new Employee("2", "first2", "last2", "email2");

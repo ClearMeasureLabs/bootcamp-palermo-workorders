@@ -5,7 +5,7 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Mappings;
 
 [TestFixture]
-public class RoleMappingTester
+public class RoleMappingTests
 {
     [Test]
     public void ShouldPersistRoles()

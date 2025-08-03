@@ -12,7 +12,7 @@ public class StateCommandHandlerForCompleteTests : IntegratedTestBase
     [Test]
     public async Task ShouldBeginWorkOrder()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var o = Faker<WorkOrder>();
         o.Id = Guid.Empty;

@@ -10,7 +10,7 @@ public class ZDataLoader
     [Test]
     public void LoadData()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
         var lead = new Role("Facility Lead", true, false);
         var fulfillment = new Role("Fulfillment", false, true);
         var db = TestHost.GetRequiredService<DbContext>();

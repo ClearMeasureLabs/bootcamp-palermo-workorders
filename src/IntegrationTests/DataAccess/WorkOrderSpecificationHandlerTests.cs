@@ -19,7 +19,7 @@ public class WorkOrderSpecificationHandlerTests
     [Test]
     public async Task ShouldSearchBySpecificationWithAssignee()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var employee1 = new Employee("1", "1", "1", "1");
         var employee2 = new Employee("2", "2", "2", "2");
@@ -54,7 +54,7 @@ public class WorkOrderSpecificationHandlerTests
     [Test]
     public async Task ShouldSearchBySpecificationWithCreator()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var creator1 = new Employee("1", "1", "1", "1");
         var creator2 = new Employee("2", "2", "2", "2");
@@ -87,7 +87,7 @@ public class WorkOrderSpecificationHandlerTests
     [Test]
     public async Task ShouldSearchBySpecificationWithFullSpecification()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var employee1 = new Employee("1", "1", "1", "1");
         var employee2 = new Employee("2", "2", "2", "2");
@@ -126,7 +126,7 @@ public class WorkOrderSpecificationHandlerTests
     [Test]
     public async Task ShouldSearchBySpecificationWithStatus()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var employee1 = new Employee("1", "1", "1", "1");
         var employee2 = new Employee("2", "2", "2", "2");
@@ -163,7 +163,7 @@ public class WorkOrderSpecificationHandlerTests
     [Test]
     public async Task ShouldSearchWithEmptySpecificationAndReturnAll()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var employee = new Employee("1", "1", "1", "1");
         var order1 = new WorkOrder { Creator = employee, Assignee = employee, Number = "123" };
@@ -188,7 +188,7 @@ public class WorkOrderSpecificationHandlerTests
     [Test]
     public void SearchShouldReturnHydratedEmployeesWithWorkOrders()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var creator = new Employee("1", "John", "Doe", "john.doe@example.com");
         var assignee = new Employee("2", "Jane", "Smith", "jane.smith@example.com");

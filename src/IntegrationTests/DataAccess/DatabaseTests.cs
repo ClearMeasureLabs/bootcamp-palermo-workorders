@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
 
 [TestFixture]
-public class DatabaseTester
+public class DatabaseTests
 {
     [Test]
     [Explicit]

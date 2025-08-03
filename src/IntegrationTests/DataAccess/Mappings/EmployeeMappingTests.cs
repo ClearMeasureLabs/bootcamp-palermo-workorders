@@ -8,7 +8,7 @@ public class EmployeeMappingTests
     [Test]
     public void ShouldSaveRolesWithEmployee()
     {
-        new DatabaseTester().Clean();
+        new DatabaseTests().Clean();
 
         var role1 = new Role("foo", false, false);
         var role2 = new Role("bar", true, true);
