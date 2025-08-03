@@ -11,7 +11,9 @@ public class CanConnectToDatabaseHealthCheck(ILogger<CanConnectToDatabaseHealthC
         CancellationToken cancellationToken = new())
     {
         if (!context.Database.CanConnect())
+        {
             return Task.FromResult(HealthCheckResult.Unhealthy("Cannot connect to database"));
+        }
 
         logger.LogInformation("Health check success");
         return Task.FromResult(HealthCheckResult.Healthy());
