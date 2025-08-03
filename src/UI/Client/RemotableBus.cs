@@ -1,6 +1,6 @@
-﻿using MediatR;
-using ClearMeasure.Bootcamp.Core;
+﻿using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Shared;
+using MediatR;
 
 namespace ClearMeasure.Bootcamp.UI.Client;
 
@@ -12,8 +12,8 @@ public class RemotableBus(IMediator mediator, IPublisherGateway gateway) : Bus(m
     {
         if (request is IRemotableRequest remotableRequest)
         {
-            WebServiceMessage result = await gateway.Publish(remotableRequest) ?? throw new InvalidOperationException();
-            TResponse returnEvent = (TResponse)result.GetBodyObject();
+            var result = await gateway.Publish(remotableRequest) ?? throw new InvalidOperationException();
+            var returnEvent = (TResponse)result.GetBodyObject();
             return returnEvent;
         }
 
