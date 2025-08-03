@@ -1,43 +1,42 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 
-namespace ClearMeasure.Bootcamp.UI.Shared.Authentication
+namespace ClearMeasure.Bootcamp.UI.Shared.Authentication;
+
+public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
-    public class CustomAuthenticationStateProvider : AuthenticationStateProvider
+    private ClaimsPrincipal _currentUser = new(new ClaimsIdentity());
+
+    public override Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        private ClaimsPrincipal _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+        return Task.FromResult(new AuthenticationState(_currentUser));
+    }
 
-        public override Task<AuthenticationState> GetAuthenticationStateAsync()
+    public void Login(string username)
+    {
+        var identity = new ClaimsIdentity(new[]
         {
-            return Task.FromResult(new AuthenticationState(_currentUser));
-        }
+            new Claim(ClaimTypes.Name, username)
+        }, "Custom Authentication");
 
-        public void Login(string username)
-        {
-            var identity = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, username)
-            }, "Custom Authentication");
-            
-            _currentUser = new ClaimsPrincipal(identity);
-            
-            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-        }
+        _currentUser = new ClaimsPrincipal(identity);
 
-        public void Logout()
-        {
-            _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
-            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-        }
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+    }
 
-        public bool IsAuthenticated()
-        {
-            return _currentUser.Identity?.IsAuthenticated ?? false;
-        }
+    public void Logout()
+    {
+        _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+    }
 
-        public string? GetUsername()
-        {
-            return _currentUser.Identity?.Name;
-        }
+    public bool IsAuthenticated()
+    {
+        return _currentUser.Identity?.IsAuthenticated ?? false;
+    }
+
+    public string? GetUsername()
+    {
+        return _currentUser.Identity?.Name;
     }
 }

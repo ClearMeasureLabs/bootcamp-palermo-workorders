@@ -1,6 +1,7 @@
 <div class="work-order-container">
     <div class="work-order-header">
-        <h2>Work Order #<span data-testid="@Elements.WorkOrderNumber">@Model.WorkOrderNumber</span>
+        <h2>
+            Work Order #<span data-testid="@Elements.WorkOrderNumber">@Model.WorkOrderNumber</span>
             (<span data-testid="@Elements.Status">@Model.Status</span>)
         </h2>
     </div>
@@ -23,7 +24,7 @@
                     <div>
                         @if (!Model.IsReadOnly)
                         {
-                            <InputSelect data-testid="@Elements.Assignee" id="AssignedToUserName" 
+                            <InputSelect data-testid="@Elements.Assignee" id="AssignedToUserName"
                                          @bind-Value="Model.AssignedToUserName"
                                          disabled="@(Model.WorkOrder != null && !Model.WorkOrder.CanReassign())"
                                          class="form-control input-select">
@@ -50,14 +51,14 @@
                 <div class="form-group">
                     <label for="Description" class="form-label">Description:</label>
                     <div>
-                        <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly" />
+                        <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="RoomNumber" class="form-label">Room:</label>
                     <div>
-                        <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly" />
+                        <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
             </div>
@@ -68,7 +69,7 @@
 
                 <span class="label">Assigned Date:</span>
                 <span data-testid="@Elements.AssignedDate" class="value">@Model.AssignedDate</span>
-                
+
                 <span class="label">Completed Date:</span>
                 <span data-testid="@Elements.CompletedDate" class="value">@Model.CompletedDate</span>
 

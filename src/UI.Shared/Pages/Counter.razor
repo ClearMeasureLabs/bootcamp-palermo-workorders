@@ -15,7 +15,7 @@
                 <div class="counter-value">@currentCount</div>
                 <div class="counter-label">Activities Completed</div>
             </div>
-            
+
             <div class="counter-actions">
                 <button class="btn btn-primary counter-btn" @onclick="IncrementCount">
                     ➕ Add Activity
@@ -42,7 +42,7 @@
 </div>
 
 @code {
-    private int currentCount = 0;
+    private int currentCount;
 
     private void IncrementCount()
     {
@@ -53,4 +53,5 @@
     {
         currentCount = 0;
     }
+
 }

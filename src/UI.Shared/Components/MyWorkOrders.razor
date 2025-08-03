@@ -1,19 +1,19 @@
-﻿@using ClearMeasure.Bootcamp.Core.Queries
+﻿@implements Palermo.BlazorMvc.IListener<WorkOrderChangedEvent>
+@using ClearMeasure.Bootcamp.Core.Queries
 @using ClearMeasure.Bootcamp.UI.Shared.Pages
-@implements Palermo.BlazorMvc.IListener<ClearMeasure.Bootcamp.UI.Shared.Pages.WorkOrderChangedEvent>
 @inherits AppComponentBase
 @inject IUserSession UserSession
 
 My Work Orders (@Count)
 
 @code {
-    private Employee? _currentUser = null;
-    private readonly HashSet<WorkOrder> _myWorkOrders = new HashSet<WorkOrder>();
+    private Employee? _currentUser;
+    private readonly HashSet<WorkOrder> _myWorkOrders = new();
     public int Count => _myWorkOrders.Count;
 
     public void Handle(WorkOrderChangedEvent theEvent)
     {
-        WorkOrder order = theEvent.Result.WorkOrder;
+        var order = theEvent.Result.WorkOrder;
         _myWorkOrders.Add(order);
         InvokeAsync(StateHasChanged);
     }
@@ -21,7 +21,7 @@ My Work Orders (@Count)
     protected override async Task OnInitializedAsync()
     {
         await SetCurrentUser();
-        _myWorkOrders.UnionWith(await Bus.Send(new WorkOrderSpecificationQuery() { Creator = _currentUser }));
+        _myWorkOrders.UnionWith(await Bus.Send(new WorkOrderSpecificationQuery { Creator = _currentUser }));
     }
 
     private async Task SetCurrentUser()
