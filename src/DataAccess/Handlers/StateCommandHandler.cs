@@ -17,7 +17,9 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
 
         var order = request.WorkOrder;
         if (order.Assignee == order.Creator)
+        {
             order.Assignee = order.Creator; //EFCore reference checking
+        }
 
         if (order.Id == Guid.Empty)
         {

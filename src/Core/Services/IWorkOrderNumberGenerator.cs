@@ -1,8 +1,6 @@
+namespace ClearMeasure.Bootcamp.Core.Services;
 
-namespace ClearMeasure.Bootcamp.Core.Services
+public interface IWorkOrderNumberGenerator
 {
-	public interface IWorkOrderNumberGenerator
-	{
-		string GenerateNumber();
-	}
+    string GenerateNumber();
 }

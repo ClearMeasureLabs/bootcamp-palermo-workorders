@@ -20,10 +20,10 @@ public record WorkOrderSpecificationQuery : IRequest<WorkOrder[]>, IRemotableReq
         Creator = creator;
     }
 
-    public string? StatusKey { get; set; } = null;
+    public string? StatusKey { get; set; }
 
-    public Employee? Assignee { get; set; } = null;
+    public Employee? Assignee { get; set; }
 
-    public Employee? Creator { get; set; } = null;
+    public Employee? Creator { get; set; }
     public WorkOrderStatus? Status => StatusKey != null ? WorkOrderStatus.FromKey(StatusKey) : null;
 }

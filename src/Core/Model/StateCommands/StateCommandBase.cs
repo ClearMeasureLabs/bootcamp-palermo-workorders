@@ -1,31 +1,30 @@
 using ClearMeasure.Bootcamp.Core.Services;
 
-namespace ClearMeasure.Bootcamp.Core.Model.StateCommands
+namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
+
+public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUser) : IStateCommand
 {
-    public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUser) : IStateCommand
+    public abstract WorkOrderStatus GetBeginStatus();
+    public abstract WorkOrderStatus GetEndStatus();
+    protected abstract bool UserCanExecute(Employee currentUser);
+    public abstract string TransitionVerbPresentTense { get; }
+    public abstract string TransitionVerbPastTense { get; }
+
+    public bool IsValid()
     {
-        public abstract WorkOrderStatus GetBeginStatus();
-        public abstract WorkOrderStatus GetEndStatus();
-        protected abstract bool UserCanExecute(Employee currentUser);
-        public abstract string TransitionVerbPresentTense { get; }
-        public abstract string TransitionVerbPastTense { get; }
+        var beginStatusMatches = WorkOrder.Status == GetBeginStatus();
+        var currentUserIsCorrectRole = UserCanExecute(CurrentUser);
+        return beginStatusMatches && currentUserIsCorrectRole;
+    }
 
-        public bool IsValid()
-        {
-            var beginStatusMatches = WorkOrder.Status == GetBeginStatus();
-            var currentUserIsCorrectRole = UserCanExecute(CurrentUser);
-            return beginStatusMatches && currentUserIsCorrectRole;
-        }
+    public bool Matches(string commandName)
+    {
+        return TransitionVerbPresentTense == commandName;
+    }
 
-        public bool Matches(string commandName)
-        {
-            return TransitionVerbPresentTense == commandName;
-        }
-
-        public virtual void Execute(StateCommandContext context)
-        {
-            var currentUserFullName = CurrentUser.GetFullName();
-            WorkOrder.ChangeStatus(CurrentUser, context.CurrentDateTime, GetEndStatus());
-        }
+    public virtual void Execute(StateCommandContext context)
+    {
+        var currentUserFullName = CurrentUser.GetFullName();
+        WorkOrder.ChangeStatus(CurrentUser, context.CurrentDateTime, GetEndStatus());
     }
 }

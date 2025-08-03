@@ -1,10 +1,8 @@
-using System.Threading.Tasks;
 using ClearMeasure.Bootcamp.Core.Model;
 
-namespace ClearMeasure.Bootcamp.Core.Services
+namespace ClearMeasure.Bootcamp.Core.Services;
+
+public interface IUserSession
 {
-	public interface IUserSession
-	{
-		Task<Employee?> GetCurrentUserAsync();
-    }
+    Task<Employee?> GetCurrentUserAsync();
 }
