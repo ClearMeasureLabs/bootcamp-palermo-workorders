@@ -5,6 +5,7 @@ using Lamar;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Client;
 using ClearMeasure.Bootcamp.UI.Shared;
 

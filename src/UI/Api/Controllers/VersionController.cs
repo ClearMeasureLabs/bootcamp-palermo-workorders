@@ -9,7 +9,7 @@ public class VersionController : ControllerBase
     [HttpGet]
     public string? Get()
     {
-        string? version = GetType().Assembly.GetName().Version?.ToString();
+        var version = GetType().Assembly.GetName().Version?.ToString();
         return version;
     }
 }
