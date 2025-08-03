@@ -1,5 +1,5 @@
-using Shouldly;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 

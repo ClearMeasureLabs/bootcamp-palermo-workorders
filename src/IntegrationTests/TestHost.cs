@@ -78,6 +78,7 @@ public static class TestHost
     private static void EnsureDependenciesRegistered()
     {
         if (!_dependenciesRegistered)
+        {
             lock (Lock)
             {
                 if (!_dependenciesRegistered)
@@ -86,6 +87,7 @@ public static class TestHost
                     _dependenciesRegistered = true;
                 }
             }
+        }
     }
 
     public static DataContext NewDbContext()

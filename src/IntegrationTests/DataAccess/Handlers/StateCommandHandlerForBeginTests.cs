@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using ClearMeasure.Bootcamp.Core.Model;
+﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
@@ -32,13 +31,13 @@ public class StateCommandHandlerForBeginTests : IntegratedTestBase
         o.Description = "new desc";
         o.RoomNumber = "new room";
         var command = new AssignedToInProgressCommand(o, currentUser);
-        AssignedToInProgressCommand remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
+        var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
 
-        var handler = TestHost.GetRequiredService<StateCommandHandler>(true);
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
         var result = await handler.Handle(remotedCommand);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
-        WorkOrder order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(order.Title);
         order.Description.ShouldBe(order.Description);
         order.Creator.ShouldBe(currentUser);

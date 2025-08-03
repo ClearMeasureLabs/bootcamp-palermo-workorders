@@ -26,7 +26,10 @@ public class SqlExecuter
             command.CommandText =
                 commandText;
             var reader = command.ExecuteReader();
-            while (reader.Read()) readerAction(reader);
+            while (reader.Read())
+            {
+                readerAction(reader);
+            }
         }
 
         connection.Close();

@@ -1,12 +1,11 @@
 ﻿using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
-using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
-using Shouldly;
 using Palermo.BlazorMvc;
+using Shouldly;
 using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
@@ -65,7 +64,7 @@ public class WorkOrderSearchTests
         // Assert
         var workOrderTable = component.Find(".grid-data");
         workOrderTable.ShouldNotBeNull();
-        
+
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
         workOrderRows.Length.ShouldBe(2);
     }

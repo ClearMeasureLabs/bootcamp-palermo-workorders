@@ -211,7 +211,6 @@ public class WorkOrderQueryHandlerTests
     }
 
 
-
     [Test]
     public void SearchShouldReturnHydratedEmployeesWithWorkOrders()
     {

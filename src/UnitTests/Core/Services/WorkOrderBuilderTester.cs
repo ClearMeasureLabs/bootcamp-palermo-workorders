@@ -1,6 +1,6 @@
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
-using ClearMeasure.Bootcamp.Core.Model;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Services;
 

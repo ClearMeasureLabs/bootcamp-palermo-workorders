@@ -22,7 +22,7 @@ public class StubBus() : Bus(null!)
 
         if (request is WorkOrderSpecificationQuery query)
         {
-            return Task.FromResult<TResponse>((TResponse)(object)(WorkOrderSpecificationQueryResponse()));
+            return Task.FromResult<TResponse>((TResponse)(object)WorkOrderSpecificationQueryResponse());
         }
 
         throw new NotImplementedException();
