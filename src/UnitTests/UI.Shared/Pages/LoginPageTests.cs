@@ -12,7 +12,7 @@ using TestContext = Bunit.TestContext;
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 [TestFixture]
-public class LoginPageTester
+public class LoginPageTests
 {
     [Test]
     public void ShouldOnlyRequireUsername()
