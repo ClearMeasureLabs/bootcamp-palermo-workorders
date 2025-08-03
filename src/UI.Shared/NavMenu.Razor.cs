@@ -6,11 +6,10 @@ using Palermo.BlazorMvc;
 
 namespace ClearMeasure.Bootcamp.UI.Shared;
 
-public partial class NavMenu : AppComponentBase, 
+public partial class NavMenu : AppComponentBase,
     IListener<UserLoggedInEvent>, IListener<UserLoggedOutEvent>
 {
-    [Inject]
-    public IUserSession? UserSession { get; set; }
+    [Inject] public IUserSession? UserSession { get; set; }
 
     private bool collapseNavMenu = true;
 

@@ -27,7 +27,7 @@ public class StateCommandList
 
     public IStateCommand GetMatchingCommand(WorkOrder order, Employee currentUser, string name)
     {
-        IStateCommand stateCommand = GetAllStateCommands(order, currentUser)
+        var stateCommand = GetAllStateCommands(order, currentUser)
             .Single(command => command.Matches(name));
         return stateCommand;
     }

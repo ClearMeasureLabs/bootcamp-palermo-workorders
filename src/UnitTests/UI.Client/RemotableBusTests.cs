@@ -1,9 +1,8 @@
 ﻿using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
-using MediatR;
-using ClearMeasure.Bootcamp.Core.Model;
-using Shouldly;
 using ClearMeasure.Bootcamp.UI.Client;
+using MediatR;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Client;
 
@@ -15,7 +14,7 @@ public class RemotableBusTests
     {
         var stubMediator = new StubMediator();
         var stubGateway = new StubPublisherGateway();
-        string? expectedResponse = "Remote test" ;
+        var expectedResponse = "Remote test";
         stubGateway.SetResponse(expectedResponse);
         var bus = new RemotableBus(stubMediator, stubGateway);
         var request = new TestRemotableRequest();
@@ -54,7 +53,7 @@ public class RemotableBusTests
         var bus = new RemotableBus(stubMediator, stubGateway);
         var request = new TestCommand();
 
-        var result = bus.Send((object)request).Result;
+        var result = bus.Send(request).Result;
 
         result.ShouldBe(expectedResponse);
         stubMediator.LastObjectRequest.ShouldBe(request);
@@ -89,7 +88,7 @@ public class RemotableBusTests
     {
         private object? _response;
         private object? _objectResponse;
-        
+
         public object? LastRequest { get; private set; }
         public object? LastObjectRequest { get; private set; }
         public object? LastNotification { get; private set; }
@@ -104,7 +103,8 @@ public class RemotableBusTests
             _objectResponse = response;
         }
 
-        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request,
+            CancellationToken cancellationToken = default)
         {
             LastRequest = request;
             return Task.FromResult((TResponse)_response!);
@@ -116,7 +116,8 @@ public class RemotableBusTests
             return Task.FromResult(_objectResponse);
         }
 
-        public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest
+        public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
+            where TRequest : IRequest
         {
             return Task.CompletedTask;
         }
@@ -127,13 +128,15 @@ public class RemotableBusTests
             return Task.CompletedTask;
         }
 
-        public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default) where TNotification : INotification
+        public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
+            where TNotification : INotification
         {
             LastNotification = notification;
             return Task.CompletedTask;
         }
 
-        public IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request, CancellationToken cancellationToken = default)
+        public IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request,
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -147,7 +150,7 @@ public class RemotableBusTests
     private class StubPublisherGateway : PublisherGateway
     {
         private object? _response;
-        
+
         public object? LastRequest { get; private set; }
 
         public StubPublisherGateway() : base(new HttpClient())
@@ -163,8 +166,10 @@ public class RemotableBusTests
         {
             LastRequest = message.GetBodyObject();
             if (_response == null)
+            {
                 return Task.FromResult<WebServiceMessage?>(null);
-            
+            }
+
             var responseMessage = new WebServiceMessage(_response);
             return Task.FromResult<WebServiceMessage?>(responseMessage);
         }

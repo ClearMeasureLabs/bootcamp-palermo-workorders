@@ -1,6 +1,5 @@
-﻿@using ClearMeasure.Bootcamp.Core.Queries
+﻿@implements Palermo.BlazorMvc.IListener<WorkOrderChangedEvent>
 @using ClearMeasure.Bootcamp.UI.Shared.Pages
-@implements Palermo.BlazorMvc.IListener<ClearMeasure.Bootcamp.UI.Shared.Pages.WorkOrderChangedEvent>
 @inherits AppComponentBase
 
 @if (WorkOrderLastChanged != null)
@@ -16,8 +15,9 @@
 
     public void Handle(WorkOrderChangedEvent theEvent)
     {
-        WorkOrder order = theEvent.Result.WorkOrder;
+        var order = theEvent.Result.WorkOrder;
         WorkOrderLastChanged = order;
         InvokeAsync(StateHasChanged);
     }
+
 }

@@ -5,7 +5,7 @@ namespace ClearMeasure.Bootcamp.UI.Api;
 public class HealthCheck(ILogger<HealthCheck> logger) : IHealthCheck
 {
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = new())
     {
         logger.LogInformation("Health check success");
         return Task.FromResult(HealthCheckResult.Healthy());

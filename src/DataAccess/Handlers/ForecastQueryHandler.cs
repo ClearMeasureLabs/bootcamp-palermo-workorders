@@ -20,13 +20,18 @@ public class ForecastQueryHandler : IRequestHandler<ForecastQuery, WeatherForeca
 
 
         private readonly WeatherForecast[] AllForecasts;
+
         public WeatherForecastData()
         {
-            List<WeatherForecast> forecasts = new List<WeatherForecast>();
-            for (int i = 1; i <= 5; i++)
+            var forecasts = new List<WeatherForecast>();
+            for (var i = 1; i <= 5; i++)
             {
-                WeatherForecast forecast = new WeatherForecast()
-                    { Date = DateTime.Now.AddDays(i), Id = i, Summary = Summaries[Random.Shared.Next(Summaries.Length)], TemperatureC = Random.Shared.Next(-20, 55) };
+                var forecast = new WeatherForecast
+                {
+                    Date = DateTime.Now.AddDays(i), Id = i,
+                    Summary = Summaries[Random.Shared.Next(Summaries.Length)],
+                    TemperatureC = Random.Shared.Next(-20, 55)
+                };
                 forecasts.Add(forecast);
             }
 

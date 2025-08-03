@@ -1,10 +1,3 @@
-using Azure.Monitor.OpenTelemetry.Exporter;
-using Microsoft.ApplicationInsights.AspNetCore.Extensions;
-using OpenTelemetry;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllersWithViews();

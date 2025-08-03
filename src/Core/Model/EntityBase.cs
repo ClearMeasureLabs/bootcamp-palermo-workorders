@@ -1,6 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
-
-namespace ClearMeasure.Bootcamp.Core.Model;
+﻿namespace ClearMeasure.Bootcamp.Core.Model;
 
 public abstract class EntityBase<T> : IEquatable<T> where T : EntityBase<T>, new()
 {
@@ -8,19 +6,39 @@ public abstract class EntityBase<T> : IEquatable<T> where T : EntityBase<T>, new
 
     public bool Equals(T? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (ReferenceEquals(null, other))
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
         return Id.Equals(other.Id) && !Id.Equals(Guid.Empty);
     }
 
     public override bool Equals(object? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != GetType()) return false;
+        if (ReferenceEquals(null, obj))
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, obj))
+        {
+            return true;
+        }
+
+        if (obj.GetType() != GetType())
+        {
+            return false;
+        }
+
         return Equals((T)obj);
     }
-    
+
     public override string ToString()
     {
         return base.ToString() + "-" + Id;

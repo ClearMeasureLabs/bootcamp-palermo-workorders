@@ -10,7 +10,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 public class StateCommandHandlerForSaveTests : IntegratedTestBase
 {
     [Test]
-public async Task ShouldSaveWorkOrderBySavingDraft()
+    public async Task ShouldSaveWorkOrderBySavingDraft()
     {
         new DatabaseTester().Clean();
 
@@ -36,13 +36,13 @@ public async Task ShouldSaveWorkOrderBySavingDraft()
 
         var context3 = TestHost.GetRequiredService<DbContext>();
         result.WorkOrder.Id.ShouldNotBe(Guid.Empty);
-        WorkOrder order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
         order.Title.ShouldBe(workOrder.Title);
     }
 
     [Test]
-public async Task ShouldSaveWorkOrderWithAssigneeAndCreator()
+    public async Task ShouldSaveWorkOrderWithAssigneeAndCreator()
     {
         new DatabaseTester().Clean();
 
@@ -71,7 +71,7 @@ public async Task ShouldSaveWorkOrderWithAssigneeAndCreator()
 
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
-        WorkOrder order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(workOrder.Title);
         order.Description.ShouldBe(workOrder.Description);
         order.Creator.ShouldBe(currentUser);
@@ -110,7 +110,7 @@ public async Task ShouldSaveWorkOrderWithAssigneeAndCreator()
 
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
-        WorkOrder order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
         order.Creator.ShouldBe(currentUser);
@@ -144,13 +144,13 @@ public async Task ShouldSaveWorkOrderWithAssigneeAndCreator()
         workOrder.Title = "newtitle";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
-        SaveDraftCommand remotedCommand = (SaveDraftCommand)RemotableRequestTests.SimulateRemoteObject(command);
+        var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
-        WorkOrder order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
         order.Creator.ShouldBe(currentUser);

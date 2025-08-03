@@ -1,14 +1,12 @@
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices.ObjectiveC;
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.Core.Services;
+using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
-using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;

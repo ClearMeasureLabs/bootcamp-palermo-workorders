@@ -5,36 +5,38 @@ using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using Microsoft.AspNetCore.Components;
 
-namespace ClearMeasure.Bootcamp.UI.Client
+namespace ClearMeasure.Bootcamp.UI.Client;
+
+public class UserSession(
+    IBus bus,
+    CustomAuthenticationStateProvider authProvider,
+    NavigationManager navigationManager)
+    : IUserSession
 {
-    public class UserSession(
-        IBus bus,
-        CustomAuthenticationStateProvider authProvider,
-        NavigationManager navigationManager)
-        : IUserSession
+    public async Task<Employee?> GetCurrentUserAsync()
     {
-        public async Task<Employee?> GetCurrentUserAsync()
+        var username = authProvider.GetUsername();
+        if (string.IsNullOrEmpty(username))
         {
-            var username = authProvider.GetUsername();
-            if (string.IsNullOrEmpty(username))
-                return null;
-            var currentUser = await bus.Send(new EmployeeByUserNameQuery(username));
-            BlowUpIfEmployeeCannotLogin(currentUser);
-            return currentUser;
+            return null;
         }
 
-        public void LogOut()
-        {
-            authProvider.Logout();
-            navigationManager.NavigateTo("/login");
-        }
+        var currentUser = await bus.Send(new EmployeeByUserNameQuery(username));
+        BlowUpIfEmployeeCannotLogin(currentUser);
+        return currentUser;
+    }
 
-        private void BlowUpIfEmployeeCannotLogin(Employee? employee)
+    public void LogOut()
+    {
+        authProvider.Logout();
+        navigationManager.NavigateTo("/login");
+    }
+
+    private void BlowUpIfEmployeeCannotLogin(Employee? employee)
+    {
+        if (employee == null)
         {
-            if (employee == null)
-            {
-                throw new Exception("That user doesn't exist or is not valid.");
-            }
+            throw new Exception("That user doesn't exist or is not valid.");
         }
     }
 }

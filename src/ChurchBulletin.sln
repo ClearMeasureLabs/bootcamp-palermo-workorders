@@ -50,8 +50,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AcceptanceTests", "Acceptan
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UI.Shared", "UI.Shared\UI.Shared.csproj", "{66B452FC-D12A-42A9-80E9-FC97074AC2B1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseFlyway", "DatabaseFlyway\DatabaseFlyway.csproj", "{71EB02C4-B409-4A97-8BA5-2D23144C77AC}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmGateway", "LlmGateway\LlmGateway.csproj", "{0695CD9E-D6F4-45F7-A987-179559A15307}"
 EndProject
 Global
@@ -373,36 +371,6 @@ Global
 		{66B452FC-D12A-42A9-80E9-FC97074AC2B1}.Release|x64.Build.0 = Release|Any CPU
 		{66B452FC-D12A-42A9-80E9-FC97074AC2B1}.Release|x86.ActiveCfg = Release|Any CPU
 		{66B452FC-D12A-42A9-80E9-FC97074AC2B1}.Release|x86.Build.0 = Release|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Debug|ARM.Build.0 = Debug|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Debug|ARM64.ActiveCfg = Debug|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Debug|ARM64.Build.0 = Debug|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Debug|x64.Build.0 = Debug|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Debug|x86.Build.0 = Debug|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.exclude-maui.slnf|Any CPU.ActiveCfg = exclude-maui.slnf|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.exclude-maui.slnf|Any CPU.Build.0 = exclude-maui.slnf|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.exclude-maui.slnf|ARM.ActiveCfg = exclude-maui.slnf|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.exclude-maui.slnf|ARM.Build.0 = exclude-maui.slnf|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.exclude-maui.slnf|ARM64.ActiveCfg = exclude-maui.slnf|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.exclude-maui.slnf|ARM64.Build.0 = exclude-maui.slnf|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.exclude-maui.slnf|x64.ActiveCfg = exclude-maui.slnf|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.exclude-maui.slnf|x64.Build.0 = exclude-maui.slnf|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.exclude-maui.slnf|x86.ActiveCfg = exclude-maui.slnf|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.exclude-maui.slnf|x86.Build.0 = exclude-maui.slnf|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Release|ARM.ActiveCfg = Release|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Release|ARM.Build.0 = Release|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Release|ARM64.ActiveCfg = Release|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Release|ARM64.Build.0 = Release|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Release|x64.ActiveCfg = Release|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Release|x64.Build.0 = Release|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Release|x86.ActiveCfg = Release|Any CPU
-		{71EB02C4-B409-4A97-8BA5-2D23144C77AC}.Release|x86.Build.0 = Release|Any CPU
 		{0695CD9E-D6F4-45F7-A987-179559A15307}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0695CD9E-D6F4-45F7-A987-179559A15307}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0695CD9E-D6F4-45F7-A987-179559A15307}.Debug|ARM.ActiveCfg = Debug|Any CPU

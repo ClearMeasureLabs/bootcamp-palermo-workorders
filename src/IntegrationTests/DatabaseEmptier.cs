@@ -5,7 +5,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests;
 
 public sealed class DatabaseEmptier
 {
-    private static readonly string[] _ignoredTables = {"[dbo].[sysdiagrams]", "[dbo].[usd_AppliedDatabaseScript]"};
+    private static readonly string[] _ignoredTables = { "[dbo].[sysdiagrams]", "[dbo].[usd_AppliedDatabaseScript]" };
     private static string? _deleteSql;
     private readonly DatabaseFacade _database;
 
@@ -16,7 +16,10 @@ public sealed class DatabaseEmptier
 
     public void DeleteAllData()
     {
-        if (_deleteSql == null) _deleteSql = BuildDeleteTableSqlStatement();
+        if (_deleteSql == null)
+        {
+            _deleteSql = BuildDeleteTableSqlStatement();
+        }
 
         _database.ExecuteSqlRaw(_deleteSql);
     }
@@ -33,7 +36,11 @@ public sealed class DatabaseEmptier
     private static string BuildTableSql(IEnumerable<string> tablesToDelete)
     {
         var completeQuery = "";
-        foreach (var tableName in tablesToDelete) completeQuery += $"delete from {tableName};";
+        foreach (var tableName in tablesToDelete)
+        {
+            completeQuery += $"delete from {tableName};";
+        }
+
         return completeQuery;
     }
 
@@ -58,7 +65,10 @@ public sealed class DatabaseEmptier
                 allTables.Remove(leafTable);
                 var relToRemove =
                     allRelationships.Where(rel => rel.ForeignKeyTable == leafTable).ToArray();
-                foreach (var rel in relToRemove) allRelationships.Remove(rel);
+                foreach (var rel in relToRemove)
+                {
+                    allRelationships.Remove(rel);
+                }
             }
         }
 

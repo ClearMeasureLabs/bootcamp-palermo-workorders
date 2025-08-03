@@ -1,5 +1,5 @@
-using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 

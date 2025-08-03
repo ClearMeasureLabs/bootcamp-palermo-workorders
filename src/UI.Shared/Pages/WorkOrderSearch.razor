@@ -10,7 +10,7 @@
                 <div class="filters-grid">
                     <div class="filter-group">
                         <label class="filter-label" for="creator">Creator</label>
-                        <InputSelect id="@WorkOrderSearch.Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
+                        <InputSelect id="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
                             <option value="">All</option>
                             @foreach (var user in UserOptions)
                             {
@@ -18,10 +18,10 @@
                             }
                         </InputSelect>
                     </div>
-                    
+
                     <div class="filter-group">
                         <label class="filter-label" for="assignee">Assignee</label>
-                        <InputSelect id="@WorkOrderSearch.Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
+                        <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
                             <option value="">All</option>
                             @foreach (var user in UserOptions)
                             {
@@ -29,10 +29,10 @@
                             }
                         </InputSelect>
                     </div>
-                    
+
                     <div class="filter-group">
                         <label class="filter-label" for="status">Status</label>
-                        <InputSelect id="@WorkOrderSearch.Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
+                        <InputSelect id="@Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
                             <option value="">All</option>
                             @foreach (var status in StatusOptions)
                             {
@@ -40,9 +40,9 @@
                             }
                         </InputSelect>
                     </div>
-                    
+
                     <div class="filter-group">
-                        <button id="@WorkOrderSearch.Elements.SearchButton" type="submit" class="btn btn-primary">
+                        <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
                     </div>
@@ -54,7 +54,7 @@
             <div class="results-header">
                 <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length work orders)
             </div>
-            
+
             @if (Model.Results.Length == 0)
             {
                 <div class="empty-results">
@@ -109,6 +109,7 @@
 </div>
 
 @code {
+
     public enum Elements
     {
         CreatorSelect,

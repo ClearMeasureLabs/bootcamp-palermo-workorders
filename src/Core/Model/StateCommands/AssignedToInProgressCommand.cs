@@ -1,5 +1,3 @@
-using ClearMeasure.Bootcamp.Core.Services;
-
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
 public record AssignedToInProgressCommand(WorkOrder WorkOrder, Employee CurrentUser)

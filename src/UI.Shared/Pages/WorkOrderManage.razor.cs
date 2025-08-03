@@ -1,5 +1,4 @@
-﻿using BlazorApplicationInsights.Models.Context;
-using ClearMeasure.Bootcamp.Core.Model;
+﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
@@ -17,8 +16,8 @@ public partial class WorkOrderManage : AppComponentBase
     [Inject] public IUserSession? UserSession { get; set; }
     [Inject] private NavigationManager? NavigationManager { get; set; }
 
-    public WorkOrderManageModel Model { get; set; } = new WorkOrderManageModel();
-    public List<SelectListItem> UserOptions { get; set; } = new List<SelectListItem>();
+    public WorkOrderManageModel Model { get; set; } = new();
+    public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
 
@@ -38,14 +37,16 @@ public partial class WorkOrderManage : AppComponentBase
 
     private async Task LoadWorkOrder()
     {
-        Employee currentUser = (await UserSession!.GetCurrentUserAsync())!;
+        var currentUser = (await UserSession!.GetCurrentUserAsync())!;
         WorkOrder workOrder;
 
         if (CurrentMode == EditMode.New)
         {
             workOrder = WorkOrderBuilder!.CreateNewWorkOrder(currentUser);
             if (!string.IsNullOrEmpty(Id))
+            {
                 workOrder.Number = Id;
+            }
         }
         else
         {
@@ -54,7 +55,7 @@ public partial class WorkOrderManage : AppComponentBase
 
         Model = CreateViewModel(CurrentMode, workOrder);
         var commandList = new StateCommandList();
-        Model.IsReadOnly = !(commandList!.GetValidStateCommands(workOrder, currentUser)).Any();
+        Model.IsReadOnly = !commandList!.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
     }
 
@@ -80,20 +81,24 @@ public partial class WorkOrderManage : AppComponentBase
     private async Task LoadUserOptions()
     {
         var employees = await Bus.Send(new EmployeeGetAllQuery());
-        var items = employees.Select(e => new SelectListItem(value: e.UserName, text: e.GetFullName())).ToList();
+        var items = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
         items.Insert(0, new SelectListItem("", ""));
         UserOptions = items;
     }
 
     private async Task HandleSubmit()
     {
-        Employee currentUser = (await UserSession!.GetCurrentUserAsync())!;
+        var currentUser = (await UserSession!.GetCurrentUserAsync())!;
         WorkOrder workOrder;
 
         if (Model.Mode == EditMode.New)
+        {
             workOrder = WorkOrderBuilder!.CreateNewWorkOrder(currentUser);
+        }
         else
+        {
             workOrder = (await Bus.Send(new WorkOrderByNumberQuery(Model.WorkOrderNumber!)))!;
+        }
 
         Employee? assignee = null;
         if (Model.AssignedToUserName != null)
@@ -107,7 +112,7 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Description = Model.Description;
         workOrder.RoomNumber = Model.RoomNumber;
 
-        IStateCommand matchingCommand = new StateCommandList()
+        var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
 
         var result = await Bus.Send(matchingCommand);

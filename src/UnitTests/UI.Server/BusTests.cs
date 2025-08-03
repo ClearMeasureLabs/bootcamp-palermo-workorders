@@ -1,7 +1,6 @@
-﻿using MediatR;
-using ClearMeasure.Bootcamp.UI.Server;
+﻿using ClearMeasure.Bootcamp.UI.Shared;
+using MediatR;
 using Shouldly;
-using ClearMeasure.Bootcamp.UI.Shared;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 

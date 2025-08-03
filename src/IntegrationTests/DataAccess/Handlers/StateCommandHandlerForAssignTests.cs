@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using ClearMeasure.Bootcamp.Core.Model;
+﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
@@ -30,12 +29,12 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
 
         var command = RemotableRequestTests.SimulateRemoteObject(new DraftToAssignedCommand(o, currentUser));
 
-        var handler = TestHost.GetRequiredService<StateCommandHandler>(true);
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
         var result = await handler.Handle(command);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
-        WorkOrder order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(order.Title);
         order.Description.ShouldBe(order.Description);
         order.Creator.ShouldBe(currentUser);
@@ -60,13 +59,13 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
         }
 
         var command = new DraftToAssignedCommand(o, currentUser);
-        DraftToAssignedCommand remotedCommand = (DraftToAssignedCommand)RemotableRequestTests.SimulateRemoteObject(command);
+        var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
 
-        var handler = TestHost.GetRequiredService<StateCommandHandler>(true);
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
         var result = await handler.Handle(remotedCommand);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
-        WorkOrder order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(order.Title);
         order.Description.ShouldBe(order.Description);
         order.Creator.ShouldBe(currentUser);
@@ -88,14 +87,14 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
             await context.SaveChangesAsync();
         }
 
-        WorkOrder remotedOrder = (WorkOrder)RemotableRequestTests.SimulateRemoteObject(o);
+        var remotedOrder = RemotableRequestTests.SimulateRemoteObject(o);
         var command = new DraftToAssignedCommand(remotedOrder, currentUser);
 
-        var handler = TestHost.GetRequiredService<StateCommandHandler>(true);
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
         var result = await handler.Handle(command);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
-        WorkOrder order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(order.Title);
         order.Description.ShouldBe(order.Description);
         order.Creator.ShouldBe(currentUser);

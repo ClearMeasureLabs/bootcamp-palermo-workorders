@@ -1,24 +1,17 @@
-namespace ClearMeasure.Bootcamp.Core.Services
+namespace ClearMeasure.Bootcamp.Core.Services;
+
+public class EmployeeSpecification
 {
-	public class EmployeeSpecification
-	{
-		public static readonly EmployeeSpecification All = new EmployeeSpecification();
+    public static readonly EmployeeSpecification All = new();
 
-	    private bool _canFulfill = false;
+    public EmployeeSpecification()
+    {
+    }
 
-	    public EmployeeSpecification()
-	    {
-	    }
+    public EmployeeSpecification(bool canFulfill)
+    {
+        CanFulfill = canFulfill;
+    }
 
-	    public EmployeeSpecification(bool canFulfill)
-	    {
-	        _canFulfill = canFulfill;
-	    }
-
-	    public bool CanFulfill
-	    {
-	        get { return _canFulfill; }
-	        set { _canFulfill = value; }
-	    }
-	}
+    public bool CanFulfill { get; set; }
 }

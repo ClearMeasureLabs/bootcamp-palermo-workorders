@@ -8,6 +8,5 @@ public class AppComponentBase : MvcComponentBase
 {
     public IUiBus EventBus => base.Bus;
 
-    [Inject]
-    public new IBus Bus { get; set; } = null!;
+    [Inject] public new IBus Bus { get; set; } = null!;
 }

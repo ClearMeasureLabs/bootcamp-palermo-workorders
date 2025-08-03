@@ -1,92 +1,89 @@
-using ClearMeasure.Bootcamp.Core.Model;
+namespace ClearMeasure.Bootcamp.Core.Model;
 
-namespace ClearMeasure.Bootcamp.Core.Model
+public class Employee : EntityBase<Employee>, IComparable<Employee>
 {
-    public class Employee : EntityBase<Employee>, IComparable<Employee>
+    public Employee()
     {
-        public Employee()
+        UserName = null!;
+        EmailAddress = null!;
+        FirstName = null!;
+        LastName = null!;
+    }
+
+    public Employee(string userName, string firstName, string lastName, string emailAddress)
+    {
+        UserName = userName;
+        FirstName = firstName;
+        LastName = lastName;
+        EmailAddress = emailAddress;
+    }
+
+    public override Guid Id { get; set; }
+
+    public string UserName { get; set; }
+
+    public string FirstName { get; set; }
+
+    public string LastName { get; set; }
+
+    public string EmailAddress { get; set; }
+
+    public ISet<Role> Roles { get; init; } = new HashSet<Role>();
+
+    public int CompareTo(Employee? other)
+    {
+        var compareResult = string.Compare(LastName, other!.LastName, StringComparison.Ordinal);
+        if (compareResult == 0)
         {
-            UserName = null!;
-            EmailAddress = null!;
-            FirstName = null!;
-            LastName = null!;
+            compareResult = string.Compare(FirstName, other.FirstName, StringComparison.Ordinal);
         }
 
-        public Employee(string userName, string firstName, string lastName, string emailAddress)
+        return compareResult;
+    }
+
+    public string GetFullName()
+    {
+        return string.Format("{0} {1}", FirstName, LastName);
+    }
+
+    public override string ToString()
+    {
+        return GetFullName();
+    }
+
+    public bool CanCreateWorkOrder()
+    {
+        foreach (var role in Roles)
         {
-            UserName = userName;
-            FirstName = firstName;
-            LastName = lastName;
-            EmailAddress = emailAddress;
-        }
-
-        public override Guid Id { get; set; }
-
-        public string UserName { get; set; }
-
-        public string FirstName { get; set; }
-
-        public string LastName { get; set; }
-
-        public string EmailAddress { get; set; }
-
-        public ISet<Role> Roles { get; init; } = new HashSet<Role>();
-
-        public int CompareTo(Employee? other)
-        {
-            int compareResult = String.Compare(LastName, other!.LastName, StringComparison.Ordinal);
-            if (compareResult == 0)
+            if (role.CanCreateWorkOrder)
             {
-                compareResult = String.Compare(FirstName, other.FirstName, StringComparison.Ordinal);
+                return true;
             }
-
-            return compareResult;
         }
 
-        public string GetFullName()
-        {
-            return string.Format("{0} {1}", FirstName, LastName);
-        }
+        return false;
+    }
 
-        public override string ToString()
+    public bool CanFulfilWorkOrder()
+    {
+        foreach (var role in Roles)
         {
-            return GetFullName();
-        }
-
-        public bool CanCreateWorkOrder()
-        {
-            foreach (Role role in Roles)
+            if (role.CanFulfillWorkOrder)
             {
-                if (role.CanCreateWorkOrder)
-                {
-                    return true;
-                }
+                return true;
             }
-
-            return false;
         }
 
-        public bool CanFulfilWorkOrder()
-        {
-            foreach (Role role in Roles)
-            {
-                if (role.CanFulfillWorkOrder)
-                {
-                    return true;
-                }
-            }
+        return false;
+    }
 
-            return false;
-        }
+    public void AddRole(Role role)
+    {
+        Roles.Add(role);
+    }
 
-        public void AddRole(Role role)
-        {
-            Roles.Add(role);
-        }
-
-        public string GetNotificationEmail(DayOfWeek day)
-        {
-            return EmailAddress;
-        }
+    public string GetNotificationEmail(DayOfWeek day)
+    {
+        return EmailAddress;
     }
 }

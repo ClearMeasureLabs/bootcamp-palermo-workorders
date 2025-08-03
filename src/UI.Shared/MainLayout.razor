@@ -1,6 +1,3 @@
-@using System.Runtime.CompilerServices
-@using System.Security.Principal
-@using Palermo.BlazorMvc
 @inherits Palermo.BlazorMvc.MvcLayoutComponentBase
 
 <div class="modern-app">
@@ -35,7 +32,7 @@
                     <AuthorizeView>
                         <Authorized>
                             <div class="user-section">
-                                <Logout />
+                                <Logout/>
                             </div>
                         </Authorized>
                         <NotAuthorized>

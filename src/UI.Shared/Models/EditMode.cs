@@ -1,8 +1,7 @@
-namespace ClearMeasure.Bootcamp.UI.Shared.Models
+namespace ClearMeasure.Bootcamp.UI.Shared.Models;
+
+public enum EditMode
 {
-    public enum EditMode
-    {
-        New,
-        Edit
-    }
+    New,
+    Edit
 }

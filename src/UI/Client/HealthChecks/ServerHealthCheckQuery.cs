@@ -1,6 +1,6 @@
-﻿using MediatR;
+﻿using ClearMeasure.Bootcamp.Core;
+using MediatR;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using ClearMeasure.Bootcamp.Core;
 
 namespace ClearMeasure.Bootcamp.UI.Client.HealthChecks;
 

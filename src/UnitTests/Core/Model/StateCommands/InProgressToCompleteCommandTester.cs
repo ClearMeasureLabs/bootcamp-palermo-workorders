@@ -1,8 +1,6 @@
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
-using ClearMeasure.Bootcamp.Core.Model;
-using Shouldly;
-using ClearMeasure.Bootcamp.UnitTests.Core;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 

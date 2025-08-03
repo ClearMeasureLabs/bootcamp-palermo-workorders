@@ -12,9 +12,10 @@ public class EmployeeQueryHandler(DataContext context)
     : IRequestHandler<EmployeeByUserNameQuery, Employee>,
         IRequestHandler<EmployeeGetAllQuery, Employee[]>
 {
-    public async Task<Employee> Handle(EmployeeByUserNameQuery request, CancellationToken cancellationToken = default)
+    public async Task<Employee> Handle(EmployeeByUserNameQuery request,
+        CancellationToken cancellationToken = default)
     {
-        Employee employee = await context.Set<Employee>()
+        var employee = await context.Set<Employee>()
             .Include("Roles")
             .SingleAsync(emp => emp.UserName == request.Username);
         return employee;
@@ -25,7 +26,10 @@ public class EmployeeQueryHandler(DataContext context)
         var query = context.Set<Employee>()
             .Include("Roles");
         var employees = await query.ToListAsync();
-        if (EmployeeSpecification.All.CanFulfill) employees = employees.Where(e => e.CanFulfilWorkOrder()).ToList();
+        if (EmployeeSpecification.All.CanFulfill)
+        {
+            employees = employees.Where(e => e.CanFulfilWorkOrder()).ToList();
+        }
 
         return employees.OrderBy(e => e.LastName).ThenBy(e => e.FirstName).ToArray();
     }

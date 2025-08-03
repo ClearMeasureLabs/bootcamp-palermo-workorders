@@ -1,7 +1,7 @@
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
-using ClearMeasure.Bootcamp.Core.Model;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Services;
 
@@ -51,7 +51,7 @@ public class StateCommandListTests
         Assert.That(commands.Length, Is.EqualTo(2));
     }
 
-    public class StubStateCommandList() : StateCommandList()
+    public class StubStateCommandList : StateCommandList
     {
         public IStateCommand[] CommandsToReturn { get; set; } = null!;
 
@@ -67,7 +67,7 @@ public class StateCommandListTests
         {
             return isValid;
         }
-        
+
         public string TransitionVerbPresentTense => throw new NotImplementedException();
 
         public bool Matches(string commandName)

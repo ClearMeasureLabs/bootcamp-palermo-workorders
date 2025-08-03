@@ -30,13 +30,19 @@ public partial class WorkOrderSearch : AppComponentBase
 
         // Apply any query parameters
         if (!string.IsNullOrEmpty(Creator))
+        {
             Model.Filters.Creator = Creator;
+        }
 
         if (!string.IsNullOrEmpty(Assignee))
+        {
             Model.Filters.Assignee = Assignee;
+        }
 
         if (!string.IsNullOrEmpty(Status))
+        {
             Model.Filters.Status = Status;
+        }
 
         // Perform initial search
         await SearchWorkOrders();
