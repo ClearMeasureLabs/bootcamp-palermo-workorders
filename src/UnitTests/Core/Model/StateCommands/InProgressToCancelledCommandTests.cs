@@ -1,10 +1,17 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
+using ClearMeasure.Bootcamp.UnitTests.Core.Services;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
-public class CancelledToDraftCommandTests : StateCommandBaseTests
+[TestFixture]
+public class InProgressToCancelledCommandTests : StateCommandBaseTests
 {
     [Test]
     public void ShouldNotBeValidInWrongStatus()
@@ -14,7 +21,7 @@ public class CancelledToDraftCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new CancelledToDraftCommand(order, employee);
+        var command = new InProgressToCancelledCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -22,12 +29,11 @@ public class CancelledToDraftCommandTests : StateCommandBaseTests
     public void ShouldNotBeValidWithWrongEmployee()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Assigned;
+        order.Status = WorkOrderStatus.InProgress;
         var employee = new Employee();
-        var differentEmployee = new Employee();
-        order.Creator = employee;
+        order.Assignee = employee;
 
-        var command = new CancelledToDraftCommand(order, differentEmployee);
+        var command = new InProgressToCancelledCommand(order, new Employee());
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -35,11 +41,11 @@ public class CancelledToDraftCommandTests : StateCommandBaseTests
     public void ShouldBeValid()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Assigned;
+        order.Status = WorkOrderStatus.InProgress;
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new CancelledToDraftCommand(order, employee);
+        var command = new InProgressToCancelledCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -48,19 +54,18 @@ public class CancelledToDraftCommandTests : StateCommandBaseTests
     {
         var order = new WorkOrder();
         order.Number = "123";
-        order.Status = WorkOrderStatus.Assigned;
+        order.Status = WorkOrderStatus.InProgress;
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new CancelledToDraftCommand(order, employee);
+        var command = new InProgressToCancelledCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Draft));
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Cancelled));
     }
-
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new CancelledToDraftCommand(order, employee);
+        return new InProgressToCancelledCommand(order, employee);
     }
 }
