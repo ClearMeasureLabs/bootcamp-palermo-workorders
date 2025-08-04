@@ -30,10 +30,17 @@ public partial class WorkOrderManage : AppComponentBase
     protected override async Task OnInitializedAsync()
     {
         await LoadUserOptions();
-        StateHasChanged();
-
         await LoadWorkOrder();
-        StateHasChanged();
+
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_workOrder != null)
+        {
+            EventBus.Notify(new WorkOrderSelectedEvent(_workOrder));
+        }
+        return base.OnAfterRenderAsync(firstRender);
     }
 
     private async Task LoadWorkOrder()
@@ -59,10 +66,7 @@ public partial class WorkOrderManage : AppComponentBase
         Model.IsReadOnly = !commandList!.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
         _workOrder = workOrder;
-        if (_workOrder != null)
-        {
-            EventBus.Notify(new WorkOrderSelectedEvent(_workOrder));
-        }
+        
     }
 
     private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)

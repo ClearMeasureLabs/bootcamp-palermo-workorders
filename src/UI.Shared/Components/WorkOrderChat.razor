@@ -1,9 +1,8 @@
 ﻿@inherits AppComponentBase
 @using ClearMeasure.Bootcamp.LlmGateway
-@using Microsoft.Extensions.AI
 @implements Palermo.BlazorMvc.IListener<WorkOrderSelectedEvent>
 
-@if (true)//_currentWorkOrder != null)
+@if (_currentWorkOrder != null && _currentWorkOrder.Assignee != null)
 {
     <div class="form-group">
         <label class="form-label">AI Assistant:</label>
@@ -19,20 +18,20 @@
                     }
                 </div>
             }
-            
+
             @if (_isLoading)
             {
                 <div class="chat-loading">
                     <span>AI is thinking...</span>
                 </div>
             }
-            
+
             <div class="chat-input-container">
-                <InputText @bind-Value="_prompt" 
-                          class="form-control chat-input" 
-                          placeholder="Ask the AI assistant about this work order..."/>
-                <button type="button" 
-                        class="btn btn-secondary chat-send-btn" 
+                <InputText @bind-Value="_prompt"
+                           class="form-control chat-input"
+                           placeholder="Ask the AI assistant about this work order..."/>
+                <button type="button"
+                        class="btn btn-secondary chat-send-btn"
                         @onclick="SendMessage">
                     Send
                 </button>
@@ -42,10 +41,10 @@
 }
 
 @code {
-    private WorkOrder _currentWorkOrder = null!;
+    private WorkOrder? _currentWorkOrder;
     private string _prompt = "";
-    private bool _isLoading = false;
-    private List<ChatMessage> _chatMessages = new();
+    private bool _isLoading;
+    private readonly List<ChatMessage> _chatMessages = new();
 
     public void Handle(WorkOrderSelectedEvent theEvent)
     {
@@ -68,9 +67,9 @@
 
         try
         {
-            var workOrderChatQuery = new WorkOrderChatQuery(userMessage);
+            var workOrderChatQuery = new WorkOrderChatQuery(userMessage, _currentWorkOrder);
             var response = await Bus.Send(workOrderChatQuery);
-            
+
             var aiContent = response.Text ?? "No response received.";
             _chatMessages.Add(new ChatMessage { Content = aiContent, IsUser = false });
         }
@@ -90,6 +89,7 @@
         public string Content { get; set; } = "";
         public bool IsUser { get; set; }
     }
+
 }
 
 <style>

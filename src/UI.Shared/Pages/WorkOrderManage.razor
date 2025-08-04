@@ -76,7 +76,10 @@
 
             </div>
             
-            <WorkOrderChat/>
+            @if (_workOrder != null)
+            {
+                <WorkOrderChat/>
+            }
         </div>
 
         <div class="action-section">
