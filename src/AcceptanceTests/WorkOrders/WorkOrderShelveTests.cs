@@ -10,18 +10,26 @@ public class WorkOrderShelveTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
 
+        // create
         var order = await CreateAndSaveNewWorkOrder();
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
+        //assign
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
+        // in progress
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + 
-                    CancelledToDraftCommand.Name);
+                    AssignedToInProgressCommand.Name);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        // shelf
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) +
+                    InProgressToAssignedCommand.Name);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
-            .ToHaveTextAsync(WorkOrderStatus.Draft.FriendlyName);
+            .ToHaveTextAsync(WorkOrderStatus.Assigned.FriendlyName);
 
     }
 }
