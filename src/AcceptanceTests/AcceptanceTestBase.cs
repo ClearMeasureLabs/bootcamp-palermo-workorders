@@ -246,7 +246,7 @@ public abstract class AcceptanceTestBase : PageTest
 
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + "Shelve2");
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToAssignedCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         return rehyratedOrder;

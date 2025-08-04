@@ -34,11 +34,9 @@ internal class WorkOrderShelveTests : AcceptanceTestBase
                 Timeout = 10000 // 10 seconds
             });
 
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToBeDisabledAsync();
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
-            .ToHaveValueAsync(order.Description!);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeDisabledAsync();
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
-            .ToHaveTextAsync(WorkOrderStatus.Assigned.FriendlyName);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync(order.Title!);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToHaveValueAsync(order.Description!);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee))).ToHaveValueAsync(CurrentUser.UserName);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status))).ToHaveTextAsync(WorkOrderStatus.Assigned.FriendlyName);
     }
 }
