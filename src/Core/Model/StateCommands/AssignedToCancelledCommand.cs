@@ -1,6 +1,6 @@
 ﻿namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public record CancelledToDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder, CurrentUser)
+public record AssignedToCancelledCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder, CurrentUser)
 {
     public static string Name { get; set; } = "Cancel";
     public override WorkOrderStatus GetBeginStatus()
@@ -10,7 +10,7 @@ public record CancelledToDraftCommand(WorkOrder WorkOrder, Employee CurrentUser)
 
     public override WorkOrderStatus GetEndStatus()
     {
-        return WorkOrderStatus.Draft;
+        return WorkOrderStatus.Cancelled;
     }
 
     protected override bool UserCanExecute(Employee currentUser)

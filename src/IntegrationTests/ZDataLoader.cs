@@ -12,7 +12,6 @@ public class ZDataLoader
     {
         new DatabaseTests().Clean();
         var lead = new Role("Facility Lead", true, false);
-        var sr = new Role("Senior Developer", true, false);
         var fulfillment = new Role("Fulfillment", false, true);
         var db = TestHost.GetRequiredService<DbContext>();
         db.Add(lead);
