@@ -31,7 +31,7 @@ public class StateCommandListTests
         Assert.That(commands[1], Is.InstanceOf(typeof(DraftToAssignedCommand)));
         Assert.That(commands[2], Is.InstanceOf(typeof(AssignedToInProgressCommand)));
         Assert.That(commands[3], Is.InstanceOf(typeof(InProgressToCompleteCommand)));
-        Assert.That(commands[4], Is.InstanceOf(typeof(CancelledToDraftCommand)));
+        Assert.That(commands[4], Is.InstanceOf(typeof(AssignedToCancelledCommand)));
         Assert.That(commands[5], Is.InstanceOf(typeof(InProgressToAssigned)));
     }
 

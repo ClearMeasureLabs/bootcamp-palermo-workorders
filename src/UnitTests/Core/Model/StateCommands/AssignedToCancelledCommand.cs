@@ -4,7 +4,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
-public class CancelledToDraftCommandTests : StateCommandBaseTests
+public class AssignedToCancelledCommandTests : StateCommandBaseTests
 {
     [Test]
     public void ShouldNotBeValidInWrongStatus()
@@ -14,7 +14,7 @@ public class CancelledToDraftCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new CancelledToDraftCommand(order, employee);
+        var command = new AssignedToCancelledCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -27,7 +27,7 @@ public class CancelledToDraftCommandTests : StateCommandBaseTests
         var differentEmployee = new Employee();
         order.Creator = employee;
 
-        var command = new CancelledToDraftCommand(order, differentEmployee);
+        var command = new AssignedToCancelledCommand(order, differentEmployee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -39,7 +39,7 @@ public class CancelledToDraftCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new CancelledToDraftCommand(order, employee);
+        var command = new AssignedToCancelledCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -52,15 +52,15 @@ public class CancelledToDraftCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new CancelledToDraftCommand(order, employee);
+        var command = new AssignedToCancelledCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Draft));
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Cancelled));
     }
 
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new CancelledToDraftCommand(order, employee);
+        return new AssignedToCancelledCommand(order, employee);
     }
 }
