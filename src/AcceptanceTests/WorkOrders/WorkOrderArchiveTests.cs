@@ -9,11 +9,6 @@ using System.Threading.Tasks;
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 public class WorkOrderArchiveTests : AcceptanceTestBase
 {
-    // Test cases
-    // 1. Can Archive from
-    //      Complete
-    // 2. Can't Archive from Complete
-    //      Draft, Assigned, Canceled
 
     [Test]
     public async Task ShouldArchiveFromComplete()
@@ -54,7 +49,7 @@ public class WorkOrderArchiveTests : AcceptanceTestBase
 
 
         order = await ClickWorkOrderNumberFromSearchPage(order);
-        Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + CompleteToArchivedCommand.Name)).ToBeHiddenAsync();
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + CompleteToArchivedCommand.Name)).ToBeHiddenAsync();
 
     }
 }
