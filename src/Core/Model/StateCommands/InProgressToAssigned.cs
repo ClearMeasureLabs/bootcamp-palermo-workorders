@@ -7,19 +7,19 @@ public record InProgressToAssigned(WorkOrder WorkOrder, Employee CurrentUser) : 
 
     public override WorkOrderStatus GetBeginStatus()
     {
-        throw new NotImplementedException();
+        return WorkOrderStatus.InProgress;
     }
 
     public override WorkOrderStatus GetEndStatus()
     {
-        throw new NotImplementedException();
+        return WorkOrderStatus.Assigned;
     }
 
     protected override bool UserCanExecute(Employee currentUser)
     {
-        throw new NotImplementedException();
+        return currentUser == WorkOrder.Assignee;
     }
 
-    public override string TransitionVerbPresentTense { get; }
-    public override string TransitionVerbPastTense { get; }
+    public override string TransitionVerbPresentTense => Name;
+    public override string TransitionVerbPastTense => "Shelved";
 }

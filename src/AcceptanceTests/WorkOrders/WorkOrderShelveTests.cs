@@ -15,13 +15,19 @@ public class WorkOrderShelveTests : AcceptanceTestBase
 
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
         order = await ClickWorkOrderNumberFromSearchPage(order);
+        order.Title = "Title";
+        order.Description = "Description";
+        await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
+        await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
 
         await Click(nameof(WorkOrderManage.Elements.CommandButton) +
                     InProgressToAssigned.Name);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
-            .ToHaveTextAsync(WorkOrderStatus.Draft.FriendlyName);
+            .ToHaveTextAsync(WorkOrderStatus.Assigned.FriendlyName);
 
     }
 }
