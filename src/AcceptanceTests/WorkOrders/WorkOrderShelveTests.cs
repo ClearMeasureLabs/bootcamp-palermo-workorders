@@ -1,8 +1,14 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
+[TestFixture]   
 public class WorkOrderShelveTests : AcceptanceTestBase
 {
     [Test]
@@ -22,7 +28,7 @@ public class WorkOrderShelveTests : AcceptanceTestBase
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) +
+		await Click(nameof(WorkOrderManage.Elements.CommandButton) +
                     InProgressToAssigned.Name);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
