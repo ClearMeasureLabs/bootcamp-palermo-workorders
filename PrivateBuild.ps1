@@ -1,7 +1,7 @@
 param (
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$databaseServer = "(LocalDb)\MSSQLLocalDB",
+    [string]$databaseServer = "Dev-MRD-Mac.local,1433",
 	
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]

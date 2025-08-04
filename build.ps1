@@ -27,7 +27,7 @@ $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName}
 
 $script:databaseServer = $databaseServer
-if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB"}
+if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "Dev-MRD-Mac.local,1433"}
 
 $databaseScripts = "$source_dir\Database\scripts"
 
