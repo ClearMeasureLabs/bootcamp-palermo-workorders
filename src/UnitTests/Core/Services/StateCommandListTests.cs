@@ -25,14 +25,15 @@ public class StateCommandListTests
         var facilitator = new StateCommandList();
         var commands = facilitator.GetAllStateCommands(new WorkOrder(), new Employee());
 
-        Assert.That(commands.Length, Is.EqualTo(6));
+        Assert.That(commands.Length, Is.EqualTo(7));
 
-        Assert.That(commands[0], Is.InstanceOf(typeof(SaveDraftCommand)));
-        Assert.That(commands[1], Is.InstanceOf(typeof(DraftToAssignedCommand)));
-        Assert.That(commands[2], Is.InstanceOf(typeof(AssignedToInProgressCommand)));
-        Assert.That(commands[3], Is.InstanceOf(typeof(InProgressToCompleteCommand)));
-        Assert.That(commands[4], Is.InstanceOf(typeof(CancelledToDraftCommand)));
-        Assert.That(commands[5], Is.InstanceOf(typeof(InProgressToAssigned)));
+        Assert.That(commands[0], Is.InstanceOf(typeof(InProgressToCancelledCommand)));
+		Assert.That(commands[1], Is.InstanceOf(typeof(SaveDraftCommand)));
+        Assert.That(commands[2], Is.InstanceOf(typeof(DraftToAssignedCommand)));
+        Assert.That(commands[3], Is.InstanceOf(typeof(AssignedToInProgressCommand)));
+        Assert.That(commands[4], Is.InstanceOf(typeof(InProgressToCompleteCommand)));
+        Assert.That(commands[5], Is.InstanceOf(typeof(CancelledToDraftCommand)));
+        Assert.That(commands[6], Is.InstanceOf(typeof(InProgressToAssigned)));
     }
 
     [Test]
@@ -53,6 +54,32 @@ public class StateCommandListTests
         Assert.That(commands.Length, Is.EqualTo(2));
     }
 
+    [Test]
+	public void ShouldGetValidMatchingCommands()
+    {
+        var workOrder = new WorkOrder();
+        var employee = new Employee();
+        workOrder.Creator = employee;
+		var stubFacilitator = new StubStateCommandList();
+        var expected = new StubbedStateCommand(true)
+        {
+            TransitionVerbPresentTense = "Cancel",
+        };
+
+		var commandsToReturn = new IStateCommand[]
+        {
+            expected,
+            new StubbedStateCommand(true),
+            new StubbedStateCommand(false)
+        };
+
+        stubFacilitator.CommandsToReturn = commandsToReturn;
+
+        var commands = stubFacilitator.GetMatchingCommand(workOrder, employee, "Cancel");
+
+        Assert.That(commands, Is.SameAs(expected));
+	}
+
     public class StubStateCommandList : StateCommandList
     {
         public IStateCommand[] CommandsToReturn { get; set; } = null!;
@@ -70,12 +97,12 @@ public class StateCommandListTests
             return isValid;
         }
 
-        public string TransitionVerbPresentTense => throw new NotImplementedException();
+        public string TransitionVerbPresentTense { get; set; }
 
         public bool Matches(string commandName)
         {
-            throw new NotImplementedException();
-        }
+            return TransitionVerbPresentTense == commandName;
+		}
 
         public WorkOrderStatus GetBeginStatus()
         {

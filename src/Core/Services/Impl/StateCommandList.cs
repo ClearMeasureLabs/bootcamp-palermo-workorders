@@ -17,7 +17,8 @@ public class StateCommandList
     public virtual IStateCommand[] GetAllStateCommands(WorkOrder workOrder, Employee currentUser)
     {
         var commands = new List<IStateCommand>();
-        commands.Add(new SaveDraftCommand(workOrder, currentUser));
+        commands.Add(new InProgressToCancelledCommand(workOrder, currentUser));
+		commands.Add(new SaveDraftCommand(workOrder, currentUser));
         commands.Add(new DraftToAssignedCommand(workOrder, currentUser));
         commands.Add(new AssignedToInProgressCommand(workOrder, currentUser));
         commands.Add(new InProgressToCompleteCommand(workOrder, currentUser));
@@ -29,8 +30,8 @@ public class StateCommandList
 
     public IStateCommand GetMatchingCommand(WorkOrder order, Employee currentUser, string name)
     {
-        var stateCommand = GetAllStateCommands(order, currentUser)
-            .Single(command => command.Matches(name));
+        var stateCommand = GetValidStateCommands(order, currentUser)
+			.Single(command => command.Matches(name));
         return stateCommand;
     }
 }
