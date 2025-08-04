@@ -36,14 +36,14 @@ public class WorkOrderCancelTests : AcceptanceTestBase
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-		order = await BeginExistingWorkOrder(order);
+        order = await BeginExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-		await Click(nameof(WorkOrderManage.Elements.CommandButton) +
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) +
                     InProgressToCancelledCommand.Name);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Cancelled.FriendlyName);
-	}
+    }
 }
