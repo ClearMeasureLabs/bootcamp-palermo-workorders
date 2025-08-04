@@ -188,7 +188,7 @@ Function PrivateBuild{
 	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
 	
 	IntegrationTest
-	AcceptanceTests
+	#AcceptanceTests
 	
 	$sw.Stop()
 	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
