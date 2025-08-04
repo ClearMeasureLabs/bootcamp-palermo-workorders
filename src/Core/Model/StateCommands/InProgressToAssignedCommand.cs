@@ -1,22 +1,20 @@
-using ClearMeasure.Bootcamp.Core.Model;
-
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
 public record InProgressToAssignedCommand(WorkOrder Order, Employee Employee) : StateCommandBase(Order, Employee)
 {
     public override WorkOrderStatus GetBeginStatus()
     {
-        throw new NotImplementedException();
+        return WorkOrderStatus.InProgress;
     }
 
     public override WorkOrderStatus GetEndStatus()
     {
-        throw new NotImplementedException();
+        return WorkOrderStatus.Assigned;
     }
 
     protected override bool UserCanExecute(Employee currentUser)
     {
-        throw new NotImplementedException();
+        return currentUser == WorkOrder.Assignee;
     }
 
     public const string Name = "Shelve";
