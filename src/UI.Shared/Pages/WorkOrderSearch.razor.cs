@@ -75,4 +75,9 @@ public partial class WorkOrderSearch : AppComponentBase
     {
         await SearchWorkOrders();
     }
+
+    private Task DeleteItem(string? orderNumber)
+    {
+        throw new NotImplementedException();
+    }
 }

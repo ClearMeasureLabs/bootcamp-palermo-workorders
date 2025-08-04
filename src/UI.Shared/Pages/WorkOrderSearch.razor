@@ -70,6 +70,7 @@
                 <table class="grid-data">
                     <thead>
                     <tr>
+                        <th>   </th>
                         <th>WO #</th>
                         <th>Creator</th>
                         <th>Assignee</th>
@@ -84,6 +85,7 @@
                         {
                             var rowClass = i++ % 2 == 0 ? "odd" : "even";
                             <tr class="@rowClass">
+                                    <td><button data-testid="deleteButtonTestId" type="button" class="btn btn-danger" style="display: @((order.Status == WorkOrderStatus.Draft && order.Id != Guid.Empty) ? "block" : "none");" @onclick="(() => DeleteItem(order.Number))">Delete</button></td>
                                 <td>
                                     @{
                                         var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;

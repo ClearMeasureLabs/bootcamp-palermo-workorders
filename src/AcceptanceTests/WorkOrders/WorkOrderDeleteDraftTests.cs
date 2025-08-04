@@ -1,7 +1,5 @@
 ﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
-using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using System.Globalization;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
@@ -29,5 +27,17 @@ public class WorkOrderDeleteDraftTests : AcceptanceTestBase
 
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).Not.ToBeVisibleAsync();
+    }
+
+    [Test]
+    public async Task ShouldDraftWorkOrderHaveDeleteButton()
+    {
+        await LoginAsCurrentUser();
+
+        WorkOrder order = await CreateAndSaveNewWorkOrder();
+
+        ILocator deleteButtonLocator = Page.GetByTestId("deleteButtonTestId");
+        await deleteButtonLocator.WaitForAsync();
+        await Expect(deleteButtonLocator).ToHaveTextAsync("Delete");
     }
 }
