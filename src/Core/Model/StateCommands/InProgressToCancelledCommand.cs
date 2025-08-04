@@ -7,22 +7,24 @@ using System.Threading.Tasks;
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 public record InProgressToCancelledCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder, CurrentUser)
 {
+    public const string Name = "Cancel";
+
 	public override string TransitionVerbPresentTense => "Cancel";
 
 	public override string TransitionVerbPastTense => "Cancelled";
 
 	public override WorkOrderStatus GetBeginStatus()
 	{
-		throw new NotImplementedException();
+		return WorkOrderStatus.InProgress;
 	}
 
 	public override WorkOrderStatus GetEndStatus()
 	{
-		throw new NotImplementedException();
+		return WorkOrderStatus.Cancelled;
 	}
 
 	protected override bool UserCanExecute(Employee currentUser)
-	{
-		throw new NotImplementedException();
-	}
+    {
+        return CurrentUser == WorkOrder.Creator;
+    }
 }
