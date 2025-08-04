@@ -55,18 +55,18 @@ public class StateCommandListTests
     }
 
     [Test]
-	public void ShouldGetValidMatchingCommands()
+    public void ShouldGetValidMatchingCommands()
     {
         var workOrder = new WorkOrder();
         var employee = new Employee();
         workOrder.Creator = employee;
-		var stubFacilitator = new StubStateCommandList();
+        var stubFacilitator = new StubStateCommandList();
         var expected = new StubbedStateCommand(true)
         {
             TransitionVerbPresentTense = "Cancel",
         };
 
-		var commandsToReturn = new IStateCommand[]
+        var commandsToReturn = new IStateCommand[]
         {
             expected,
             new StubbedStateCommand(true),
