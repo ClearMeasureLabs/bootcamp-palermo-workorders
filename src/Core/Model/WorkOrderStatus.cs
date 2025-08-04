@@ -16,7 +16,7 @@ public class WorkOrderStatus
     public static readonly WorkOrderStatus InProgress = new("IPG", "InProgress", "In Progress", 3);
     public static readonly WorkOrderStatus Complete = new("CMP", "Complete", "Complete", 4);
     public static readonly WorkOrderStatus Cancelled = new("CNL", "Cancelled", "Cancelled", 5);
-
+    public static readonly WorkOrderStatus Archived = new("ARC", "Archived", "Archived", 6);
     public WorkOrderStatus()
     {
         Code = null!;
@@ -40,7 +40,8 @@ public class WorkOrderStatus
             Assigned,
             InProgress,
             Complete,
-            Cancelled
+            Cancelled,
+            Archived
         };
     }
 

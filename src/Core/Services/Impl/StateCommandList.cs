@@ -23,6 +23,8 @@ public class StateCommandList
         commands.Add(new InProgressToCompleteCommand(workOrder, currentUser));
         commands.Add(new CancelledToDraftCommand(workOrder, currentUser));
         commands.Add(new InProgressToAssigned(workOrder, currentUser));
+        commands.Add(new CompleteToArchivedCommand(workOrder, currentUser));
+
 
         return commands.ToArray();
     }
