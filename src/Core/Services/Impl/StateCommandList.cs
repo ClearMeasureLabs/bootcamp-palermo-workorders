@@ -22,8 +22,9 @@ public class StateCommandList
         commands.Add(new AssignedToInProgressCommand(workOrder, currentUser));
         commands.Add(new InProgressToCompleteCommand(workOrder, currentUser));
         commands.Add(new CancelledToDraftCommand(workOrder, currentUser));
+        commands.Add(new InProgressToAssignedCommand(workOrder, currentUser));
 
-        return commands.ToArray();
+		return commands.ToArray();
     }
 
     public IStateCommand GetMatchingCommand(WorkOrder order, Employee currentUser, string name)
