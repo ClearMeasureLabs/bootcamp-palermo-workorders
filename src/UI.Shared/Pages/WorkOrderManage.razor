@@ -1,3 +1,4 @@
+@using ClearMeasure.Bootcamp.Core.Model.StateCommands
 <div class="work-order-container">
     <div class="work-order-header">
         <h2>
@@ -93,7 +94,7 @@
                     @foreach (var command in ValidCommands)
                     {
                         var buttonTestId = Elements.CommandButton + command.TransitionVerbPresentTense;
-                        var buttonClass = command.TransitionVerbPresentTense == "Cancel" ? "btn btn-primary btn-red" : "btn btn-primary";
+                        var buttonClass = command.TransitionVerbPresentTense == "Cancel" ? "btn btn-primary btn-red" : command.Matches(CompletedToInProgressCommand.Name) ? "btn btn-success" : "btn btn-primary";
                         <button data-testid="@buttonTestId" type="submit" @onclick="@(() => SelectedCommand = command.TransitionVerbPresentTense)" class="@buttonClass">
                             @command.TransitionVerbPresentTense
                         </button>

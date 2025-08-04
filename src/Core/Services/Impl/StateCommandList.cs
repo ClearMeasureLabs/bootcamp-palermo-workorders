@@ -23,6 +23,7 @@ public class StateCommandList
         commands.Add(new AssignedToInProgressCommand(workOrder, currentUser));
         commands.Add(new InProgressToCompleteCommand(workOrder, currentUser));
         commands.Add(new InProgressToAssigned(workOrder, currentUser));
+        commands.Add(new CompletedToInProgressCommand(workOrder, currentUser));
 
         return commands.ToArray();
     }
