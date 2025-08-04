@@ -78,7 +78,7 @@ public class StateCommandListTests
         var commands = stubFacilitator.GetMatchingCommand(workOrder, employee, "Cancel");
 
         Assert.That(commands, Is.SameAs(expected));
-	}
+        }
 
     public class StubStateCommandList : StateCommandList
     {
