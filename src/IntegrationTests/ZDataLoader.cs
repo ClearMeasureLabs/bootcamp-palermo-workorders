@@ -25,6 +25,10 @@ public class ZDataLoader
         db.Add(jpalermo);
 
         //Person 1
+        var jarndt = new Employee("jarndt", "Joe", "Arndt", "joe.arndt@biberk.com");
+        jarndt.AddRole(sr);
+        jarndt.AddRole(fulfillment);
+        db.Add(jarndt);
 
         //Person 2
 
