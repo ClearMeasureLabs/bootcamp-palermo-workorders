@@ -93,7 +93,7 @@
                     @foreach (var command in ValidCommands)
                     {
                         var buttonTestId = Elements.CommandButton + command.TransitionVerbPresentTense;
-                        var buttonClass = command.TransitionVerbPresentTense == "Cancel" ? "btn btn-primary btn-red" : "btn btn-primary";
+                        var buttonClass = command.TransitionVerbPresentTense is "Cancel" or "Archive" ? "btn btn-primary btn-red" : "btn btn-primary";
                         <button data-testid="@buttonTestId" type="submit" @onclick="@(() => SelectedCommand = command.TransitionVerbPresentTense)" class="@buttonClass">
                             @command.TransitionVerbPresentTense
                         </button>
