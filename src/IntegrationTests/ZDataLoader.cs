@@ -12,6 +12,7 @@ public class ZDataLoader
     {
         new DatabaseTests().Clean();
         var lead = new Role("Facility Lead", true, false);
+        var sr = new Role("Senior Developer", true, false);
         var fulfillment = new Role("Fulfillment", false, true);
         var db = TestHost.GetRequiredService<DbContext>();
         db.Add(lead);
@@ -25,6 +26,10 @@ public class ZDataLoader
         db.Add(jpalermo);
 
         //Person 1
+        var jarndt = new Employee("jarndt", "Joe", "Arndt", "joe.arndt@biberk.com");
+        jarndt.AddRole(sr);
+        jarndt.AddRole(fulfillment);
+        db.Add(jarndt);
 
         //Person 2
 
