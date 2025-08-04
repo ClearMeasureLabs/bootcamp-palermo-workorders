@@ -9,21 +9,21 @@ public record InProgressToCancelledCommand(WorkOrder WorkOrder, Employee Current
 {
     public const string Name = "Cancel";
 
-	public override string TransitionVerbPresentTense => "Cancel";
+    public override string TransitionVerbPresentTense => "Cancel";
 
-	public override string TransitionVerbPastTense => "Cancelled";
+    public override string TransitionVerbPastTense => "Cancelled";
 
-	public override WorkOrderStatus GetBeginStatus()
-	{
-		return WorkOrderStatus.InProgress;
-	}
+    public override WorkOrderStatus GetBeginStatus()
+    {
+        return WorkOrderStatus.InProgress;
+    }
 
-	public override WorkOrderStatus GetEndStatus()
-	{
-		return WorkOrderStatus.Cancelled;
-	}
+    public override WorkOrderStatus GetEndStatus()
+    {
+        return WorkOrderStatus.Cancelled;
+    }
 
-	protected override bool UserCanExecute(Employee currentUser)
+    protected override bool UserCanExecute(Employee currentUser)
     {
         return CurrentUser == WorkOrder.Creator;
     }
