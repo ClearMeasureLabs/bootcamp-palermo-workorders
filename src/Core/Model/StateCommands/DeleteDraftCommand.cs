@@ -9,26 +9,21 @@ public record DeleteDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) :
 
     public override WorkOrderStatus GetBeginStatus()
     {
-        throw new NotImplementedException();
+        return WorkOrderStatus.Draft;
     }
 
     public override WorkOrderStatus GetEndStatus()
     {
-        throw new NotImplementedException();
+        return WorkOrderStatus.None;
     }
 
     protected override bool UserCanExecute(Employee currentUser)
     {
-        throw new NotImplementedException();
+        return true;
     }
 
     public override string TransitionVerbPresentTense => Name;
 
     public override string TransitionVerbPastTense => string.Empty;
 
-    public override void Execute(StateCommandContext context)
-    {
-        throw new NotImplementedException();
-
-    }
 }

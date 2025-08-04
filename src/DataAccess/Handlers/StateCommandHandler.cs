@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,16 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         if (order.Assignee == order.Creator)
         {
             order.Assignee = order.Creator; //EFCore reference checking
+        }
+
+        if (order.Id != Guid.Empty && order.Status.Equals(WorkOrderStatus.None))
+        {
+            dbContext.Attach(order); 
+            dbContext.Remove(order);
+
+            logger.LogDebug("Work order {0} has been deleted", order.Number);
+            return new StateCommandResult(null, request.TransitionVerbPresentTense,
+                "Work order has been deleted");
         }
 
         if (order.Id == Guid.Empty)
