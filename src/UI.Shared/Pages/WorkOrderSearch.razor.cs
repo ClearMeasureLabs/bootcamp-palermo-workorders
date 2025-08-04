@@ -1,5 +1,7 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.Core.Services;
+using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -13,6 +15,8 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
+    [Inject] public IUserSession? UserSession { get; set; }
+    [Inject] private NavigationManager? NavigationManager { get; set; }
 
     protected override void OnParametersSet()
     {
@@ -76,8 +80,18 @@ public partial class WorkOrderSearch : AppComponentBase
         await SearchWorkOrders();
     }
 
-    private Task DeleteItem(string? orderNumber)
+    private async Task DeleteItem(string? orderNumber)
     {
-        throw new NotImplementedException();
+        var currentUser = (await UserSession!.GetCurrentUserAsync())!;
+        WorkOrder workOrder =  (await Bus.Send(new WorkOrderByNumberQuery(orderNumber!)))!;
+
+        // TODO: get rid of magic strings
+        var matchingCommand = new StateCommandList()
+            .GetMatchingCommand(workOrder, currentUser!, "Delete");
+
+        var result = await Bus.Send(matchingCommand);
+        EventBus.Notify(new WorkOrderChangedEvent(result));
+
+        await HandleSearch();
     }
 }

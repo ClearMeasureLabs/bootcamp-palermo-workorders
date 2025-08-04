@@ -22,7 +22,7 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             order.Assignee = order.Creator; //EFCore reference checking
         }
 
-        if (order.Id != Guid.Empty && order.Status.Equals(WorkOrderStatus.None))
+        if (order.Id != Guid.Empty && order.Status.Equals(WorkOrderStatus.Deleted))
         {
             dbContext.Attach(order); 
             dbContext.Remove(order);

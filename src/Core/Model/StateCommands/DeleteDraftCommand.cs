@@ -14,7 +14,7 @@ public record DeleteDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) :
 
     public override WorkOrderStatus GetEndStatus()
     {
-        return WorkOrderStatus.None;
+        return WorkOrderStatus.Deleted;
     }
 
     protected override bool UserCanExecute(Employee currentUser)
@@ -24,6 +24,6 @@ public record DeleteDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) :
 
     public override string TransitionVerbPresentTense => Name;
 
-    public override string TransitionVerbPastTense => string.Empty;
+    public override string TransitionVerbPastTense => "Deleted";
 
 }

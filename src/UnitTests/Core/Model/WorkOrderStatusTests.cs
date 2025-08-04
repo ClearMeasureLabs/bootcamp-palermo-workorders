@@ -12,12 +12,13 @@ public class WorkOrderStatusTests
     {
         var statuses = WorkOrderStatus.GetAllItems();
 
-        Assert.That(statuses.Length, Is.EqualTo(5));
+        Assert.That(statuses.Length, Is.EqualTo(6));
         Assert.That(statuses[0], Is.EqualTo(WorkOrderStatus.Draft));
         Assert.That(statuses[1], Is.EqualTo(WorkOrderStatus.Assigned));
         Assert.That(statuses[2], Is.EqualTo(WorkOrderStatus.InProgress));
         Assert.That(statuses[3], Is.EqualTo(WorkOrderStatus.Complete));
         Assert.That(statuses[4], Is.EqualTo(WorkOrderStatus.Cancelled));
+        Assert.That(statuses[5], Is.EqualTo(WorkOrderStatus.Deleted));
     }
 
     [Test]
