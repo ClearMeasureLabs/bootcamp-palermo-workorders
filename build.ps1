@@ -1,9 +1,4 @@
-param(
-    [string]$flywayCliDir = "$base_dir\flyway"
-)
-
 . .\BuildFunctions.ps1
-. .\FlywayFunctions.ps1
 
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
@@ -13,8 +8,6 @@ $integrationTestProjectPath = "$source_dir\IntegrationTests"
 $acceptanceTestProjectPath = "$source_dir\AcceptanceTests"
 $uiProjectPath = "$source_dir\UI\Server"
 $databaseProjectPath = "$source_dir\Database"
-$databaseFlywayProjectPath = "$source_dir\DatabaseFlyway"
-$mauiProjectPath = "$source_dir\UI\Maui"
 $projectConfig = $env:BuildConfiguration
 $framework = "net9.0"
 $version = $env:BUILD_BUILDNUMBER
@@ -26,25 +19,12 @@ $test_dir = "$build_dir\test"
 
 
 $aliaSql = "$source_dir\Database\scripts\AliaSql.exe"
-$flywayCli = "$flywayCliDir\flyway.cmd"
 
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild"}
 
-#We will create 3x databases for Flyway
 $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName}
-
-$devDatabaseName = $databaseName + "_Dev"
-$shadowDatabaseName = $databaseName + "_Shadow"
-
-#We may need three separate servers, but for initialization and/or testing, just use the same, root SQL Server for the 3x test Flyway dbs.
-$script:databaseServer = $databaseServer
-if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB"}
-
-$script:devDatabaseServer = $databaseServer
-$script:shadowDatabaseServer = $databaseServer
-
 
 $databaseScripts = "$source_dir\Database\scripts"
 
@@ -149,21 +129,6 @@ Function MigrateDatabaseLocal {
 	exec{
 		& $aliaSql $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
 	}
-	
-	if ($migrateDbWithFlyway) {
-		#call 'flyaway migrate' with db parameters
-		$migrationsPath = "$databaseFlywayProjectPath\migrations"
-		$flywayParameters = @(
-			"-configFiles=$databaseFlywayProjectPath\flyway.toml"
-			"-url=jdbc:sqlserver://$databaseServerFunc;databaseName=$databaseNameFunc;encrypt=false;integratedSecurity=true;trustServerCertificate=true"
-			"-locations=filesystem:$migrationsPath"
-			"migrate"
-		)
-
-		exec {
-				& $flywayCli $flywayParameters
-		}
-	}
 }
 
 Function PackageUI {    
@@ -178,12 +143,6 @@ Function PackageUI {
 Function PackageDatabase {    
     exec{
 		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
-	}
-}
-
-Function PackageDatabaseFlyway {    
-    exec{
-		& dotnet-octo pack --id "$projectName.DatabaseFlyway" --version $version --basePath $databaseFlywayProjectPath --outFolder $build_dir --overwrite
 	}
 }
 
@@ -212,7 +171,6 @@ Function Package{
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
     PackageUI
     PackageDatabase
-    PackageDatabaseFlyway
     PackageAcceptanceTests
 	PackageScript
 }
@@ -224,15 +182,6 @@ Function PrivateBuild{
 	Init
 	Compile
 	UnitTests
-	
-	#We need 3 databases for 
-	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
-	
-	#These are extra Dbs that are can be part of a Flyway setup
-	if ($migrateDbWithFlyway) {
-		MigrateDatabaseLocal -databaseServerFunc $devDatabaseServer -databaseNameFunc $devDatabaseName
-		MigrateDatabaseLocal -databaseServerFunc $shadowDatabaseServer -databaseNameFunc $shadowDatabaseName
-	}
 	IntegrationTest
 	AcceptanceTests
 	

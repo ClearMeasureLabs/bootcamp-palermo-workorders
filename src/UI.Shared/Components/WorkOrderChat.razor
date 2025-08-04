@@ -67,7 +67,7 @@
 
         try
         {
-            var workOrderChatQuery = new WorkOrderChatQuery(userMessage, _currentWorkOrder);
+            var workOrderChatQuery = new WorkOrderChatQuery(userMessage, _currentWorkOrder ?? throw new InvalidOperationException());
             var response = await Bus.Send(workOrderChatQuery);
 
             var aiContent = response.Text ?? "No response received.";
