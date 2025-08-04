@@ -31,7 +31,7 @@ public class StateCommandList
     public IStateCommand GetMatchingCommand(WorkOrder order, Employee currentUser, string name)
     {
         var stateCommand = GetValidStateCommands(order, currentUser)
-			.Single(command => command.Matches(name));
+        .Single(command => command.Matches(name));
         return stateCommand;
     }
 }
