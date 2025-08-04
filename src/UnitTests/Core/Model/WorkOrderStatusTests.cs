@@ -47,7 +47,6 @@ public class WorkOrderStatusTests
     {
         var original = WorkOrderStatus.Complete;
         var json = JsonSerializer.Serialize(original);
-        Console.WriteLine($"JSON: {json}");
         var deserialized = JsonSerializer.Deserialize<WorkOrderStatus>(json);
 
         Assert.That(deserialized, Is.EqualTo(original));
@@ -67,7 +66,6 @@ public class WorkOrderStatusTests
         };
 
         var json = JsonSerializer.Serialize(workOrder);
-        Console.WriteLine($"WorkOrder JSON: {json}");
         var deserialized = JsonSerializer.Deserialize<WorkOrder>(json);
 
         Assert.That(deserialized!.Status, Is.EqualTo(workOrder.Status));
