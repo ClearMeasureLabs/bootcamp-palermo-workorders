@@ -26,6 +26,9 @@ if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild"}
 $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName}
 
+$script:databaseServer = $databaseServer
+if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB"}
+
 $databaseScripts = "$source_dir\Database\scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0"}
@@ -182,6 +185,8 @@ Function PrivateBuild{
 	Init
 	Compile
 	UnitTests
+	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
+	
 	IntegrationTest
 	AcceptanceTests
 	
