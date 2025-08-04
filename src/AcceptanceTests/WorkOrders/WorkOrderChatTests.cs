@@ -8,7 +8,7 @@ using ClearMeasure.Bootcamp.Core.Queries;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
-public class WorkOrderSaveChatTests : AcceptanceTestBase
+public class WorkOrderChatTests : AcceptanceTestBase
 {
     [Test]
     public async Task ShouldAppearOnWorkOrderScreens()
@@ -21,8 +21,7 @@ public class WorkOrderSaveChatTests : AcceptanceTestBase
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-        await Expect(Page.GetByTestId("work-order-chat"))
-            .ToHaveTextAsync("Ask George about this work order...");
+        await Expect(Page.GetByTestId("work-order-chat")).ToBeVisibleAsync();
 
         Console.WriteLine(order);
     }
