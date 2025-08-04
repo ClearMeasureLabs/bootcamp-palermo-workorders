@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
+    <ProjectReference Include="..\LlmGateway\LlmGateway.csproj" />
   </ItemGroup>
 
 </Project>

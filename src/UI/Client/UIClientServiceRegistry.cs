@@ -1,10 +1,12 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
+using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Client.HealthChecks;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using Lamar;
 using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Palermo.BlazorMvc;
 
@@ -25,6 +27,17 @@ public class UIClientServiceRegistry : ServiceRegistry
         this.AddTransient<IBus, RemotableBus>();
 
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<UIClientServiceRegistry>());
+        this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CanConnectToLlmServerHealthCheck>());
+        this.AddSingleton<IChatClient>(provider =>
+        {
+            var endpoint = "http://localhost:11434/";
+            var modelId = "llama3.2";
+
+            return new OllamaChatClient(endpoint, modelId: modelId)
+                .AsBuilder()
+                .UseFunctionInvocation()
+                .Build();
+        });
 
         Scan(scanner =>
         {

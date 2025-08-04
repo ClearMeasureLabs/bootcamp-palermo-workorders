@@ -1,0 +1,160 @@
+﻿@inherits AppComponentBase
+@using ClearMeasure.Bootcamp.LlmGateway
+@using Microsoft.Extensions.AI
+@implements Palermo.BlazorMvc.IListener<WorkOrderSelectedEvent>
+
+@if (true)//_currentWorkOrder != null)
+{
+    <div class="form-group">
+        <label class="form-label">AI Assistant:</label>
+        <div class="chat-container">
+            @if (_chatMessages.Any())
+            {
+                <div class="chat-history">
+                    @foreach (var message in _chatMessages)
+                    {
+                        <div class="chat-message @(message.IsUser ? "user-message" : "ai-message")">
+                            <div class="message-content">@message.Content</div>
+                        </div>
+                    }
+                </div>
+            }
+            
+            @if (_isLoading)
+            {
+                <div class="chat-loading">
+                    <span>AI is thinking...</span>
+                </div>
+            }
+            
+            <div class="chat-input-container">
+                <InputText @bind-Value="_prompt" 
+                          class="form-control chat-input" 
+                          placeholder="Ask the AI assistant about this work order..."/>
+                <button type="button" 
+                        class="btn btn-secondary chat-send-btn" 
+                        @onclick="SendMessage">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private WorkOrder _currentWorkOrder = null!;
+    private string _prompt = "";
+    private bool _isLoading = false;
+    private List<ChatMessage> _chatMessages = new();
+
+    public void Handle(WorkOrderSelectedEvent theEvent)
+    {
+        _currentWorkOrder = theEvent.CurrentWorkOrder;
+        _prompt = "";
+        _chatMessages.Clear();
+        StateHasChanged();
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_prompt) || _isLoading)
+            return;
+
+        var userMessage = _prompt.Trim();
+        _chatMessages.Add(new ChatMessage { Content = userMessage, IsUser = true });
+        _isLoading = true;
+        StateHasChanged();
+        _prompt = "";
+
+        try
+        {
+            var workOrderChatQuery = new WorkOrderChatQuery(userMessage);
+            var response = await Bus.Send(workOrderChatQuery);
+            
+            var aiContent = response.Text ?? "No response received.";
+            _chatMessages.Add(new ChatMessage { Content = aiContent, IsUser = false });
+        }
+        catch (Exception ex)
+        {
+            _chatMessages.Add(new ChatMessage { Content = $"Error: {ex.Message}", IsUser = false });
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private class ChatMessage
+    {
+        public string Content { get; set; } = "";
+        public bool IsUser { get; set; }
+    }
+}
+
+<style>
+    .chat-container {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 12px;
+        background-color: #f9f9f9;
+        max-height: 400px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-history {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 12px;
+        max-height: 300px;
+    }
+
+    .chat-message {
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        max-width: 80%;
+    }
+
+    .user-message {
+        background-color: #007bff;
+        color: white;
+        align-self: flex-end;
+        margin-left: auto;
+        text-align: right;
+    }
+
+    .ai-message {
+        background-color: #e9ecef;
+        color: #333;
+        align-self: flex-start;
+        margin-right: auto;
+    }
+
+    .message-content {
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+
+    .chat-loading {
+        font-style: italic;
+        color: #6c757d;
+        padding: 8px;
+        text-align: center;
+    }
+
+    .chat-input-container {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .chat-input {
+        flex: 1;
+    }
+
+    .chat-send-btn {
+        white-space: nowrap;
+    }
+</style>

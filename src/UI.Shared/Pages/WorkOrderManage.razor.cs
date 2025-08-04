@@ -12,6 +12,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 [Route("/workorder/manage/{id?}")]
 public partial class WorkOrderManage : AppComponentBase
 {
+    private WorkOrder? _workOrder;
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
     [Inject] public IUserSession? UserSession { get; set; }
     [Inject] private NavigationManager? NavigationManager { get; set; }
@@ -57,6 +58,11 @@ public partial class WorkOrderManage : AppComponentBase
         var commandList = new StateCommandList();
         Model.IsReadOnly = !commandList!.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
+        _workOrder = workOrder;
+        if (_workOrder != null)
+        {
+            EventBus.Notify(new WorkOrderSelectedEvent(_workOrder));
+        }
     }
 
     private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)
