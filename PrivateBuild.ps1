@@ -1,7 +1,7 @@
 param (
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$databaseServer = "(LocalDb)\MSSQLLocalDB",
+    [string]$databaseServer = "localhost\SQLEXPRESS",
 	
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
