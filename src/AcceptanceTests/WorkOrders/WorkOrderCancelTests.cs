@@ -17,11 +17,11 @@ public class WorkOrderCancelTests : AcceptanceTestBase
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + 
-                    CancelledToDraftCommand.Name);
+                    AssignedToCancelledCommand.Name);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
-            .ToHaveTextAsync(WorkOrderStatus.Draft.FriendlyName);
+            .ToHaveTextAsync(WorkOrderStatus.Cancelled.FriendlyName);
 
     }
 
