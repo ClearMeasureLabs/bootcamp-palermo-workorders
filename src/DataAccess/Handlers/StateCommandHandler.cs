@@ -28,11 +28,8 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             dbContext.Remove(order);
 
             logger.LogDebug("Work order {0} has been deleted", order.Number);
-            return new StateCommandResult(null, request.TransitionVerbPresentTense,
-                "Work order has been deleted");
         }
-
-        if (order.Id == Guid.Empty)
+        else if (order.Id == Guid.Empty)
         {
             dbContext.Attach(order);
             dbContext.Add(order);
