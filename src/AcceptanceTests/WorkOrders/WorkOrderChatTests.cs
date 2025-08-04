@@ -21,12 +21,28 @@ public class WorkOrderSaveChatTests : AcceptanceTestBase
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-        //test code india
-        var test = Page.GetByTestId("work-order-chat");
-        var test1 = Page.GetByText("Ask the AI assistant about this work order...");
+        await Expect(Page.GetByTestId("work-order-chat"))
+            .ToHaveTextAsync("Ask George about this work order...");
 
-        await Expect(Page.GetByText("Ask the AI assistant about this work order..."))
-            .ToBeVisibleAsync();
+        Console.WriteLine(order);
+    }
+
+    [Ignore("India's computer didn't want to download the Llama")]
+    [Test]
+    public async Task ShouldReturnAnyInformationThatIsNotAnError()
+    {
+        await LoginAsCurrentUser();
+
+        WorkOrder order = await CreateAndSaveNewWorkOrder();
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+        order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        await Input("work-order-chat", "What is the status of this item?");
+
+        await Expect(Page.GetByTestId("work-order-chat")).Not
+            .ToHaveTextAsync("Error");
 
         Console.WriteLine(order);
     }

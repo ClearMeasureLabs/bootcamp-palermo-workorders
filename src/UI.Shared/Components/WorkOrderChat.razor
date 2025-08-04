@@ -5,7 +5,7 @@
 @if (_currentWorkOrder != null && _currentWorkOrder.Assignee != null)
 {
     <div class="form-group">
-        <label class="form-label">AI Assistant:</label>
+        <label class="form-label">George (AI Assistant):</label>
         <div class="chat-container">
             @if (_chatMessages.Any())
             {
@@ -22,15 +22,15 @@
             @if (_isLoading)
             {
                 <div class="chat-loading">
-                    <span>AI is thinking...</span>
+                    <span>George is thinking...</span>
                 </div>
             }
 
             <div class="chat-input-container">
                 <InputText @bind-Value="_prompt"
-                           id="work-order-chat"
+                           data-testid="work-order-chat"
                            class="form-control chat-input"
-                           placeholder="Ask the AI assistant about this work order..."/>
+                           placeholder="Ask George about this work order..."/>
                 <button type="button"
                         class="btn btn-secondary chat-send-btn"
                         @onclick="SendMessage">
