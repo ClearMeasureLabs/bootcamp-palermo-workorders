@@ -24,4 +24,26 @@ public class WorkOrderCancelTests : AcceptanceTestBase
             .ToHaveTextAsync(WorkOrderStatus.Cancelled.FriendlyName);
 
     }
+
+    [Test]
+    public async Task ShouldBeginAndCancel()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        order = await BeginExistingWorkOrder(order);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) +
+                    InProgressToCancelledCommand.Name);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
+            .ToHaveTextAsync(WorkOrderStatus.Cancelled.FriendlyName);
+    }
 }
