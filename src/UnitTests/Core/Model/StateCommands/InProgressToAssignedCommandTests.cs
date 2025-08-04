@@ -5,7 +5,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
 [TestFixture]
-public class InProgressToAsCompleteCommandTests : StateCommandBaseTests
+public class InProgressToAssignedCommandTests : StateCommandBaseTests
 {
     [Test]
     public void ShouldNotBeValidInWrongStatus()
@@ -15,7 +15,7 @@ public class InProgressToAsCompleteCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Assignee = employee;
 
-        var command = new InProgressToCompleteCommand(order, employee);
+        var command = new InProgressToAssignedCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -27,7 +27,7 @@ public class InProgressToAsCompleteCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Assignee = employee;
 
-        var command = new InProgressToAssignedCommand(order, new Employee());
+        var command = new InProgressToCompleteCommand(order, new Employee());
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -39,7 +39,7 @@ public class InProgressToAsCompleteCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Assignee = employee;
 
-        var command = new InProgressToAssignedCommand(order, employee);
+        var command = new InProgressToCompleteCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -52,14 +52,15 @@ public class InProgressToAsCompleteCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Assignee = employee;
 
-        var command = new InProgressToAssignedCommand(order, employee);
+        var command = new InProgressToCompleteCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Complete));
+        Assert.That(order.CompletedDate, Is.Not.Null);
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new InProgressToAssignedCommand(order, employee);
+        return new InProgressToCompleteCommand(order, employee);
     }
 }

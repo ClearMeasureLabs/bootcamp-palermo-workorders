@@ -11,7 +11,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 internal class WorkOrderShelveTests : AcceptanceTestBase
 {
     [Test]
-    public async Task ShouldCompleteWorkOrder()
+    public async Task ShouldShelveWorkOrder()
     {
         await LoginAsCurrentUser();
 
