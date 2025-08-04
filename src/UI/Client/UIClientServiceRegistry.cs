@@ -1,3 +1,5 @@
+using Azure;
+using Azure.AI.OpenAI;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.LlmGateway;
@@ -8,7 +10,10 @@ using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
+using OpenAI;
+using OpenAI.Chat;
 using Palermo.BlazorMvc;
+using static System.Net.WebRequestMethods;
 
 namespace ClearMeasure.Bootcamp.UI.Client;
 
@@ -32,12 +37,23 @@ public class UIClientServiceRegistry : ServiceRegistry
         {
             var endpoint = "http://localhost:11434/";
             var modelId = "llama3.2";
-
+        
             return new OllamaChatClient(endpoint, modelId: modelId)
                 .AsBuilder()
                 .UseFunctionInvocation()
                 .Build();
         });
+        
+        // this.AddSingleton<IChatClient>(sp =>
+        // {
+        //     var configuration = sp.GetRequiredService<IConfiguration>();
+        //     var apiKey = "ask me later";
+        //     var openAIUrl = "https://ai-openai-temp-test.openai.azure.com/";
+        //     var openAIClient = new AzureOpenAIClient(new Uri(openAIUrl), new AzureKeyCredential(apiKey));
+        //     ChatClient chatClient = openAIClient.GetChatClient("gpt-4o-mini");
+        //     return chatClient.AsIChatClient();
+        // });
+
 
         Scan(scanner =>
         {
