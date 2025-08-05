@@ -5,6 +5,9 @@ builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
 
+// Add background services
+builder.Services.AddHostedService<WorkOrderCancellationAgent>();
+
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
 

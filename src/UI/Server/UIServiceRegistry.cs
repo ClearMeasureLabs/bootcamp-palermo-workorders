@@ -28,7 +28,7 @@ public class UiServiceRegistry : ServiceRegistry
         });
 
         // Register background service
-        // this.AddHostedService<WorkOrderAutoAssignmentService>();
+        this.AddHostedService<WorkOrderCancellationAgent>();
 
         Scan(scanner =>
         {
