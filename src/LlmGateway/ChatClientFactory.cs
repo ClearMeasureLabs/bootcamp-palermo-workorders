@@ -15,7 +15,7 @@ public class ChatClientFactory()
 
     private static IChatClient BuildOllamaChatClient()
     {
-        var endpoint = "http://localhost:11434/";
+        var endpoint = "http://Dev-MRD-Mac.local:11434/";
         var modelId = "llama3.2";
         
         return new OllamaChatClient(endpoint, modelId: modelId)
