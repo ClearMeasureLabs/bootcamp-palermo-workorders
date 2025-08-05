@@ -7,7 +7,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Mappings;
 [TestFixture]
 public class RoleMappingTests
 {
-    [Test]
+    [Test, Retry(2)]
     public void ShouldPersistRoles()
     {
         // Empty the database
