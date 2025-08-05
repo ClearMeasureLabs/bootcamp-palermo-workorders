@@ -66,7 +66,7 @@ public class WorkOrderAutoAssignmentService : BackgroundService
 
                 // Set assignee and send DraftToAssignedCommand
                 workOrder.Assignee = assignee;
-                var command = new DraftToAssignedCommand(workOrder, workOrder.Creator);
+                var command = new DraftToAssignedCommand(workOrder, workOrder.Creator!);
                 await bus.Send(command);
                 
                 _logger.LogInformation("Successfully assigned work order {WorkOrderNumber} to {AssigneeUserName}", 
