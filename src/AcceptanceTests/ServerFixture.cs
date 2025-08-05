@@ -8,7 +8,7 @@ public class ServerFixture
 {
     private const string ProjectPath = "../../../../UI/Server";
     private const int WaitTimeoutSeconds = 60;
-    public static bool StartLocalServer { get; set; }
+    public static bool StartLocalServer { get; set; } = true;
     public static int SlowMo { get; set; } = 100;
     public static string ApplicationBaseUrl { get; private set; } = string.Empty;
     private Process? _serverProcess;
