@@ -27,7 +27,14 @@ public class UiServiceRegistry : ServiceRegistry
             return new Bus(mediator, telemetryClient);
         });
 
-        // Register background service
+        // Register ChatClientFactory for AI services
+        this.AddScoped<ChatClientFactory>();
+        
+        // Register AI agent and background service for work order cancellation
+        this.AddScoped<WorkOrderCancellationAgent>();
+        this.AddHostedService<WorkOrderCancellationService>();
+
+        // Register background service for auto-assignment
         // this.AddHostedService<WorkOrderAutoAssignmentService>();
 
         Scan(scanner =>
