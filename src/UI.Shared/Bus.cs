@@ -32,6 +32,8 @@ public class Bus : IBus
     public virtual async Task<object?> Send(object request)
     {
         var response = await _mediator.Send(request);
+        RecordCustomEvent(request);
+        RecordTrace(request);
         return response;
     }
 
