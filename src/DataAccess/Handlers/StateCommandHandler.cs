@@ -53,8 +53,8 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         logger.LogInformation("Executed");
 
         // For delete, return null for the order?
-        //var resultOrder = request.GetEndStatus().Equals(WorkOrderStatus.None) ? null : order;
+        var resultOrder = request.GetEndStatus().Equals(WorkOrderStatus.None) ? null : order;
         //currently, expects an order to not be null
-        return new StateCommandResult(order, request.TransitionVerbPresentTense, debugMessage);
+        return new StateCommandResult(resultOrder!, request.TransitionVerbPresentTense, debugMessage);
     }
 }

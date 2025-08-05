@@ -19,7 +19,7 @@ public class WorkOrderDeleteDraftTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var deletedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
+        var deletedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
         deletedOrder.ShouldBeNull();
     }
 

@@ -30,7 +30,7 @@ public class StateCommandHandlerForDeleteTests : IntegratedTestBase
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
         var result = await handler.Handle(command);
 
-        result.WorkOrder.Status.ShouldBe(WorkOrderStatus.None);
+        result.WorkOrder.ShouldBeNull();
         var context3 = TestHost.GetRequiredService<DbContext>();
         var deletedOrder = await context3.Set<WorkOrder>().FindAsync(workOrder.Id);
         deletedOrder.ShouldBeNull();
