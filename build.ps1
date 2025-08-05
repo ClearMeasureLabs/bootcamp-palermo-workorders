@@ -28,6 +28,8 @@ if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName}
 
 $script:databaseServer = $databaseServer
 if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "Dev-MRD-Mac.local,1433"}
+$databaseUserName = "sa"
+$databaseUserPassword = "Password123"
 
 $databaseScripts = "$source_dir\Database\scripts"
 
@@ -130,7 +132,7 @@ Function MigrateDatabaseLocal {
 		[string]$databaseNameFunc
 	)
 	exec{
-		& $aliaSql $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
+		& $aliaSql $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts $databaseUserName $databaseUserPassword
 	}
 }
 
