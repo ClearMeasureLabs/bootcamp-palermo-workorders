@@ -6,6 +6,7 @@ using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Lamar;
 using MediatR;
+using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
@@ -18,7 +19,12 @@ public class UiServiceRegistry : ServiceRegistry
 
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<UiServiceRegistry>());
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<HealthCheck>());
-        this.AddTransient<IBus, Bus>();
+        this.AddTransient<IBus>(provider =>
+        {
+            var mediator = provider.GetRequiredService<IMediator>();
+            var telemetryClient = provider.GetService<TelemetryClient>();
+            return new Bus(mediator, telemetryClient);
+        });
 
         // Register background service
         // this.AddHostedService<WorkOrderAutoAssignmentService>();
