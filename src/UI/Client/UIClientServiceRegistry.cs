@@ -30,16 +30,7 @@ public class UIClientServiceRegistry : ServiceRegistry
 
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<UIClientServiceRegistry>());
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CanConnectToLlmServerHealthCheck>());
-        // this.AddSingleton<IChatClient>(provider =>
-        // {
-        //     var endpoint = "http://localhost:11434/";
-        //     var modelId = "llama3.2";
-        //
-        //     return new OllamaChatClient(endpoint, modelId: modelId)
-        //         .AsBuilder()
-        //         .UseFunctionInvocation()
-        //         .Build();
-        // });
+        
         
         this.AddSingleton<ChatClientFactory>();
 

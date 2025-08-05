@@ -10,6 +10,8 @@ public class ChatClientFactory(IBus bus)
 {
     public async Task<IChatClient> GetChatClient()
     {
+        // return BuildOllamaChatClient();
+
         var config = await bus.Send(new ChatClientConfigQuery());
         var apiKey = config.AiOpenAiApiKey;
         var openAiUrl = config.AiOpenAiUrl;
@@ -21,5 +23,16 @@ public class ChatClientFactory(IBus bus)
 
         ChatClient chatClient = openAiClient.GetChatClient(openAiModel);
         return chatClient.AsIChatClient();
+    }
+
+    private static IChatClient BuildOllamaChatClient()
+    {
+        var endpoint = "http://localhost:11434/";
+        var modelId = "llama3.2";
+        
+        return new OllamaChatClient(endpoint, modelId: modelId)
+            .AsBuilder()
+            .UseFunctionInvocation()
+            .Build();
     }
 }
