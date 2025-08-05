@@ -4,6 +4,6 @@ public class WorkOrderNumberGenerator : IWorkOrderNumberGenerator
 {
     public string GenerateNumber()
     {
-        return Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
+        return Guid.NewGuid().ToString().Substring(0, 6).ToUpper();
     }
 }

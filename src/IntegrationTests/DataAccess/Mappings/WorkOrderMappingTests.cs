@@ -16,7 +16,7 @@ public class WorkOrderMappingTests
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
         var workOrder = new WorkOrder
         {
-            Number = "WO-01",
+            Number = "WO-013",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
             RoomNumber = "CR-101",
@@ -40,7 +40,7 @@ public class WorkOrderMappingTests
         }
 
         rehydratedWorkOrder.Id.ShouldBe(workOrder.Id);
-        rehydratedWorkOrder.Number.ShouldBe("WO-01");
+        rehydratedWorkOrder.Number.ShouldBe("WO-013");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");

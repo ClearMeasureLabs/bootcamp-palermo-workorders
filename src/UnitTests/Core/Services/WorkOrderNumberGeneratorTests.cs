@@ -11,6 +11,6 @@ public class WorkOrderNumberGeneratorTests
         var generator = new WorkOrderNumberGenerator();
         var number = generator.GenerateNumber();
 
-        Assert.That(number.Length, Is.EqualTo(5));
+        Assert.That(number.Length, Is.EqualTo(6));
     }
 }

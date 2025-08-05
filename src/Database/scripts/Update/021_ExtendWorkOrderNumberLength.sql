@@ -1,0 +1,11 @@
+BEGIN TRANSACTION
+GO
+PRINT N'Altering [dbo].[WorkOrder] Number column from NVARCHAR(5) to NVARCHAR(6)'
+GO
+ALTER TABLE [dbo].[WorkOrder] ALTER COLUMN [Number] NVARCHAR(6) NOT NULL
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO
