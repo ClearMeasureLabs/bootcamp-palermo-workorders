@@ -1,7 +1,9 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
+using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 
@@ -260,5 +262,46 @@ public class WorkOrderQueryHandlerTests
         rehydratedOrder.Assignee.FirstName.ShouldBe(assignee.FirstName);
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
+    }
+
+    [Test]
+    public async Task ShouldDeleteDraftWorkOrder()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = new Employee("1", "John", "Doe", "john.doe@example.com");
+        var assignee = new Employee("2", "Jane", "Smith", "jane.smith@example.com");
+
+        var workOrder = new WorkOrder
+        {
+            Creator = assignee,
+            Assignee = assignee,
+            Number = "123",
+            Title = "Fix plumbing",
+            Description = "Fix the plumbing in room 101",
+            RoomNumber = "101",
+            Status = WorkOrderStatus.Draft
+        };
+
+        // Save the work order to the database
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(currentUser);
+            context.Add(assignee);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+        }
+
+        // Execute the delete command
+        var command = RemotableRequestTests.SimulateRemoteObject(new DeleteDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        var result = await handler.Handle(command);
+
+        // Verify the work order is deleted
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var deletedOrder = await context.Set<WorkOrder>().FindAsync(workOrder.Id);
+            deletedOrder.ShouldBeNull();
+        }
     }
 }

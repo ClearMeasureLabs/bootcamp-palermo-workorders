@@ -9,14 +9,15 @@ namespace ClearMeasure.Bootcamp.UnitTests.Core.Services;
 public class StateCommandListTests
 {
     [Test]
-    public void ShouldGetNoValidStateCommandsForWrongUser()
+    public void ShouldGetSingleValidStateCommandsForWrongUser()
     {
         var facilitator = new StateCommandList();
         var workOrder = new WorkOrder();
         var employee = new Employee();
         var commands = facilitator.GetValidStateCommands(workOrder, employee);
 
-        Assert.That(commands.Length, Is.EqualTo(0));
+        Assert.That(commands.Length, Is.EqualTo(1));
+        Assert.That(commands.First(), Is.TypeOf(typeof(DeleteDraftCommand)));
     }
 
     [Test]
@@ -25,7 +26,7 @@ public class StateCommandListTests
         var facilitator = new StateCommandList();
         var commands = facilitator.GetAllStateCommands(new WorkOrder(), new Employee());
 
-        Assert.That(commands.Length, Is.EqualTo(7));
+        Assert.That(commands.Length, Is.EqualTo(8));
 
         Assert.That(commands[0], Is.InstanceOf(typeof(InProgressToCancelledCommand)));
         Assert.That(commands[1], Is.InstanceOf(typeof(SaveDraftCommand)));
@@ -34,6 +35,7 @@ public class StateCommandListTests
         Assert.That(commands[4], Is.InstanceOf(typeof(AssignedToInProgressCommand)));
         Assert.That(commands[5], Is.InstanceOf(typeof(InProgressToCompleteCommand)));
         Assert.That(commands[6], Is.InstanceOf(typeof(InProgressToAssigned)));
+        Assert.That(commands[7], Is.InstanceOf(typeof(DeleteDraftCommand)));
     }
 
     [Test]

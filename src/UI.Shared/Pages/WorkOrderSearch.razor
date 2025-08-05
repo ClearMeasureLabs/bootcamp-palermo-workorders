@@ -70,6 +70,7 @@
                 <table class="grid-data">
                     <thead>
                     <tr>
+                        <th>   </th>
                         <th>WO #</th>
                         <th>Creator</th>
                         <th>Assignee</th>
@@ -84,6 +85,10 @@
                         {
                             var rowClass = i++ % 2 == 0 ? "odd" : "even";
                             <tr class="@rowClass">
+                                @{
+                                    var deleteButtontId = Elements.DeleteWorkOrderButton + order.Number;
+                                }
+                                    <td><button data-testid="@deleteButtontId" type="button" class="btn btn-danger" style="display: @((order.Status == WorkOrderStatus.Draft && order.Id != Guid.Empty) ? "block" : "none");" @onclick="(() => DeleteItem(order.Number))">Delete</button></td>
                                 <td>
                                     @{
                                         var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
@@ -116,7 +121,8 @@
         AssigneeSelect,
         StatusSelect,
         SearchButton,
-        WorkOrderLink
+        WorkOrderLink,
+        DeleteWorkOrderButton
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();
