@@ -36,4 +36,12 @@ public class ClientHealthCheckTests : AcceptanceTestBase
         var innerTextAsync = await statusSpan.InnerTextAsync();
         innerTextAsync.ShouldBe(nameof(HealthStatus.Healthy));
     }
+
+    [Test]
+    public async Task FirstStartShouldValidateServerHealthChecks()
+    {
+        await Page.GotoAsync("/_healthcheck");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        (await Page.ContentAsync()).ShouldContain("Healthy");
+    }
 }
