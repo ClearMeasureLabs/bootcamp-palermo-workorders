@@ -4,7 +4,7 @@ using Microsoft.Extensions.AI;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class WorkOrderChatHandler(IChatClient client) : IRequestHandler<WorkOrderChatQuery, ChatResponse>
+public class WorkOrderChatHandler(ChatClientFactory factory) : IRequestHandler<WorkOrderChatQuery, ChatResponse>
 {
     private readonly ChatOptions _chatOptions = new()
     {
@@ -28,6 +28,8 @@ public class WorkOrderChatHandler(IChatClient client) : IRequestHandler<WorkOrde
             new(ChatRole.User, prompt)
             
         };
+
+        IChatClient client = await factory.GetChatClient();
         ChatResponse responseAsync = await client.GetResponseAsync(chatMessages, _chatOptions);
         return responseAsync;
     }

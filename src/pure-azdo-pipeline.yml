@@ -157,9 +157,10 @@ stages:
                 codeCoverageEnabled: true
                 testRunTitle: 'Acceptance Tests'
                 diagnosticsEnabled: True
-                rerunFailedTestCasesMaxLimit: 2
+                rerunFailedTestCasesMaxLimit: 3
                 rerunFailedTests: true
                 rerunMaxAttempts: 2
+                rerunType: basedOnTestFailureCount
 
 
 # Deploying to UAT
