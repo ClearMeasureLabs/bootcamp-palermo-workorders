@@ -1,8 +1,8 @@
 BEGIN TRANSACTION
 GO
-PRINT N'Altering [dbo].[WorkOrder] Number column from NVARCHAR(5) to NVARCHAR(6)'
+PRINT N'Altering [dbo].[WorkOrder] Number column from NVARCHAR(6) to NVARCHAR(7)'
 GO
-ALTER TABLE [dbo].[WorkOrder] ALTER COLUMN [Number] NVARCHAR(6) NOT NULL
+ALTER TABLE [dbo].[WorkOrder] ALTER COLUMN [Number] NVARCHAR(7) NOT NULL
 GO
 IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
 GO

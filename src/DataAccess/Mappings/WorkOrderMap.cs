@@ -17,7 +17,7 @@ public class WorkOrderMap : IEntityFrameworkMapping
                 .ValueGeneratedOnAdd()
                 .HasDefaultValue(Guid.Empty);
 
-            entity.Property(e => e.Number).IsRequired().HasMaxLength(5);
+            entity.Property(e => e.Number).IsRequired().HasMaxLength(7);
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Description).HasMaxLength(4000);
             entity.Property(e => e.RoomNumber).HasMaxLength(50);

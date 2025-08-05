@@ -6,24 +6,12 @@ using OpenAI.Chat;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class ChatClientFactory(IBus bus)
+public class ChatClientFactory()
 {
     public async Task<IChatClient> GetChatClient()
     {
-        // return BuildOllamaChatClient();
-
-        var config = await bus.Send(new ChatClientConfigQuery());
-        var apiKey = config.AiOpenAiApiKey;
-        var openAiUrl = config.AiOpenAiUrl;
-        var openAiModel = config.AiOpenAiModel;
-
-        var credential = new AzureKeyCredential(apiKey ?? throw new InvalidOperationException());
-        var uri = new Uri(openAiUrl ?? throw new InvalidOperationException());
-        var openAiClient = new AzureOpenAIClient(uri, credential);
-
-        ChatClient chatClient = openAiClient.GetChatClient(openAiModel);
-        return chatClient.AsIChatClient();
-    }
+		return await Task.FromResult(BuildOllamaChatClient());
+	}
 
     private static IChatClient BuildOllamaChatClient()
     {
