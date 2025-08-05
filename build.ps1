@@ -102,6 +102,7 @@ Function IntegrationTest{
 }
 
 Function AcceptanceTests{
+	$projectConfig = "Debug"
 	Push-Location -Path $acceptanceTestProjectPath
 
 	pwsh bin/Debug/$framework/playwright.ps1 install 
