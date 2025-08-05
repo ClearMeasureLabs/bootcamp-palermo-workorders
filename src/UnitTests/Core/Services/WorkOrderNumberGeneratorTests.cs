@@ -6,11 +6,11 @@ namespace ClearMeasure.Bootcamp.UnitTests.Core.Services;
 public class WorkOrderNumberGeneratorTests
 {
     [Test]
-    public void ShouldBeFiveInLength()
+    public void ShouldBeSevenInLength()
     {
         var generator = new WorkOrderNumberGenerator();
         var number = generator.GenerateNumber();
 
-        Assert.That(number.Length, Is.EqualTo(6));
+        Assert.That(number.Length, Is.EqualTo(7));
     }
 }
