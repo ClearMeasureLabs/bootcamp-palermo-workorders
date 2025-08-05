@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -16,20 +17,30 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
 
         var order = request.WorkOrder;
-        if (order.Assignee == order.Creator)
-        {
-            order.Assignee = order.Creator; //EFCore reference checking
-        }
 
-        if (order.Id == Guid.Empty)
+        // Check for end state of None to handle delete
+        if (request.GetEndStatus().Equals(WorkOrderStatus.None))
         {
             dbContext.Attach(order);
-            dbContext.Add(order);
+            dbContext.Remove(order);
         }
         else
-        {
-            dbContext.Attach(order);
-            dbContext.Update(order);
+        {   
+            if (order.Assignee == order.Creator)
+            {
+                order.Assignee = order.Creator; //EFCore reference checking
+            }
+
+            if (order.Id == Guid.Empty)
+            {
+                dbContext.Attach(order);
+                dbContext.Add(order);
+            }
+            else
+            {
+                dbContext.Attach(order);
+                dbContext.Update(order);
+            }
         }
 
         await dbContext.SaveChangesAsync();
@@ -37,11 +48,12 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         var loweredTransitionVerb = request.TransitionVerbPastTense.ToLower();
         var workOrderNumber = order.Number;
         var fullName = request.CurrentUser.GetFullName();
-        var debugMessage = string.Format("{0} has {1} work order {2}", fullName, loweredTransitionVerb,
-            workOrderNumber);
+        var debugMessage = string.Format("{0} has {1} work order {2}", fullName, loweredTransitionVerb, workOrderNumber);
         logger.LogDebug(debugMessage);
         logger.LogInformation("Executed");
 
-        return new StateCommandResult(order, request.TransitionVerbPresentTense, debugMessage);
+        // For delete, return null for the order
+        var resultOrder = request.GetEndStatus().Equals(WorkOrderStatus.None) ? null : order;
+        return new StateCommandResult(resultOrder, request.TransitionVerbPresentTense, debugMessage);
     }
 }

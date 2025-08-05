@@ -24,7 +24,7 @@ public class StateCommandList
         commands.Add(new AssignedToInProgressCommand(workOrder, currentUser));
         commands.Add(new InProgressToCompleteCommand(workOrder, currentUser));
         commands.Add(new InProgressToAssigned(workOrder, currentUser));
-
+        commands.Add(new DeleteDraftCommand(workOrder, currentUser));
         return commands.ToArray();
     }
 
