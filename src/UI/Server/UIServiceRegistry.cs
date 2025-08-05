@@ -20,6 +20,9 @@ public class UiServiceRegistry : ServiceRegistry
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<HealthCheck>());
         this.AddTransient<IBus, Bus>();
 
+        // Register background service
+        // this.AddHostedService<WorkOrderAutoAssignmentService>();
+
         Scan(scanner =>
         {
             scanner.WithDefaultConventions();
