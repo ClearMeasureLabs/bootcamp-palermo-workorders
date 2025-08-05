@@ -8,6 +8,8 @@ builder.Services.AddSingleton(TimeProvider.System);
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
 
+builder.Services.AddHostedService<WorkOrderAutoCancellationService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
