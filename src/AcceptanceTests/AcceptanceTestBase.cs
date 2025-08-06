@@ -12,7 +12,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests;
 public abstract class AcceptanceTestBase : PageTest
 {
     public Employee CurrentUser { get; set; } = null!;
-    protected virtual bool? Headless { get; set; } = false;
+    protected virtual bool? Headless { get; set; } = true;
     protected virtual bool LoadDataOnSetup { get; set; } = true;
     protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
     protected new IPage Page { get; private set; }
