@@ -33,7 +33,7 @@ public class UIClientServiceRegistry : ServiceRegistry
         
         
         this.AddSingleton<ChatClientFactory>();
-
+        this.AddTransient<WorkOrderTool>();
 
         Scan(scanner =>
         {
