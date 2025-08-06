@@ -38,10 +38,11 @@ public class AutoCancelAgentTests : AcceptanceTestBase
 
         // Create a new work order
         var order = await CreateAndSaveNewWorkOrder();
+        order.Title = "test demo";
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
         // Assign the work order to Homer Simpson with test keywords
-        order.Description += " test ";
+        order.Description += " test demo temporary";
         await AssignExistingWorkOrder(order, homerSimpson.UserName);
 
         // Click on work order again to verify it was auto-cancelled

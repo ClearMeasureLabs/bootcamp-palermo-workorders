@@ -4,12 +4,13 @@ using Microsoft.Extensions.AI;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class WorkOrderChatHandler(ChatClientFactory factory) : IRequestHandler<WorkOrderChatQuery, ChatResponse>
+public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workOrderTool) : IRequestHandler<WorkOrderChatQuery, ChatResponse>
 {
     private readonly ChatOptions _chatOptions = new()
     {
         Tools = [
-            AIFunctionFactory.Create(WorkOrderTool.GetWorkOrderByNumber),
+            AIFunctionFactory.Create(workOrderTool.GetWorkOrderByNumber),
+            AIFunctionFactory.Create(workOrderTool.GetAllEmployees),
         ]
     };
 

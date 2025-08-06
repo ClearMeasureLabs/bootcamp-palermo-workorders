@@ -37,6 +37,7 @@ public class WorkOrderEvaluationAgent
                 Analyze this work order and determine if it should be cancelled:
 
                 Decision criteria:
+                - Ignore and skip if work order title is 'from automation'
                 - Cancel if assigned more than 24 hours ago
                 - Cancel if description contains keywords like 'test', 'demo', or 'temporary'
                 - Cancel if room number is 'TEST' or similar
