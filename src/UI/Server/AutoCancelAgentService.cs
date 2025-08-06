@@ -1,6 +1,8 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.UI.Shared;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
 
@@ -16,7 +18,7 @@ namespace ClearMeasure.Bootcamp.UI.Server;
 /// </summary>
 public class AutoCancelAgentService : BackgroundService
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScope _serviceScope;
     private readonly ILogger<AutoCancelAgentService> _logger;
     private readonly TimeProvider _timeProvider;
 
@@ -25,7 +27,7 @@ public class AutoCancelAgentService : BackgroundService
         ILogger<AutoCancelAgentService> logger,
         TimeProvider timeProvider)
     {
-        _serviceProvider = serviceProvider;
+        _serviceScope = serviceProvider.CreateScope();
         _logger = logger;
         _timeProvider = timeProvider;
     }
@@ -58,9 +60,8 @@ public class AutoCancelAgentService : BackgroundService
 
     private async Task EvaluateAssignedWorkOrdersAsync()
     {
-        using var scope = _serviceProvider.CreateScope();
-        var bus = scope.ServiceProvider.GetRequiredService<IBus>();
-        var agent = scope.ServiceProvider.GetRequiredService<WorkOrderEvaluationAgent>();
+        var bus = _serviceScope.ServiceProvider.GetRequiredService<IBus>();
+        var agent = _serviceScope.ServiceProvider.GetRequiredService<WorkOrderEvaluationAgent>();
 
         try
         {
@@ -93,7 +94,7 @@ public class AutoCancelAgentService : BackgroundService
                     {
                         _logger.LogInformation("AI agent recommends cancelling WorkOrder {WorkOrderNumber}", 
                             workOrder.Number);
-                        await agent.CancelWorkOrderAsync(workOrder);
+                        await CancelWorkOrderAsync(workOrder);
                     }
                 }
                 catch (Exception ex)
@@ -106,6 +107,32 @@ public class AutoCancelAgentService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving assigned work orders");
+        }
+    }
+
+    public async Task CancelWorkOrderAsync(WorkOrder workOrder)
+    {
+        using IServiceScope newScopeForExecution = _serviceScope.ServiceProvider.CreateScope();
+        IBus bus = newScopeForExecution.ServiceProvider.GetRequiredService<IBus>();
+        try
+        {
+            if (workOrder.Creator == null)
+            {
+                _logger.LogWarning("Cannot cancel WorkOrder {WorkOrderNumber} - Creator is null",
+                    workOrder.Number);
+                return;
+            }
+
+            var cancelCommand = new AssignedToCancelledCommand(workOrder, workOrder.Creator);
+            await bus.Send(cancelCommand);
+
+            _logger.LogInformation("Successfully cancelled WorkOrder {WorkOrderNumber}",
+                workOrder.Number);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling WorkOrder {WorkOrderNumber}",
+                workOrder.Number);
         }
     }
 }

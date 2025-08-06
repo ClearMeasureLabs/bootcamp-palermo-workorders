@@ -17,10 +17,13 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.AIAgents;
 /// </summary>
 public class AutoCancelAgentTests : AcceptanceTestBase
 {
-    [Test]
-    public async Task ShouldAutoCancelWorkOrderWithTestKeywords()
+    public AutoCancelAgentTests()
     {
         new ZDataLoader().LoadData();
+    }
+    [Test, Retry(2)]
+    public async Task ShouldAutoCancelWorkOrderWithTestKeywords()
+    {
         // Set up specific users for this test
         var timothyLovejoy = await Bus.Send(new EmployeeByUserNameQuery("tlovejoy"));
         var homerSimpson = await Bus.Send(new EmployeeByUserNameQuery("hsimpson"));

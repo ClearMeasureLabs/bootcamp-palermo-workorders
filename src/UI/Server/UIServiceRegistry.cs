@@ -28,8 +28,8 @@ public class UiServiceRegistry : ServiceRegistry
         });
 
         // Register AI agent and background service
-        this.AddScoped<WorkOrderEvaluationAgent>();
-        // this.AddHostedService<AutoCancelAgentService>();
+        this.AddTransient<WorkOrderEvaluationAgent>();
+        this.AddHostedService<AutoCancelAgentService>();
 
         Scan(scanner =>
         {

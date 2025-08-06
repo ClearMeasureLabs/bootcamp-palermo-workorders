@@ -75,31 +75,4 @@ public class WorkOrderEvaluationAgent
             return false;
         }
     }
-
-    /// <summary>
-    /// Cancels a work order by sending an AssignedToCancelledCommand
-    /// </summary>
-    public async Task CancelWorkOrderAsync(WorkOrder workOrder)
-    {
-        try
-        {
-            if (workOrder.Creator == null)
-            {
-                _logger.LogWarning("Cannot cancel WorkOrder {WorkOrderNumber} - Creator is null", 
-                    workOrder.Number);
-                return;
-            }
-
-            var cancelCommand = new AssignedToCancelledCommand(workOrder, workOrder.Creator);
-            await _bus.Send(cancelCommand);
-
-            _logger.LogInformation("Successfully cancelled WorkOrder {WorkOrderNumber}", 
-                workOrder.Number);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error cancelling WorkOrder {WorkOrderNumber}", 
-                workOrder.Number);
-        }
-    }
 }
