@@ -14,9 +14,9 @@ public class ChatClientConfigQueryHandler(IConfiguration configuration)
         var openAiModel = configuration.GetValue<string>("AI_OpenAI_Model");
         return Task.FromResult(new ChatClientConfig
         {
-            AiOpenAiApiKey = apiKey ?? throw new InvalidOperationException(), 
-            AiOpenAiUrl = openAiUrl ?? throw new InvalidOperationException(), 
-            AiOpenAiModel = openAiModel ?? throw new InvalidOperationException()
+            AiOpenAiApiKey = apiKey, 
+            AiOpenAiUrl = openAiUrl, 
+            AiOpenAiModel = openAiModel
         });
     }
 }
