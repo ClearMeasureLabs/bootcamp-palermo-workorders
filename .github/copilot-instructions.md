@@ -16,7 +16,8 @@ This file provides standards for GitHub Copilot to follow when generating code f
 - Keep business logic in Core project
 - Data access should be isolated in DataAccess
 - UI logic should be thin and focused on presentation
-- Do not add Nuget packages or project references without approval. 
+- Do not add Nuget packages or project references without approval.
+- Keep existing versions of .NET SDK and libraries unless specifically instructed to upgrade. Don't add new libraries or Nuget packages unless explicitly instructed. Ask for approval to change .NET SDK version.
 
 ## Database Practices
 
