@@ -1,25 +1,37 @@
 {
-    "name": "Church Bulletin Work Orders",
-    "image": "mcr.microsoft.com/devcontainers/dotnet:9.0",
-    "features": {
-        "ghcr.io/devcontainers/features/dotnet:2": {
-            "version": "9.0",
-            "installUsingApt": false
-        }
-    },
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-dotnettools.csharp",
-                "ms-dotnettools.vscode-dotnet-runtime",
-                "ms-vscode.vscode-json"
-            ],
-            "settings": {
-                "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true
-            }
-        }
-    },
-    "forwardPorts": [5000, 5001],
-    "postCreateCommand": "dotnet restore src/ChurchBulletin.sln",
-    "remoteUser": "vscode"
+  "name": "DotNet 9 Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:9.0",
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "9.0",
+      "installUsingApt": false
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",          // C# support
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "ms-vscode.vscode-json",
+        "github.copilot",                // GitHub Copilot
+        "github.copilot-chat",           // Copilot Chat
+        "ms-vscode.sln-support",         // Solution (.sln) support
+        "ms-vscode.cpptools",            // For native interop if needed
+        "ms-vscode.powershell",          // PowerShell support
+        "ms-vscode.vs-keybindings",      // Visual Studio keymap
+        "JetBrains.jetbrains-rider-keymap" // JetBrains keymap
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "dotnet.defaultSolution": "src/*.sln",  // Points to solution in ./src
+        "keyboard.dispatch": "keyCode",
+        "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true
+      }
+    }
+  },
+  "forwardPorts": [5000, 5001],
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",  // Root of repo
+  "postCreateCommand": "dotnet restore src/*.sln"
 }
+
