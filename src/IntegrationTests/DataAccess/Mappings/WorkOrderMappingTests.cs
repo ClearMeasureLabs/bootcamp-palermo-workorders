@@ -357,7 +357,7 @@ public class WorkOrderMappingTests
                 .Single(wo => wo.Id == workOrder.Id);
         }
 
-        rehydratedWorkOrder.Instructions.Length.ShouldBe(4000);
+        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
         rehydratedWorkOrder.Instructions.ShouldBe(new string('X', 4000));
     }
 }
