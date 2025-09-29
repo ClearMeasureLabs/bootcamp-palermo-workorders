@@ -11,6 +11,7 @@
     "vscode": {
       "extensions": [
         "ms-dotnettools.csharp",          // C# support
+        "ms-dotnettools.csdevkit",        // C# Dev Kit for advanced project support
         "ms-dotnettools.vscode-dotnet-runtime",
         "ms-vscode.vscode-json",
         "github.copilot",                // GitHub Copilot
