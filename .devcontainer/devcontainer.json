@@ -1,0 +1,25 @@
+{
+    "name": "Church Bulletin Work Orders",
+    "image": "mcr.microsoft.com/devcontainers/dotnet:9.0",
+    "features": {
+        "ghcr.io/devcontainers/features/dotnet:2": {
+            "version": "9.0",
+            "installUsingApt": false
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csharp",
+                "ms-dotnettools.vscode-dotnet-runtime",
+                "ms-vscode.vscode-json"
+            ],
+            "settings": {
+                "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true
+            }
+        }
+    },
+    "forwardPorts": [5000, 5001],
+    "postCreateCommand": "dotnet restore src/ChurchBulletin.sln",
+    "remoteUser": "vscode"
+}
