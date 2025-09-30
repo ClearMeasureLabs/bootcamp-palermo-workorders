@@ -195,6 +195,8 @@ public class ZDataLoader
         christmasOrder3.Title = "Tune and Maintain Church Organ for Christmas Concert";
         christmasOrder3.Description =
             "Perform complete maintenance and tuning of the church organ in preparation for Christmas concert performances. Test all stops and ensure optimal sound quality.";
+        christmasOrder3.Instructions =
+            "1. Turn off electrical power to organ. 2. Remove organ panels carefully. 3. Check all air pressure systems. 4. Clean and adjust each pipe. 5. Test each stop individually. 6. Reassemble and test full functionality.";
         christmasOrder3.CreatedDate = new DateTime(2024, 11, 5, 14, 0, 0);
         christmasOrder3.AssignedDate = new DateTime(2024, 11, 6, 9, 0, 0);
         christmasOrder3.RoomNumber = "Sanctuary Organ Loft";

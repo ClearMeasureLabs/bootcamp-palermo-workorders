@@ -19,6 +19,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
+            Instructions = "Turn off power first, then replace bulbs with LED equivalents",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
@@ -43,6 +44,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
+        rehydratedWorkOrder.Instructions.ShouldBe("Turn off power first, then replace bulbs with LED equivalents");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
@@ -233,6 +235,7 @@ public class WorkOrderMappingTests
             Number = new string('A', 51), // Exceeds 50 char limit
             Title = new string('B', 201), // Exceeds 200 char limit
             Description = new string('C', 1001), // Exceeds 1000 char limit
+            Instructions = new string('I', 1001), // Exceeds 1000 char limit
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
@@ -243,6 +246,43 @@ public class WorkOrderMappingTests
         context.Add(workOrder);
 
         Should.Throw<DbUpdateException>(() => context.SaveChanges());
+    }
+
+    [Test]
+    public void ShouldSaveWorkOrderWithInstructionsAt4000Characters()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var longInstructions = new string('X', 4000);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-02",
+            Title = "Test Instructions",
+            Description = "Testing Instructions field",
+            Instructions = longInstructions,
+            RoomNumber = "R-100",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Include(wo => wo.Creator)
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe(longInstructions);
+        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
     }
 
     [Test]

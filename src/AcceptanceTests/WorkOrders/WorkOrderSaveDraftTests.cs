@@ -45,6 +45,9 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync(order.Description!);
 
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync(order.Instructions!);
+
         var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
@@ -91,5 +94,39 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))
             .ToHaveTextAsync(rehyratedOrder.CreatedDate!.Value.ToString(CultureInfo.CurrentCulture));
+    }
+
+    [Test]
+    public async Task ShouldSaveWorkOrderWithInstructionsAt4000Characters()
+    {
+        await LoginAsCurrentUser();
+
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var longInstructions = new string('A', 4000);
+        
+        await Input(nameof(WorkOrderManage.Elements.Title), "Test Long Instructions");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Testing 4000 character instructions field");
+        await Input(nameof(WorkOrderManage.Elements.Instructions), longInstructions);
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "R-100");
+
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        var workOrderNumber = await woNumberLocator.InnerTextAsync();
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Navigate back to verify the instructions were saved correctly
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        var savedInstructions = await instructionsField.InputValueAsync();
+        
+        // Verify the full 4000 characters were saved
+        savedInstructions.Length.ShouldBe(4000);
+        savedInstructions.ShouldBe(longInstructions);
     }
 }
