@@ -1,0 +1,23 @@
+/* 
+   Add Instructions column to WorkOrder table
+   Supporting 4000 characters for plain text instructions
+*/
+
+BEGIN TRANSACTION
+SET QUOTED_IDENTIFIER ON
+SET ARITHABORT ON
+SET NUMERIC_ROUNDABORT OFF
+SET CONCAT_NULL_YIELDS_NULL ON
+SET ANSI_NULLS ON
+SET ANSI_PADDING ON
+SET ANSI_WARNINGS ON
+COMMIT
+
+BEGIN TRANSACTION
+GO
+
+ALTER TABLE dbo.WorkOrder
+ADD Instructions nvarchar(4000) NULL
+GO
+
+COMMIT
