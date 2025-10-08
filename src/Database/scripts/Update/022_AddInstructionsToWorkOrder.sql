@@ -1,6 +1,7 @@
 -- Add Instructions column to WorkOrder table
 -- Instructions field is optional and supports up to 4000 characters
 BEGIN TRANSACTION
+GO
 ALTER TABLE dbo.WorkOrder 
 ADD Instructions nvarchar(4000) NULL;
 GO
@@ -12,5 +13,7 @@ EXEC sp_addextendedproperty
     @level0type = N'Schema', @level0name = 'dbo', 
     @level1type = N'Table', @level1name = 'WorkOrder', 
     @level2type = N'Column', @level2name = 'Instructions';
+GO
 
-COMMIT;
+COMMIT TRANSACTION
+GO
