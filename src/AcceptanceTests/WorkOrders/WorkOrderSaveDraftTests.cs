@@ -92,4 +92,39 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))
             .ToHaveTextAsync(rehyratedOrder.CreatedDate!.Value.ToString(CultureInfo.CurrentCulture));
     }
+
+    [Test]
+    public async Task ShouldCreateNewWorkOrderWithInstructionsOf4000Characters()
+    {
+        await LoginAsCurrentUser();
+
+        var instructions4000 = new string('x', 4000);
+        
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync();
+        var newWorkOrderNumber = await woNumberLocator.InnerTextAsync();
+        
+        await Input(nameof(WorkOrderManage.Elements.Title), "Test Instructions");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Test Description");
+        await Input(nameof(WorkOrderManage.Elements.Instructions), instructions4000);
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        WorkOrder? rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
+        if (rehydratedOrder == null)
+        {
+            await Task.Delay(1000); 
+            rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
+        }
+        rehydratedOrder.ShouldNotBeNull();
+        rehydratedOrder.Instructions.ShouldBe(instructions4000);
+        rehydratedOrder.Instructions!.Length.ShouldBe(4000);
+    }
 }
