@@ -1,5 +1,11 @@
 . .\BuildFunctions.ps1
 
+# Clear ConnectionStrings__SqlConnectionString environment variable if present
+if ($env:ConnectionStrings__SqlConnectionString) {
+	Write-Host "Clearing ConnectionStrings__SqlConnectionString environment variable for build execution"
+	$env:ConnectionStrings__SqlConnectionString = $null
+	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
+
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
 $source_dir = "$base_dir\src"
