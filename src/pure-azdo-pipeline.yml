@@ -1,5 +1,7 @@
 trigger:
     - '*'
+
+pr: none
     
 variables:
     major: 1
