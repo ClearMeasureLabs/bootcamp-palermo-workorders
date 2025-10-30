@@ -51,6 +51,35 @@ var maxLength = reader.IsDBNull(4) ? (int?)null : reader.GetInt32(4);
         // Assert
         tables.Count.ShouldBeGreaterThan(0);
         
+        // Validate WorkOrder table has Instructions column
+   var workOrderColumns = tables.Where(t => t.Table.Equals("WorkOrder", StringComparison.OrdinalIgnoreCase)).ToList();
+        
+        if (workOrderColumns.Count == 0)
+   {
+          Assert.Fail("WorkOrder table not found in database schema");
+        }
+
+        var hasInstructionsColumn = workOrderColumns.Any(t => t.Column.Equals("Instructions", StringComparison.OrdinalIgnoreCase));
+  
+        if (!hasInstructionsColumn)
+        {
+   var workOrderTableOutput = new System.Text.StringBuilder();
+      workOrderTableOutput.AppendLine("\nWorkOrder table schema:");
+     
+      foreach (var col in workOrderColumns)
+            {
+      var columnInfo = $"  Column: {col.Column} ({col.DataType}";
+  if (col.MaxLength.HasValue)
+      {
+      columnInfo += $"({col.MaxLength})";
+           }
+       columnInfo += $", Nullable: {col.Nullable})";
+     workOrderTableOutput.AppendLine(columnInfo);
+ }
+
+            Assert.Fail($"WorkOrder table does not have an 'Instructions' column. {workOrderTableOutput}");
+        }
+        
         // Output schema information to both Console and TestContext
         var header = "\n=== Database Schema Information ===\n";
         Console.WriteLine(header);
