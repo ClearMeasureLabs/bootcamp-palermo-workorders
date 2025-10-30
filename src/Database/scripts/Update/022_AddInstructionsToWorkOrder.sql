@@ -1,6 +1,6 @@
 /*
-       Add Instructions field to WorkOrder table
-       To prevent any potential data loss issues, you should review this script in detail before running it outside the context of the database designer.
+	Add Instructions field to WorkOrder table
+	To prevent any potential data loss issues, you should review this script in detail before running it outside the context of the database designer.
 */
 BEGIN TRANSACTION
 SET QUOTED_IDENTIFIER ON
