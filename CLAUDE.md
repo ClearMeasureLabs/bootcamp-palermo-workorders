@@ -227,3 +227,5 @@ PlantUML diagrams in `arch/`:
 - **Test-after approach**: Generate code first, then implement tests
 - **Shouldly assertions**: Use Shouldly for all test assertions, not FluentAssertions or Assert.That
 - **Test naming**: Use "Stub" prefix for test doubles, never "Mock"
+- Use TABS when generating new *.sql database migration scripts
+- when on a branch, add/commit/push automatically without asking
