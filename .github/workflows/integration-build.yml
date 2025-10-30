@@ -2,16 +2,14 @@ name: Integration Build
 
 on:
   push:
-    branches:
-      - '*'
+    branches: ['*']
   pull_request:
-    branches:
-      - '*'
+    branches: ['*']
+  workflow_dispatch:
 
 env:
   MAJOR_VERSION: 1
   MINOR_VERSION: 3
-  BUILD_CONFIGURATION: Release
 
 jobs:
   build:
@@ -19,69 +17,61 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # Checkout repository
+      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Setup .NET SDK 9.0.302
-      - name: Setup .NET SDK 9.0.302
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.302'
-
-      # Setup .NET Runtime 6.0.0
-      - name: Setup .NET Runtime 6.0.0
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
 
       # Start SQL Server LocalDB
       - name: Start SQL Server LocalDB
         shell: powershell
         run: |
           Write-Host "Starting SQL Server LocalDB..."
+          sqllocaldb create MSSQLLocalDB
           sqllocaldb start MSSQLLocalDB
           sqllocaldb info MSSQLLocalDB
-          Write-Host "SQL Server LocalDB started successfully"
+
+      # Install .NET SDK 9.0.302
+      - name: Setup .NET SDK 9.0.302
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.302'
+
+      # Install .NET Runtime 6.0.0
+      - name: Setup .NET Runtime 6.0.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
 
       # Set version environment variable
-      - name: Set version
+      - name: Set Version
         shell: powershell
         run: |
           $version = "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $env:GITHUB_ENV
           echo "Version=$version" >> $env:GITHUB_ENV
           Write-Host "Build version: $version"
 
       # Run build script
-      - name: Run build.ps1
+      - name: Run Build Script
         shell: powershell
         run: |
-          .\build.ps1 ; CIBuild
-        env:
-          BuildConfiguration: ${{ env.BUILD_CONFIGURATION }}
+          ./build.ps1 ; CIBuild
 
       # Publish test results
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action/windows@v2
         if: always()
         with:
-          files: |
-            build/test/**/*.trx
-          check_name: CI Tests
-          comment_mode: off
+          files: 'build/test/**/*.trx'
+          check_name: 'CI Test Results'
 
       # Publish code coverage
       - name: Publish Code Coverage
         uses: codecov/codecov-action@v4
         if: always()
         with:
-          files: build/test/**/coverage.cobertura.xml
+          files: '**/build/test/**/In/**/coverage.cobertura.xml'
           flags: unittests
           name: codecov-umbrella
-          fail_ci_if_error: false
 
       # Upload test results as artifacts
       - name: Upload Test Results
@@ -98,7 +88,7 @@ jobs:
         if: always()
         with:
           name: code-coverage
-          path: build/test/**/coverage.cobertura.xml
+          path: '**/build/test/**/In/**/coverage.cobertura.xml'
           retention-days: 30
 
       # Upload build logs as artifacts
@@ -111,7 +101,6 @@ jobs:
             build/**/*.log
             build/**/*.binlog
           retention-days: 30
-          if-no-files-found: ignore
 
       # Upload NuGet packages as artifacts
       - name: Upload NuGet Packages
