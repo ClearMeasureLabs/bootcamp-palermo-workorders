@@ -3,19 +3,105 @@
 scale 2/3
 'left to right direction
 center header
-    C4 Architecture: Church Bulletin domain model
+    C4 Architecture: Work Order System domain model
 endheader
 
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
 
-title Church Bulletin domain model
+title Work Order System domain model
 
-class ScheduledGathering {
-  -Date : date
-  -Time : time
-  -Name : string
-  -Place : string
-} 
+abstract class EntityBase<T> {
+  +Id : Guid
+  +Equals(other : T) : bool
+  +Equals(obj : object) : bool
+  +ToString() : string
+  +GetHashCode() : int
+}
+
+class WorkOrder {
+  +Title : string
+  +Description : string
+  +RoomNumber : string
+  +Status : WorkOrderStatus
+  +Creator : Employee
+  +Assignee : Employee
+  +Number : string
+  +FriendlyStatus : string
+  +AssignedDate : DateTime?
+  +CreatedDate : DateTime?
+  +CompletedDate : DateTime?
+  +ChangeStatus(status : WorkOrderStatus) : void
+  +ChangeStatus(employee : Employee, date : DateTime, status : WorkOrderStatus) : void
+  +GetMessage() : string
+  +CanReassign() : bool
+}
+
+class Employee {
+  +UserName : string
+  +FirstName : string
+  +LastName : string
+  +EmailAddress : string
+  +Roles : ISet<Role>
+  +CompareTo(other : Employee) : int
+  +GetFullName() : string
+  +CanCreateWorkOrder() : bool
+  +CanFulfilWorkOrder() : bool
+  +AddRole(role : Role) : void
+  +GetNotificationEmail(day : DayOfWeek) : string
+}
+
+class WorkOrderStatus {
+  +Code : string
+  +Key : string
+  +FriendlyName : string
+  +SortBy : byte
+  {static} +None : WorkOrderStatus
+  {static} +Draft : WorkOrderStatus
+  {static} +Assigned : WorkOrderStatus
+  {static} +InProgress : WorkOrderStatus
+  {static} +Complete : WorkOrderStatus
+  {static} +Cancelled : WorkOrderStatus
+  {static} +GetAllItems() : WorkOrderStatus[]
+  +Equals(obj : object) : bool
+  +ToString() : string
+  +GetHashCode() : int
+  +IsEmpty() : bool
+  {static} +FromCode(code : string) : WorkOrderStatus
+  {static} +FromKey(key : string) : WorkOrderStatus
+  {static} +Parse(name : string) : WorkOrderStatus
+}
+
+class Role {
+  +Name : string
+  +CanCreateWorkOrder : bool
+  +CanFulfillWorkOrder : bool
+}
+
+abstract class ListItem {
+  -displayName : string
+  -value : int
+  +Value : int
+  +DisplayName : string
+  +CompareTo(other : object) : int
+  +ToString() : string
+  {static} +GetAll<T>() : IEnumerable<T>
+  {static} +GetAll(type : Type) : IEnumerable<ListItem>
+  +Equals(obj : object) : bool
+  +GetHashCode() : int
+  {static} +FromValue<T>(value : int) : T
+  {static} +FromDisplayName<T>(displayName : string) : T
+}
+
+' Inheritance relationships
+WorkOrder --|> EntityBase
+Employee --|> EntityBase
+Role --|> EntityBase
+
+' Associations
+WorkOrder "1" *-- "1" WorkOrderStatus : status
+WorkOrder "1" --> "0..1" Employee : creator
+WorkOrder "1" --> "0..1" Employee : assignee
+Employee "1" *-- "0..*" Role : roles
 
 center footer
     C4 Architecture: Class Diagram $(Version)

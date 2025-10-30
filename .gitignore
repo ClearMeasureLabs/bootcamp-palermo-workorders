@@ -359,3 +359,5 @@ coverage.cobertura.xml
 #Ignore the Flyway CLI
 /flyway/
 /build
+/.claude/settings.local.json
+nul
