@@ -15,7 +15,7 @@ jobs:
   build:
     name: Build and Test
     runs-on: windows-latest
-
+    
     steps:
       # Checkout code
       - name: Checkout code
@@ -36,12 +36,6 @@ jobs:
         with:
           dotnet-version: '9.0.302'
 
-      # Install .NET Runtime 6.0.0
-      - name: Setup .NET Runtime 6.0.0
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
-
       # Set version environment variable
       - name: Set Version
         shell: powershell
@@ -54,7 +48,8 @@ jobs:
       - name: Run Build Script
         shell: powershell
         run: |
-          ./build.ps1 ; CIBuild
+          . ./build.ps1
+          CIBuild
 
       # Publish test results
       - name: Publish Test Results
