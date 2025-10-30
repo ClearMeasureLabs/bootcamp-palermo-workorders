@@ -49,15 +49,16 @@ jobs:
         shell: powershell
         run: |
           . ./build.ps1
-          CIBuild
+          PrivateBuild
 
       # Publish test results
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action/windows@v2
+      - name: Test Reporter
+        uses: dorny/test-reporter@v2.1.1
         if: always()
         with:
-          files: 'build/test/**/*.trx'
-          check_name: 'CI Test Results'
+          name: CI Test Results
+          path: 'build/test/**/*.trx'
+          reporter: dotnet-trx
 
       # Publish code coverage
       - name: Publish Code Coverage
@@ -96,12 +97,4 @@ jobs:
             build/**/*.log
             build/**/*.binlog
           retention-days: 30
-
-      # Upload NuGet packages as artifacts
-      - name: Upload NuGet Packages
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: nuget-packages
-          path: build/*.nupkg
-          retention-days: 30
+          
