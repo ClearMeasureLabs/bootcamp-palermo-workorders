@@ -163,7 +163,20 @@ The solution follows strict Onion Architecture with dependency flow inward:
 1. Create numbered script in `src/Database/scripts/Update/`
 2. Use next sequential number (e.g., if 004 exists, create 005)
 3. Script naming: `###_Description.sql`
-4. Run PrivateBuild to apply locally
+4. **CRITICAL: SQL File Encoding Requirements**
+   - All SQL migration files MUST be encoded as **UTF-16 LE (Little Endian)** with **BOM (Byte Order Mark)**
+   - Files MUST use **CRLF line terminators** (Windows-style line endings)
+   - Use **TAB characters** for indentation, not spaces
+   - To convert a file to proper encoding:
+     ```bash
+     # Add CRLF line endings and convert to UTF-16 LE with BOM
+     printf '\xFF\xFE' > output.sql
+     sed 's/$/\r/' input.sql | iconv -f UTF-8 -t UTF-16LE >> output.sql
+     ```
+   - Verify encoding with: `file filename.sql`
+   - Expected output: `Unicode text, UTF-16, little-endian text, with CRLF line terminators`
+   - Reference existing migration files (e.g., `021_ExtendWorkOrderNumberLength.sql`) for correct format
+5. Run PrivateBuild to apply locally
 
 ### Migration Actions
 - `Create`: Create new database
@@ -227,5 +240,5 @@ PlantUML diagrams in `arch/`:
 - **Test-after approach**: Generate code first, then implement tests
 - **Shouldly assertions**: Use Shouldly for all test assertions, not FluentAssertions or Assert.That
 - **Test naming**: Use "Stub" prefix for test doubles, never "Mock"
-- Use TABS when generating new *.sql database migration scripts
+- **SQL Migration Files**: ALL *.sql database migration scripts MUST be UTF-16 LE encoded with BOM and CRLF line terminators. Use TABS for indentation. See "Database Migrations" section for conversion commands.
 - when on a branch, add/commit/push automatically without asking
