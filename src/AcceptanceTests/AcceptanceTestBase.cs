@@ -146,13 +146,14 @@ public abstract class AcceptanceTestBase : PageTest
         await locator.SelectOptionAsync(value ?? "");
     }
 
-    protected async Task<WorkOrder> CreateAndSaveNewWorkOrder()
+    protected async Task<WorkOrder> CreateAndSaveNewWorkOrder(string? instructions = null)
     {
         var order = Faker<WorkOrder>();
         order.Title = "from automation";
         order.Number = null;
         var testTitle = order.Title;
         var testDescription = order.Description;
+        var testInstructions = instructions ?? order.Instructions;
         var testRoomNumber = order.RoomNumber;
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -166,6 +167,7 @@ public abstract class AcceptanceTestBase : PageTest
         order.Number = newWorkOrderNumber;
         await Input(nameof(WorkOrderManage.Elements.Title), testTitle);
         await Input(nameof(WorkOrderManage.Elements.Description), testDescription);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), testInstructions);
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), testRoomNumber);
         await TakeScreenshotAsync(2, "FormFilled");
 
@@ -176,7 +178,7 @@ public abstract class AcceptanceTestBase : PageTest
         WorkOrder? rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
         if (rehyratedOrder == null)
         {
-            await Task.Delay(1000); 
+            await Task.Delay(1000);
             rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
         }
         rehyratedOrder.ShouldNotBeNull();
