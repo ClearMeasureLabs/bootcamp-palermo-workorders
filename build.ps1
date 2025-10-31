@@ -3,8 +3,8 @@
 # Clean environment variables that may interfere with local builds
 if ($env:ConnectionStrings__SqlConnectionString) {
     Write-Host "Clearing ConnectionStrings__SqlConnectionString environment variable"
-    [Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
     $env:ConnectionStrings__SqlConnectionString = $null
+    [Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
 }
 
 $projectName = "ChurchBulletin"
