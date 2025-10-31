@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -12,6 +13,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
         Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
+        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
@@ -40,6 +42,7 @@ public class WorkOrderTests
         workOrder.Id = guid;
         workOrder.Title = "Title";
         workOrder.Description = "Description";
+        workOrder.Instructions = "Instructions";
         workOrder.Status = WorkOrderStatus.Complete;
         workOrder.Number = "Number";
         workOrder.Creator = creator;
@@ -48,6 +51,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Id, Is.EqualTo(guid));
         Assert.That(workOrder.Title, Is.EqualTo("Title"));
         Assert.That(workOrder.Description, Is.EqualTo("Description"));
+        Assert.That(workOrder.Instructions, Is.EqualTo("Instructions"));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
         Assert.That(workOrder.Number, Is.EqualTo("Number"));
         Assert.That(workOrder.Creator, Is.EqualTo(creator));
@@ -70,6 +74,25 @@ public class WorkOrderTests
         var order = new WorkOrder();
         order.Description = longText;
         Assert.That(order.Description.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void ShouldTruncateTo4000CharactersOnInstructions()
+    {
+        var longText = new string('x', 4001);
+        var order = new WorkOrder();
+        order.Instructions = longText;
+        order.Instructions.Length.ShouldBe(4000);
+    }
+
+    [Test]
+    public void ShouldAcceptExactly4000CharactersOnInstructions()
+    {
+        var exactText = new string('y', 4000);
+        var order = new WorkOrder();
+        order.Instructions = exactText;
+        order.Instructions.Length.ShouldBe(4000);
+        order.Instructions.ShouldBe(exactText);
     }
 
     [Test]
