@@ -1,4 +1,4 @@
-﻿using AutoBogus;
+using AutoBogus;
 using Bogus.Extensions;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
@@ -18,6 +18,7 @@ internal class BogusOverrides : AutoGeneratorOverride
         {
             case WorkOrder order:
                 order.Description = order.Description.ClampLength(1, 2000);
+                order.Instructions = order.Instructions.ClampLength(1, 2000);
                 order.Number = order.Number.ClampLength(1, 5);
                 // order.Status = context.Faker.PickRandom<WorkOrderStatus>(WorkOrderStatus.GetAllItems());
                 break;
