@@ -20,8 +20,6 @@ public class WorkOrderManageModel
 
     [Required] public string? Description { get; set; }
 
-    public string? Instructions { get; set; }
-
     public bool IsReadOnly { get; set; }
 
     public string? AssignedDate { get; set; }

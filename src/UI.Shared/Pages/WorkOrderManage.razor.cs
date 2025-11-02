@@ -81,7 +81,6 @@ public partial class WorkOrderManage : AppComponentBase
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
             Description = workOrder.Description,
-            Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
             CreatedDate = workOrder.CreatedDate.ToString(),
             AssignedDate = workOrder.AssignedDate?.ToString(),
@@ -108,21 +107,20 @@ public partial class WorkOrderManage : AppComponentBase
         }
         else
         {
-          workOrder = (await Bus.Send(new WorkOrderByNumberQuery(Model.WorkOrderNumber!)))!;
+            workOrder = (await Bus.Send(new WorkOrderByNumberQuery(Model.WorkOrderNumber!)))!;
         }
 
         Employee? assignee = null;
-  if (Model.AssignedToUserName != null)
-    {
-         assignee = await Bus.Send(new EmployeeByUserNameQuery(Model.AssignedToUserName));
+        if (Model.AssignedToUserName != null)
+        {
+            assignee = await Bus.Send(new EmployeeByUserNameQuery(Model.AssignedToUserName));
         }
 
         workOrder.Number = Model.WorkOrderNumber;
         workOrder.Assignee = assignee;
-    workOrder.Title = Model.Title;
+        workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
-        workOrder.Instructions = Model.Instructions;
-      workOrder.RoomNumber = Model.RoomNumber;
+        workOrder.RoomNumber = Model.RoomNumber;
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
