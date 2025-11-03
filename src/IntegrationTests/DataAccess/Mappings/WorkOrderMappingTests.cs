@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
@@ -19,6 +19,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
+            Instructions = "Use ladder, turn off power first",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
@@ -43,6 +44,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
+        rehydratedWorkOrder.Instructions.ShouldBe("Use ladder, turn off power first");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
