@@ -235,10 +235,11 @@ public class WorkOrderMappingTests
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
         var workOrder = new WorkOrder
         {
-            Number = new string('A', 51), // Exceeds 50 char limit
+            Number = new string('A', 51), // Exceeds 7 char limit
             Title = new string('B', 201), // Exceeds 200 char limit
-            Description = new string('C', 1001), // Exceeds 1000 char limit
-            RoomNumber = new string('D', 51), // Exceeds 50 char limit
+            Description = new string('C', 5000), // Exceeds 4000 char limit
+            Instructions = new string('D', 5000), // Exceeds 4000 char limit
+            RoomNumber = new string('E', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
         };
@@ -248,6 +249,44 @@ public class WorkOrderMappingTests
         context.Add(workOrder);
 
         Should.Throw<DbUpdateException>(() => context.SaveChanges());
+        workOrder.Description!.Length.ShouldBe(4000);
+        workOrder.Instructions!.Length.ShouldBe(4000);
+    }
+
+    [Test]
+    public void ShouldPersistInstructionsUpToMaxLength()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var instructions = new string('I', 4000);
+        var description = new string('D', 4000);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-07",
+            Title = "Validate max length",
+            Description = description,
+            Instructions = instructions,
+            RoomNumber = "RM-01",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+
+            rehydratedWorkOrder.Description!.Length.ShouldBe(4000);
+            rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
+        }
     }
 
     [Test]
