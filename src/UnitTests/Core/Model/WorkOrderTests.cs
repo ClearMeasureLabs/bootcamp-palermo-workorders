@@ -73,6 +73,40 @@ public class WorkOrderTests
     }
 
     [Test]
+    public void ShouldTruncateTo4000CharactersOnInstructions()
+    {
+        var longText = new string('x', 4001);
+        var order = new WorkOrder();
+        order.Instructions = longText;
+        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void InstructionsShouldAcceptNullValue()
+    {
+        var order = new WorkOrder();
+        order.Instructions = null;
+        Assert.That(order.Instructions, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void InstructionsShouldAcceptEmptyString()
+    {
+        var order = new WorkOrder();
+        order.Instructions = "";
+        Assert.That(order.Instructions, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void InstructionsShouldAccept4000Characters()
+    {
+        var text = new string('x', 4000);
+        var order = new WorkOrder();
+        order.Instructions = text;
+        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
     public void ShouldChangeStatus()
     {
         var order = new WorkOrder();
