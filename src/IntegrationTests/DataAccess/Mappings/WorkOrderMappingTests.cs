@@ -388,6 +388,6 @@ public class WorkOrderMappingTests
         }
 
         rehydratedWorkOrder.Instructions.ShouldBe(longInstructions);
-        rehydratedWorkOrder.Instructions.Length.ShouldBe(4000);
+        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
     }
 }
