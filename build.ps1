@@ -219,6 +219,8 @@ Function PrivateBuild{
 	
 	IntegrationTest
 	#AcceptanceTests
+
+	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 	
 	$sw.Stop()
 	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
