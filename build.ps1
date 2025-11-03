@@ -1,5 +1,12 @@
 . .\BuildFunctions.ps1
 
+# Clean environment variables that may interfere with local builds
+if ($env:ConnectionStrings__SqlConnectionString) {
+    Write-Host "Clearing ConnectionStrings__SqlConnectionString environment variable"
+    $env:ConnectionStrings__SqlConnectionString = $null
+    [Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
+}
+
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
 $source_dir = "$base_dir\src"
@@ -33,6 +40,20 @@ $databaseScripts = "$source_dir\Database\scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0"}
 if ([string]::IsNullOrEmpty($projectConfig)) {$projectConfig = "Release"}
+
+Function Generate-UniqueDatabaseName {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$baseName
+    )
+    
+    $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+    $randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+    $uniqueName = "${baseName}_${timestamp}_${randomChars}"
+ 
+    Write-Host "Generated unique database name: $uniqueName" -ForegroundColor Cyan
+    return $uniqueName
+}
  
 Function Init {
 	# Check for PowerShell 7
@@ -122,7 +143,7 @@ Function AcceptanceTests{
 
 Function MigrateDatabaseLocal {
 	param (
-	    [Parameter(Mandatory=$true)]
+	 [Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
 		[string]$databaseServerFunc,
 		
@@ -137,7 +158,7 @@ Function MigrateDatabaseLocal {
 
 Function PackageUI {    
     exec{
-        & dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
+      & dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
     }
 	exec{
 		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $uiProjectPath\bin\$projectConfig\$framework\publish --outFolder $build_dir  --overwrite
@@ -150,7 +171,7 @@ Function PackageDatabase {
 	}
 }
 
-Function PackageAcceptanceTests {       
+Function PackageAcceptanceTests {  
     # Use Debug configuration so full symbols are available to display better error messages in test failures
     exec{
         & dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
@@ -183,16 +204,25 @@ Function PrivateBuild{
 	$projectConfig = "Debug"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
+	
+	# Generate unique database name for this build instance
+	$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName
+	
 	Init
 	Compile
 	UnitTests
-	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
+	
+	# Update appsettings.json files before database migration
+	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	
+	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest
 	#AcceptanceTests
 	
 	$sw.Stop()
 	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
+	write-host "Database used: $script:databaseName" -ForegroundColor Cyan
 }
 
 Function CIBuild{
