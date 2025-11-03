@@ -1,0 +1,11 @@
+BEGIN TRANSACTION
+GO
+PRINT N'Adding [dbo].[WorkOrder] Instructions column NVARCHAR(4000) NULL'
+GO
+ALTER TABLE [dbo].[WorkOrder] ADD [Instructions] NVARCHAR(4000) NULL
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO
