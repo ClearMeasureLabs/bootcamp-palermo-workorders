@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
@@ -40,8 +41,8 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         // Verify from database
         Debug.Assert(orderNumber != null, "orderNumber != null");
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(orderNumber)) ?? throw new InvalidOperationException();
-        Assert.That(rehydratedOrder.Instructions, Is.EqualTo(longInstructions));
-        Assert.That(rehydratedOrder.Instructions!.Length, Is.EqualTo(4000));
+        rehydratedOrder.Instructions.ShouldBe(longInstructions);
+        rehydratedOrder.Instructions!.Length.ShouldBe(4000);
     }
 
     [Test]
@@ -76,7 +77,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         // Verify from database
         Debug.Assert(orderNumber != null, "orderNumber != null");
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(orderNumber)) ?? throw new InvalidOperationException();
-        Assert.That(rehydratedOrder.Instructions, Is.EqualTo(string.Empty));
+        rehydratedOrder.Instructions.ShouldBe(string.Empty);
     }
 
     [Test]
@@ -120,6 +121,6 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
 
         // Verify from database
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
-        Assert.That(rehydratedOrder.Instructions, Is.EqualTo(instructionsText));
+        rehydratedOrder.Instructions.ShouldBe(instructionsText);
     }
 }
