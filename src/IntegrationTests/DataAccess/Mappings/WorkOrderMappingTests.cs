@@ -19,6 +19,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
+            Instructions = "Turn off breaker before replacing the bulbs",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
@@ -43,6 +44,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
+        rehydratedWorkOrder.Instructions.ShouldBe("Turn off breaker before replacing the bulbs");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
@@ -62,6 +64,7 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
+            Instructions = new string('i', 4005),
             RoomNumber = "123 a"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
@@ -89,6 +92,7 @@ public class WorkOrderMappingTests
             rehydratedWorkOrder.Assignee!.Id.ShouldBe(order.Assignee.Id);
             rehydratedWorkOrder.Title.ShouldBe(order.Title);
             rehydratedWorkOrder.Description.ShouldBe(order.Description);
+            rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
             rehydratedWorkOrder.Status.ShouldBe(order.Status);
             rehydratedWorkOrder.RoomNumber.ShouldBe(order.RoomNumber);
             rehydratedWorkOrder.Number.ShouldBe(order.Number);
@@ -144,6 +148,7 @@ public class WorkOrderMappingTests
             Number = "WO-02",
             Title = "Fix plumbing",
             Description = "Fix sink in bathroom",
+            Instructions = "Check for leaks after repair",
             Creator = creator,
             Assignee = assignee,
             Status = WorkOrderStatus.Assigned
@@ -168,6 +173,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee.ShouldNotBeNull();
         rehydratedWorkOrder.Creator!.Id.ShouldBe(creator.Id);
         rehydratedWorkOrder.Assignee!.Id.ShouldBe(assignee.Id);
+        rehydratedWorkOrder.Instructions.ShouldBe("Check for leaks after repair");
     }
 
     [Test]
@@ -181,6 +187,7 @@ public class WorkOrderMappingTests
             Number = "WO-04",
             Title = "Test Status",
             Description = "Testing status conversion",
+            Instructions = "Status change instructions",
             Creator = creator,
             Status = WorkOrderStatus.Complete
         };
@@ -230,9 +237,10 @@ public class WorkOrderMappingTests
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
         var workOrder = new WorkOrder
         {
-            Number = new string('A', 51), // Exceeds 50 char limit
+            Number = new string('A', 51), // Exceeds 7 char limit
             Title = new string('B', 201), // Exceeds 200 char limit
-            Description = new string('C', 1001), // Exceeds 1000 char limit
+            Description = new string('C', 4001), // Exceeds 4000 char limit before truncation
+            Instructions = new string('I', 4001), // Exceeds 4000 char limit before truncation
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
@@ -257,6 +265,7 @@ public class WorkOrderMappingTests
             Number = "WO-06",
             Title = "Test Eager Loading",
             Description = "Testing that Creator and Assignee are auto-included",
+            Instructions = "Ensure auto-include still works",
             Creator = creator,
             Assignee = assignee,
             Status = WorkOrderStatus.Assigned
