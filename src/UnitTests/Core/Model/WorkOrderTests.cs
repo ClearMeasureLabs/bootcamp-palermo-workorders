@@ -9,13 +9,13 @@ public class WorkOrderTests
     public void PropertiesShouldInitializeToProperDefaults()
     {
         var workOrder = new WorkOrder();
-        Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
-        Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
-        Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
-        Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
-        Assert.That(workOrder.Number, Is.EqualTo(null));
-        Assert.That(workOrder.Creator, Is.EqualTo(null));
-        Assert.That(workOrder.Assignee, Is.EqualTo(null));
+        workOrder.Id.ShouldBe(Guid.Empty);
+        workOrder.Title.ShouldBe(string.Empty);
+        workOrder.Description.ShouldBe(string.Empty);
+        workOrder.Status.ShouldBe(WorkOrderStatus.Draft);
+        workOrder.Number.ShouldBeNull();
+        workOrder.Creator.ShouldBeNull();
+        workOrder.Assignee.ShouldBeNull();
     }
 
     [Test]
@@ -23,7 +23,7 @@ public class WorkOrderTests
     {
         var order = new WorkOrder();
         order.Number = "456";
-        Assert.That(order.ToString(), Is.EqualTo("Work Order 456"));
+        order.ToString().ShouldBe("Work Order 456");
     }
 
     [Test]
@@ -45,13 +45,13 @@ public class WorkOrderTests
         workOrder.Creator = creator;
         workOrder.Assignee = assignee;
 
-        Assert.That(workOrder.Id, Is.EqualTo(guid));
-        Assert.That(workOrder.Title, Is.EqualTo("Title"));
-        Assert.That(workOrder.Description, Is.EqualTo("Description"));
-        Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
-        Assert.That(workOrder.Number, Is.EqualTo("Number"));
-        Assert.That(workOrder.Creator, Is.EqualTo(creator));
-        Assert.That(workOrder.Assignee, Is.EqualTo(assignee));
+        workOrder.Id.ShouldBe(guid);
+        workOrder.Title.ShouldBe("Title");
+        workOrder.Description.ShouldBe("Description");
+        workOrder.Status.ShouldBe(WorkOrderStatus.Complete);
+        workOrder.Number.ShouldBe("Number");
+        workOrder.Creator.ShouldBe(creator);
+        workOrder.Assignee.ShouldBe(assignee);
     }
 
     [Test]
@@ -60,7 +60,7 @@ public class WorkOrderTests
         var workOrder = new WorkOrder();
         workOrder.Status = WorkOrderStatus.Assigned;
 
-        Assert.That(workOrder.FriendlyStatus, Is.EqualTo("Assigned"));
+        workOrder.FriendlyStatus.ShouldBe("Assigned");
     }
 
     [Test]
@@ -69,7 +69,7 @@ public class WorkOrderTests
         var longText = new string('x', 4001);
         var order = new WorkOrder();
         order.Description = longText;
-        Assert.That(order.Description.Length, Is.EqualTo(4000));
+        order.Description.Length.ShouldBe(4000);
     }
 
     [Test]
@@ -78,7 +78,7 @@ public class WorkOrderTests
         var longText = new string('x', 4001);
         var order = new WorkOrder();
         order.Instructions = longText;
-        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
+        order.Instructions.Length.ShouldBe(4000);
     }
 
     [Test]
@@ -86,7 +86,7 @@ public class WorkOrderTests
     {
         var order = new WorkOrder();
         order.Instructions = null;
-        Assert.That(order.Instructions, Is.EqualTo(string.Empty));
+        order.Instructions.ShouldBe(string.Empty);
     }
 
     [Test]
@@ -94,7 +94,7 @@ public class WorkOrderTests
     {
         var order = new WorkOrder();
         order.Instructions = "";
-        Assert.That(order.Instructions, Is.EqualTo(string.Empty));
+        order.Instructions.ShouldBe(string.Empty);
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class WorkOrderTests
         var text = new string('x', 4000);
         var order = new WorkOrder();
         order.Instructions = text;
-        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
+        order.Instructions.Length.ShouldBe(4000);
     }
 
     [Test]
@@ -112,6 +112,6 @@ public class WorkOrderTests
         var order = new WorkOrder();
         order.Status = WorkOrderStatus.Draft;
         order.ChangeStatus(WorkOrderStatus.Assigned);
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+        order.Status.ShouldBe(WorkOrderStatus.Assigned);
     }
 }
