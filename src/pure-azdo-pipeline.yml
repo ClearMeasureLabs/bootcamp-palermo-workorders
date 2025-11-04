@@ -166,6 +166,7 @@ stages:
 # Deploying to UAT
 - stage: 'UAT'
   displayName: 'UAT'
+  condition: eq(variables['Build.Reason'], 'Manual')
   jobs:
     - deployment: 'DeployToUAT'
       pool:
@@ -182,7 +183,7 @@ stages:
                 feed: '$(AzureFeedName)'
                 view: 'Local'
                 definition: 'ChurchBulletin.Database'
-                version: '$(Build.BuildNumber)'
+                version: '$(Build.Build.Number)'
                 downloadPath: '$(System.DefaultWorkingDirectory)'
                 extract: true
             - task: PowerShell@2
