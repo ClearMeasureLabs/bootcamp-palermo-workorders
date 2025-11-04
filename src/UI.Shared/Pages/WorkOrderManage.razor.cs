@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
@@ -81,6 +81,7 @@ public partial class WorkOrderManage : AppComponentBase
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
             Description = workOrder.Description,
+            Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
             CreatedDate = workOrder.CreatedDate.ToString(),
             AssignedDate = workOrder.AssignedDate?.ToString(),
@@ -120,6 +121,7 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Assignee = assignee;
         workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
+        workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
 
         var matchingCommand = new StateCommandList()
