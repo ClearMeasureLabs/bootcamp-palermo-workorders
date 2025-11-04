@@ -226,6 +226,7 @@ public class WorkOrderQueryHandlerTests
             Number = "123",
             Title = "Fix plumbing",
             Description = "Fix the plumbing in room 101",
+            Instructions = "Shut off water before repairs",
             RoomNumber = "101",
             Status = WorkOrderStatus.InProgress
         };
@@ -260,5 +261,6 @@ public class WorkOrderQueryHandlerTests
         rehydratedOrder.Assignee.FirstName.ShouldBe(assignee.FirstName);
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
+        rehydratedOrder.Instructions.ShouldBe("Shut off water before repairs");
     }
 }
