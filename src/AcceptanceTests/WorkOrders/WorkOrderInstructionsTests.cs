@@ -32,10 +32,10 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Click(saveButtonTestId);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
-        rehyratedOrder.ShouldNotBeNull();
-        rehyratedOrder.Instructions.ShouldBe(longInstructions);
-        rehyratedOrder.Instructions!.Length.ShouldBe(4000);
+        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
+        rehydratedOrder.ShouldNotBeNull();
+        rehydratedOrder.Instructions.ShouldBe(longInstructions);
+        rehydratedOrder.Instructions!.Length.ShouldBe(4000);
     }
 
     [Test]
@@ -59,9 +59,9 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Click(saveButtonTestId);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
-        rehyratedOrder.ShouldNotBeNull();
-        rehyratedOrder.Instructions.ShouldBe(string.Empty);
+        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
+        rehydratedOrder.ShouldNotBeNull();
+        rehydratedOrder.Instructions.ShouldBe(string.Empty);
     }
 
     [Test]
@@ -104,8 +104,8 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
         await Expect(instructionsField).ToHaveValueAsync("New instructions added later");
 
-        var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
-        rehyratedOrder.ShouldNotBeNull();
-        rehyratedOrder.Instructions.ShouldBe("New instructions added later");
+        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
+        rehydratedOrder.ShouldNotBeNull();
+        rehydratedOrder.Instructions.ShouldBe("New instructions added later");
     }
 }
