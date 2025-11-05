@@ -38,14 +38,12 @@ Run tests using PowerShell build script:
 ```powershell
 .\build.ps1 UnitTests           # Run unit tests only
 .\build.ps1 IntegrationTest     # Run integration tests (requires database)
-.\build.ps1 AcceptanceTests     # Run acceptance tests (requires Playwright)
 ```
 
 Or using .NET CLI:
 ```bash
 dotnet test src/UnitTests/UnitTests.csproj
 dotnet test src/IntegrationTests/IntegrationTests.csproj
-dotnet test src/AcceptanceTests/AcceptanceTests.csproj
 ```
 
 ## Special Project Rules
@@ -56,7 +54,6 @@ dotnet test src/AcceptanceTests/AcceptanceTests.csproj
 - **ALWAYS** include unit tests for new functionality
 - **ALWAYS** update XML documentation for public APIs
 - Integration tests require SQL Server LocalDB
-- Acceptance tests require Playwright installation
 
 ## General Coding Standards
 
