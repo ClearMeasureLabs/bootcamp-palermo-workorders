@@ -2,7 +2,7 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 
 public class WorkOrder : EntityBase<WorkOrder>
 {
-    private string? _description = "";
+    private string? _description = "";`n    private string? _instructions = "";
 
     public string? Title { get; set; } = "";
 
@@ -12,7 +12,7 @@ public class WorkOrder : EntityBase<WorkOrder>
         set => _description = getTruncatedString(value);
     }
 
-    public string? RoomNumber { get; set; } = null;
+    public string? Instructions`n    {`n        get => _instructions;`n        set => _instructions = getTruncatedString(value);`n    }`n`n    public string? RoomNumber { get; set; } = null;
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 

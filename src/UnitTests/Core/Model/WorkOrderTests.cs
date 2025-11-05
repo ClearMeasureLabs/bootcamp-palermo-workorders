@@ -11,7 +11,7 @@ public class WorkOrderTests
         var workOrder = new WorkOrder();
         Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
         Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
-        Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
+        Assert.That(workOrder.Description, Is.EqualTo(string.Empty));`n        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
@@ -72,6 +72,40 @@ public class WorkOrderTests
         Assert.That(order.Description.Length, Is.EqualTo(4000));
     }
 
+    
+
+    [Test]
+    public void ShouldTruncateTo4000CharactersOnInstructions()
+    {
+        var longText = new string('x', 4001);
+        var order = new WorkOrder();
+        order.Instructions = longText;
+        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void InstructionsShouldGetAndSetValuesProperly()
+    {
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = "Test instructions";
+        Assert.That(workOrder.Instructions, Is.EqualTo("Test instructions"));
+    }
+
+    [Test]
+    public void InstructionsShouldAllowEmptyString()
+    {
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = "";
+        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void InstructionsShouldAllowNull()
+    {
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = null;
+        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
+    }
     [Test]
     public void ShouldChangeStatus()
     {
