@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
@@ -39,7 +40,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
 		await Expect(instructionsField).ToHaveValueAsync(longInstructions);
 
 		WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(linkText!)) ?? throw new InvalidOperationException();
-		Assert.That(rehydratedOrder.Instructions!.Length, Is.EqualTo(4000));
+		rehydratedOrder.Instructions!.Length.ShouldBe(4000);
 	}
 
 	[Test]
@@ -69,7 +70,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
 		await Expect(instructionsField).ToHaveValueAsync("");
 
 		WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(linkText!)) ?? throw new InvalidOperationException();
-		Assert.That(rehydratedOrder.Instructions, Is.EqualTo(""));
+		rehydratedOrder.Instructions.ShouldBe("");
 	}
 
 	[Test]
@@ -107,7 +108,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
 		await Expect(assigneeField).ToHaveValueAsync(CurrentUser.UserName);
 
 		WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-		Assert.That(rehydratedOrder.Instructions, Is.EqualTo("These are new instructions added later"));
-		Assert.That(rehydratedOrder.Assignee!.UserName, Is.EqualTo(CurrentUser.UserName));
+		rehydratedOrder.Instructions.ShouldBe("These are new instructions added later");
+		rehydratedOrder.Assignee!.UserName.ShouldBe(CurrentUser.UserName);
 	}
 }
