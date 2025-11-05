@@ -361,3 +361,6 @@ coverage.cobertura.xml
 /build
 /.claude/settings.local.json
 nul
+
+# Build output artifacts
+*.output.txt
