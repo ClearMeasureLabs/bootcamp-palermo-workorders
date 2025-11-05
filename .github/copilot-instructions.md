@@ -2,6 +2,59 @@
 
 This file provides standards for GitHub Copilot to follow when generating code for this project.
 
+## Project Overview
+
+This is a Church Bulletin management application built with:
+- **.NET 9.0** - Primary framework
+- **Blazor** - UI framework
+- **Entity Framework Core** - Data access
+- **SQL Server** - Database (LocalDB for development)
+- **Onion Architecture** - Clean architecture pattern with Core, DataAccess, and UI layers
+
+## Build Instructions
+
+Build the project using PowerShell:
+```powershell
+# Full private build (includes tests)
+.\build.ps1 PrivateBuild
+
+# CI build (includes packaging)
+.\build.ps1 CIBuild
+
+# Individual build steps
+.\build.ps1 Init      # Clean and restore
+.\build.ps1 Compile   # Build solution
+```
+
+Or using .NET CLI:
+```bash
+dotnet restore src/ChurchBulletin.sln
+dotnet build src/ChurchBulletin.sln --configuration Release
+```
+
+## Test Instructions
+
+Run tests using PowerShell build script:
+```powershell
+.\build.ps1 UnitTests           # Run unit tests only
+.\build.ps1 IntegrationTest     # Run integration tests (requires database)
+```
+
+Or using .NET CLI:
+```bash
+dotnet test src/UnitTests/UnitTests.csproj
+dotnet test src/IntegrationTests/IntegrationTests.csproj
+```
+
+## Special Project Rules
+
+- **DO NOT** modify files in `.octopus/`, `.octopus_original_from_od/`, or build scripts without explicit approval
+- **DO NOT** add new NuGet packages without approval
+- **DO NOT** upgrade .NET SDK version without approval (currently 9.0.0)
+- **ALWAYS** include unit tests for new functionality
+- **ALWAYS** update XML documentation for public APIs
+- Integration tests require SQL Server LocalDB
+
 ## General Coding Standards
 
 - Use clean, readable code with proper indentation
