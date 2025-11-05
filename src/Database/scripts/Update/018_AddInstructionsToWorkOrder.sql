@@ -1,0 +1,23 @@
+/*
+	Add Instructions field to WorkOrder table
+	Instructions is an optional field for work order execution instructions
+	Maximum length: 4000 characters
+*/
+
+BEGIN TRANSACTION
+SET QUOTED_IDENTIFIER ON
+SET ARITHABORT ON
+SET NUMERIC_ROUNDABORT OFF
+SET CONCAT_NULL_YIELDS_NULL ON
+SET ANSI_NULLS ON
+SET ANSI_PADDING ON
+SET ANSI_WARNINGS ON
+COMMIT
+BEGIN TRANSACTION
+GO
+ALTER TABLE dbo.WorkOrder ADD
+	Instructions nvarchar(4000) NULL
+GO
+ALTER TABLE dbo.WorkOrder SET (LOCK_ESCALATION = TABLE)
+GO
+COMMIT
