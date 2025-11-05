@@ -12,7 +12,7 @@ public class WorkOrder : EntityBase<WorkOrder>
         set => _description = getTruncatedString(value);
     }
 
-    public string? Instructions`n    {`n        get => _instructions;`n        set => _instructions = getTruncatedString(value);`n    }`n`n    public string? RoomNumber { get; set; } = null;
+    /// <summary>`n    /// Optional execution instructions for the work order. Limited to 4000 characters.`n    /// </summary>`n    public string? Instructions`n    {`n        get => _instructions;`n        set => _instructions = getTruncatedString(value);`n    }`n`n    public string? RoomNumber { get; set; } = null;
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 
