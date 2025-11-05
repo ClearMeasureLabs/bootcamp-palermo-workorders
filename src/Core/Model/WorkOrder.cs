@@ -3,6 +3,7 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 public class WorkOrder : EntityBase<WorkOrder>
 {
     private string? _description = "";
+    private string? _instructions = "";
 
     public string? Title { get; set; } = "";
 
@@ -10,6 +11,16 @@ public class WorkOrder : EntityBase<WorkOrder>
     {
         get => _description;
         set => _description = getTruncatedString(value);
+    }
+
+    /// <summary>
+    /// Optional step-by-step directions for fulfilling the work order.
+    /// Stored as a string truncated to a maximum of 4000 characters.
+    /// </summary>
+    public string? Instructions
+    {
+        get => _instructions;
+        set => _instructions = getTruncatedString(value);
     }
 
     public string? RoomNumber { get; set; } = null;
