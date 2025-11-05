@@ -1,5 +1,6 @@
 -- Add Instructions column to WorkOrder table
 -- This column is optional and supports up to 4000 characters
+-- Existing work orders will have NULL for Instructions, which is expected behavior
 
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[WorkOrder]') AND name = 'Instructions')
 BEGIN
