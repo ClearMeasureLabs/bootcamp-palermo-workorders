@@ -146,7 +146,7 @@ public abstract class AcceptanceTestBase : PageTest
         await locator.SelectOptionAsync(value ?? "");
     }
 
-    protected async Task<WorkOrder> CreateAndSaveNewWorkOrder()
+    protected async Task<WorkOrder> CreateAndSaveNewWorkOrder(string? instructions = null)
     {
         var order = Faker<WorkOrder>();
         order.Title = "from automation";
@@ -154,6 +154,8 @@ public abstract class AcceptanceTestBase : PageTest
         var testTitle = order.Title;
         var testDescription = order.Description;
         var testRoomNumber = order.RoomNumber;
+        order.Instructions = instructions ?? order.Instructions;
+        var testInstructions = order.Instructions;
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
@@ -166,6 +168,7 @@ public abstract class AcceptanceTestBase : PageTest
         order.Number = newWorkOrderNumber;
         await Input(nameof(WorkOrderManage.Elements.Title), testTitle);
         await Input(nameof(WorkOrderManage.Elements.Description), testDescription);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), testInstructions);
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), testRoomNumber);
         await TakeScreenshotAsync(2, "FormFilled");
 
