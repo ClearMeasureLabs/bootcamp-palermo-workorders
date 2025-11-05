@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
@@ -111,9 +111,10 @@ public partial class WorkOrderManage : AppComponentBase
         }
 
         Employee? assignee = null;
-        if (Model.AssignedToUserName != null)
+        var assignedUserName = Model.AssignedToUserName?.Trim();
+        if (!string.IsNullOrWhiteSpace(assignedUserName))
         {
-            assignee = await Bus.Send(new EmployeeByUserNameQuery(Model.AssignedToUserName));
+            assignee = await Bus.Send(new EmployeeByUserNameQuery(assignedUserName));
         }
 
         workOrder.Number = Model.WorkOrderNumber;
