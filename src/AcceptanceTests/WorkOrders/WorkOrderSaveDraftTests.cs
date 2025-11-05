@@ -92,4 +92,86 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))
             .ToHaveTextAsync(rehyratedOrder.CreatedDate!.Value.ToString(CultureInfo.CurrentCulture));
     }
+
+    [Test]
+    public async Task ShouldCreateWorkOrderWith4000CharacterInstructions()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var longInstructions = new string('x', 4000);
+        await Input(nameof(WorkOrderManage.Elements.Title), "Test 4000 Char Instructions");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Testing long instructions");
+        await Input(nameof(WorkOrderManage.Elements.Instructions), longInstructions);
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var orderNumberElement = await Page.Locator("table tbody tr:first-child td:first-child").TextContentAsync();
+        var orderNumber = orderNumberElement?.Trim() ?? throw new InvalidOperationException("Could not find order number");
+
+        WorkOrder savedOrder = await Bus.Send(new WorkOrderByNumberQuery(orderNumber)) ?? throw new InvalidOperationException();
+        Assert.That(savedOrder.Instructions, Is.Not.Null);
+        Assert.That(savedOrder.Instructions!.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public async Task ShouldCreateWorkOrderWithEmptyInstructions()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "Test Empty Instructions");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Testing empty instructions");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "102");
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var orderNumberElement = await Page.Locator("table tbody tr:first-child td:first-child").TextContentAsync();
+        var orderNumber = orderNumberElement?.Trim() ?? throw new InvalidOperationException("Could not find order number");
+
+        WorkOrder savedOrder = await Bus.Send(new WorkOrderByNumberQuery(orderNumber)) ?? throw new InvalidOperationException();
+        Assert.That(savedOrder.Instructions, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public async Task ShouldSaveWorkOrderReturnLaterAddInstructionsAssignAndVerifyPersistence()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await woNumberLocator.WaitForAsync();
+        await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
+
+        await Input(nameof(WorkOrderManage.Elements.Instructions), "Added instructions after initial save");
+        await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await woNumberLocator.WaitForAsync();
+        await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync("Added instructions after initial save");
+
+        var assigneeField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee));
+        await Expect(assigneeField).ToHaveValueAsync(CurrentUser.UserName);
+
+        WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        Assert.That(rehydratedOrder.Instructions, Is.EqualTo("Added instructions after initial save"));
+    }
 }
