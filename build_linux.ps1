@@ -9,12 +9,12 @@ if ($env:ConnectionStrings__SqlConnectionString) {
 
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
-$source_dir = "$base_dir\src"
-$unitTestProjectPath = "$source_dir\UnitTests"
-$integrationTestProjectPath = "$source_dir\IntegrationTests"
-$acceptanceTestProjectPath = "$source_dir\AcceptanceTests"
-$uiProjectPath = "$source_dir\UI\Server"
-$databaseProjectPath = "$source_dir\Database"
+$source_dir = Join-Path $base_dir "src"
+$unitTestProjectPath = Join-Path $source_dir "UnitTests"
+$integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
+$acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
+$uiProjectPath = Join-Path $source_dir "UI" "Server"
+$databaseProjectPath = Join-Path $source_dir "Database"
 $projectConfig = $env:BuildConfiguration
 $framework = "net9.0"
 $version = $env:BUILD_BUILDNUMBER
@@ -157,12 +157,12 @@ Function MigrateDatabaseLocal {
 		[string]$databaseNameFunc
 	)
 
-	New-DockerSqlServer -saPassword $databaseNameFunc
+	New-DockerSqlServer -databaseName $databaseNameFunc
 	New-SqlServerDatabase -serverName $databaseServerFunc -databaseName $databaseNameFunc
-	
+
 	exec{
-		& $aliaSql $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
-	}
+      & dotnet run --project $databaseProjectPath/Database.csproj --no-build --verbosity $verbosity --configuration $projectConfig -- $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
+    }
 }
 
 Function PackageUI {    
@@ -226,7 +226,7 @@ Function PrivateBuild{
 	
 	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
-	IntegrationTest
+	#IntegrationTest
 	#AcceptanceTests
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir

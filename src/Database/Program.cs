@@ -1,2 +1,98 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿using DbUp;
+using DbUp.Helpers;
+using DbUp.ScriptProviders;
+using DbUp.Support;
+using Microsoft.Data.SqlClient;
+
+
+int Fail(string message, int code = -1)
+{
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.WriteLine(message);
+    Console.ResetColor();
+    return code;
+}
+
+// Takes 4 arguments, just like AliaASql
+// <ALIASQL ACTION> <SERVER NAME> <DATABASE NAME> <SCRIPT DIRECTORY>
+// Check for 4 command line parameters
+if (args.Length < 4 ||
+    string.IsNullOrWhiteSpace(args[0]) ||
+    string.IsNullOrWhiteSpace(args[1]) ||
+    string.IsNullOrWhiteSpace(args[2]) ||
+    string.IsNullOrWhiteSpace(args[3]))
+{
+    return Fail("Exactly 4 parameters required: <action> <server> <database> <scriptDir>");
+}
+
+// [TO20251111] Ignore the <ALIASQL ACTION>
+var serverName = args[1];
+var databaseName = args[2];
+// Normalize path separators to be platform-appropriate
+var scriptDir = args[3].Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
+
+
+// TODO [TO20251111] Should use the environment variable connection if available. Note that we need TrustServerCertificate=True for local dev with self-signed certs.
+// TODO [TO20251111] Note the hardcoded username.
+var builder = new SqlConnectionStringBuilder
+{
+    DataSource = $"{serverName}",
+    InitialCatalog = databaseName,
+    UserID = "sa",
+    Password = databaseName,
+    TrustServerCertificate = true,
+    IntegratedSecurity = false,
+    Encrypt = false
+};
+var connectionString = builder.ConnectionString;
+
+EnsureDatabase.For.SqlDatabase(connectionString);
+
+// 1) RunOnce scripts: Create + Update (journaled)
+var runOnce = DeployChanges.To
+    .SqlDatabase(connectionString)
+    .WithScriptsFromFileSystem(Path.Join(scriptDir, "Create"))
+    .WithScriptsFromFileSystem(Path.Join(scriptDir, "Update"))
+    .LogToConsole()
+    .Build();
+
+var runOnceResult = runOnce.PerformUpgrade();
+if (!runOnceResult.Successful)
+{
+    return Fail(runOnceResult?.Error.ToString() ?? "Could not run scripts to create and update database.");
+}
+
+// 2) RunAlways scripts: things to re-apply each run (procs/views/perms)
+var runAlways = DeployChanges.To
+    .SqlDatabase(connectionString)
+    .WithScriptsFromFileSystem(path:Path.Join(scriptDir, "Everytime"), 
+        sqlScriptOptions:new DbUp.Engine.SqlScriptOptions { ScriptType = ScriptType.RunAlways })
+    .JournalTo(new NullJournal())
+    .LogToConsole()
+    .Build();
+
+var runAlwaysResult = runAlways.PerformUpgrade();
+if (!runAlwaysResult.Successful)
+{
+    return Fail(runAlwaysResult?.Error.ToString() ?? "Failed to re-apply RunAlways scripts.");
+}
+
+
+// 3) Optional test data pass (journaled or not, your choice)
+var testData = DeployChanges.To
+    .SqlDatabase(connectionString)
+    .WithScriptsFromFileSystem(Path.Join(scriptDir, "TestData"))
+    .LogToConsole()
+    .Build();
+
+var testDataResult = testData.PerformUpgrade();
+if (!testDataResult.Successful)
+{
+    return Fail(testDataResult?.Error.ToString() ?? "Failed to run TestData scripts.");
+}
+
+
+Console.ForegroundColor = ConsoleColor.Green;
+Console.WriteLine($"Finished updating {databaseName}.");
+Console.ResetColor();
+return 0;

@@ -139,7 +139,7 @@ END
     try 
     {
         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
     } 
     catch {
         Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
@@ -149,10 +149,13 @@ END
     Log-Message -Message "Recreated database '$databaseName' on server '$serverName'" -Type "INFO"
 }
 
+
+
+
 Function New-DockerSqlServer {
     param (
         [Parameter(Mandatory=$true)]
-        [string]$saPassword
+        [string]$databaseName
     )
 
     $containerName = "sql2022-bootcamp-tests"
@@ -163,9 +166,10 @@ Function New-DockerSqlServer {
     # - check if container exists but is stopped, and start it instead of creating a new one OR remove existing container
     $containerStatus = docker ps --filter "name=$containerName" --format "{{.Status}}"
     if (-not $containerStatus) {
-        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$saPassword" -p 1433:1433 --name $containerName -d $imageName | Out-Null
+        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$databaseName" -p 1433:1433 --name $containerName -d $imageName | Out-Null
         Start-Sleep -Seconds 10
     }
     Log-Message -Message "SQL Server Docker container '$containerName' is running." -Type "INFO"
 
 }
+
