@@ -99,3 +99,73 @@ Function Update-AppSettingsConnectionStrings {
     
     Write-Host "Completed updating appsettings*.json files" -ForegroundColor Cyan
 }
+
+Function Get-OSPlatform {
+    $os = $PSVersionTable.OS
+    if ($os -match "Windows") {
+        return "Windows"
+    }
+    elseif ($os -match "Linux") {
+        return "Linux"
+    }
+    elseif ($os -match "Darwin") {
+        return "macOS"
+    }
+    else {
+        return "Unknown"
+    }
+}
+
+Function New-SqlServerDatabase {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$serverName,
+        [Parameter(Mandatory=$true)]
+        [string]$databaseName
+    )
+
+    $saCred = New-object System.Management.Automation.PSCredential("sa", (ConvertTo-SecureString -String $databaseName -AsPlainText -Force))
+    
+    $dropDbCmd = @"
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'$databaseName')
+BEGIN
+    ALTER DATABASE [$databaseName] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE [$databaseName];
+END
+"@
+
+    $createDbCmd = "CREATE DATABASE [$databaseName];"
+
+    try 
+    {
+        Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
+        Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+    } 
+    catch {
+        Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
+        throw $_
+    }
+
+    Log-Message -Message "Recreated database '$databaseName' on server '$serverName'" -Type "INFO"
+}
+
+Function New-DockerSqlServer {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$saPassword
+    )
+
+    $containerName = "sql2022-bootcamp-tests"
+    $imageName = "mcr.microsoft.com/mssql/server:2022-latest"
+
+    # [TO20251111] Some ideas for improvement:
+    # - use a random port instead of 1433 to avoid conflicts with other SQL Server instances
+    # - check if container exists but is stopped, and start it instead of creating a new one OR remove existing container
+    $containerStatus = docker ps --filter "name=$containerName" --format "{{.Status}}"
+    if (-not $containerStatus) {
+        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$saPassword" -p 1433:1433 --name $containerName -d $imageName | Out-Null
+        Start-Sleep -Seconds 10
+    }
+    Log-Message -Message "SQL Server Docker container '$containerName' is running." -Type "INFO"
+
+}
