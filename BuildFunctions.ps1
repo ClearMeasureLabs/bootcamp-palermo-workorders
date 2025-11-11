@@ -124,7 +124,8 @@ Function New-SqlServerDatabase {
         [string]$databaseName
     )
 
-    $saCred = New-object System.Management.Automation.PSCredential("sa", (ConvertTo-SecureString -String $databaseName -AsPlainText -Force))
+    $containerName = "sql2022-bootcamp-tests-$databaseName"
+    $saPassword = $databaseName
     
     $dropDbCmd = @"
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'$databaseName')
@@ -138,8 +139,9 @@ END
 
     try 
     {
-        Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
-         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+        # Use docker exec to run sqlcmd inside the container
+        docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $saPassword -Q $dropDbCmd -C 2>&1 | Out-Null
+        docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $saPassword -Q $createDbCmd -C
     } 
     catch {
         Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"

@@ -23,11 +23,11 @@ $version = $env:BUILD_BUILDNUMBER
 
 $verbosity = "minimal"
 
-$build_dir = "$base_dir\build"
-$test_dir = "$build_dir\test"
+$build_dir = "$base_dir/build"
+$test_dir = "$build_dir/test"
 
 # TODO  [TO20251110] Will/what AliaSQL work on linux?
-$aliaSql = "$source_dir\Database\scripts\AliaSql.exe"
+$aliaSql = "$source_dir/Database/scripts/AliaSql.exe"
 
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild"}
@@ -39,7 +39,7 @@ if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName}
 $script:databaseServer = $databaseServer
 if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost"}
 
-$databaseScripts = "$source_dir\Database\scripts"
+$databaseScripts = "$source_dir/Database/scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0"}
 if ([string]::IsNullOrEmpty($projectConfig)) {$projectConfig = "Release"}
@@ -70,15 +70,17 @@ Function Init {
 		Write-Host "PowerShell 7 found at: $pwshPath"
 	}
 
-	& cmd.exe /c rd /S /Q build
+	if (Test-Path $build_dir) {
+		Remove-Item -Path $build_dir -Recurse -Force
+	}
 	
 	mkdir $build_dir > $null
 
 	exec {
-		& dotnet clean $source_dir\$projectName.sln -nologo -v $verbosity
+		& dotnet clean $source_dir/$projectName.sln -nologo -v $verbosity
 		}
 	exec {
-		& dotnet restore $source_dir\$projectName.sln -nologo --interactive -v $verbosity  
+		& dotnet restore $source_dir/$projectName.sln -nologo --interactive -v $verbosity  
 		}
 	
     Write-Output $projectConfig
@@ -87,7 +89,7 @@ Function Init {
 
 Function Compile{
 	exec {
-		& dotnet build $source_dir\$projectName.sln -nologo --no-restore -v `
+		& dotnet build $source_dir/$projectName.sln -nologo --no-restore -v `
 			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
@@ -101,7 +103,7 @@ Function UnitTests{
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-			--results-directory $test_dir\UnitTests --no-build `
+			--results-directory $test_dir/UnitTests --no-build `
 			--no-restore --configuration $projectConfig `
 			--collect:"XPlat Code Coverage"
 		}
@@ -117,7 +119,7 @@ Function IntegrationTest{
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-			--results-directory $test_dir\IntegrationTests --no-build `
+			--results-directory $test_dir/IntegrationTests --no-build `
 			--no-restore --configuration $projectConfig `
 			--collect:"XPlat Code Coverage"
 		}
@@ -136,7 +138,7 @@ Function AcceptanceTests{
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-			--results-directory $test_dir\AcceptanceTests --no-build `
+			--results-directory $test_dir/AcceptanceTests --no-build `
 			--no-restore --configuration $projectConfig `
 			--collect:"XPlat Code Coverage"
 		}
@@ -170,7 +172,7 @@ Function PackageUI {
       & dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
     }
 	exec{
-		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $uiProjectPath\bin\$projectConfig\$framework\publish --outFolder $build_dir  --overwrite
+		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $uiProjectPath/bin/$projectConfig/$framework/publish --outFolder $build_dir  --overwrite
 	}
 }
 
@@ -186,7 +188,7 @@ Function PackageAcceptanceTests {
         & dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
     }
 	exec{
-		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $acceptanceTestProjectPath\bin\Debug\$framework\publish --outFolder $build_dir --overwrite
+		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $acceptanceTestProjectPath/bin/Debug/$framework/publish --outFolder $build_dir --overwrite
 	}
 }
 
@@ -248,3 +250,5 @@ Function CIBuild{
 	$sw.Stop()
 	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
 }
+
+PrivateBuild
