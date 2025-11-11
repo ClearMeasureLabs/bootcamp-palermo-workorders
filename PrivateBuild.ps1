@@ -1,7 +1,7 @@
 param (
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$databaseServer = "(LocalDb)\MSSQLLocalDB",
+    [string]$databaseServer = "localhost",
 	
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -9,6 +9,6 @@ param (
 	
 )
 
-. .\build.ps1
+. .\build_linux.ps1
 
 PrivateBuild
