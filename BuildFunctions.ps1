@@ -99,3 +99,89 @@ Function Update-AppSettingsConnectionStrings {
     
     Write-Host "Completed updating appsettings*.json files" -ForegroundColor Cyan
 }
+
+Function Get-OSPlatform {
+    $os = $PSVersionTable.OS
+    if ($os -match "Windows") {
+        return "Windows"
+    }
+    elseif ($os -match "Linux") {
+        return "Linux"
+    }
+    elseif ($os -match "Darwin") {
+        return "macOS"
+    }
+    else {
+        return "Unknown"
+    }
+}
+
+Function New-SqlServerDatabase {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$serverName,
+        [Parameter(Mandatory=$true)]
+        [string]$databaseName
+    )
+
+    $saCred = New-object System.Management.Automation.PSCredential("sa", (ConvertTo-SecureString -String $databaseName -AsPlainText -Force))
+    
+    $dropDbCmd = @"
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'$databaseName')
+BEGIN
+    ALTER DATABASE [$databaseName] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE [$databaseName];
+END
+"@
+
+    $createDbCmd = "CREATE DATABASE [$databaseName];"
+
+    try 
+    {
+        Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
+         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+    } 
+    catch {
+        Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
+        throw $_
+    }
+
+    Log-Message -Message "Recreated database '$databaseName' on server '$serverName'" -Type "INFO"
+}
+
+
+
+
+Function New-DockerSqlServer {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$databaseName
+    )
+
+    $containerName = "sql2022-bootcamp-tests-$databaseName"
+    $imageName = "mcr.microsoft.com/mssql/server:2022-latest"
+
+    # Stop any containers using port 1433
+    Log-Message -Message "Checking for containers using port 1433..." -Type "INFO"
+    $containersOnPort1433 = docker ps --format "table {{.Names}}\t{{.Ports}}" | Select-String ":1433->" | ForEach-Object { 
+        ($_ -split '\s+')[0] 
+    }
+    
+    foreach ($container in $containersOnPort1433) {
+        if ($container -and $container -ne "NAMES") {
+            Log-Message -Message "Stopping container '$container' that is using port 1433..." -Type "INFO"
+            docker stop $container | Out-Null
+            docker rm $container | Out-Null
+        }
+    }
+
+    # Check if our specific container exists
+    $containerStatus = docker ps --filter "name=$containerName" --format "{{.Status}}"
+    if (-not $containerStatus) {
+        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$databaseName" -p 1433:1433 --name $containerName -d $imageName | Out-Null
+        Start-Sleep -Seconds 10
+    }
+    Log-Message -Message "SQL Server Docker container '$containerName' is running." -Type "INFO"
+
+}
+
