@@ -158,12 +158,24 @@ Function New-DockerSqlServer {
         [string]$databaseName
     )
 
-    $containerName = "sql2022-bootcamp-tests"
+    $containerName = "sql2022-bootcamp-tests-$databaseName"
     $imageName = "mcr.microsoft.com/mssql/server:2022-latest"
 
-    # [TO20251111] Some ideas for improvement:
-    # - use a random port instead of 1433 to avoid conflicts with other SQL Server instances
-    # - check if container exists but is stopped, and start it instead of creating a new one OR remove existing container
+    # Stop any containers using port 1433
+    Log-Message -Message "Checking for containers using port 1433..." -Type "INFO"
+    $containersOnPort1433 = docker ps --format "table {{.Names}}\t{{.Ports}}" | Select-String ":1433->" | ForEach-Object { 
+        ($_ -split '\s+')[0] 
+    }
+    
+    foreach ($container in $containersOnPort1433) {
+        if ($container -and $container -ne "NAMES") {
+            Log-Message -Message "Stopping container '$container' that is using port 1433..." -Type "INFO"
+            docker stop $container | Out-Null
+            docker rm $container | Out-Null
+        }
+    }
+
+    # Check if our specific container exists
     $containerStatus = docker ps --filter "name=$containerName" --format "{{.Status}}"
     if (-not $containerStatus) {
         docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$databaseName" -p 1433:1433 --name $containerName -d $imageName | Out-Null
