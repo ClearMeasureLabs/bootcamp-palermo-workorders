@@ -14,7 +14,7 @@ stages:
     - job: 'Build'
       displayName: 'Build job'
       pool:
-        vmImage: 'windows-latest'
+        vmImage: 'ubuntu-latest'
       steps:
       # Dependencies
       - task: UseDotNet@2
@@ -36,10 +36,10 @@ stages:
             echo $(Build.BuildNumber)
 
       - task: PowerShell@2
-        displayName: Build.ps1
+        displayName: Build_Linux.ps1
         inputs:
           targetType: filePath
-          filePath: ./build.ps1
+          filePath: ./build_linux.ps1
           arguments: '; CIBuild'
       - task: PublishTestResults@2
         displayName: 'Publish Test Results ./build/test/*.trx'
