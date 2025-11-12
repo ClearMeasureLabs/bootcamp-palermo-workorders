@@ -1,0 +1,215 @@
+Clearing ConnectionStrings__SqlConnectionString environment variable
+Generated unique database name: ChurchBulletin_20251112122021_vxiM
+PowerShell 7 found at: C:\Program Files\PowerShell\7\pwsh.exe
+Build succeeded in 0.7s
+Restore complete (0.6s)
+Build succeeded in 0.7s
+Debug
+1.0.0
+  Database succeeded (0.2s) → src\Database\bin\Debug\net9.0\ClearMeasure.Bootcamp.Database.dll
+  Core succeeded (0.4s) → src\Core\bin\Debug\net9.0\ClearMeasure.Bootcamp.Core.dll
+  LlmGateway succeeded (0.2s) → src\LlmGateway\bin\Debug\net9.0\ClearMeasure.Bootcamp.LlmGateway.dll
+  DataAccess succeeded (0.2s) → src\DataAccess\bin\Debug\net9.0\ClearMeasure.Bootcamp.DataAccess.dll
+  UI.Api succeeded (0.5s) → src\UI\Api\bin\Debug\net9.0\ClearMeasure.Bootcamp.UI.Api.dll
+  UI.Shared succeeded (0.4s) → src\UI.Shared\bin\Debug\net9.0\ClearMeasure.Bootcamp.UI.Shared.dll
+  UI.Client succeeded (1.6s) → src\UI\Client\bin\Debug\net9.0\wwwroot
+  UI.Server succeeded (1.0s) → src\UI\Server\bin\Debug\net9.0\ClearMeasure.Bootcamp.UI.Server.dll
+  UnitTests succeeded (0.5s) → src\UnitTests\bin\Debug\net9.0\ClearMeasure.Bootcamp.UnitTests.dll
+  IntegrationTests succeeded (0.5s) → src\IntegrationTests\bin\Debug\net9.0\ClearMeasure.Bootcamp.IntegrationTests.dll
+  AcceptanceTests succeeded (0.7s) → src\AcceptanceTests\bin\Debug\net9.0\ClearMeasure.Bootcamp.AcceptanceTests.dll
+Build succeeded in 6.0s
+NUnit Adapter 5.0.0.0: Test execution started
+Running all tests in C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UnitTests\bin\Debug\net9.0\ClearMeasure.Bootcamp.UnitTests.dll
+   NUnit3TestExecutor discovered 89 of 89 NUnit test cases using Current Discovery mode, Non-Explicit run
+NUnit Adapter 5.0.0.0: Test execution complete
+Results File: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\build\test\UnitTests\JeffreyPalermo_DESKTOP-OBS4PVU_2025-11-12_12_20_32.trx
+  UnitTests                                       GenerateCoverageResult (3.0s)
++----------------------------------+--------+--------+--------+
+| Module                           | Line   | Branch | Method |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.Core       | 77.9%  | 52.5%  | 78.7%  |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.DataAccess | 0%     | 0%     | 0%     |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.LlmGateway | 0%     | 0%     | 0%     |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.UI.Api     | 0%     | 0%     | 0%     |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.UI.Client  | 24.69% | 22.22% | 37.93% |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.UI.Server  | 0%     | 0%     | 0%     |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.UI.Shared  | 40.19% | 24.4%  | 47.28% |
++----------------------------------+--------+--------+--------+
++---------+--------+--------+--------+
+|         | Line   | Branch | Method |
++---------+--------+--------+--------+
+| Total   | 34.24% | 22%    | 49.87% |
++---------+--------+--------+--------+
+| Average | 20.39% | 14.16% | 23.41% |
++---------+--------+--------+--------+
+  UnitTests test succeeded (3.0s)
+Test summary: total: 89, failed: 0, succeeded: 89, skipped: 0, duration: 2.2s
+Build succeeded in 3.3s
+Attachments:
+  C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\build\test\UnitTests\dbd7cf39-46fd-428e-8f39-cd85530be706\coverage.cobertura.xml
+Updating appsettings*.json files with database name: ChurchBulletin_20251112122021_vxiM
+Set process environment variable ConnectionStrings__SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\appsettings.acceptancetests.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\appsettings.acceptancetests.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\publish\appsettings.acceptancetests.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\publish\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\publish\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\publish\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Release\net9.0\appsettings.acceptancetests.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Release\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Release\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Release\net9.0\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Debug\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Debug\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Debug\net9.0\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Release\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Release\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Release\net9.0\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Debug\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Debug\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Release\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Release\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Release\net9.0\publish\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Release\net9.0\publish\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UnitTests\bin\Debug\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UnitTests\bin\Debug\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UnitTests\bin\Release\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UnitTests\bin\Release\net9.0\appsettings.json
+Completed updating appsettings*.json files
+Rebuild ChurchBulletin_20251112122021_vxiM on (LocalDb)\MSSQLLocalDB using scripts from C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\Database\scripts
+Database 'ChurchBulletin_20251112122021_vxiM' could not be dropped.
+Run scripts in Create folder.
+Run scripts in Update folder.
+Executing: 001-first-script.sql in a transaction
+Executing: 003-WorkOrderAndEmployeeTables.sql in a transaction
+Executing: 004_RenameConstraintsToGoodNames.sql in a transaction
+Executing: 005_AddedWorkOrderNumber.sql in a transaction
+Executing: 006_MakeAssigneeNullable.sql in a transaction
+Executing: 007_ChangeStatusToChar.sql in a transaction
+Executing: 008_AddSomeEmployeeRecords.sql in a transaction
+Executing: 009_AddAuditEntry.sql in a transaction
+Executing: 010_AddRole.sql in a transaction
+Executing: 011_EmployeeRolesTable.sql in a transaction
+Executing: 012_ManagerSecretary.sql in a transaction
+Executing: 013_SecretaryColumn.sql in a transaction
+Executing: 014_MergingEmployees.sql in a transaction
+Executing: 015_RemovedAuditEntriesSecretaryManager.sql in a transaction
+Executing: 016_AddRoomNumberToWorkOrder.sql in a transaction
+Executing: 017_AddAuditEntryTable.sql in a transaction
+Executing: 017_AddCreatedDateAndCompletedDateToWorkOrder.sql in a transaction
+Executing: 018_AddAssignedDateToWorkOrder.sql in a transaction
+Executing: 019_ChangeRoomNumberFromIntToString.sql in a transaction
+Executing: 020_DropAuditEntry.sql in a transaction
+Executing: 021_ExtendWorkOrderNumberLength.sql in a transaction
+Executing: 022_AddInstructionsToWorkOrder.sql in a transaction
+Run scripts in Everytime folder.
+Run scripts in RunAlways folder.
+usdDatabaseVersion: 22
+NUnit Adapter 5.0.0.0: Test execution started
+Running all tests in C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Debug\net9.0\ClearMeasure.Bootcamp.IntegrationTests.dll
+   NUnit3TestExecutor discovered 38 of 39 NUnit test cases using Current Discovery mode, Non-Explicit run
+server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin_20251112122021_vxiM;Integrated Security=true;
+test valueSystem.Random
+NUnit Adapter 5.0.0.0: Test execution complete
+Results File: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\build\test\IntegrationTests\JeffreyPalermo_DESKTOP-OBS4PVU_2025-11-12_12_20_48.trx
+  IntegrationTests                                GenerateCoverageResult (6.8s)
++----------------------------------+--------+--------+--------+
+| Module                           | Line   | Branch | Method |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.Core       | 53.68% | 40%    | 62.58% |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.DataAccess | 76.37% | 79.16% | 65.51% |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.LlmGateway | 0%     | 0%     | 0%     |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.UI.Api     | 0%     | 0%     | 0%     |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.UI.Client  | 15.43% | 0%     | 24.13% |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.UI.Server  | 11.89% | 0%     | 5.55%  |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.UI.Shared  | 0%     | 0%     | 0%     |
++----------------------------------+--------+--------+--------+
+| ClearMeasure.Bootcamp.UnitTests  | 3.95%  | 25%    | 4.57%  |
++----------------------------------+--------+--------+--------+
++---------+--------+--------+--------+
+|         | Line   | Branch | Method |
++---------+--------+--------+--------+
+| Total   | 17.53% | 13.23% | 23.4%  |
++---------+--------+--------+--------+
+| Average | 20.16% | 18.02% | 20.29% |
++---------+--------+--------+--------+
+  IntegrationTests test succeeded (6.9s)
+Test summary: total: 39, failed: 0, succeeded: 38, skipped: 0, duration: 6.0s
+Build succeeded in 7.3s
+Attachments:
+  C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\build\test\IntegrationTests\86605f66-6292-43c1-9228-05c5075a2804\coverage.cobertura.xml
+Updating appsettings*.json files with database name: ChurchBulletin
+Set process environment variable ConnectionStrings__SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\appsettings.acceptancetests.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\appsettings.acceptancetests.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\publish\appsettings.acceptancetests.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\publish\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\publish\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Debug\net9.0\publish\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Release\net9.0\appsettings.acceptancetests.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Release\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Release\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\AcceptanceTests\bin\Release\net9.0\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Debug\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Debug\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Debug\net9.0\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Release\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Release\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\IntegrationTests\bin\Release\net9.0\appsettings.test.json
+  Updated SqlConnectionString: server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Debug\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Debug\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Release\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Release\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Release\net9.0\publish\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UI\Server\bin\Release\net9.0\publish\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UnitTests\bin\Debug\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UnitTests\bin\Debug\net9.0\appsettings.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UnitTests\bin\Release\net9.0\appsettings.Development.json
+Processing file: C:\Users\JeffreyPalermo\RiderProjects\bootcamp-palermo-workorders-jetbrains-rider-junie\src\UnitTests\bin\Release\net9.0\appsettings.json
+Completed updating appsettings*.json files
+BUILD SUCCEEDED - Build time:  00:00:30.8071026
+Database used: ChurchBulletin_20251112122021_vxiM
