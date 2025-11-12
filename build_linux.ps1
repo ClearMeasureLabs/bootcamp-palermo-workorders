@@ -34,8 +34,13 @@ $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
 
+if (Test-IsLinux) {
+	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
+}
+else {
+	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
+}
 $script:databaseServer = $databaseServer
-if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 
 $databaseScripts = Join-Path $source_dir "Database" "scripts"
 
@@ -60,13 +65,20 @@ Function Generate-UniqueDatabaseName {
 Function Init {
 	# Check for PowerShell 7
 	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-
 	if (-not $pwshPath) {
 		Write-Warning "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell"
 	}
- else {
+ 	else {
 		Write-Host "PowerShell 7 found at: $pwshPath"
 	}
+
+	if (Test-IsLinux) {
+		Write-Host "Running on Linux"		
+	}
+	elseif (Test-IsWindows) {
+		Write-Host "Running on Windows"
+	}
+
 
 	if (Test-Path "build") {
 		Remove-Item -Path "build" -Recurse -Force
@@ -160,9 +172,6 @@ Function MigrateDatabaseLocal {
 		[string]$databaseNameFunc
 	)
 
-	New-DockerSqlServer -databaseName $databaseNameFunc
-	New-SqlServerDatabase -serverName $databaseServerFunc -databaseName $databaseNameFunc
-
 	$dbProjectName = Join-Path $databaseProjectPath "Database.csproj"
 	exec {
 		& dotnet run --project $dbProjectName --no-build --verbosity $verbosity --configuration $projectConfig -- $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
@@ -228,6 +237,22 @@ Function PrivateBuild {
 	# Update appsettings.json files before database migration
 	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
 	
+	if (Test-IsLinux) 
+	{
+		write-host "Setting up SQL Server in Docker" -ForegroundColor Cyan
+		# For Linux, can't use LocalDB, so spin SQL Server in Docker.
+		if (Test-IsDockerRunning -LogOutput $true) 
+		{
+			Write-Host "Standing up SQL Server in Docker for Linux environment" -ForegroundColor Cyan
+			New-DockerContainerForSqlServer -databaseName $script:databaseName
+			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		}
+		else {
+			Write-Error "Docker is not running. Please start Docker to run SQL Server in a container."
+			throw "Docker is not running."
+		}
+	}
+
 	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest

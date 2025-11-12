@@ -56,11 +56,16 @@ Function Update-AppSettingsConnectionStrings {
     
     Write-Host "Updating appsettings*.json files with database name: $databaseNameToUse" -ForegroundColor Cyan
     
-    # Build the connection string for the Docker instance for environment variable
-    # [TO20251112] This is the connection string format for LocalDB
-    # $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+    if (Test-IsLinux) 
+    {
+        $connectionString = "Data Source=$serverName;Initial Catalog=$databaseNameToUse;User ID=sa;Password=$databaseNameToUse;TrustServerCertificate=true;Integrated Security=false;Encrypt=false"
+    }
+    else
+    {
+        # [TO20251112] This is the connection string format for LocalDB
+        $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+    }
 
-    $connectionString = "Data Source=$serverName;Initial Catalog=$databaseNameToUse;User ID=sa;Password=$databaseNameToUse;TrustServerCertificate=true;Integrated Security=false;Encrypt=false"
 
     # Set environment variable for current process
     $env:ConnectionStrings__SqlConnectionString = $connectionString
@@ -121,9 +126,8 @@ Function Get-OSPlatform {
     elseif ($os -match "Darwin") {
         return "macOS"
     }
-    else {
-        return "Unknown"
-    }
+
+    return "Unknown"
 }
 
 Function Test-IsLinux {
@@ -136,7 +140,14 @@ Function Test-IsLinux {
         [bool] True if running on Linux, False otherwise
     #>
     
-    return $PSVersionTable.OS -match "Linux"
+    if (Get-OSPlatform -match "Linux") {
+        return $true
+    }
+    if ($IsLinux) { 
+        return $true
+    }
+
+    return $false
 }
 
 Function Test-IsWindows {
@@ -149,7 +160,14 @@ Function Test-IsWindows {
         [bool] True if running on Windows, False otherwise
     #>
     
-    return $PSVersionTable.OS -match "Windows"
+    if (Get-OSPlatform -match "Windows") {
+        return $true
+    }
+    if ($IsWindows) { 
+        return $true
+    }
+
+    return $false
 }
 
 
@@ -185,10 +203,7 @@ END
     Log-Message -Message "Recreated database '$databaseName' on server '$serverName'" -Type "INFO"
 }
 
-
-
-
-Function New-DockerSqlServer {
+Function New-DockerContainerForSqlServer {
     param (
         [Parameter(Mandatory = $true)]
         [string]$databaseName
@@ -221,3 +236,55 @@ Function New-DockerSqlServer {
 
 }
 
+Function Test-IsDockerRunning {
+    <#
+    .SYNOPSIS
+        Tests if Docker is installed and running
+    .DESCRIPTION
+        Checks if Docker is installed and the Docker daemon is accessible
+    .PARAMETER LogOutput
+        If true, outputs detailed logging information
+    .OUTPUTS
+        [bool] True if Docker is running, False otherwise
+    #>
+    param (
+        [Parameter(Mandatory=$false)]
+        [bool]$LogOutput = $false
+    )
+    
+    $dockerPath = (Get-Command docker -ErrorAction SilentlyContinue).Source
+    if (-not $dockerPath) {
+        if ($LogOutput) {
+            Log-Message -Message "Docker is not installed or not in PATH" -Type "ERROR"
+            Log-Message -Message "Install Docker from: https://docs.docker.com/engine/install/" -Type "INFO"
+        }
+        return $false
+    } else {
+        if ($LogOutput) {
+            Log-Message -Message "Docker found at: $dockerPath" -Type "INFO"
+        }
+        
+        # Check if Docker daemon is running
+        try {
+            $dockerVersion = & docker version --format "{{.Server.Version}}" 2>$null
+            if ($dockerVersion) {
+                if ($LogOutput) {
+                    Log-Message -Message "Docker daemon is running (version: $dockerVersion)" -Type "INFO"
+                }
+            } else {
+                if ($LogOutput) {
+                    Log-Message -Message "Docker is installed but the daemon may not be running. Try: sudo systemctl start docker" -Type "ERROR"
+                }
+                return $false
+            }
+        }
+        catch {
+            if ($LogOutput) {
+                Log-Message -Message "Docker is installed but the daemon is not accessible. Try: sudo systemctl start docker" -Type "ERROR"
+            }
+            return $false   
+        }
+    }
+
+    return $true
+}
