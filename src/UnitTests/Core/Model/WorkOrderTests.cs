@@ -83,6 +83,15 @@ public class WorkOrderTests
     }
 
     [Test]
+    public void ShouldHandleNullInstructions()
+    {
+        var order = new WorkOrder();
+        order.Instructions = null;
+        Assert.That(order.Instructions, Is.EqualTo(string.Empty));
+        Assert.That(order.Instructions, Is.Not.Null);
+    }
+
+    [Test]
     public void ShouldChangeStatus()
     {
         var order = new WorkOrder();

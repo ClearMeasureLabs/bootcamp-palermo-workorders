@@ -58,7 +58,11 @@
                 <div class="form-group">
                     <label for="Instructions" class="form-label">Instructions:</label>
                     <div>
-                        <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
+                        <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" disabled="@Model.IsReadOnly" maxlength="4000"/>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <small class="text-muted">@(Model.Instructions?.Length ?? 0) / 4000 characters</small>
+                        }
                     </div>
                 </div>
 

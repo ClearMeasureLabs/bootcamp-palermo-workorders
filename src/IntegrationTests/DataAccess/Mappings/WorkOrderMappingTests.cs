@@ -100,6 +100,44 @@ public class WorkOrderMappingTests
     }
 
     [Test]
+    public async Task ShouldTruncateInstructionsOver4000Characters()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("trunctest", "Test", "User", "test@example.com");
+        var longInstructions = new string('x', 4500);
+        var order = new WorkOrder
+        {
+            Creator = creator,
+            Title = "Test Order",
+            Description = "Test Description",
+            Instructions = longInstructions,
+            RoomNumber = "101",
+            Number = "WO-999"
+        };
+
+        // Verify truncation happened in the model
+        order.Instructions.ShouldNotBeNull();
+        order.Instructions!.Length.ShouldBe(4000);
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == order.Id);
+            rehydratedWorkOrder.Instructions.ShouldNotBeNull();
+            rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
+            rehydratedWorkOrder.Instructions.ShouldBe(new string('x', 4000));
+        }
+    }
+
+    [Test]
     public async Task ShouldSaveAuditEntries()
     {
         new DatabaseTests().Clean();
