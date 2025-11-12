@@ -8,6 +8,7 @@ if ($env:ConnectionStrings__SqlConnectionString) {
 }
 
 $projectName = "ChurchBulletin"
+
 $base_dir = resolve-path .\
 $source_dir = Join-Path $base_dir "src"
 $unitTestProjectPath = Join-Path $source_dir "UnitTests"
@@ -23,9 +24,8 @@ $verbosity = "minimal"
 
 $build_dir = Join-Path $base_dir "build"
 $test_dir = Join-Path $build_dir "test"
-
-# TODO  [TO20251110] Will/what AliaSQL work on linux?
-$aliaSql = "$source_dir\Database\scripts\AliaSql.exe"
+$aliaSql =  Join-Path $source_dir "Database" "scripts" "AliaSql.exe"
+$solutionName = Join-Path $source_dir "$projectName.sln"
 
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild" }
@@ -37,7 +37,7 @@ if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 $script:databaseServer = $databaseServer
 if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 
-$databaseScripts = "$source_dir\Database\scripts"
+$databaseScripts = Join-Path $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
@@ -68,15 +68,17 @@ Function Init {
 		Write-Host "PowerShell 7 found at: $pwshPath"
 	}
 
-	& cmd.exe /c rd /S /Q build
+	if (Test-Path "build") {
+		Remove-Item -Path "build" -Recurse -Force
+	}
 	
-	mkdir $build_dir > $null
+	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
 
 	exec {
-		& dotnet clean $source_dir\$projectName.sln -nologo -v $verbosity
+		& dotnet clean $solutionName -nologo -v $verbosity
 	}
 	exec {
-		& dotnet restore $source_dir\$projectName.sln -nologo --interactive -v $verbosity  
+		& dotnet restore $solutionName -nologo --interactive -v $verbosity  
 	}
 	
 	Write-Output $projectConfig
@@ -85,7 +87,7 @@ Function Init {
 
 Function Compile {
 	exec {
-		& dotnet build $source_dir\$projectName.sln -nologo --no-restore -v `
+		& dotnet build $solutionName -nologo --no-restore -v `
 			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
@@ -96,10 +98,11 @@ Function Compile {
 Function UnitTests {
 	Push-Location -Path $unitTestProjectPath
 
+	$resultsDir = Join-Path $test_dir "UnitTests"
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $test_dir\UnitTests --no-build `
+				--results-directory $resultsDir --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
@@ -112,10 +115,11 @@ Function UnitTests {
 Function IntegrationTest {
 	Push-Location -Path $integrationTestProjectPath
 
+	$resultsDir = Join-Path $test_dir "IntegrationTests"
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $test_dir\IntegrationTests --no-build `
+				--results-directory $resultsDir --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
@@ -131,6 +135,7 @@ Function AcceptanceTests {
 
 	pwsh bin/Debug/$framework/playwright.ps1 install 
 
+	$resultsDir
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
