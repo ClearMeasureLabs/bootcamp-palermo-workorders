@@ -9,12 +9,11 @@
 .EXAMPLE
   exec { svn info $repository_trunk } "Error executing SVN. Please verify SVN command-line client is installed"
 #>
-function Exec
-{
+function Exec {
     [CmdletBinding()]
     param(
-        [Parameter(Position=0,Mandatory=1)][scriptblock]$cmd,
-        [Parameter(Position=1,Mandatory=0)][string]$errorMessage = ($msgs.error_bad_command -f $cmd)
+        [Parameter(Position = 0, Mandatory = 1)][scriptblock]$cmd,
+        [Parameter(Position = 1, Mandatory = 0)][string]$errorMessage = ($msgs.error_bad_command -f $cmd)
     )
     & $cmd
     if ($lastexitcode -ne 0) {
@@ -47,22 +46,27 @@ Function Log-Message {
 
 Function Update-AppSettingsConnectionStrings {
     param (
-        [Parameter(Mandatory=$true)]
-      [string]$databaseNameToUse,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
+        [string]$databaseNameToUse,
+        [Parameter(Mandatory = $true)]
         [string]$serverName,
-     [Parameter(Mandatory=$true)]
-      [string]$sourceDir
+        [Parameter(Mandatory = $true)]
+        [string]$sourceDir
     )
     
     Write-Host "Updating appsettings*.json files with database name: $databaseNameToUse" -ForegroundColor Cyan
     
-    # Build the connection string for environment variable
-    $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
-    
+    # Build the connection string for the Docker instance for environment variable
+    # [TO20251112] This is the connection string format for LocalDB
+    # $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+
+    $connectionString = "Data Source=$serverName;Initial Catalog=$databaseNameToUse;User ID=sa;Password=$databaseNameToUse;TrustServerCertificate=true;Integrated Security=false;Encrypt=false"
+
     # Set environment variable for current process
     $env:ConnectionStrings__SqlConnectionString = $connectionString
-    Write-Host "Set process environment variable ConnectionStrings__SqlConnectionString: $connectionString" -ForegroundColor Cyan
+    $redactedConnectionString = $oldConnectionString -replace "Password=[^;]*", "Password=***"
+
+    Write-Host "Set process environment variable ConnectionStrings__SqlConnectionString: $redactedConnectionString" -ForegroundColor Cyan
     
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
@@ -76,24 +80,28 @@ Function Update-AppSettingsConnectionStrings {
         if ($content.PSObject.Properties.Name -contains "ConnectionStrings") {
             $connectionStringsObj = $content.ConnectionStrings
 
-    # Update all connection strings that contain a database reference
-     foreach ($property in $connectionStringsObj.PSObject.Properties) {
-   $connectionString = $property.Value
-   
-       if ($connectionString -match "database=([^;]+)") {
-# Replace the database name in the connection string
- $newConnectionString = $connectionString -replace "database=[^;]+", "database=$databaseNameToUse"
-          
-     # Also update server if needed
-     $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
-      
-            $connectionStringsObj.$($property.Name) = $newConnectionString
-       Write-Host "  Updated $($property.Name): $newConnectionString" -ForegroundColor Green
-    }
+            # Update all connection strings that contain a database reference
+            foreach ($property in $connectionStringsObj.PSObject.Properties) {
+                $oldConnectionString = $property.Value
+                $redactedConnectionString = $oldConnectionString -replace "Password=[^;]*", "Password=***"
+
+                Write-Host "  Found connection string $($property.Name) : $redactedConnectionString" -ForegroundColor Yellow
+                if ($oldConnectionString -match "database=([^;]+)") {
+
+                    # Replace the database name in the connection string
+                    #$newConnectionString = $connectionString -replace "database=[^;]+", "database=$databaseNameToUse"
+            
+                    # Also update server if needed
+                    #$newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
+        
+                    $connectionStringsObj.$($property.Name) = $connectionString
+                    # Redact password from output for security
+                    Write-Host "  Updated $($property.Name): $redactedConnectionString" -ForegroundColor Green
+                }
             }
        
             # Save the updated JSON
- $content | ConvertTo-Json -Depth 10 | Set-Content $file.FullName
+            $content | ConvertTo-Json -Depth 10 | Set-Content $file.FullName
         }
     }
     
@@ -118,9 +126,9 @@ Function Get-OSPlatform {
 
 Function New-SqlServerDatabase {
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$serverName,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$databaseName
     )
 
@@ -136,10 +144,9 @@ END
 
     $createDbCmd = "CREATE DATABASE [$databaseName];"
 
-    try 
-    {
+    try {
         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
-         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+        Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
     } 
     catch {
         Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
@@ -154,7 +161,7 @@ END
 
 Function New-DockerSqlServer {
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$databaseName
     )
 
