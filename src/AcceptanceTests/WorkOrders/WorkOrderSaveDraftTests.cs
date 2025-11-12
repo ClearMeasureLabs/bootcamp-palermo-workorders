@@ -45,6 +45,9 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync(order.Description!);
 
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync(order.Instructions!);
+
         var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
