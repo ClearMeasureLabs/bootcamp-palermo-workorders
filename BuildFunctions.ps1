@@ -108,6 +108,8 @@ Function Update-AppSettingsConnectionStrings {
     Write-Host "Completed updating appsettings*.json files" -ForegroundColor Cyan
 }
 
+
+
 Function Get-OSPlatform {
     $os = $PSVersionTable.OS
     if ($os -match "Windows") {
@@ -123,6 +125,33 @@ Function Get-OSPlatform {
         return "Unknown"
     }
 }
+
+Function Test-IsLinux {
+    <#
+    .SYNOPSIS
+        Tests if the current script is running on Linux
+    .DESCRIPTION
+        Returns true if the current PowerShell session is running on a Linux operating system
+    .OUTPUTS
+        [bool] True if running on Linux, False otherwise
+    #>
+    
+    return $PSVersionTable.OS -match "Linux"
+}
+
+Function Test-IsWindows {
+    <#
+    .SYNOPSIS
+        Tests if the current script is running on Windows
+    .DESCRIPTION
+        Returns true if the current PowerShell session is running on a Windows operating system
+    .OUTPUTS
+        [bool] True if running on Windows, False otherwise
+    #>
+    
+    return $PSVersionTable.OS -match "Windows"
+}
+
 
 Function New-SqlServerDatabase {
     param (

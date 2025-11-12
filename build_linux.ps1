@@ -135,11 +135,11 @@ Function AcceptanceTests {
 
 	pwsh bin/Debug/$framework/playwright.ps1 install 
 
-	$resultsDir
+	$resultsDir = Join-Path $test_dir "AcceptanceTests"
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $test_dir\AcceptanceTests --no-build `
+				--results-directory $resultsDir --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
@@ -163,8 +163,9 @@ Function MigrateDatabaseLocal {
 	New-DockerSqlServer -databaseName $databaseNameFunc
 	New-SqlServerDatabase -serverName $databaseServerFunc -databaseName $databaseNameFunc
 
+	$dbProjectName = Join-Path $databaseProjectPath "Database.csproj"
 	exec {
-		& dotnet run --project $databaseProjectPath/Database.csproj --no-build --verbosity $verbosity --configuration $projectConfig -- $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
+		& dotnet run --project $dbProjectName --no-build --verbosity $verbosity --configuration $projectConfig -- $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
 	}
 }
 
