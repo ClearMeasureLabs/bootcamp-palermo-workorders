@@ -1,5 +1,12 @@
 # Taken from psake https://github.com/psake/psake
 
+# Ensure SqlServer module is installed for Invoke-Sqlcmd
+if (-not (Get-Module -ListAvailable -Name SqlServer)) {
+    Write-Host "Installing SqlServer module..." -ForegroundColor Yellow
+    Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser
+}
+Import-Module SqlServer -ErrorAction SilentlyContinue
+
 <#
 .SYNOPSIS
   This is a helper function that runs a scriptblock and checks the PS variable $lastexitcode
