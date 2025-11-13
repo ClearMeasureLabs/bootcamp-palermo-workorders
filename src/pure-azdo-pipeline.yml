@@ -14,7 +14,7 @@ stages:
     - job: 'Build'
       displayName: 'Build job'
       pool:
-        vmImage: 'windows-latest'
+        vmImage: 'ubuntu-latest'
       steps:
       # Dependencies
       - task: UseDotNet@2
@@ -34,6 +34,12 @@ stages:
             [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
             echo $env:Version
             echo $(Build.BuildNumber)
+
+      - task: Bash@3
+        displayName: 'Display Docker Containers'
+        inputs:
+          targetType: 'inline'
+          script: 'docker ps'
 
       - task: PowerShell@2
         displayName: Build_Linux.ps1
