@@ -172,8 +172,9 @@ Function MigrateDatabaseLocal {
 		[string]$databaseNameFunc
 	)
 
-	Log-Message -Message "Migrating database '$databaseNameFunc' on server '$databaseServerFunc' with project $script:$dbProjectName" -Type "INFO"
 	$dbProjectName = Join-Path $databaseProjectPath "Database.csproj"
+	Log-Message -Message "Migrating database '$databaseNameFunc' on server '$databaseServerFunc' with project '$dbProjectName'" -Type "INFO"
+
 	exec {
 		& dotnet run --project $dbProjectName --no-build --verbosity $verbosity --configuration $projectConfig -- $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
 	}
@@ -271,7 +272,7 @@ Function CIBuild {
 	Init
 	Compile
 	UnitTests
-	MigrateDatabaseLocal  -databaseServerFunc $script:$databaseServer -databaseNameFunc $script:$databaseName
+	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	IntegrationTest
 	#AcceptanceTests
 	Package
