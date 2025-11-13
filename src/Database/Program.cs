@@ -31,6 +31,50 @@ var databaseName = args[2];
 // Normalize path separators to be platform-appropriate
 var scriptDir = args[3].Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
 
+// Check if Docker is running and container exists
+try
+{
+    var processStartInfo = new System.Diagnostics.ProcessStartInfo
+    {
+        FileName = "docker",
+        Arguments = "ps --format \"{{.Names}}\"",
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
+    };
+
+    using var process = System.Diagnostics.Process.Start(processStartInfo);
+    if (process == null)
+    {
+        return Fail("Failed to start docker process. Is Docker installed?");
+    }
+
+    var output = process.StandardOutput.ReadToEnd();
+    var error = process.StandardError.ReadToEnd();
+    process.WaitForExit();
+
+    if (process.ExitCode != 0)
+    {
+        return Fail($"Docker is not accessible. Error: {error}");
+    }
+
+    var containerNames = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+    if (!containerNames.Contains($"sql2022-bootcamp-tests-{databaseName}"))
+    {
+        return Fail($"Docker container 'sql2022-bootcamp-tests-{databaseName}' is not running. Available containers: {string.Join(", ", containerNames)}");
+    }
+
+    Console.ForegroundColor = ConsoleColor.Green;
+    Console.WriteLine($"Found Docker container: {databaseName}");
+    Console.ResetColor();
+}
+catch (Exception ex)
+{
+    return Fail($"Error checking Docker: {ex.Message}");
+}
+
+
 
 // TODO [TO20251111] Should use the environment variable connection if available. Note that we need TrustServerCertificate=True for local dev with self-signed certs.
 // TODO [TO20251111] Note the hardcoded username.
