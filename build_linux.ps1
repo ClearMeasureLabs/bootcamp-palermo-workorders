@@ -269,6 +269,9 @@ Function PrivateBuild {
 
 Function CIBuild {
 	$sw = [Diagnostics.Stopwatch]::StartNew()
+
+	$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName
+
 	Init
 	Compile
 	UnitTests
