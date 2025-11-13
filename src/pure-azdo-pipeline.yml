@@ -46,7 +46,7 @@ stages:
         inputs:
           targetType: filePath
           filePath: ./build_linux.ps1
-          arguments: '; CIBuild'
+          arguments: '; PrivateBuild'
       - task: PublishTestResults@2
         displayName: 'Publish Test Results ./build/test/*.trx'
         inputs:
