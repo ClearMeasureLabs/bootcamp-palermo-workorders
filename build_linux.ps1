@@ -172,6 +172,7 @@ Function MigrateDatabaseLocal {
 		[string]$databaseNameFunc
 	)
 
+	Log-Message -Message "Migrating database '$databaseNameFunc' on server '$databaseServerFunc' using $dbProjectName" -Type "INFO"
 	$dbProjectName = Join-Path $databaseProjectPath "Database.csproj"
 	exec {
 		& dotnet run --project $dbProjectName --no-build --verbosity $verbosity --configuration $projectConfig -- $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts

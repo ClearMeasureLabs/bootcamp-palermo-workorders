@@ -41,7 +41,7 @@ Function Log-Message {
         [string]$Type = "INFO"
     )
     $logEntry = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [$Type] $Message"
-    Write-Host $logEntry
+    Write-Host $logEntry 
 }
 
 Function Update-AppSettingsConnectionStrings {
