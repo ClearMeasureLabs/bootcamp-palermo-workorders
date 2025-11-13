@@ -229,10 +229,10 @@ Function New-DockerContainerForSqlServer {
     # Check if our specific container exists
     $containerStatus = docker ps --filter "name=$containerName" --format "{{.Status}}"
     if (-not $containerStatus) {
-        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$databaseName" -p 1433:1433 --name $containerName -d $imageName | Out-Null
+        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$databaseName" -p 1433:1433 --name $containerName -d $imageName 
         Start-Sleep -Seconds 10
     }
-    Log-Message -Message "SQL Server Docker container '$containerName' is running." -Type "INFO"
+    Log-Message -Message "SQL Server Docker container '$containerName' should be running." -Type "INFO"
 
 }
 
