@@ -72,16 +72,17 @@ Function Update-AppSettingsConnectionStrings {
     Write-Host "Updating appsettings*.json files with database name: $databaseNameToUse" -ForegroundColor Cyan
     
     # TODO [TO20251114] We dont' want to test for $IsLinux; check for if we're using a local database or not.
-    if ($IsLinux) {
-        Log-Message -Message "Assuming Linux environment uses SQL Server with SQL Authentication" -Type "INFO"
-        # $connectionString = "Data Source=$serverName;Initial Catalog=$databaseNameToUse;User ID=sa;Password=$databaseNameToUse;TrustServerCertificate=true;Integrated Security=false;Encrypt=false"
-        $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
-    }
-    else {
-        Log-Message "Assuming Windows environment uses LocalDB with Integrated Security" -Type "INFO"
-        $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
-    }
+    # if ($IsLinux) {
+    #     Log-Message -Message "Assuming Linux environment uses SQL Server with SQL Authentication" -Type "INFO"
+    #     # $connectionString = "Data Source=$serverName;Initial Catalog=$databaseNameToUse;User ID=sa;Password=$databaseNameToUse;TrustServerCertificate=true;Integrated Security=false;Encrypt=false"
+    #     $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+    # }
+    # else {
+    #     Log-Message "Assuming Windows environment uses LocalDB with Integrated Security" -Type "INFO"
+    #     $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+    # }
 
+    $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
     # Set environment variable for current process
     $env:ConnectionStrings__SqlConnectionString = $connectionString
     $redactedConnectionString = $oldConnectionString -replace "Password=[^;]*", "Password=***"
