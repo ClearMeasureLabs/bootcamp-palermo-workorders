@@ -132,7 +132,7 @@ stages:
                 feed: '$(AzureFeedName)'
                 view: 'Local'
                 definition: 'ChurchBulletin.AcceptanceTests'
-                version: '$(Build.Buildnumber)'
+                version: '$(Build.BuildNumber)'
                 downloadPath: '$(System.DefaultWorkingDirectory)/tests'
                 extract: true
 
@@ -166,7 +166,7 @@ stages:
 # Deploying to UAT
 - stage: 'UAT'
   displayName: 'UAT'
-  condition: eq(variables['Build.Reason'], 'Manual')
+  condition: eq(variables['Build.Reason'], 'IndividualCI')
   jobs:
     - deployment: 'DeployToUAT'
       pool:
@@ -183,7 +183,7 @@ stages:
                 feed: '$(AzureFeedName)'
                 view: 'Local'
                 definition: 'ChurchBulletin.Database'
-                version: '$(Build.Build.Number)'
+                version: '$(Build.BuildNumber)'
                 downloadPath: '$(System.DefaultWorkingDirectory)'
                 extract: true
             - task: PowerShell@2
