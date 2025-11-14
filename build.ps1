@@ -9,22 +9,20 @@ if ($env:ConnectionStrings__SqlConnectionString) {
 
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
-$source_dir = "$base_dir\src"
-$unitTestProjectPath = "$source_dir\UnitTests"
-$integrationTestProjectPath = "$source_dir\IntegrationTests"
-$acceptanceTestProjectPath = "$source_dir\AcceptanceTests"
-$uiProjectPath = "$source_dir\UI\Server"
-$databaseProjectPath = "$source_dir\Database"
+$source_dir = Join-Path $base_dir "src"
+$unitTestProjectPath = Join-Path $source_dir "UnitTests"
+$integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
+$acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
+$uiProjectPath = Join-Path $source_dir "UI" "Server"
+$databaseProjectPath = Join-Path $source_dir "Database"
 $projectConfig = $env:BuildConfiguration
 $framework = "net9.0"
 $version = $env:BUILD_BUILDNUMBER
 
 $verbosity = "minimal"
 
-$build_dir = "$base_dir\build"
-$test_dir = "$build_dir\test"
-
-$aliaSql =  Join-Path "$source_dir\Database\bin\$projectConfig\net9.0" "ClearMeasure.Bootcamp.Database.dll"
+$build_dir = Join-Path $base_dir "build"
+$test_dir = Join-Path $build_dir "test"
 
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild" }
@@ -141,7 +139,8 @@ Function MigrateDatabaseLocal {
 		[string]$databaseNameFunc
 	)
 	exec {
-		& dotnet $aliaSql $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
+		$databaseDll = Join-Path "$source_dir\Database\bin" $projectConfig "net9.0" "ClearMeasure.Bootcamp.Database.dll"
+		& dotnet $databaseDll $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
 	}
 }
 
