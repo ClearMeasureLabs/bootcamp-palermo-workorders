@@ -24,7 +24,6 @@ $verbosity = "minimal"
 
 $build_dir = Join-Path $base_dir "build"
 $test_dir = Join-Path $build_dir "test"
-$aliaSql =  Join-Path $source_dir "Database" "scripts" "AliaSql.exe"
 $solutionName = Join-Path $source_dir "$projectName.sln"
 
 $databaseAction = $env:DatabaseAction
@@ -195,11 +194,13 @@ Function MigrateDatabaseLocal {
 }
 
 Function PackageUI {    
+
+	$packagePath = Join-Path $uiProjectPath "bin" $projectConfig $framework "publish"
 	exec {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $uiProjectPath\bin\$projectConfig\$framework\publish --outFolder $build_dir  --overwrite
+		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $packagePath --outFolder $build_dir  --overwrite
 	}
 }
 
@@ -211,11 +212,13 @@ Function PackageDatabase {
 
 Function PackageAcceptanceTests {  
 	# Use Debug configuration so full symbols are available to display better error messages in test failures
+
+	$acceptanceProjectPath  = Join-Path $acceptanceTestProjectPath "bin" "Debug" $framework "publish"
 	exec {
 		& dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $acceptanceTestProjectPath\bin\Debug\$framework\publish --outFolder $build_dir --overwrite
+		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $acceptanceProjectPath --outFolder $build_dir --overwrite
 	}
 }
 
