@@ -6,9 +6,7 @@ param(
 	[string]$DatabasePassword
 )
 
-
 $scriptDir = Join-Path $PWD "scripts"
-
 $bootcampdatabaseDll = Join-Path $PWD "ClearMeasure.Bootcamp.Database.dll"
 
 Write-Host "Executing dotnet $bootcampdatabaseDll $DatabaseAction $DatabaseServer $DatabaseName $scriptDir"

@@ -41,8 +41,8 @@ stages:
             inputs:
               pwsh: true
               targetType: filePath
-              filePath: ./build_linux.ps1
-              arguments: ";Invoke-Build"
+              filePath: ./build.ps1
+              arguments: ";CIBuild"
           - task: PublishTestResults@2
             displayName: "Publish Test Results ./build/test/*.trx"
             inputs:

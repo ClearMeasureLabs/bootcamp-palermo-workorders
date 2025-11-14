@@ -2,9 +2,9 @@
 
 # Clean environment variables that may interfere with local builds
 if ($env:ConnectionStrings__SqlConnectionString) {
-    Write-Host "Clearing ConnectionStrings__SqlConnectionString environment variable"
-    $env:ConnectionStrings__SqlConnectionString = $null
-    [Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
+	Write-Host "Clearing ConnectionStrings__SqlConnectionString environment variable"
+	$env:ConnectionStrings__SqlConnectionString = $null
+	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
 }
 
 $projectName = "ChurchBulletin"
@@ -24,36 +24,22 @@ $verbosity = "minimal"
 $build_dir = "$base_dir\build"
 $test_dir = "$build_dir\test"
 
-
-$aliaSql = "$source_dir\Database\scripts\AliaSql.exe"
+$aliaSql =  Join-Path "$source_dir\Database\bin\$projectConfig\net9.0" "ClearMeasure.Bootcamp.Database.dll"
 
 $databaseAction = $env:DatabaseAction
-if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild"}
+if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild" }
 
 $databaseName = $projectName
-if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName}
+if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
 $script:databaseServer = $databaseServer
-if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB"}
+if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
 
 $databaseScripts = "$source_dir\Database\scripts"
 
-if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0"}
-if ([string]::IsNullOrEmpty($projectConfig)) {$projectConfig = "Release"}
+if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
+if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 
-Function Generate-UniqueDatabaseName {
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$baseName
-    )
-    
-    $timestamp = Get-Date -Format "yyyyMMddHHmmss"
-    $randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
-    $uniqueName = "${baseName}_${timestamp}_${randomChars}"
- 
-    Write-Host "Generated unique database name: $uniqueName" -ForegroundColor Cyan
-    return $uniqueName
-}
  
 Function Init {
 	# Check for PowerShell 7
@@ -61,7 +47,8 @@ Function Init {
 
 	if (-not $pwshPath) {
 		Write-Warning "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell"
-	} else {
+	}
+ else {
 		Write-Host "PowerShell 7 found at: $pwshPath"
 	}
 
@@ -71,16 +58,16 @@ Function Init {
 
 	exec {
 		& dotnet clean $source_dir\$projectName.sln -nologo -v $verbosity
-		}
+	}
 	exec {
 		& dotnet restore $source_dir\$projectName.sln -nologo --interactive -v $verbosity  
-		}
+	}
 	
-    Write-Output $projectConfig
-    Write-Output $version
+	Write-Output $projectConfig
+	Write-Output $version
 }
 
-Function Compile{
+Function Compile {
 	exec {
 		& dotnet build $source_dir\$projectName.sln -nologo --no-restore -v `
 			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
@@ -90,15 +77,15 @@ Function Compile{
 	}
 }
 
-Function UnitTests{
+Function UnitTests {
 	Push-Location -Path $unitTestProjectPath
 
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-			--results-directory $test_dir\UnitTests --no-build `
-			--no-restore --configuration $projectConfig `
-			--collect:"XPlat Code Coverage"
+				--results-directory $test_dir\UnitTests --no-build `
+				--no-restore --configuration $projectConfig `
+				--collect:"XPlat Code Coverage"
 		}
 	}
 	finally {
@@ -106,15 +93,15 @@ Function UnitTests{
 	}
 }
 
-Function IntegrationTest{
+Function IntegrationTest {
 	Push-Location -Path $integrationTestProjectPath
 
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-			--results-directory $test_dir\IntegrationTests --no-build `
-			--no-restore --configuration $projectConfig `
-			--collect:"XPlat Code Coverage"
+				--results-directory $test_dir\IntegrationTests --no-build `
+				--no-restore --configuration $projectConfig `
+				--collect:"XPlat Code Coverage"
 		}
 	}
 	finally {
@@ -122,7 +109,7 @@ Function IntegrationTest{
 	}
 }
 
-Function AcceptanceTests{
+Function AcceptanceTests {
 	$projectConfig = "Debug"
 	Push-Location -Path $acceptanceTestProjectPath
 
@@ -131,9 +118,9 @@ Function AcceptanceTests{
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-			--results-directory $test_dir\AcceptanceTests --no-build `
-			--no-restore --configuration $projectConfig `
-			--collect:"XPlat Code Coverage"
+				--results-directory $test_dir\AcceptanceTests --no-build `
+				--no-restore --configuration $projectConfig `
+				--collect:"XPlat Code Coverage"
 		}
 	}
 	finally {
@@ -143,64 +130,64 @@ Function AcceptanceTests{
 
 Function MigrateDatabaseLocal {
 	param (
-	 [Parameter(Mandatory=$true)]
+	 [Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]$databaseServerFunc,
 		
-	    [Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]$databaseNameFunc
 	)
-	exec{
-		& $aliaSql $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
+	exec {
+		& dotnet $aliaSql $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
 	}
 }
 
 Function PackageUI {    
-    exec{
-      & dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
-    }
-	exec{
+	exec {
+		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
+	}
+	exec {
 		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $uiProjectPath\bin\$projectConfig\$framework\publish --outFolder $build_dir  --overwrite
 	}
 }
 
 Function PackageDatabase {    
-    exec{
+	exec {
 		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
 	}
 }
 
 Function PackageAcceptanceTests {  
-    # Use Debug configuration so full symbols are available to display better error messages in test failures
-    exec{
-        & dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
-    }
-	exec{
+	# Use Debug configuration so full symbols are available to display better error messages in test failures
+	exec {
+		& dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
+	}
+	exec {
 		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $acceptanceTestProjectPath\bin\Debug\$framework\publish --outFolder $build_dir --overwrite
 	}
 }
 
 Function PackageScript {    
-    exec{
-        & dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
-    }
-	exec{
+	exec {
+		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
+	}
+	exec {
 		& dotnet-octo pack --id "$projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
 	}
 }
 
 
-Function Package{
+Function Package {
 	Write-Output "Packaging nuget packages"
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
-    PackageUI
-    PackageDatabase
-    PackageAcceptanceTests
+	PackageUI
+	PackageDatabase
+	PackageAcceptanceTests
 	PackageScript
 }
 
-Function PrivateBuild{
+Function PrivateBuild {
 	$projectConfig = "Debug"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
@@ -227,7 +214,7 @@ Function PrivateBuild{
 	write-host "Database used: $script:databaseName" -ForegroundColor Cyan
 }
 
-Function CIBuild{
+Function CIBuild {
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	Init
 	Compile
