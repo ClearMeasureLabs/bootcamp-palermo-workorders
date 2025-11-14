@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Linq.Expressions;
 using DbUp;
 using DbUp.Engine;
 using DbUp.Helpers;
@@ -114,8 +115,14 @@ else
     Console.ResetColor();
 }
 
-EnsureDatabase.For.SqlDatabase(connectionString);
-
+try 
+{
+    EnsureDatabase.For.SqlDatabase(connectionString);
+}
+catch (Exception ex)
+{
+    return Fail($"DbUp encountered a problem trying to update the database. {connectionString}: {ex.Message}");
+}
 #endregion
 
 
