@@ -63,8 +63,7 @@ Function Init {
 		& dotnet restore $source_dir\$projectName.sln -nologo --interactive -v $verbosity  
 	}
 	
-	Write-Output $projectConfig
-	Write-Output $version
+	Log-Message "Project Configuration: $projectConfig. Version: $version"
 }
 
 Function Compile {

@@ -86,11 +86,12 @@ int CheckDockerContainer(string containerName)
     }
 }
 
-var dockerCheckResult = CheckDockerContainer($"sql2022-bootcamp-tests-{databaseName}");
-if (dockerCheckResult != 0)
-{
-    return dockerCheckResult;
-}
+// TODO [TO20251114] We should not be checking to see if there is a Docker container.
+// var dockerCheckResult = CheckDockerContainer($"sql2022-bootcamp-tests-{databaseName}");
+// if (dockerCheckResult != 0)
+// {
+//     return dockerCheckResult;
+// }
 
 #endregion
 
