@@ -9,6 +9,7 @@ param(
 Write-Output "Recursive directory listing for diagnostics"
 Get-ChildItem -Recurse
 
+$bootcampdatabaseDll = Join-Path ".\scripts" "ClearMeasure.Bootcamp.Database.dll"
 Write-Host "Executing dotnet .\scripts\ClearMeasure.Bootcamp.Database.dll $DatabaseAction $DatabaseServer $DatabaseName .\scripts"
 
 dotnet .\scripts\ClearMeasure.Bootcamp.Database.dll $DatabaseAction $DatabaseServer $DatabaseName .\scripts

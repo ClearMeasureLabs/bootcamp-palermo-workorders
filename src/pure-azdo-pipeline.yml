@@ -35,8 +35,7 @@ stages:
               targetType: "inline"
               script: |
                 [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
-                echo $env:Version
-                echo $(Build.BuildNumber)
+                echo "Build Version: $env:Version"
           - task: PowerShell@2
             displayName: "Run the Powershell build script"
             inputs:
@@ -53,7 +52,7 @@ stages:
               testRunTitle: "CI Tests"
             continueOnError: true
             condition: succeededOrFailed()
-          - task: PublishCodeCoverageResults@1
+          - task: PublishCodeCoverageResults@2
             displayName: "Publish code coverage UnitTests"
             inputs:
               codeCoverageTool: Cobertura
