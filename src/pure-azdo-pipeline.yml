@@ -1,247 +1,243 @@
 trigger:
-    - '*'
-    
+  - "*"
+
 variables:
-    major: 1
-    minor: 3
+  major: 1
+  minor: 3
 name: $(major).$(minor).$(Rev:r)
 
 stages:
-- stage: 'Integration_Build'
-  displayName: 'Build Application'
+  - stage: "Integration_Build"
+    displayName: "Build Application"
 
-  jobs:
-    - job: 'Build'
-      displayName: 'Build job'
-      pool:
-        vmImage: 'ubuntu-latest'
-      steps:
-      # Dependencies
-      - task: UseDotNet@2
-        displayName: 'Install SDK 9.0.302'
-        inputs:
-          packageType: 'sdk'
-          version: '9.0.302'
-      - task: UseDotNet@2
-        inputs:
-          packageType: 'runtime'
-          version: '6.0.0'
-      # Set environment variables
-      - task: PowerShell@2
-        inputs:
-          targetType: 'inline'
-          script: |
-            [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
-            echo $env:Version
-            echo $(Build.BuildNumber)
+    jobs:
+      - job: "Build"
+        displayName: "Build job"
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          # Dependencies
+          - task: UseDotNet@2
+            displayName: "Install SDK 9.0.302"
+            inputs:
+              packageType: "sdk"
+              version: "9.0.302"
+          - task: UseDotNet@2
+            inputs:
+              packageType: "runtime"
+              version: "6.0.0"
+          # Set environment variables
+          - task: PowerShell@2
+            inputs:
+              targetType: "inline"
+              script: |
+                [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
+                echo $env:Version
+                echo $(Build.BuildNumber)
+          - task: PowerShell@2
+            displayName: Build_Linux.ps1
+            inputs:
+              targetType: filePath
+              filePath: ./build_linux.ps1
+              arguments: ";Invoke-Build"
+          - task: PublishTestResults@2
+            displayName: "Publish Test Results ./build/test/*.trx"
+            inputs:
+              testResultsFormat: VSTest
+              testResultsFiles: "build/test/**/*.trx"
+              mergeTestResults: true
+              testRunTitle: "CI Tests"
+            continueOnError: true
+            condition: succeededOrFailed()
+          - task: PublishCodeCoverageResults@1
+            displayName: "Publish code coverage UnitTests"
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/build/test/**/In/**/coverage.cobertura.xml"
+          # - task: NuGetCommand@2
+          #   inputs:
+          #     command: "push"
+          #     packagesToPush: '.\build\*.nupkg'
+          #     publishVstsFeed: "$(AzureFeedName)"
+          - task: DotNetCoreCLI@2
+            displayName: "Push NuGet packages."
+            inputs:
+              command: 'push'
+              packagesToPush: '$(System.DefaultWorkingDirectory)/build/*.nupkg'
+              nuGetFeedType: 'internal'
+              publishVstsFeed: '$(AzureFeedName)'
+      - job: "DockerBuildandPush"
+        pool:
+          vmImage: "ubuntu-latest"
+        dependsOn: Build
 
-      - task: Bash@3
-        displayName: 'Display Docker Containers'
-        inputs:
-          targetType: 'inline'
-          script: 'docker ps'
+        steps:
+          - task: DownloadPackage@1
+            displayName: "Download UI Package"
+            inputs:
+              packageType: "nuget"
+              feed: "$(AzureFeedName)"
+              view: "Local"
+              definition: "ChurchBulletin.UI"
+              version: "$(Build.BuildNumber)"
+              downloadPath: "$(System.DefaultWorkingDirectory)/built"
+              extract: true
 
-      - task: PowerShell@2
-        displayName: Build_Linux.ps1
-        inputs:
-          targetType: filePath
-          filePath: ./build_linux.ps1
-          arguments: ';CIBuild'
-      - task: PublishTestResults@2
-        displayName: 'Publish Test Results ./build/test/*.trx'
-        inputs:
-          testResultsFormat: VSTest
-          testResultsFiles: 'build/test/**/*.trx'
-          mergeTestResults: true
-          testRunTitle: 'CI Tests'
-        continueOnError: true
-        condition: succeededOrFailed()
-      - task: PublishCodeCoverageResults@1
-        displayName: 'Publish code coverage UnitTests'
-        inputs:
-          codeCoverageTool: Cobertura
-          summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/build/test/**/In/**/coverage.cobertura.xml'
-      - task: NuGetCommand@2
-        inputs:
-          command: 'push'
-          packagesToPush: '.\build\*.nupkg'
-          publishVstsFeed: '$(AzureFeedName)'
+          - task: Docker@2
+            inputs:
+              containerRegistry: "$(AzureContainerRegistry)"
+              repository: "ChurchBulletin.UI"
+              command: "buildAndPush"
+              Dockerfile: "**/Dockerfile"
+              tags: |
+                $(Build.BuildNumber)
+    #Azure junk db passwords - hsimpson123! - user is the name of the environment
 
-    - job: 'DockerBuildandPush'
-      pool:
-        vmImage: 'ubuntu-latest'
-      dependsOn: Build
- 
-      steps:
-      - task: DownloadPackage@1
-        displayName: 'Download UI Package'
-        inputs:
-          packageType: 'nuget'
-          feed: '$(AzureFeedName)'
-          view: 'Local'
-          definition: 'ChurchBulletin.UI'
-          version: '$(Build.BuildNumber)'
-          downloadPath: '$(System.DefaultWorkingDirectory)/built'
-          extract: true
+  # Deploying to TDD
+  - stage: "TDD"
+    displayName: "TDD"
+    jobs:
+      - deployment: "DeployToTDD"
+        pool:
+          vmImage: "windows-latest"
+        environment: "TDD"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadPackage@1
+                  displayName: "Download Database Package"
+                  inputs:
+                    packageType: "nuget"
+                    feed: "$(AzureFeedName)"
+                    view: "Local"
+                    definition: "ChurchBulletin.Database"
+                    version: "$(Build.BuildNumber)"
+                    downloadPath: "$(System.DefaultWorkingDirectory)"
+                    extract: true
+                - task: PowerShell@2
+                  displayName: "Create database schema"
+                  inputs:
+                    targetType: filePath
+                    filePath: ./scripts/UpdateAzurePipelineSql.ps1
+                    arguments: -DatabaseServer "$(DatabaseServer)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "tdd" -DatabasePassword "$(DatabasePassword)"
 
-      - task: Docker@2
-        inputs:
-          containerRegistry: '$(AzureContainerRegistry)'
-          repository: 'ChurchBulletin.UI'
-          command: 'buildAndPush'
-          Dockerfile: '**/Dockerfile'
-          tags: |
-            $(Build.BuildNumber)
- #Azure junk db passwords - hsimpson123! - user is the name of the environment
-# Deploying to TDD
-- stage: 'TDD'
-  displayName: 'TDD'
-  jobs:
-    - deployment: 'DeployToTDD'
-      pool:
-        vmImage: 'windows-latest'
-      environment: 'TDD'
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-            - task: DownloadPackage@1
-              displayName: 'Download Database Package'
-              inputs:
-                packageType: 'nuget'
-                feed: '$(AzureFeedName)'
-                view: 'Local'
-                definition: 'ChurchBulletin.Database'
-                version: '$(Build.BuildNumber)'
-                downloadPath: '$(System.DefaultWorkingDirectory)'
-                extract: true
-            - task: PowerShell@2
-              displayName: 'Create database schema'
-              inputs:
-                targetType: filePath
-                filePath: ./scripts/UpdateAzurePipelineSql.ps1
-                arguments: -DatabaseServer "$(DatabaseServer)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "tdd" -DatabasePassword "$(DatabasePassword)"
+                - task: AzureCLI@2
+                  displayName: "Add revision to container app"
+                  inputs:
+                    azureSubscription: "$(AzureSubscription)"
+                    scriptType: "ps"
+                    scriptLocation: "inlineScript"
+                    inlineScript: az containerapp update --name $(containerAppName) --resource-group bootcamp-tdd --image $(containerImage)
 
+                - task: DownloadPackage@1
+                  displayName: "Download Acceptance Test Package"
+                  inputs:
+                    packageType: "nuget"
+                    feed: "$(AzureFeedName)"
+                    view: "Local"
+                    definition: "ChurchBulletin.AcceptanceTests"
+                    version: "$(Build.Buildnumber)"
+                    downloadPath: "$(System.DefaultWorkingDirectory)/tests"
+                    extract: true
 
-            - task: AzureCLI@2
-              displayName: 'Add revision to container app'
-              inputs:
-                azureSubscription: '$(AzureSubscription)'
-                scriptType: 'ps'
-                scriptLocation: 'inlineScript'
-                inlineScript: az containerapp update --name $(containerAppName) --resource-group bootcamp-tdd --image $(containerImage) 
+                - task: PowerShell@2
+                  displayName: "Install Playwright"
+                  inputs:
+                    targetType: filePath
+                    filePath: ./tests/playwright.ps1
+                    arguments: "install"
 
-            - task: DownloadPackage@1
-              displayName: 'Download Acceptance Test Package'
-              inputs:
-                packageType: 'nuget'
-                feed: '$(AzureFeedName)'
-                view: 'Local'
-                definition: 'ChurchBulletin.AcceptanceTests'
-                version: '$(Build.Buildnumber)'
-                downloadPath: '$(System.DefaultWorkingDirectory)/tests'
-                extract: true
+                - task: VSTest@2
+                  continueOnError: true
+                  displayName: "VsTest - AcceptanceTests"
+                  inputs:
+                    testSelector: "testAssemblies"
+                    testAssemblyVer2: |
+                      **\*AcceptanceTests.dll
+                      !**\*TestAdapter.dll
+                      !**\obj\**
+                      searchFolder: '$(System.DefaultWorkingDirectory)/tests'
+                    uiTests: true
+                    codeCoverageEnabled: true
+                    testRunTitle: "Acceptance Tests"
+                    diagnosticsEnabled: True
+                    rerunFailedTestCasesMaxLimit: 3
+                    rerunFailedTests: true
+                    rerunMaxAttempts: 2
+                    rerunType: basedOnTestFailureCount
 
-            - task: PowerShell@2
-              displayName: 'Install Playwright'
-              inputs:
-                targetType: filePath
-                filePath: ./tests/playwright.ps1
-                arguments: 'install'
+  # Deploying to UAT
+  - stage: "UAT"
+    displayName: "UAT"
+    condition: eq(variables['Build.Reason'], 'Manual')
+    jobs:
+      - deployment: "DeployToUAT"
+        pool:
+          vmImage: "windows-latest"
+        environment: "UAT"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadPackage@1
+                  displayName: "Download Database Package"
+                  inputs:
+                    packageType: "nuget"
+                    feed: "$(AzureFeedName)"
+                    view: "Local"
+                    definition: "ChurchBulletin.Database"
+                    version: "$(Build.Build.Number)"
+                    downloadPath: "$(System.DefaultWorkingDirectory)"
+                    extract: true
+                - task: PowerShell@2
+                  displayName: "Create database schema"
+                  inputs:
+                    targetType: filePath
+                    filePath: ./scripts/UpdateAzurePipelineSql.ps1
+                    arguments: -DatabaseServer "$(DatabaseServerUAT)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "uat" -DatabasePassword "$(DatabasePassword)"
 
-            - task: VSTest@2
-              continueOnError: true
-              displayName: 'VsTest - AcceptanceTests'
-              inputs:
-                testSelector: 'testAssemblies'
-                testAssemblyVer2: |
-                  **\*AcceptanceTests.dll
-                  !**\*TestAdapter.dll
-                  !**\obj\**
-                  searchFolder: '$(System.DefaultWorkingDirectory)/tests'
-                uiTests: true
-                codeCoverageEnabled: true
-                testRunTitle: 'Acceptance Tests'
-                diagnosticsEnabled: True
-                rerunFailedTestCasesMaxLimit: 3
-                rerunFailedTests: true
-                rerunMaxAttempts: 2
-                rerunType: basedOnTestFailureCount
+                - task: AzureCLI@2
+                  displayName: "Add revision to container app"
+                  inputs:
+                    azureSubscription: "$(AzureSubscription)"
+                    scriptType: "ps"
+                    scriptLocation: "inlineScript"
+                    inlineScript: az containerapp update --name $(containerAppName) --resource-group bootcamp-uat --image $(containerImage)
 
+  # Deploying to PROD
+  - stage: "PROD"
+    displayName: "PROD"
+    jobs:
+      - deployment: "DeployToPROD"
+        pool:
+          vmImage: "windows-latest"
+        environment: "PROD"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadPackage@1
+                  displayName: "Download Database Package"
+                  inputs:
+                    packageType: "nuget"
+                    feed: "$(AzureFeedName)"
+                    view: "Local"
+                    definition: "ChurchBulletin.Database"
+                    version: "$(Build.BuildNumber)"
+                    downloadPath: "$(System.DefaultWorkingDirectory)"
+                    extract: true
+                - task: PowerShell@2
+                  displayName: "Create database schema"
+                  inputs:
+                    targetType: filePath
+                    filePath: ./scripts/UpdateAzurePipelineSql.ps1
+                    arguments: -DatabaseServer "$(DatabaseServerPROD)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "prod" -DatabasePassword "$(DatabasePassword)"
 
-# Deploying to UAT
-- stage: 'UAT'
-  displayName: 'UAT'
-  condition: eq(variables['Build.Reason'], 'Manual')
-  jobs:
-    - deployment: 'DeployToUAT'
-      pool:
-        vmImage: 'windows-latest'
-      environment: 'UAT'
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-            - task: DownloadPackage@1
-              displayName: 'Download Database Package'
-              inputs:
-                packageType: 'nuget'
-                feed: '$(AzureFeedName)'
-                view: 'Local'
-                definition: 'ChurchBulletin.Database'
-                version: '$(Build.Build.Number)'
-                downloadPath: '$(System.DefaultWorkingDirectory)'
-                extract: true
-            - task: PowerShell@2
-              displayName: 'Create database schema'
-              inputs:
-                targetType: filePath
-                filePath: ./scripts/UpdateAzurePipelineSql.ps1
-                arguments: -DatabaseServer "$(DatabaseServerUAT)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "uat" -DatabasePassword "$(DatabasePassword)"
-
-
-            - task: AzureCLI@2
-              displayName: 'Add revision to container app'
-              inputs:
-                azureSubscription: '$(AzureSubscription)'
-                scriptType: 'ps'
-                scriptLocation: 'inlineScript'
-                inlineScript: az containerapp update --name $(containerAppName) --resource-group bootcamp-uat --image $(containerImage) 
-
-# Deploying to PROD
-- stage: 'PROD'
-  displayName: 'PROD'
-  jobs:
-    - deployment: 'DeployToPROD'
-      pool:
-        vmImage: 'windows-latest'
-      environment: 'PROD'
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-            - task: DownloadPackage@1
-              displayName: 'Download Database Package'
-              inputs:
-                packageType: 'nuget'
-                feed: '$(AzureFeedName)'
-                view: 'Local'
-                definition: 'ChurchBulletin.Database'
-                version: '$(Build.BuildNumber)'
-                downloadPath: '$(System.DefaultWorkingDirectory)'
-                extract: true
-            - task: PowerShell@2
-              displayName: 'Create database schema'
-              inputs:
-                targetType: filePath
-                filePath: ./scripts/UpdateAzurePipelineSql.ps1
-                arguments: -DatabaseServer "$(DatabaseServerPROD)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "prod" -DatabasePassword "$(DatabasePassword)"
-
-
-            - task: AzureCLI@2
-              displayName: 'Add revision to container app'
-              inputs:
-                azureSubscription: '$(AzureSubscription)'
-                scriptType: 'ps'
-                scriptLocation: 'inlineScript'
-                inlineScript: az containerapp update --name $(containerAppName) --resource-group bootcamp-prod --image $(containerImage) 
+                - task: AzureCLI@2
+                  displayName: "Add revision to container app"
+                  inputs:
+                    azureSubscription: "$(AzureSubscription)"
+                    scriptType: "ps"
+                    scriptLocation: "inlineScript"
+                    inlineScript: az containerapp update --name $(containerAppName) --resource-group bootcamp-prod --image $(containerImage)

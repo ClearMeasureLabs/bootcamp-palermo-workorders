@@ -330,12 +330,16 @@ Function CIBuild {
 }
 
 Function Invoke-Build {
-	# param (
-	# 	[Parameter(Mandatory = $false)]
-	# 	[ValidateNotNullOrEmpty()]
-	# 	[string]$buildType = "Private"
-	# )
-
+	<#
+	.SYNOPSIS
+		Invokes the appropriate build based on the environment
+	.DESCRIPTION
+		Detects whether the script is running in Azure DevOps or locally and executes the corresponding build function.
+		In Azure DevOps, runs CIBuild which includes packaging.
+		In local environments, runs PrivateBuild which uses a unique database name for isolation.
+	.EXAMPLE
+		Invoke-Build
+	#>
 
 	if (Test-IsAzureDevOps) {
 		CIBuild
