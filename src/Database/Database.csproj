@@ -5,7 +5,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>ChurchBulletin.Database </AssemblyName>
+    <AssemblyName>ChurchBulletin.Database</AssemblyName>
 	<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <Configurations>Debug;Release;exclude-maui.slnf</Configurations>
   </PropertyGroup>
