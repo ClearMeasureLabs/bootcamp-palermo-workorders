@@ -5,18 +5,9 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>ChurchBulletin.Database</AssemblyName>
 	<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <Configurations>Debug;Release;exclude-maui.slnf</Configurations>
   </PropertyGroup>
-    <PropertyGroup>
-        <PublishSingleFile>true</PublishSingleFile>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(RuntimeIdentifier)' == ''">
-        <PublishSingleFile>true</PublishSingleFile>
-        <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
-    </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DbUp" Version="5.0.41" />
     <PackageReference Include="dbup-sqlserver" Version="6.0.16" />
