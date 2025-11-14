@@ -68,9 +68,9 @@ Function Update-AppSettingsConnectionStrings {
         [Parameter(Mandatory = $true)]
         [string]$sourceDir
     )
-    
-    Write-Host "Updating appsettings*.json files with database name: $databaseNameToUse" -ForegroundColor Cyan
-    
+
+    Log-Message "Updating appsettings*.json files with database name: $databaseNameToUse" -Type "INFO"
+
     # TODO [TO20251114] We dont' want to test for $IsLinux; check for if we're using a local database or not.
     # if ($IsLinux) {
     #     Log-Message -Message "Assuming Linux environment uses SQL Server with SQL Authentication" -Type "INFO"
@@ -83,12 +83,11 @@ Function Update-AppSettingsConnectionStrings {
     # }
 
     $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+
     # Set environment variable for current process
     $env:ConnectionStrings__SqlConnectionString = $connectionString
-    $redactedConnectionString = $oldConnectionString -replace "Password=[^;]*", "Password=***"
+    Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $connectionString" -Type "INFO"
 
-    Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $redactedConnectionString" -Type "INFO"
-    
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
     
@@ -104,21 +103,18 @@ Function Update-AppSettingsConnectionStrings {
             # Update all connection strings that contain a database reference
             foreach ($property in $connectionStringsObj.PSObject.Properties) {
                 $oldConnectionString = $property.Value
-                $redactedConnectionString = $oldConnectionString -replace "Password=[^;]*", "Password=***"
 
-                Log-Message "  Found connection string $($property.Name) : $redactedConnectionString" -Type "WARNING"
+                Log-Message "Found connection string $($property.Name) : $oldConnectionString" -Type "INFO"
                 if ($oldConnectionString -match "database=([^;]+)") {
 
                     # Replace the database name in the connection string
-                    $newConnectionString = $connectionString -replace "database=[^;]+", "database=$databaseNameToUse"
+                    $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
             
                     # Also update server if needed
                     $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
         
                     $connectionStringsObj.$($property.Name) = $newConnectionString
-                    # Redact password from output for security
-                    $redactedConnectionString = $newConnectionString -replace "Password=[^;]*", "Password=***"
-                    Log-Message "  Updated $($property.Name): $redactedConnectionString" -Type "INFO"
+                    Log-Message "  Updated $($property.Name): $newConnectionString" -Type "INFO"
                 }
             }
        
@@ -134,13 +130,13 @@ Function Update-AppSettingsConnectionStrings {
 
 Function Get-OSPlatform {
     $os = $PSVersionTable.OS
-    if ($os -match "Windows") {
+    if ($IsWindows) {
         return "Windows"
     }
-    elseif ($os -match "Linux") {
+    elseif ($IsLinux) {
         return "Linux"
     }
-    elseif ($os -match "Darwin") {
+    elseif ($IsMacOS) {
         return "macOS"
     }
 
@@ -156,14 +152,13 @@ Function Test-IsLinux {
     .OUTPUTS
         [bool] True if running on Linux, False otherwise
     #>
+    if ($IsLinux) { 
+        return $true
+    }
     
     if (Get-OSPlatform -match "Linux") {
         return $true
     }
-    if ($IsLinux) { 
-        return $true
-    }
-
     return $false
 }
 
@@ -176,11 +171,11 @@ Function Test-IsWindows {
     .OUTPUTS
         [bool] True if running on Windows, False otherwise
     #>
-    
-    if (Get-OSPlatform -match "Windows") {
+    if ($IsWindows) { 
         return $true
     }
-    if ($IsWindows) { 
+    
+    if (Get-OSPlatform -match "Windows") {
         return $true
     }
 

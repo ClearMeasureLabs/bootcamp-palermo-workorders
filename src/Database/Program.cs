@@ -104,23 +104,8 @@ var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Sq
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
+    // [TO20251114] We could assume LocalDB, but for now just fail.
     throw new ArgumentException("Environment variable ConnectionStrings__SqlConnectionString is not set.");
-    // // Fall back to building from command line arguments
-    // var builder = new SqlConnectionStringBuilder
-    // {
-    //     DataSource = $"{serverName}",
-    //     InitialCatalog = databaseName,
-    //     UserID = "sa",
-    //     Password = databaseName,
-    //     TrustServerCertificate = true,
-    //     IntegratedSecurity = false,
-    //     Encrypt = false
-    // };
-    // connectionString = builder.ConnectionString;
-    
-    // Console.ForegroundColor = ConsoleColor.Yellow;
-    // Console.WriteLine("Using connection string built from command line arguments");
-    // Console.ResetColor();
 }
 else
 {
@@ -128,16 +113,6 @@ else
     Console.WriteLine("Using connection string from environment variable ConnectionStrings__SqlConnectionString");
     Console.ResetColor();
 }
-
-// Write redacted connection string to console
-var redactedConnectionString = System.Text.RegularExpressions.Regex.Replace(
-    connectionString, 
-    @"Password=[^;]*", 
-    "Password=***", 
-    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-Console.ForegroundColor = ConsoleColor.Cyan;
-Console.WriteLine($"Connection string: {redactedConnectionString}");
-Console.ResetColor();
 
 EnsureDatabase.For.SqlDatabase(connectionString);
 
