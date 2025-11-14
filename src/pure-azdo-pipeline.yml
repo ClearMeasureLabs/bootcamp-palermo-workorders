@@ -54,11 +54,6 @@ stages:
             inputs:
               codeCoverageTool: Cobertura
               summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/build/test/**/In/**/coverage.cobertura.xml"
-          # - task: NuGetCommand@2
-          #   inputs:
-          #     command: "push"
-          #     packagesToPush: '.\build\*.nupkg'
-          #     publishVstsFeed: "$(AzureFeedName)"
           - task: DotNetCoreCLI@2
             displayName: "Push NuGet packages."
             inputs:
@@ -144,9 +139,9 @@ stages:
                 - task: PowerShell@2
                   displayName: "Install Playwright"
                   inputs:
-                    targetType: filePath
-                    filePath: ./tests/playwright.ps1
-                    arguments: "install"
+                    targetType: "inline"
+                    script: |
+                      pwsh ./tests/playwright.ps1 install
 
                 - task: VSTest@2
                   continueOnError: true
