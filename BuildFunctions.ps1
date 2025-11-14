@@ -71,12 +71,10 @@ Function Update-AppSettingsConnectionStrings {
     
     Write-Host "Updating appsettings*.json files with database name: $databaseNameToUse" -ForegroundColor Cyan
     
-    if (Test-IsLinux) 
-    {
+    if (Test-IsLinux) {
         $connectionString = "Data Source=$serverName;Initial Catalog=$databaseNameToUse;User ID=sa;Password=$databaseNameToUse;TrustServerCertificate=true;Integrated Security=false;Encrypt=false"
     }
-    else
-    {
+    else {
         # [TO20251112] This is the connection string format for LocalDB
         $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
     }
@@ -280,7 +278,7 @@ Function Test-IsDockerRunning {
         [bool] True if Docker is running, False otherwise
     #>
     param (
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [bool]$LogOutput = $false
     )
     
@@ -291,7 +289,8 @@ Function Test-IsDockerRunning {
             Log-Message -Message "Install Docker from: https://docs.docker.com/engine/install/" -Type "INFO"
         }
         return $false
-    } else {
+    }
+    else {
         if ($LogOutput) {
             Log-Message -Message "Docker found at: $dockerPath" -Type "INFO"
         }
@@ -303,7 +302,8 @@ Function Test-IsDockerRunning {
                 if ($LogOutput) {
                     Log-Message -Message "Docker daemon is running (version: $dockerVersion)" -Type "INFO"
                 }
-            } else {
+            }
+            else {
                 if ($LogOutput) {
                     Log-Message -Message "Docker is installed but the daemon may not be running. Try: sudo systemctl start docker" -Type "ERROR"
                 }
@@ -322,15 +322,15 @@ Function Test-IsDockerRunning {
 }
 
 Function Generate-UniqueDatabaseName {
-	param (
-		[Parameter(Mandatory = $true)]
-		[string]$baseName
-	)
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$baseName
+    )
     
-	$timestamp = Get-Date -Format "yyyyMMddHHmmss"
-	$randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
-	$uniqueName = "${baseName}_${timestamp}_${randomChars}"
+    $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+    $randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
+    $uniqueName = "${baseName}_${timestamp}_${randomChars}"
  
-	Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
-	return $uniqueName
+    Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
+    return $uniqueName
 }

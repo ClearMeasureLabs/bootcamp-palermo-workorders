@@ -57,10 +57,10 @@ stages:
           - task: DotNetCoreCLI@2
             displayName: "Push NuGet packages."
             inputs:
-              command: 'push'
-              packagesToPush: '$(System.DefaultWorkingDirectory)/build/*.nupkg'
-              nuGetFeedType: 'internal'
-              publishVstsFeed: '$(AzureFeedName)'
+              command: "push"
+              packagesToPush: "$(System.DefaultWorkingDirectory)/build/*.nupkg"
+              nuGetFeedType: "internal"
+              publishVstsFeed: "$(AzureFeedName)"
       - job: "DockerBuildandPush"
         pool:
           vmImage: "ubuntu-latest"
@@ -151,11 +151,11 @@ stages:
                   inputs:
                     targetType: "inline"
                     script: |
-                      $databaseExe = Get-ChildItem -Path "$(System.DefaultWorkingDirectory)/database" -Filter "ChurchBulletinDatabase.exe" -Recurse | Select-Object -First 1
-                      if ($databaseExe) {
-                        & $databaseExe.FullName "$(DatabaseAction)" "$(DatabaseServer)" "ChurchBulletin" "$(System.DefaultWorkingDirectory)/database/scripts"
+                      $databaseDll = Get-ChildItem -Path "$(System.DefaultWorkingDirectory)/database" -Filter "ClearMeasure.Bootcamp.Database.dll" -Recurse | Select-Object -First 1
+                      if ($databaseDll) {
+                        dotnet $databaseDll.FullName "$(DatabaseAction)" "$(DatabaseServer)" "ChurchBulletin" "$(System.DefaultWorkingDirectory)/database/scripts"
                       } else {
-                        Write-Error "Database.exe not found in downloaded package"
+                        Write-Error "ClearMeasure.Bootcamp.Database.dll not found in downloaded package"
                         exit 1
                       }
 
