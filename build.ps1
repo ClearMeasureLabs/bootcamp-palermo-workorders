@@ -138,7 +138,7 @@ Function MigrateDatabaseLocal {
 		[string]$databaseNameFunc
 	)
 	exec {
-		$databaseDll = Join-Path "$source_dir\Database\bin" $projectConfig "net9.0" "ClearMeasure.Bootcamp.Database.dll"
+		$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 		& dotnet $databaseDll $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
 	}
 }
