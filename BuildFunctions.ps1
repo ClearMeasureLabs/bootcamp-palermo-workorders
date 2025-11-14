@@ -2,7 +2,7 @@
 
 # Ensure SqlServer module is installed for Invoke-Sqlcmd
 if (-not (Get-Module -ListAvailable -Name SqlServer)) {
-    Log-Message "Installing SqlServer module..." -Type "INFO"
+    Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
     Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser
 }
 Import-Module SqlServer -ErrorAction SilentlyContinue

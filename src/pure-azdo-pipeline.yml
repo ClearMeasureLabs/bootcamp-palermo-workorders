@@ -135,13 +135,36 @@ stages:
                     version: "$(Build.Buildnumber)"
                     downloadPath: "$(System.DefaultWorkingDirectory)/tests"
                     extract: true
+                - task: DownloadPackage@1
+                  displayName: "Download ChurchBulletin.Database Package"
+                  inputs:
+                    packageType: "nuget"
+                    feed: "$(AzureFeedName)"
+                    view: "Local"
+                    definition: "ChurchBulletin.Database"
+                    version: "$(Build.Buildnumber)"
+                    downloadPath: "$(System.DefaultWorkingDirectory)/database"
+                    extract: true
+
+                - task: PowerShell@2
+                  displayName: "Run ChurchBulletin.Database migration"
+                  inputs:
+                    targetType: "inline"
+                    script: |
+                      $databaseExe = Get-ChildItem -Path "$(System.DefaultWorkingDirectory)/database" -Filter "ChurchBulletinDatabase.exe" -Recurse | Select-Object -First 1
+                      if ($databaseExe) {
+                        & $databaseExe.FullName "$(DatabaseAction)" "$(DatabaseServer)" "ChurchBulletin" "$(System.DefaultWorkingDirectory)/database/scripts"
+                      } else {
+                        Write-Error "Database.exe not found in downloaded package"
+                        exit 1
+                      }
 
                 - task: PowerShell@2
                   displayName: "Install Playwright"
                   inputs:
                     targetType: "inline"
                     script: |
-                      pwsh ./tests/playwright.ps1 install
+                      pwsh ./tests/playwright.ps1 install --with-deps
 
                 - task: VSTest@2
                   continueOnError: true

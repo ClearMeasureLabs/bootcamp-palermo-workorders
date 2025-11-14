@@ -15,7 +15,10 @@ $unitTestProjectPath = Join-Path $source_dir "UnitTests"
 $integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
 $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
 $uiProjectPath = Join-Path $source_dir "UI" "Server"
+
 $databaseProjectPath = Join-Path $source_dir "Database"
+$dbProjectName = Join-Path $databaseProjectPath "Database.csproj"
+
 $projectConfig = $env:BuildConfiguration
 $framework = "net9.0"
 $version = $env:BUILD_BUILDNUMBER
@@ -32,7 +35,6 @@ if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild" }
 $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
-
 if ($IsLinux) {
 	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 }
@@ -47,19 +49,6 @@ if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 
 
-Function Generate-UniqueDatabaseName {
-	param (
-		[Parameter(Mandatory = $true)]
-		[string]$baseName
-	)
-    
-	$timestamp = Get-Date -Format "yyyyMMddHHmmss"
-	$randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
-	$uniqueName = "${baseName}_${timestamp}_${randomChars}"
- 
-	Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
-	return $uniqueName
-}
  
 Function Init {
 	# Check for PowerShell 7
@@ -185,7 +174,6 @@ Function MigrateDatabaseLocal {
 		[string]$databaseNameFunc
 	)
 
-	$dbProjectName = Join-Path $databaseProjectPath "Database.csproj"
 	Log-Message -Message "Migrating database '$databaseNameFunc' on server '$databaseServerFunc' with project '$dbProjectName'" -Type "INFO"
 
 	exec {
@@ -205,8 +193,24 @@ Function PackageUI {
 }
 
 Function PackageDatabase {    
+	# Publish as a single-file executable
+	$databasePublishPath = Join-Path $databaseProjectPath "bin" $projectConfig $framework "publish"
 	exec {
-		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
+		& dotnet publish $databaseProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig `
+			/p:PublishSingleFile=true /p:SelfContained=false /p:IncludeNativeLibrariesForSelfExtract=true
+	}
+	
+	# Copy scripts folder to publish directory
+	$scriptsSource = Join-Path $databaseProjectPath "scripts"
+	$scriptsDestination = Join-Path $databasePublishPath "scripts"
+	if (Test-Path $scriptsSource) {
+		Copy-Item -Path $scriptsSource -Destination $scriptsDestination -Recurse -Force
+		Log-Message -Message "Copied scripts folder to publish directory" -Type "INFO"
+	}
+	
+	# Package the published output
+	exec {
+		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databasePublishPath --outFolder $build_dir --overwrite
 	}
 }
 
