@@ -99,19 +99,46 @@ if (dockerCheckResult != 0)
 
 #region Build connection string
 
-// TODO [TO20251111] Should use the environment variable connection if available. Note that we need TrustServerCertificate=True for local dev with self-signed certs.
-// TODO [TO20251111] Note the hardcoded username.
-var builder = new SqlConnectionStringBuilder
+// Check for environment variable first
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__SqlConnectionString");
+
+if (string.IsNullOrWhiteSpace(connectionString))
 {
-    DataSource = $"{serverName}",
-    InitialCatalog = databaseName,
-    UserID = "sa",
-    Password = databaseName,
-    TrustServerCertificate = true,
-    IntegratedSecurity = false,
-    Encrypt = false
-};
-var connectionString = builder.ConnectionString;
+    throw new ArgumentException("Environment variable ConnectionStrings__SqlConnectionString is not set.");
+    // // Fall back to building from command line arguments
+    // var builder = new SqlConnectionStringBuilder
+    // {
+    //     DataSource = $"{serverName}",
+    //     InitialCatalog = databaseName,
+    //     UserID = "sa",
+    //     Password = databaseName,
+    //     TrustServerCertificate = true,
+    //     IntegratedSecurity = false,
+    //     Encrypt = false
+    // };
+    // connectionString = builder.ConnectionString;
+    
+    // Console.ForegroundColor = ConsoleColor.Yellow;
+    // Console.WriteLine("Using connection string built from command line arguments");
+    // Console.ResetColor();
+}
+else
+{
+    Console.ForegroundColor = ConsoleColor.Green;
+    Console.WriteLine("Using connection string from environment variable ConnectionStrings__SqlConnectionString");
+    Console.ResetColor();
+}
+
+// Write redacted connection string to console
+var redactedConnectionString = System.Text.RegularExpressions.Regex.Replace(
+    connectionString, 
+    @"Password=[^;]*", 
+    "Password=***", 
+    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+Console.ForegroundColor = ConsoleColor.Cyan;
+Console.WriteLine($"Connection string: {redactedConnectionString}");
+Console.ResetColor();
+
 EnsureDatabase.For.SqlDatabase(connectionString);
 
 #endregion

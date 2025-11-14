@@ -30,7 +30,7 @@ if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild" }
 $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
-$script:databaseServer = $databaseServer
+$script:databaseServer = $env:DatabaseServer
 if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
 
 $databaseScripts = "$source_dir\Database\scripts"
@@ -188,6 +188,7 @@ Function Package {
 }
 
 Function PrivateBuild {
+	Log-Message "Starting Private Build"
 	$projectConfig = "Debug"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
@@ -215,14 +216,19 @@ Function PrivateBuild {
 }
 
 Function CIBuild {
+	Log-Message
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	Init
 	Compile
 	UnitTests
+
+	# TODO [TO20251114] Come back to fix this for the Linux builds.
+    $env:ConnectionStrings__SqlConnectionString = "server=$serverName;database=$script:databaseName;Integrated Security=true;"
+
 	MigrateDatabaseLocal  -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
 	IntegrationTest
 	#AcceptanceTests
-	Package
+	Package-Everything
 	$sw.Stop()
 	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
 }

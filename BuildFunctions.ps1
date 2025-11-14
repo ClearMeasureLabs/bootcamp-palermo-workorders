@@ -74,7 +74,7 @@ Function Update-AppSettingsConnectionStrings {
     # TODO [TO20251114] We dont' want to test for $IsLinux; check for if we're using a local database or not.
     if ($IsLinux) {
         Log-Message -Message "Assuming Linux environment uses SQL Server with SQL Authentication" -Type "INFO"
-        $connectionString = "Data Source=$serverName;Initial Catalog=$databaseNameToUse;User ID=sa;Password=$databaseNameToUse;TrustServerCertificate=true;Integrated Security=false;Encrypt=false"
+        # $connectionString = "Data Source=$serverName;Initial Catalog=$databaseNameToUse;User ID=sa;Password=$databaseNameToUse;TrustServerCertificate=true;Integrated Security=false;Encrypt=false"
         $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
     }
     else {
