@@ -8,8 +8,9 @@ $DatabaseUser = $OctopusParameters["DatabaseUser"]
 $DatabasePassword = $OctopusParameters["DatabasePassword"]
 Write-Output "Recursive directory listing for diagnostics"
 Get-ChildItem -Recurse
-Write-Host "Executing & .\scripts\AliaSQL.exe $DatabaseAction $databaseServer $databaseName .\scripts $databaseUser $databasePassword"
-& .\AliaSQL.exe $DatabaseAction $DatabaseServer $DatabaseName .\ $DatabaseUser $DatabasePassword
+
+Write-Host "Executing dotnet .\scripts\ClearMeasure.Bootcamp.Database.dll $DatabaseAction $DatabaseServer $DatabaseName .\scripts"
+dotnet .\scripts\ClearMeasure.Bootcamp.Database.dll $DatabaseAction $DatabaseServer $DatabaseName .\scripts
 if ($lastexitcode -ne 0) {
-    throw ("AliaSQL had an error.")
+    throw ("Database migration had an error.")
 }

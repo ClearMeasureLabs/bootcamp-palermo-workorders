@@ -23,20 +23,24 @@ stages:
               packageType: "sdk"
               version: "9.0.302"
           - task: UseDotNet@2
+            displayName: "Install Runtime 6.0.0"
             inputs:
               packageType: "runtime"
               version: "6.0.0"
           # Set environment variables
           - task: PowerShell@2
+            displayName: "Set Version Environment Variable"
             inputs:
+              pwsh: true
               targetType: "inline"
               script: |
                 [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
                 echo $env:Version
                 echo $(Build.BuildNumber)
           - task: PowerShell@2
-            displayName: Build_Linux.ps1
+            displayName: "Run the Powershell build script"
             inputs:
+              pwsh: true
               targetType: filePath
               filePath: ./build_linux.ps1
               arguments: ";Invoke-Build"
@@ -113,6 +117,7 @@ stages:
                 - task: PowerShell@2
                   displayName: "Create database schema"
                   inputs:
+                    pwsh: true
                     targetType: filePath
                     filePath: ./scripts/UpdateAzurePipelineSql.ps1
                     arguments: -DatabaseServer "$(DatabaseServer)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "tdd" -DatabasePassword "$(DatabasePassword)"
@@ -149,6 +154,7 @@ stages:
                 - task: PowerShell@2
                   displayName: "Run ChurchBulletin.Database migration"
                   inputs:
+                    pwsh: true
                     targetType: "inline"
                     script: |
                       $databaseDll = Get-ChildItem -Path "$(System.DefaultWorkingDirectory)/database" -Filter "ClearMeasure.Bootcamp.Database.dll" -Recurse | Select-Object -First 1
@@ -162,6 +168,7 @@ stages:
                 - task: PowerShell@2
                   displayName: "Install Playwright"
                   inputs:
+                    pwsh: true
                     targetType: "inline"
                     script: |
                       pwsh ./tests/playwright.ps1 install --with-deps
@@ -211,6 +218,7 @@ stages:
                 - task: PowerShell@2
                   displayName: "Create database schema"
                   inputs:
+                    pwsh: true
                     targetType: filePath
                     filePath: ./scripts/UpdateAzurePipelineSql.ps1
                     arguments: -DatabaseServer "$(DatabaseServerUAT)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "uat" -DatabasePassword "$(DatabasePassword)"
@@ -248,6 +256,7 @@ stages:
                 - task: PowerShell@2
                   displayName: "Create database schema"
                   inputs:
+                    pwsh: true
                     targetType: filePath
                     filePath: ./scripts/UpdateAzurePipelineSql.ps1
                     arguments: -DatabaseServer "$(DatabaseServerPROD)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "prod" -DatabasePassword "$(DatabasePassword)"

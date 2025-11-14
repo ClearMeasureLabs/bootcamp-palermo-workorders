@@ -7,12 +7,12 @@ param(
 )
 
 Write-Output "Recursive directory listing for diagnostics"
-#Get-ChildItem -Recurse
+Get-ChildItem -Recurse
 
-Write-Host "Executing & .\scripts\AliaSQL.exe $DatabaseAction $DatabaseServer $DatabaseName .\scripts $DatabaseUser $DatabasePassword"
+Write-Host "Executing dotnet .\scripts\ClearMeasure.Bootcamp.Database.dll $DatabaseAction $DatabaseServer $DatabaseName .\scripts"
 
-& .\scripts\AliaSQL.exe $DatabaseAction $DatabaseServer $DatabaseName .\scripts $DatabaseUser $DatabasePassword
+dotnet .\scripts\ClearMeasure.Bootcamp.Database.dll $DatabaseAction $DatabaseServer $DatabaseName .\scripts
 
 if ($lastexitcode -ne 0) {
-    throw ("AliaSQL had an error.")
+    throw ("Database migration had an error.")
 }
