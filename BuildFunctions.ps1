@@ -71,26 +71,28 @@ Function Update-AppSettingsConnectionStrings {
     
     Write-Host "Updating appsettings*.json files with database name: $databaseNameToUse" -ForegroundColor Cyan
     
-    if (Test-IsLinux) {
+    # TODO [TO20251114] We dont' want to test for $IsLinux; check for if we're using a local database or not.
+    if ($IsLinux) {
+        Log-Message -Message "Assuming Linux environment uses SQL Server with SQL Authentication" -Type "INFO"
         $connectionString = "Data Source=$serverName;Initial Catalog=$databaseNameToUse;User ID=sa;Password=$databaseNameToUse;TrustServerCertificate=true;Integrated Security=false;Encrypt=false"
-    }
-    else {
-        # [TO20251112] This is the connection string format for LocalDB
         $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
     }
-
+    else {
+        Log-Message "Assuming Windows environment uses LocalDB with Integrated Security" -Type "INFO"
+        $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+    }
 
     # Set environment variable for current process
     $env:ConnectionStrings__SqlConnectionString = $connectionString
     $redactedConnectionString = $oldConnectionString -replace "Password=[^;]*", "Password=***"
 
-    Write-Host "Set process environment variable ConnectionStrings__SqlConnectionString: $redactedConnectionString" -ForegroundColor Cyan
+    Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $redactedConnectionString" -Type "INFO"
     
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
     
     foreach ($file in $appSettingsFiles) {
-        Write-Host "Processing file: $($file.FullName)" -ForegroundColor Gray
+        Log-Message "Processing file: $($file.FullName)" -Type "INFO"
     
         $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
         
@@ -103,18 +105,19 @@ Function Update-AppSettingsConnectionStrings {
                 $oldConnectionString = $property.Value
                 $redactedConnectionString = $oldConnectionString -replace "Password=[^;]*", "Password=***"
 
-                Write-Host "  Found connection string $($property.Name) : $redactedConnectionString" -ForegroundColor Yellow
+                Log-Message "  Found connection string $($property.Name) : $redactedConnectionString" -Type "WARNING"
                 if ($oldConnectionString -match "database=([^;]+)") {
 
                     # Replace the database name in the connection string
-                    #$newConnectionString = $connectionString -replace "database=[^;]+", "database=$databaseNameToUse"
+                    $newConnectionString = $connectionString -replace "database=[^;]+", "database=$databaseNameToUse"
             
                     # Also update server if needed
-                    #$newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
+                    $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
         
-                    $connectionStringsObj.$($property.Name) = $connectionString
+                    $connectionStringsObj.$($property.Name) = $newConnectionString
                     # Redact password from output for security
-                    Write-Host "  Updated $($property.Name): $redactedConnectionString" -ForegroundColor Green
+                    $redactedConnectionString = $newConnectionString -replace "Password=[^;]*", "Password=***"
+                    Log-Message "  Updated $($property.Name): $redactedConnectionString" -Type "INFO"
                 }
             }
        
@@ -123,7 +126,7 @@ Function Update-AppSettingsConnectionStrings {
         }
     }
     
-    Write-Host "Completed updating appsettings*.json files" -ForegroundColor Cyan
+    Log-Message "Completed updating appsettings*.json files" -Type "INFO"
 }
 
 
