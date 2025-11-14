@@ -52,9 +52,11 @@ Function Init {
 		Write-Host "PowerShell 7 found at: $pwshPath"
 	}
 
-	& cmd.exe /c rd /S /Q build
+	if (Test-Path "build") {
+		Remove-Item -Path "build" -Recurse -Force
+	}
 	
-	mkdir $build_dir > $null
+	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
 
 	exec {
 		& dotnet clean $source_dir\$projectName.sln -nologo -v $verbosity
