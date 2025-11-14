@@ -2,7 +2,7 @@
 
 # Clean environment variables that may interfere with local builds
 if ($env:ConnectionStrings__SqlConnectionString) {
-	Write-Host "Clearing ConnectionStrings__SqlConnectionString environment variable"
+	Log-Message -Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
 	$env:ConnectionStrings__SqlConnectionString = $null
 	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
 }
@@ -33,7 +33,7 @@ $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
 
-if (Test-IsLinux) {
+if ($IsLinux) {
 	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 }
 else {
@@ -57,7 +57,7 @@ Function Generate-UniqueDatabaseName {
 	$randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
 	$uniqueName = "${baseName}_${timestamp}_${randomChars}"
  
-	Write-Host "Generated unique database name: $uniqueName" -ForegroundColor Cyan
+	Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
 	return $uniqueName
 }
  
@@ -65,31 +65,31 @@ Function Init {
 	# Check for PowerShell 7
 	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
 	if (-not $pwshPath) {
-		Write-Warning "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell"
+		Log-Message -Message "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell" -Type "WARNING"
 		throw "PowerShell 7 is required to run this build script."
 	}
  	else {
-		Write-Host "PowerShell 7 found at: $pwshPath"
+		Log-Message -Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
 	}
 
 	if (Test-IsAzureDevOps) { 
-		Write-Host "Running in Azure DevOps Pipeline"
+		Log-Message -Message "Running in Azure DevOps Pipeline" -Type "INFO"
 	}
 	else {
-		Write-Host "Running in Local Environment"
+		Log-Message -Message "Running in Local Environment" -Type "INFO"
 	}
 
 	if (Test-IsLinux) {
-		Write-Host "Running on Linux"		
+		Log-Message -Message "Running on Linux" -Type "INFO"
 		if (Test-IsDockerRunning) {
-			Write-Host "Docker is running"
+			Log-Message -Message "Docker is running" -Type "INFO"
 		} else {
-			Write-Error "Docker is not running. Please start Docker to run SQL Server in a container."
+			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
 			throw "Docker is not running."
 		}
 	}
 	elseif (Test-IsWindows) {
-		Write-Host "Running on Windows"
+		Log-Message -Message "Running on Windows" -Type "INFO"
 	}
 
 
@@ -106,8 +106,8 @@ Function Init {
 		& dotnet restore $solutionName -nologo --interactive -v $verbosity  
 	}
 	
-	Write-Output $projectConfig
-	Write-Output $version
+	Log-Message -Message "Project Config: $projectConfig" -Type "INFO"
+	Log-Message -Message "Version: $version" -Type "INFO"
 }
 
 Function Compile {
@@ -233,8 +233,8 @@ Function PackageScript {
 
 
 Function Package-Everything {
-	Write-Output "Packaging nuget packages"
-	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
+	Log-Message -Message "Packaging nuget packages" -Type "INFO"
+	dotnet tool install --global Octopus.DotNet.Cli | Out-Null
 	PackageUI
 	PackageDatabase
 	PackageAcceptanceTests
@@ -243,7 +243,7 @@ Function Package-Everything {
 
 Function PrivateBuild {
 
-	Write-Host "Starting Private Build..." -ForegroundColor Yellow
+	Log-Message -Message "Starting Private Build..." -Type "INFO"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
@@ -257,16 +257,14 @@ Function PrivateBuild {
 	
 	if (Test-IsLinux) 
 	{
-		write-host "Setting up SQL Server in Docker" -ForegroundColor Cyan
-		# For Linux, can't use LocalDB, so spin SQL Server in Docker.
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
 		if (Test-IsDockerRunning -LogOutput $true) 
 		{
-			Write-Host "Standing up SQL Server in Docker for Linux environment" -ForegroundColor Cyan
 			New-DockerContainerForSqlServer -databaseName $script:databaseName
 			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 		}
 		else {
-			Write-Error "Docker is not running. Please start Docker to run SQL Server in a container."
+			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
 			throw "Docker is not running."
 		}
 	}
@@ -282,13 +280,13 @@ Function PrivateBuild {
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 	
 	$sw.Stop()
-	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
-	write-host "Database used: $script:databaseName" -ForegroundColor Cyan
+	Log-Message -Message "BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
 
 Function CIBuild {
 
-	Write-Host "Starting CI Build..." -ForegroundColor Yellow
+	Log-Message -Message "Starting CI Build..." -Type "INFO"
 
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
@@ -300,16 +298,16 @@ Function CIBuild {
 
 	if (Test-IsLinux) 
 	{
-		write-host "Setting up SQL Server in Docker" -ForegroundColor Cyan
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
 		# For Linux, can't use LocalDB, so spin SQL Server in Docker.
 		if (Test-IsDockerRunning -LogOutput $true) 
 		{
-			Write-Host "Standing up SQL Server in Docker for Linux environment" -ForegroundColor Cyan
+			Log-Message -Message "Standing up SQL Server in Docker for Linux environment" -Type "INFO"
 			New-DockerContainerForSqlServer -databaseName $script:databaseName
 			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 		}
 		else {
-			Write-Error "Docker is not running. Please start Docker to run SQL Server in a container."
+			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
 			throw "Docker is not running."
 		}
 	}
@@ -326,7 +324,7 @@ Function CIBuild {
 	Package-Everything
 
 	$sw.Stop()
-	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
+	Log-Message -Message "BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
 }
 
 Function Invoke-Build {

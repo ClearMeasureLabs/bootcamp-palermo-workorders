@@ -2,7 +2,7 @@
 
 # Ensure SqlServer module is installed for Invoke-Sqlcmd
 if (-not (Get-Module -ListAvailable -Name SqlServer)) {
-    Write-Host "Installing SqlServer module..." -ForegroundColor Yellow
+    Log-Message "Installing SqlServer module..." -Type "INFO"
     Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser
 }
 Import-Module SqlServer -ErrorAction SilentlyContinue
@@ -47,8 +47,16 @@ Function Log-Message {
         [string]$Message,
         [string]$Type = "INFO"
     )
+
+    $color = switch ($Type) {
+        "ERROR" { "Red" }
+        "WARNING" { "Yellow" }
+        "INFO" { "Cyan" }
+        default { "White" }
+    }
+
     $logEntry = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [$Type] $Message"
-    Write-Host $logEntry 
+    Write-Host $logEntry -ForegroundColor $color
 }
 
 Function Update-AppSettingsConnectionStrings {
@@ -311,4 +319,18 @@ Function Test-IsDockerRunning {
     }
 
     return $true
+}
+
+Function Generate-UniqueDatabaseName {
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]$baseName
+	)
+    
+	$timestamp = Get-Date -Format "yyyyMMddHHmmss"
+	$randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
+	$uniqueName = "${baseName}_${timestamp}_${randomChars}"
+ 
+	Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
+	return $uniqueName
 }
