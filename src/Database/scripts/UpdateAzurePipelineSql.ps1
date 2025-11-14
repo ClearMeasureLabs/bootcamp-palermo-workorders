@@ -6,13 +6,14 @@ param(
 	[string]$DatabasePassword
 )
 
-Write-Output "Recursive directory listing for diagnostics"
-Get-ChildItem -Recurse
 
-$bootcampdatabaseDll = Join-Path ".\scripts" "ClearMeasure.Bootcamp.Database.dll"
-Write-Host "Executing dotnet .\scripts\ClearMeasure.Bootcamp.Database.dll $DatabaseAction $DatabaseServer $DatabaseName .\scripts"
+$scriptDir = Join-Path $PWD "scripts"
 
-dotnet .\scripts\ClearMeasure.Bootcamp.Database.dll $DatabaseAction $DatabaseServer $DatabaseName .\scripts
+$bootcampdatabaseDll = Join-Path $PWD "ClearMeasure.Bootcamp.Database.dll"
+
+Write-Host "Executing dotnet $bootcampdatabaseDll $DatabaseAction $DatabaseServer $DatabaseName $scriptDir"
+
+dotnet $bootcampdatabaseDll $DatabaseAction $DatabaseServer $DatabaseName $scriptDir	
 
 if ($lastexitcode -ne 0) {
     throw ("Database migration had an error.")
