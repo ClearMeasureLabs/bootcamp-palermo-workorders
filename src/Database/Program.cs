@@ -38,7 +38,8 @@ var scriptDir = args[3].Replace('\\', Path.DirectorySeparatorChar).Replace('/', 
 
 #region Check for Docker
 
-// Check if Docker is running and container exists
+// TODO [TO20251114] We should not be checking to see if there is a Docker container.
+/*
 int CheckDockerContainer(string containerName)
 {
     try
@@ -86,12 +87,13 @@ int CheckDockerContainer(string containerName)
     }
 }
 
-// TODO [TO20251114] We should not be checking to see if there is a Docker container.
-// var dockerCheckResult = CheckDockerContainer($"sql2022-bootcamp-tests-{databaseName}");
-// if (dockerCheckResult != 0)
-// {
-//     return dockerCheckResult;
-// }
+
+var dockerCheckResult = CheckDockerContainer($"sql2022-bootcamp-tests-{databaseName}");
+if (dockerCheckResult != 0)
+{
+     return dockerCheckResult;
+}
+*/
 
 #endregion
 
