@@ -193,11 +193,9 @@ Function PackageUI {
 }
 
 Function PackageDatabase {    
-	# Publish as a single-file executable
 	$databasePublishPath = Join-Path $databaseProjectPath "bin" $projectConfig $framework "publish"
 	exec {
-		& dotnet publish $databaseProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig `
-			/p:PublishSingleFile=true /p:SelfContained=false /p:IncludeNativeLibrariesForSelfExtract=true
+		& dotnet publish $databaseProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
 	}
 	
 	# Copy scripts folder to publish directory
@@ -257,8 +255,7 @@ Function PrivateBuild {
 	Init
 	Compile
 	UnitTests
-	
-	
+		
 	if (Test-IsLinux) 
 	{
 		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
