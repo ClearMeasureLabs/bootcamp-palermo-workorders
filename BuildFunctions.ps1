@@ -177,6 +177,23 @@ Function Test-IsWindows {
     return $false
 }
 
+Function Test-IsAzureDevOps {
+    <#
+    .SYNOPSIS
+        Tests if the current script is running in Azure DevOps
+    .DESCRIPTION
+        Returns true if the current PowerShell session is running within an Azure DevOps pipeline
+    .OUTPUTS
+        [bool] True if running in Azure DevOps, False otherwise
+    #>
+    
+    if ($env:TF_BUILD -eq "True") {
+        return $true
+    }
+
+    return $false
+}
+
 
 Function New-SqlServerDatabase {
     param (

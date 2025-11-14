@@ -38,7 +38,7 @@ if (Test-IsLinux) {
 	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 }
 else {
-	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
+	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
 }
 $script:databaseServer = $databaseServer
 
@@ -67,13 +67,27 @@ Function Init {
 	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
 	if (-not $pwshPath) {
 		Write-Warning "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell"
+		throw "PowerShell 7 is required to run this build script."
 	}
  	else {
 		Write-Host "PowerShell 7 found at: $pwshPath"
 	}
 
+	if (Test-IsAzureDevOps) { 
+		Write-Host "Running in Azure DevOps Pipeline"
+	}
+	else {
+		Write-Host "Running in Local Environment"
+	}
+
 	if (Test-IsLinux) {
 		Write-Host "Running on Linux"		
+		if (Test-IsDockerRunning) {
+			Write-Host "Docker is running"
+		} else {
+			Write-Error "Docker is not running. Please start Docker to run SQL Server in a container."
+			throw "Docker is not running."
+		}
 	}
 	elseif (Test-IsWindows) {
 		Write-Host "Running on Windows"
@@ -215,7 +229,7 @@ Function PackageScript {
 }
 
 
-Function Package {
+Function Package-Everything {
 	Write-Output "Packaging nuget packages"
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
 	PackageUI
@@ -225,7 +239,8 @@ Function Package {
 }
 
 Function PrivateBuild {
-	$projectConfig = "Debug"
+
+	Write-Host "Starting Private Build..." -ForegroundColor Yellow
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
@@ -236,8 +251,6 @@ Function PrivateBuild {
 	Compile
 	UnitTests
 	
-	# Update appsettings.json files before database migration
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
 	
 	if (Test-IsLinux) 
 	{
@@ -255,6 +268,9 @@ Function PrivateBuild {
 		}
 	}
 
+	# Update appsettings.json files before database migration
+	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+
 	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest
@@ -268,6 +284,9 @@ Function PrivateBuild {
 }
 
 Function CIBuild {
+
+	Write-Host "Starting CI Build..." -ForegroundColor Yellow
+
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
 	$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName
@@ -275,10 +294,50 @@ Function CIBuild {
 	Init
 	Compile
 	UnitTests
+
+	if (Test-IsLinux) 
+	{
+		write-host "Setting up SQL Server in Docker" -ForegroundColor Cyan
+		# For Linux, can't use LocalDB, so spin SQL Server in Docker.
+		if (Test-IsDockerRunning -LogOutput $true) 
+		{
+			Write-Host "Standing up SQL Server in Docker for Linux environment" -ForegroundColor Cyan
+			New-DockerContainerForSqlServer -databaseName $script:databaseName
+			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		}
+		else {
+			Write-Error "Docker is not running. Please start Docker to run SQL Server in a container."
+			throw "Docker is not running."
+		}
+	}
+	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+
 	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+
+
 	IntegrationTest
 	#AcceptanceTests
-	Package
+
+	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+
+	Package-Everything
+
 	$sw.Stop()
 	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
+}
+
+Function Invoke-Build {
+	# param (
+	# 	[Parameter(Mandatory = $false)]
+	# 	[ValidateNotNullOrEmpty()]
+	# 	[string]$buildType = "Private"
+	# )
+
+
+	if (Test-IsAzureDevOps) {
+		CIBuild
+	}
+	else {
+		PrivateBuild
+	}
 }
