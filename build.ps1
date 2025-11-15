@@ -24,16 +24,16 @@ $verbosity = "minimal"
 $build_dir = Join-Path $base_dir "build"
 $test_dir = Join-Path $build_dir "test"
 
-$script:databaseAction = $env:DatabaseAction
-if ([string]::IsNullOrEmpty($databaseAction)) { $script:databaseAction = "Rebuild" }
+$databaseAction = $env:DatabaseAction
+if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild" }
 
-$script:databaseName = $projectName
-if ([string]::IsNullOrEmpty($databaseName)) { $script:databaseName = $projectName }
+$databaseName = $projectName
+if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
 $script:databaseServer = $env:DatabaseServer
 if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
 
-$databaseScripts = "$source_dir\Database\scripts"
+$databaseScripts = Join-Path $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
@@ -221,10 +221,6 @@ Function CIBuild {
 	Init
 	Compile
 	UnitTests
-
-	# TODO [TO20251114] Come back to fix this for the Linux builds.
-    $env:ConnectionStrings__SqlConnectionString = "server=$script:databaseServer;database=$script:databaseName;Integrated Security=true;"
-
 	MigrateDatabaseLocal  -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	IntegrationTest
 	#AcceptanceTests

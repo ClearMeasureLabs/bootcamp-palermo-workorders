@@ -59,6 +59,28 @@ Function Log-Message {
     Write-Host $logEntry -ForegroundColor $color
 }
 
+Function Get-RedactedConnectionString {
+    <#
+    .SYNOPSIS
+        Returns a connection string with the password redacted
+    .DESCRIPTION
+        Takes a connection string and replaces the password value with ***
+    .PARAMETER ConnectionString
+        The connection string to redact
+    .OUTPUTS
+        [string] The connection string with password replaced by ***
+    .EXAMPLE
+        Get-RedactedConnectionString -ConnectionString "Server=localhost;Database=mydb;Password=secret123;User=sa"
+        Returns: "Server=localhost;Database=mydb;Password=***;User=sa"
+    #>
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$ConnectionString
+    )
+    
+    return $ConnectionString -replace "Password=[^;]*", "Password=***"
+}
+
 Function Update-AppSettingsConnectionStrings {
     param (
         [Parameter(Mandatory = $true)]
@@ -71,22 +93,13 @@ Function Update-AppSettingsConnectionStrings {
 
     Log-Message "Updating appsettings*.json files with database name: $databaseNameToUse" -Type "INFO"
 
-    # TODO [TO20251114] We dont' want to test for $IsLinux; check for if we're using a local database or not.
-    # if ($IsLinux) {
-    #     Log-Message -Message "Assuming Linux environment uses SQL Server with SQL Authentication" -Type "INFO"
-    #     # $connectionString = "Data Source=$serverName;Initial Catalog=$databaseNameToUse;User ID=sa;Password=$databaseNameToUse;TrustServerCertificate=true;Integrated Security=false;Encrypt=false"
-    #     $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
-    # }
-    # else {
-    #     Log-Message "Assuming Windows environment uses LocalDB with Integrated Security" -Type "INFO"
-    #     $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
-    # }
-
+    # Build the connection string for environment variable
     $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+
 
     # Set environment variable for current process
     $env:ConnectionStrings__SqlConnectionString = $connectionString
-    Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $connectionString" -Type "INFO"
+    Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $(Get-RedactedConnectionString -ConnectionString $connectionString)" -Type "INFO"
 
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
@@ -104,7 +117,7 @@ Function Update-AppSettingsConnectionStrings {
             foreach ($property in $connectionStringsObj.PSObject.Properties) {
                 $oldConnectionString = $property.Value
 
-                Log-Message "Found connection string $($property.Name) : $oldConnectionString" -Type "INFO"
+                Log-Message "Found connection string $($property.Name) : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
                 if ($oldConnectionString -match "database=([^;]+)") {
 
                     # Replace the database name in the connection string
@@ -114,7 +127,7 @@ Function Update-AppSettingsConnectionStrings {
                     $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
         
                     $connectionStringsObj.$($property.Name) = $newConnectionString
-                    Log-Message "  Updated $($property.Name): $newConnectionString" -Type "INFO"
+                    Log-Message "Updated $($property.Name): $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
                 }
             }
        
@@ -238,7 +251,7 @@ Function New-DockerContainerForSqlServer {
         [string]$databaseName
     )
 
-    $containerName = "sql2022-bootcamp-tests-$databaseName"
+    $containerName = "$databaseName"
     $imageName = "mcr.microsoft.com/mssql/server:2022-latest"
 
     # Stop any containers using port 1433
@@ -333,3 +346,5 @@ Function Generate-UniqueDatabaseName {
     Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
     return $uniqueName
 }
+
+
