@@ -81,6 +81,7 @@ Function Get-RedactedConnectionString {
     return $ConnectionString -replace "Password=[^;]*", "Password=***"
 }
 
+
 Function Update-AppSettingsConnectionStrings {
     param (
         [Parameter(Mandatory = $true)]
@@ -248,7 +249,7 @@ END
 Function New-DockerContainerForSqlServer {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$databaseName
+        [string]$containerName
     )
 
     $imageName = "mcr.microsoft.com/mssql/server:2022-latest"
@@ -268,12 +269,12 @@ Function New-DockerContainerForSqlServer {
     }
 
     # Check if our specific container exists
-    $containerStatus = docker ps --filter "name=$databaseName" --format "{{.Status}}"
+    $containerStatus = docker ps --filter "name=$containerName" --format "{{.Status}}"
     if (-not $containerStatus) {
-        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$databaseName" -p 1433:1433 --name $databaseName -d $imageName 
+        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$containerName" -p 1433:1433 --name $containerName -d $imageName 
         Start-Sleep -Seconds 10
     }
-    Log-Message -Message "SQL Server Docker container '$databaseName' should be running." -Type "INFO"
+    Log-Message -Message "SQL Server Docker container '$containerName' should be running." -Type "INFO"
 
 }
 
@@ -346,4 +347,24 @@ Function Generate-UniqueDatabaseName {
     return $uniqueName
 }
 
-
+Function Get-ContainerName {
+    <#
+    .SYNOPSIS
+        Creates a container name from a database name
+    .DESCRIPTION
+        Takes a database name and returns a container name in the format
+    .PARAMETER DatabaseName
+        The database name to create the container name from
+    .OUTPUTS
+        [string] A unique container name based on the database name
+    .EXAMPLE
+        Get-ContainerName -DatabaseName "MyTestDB"
+        Returns: "mytestdb-mssql"
+    #>
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$DatabaseName
+    )
+    
+    return "$DatabaseName-mssql".ToLower()
+}

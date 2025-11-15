@@ -155,7 +155,7 @@ Function Create-SqlServerInDocker {
 	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName
 	Log-Message "Creating SQL Server in Docker for integration tests for $tempDatabaseName" -Type "INFO"
 	
-	New-DockerContainerForSqlServer -databaseName $tempDatabaseName
+	New-DockerContainerForSqlServer -containerName $(Get-ContainerName $tempDatabaseName)
 	New-SqlServerDatabase -serverName "localhost" -databaseName $tempDatabaseName 
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName "localhost" -sourceDir $source_dir

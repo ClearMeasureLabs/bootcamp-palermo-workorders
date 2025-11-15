@@ -261,7 +261,7 @@ Function PrivateBuild {
 		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
 		if (Test-IsDockerRunning -LogOutput $true) 
 		{
-			New-DockerContainerForSqlServer -databaseName $script:databaseName
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
 			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 		}
 		else {
@@ -304,7 +304,7 @@ Function CIBuild {
 		if (Test-IsDockerRunning -LogOutput $true) 
 		{
 			Log-Message -Message "Standing up SQL Server in Docker for Linux environment" -Type "INFO"
-			New-DockerContainerForSqlServer -databaseName $script:databaseName
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
 			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 		}
 		else {
