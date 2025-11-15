@@ -139,12 +139,15 @@ Function MigrateDatabaseLocal {
 	)
 	exec {
 		$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-		& dotnet $databaseDll $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
+		& dotnet $databaseDll $script:databaseAction $databaseServerFunc $databaseNameFunc $script:databaseScripts
 	}
 }
 
 Function Create-SqlServerInDocker {
 	param (
+		[Parameter(Mandatory = $true)]
+			[ValidateNotNullOrEmpty()]
+			[string]$serverName,		
 		[Parameter(Mandatory = $true)]
 			[ValidateNotNullOrEmpty()]
 			[string]$dbAction,
@@ -153,15 +156,15 @@ Function Create-SqlServerInDocker {
 			[string]$scriptDir			
 		)
 	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName
-	Log-Message "Creating SQL Server in Docker for integration tests for $tempDatabaseName" -Type "INFO"
 	
 	New-DockerContainerForSqlServer -containerName $(Get-ContainerName $tempDatabaseName)
-	New-SqlServerDatabase -serverName "localhost" -databaseName $tempDatabaseName 
+	Log-Message "Creating SQL Server in Docker for integration tests for $tempDatabaseName" -Type "INFO"
+	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
-	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName "localhost" -sourceDir $source_dir
+	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
 	exec {
 		$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-		& dotnet $databaseDll $dbAction "localhost" $tempDatabaseName $scriptDir "sa" $tempDatabaseName
+		& dotnet $databaseDll $dbAction $serverName $tempDatabaseName $scriptDir "sa" $tempDatabaseName
 	}
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 }
@@ -241,19 +244,13 @@ Function PrivateBuild {
 Function CIBuild {
 	Log-Message
 	$sw = [Diagnostics.Stopwatch]::StartNew()
+	
 	Init
 	Compile
 	UnitTests
 
+	MigrateDatabaseLocal  -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 
-	if ((Test-IsAzureDevOps) && ($IsLinux))
-	{
-		Create-SqlServerInDocker $script:databaseAction $script:databaseScripts
-	}
-	else 
-	{
-		MigrateDatabaseLocal  -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	}
 	IntegrationTest
 	#AcceptanceTests
 	Package-Everything
