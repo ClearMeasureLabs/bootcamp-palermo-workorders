@@ -246,7 +246,7 @@ Function CIBuild {
 	UnitTests
 
 
-	if (Test-IsAzureDevOps) 
+	if ((Test-IsAzureDevOps) && ($IsLinux))
 	{
 		Create-SqlServerInDocker $script:databaseAction $script:databaseScripts
 	}
