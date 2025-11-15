@@ -1,19 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
-	<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-    <Configurations>Debug;Release;exclude-maui.slnf</Configurations>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
+        <RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+        <Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DbUp" Version="5.0.41" />
-    <PackageReference Include="dbup-sqlserver" Version="6.0.16" />
+    <ItemGroup>
+        <PackageReference Include="DbUp" Version="5.0.41"/>
+        <PackageReference Include="dbup-sqlserver" Version="6.0.16"/>
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.2"/>
+        <PackageReference Include="Spectre.Console" Version="0.54.0"/>
+        <PackageReference Include="Spectre.Console.Cli" Version="0.53.0"/>
 
-  </ItemGroup>
+    </ItemGroup>
 
 </Project>
