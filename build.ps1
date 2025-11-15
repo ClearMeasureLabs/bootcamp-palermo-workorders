@@ -33,7 +33,7 @@ if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 $script:databaseServer = $env:DatabaseServer
 if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
 
-$databaseScripts = Join-Path $source_dir "Database" "scripts"
+$script:databaseScripts = Join-Path $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
@@ -44,10 +44,10 @@ Function Init {
 	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
 
 	if (-not $pwshPath) {
-		Write-Warning "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell"
+		Log-Message "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell" -Type "ERROR"
 	}
  else {
-		Write-Host "PowerShell 7 found at: $pwshPath"
+		Log-Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
 	}
 
 	if (Test-Path "build") {
@@ -57,10 +57,10 @@ Function Init {
 	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
 
 	exec {
-		& dotnet clean $source_dir\$projectName.sln -nologo -v $verbosity
+		& dotnet clean $(Join-Path $source_dir "$projectName.sln") -nologo -v $verbosity
 	}
 	exec {
-		& dotnet restore $source_dir\$projectName.sln -nologo --interactive -v $verbosity  
+		& dotnet restore $(Join-Path $source_dir "$projectName.sln") -nologo --interactive -v $verbosity  
 	}
 	
 	Log-Message "Project Configuration: $projectConfig. Version: $version"
@@ -68,7 +68,7 @@ Function Init {
 
 Function Compile {
 	exec {
-		& dotnet build $source_dir\$projectName.sln -nologo --no-restore -v `
+		& dotnet build $(Join-Path $source_dir "$projectName.sln") -nologo --no-restore -v `
 			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
@@ -82,7 +82,7 @@ Function UnitTests {
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $test_dir\UnitTests --no-build `
+				--results-directory $(Join-Path $test_dir "UnitTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
@@ -98,7 +98,7 @@ Function IntegrationTest {
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $test_dir\IntegrationTests --no-build `
+				--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
@@ -112,12 +112,12 @@ Function AcceptanceTests {
 	$projectConfig = "Debug"
 	Push-Location -Path $acceptanceTestProjectPath
 
-	pwsh bin/Debug/$framework/playwright.ps1 install 
+	pwsh (Join-Path "bin" "Debug" $framework "playwright.ps1") install --with-deps
 
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $test_dir\AcceptanceTests --no-build `
+				--results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
@@ -143,12 +143,35 @@ Function MigrateDatabaseLocal {
 	}
 }
 
+Function Create-SqlServerInDocker {
+	param (
+		[Parameter(Mandatory = $true)]
+			[ValidateNotNullOrEmpty()]
+			[string]$dbAction,
+		[Parameter(Mandatory = $true)]
+			[ValidateNotNullOrEmpty()]
+			[string]$scriptDir			
+		)
+	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName
+	Log-Message "Creating SQL Server in Docker for integration tests for $tempDatabaseName" -Type "INFO"
+	
+	New-DockerContainerForSqlServer -databaseName $tempDatabaseName
+	New-SqlServerDatabase -serverName "localhost" -databaseName $tempDatabaseName 
+
+	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName "localhost" -sourceDir $source_dir
+	exec {
+		$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+		& dotnet $databaseDll $dbAction "localhost" $tempDatabaseName $scriptDir "sa" $tempDatabaseName
+	}
+	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+}
+
 Function PackageUI {    
 	exec {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $uiProjectPath\bin\$projectConfig\$framework\publish --outFolder $build_dir  --overwrite
+		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-Path $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 }
 
@@ -164,7 +187,7 @@ Function PackageAcceptanceTests {
 		& dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $acceptanceTestProjectPath\bin\Debug\$framework\publish --outFolder $build_dir --overwrite
+		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-Path $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
 	}
 }
 
@@ -178,7 +201,7 @@ Function PackageScript {
 }
 
 
-Function Package {
+Function Package-Everything{
 	Write-Output "Packaging nuget packages"
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
 	PackageUI
@@ -211,8 +234,8 @@ Function PrivateBuild {
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 	
 	$sw.Stop()
-	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
-	write-host "Database used: $script:databaseName" -ForegroundColor Cyan
+	Log-Message "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -Type "INFO"
+	Log-Message "Database used: $script:databaseName" -Type "INFO"
 }
 
 Function CIBuild {
@@ -221,10 +244,19 @@ Function CIBuild {
 	Init
 	Compile
 	UnitTests
-	MigrateDatabaseLocal  -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+
+
+	if (Test-IsAzureDevOps) 
+	{
+		Create-SqlServerInDocker $script:databaseAction $script:databaseScripts
+	}
+	else 
+	{
+		MigrateDatabaseLocal  -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	}
 	IntegrationTest
 	#AcceptanceTests
 	Package-Everything
 	$sw.Stop()
-	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
+	Log-Message "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -Type "INFO"
 }

@@ -12,7 +12,7 @@ stages:
 
     jobs:
       - job: "Build"
-        displayName: "Build job"
+        displayName: "Build on Windows"
         pool:
           vmImage: "windows-latest"
         steps:

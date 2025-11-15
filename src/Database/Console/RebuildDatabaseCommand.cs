@@ -10,7 +10,7 @@ using Spectre.Console.Cli;
 namespace ClearMeasure.Bootcamp.Database.Console;
 
 [UsedImplicitly]
-public class PerformDbUpMigration : Command<DatabaseOptions>
+public class RebuildDatabaseCommand : Command<DatabaseOptions>
 {
     private string GetConnectionString(DatabaseOptions options)
     {
@@ -49,34 +49,20 @@ public class PerformDbUpMigration : Command<DatabaseOptions>
         {
             AnsiConsole.MarkupLine($"[green]User:[/] {options.DatabaseUser}");
             AnsiConsole.MarkupLine(
-                $"[green]Password:[/] {(string.IsNullOrEmpty(options.DatabasePassword) ? "(empty)" : "******")}");
+                $"[gray]Password:[/] {(string.IsNullOrEmpty(options.DatabasePassword) ? "(empty)" : "******")}");
         }
 
-        #region Build connection string
-
-        // Check for environment variable first
         var connectionString = GetConnectionString(options);
-
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            AnsiConsole.MarkupLine(
-                "[yellow]Environment variable ConnectionStrings__SqlConnectionString is not set.[/]");
-            return -1;
-        }
-
-        AnsiConsole.MarkupLine(
-            $"[green]Using connection string from environment variable `{connectionString}`.[/]");
-
+        AnsiConsole.MarkupLine($"[green]Using connection string `{connectionString}`.[/]");
         try
         {
             EnsureDatabase.For.SqlDatabase(connectionString);
         }
         catch (Exception ex)
         {
-            return Fail($"DbUp encountered a problem trying to update the database. {connectionString}: {ex.Message}");
+            AnsiConsole.WriteException(ex);
+            return -1;
         }
-
-        #endregion
 
         // 1) RunOnce scripts: Create + Update (journaled)
         var runOnce = DeployChanges.To
