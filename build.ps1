@@ -30,7 +30,7 @@ if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild" }
 $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
-$script:databaseServer = $env:DatabaseServer
+$script:databaseServer = $databaseServer
 if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
 
 $script:databaseScripts = Join-Path $source_dir "Database" "scripts"
@@ -249,7 +249,7 @@ Function CIBuild {
 	Compile
 	UnitTests
 
-	MigrateDatabaseLocal  -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	MigrateDatabaseLocal  -databaseServerFunc databaseServer -databaseNameFunc databaseName
 
 	IntegrationTest
 	#AcceptanceTests
