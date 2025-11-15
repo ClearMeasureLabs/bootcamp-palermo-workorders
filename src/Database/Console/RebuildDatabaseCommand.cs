@@ -3,83 +3,38 @@ using DbUp.Engine;
 using DbUp.Helpers;
 using DbUp.Support;
 using JetBrains.Annotations;
-using Microsoft.Data.SqlClient;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace ClearMeasure.Bootcamp.Database.Console;
 
+/// <summary>
+/// This should resemble the AliaSQL "Rebuild" action, which runs Create, Update, Everytime, and TestData scripts.
+/// </summary>
 [UsedImplicitly]
-public class RebuildDatabaseCommand : Command<DatabaseOptions>
+public class RebuildDatabaseCommand() : BaseDatabaseCommand("Rebuild")
 {
-    private string GetConnectionString(DatabaseOptions options)
+    protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
     {
-        var builder = new SqlConnectionStringBuilder
-        {
-            DataSource = options.DatabaseServer,
-            TrustServerCertificate = true,
-            InitialCatalog = options.DatabaseName
-        };
-
-        if (string.IsNullOrWhiteSpace(options.DatabaseUser))
-        {
-            return builder.ToString();
-        }
-
-        builder.UserID = options.DatabaseUser;
-        builder.Password = options.DatabasePassword;
-
-        return builder.ToString();
-    }
-
-    public override int Execute(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
-    {
-        // Normalize the script directory path
-        var scriptDir = options.ScriptDir
-            .Replace('\\', Path.DirectorySeparatorChar)
-            .Replace('/', Path.DirectorySeparatorChar);
-
-        // Display the parameters for confirmation
-        AnsiConsole.MarkupLine($"[green]Action:[/] {options.DatabaseAction}");
-        AnsiConsole.MarkupLine($"[green]Server:[/] {options.DatabaseServer}");
-        AnsiConsole.MarkupLine($"[green]Database:[/] {options.DatabaseName}");
-        AnsiConsole.MarkupLine($"[green]Script Directory:[/] {scriptDir}");
-
-        if (!string.IsNullOrWhiteSpace(options.DatabaseUser))
-        {
-            AnsiConsole.MarkupLine($"[green]User:[/] {options.DatabaseUser}");
-            AnsiConsole.MarkupLine(
-                $"[gray]Password:[/] {(string.IsNullOrEmpty(options.DatabasePassword) ? "(empty)" : "******")}");
-        }
-
+        var scriptDir = GetScriptDirectory(options);
         var connectionString = GetConnectionString(options);
-        AnsiConsole.MarkupLine($"[green]Using connection string `{connectionString}`.[/]");
-        try
-        {
-            EnsureDatabase.For.SqlDatabase(connectionString);
-        }
-        catch (Exception ex)
-        {
-            AnsiConsole.WriteException(ex);
-            return -1;
-        }
 
         // 1) RunOnce scripts: Create + Update (journaled)
-        var runOnce = DeployChanges.To
+        var createAndUpdateEngine = DeployChanges.To
             .SqlDatabase(connectionString)
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "Create"))
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "Update"))
             .LogToConsole()
             .Build();
 
-        var runOnceResult = runOnce.PerformUpgrade();
-        if (!runOnceResult.Successful)
+        var createAndUpdateResult = createAndUpdateEngine.PerformUpgrade();
+        if (!createAndUpdateResult.Successful)
         {
-            return Fail(runOnceResult.Error?.ToString() ?? "Could not run scripts to create and update database.");
+            return Fail(createAndUpdateResult.Error?.ToString() ?? "Could not run scripts to rebuild database.");
         }
 
         // 2) RunAlways scripts: things to re-apply each run (procs/views/perms)
-        var runAlways = DeployChanges.To
+        var everytimeEngine = DeployChanges.To
             .SqlDatabase(connectionString)
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "Everytime"),
                 new SqlScriptOptions { ScriptType = ScriptType.RunAlways })
@@ -87,20 +42,20 @@ public class RebuildDatabaseCommand : Command<DatabaseOptions>
             .LogToConsole()
             .Build();
 
-        var runAlwaysResult = runAlways.PerformUpgrade();
-        if (!runAlwaysResult.Successful)
+        var everytimeResult = everytimeEngine.PerformUpgrade();
+        if (!everytimeResult.Successful)
         {
-            return Fail(runAlwaysResult.Error?.ToString() ?? "Failed to re-apply RunAlways scripts.");
+            return Fail(everytimeResult.Error?.ToString() ?? "Failed to re-apply RunAlways scripts.");
         }
 
         // 3) Optional test data pass (journaled or not, your choice)
-        var testData = DeployChanges.To
+        var testDataEngine = DeployChanges.To
             .SqlDatabase(connectionString)
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "TestData"))
             .LogToConsole()
             .Build();
 
-        var testDataResult = testData.PerformUpgrade();
+        var testDataResult = testDataEngine.PerformUpgrade();
         if (!testDataResult.Successful)
         {
             return Fail(testDataResult.Error?.ToString() ?? "Failed to run TestData scripts.");
@@ -108,11 +63,5 @@ public class RebuildDatabaseCommand : Command<DatabaseOptions>
 
         AnsiConsole.MarkupLine($"[green]Finished updating {options.DatabaseName}.[/]");
         return 0;
-    }
-
-    private static int Fail(string message, int code = -1)
-    {
-        AnsiConsole.MarkupLine($"[red]{message.EscapeMarkup()}[/]");
-        return code;
     }
 }
