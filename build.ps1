@@ -249,7 +249,7 @@ Function CIBuild {
 	Compile
 	UnitTests
 
-	MigrateDatabaseLocal  -databaseServerFunc databaseServer -databaseNameFunc databaseName
+	MigrateDatabaseLocal  -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
 
 	IntegrationTest
 	#AcceptanceTests
