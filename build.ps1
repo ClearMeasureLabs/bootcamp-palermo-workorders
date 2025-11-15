@@ -250,7 +250,8 @@ Function CIBuild {
 	UnitTests
 
 	MigrateDatabaseLocal  -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
-
+	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $databaseServer -sourceDir $source_dir
+	
 	IntegrationTest
 	#AcceptanceTests
 	Package-Everything
