@@ -6,10 +6,17 @@ param(
 	[string]$DatabasePassword
 )
 
-$scriptDir = Join-Path $PWD "scripts"
-$bootcampdatabaseDll = Join-Path $PWD "ClearMeasure.Bootcamp.Database.dll"
 
-Write-Host "Executing dotnet $bootcampdatabaseDll $DatabaseAction $DatabaseServer $DatabaseName $scriptDir"
+# Find ClearMeasure.Bootcamp.Database.dll in current folder or subfolders
+$bootcampdatabaseDll = Get-ChildItem -Path $PWD -Filter "ClearMeasure.Bootcamp.Database.dll" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+
+if (-not $bootcampdatabaseDll) {
+    throw "Could not find ClearMeasure.Bootcamp.Database.dll in $PWD or its subfolders"
+}
+
+Write-Host "Found database DLL at: $bootcampdatabaseDll"
+$scriptDir = Resolve-Path -Path (".\scripts")
+Write-Host "Executing dotnet $bootcampdatabaseDll $DatabaseAction $DatabaseServer $DatabaseName $scriptDir $DatabaseUser <REDACTED>"
 
 dotnet $bootcampdatabaseDll $DatabaseAction $DatabaseServer $DatabaseName $scriptDir $DatabaseUser $DatabasePassword
 
