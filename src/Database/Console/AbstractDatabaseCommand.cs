@@ -5,9 +5,9 @@ using Spectre.Console.Cli;
 
 namespace ClearMeasure.Bootcamp.Database.Console;
 
-public abstract class DatabaseCommandBase(string action) : Command<DatabaseOptions>
+public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseOptions>
 {
-    protected readonly string _action = action;
+    protected readonly string Action = action;
 
     
     protected string GetScriptDirectory(DatabaseOptions options)
@@ -70,7 +70,7 @@ public abstract class DatabaseCommandBase(string action) : Command<DatabaseOptio
     protected void ShowOptionsOnConsole(DatabaseOptions options)
     {
         // Display the parameters for confirmation
-        AnsiConsole.MarkupLine($"[green]Action:[/] {_action}");
+        AnsiConsole.MarkupLine($"[green]Action:[/] {Action}");
         AnsiConsole.MarkupLine($"[green]Server:[/] {options.DatabaseServer}");
         AnsiConsole.MarkupLine($"[green]Database:[/] {options.DatabaseName}");
         AnsiConsole.MarkupLine($"[green]Script Directory:[/] {GetScriptDirectory(options)}");

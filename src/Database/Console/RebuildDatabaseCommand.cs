@@ -12,7 +12,7 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 /// This should resemble the AliaSQL "Rebuild" action, which runs Create, Update, Everytime, and TestData scripts.
 /// </summary>
 [UsedImplicitly]
-public class RebuildDatabaseCommand() : BaseDatabaseCommand("Rebuild")
+public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
 {
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
     {

@@ -11,7 +11,7 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 /// This is useful when introducing DbUp to an existing database.
 /// </summary>
 [UsedImplicitly]
-public class BaselineCommand() : AbstractDatabaseCommand("baseline")
+public class BaselineDatabaseCommand() : AbstractDatabaseCommand("baseline")
 {
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
     {
@@ -68,7 +68,7 @@ public class BaselineCommand() : AbstractDatabaseCommand("baseline")
 
         var scripts = upgradeEngine.GetScriptsToExecute();
         
-        if (!scripts.Any())
+        if (scripts.Count == 0)
         {
             AnsiConsole.MarkupLine($"[green]{scriptType}: No scripts to baseline (all already marked as executed)[/]");
             return 0;
@@ -78,7 +78,7 @@ public class BaselineCommand() : AbstractDatabaseCommand("baseline")
 
         foreach (var script in scripts)
         {
-            upgradeEngine.MarkAsExecuted(script);
+            upgradeEngine.MarkAsExecuted(script.Name);
             AnsiConsole.MarkupLine($"  [dim]✓ {script.Name}[/]");
         }
 

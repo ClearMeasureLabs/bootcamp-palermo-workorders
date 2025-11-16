@@ -8,7 +8,7 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 /// This should match the AliaSQL "Update" action, which only runs Update.
 /// </summary>
 [UsedImplicitly]
-public class UpdateDatabaseCommand() : BaseDatabaseCommand("Update")
+public class UpdateDatabaseCommand() : AbstractDatabaseCommand("Update")
 {
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
     {
