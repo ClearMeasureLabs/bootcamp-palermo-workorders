@@ -5,7 +5,7 @@ using Spectre.Console.Cli;
 
 namespace ClearMeasure.Bootcamp.Database.Console;
 
-public abstract class BaseDatabaseCommand(string action) : Command<DatabaseOptions>
+public abstract class DatabaseCommandBase(string action) : Command<DatabaseOptions>
 {
     protected readonly string _action = action;
 
