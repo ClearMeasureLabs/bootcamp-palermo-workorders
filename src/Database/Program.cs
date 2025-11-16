@@ -7,6 +7,9 @@ app.Configure(config =>
     config.SetApplicationName("ChurchBulletin.Database");
     config.CaseSensitivity(CaseSensitivity.None); // Command names are case-insensitive
     
+    config.AddCommand<BaselineDatabaseCommand>("baseline")
+        .WithDescription("Mark all existing scripts as executed without running them (for existing databases)");
+    
     config.AddCommand<RebuildDatabaseCommand>("rebuild")
         .WithDescription("Rebuild the database by running Create, Update, Everytime, and TestData scripts");
     
