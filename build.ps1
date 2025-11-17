@@ -28,16 +28,7 @@ $build_dir = Join-Path $base_dir "build"
 $test_dir = Join-Path $build_dir "test"
 $solutionName = Join-Path $source_dir "$projectName.sln"
 
-$databaseAction = $env:DatabaseAction
-if ( [string]::IsNullOrEmpty($databaseAction))
-{
-    $databaseAction = "Rebuild"
-}
-$script:databaseName = $projectName
-if ( [string]::IsNullOrEmpty($script:databaseName))
-{
-    $script:databaseName = $projectName
-}
+
 
 if ( [string]::IsNullOrEmpty($version))
 {
@@ -48,27 +39,25 @@ if ( [string]::IsNullOrEmpty($projectConfig))
     $projectConfig = "Release"
 }
 
-$script:databaseServer = $env:DatabaseServer
-$script:databaseInDocker = $false;
-if ([string]::IsNullOrEmpty($script:databaseServer))
+$databaseAction = $env:DatabaseAction
+if ( [string]::IsNullOrEmpty($databaseAction))
 {
-    if (Test-IsLinux)
-    {
-        $script:databaseInDocker = $true;
-        $script:databaseServer = "localhost"
-        Log-Message "Linux detected. No database server specified in environment variable 'DatabaseServer'. Using localhost."
-    }
-    else
-    {
-        Log-Message "Windows detected. No database server specified in environment variable 'DatabaseServer'. Using LocalDB instance."
-        $script:databaseServer = "(LocalDb)\MSSQLLocalDB"
-    }
+    $databaseAction = "Rebuild"
+}
+$script:databaseName = $projectName
+if ([string]::IsNullOrEmpty($env:databaseName))
+{
+    $script:databaseName = $projectName
 }
 else
 {
-    Log-Message "Using database server from environment variable 'DatabaseServer': $script:databaseServer"
+    $script:databaseName = $env:databaseName
 }
 
+$script:databaseInDocker = $false;
+$script:databaseUser = ""
+$script:databasePassword = ""
+$script:databaseServer = ""
 
 Function Init
 {
@@ -285,11 +274,25 @@ Function PrivateBuild
     [Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
     $sw = [Diagnostics.Stopwatch]::StartNew()
 
+    if (Test-IsLinux)
+    {
+        Log-Message "Linux detected. No database server specified in environment variable 'DatabaseServer'. Using localhost."
+        $script:databaseInDocker = $true;
+        $script:databaseServer = "localhost"
+        $script:databaseUser = "sa"
+        $script:databasePassword = $script:databaseName
+    }        
+    else
+    {
+        Log-Message "Windows detected. No database server specified in environment variable 'DatabaseServer'. Using LocalDB instance."
+        $script:databaseServer = "(LocalDb)\MSSQLLocalDB"
+        $script:databaseUser = ""
+        $script:databasePassword = ""
+    }
+
     Init
     Compile
     UnitTests
-
-    Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
 
     if ($script:databaseInDocker)
     {
@@ -312,8 +315,11 @@ END
             throw $_
         }        
         
-        MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
     }
+
+    Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+
+    MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName $script:databaseUser $script:databasePassword
     IntegrationTest
     #AcceptanceTests
 
@@ -325,9 +331,26 @@ END
 
 Function CIBuild
 {
-    Log-Message
+    Log-Message "Starting CIBuild Build" -Type "INFO"
+
     $sw = [Diagnostics.Stopwatch]::StartNew()
 
+    if (Test-IsLinux)
+    {
+        Log-Message "Linux detected. No database server specified in environment variable 'DatabaseServer'. Using localhost."
+        $script:databaseInDocker = $true;
+        $script:databaseServer = "localhost"
+        $script:databaseUser = "sa"
+        $script:databasePassword = $script:databaseName
+    }
+    else
+    {
+        Log-Message "Windows detected. No database server specified in environment variable 'DatabaseServer'. Using LocalDB instance."
+        $script:databaseServer = "(LocalDb)\MSSQLLocalDB"
+        $script:databaseUser = ""
+        $script:databasePassword = ""
+    }
+        
     Init
     Compile
     UnitTests
@@ -338,7 +361,7 @@ Function CIBuild
     }
     else
     {
-        MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName $env:DatabaseUser $env:DatabasePassword
+        MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName $script:databaseUser $script:databasePassword
     }    
     
     Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $databaseServer -sourceDir $source_dir
