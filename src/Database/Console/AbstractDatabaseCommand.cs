@@ -1,4 +1,5 @@
-﻿using DbUp;
+﻿using System.Reflection;
+using DbUp;
 using Microsoft.Data.SqlClient;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -7,23 +8,19 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 
 public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseOptions>
 {
+    // ReSharper disable once MemberCanBePrivate.Global
     protected readonly string Action = action;
 
-    
-    protected string GetScriptDirectory(DatabaseOptions options)
+
+    protected static string GetScriptDirectory(DatabaseOptions options)
     {
-        var scriptDir = options.ScriptDir
-            .Replace('\\', Path.DirectorySeparatorChar)
-            .Replace('/', Path.DirectorySeparatorChar);
-        return scriptDir;
+        return Path.GetFullPath(options.ScriptDir);
     }
 
     public override int Execute(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
     {
         ShowOptionsOnConsole(options);
         var connectionString = GetConnectionString(options);
-        AnsiConsole.MarkupLine($"[green]Using connection string `{connectionString}`.[/]");
-
         try
         {
             EnsureDatabase.For.SqlDatabase(connectionString);
@@ -33,15 +30,15 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             AnsiConsole.WriteException(ex);
             return -1;
         }
-        
-        return ExecuteInternal(context, options, cancellationToken);
 
+        return ExecuteInternal(context, options, cancellationToken);
     }
 
-    protected abstract int ExecuteInternal(CommandContext context, DatabaseOptions options,
-        CancellationToken cancellationToken);
-    
-    protected string GetConnectionString(DatabaseOptions options)
+    // ReSharper disable UnusedParameter.Global
+    protected abstract int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken);
+    // ReSharper restore UnusedParameter.Global
+
+    protected static string GetConnectionString(DatabaseOptions options)
     {
         var builder = new SqlConnectionStringBuilder
         {
@@ -61,27 +58,21 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         return builder.ToString();
     }
 
-    protected int Fail(string message, int code = -1)
+    protected static int Fail(string message, int code = -1)
     {
         AnsiConsole.MarkupLine($"[red]{message.EscapeMarkup()}[/]");
         return code;
     }
 
-    protected void ShowOptionsOnConsole(DatabaseOptions options)
+    private void ShowOptionsOnConsole(DatabaseOptions options)
     {
-        // Display the parameters for confirmation
-        AnsiConsole.MarkupLine($"[green]Action:[/] {Action}");
-        AnsiConsole.MarkupLine($"[green]Server:[/] {options.DatabaseServer}");
-        AnsiConsole.MarkupLine($"[green]Database:[/] {options.DatabaseName}");
-        AnsiConsole.MarkupLine($"[green]Script Directory:[/] {GetScriptDirectory(options)}");
-        if (string.IsNullOrWhiteSpace(options.DatabaseUser))
-        {
-            return;
-        }
+        var assemblyName = Assembly.GetExecutingAssembly().Location;
 
-        AnsiConsole.MarkupLine($"[green]User:[/] {options.DatabaseUser}");
+        var userInfo = !string.IsNullOrWhiteSpace(options.DatabaseUser)
+            ? $"{options.DatabaseUser} <REDACTED>"
+            : string.Empty;
+
         AnsiConsole.MarkupLine(
-            $"[gray]Password:[/] {(string.IsNullOrEmpty(options.DatabasePassword) ? "(empty)" : "******")}");
-
+            $"[green]{assemblyName} migrating database {Action} {options.DatabaseServer} {options.DatabaseName} {GetScriptDirectory(options)} {userInfo}[/]");
     }
 }

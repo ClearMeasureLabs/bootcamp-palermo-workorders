@@ -15,7 +15,6 @@ public class BaselineDatabaseCommand() : AbstractDatabaseCommand("baseline")
 {
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
     {
-        ShowOptionsOnConsole(options);
         var scriptDir = GetScriptDirectory(options);
         var connectionString = GetConnectionString(options);
 

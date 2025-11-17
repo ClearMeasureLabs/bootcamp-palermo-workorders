@@ -12,7 +12,6 @@ public class UpdateDatabaseCommand() : AbstractDatabaseCommand("Update")
 {
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
     {
-        ShowOptionsOnConsole(options);
         var scriptDir = Path.Join( GetScriptDirectory(options), "Update");
         var connectionString= GetConnectionString(options);
         var upgradeEngine = DeployChanges.To

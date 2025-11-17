@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices.JavaScript;
-using ClearMeasure.Bootcamp.Database.Console;
+﻿using ClearMeasure.Bootcamp.Database.Console;
 using Spectre.Console.Cli;
 
 var app = new CommandApp();
