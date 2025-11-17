@@ -48,10 +48,9 @@ if ( [string]::IsNullOrEmpty($projectConfig))
     $projectConfig = "Release"
 }
 
-# TODO [TO20251117] How do we decide the database server?
 $script:databaseServer = $env:DatabaseServer
 $script:databaseInDocker = $false;
-if ( [string]::IsNullOrEmpty($script:databaseServer))
+if ([string]::IsNullOrEmpty($script:databaseServer))
 {
     if (Test-IsLinux)
     {
@@ -180,8 +179,6 @@ Function MigrateDatabaseLocal
         [string]$databaseNameFunc
     )
 
-    $databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-
     if ($script:databaseInDocker)
     {
         Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
@@ -197,7 +194,7 @@ Function MigrateDatabaseLocal
             throw "Docker is not running."
         }
     }
-
+    $databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
     exec { & dotnet $databaseDll $script:databaseAction $databaseServerFunc $databaseNameFunc $script:databaseScripts }
 }
 
@@ -220,7 +217,7 @@ Function Create-SqlServerInDocker
 
     $databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
     exec {
-        & dotnet $databaseDll $dbAction $serverName $script:databaseName $scriptDir "sa" $script:databaseName
+        & dotnet $databaseDll $dbAction $serverName $script:databaseName $scriptDir "sa" $script:databaseName 
     }
 }
 
@@ -284,10 +281,15 @@ Function PrivateBuild
     Compile
     UnitTests
 
-    # Update appsettings.json files before database migration
     Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-
-    MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+    if ($script:databaseInDocker)
+    {
+        Create-SqlServerInDocker -serverName $script:databaseServer -dbAction $databaseAction -scriptDir $script:databaseScripts
+    }
+    else
+    {
+        MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+    }
 
     IntegrationTest
     #AcceptanceTests
@@ -296,7 +298,6 @@ Function PrivateBuild
 
     $sw.Stop()
     Log-Message "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -Type "INFO"
-    Log-Message "Database used: $script:databaseName" -Type "INFO"
 }
 
 Function CIBuild
