@@ -54,9 +54,9 @@ if ([string]::IsNullOrEmpty($script:databaseServer))
 {
     if (Test-IsLinux)
     {
-        Log-Message "Linux detected. No database server specified in environment variable 'DatabaseServer'. Using localhost."
-        $script:databaseServer = "localhost"
         $script:databaseInDocker = $true;
+        $script:databaseServer = "localhost"
+        Log-Message "Linux detected. No database server specified in environment variable 'DatabaseServer'. Using localhost."
     }
     else
     {
@@ -179,8 +179,13 @@ Function MigrateDatabaseLocal
         [string]$databaseNameFunc
     )
 
+    $dbUser = ""
+    $dbPwd = ""
     if ($script:databaseInDocker)
     {
+        $dbPwd = $script:databaseName
+        $dbUser = "sa"
+        
         Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
         if (Test-IsDockerRunning -LogOutput $true)
         {
@@ -193,9 +198,10 @@ Function MigrateDatabaseLocal
             Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
             throw "Docker is not running."
         }
+
     }
     $databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-    exec { & dotnet $databaseDll $script:databaseAction $databaseServerFunc $databaseNameFunc $script:databaseScripts }
+    exec { & dotnet $databaseDll $script:databaseAction $databaseServerFunc $databaseNameFunc $script:databaseScripts $dbUser $dbPwd}
 }
 
 Function Create-SqlServerInDocker
