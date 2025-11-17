@@ -8,17 +8,14 @@ if ($env:ConnectionStrings__SqlConnectionString) {
 }
 
 $projectName = "ChurchBulletin"
-
 $base_dir = resolve-path .\
 $source_dir = Join-Path $base_dir "src"
 $unitTestProjectPath = Join-Path $source_dir "UnitTests"
 $integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
 $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
 $uiProjectPath = Join-Path $source_dir "UI" "Server"
-
 $databaseProjectPath = Join-Path $source_dir "Database"
 $dbProjectName = Join-Path $databaseProjectPath "Database.csproj"
-
 $projectConfig = $env:BuildConfiguration
 $framework = "net9.0"
 $version = $env:BUILD_BUILDNUMBER
@@ -47,8 +44,6 @@ $databaseScripts = Join-Path $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
-
-
  
 Function Init {
 	# Check for PowerShell 7
