@@ -20,10 +20,12 @@ Write-Host "Executing dotnet $bootcampdatabaseDll $DatabaseAction $DatabaseServe
 
 # This is a one-off - we need to baseline the database the first time so that DbUp doesn't try to re-apply all the scripts
 # in an existing database.
-dotnet $bootcampdatabaseDll baseline $DatabaseServer $DatabaseName $scriptDir $DatabaseUser $DatabasePassword
+dotnet $bootcampdatabaseDll baseline $DatabaseServer $DatabaseName $scriptDir $DatabaseUser $DatabasePassword 
+if ($lastexitcode -ne 0) {
+    throw ("Failed to baseline the database.")
+}
 
 dotnet $bootcampdatabaseDll $DatabaseAction $DatabaseServer $DatabaseName $scriptDir $DatabaseUser $DatabasePassword
-
 if ($lastexitcode -ne 0) {
     throw ("Database migration had an error.")
 }
