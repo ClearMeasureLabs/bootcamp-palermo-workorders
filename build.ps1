@@ -58,10 +58,16 @@ if ( [string]::IsNullOrEmpty($script:databaseServer))
         Log-Message "Linux detected. No database server specified in environment variable 'DatabaseServer'. Using localhost."
         $script:databaseServer = "localhost"
         $script:databaseInDocker = $true;
-    } else {
+    }
+    else
+    {
         Log-Message "Windows detected. No database server specified in environment variable 'DatabaseServer'. Using LocalDB instance."
         $script:databaseServer = "(LocalDb)\MSSQLLocalDB"
     }
+}
+else
+{
+    Log-Message "Using database server from environment variable 'DatabaseServer': $script:databaseServer"
 }
 
 
@@ -210,16 +216,12 @@ Function Create-SqlServerInDocker
     )
 
     New-DockerContainerForSqlServer $script:databaseName
-    Log-Message "Creating SQL Server in Docker for integration tests for $script:databaseName" -Type "INFO"
     New-SqlServerDatabase -serverName $serverName -databaseName $script:databaseName
-
-    Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $serverName -sourceDir $source_dir
 
     $databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
     exec {
         & dotnet $databaseDll $dbAction $serverName $script:databaseName $scriptDir "sa" $script:databaseName
     }
-    Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 }
 
 Function PackageUI

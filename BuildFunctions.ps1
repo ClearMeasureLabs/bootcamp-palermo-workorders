@@ -140,8 +140,6 @@ Function Update-AppSettingsConnectionStrings {
     Log-Message "Completed updating appsettings*.json files" -Type "INFO"
 }
 
-
-
 Function Get-OSPlatform {
     $os = $PSVersionTable.OS
     if ($IsWindows) {
@@ -218,17 +216,24 @@ BEGIN
 END
 "@
 
-    $createDbCmd = "CREATE DATABASE [$databaseName];"
     try {
         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
+    }
+    catch {
+        Log-Message -Message "Error dropping database '$databaseName' on server '$serverName': $_" -Type "ERROR"
+        throw $_
+    }
+
+    $createDbCmd = "CREATE DATABASE [$databaseName];"
+    try {
         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
     }
     catch {
         Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
         throw $_
     }
-
     Log-Message -Message "Recreated database '$databaseName' on server '$serverName'" -Type "INFO"
+    
 }
 
 Function New-DockerContainerForSqlServer {
