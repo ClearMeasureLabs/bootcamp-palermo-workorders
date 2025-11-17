@@ -73,6 +73,6 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             : string.Empty;
 
         AnsiConsole.MarkupLine(
-            $"[green]{assemblyName} migrating database {Action} {options.DatabaseServer} {options.DatabaseName} {GetScriptDirectory(options)} {userInfo}[/]");
+            $"[green]{assemblyName} performing {Action} on database {options.DatabaseServer} {options.DatabaseName}. Script directory {GetScriptDirectory(options)} {userInfo}[/]");
     }
 }

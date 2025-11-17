@@ -151,20 +151,6 @@ stages:
                     extract: true
 
                 - task: PowerShell@2
-                  displayName: "Run ChurchBulletin.Database migration"
-                  inputs:
-                    pwsh: true
-                    targetType: "inline"
-                    script: |
-                      $databaseDll = Get-ChildItem -Path "$(System.DefaultWorkingDirectory)/database" -Filter "ClearMeasure.Bootcamp.Database.dll" -Recurse | Select-Object -First 1
-                      if ($databaseDll) {
-                        dotnet $databaseDll.FullName "$(DatabaseAction)" "$(DatabaseServer)" "ChurchBulletin" "$(System.DefaultWorkingDirectory)/database/scripts"
-                      } else {
-                        Write-Error "ClearMeasure.Bootcamp.Database.dll not found in downloaded package"
-                        exit 1
-                      }
-
-                - task: PowerShell@2
                   displayName: "Install Playwright"
                   inputs:
                     pwsh: true
