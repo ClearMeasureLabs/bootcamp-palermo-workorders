@@ -31,7 +31,7 @@ function Exec {
 Function Poke-Xml($filePath, $xpath, $value) {
     [xml] $fileXml = Get-Content $filePath
     $node = $fileXml.SelectSingleNode($xpath)
-
+    
     if ($node.NodeType -eq "Element") {
         $node.InnerText = $value
     }
@@ -39,8 +39,8 @@ Function Poke-Xml($filePath, $xpath, $value) {
         $node.Value = $value
     }
 
-    $fileXml.Save($filePath)
-}
+    $fileXml.Save($filePath) 
+} 
 
 Function Log-Message {
     param (
@@ -77,7 +77,7 @@ Function Get-RedactedConnectionString {
         [Parameter(Mandatory = $true)]
         [string]$ConnectionString
     )
-
+    
     return $ConnectionString -replace "Password=[^;]*", "Password=***"
 }
 
@@ -104,12 +104,12 @@ Function Update-AppSettingsConnectionStrings {
 
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
-
+    
     foreach ($file in $appSettingsFiles) {
         Log-Message "Processing file: $($file.FullName)" -Type "INFO"
-
+    
         $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
-
+        
         # Check if ConnectionStrings section exists
         if ($content.PSObject.Properties.Name -contains "ConnectionStrings") {
             $connectionStringsObj = $content.ConnectionStrings
@@ -123,22 +123,24 @@ Function Update-AppSettingsConnectionStrings {
 
                     # Replace the database name in the connection string
                     $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
-
+            
                     # Also update server if needed
                     $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
-
+        
                     $connectionStringsObj.$($property.Name) = $newConnectionString
                     Log-Message "Updated $($property.Name): $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
                 }
             }
-
+       
             # Save the updated JSON
             $content | ConvertTo-Json -Depth 10 | Set-Content $file.FullName
         }
     }
-
+    
     Log-Message "Completed updating appsettings*.json files" -Type "INFO"
 }
+
+
 
 Function Get-OSPlatform {
     $os = $PSVersionTable.OS
@@ -164,8 +166,14 @@ Function Test-IsLinux {
     .OUTPUTS
         [bool] True if running on Linux, False otherwise
     #>
-
-    return $IsLinux -or ([System.Environment]::OSVersion.Platform -match 'Linux') -or ([System.Environment]::OSVersion.Platform -eq 'Unix') -or ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Linux))
+    if ($IsLinux) { 
+        return $true
+    }
+    
+    if (Get-OSPlatform -match "Linux") {
+        return $true
+    }
+    return $false
 }
 
 Function Test-IsWindows {
@@ -177,7 +185,15 @@ Function Test-IsWindows {
     .OUTPUTS
         [bool] True if running on Windows, False otherwise
     #>
-    return $IsWindows -or ([System.Environment]::OSVersion.Platform -eq 'Win32NT') -or ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows))
+    if ($IsWindows) { 
+        return $true
+    }
+    
+    if (Get-OSPlatform -match "Windows") {
+        return $true
+    }
+
+    return $false
 }
 
 Function Test-IsAzureDevOps {
@@ -189,7 +205,7 @@ Function Test-IsAzureDevOps {
     .OUTPUTS
         [bool] True if running in Azure DevOps, False otherwise
     #>
-
+    
     if ($env:TF_BUILD -eq "True") {
         return $true
     }
@@ -207,7 +223,7 @@ Function New-SqlServerDatabase {
     )
 
     $saCred = New-object System.Management.Automation.PSCredential("sa", (ConvertTo-SecureString -String $databaseName -AsPlainText -Force))
-
+    
     $dropDbCmd = @"
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'$databaseName')
 BEGIN
@@ -216,24 +232,18 @@ BEGIN
 END
 "@
 
+    $createDbCmd = "CREATE DATABASE [$databaseName];"
+
     try {
         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
-    }
-    catch {
-        Log-Message -Message "Error dropping database '$databaseName' on server '$serverName': $_" -Type "ERROR"
-        throw $_
-    }
-
-    $createDbCmd = "CREATE DATABASE [$databaseName];"
-    try {
         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
-    }
+    } 
     catch {
         Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
         throw $_
     }
+
     Log-Message -Message "Recreated database '$databaseName' on server '$serverName'" -Type "INFO"
-    
 }
 
 Function New-DockerContainerForSqlServer {
@@ -246,30 +256,24 @@ Function New-DockerContainerForSqlServer {
 
     # Stop any containers using port 1433
     Log-Message -Message "Checking for containers using port 1433..." -Type "INFO"
-    $containersOnPort1433 = docker ps --format "table {{.Names}}\t{{.Ports}}" | Select-String ":1433->" | ForEach-Object {
-        ($_ -split '\s+')[0]
+    $containersOnPort1433 = docker ps --format "table {{.Names}}\t{{.Ports}}" | Select-String ":1433->" | ForEach-Object { 
+        ($_ -split '\s+')[0] 
     }
-
+    
     foreach ($container in $containersOnPort1433) {
-        Log-Message -Message "Found container '$container' using port 1433." -Type "INFO"
         if ($container -and $container -ne "NAMES") {
-            Log-Message -Message "Stopping and then deleting the container '$container' that is using port 1433..." -Type "INFO"
+            Log-Message -Message "Stopping container '$container' that is using port 1433..." -Type "INFO"
             docker stop $container | Out-Null
             docker rm $container | Out-Null
         }
     }
 
-    # Check if our specific container exists (running or stopped)
-    Start-Sleep -Seconds 2
-    $containerExists = docker ps -a --filter "name=^/${containerName}$" --format "{{.Names}}"
-    if ($containerExists) {
-        Log-Message -Message "Container '$containerName' exists. Removing it..." -Type "INFO"
-        docker rm -f $containerName | Out-Null
+    # Check if our specific container exists
+    $containerStatus = docker ps --filter "name=$containerName" --format "{{.Status}}"
+    if (-not $containerStatus) {
+        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$containerName" -p 1433:1433 --name $containerName -d $imageName 
+        Start-Sleep -Seconds 10
     }
-
-    # Create and start the new container
-    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$containerName" -p 1433:1433 --name $containerName -d $imageName
-    Start-Sleep -Seconds 10
     Log-Message -Message "SQL Server Docker container '$containerName' should be running." -Type "INFO"
 
 }
@@ -289,7 +293,7 @@ Function Test-IsDockerRunning {
         [Parameter(Mandatory = $false)]
         [bool]$LogOutput = $false
     )
-
+    
     $dockerPath = (Get-Command docker -ErrorAction SilentlyContinue).Source
     if (-not $dockerPath) {
         if ($LogOutput) {
@@ -302,7 +306,7 @@ Function Test-IsDockerRunning {
         if ($LogOutput) {
             Log-Message -Message "Docker found at: $dockerPath" -Type "INFO"
         }
-
+        
         # Check if Docker daemon is running
         try {
             $dockerVersion = & docker version --format "{{.Server.Version}}" 2>$null
@@ -322,7 +326,7 @@ Function Test-IsDockerRunning {
             if ($LogOutput) {
                 Log-Message -Message "Docker is installed but the daemon is not accessible. Try: sudo systemctl start docker" -Type "ERROR"
             }
-            return $false
+            return $false   
         }
     }
 
@@ -334,14 +338,13 @@ Function Generate-UniqueDatabaseName {
         [Parameter(Mandatory = $true)]
         [string]$baseName
     )
-
-    return $baseName
-    #    $timestamp = Get-Date -Format "yyyyMMddHHmmss"
-    #    $randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
-    #    $uniqueName = "${baseName}_${timestamp}_${randomChars}"
-    # 
-    #    Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
-    #    return $uniqueName
+    
+    $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+    $randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
+    $uniqueName = "${baseName}_${timestamp}_${randomChars}"
+ 
+    Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
+    return $uniqueName
 }
 
 Function Get-ContainerName {
@@ -362,6 +365,6 @@ Function Get-ContainerName {
         [Parameter(Mandatory = $true)]
         [string]$DatabaseName
     )
-
+    
     return "$DatabaseName-mssql".ToLower()
 }

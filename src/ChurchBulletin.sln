@@ -10,17 +10,18 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FBE145BD-737C-47A5-BA88-A50ABAA81729}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		..\azure-pipelines.yml = ..\azure-pipelines.yml
 		..\build.bat = ..\build.bat
 		..\build.ps1 = ..\build.ps1
 		..\BuildFunctions.ps1 = ..\BuildFunctions.ps1
 		..\click_to_build.bat = ..\click_to_build.bat
 		..\.github\copilot-instructions.md = ..\.github\copilot-instructions.md
 		..\Dockerfile = ..\Dockerfile
+		..\.github\workflows\dotnet.yml = ..\.github\workflows\dotnet.yml
 		..\global.json = ..\global.json
 		..\PrivateBuild.ps1 = ..\PrivateBuild.ps1
 		pure-azdo-pipeline.yml = pure-azdo-pipeline.yml
 		..\README.md = ..\README.md
-		..\build_linux.ps1 = ..\build_linux.ps1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "arch", "arch", "{20334D25-873D-49F0-A78B-003AB1D7D783}"
