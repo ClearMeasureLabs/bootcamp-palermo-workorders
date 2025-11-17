@@ -179,29 +179,16 @@ Function MigrateDatabaseLocal
         [string]$databaseNameFunc
     )
 
-    $dbUser = ""
-    $dbPwd = ""
     if ($script:databaseInDocker)
     {
-        $dbPwd = $script:databaseName
-        $dbUser = "sa"
-        
-        Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
-        if (Test-IsDockerRunning -LogOutput $true)
-        {
-            Log-Message -Message "Standing up SQL Server in Docker." -Type "INFO"
-            New-DockerContainerForSqlServer -containerName $script:databaseName
-            New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
-        }
-        else
-        {
-            Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-            throw "Docker is not running."
-        }
-
+        Create-SqlServerInDocker -serverName $script:databaseServer -dbAction $databaseAction -scriptDir $script:databaseScripts
     }
-    $databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-    exec { & dotnet $databaseDll $script:databaseAction $databaseServerFunc $databaseNameFunc $script:databaseScripts $dbUser $dbPwd}
+    else
+    {
+        Log-Message -Message "Migrating database locally on server $databaseServerFunc with database name $databaseNameFunc" -Type "INFO"
+        $databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+        exec { & dotnet $databaseDll $script:databaseAction $databaseServerFunc $databaseNameFunc $script:databaseScripts $dbUser $dbPwd }
+    }
 }
 
 Function Create-SqlServerInDocker
@@ -217,14 +204,28 @@ Function Create-SqlServerInDocker
         [ValidateNotNullOrEmpty()]
         [string]$scriptDir
     )
+    Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
 
+    $dbPwd = $script:databaseName
+    $dbUser = "sa"
+    
     New-DockerContainerForSqlServer $script:databaseName
     New-SqlServerDatabase -serverName $serverName -databaseName $script:databaseName
+    
+    if (Test-IsDockerRunning -LogOutput $true)
+    {
+        Log-Message -Message "Standing up SQL Server in Docker." -Type "INFO"
+        New-DockerContainerForSqlServer -containerName $script:databaseName
+        New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+    }
+    else
+    {
+        Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+        throw "Docker is not running."
+    }
 
     $databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-    exec {
-        & dotnet $databaseDll $dbAction $serverName $script:databaseName $scriptDir "sa" $script:databaseName 
-    }
+    exec { & dotnet $databaseDll $script:databaseAction $databaseServerFunc $databaseNameFunc $script:databaseScripts $dbUser $dbPwd}
 }
 
 Function PackageUI
@@ -288,14 +289,8 @@ Function PrivateBuild
     UnitTests
 
     Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-    if ($script:databaseInDocker)
-    {
-        Create-SqlServerInDocker -serverName $script:databaseServer -dbAction $databaseAction -scriptDir $script:databaseScripts
-    }
-    else
-    {
-        MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-    }
+
+    MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 
     IntegrationTest
     #AcceptanceTests
