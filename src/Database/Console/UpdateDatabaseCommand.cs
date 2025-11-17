@@ -17,6 +17,7 @@ public class UpdateDatabaseCommand() : AbstractDatabaseCommand("Update")
         var upgradeEngine = DeployChanges.To
             .SqlDatabase(connectionString)
             .WithScriptsFromFileSystem(scriptDir)
+            .JournalToSqlTable("dbo", "SchemaVersions")
             .LogToConsole()
             .Build();
 

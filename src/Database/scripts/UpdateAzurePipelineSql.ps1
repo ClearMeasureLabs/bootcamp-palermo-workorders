@@ -13,6 +13,12 @@ if (-not $databaseAssembly) {
     throw "Could not find ClearMeasure.Bootcamp.Database.dll in $PWD or its subfolders"
 }
 
+Write-Host "Baselining database dotnet $databaseAssembly baseline $DatabaseServer $DatabaseName $scriptDir $DatabaseUser <REDACTED>"
+dotnet $databaseAssembly baseline $DatabaseServer $DatabaseName $scriptDir $DatabaseUser $DatabasePassword
+if ($lastexitcode -ne 0) {
+    throw ("Database migration had an error.")
+}
+
 Write-Host "Executing dotnet $databaseAssembly $DatabaseAction $DatabaseServer $DatabaseName $scriptDir $DatabaseUser <REDACTED>"
 dotnet $databaseAssembly $DatabaseAction $DatabaseServer $DatabaseName $scriptDir $DatabaseUser $DatabasePassword
 if ($lastexitcode -ne 0) {

@@ -25,7 +25,7 @@ $build_dir = Join-Path $base_dir "build"
 $test_dir = Join-Path $build_dir "test"
 
 $databaseAction = $env:DatabaseAction
-if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Rebuild" }
+if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
 
 $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
@@ -137,9 +137,11 @@ Function MigrateDatabaseLocal {
 		[ValidateNotNullOrEmpty()]
 		[string]$databaseNameFunc
 	)
-	exec {
-		$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-		& dotnet $databaseDll $script:databaseAction $databaseServerFunc $databaseNameFunc $script:databaseScripts
+	$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+	$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts)
+	& dotnet $dbArgs
+	if ($LASTEXITCODE -ne 0) {
+		throw "Database migration failed with exit code $LASTEXITCODE"
 	}
 }
 
@@ -162,9 +164,11 @@ Function Create-SqlServerInDocker {
 	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
-	exec {
-		$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-		& dotnet $databaseDll $dbAction $serverName $tempDatabaseName $scriptDir "sa" $tempDatabaseName
+	$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $tempDatabaseName)
+	& dotnet $dbArgs
+	if ($LASTEXITCODE -ne 0) {
+		throw "Database migration failed with exit code $LASTEXITCODE"
 	}
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 }
