@@ -176,17 +176,20 @@ Function MigrateDatabaseLocal
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$databaseNameFunc
-    )
+        [string]$databaseNameFunc,
 
-    if ($script:databaseInDocker)
-    {
-        Create-SqlServerInDocker -serverName $script:databaseServer -dbAction $databaseAction -scriptDir $script:databaseScripts
-    }
-    else
-    {
-        Log-Message -Message "Migrating database locally on server $databaseServerFunc with database name $databaseNameFunc" -Type "INFO"
-        $databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+        [Parameter(Mandatory = $false)]
+        [string]$dbUser = "",
+
+        [Parameter(Mandatory = $false)]
+        [string]$dbPwd = ""
+    )
+    
+    Log-Message -Message "Migrating database locally on server $databaseServerFunc with database name $databaseNameFunc" -Type "INFO"
+    $databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+    if ([string]::IsNullOrEmpty($dbUser) -or [string]::IsNullOrEmpty($dbPwd)) {
+        exec { & dotnet $databaseDll $script:databaseAction $databaseServerFunc $databaseNameFunc $script:databaseScripts }
+    } else {
         exec { & dotnet $databaseDll $script:databaseAction $databaseServerFunc $databaseNameFunc $script:databaseScripts $dbUser $dbPwd }
     }
 }
@@ -210,12 +213,10 @@ Function Create-SqlServerInDocker
     $dbUser = "sa"
     
     New-DockerContainerForSqlServer $script:databaseName
-    New-SqlServerDatabase -serverName $serverName -databaseName $script:databaseName
     
     if (Test-IsDockerRunning -LogOutput $true)
     {
         Log-Message -Message "Standing up SQL Server in Docker." -Type "INFO"
-        New-DockerContainerForSqlServer -containerName $script:databaseName
         New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
     }
     else
@@ -290,8 +291,29 @@ Function PrivateBuild
 
     Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
 
-    MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-
+    if ($script:databaseInDocker)
+    {
+        Create-SqlServerInDocker -serverName $script:databaseServer -dbAction $script:databaseAction -scriptDir $script:databaseScripts
+    }
+    else 
+    {
+        $dropDbCmd = @"
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'$script:databaseName')
+BEGIN
+    ALTER DATABASE [$script:databaseName] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE [$script:databaseName];
+END
+"@
+        try {
+            Invoke-Sqlcmd -ServerInstance $script:databaseServer -Database master -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
+        }
+        catch {
+            Log-Message -Message "Error dropping database '$script:databaseName' on server '$script:databaseServer': $_" -Type "ERROR"
+            throw $_
+        }        
+        
+        MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+    }
     IntegrationTest
     #AcceptanceTests
 
@@ -310,7 +332,15 @@ Function CIBuild
     Compile
     UnitTests
 
-    MigrateDatabaseLocal  -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
+    if ($script:databaseInDocker)
+    {
+        Create-SqlServerInDocker -serverName $script:databaseServer -dbAction $script:databaseAction -scriptDir $script:databaseScripts
+    }
+    else
+    {
+        MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName $env:DatabaseUser $env:DatabasePassword
+    }    
+    
     Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $databaseServer -sourceDir $source_dir
 
     IntegrationTest
