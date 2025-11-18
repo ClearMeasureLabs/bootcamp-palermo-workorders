@@ -247,6 +247,14 @@ Function PackageScript {
 Function Package-Everything{
 	Write-Output "Packaging nuget packages"
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
+	
+	# Ensure dotnet tools are in PATH
+	$dotnetToolsPath = [System.IO.Path]::Combine($env:HOME, ".dotnet", "tools")
+	if (-not $env:PATH.Contains($dotnetToolsPath)) {
+		$env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
+		Log-Message -Message "Added dotnet tools to PATH: $dotnetToolsPath" -Type "INFO"
+	}
+	
 	PackageUI
 	PackageDatabase
 	PackageAcceptanceTests
@@ -302,19 +310,45 @@ Function PrivateBuild {
 }
 
 Function CIBuild {
-	Log-Message
+	Log-Message -Message "Starting CI Build..." -Type "INFO"
 	$sw = [Diagnostics.Stopwatch]::StartNew()
+	
+	# Generate database name based on environment
+	if (Test-IsLinux) {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+	}
+	else {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+	}
 	
 	Init
 	Compile
 	UnitTests
 
-	MigrateDatabaseLocal  -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $databaseServer -sourceDir $source_dir
+	if (Test-IsLinux) 
+	{
+		Log-Message -Message "Setting up SQL Server in Docker for CI" -Type "INFO"
+		if (Test-IsDockerRunning -LogOutput $true) 
+		{
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		}
+		else {
+			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+			throw "Docker is not running."
+		}
+	}
+
+	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest
 	#AcceptanceTests
+	
+	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	
 	Package-Everything
 	$sw.Stop()
-	Log-Message "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -Type "INFO"
+	Log-Message -Message "BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
