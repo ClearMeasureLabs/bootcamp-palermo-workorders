@@ -47,6 +47,11 @@ jobs:
           echo "Version=$version" >> $env:GITHUB_ENV
           Write-Host "Build version: $version"
 
+      # Authenticate with GitHub Packages
+      - name: Authenticate with GitHub Packages
+        run: |
+          dotnet nuget add source --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
       # Run PrivateBuild script
       - name: Run Build Script
         shell: pwsh
@@ -133,6 +138,11 @@ jobs:
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "Build version: $version"
+
+      # Authenticate with GitHub Packages
+      - name: Authenticate with GitHub Packages
+        run: |
+          dotnet nuget add source --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
 
       # Run CIBuild script
       - name: Run CI Build Script
