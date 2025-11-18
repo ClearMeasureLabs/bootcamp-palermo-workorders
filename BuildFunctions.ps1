@@ -3,9 +3,22 @@
 # Ensure SqlServer module is installed for Invoke-Sqlcmd
 if (-not (Get-Module -ListAvailable -Name SqlServer)) {
     Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
-    Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser
+    try {
+        Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser -ErrorAction Stop
+        Write-Host "SqlServer module installed successfully" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Failed to install SqlServer module: $_" -ForegroundColor Red
+        Write-Host "Some database operations may not work without this module" -ForegroundColor Yellow
+    }
 }
-Import-Module SqlServer -ErrorAction SilentlyContinue
+
+try {
+    Import-Module SqlServer -ErrorAction Stop
+}
+catch {
+    Write-Host "Warning: Could not import SqlServer module. Invoke-Sqlcmd will not be available." -ForegroundColor Yellow
+}
 
 <#
 .SYNOPSIS
