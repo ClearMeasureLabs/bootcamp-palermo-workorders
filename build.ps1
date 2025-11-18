@@ -209,6 +209,40 @@ Function Create-SqlServerInDocker {
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 }
 
+Function Publish-ToGitHubPackages {
+	param(
+		[Parameter(Mandatory = $true)]
+		[string]$packageId
+	)
+	
+	$githubToken = $env:GITHUB_TOKEN
+	if ([string]::IsNullOrEmpty($githubToken)) {
+		Log-Message -Message "GITHUB_TOKEN not found. Cannot publish $packageId to GitHub Packages." -Type "ERROR"
+		throw "GITHUB_TOKEN environment variable is required for publishing to GitHub Packages"
+	}
+	
+	$githubRepo = $env:GITHUB_REPOSITORY
+	if ([string]::IsNullOrEmpty($githubRepo)) {
+		Log-Message -Message "GITHUB_REPOSITORY not found. Cannot determine GitHub Packages feed." -Type "ERROR"
+		throw "GITHUB_REPOSITORY environment variable is required"
+	}
+	
+	$owner = $githubRepo.Split('/')[0]
+	$githubFeed = "https://nuget.pkg.github.com/$owner/index.json"
+	
+	$packageFile = Get-ChildItem "$build_dir/$packageId.$version.nupkg" -ErrorAction SilentlyContinue
+	if (-not $packageFile) {
+		Log-Message -Message "Package file not found: $packageId.$version.nupkg" -Type "ERROR"
+		throw "Package file not found"
+	}
+	
+	Log-Message -Message "Publishing $($packageFile.Name) to GitHub Packages..." -Type "INFO"
+	exec {
+		& dotnet nuget push $packageFile.FullName --source $githubFeed --api-key $githubToken --skip-duplicate
+	}
+	Log-Message -Message "Successfully published $($packageFile.Name) to GitHub Packages" -Type "INFO"
+}
+
 Function PackageUI {    
 	exec {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
@@ -216,11 +250,28 @@ Function PackageUI {
 	exec {
 		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-Path $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
+	
+	# Publish to appropriate package registry
+	if (Test-IsGitHubActions) {
+		Publish-ToGitHubPackages -packageId "$projectName.UI"
+	}
+	elseif (Test-IsAzureDevOps) {
+		# Azure DevOps pipeline handles publishing via separate task
+		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
+	}
 }
 
 Function PackageDatabase {    
 	exec {
 		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
+	}
+	
+	# Publish to appropriate package registry
+	if (Test-IsGitHubActions) {
+		Publish-ToGitHubPackages -packageId "$projectName.Database"
+	}
+	elseif (Test-IsAzureDevOps) {
+		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
 	}
 }
 
@@ -232,6 +283,14 @@ Function PackageAcceptanceTests {
 	exec {
 		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-Path $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
 	}
+	
+	# Publish to appropriate package registry
+	if (Test-IsGitHubActions) {
+		Publish-ToGitHubPackages -packageId "$projectName.AcceptanceTests"
+	}
+	elseif (Test-IsAzureDevOps) {
+		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
+	}
 }
 
 Function PackageScript {    
@@ -240,6 +299,14 @@ Function PackageScript {
 	}
 	exec {
 		& dotnet-octo pack --id "$projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
+	}
+	
+	# Publish to appropriate package registry
+	if (Test-IsGitHubActions) {
+		Publish-ToGitHubPackages -packageId "$projectName.Script"
+	}
+	elseif (Test-IsAzureDevOps) {
+		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
 	}
 }
 
@@ -319,7 +386,16 @@ Function PrivateBuild {
 }
 
 Function CIBuild {
-	Log-Message -Message "Starting CI Build..." -Type "INFO"
+	if (Test-IsAzureDevOps) {
+		Log-Message -Message "Starting CI Build on Azure DevOps..." -Type "INFO"
+	}
+	elseif (Test-IsGitHubActions) {
+		Log-Message -Message "Starting CI Build on GitHub Actions..." -Type "INFO"
+	}
+	else {
+		Log-Message -Message "Starting CI Build..." -Type "INFO"
+	}
+	
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
 	# Generate database name based on environment

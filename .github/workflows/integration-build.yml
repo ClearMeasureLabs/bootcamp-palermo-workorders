@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    name: Build and Test
+    name: Build and Test (Windows)
     runs-on: windows-latest
     
     steps:
@@ -44,7 +44,7 @@ jobs:
           echo "Version=$version" >> $env:GITHUB_ENV
           Write-Host "Build version: $version"
 
-      # Run build script
+      # Run PrivateBuild script
       - name: Run Build Script
         shell: pwsh
         run: |
@@ -96,5 +96,97 @@ jobs:
           path: |
             build/**/*.log
             build/**/*.binlog
+          retention-days: 30
+
+  build-linux:
+    name: Build and Test (Linux)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Install .NET SDK 9.0.302
+      - name: Setup .NET SDK 9.0.302
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.302'
+
+      # Install .NET SDK 6.0 (required by Octopus CLI)
+      - name: Setup .NET SDK 6.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      # Set version environment variable
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "Build version: $version"
+
+      # Run CIBuild script
+      - name: Run CI Build Script
+        run: |
+          pwsh -Command ". ./build.ps1; CIBuild"
+
+      # Publish packages to GitHub Packages
+      - name: Publish to GitHub Packages
+        if: success()
+        run: |
+          for package in build/*.nupkg; do
+            echo "Publishing $package to GitHub Packages..."
+            dotnet nuget push "$package" \
+              --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+              --api-key "${{ secrets.GITHUB_TOKEN }}" \
+              --skip-duplicate
+          done
+
+      # Upload packages as artifacts
+      - name: Upload NuGet Packages
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: nuget-packages
+          path: build/*.nupkg
+          retention-days: 90
+
+      # Publish test results
+      - name: Test Reporter
+        uses: dorny/test-reporter@v2.1.1
+        if: always()
+        with:
+          name: Linux CI Test Results
+          path: 'build/test/**/*.trx'
+          reporter: dotnet-trx
+
+      # Publish code coverage
+      - name: Publish Code Coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: '**/build/test/**/In/**/coverage.cobertura.xml'
+          flags: unittests-linux
+          name: codecov-linux
+
+      # Upload test results as artifacts
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-linux
+          path: build/test/**/*.trx
+          retention-days: 30
+
+      # Upload code coverage as artifacts
+      - name: Upload Code Coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: code-coverage-linux
+          path: '**/build/test/**/In/**/coverage.cobertura.xml'
           retention-days: 30
           
