@@ -95,8 +95,7 @@ Function Init {
 
 Function Compile {
 	exec {
-		& dotnet build $solutionName = Join-Path $source_dir "$projectName.sln"
- -nologo --no-restore -v `
+		& dotnet build $solutionName -nologo --no-restore -v `
 			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
@@ -166,7 +165,16 @@ Function MigrateDatabaseLocal {
 		[string]$databaseNameFunc
 	)
 	$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-	$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts)
+	
+	if (Test-IsLinux) {
+		$containerName = Get-ContainerName -DatabaseName $databaseNameFunc
+		$sqlPassword = "${containerName}#1A"
+		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts, "sa", $sqlPassword)
+	}
+	else {
+		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts)
+	}
+	
 	& dotnet $dbArgs
 	if ($LASTEXITCODE -ne 0) {
 		throw "Database migration failed with exit code $LASTEXITCODE"
@@ -185,7 +193,7 @@ Function Create-SqlServerInDocker {
 			[ValidateNotNullOrEmpty()]
 			[string]$scriptDir			
 		)
-	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName
+	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName -generateUnique $true
 	
 	New-DockerContainerForSqlServer -containerName $(Get-ContainerName $tempDatabaseName)
 	Log-Message "Creating SQL Server in Docker for integration tests for $tempDatabaseName" -Type "INFO"
@@ -252,7 +260,13 @@ Function PrivateBuild {
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
 	# Generate unique database name for this build instance
-	$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName
+	# On Linux with Docker, no need for unique names since container is clean
+	if (Test-IsLinux) {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+	}
+	else {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+	}
 	
 	Init
 	Compile

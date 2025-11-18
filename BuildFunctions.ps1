@@ -95,7 +95,14 @@ Function Update-AppSettingsConnectionStrings {
     Log-Message "Updating appsettings*.json files with database name: $databaseNameToUse" -Type "INFO"
 
     # Build the connection string for environment variable
-    $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+    if (Test-IsLinux) {
+        $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
+        $sqlPassword = "${containerName}#1A"
+        $connectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+    }
+    else {
+        $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+    }
 
 
     # Set environment variable for current process
@@ -121,11 +128,18 @@ Function Update-AppSettingsConnectionStrings {
                 Log-Message "Found connection string $($property.Name) : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
                 if ($oldConnectionString -match "database=([^;]+)") {
 
-                    # Replace the database name in the connection string
-                    $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
-            
-                    # Also update server if needed
-                    $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
+                    if (Test-IsLinux) {
+                        $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
+                        $sqlPassword = "${containerName}#1A"
+                        $newConnectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+                    }
+                    else {
+                        # Replace the database name in the connection string
+                        $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
+                
+                        # Also update server if needed
+                        $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
+                    }
         
                     $connectionStringsObj.$($property.Name) = $newConnectionString
                     Log-Message "Updated $($property.Name): $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
@@ -222,7 +236,9 @@ Function New-SqlServerDatabase {
         [string]$databaseName
     )
 
-    $saCred = New-object System.Management.Automation.PSCredential("sa", (ConvertTo-SecureString -String $databaseName -AsPlainText -Force))
+    $containerName = Get-ContainerName -DatabaseName $databaseName
+    $sqlPassword = "${containerName}#1A"
+    $saCred = New-object System.Management.Automation.PSCredential("sa", (ConvertTo-SecureString -String $sqlPassword -AsPlainText -Force))
     
     $dropDbCmd = @"
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'$databaseName')
@@ -268,12 +284,22 @@ Function New-DockerContainerForSqlServer {
         }
     }
 
-    # Check if our specific container exists
-    $containerStatus = docker ps --filter "name=$containerName" --format "{{.Status}}"
-    if (-not $containerStatus) {
-        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$containerName" -p 1433:1433 --name $containerName -d $imageName 
-        Start-Sleep -Seconds 10
+    # Check if our specific container exists (running or stopped)
+    $existingContainer = docker ps -a --filter "name=^${containerName}$" --format "{{.Names}}"
+    if ($existingContainer) {
+        Log-Message -Message "Removing existing container '$containerName'..." -Type "INFO"
+        docker rm -f $existingContainer | Out-Null
     }
+    
+    # Create SQL Server password that meets complexity requirements
+    # Must be at least 8 characters with uppercase, lowercase, digit, and symbol
+    $sqlPassword = "${containerName}#1A"
+    
+    # Create new container
+    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$sqlPassword" -p 1433:1433 --name $containerName -d $imageName 
+    Log-Message -Message "Waiting for SQL Server to be ready..." -Type "INFO"
+    Start-Sleep -Seconds 25
+    
     Log-Message -Message "SQL Server Docker container '$containerName' should be running." -Type "INFO"
 
 }
@@ -336,15 +362,24 @@ Function Test-IsDockerRunning {
 Function Generate-UniqueDatabaseName {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$baseName
+        [string]$baseName,
+        
+        [Parameter(Mandatory = $false)]
+        [bool]$generateUnique = $false
     )
     
-    $timestamp = Get-Date -Format "yyyyMMddHHmmss"
-    $randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
-    $uniqueName = "${baseName}_${timestamp}_${randomChars}"
- 
-    Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
-    return $uniqueName
+    if ($generateUnique) {
+        $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+        $randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
+        $uniqueName = "${baseName}_${timestamp}_${randomChars}"
+     
+        Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
+        return $uniqueName
+    }
+    else {
+        Log-Message -Message "Using base database name: $baseName" -Type "INFO"
+        return $baseName
+    }
 }
 
 Function Get-ContainerName {
