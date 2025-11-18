@@ -24,6 +24,7 @@ public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
             .SqlDatabase(connectionString)
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "Create"))
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "Update"))
+            .JournalToSqlTable("dbo", "SchemaVersions")
             .LogToConsole()
             .Build();
 
@@ -52,6 +53,7 @@ public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
         var testDataEngine = DeployChanges.To
             .SqlDatabase(connectionString)
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "TestData"))
+            .JournalToSqlTable("dbo", "SchemaVersions")
             .LogToConsole()
             .Build();
 
