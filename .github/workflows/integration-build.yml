@@ -38,7 +38,7 @@ jobs:
 
       # Set version environment variable
       - name: Set Version
-        shell: powershell
+        shell: pwsh
         run: |
           $version = "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
           echo "Version=$version" >> $env:GITHUB_ENV
@@ -46,7 +46,7 @@ jobs:
 
       # Run build script
       - name: Run Build Script
-        shell: powershell
+        shell: pwsh
         run: |
           . ./build.ps1
           PrivateBuild
