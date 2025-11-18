@@ -251,9 +251,9 @@ Function PackageUI {
 		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-Path $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 	
-	# Publish to appropriate package registry
+	# Log package creation (publishing handled separately)
 	if (Test-IsGitHubActions) {
-		Publish-ToGitHubPackages -packageId "$projectName.UI"
+		Log-Message -Message "Would publish $projectName.UI.$version.nupkg to GitHub Packages" -Type "INFO"
 	}
 	elseif (Test-IsAzureDevOps) {
 		# Azure DevOps pipeline handles publishing via separate task
@@ -266,9 +266,9 @@ Function PackageDatabase {
 		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
 	}
 	
-	# Publish to appropriate package registry
+	# Log package creation (publishing handled separately)
 	if (Test-IsGitHubActions) {
-		Publish-ToGitHubPackages -packageId "$projectName.Database"
+		Log-Message -Message "Would publish $projectName.Database.$version.nupkg to GitHub Packages" -Type "INFO"
 	}
 	elseif (Test-IsAzureDevOps) {
 		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
@@ -284,9 +284,9 @@ Function PackageAcceptanceTests {
 		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-Path $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
 	}
 	
-	# Publish to appropriate package registry
+	# Log package creation (publishing handled separately)
 	if (Test-IsGitHubActions) {
-		Publish-ToGitHubPackages -packageId "$projectName.AcceptanceTests"
+		Log-Message -Message "Would publish $projectName.AcceptanceTests.$version.nupkg to GitHub Packages" -Type "INFO"
 	}
 	elseif (Test-IsAzureDevOps) {
 		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
@@ -301,9 +301,9 @@ Function PackageScript {
 		& dotnet-octo pack --id "$projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
 	}
 	
-	# Publish to appropriate package registry
+	# Log package creation (publishing handled separately)
 	if (Test-IsGitHubActions) {
-		Publish-ToGitHubPackages -packageId "$projectName.Script"
+		Log-Message -Message "Would publish $projectName.Script.$version.nupkg to GitHub Packages" -Type "INFO"
 	}
 	elseif (Test-IsAzureDevOps) {
 		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
