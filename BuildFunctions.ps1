@@ -157,18 +157,24 @@ Function Update-AppSettingsConnectionStrings {
 
 
 Function Get-OSPlatform {
-    $os = $PSVersionTable.OS
-    if ($IsWindows) {
+    # In PowerShell Core 6+, use built-in variables
+    if ($null -ne $IsWindows) {
+        if ($IsWindows) { return "Windows" }
+        if ($IsLinux) { return "Linux" }
+        if ($IsMacOS) { return "macOS" }
+    }
+    
+    # Fallback for Windows PowerShell 5.1 (which only runs on Windows)
+    if ($PSVersionTable.PSVersion.Major -lt 6) {
         return "Windows"
     }
-    elseif ($IsLinux) {
+    
+    # Additional fallback using environment
+    if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Unix) {
         return "Linux"
     }
-    elseif ($IsMacOS) {
-        return "macOS"
-    }
-
-    return "Unknown"
+    
+    return "Windows"
 }
 
 Function Test-IsLinux {
@@ -180,14 +186,18 @@ Function Test-IsLinux {
     .OUTPUTS
         [bool] True if running on Linux, False otherwise
     #>
-    if ($IsLinux) { 
-        return $true
+    # PowerShell Core 6+ has $IsLinux variable
+    if ($null -ne $IsLinux) { 
+        return $IsLinux
     }
     
-    if (Get-OSPlatform -match "Linux") {
-        return $true
+    # Windows PowerShell 5.1 only runs on Windows
+    if ($PSVersionTable.PSVersion.Major -lt 6) {
+        return $false
     }
-    return $false
+    
+    # Fallback check
+    return (Get-OSPlatform -eq "Linux")
 }
 
 Function Test-IsWindows {
