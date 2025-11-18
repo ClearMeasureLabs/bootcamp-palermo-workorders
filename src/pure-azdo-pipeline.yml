@@ -27,6 +27,42 @@ stages:
             inputs:
               packageType: "runtime"
               version: "6.0.0"
+          # Start SQL Server LocalDB
+          - task: PowerShell@2
+            displayName: "Start and Verify SQL Server LocalDB (Windows only)"
+            condition: eq(variables['Agent.OS'], 'Windows_NT')
+            inputs:
+              pwsh: true
+              targetType: "inline"
+              script: |
+                Write-Host "Starting SQL Server LocalDB..."
+                sqllocaldb create MSSQLLocalDB -s
+                sqllocaldb start MSSQLLocalDB
+                sqllocaldb info MSSQLLocalDB
+                
+                Write-Host "Waiting for LocalDB to be ready..."
+                $maxAttempts = 30
+                $attempt = 0
+                $ready = $false
+                
+                while (-not $ready -and $attempt -lt $maxAttempts) {
+                    $attempt++
+                    try {
+                        $conn = New-Object System.Data.SqlClient.SqlConnection("Server=(LocalDb)\MSSQLLocalDB;Integrated Security=true;Connection Timeout=5")
+                        $conn.Open()
+                        $conn.Close()
+                        $ready = $true
+                        Write-Host "LocalDB is ready after $attempt attempts"
+                    }
+                    catch {
+                        Write-Host "Attempt $attempt : $_"
+                        Start-Sleep -Seconds 2
+                    }
+                }
+                
+                if (-not $ready) {
+                    throw "LocalDB failed to start after $maxAttempts attempts"
+                }
           # Set environment variables
           - task: PowerShell@2
             displayName: "Set Version Environment Variable"
