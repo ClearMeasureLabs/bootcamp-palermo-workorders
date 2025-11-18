@@ -220,6 +220,34 @@ Function Test-IsWindows {
     return $false
 }
 
+Function Test-IsGitHubActions {
+    <#
+    .SYNOPSIS
+        Tests if the current script is running in GitHub Actions
+    .DESCRIPTION
+        Returns true if the current PowerShell session is running within a GitHub Actions workflow
+    .OUTPUTS
+        [bool] True if running in GitHub Actions, False otherwise
+    .EXAMPLE
+        if (Test-IsGitHubActions) {
+            Write-Host "Running in GitHub Actions"
+        }
+    #>
+    # GitHub Actions sets the GITHUB_ACTIONS environment variable to 'true'
+    $githubActions = $env:GITHUB_ACTIONS
+    
+    if ($githubActions -eq 'true') {
+        return $true
+    }
+    
+    # Additional check for GITHUB_WORKFLOW which is also set by GitHub Actions
+    if (-not [string]::IsNullOrEmpty($env:GITHUB_WORKFLOW)) {
+        return $true
+    }
+    
+    return $false
+}
+
 Function Test-IsAzureDevOps {
     <#
     .SYNOPSIS
@@ -413,3 +441,4 @@ Function Get-ContainerName {
     
     return "$DatabaseName-mssql".ToLower()
 }
+
