@@ -10,6 +10,7 @@ if ($env:ConnectionStrings__SqlConnectionString) {
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
 $source_dir = Join-Path $base_dir "src"
+$solutionName = Join-Path $source_dir "$projectName.sln"
 $unitTestProjectPath = Join-Path $source_dir "UnitTests"
 $integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
 $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
@@ -30,8 +31,13 @@ if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
 $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
+if (Test-IsLinux) {
+	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
+}
+else {
+	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
+}
 $script:databaseServer = $databaseServer
-if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
 
 $script:databaseScripts = Join-Path $source_dir "Database" "scripts"
 
@@ -42,12 +48,32 @@ if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 Function Init {
 	# Check for PowerShell 7
 	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-
 	if (-not $pwshPath) {
-		Log-Message "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell" -Type "ERROR"
+		Log-Message -Message "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell" -Type "WARNING"
+		throw "PowerShell 7 is required to run this build script."
 	}
- else {
-		Log-Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
+ 	else {
+		Log-Message -Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
+	}
+
+	if (Test-IsAzureDevOps) { 
+		Log-Message -Message "Running in Azure DevOps Pipeline" -Type "INFO"
+	}
+	else {
+		Log-Message -Message "Running in Local Environment" -Type "INFO"
+	}
+
+	if (Test-IsLinux) {
+		Log-Message -Message "Running on Linux" -Type "INFO"
+		if (Test-IsDockerRunning) {
+			Log-Message -Message "Docker is running" -Type "INFO"
+		} else {
+			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+			throw "Docker is not running."
+		}
+	}
+	elseif (Test-IsWindows) {
+		Log-Message -Message "Running on Windows" -Type "INFO"
 	}
 
 	if (Test-Path "build") {
@@ -57,18 +83,20 @@ Function Init {
 	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
 
 	exec {
-		& dotnet clean $(Join-Path $source_dir "$projectName.sln") -nologo -v $verbosity
+		& dotnet clean $solutionName -nologo -v $verbosity
 	}
 	exec {
-		& dotnet restore $(Join-Path $source_dir "$projectName.sln") -nologo --interactive -v $verbosity  
+		& dotnet restore $solutionName -nologo --interactive -v $verbosity  
 	}
 	
-	Log-Message "Project Configuration: $projectConfig. Version: $version"
+	Log-Message -Message "Project Config: $projectConfig" -Type "INFO"
+	Log-Message -Message "Version: $version" -Type "INFO"
 }
 
 Function Compile {
 	exec {
-		& dotnet build $(Join-Path $source_dir "$projectName.sln") -nologo --no-restore -v `
+		& dotnet build $solutionName = Join-Path $source_dir "$projectName.sln"
+ -nologo --no-restore -v `
 			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
@@ -218,7 +246,7 @@ Function Package-Everything{
 }
 
 Function PrivateBuild {
-	Log-Message "Starting Private Build"
+	Log-Message -Message "Starting Private Build..." -Type "INFO"
 	$projectConfig = "Debug"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
@@ -229,6 +257,20 @@ Function PrivateBuild {
 	Init
 	Compile
 	UnitTests
+	
+	if (Test-IsLinux) 
+	{
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
+		if (Test-IsDockerRunning -LogOutput $true) 
+		{
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		}
+		else {
+			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+			throw "Docker is not running."
+		}
+	}
 	
 	# Update appsettings.json files before database migration
 	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
@@ -241,8 +283,8 @@ Function PrivateBuild {
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 	
 	$sw.Stop()
-	Log-Message "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -Type "INFO"
-	Log-Message "Database used: $script:databaseName" -Type "INFO"
+	Log-Message -Message "BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
 
 Function CIBuild {
