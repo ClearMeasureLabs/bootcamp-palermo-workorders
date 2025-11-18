@@ -245,7 +245,16 @@ Function PackageScript {
 
 
 Function Package-Everything{
-	Write-Output "Packaging nuget packages"
+	if (Test-IsAzureDevOps) {
+		Write-Output "Packaging nuget packages for Azure DevOps Artifacts"
+	}
+	elseif (Test-IsGitHubActions) {
+		Write-Output "Packaging nuget packages for GitHub Packages"
+	}
+	else {
+		Write-Output "Packaging nuget packages"
+	}
+	
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
 	
 	# Ensure dotnet tools are in PATH
