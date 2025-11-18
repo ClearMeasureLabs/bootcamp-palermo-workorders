@@ -56,7 +56,7 @@ try {
             	throw ("Database baseline had an error.")
         	}			
         } elseif ($recordCount -eq $sqlFileCount) {
-            Write-Host "Database appears fully baselined: record count matches SQL file count"
+            Write-Host "Database appears fully baselined: record count matches SQL file count" -ForegroundColor Cyan
         } else {
             Write-Warning "Database has more records than SQL files: $recordCount records vs $sqlFileCount files"
         }
