@@ -49,7 +49,12 @@ try {
         Write-Host "Scripts directory contains $sqlFileCount SQL file(s)"
         
         if ($recordCount -lt $sqlFileCount) {
-            Write-Warning "Database may not be fully baselined: $recordCount records vs $sqlFileCount SQL files"
+            Write-Warning "Database may not be fully baselined: dbo.SchemaVersions has $recordCount records vs $sqlFileCount SQL files"
+        	Write-Host "Baselining database dotnet $databaseAssembly baseline $DatabaseServer $DatabaseName $scriptDir $DatabaseUser <REDACTED>"
+        	dotnet $databaseAssembly baseline $DatabaseServer $DatabaseName $scriptDir $DatabaseUser $DatabasePassword
+        	if ($lastexitcode -ne 0) {
+            	throw ("Database baseline had an error.")
+        	}			
         } elseif ($recordCount -eq $sqlFileCount) {
             Write-Host "Database appears fully baselined: record count matches SQL file count"
         } else {
