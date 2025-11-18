@@ -5,7 +5,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests;
 
 public sealed class DatabaseEmptier
 {
-    private static readonly string[] _ignoredTables = { "[dbo].[sysdiagrams]", "[dbo].[usd_AppliedDatabaseScript]", "[dbo].[SchemaVersions]" };
+    private static readonly string[] _ignoredTables = { "[dbo].[sysdiagrams]", "[dbo].[SchemaVersions]" };
     private static string? _deleteSql;
     private readonly DatabaseFacade _database;
 
