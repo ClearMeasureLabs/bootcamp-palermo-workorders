@@ -58,7 +58,7 @@ try {
         } elseif ($recordCount -eq $sqlFileCount) {
             Write-Host "Database appears fully baselined: record count matches SQL file count"
         } else {
-            Write-Host "Database has more records than SQL files: $recordCount records vs $sqlFileCount files"
+            Write-Warning "Database has more records than SQL files: $recordCount records vs $sqlFileCount files"
         }
     } else {
         Write-Host "Database not baselined - SchemaVersions table does not exist. Running baseline..."
