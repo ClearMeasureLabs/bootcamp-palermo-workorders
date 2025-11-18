@@ -43,17 +43,36 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         var builder = new SqlConnectionStringBuilder
         {
             DataSource = options.DatabaseServer,
+            InitialCatalog = options.DatabaseName,
             TrustServerCertificate = true,
-            InitialCatalog = options.DatabaseName
+            Encrypt = false,
+            ConnectTimeout = 60 // Increased timeout for LocalDB startup
         };
 
         if (string.IsNullOrWhiteSpace(options.DatabaseUser))
         {
-            return builder.ToString();
+            // Use Windows Integrated Security
+            builder.IntegratedSecurity = true;
+        }
+        else
+        {
+            // Use SQL Server Authentication
+            if (string.IsNullOrWhiteSpace(options.DatabasePassword))
+            {
+                throw new ArgumentException("DatabasePassword is required when DatabaseUser is provided", nameof(options.DatabasePassword));
+            }
+            
+            builder.IntegratedSecurity = false;
+            builder.UserID = options.DatabaseUser;
+            builder.Password = options.DatabasePassword;
         }
 
-        builder.UserID = options.DatabaseUser;
-        builder.Password = options.DatabasePassword;
+        // Log connection string for debugging (password redacted)
+        var logBuilder = new SqlConnectionStringBuilder(builder.ToString())
+        {
+            Password = "******"
+        };
+        AnsiConsole.MarkupLine($"[dim]Connection String: {logBuilder.ToString().EscapeMarkup()}[/]");
 
         return builder.ToString();
     }
