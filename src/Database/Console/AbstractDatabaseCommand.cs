@@ -59,7 +59,7 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             // Use SQL Server Authentication
             if (string.IsNullOrWhiteSpace(options.DatabasePassword))
             {
-                throw new ArgumentException("DatabasePassword is required when DatabaseUser is provided", nameof(options.DatabasePassword));
+                throw new ArgumentException("DatabasePassword is required when DatabaseUser is provided", "DatabasePassword");
             }
             
             builder.IntegratedSecurity = false;
