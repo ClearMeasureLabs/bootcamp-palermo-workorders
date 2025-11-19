@@ -13,8 +13,11 @@ env:
 
 jobs:
   build:
-    name: Build and Test
+    name: Build and Test (Windows)
     runs-on: windows-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
       # Checkout code
@@ -44,9 +47,19 @@ jobs:
           echo "Version=$version" >> $env:GITHUB_ENV
           Write-Host "Build version: $version"
 
-      # Run build script
+      # Authenticate with GitHub Packages
+      - name: Authenticate with GitHub Packages
+        run: |
+          # The --store-password-in-clear-text flag is required for CI/CD environments.
+          # GitHub Actions runners are ephemeral and isolated, and the GITHUB_TOKEN is short-lived and scoped.
+          # This stores the token unencrypted on the agent, which is acceptable in this context.
+          dotnet nuget add source --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      # Run PrivateBuild script
       - name: Run Build Script
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           . ./build.ps1
           PrivateBuild
@@ -96,5 +109,88 @@ jobs:
           path: |
             build/**/*.log
             build/**/*.binlog
+          retention-days: 30
+
+  build-linux:
+    name: Build and Test (Linux)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Install .NET SDK 9.0.302
+      - name: Setup .NET SDK 9.0.302
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.302'
+
+      # Install .NET SDK 6.0 (required by Octopus CLI)
+      - name: Setup .NET SDK 6.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      # Set version environment variable
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "Build version: $version"
+
+       # Run CIBuild script
+      - name: Run CI Build Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pwsh -Command ". ./build.ps1; CIBuild"
+
+      # Upload packages as artifacts
+      - name: Upload NuGet Packages
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: nuget-packages
+          path: build/*.nupkg
+          retention-days: 90
+
+      # Publish test results
+      - name: Test Reporter
+        uses: dorny/test-reporter@v2.1.1
+        if: always()
+        with:
+          name: Linux CI Test Results
+          path: 'build/test/**/*.trx'
+          reporter: dotnet-trx
+
+      # Publish code coverage
+      - name: Publish Code Coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: '**/build/test/**/In/**/coverage.cobertura.xml'
+          flags: unittests-linux
+          name: codecov-linux
+
+      # Upload test results as artifacts
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-linux
+          path: build/test/**/*.trx
+          retention-days: 30
+
+      # Upload code coverage as artifacts
+      - name: Upload Code Coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: code-coverage-linux
+          path: '**/build/test/**/In/**/coverage.cobertura.xml'
           retention-days: 30
           

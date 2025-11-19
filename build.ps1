@@ -10,6 +10,7 @@ if ($env:ConnectionStrings__SqlConnectionString) {
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
 $source_dir = Join-Path $base_dir "src"
+$solutionName = Join-Path $source_dir "$projectName.sln"
 $unitTestProjectPath = Join-Path $source_dir "UnitTests"
 $integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
 $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
@@ -30,8 +31,13 @@ if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
 $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
+if (Test-IsLinux) {
+	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
+}
+else {
+	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
+}
 $script:databaseServer = $databaseServer
-if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
 
 $script:databaseScripts = Join-Path $source_dir "Database" "scripts"
 
@@ -42,12 +48,32 @@ if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 Function Init {
 	# Check for PowerShell 7
 	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-
 	if (-not $pwshPath) {
-		Log-Message "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell" -Type "ERROR"
+		Log-Message -Message "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell" -Type "WARNING"
+		throw "PowerShell 7 is required to run this build script."
 	}
- else {
-		Log-Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
+ 	else {
+		Log-Message -Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
+	}
+
+	if (Test-IsAzureDevOps) { 
+		Log-Message -Message "Running in Azure DevOps Pipeline" -Type "INFO"
+	}
+	else {
+		Log-Message -Message "Running in Local Environment" -Type "INFO"
+	}
+
+	if (Test-IsLinux) {
+		Log-Message -Message "Running on Linux" -Type "INFO"
+		if (Test-IsDockerRunning) {
+			Log-Message -Message "Docker is running" -Type "INFO"
+		} else {
+			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+			throw "Docker is not running."
+		}
+	}
+	elseif (Test-IsWindows) {
+		Log-Message -Message "Running on Windows" -Type "INFO"
 	}
 
 	if (Test-Path "build") {
@@ -57,18 +83,19 @@ Function Init {
 	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
 
 	exec {
-		& dotnet clean $(Join-Path $source_dir "$projectName.sln") -nologo -v $verbosity
+		& dotnet clean $solutionName -nologo -v $verbosity
 	}
 	exec {
-		& dotnet restore $(Join-Path $source_dir "$projectName.sln") -nologo --interactive -v $verbosity  
+		& dotnet restore $solutionName -nologo --interactive -v $verbosity  
 	}
 	
-	Log-Message "Project Configuration: $projectConfig. Version: $version"
+	Log-Message -Message "Project Config: $projectConfig" -Type "INFO"
+	Log-Message -Message "Version: $version" -Type "INFO"
 }
 
 Function Compile {
 	exec {
-		& dotnet build $(Join-Path $source_dir "$projectName.sln") -nologo --no-restore -v `
+		& dotnet build $solutionName -nologo --no-restore -v `
 			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
@@ -138,7 +165,16 @@ Function MigrateDatabaseLocal {
 		[string]$databaseNameFunc
 	)
 	$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-	$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts)
+	
+	if (Test-IsLinux) {
+		$containerName = Get-ContainerName -DatabaseName $databaseNameFunc
+		$sqlPassword = "${containerName}#1A"
+		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts, "sa", $sqlPassword)
+	}
+	else {
+		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts)
+	}
+	
 	& dotnet $dbArgs
 	if ($LASTEXITCODE -ne 0) {
 		throw "Database migration failed with exit code $LASTEXITCODE"
@@ -157,7 +193,7 @@ Function Create-SqlServerInDocker {
 			[ValidateNotNullOrEmpty()]
 			[string]$scriptDir			
 		)
-	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName
+	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName -generateUnique $true
 	
 	New-DockerContainerForSqlServer -containerName $(Get-ContainerName $tempDatabaseName)
 	Log-Message "Creating SQL Server in Docker for integration tests for $tempDatabaseName" -Type "INFO"
@@ -173,6 +209,40 @@ Function Create-SqlServerInDocker {
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 }
 
+Function Publish-ToGitHubPackages {
+	param(
+		[Parameter(Mandatory = $true)]
+		[string]$packageId
+	)
+	
+	$githubToken = $env:GITHUB_TOKEN
+	if ([string]::IsNullOrEmpty($githubToken)) {
+		Log-Message -Message "GITHUB_TOKEN not found. Cannot publish $packageId to GitHub Packages." -Type "ERROR"
+		throw "GITHUB_TOKEN environment variable is required for publishing to GitHub Packages"
+	}
+	
+	$githubRepo = $env:GITHUB_REPOSITORY
+	if ([string]::IsNullOrEmpty($githubRepo)) {
+		Log-Message -Message "GITHUB_REPOSITORY not found. Cannot determine GitHub Packages feed." -Type "ERROR"
+		throw "GITHUB_REPOSITORY environment variable is required"
+	}
+	
+	$owner = $githubRepo.Split('/')[0]
+	$githubFeed = "https://nuget.pkg.github.com/$owner/index.json"
+	
+	$packageFile = Get-ChildItem "$build_dir/$packageId.$version.nupkg" -ErrorAction SilentlyContinue
+	if (-not $packageFile) {
+		Log-Message -Message "Package file not found: $packageId.$version.nupkg" -Type "ERROR"
+		throw "Package file not found"
+	}
+	
+	Log-Message -Message "Publishing $($packageFile.Name) to GitHub Packages..." -Type "INFO"
+	exec {
+		& dotnet nuget push $packageFile.FullName --source $githubFeed --api-key $githubToken --skip-duplicate
+	}
+	Log-Message -Message "Successfully published $($packageFile.Name) to GitHub Packages" -Type "INFO"
+}
+
 Function PackageUI {    
 	exec {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
@@ -180,11 +250,28 @@ Function PackageUI {
 	exec {
 		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-Path $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
+	
+	# Log package creation (publishing handled separately)
+	if (Test-IsGitHubActions) {
+		Log-Message -Message "Would publish $projectName.UI.$version.nupkg to GitHub Packages" -Type "INFO"
+	}
+	elseif (Test-IsAzureDevOps) {
+		# Azure DevOps pipeline handles publishing via separate task
+		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
+	}
 }
 
 Function PackageDatabase {    
 	exec {
 		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
+	}
+	
+	# Log package creation (publishing handled separately)
+	if (Test-IsGitHubActions) {
+		Log-Message -Message "Would publish $projectName.Database.$version.nupkg to GitHub Packages" -Type "INFO"
+	}
+	elseif (Test-IsAzureDevOps) {
+		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
 	}
 }
 
@@ -196,6 +283,14 @@ Function PackageAcceptanceTests {
 	exec {
 		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-Path $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
 	}
+	
+	# Log package creation (publishing handled separately)
+	if (Test-IsGitHubActions) {
+		Log-Message -Message "Would publish $projectName.AcceptanceTests.$version.nupkg to GitHub Packages" -Type "INFO"
+	}
+	elseif (Test-IsAzureDevOps) {
+		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
+	}
 }
 
 Function PackageScript {    
@@ -205,12 +300,39 @@ Function PackageScript {
 	exec {
 		& dotnet-octo pack --id "$projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
 	}
+	
+	# Log package creation (publishing handled separately)
+	if (Test-IsGitHubActions) {
+		Log-Message -Message "Would publish $projectName.Script.$version.nupkg to GitHub Packages" -Type "INFO"
+	}
+	elseif (Test-IsAzureDevOps) {
+		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
+	}
 }
 
 
 Function Package-Everything{
-	Write-Output "Packaging nuget packages"
+	if (Test-IsAzureDevOps) {
+		Write-Output "Packaging nuget packages for Azure DevOps Artifacts"
+	}
+	elseif (Test-IsGitHubActions) {
+		Write-Output "Packaging nuget packages for GitHub Packages"
+	}
+	else {
+		Write-Output "Packaging nuget packages"
+	}
+	
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
+	
+	# Ensure dotnet tools are in PATH
+	$dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
+	$pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
+	$dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
+	if (-not $dotnetToolsPathPresent) {
+		$env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
+		Log-Message -Message "Added dotnet tools to PATH: $dotnetToolsPath" -Type "INFO"
+	}
+	
 	PackageUI
 	PackageDatabase
 	PackageAcceptanceTests
@@ -218,17 +340,37 @@ Function Package-Everything{
 }
 
 Function PrivateBuild {
-	Log-Message "Starting Private Build"
+	Log-Message -Message "Starting Private Build..." -Type "INFO"
 	$projectConfig = "Debug"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
 	# Generate unique database name for this build instance
-	$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName
+	# On Linux with Docker, no need for unique names since container is clean
+	if (Test-IsLinux) {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+	}
+	else {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+	}
 	
 	Init
 	Compile
 	UnitTests
+	
+	if (Test-IsLinux) 
+	{
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
+		if (Test-IsDockerRunning -LogOutput $true) 
+		{
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		}
+		else {
+			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+			throw "Docker is not running."
+		}
+	}
 	
 	# Update appsettings.json files before database migration
 	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
@@ -241,24 +383,59 @@ Function PrivateBuild {
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 	
 	$sw.Stop()
-	Log-Message "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -Type "INFO"
-	Log-Message "Database used: $script:databaseName" -Type "INFO"
+	Log-Message -Message "BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
 
 Function CIBuild {
-	Log-Message
+	if (Test-IsAzureDevOps) {
+		Log-Message -Message "Starting CI Build on Azure DevOps..." -Type "INFO"
+	}
+	elseif (Test-IsGitHubActions) {
+		Log-Message -Message "Starting CI Build on GitHub Actions..." -Type "INFO"
+	}
+	else {
+		Log-Message -Message "Starting CI Build..." -Type "INFO"
+	}
+	
 	$sw = [Diagnostics.Stopwatch]::StartNew()
+	
+	# Generate database name based on environment
+	if (Test-IsLinux) {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+	}
+	else {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+	}
 	
 	Init
 	Compile
 	UnitTests
 
-	MigrateDatabaseLocal  -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $databaseServer -sourceDir $source_dir
+	if (Test-IsLinux) 
+	{
+		Log-Message -Message "Setting up SQL Server in Docker for CI" -Type "INFO"
+		if (Test-IsDockerRunning -LogOutput $true) 
+		{
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		}
+		else {
+			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+			throw "Docker is not running."
+		}
+	}
+
+	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest
 	#AcceptanceTests
+	
+	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	
 	Package-Everything
 	$sw.Stop()
-	Log-Message "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -Type "INFO"
+	Log-Message -Message "BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }

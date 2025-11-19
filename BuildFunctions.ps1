@@ -3,9 +3,22 @@
 # Ensure SqlServer module is installed for Invoke-Sqlcmd
 if (-not (Get-Module -ListAvailable -Name SqlServer)) {
     Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
-    Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser
+    try {
+        Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser -ErrorAction Stop
+        Write-Host "SqlServer module installed successfully" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Failed to install SqlServer module: $_" -ForegroundColor Red
+        Write-Host "Some database operations may not work without this module" -ForegroundColor Yellow
+    }
 }
-Import-Module SqlServer -ErrorAction SilentlyContinue
+
+try {
+    Import-Module SqlServer -ErrorAction Stop
+}
+catch {
+    Write-Host "Warning: Could not import SqlServer module. Invoke-Sqlcmd will not be available." -ForegroundColor Yellow
+}
 
 <#
 .SYNOPSIS
@@ -95,7 +108,14 @@ Function Update-AppSettingsConnectionStrings {
     Log-Message "Updating appsettings*.json files with database name: $databaseNameToUse" -Type "INFO"
 
     # Build the connection string for environment variable
-    $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+    if (Test-IsLinux) {
+        $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
+        $sqlPassword = "${containerName}#1A"
+        $connectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+    }
+    else {
+        $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+    }
 
 
     # Set environment variable for current process
@@ -121,11 +141,18 @@ Function Update-AppSettingsConnectionStrings {
                 Log-Message "Found connection string $($property.Name) : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
                 if ($oldConnectionString -match "database=([^;]+)") {
 
-                    # Replace the database name in the connection string
-                    $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
-            
-                    # Also update server if needed
-                    $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
+                    if (Test-IsLinux) {
+                        $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
+                        $sqlPassword = "${containerName}#1A"
+                        $newConnectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+                    }
+                    else {
+                        # Replace the database name in the connection string
+                        $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
+                
+                        # Also update server if needed
+                        $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
+                    }
         
                     $connectionStringsObj.$($property.Name) = $newConnectionString
                     Log-Message "Updated $($property.Name): $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
@@ -143,18 +170,24 @@ Function Update-AppSettingsConnectionStrings {
 
 
 Function Get-OSPlatform {
-    $os = $PSVersionTable.OS
-    if ($IsWindows) {
+    # In PowerShell Core 6+, use built-in variables
+    if ($null -ne $IsWindows) {
+        if ($IsWindows) { return "Windows" }
+        if ($IsLinux) { return "Linux" }
+        if ($IsMacOS) { return "macOS" }
+    }
+    
+    # Fallback for Windows PowerShell 5.1 (which only runs on Windows)
+    if ($PSVersionTable.PSVersion.Major -lt 6) {
         return "Windows"
     }
-    elseif ($IsLinux) {
+    
+    # Additional fallback using environment
+    if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Unix) {
         return "Linux"
     }
-    elseif ($IsMacOS) {
-        return "macOS"
-    }
-
-    return "Unknown"
+    
+    return "Windows"
 }
 
 Function Test-IsLinux {
@@ -166,14 +199,18 @@ Function Test-IsLinux {
     .OUTPUTS
         [bool] True if running on Linux, False otherwise
     #>
-    if ($IsLinux) { 
-        return $true
+    # PowerShell Core 6+ has $IsLinux variable
+    if ($null -ne $IsLinux) { 
+        return $IsLinux
     }
     
-    if (Get-OSPlatform -match "Linux") {
-        return $true
+    # Windows PowerShell 5.1 only runs on Windows
+    if ($PSVersionTable.PSVersion.Major -lt 6) {
+        return $false
     }
-    return $false
+    
+    # Fallback check
+    return (Get-OSPlatform -eq "Linux")
 }
 
 Function Test-IsWindows {
@@ -193,6 +230,34 @@ Function Test-IsWindows {
         return $true
     }
 
+    return $false
+}
+
+Function Test-IsGitHubActions {
+    <#
+    .SYNOPSIS
+        Tests if the current script is running in GitHub Actions
+    .DESCRIPTION
+        Returns true if the current PowerShell session is running within a GitHub Actions workflow
+    .OUTPUTS
+        [bool] True if running in GitHub Actions, False otherwise
+    .EXAMPLE
+        if (Test-IsGitHubActions) {
+            Write-Host "Running in GitHub Actions"
+        }
+    #>
+    # GitHub Actions sets the GITHUB_ACTIONS environment variable to 'true'
+    $githubActions = $env:GITHUB_ACTIONS
+    
+    if ($githubActions -eq 'true') {
+        return $true
+    }
+    
+    # Additional check for GITHUB_WORKFLOW which is also set by GitHub Actions
+    if (-not [string]::IsNullOrEmpty($env:GITHUB_WORKFLOW)) {
+        return $true
+    }
+    
     return $false
 }
 
@@ -222,7 +287,9 @@ Function New-SqlServerDatabase {
         [string]$databaseName
     )
 
-    $saCred = New-object System.Management.Automation.PSCredential("sa", (ConvertTo-SecureString -String $databaseName -AsPlainText -Force))
+    $containerName = Get-ContainerName -DatabaseName $databaseName
+    $sqlPassword = "${containerName}#1A"
+    $saCred = New-object System.Management.Automation.PSCredential("sa", (ConvertTo-SecureString -String $sqlPassword -AsPlainText -Force))
     
     $dropDbCmd = @"
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'$databaseName')
@@ -268,12 +335,40 @@ Function New-DockerContainerForSqlServer {
         }
     }
 
-    # Check if our specific container exists
-    $containerStatus = docker ps --filter "name=$containerName" --format "{{.Status}}"
-    if (-not $containerStatus) {
-        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$containerName" -p 1433:1433 --name $containerName -d $imageName 
-        Start-Sleep -Seconds 10
+    # Check if our specific container exists (running or stopped)
+    $existingContainer = docker ps -a --filter "name=^${containerName}$" --format "{{.Names}}"
+    if ($existingContainer) {
+        Log-Message -Message "Removing existing container '$containerName'..." -Type "INFO"
+        docker rm -f $existingContainer | Out-Null
     }
+    
+    # Create SQL Server password that meets complexity requirements
+    # Must be at least 8 characters with uppercase, lowercase, digit, and symbol
+    $sqlPassword = "${containerName}#1A"
+    
+    # Create new container
+    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$sqlPassword" -p 1433:1433 --name $containerName -d $imageName 
+    Log-Message -Message "Waiting for SQL Server to be ready..." -Type "INFO"
+    
+    $maxWaitSeconds = 60
+    $waitIntervalSeconds = 3
+    $elapsedSeconds = 0
+    $isReady = $false
+    while ($elapsedSeconds -lt $maxWaitSeconds) {
+        try {
+            Invoke-Sqlcmd -ServerInstance "localhost,1433" -Username "sa" -Password $sqlPassword -Query "SELECT 1" -Encrypt Optional -TrustServerCertificate -ErrorAction Stop | Out-Null
+            $isReady = $true
+            break
+        } catch {
+            Start-Sleep -Seconds $waitIntervalSeconds
+            $elapsedSeconds += $waitIntervalSeconds
+        }
+    }
+    if (-not $isReady) {
+        Log-Message -Message "SQL Server did not become ready within $maxWaitSeconds seconds." -Type "ERROR"
+        throw "SQL Server Docker container '$containerName' did not become ready in time."
+    }
+    
     Log-Message -Message "SQL Server Docker container '$containerName' should be running." -Type "INFO"
 
 }
@@ -336,15 +431,24 @@ Function Test-IsDockerRunning {
 Function Generate-UniqueDatabaseName {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$baseName
+        [string]$baseName,
+        
+        [Parameter(Mandatory = $false)]
+        [bool]$generateUnique = $false
     )
     
-    $timestamp = Get-Date -Format "yyyyMMddHHmmss"
-    $randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
-    $uniqueName = "${baseName}_${timestamp}_${randomChars}"
- 
-    Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
-    return $uniqueName
+    if ($generateUnique) {
+        $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+        $randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
+        $uniqueName = "${baseName}_${timestamp}_${randomChars}"
+     
+        Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
+        return $uniqueName
+    }
+    else {
+        Log-Message -Message "Using base database name: $baseName" -Type "INFO"
+        return $baseName
+    }
 }
 
 Function Get-ContainerName {
@@ -368,3 +472,4 @@ Function Get-ContainerName {
     
     return "$DatabaseName-mssql".ToLower()
 }
+
