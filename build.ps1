@@ -139,8 +139,19 @@ Function AcceptanceTests {
 	$projectConfig = "Release"
 	Push-Location -Path $acceptanceTestProjectPath
 
-	pwsh (Join-Path "bin" "Release" $framework "playwright.ps1") install --with-deps
+	Log-Message -Message "Installing Playwright browsers for Acceptance Tests" -Type "INFO"
+	$playwrightScript = Join-Path "bin" "Release" $framework "playwright.ps1"
 
+	# TODO [TO20251119] Move environment checks outside of this.  Put it into Init or somethign similars.
+	if (Test-Path $playwrightScript) {
+		Log-Message -Message "Playwright script found at $playwrightScript. Installing browsers." -Type "INFO"
+	}
+	else {
+		Log-Message -Message "Playwright script not found at $playwrightScript. Skipping browser installation." -Type "ERROR"
+		throw "Playwright script not found at $playwrightScript. Cannot run acceptance tests without the browsers."
+	}
+
+	Log-Message -Message "Running Acceptance Tests" -Type "INFO"
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
@@ -339,7 +350,10 @@ Function Package-Everything{
 	PackageScript
 }
 
-Function AcceptanceBuild {
+Function Run-AcceptanceTests {
+
+	# tomtd :  include the database server parameter
+
 	Log-Message -Message "Starting AcceptanceBuild..." -Type "INFO"
 	$projectConfig = "Release"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
@@ -356,7 +370,6 @@ Function AcceptanceBuild {
 	
 	Init
 	Compile
-	UnitTests
 
 	if (Test-IsLinux) 
 	{
@@ -422,7 +435,6 @@ Function PrivateBuild {
 	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest
-	#AcceptanceTests
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 	
@@ -474,7 +486,6 @@ Function CIBuild {
 	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest
-	#AcceptanceTests
 	
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 	

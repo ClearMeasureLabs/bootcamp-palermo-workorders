@@ -6,4 +6,4 @@ param (
 
 . .\build.ps1
 
-AcceptanceBuild
+Run-AcceptanceTests -databaseServer $databaseServer
