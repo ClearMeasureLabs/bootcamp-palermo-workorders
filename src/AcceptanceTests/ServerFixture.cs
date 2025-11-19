@@ -40,7 +40,11 @@ public class ServerFixture
         _serverProcess.Start();
 
         // Wait for server to be ready
-        using var client = new HttpClient();
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var client = new HttpClient(handler);
         var baseUrl = ApplicationBaseUrl;
         var timeout = TimeSpan.FromSeconds(WaitTimeoutSeconds);
         var start = DateTime.UtcNow;
