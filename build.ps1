@@ -326,7 +326,9 @@ Function Package-Everything{
 	
 	# Ensure dotnet tools are in PATH
 	$dotnetToolsPath = [System.IO.Path]::Combine($env:HOME, ".dotnet", "tools")
-	if (-not $env:PATH.Contains($dotnetToolsPath)) {
+	$pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
+	$dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
+	if (-not $dotnetToolsPathPresent) {
 		$env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
 		Log-Message -Message "Added dotnet tools to PATH: $dotnetToolsPath" -Type "INFO"
 	}
