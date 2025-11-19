@@ -325,7 +325,7 @@ Function Package-Everything{
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
 	
 	# Ensure dotnet tools are in PATH
-	$dotnetToolsPath = [System.IO.Path]::Combine($env:HOME, ".dotnet", "tools")
+	$dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
 	$pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
 	$dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
 	if (-not $dotnetToolsPathPresent) {
