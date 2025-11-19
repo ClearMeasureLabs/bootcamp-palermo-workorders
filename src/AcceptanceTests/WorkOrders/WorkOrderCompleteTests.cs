@@ -1,6 +1,7 @@
-﻿using System.Globalization;
+﻿using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using System.Globalization;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
@@ -39,8 +40,9 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
 
         var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ??
                              throw new InvalidOperationException();
+        var completedDateText = rehyratedOrder.CompletedDate.ToTestDateTimeString();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CompletedDate)))
-            .ToHaveTextAsync(rehyratedOrder.CompletedDate!.Value.ToString(CultureInfo.CurrentCulture));
+            .ToHaveTextAsync(completedDateText);
     }
 
     [Test]
