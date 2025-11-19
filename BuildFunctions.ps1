@@ -349,7 +349,25 @@ Function New-DockerContainerForSqlServer {
     # Create new container
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$sqlPassword" -p 1433:1433 --name $containerName -d $imageName 
     Log-Message -Message "Waiting for SQL Server to be ready..." -Type "INFO"
-    Start-Sleep -Seconds 25
+    
+    $maxWaitSeconds = 60
+    $waitIntervalSeconds = 3
+    $elapsedSeconds = 0
+    $isReady = $false
+    while ($elapsedSeconds -lt $maxWaitSeconds) {
+        try {
+            Invoke-Sqlcmd -ServerInstance "localhost,1433" -Username "sa" -Password $sqlPassword -Query "SELECT 1" -Encrypt Optional -TrustServerCertificate -ErrorAction Stop | Out-Null
+            $isReady = $true
+            break
+        } catch {
+            Start-Sleep -Seconds $waitIntervalSeconds
+            $elapsedSeconds += $waitIntervalSeconds
+        }
+    }
+    if (-not $isReady) {
+        Log-Message -Message "SQL Server did not become ready within $maxWaitSeconds seconds." -Type "ERROR"
+        throw "SQL Server Docker container '$containerName' did not become ready in time."
+    }
     
     Log-Message -Message "SQL Server Docker container '$containerName' should be running." -Type "INFO"
 
