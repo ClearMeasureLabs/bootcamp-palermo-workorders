@@ -13,6 +13,11 @@ public class WorkOrder : EntityBase<WorkOrder>
         set => _description = getTruncatedString(value);
     }
 
+    /// <summary>
+    /// Optional execution instructions for the work order.
+    /// Supports up to 4000 characters (plain text only).
+    /// Value is automatically truncated if it exceeds maximum length.
+    /// </summary>
     public string? Instructions
     {
         get => _instructions;
