@@ -136,10 +136,10 @@ Function IntegrationTest {
 }
 
 Function AcceptanceTests {
-	$projectConfig = "Debug"
+	$projectConfig = "Release"
 	Push-Location -Path $acceptanceTestProjectPath
 
-	pwsh (Join-Path "bin" "Debug" $framework "playwright.ps1") install --with-deps
+	pwsh (Join-Path "bin" "Release" $framework "playwright.ps1") install --with-deps
 
 	try {
 		exec {
@@ -339,9 +339,9 @@ Function Package-Everything{
 	PackageScript
 }
 
-Function PrivateBuild {
-	Log-Message -Message "Starting Private Build..." -Type "INFO"
-	$projectConfig = "Debug"
+Function AcceptanceBuild {
+	Log-Message -Message "Starting AcceptanceBuild..." -Type "INFO"
+	$projectConfig = "Release"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
@@ -353,6 +353,50 @@ Function PrivateBuild {
 	else {
 		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
 	}
+	
+	Init
+	Compile
+	UnitTests
+
+	if (Test-IsLinux) 
+	{
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
+		if (Test-IsDockerRunning -LogOutput $true) 
+		{
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		}
+		else {
+			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+			throw "Docker is not running."
+		}
+	}
+
+	# Update appsettings.json files before database migration
+	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	AcceptanceTests
+	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+
+	$sw.Stop()
+	Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+}
+
+Function PrivateBuild {
+	Log-Message -Message "Starting PrivateBuild..." -Type "INFO"
+	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
+	
+	# Generate unique database name for this build instance
+	# On Linux with Docker, no need for unique names since container is clean
+	if (Test-IsLinux) {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+	}
+	else {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+	}
+
+	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
 	Init
 	Compile
@@ -383,19 +427,19 @@ Function PrivateBuild {
 	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 	
 	$sw.Stop()
-	Log-Message -Message "BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
 	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
 
 Function CIBuild {
 	if (Test-IsAzureDevOps) {
-		Log-Message -Message "Starting CI Build on Azure DevOps..." -Type "INFO"
+		Log-Message -Message "Starting CIBuild on Azure DevOps..." -Type "INFO"
 	}
 	elseif (Test-IsGitHubActions) {
-		Log-Message -Message "Starting CI Build on GitHub Actions..." -Type "INFO"
+		Log-Message -Message "Starting CIBuild on GitHub Actions..." -Type "INFO"
 	}
 	else {
-		Log-Message -Message "Starting CI Build..." -Type "INFO"
+		Log-Message -Message "Starting CIBuild..." -Type "INFO"
 	}
 	
 	$sw = [Diagnostics.Stopwatch]::StartNew()
@@ -436,6 +480,6 @@ Function CIBuild {
 	
 	Package-Everything
 	$sw.Stop()
-	Log-Message -Message "BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "CIBUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
 	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }

@@ -29,7 +29,7 @@ public class ServerFixture
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"run --no-build --urls={ApplicationBaseUrl}",
+                Arguments = $"run --urls={ApplicationBaseUrl}",
                 WorkingDirectory = ProjectPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -60,7 +60,6 @@ public class ServerFixture
             catch (Exception ex)
             {
                 lastException = ex;
-                throw;
             }
 
             await Task.Delay(1000);
