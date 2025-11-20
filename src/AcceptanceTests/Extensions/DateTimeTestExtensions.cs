@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Microsoft.Playwright;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.Extensions
 {
