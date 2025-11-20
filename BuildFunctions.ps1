@@ -300,6 +300,7 @@ END
 "@
 
     $createDbCmd = "CREATE DATABASE [$databaseName];"
+	Log-Message "Creating SQL Server in Docker for integration tests for $databaseName on $serverName" -Type "INFO"
 
     try {
         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate

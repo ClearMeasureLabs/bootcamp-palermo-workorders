@@ -2,7 +2,7 @@
 
 # Clean environment variables that may interfere with local builds
 if ($env:ConnectionStrings__SqlConnectionString) {
-	Write-Host "Clearing ConnectionStrings__SqlConnectionString environment variable"
+	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
 	$env:ConnectionStrings__SqlConnectionString = $null
 	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
 }
@@ -37,7 +37,7 @@ if (Test-IsLinux) {
 else {
 	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
 }
-$script:databaseServer = $databaseServer
+Log-Message "Using $script:databaseServer as database server." -Type "INFO"
 
 $script:databaseScripts = Join-Path $source_dir "Database" "scripts"
 
@@ -144,7 +144,7 @@ Function AcceptanceTests {
 
 	# TODO [TO20251119] Move environment checks outside of this.  Put it into Init or somethign similars.
 	if (Test-Path $playwrightScript) {
-		Log-Message -Message "Playwright script found at $playwrightScript. Installing browsers." -Type "INFO"
+		Log-Message -Message "Playwright script found at $playwrightScript." -Type "INFO"
 	}
 	else {
 		Log-Message -Message "Playwright script not found at $playwrightScript. Skipping browser installation." -Type "ERROR"
@@ -207,7 +207,6 @@ Function Create-SqlServerInDocker {
 	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName -generateUnique $true
 	
 	New-DockerContainerForSqlServer -containerName $(Get-ContainerName $tempDatabaseName)
-	Log-Message "Creating SQL Server in Docker for integration tests for $tempDatabaseName" -Type "INFO"
 	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
