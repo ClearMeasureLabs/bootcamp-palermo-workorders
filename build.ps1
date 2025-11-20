@@ -453,7 +453,7 @@ Function PrivateBuild {
 		Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "INFO"
 	}
 	else {
-		$script:databaseServer = ""
+		# Do not set $script:databaseServer here; platform-specific logic will set it below if needed
 	}
 	
 	# Generate unique database name for this build instance
