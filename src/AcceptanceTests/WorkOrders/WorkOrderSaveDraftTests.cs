@@ -48,9 +48,9 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
-        var createdDateText = rehyratedOrder.CreatedDate.ToTestDateTimeString();
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))
-            .ToHaveTextAsync(createdDateText);
+        var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
+        
+        rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
 
     [Test]
@@ -89,8 +89,8 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Expect(assigneeField).ToHaveValueAsync(CurrentUser.UserName);
 
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-        var createdDateText = rehyratedOrder.CreatedDate.ToTestDateTimeString();
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))
-            .ToHaveTextAsync(createdDateText);
+        var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
+        
+        rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
 }

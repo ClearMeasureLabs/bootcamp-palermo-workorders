@@ -1,7 +1,6 @@
 ﻿using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using System.Globalization;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
@@ -38,11 +37,12 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
 
+
+        var displayedDateTime = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CompletedDate));
+
         var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ??
                              throw new InvalidOperationException();
-        var completedDateText = rehyratedOrder.CompletedDate.ToTestDateTimeString();
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CompletedDate)))
-            .ToHaveTextAsync(completedDateText);
+        rehyratedOrder.CompletedDate.TruncateToMinute().ShouldBe(displayedDateTime);
     }
 
     [Test]

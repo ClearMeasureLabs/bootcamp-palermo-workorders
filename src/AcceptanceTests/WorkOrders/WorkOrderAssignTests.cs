@@ -45,8 +45,8 @@ public class WorkOrderAssignTests : AcceptanceTestBase
         await Expect(assigneeField).ToHaveValueAsync(CurrentUser.UserName);
 
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-        var assignedDateText = rehyratedOrder.AssignedDate.ToTestDateTimeString();
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.AssignedDate)))
-            .ToHaveTextAsync(assignedDateText);
+        var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.AssignedDate));
+
+        rehyratedOrder.AssignedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
 }
