@@ -203,7 +203,8 @@ stages:
                       **\*AcceptanceTests.dll
                       !**\*TestAdapter.dll
                       !**\obj\**
-                      searchFolder: '$(System.DefaultWorkingDirectory)/tests'
+                    searchFolder: '$(System.DefaultWorkingDirectory)/tests'
+                    runSettingsFile: '$(System.DefaultWorkingDirectory)/tests/AcceptanceTests.runsettings'
                     uiTests: true
                     codeCoverageEnabled: true
                     testRunTitle: "Acceptance Tests"
