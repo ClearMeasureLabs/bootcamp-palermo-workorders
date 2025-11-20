@@ -136,18 +136,27 @@ Function AcceptanceTests {
 	$projectConfig = "Release"
 	Push-Location -Path $acceptanceTestProjectPath
 
-	Log-Message -Message "Installing Playwright browsers for Acceptance Tests" -Type "INFO"
+	Log-Message -Message "Checking Playwright browsers for Acceptance Tests" -Type "INFO"
 	$playwrightScript = Join-Path "bin" "Release" $framework "playwright.ps1"
 
 	if (Test-Path $playwrightScript) {
 		Log-Message -Message "Playwright script found at $playwrightScript." -Type "INFO"
-		exec {
-			& pwsh $playwrightScript install --with-deps
+		
+		# Check if browsers are installed
+		try {
+			$listOutput = & pwsh $playwrightScript list 2>&1 | Out-String
+			if ($listOutput -match "chromium|webkit|firefox") {
+				Log-Message -Message "Playwright browsers are installed." -Type "INFO"
+			}
+			else {
+				Log-Message -Message "WARNING: Playwright browsers may not be installed. Run 'pwsh $playwrightScript install --with-deps' to install them." -Type "WARN"
+			}
 		}
-		Log-Message -Message "Playwright browsers installed successfully." -Type "INFO"
+		catch {
+			Log-Message -Message "WARNING: Could not verify Playwright browser installation. Run 'pwsh $playwrightScript install --with-deps' if tests fail." -Type "WARN"
+		}
 	}
 	else {
-		Log-Message -Message "Playwright script not found at $playwrightScript. Skipping browser installation." -Type "ERROR"
 		throw "Playwright script not found at $playwrightScript. Cannot run acceptance tests without the browsers."
 	}
 
