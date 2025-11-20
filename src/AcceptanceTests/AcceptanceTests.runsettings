@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <!-- Maximum number of test adapters that can run in parallel -->
+    <MaxCpuCount>1</MaxCpuCount>
+    <!-- Disable parallel test execution -->
+    <DisableParallelization>true</DisableParallelization>
+    <!-- Test session timeout in milliseconds (60 minutes) -->
+    <TestSessionTimeout>3600000</TestSessionTimeout>
+  </RunConfiguration>
+  <NUnit>
+    <!-- Disable parallel execution at NUnit level -->
+    <NumberOfTestWorkers>1</NumberOfTestWorkers>
+    <!-- Default test timeout in milliseconds (5 minutes per test) -->
+    <DefaultTimeout>300000</DefaultTimeout>
+    <InternalTraceLevel>Off</InternalTraceLevel>
+  </NUnit>
+  <LoggerRunSettings>
+    <Loggers>
+      <Logger friendlyName="console" enabled="True">
+        <Configuration>
+          <Verbosity>normal</Verbosity>
+        </Configuration>
+      </Logger>
+    </Loggers>
+  </LoggerRunSettings>
+</RunSettings>
