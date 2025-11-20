@@ -71,6 +71,7 @@ Function Init {
 		Log-Message -Message "Running on Windows" -Type "INFO"
 	}
 	Log-Message "Using $script:databaseServer as database server." -Type "INFO"
+	Log-Message "Using $script:databaseName as the database name." 
 
 	if (Test-Path "build") {
 		Remove-Item -Path "build" -Recurse -Force
@@ -138,21 +139,32 @@ Function AcceptanceTests {
 	Log-Message -Message "Installing Playwright browsers for Acceptance Tests" -Type "INFO"
 	$playwrightScript = Join-Path "bin" "Release" $framework "playwright.ps1"
 
-	# TODO [TO20251119] Move environment checks outside of this.  Put it into Init or somethign similars.
 	if (Test-Path $playwrightScript) {
 		Log-Message -Message "Playwright script found at $playwrightScript." -Type "INFO"
+		exec {
+			& pwsh $playwrightScript install --with-deps
+		}
+		Log-Message -Message "Playwright browsers installed successfully." -Type "INFO"
 	}
 	else {
 		Log-Message -Message "Playwright script not found at $playwrightScript. Skipping browser installation." -Type "ERROR"
 		throw "Playwright script not found at $playwrightScript. Cannot run acceptance tests without the browsers."
 	}
 
+	# Check if UI.Server is already running
+	$uiServerProcess = Get-Process -Name "ClearMeasure.Bootcamp.UI.Server" -ErrorAction SilentlyContinue
+	if ($uiServerProcess) {
+		Log-Message -Message "Warning: ClearMeasure.Bootcamp.UI.Server is already running in background (PID: $($uiServerProcess.Id)). This may interfere with acceptance tests." -Type "WARNING"
+	}
+
 	Log-Message -Message "Running Acceptance Tests" -Type "INFO"
+	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
 				--no-restore --configuration $projectConfig `
+				--settings:$runSettingsPath `
 				--collect:"XPlat Code Coverage"
 		}
 	}
@@ -346,21 +358,48 @@ Function Package-Everything{
 }
 
 Function Run-AcceptanceTests {
-
-	# tomtd :  include the database server parameter
+	param (
+		[Parameter(Mandatory = $false)]
+		[string]$databaseServer = "",
+		[Parameter(Mandatory=$false)]
+		[string]$databaseName =""
+	)
+	
 
 	Log-Message -Message "Starting AcceptanceBuild..." -Type "INFO"
 	$projectConfig = "Release"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
+
+    Test-IsOllamaRunning -LogOutput $true
+
+
+	# Set database server from parameter if provided
+	if (-not [string]::IsNullOrEmpty($databaseServer)) {
+		$script:databaseServer = $databaseServer
+	}
+	else {
+		if (Test-IsLinux) {
+			$script:databaseServer = "localhost"
+		}
+		else {
+			$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
+		}
+		$script:databaseServer = ""
+	}
 	
 	# Generate unique database name for this build instance
 	# On Linux with Docker, no need for unique names since container is clean
-	if (Test-IsLinux) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+	if (-not [string]::IsNullOrEmpty($databaseName)) {
+		$script:databaseName = $databaseName
 	}
 	else {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+		if (Test-IsLinux) {
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+		}
+		else {
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+		}
 	}
 	
 	Init
@@ -392,8 +431,22 @@ Function Run-AcceptanceTests {
 }
 
 Function PrivateBuild {
+	param (
+		[Parameter(Mandatory = $false)]
+		[string]$databaseServer = ""
+	)
+	
 	Log-Message -Message "Starting PrivateBuild..." -Type "INFO"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
+	
+	# Set database server from parameter if provided
+	if (-not [string]::IsNullOrEmpty($databaseServer)) {
+		$script:databaseServer = $databaseServer
+		Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "INFO"
+	}
+	else {
+		$script:databaseServer = ""
+	}
 	
 	# Generate unique database name for this build instance
 	# On Linux with Docker, no need for unique names since container is clean
