@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
@@ -43,6 +43,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
+        rehydratedWorkOrder.Instructions.ShouldBe(string.Empty);
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
@@ -287,5 +288,48 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee!.Id.ShouldBe(assignee.Id);
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
+    }
+
+    [Test]
+    public void ShouldMapWorkOrderWithInstructions()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-07",
+            Title = "Fix lighting",
+            Description = "Replace broken light bulbs in conference room",
+            Instructions = "Use LED bulbs, turn off power before starting, test after installation",
+            RoomNumber = "CR-101",
+            Status = WorkOrderStatus.Draft,
+            Creator = creator
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Include(wo => wo.Creator)
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Id.ShouldBe(workOrder.Id);
+        rehydratedWorkOrder.Number.ShouldBe("WO-07");
+        rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
+        rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
+        rehydratedWorkOrder.Instructions.ShouldBe("Use LED bulbs, turn off power before starting, test after installation");
+        rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
+        rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
+        rehydratedWorkOrder.Creator.ShouldNotBeNull();
+        rehydratedWorkOrder.Creator!.Id.ShouldBe(creator.Id);
     }
 }
