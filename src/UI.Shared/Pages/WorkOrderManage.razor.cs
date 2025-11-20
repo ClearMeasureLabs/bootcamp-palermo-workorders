@@ -83,9 +83,9 @@ public partial class WorkOrderManage : AppComponentBase
             Title = workOrder.Title,
             Description = workOrder.Description,
             RoomNumber = workOrder.RoomNumber,
-            CreatedDate = workOrder.CreatedDate?.ToString(CultureInfo.CurrentCulture),
-            AssignedDate = workOrder.AssignedDate?.ToString(CultureInfo.CurrentCulture),
-            CompletedDate = workOrder.CompletedDate?.ToString(CultureInfo.CurrentCulture)
+            CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
+            AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
+            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
         };
     }
 
