@@ -31,14 +31,7 @@ if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
 $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
-if (Test-IsLinux) {
-	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
-}
-else {
-	if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
-}
-Log-Message "Using $script:databaseServer as database server." -Type "INFO"
-
+$script:databaseServer = "";
 $script:databaseScripts = Join-Path $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
@@ -65,6 +58,7 @@ Function Init {
 
 	if (Test-IsLinux) {
 		Log-Message -Message "Running on Linux" -Type "INFO"
+		$script:databaseServer = "localhost"
 		if (Test-IsDockerRunning) {
 			Log-Message -Message "Docker is running" -Type "INFO"
 		} else {
@@ -73,8 +67,10 @@ Function Init {
 		}
 	}
 	elseif (Test-IsWindows) {
+		$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
 		Log-Message -Message "Running on Windows" -Type "INFO"
 	}
+	Log-Message "Using $script:databaseServer as database server." -Type "INFO"
 
 	if (Test-Path "build") {
 		Remove-Item -Path "build" -Recurse -Force
