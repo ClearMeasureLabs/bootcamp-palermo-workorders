@@ -394,7 +394,6 @@ Function Run-AcceptanceTests {
 		else {
 			$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
 		}
-		$script:databaseServer = ""
 	}
 	
 	# Generate unique database name for this build instance
