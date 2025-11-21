@@ -71,7 +71,8 @@ public abstract class AcceptanceTestBase : PageTest
     {
         return new BrowserNewContextOptions
         {
-            BaseURL = ServerFixture.ApplicationBaseUrl
+            BaseURL = ServerFixture.ApplicationBaseUrl,
+            IgnoreHTTPSErrors = true
         };
     }
 

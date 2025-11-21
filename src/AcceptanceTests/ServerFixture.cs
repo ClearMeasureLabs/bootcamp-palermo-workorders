@@ -29,7 +29,7 @@ public class ServerFixture
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"run --no-build --urls={ApplicationBaseUrl}",
+                Arguments = $"run --urls={ApplicationBaseUrl}",
                 WorkingDirectory = ProjectPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -40,7 +40,11 @@ public class ServerFixture
         _serverProcess.Start();
 
         // Wait for server to be ready
-        using var client = new HttpClient();
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var client = new HttpClient(handler);
         var baseUrl = ApplicationBaseUrl;
         var timeout = TimeSpan.FromSeconds(WaitTimeoutSeconds);
         var start = DateTime.UtcNow;
@@ -56,7 +60,6 @@ public class ServerFixture
             catch (Exception ex)
             {
                 lastException = ex;
-                throw;
             }
 
             await Task.Delay(1000);

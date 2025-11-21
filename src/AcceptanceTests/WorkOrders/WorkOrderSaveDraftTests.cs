@@ -1,10 +1,9 @@
-﻿using System.Diagnostics;
-using System.Globalization;
+﻿using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using System.Text.RegularExpressions;
-using ClearMeasure.Bootcamp.Core.Queries;
+using System.Diagnostics;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
@@ -49,8 +48,9 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))
-            .ToHaveTextAsync(rehyratedOrder.CreatedDate!.Value.ToString(CultureInfo.CurrentCulture));
+        var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
+        
+        rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
 
     [Test]
@@ -89,7 +89,8 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Expect(assigneeField).ToHaveValueAsync(CurrentUser.UserName);
 
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))
-            .ToHaveTextAsync(rehyratedOrder.CreatedDate!.Value.ToString(CultureInfo.CurrentCulture));
+        var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
+        
+        rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
 }

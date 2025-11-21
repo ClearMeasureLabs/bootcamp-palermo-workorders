@@ -6,6 +6,7 @@ using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
 using Microsoft.AspNetCore.Components;
 using Palermo.BlazorMvc;
+using System.Globalization;
 
 namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -82,9 +83,9 @@ public partial class WorkOrderManage : AppComponentBase
             Title = workOrder.Title,
             Description = workOrder.Description,
             RoomNumber = workOrder.RoomNumber,
-            CreatedDate = workOrder.CreatedDate.ToString(),
-            AssignedDate = workOrder.AssignedDate?.ToString(),
-            CompletedDate = workOrder.CompletedDate?.ToString()
+            CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
+            AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
+            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
         };
     }
 

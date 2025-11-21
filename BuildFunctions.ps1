@@ -300,6 +300,7 @@ END
 "@
 
     $createDbCmd = "CREATE DATABASE [$databaseName];"
+	Log-Message "Creating SQL Server in Docker for integration tests for $databaseName on $serverName" -Type "INFO"
 
     try {
         Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
@@ -472,4 +473,82 @@ Function Get-ContainerName {
     
     return "$DatabaseName-mssql".ToLower()
 }
+
+Function Test-IsOllamaRunning {
+    <#
+    .SYNOPSIS
+        Tests if Ollama is installed and running
+    .DESCRIPTION
+        Checks if Ollama is installed and the Ollama service is accessible by testing the API endpoint
+    .PARAMETER LogOutput
+        If true, outputs detailed logging information
+    .PARAMETER OllamaUrl
+        The URL of the Ollama service. Defaults to http://localhost:11434
+    .OUTPUTS
+        [bool] True if Ollama is running and accessible, False otherwise
+    .EXAMPLE
+        if (Test-IsOllamaRunning -LogOutput $true) {
+            Write-Host "Ollama is running"
+        }
+    #>
+    param (
+        [Parameter(Mandatory = $false)]
+        [bool]$LogOutput = $false,
+        
+        [Parameter(Mandatory = $false)]
+        [string]$OllamaUrl = "http://localhost:11434"
+    )
+    
+    # Check if Ollama CLI is installed
+    $ollamaPath = (Get-Command ollama -ErrorAction SilentlyContinue).Source
+    if (-not $ollamaPath) {
+        if ($LogOutput) {
+            Log-Message -Message "Ollama is not installed or not in PATH" -Type "ERROR"
+            Log-Message -Message "Install Ollama from: https://ollama.ai/download" -Type "INFO"
+        }
+        return $false
+    }
+    else {
+        if ($LogOutput) {
+            Log-Message -Message "Ollama found at: $ollamaPath" -Type "INFO"
+        }
+    }
+    
+    # Check if Ollama service is running by testing the API
+    try {
+        $response = Invoke-WebRequest -Uri "$OllamaUrl/api/tags" -Method Get -TimeoutSec 5 -ErrorAction Stop
+        if ($response.StatusCode -eq 200) {
+            if ($LogOutput) {
+                $content = $response.Content | ConvertFrom-Json
+                $modelCount = ($content.models | Measure-Object).Count
+                Log-Message -Message "Ollama service is running at $OllamaUrl" -Type "INFO"
+                Log-Message -Message "Available models: $modelCount" -Type "INFO"
+            }
+            return $true
+        }
+        else {
+            if ($LogOutput) {
+                Log-Message -Message "Ollama service returned unexpected status code: $($response.StatusCode)" -Type "ERROR"
+            }
+            return $false
+        }
+    }
+    catch {
+        if ($LogOutput) {
+            Log-Message -Message "Ollama service is not accessible at $OllamaUrl" -Type "ERROR"
+            Log-Message -Message "Error: $_" -Type "ERROR"
+            if (Test-IsWindows) {
+                Log-Message -Message "Try starting Ollama from the Start Menu or run: ollama serve" -Type "INFO"
+            }
+            elseif (Test-IsLinux) {
+                Log-Message -Message "Try starting Ollama: sudo systemctl start ollama" -Type "INFO"
+            }
+            else {
+                Log-Message -Message "Try starting Ollama: ollama serve" -Type "INFO"
+            }
+        }
+        return $false
+    }
+}
+
 

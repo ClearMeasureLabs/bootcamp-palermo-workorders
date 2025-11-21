@@ -21,9 +21,10 @@ public class AutoCancelAgentTests : AcceptanceTestBase
     {
         new ZDataLoader().LoadData();
     }
-    [Test, Retry(2)]
+    [Test, Retry(2), Explicit]
     public async Task ShouldAutoCancelWorkOrderWithTestKeywords()
     {
+        // [TO20251120] This test relies an AI agent to runn
         // Set up specific users for this test
         var timothyLovejoy = await Bus.Send(new EmployeeByUserNameQuery("tlovejoy"));
         var homerSimpson = await Bus.Send(new EmployeeByUserNameQuery("hsimpson"));

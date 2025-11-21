@@ -11,4 +11,4 @@ param (
 
 . .\build.ps1
 
-PrivateBuild
+PrivateBuild -databaseServer $databaseServer 

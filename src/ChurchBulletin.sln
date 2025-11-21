@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.3.32611.2
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11218.70 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "Core\Core.csproj", "{BE4922D2-08AF-437B-B8C9-C671D5F5B1BA}"
 EndProject
@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FBE145BD-737C-47A5-BA88-A50ABAA81729}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		..\AcceptanceTests.ps1 = ..\AcceptanceTests.ps1
 		..\azure-pipelines.yml = ..\azure-pipelines.yml
 		..\build.bat = ..\build.bat
 		..\build.ps1 = ..\build.ps1

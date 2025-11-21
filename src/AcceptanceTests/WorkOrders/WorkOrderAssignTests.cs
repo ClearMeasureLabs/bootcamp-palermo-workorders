@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+﻿using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using System.Globalization;
@@ -44,7 +45,8 @@ public class WorkOrderAssignTests : AcceptanceTestBase
         await Expect(assigneeField).ToHaveValueAsync(CurrentUser.UserName);
 
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.AssignedDate)))
-            .ToHaveTextAsync(rehyratedOrder.AssignedDate!.Value.ToString(CultureInfo.CurrentCulture));
+        var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.AssignedDate));
+
+        rehyratedOrder.AssignedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
 }
