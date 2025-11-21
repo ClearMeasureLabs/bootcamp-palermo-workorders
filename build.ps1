@@ -470,7 +470,13 @@ Function PrivateBuild {
 		Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "INFO"
 	}
 	else {
-		# Do not set $script:databaseServer here; platform-specific logic will set it below if needed
+		if (Test-IsLinux) {
+			$script:databaseServer = "localhost"
+		}
+		else {
+			$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
+		}
+		Log-Message -Message "Using default database server for platform: $script:databaseServer" -Type "INFO"
 	}
 	
 	# Generate unique database name for this build instance
