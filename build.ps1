@@ -431,7 +431,10 @@ Function Run-AcceptanceTests {
 	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
 	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	AcceptanceTests
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	
+	# Restore appsettings files to their original git state
+	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
+	& git restore 'src/**/appsettings*.json'
 
 	$sw.Stop()
 	Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
@@ -492,7 +495,9 @@ Function PrivateBuild {
 	
 	IntegrationTest
 
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	# Restore appsettings files to their original git state
+	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
+	& git restore 'src/**/appsettings*.json'
 	
 	$sw.Stop()
 	Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
@@ -543,7 +548,9 @@ Function CIBuild {
 	
 	IntegrationTest
 	
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	# Restore appsettings files to their original git state
+	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
+	& git restore 'src/**/appsettings*.json'
 	
 	Package-Everything
 	$sw.Stop()
