@@ -310,8 +310,13 @@ END
         } else {
             # Fallback: Use docker exec to run sqlcmd inside the container
             docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -d master -Q $dropDbCmd -C | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to drop database '$databaseName' in container '$containerName' using docker exec"
+            }
             docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -d master -Q $createDbCmd -C | Out-Null
-        }
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to create database '$databaseName' in container '$containerName' using docker exec"
+            }
     } 
     catch {
         Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
