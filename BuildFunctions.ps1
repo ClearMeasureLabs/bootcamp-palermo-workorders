@@ -4,7 +4,13 @@
 if (-not (Get-Module -ListAvailable -Name SqlServer)) {
     Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
     try {
-        Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser -ErrorAction Stop
+        # Register PSGallery if it's not registered
+        if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+            Register-PSRepository -Default -ErrorAction Stop | Out-Null
+        }
+        # Trust PSGallery to avoid prompts
+        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue
+        Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser -Repository PSGallery -ErrorAction Stop
         Write-Host "SqlServer module installed successfully" -ForegroundColor Green
     }
     catch {
@@ -303,8 +309,16 @@ END
 	Log-Message "Creating SQL Server in Docker for integration tests for $databaseName on $serverName" -Type "INFO"
 
     try {
-        Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+        if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
+            Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
+            Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+        } else {
+            # Fallback to docker exec if Invoke-Sqlcmd is not available
+            $dropDbCmdEscaped = $dropDbCmd -replace '"', '\"' -replace "`r`n", " " -replace "`n", " "
+            $createDbCmdEscaped = $createDbCmd -replace '"', '\"'
+            docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -d master -Q "$dropDbCmdEscaped" -C 2>&1 | Out-Null
+            docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -d master -Q "$createDbCmdEscaped" -C 2>&1 | Out-Null
+        }
     } 
     catch {
         Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
@@ -351,16 +365,28 @@ Function New-DockerContainerForSqlServer {
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$sqlPassword" -p 1433:1433 --name $containerName -d $imageName 
     Log-Message -Message "Waiting for SQL Server to be ready..." -Type "INFO"
     
-    $maxWaitSeconds = 60
+    $maxWaitSeconds = 120
     $waitIntervalSeconds = 3
     $elapsedSeconds = 0
     $isReady = $false
     while ($elapsedSeconds -lt $maxWaitSeconds) {
         try {
-            Invoke-Sqlcmd -ServerInstance "localhost,1433" -Username "sa" -Password $sqlPassword -Query "SELECT 1" -Encrypt Optional -TrustServerCertificate -ErrorAction Stop | Out-Null
+            # Try using docker exec as an alternative to Invoke-Sqlcmd if the module is not available
+            if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
+                Invoke-Sqlcmd -ServerInstance "localhost,1433" -Username "sa" -Password $sqlPassword -Query "SELECT 1" -Encrypt Optional -TrustServerCertificate -ErrorAction Stop | Out-Null
+            } else {
+                # Fallback to docker exec if Invoke-Sqlcmd is not available
+                $result = docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -Q "SELECT 1" -C 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    throw "SQL Server not ready yet"
+                }
+            }
             $isReady = $true
             break
         } catch {
+            if ($elapsedSeconds % 30 -eq 0) {
+                Log-Message -Message "Still waiting for SQL Server... Error: $_" -Type "WARNING"
+            }
             Start-Sleep -Seconds $waitIntervalSeconds
             $elapsedSeconds += $waitIntervalSeconds
         }
