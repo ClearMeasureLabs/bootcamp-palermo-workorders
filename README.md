@@ -1,442 +1,489 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
-
-This project will create all of the required infrastructure in Azure programatically. The resoureces in the TDD environment will be torn down after automated testing is completed. The UAT and Prod resources will remain. There is an Octopus variable **EnsureEnvironmentsExist** that will tell Octopus to create all of the resources. If the variable is set to **True** Octopus will create all of the resources, if the variable is set to something else, Octopus will not create the resources. **EnsureEnvironmentsExist** should always be set to **True** for the TDD environment. This variable should be set to **False** (or anything other than **True**) for UAT and Prod to save time and preserve the existing resources during subsequent deployments.
-
-# Onion Architecture Azure .NET 9/8 Getting Started
-- [Github](#github)
-- [Azure](#azure)
-  - [Create an Azure Container Registry](#create-an-azure-container-registry)
-  - [Connect Azure to Octopus Deploy](#connect-azure-to-octopus-deploy)
-- [Octopus Deploy Environment Setup:](#octopus-deploy-environment-setup)
-- [Octopus Deploy Project Setup:](#octopus-deploy-project-setup)
-  - [Connect Octopus to GitHub](#connect-octopus-to-github)
-  - [Create a new Version Controlled Project:](#create-a-new-version-controlled-project)
-  - [Optional-Create a runbook for availability monitoring](#optional-create-a-runbook-for-availability-monitoring)
-- [Azure DevOps Setup:](#azure-devops-setup)
-  - [Create Service Connections](#create-service-connections)
-  - [Create an artifact feed](#create-an-artifact-feed)
-  - [Authorize the Pipeline to push packages to the feed](#authorize-the-pipeline-to-push-packages-to-the-feed)
-  - [Add the Azure DevOps Feed to Octopus](#add-the-azure-devops-feed-to-octopus)
-  - [Create the Library Variable Group](#create-the-library-variable-group)
-  - [Grant the pipeline access to the variable group](#grant-the-pipeline-access-to-the-variable-group)
-  - [Create a Pipeline](#create-a-pipeline)
-- [Octopus Deploy Runbook Setup:](#octopus-deploy-runbook-setup)
-  - [Create ContainerAppReplicas variable](#create-containerappreplicas-variable)
-  - [Create Scale Up Runbook](#create-scale-up-runbook)
-  - [Create Scale Down Runbook](#create-scale-down-runbook)
-  - [Publish the runbooks](#publish-the-runbooks)
-  - [Create Scheduled Runbook Triggers](#create-scheduled-runbook-triggers)
-
-
-Requirements:
-
-- Octopus Deploy
-- Azure
-- Github
-- Azure DevOps
-
- 
-# Github
-Create a new repository using the  [onion-architecture-maui-azure-dotnet-8](https://github.com/ClearMeasureLabs/onion-architecture-maui-azure-dotnet-8) template repo
-
-# Azure
-
-## Create an Azure Container Registry
-
-[https://learn.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal?tabs=azure-cli](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal?tabs=azure-cli)
-
-Name the resource group something identifiable and different than the application environments. 
-e.g. onion-architecture-container-apps-acr
-The resource groups for the application environments will be created and destroyed programatically, the container registry should be kept separate.
-
-When creating the container registry, a Basic SKU is sufficient. Name the container registry something identifiable. e.g. onion-architecture-container-apps
-
-## Connect Azure to Octopus Deploy
-
-### Create an Azure App Registration for Octopus Deploy
-
-- In Azure AD select App Registrations
-
-![Alt text](images/Create%20azure%20app%20registration%201.png)
-
-- Select New Registration
-    1. Name the Registration something identifiable. e.g. Onion-Containers-Octo
-    2. A Redirect URI is not needed
-    3. Select Register
-
-![Alt text](images/Create%20azure%20app%20registration%202.png)
-
-### Create a Client Secret
-
-- Select Certificates and Secrets
-- New Client Secret
-- Provide a description and select add
-
-![Alt text](images/Create%20azure%20app%20registration%203.png)
-
-- Save the client secret Value. It will be used in Octopus.
-
-### Set Octopus Deploy as an Azure Contributor
-
-- In your Azure subscription, navigate to Access Control (IAM), and add a role assignment
-- Select Privileged administrator roles, then Contributor
-
-![Alt text](images/Create%20azure%20app%20registration%204.png)
-
-- In the Members tab use the + Select Members page to select the App Registration that was created
-- Press Review + assign
-
-![Alt text](images/Create%20azure%20app%20registration%205.png)
-
-- Press Review + assign again to save
-
-### Create an Azure Account in Octopus Deploy
-
-- In Octopus Deploy navigate to Infrastructure -\> Accounts
-- Add an Azure Subscription Account
-    1. Name the account Azure-Onion-Containers
-    2. Fill in the Subscription ID
-        - This can be found in the Subscription Overview page in the Azure web portal
-    3. Leave the Authentication Method as 'Use a Service Principal'
-    4. Fill in the Tenant ID
-        - This can be found in the Overview page of the App Registration in the Azure web portal
-    5. Fill in the Application ID
-        - This is the Application (client) ID from the App registration that was just created. This can be found in the Overview page in the Azure web portal
-    6. Fill in the Application Password / Key
-        - This is the client secret value that was created previously
-
-![Alt text](images/Create%20azure%20app%20registration%206.png)
-
-# Octopus Deploy Environment Setup:
-
-In Octopus Deploy create 3 environments.
-
-- TDD
-- UAT
-- Prod
-
-No Deployment targets need to be created.
-
-Create a Lifecycle that uses those three environments promoting from TDD -\> UAT -\> Prod
-
-# Octopus Deploy Project Setup:
-
-## Connect Octopus to GitHub
-
-### In GitHub
-
-Create a Personal Access Token with repo access only.
-Save the token for use in Octopus
-
-### In Octopus
-
-Create Git Credentials using the GitHub Personal Access Token
-
-## Create a new Version Controlled Project:
-
-1. Create a new project, ensure the "Use version control for this project" box is checked
-2. Use the Lifecycle that was just created
-
-![Alt text](images/new%20version%20controlled%20project%201.png)
-
-3. Click Save AND CONFIGURE VCS
-
-      1. Skip the "How do you intend to use this project" popup
-4. Set the Git Repository URL to the URL of the forked repo
-5. Use the Library Git Credentials that were created earlier
-
-![Alt text](images/new%20version%20controlled%20project%202.png)
-
-7. Click CONFIGURE and push the initial commit to convert the project
-
-## Optional-Create a runbook for availability monitoring
-
-In the deployment process Octopus will setup Azure App Insights to monitor the availability of the app. If the healthcheck endpoint returns unhealthy an alert will be created that triggers an Octopus Runbook. 
-To configure the Runbook integration:
-- There is a variable in the project named **OctoRunbookName** this is the name of the Runbook that Azure will run. Create a Runbook with the same name. e.g. Unhealthy app alert
-- In the project create a variable named **azrunbookAPI** Set the value to Sensitive and provide an API key that has access to the project
-- Update **OctoInstanceURL** with the URL of your Octopus instance
-
-
-
-# Azure DevOps Setup:
-
-Create a new project
-
-Install the Octopus Deploy Integration ([https://marketplace.visualstudio.com/items?itemName=octopusdeploy.octopus-deploy-build-release-tasks](https://marketplace.visualstudio.com/items?itemName=octopusdeploy.octopus-deploy-build-release-tasks))
-
-## Create Service Connections
-
-To create a service connection
-  - Go to Project Settings in the bottom left
-  - Under the Pipelines heading, select Service Connections
-  - Select Create Service Connection
-
-### Create an Azure Resource Manager Service Connection
-  - Select Azure Resource Manager as the new service connection type
-
-![Alt text](images/service%20connections%201.png)
-
-  - Use the Service Principal (automatic) authentication method
-  - Select your Azure Subscriptoin
-  - Leave the Resource Group section blank
-  - Name the Service Connection: onion-architecture-maui-azure-dotnet-8
-  - Check 'Grant access permission to all pipelines'
-
-![Alt text](images/service%20connections%202.png)
-
-  - Save the service connection
-
-### Create an Octopus Deploy Service connection
-
-  - In Octopus Deploy create an API key ([https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key](https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key))
-  - In Azure DevOps select New Service Connection, choose Octopus Deploy as the type
-
-![Alt text](images/service%20connections%203.png)
-
-  - Fill in the URL of your Octopus instance
-  - Fill in the API key that was created
-  - Name the service connection: OctoServiceConnection
-  - Check 'Grant access permission to all pipelines'
-
-![Alt text](images/service%20connections%204.png)
-
-  - Save the service connection
-
-### Create an Azure Container Registry Service Connection
-
-  - Select New Service Connection, choose Docker Registry as the type
-
-![Alt text](images/service%20connections%205.png)
-
-  - Configure the registry
-    1. Choose Azure Container Registy as the type
-    2. Choose Service Principal as the Authentication Type
-    3. Select your Azure Subscription
-    4. Select the container registry that was created
-    5. Name the service connection: OnionArchACRServiceConnection
-    6. Select 'Grant access permission to all pipelines'
-
-![Alt text](images/service%20connections%206.png)
-
-- Save the Service Connection
-
-## Create an artifact feed
-
-- In the Azure DevOps project: Go to Artifacts, then select **+ Create Feed**
-
-![Alt text](images/feed%201.png)
-
-- Name the feed something relevant, scope it to the current project, select create
-
-![Alt text](images/feed%202.png)
-
-## Authorize the Pipeline to push packages to the feed
-
-- Set the Project Build Service identity to be a  **Contributor**  on your feed ([https://learn.microsoft.com/en-us/azure/devops/artifacts/feeds/feed-permissions?view=azure-devops#configure-feed-settings](https://learn.microsoft.com/en-us/azure/devops/artifacts/feeds/feed-permissions?view=azure-devops%23configure-feed-settings))
-
-![Alt text](images/authorize%20feed%201.png)
-
-## Add the Azure DevOps Feed to Octopus
-
-### Create a Personal Access Token
-
-1. Create an Azure DevOps Personal Access Token [https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Windows](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Windows)
-2. Give the token the Packaging Read scope
-3. Save the token for use in Octopus
-
-### In Azure DevOps
-
-1. Navigate to the Artifacts page.
-2. Select the 'Connect to Feed' button
-3. Select Nuget.exe as the feed type
-4. In the Project Setup section, copy the URL from the value field
-
-![Alt text](images/add%20feed%20to%20octo%201.png)
-
-### In Octopus Deploy
-
-1. Navigate to Library -\> External Feeds and select ADD FEED
-2. Set the Feed type to NuGet Feed
-3. Name the feed Onion-Architecture-MAUI-Azure-dotnet-8
-4. Paste in the URL that was copied from Azure DevOps
-5. Provide something in the Feed username field. It can be anything other than an empty string. It's not actually used.
-6. Provide the personal access token from Azure DevOps as the Feed Password
-
-![Alt text](images/add%20feed%20to%20octo%202.png)
-
-## Create and Update Project Variables
-
-In the Octopus Project navigate to Variables -\> Project
-
-- Create a variable named **DatabasePassword** Set the values to Sensitive and enter passwords for TDD, UAT, and Prod environments
-- Update **registry\_login\_server** to the login server of the Azure Container Registry that was created
-  - This login server can be found in the Overview page of the container registry in the Azure Web Portal
-- Update **EnsureEnvironmentsExist** to True for Prod/UAT to ensure that all resources will be created the first time.
-
-## Create the Library Variable Group
-
-1. In the Azure DevOps project: Go to Pipelines -\> Library
-
-![Alt text](images/variable%20group%201.png)
-
-2. Create a variable group named **Integration-Build**
-
-    1. Create a variable called **FeedName**. The value will be \<Azure DevOps project name\>/\<Azure DevOps feed name\>
-    2. Create a variable called **OctoProjectGroup** with the value being the Project Group that houses your Octopus Project.
-    3. Create a variable called **OctoProjectName** with the value being the name of your Octopus Project.
-    4. Create a variable called **OctoSpace** with the value being the name of your Octopus Space.
-
-![Alt text](images/variable%20group%202.png)
-
-3. Save the variable group
-
-## Grant the pipeline access to the variable group
-
-1. From the variable group page select the Pipeline permissions tab at the top
-2. Select the hamburger menu, and select Open Access
-
-![Alt text](images/variable%20group%203.png)
-
-3. Select Open access to allow all pipelines in the project to use the variable group
-
-![Alt text](images/variable%20group%204.png)
-
-## Create Environments
-
-1. Go to Pipelines -\> Environments
-2. Select New environment
-3. Create three environments.
-- TDD
-- UAT
-- Prod
-4. In the UAT and Prod environments, add an approval check and select the users that need to approve the appropriate deploy stages.
-
-## Create a Pipeline
-
-1. Go to Pipelines -\> Pipelines
-
-![Alt text](images/pipeline%201.png)
-
-1. Select Create Pipeline
-2. Select Github as the location for your code
-3. Accept and allow Github and Azure DevOps to connect
-
-![Alt text](images/pipeline%202.png)
-
-4. Select the forked repo when asked to select a repository
-5. Select Approve & Install to allow Azure Pipelines to connect to GitHub
-6. When reviewing the pipeline YAML select **Run** to create and run the Pipeline for the first time
-
-![Alt text](images/pipeline%203.png)
-
-The pipeline will build the application, create all of the resources in the TDD environment, deploy the app to TDD, test the app, then destroy the TDD resources. Then the Azure resources in UAT will be created, and the app will be deployed to TDD. Ultimately Prod resources will be created, and the app will be deployed to Prod
-
-
-# Octopus Deploy Runbook Setup:
-
-In the ChurchBulletin.Scripts package that is created there is a script called ScaleInfrastructure.ps1. When provided with appReplicas and/or serviceObjective values the script will set the min and max number of replicas of the container app and the service objective of the database. This is used with Octopus Runbooks ([Runbooks Documentation](https://octopus.com/docs/runbooks#:~:text=To%20create%20or%20manage%20your,%E2%9E%9C%20Runbooks%20%E2%9E%9C%20Add%20Runbook.)) to scale up and down the infrastructure for day and nighttime loads.
-
-## Create ContainerAppReplicas variable
-
-In your Octopus Deploy project, create two new variables
-- **ContainerAppScaledUpReplicas** and give it an integer value. e.g. 2
-- **ContainerAppScaledUpCPU** and give it a float value. e.g. 0.5
-- **ContainerAppScaledUpMem** and give it a float value. e.g. 1.0
-- **DBScaledUpPerformanceLevel** and give it service objective value. e.g. S0
-
-Commit these variables to main. **Variables not in the default branch will not be accessible to runbooks**
-
-![Alt text](images/Replicas1.png)
-
-## Create Scale Up Runbook
-
-- In your Octopus Deploy project, navigate to Operations -> Runbooks and select ADD RUNBOOK
-- Name the runbook Scale Up Infrastructure
-- Select Save
-![Alt text](images/runbook1.png)
-
-- Select DEFINE YOUR RUNBOOK PROCESS near the upper right
-
-![Alt text](images/runbook2.png)
-
-- And then select ADD STEP
-
-- Use the run az Azure Script step template
-
-![Alt text](images/runbook3.png)
-
-- Select ADD
-
-- Name the step **Scale Up Infrastructure**
-- Leave Execution Location, Worker Pool, Container Image, and Azure Tools as default
-
-- Under Azure -> Account select the chain links icon to bind the account value to a variable. Then set the value to **#{AzureAccount}** 
-
-![Alt text](images/runbook4.png)
-
-- Under Script Source select **Script file inside a package** 
-- Under Script File in Package set the Package feed to the feed that was created.
-- Set the Package ID to **ChurchBulletin.Script**
-- Set the Script file name to **ScaleInfrastructure.ps1**
-- Set the Script parameters to **-appReplicas #{ContainerAppScaledUpReplicas} -cpu #{ContainerAppScaledUpCPU} -mem #{ContainerAppScaledUpMem} -serviceObjective #{DBScaledUpPerformanceLevel}**
-
-![Alt text](images/runbook5.png)
-
-Leave the rest of the settings at default, and select SAVE
-
-## Create Scale Down Runbook
-
-Create another runbook named Scale Down Container App using the same directions.
-
-- Change the Step Name to **Scale Down Infrastructure**
-- Leave the Script Parameters blank
-
-## Publish the runbooks
-
-Runbooks must be published before they can be consumed by triggers.
-
-- Navigate to the Scale Up Infrastructure runbook. Select PUBLISH
-![Alt text](images/runbook6.png)
-- Leave the default settings, and select PUBLISH
-![Alt text](images/runbook7.png)
-- Do the same for Scale Down Infrastructure
-
-## Create Scheduled Runbook Triggers
-([Runbook Triggers Documentation](https://octopus.com/docs/runbooks/scheduled-runbook-trigger))
-
-- Navigate to Operations -> Triggers
-- Select ADD SCHEDULED TRIGGER
-- Name the trigger Scale Up Morning
-- Under Runbook select Scale Up Infrastructure
-- Under Target Environments select Prod
-- Leave the schedule at Daily
-- Under Run Days uncheck Saturday and Sunday
-- Set Schedule Timezone to your timezone
-- Leave the Interval at once
-- Set the Start Time to 8:00 AM
-- Click Save
-
-![Alt text](images/trigger1.png)
-
-- Create another trigger named Scale Down Evening
-- Use the Scale Down Container App runbook
-- Under Target Environments select Prod
-- Under Run Days uncheck Saturday and Sunday
-- Set Schedule Timezone to your timezone
-- Set the Start Time to 6:00 PM
-- Click Save
-
-Now the container app and database will automatically be scaled up every morning, and scaled down every evening
-
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
-
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
-
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+# Work Order Management System
+
+A comprehensive work order management system built with .NET 9.0, implementing Onion Architecture principles with a Blazor WebAssembly UI. This system enables organizations to create, assign, track, and complete maintenance work orders with integrated AI assistance.
+
+## Features
+
+- **Work Order Management**: Create, edit, assign, and track work orders through their complete lifecycle
+- **Status Workflow**: Draft → Assigned → In Progress → Complete → Cancelled/Shelved
+- **Employee Management**: User authentication and role-based access control
+- **AI Assistant Integration**: Azure OpenAI and Ollama integration for intelligent work order assistance
+- **Real-time Updates**: Blazor WebAssembly provides responsive, real-time UI updates
+- **Comprehensive Testing**: Unit, integration, and end-to-end acceptance tests with Playwright
+
+## Technology Stack
+
+### Backend
+- **.NET 9.0**: Latest .NET framework
+- **Entity Framework Core 9.0**: Data access with SQL Server
+- **MediatR**: CQRS pattern implementation
+- **Lamar**: Dependency injection container (StructureMap successor)
+- **AliaSQL**: Database migration tool
+
+### Frontend
+- **Blazor WebAssembly**: Modern single-page application framework
+- **Blazor Server**: Server-side rendering support
+- **bUnit**: Blazor component testing
+
+### Database
+- **SQL Server**: Production database
+- **LocalDB**: Development database
+- **AliaSQL**: Version-controlled database migrations
+
+### AI/LLM Integration
+- **Azure OpenAI**: Cloud-based AI assistance
+- **Ollama**: Local LLM support
+
+### Testing
+- **NUnit 4.x**: Testing framework
+- **Playwright**: End-to-end browser automation
+- **Shouldly**: Fluent assertion library
+- **AutoBogus**: Test data generation
+
+### Deployment
+- **Azure Container Apps**: Containerized deployment
+- **Docker**: Container packaging
+- **Azure DevOps**: CI/CD pipelines
+- **Octopus Deploy**: Release management
+
+## Architecture
+
+This project implements **Onion Architecture** with strict dependency rules ensuring the core domain logic remains independent of infrastructure concerns.
+
+### Project Structure
+
+```
+src/
+├── Core/                           # Domain layer (no dependencies)
+│   ├── Model/                     # Domain entities (WorkOrder, Employee, etc.)
+│   ├── Queries/                   # CQRS query objects
+│   └── Services/                  # Domain service interfaces
+├── DataAccess/                    # Data access layer (depends on Core only)
+│   ├── Mappings/                  # EF Core entity mappings
+│   └── Handlers/                  # MediatR query/command handlers
+├── Database/                      # AliaSQL migration scripts
+│   └── scripts/
+│       └── Update/                # Numbered migration scripts (001, 003, 004...)
+├── UI/
+│   ├── Client/                    # Blazor WebAssembly client
+│   ├── Server/                    # Blazor Server hosting
+│   ├── Shared/                    # Shared UI components
+│   └── Api/                       # Web API endpoints
+├── LlmGateway/                    # AI integration layer
+├── UnitTests/                     # Unit tests
+├── IntegrationTests/              # Integration tests
+└── AcceptanceTests/               # Playwright end-to-end tests
+```
+
+### Dependency Flow
+
+```
+UI → DataAccess → Core
+         ↓
+    LlmGateway → Core
+```
+
+**Key Principles**:
+- Core has no dependencies on other projects
+- DataAccess only references Core
+- UI layers reference both Core and DataAccess
+- Domain logic resides in Core
+- Infrastructure concerns stay in outer layers
+
+### CQRS Pattern
+
+The application uses **MediatR** to implement Command Query Responsibility Segregation:
+- **Queries**: Read operations returning data (e.g., `WorkOrderByNumberQuery`, `EmployeeByUserNameQuery`)
+- **Commands**: Write operations via `IStateCommand` interface
+- **Handlers**: Distributed across DataAccess and UI layers based on responsibility
+
+## Getting Started
+
+### Prerequisites
+
+- **.NET 9.0 SDK**: [Download](https://dotnet.microsoft.com/download/dotnet/9.0)
+- **SQL Server LocalDB**: Included with Visual Studio or [download standalone](https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/sql-server-express-localdb)
+- **PowerShell 7+**: For build scripts
+- **Node.js** (optional): For Playwright browser automation
+
+### Local Development Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd bootcamp-palermo-workorders-claude-code-cli
+   ```
+
+2. **Build the solution**
+   ```powershell
+   # Quick build
+   .\build.bat
+
+   # Full private build (recommended for first-time setup)
+   .\build.ps1
+   PrivateBuild
+   ```
+
+3. **Database setup**
+
+   The PrivateBuild process automatically:
+   - Creates a unique LocalDB database
+   - Runs all AliaSQL migration scripts
+   - Seeds test data
+
+   To manually migrate the database:
+   ```powershell
+   $databaseServer = "(LocalDb)\MSSQLLocalDB"
+   $databaseName = "WorkOrderSystem"
+   MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
+   ```
+
+4. **Run the application**
+   ```bash
+   cd src/UI/Server
+   dotnet run
+   ```
+
+   Application will be available at:
+   - **HTTPS**: https://localhost:7174
+   - **Health Check**: https://localhost:7174/_healthcheck
+
+### Build Commands
+
+#### Quick Build
+```powershell
+.\build.bat
+```
+Compiles the solution in Debug mode.
+
+#### Private Build
+```powershell
+.\build.ps1
+PrivateBuild
+```
+Complete local development build including:
+1. Clean solution
+2. Compile all projects
+3. Run unit tests (with code coverage)
+4. Create temporary database
+5. Run database migrations
+6. Run integration tests
+7. Database cleanup
+
+#### CI Build
+```powershell
+.\build.ps1
+CIBuild
+```
+Includes PrivateBuild plus:
+- Package creation
+- Artifact publishing to Azure Artifacts
+
+### Running Tests
+
+#### Unit Tests
+```powershell
+cd src/UnitTests
+dotnet test --configuration Release
+```
+- **92 tests** covering domain logic, validation, and business rules
+- Uses **Shouldly** for assertions
+- Follows AAA pattern (Arrange, Act, Assert)
+
+#### Integration Tests
+```powershell
+cd src/IntegrationTests
+dotnet test --configuration Release
+```
+- **41 tests** verifying data access, EF Core mappings, and database operations
+- Uses LocalDB with automatic database creation/cleanup
+- Tests include: entity persistence, query handlers, database constraints
+
+#### Acceptance Tests
+```powershell
+cd src/AcceptanceTests
+
+# Install Playwright browsers (first time only)
+pwsh bin/Debug/net9.0/playwright.ps1 install
+
+# Run tests
+dotnet test --configuration Debug
+```
+- End-to-end tests using Playwright browser automation
+- Tests cover: work order creation, assignment, status changes, AI chat integration
+- Runs against actual Blazor WebAssembly application
+
+### Database Migrations
+
+This project uses **AliaSQL** for version-controlled database migrations.
+
+#### Migration Script Location
+```
+src/Database/scripts/Update/
+```
+
+#### Creating New Migrations
+
+1. Create a new numbered SQL script in `src/Database/scripts/Update/`:
+   ```
+   ###_Description.sql
+   ```
+   Example: `023_AddPriorityFieldToWorkOrder.sql`
+
+2. Use the next sequential number (current highest is 022)
+
+3. Write your migration SQL:
+   ```sql
+   -- Add Priority field to WorkOrder table
+   ALTER TABLE [dbo].[WorkOrder]
+       ADD [Priority] NVARCHAR(50) NULL;
+   GO
+   ```
+
+4. Run PrivateBuild to apply locally:
+   ```powershell
+   .\build.ps1
+   PrivateBuild
+   ```
+
+#### Migration Actions
+- **Create**: Create new database
+- **Update**: Apply incremental migrations
+- **Rebuild**: Drop and recreate (used in PrivateBuild)
+- **TestData**: Load test data
+
+## Domain Model
+
+### Core Entities
+
+#### WorkOrder
+Primary entity representing a maintenance work order.
+
+**Properties**:
+- `Number`: Unique 7-character identifier (e.g., "WO-0001")
+- `Title`: Short description (max 200 chars)
+- `Description`: Detailed description (max 4000 chars)
+- `Instructions`: Optional execution instructions (max 4000 chars)
+- `RoomNumber`: Location identifier (max 50 chars)
+- `Status`: Current workflow state
+- `Creator`: Employee who created the work order
+- `Assignee`: Employee assigned to complete the work
+- `CreatedDate`, `AssignedDate`, `CompletedDate`: Timestamps
+
+#### WorkOrderStatus
+Enum defining the work order lifecycle:
+- **Draft**: Initial state, editable
+- **Assigned**: Assigned to an employee
+- **InProgress**: Work has started
+- **Complete**: Work finished successfully
+- **Cancelled**: Work order cancelled
+- **Shelved**: Work order postponed
+
+#### Employee
+Represents system users.
+
+**Properties**:
+- `UserName`: Unique identifier
+- `FirstName`, `LastName`: Name components
+- `EmailAddress`: Contact information
+- `Roles`: Collection of assigned roles
+
+#### Role
+Defines user permissions:
+- **Creator**: Can create work orders
+- **Assignee**: Can be assigned work orders
+
+### Business Rules
+
+1. **Work orders can only be reassigned in Draft status**
+   ```csharp
+   public bool CanReassign() => Status == WorkOrderStatus.Draft;
+   ```
+
+2. **Description and Instructions auto-truncate at 4000 characters**
+   - Prevents data loss from overly long inputs
+   - Enforced at domain level
+
+3. **State transitions follow defined workflow**
+   - Managed through `IStateCommand` implementations
+   - Validated by `StateCommandList`
+
+## Coding Standards
+
+### Naming Conventions
+- **PascalCase**: Classes, methods, properties, public members
+- **camelCase**: Local variables, private fields, parameters
+- **Prefix test doubles with "Stub"**: Not "Mock"
+
+### Testing Standards
+- **Use Shouldly** for all test assertions
+- **Follow AAA pattern** without explicit comments
+- **Test method naming**: `[MethodName]_[Scenario]_[ExpectedResult]` or start with "Should"/"When"
+- **Small, focused methods**: Single responsibility principle
+
+### Architecture Rules
+- **Core project**: No external dependencies (pure domain logic)
+- **DataAccess project**: Only references Core
+- **Do not add NuGet packages** without approval
+- **Maintain .NET SDK versions** unless specifically instructed to upgrade
+
+## Contributing
+
+### Workflow
+
+1. **Branch naming**: `feature/{date}-{issue-number}-{ai-model}-{ide}-{description}`
+   - Example: `feature/20251112-120000-issue50-claude-sonnet-4.5-claudecodecli-workorders`
+
+2. **Development process**:
+   - Checkout master and pull latest changes
+   - Create feature branch
+   - Implement changes following architecture rules
+   - Run PrivateBuild locally
+   - Commit with descriptive messages
+   - Push and create pull request
+
+3. **Pull request requirements**:
+   - All tests must pass (unit, integration, acceptance)
+   - Follow existing code style and patterns
+   - Include test coverage for new features
+   - Update documentation if needed
+
+### Commit Message Format
+```
+Brief summary (50 chars or less)
+
+Detailed explanation of changes including:
+- What was changed and why
+- Technical details
+- Breaking changes (if any)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+## CI/CD Pipeline
+
+The project uses Azure DevOps pipelines defined in `src/pure-azdo-pipeline.yml`.
+
+### Pipeline Stages
+
+1. **Integration_Build**
+   - Build solution
+   - Run unit and integration tests
+   - Package application
+   - Push to Azure Artifacts
+
+2. **Docker Build & Push**
+   - Build Docker container
+   - Push to Azure Container Registry
+
+3. **TDD Environment**
+   - Auto-deploy to test environment
+   - Run database migrations
+   - Execute acceptance tests
+   - Destroy environment resources
+
+4. **UAT Environment**
+   - Manual approval required
+   - Deploy to staging
+   - Database migration
+   - Manual testing
+
+5. **PROD Environment**
+   - Manual approval required
+   - Production deployment
+   - Database migration
+   - Health monitoring
+
+### Versioning
+Format: `{major}.{minor}.{Rev:r}`
+- Current version: 1.3.x
+- Automatically incremented by build pipeline
+
+## Infrastructure & Deployment
+
+For detailed information about Azure infrastructure setup, Octopus Deploy configuration, and production deployment, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Quick Deploy Overview
+
+**Requirements**:
+- Azure subscription
+- Azure Container Registry
+- Octopus Deploy instance
+- Azure DevOps project
+- GitHub repository
+
+**Environments**:
+- **TDD**: Temporary test environment (auto-created/destroyed)
+- **UAT**: User acceptance testing (persistent)
+- **PROD**: Production (persistent)
+
+**Container Deployment**:
+- Application runs in Azure Container Apps
+- Database uses Azure SQL
+- Infrastructure created programmatically via Azure CLI scripts
+- Auto-scaling configured via Octopus runbooks
+
+## Troubleshooting
+
+### Build Issues
+
+**Problem**: Build fails with SDK version mismatch
+```
+Solution: Ensure .NET 9.0 SDK is installed
+dotnet --list-sdks
+```
+
+**Problem**: Database connection fails
+```
+Solution: Verify LocalDB is running
+SqlLocalDB info MSSQLLocalDB
+SqlLocalDB start MSSQLLocalDB
+```
+
+### Test Issues
+
+**Problem**: Acceptance tests fail to start browser
+```
+Solution: Install Playwright browsers
+pwsh src/AcceptanceTests/bin/Debug/net9.0/playwright.ps1 install
+```
+
+**Problem**: Integration tests fail with database errors
+```
+Solution: Ensure LocalDB is accessible and rebuild database
+.\build.ps1
+PrivateBuild
+```
+
+## Architecture Documentation
+
+PlantUML diagrams are available in the `arch/` directory:
+- `arch-c4-system.puml`: System context diagram
+- `arch-c4-container-deployment.puml`: Container deployment view
+- `arch-c4-component-project-dependencies.puml`: Component dependencies
+- `arch-c4-class-domain-model.puml`: Domain model (WorkOrder, Employee, Status, Role)
+
+## Additional Resources
+
+### Documentation
+- [CLAUDE.md](CLAUDE.md): AI assistant instructions for working with this codebase
+- [Onion Architecture](https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/): Original article by Jeffrey Palermo
+- [MediatR Documentation](https://github.com/jbogard/MediatR/wiki)
+- [Blazor Documentation](https://learn.microsoft.com/en-us/aspnet/core/blazor/)
+
+### Related Projects
+- [AliaSQL](https://github.com/ClearMeasure/AliaSQL): Database migration tool
+- [Lamar](https://jasperfx.github.io/lamar/): Dependency injection container
+
+## License
+
+This project is part of the Clear Measure Bootcamp training program.
+
+## Support
+
+For questions or issues:
+- Create an issue in the GitHub repository
+- Contact the development team
+- Review the CLAUDE.md file for AI-assisted development guidance
