@@ -303,8 +303,15 @@ END
 	Log-Message "Creating SQL Server in Docker for integration tests for $databaseName on $serverName" -Type "INFO"
 
     try {
-        Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+        # Try using Invoke-Sqlcmd if available, otherwise use docker exec
+        if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
+            Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
+            Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+        } else {
+            # Fallback: Use docker exec to run sqlcmd inside the container
+            docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -d master -Q $dropDbCmd -C | Out-Null
+            docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -d master -Q $createDbCmd -C | Out-Null
+        }
     } 
     catch {
         Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
@@ -351,13 +358,22 @@ Function New-DockerContainerForSqlServer {
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$sqlPassword" -p 1433:1433 --name $containerName -d $imageName 
     Log-Message -Message "Waiting for SQL Server to be ready..." -Type "INFO"
     
-    $maxWaitSeconds = 60
+    $maxWaitSeconds = 120
     $waitIntervalSeconds = 3
     $elapsedSeconds = 0
     $isReady = $false
     while ($elapsedSeconds -lt $maxWaitSeconds) {
         try {
-            Invoke-Sqlcmd -ServerInstance "localhost,1433" -Username "sa" -Password $sqlPassword -Query "SELECT 1" -Encrypt Optional -TrustServerCertificate -ErrorAction Stop | Out-Null
+            # Try using Invoke-Sqlcmd if available, otherwise use docker exec
+            if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
+                Invoke-Sqlcmd -ServerInstance "localhost,1433" -Username "sa" -Password $sqlPassword -Query "SELECT 1" -Encrypt Optional -TrustServerCertificate -ErrorAction Stop | Out-Null
+            } else {
+                # Fallback: Use docker exec to run sqlcmd inside the container
+                $result = docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -Q "SELECT 1" -C 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Docker exec failed"
+                }
+            }
             $isReady = $true
             break
         } catch {
