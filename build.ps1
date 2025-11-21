@@ -429,12 +429,26 @@ Function Run-AcceptanceTests {
 
 	# Update appsettings.json files before database migration
 	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	
+	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
+	# This prevents the Windows LocalDB connection string from overriding appsettings.json
+	$launchSettingsPath = Join-Path $source_dir "UI" "Server" "Properties" "launchSettings.json"
+	if (Test-Path $launchSettingsPath) {
+		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
+		$launchSettings = Get-Content $launchSettingsPath -Raw
+		$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
+		Set-Content -Path $launchSettingsPath -Value $launchSettings
+	}
+	
 	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	AcceptanceTests
 	
-	# Restore appsettings files to their original git state
-	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
+	# Restore appsettings and launchSettings files to their original git state
+	Log-Message -Message "Restoring appsettings*.json and launchSettings.json files to git state" -Type "INFO"
 	& git restore 'src/**/appsettings*.json'
+	if (Test-Path $launchSettingsPath) {
+		& git restore $launchSettingsPath
+	}
 
 	$sw.Stop()
 	Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
