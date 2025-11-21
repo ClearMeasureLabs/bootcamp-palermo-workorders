@@ -309,7 +309,7 @@ END
             Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
         } else {
             # Fallback: Use docker exec to run sqlcmd inside the container
-            docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -d master -Q $dropDbCmd -C | Out-Null
+            docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -d master -q $dropDbCmd -C | Out-Null
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to drop database '$databaseName' in container '$containerName' using docker exec"
             }
