@@ -581,4 +581,3 @@ Function Test-IsOllamaRunning {
     }
 }
 
-

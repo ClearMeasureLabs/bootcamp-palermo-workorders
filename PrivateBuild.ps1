@@ -1,7 +1,6 @@
 param (
     [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$databaseServer = "(LocalDb)\MSSQLLocalDB",
+    [string]$databaseServer = "",
 	
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -10,5 +9,15 @@ param (
 )
 
 . .\build.ps1
+
+# Set default database server based on platform if not provided
+if ([string]::IsNullOrEmpty($databaseServer)) {
+    if (Test-IsLinux) {
+        $databaseServer = "localhost,1433"
+    }
+    else {
+        $databaseServer = "(LocalDb)\MSSQLLocalDB"
+    }
+}
 
 PrivateBuild -databaseServer $databaseServer 
