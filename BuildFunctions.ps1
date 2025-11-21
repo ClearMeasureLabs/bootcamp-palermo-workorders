@@ -314,10 +314,13 @@ END
             Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
         } else {
             # Fallback to docker exec if Invoke-Sqlcmd is not available
+            # Using -i for interactive mode to avoid password in command line
             $dropDbCmdEscaped = $dropDbCmd -replace '"', '\"' -replace "`r`n", " " -replace "`n", " "
-            $createDbCmdEscaped = $createDbCmd -replace '"', '\"'
-            docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -d master -Q "$dropDbCmdEscaped" -C 2>&1 | Out-Null
-            docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -d master -Q "$createDbCmdEscaped" -C 2>&1 | Out-Null
+            $createDbCmdEscaped = $createDbCmd -replace '"', '\"' -replace "`r`n", " " -replace "`n", " "
+            
+            # Set password as environment variable for the container to avoid exposing in process list
+            docker exec -e "SQLCMDPASSWORD=$sqlPassword" $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -d master -Q "$dropDbCmdEscaped" -C 2>&1 | Out-Null
+            docker exec -e "SQLCMDPASSWORD=$sqlPassword" $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -d master -Q "$createDbCmdEscaped" -C 2>&1 | Out-Null
         }
     } 
     catch {
@@ -376,7 +379,8 @@ Function New-DockerContainerForSqlServer {
                 Invoke-Sqlcmd -ServerInstance "localhost,1433" -Username "sa" -Password $sqlPassword -Query "SELECT 1" -Encrypt Optional -TrustServerCertificate -ErrorAction Stop | Out-Null
             } else {
                 # Fallback to docker exec if Invoke-Sqlcmd is not available
-                $result = docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $sqlPassword -Q "SELECT 1" -C 2>&1
+                # Use environment variable to avoid password in command line
+                $result = docker exec -e "SQLCMDPASSWORD=$sqlPassword" $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -Q "SELECT 1" -C 2>&1
                 if ($LASTEXITCODE -ne 0) {
                     throw "SQL Server not ready yet"
                 }
