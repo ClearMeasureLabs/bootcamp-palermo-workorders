@@ -446,8 +446,14 @@ Function Run-AcceptanceTests {
 	# Restore appsettings and launchSettings files to their original git state
 	Log-Message -Message "Restoring appsettings*.json and launchSettings.json files to git state" -Type "INFO"
 	& git restore 'src/**/appsettings*.json'
+	if ($LASTEXITCODE -ne 0) {
+		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
+	}
 	if (Test-Path $launchSettingsPath) {
 		& git restore $launchSettingsPath
+		if ($LASTEXITCODE -ne 0) {
+			Log-Message -Message "Warning: Failed to restore launchSettings.json file" -Type "WARNING"
+		}
 		if ($LASTEXITCODE -ne 0) {
 			Log-Message -Message "Warning: Failed to restore launchSettings.json" -Type "WARNING"
 		}
