@@ -456,9 +456,6 @@ Function Run-AcceptanceTests {
 		if ($LASTEXITCODE -ne 0) {
 			Log-Message -Message "Warning: Failed to restore launchSettings.json file" -Type "WARNING"
 		}
-		if ($LASTEXITCODE -ne 0) {
-			Log-Message -Message "Warning: Failed to restore launchSettings.json" -Type "WARNING"
-		}
 	}
 
 	$sw.Stop()

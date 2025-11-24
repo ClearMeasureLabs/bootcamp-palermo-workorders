@@ -507,7 +507,7 @@ Function Get-ContainerName {
 Function Get-SqlServerPassword {
     <#
     .SYNOPSIS
-        Generates SQL Server password for Docker containers
+        Generates SQL Server password for Docker containers. This is for testing/CI purposes only. 
     .DESCRIPTION
         Creates a SQL Server password based on the container name that meets complexity requirements.
         Password must be at least 8 characters with uppercase, lowercase, digit, and symbol.
