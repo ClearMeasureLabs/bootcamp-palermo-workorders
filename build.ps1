@@ -49,6 +49,7 @@ Function Init {
 		Log-Message -Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
 	}
 
+	
 	if (Test-IsAzureDevOps) { 
 		Log-Message -Message "Running in Azure DevOps Pipeline" -Type "INFO"
 	}
@@ -58,6 +59,12 @@ Function Init {
 
 	if (Test-IsLinux) {
 		Log-Message -Message "Running on Linux" -Type "INFO"
+
+		# Set NuGet cache to shorter path for WSL compatibility
+		$env:NUGET_PACKAGES = "/tmp/nuget-packages"
+		Log-Message -Message "Setting NUGET_PACKAGES to /tmp/nuget-packages for WSL" -Type "INFO"
+
+
 		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 		if (Test-IsDockerRunning) {
 			Log-Message -Message "Docker is running" -Type "INFO"
