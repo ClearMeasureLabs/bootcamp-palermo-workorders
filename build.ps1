@@ -49,7 +49,6 @@ Function Init {
 		Log-Message -Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
 	}
 
-	
 	if (Test-IsAzureDevOps) { 
 		Log-Message -Message "Running in Azure DevOps Pipeline" -Type "INFO"
 	}
@@ -58,13 +57,13 @@ Function Init {
 	}
 
 	if (Test-IsLinux) {
+		# Set NuGet cache to shorter path for Linux/WSL compatibility (only for local builds)
+		if (-not (Test-IsAzureDevOps) -and -not (Test-IsGitHubActions)) {
+			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
+			Log-Message -Message "Setting NUGET_PACKAGES to /tmp/nuget-packages for WSL" -Type "INFO"
+		}
+
 		Log-Message -Message "Running on Linux" -Type "INFO"
-
-		# Set NuGet cache to shorter path for WSL compatibility
-		$env:NUGET_PACKAGES = "/tmp/nuget-packages"
-		Log-Message -Message "Setting NUGET_PACKAGES to /tmp/nuget-packages for WSL" -Type "INFO"
-
-
 		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 		if (Test-IsDockerRunning) {
 			Log-Message -Message "Docker is running" -Type "INFO"
@@ -280,16 +279,27 @@ Function Publish-ToGitHubPackages {
 }
 
 Function PackageUI {    
+	$packageName = "$projectName.UI.$version.nupkg"
+	$packagePath = Join-Path $build_dir $packageName
+
+	Log-Message -Message "Packaging UI project into NuGet package: $packageName" -Type "INFO"
 	exec {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
 	}
+	
+	Log-Message -Message "Creating Octopus package: $packageName" -Type "INFO"
 	exec {
 		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-Path $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 	
+	if (Test-Path $packagePath) {
+		$packageSize = (Get-Item $packagePath).Length / 1MB
+		Log-Message -Message "Created package: $packageName ($([math]::Round($packageSize, 2)) MB)" -Type "INFO"
+	}
+	
 	# Log package creation (publishing handled separately)
 	if (Test-IsGitHubActions) {
-		Log-Message -Message "Would publish $projectName.UI.$version.nupkg to GitHub Packages" -Type "INFO"
+		Log-Message -Message "Would publish $packageName to GitHub Packages" -Type "INFO"
 	}
 	elseif (Test-IsAzureDevOps) {
 		# Azure DevOps pipeline handles publishing via separate task
@@ -579,6 +589,28 @@ Function CIBuild {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
 			throw "Docker is not running."
 		}
+	}
+
+	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	
+	IntegrationTest
+	
+	# Restore appsettings files to their original git state
+	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
+	& git restore 'src/**/appsettings*.json'
+	if ($LASTEXITCODE -ne 0) {
+		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
+	}
+	
+	Package-Everything
+	$sw.Stop()
+	Log-Message -Message "CIBUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+}egrationTest
+	
+	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	}
 	}
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
