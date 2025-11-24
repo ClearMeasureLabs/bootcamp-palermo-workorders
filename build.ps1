@@ -521,6 +521,9 @@ Function PrivateBuild {
 	# Restore appsettings files to their original git state
 	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
 	& git restore 'src/**/appsettings*.json'
+	if ($LASTEXITCODE -ne 0) {
+		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
+	}
 	
 	$sw.Stop()
 	Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
