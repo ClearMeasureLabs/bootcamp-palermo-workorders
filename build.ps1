@@ -196,7 +196,7 @@ Function MigrateDatabaseLocal {
 	
 	if (Test-IsLinux) {
 		$containerName = Get-ContainerName -DatabaseName $databaseNameFunc
-		$sqlPassword = "${containerName}#1A"
+		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
 		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts, "sa", $sqlPassword)
 	}
 	else {
@@ -222,13 +222,15 @@ Function Create-SqlServerInDocker {
 			[string]$scriptDir			
 		)
 	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName -generateUnique $true
-	
-	New-DockerContainerForSqlServer -containerName $(Get-ContainerName $tempDatabaseName)
+	$containerName = Get-ContainerName -DatabaseName $tempDatabaseName
+	$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+
+	New-DockerContainerForSqlServer -containerName $containerName
 	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
 	$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $tempDatabaseName)
+	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $sqlPassword)
 	& dotnet $dbArgs
 	if ($LASTEXITCODE -ne 0) {
 		throw "Database migration failed with exit code $LASTEXITCODE"
@@ -429,9 +431,32 @@ Function Run-AcceptanceTests {
 
 	# Update appsettings.json files before database migration
 	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	
+	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
+	# This prevents the Windows LocalDB connection string from overriding appsettings.json
+	$launchSettingsPath = Join-Path $source_dir "UI" "Server" "Properties" "launchSettings.json"
+	if (Test-Path $launchSettingsPath) {
+		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
+		$launchSettings = Get-Content $launchSettingsPath -Raw
+		$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
+		Set-Content -Path $launchSettingsPath -Value $launchSettings
+	}
+	
 	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	AcceptanceTests
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	
+	# Restore appsettings and launchSettings files to their original git state
+	Log-Message -Message "Restoring appsettings*.json and launchSettings.json files to git state" -Type "INFO"
+	& git restore 'src/**/appsettings*.json'
+	if ($LASTEXITCODE -ne 0) {
+		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
+	}
+	if (Test-Path $launchSettingsPath) {
+		& git restore $launchSettingsPath
+		if ($LASTEXITCODE -ne 0) {
+			Log-Message -Message "Warning: Failed to restore launchSettings.json file" -Type "WARNING"
+		}
+	}
 
 	$sw.Stop()
 	Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
@@ -453,7 +478,13 @@ Function PrivateBuild {
 		Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "INFO"
 	}
 	else {
-		# Do not set $script:databaseServer here; platform-specific logic will set it below if needed
+		if (Test-IsLinux) {
+			$script:databaseServer = "localhost"
+		}
+		else {
+			$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
+		}
+		Log-Message -Message "Using default database server for platform: $script:databaseServer" -Type "INFO"
 	}
 	
 	# Generate unique database name for this build instance
@@ -492,7 +523,12 @@ Function PrivateBuild {
 	
 	IntegrationTest
 
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	# Restore appsettings files to their original git state
+	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
+	& git restore 'src/**/appsettings*.json'
+	if ($LASTEXITCODE -ne 0) {
+		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
+	}
 	
 	$sw.Stop()
 	Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
@@ -543,7 +579,12 @@ Function CIBuild {
 	
 	IntegrationTest
 	
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	# Restore appsettings files to their original git state
+	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
+	& git restore 'src/**/appsettings*.json'
+	if ($LASTEXITCODE -ne 0) {
+		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
+	}
 	
 	Package-Everything
 	$sw.Stop()
