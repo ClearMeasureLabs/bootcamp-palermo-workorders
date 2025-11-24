@@ -88,6 +88,14 @@ jobs:
         run: |
           .\AcceptanceTests.ps1
 
+      # Upload packages as artifacts
+      - name: Upload NuGet Packages
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: nuget-packages-windows
+          path: build/*.nupkg
+          retention-days: 90
 
       # Publish test results
       - name: Test Reporter
@@ -172,6 +180,7 @@ jobs:
       - name: Run CI Build Script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
         run: |
           pwsh -Command ". ./build.ps1; CIBuild"
@@ -206,7 +215,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: nuget-packages
+          name: nuget-packages-linux
           path: build/*.nupkg
           retention-days: 90
 
