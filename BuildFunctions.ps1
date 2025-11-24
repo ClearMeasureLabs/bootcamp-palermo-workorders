@@ -1,4 +1,4 @@
-# Taken from psake https://github.com/psake/psake
+# Taken from psake https://github.com/psake
 
 # Ensure SqlServer module is installed for Invoke-Sqlcmd
 if (-not (Get-Module -ListAvailable -Name SqlServer)) {
@@ -116,7 +116,7 @@ Function Update-AppSettingsConnectionStrings {
     # Build the connection string for environment variable
     if (Test-IsLinux) {
         $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
-        $sqlPassword = "${containerName}#1A"
+        $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
         $connectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
     }
     else {
@@ -149,7 +149,7 @@ Function Update-AppSettingsConnectionStrings {
 
                     if (Test-IsLinux) {
                         $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
-                        $sqlPassword = "${containerName}#1A"
+                        $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
                         $newConnectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
                     }
                     else {
@@ -294,7 +294,7 @@ Function New-SqlServerDatabase {
     )
 
     $containerName = Get-ContainerName -DatabaseName $databaseName
-    $sqlPassword = "${containerName}#1A"
+    $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
     $saCred = New-object System.Management.Automation.PSCredential("sa", (ConvertTo-SecureString -String $sqlPassword -AsPlainText -Force))
     
     $dropDbCmd = @"
@@ -362,7 +362,7 @@ Function New-DockerContainerForSqlServer {
     
     # Create SQL Server password that meets complexity requirements
     # Must be at least 8 characters with uppercase, lowercase, digit, and symbol
-    $sqlPassword = "${containerName}#1A"
+    $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
     
     # Create new container
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$sqlPassword" -p 1433:1433 --name $containerName -d $imageName 
@@ -504,6 +504,29 @@ Function Get-ContainerName {
     return "$DatabaseName-mssql".ToLower()
 }
 
+Function Get-SqlServerPassword {
+    <#
+    .SYNOPSIS
+        Generates SQL Server password for Docker containers
+    .DESCRIPTION
+        Creates a SQL Server password based on the container name that meets complexity requirements.
+        Password must be at least 8 characters with uppercase, lowercase, digit, and symbol.
+    .PARAMETER ContainerName
+        The name of the Docker container to generate password for
+    .OUTPUTS
+        [string] A password that meets SQL Server complexity requirements
+    .EXAMPLE
+        Get-SqlServerPassword -ContainerName "mydb-mssql"
+        Returns: "mydb-mssql#1A"
+    #>
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$ContainerName
+    )
+    
+    return "${ContainerName}#1A"
+}
+
 Function Test-IsOllamaRunning {
     <#
     .SYNOPSIS
@@ -580,4 +603,3 @@ Function Test-IsOllamaRunning {
         return $false
     }
 }
-

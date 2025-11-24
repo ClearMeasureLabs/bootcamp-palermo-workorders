@@ -196,7 +196,7 @@ Function MigrateDatabaseLocal {
 	
 	if (Test-IsLinux) {
 		$containerName = Get-ContainerName -DatabaseName $databaseNameFunc
-		$sqlPassword = "${containerName}#1A"
+		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
 		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts, "sa", $sqlPassword)
 	}
 	else {
@@ -222,13 +222,15 @@ Function Create-SqlServerInDocker {
 			[string]$scriptDir			
 		)
 	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName -generateUnique $true
-	
-	New-DockerContainerForSqlServer -containerName $(Get-ContainerName $tempDatabaseName)
+	$containerName = Get-ContainerName -DatabaseName $tempDatabaseName
+	$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+
+	New-DockerContainerForSqlServer -containerName $containerName
 	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
 	$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $tempDatabaseName)
+	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $sqlPassword)
 	& dotnet $dbArgs
 	if ($LASTEXITCODE -ne 0) {
 		throw "Database migration failed with exit code $LASTEXITCODE"
