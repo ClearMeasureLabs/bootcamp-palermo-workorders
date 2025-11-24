@@ -341,12 +341,10 @@ Function New-DockerContainerForSqlServer {
 
     # Stop any containers using port 1433
     Log-Message -Message "Checking for containers using port 1433..." -Type "INFO"
-    $containersOnPort1433 = docker ps --format "table {{.Names}}\t{{.Ports}}" | Select-String ":1433->" | ForEach-Object { 
-        ($_ -split '\s+')[0] 
-    }
+    $containersOnPort1433 = docker ps --filter "publish=1433" --format "{{.Names}}"
     
     foreach ($container in $containersOnPort1433) {
-        if ($container -and $container -ne "NAMES") {
+        if ($container) {
             Log-Message -Message "Stopping container '$container' that is using port 1433..." -Type "INFO"
             docker stop $container | Out-Null
             docker rm $container | Out-Null
