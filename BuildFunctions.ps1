@@ -532,7 +532,7 @@ Function Test-IsOllamaRunning {
     .DESCRIPTION
         Checks if Ollama is installed and the Ollama service is accessible by testing the API endpoint
     .PARAMETER LogOutput
-        If true, outputs detailed logging information
+        If true, outputs details about the Ollama installation (if any)
     .PARAMETER OllamaUrl
         The URL of the Ollama service. Defaults to http://localhost:11434
     .OUTPUTS
@@ -554,8 +554,7 @@ Function Test-IsOllamaRunning {
     $ollamaPath = (Get-Command ollama -ErrorAction SilentlyContinue).Source
     if (-not $ollamaPath) {
         if ($LogOutput) {
-            Log-Message -Message "Ollama is not installed or not in PATH" -Type "ERROR"
-            Log-Message -Message "Install Ollama from: https://ollama.ai/download" -Type "INFO"
+            Log-Message -Message "Ollama is not installed or not in PATH! Install Ollama from https://ollama.ai/download" -Type "WARNING"
         }
         return $false
     }
