@@ -165,12 +165,14 @@ jobs:
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
 
        # Run CIBuild script
       - name: Run CI Build Script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
         run: |
           pwsh -Command ". ./build.ps1; CIBuild"
 
