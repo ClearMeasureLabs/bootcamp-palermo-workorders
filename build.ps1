@@ -448,6 +448,9 @@ Function Run-AcceptanceTests {
 	& git restore 'src/**/appsettings*.json'
 	if (Test-Path $launchSettingsPath) {
 		& git restore $launchSettingsPath
+		if ($LASTEXITCODE -ne 0) {
+			Log-Message -Message "Warning: Failed to restore launchSettings.json" -Type "WARNING"
+		}
 	}
 
 	$sw.Stop()
