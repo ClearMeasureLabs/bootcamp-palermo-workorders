@@ -1,0 +1,146 @@
+name: Integration Build
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  MAJOR_VERSION: '1'
+  MINOR_VERSION: '0'
+  BUILD_CONFIGURATION: 'Release'
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Set Version
+      id: set_version
+      shell: pwsh
+      run: |
+        $version = "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+        echo "BUILD_BUILDNUMBER=$version" >> $env:GITHUB_ENV
+        Write-Host "Version set to: $version"
+
+    - name: Start SQL Server LocalDB
+      shell: pwsh
+      run: |
+        SqlLocalDB start MSSQLLocalDB
+        SqlLocalDB info MSSQLLocalDB
+
+    - name: Run CI Build
+      shell: pwsh
+      env:
+        BuildConfiguration: ${{ env.BUILD_CONFIGURATION }}
+        BUILD_BUILDNUMBER: ${{ env.VERSION }}
+      run: |
+        . .\build.ps1
+        CIBuild
+
+    - name: Run Acceptance Tests
+      shell: pwsh
+      env:
+        BuildConfiguration: ${{ env.BUILD_CONFIGURATION }}
+        BUILD_BUILDNUMBER: ${{ env.VERSION }}
+        # OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER_URL }}
+        # OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
+        # OCTOPUS_SPACE: ${{ secrets.OCTOPUS_SPACE }}
+        # OCTOPUS_PROJECT: ${{ secrets.OCTOPUS_PROJECT }}
+      run: |
+        .\AcceptanceTests.ps1
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: build/test/**/*.trx
+        retention-days: 30
+
+    - name: Upload Code Coverage
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage
+        path: build/test/**/coverage.cobertura.xml
+        retention-days: 30
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: packages
+        path: build/*.nupkg
+        retention-days: 30
+
+    - name: Publish Test Results
+      if: always()
+      uses: EnricoMi/publish-unit-test-result-action/windows@v2
+      with:
+        files: build/test/**/*.trx
+        check_name: Test Results
+
+  push-to-octopus:
+    name: Push to Octopus Deploy
+    runs-on: windows-latest
+    needs: build
+    if: github.event_name != 'pull_request'
+    
+    steps:
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: packages
+        path: packages
+
+    - name: Install Octopus CLI
+      shell: pwsh
+      run: |
+        dotnet tool install --global Octopus.DotNet.Cli --version 9.1.7
+
+    - name: Push Packages to Octopus
+      shell: pwsh
+      env:
+        OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER_URL }}
+        OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
+      run: |
+        $packages = Get-ChildItem -Path packages/*.nupkg
+        foreach ($package in $packages) {
+          Write-Host "Pushing $($package.Name) to Octopus Deploy..."
+          octo push --package $package.FullName --server $env:OCTOPUS_URL --apiKey $env:OCTOPUS_API_KEY --space Default
+        }
+
+    - name: Create and Deploy Release
+      shell: pwsh
+      env:
+        OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER_URL }}
+        OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
+        VERSION: ${{ needs.build.outputs.version }}
+      run: |
+        $version = "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+        
+        Write-Host "Creating release $version for ChurchBulletin project..."
+        octo create-release `
+          --project "ChurchBulletin" `
+          --version $version `
+          --server $env:OCTOPUS_URL `
+          --apiKey $env:OCTOPUS_API_KEY `
+          --space Default `
+          --deployTo "Development"
+        
+        Write-Host "Release $version created and deployed to Development"
