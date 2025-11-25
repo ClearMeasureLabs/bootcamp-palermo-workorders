@@ -27,42 +27,6 @@ stages:
             inputs:
               packageType: "runtime"
               version: "6.0.0"
-          # Start SQL Server LocalDB
-          - task: PowerShell@2
-            displayName: "Start and Verify SQL Server LocalDB (Windows only)"
-            condition: eq(variables['Agent.OS'], 'Windows_NT')
-            inputs:
-              pwsh: true
-              targetType: "inline"
-              script: |
-                Write-Host "Starting SQL Server LocalDB..."
-                sqllocaldb create MSSQLLocalDB -s
-                sqllocaldb start MSSQLLocalDB
-                sqllocaldb info MSSQLLocalDB
-                
-                Write-Host "Waiting for LocalDB to be ready..."
-                $maxAttempts = 30
-                $attempt = 0
-                $ready = $false
-                
-                while (-not $ready -and $attempt -lt $maxAttempts) {
-                    $attempt++
-                    try {
-                        $conn = New-Object System.Data.SqlClient.SqlConnection("Server=(LocalDb)\MSSQLLocalDB;Integrated Security=true;Connection Timeout=5")
-                        $conn.Open()
-                        $conn.Close()
-                        $ready = $true
-                        Write-Host "LocalDB is ready after $attempt attempts"
-                    }
-                    catch {
-                        Write-Host "Attempt $attempt : $_"
-                        Start-Sleep -Seconds 2
-                    }
-                }
-                
-                if (-not $ready) {
-                    throw "LocalDB failed to start after $maxAttempts attempts"
-                }
           # Set environment variables
           - task: PowerShell@2
             displayName: "Set Version Environment Variable"
@@ -73,7 +37,7 @@ stages:
                 [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
                 echo "Build Version: $env:Version"
           - task: PowerShell@2
-            displayName: "Run the Powershell build script"
+            displayName: "Run CIBuild"
             inputs:
               pwsh: true
               targetType: filePath
@@ -93,6 +57,13 @@ stages:
             inputs:
               codeCoverageTool: Cobertura
               summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/build/test/**/In/**/coverage.cobertura.xml"
+          - task: PowerShell@2
+            displayName: "Package Nugets"
+            inputs:
+              pwsh: true
+              targetType: filePath
+              filePath: ./build.ps1
+              arguments: ";Package-Everything"          
           - task: DotNetCoreCLI@2
             displayName: "Push NuGet packages."
             inputs:
@@ -125,7 +96,6 @@ stages:
               Dockerfile: "**/Dockerfile"
               tags: |
                 $(Build.BuildNumber)
-    #Azure junk db passwords - hsimpson123! - user is the name of the environment
 
   # Deploying to TDD
   - stage: "TDD"
@@ -150,6 +120,13 @@ stages:
                     downloadPath: "$(System.DefaultWorkingDirectory)"
                     extract: true
                 - task: PowerShell@2
+                  displayName: "Baseline database schema"
+                  inputs:
+                    pwsh: true
+                    targetType: filePath
+                    filePath: ./scripts/UpdateAzurePipelineSql.ps1
+                    arguments: -DatabaseServer "$(DatabaseServer)" -DatabaseName "ChurchBulletin" -DatabaseAction "baseline" -DatabaseUser "tdd" -DatabasePassword "$(DatabasePassword)"                    
+                - task: PowerShell@2
                   displayName: "Create database schema"
                   inputs:
                     pwsh: true
@@ -172,7 +149,7 @@ stages:
                     feed: "$(AzureFeedName)"
                     view: "Local"
                     definition: "ChurchBulletin.AcceptanceTests"
-                    version: "$(Build.Buildnumber)"
+                    version: "$(Build.BuildNumber)"
                     downloadPath: "$(System.DefaultWorkingDirectory)/tests"
                     extract: true
                 - task: DownloadPackage@1
@@ -182,9 +159,23 @@ stages:
                     feed: "$(AzureFeedName)"
                     view: "Local"
                     definition: "ChurchBulletin.Database"
-                    version: "$(Build.Buildnumber)"
+                    version: "$(Build.BuildNumber)"
                     downloadPath: "$(System.DefaultWorkingDirectory)/database"
                     extract: true
+
+                - task: PowerShell@2
+                  displayName: "Run ChurchBulletin.Database migration"
+                  inputs:
+                    pwsh: true
+                    targetType: "inline"
+                    script: |
+                      $databaseDll = Get-ChildItem -Path "$(System.DefaultWorkingDirectory)/database" -Filter "ClearMeasure.Bootcamp.Database.dll" -Recurse | Select-Object -First 1
+                      if ($databaseDll) {
+                        dotnet $databaseDll.FullName "$(DatabaseAction)" "$(DatabaseServer)" "ChurchBulletin" "$(System.DefaultWorkingDirectory)/database/scripts" "tdd" "$(DatabasePassword)"
+                      } else {
+                        Write-Error "ClearMeasure.Bootcamp.Database.dll not found in downloaded package"
+                        exit 1
+                      }
 
                 - task: PowerShell@2
                   displayName: "Install Playwright"
@@ -203,8 +194,7 @@ stages:
                       **\*AcceptanceTests.dll
                       !**\*TestAdapter.dll
                       !**\obj\**
-                    searchFolder: '$(System.DefaultWorkingDirectory)/tests'
-                    runSettingsFile: '$(System.DefaultWorkingDirectory)/tests/AcceptanceTests.runsettings'
+                      searchFolder: '$(System.DefaultWorkingDirectory)/tests'
                     uiTests: true
                     codeCoverageEnabled: true
                     testRunTitle: "Acceptance Tests"
@@ -234,7 +224,7 @@ stages:
                     feed: "$(AzureFeedName)"
                     view: "Local"
                     definition: "ChurchBulletin.Database"
-                    version: "$(Build.Build.Number)"
+                    version: "$(Build.BuildNumber)"
                     downloadPath: "$(System.DefaultWorkingDirectory)"
                     extract: true
                 - task: PowerShell@2

@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 . .\BuildFunctions.ps1
 
 # Clean environment variables that may interfere with local builds
@@ -57,6 +58,12 @@ Function Init {
 	}
 
 	if (Test-IsLinux) {
+		# Set NuGet cache to shorter path for Linux/WSL compatibility (only for local builds)
+		if (-not (Test-IsAzureDevOps) -and -not (Test-IsGitHubActions)) {
+			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
+			Log-Message -Message "Setting NUGET_PACKAGES to /tmp/nuget-packages for WSL" -Type "INFO"
+		}
+
 		Log-Message -Message "Running on Linux" -Type "INFO"
 		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 		if (Test-IsDockerRunning) {
@@ -149,11 +156,20 @@ Function AcceptanceTests {
 				Log-Message -Message "Playwright browsers are installed." -Type "INFO"
 			}
 			else {
-				Log-Message -Message "WARNING: Playwright browsers may not be installed. Run 'pwsh $playwrightScript install --with-deps' to install them." -Type "WARN"
+				Log-Message -Message "Playwright browsers not detected. Installing..." -Type "WARNING"
+				& pwsh $playwrightScript install --with-deps
+				if ($LASTEXITCODE -ne 0) {
+					throw "Failed to install Playwright browsers"
+				}
+				Log-Message -Message "Playwright browsers installed successfully." -Type "INFO"
 			}
 		}
 		catch {
-			Log-Message -Message "WARNING: Could not verify Playwright browser installation. Run 'pwsh $playwrightScript install --with-deps' if tests fail." -Type "WARN"
+			Log-Message -Message "WARNING: Could not verify Playwright browser installation. Attempting to install..." -Type "WARNING"
+			& pwsh $playwrightScript install --with-deps
+			if ($LASTEXITCODE -ne 0) {
+				throw "Failed to install Playwright browsers"
+			}
 		}
 	}
 	else {
@@ -273,16 +289,27 @@ Function Publish-ToGitHubPackages {
 }
 
 Function PackageUI {    
+	$packageName = "$projectName.UI.$version.nupkg"
+	$packagePath = Join-Path $build_dir $packageName
+
+	Log-Message -Message "Packaging UI project into NuGet package: $packageName" -Type "INFO"
 	exec {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
 	}
+	
+	Log-Message -Message "Creating Octopus package: $packageName" -Type "INFO"
 	exec {
 		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 	
+	if (Test-Path $packagePath) {
+		$packageSize = (Get-Item $packagePath).Length / 1MB
+		Log-Message -Message "Created package: $packageName ($([math]::Round($packageSize, 2)) MB)" -Type "INFO"
+	}
+	
 	# Log package creation (publishing handled separately)
 	if (Test-IsGitHubActions) {
-		Log-Message -Message "Would publish $projectName.UI.$version.nupkg to GitHub Packages" -Type "INFO"
+		Log-Message -Message "Would publish $packageName to GitHub Packages" -Type "INFO"
 	}
 	elseif (Test-IsAzureDevOps) {
 		# Azure DevOps pipeline handles publishing via separate task
@@ -687,7 +714,6 @@ Function Invoke-CIBuild {
 	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest
-	
 	# Restore appsettings files to their original git state
 	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
 	& git restore 'src/**/appsettings*.json'
@@ -695,7 +721,8 @@ Function Invoke-CIBuild {
 		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
 	}
 	
-	Package-Everything
+	# Package-Everything
+
 	$sw.Stop()
 	Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
 	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
