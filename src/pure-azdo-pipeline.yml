@@ -149,7 +149,7 @@ stages:
                     feed: "$(AzureFeedName)"
                     view: "Local"
                     definition: "ChurchBulletin.AcceptanceTests"
-                    version: "$(Build.Buildnumber)"
+                    version: "$(Build.BuildNumber)"
                     downloadPath: "$(System.DefaultWorkingDirectory)/tests"
                     extract: true
                 - task: DownloadPackage@1
@@ -159,7 +159,7 @@ stages:
                     feed: "$(AzureFeedName)"
                     view: "Local"
                     definition: "ChurchBulletin.Database"
-                    version: "$(Build.Buildnumber)"
+                    version: "$(Build.BuildNumber)"
                     downloadPath: "$(System.DefaultWorkingDirectory)/database"
                     extract: true
 
