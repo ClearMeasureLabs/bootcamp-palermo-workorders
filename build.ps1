@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 . .\BuildFunctions.ps1
 
 # Clean environment variables that may interfere with local builds
