@@ -90,7 +90,7 @@ jobs:
   acceptance-tests-and-publish:
     name: Acceptance Tests and Package
     runs-on: ubuntu-latest
-    needs: [build, build-linux]
+    needs: [build-linux]
     if: success()
     permissions:
       contents: read
