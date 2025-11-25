@@ -16,13 +16,6 @@ stages:
         pool:
           vmImage: "windows-latest"
         steps:
-          # Dependencies
-#          - task: UseDotNet@2
-#            displayName: "Install SDK 10.0.100"
-#            inputs:
-#              packageType: "sdk"
-#              version: "10.0.100"
-#              includePreviewVersions: true
           # Manual .NET 10 SDK Installation (fallback)
           - task: PowerShell@2
             displayName: "Install .NET 10 SDK Manually"
