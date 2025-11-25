@@ -171,7 +171,7 @@ stages:
                     script: |
                       $databaseDll = Get-ChildItem -Path "$(System.DefaultWorkingDirectory)/database" -Filter "ClearMeasure.Bootcamp.Database.dll" -Recurse | Select-Object -First 1
                       if ($databaseDll) {
-                        dotnet $databaseDll.FullName "$(DatabaseAction)" "$(DatabaseServer)" "ChurchBulletin" "$(System.DefaultWorkingDirectory)/database/scripts"
+                        dotnet $databaseDll.FullName "$(DatabaseAction)" "$(DatabaseServer)" "ChurchBulletin" "$(System.DefaultWorkingDirectory)/database/scripts" "tdd" "$(DatabasePassword)"
                       } else {
                         Write-Error "ClearMeasure.Bootcamp.Database.dll not found in downloaded package"
                         exit 1
