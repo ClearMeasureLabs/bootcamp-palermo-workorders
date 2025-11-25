@@ -10,8 +10,4 @@ if ([string]::IsNullOrEmpty($databaseServer) -and -not [string]::IsNullOrEmpty($
 }
 
 . .\build.ps1
-
 Run-AcceptanceTests -databaseServer $databaseServer -databaseName "ChurchBulletin"
-
-# Package everything after acceptance tests complete successfully
-Package-Everything
