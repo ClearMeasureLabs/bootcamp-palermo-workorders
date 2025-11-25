@@ -13,5 +13,5 @@ if ([string]::IsNullOrEmpty($databaseServer) -and -not [string]::IsNullOrEmpty($
 
 Run-AcceptanceTests -databaseServer $databaseServer -databaseName "ChurchBulletin"
 
-# Package everything after acceptance tests complete successfully
-Package-Everything
+# Package everything  - a seperate step in the GH action.
+#Package-Everything
