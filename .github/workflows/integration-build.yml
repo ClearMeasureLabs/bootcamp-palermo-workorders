@@ -222,17 +222,6 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
 
-      # Install Playwright Browsers
-      - name: Install Playwright Browsers
-        shell: pwsh
-        run: |
-          $playwrightScript = Join-Path "src" "AcceptanceTests" "bin" "Release" "net9.0" "playwright.ps1"
-          if (-not (Test-Path $playwrightScript)) {
-            Write-Error "Playwright script not found at $playwrightScript"
-            exit 1
-          }
-          pwsh $playwrightScript install --with-deps
-
       # Run Acceptance Tests
       - name: Run Acceptance Tests
         shell: pwsh
