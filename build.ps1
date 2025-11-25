@@ -32,7 +32,7 @@ $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
 $script:databaseServer = $databaseServer;
-$script:databaseScripts = Join-Path $source_dir "Database" "scripts"
+$script:databaseScripts = Join-PathSegments $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
