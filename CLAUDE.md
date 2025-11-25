@@ -14,10 +14,10 @@ This is a Work Order management system built with .NET 9.0, implementing Onion A
 .\build.bat
 
 # Private build (local development - includes clean, compile, unit tests, DB migration, integration tests)
-.\build.ps1 ; PrivateBuild
+.\build.ps1 ; Invoke-PrivateBuild
 
-# CI build (includes PrivateBuild + packaging)
-.\build.ps1 ; CIBuild
+# CI build (includes Invoke-PrivateBuild + packaging)
+.\build.ps1 ; Invoke-CIBuild
 
 # Using dotnet CLI directly
 dotnet build src/ChurchBulletin.sln --configuration Release
@@ -163,7 +163,7 @@ The solution follows strict Onion Architecture with dependency flow inward:
 1. Create numbered script in `src/Database/scripts/Update/`
 2. Use next sequential number (e.g., if 004 exists, create 005)
 3. Script naming: `###_Description.sql`
-4. Run PrivateBuild to apply locally
+4. Run Invoke-PrivateBuild to apply locally
 
 ### Migration Actions
 - `Create`: Create new database

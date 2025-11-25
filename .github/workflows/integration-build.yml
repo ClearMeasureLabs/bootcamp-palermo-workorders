@@ -142,12 +142,12 @@ jobs:
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "Build version: $version"
 
-       # Run CIBuild script
+       # Run Invoke-CIBuild script
       - name: Run CI Build Script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pwsh -Command ". ./build.ps1; CIBuild"
+          pwsh -Command ". ./build.ps1; Invoke-CIBuild"
 
       # Upload packages as artifacts
       - name: Upload NuGet Packages

@@ -16,10 +16,10 @@ This is a Church Bulletin management application built with:
 Build the project using PowerShell:
 ```powershell
 # Full private build (includes tests)
-.\build.ps1 PrivateBuild
+.\build.ps1 Invoke-PrivateBuild
 
 # CI build (includes packaging)
-.\build.ps1 CIBuild
+.\build.ps1 Invoke-CIBuild
 
 # Individual build steps
 .\build.ps1 Init      # Clean and restore

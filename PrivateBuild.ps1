@@ -20,4 +20,4 @@ if ([string]::IsNullOrEmpty($databaseServer)) {
     }
 }
 
-PrivateBuild -databaseServer $databaseServer 
+Invoke-PrivateBuild -databaseServer $databaseServer 

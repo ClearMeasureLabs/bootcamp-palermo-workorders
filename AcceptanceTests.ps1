@@ -15,4 +15,4 @@ else {
 
 . .\build.ps1
 
-Run-AcceptanceTests -databaseServer $databaseServer -databaseName "ChurchBulletin"
+Invoke-AcceptanceTests -databaseServer $databaseServer -databaseName "ChurchBulletin"
