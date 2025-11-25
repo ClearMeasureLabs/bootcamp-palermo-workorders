@@ -192,7 +192,7 @@ Function MigrateDatabaseLocal {
 		[ValidateNotNullOrEmpty()]
 		[string]$databaseNameFunc
 	)
-	$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	
 	if (Test-IsLinux) {
 		$containerName = Get-ContainerName -DatabaseName $databaseNameFunc

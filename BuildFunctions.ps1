@@ -601,3 +601,41 @@ Function Test-IsOllamaRunning {
         return $false
     }
 }
+
+<#
+.SYNOPSIS
+    Joins multiple path segments into a single path using nested Join-Path calls.
+.DESCRIPTION
+    Creates a cross-platform and cross-version compatible path by joining multiple segments.
+    Works with PowerShell 5.1+ and pwsh 6.0+. Handles proper path separators for Windows and Linux.
+.PARAMETER PathSegments
+    Array of path segments to join together.
+.EXAMPLE
+    Join-PathSegments "C:\test", "Database", "bin", "Release", "net9.0", "test.dll"
+    Returns: C:\test\Database\bin\Release\net9.0\test.dll (on Windows)
+.EXAMPLE
+    Join-PathSegments "/home", "user", "projects", "src", "file.txt"
+    Returns: /home/user/projects/src/file.txt (on Linux)
+#>
+function Join-PathSegments {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true, ValueFromRemainingArguments = $true)]
+        [string[]]$PathSegments
+    )
+    
+    if ($PathSegments.Count -eq 0) {
+        throw "At least one path segment must be provided"
+    }
+    
+    if ($PathSegments.Count -eq 1) {
+        return $PathSegments[0]
+    }
+    
+    $result = $PathSegments[0]
+    for ($i = 1; $i -lt $PathSegments.Count; $i++) {
+        $result = Join-Path $result $PathSegments[$i]
+    }
+    
+    return $result
+}
