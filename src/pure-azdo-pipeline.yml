@@ -93,13 +93,13 @@ stages:
             inputs:
               codeCoverageTool: Cobertura
               summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/build/test/**/In/**/coverage.cobertura.xml"
-          - task: DotNetCoreCLI@2
-            displayName: "Push NuGet packages."
-            inputs:
-              command: "push"
-              packagesToPush: "$(System.DefaultWorkingDirectory)/build/*.nupkg"
-              nuGetFeedType: "internal"
-              publishVstsFeed: "$(AzureFeedName)"
+          # - task: DotNetCoreCLI@2
+          #   displayName: "Push NuGet packages."
+          #   inputs:
+          #     command: "push"
+          #     packagesToPush: "$(System.DefaultWorkingDirectory)/build/*.nupkg"
+          #     nuGetFeedType: "internal"
+          #     publishVstsFeed: "$(AzureFeedName)"
       - job: "DockerBuildandPush"
         pool:
           vmImage: "ubuntu-latest"
