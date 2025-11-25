@@ -6,6 +6,7 @@
 		<Nullable>enable</Nullable>
 
 		<IsPackable>false</IsPackable>
+		<PreserveCompilationContext>true</PreserveCompilationContext>
 
 		<AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
 		<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
