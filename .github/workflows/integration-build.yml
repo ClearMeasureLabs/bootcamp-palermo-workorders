@@ -143,6 +143,7 @@ jobs:
 
        # Run CIBuild script
       - name: Run CI Build Script
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
