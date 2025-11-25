@@ -28,6 +28,40 @@ stages:
             inputs:
               packageType: "runtime"
               version: "6.0.0"
+          # Manual .NET 10 SDK Installation (fallback)
+          - task: PowerShell@2
+            displayName: "Install .NET 10 SDK Manually"
+            inputs:
+              pwsh: true
+              targetType: "inline"
+              script: |
+                Write-Host "Checking current SDK..."
+                dotnet --list-sdks
+                dotnet --version
+                
+                # Check if .NET 10 SDK is already available
+                $sdks = dotnet --list-sdks
+                if ($sdks -match "10\.0\.") {
+                  Write-Host "? .NET 10 SDK is already installed"
+                  exit 0
+                }
+                
+                # Download and install .NET 10 SDK using official installer script
+                Write-Host "Downloading .NET 10 SDK installer script..."
+                try {
+                  Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1"
+                  Write-Host "Installing .NET 10 SDK..."
+                  & "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -Quality preview -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                  
+                  Write-Host "? SDK installation completed"
+                  Write-Host "Available SDKs:"
+                  dotnet --list-sdks
+                  dotnet --version
+                } catch {
+                  Write-Warning "? Could not install SDK: $_"
+                  Write-Host "Attempting to continue with existing SDKs..."
+                  dotnet --list-sdks
+                }
           # Set environment variables
           - task: PowerShell@2
             displayName: "Set Version Environment Variable"
