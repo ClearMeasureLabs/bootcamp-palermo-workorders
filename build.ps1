@@ -9,21 +9,21 @@ if ($env:ConnectionStrings__SqlConnectionString) {
 
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
-$source_dir = Join-PathSegments $base_dir "src"
-$solutionName = Join-PathSegments $source_dir "$projectName.sln"
-$unitTestProjectPath = Join-PathSegments $source_dir "UnitTests"
-$integrationTestProjectPath = Join-PathSegments $source_dir "IntegrationTests"
-$acceptanceTestProjectPath = Join-PathSegments $source_dir "AcceptanceTests"
-$uiProjectPath = Join-PathSegments $source_dir "UI" "Server"
-$databaseProjectPath = Join-PathSegments $source_dir "Database"
+$source_dir = Join-Path $base_dir "src"
+$solutionName = Join-Path $source_dir "$projectName.sln"
+$unitTestProjectPath = Join-Path $source_dir "UnitTests"
+$integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
+$acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
+$uiProjectPath = Join-Path $source_dir "UI" -AdditionalChildPath "Server"
+$databaseProjectPath = Join-Path $source_dir "Database"
 $projectConfig = $env:BuildConfiguration
 $framework = "net9.0"
 $version = $env:BUILD_BUILDNUMBER
 
 $verbosity = "minimal"
 
-$build_dir = Join-PathSegments $base_dir "build"
-$test_dir = Join-PathSegments $build_dir "test"
+$build_dir = Join-Path $base_dir "build"
+$test_dir = Join-Path $build_dir "test"
 
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
@@ -106,7 +106,7 @@ Function UnitTests {
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $(Join-PathSegments $test_dir "UnitTests") --no-build `
+				--results-directory $(Join-Path $test_dir "UnitTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
@@ -122,7 +122,7 @@ Function IntegrationTest {
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $(Join-PathSegments $test_dir "IntegrationTests") --no-build `
+				--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
@@ -167,11 +167,11 @@ Function AcceptanceTests {
 	}
 
 	Log-Message -Message "Running Acceptance Tests" -Type "INFO"
-	$runSettingsPath = Join-PathSegments $acceptanceTestProjectPath "AcceptanceTests.runsettings"
+	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $(Join-PathSegments $test_dir "AcceptanceTests") --no-build `
+				--results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--settings:$runSettingsPath `
 				--collect:"XPlat Code Coverage"
@@ -697,6 +697,6 @@ Function Invoke-CIBuild {
 	
 	Package-Everything
 	$sw.Stop()
-	Log-Message -Message "CIBUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
 	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
