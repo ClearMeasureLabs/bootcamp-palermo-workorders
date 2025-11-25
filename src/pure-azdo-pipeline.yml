@@ -96,7 +96,6 @@ stages:
               Dockerfile: "**/Dockerfile"
               tags: |
                 $(Build.BuildNumber)
-    #Azure junk db passwords - hsimpson123! - user is the name of the environment
 
   # Deploying to TDD
   - stage: "TDD"
@@ -130,7 +129,9 @@ stages:
                 - task: PowerShell@2
                   displayName: "Create database schema"
                   inputs:
-                Path: ./scripts/UpdateAzurePipelineSql.ps1
+                    pwsh: true
+                    targetType: filePath
+                    filePath: ./scripts/UpdateAzurePipelineSql.ps1
                     arguments: -DatabaseServer "$(DatabaseServer)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "tdd" -DatabasePassword "$(DatabasePassword)"
 
                 - task: AzureCLI@2
@@ -223,7 +224,7 @@ stages:
                     feed: "$(AzureFeedName)"
                     view: "Local"
                     definition: "ChurchBulletin.Database"
-                    version: "$(Build.Build.Number)"
+                    version: "$(Build.BuildNumber)"
                     downloadPath: "$(System.DefaultWorkingDirectory)"
                     extract: true
                 - task: PowerShell@2
