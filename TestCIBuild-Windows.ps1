@@ -110,7 +110,7 @@ function Run-CIBuild {
     Show-Header "Running CI Build"
     
     . .\build.ps1
-    CIBuild
+    Invoke-CIBuild
     
     if ($LASTEXITCODE -ne 0) {
         throw "CI Build failed"

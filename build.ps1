@@ -33,7 +33,7 @@ $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
 $script:databaseServer = $databaseServer;
-$script:databaseScripts = Join-Path $source_dir "Database" "scripts"
+$script:databaseScripts = Join-PathSegments $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
@@ -144,7 +144,7 @@ Function AcceptanceTests {
 	Push-Location -Path $acceptanceTestProjectPath
 
 	Log-Message -Message "Checking Playwright browsers for Acceptance Tests" -Type "INFO"
-	$playwrightScript = Join-Path "bin" "Release" $framework "playwright.ps1"
+	$playwrightScript = Join-PathSegments "bin" "Release" $framework "playwright.ps1"
 
 	if (Test-Path $playwrightScript) {
 		Log-Message -Message "Playwright script found at $playwrightScript." -Type "INFO"
@@ -208,7 +208,7 @@ Function MigrateDatabaseLocal {
 		[ValidateNotNullOrEmpty()]
 		[string]$databaseNameFunc
 	)
-	$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	
 	if (Test-IsLinux) {
 		$containerName = Get-ContainerName -DatabaseName $databaseNameFunc
@@ -245,7 +245,7 @@ Function Create-SqlServerInDocker {
 	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
-	$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $sqlPassword)
 	& dotnet $dbArgs
 	if ($LASTEXITCODE -ne 0) {
@@ -299,7 +299,7 @@ Function PackageUI {
 	
 	Log-Message -Message "Creating Octopus package: $packageName" -Type "INFO"
 	exec {
-		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-Path $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
+		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 	
 	if (Test-Path $packagePath) {
@@ -337,7 +337,7 @@ Function PackageAcceptanceTests {
 		& dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-Path $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
+		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
 	}
 	
 	# Log package creation (publishing handled separately)
@@ -395,7 +395,49 @@ Function Package-Everything{
 	PackageScript
 }
 
-Function Run-AcceptanceTests {
+<#
+.SYNOPSIS
+Executes a complete build with acceptance tests and packaging.
+
+.DESCRIPTION
+The Invoke-AcceptanceTests function performs a full build including initialization, compilation, 
+database setup, acceptance tests with Playwright browser automation, and NuGet package creation. 
+This function is designed for end-to-end validation before deployment.
+
+On Linux, creates a SQL Server Docker container with a non-unique database name.
+On Windows, uses LocalDB with a unique timestamp-based database name.
+
+Build steps:
+1. Init - Clean and restore NuGet packages
+2. Compile - Build the solution
+3. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows)
+4. Update appsettings.json files with connection strings
+5. Temporarily disable ConnectionStrings in launchSettings.json to prevent override
+6. MigrateDatabaseLocal - Run database migrations
+7. AcceptanceTests - Run Playwright browser-based acceptance tests (auto-installs browsers)
+8. Restore appsettings.json and launchSettings.json files to git state
+9. Package-Everything - Create NuGet packages for deployment
+
+.PARAMETER databaseServer
+Optional. Specifies the database server to use. If not provided, defaults to "localhost" 
+on Linux or "(LocalDb)\MSSQLLocalDB" on Windows.
+
+.PARAMETER databaseName
+Optional. Specifies the database name to use. If not provided, generates a unique name 
+based on the project name and timestamp (Windows only).
+
+.EXAMPLE
+Invoke-AcceptanceTests
+
+.EXAMPLE
+Invoke-AcceptanceTests -databaseServer "localhost" -databaseName "ChurchBulletin_Test"
+
+.NOTES
+Requires Docker on Linux, Ollama running for AI tests, and Playwright browsers installed.
+Sets containerAppURL environment variable to "localhost:7174".
+Automatically installs Playwright browsers if not present.
+#>
+Function Invoke-AcceptanceTests {
 	param (
 		[Parameter(Mandatory = $false)]
 		[string]$databaseServer = "",
@@ -461,7 +503,7 @@ Function Run-AcceptanceTests {
 	
 	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
 	# This prevents the Windows LocalDB connection string from overriding appsettings.json
-	$launchSettingsPath = Join-Path $source_dir "UI" "Server" "Properties" "launchSettings.json"
+	$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
 	if (Test-Path $launchSettingsPath) {
 		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
 		$launchSettings = Get-Content $launchSettingsPath -Raw
@@ -490,13 +532,50 @@ Function Run-AcceptanceTests {
 	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
 
-Function PrivateBuild {
+<#
+.SYNOPSIS
+Executes a local developer build with unit and integration tests.
+
+.DESCRIPTION
+The Invoke-PrivateBuild function runs a complete build process for local development including 
+initialization, compilation, unit tests, database setup, and integration tests. This function 
+is intended for developers to validate changes locally before committing code.
+
+On Linux, creates a SQL Server Docker container with a non-unique database name.
+On Windows, uses LocalDB with a unique timestamp-based database name to avoid conflicts.
+
+Build steps:
+1. Init - Clean and restore NuGet packages
+2. Compile - Build the solution
+3. UnitTests - Run unit tests
+4. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows)
+5. Update appsettings.json files with connection strings
+6. MigrateDatabaseLocal - Run database migrations
+7. IntegrationTest - Run integration tests
+8. Restore appsettings.json files to git state
+
+Note: Does NOT create NuGet packages. Use Invoke-CIBuild or Invoke-AcceptanceTests for packaging.
+
+.PARAMETER databaseServer
+Optional. Specifies the database server to use. If not provided, defaults to "localhost" 
+on Linux or "(LocalDb)\MSSQLLocalDB" on Windows.
+
+.EXAMPLE
+Invoke-PrivateBuild
+
+.EXAMPLE
+Invoke-PrivateBuild -databaseServer "localhost"
+
+.NOTES
+Requires Docker on Linux. Sets containerAppURL environment variable to "localhost:7174".
+#>
+Function Invoke-PrivateBuild {
 	param (
 		[Parameter(Mandatory = $false)]
 		[string]$databaseServer = ""
 	)
 	
-	Log-Message -Message "Starting PrivateBuild..." -Type "INFO"
+	Log-Message -Message "Starting Invoke-PrivateBuild..." -Type "INFO"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	
 	# Set database server from parameter if provided
@@ -562,15 +641,45 @@ Function PrivateBuild {
 	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
 
-Function CIBuild {
+<#
+.SYNOPSIS
+Executes a complete continuous integration build pipeline.
+
+.DESCRIPTION
+The Invoke-CIBuild function runs a full CI/CD build process including initialization, compilation, 
+unit tests, database setup, integration tests, and packaging. This function is designed to 
+run in CI/CD environments (Azure DevOps, GitHub Actions) or locally.
+
+On Linux, creates a SQL Server Docker container with a non-unique database name.
+On Windows, uses LocalDB with a unique database name.
+
+Build steps:
+1. Init - Clean and restore NuGet packages
+2. Compile - Build the solution
+3. UnitTests - Run unit tests
+4. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows)
+5. Update appsettings.json files with connection strings
+6. MigrateDatabaseLocal - Run database migrations
+7. IntegrationTest - Run integration tests
+8. Restore appsettings.json files to git state
+9. Package-Everything - Create NuGet packages for deployment
+
+.EXAMPLE
+Invoke-CIBuild
+
+.NOTES
+Requires Docker on Linux. Uses Test-IsLinux, Test-IsAzureDevOps, and Test-IsGitHubActions 
+to detect environment and adjust behavior accordingly.
+#>
+Function Invoke-CIBuild {
 	if (Test-IsAzureDevOps) {
-		Log-Message -Message "Starting CIBuild on Azure DevOps..." -Type "INFO"
+		Log-Message -Message "Starting Invoke-CIBuild on Azure DevOps..." -Type "INFO"
 	}
 	elseif (Test-IsGitHubActions) {
-		Log-Message -Message "Starting CIBuild on GitHub Actions..." -Type "INFO"
+		Log-Message -Message "Starting Invoke-CIBuild on GitHub Actions..." -Type "INFO"
 	}
 	else {
-		Log-Message -Message "Starting CIBuild..." -Type "INFO"
+		Log-Message -Message "Starting Invoke-CIBuild..." -Type "INFO"
 	}
 	
 	$sw = [Diagnostics.Stopwatch]::StartNew()
@@ -615,6 +724,6 @@ Function CIBuild {
 	# Package-Everything
 
 	$sw.Stop()
-	Log-Message -Message "CIBUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
 	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
