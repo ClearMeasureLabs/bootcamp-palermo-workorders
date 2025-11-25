@@ -18,6 +18,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      BUILD_CONFIGURATION: Release
     
     steps:
       # Checkout code
@@ -157,6 +159,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      BUILD_CONFIGURATION: Release
     
     steps:
       # Checkout code
