@@ -49,7 +49,7 @@ jobs:
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
         run: |
           . ./build.ps1
-          CIBuild
+          Invoke-CIBuild
 
       # Publish test results
       - name: Test Reporter
