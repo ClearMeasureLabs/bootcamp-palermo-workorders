@@ -18,7 +18,7 @@ $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
 $uiProjectPath = Join-Path $source_dir "UI" -AdditionalChildPath "Server"
 $databaseProjectPath = Join-Path $source_dir "Database"
 $projectConfig = $env:BuildConfiguration
-$framework = "net9.0"
+$framework = "net10.0"
 $version = $env:BUILD_BUILDNUMBER
 
 $verbosity = "minimal"
