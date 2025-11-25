@@ -11,7 +11,7 @@ if ([string]::IsNullOrEmpty($databaseServer) -and -not [string]::IsNullOrEmpty($
 	Log-Message -Message "Using database server from pipeline variable: $databaseServer" -Type "INFO"
 }
 
-Run-AcceptanceTests -databaseServer $databaseServer -databaseName "ChurchBulletin"
+Invoke-AcceptanceTests -databaseServer $databaseServer -databaseName "ChurchBulletin"
 
 # Package everything  - a seperate step in the GH action.
 #Package-Everything
