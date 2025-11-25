@@ -9,21 +9,21 @@ if ($env:ConnectionStrings__SqlConnectionString) {
 
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
-$source_dir = Join-Path $base_dir "src"
-$solutionName = Join-Path $source_dir "$projectName.sln"
-$unitTestProjectPath = Join-Path $source_dir "UnitTests"
-$integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
-$acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
-$uiProjectPath = Join-Path $source_dir "UI" -AdditionalChildPath "Server"
-$databaseProjectPath = Join-Path $source_dir "Database"
+$source_dir = Join-PathSegments $base_dir "src"
+$solutionName = Join-PathSegments $source_dir "$projectName.sln"
+$unitTestProjectPath = Join-PathSegments $source_dir "UnitTests"
+$integrationTestProjectPath = Join-PathSegments $source_dir "IntegrationTests"
+$acceptanceTestProjectPath = Join-PathSegments $source_dir "AcceptanceTests"
+$uiProjectPath = Join-PathSegments $source_dir "UI" "Server"
+$databaseProjectPath = Join-PathSegments $source_dir "Database"
 $projectConfig = $env:BuildConfiguration
 $framework = "net9.0"
 $version = $env:BUILD_BUILDNUMBER
 
 $verbosity = "minimal"
 
-$build_dir = Join-Path $base_dir "build"
-$test_dir = Join-Path $build_dir "test"
+$build_dir = Join-PathSegments $base_dir "build"
+$test_dir = Join-PathSegments $build_dir "test"
 
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
@@ -106,7 +106,7 @@ Function UnitTests {
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $(Join-Path $test_dir "UnitTests") --no-build `
+				--results-directory $(Join-PathSegments $test_dir "UnitTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
@@ -122,7 +122,7 @@ Function IntegrationTest {
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
+				--results-directory $(Join-PathSegments $test_dir "IntegrationTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
@@ -137,7 +137,7 @@ Function AcceptanceTests {
 	Push-Location -Path $acceptanceTestProjectPath
 
 	Log-Message -Message "Checking Playwright browsers for Acceptance Tests" -Type "INFO"
-	$playwrightScript = Join-Path "bin" "Release" $framework "playwright.ps1"
+	$playwrightScript = Join-PathSegments "bin" "Release" $framework "playwright.ps1"
 
 	if (Test-Path $playwrightScript) {
 		Log-Message -Message "Playwright script found at $playwrightScript." -Type "INFO"
@@ -167,11 +167,11 @@ Function AcceptanceTests {
 	}
 
 	Log-Message -Message "Running Acceptance Tests" -Type "INFO"
-	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
+	$runSettingsPath = Join-PathSegments $acceptanceTestProjectPath "AcceptanceTests.runsettings"
 	try {
 		exec {
 			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
+				--results-directory $(Join-PathSegments $test_dir "AcceptanceTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--settings:$runSettingsPath `
 				--collect:"XPlat Code Coverage"
@@ -229,7 +229,7 @@ Function Create-SqlServerInDocker {
 	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
-	$databaseDll = Join-Path $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $sqlPassword)
 	& dotnet $dbArgs
 	if ($LASTEXITCODE -ne 0) {
@@ -277,7 +277,7 @@ Function PackageUI {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-Path $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
+		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 	
 	# Log package creation (publishing handled separately)
@@ -310,7 +310,7 @@ Function PackageAcceptanceTests {
 		& dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-Path $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
+		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
 	}
 	
 	# Log package creation (publishing handled separately)
@@ -476,7 +476,7 @@ Function Invoke-AcceptanceTests {
 	
 	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
 	# This prevents the Windows LocalDB connection string from overriding appsettings.json
-	$launchSettingsPath = Join-Path $source_dir "UI" "Server" "Properties" "launchSettings.json"
+	$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
 	if (Test-Path $launchSettingsPath) {
 		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
 		$launchSettings = Get-Content $launchSettingsPath -Raw
