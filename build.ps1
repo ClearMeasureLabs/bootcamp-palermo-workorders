@@ -156,11 +156,20 @@ Function AcceptanceTests {
 				Log-Message -Message "Playwright browsers are installed." -Type "INFO"
 			}
 			else {
-				Log-Message -Message "WARNING: Playwright browsers may not be installed. Run 'pwsh $playwrightScript install --with-deps' to install them." -Type "WARN"
+				Log-Message -Message "Playwright browsers not detected. Installing..." -Type "WARNING"
+				& pwsh $playwrightScript install --with-deps
+				if ($LASTEXITCODE -ne 0) {
+					throw "Failed to install Playwright browsers"
+				}
+				Log-Message -Message "Playwright browsers installed successfully." -Type "INFO"
 			}
 		}
 		catch {
-			Log-Message -Message "WARNING: Could not verify Playwright browser installation. Run 'pwsh $playwrightScript install --with-deps' if tests fail." -Type "WARN"
+			Log-Message -Message "WARNING: Could not verify Playwright browser installation. Attempting to install..." -Type "WARNING"
+			& pwsh $playwrightScript install --with-deps
+			if ($LASTEXITCODE -ne 0) {
+				throw "Failed to install Playwright browsers"
+			}
 		}
 	}
 	else {
