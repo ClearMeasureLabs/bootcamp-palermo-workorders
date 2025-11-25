@@ -144,6 +144,38 @@ stages:
           runOnce:
             deploy:
               steps:
+                # Install .NET 10 Runtime for Database migrations
+                - task: PowerShell@2
+                  displayName: "Install .NET 10 Runtime"
+                  inputs:
+                    pwsh: true
+                    targetType: "inline"
+                    script: |
+                      Write-Host "Checking current .NET runtimes..."
+                      dotnet --list-runtimes
+                      
+                      # Check if .NET 10 runtime is already available
+                      $runtimes = dotnet --list-runtimes
+                      if ($runtimes -match "Microsoft.NETCore.App 10\.0\.") {
+                        Write-Host "? .NET 10 runtime is already installed"
+                        exit 0
+                      }
+                      
+                      # Download and install .NET 10 runtime
+                      Write-Host "Downloading .NET 10 runtime installer script..."
+                      try {
+                        Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1"
+                        Write-Host "Installing .NET 10 runtime..."
+                        & "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -Quality preview -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                        
+                        Write-Host "? Runtime installation completed"
+                        Write-Host "Available runtimes:"
+                        dotnet --list-runtimes
+                      } catch {
+                        Write-Warning "? Could not install runtime: $_"
+                        Write-Host "Attempting to continue..."
+                        dotnet --list-runtimes
+                      }
                 - task: DownloadPackage@1
                   displayName: "Download Database Package"
                   inputs:
@@ -252,6 +284,38 @@ stages:
           runOnce:
             deploy:
               steps:
+                # Install .NET 10 Runtime for Database migrations
+                - task: PowerShell@2
+                  displayName: "Install .NET 10 Runtime"
+                  inputs:
+                    pwsh: true
+                    targetType: "inline"
+                    script: |
+                      Write-Host "Checking current .NET runtimes..."
+                      dotnet --list-runtimes
+                      
+                      # Check if .NET 10 runtime is already available
+                      $runtimes = dotnet --list-runtimes
+                      if ($runtimes -match "Microsoft.NETCore.App 10\.0\.") {
+                        Write-Host "? .NET 10 runtime is already installed"
+                        exit 0
+                      }
+                      
+                      # Download and install .NET 10 runtime
+                      Write-Host "Downloading .NET 10 runtime installer script..."
+                      try {
+                        Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1"
+                        Write-Host "Installing .NET 10 runtime..."
+                        & "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -Quality preview -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                        
+                        Write-Host "? Runtime installation completed"
+                        Write-Host "Available runtimes:"
+                        dotnet --list-runtimes
+                      } catch {
+                        Write-Warning "? Could not install runtime: $_"
+                        Write-Host "Attempting to continue..."
+                        dotnet --list-runtimes
+                      }
                 - task: DownloadPackage@1
                   displayName: "Download Database Package"
                   inputs:
@@ -290,6 +354,38 @@ stages:
           runOnce:
             deploy:
               steps:
+                # Install .NET 10 Runtime for Database migrations
+                - task: PowerShell@2
+                  displayName: "Install .NET 10 Runtime"
+                  inputs:
+                    pwsh: true
+                    targetType: "inline"
+                    script: |
+                      Write-Host "Checking current .NET runtimes..."
+                      dotnet --list-runtimes
+                      
+                      # Check if .NET 10 runtime is already available
+                      $runtimes = dotnet --list-runtimes
+                      if ($runtimes -match "Microsoft.NETCore.App 10\.0\.") {
+                        Write-Host "? .NET 10 runtime is already installed"
+                        exit 0
+                      }
+                      
+                      # Download and install .NET 10 runtime
+                      Write-Host "Downloading .NET 10 runtime installer script..."
+                      try {
+                        Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1"
+                        Write-Host "Installing .NET 10 runtime..."
+                        & "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -Quality preview -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                        
+                        Write-Host "? Runtime installation completed"
+                        Write-Host "Available runtimes:"
+                        dotnet --list-runtimes
+                      } catch {
+                        Write-Warning "? Could not install runtime: $_"
+                        Write-Host "Attempting to continue..."
+                        dotnet --list-runtimes
+                      }
                 - task: DownloadPackage@1
                   displayName: "Download Database Package"
                   inputs:
