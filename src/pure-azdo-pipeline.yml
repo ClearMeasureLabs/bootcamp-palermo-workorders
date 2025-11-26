@@ -16,12 +16,40 @@ stages:
         pool:
           vmImage: "windows-latest"
         steps:
-          # Dependencies
-          - task: UseDotNet@2
-            displayName: "Install SDK 9.0.302"
+          # Manual .NET 10 SDK Installation (fallback)
+          - task: PowerShell@2
+            displayName: "Install .NET 10 SDK Manually"
             inputs:
-              packageType: "sdk"
-              version: "9.0.302"
+              pwsh: true
+              targetType: "inline"
+              script: |
+                Write-Host "Checking current SDK..."
+                dotnet --list-sdks
+                dotnet --version
+                
+                # Check if .NET 10 SDK is already available
+                $sdks = dotnet --list-sdks
+                if ($sdks -match "10\.0\.") {
+                  Write-Host "? .NET 10 SDK is already installed"
+                  exit 0
+                }
+                
+                # Download and install .NET 10 SDK using official installer script
+                Write-Host "Downloading .NET 10 SDK installer script..."
+                try {
+                  Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1"
+                  Write-Host "Installing .NET 10 SDK..."
+                  & "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                  
+                  Write-Host "? SDK installation completed"
+                  Write-Host "Available SDKs:"
+                  dotnet --list-sdks
+                  dotnet --version
+                } catch {
+                  Write-Warning "? Could not install SDK: $_"
+                  Write-Host "Attempting to continue with existing SDKs..."
+                  dotnet --list-sdks
+                }
           - task: UseDotNet@2
             displayName: "Install Runtime 6.0.0"
             inputs:
@@ -109,6 +137,50 @@ stages:
           runOnce:
             deploy:
               steps:
+                # Install .NET 10 Runtimes for Database migrations and Acceptance Tests
+                - task: PowerShell@2
+                  displayName: "Install .NET 10 Runtimes"
+                  inputs:
+                    pwsh: true
+                    targetType: "inline"
+                    script: |
+                      Write-Host "Checking current .NET runtimes..."
+                      dotnet --list-runtimes
+                      
+                      # Download installer script
+                      Write-Host "Downloading .NET 10 runtime installer script..."
+                      Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1"
+                      
+                      # Install .NET 10 Core Runtime (for Database.dll)
+                      $coreInstalled = (dotnet --list-runtimes) -match "Microsoft.NETCore.App 10\.0\."
+                      if (-not $coreInstalled) {
+                        try {
+                          Write-Host "Installing .NET 10 Core runtime..."
+                          & "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                          Write-Host "? Core runtime installation completed"
+                        } catch {
+                          Write-Warning "? Could not install Core runtime: $_"
+                        }
+                      } else {
+                        Write-Host "? .NET 10 Core runtime already installed"
+                      }
+                      
+                      # Install ASP.NET Core 10 Runtime (for Acceptance Tests)
+                      $aspnetInstalled = (dotnet --list-runtimes) -match "Microsoft.AspNetCore.App 10\.0\."
+                      if (-not $aspnetInstalled) {
+                        try {
+                          Write-Host "Installing ASP.NET Core 10 runtime..."
+                          & "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -Runtime aspnetcore -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                          Write-Host "? ASP.NET Core runtime installation completed"
+                        } catch {
+                          Write-Warning "? Could not install ASP.NET Core runtime: $_"
+                        }
+                      } else {
+                        Write-Host "? ASP.NET Core 10 runtime already installed"
+                      }
+                      
+                      Write-Host "Available runtimes:"
+                      dotnet --list-runtimes
                 - task: DownloadPackage@1
                   displayName: "Download Database Package"
                   inputs:
@@ -217,6 +289,38 @@ stages:
           runOnce:
             deploy:
               steps:
+                # Install .NET 10 Runtime for Database migrations
+                - task: PowerShell@2
+                  displayName: "Install .NET 10 Runtime"
+                  inputs:
+                    pwsh: true
+                    targetType: "inline"
+                    script: |
+                      Write-Host "Checking current .NET runtimes..."
+                      dotnet --list-runtimes
+                      
+                      # Check if .NET 10 runtime is already available
+                      $runtimes = dotnet --list-runtimes
+                      if ($runtimes -match "Microsoft.NETCore.App 10\.0\.") {
+                        Write-Host "? .NET 10 runtime is already installed"
+                        exit 0
+                      }
+                      
+                      # Download and install .NET 10 runtime
+                      Write-Host "Downloading .NET 10 runtime installer script..."
+                      try {
+                        Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1"
+                        Write-Host "Installing .NET 10 runtime..."
+                        & "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                        
+                        Write-Host "? Runtime installation completed"
+                        Write-Host "Available runtimes:"
+                        dotnet --list-runtimes
+                      } catch {
+                        Write-Warning "? Could not install runtime: $_"
+                        Write-Host "Attempting to continue..."
+                        dotnet --list-runtimes
+                      }
                 - task: DownloadPackage@1
                   displayName: "Download Database Package"
                   inputs:
@@ -255,6 +359,38 @@ stages:
           runOnce:
             deploy:
               steps:
+                # Install .NET 10 Runtime for Database migrations
+                - task: PowerShell@2
+                  displayName: "Install .NET 10 Runtime"
+                  inputs:
+                    pwsh: true
+                    targetType: "inline"
+                    script: |
+                      Write-Host "Checking current .NET runtimes..."
+                      dotnet --list-runtimes
+                      
+                      # Check if .NET 10 runtime is already available
+                      $runtimes = dotnet --list-runtimes
+                      if ($runtimes -match "Microsoft.NETCore.App 10\.0\.") {
+                        Write-Host "? .NET 10 runtime is already installed"
+                        exit 0
+                      }
+                      
+                      # Download and install .NET 10 runtime
+                      Write-Host "Downloading .NET 10 runtime installer script..."
+                      try {
+                        Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1"
+                        Write-Host "Installing .NET 10 runtime..."
+                        & "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                        
+                        Write-Host "? Runtime installation completed"
+                        Write-Host "Available runtimes:"
+                        dotnet --list-runtimes
+                      } catch {
+                        Write-Warning "? Could not install runtime: $_"
+                        Write-Host "Attempting to continue..."
+                        dotnet --list-runtimes
+                      }
                 - task: DownloadPackage@1
                   displayName: "Download Database Package"
                   inputs:
