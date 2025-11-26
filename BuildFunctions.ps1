@@ -284,6 +284,19 @@ Function Test-IsAzureDevOps {
     return $false
 }
 
+Function Test-IsLocalBuild {
+    <#
+    .SYNOPSIS
+        Tests if the current script is running locally (not in CI/CD)
+    .DESCRIPTION
+        Returns true if not running in GitHub Actions or Azure DevOps
+    .OUTPUTS
+        [bool] True if running locally, False if in CI/CD
+    #>
+    
+    return -not ((Test-IsGitHubActions) -or (Test-IsAzureDevOps))
+}
+
 
 Function New-SqlServerDatabase {
     param (
