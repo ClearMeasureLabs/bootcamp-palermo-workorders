@@ -335,14 +335,9 @@ stages:
                   displayName: "Create database schema"
                   inputs:
                     pwsh: true
-                    targetType: "inline"
-                    script: |
-                      # Update database connection string for UAT
-                      $connectionString = "Server=$(DatabaseServerUAT);Database=ChurchBulletin;User Id=uat;Password=$(DatabasePassword);"
-                      [System.Environment]::SetEnvironmentVariable('DB_CONNECTION_STRING', $connectionString, [System.EnvironmentVariableTarget]::Process)
-
-                      # Run the database migration
-                      & "dotnet-ef" database update --context ApplicationDbContext --verbose
+                    targetType: filePath
+                    filePath: ./scripts/UpdateAzurePipelineSql.ps1
+                    arguments: -DatabaseServer "$(DatabaseServerUAT)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "uat" -DatabasePassword "$(DatabasePassword)"
 
                 - task: AzureCLI@2
                   displayName: "Add revision to container app"
@@ -410,14 +405,9 @@ stages:
                   displayName: "Create database schema"
                   inputs:
                     pwsh: true
-                    targetType: "inline"
-                    script: |
-                      # Update database connection string for PROD
-                      $connectionString = "Server=$(DatabaseServerPROD);Database=ChurchBulletin;User Id=prod;Password=$(DatabasePassword);"
-                      [System.Environment]::SetEnvironmentVariable('DB_CONNECTION_STRING', $connectionString, [System.EnvironmentVariableTarget]::Process)
-
-                      # Run the database migration
-                      & "dotnet-ef" database update --context ApplicationDbContext --verbose
+                    targetType: filePath
+                    filePath: ./scripts/UpdateAzurePipelineSql.ps1
+                    arguments: -DatabaseServer "$(DatabaseServerPROD)" -DatabaseName "ChurchBulletin" -DatabaseAction "$(DatabaseAction)" -DatabaseUser "prod" -DatabasePassword "$(DatabasePassword)"
 
                 - task: AzureCLI@2
                   displayName: "Add revision to container app"
