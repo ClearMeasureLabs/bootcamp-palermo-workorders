@@ -705,9 +705,6 @@ Function Invoke-CIBuild {
 	if (Test-IsLinux) {
 		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
 	}
-	elseif (Test-IsLocalBuild) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-	}
 	else {
 		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
 	}
