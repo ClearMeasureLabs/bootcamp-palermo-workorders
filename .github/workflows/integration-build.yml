@@ -329,7 +329,7 @@ jobs:
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
           
-  
+
   TDD:
     name: Deploy to TDD environment and run acceptance tests
     needs: [dockerbuildandpush]
@@ -420,18 +420,79 @@ jobs:
           echo "CONTAINER_APP_URL=$CONTAINER_APP_URL" >> $GITHUB_ENV
           echo "Container App URL: $CONTAINER_APP_URL"
 
+      # Download acceptance test package from artifacts (created by build-linux job)
+      # This approach uses GitHub Actions artifacts instead of NuGet CLI, eliminating
+      # the need to install external tools and providing better reliability
       - name: Download Acceptance Test Package
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages-acceptance
+          path: ./packages
+
+      - name: Extract Acceptance Test Package
         run: |
-          # Add GitHub Packages NuGet source
-          nuget sources Add -Name github \
-            -Source https://nuget.pkg.github.com/${{ vars.OWNER }}/index.json \
-            -UserName ${{ vars.USERNAME }} \
-            -Password ${{ secrets.PACKAGESAPI }}
+          # Find the ChurchBulletin.AcceptanceTests package
+          PACKAGE_FILE=$(find ./packages -name "ChurchBulletin.AcceptanceTests.*.nupkg" | head -n 1)
           
-          # Install the acceptance test package
-          nuget install ChurchBulletin.AcceptanceTests \
-            -Version ${{ env.BUILD_BUILDNUMBER }} \
-            -Source "https://nuget.pkg.github.com/${{ vars.OWNER }}/index.json"
+          if [ -z "$PACKAGE_FILE" ]; then
+            echo "Error: ChurchBulletin.AcceptanceTests package not found"
+            ls -la ./packages/
+            exit 1
+          fi
+          
+          echo "Found package: $PACKAGE_FILE"
+          
+          # Create directory for extraction
+          mkdir -p ./acceptance-tests-extract
+          
+          # Extract the package (NuGet packages are ZIP files)
+          unzip -o "$PACKAGE_FILE" -d ./acceptance-tests-extract
+          
+          # Fix permissions on extracted files
+          find ./acceptance-tests-extract -type d -exec chmod u+rwx {} \;
+          find ./acceptance-tests-extract -type f -exec chmod u+r {} \;
+          
+          # Create the expected directory structure for VSTest
+          mkdir -p ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}
+          
+          # Find the test DLL to determine package structure
+          # dotnet-octo pack packages files from the publish directory
+          TEST_DLL=$(find ./acceptance-tests-extract -name "*AcceptanceTests.dll" 2>/dev/null | head -n 1)
+          
+          if [ -z "$TEST_DLL" ]; then
+            echo "Error: AcceptanceTests DLL not found in package"
+            echo "Package contents:"
+            find ./acceptance-tests-extract -type f 2>/dev/null | head -20
+            exit 1
+          fi
+          
+          # Get the directory containing the test DLL
+          TEST_DIR=$(dirname "$TEST_DLL")
+          
+          # Copy all contents from the test DLL's directory using tar
+          # This preserves directory structure and handles all file types correctly
+          (cd "$TEST_DIR" && tar cf - .) | (cd ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} && tar xf -)
+          
+          # Remove any package metadata files that might have been copied
+          find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -name "*.nuspec" -delete 2>/dev/null || true
+          find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -name "[Content_Types].xml" -delete 2>/dev/null || true
+          find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -name "*.psmdcp" -delete 2>/dev/null || true
+          find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -name "_rels" -type d -exec rm -rf {} + 2>/dev/null || true
+          
+          # Verify we have test DLLs
+          TEST_DLL_COUNT=$(find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -name "*AcceptanceTests.dll" | wc -l)
+          if [ "$TEST_DLL_COUNT" -eq 0 ]; then
+            echo "Error: No AcceptanceTests.dll files found after extraction"
+            echo "Contents:"
+            find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -type f | head -20
+            exit 1
+          else
+            echo "✓ Found $TEST_DLL_COUNT AcceptanceTests DLL file(s)"
+          fi
+          
+          # Clean up
+          rm -rf ./acceptance-tests-extract ./packages
+          echo "✓ Acceptance test package extracted successfully"
 
       - name: Run tests
         uses: microsoft/vstest-action@v1.0.0
@@ -483,3 +544,292 @@ jobs:
             else
               echo "Resource group $RESOURCE_GROUP does not exist. Nothing to delete."
             fi
+
+
+  Deploy-to-UAT:
+    name: Deploy to UAT environment
+    needs: [TDD]
+    if: success() # Only run if TDD job completed successfully
+    runs-on: ubuntu-latest
+    environment:
+      name: UAT
+    
+    steps:
+      # Set version environment variable (must match TDD job)
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Build version: $version"
+          echo "Deploying release $version to UAT (same release that was deployed to TDD)"
+
+      # Install .NET SDK 10.0.100 (required for running Database migration tool)
+      - name: Setup .NET SDK 10.0.100
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.100'
+
+      - name: Install Octopus CLI
+        uses: OctopusDeploy/install-octopus-cli-action@v1
+        with:
+          version: latest
+
+      - name: Download ChurchBulletin.Database NuGet Package
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages-acceptance
+          path: ./packages
+
+      - name: Extract Database Package and Apply Migrations
+        run: |
+          # Find the ChurchBulletin.Database package
+          PACKAGE_FILE=$(find ./packages -name "ChurchBulletin.Database.*.nupkg" | head -n 1)
+          
+          if [ -z "$PACKAGE_FILE" ]; then
+            echo "Error: ChurchBulletin.Database package not found"
+            ls -la ./packages/
+            exit 1
+          fi
+          
+          echo "Found package: $PACKAGE_FILE"
+          
+          # Create temporary extraction directory
+          mkdir -p ./database-extract
+          
+          # Extract the package (NuGet packages are ZIP files)
+          unzip -o "$PACKAGE_FILE" -d ./database-extract
+          
+          # Fix permissions on extracted files
+          find ./database-extract -type d -exec chmod u+rwx {} \;
+          find ./database-extract -type f -exec chmod u+r {} \;
+          
+          # Find the Database DLL
+          DATABASE_DLL=$(find ./database-extract -name "ClearMeasure.Bootcamp.Database.dll" | head -n 1)
+          
+          if [ -z "$DATABASE_DLL" ]; then
+            echo "Error: ClearMeasure.Bootcamp.Database.dll not found in package"
+            find ./database-extract -name "*.dll" | head -10
+            exit 1
+          fi
+          
+          echo "Found Database DLL: $DATABASE_DLL"
+          
+          # Find the scripts directory
+          SCRIPTS_DIR=$(find ./database-extract -type d -name "scripts" | head -n 1)
+          
+          if [ -z "$SCRIPTS_DIR" ]; then
+            # Scripts might be in the root or in a specific location
+            # Try looking for the Update subdirectory
+            SCRIPTS_DIR=$(find ./database-extract -type d -name "Update" | head -n 1)
+            if [ -n "$SCRIPTS_DIR" ]; then
+              SCRIPTS_DIR=$(dirname "$SCRIPTS_DIR")
+            fi
+          fi
+          
+          if [ -z "$SCRIPTS_DIR" ]; then
+            echo "Warning: Scripts directory not found, using package root"
+            SCRIPTS_DIR="./database-extract"
+          fi
+          
+          echo "Using scripts directory: $SCRIPTS_DIR"
+          
+          # Get database connection details from secrets
+          # Configure these secrets in GitHub Settings → Secrets and variables → Actions → Secrets
+          DATABASE_SERVER="${{ secrets.UAT_DATABASE_SERVER }}"
+          DATABASE_NAME="${{ secrets.UAT_DATABASE_NAME }}"
+          DATABASE_USER="${{ secrets.UAT_DATABASE_USER }}"
+          DATABASE_PASSWORD="${{ secrets.UAT_DATABASE_PASSWORD }}"
+          
+          # Use default database name if not provided
+          if [ -z "$DATABASE_NAME" ]; then
+            DATABASE_NAME="ChurchBulletin"
+          fi
+          
+          if [ -z "$DATABASE_SERVER" ]; then
+            echo "Error: Database server not configured. Set UAT_DATABASE_SERVER secret in GitHub Settings."
+            exit 1
+          fi
+          
+          # Require SQL Server authentication for the UAT Database
+          if [ -z "$DATABASE_USER" ] || [ -z "$DATABASE_PASSWORD" ]; then
+            echo "Error: Database credentials required for the UAT Database."
+            echo "Please configure UAT_DATABASE_USER and UAT_DATABASE_PASSWORD secrets in GitHub Settings."
+            exit 1
+          fi
+          
+          echo "Applying database migrations..."
+          echo "Database Server: $DATABASE_SERVER"
+          echo "Database Name: $DATABASE_NAME"
+          echo "Database User: $DATABASE_USER"
+          
+          # Run the database update command with SQL Server authentication
+          dotnet "$DATABASE_DLL" update "$DATABASE_SERVER" "$DATABASE_NAME" "$SCRIPTS_DIR" "$DATABASE_USER" "$DATABASE_PASSWORD"
+          
+          if [ $? -ne 0 ]; then
+            echo "Error: Database migration failed"
+            exit 1
+          fi
+          
+          echo "✓ Database migrations completed successfully"
+          
+          # Clean up
+          rm -rf ./database-extract ./packages
+
+      - name: Deploy existing release to UAT
+        uses: OctopusDeploy/create-release-action@v1
+        with:
+          api_key: ${{ secrets.OCTO_API_KEY }}
+          server: ${{ secrets.OCTOPUS_URL }}
+          space: ${{ vars.OCTOPUS_SPACE }}
+          project: ${{ vars.OCTOPUS_PROJECT }}
+          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          deploy_to: "UAT"
+          progress: true
+          deployment_timeout: 00:30:00
+          # Note: This will deploy the existing release that was created during TDD deployment            
+
+  Deploy-to-Prod:
+    name: Deploy to Production environment
+    needs: [Deploy-to-UAT]
+    if: success() # Only run if UAT job completed successfully
+    runs-on: ubuntu-latest
+    environment:
+      name: Prod
+      # Note: Manual approval must be configured in GitHub Settings → Environments → Prod
+      # Add required reviewers to enable manual approval before deployment
+    
+    steps:
+      # Set version environment variable (must match TDD and UAT jobs)
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Build version: $version"
+          echo "Deploying release $version to Production (same release that was deployed to TDD and UAT)"
+
+      # Install .NET SDK 10.0.100 (required for running Database migration tool)
+      - name: Setup .NET SDK 10.0.100
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.100'
+
+      - name: Install Octopus CLI
+        uses: OctopusDeploy/install-octopus-cli-action@v1
+        with:
+          version: latest
+
+      - name: Download ChurchBulletin.Database NuGet Package
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages-acceptance
+          path: ./packages
+
+      - name: Extract Database Package and Apply Migrations
+        run: |
+          # Find the ChurchBulletin.Database package
+          PACKAGE_FILE=$(find ./packages -name "ChurchBulletin.Database.*.nupkg" | head -n 1)
+          
+          if [ -z "$PACKAGE_FILE" ]; then
+            echo "Error: ChurchBulletin.Database package not found"
+            ls -la ./packages/
+            exit 1
+          fi
+          
+          echo "Found package: $PACKAGE_FILE"
+          
+          # Create temporary extraction directory
+          mkdir -p ./database-extract
+          
+          # Extract the package (NuGet packages are ZIP files)
+          unzip -o "$PACKAGE_FILE" -d ./database-extract
+          
+          # Fix permissions on extracted files
+          find ./database-extract -type d -exec chmod u+rwx {} \;
+          find ./database-extract -type f -exec chmod u+r {} \;
+          
+          # Find the Database DLL
+          DATABASE_DLL=$(find ./database-extract -name "ClearMeasure.Bootcamp.Database.dll" | head -n 1)
+          
+          if [ -z "$DATABASE_DLL" ]; then
+            echo "Error: ClearMeasure.Bootcamp.Database.dll not found in package"
+            find ./database-extract -name "*.dll" | head -10
+            exit 1
+          fi
+          
+          echo "Found Database DLL: $DATABASE_DLL"
+          
+          # Find the scripts directory
+          SCRIPTS_DIR=$(find ./database-extract -type d -name "scripts" | head -n 1)
+          
+          if [ -z "$SCRIPTS_DIR" ]; then
+            # Scripts might be in the root or in a specific location
+            # Try looking for the Update subdirectory
+            SCRIPTS_DIR=$(find ./database-extract -type d -name "Update" | head -n 1)
+            if [ -n "$SCRIPTS_DIR" ]; then
+              SCRIPTS_DIR=$(dirname "$SCRIPTS_DIR")
+            fi
+          fi
+          
+          if [ -z "$SCRIPTS_DIR" ]; then
+            echo "Warning: Scripts directory not found, using package root"
+            SCRIPTS_DIR="./database-extract"
+          fi
+          
+          echo "Using scripts directory: $SCRIPTS_DIR"
+          
+          # Get database connection details from secrets
+          # Configure these secrets in GitHub Settings → Secrets and variables → Actions → Secrets
+          DATABASE_SERVER="${{ secrets.PROD_DATABASE_SERVER }}"
+          DATABASE_NAME="${{ secrets.PROD_DATABASE_NAME }}"
+          DATABASE_USER="${{ secrets.PROD_DATABASE_USER }}"
+          DATABASE_PASSWORD="${{ secrets.PROD_DATABASE_PASSWORD }}"
+          
+          # Use default database name if not provided
+          if [ -z "$DATABASE_NAME" ]; then
+            DATABASE_NAME="ChurchBulletin"
+          fi
+          
+          if [ -z "$DATABASE_SERVER" ]; then
+            echo "Error: Database server not configured. Set PROD_DATABASE_SERVER secret in GitHub Settings."
+            exit 1
+          fi
+          
+          # Require SQL Server authentication for the Production Database
+          if [ -z "$DATABASE_USER" ] || [ -z "$DATABASE_PASSWORD" ]; then
+            echo "Error: Database credentials required for the Production Database."
+            echo "Please configure PROD_DATABASE_USER and PROD_DATABASE_PASSWORD secrets in GitHub Settings."
+            exit 1
+          fi
+          
+          echo "Applying database migrations..."
+          echo "Database Server: $DATABASE_SERVER"
+          echo "Database Name: $DATABASE_NAME"
+          echo "Database User: $DATABASE_USER"
+          
+          # Run the database update command with SQL Server authentication
+          dotnet "$DATABASE_DLL" update "$DATABASE_SERVER" "$DATABASE_NAME" "$SCRIPTS_DIR" "$DATABASE_USER" "$DATABASE_PASSWORD"
+          
+          if [ $? -ne 0 ]; then
+            echo "Error: Database migration failed"
+            exit 1
+          fi
+          
+          echo "✓ Database migrations completed successfully"
+          
+          # Clean up
+          rm -rf ./database-extract ./packages
+
+      - name: Deploy existing release to Production
+        uses: OctopusDeploy/create-release-action@v1
+        with:
+          api_key: ${{ secrets.OCTO_API_KEY }}
+          server: ${{ secrets.OCTOPUS_URL }}
+          space: ${{ vars.OCTOPUS_SPACE }}
+          project: ${{ vars.OCTOPUS_PROJECT }}
+          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          deploy_to: "Prod"
+          progress: true
+          deployment_timeout: 00:30:00
+          # Note: This will deploy the existing release that was created during TDD deployment          
