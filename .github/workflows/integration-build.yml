@@ -128,7 +128,78 @@ jobs:
           path: build/*.nupkg
           retention-days: 90
 
+  dockerbuildandpush:
+    name: Build and Push Docker Image
+    needs: build-linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      # Set version environment variable (same as build-linux job)
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Build version: $version"
+
+      # Install .NET SDK 10.0.100
+      - name: Setup .NET SDK 10.0.100
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.100'
+
+      # Login to Azure
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Login to Azure Container Registry
+      - name: Login to ACR
+        run: |
+          az acr login --name churchbulletingithubacr
+
+      # Build and publish UI Server for Docker
+      - name: Build and Publish UI Server
+        run: |
+          # Restore dependencies
+          dotnet restore src/ChurchBulletin.sln
+          
+          # Build the solution
+          dotnet build src/ChurchBulletin.sln --configuration Release --no-restore
+          
+          # Publish UI.Server to the built directory for Docker
+          dotnet publish src/UI/Server/UI.Server.csproj \
+            --configuration Release \
+            --no-build \
+            --output ./built \
+            --self-contained false
+          
+          # Verify published files
+          echo "Published files:"
+          ls -la built/
+
+      # Build Docker image
+      - name: Build Docker image
+        run: |
+          IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
+          docker build -f Dockerfile -t churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG} .
+          docker tag churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG} churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
+
+      # Push Docker image to ACR
+      - name: Push Docker image to ACR
+        run: |
+          IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
+          docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}
+          docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
+          
   run-acceptance-tests:
     name: Acceptance Tests and Package
     runs-on: ubuntu-latest
