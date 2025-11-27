@@ -32,6 +32,29 @@ jobs:
         with:
           dotnet-version: '10.0.100'
 
+      # Install .NET SDK 6.0 (required by Octopus CLI tool - includes runtime)
+      - name: Setup .NET SDK 6.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      # Verify .NET 6.0 runtime is available (required by dotnet-octo tool)
+      - name: Verify .NET 6.0 runtime
+        run: |
+          echo "Installed runtimes:"
+          dotnet --list-runtimes
+          echo ""
+          echo "Checking for .NET 6.0 runtime:"
+          if dotnet --list-runtimes | grep -q "Microsoft.NETCore.App 6.0"; then
+            echo "✓ .NET 6.0 runtime is available"
+          else
+            echo "✗ .NET 6.0 runtime not found - attempting to install runtime explicitly"
+            # Try installing runtime explicitly if SDK installation didn't include it
+            curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --runtime dotnet --version 6.0.0
+            export PATH="$HOME/.dotnet:$PATH"
+            dotnet --list-runtimes
+          fi
+
       # Set version environment variable
       - name: Set Version
         run: |
@@ -126,11 +149,28 @@ jobs:
         with:
           dotnet-version: '10.0.100'
 
-      # Install .NET SDK 6.0 (required by Octopus CLI)
+      # Install .NET SDK 6.0 (required by Octopus CLI tool - includes runtime)
       - name: Setup .NET SDK 6.0
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
+
+      # Verify .NET 6.0 runtime is available (required by dotnet-octo tool)
+      - name: Verify .NET 6.0 runtime
+        run: |
+          echo "Installed runtimes:"
+          dotnet --list-runtimes
+          echo ""
+          echo "Checking for .NET 6.0 runtime:"
+          if dotnet --list-runtimes | grep -q "Microsoft.NETCore.App 6.0"; then
+            echo "✓ .NET 6.0 runtime is available"
+          else
+            echo "✗ .NET 6.0 runtime not found - attempting to install runtime explicitly"
+            # Try installing runtime explicitly if SDK installation didn't include it
+            curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --runtime dotnet --version 6.0.0
+            export PATH="$HOME/.dotnet:$PATH"
+            dotnet --list-runtimes
+          fi
 
       # Set version environment variable
       - name: Set Version
