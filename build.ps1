@@ -112,7 +112,7 @@ Function UnitTests {
 
 	try {
 		exec {
-			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
+			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "UnitTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
@@ -128,7 +128,7 @@ Function IntegrationTest {
 
 	try {
 		exec {
-			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
+			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
@@ -186,7 +186,7 @@ Function AcceptanceTests {
 	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
 	try {
 		exec {
-			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
+			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--settings:$runSettingsPath `
