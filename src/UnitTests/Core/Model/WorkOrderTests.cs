@@ -80,4 +80,65 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void Should_InitializeInstructionsToEmptyString()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void Should_SetAndGetInstructionsValue()
+    {
+        var workOrder = new WorkOrder();
+        var instructions = "Please follow safety protocols and wear protective equipment.";
+        
+        workOrder.Instructions = instructions;
+        
+        Assert.That(workOrder.Instructions, Is.EqualTo(instructions));
+    }
+
+    [Test]
+    public void Should_TruncateInstructionsTo4000Characters()
+    {
+        var longInstructions = new string('x', 4001);
+        var workOrder = new WorkOrder();
+        
+        workOrder.Instructions = longInstructions;
+        
+        Assert.That(workOrder.Instructions.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void Should_HandleExactly4000CharacterInstructions()
+    {
+        var instructions4000 = new string('x', 4000);
+        var workOrder = new WorkOrder();
+        
+        workOrder.Instructions = instructions4000;
+        
+        Assert.That(workOrder.Instructions.Length, Is.EqualTo(4000));
+        Assert.That(workOrder.Instructions, Is.EqualTo(instructions4000));
+    }
+
+    [Test]
+    public void Should_HandleNullInstructionsAsEmptyString()
+    {
+        var workOrder = new WorkOrder();
+        
+        workOrder.Instructions = null;
+        
+        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void Should_HandleEmptyInstructions()
+    {
+        var workOrder = new WorkOrder();
+        
+        workOrder.Instructions = string.Empty;
+        
+        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
+    }
 }
