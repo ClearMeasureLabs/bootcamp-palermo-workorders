@@ -3,6 +3,9 @@ param (
     [string]$databaseServer = "",
 	
     [Parameter(Mandatory=$false)]
+    [string]$databaseName = "",
+	
+    [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [bool]$migrateDbWithFlyway = $false
 	
@@ -20,4 +23,10 @@ if ([string]::IsNullOrEmpty($databaseServer)) {
     }
 }
 
-Invoke-PrivateBuild -databaseServer $databaseServer 
+# Pass database name to Invoke-PrivateBuild if provided
+if ([string]::IsNullOrEmpty($databaseName)) {
+    Invoke-PrivateBuild -databaseServer $databaseServer
+}
+else {
+    Invoke-PrivateBuild -databaseServer $databaseServer -databaseName $databaseName
+}

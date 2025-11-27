@@ -469,11 +469,15 @@ Function Invoke-AcceptanceTests {
 	
 	# Generate unique database name for this build instance
 	# On Linux with Docker, no need for unique names since container is clean
+	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
 	if (-not [string]::IsNullOrEmpty($databaseName)) {
 		$script:databaseName = $databaseName
 	}
 	else {
 		if (Test-IsLinux) {
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+		}
+		elseif (Test-IsLocalBuild) {
 			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
 		}
 		else {
@@ -572,7 +576,10 @@ Requires Docker on Linux. Sets containerAppURL environment variable to "localhos
 Function Invoke-PrivateBuild {
 	param (
 		[Parameter(Mandatory = $false)]
-		[string]$databaseServer = ""
+		[string]$databaseServer = "",
+		
+		[Parameter(Mandatory = $false)]
+		[string]$databaseName = ""
 	)
 	
 	Log-Message -Message "Starting Invoke-PrivateBuild..." -Type "INFO"
@@ -595,7 +602,15 @@ Function Invoke-PrivateBuild {
 	
 	# Generate unique database name for this build instance
 	# On Linux with Docker, no need for unique names since container is clean
-	if (Test-IsLinux) {
+	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
+	if (-not [string]::IsNullOrEmpty($databaseName)) {
+		$script:databaseName = $databaseName
+		Log-Message -Message "Using database name from parameter: $script:databaseName" -Type "INFO"
+	}
+	elseif (Test-IsLinux) {
+		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+	}
+	elseif (Test-IsLocalBuild) {
 		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
 	}
 	else {
@@ -685,6 +700,8 @@ Function Invoke-CIBuild {
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
 	# Generate database name based on environment
+	# On Linux with Docker, no need for unique names since container is clean
+	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
 	if (Test-IsLinux) {
 		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
 	}
