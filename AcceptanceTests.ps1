@@ -12,6 +12,3 @@ if ([string]::IsNullOrEmpty($databaseServer) -and -not [string]::IsNullOrEmpty($
 }
 
 Invoke-AcceptanceTests -databaseServer $databaseServer -databaseName "ChurchBulletin"
-
-# Package everything  - a seperate step in the GH action.
-#Package-Everything
