@@ -1,38 +1,38 @@
-DeploymentProcess {
-  Steps = [
-    Step "Update Azure Container App image for ChurchBulletin.UI" {
-      Action {
-        Environments = [ "UAT", "Production" ]
-        Properties {
-          "Octopus.Action.Type" = "Octopus.Action.AzureCLI"
-          "Octopus.Action.Azure.AccountId" = "churchbulletin-gh-azure-account"
-          "Octopus.Action.RunOnWorker" = "True"
-          # "Octopus.Action.WorkerPoolId" = "WorkerPools-REPLACE_ME"  # optional
-
-          "Octopus.Action.Script.ScriptSource" = "Inline"
-          "Octopus.Action.Script.ScriptSyntax" = "PowerShell"
-
-          "Octopus.Action.Script.ScriptBody" = <<SCRIPT
-$ErrorActionPreference = "Stop"
-
-$imageTag = "$ACR_NAME.azurecr.io/$IMAGE_REPOSITORY`:$IMAGE_TAG"
-
-Write-Host "Resource Group:        $RESOURCE_GROUP"
-Write-Host "Container App Name:    $CONTAINER_APP_NAME"
-Write-Host "Image:                 $imageTag"
-
-az containerapp update `
-  --name "$CONTAINER_APP_NAME" `
-  --resource-group "$RESOURCE_GROUP" `
-  --image "$imageTag"
-
-Write-Host "✅ Container App updated successfully."
-SCRIPT
-        }
-      }
-    }
-  ]
-}
+#DeploymentProcess {
+#  Steps = [
+#    Step "Update Azure Container App image for ChurchBulletin.UI" {
+#      Action {
+#        Environments = [ "UAT", "Production" ]
+#        Properties {
+#          "Octopus.Action.Type" = "Octopus.Action.AzureCLI"
+#          "Octopus.Action.Azure.AccountId" = "churchbulletin-gh-azure-account"
+#          "Octopus.Action.RunOnWorker" = "True"
+#          # "Octopus.Action.WorkerPoolId" = "WorkerPools-REPLACE_ME"  # optional
+#
+#          "Octopus.Action.Script.ScriptSource" = "Inline"
+#          "Octopus.Action.Script.ScriptSyntax" = "PowerShell"
+#
+#          "Octopus.Action.Script.ScriptBody" = <<SCRIPT
+#$ErrorActionPreference = "Stop"
+#
+#$imageTag = "$ACR_NAME.azurecr.io/$IMAGE_REPOSITORY`:$IMAGE_TAG"
+#
+#Write-Host "Resource Group:        $RESOURCE_GROUP"
+#Write-Host "Container App Name:    $CONTAINER_APP_NAME"
+#Write-Host "Image:                 $imageTag"
+#
+#az containerapp update `
+#  --name "$CONTAINER_APP_NAME" `
+#  --resource-group "$RESOURCE_GROUP" `
+#  --image "$imageTag"
+#
+#Write-Host "✅ Container App updated successfully."
+#SCRIPT
+#        }
+#      }
+#    }
+#  ]
+#}
 
 
 # step "azure-deploy-churchbulletin-ui-container-app" {
