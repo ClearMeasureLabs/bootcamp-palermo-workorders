@@ -63,8 +63,7 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
 
-       # Run Invoke-CIBuild script
-      - name: Run CI Build Script
+      - name: Run CI Build 
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -129,7 +128,7 @@ jobs:
           retention-days: 90
 
   run-acceptance-tests:
-      name: Run Playwright Acceptance Tests
+      name: Run Acceptance Tests
       runs-on: ubuntu-latest
       needs: [build-linux]
       if: success()
@@ -198,9 +197,10 @@ jobs:
             retention-days: 30
 
 
-  dockerbuildandpush:
-    name: Get ChurchBulletin.UI Package, create and push Docker Image to ACR
+  docker-build-image-for-churchbulletin-ui:
+    name: Create and push Docker image for ChurchBulletin.UI
     needs: [build-linux, run-acceptance-tests]
+    if: success()
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -330,9 +330,10 @@ jobs:
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
           
 
-  TDD:
+  deploy-to-tdd:
     name: Deploy to TDD environment and run acceptance tests
-    needs: [dockerbuildandpush]
+    needs: [docker-build-image-for-churchbulletin-ui]
+    if: success() # Only run if Docker build image job completed successfully
     runs-on: ubuntu-latest
     environment:
       name: TDD
@@ -504,51 +505,10 @@ jobs:
           searchFolder: ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}/
           runInParallel: true 
 
-  Delete-TDD: 
-    name: Cleanup resources created by TDD job
-    needs: [TDD]
-    if: success() # Only run if TDD job completed successfully
-    runs-on: 'ubuntu-latest'    
-    steps:
-      # Set version environment variable
-      - name: Set Version
-        run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
 
-      # Set TDD environment variables (must match TDD job)
-      - name: Set TDD Environment Variables
-        run: |
-          echo "TDD_RESOURCE_GROUP=bootcamp-tdd-github-${BUILD_BUILDNUMBER}" >> $GITHUB_ENV
-
-      - name: 'Login via Azure CLI'
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Delete TDD resources
-        uses: azure/CLI@v1
-        with:
-          azcliversion: 2.30.0
-          inlineScript: |
-            RESOURCE_GROUP="${{ env.TDD_RESOURCE_GROUP }}"
-            echo "Checking if resource group exists: $RESOURCE_GROUP"
-            
-            # Check if resource group exists before attempting to delete
-            if az group show --name "$RESOURCE_GROUP" &>/dev/null; then
-              echo "Resource group $RESOURCE_GROUP exists. Deleting..."
-              az group delete --name "$RESOURCE_GROUP" --yes --no-wait
-              echo "Resource group deletion initiated successfully"
-            else
-              echo "Resource group $RESOURCE_GROUP does not exist. Nothing to delete."
-            fi
-
-
-  Deploy-to-UAT:
+  deploy-to-uat:
     name: Deploy to UAT environment
-    needs: [TDD]
+    needs: [deploy-to-tdd]
     if: success() # Only run if TDD job completed successfully
     runs-on: ubuntu-latest
     environment:
@@ -689,9 +649,9 @@ jobs:
           deployment_timeout: 00:30:00
           # Note: This will deploy the existing release that was created during TDD deployment            
 
-  Deploy-to-Prod:
+  deploy-to-prod:
     name: Deploy to Production environment
-    needs: [Deploy-to-UAT]
+    needs: [deploy-to-uat]
     if: success() # Only run if UAT job completed successfully
     runs-on: ubuntu-latest
     environment:
