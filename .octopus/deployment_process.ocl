@@ -1,5 +1,5 @@
 DeploymentProcess {
-  Steps [
+  Steps = [
     Step "Update Azure Container App image for ChurchBulletin.UI" {
       Action {
         Environments = [ "UAT", "Production" ]
