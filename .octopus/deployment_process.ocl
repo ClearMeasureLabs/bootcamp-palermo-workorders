@@ -1,0 +1,36 @@
+step "azure-deploy-churchbulletin-ui-container-app" {
+    name = "Azure - Deploy ChurchBulletin.UI Container App"
+    properties = {
+        Octopus.Action.TargetRoles = "churchbulletin-ui"
+    }
+
+    action {
+        environments = ["tdd"]
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Template.Id = "ActionTemplates-441"
+            Octopus.Action.Template.Version = "7"
+            Template.Azure.Account.ClientId = "9fea6baf-d7c0-4a4e-9e06-6285cbc54356"
+            Template.Azure.Account.SubscriptionId = "f3cfae68-cb4e-4642-9a97-7da7fb774e25"
+            Template.Azure.Account.TenantId = "27312afb-009f-4fed-a8bb-9737425cc42a"
+            Template.Azure.Container.ExternalIngress = "False"
+            Template.Azure.Container.Image = "{\"PackageId\":\"churchbulletin.ui\",\"FeedId\":\"churchbulletin-github-acr-2\"}"
+            Template.Azure.Container.Name = "ui-gh"
+            Template.Azure.ResourceGroup.Name = "bootcamp#{Octopus.Environment.Name}"
+            Template.ContainerApp.Environment.Name = "bootcamp-#{Octopus.Environment.Name}-churchbulletin-gh"
+        }
+        worker_pool_variable = ""
+
+        packages "Template.Azure.Container.Image" {
+            acquisition_location = "NotAcquired"
+            feed = "churchbulletin-github-acr-2"
+            package_id = "churchbulletin.ui"
+            properties = {
+                Extract = "False"
+                PackageParameterName = "Template.Azure.Container.Image"
+                Purpose = ""
+                SelectionMode = "deferred"
+            }
+        }
+    }
+}
