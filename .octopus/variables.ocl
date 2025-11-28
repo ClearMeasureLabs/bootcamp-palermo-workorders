@@ -64,11 +64,11 @@ variable "registry_login_server" {
     }
 }
 
-variable "AzureAccount" {
-    type = "AzureAccount"
-
-    value "azure-onion-containers" {}
-}
+#variable "AzureAccount" {
+#    type = "AzureAccount"
+#
+#    value "churchbulletin-github-actions" {}
+#}
 
 variable "DatabaseServer" {
     value "#{DatabaseServerName}.database.windows.net" {
