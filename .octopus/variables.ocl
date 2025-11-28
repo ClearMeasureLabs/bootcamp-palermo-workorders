@@ -1,18 +1,18 @@
 variable "az_location" {
-    value "southcentralus" {}
+    value "centralus" {}
 }
 
 variable "DatabaseName" {
-    value "oniondb-flyway" {
+    value "ChurchBulletin" {
         environment = ["tdd"]
     }
 
-    value "oniondb-flyway-uat" {
+    value "ChurchBulletin" {
         description = ""
         environment = ["uat"]
     }
 
-    value "oniondb-flyway-prod" {
+    value "ChurchBulletin" {
         description = ""
         environment = ["prod"]
     }
@@ -59,7 +59,7 @@ variable "container_image" {
 }
 
 variable "registry_login_server" {
-    value "onionarchitecturedotnet8flywayazuresccr.azurecr.io" {
+    value "churchbulletingithubacr.azurecr.io" {
         environment = ["tdd", "uat", "prod"]
     }
 }
@@ -77,7 +77,7 @@ variable "DatabaseServer" {
 }
 
 variable "container_app_environment_name" {
-    value "onion-architecture-dotnet-8-flyway-azure-#{Octopus.Environment.Name}-cae" {
+    value "bootcamp-#{Octopus.Environment.Name}-churchbulletin-gh" {
         description = ""
     }
 }
@@ -99,23 +99,23 @@ variable "DatabasePerformanceLevel" {
 }
 
 variable "container_app_name" {
-    value "uat-ui" {
+    value "ui-gh" {
         description = ""
         environment = ["uat"]
     }
 
-    value "prod-ui" {
+    value "ui-gh" {
         description = ""
         environment = ["prod"]
     }
 
-    value "tdd-ui" {
+    value "ui-gh" {
         description = ""
         environment = ["tdd"]
 
         prompt {
             description = ""
-            label = "Name of the TDD UI container app"
+            label = "Name of the UI container app"
         }
     }
 }
@@ -133,12 +133,12 @@ variable "az_login_tenant" {
 }
 
 variable "ResourceGroupName" {
-    value "onion-architecture-dotnet-8-flyway-azure-#{Octopus.Environment.Name}" {
+    value "bootcamp-#{Octopus.Environment.Name}" {
         description = ""
         environment = ["uat", "prod"]
     }
 
-    value "onion-architecture-dotnet-8-flyway-azure-#{Octopus.Release.Number}" {
+    value "bootcamp-#{Octopus.Release.Number}" {
         description = ""
         environment = ["tdd"]
 
@@ -240,13 +240,13 @@ variable "DatabaseServerName" {
         environment = ["uat"]
     }
 
-    value "#{az_login_appid}-dn8fwtdd-#{Octopus.Release.Id | ToLower }" {
+    value "bootcamp-palermo-workorders" {
         environment = ["tdd"]
     }
 }
 
 variable "gitUser" {
-    value "tonyfauss" {
+    value "tomopgenorth-cm" {
         environment = ["uat", "prod", "tdd"]
     }
 }
