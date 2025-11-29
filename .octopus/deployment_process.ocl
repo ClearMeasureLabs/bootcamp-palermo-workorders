@@ -11,20 +11,89 @@ step "update-ui-gh-container-app" {
                 
                 $buildNumber = "#{Octopus.Release.Number}"
                 $imageTag = "churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest"
-                $revision= $(Get-Date -Format 'yyyyMMddHHmmss')
+                $revision = $(Get-Date -Format 'yyyyMMddHHmmss')
                 
                 if ($buildNumber -and $buildNumber.Trim() -ne "") {
-                    $revision = "$revision-$buildNumber"
+                    # Sanitize build number for Azure Container App revision suffix requirements:
+                    # - Must be lowercase alphanumeric or '-'
+                    # - Must start with letter or number
+                    # - Must end with alphanumeric
+                    # - Cannot contain '--'
+                    # - No periods allowed
+                    $sanitizedBuildNumber = $buildNumber.Trim().ToLower() `
+                        -replace '\.', '-' `  # Replace periods with hyphens
+                        -replace '[^a-z0-9\-]', '' `  # Remove any other invalid characters
+                        -replace '\-+', '-' `  # Replace multiple consecutive hyphens with single hyphen
+                        -replace '^-+', '' `  # Remove leading hyphens
+                        -replace '-+$', '' `  # Remove trailing hyphens
+                    
+                    if ($sanitizedBuildNumber) {
+                        $revision = "$revision-$sanitizedBuildNumber"
+                    }
                 }
                 
-                az containerapp update `
-                  --name ui-gh `
-                  --resource-group bootcamp-$OctopusParameters["Octopus.Environment.Slug"] `
-                  --image $imageTag `
-                  --revision-suffix $revision
+                # Ensure revision suffix meets all requirements
+                $revision = $revision.ToLower() -replace '[^a-z0-9\-]', '' -replace '\-+', '-' -replace '^-+', '' -replace '-+$', ''
                 
+                Write-Host "Using revision suffix: $revision"
                 
-                Start-Sleep -Seconds 15; az containerapp revision show --revision ui-gh--20251129081300 -n ui-gh -g bootcamp-tdd --query "{name:name, active:properties.active, replicas:properties.replicas, healthState:properties.healthState, runningState:properties.runningState, trafficWeight:properties.trafficWeight}" --output table                
+                # Get database connection components from Octopus variables
+                $databaseServer = $OctopusParameters["DatabaseServer"]
+                $databaseName = $OctopusParameters["DatabaseName"]
+                $databaseUser = $OctopusParameters["DatabaseUser"]
+                $databasePassword = $OctopusParameters["DatabasePassword"]
+                
+                # Build the connection string from components
+                if ([string]::IsNullOrWhiteSpace($databaseServer) -or 
+                    [string]::IsNullOrWhiteSpace($databaseName) -or
+                    [string]::IsNullOrWhiteSpace($databaseUser) -or
+                    [string]::IsNullOrWhiteSpace($databasePassword)) {
+                    Write-Warning "Database connection variables are not fully configured. Container app will be updated without setting the connection string."
+                    Write-Warning "Required variables: DatabaseServer, DatabaseName, DatabaseUser, DatabasePassword"
+                    az containerapp update `
+                      --name ui-gh `
+                      --resource-group bootcamp-$OctopusParameters["Octopus.Environment.Slug"] `
+                      --image $imageTag `
+                      --revision-suffix $revision
+                } else {
+                    # Build SQL Server connection string with authentication
+                    # Escape the password for use in connection string (especially if it contains special characters)
+                    $escapedPassword = $databasePassword -replace "'", "''" -replace ";", "`;"
+                    $databaseConnectionString = "Server=$databaseServer;Database=$databaseName;User ID=$databaseUser;Password=$escapedPassword;TrustServerCertificate=true;"
+                    
+                    Write-Host "Setting database connection string for server: $databaseServer"
+                    
+                    # Set the connection string as an environment variable on the container app
+                    # Using double underscore format for ASP.NET Core configuration hierarchy
+                    az containerapp update `
+                      --name ui-gh `
+                      --resource-group bootcamp-$OctopusParameters["Octopus.Environment.Slug"] `
+                      --image $imageTag `
+                      --revision-suffix $revision `
+                      --set-env-vars "ConnectionStrings__SqlConnectionString=$databaseConnectionString"
+                }
+                
+                # Wait for revision to be created and show its status
+                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
+                Start-Sleep -Seconds 15
+                
+                # Get the latest revision name (format: appname--revisionsuffix)
+                $latestRevision = az containerapp revision list `
+                    --name ui-gh `
+                    --resource-group $resourceGroup `
+                    --query "[0].name" `
+                    --output tsv
+                
+                if ($latestRevision) {
+                    Write-Host "Latest revision: $latestRevision"
+                    az containerapp revision show `
+                        --revision $latestRevision `
+                        --name ui-gh `
+                        --resource-group $resourceGroup `
+                        --query "{name:name, active:properties.active, replicas:properties.replicas, healthState:properties.healthState, runningState:properties.runningState, trafficWeight:properties.trafficWeight}" `
+                        --output table
+                }
+                
                 Write-Host "✅ Container App updated successfully."
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"

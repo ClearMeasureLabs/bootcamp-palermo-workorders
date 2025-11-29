@@ -199,7 +199,7 @@ stages:
                     filePath: ./scripts/UpdateAzurePipelineSql.ps1
                     arguments: -DatabaseServer "$(DatabaseServer)" -DatabaseName "ChurchBulletin" -DatabaseAction "baseline" -DatabaseUser "tdd" -DatabasePassword "$(DatabasePassword)"                    
                 - task: PowerShell@2
-                  displayName: "Create database schema"
+                  displayName: "Update database schema"
                   inputs:
                     pwsh: true
                     targetType: filePath

@@ -1,20 +1,62 @@
-variable "DatabaseConnectionString-TDD" {
-    value "Server=(localdb)\\\\mssqllocaldb;Database=ChurchBulletinDb-gh;Trusted_Connection=true;" {
+variable "DatabaseServer" {
+    value "your-tdd-database-server.database.windows.net" {
         action = ["update-ui-gh-container-app"]
         environment = ["tdd"]
     }
-}
-
-variable "DatabaseConnectionString-UAT" {
-    value "Server=(localdb)\\\\mssqllocaldb;Database=ChurchBulletinDb-gh;Trusted_Connection=true;" {
+    value "your-uat-database-server.database.windows.net" {
         action = ["update-ui-gh-container-app"]
         environment = ["uat"]
     }
-}
-
-variable "DatabaseConnectionString-PROD" {
-    value "Server=(localdb)\\\\mssqllocaldb;Database=ChurchBulletinDb-gh;Trusted_Connection=true;" {
+    value "your-prod-database-server.database.windows.net" {
         action = ["update-ui-gh-container-app"]
         environment = ["prod"]
+    }
+}
+
+variable "DatabaseName" {
+    value "ChurchBulletinDb-gh" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["tdd"]
+    }
+    value "ChurchBulletinDb-gh" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["uat"]
+    }
+    value "ChurchBulletinDb-gh" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["prod"]
+    }
+}
+
+variable "DatabaseUser" {
+    value "your-db-user" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["tdd"]
+    }
+    value "your-db-user" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["uat"]
+    }
+    value "your-db-user" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["prod"]
+    }
+}
+
+variable "DatabasePassword" {
+    value "your-db-password" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["tdd"]
+        is_sensitive = true
+    }
+    value "your-db-password" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["uat"]
+        is_sensitive = true
+    }
+    value "your-db-password" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["prod"]
+        is_sensitive = true
     }
 }
