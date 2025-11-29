@@ -2,7 +2,7 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 
 public class WorkOrder : EntityBase<WorkOrder>
 {
-    private string? _description = "";
+    private string? _description = "";`n    private string? _instructions = "";
 
     public string? Title { get; set; } = "";
 
