@@ -16,7 +16,7 @@ step "update-ui-gh-container-app" {
                 Write-Host "Image:                 latest"
                 
                 az containerapp update --name ui-gh --resource-group bootcamp-tdd `
-                  --image latest
+                  --subscription f3cfae68-cb4e-4642-9a97-7da7fb774e25
                 
                 Write-Host "✅ Container App updated successfully."
                 EOT
