@@ -3,26 +3,13 @@ variable "DatabaseServer" {
         action = ["update-ui-gh-container-app"]
         environment = ["tdd"]
     }
+
     value "your-uat-database-server.database.windows.net" {
         action = ["update-ui-gh-container-app"]
         environment = ["uat"]
     }
-    value "your-prod-database-server.database.windows.net" {
-        action = ["update-ui-gh-container-app"]
-        environment = ["prod"]
-    }
-}
 
-variable "DatabaseName" {
-    value "ChurchBulletinDb-gh" {
-        action = ["update-ui-gh-container-app"]
-        environment = ["tdd"]
-    }
-    value "ChurchBulletinDb-gh" {
-        action = ["update-ui-gh-container-app"]
-        environment = ["uat"]
-    }
-    value "ChurchBulletinDb-gh" {
+    value "your-prod-database-server.database.windows.net" {
         action = ["update-ui-gh-container-app"]
         environment = ["prod"]
     }
@@ -33,27 +20,21 @@ variable "DatabaseUser" {
         action = ["update-ui-gh-container-app"]
         environment = ["tdd"]
     }
+
     value "your-db-user" {
         action = ["update-ui-gh-container-app"]
         environment = ["uat"]
     }
+
     value "your-db-user" {
         action = ["update-ui-gh-container-app"]
         environment = ["prod"]
     }
 }
 
-variable "DatabasePassword" {
-    value "your-db-password" {
+variable "DatabaseName" {
+    value "ChurchBulletinDb-gh" {
         action = ["update-ui-gh-container-app"]
-        environment = ["tdd"]
-    }
-    value "your-db-password" {
-        action = ["update-ui-gh-container-app"]
-        environment = ["uat"]
-    }
-    value "your-db-password" {
-        action = ["update-ui-gh-container-app"]
-        environment = ["prod"]
+        environment = ["prod", "tdd", "uat"]
     }
 }
