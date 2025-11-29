@@ -11,7 +11,7 @@ step "update-ui-gh-container-app" {
                 
                 $imageTag = "churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest"
                 
-                Write-Host "Resource Group:        bootcamp-tdd]"
+                Write-Host "Resource Group:        bootcamp-tdd"
                 Write-Host "Container App Name:    ui-gh"
                 Write-Host "Image:                 latest"
                 
