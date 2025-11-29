@@ -1,0 +1,20 @@
+variable "DatabaseConnectionString-TDD" {
+    value "Server=(localdb)\\\\mssqllocaldb;Database=ChurchBulletinDb-gh;Trusted_Connection=true;" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["tdd"]
+    }
+}
+
+variable "DatabaseConnectionString-UAT" {
+    value "Server=(localdb)\\\\mssqllocaldb;Database=ChurchBulletinDb-gh;Trusted_Connection=true;" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["uat"]
+    }
+}
+
+variable "DatabaseConnectionString-PROD" {
+    value "Server=(localdb)\\\\mssqllocaldb;Database=ChurchBulletinDb-gh;Trusted_Connection=true;" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["prod"]
+    }
+}
