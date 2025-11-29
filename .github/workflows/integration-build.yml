@@ -381,6 +381,26 @@ jobs:
         with:
           version: latest        
 
+      - name: Set Octopus variables for TDD deployment
+        run: |
+          octo set-variable \
+            --server="${{ secrets.OCTOPUS_URL }}" \
+            --apiKey="${{ secrets.OCTO_API_KEY }}" \
+            --space="${{ vars.OCTOPUS_SPACE }}" \
+            --project="${{ vars.OCTOPUS_PROJECT }}" \
+            --name="ResourceGroupName" \
+            --value="${{ env.TDD_RESOURCE_GROUP }}" \
+            --environment="TDD"
+          
+          octo set-variable \
+            --server="${{ secrets.OCTOPUS_URL }}" \
+            --apiKey="${{ secrets.OCTO_API_KEY }}" \
+            --space="${{ vars.OCTOPUS_SPACE }}" \
+            --project="${{ vars.OCTOPUS_PROJECT }}" \
+            --name="container_app_name" \
+            --value="${{ env.TDD_APP_NAME }}" \
+            --environment="TDD"
+
       - name: Create release and deploy to TDD
         uses: OctopusDeploy/create-release-action@v1
         with:
@@ -388,16 +408,11 @@ jobs:
           server: ${{ secrets.OCTOPUS_URL }}
           space: ${{ vars.OCTOPUS_SPACE }}       
           project: ${{ vars.OCTOPUS_PROJECT }}
-          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
-          git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}     
-          deploy_to: "TDD"   
+          deploy_to: "TDD"
+          deployment_timeout: 00:30:00   
           progress: true 
           release_number: ${{ env.BUILD_BUILDNUMBER }}
-          deployment_timeout: 00:30:00
           package_version: ${{ env.BUILD_BUILDNUMBER }}
-          variables: |
-            ResourceGroupName:${{ env.TDD_RESOURCE_GROUP }}
-            container_app_name:${{ env.TDD_APP_NAME }}
 
       - name: 'Login via Azure CLI'
         uses: azure/login@v1
