@@ -13,12 +13,10 @@ step "update-ui-gh-container-app" {
                 
                 $imageTag = "churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest"
                 
-                Write-Host "Resource Group:        bootcamp-tdd"
-                Write-Host "Container App Name:    ui-gh"
-                Write-Host "Image:                 latest"
                 
                 az containerapp update --name ui-gh --resource-group bootcamp-tdd `
                   --subscription f3cfae68-cb4e-4642-9a97-7da7fb774e25
+                  --image churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
                 
                 Write-Host "✅ Container App updated successfully."
                 EOT
