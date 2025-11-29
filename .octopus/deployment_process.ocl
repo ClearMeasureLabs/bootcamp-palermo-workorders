@@ -7,7 +7,7 @@ step "update-ui-gh-container-app" {
         properties = {
             Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
             Octopus.Action.Script.ScriptBody = <<-EOT
-                ErrorActionPreference = "Stop"
+                $ErrorActionPreference = "Stop"
                 
                 $imageTag = "churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest"
                 
