@@ -19,11 +19,11 @@ step "update-ui-gh-container-app" {
                 
                 az containerapp update `
                   --name ui-gh `
-                  --resource-group bootcamp-tdd `
+                  --resource-group bootcamp-$OctopusParameters["Octopus.Environment.Slug"] `
                   --image $imageTag `
                   --revision-suffix $revision
                 
-
+                
                 Start-Sleep -Seconds 15; az containerapp revision show --revision ui-gh--20251129081300 -n ui-gh -g bootcamp-tdd --query "{name:name, active:properties.active, replicas:properties.replicas, healthState:properties.healthState, runningState:properties.runningState, trafficWeight:properties.trafficWeight}" --output table                
                 Write-Host "✅ Container App updated successfully."
                 EOT
