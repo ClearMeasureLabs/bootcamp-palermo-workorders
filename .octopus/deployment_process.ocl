@@ -12,29 +12,6 @@ step "update-ui-gh-container-app" {
                 $buildNumber = "#{Octopus.Release.Number}"
                 $imageTag = "churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest"
                 $revision = $(Get-Date -Format 'yyyyMMddHHmmss')
-                
-                if ($buildNumber -and $buildNumber.Trim() -ne "") {
-                    # Sanitize build number for Azure Container App revision suffix requirements:
-                    # - Must be lowercase alphanumeric or '-'
-                    # - Must start with letter or number
-                    # - Must end with alphanumeric
-                    # - Cannot contain '--'
-                    # - No periods allowed
-                    $sanitizedBuildNumber = $buildNumber.Trim().ToLower() `
-                        -replace '\.', '-' `  # Replace periods with hyphens
-                        -replace '[^a-z0-9\-]', '' `  # Remove any other invalid characters
-                        -replace '\-+', '-' `  # Replace multiple consecutive hyphens with single hyphen
-                        -replace '^-+', '' `  # Remove leading hyphens
-                        -replace '-+$', '' `  # Remove trailing hyphens
-                    
-                    if ($sanitizedBuildNumber) {
-                        $revision = "$revision-$sanitizedBuildNumber"
-                    }
-                }
-                
-                # Ensure revision suffix meets all requirements
-                $revision = $revision.ToLower() -replace '[^a-z0-9\-]', '' -replace '\-+', '-' -replace '^-+', '' -replace '-+$', ''
-                
                 Write-Host "Using revision suffix: $revision"
                 
                 # Get database connection components from Octopus variables
