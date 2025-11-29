@@ -47,16 +47,13 @@ variable "DatabasePassword" {
     value "your-db-password" {
         action = ["update-ui-gh-container-app"]
         environment = ["tdd"]
-        is_sensitive = true
     }
     value "your-db-password" {
         action = ["update-ui-gh-container-app"]
         environment = ["uat"]
-        is_sensitive = true
     }
     value "your-db-password" {
         action = ["update-ui-gh-container-app"]
         environment = ["prod"]
-        is_sensitive = true
     }
 }
