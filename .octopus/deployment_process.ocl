@@ -9,7 +9,6 @@ step "update-ui-gh-container-app" {
             Octopus.Action.Script.ScriptBody = <<-EOT
                 $ErrorActionPreference = "Stop"
                 
-                $buildNumber = "#{Octopus.Release.Number}"
                 $imageTag = "churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest"
                 $revision = $(Get-Date -Format 'yyyyMMddHHmmss')
                 Write-Host "Using revision suffix: $revision"
@@ -20,6 +19,8 @@ step "update-ui-gh-container-app" {
                 $databaseUser = $OctopusParameters["DatabaseUser"]
                 $databasePassword = $OctopusParameters["DatabasePassword"]
                 
+                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
+                
                 # Build the connection string from components
                 if ([string]::IsNullOrWhiteSpace($databaseServer) -or 
                     [string]::IsNullOrWhiteSpace($databaseName) -or
@@ -29,7 +30,7 @@ step "update-ui-gh-container-app" {
                     Write-Warning "Required variables: DatabaseServer, DatabaseName, DatabaseUser, DatabasePassword"
                     az containerapp update `
                       --name ui-gh `
-                      --resource-group bootcamp-$OctopusParameters["Octopus.Environment.Slug"] `
+                      --resource-group $resourceGroup `
                       --image $imageTag `
                       --revision-suffix $revision
                 } else {
@@ -43,15 +44,14 @@ step "update-ui-gh-container-app" {
                     # Set the connection string as an environment variable on the container app
                     # Using double underscore format for ASP.NET Core configuration hierarchy
                     az containerapp update `
-                      --name ui-gh `
-                      --resource-group bootcamp-$OctopusParameters["Octopus.Environment.Slug"] `
+                      --name "ui-gh" `
+                      --resource-group $resourceGroup `
                       --image $imageTag `
                       --revision-suffix $revision `
                       --set-env-vars "ConnectionStrings__SqlConnectionString=$databaseConnectionString"
                 }
                 
                 # Wait for revision to be created and show its status
-                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
                 Start-Sleep -Seconds 15
                 
                 # Get the latest revision name (format: appname--revisionsuffix)
