@@ -13,40 +13,6 @@ step "update-ui-gh-container-app" {
                 $revision = $(Get-Date -Format 'yyyyMMddHHmmss')
                 Write-Host "Using revision suffix: $revision"
                 
-                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
-                
-                # Update container app with new image
-                az containerapp update `
-                  --name ui-gh `
-                  --resource-group $resourceGroup `
-                  --image $imageTag `
-                  --revision-suffix $revision `
-                  --only-show-errors
-                
-                Write-Host "✅ Container App updated successfully."
-            EOT
-            Octopus.Action.Script.ScriptSource = "Inline"
-            Octopus.Action.Script.Syntax = "PowerShell"
-            OctopusUseBundledTooling = "False"
-        }
-        worker_pool = "hosted-windows"
-        worker_pool_variable = ""
-    }
-}
-
-step "set-container-app-connection-string" {
-    name = "Set Connection String Environment Variable"
-    condition = "Success"
-    start_trigger = "StartAfterPrevious"
-    
-    action {
-        action_type = "Octopus.AzurePowerShell"
-        is_required = true
-        properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
-            Octopus.Action.Script.ScriptBody = <<-EOT
-                $ErrorActionPreference = "Stop"
-                
                 # Get database connection components from Octopus variables
                 $databaseServer = $OctopusParameters["DatabaseServer"]
                 $databaseName = $OctopusParameters["DatabaseName"]
@@ -55,32 +21,39 @@ step "set-container-app-connection-string" {
                 
                 $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
                 
-                # Check if database connection variables are configured
-                if ([string]::IsNullOrWhiteSpace($databaseServer) -or 
-                    [string]::IsNullOrWhiteSpace($databaseName) -or
-                    [string]::IsNullOrWhiteSpace($databaseUser) -or
-                    [string]::IsNullOrWhiteSpace($databasePassword)) {
-                    Write-Warning "Database connection variables are not fully configured. Skipping connection string update."
+                # Build connection string if database variables are configured
+                if (-not [string]::IsNullOrWhiteSpace($databaseServer) -and 
+                    -not [string]::IsNullOrWhiteSpace($databaseName) -and
+                    -not [string]::IsNullOrWhiteSpace($databaseUser) -and
+                    -not [string]::IsNullOrWhiteSpace($databasePassword)) {
+                    # Build SQL Server connection string with authentication
+                    $escapedPassword = $databasePassword -replace "'", "''" -replace ";", "`;"
+                    $databaseConnectionString = "Server=tcp:$databaseServer,1433;Initial Catalog=$databaseName;User ID=$databaseUser;Password=$escapedPassword;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+                    Write-Host "Setting database connection string for server: $databaseServer, database: $databaseName"
+                    
+                    # Update container app with new image and environment variables in a single operation
+                    # This ensures the new revision is created with the environment variable already set
+                    az containerapp update `
+                      --name ui-gh `
+                      --resource-group $resourceGroup `
+                      --image $imageTag `
+                      --revision-suffix $revision `
+                      --set-env-vars "ConnectionStrings__SqlConnectionString=$databaseConnectionString" `
+                      --only-show-errors
+                } else {
+                    Write-Warning "Database connection variables are not fully configured. Container app will be updated without setting the connection string."
                     Write-Warning "Required variables: DatabaseServer, DatabaseName, DatabaseUser, DatabasePassword"
-                    exit 0
+                    
+                    # Update container app with new image only (no environment variables)
+                    az containerapp update `
+                      --name ui-gh `
+                      --resource-group $resourceGroup `
+                      --image $imageTag `
+                      --revision-suffix $revision `
+                      --only-show-errors
                 }
                 
-                # Build SQL Server connection string with authentication
-                # Escape the password for use in connection string (especially if it contains special characters)
-                $escapedPassword = $databasePassword -replace "'", "''" -replace ";", "`;"
-                $databaseConnectionString = "Server=tcp:$databaseServer,1433;Initial Catalog=$databaseName;User ID=$databaseUser;Password=$escapedPassword;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
-                
-                Write-Host "Setting database connection string for server: $databaseServer, database: $databaseName"
-                
-                # Set the connection string as an environment variable on the container app
-                # Using double underscore format for ASP.NET Core configuration hierarchy
-                az containerapp update `
-                  --name "ui-gh" `
-                  --resource-group $resourceGroup `
-                  --set-env-vars "ConnectionStrings__SqlConnectionString=$databaseConnectionString" `
-                  --only-show-errors
-                
-                Write-Host "✅ Connection string environment variable set successfully."
+                Write-Host "✅ Container App updated successfully."
             EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
