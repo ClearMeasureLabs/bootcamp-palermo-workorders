@@ -6,55 +6,57 @@ step "update-ui-gh-container-app" {
         is_required = true
         properties = {
             Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
+            Octopus.Action.PowerShell.Edition = "Core"
             Octopus.Action.Script.ScriptBody = <<-EOT
-                $ErrorActionPreference = "Stop"
-                
-                $imageTag = "churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest"
-                $revision = $(Get-Date -Format 'yyyyMMddHHmmss')
-                Write-Host "Using revision suffix: $revision"
-                
-                # Get database connection components from Octopus variables
-                $databaseServer = $OctopusParameters["DatabaseServer"]
-                $databaseName = $OctopusParameters["DatabaseName"]
-                $databaseUser = $OctopusParameters["DatabaseUser"]
-                $databasePassword = $OctopusParameters["DatabasePassword"]
-                
-                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
-                
-                # Build connection string if database variables are configured
-                if (-not [string]::IsNullOrWhiteSpace($databaseServer) -and 
-                    -not [string]::IsNullOrWhiteSpace($databaseName) -and
-                    -not [string]::IsNullOrWhiteSpace($databaseUser) -and
-                    -not [string]::IsNullOrWhiteSpace($databasePassword)) {
-                    # Build SQL Server connection string with authentication
-                    $escapedPassword = $databasePassword -replace "'", "''" -replace ";", "`;"
-                    $databaseConnectionString = "Server=tcp:$databaseServer,1433;Initial Catalog=$databaseName;User ID=$databaseUser;Password=$escapedPassword;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
-                    Write-Host "Setting database connection string for server: $databaseServer, database: $databaseName"
+                    $ErrorActionPreference = "Stop"
                     
-                    # Update container app with new image and environment variables in a single operation
-                    # This ensures the new revision is created with the environment variable already set
-                    az containerapp update `
-                      --name ui-gh `
-                      --resource-group $resourceGroup `
-                      --image $imageTag `
-                      --revision-suffix $revision `
-                      --set-env-vars "ConnectionStrings__SqlConnectionString=$databaseConnectionString" `
-                      --only-show-errors
-                } else {
-                    Write-Warning "Database connection variables are not fully configured. Container app will be updated without setting the connection string."
-                    Write-Warning "Required variables: DatabaseServer, DatabaseName, DatabaseUser, DatabasePassword"
+                    $imageTag = "churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest"
+                    $revision = $(Get-Date -Format 'yyyyMMddHHmmss')
+                    Write-Host "Using revision suffix: $revision"
                     
-                    # Update container app with new image only (no environment variables)
-                    az containerapp update `
-                      --name ui-gh `
-                      --resource-group $resourceGroup `
-                      --image $imageTag `
-                      --revision-suffix $revision `
-                      --only-show-errors
-                }
-                
-                Write-Host "✅ Container App updated successfully."
-            EOT
+                    # Get database connection components from Octopus variables
+                    $databaseServer = $OctopusParameters["DatabaseServer"]
+                    $databaseName = $OctopusParameters["DatabaseName"]
+                    $databaseUser = $OctopusParameters["DatabaseUser"]
+                    $databasePassword = $OctopusParameters["DatabasePassword"]
+                    
+                    $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
+                    
+                    # Build connection string if database variables are configured
+                    if (-not [string]::IsNullOrWhiteSpace($databaseServer) -and 
+                        -not [string]::IsNullOrWhiteSpace($databaseName) -and
+                        -not [string]::IsNullOrWhiteSpace($databaseUser) -and
+                        -not [string]::IsNullOrWhiteSpace($databasePassword)) {
+                        # Build SQL Server connection string with authentication
+                        $escapedPassword = $databasePassword -replace "'", "''" -replace ";", "`;"
+                        $databaseConnectionString = "Server=tcp:$databaseServer,1433;Initial Catalog=$databaseName;User ID=$databaseUser;Password=$escapedPassword;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+                        Write-Host "Setting database connection string for server: $databaseServer, database: $databaseName"
+                        
+                        # Update container app with new image and environment variables in a single operation
+                        # This ensures the new revision is created with the environment variable already set
+                        az containerapp update `
+                          --name ui-gh `
+                          --resource-group $resourceGroup `
+                          --image $imageTag `
+                          --revision-suffix $revision `
+                          --set-env-vars "ConnectionStrings__SqlConnectionString=$databaseConnectionString" `
+                          --only-show-errors
+                    } else {
+                        Write-Warning "Database connection variables are not fully configured. Container app will be updated without setting the connection string."
+                        Write-Warning "Required variables: DatabaseServer, DatabaseName, DatabaseUser, DatabasePassword"
+                        
+                        # Update container app with new image only (no environment variables)
+                        az containerapp update `
+                          --name ui-gh `
+                          --resource-group $resourceGroup `
+                          --image $imageTag `
+                          --revision-suffix $revision `
+                          --only-show-errors
+                    }
+                    
+                    Write-Host "✅ Container App updated successfully."
+                EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "False"
@@ -66,68 +68,113 @@ step "update-ui-gh-container-app" {
 
 step "show-container-app-details" {
     name = "Show Container App Revision and FQDN"
-    condition = "Success"
-    start_trigger = "StartAfterPrevious"
-    
+
     action {
         action_type = "Octopus.AzurePowerShell"
         is_required = true
         properties = {
             Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
             Octopus.Action.Script.ScriptBody = <<-EOT
-                $ErrorActionPreference = "Stop"
-                
-                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
-                
-                # Wait for revision to be fully created
-                Start-Sleep -Seconds 15
-                
-                # Get the latest revision name (format: appname--revisionsuffix)
-                $latestRevision = az containerapp revision list `
-                    --name ui-gh `
-                    --resource-group $resourceGroup `
-                    --query "[0].name" `
-                    --output tsv `
-                    --only-show-errors
-                
-                if ($latestRevision) {
-                    Write-Host "Latest revision: $latestRevision"
-                    Write-Host ""
+                    $ErrorActionPreference = "Stop"
                     
-                    # Show revision details
-                    Write-Host "Revision Details:"
-                    az containerapp revision show `
-                        --revision $latestRevision `
+                    $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
+                    
+                    # Wait for revision to be fully created
+                    Start-Sleep -Seconds 15
+                    
+                    # Get the latest revision name (format: appname--revisionsuffix)
+                    $latestRevision = az containerapp revision list `
                         --name ui-gh `
                         --resource-group $resourceGroup `
-                        --query "{name:name, active:properties.active, replicas:properties.replicas, healthState:properties.healthState, runningState:properties.runningState, trafficWeight:properties.trafficWeight}" `
-                        --output table `
-                        --only-show-errors
-                    
-                    Write-Host ""
-                    
-                    # Get and display the FQDN
-                    $fqdn = az containerapp show `
-                        --name ui-gh `
-                        --resource-group $resourceGroup `
-                        --query properties.configuration.ingress.fqdn `
+                        --query "[0].name" `
                         --output tsv `
                         --only-show-errors
                     
-                    if ($fqdn) {
-                        Write-Host "Container App FQDN: https://$fqdn"
+                    if ($latestRevision) {
+                        Write-Host "Latest revision: $latestRevision"
+                        Write-Host ""
+                        
+                        # Show revision details
+                        Write-Host "Revision Details:"
+                        az containerapp revision show `
+                            --revision $latestRevision `
+                            --name ui-gh `
+                            --resource-group $resourceGroup `
+                            --query "{name:name, active:properties.active, replicas:properties.replicas, healthState:properties.healthState, runningState:properties.runningState, trafficWeight:properties.trafficWeight}" `
+                            --output table `
+                            --only-show-errors
+                        
+                        Write-Host ""
+                        
+                        # Get and display the FQDN
+                        $fqdn = az containerapp show `
+                            --name ui-gh `
+                            --resource-group $resourceGroup `
+                            --query properties.configuration.ingress.fqdn `
+                            --output tsv `
+                            --only-show-errors
+                        
+                        if ($fqdn) {
+                            Write-Host "Container App FQDN: https://$fqdn"
+                        } else {
+                            Write-Warning "FQDN not available for container app"
+                        }
                     } else {
-                        Write-Warning "FQDN not available for container app"
+                        Write-Warning "No revision found for container app"
                     }
-                } else {
-                    Write-Warning "No revision found for container app"
-                }
-            EOT
+                EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "False"
         }
         worker_pool = "hosted-windows"
+        worker_pool_variable = ""
+    }
+}
+
+step "install-net-10-manually" {
+    name = "Install .NET 10 manually"
+    properties = {
+        Octopus.Action.TargetRoles = "environment"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                                Write-Host "Checking current SDK..."
+                                dotnet --list-sdks
+                                dotnet --version
+                                
+                                # Check if .NET 10 SDK is already available
+                                $sdks = dotnet --list-sdks
+                                if ($sdks -match "10\.0\.") {
+                                  Write-Host "? .NET 10 SDK is already installed"
+                                  exit 0
+                                }
+                                
+                                # Download and install .NET 10 SDK using official installer script
+                                Write-Host "Downloading .NET 10 SDK installer script..."
+                                try {
+                                  Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1"
+                                  Write-Host "Installing .NET 10 SDK..."
+                                  & "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                                  
+                                  Write-Host "? SDK installation completed"
+                                  Write-Host "Available SDKs:"
+                                  dotnet --list-sdks
+                                  dotnet --version
+                                } catch {
+                                  Write-Warning "? Could not install SDK: $_"
+                                  Write-Host "Attempting to continue with existing SDKs..."
+                                  dotnet --list-sdks
+                                }
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
         worker_pool_variable = ""
     }
 }
