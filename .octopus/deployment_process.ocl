@@ -66,74 +66,28 @@ step "update-ui-gh-container-app" {
                       --revision-suffix $revision `
                       --only-show-errors
                 }
-                
+
+
+                # Wait for revision to be fully created
+                Start-Sleep -Seconds 15
+
+                $latestRevision = az containerapp revision list `
+                    --name ui-gh `
+                    --resource-group $resourceGroup `
+                    --query "[0].name" `
+                    --output tsv `
+                    --only-show-errors
+                Write-Host "Latest revision: $latestRevision"
+
+                $fqdn = az containerapp show `
+                    --name ui-gh `
+                    --resource-group $resourceGroup `
+                    --query properties.configuration.ingress.fqdn `
+                    --output tsv `
+                    --only-show-errors
+                Write-Host "Container App FQDN: https://$fqdn"
+
                 Write-Host "✅ Container App updated successfully."
-                EOT
-            Octopus.Action.Script.ScriptSource = "Inline"
-            Octopus.Action.Script.Syntax = "PowerShell"
-            OctopusUseBundledTooling = "False"
-        }
-        worker_pool = "hosted-windows"
-        worker_pool_variable = ""
-    }
-}
-
-step "show-container-app-details" {
-    name = "Show Container App Revision and FQDN"
-
-    action {
-        action_type = "Octopus.AzurePowerShell"
-        is_required = true
-        properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
-            Octopus.Action.Script.ScriptBody = <<-EOT
-                    $ErrorActionPreference = "Stop"
-                    
-                    $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
-                    
-                    # Wait for revision to be fully created
-                    Start-Sleep -Seconds 15
-                    
-                    # Get the latest revision name (format: appname--revisionsuffix)
-                    $latestRevision = az containerapp revision list `
-                        --name ui-gh `
-                        --resource-group $resourceGroup `
-                        --query "[0].name" `
-                        --output tsv `
-                        --only-show-errors
-                    
-                    if ($latestRevision) {
-                        Write-Host "Latest revision: $latestRevision"
-                        Write-Host ""
-                        
-                        # Show revision details
-                        Write-Host "Revision Details:"
-                        az containerapp revision show `
-                            --revision $latestRevision `
-                            --name ui-gh `
-                            --resource-group $resourceGroup `
-                            --query "{name:name, active:properties.active, replicas:properties.replicas, healthState:properties.healthState, runningState:properties.runningState, trafficWeight:properties.trafficWeight}" `
-                            --output table `
-                            --only-show-errors
-                        
-                        Write-Host ""
-                        
-                        # Get and display the FQDN
-                        $fqdn = az containerapp show `
-                            --name ui-gh `
-                            --resource-group $resourceGroup `
-                            --query properties.configuration.ingress.fqdn `
-                            --output tsv `
-                            --only-show-errors
-                        
-                        if ($fqdn) {
-                            Write-Host "Container App FQDN: https://$fqdn"
-                        } else {
-                            Write-Warning "FQDN not available for container app"
-                        }
-                    } else {
-                        Write-Warning "No revision found for container app"
-                    }
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
