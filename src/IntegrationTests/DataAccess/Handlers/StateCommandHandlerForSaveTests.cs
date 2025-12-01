@@ -33,12 +33,14 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         result.WorkOrder.Creator.ShouldBe(currentUser);
         result.WorkOrder.Title.ShouldBe(workOrder.Title);
         result.WorkOrder.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
+        result.WorkOrder.Instructions.ShouldBe(workOrder.Instructions);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
         result.WorkOrder.Id.ShouldNotBe(Guid.Empty);
         var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
         order.Title.ShouldBe(workOrder.Title);
+        order.Instructions.ShouldBe(workOrder.Instructions);
     }
 
     [Test]
@@ -74,6 +76,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(workOrder.Title);
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe(workOrder.Instructions);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -113,6 +116,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe(workOrder.Instructions);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -153,6 +157,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe(workOrder.Instructions);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
