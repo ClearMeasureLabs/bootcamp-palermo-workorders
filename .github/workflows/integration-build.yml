@@ -382,16 +382,19 @@ jobs:
           version: latest
 
       - name: Create release and deploy to TDD
-        uses: OctopusDeploy/create-release-action@v1
-        with:
-          api_key: ${{ secrets.OCTO_API_KEY }}
-          server: ${{ secrets.OCTOPUS_URL }}
-          space: ${{ vars.OCTOPUS_SPACE }}       
-          project: ${{ vars.OCTOPUS_PROJECT }}
-          deploy_to: "TDD"
-          deployment_timeout: 00:30:00   
-          progress: true 
-          release_number: ${{ env.BUILD_BUILDNUMBER }}
+        run: |
+          octo create-release \
+            --server ${{ secrets.OCTOPUS_URL }} \
+            --apiKey ${{ secrets.OCTO_API_KEY }} \
+            --space ${{ vars.OCTOPUS_SPACE }} \
+            --project ${{ vars.OCTOPUS_PROJECT }} \
+            --version ${{ env.BUILD_BUILDNUMBER }} \
+            --deployTo "TDD" \
+            --deploymentTimeout "00:30:00" \
+            --progress \
+            --wait-for-deployment
+
+          
 
       - name: 'Login via Azure CLI'
         uses: azure/login@v1
