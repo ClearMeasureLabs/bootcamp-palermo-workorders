@@ -148,69 +148,12 @@ jobs:
           VERSION: ${{ env.VERSION }}
         run: |
           $ErrorActionPreference = "Stop"
-          
-          $githubToken = $env:GITHUB_TOKEN
-          $githubRepo = $env:GITHUB_REPOSITORY
-          $version = $env:VERSION
-          
-          if ([string]::IsNullOrWhiteSpace($githubToken)) {
-            throw "GITHUB_TOKEN is required for publishing to GitHub Packages"
-          }
-          
-          if ([string]::IsNullOrWhiteSpace($githubRepo)) {
-            throw "GITHUB_REPOSITORY is required for publishing to GitHub Packages"
-          }
-          
-          $owner = $githubRepo.Split('/')[0]
-          $githubFeed = "https://nuget.pkg.github.com/$owner/index.json"
-          
-          Write-Host "Publishing packages to GitHub Packages feed: $githubFeed"
-          Write-Host "Package version: $version"
-          
-          # Find all .nupkg files in the build directory
-          $packageFiles = Get-ChildItem -Path "./build" -Filter "*.nupkg" -ErrorAction SilentlyContinue
-          
-          if (-not $packageFiles -or $packageFiles.Count -eq 0) {
-            Write-Warning "No NuGet packages found in ./build directory"
-            exit 0
-          }
-          
-          Write-Host "Found $($packageFiles.Count) package(s) to publish:"
-          foreach ($packageFile in $packageFiles) {
-            Write-Host "  - $($packageFile.Name)"
-          }
-          
-          # Publish each package
-          $publishedCount = 0
-          $failedCount = 0
-          
-          foreach ($packageFile in $packageFiles) {
-            $packageName = $packageFile.Name
-            Write-Host ""
-            Write-Host "Publishing $packageName to GitHub Packages..."
-            
-            try {
-              dotnet nuget push $packageFile.FullName --source $githubFeed --api-key $githubToken --skip-duplicate
-              
-              if ($LASTEXITCODE -eq 0) {
-                Write-Host "✅ Successfully published $packageName" -ForegroundColor Green
-                $publishedCount++
-              } else {
-                Write-Warning "Failed to publish $packageName (exit code: $LASTEXITCODE)"
-                $failedCount++
-              }
-            } catch {
-              Write-Warning "Error publishing $packageName : $_"
-              $failedCount++
-            }
-          }
-          
-          Write-Host ""
-          Write-Host "Publishing summary: $publishedCount published, $failedCount failed"
-          
-          if ($failedCount -gt 0) {
-            Write-Warning "Some packages failed to publish. This may be expected if packages already exist (--skip-duplicate)."
-          }
+          . ./build.ps1
+          Publish-ToGitHubPackages -packageId "ChurchBulletin.UI"
+          Publish-ToGitHubPackages -packageId "ChurchBulletin.Database"
+          Publish-ToGitHubPackages -packageId "ChurchBulletin.AcceptanceTests"
+          Publish-ToGitHubPackages -packageId "ChurchBulletin.Script"
+
 
       # Publish Octopus packages to Octopus Deploy server
       - name: Publish Octopus Packages to Octopus Deploy
