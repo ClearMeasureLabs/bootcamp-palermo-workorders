@@ -370,9 +370,26 @@ jobs:
           OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
           OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
         with:
-              project: '${{ vars.OCTOPUS_PROJECT }}'
-              git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
-              git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}          
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
+          git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}          
+
+
+
+      - name: Deploy Octopus Release
+        uses: OctopusDeploy/deploy-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
+          OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
+        with:          
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
+        environments: "TDD"
 
       - name: 'Login via Azure CLI'
         uses: azure/login@v1
