@@ -14,7 +14,11 @@ step "apply-database-migrations" {
                 
                 $firewallRuleName = "OctopusDeployWorker"
                 $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
-                $resourceDbServer = "bootcamp-palermo-workorders-$($OctopusParameters["Octopus.Environment.Slug"])"
+                $resourceDbServer = "bootcamp-palermo-workorders"
+                if ($OctopusParameters["Octopus.Environment.Slug"] -ne "tdd") {
+                    $resourceDbServer += "-$($OctopusParameters["Octopus.Environment.Slug"])"
+                }
+                
                 az sql server firewall-rule create --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName --start-ip-address $workerIp --end-ip-address $workerIp
                 
                 # Get database connection components from Octopus variables
