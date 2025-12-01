@@ -1,40 +1,34 @@
+variable "DatabaseName" {
+    value "ChurchBulletin-gh" {
+        action = ["update-ui-gh-container-app"]
+        environment = ["prod", "tdd", "uat"]
+    }
+}
+
 variable "DatabaseServer" {
     value "bootcamp-palermo-workorders.database.windows.net" {
-        action = ["update-ui-gh-container-app"]
         environment = ["tdd"]
     }
 
     value "bootcamp-palermo-workorders.database.windows.net" {
-        action = ["update-ui-gh-container-app"]
         environment = ["uat"]
     }
 
     value "bootcamp-palermo-workorders.database.windows.net" {
-        action = ["update-ui-gh-container-app"]
         environment = ["prod"]
     }
 }
 
 variable "DatabaseUser" {
     value "tdd" {
-        action = ["update-ui-gh-container-app"]
         environment = ["tdd"]
     }
 
     value "uat" {
-        action = ["update-ui-gh-container-app"]
         environment = ["uat"]
     }
 
     value "prod" {
-        action = ["update-ui-gh-container-app"]
         environment = ["prod"]
-    }
-}
-
-variable "DatabaseName" {
-    value "ChurchBulletin-gh" {
-        action = ["update-ui-gh-container-app"]
-        environment = ["prod", "tdd", "uat"]
     }
 }
