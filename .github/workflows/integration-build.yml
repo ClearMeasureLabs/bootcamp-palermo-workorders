@@ -358,117 +358,21 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
 
-      # Set TDD environment variables
-      - name: Set TDD Environment Variables
-        run: |
-          echo "TDD_RESOURCE_GROUP=bootcamp-tdd" >> $GITHUB_ENV
-          echo "TDD_APP_NAME=ui-gh" >> $GITHUB_ENV
 
-      - name: Install jq
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-
-      - name: Create release and deploy to TDD via REST API
-        run: |
-          OCTOPUS_URL="${{ secrets.OCTOPUS_URL }}"
-          API_KEY="${{ secrets.OCTO_API_KEY }}"
-          SPACE_ID="${{ vars.OCTOPUS_SPACE }}"
-          PROJECT_NAME="${{ vars.OCTOPUS_PROJECT }}"
-          RELEASE_VERSION="${{ env.BUILD_BUILDNUMBER }}"
-          ENVIRONMENT_NAME="TDD"
-          
-          # Get Space ID if space name was provided instead of ID
-          if [[ ! "$SPACE_ID" =~ ^Spaces- ]]; then
-            echo "Looking up space: $SPACE_ID"
-            SPACE_RESPONSE=$(curl -s -X GET "$OCTOPUS_URL/api/spaces/all" \
-              -H "X-Octopus-ApiKey: $API_KEY")
-            SPACE_ID=$(echo "$SPACE_RESPONSE" | jq -r ".[] | select(.Name == \"$SPACE_ID\") | .Id")
-            if [ -z "$SPACE_ID" ] || [ "$SPACE_ID" == "null" ]; then
-              echo "Error: Space '$SPACE_ID' not found"
-              exit 1
-            fi
-            echo "Found space ID: $SPACE_ID"
-          fi
-          
-          # Get Project ID
-          echo "Looking up project: $PROJECT_NAME"
-          PROJECT_RESPONSE=$(curl -s -X GET "$OCTOPUS_URL/api/$SPACE_ID/projects/all" \
-            -H "X-Octopus-ApiKey: $API_KEY")
-          PROJECT_ID=$(echo "$PROJECT_RESPONSE" | jq -r ".[] | select(.Name == \"$PROJECT_NAME\") | .Id")
-          if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" == "null" ]; then
-            echo "Error: Project '$PROJECT_NAME' not found"
-            exit 1
-          fi
-          echo "Found project ID: $PROJECT_ID"
-          
-          # Get Environment ID
-          echo "Looking up environment: $ENVIRONMENT_NAME"
-          ENV_RESPONSE=$(curl -s -X GET "$OCTOPUS_URL/api/$SPACE_ID/environments/all" \
-            -H "X-Octopus-ApiKey: $API_KEY")
-          ENVIRONMENT_ID=$(echo "$ENV_RESPONSE" | jq -r ".[] | select(.Name == \"$ENVIRONMENT_NAME\") | .Id")
-          if [ -z "$ENVIRONMENT_ID" ] || [ "$ENVIRONMENT_ID" == "null" ]; then
-            echo "Error: Environment '$ENVIRONMENT_NAME' not found"
-            exit 1
-          fi
-          echo "Found environment ID: $ENVIRONMENT_ID"
-          
-          # Create release
-          echo "Creating release $RELEASE_VERSION for project $PROJECT_NAME"
-          # Octopus Deploy API v3 uses /api/releases with ProjectId in body and space in header
-          RELEASE_DATA=$(jq -n \
-            --arg version "$RELEASE_VERSION" \
-            --arg projectId "$PROJECT_ID" \
-            '{ProjectId: $projectId, Version: $version}')
-          
-          RELEASE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "$OCTOPUS_URL/api/releases" \
-            -H "X-Octopus-ApiKey: $API_KEY" \
-            -H "X-Octopus-Space: $SPACE_ID" \
-            -H "Content-Type: application/json" \
-            -d "$RELEASE_DATA")
-          
-          HTTP_CODE=$(echo "$RELEASE_RESPONSE" | tail -n1)
-          RELEASE_BODY=$(echo "$RELEASE_RESPONSE" | sed '$d')
-          
-          if [ "$HTTP_CODE" != "201" ]; then
-            echo "Error creating release. HTTP Code: $HTTP_CODE"
-            echo "Response: $RELEASE_BODY"
-            echo "Endpoint used: $OCTOPUS_URL/api/releases"
-            echo "Request data: $RELEASE_DATA"
-            exit 1
-          fi
-          
-          RELEASE_ID=$(echo "$RELEASE_BODY" | jq -r '.Id')
-          echo "✓ Release created with ID: $RELEASE_ID"
-          
-          # Create deployment
-          echo "Creating deployment to $ENVIRONMENT_NAME"
-          DEPLOYMENT_DATA=$(jq -n \
-            --arg releaseId "$RELEASE_ID" \
-            --arg environmentId "$ENVIRONMENT_ID" \
-            '{ReleaseId: $releaseId, EnvironmentId: $environmentId}')
-          
-          DEPLOYMENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "$OCTOPUS_URL/api/deployments" \
-            -H "X-Octopus-ApiKey: $API_KEY" \
-            -H "X-Octopus-Space: $SPACE_ID" \
-            -H "Content-Type: application/json" \
-            -d "$DEPLOYMENT_DATA")
-          
-          HTTP_CODE=$(echo "$DEPLOYMENT_RESPONSE" | tail -n1)
-          DEPLOYMENT_BODY=$(echo "$DEPLOYMENT_RESPONSE" | sed '$d')
-          
-          if [ "$HTTP_CODE" != "201" ]; then
-            echo "Error creating deployment. HTTP Code: $HTTP_CODE"
-            echo "Response: $DEPLOYMENT_BODY"
-            exit 1
-          fi
-          
-          DEPLOYMENT_ID=$(echo "$DEPLOYMENT_BODY" | jq -r '.TaskId')
-          echo "✓ Deployment created with task ID: $DEPLOYMENT_ID"
-          echo "Deployment is now running in Octopus Deploy"
-          
+      - name: Create Octopus Release
+        uses: OctopusDeploy/create-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
+          OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
+        with:
+              project: '${{ vars.OCTOPUS_PROJECT }}'
+              git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
+              git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}          
 
       - name: 'Login via Azure CLI'
         uses: azure/login@v1
