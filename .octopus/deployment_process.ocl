@@ -4,21 +4,25 @@ step "apply-database-migrations" {
 
     action {
         action_type = "Octopus.AzurePowerShell"
+        is_required = true
         properties = {
             Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
             Octopus.Action.Script.ScriptBody = <<-EOT
+                $ErrorActionPreference = "Stop"
+                
                 Write-Host "Getting Octopus Worker IP address..."
                 $workerIp = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
                 Write-Host "Worker IP Address: $workerIp"
                 Set-OctopusVariable -name "WorkerIP" -value $workerIp
                 
-                $firewallRuleName = "OctopusDeployWorker"
                 $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
                 $resourceDbServer = "bootcamp-palermo-workorders"
                 if ($OctopusParameters["Octopus.Environment.Slug"] -ne "tdd") {
                     $resourceDbServer += "-$($OctopusParameters["Octopus.Environment.Slug"])"
                 }
                 
+                # Have to open up the firewall briefly so that we can apply the Database migrations.
+                $firewallRuleName = "OctopusDeployWorker"
                 az sql server firewall-rule create --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName --start-ip-address $workerIp --end-ip-address $workerIp
                 
                 # Get database connection components from Octopus variables
@@ -26,20 +30,122 @@ step "apply-database-migrations" {
                 $databaseName = $OctopusParameters["DatabaseName"]
                 $databaseUser = $OctopusParameters["DatabaseUser"]
                 $databasePassword = $OctopusParameters["DatabasePassword"]
-                $escapedPassword = $databasePassword -replace "'", "''" -replace ";", "`;"
-                $databaseConnectionString = "Server=tcp:$databaseServer,1433;Initial Catalog=$databaseName;User ID=$databaseUser;Password=$escapedPassword;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+                $databaseAction = $OctopusParameters["DatabaseAction"]
                 
-                Write-Host "Apply migrations to the SQL server database"
+                # Find the Database package (deployed as part of release)
+                $packagePath = $OctopusParameters["Octopus.Action.Package[ChurchBulletin.Database].ExtractedPath"]
+                if (-not $packagePath) {
+                    throw "Could not find ChurchBulletin.Database package path"
+                }
                 
-                az sql server firewall-rule delete --resource-group $resourceGroup --server $resourceDbServer --name firewallRuleName
+                $databaseAssembly = Get-ChildItem -Path $packagePath `
+                    -Filter "ClearMeasure.Bootcamp.Database.dll" `
+                    -Recurse | Select-Object -First 1 -ExpandProperty FullName
                 
+                $scriptDir = Join-Path $packagePath "scripts"
+                
+                if (-not $databaseAssembly) {
+                    throw "Could not find ClearMeasure.Bootcamp.Database.dll in ChurchBulletin.Database package"
+                }
+                
+                if (-not (Test-Path $scriptDir)) {
+                    throw "Scripts directory not found at: $scriptDir"
+                }
+                
+                Write-Host "Database Assembly: $databaseAssembly"
+                Write-Host "Scripts Directory: $scriptDir"
+                Write-Host "Database Server: $databaseServer"
+                Write-Host "Database Name: $databaseName"
+                Write-Host "Database Action: $databaseAction"
+                
+                # Check if database has been baselined by checking for SchemaVersions table
+                $connectionString = "Server=$databaseServer;Database=$databaseName;User Id=$databaseUser;Password=$databasePassword;TrustServerCertificate=True"
+                
+                $checkSchemaQuery = @"
+SELECT CASE WHEN EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.TABLES 
+    WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'SchemaVersions'
+) THEN 1 ELSE 0 END AS TableExists
+"@
+                
+                try {
+                    $connection = New-Object System.Data.SqlClient.SqlConnection($connectionString)
+                    $connection.Open()
+                    
+                    $command = $connection.CreateCommand()
+                    $command.CommandText = $checkSchemaQuery
+                    $tableExists = $command.ExecuteScalar()
+                    
+                    $connection.Close()
+                    
+                    if ($tableExists -eq 1) {
+                        Write-Host "Database has been baselined - SchemaVersions table exists"
+                        
+                        # Check for existing records
+                        $connection.Open()
+                        $command.CommandText = "SELECT COUNT(*) FROM dbo.SchemaVersions"
+                        $recordCount = $command.ExecuteScalar()
+                        $connection.Close()
+                        
+                        # Count SQL files in scripts directory
+                        $sqlFileCount = (Get-ChildItem -Path $scriptDir -Filter "*.sql" -Recurse -File).Count
+                        
+                        Write-Host "SchemaVersions table contains $recordCount script record(s)"
+                        Write-Host "Scripts directory contains $sqlFileCount SQL file(s)"
+                        
+                        if ($recordCount -lt $sqlFileCount) {
+                            Write-Warning "Database may not be fully baselined: dbo.SchemaVersions has $recordCount records vs $sqlFileCount SQL files"
+#                            Write-Host "Running baseline to sync records..."
+#                            dotnet $databaseAssembly baseline $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
+#                            
+#                            if ($LASTEXITCODE -ne 0) {
+#                                throw "Database baseline failed with exit code $LASTEXITCODE"
+#                            }
+                        } else {
+                            Write-Host "Database appears fully baselined: record count matches SQL file count"
+                        }
+                    } else {
+                        Write-Host "Database not baselined - SchemaVersions table does not exist. Running baseline..."
+                        dotnet $databaseAssembly baseline $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
+                        
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Database baseline failed with exit code $LASTEXITCODE"
+                        }
+                    }
+                } catch {
+                    Write-Warning "Could not check for SchemaVersions table: $_"
+                    Write-Host "Attempting baseline anyway..."
+                    dotnet $databaseAssembly baseline $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
+                    
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Database baseline failed with exit code $LASTEXITCODE"
+                    }
+                }
+                
+                # Run the database migration
+                Write-Host "Executing database migration: $databaseAction"
+                dotnet $databaseAssembly $databaseAction $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
+                
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Database migration failed with exit code $LASTEXITCODE"
+                }
+                
+                # Close up the firewall again.
+                az sql server firewall-rule delete --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName
                 
                 Write-Host "✅ Migrations applied successfully."
-                EOT
+            EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "False"
         }
+        
+        package {
+            name = "ChurchBulletin.Database"
+            feed = "#{NuGetFeed}"
+            acquisition_location = "Server"
+        }
+        
         worker_pool = "hosted-windows"
         worker_pool_variable = ""
     }
