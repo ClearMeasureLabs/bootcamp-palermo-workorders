@@ -379,7 +379,7 @@ jobs:
       - name: Install Octopus CLI
         uses: OctopusDeploy/install-octopus-cli-action@v1
         with:
-          version: latest        
+          version: latest
 
       - name: Create release and deploy to TDD
         uses: OctopusDeploy/create-release-action@v1
@@ -392,7 +392,6 @@ jobs:
           deployment_timeout: 00:30:00   
           progress: true 
           release_number: ${{ env.BUILD_BUILDNUMBER }}
-          package_version: ${{ env.BUILD_BUILDNUMBER }}
 
       - name: 'Login via Azure CLI'
         uses: azure/login@v1
@@ -498,7 +497,7 @@ jobs:
             !**/*TestAdapter.dll
             !**/obj/**
           searchFolder: ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}/
-          runInParallel: true 
+          runInParallel: false 
 
 
   deploy-to-uat:
