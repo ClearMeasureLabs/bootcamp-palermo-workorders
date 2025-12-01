@@ -389,7 +389,7 @@ jobs:
         with:          
           project: '${{ vars.OCTOPUS_PROJECT }}'
           release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
-        environments: "TDD"
+          environments: "TDD"
 
       - name: 'Login via Azure CLI'
         uses: azure/login@v1
