@@ -33,7 +33,7 @@ variable "DatabaseUser" {
 }
 
 variable "DatabaseName" {
-    value "ChurchBulletinDb-gh" {
+    value "ChurchBulletin-gh" {
         action = ["update-ui-gh-container-app"]
         environment = ["prod", "tdd", "uat"]
     }
