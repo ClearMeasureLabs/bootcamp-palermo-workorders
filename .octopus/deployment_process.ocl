@@ -5,7 +5,7 @@ step "update-ui-gh-container-app" {
         action_type = "Octopus.AzurePowerShell"
         is_required = true
         properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.AccountId = "#{AzureAccountId}"
             Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
             Octopus.Action.PowerShell.Edition = "Core"
             Octopus.Action.Script.ScriptBody = <<-EOT
@@ -73,7 +73,7 @@ step "show-container-app-details" {
         action_type = "Octopus.AzurePowerShell"
         is_required = true
         properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.AccountId = "#{AzureAccountId}"
             Octopus.Action.Script.ScriptBody = <<-EOT
                     $ErrorActionPreference = "Stop"
                     
