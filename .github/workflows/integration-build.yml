@@ -415,13 +415,16 @@ jobs:
           
           # Create release
           echo "Creating release $RELEASE_VERSION for project $PROJECT_NAME"
+          # Octopus Deploy API v3 uses /api/releases with ProjectId in body and space in header
           RELEASE_DATA=$(jq -n \
             --arg version "$RELEASE_VERSION" \
-            '{Version: $version}')
+            --arg projectId "$PROJECT_ID" \
+            '{ProjectId: $projectId, Version: $version}')
           
           RELEASE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "$OCTOPUS_URL/api/$SPACE_ID/projects/$PROJECT_ID/releases" \
+            "$OCTOPUS_URL/api/releases" \
             -H "X-Octopus-ApiKey: $API_KEY" \
+            -H "X-Octopus-Space: $SPACE_ID" \
             -H "Content-Type: application/json" \
             -d "$RELEASE_DATA")
           
@@ -431,6 +434,8 @@ jobs:
           if [ "$HTTP_CODE" != "201" ]; then
             echo "Error creating release. HTTP Code: $HTTP_CODE"
             echo "Response: $RELEASE_BODY"
+            echo "Endpoint used: $OCTOPUS_URL/api/releases"
+            echo "Request data: $RELEASE_DATA"
             exit 1
           fi
           
@@ -445,8 +450,9 @@ jobs:
             '{ReleaseId: $releaseId, EnvironmentId: $environmentId}')
           
           DEPLOYMENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "$OCTOPUS_URL/api/$SPACE_ID/deployments" \
+            "$OCTOPUS_URL/api/deployments" \
             -H "X-Octopus-ApiKey: $API_KEY" \
+            -H "X-Octopus-Space: $SPACE_ID" \
             -H "Content-Type: application/json" \
             -d "$DEPLOYMENT_DATA")
           
