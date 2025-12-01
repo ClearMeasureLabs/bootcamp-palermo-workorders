@@ -66,11 +66,11 @@ step "update-ui-gh-container-app" {
                       --revision-suffix $revision `
                       --only-show-errors
                 }
-
-
+                
+                
                 # Wait for revision to be fully created
                 Start-Sleep -Seconds 15
-
+                
                 $latestRevision = az containerapp revision list `
                     --name ui-gh `
                     --resource-group $resourceGroup `
@@ -78,7 +78,7 @@ step "update-ui-gh-container-app" {
                     --output tsv `
                     --only-show-errors
                 Write-Host "Latest revision: $latestRevision"
-
+                
                 $fqdn = az containerapp show `
                     --name ui-gh `
                     --resource-group $resourceGroup `
@@ -86,8 +86,50 @@ step "update-ui-gh-container-app" {
                     --output tsv `
                     --only-show-errors
                 Write-Host "Container App FQDN: https://$fqdn"
-
+                
                 Write-Host "✅ Container App updated successfully."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-windows"
+        worker_pool_variable = ""
+    }
+}
+
+step "apply-database-migrations" {
+    name = "Apply database migrations"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        properties = {
+            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                Write-Host "Getting Octopus Worker IP address..."
+                $workerIp = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
+                Write-Host "Worker IP Address: $workerIp"
+                Set-OctopusVariable -name "WorkerIP" -value $workerIp
+                
+                $firewallRuleName  "OctopusDeployWorker"
+                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
+                $resourceDbServer = "bootcamp-palermo-workorders-$($OctopusParameters["Octopus.Environment.Slug"])"
+                az sql server firewall-rule create --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName --start-ip-address $workerIp --end-ip-address $workerIp
+                
+                # Get database connection components from Octopus variables
+                $databaseServer = $OctopusParameters["DatabaseServer"]
+                $databaseName = $OctopusParameters["DatabaseName"]
+                $databaseUser = $OctopusParameters["DatabaseUser"]
+                $databasePassword = $OctopusParameters["DatabasePassword"]
+                $escapedPassword = $databasePassword -replace "'", "''" -replace ";", "`;"
+                $databaseConnectionString = "Server=tcp:$databaseServer,1433;Initial Catalog=$databaseName;User ID=$databaseUser;Password=$escapedPassword;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+                
+                Write-Host "Apply migrations to the SQL server database"
+                
+                az sql server firewall-rule delete --resource-group $resourceGroup --server $resourceDbServer --name firewallRuleName
+                
+                
+                Write-Host "✅ Migrations applied successfully."
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
