@@ -145,9 +145,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          VERSION: ${{ env.VERSION }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
         run: |
           $ErrorActionPreference = "Stop"
+          
+          # Debug: Show repository information
+          Write-Host "GITHUB_REPOSITORY: $env:GITHUB_REPOSITORY"
+          Write-Host "Repository owner will be: $($env:GITHUB_REPOSITORY.Split('/')[0])"
+          
           . ./build.ps1
           Publish-ToGitHubPackages -packageId "ChurchBulletin.UI"
           Publish-ToGitHubPackages -packageId "ChurchBulletin.Database"

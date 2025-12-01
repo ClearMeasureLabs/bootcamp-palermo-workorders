@@ -278,13 +278,36 @@ Function Publish-ToGitHubPackages {
 	$packageFile = Get-ChildItem "$build_dir/$packageId.$version.nupkg" -ErrorAction SilentlyContinue
 	if (-not $packageFile) {
 		Log-Message -Message "Package file not found: $packageId.$version.nupkg" -Type "ERROR"
-		throw "Package file not found"
+		throw "Package file not found: $packageId.$version.nupkg"
 	}
 	
 	Log-Message -Message "Publishing $($packageFile.Name) to GitHub Packages..." -Type "INFO"
-	exec {
-		& dotnet nuget push $packageFile.FullName --source $githubFeed --api-key $githubToken --skip-duplicate
+	Log-Message -Message "Feed: $githubFeed" -Type "INFO"
+	Log-Message -Message "Owner: $owner" -Type "INFO"
+	
+	# GitHub Packages requires username/password authentication, not API key
+	# Configure the source with authentication first
+	$sourceName = "GitHub-$owner"
+	
+	# Remove existing source if it exists
+	$existingSource = dotnet nuget list source | Select-String -Pattern $sourceName -Quiet
+	if ($existingSource) {
+		Log-Message -Message "Removing existing source: $sourceName" -Type "INFO"
+		dotnet nuget remove source $sourceName 2>$null
 	}
+	
+	# Add source with username/password authentication
+	Log-Message -Message "Adding NuGet source with authentication..." -Type "INFO"
+	exec {
+		& dotnet nuget add source $githubFeed --name $sourceName --username $owner --password $githubToken --store-password-in-clear-text
+	}
+	
+	# Push using the configured source
+	Log-Message -Message "Pushing package to GitHub Packages..." -Type "INFO"
+	exec {
+		& dotnet nuget push $packageFile.FullName --source $sourceName --skip-duplicate
+	}
+	
 	Log-Message -Message "Successfully published $($packageFile.Name) to GitHub Packages" -Type "INFO"
 }
 
