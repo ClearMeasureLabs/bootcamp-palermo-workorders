@@ -6,6 +6,17 @@ on:
   pull_request:
     branches: ['*']
   workflow_dispatch:
+    inputs:
+      deploy_to_uat:
+        description: 'Deploy to UAT environment'
+        required: false
+        default: false
+        type: boolean
+      deploy_to_prod:
+        description: 'Deploy to Production environment'
+        required: false
+        default: false
+        type: boolean
 
 env:
   MAJOR_VERSION: 1
@@ -391,9 +402,7 @@ jobs:
             --version ${{ env.BUILD_BUILDNUMBER }} \
             --deployTo "TDD" \
             --deploymentTimeout "00:30:00" \
-            --progress \
-            --wait-for-deployment
-
+            --progress
           
 
       - name: 'Login via Azure CLI'
@@ -506,10 +515,12 @@ jobs:
   deploy-to-uat:
     name: Deploy to UAT environment
     needs: [deploy-to-tdd]
-    if: success() # Only run if TDD job completed successfully
+    if: success() && (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_to_uat == 'true')
     runs-on: ubuntu-latest
     environment:
       name: UAT
+      # Note: Manual approval must be configured in GitHub Settings → Environments → UAT
+      # Add required reviewers to enable manual approval before deployment
     
     steps:
       # Set version environment variable (must match TDD job)
@@ -649,7 +660,7 @@ jobs:
   deploy-to-prod:
     name: Deploy to Production environment
     needs: [deploy-to-uat]
-    if: success() # Only run if UAT job completed successfully
+    if: success() && (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_to_prod == 'true')
     runs-on: ubuntu-latest
     environment:
       name: Prod
