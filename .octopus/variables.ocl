@@ -1,6 +1,5 @@
 variable "DatabaseName" {
     value "ChurchBulletin-gh" {
-        action = ["update-ui-gh-container-app"]
         environment = ["prod", "tdd", "uat"]
     }
 }
