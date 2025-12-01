@@ -26,13 +26,13 @@ variable "DatabaseUser" {
         environment = ["uat"]
     }
 
-    value "your-db-user" {
+    value "prod" {
         action = ["update-ui-gh-container-app"]
         environment = ["prod"]
     }
 }
 
-variable "prod" {
+variable "DatabaseName" {
     value "ChurchBulletinDb-gh" {
         action = ["update-ui-gh-container-app"]
         environment = ["prod", "tdd", "uat"]
