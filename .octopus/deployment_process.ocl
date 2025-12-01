@@ -143,30 +143,3 @@ step "show-container-app-details" {
         worker_pool_variable = ""
     }
 }
-
-step "get-worker-ip-address" {
-    condition = "Always"
-    name = "Get Worker IP address"
-
-    action {
-        action_type = "Octopus.Script"
-        properties = {
-            Octopus.Action.Script.ScriptBody = <<-EOT
-                 Write-Host "Getting Octopus Worker IP address..."
-                 try {
-                       $ip = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
-                       Write-Host "Worker IP Address: $ip"
-                       Set-OctopusVariable -name "WorkerIP" -value $ip
-                 } catch {
-                       Write-Warning "Failed to get IP from ifconfig.me, trying alternative..."
-                       $ip = (Invoke-WebRequest -Uri "https://api.ipify.org" -UseBasicParsing).Content
-                       Write-Host "Worker IP Address: $ip"
-                 }
-                EOT
-            Octopus.Action.Script.ScriptSource = "Inline"
-            Octopus.Action.Script.Syntax = "PowerShell"
-            OctopusUseBundledTooling = "False"
-        }
-        worker_pool = "hosted-windows"
-    }
-}
