@@ -140,11 +140,6 @@ SELECT CASE WHEN EXISTS (
             OctopusUseBundledTooling = "False"
         }
         
-        package {
-            name = "ChurchBulletin.Database"
-            feed = "#{NuGetFeed}"
-            acquisition_location = "Server"
-        }
         
         worker_pool = "hosted-windows"
         worker_pool_variable = ""
