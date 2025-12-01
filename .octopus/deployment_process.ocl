@@ -140,16 +140,16 @@ step "get-worker-ip-address" {
         action_type = "Octopus.Script"
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
-                 (Invoke-WebRequest -Uri "https://ifconfig.me/ip").ContentWrite-Host "Getting Octopus Worker IP address..."
-                       try {
-                           $ip = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
-                           Write-Host "Worker IP Address: $ip"
-                           Set-OctopusVariable -name "WorkerIP" -value $ip
-                       } catch {
-                           Write-Warning "Failed to get IP from ifconfig.me, trying alternative..."
-                           $ip = (Invoke-WebRequest -Uri "https://api.ipify.org" -UseBasicParsing).Content
-                           Write-Host "Worker IP Address: $ip"
-                       }
+                 Write-Host "Getting Octopus Worker IP address..."
+                 try {
+                       $ip = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
+                       Write-Host "Worker IP Address: $ip"
+                       Set-OctopusVariable -name "WorkerIP" -value $ip
+                 } catch {
+                       Write-Warning "Failed to get IP from ifconfig.me, trying alternative..."
+                       $ip = (Invoke-WebRequest -Uri "https://api.ipify.org" -UseBasicParsing).Content
+                       Write-Host "Worker IP Address: $ip"
+                 }
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
