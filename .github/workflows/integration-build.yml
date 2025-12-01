@@ -364,6 +364,11 @@ jobs:
           echo "TDD_RESOURCE_GROUP=bootcamp-tdd" >> $GITHUB_ENV
           echo "TDD_APP_NAME=ui-gh" >> $GITHUB_ENV
 
+      - name: Install Octopus CLI
+        uses: OctopusDeploy/install-octopus-cli-action@v1
+        with:
+          version: latest
+
       - name: Create release and deploy to TDD
         uses: OctopusDeploy/create-release-action@v1
         with:
