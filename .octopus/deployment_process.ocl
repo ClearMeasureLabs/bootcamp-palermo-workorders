@@ -37,9 +37,10 @@ step "update-ui-gh-container-app" {
                     # Build SQL Server connection string with authentication
                     # Escape the password for use in connection string (especially if it contains special characters)
                     $escapedPassword = $databasePassword -replace "'", "''" -replace ";", "`;"
-                    $databaseConnectionString = "Server=$databaseServer;Database=$databaseName;User ID=$databaseUser;Password=$escapedPassword;TrustServerCertificate=true;"
+
+                    $databaseConnectionString = "Server=tcp:$databaseServer,1433;Initial Catalog=$databaseName;User ID=$databaseUser;Password=$escapedPassword;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
                     
-                    Write-Host "Setting database connection string for server: $databaseServer"
+                    Write-Host "Setting database connection string for server: $databaseServer, database: $databaseName"
                     
                     # Set the connection string as an environment variable on the container app
                     # Using double underscore format for ASP.NET Core configuration hierarchy
