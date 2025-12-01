@@ -211,7 +211,7 @@ jobs:
   docker-build-image-for-churchbulletin-ui:
     name: Create and push Docker image for ChurchBulletin.UI
     needs: [build-linux]
-    if: success()
+    if: false # Disabled for now
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -343,8 +343,8 @@ jobs:
 
   deploy-to-tdd:
     name: Deploy to TDD environment and run acceptance tests
-    needs: [docker-build-image-for-churchbulletin-ui]
-    if: success() # Only run if Docker build image job completed successfully
+    # needs: [docker-build-image-for-churchbulletin-ui]
+    # if: success() # Only run if Docker build image job completed successfully
     runs-on: ubuntu-latest
     environment:
       name: TDD
@@ -364,22 +364,104 @@ jobs:
           echo "TDD_RESOURCE_GROUP=bootcamp-tdd" >> $GITHUB_ENV
           echo "TDD_APP_NAME=ui-gh" >> $GITHUB_ENV
 
-      - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v1
-        with:
-          version: latest
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
 
-      - name: Create release and deploy to TDD
-        uses: OctopusDeploy/create-release-action@v1
-        with:
-          api_key: ${{ secrets.OCTO_API_KEY }}
-          server: ${{ secrets.OCTOPUS_URL }}
-          space: ${{ vars.OCTOPUS_SPACE }}
-          project: ${{ vars.OCTOPUS_PROJECT }}
-          release_number: ${{ env.BUILD_BUILDNUMBER }}
-          deploy_to: "TDD"
-          progress: true
-          deployment_timeout: 00:30:00
+      - name: Create release and deploy to TDD via REST API
+        run: |
+          OCTOPUS_URL="${{ secrets.OCTOPUS_URL }}"
+          API_KEY="${{ secrets.OCTO_API_KEY }}"
+          SPACE_ID="${{ vars.OCTOPUS_SPACE }}"
+          PROJECT_NAME="${{ vars.OCTOPUS_PROJECT }}"
+          RELEASE_VERSION="${{ env.BUILD_BUILDNUMBER }}"
+          ENVIRONMENT_NAME="TDD"
+          
+          # Get Space ID if space name was provided instead of ID
+          if [[ ! "$SPACE_ID" =~ ^Spaces- ]]; then
+            echo "Looking up space: $SPACE_ID"
+            SPACE_RESPONSE=$(curl -s -X GET "$OCTOPUS_URL/api/spaces/all" \
+              -H "X-Octopus-ApiKey: $API_KEY")
+            SPACE_ID=$(echo "$SPACE_RESPONSE" | jq -r ".[] | select(.Name == \"$SPACE_ID\") | .Id")
+            if [ -z "$SPACE_ID" ] || [ "$SPACE_ID" == "null" ]; then
+              echo "Error: Space '$SPACE_ID' not found"
+              exit 1
+            fi
+            echo "Found space ID: $SPACE_ID"
+          fi
+          
+          # Get Project ID
+          echo "Looking up project: $PROJECT_NAME"
+          PROJECT_RESPONSE=$(curl -s -X GET "$OCTOPUS_URL/api/$SPACE_ID/projects/all" \
+            -H "X-Octopus-ApiKey: $API_KEY")
+          PROJECT_ID=$(echo "$PROJECT_RESPONSE" | jq -r ".[] | select(.Name == \"$PROJECT_NAME\") | .Id")
+          if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" == "null" ]; then
+            echo "Error: Project '$PROJECT_NAME' not found"
+            exit 1
+          fi
+          echo "Found project ID: $PROJECT_ID"
+          
+          # Get Environment ID
+          echo "Looking up environment: $ENVIRONMENT_NAME"
+          ENV_RESPONSE=$(curl -s -X GET "$OCTOPUS_URL/api/$SPACE_ID/environments/all" \
+            -H "X-Octopus-ApiKey: $API_KEY")
+          ENVIRONMENT_ID=$(echo "$ENV_RESPONSE" | jq -r ".[] | select(.Name == \"$ENVIRONMENT_NAME\") | .Id")
+          if [ -z "$ENVIRONMENT_ID" ] || [ "$ENVIRONMENT_ID" == "null" ]; then
+            echo "Error: Environment '$ENVIRONMENT_NAME' not found"
+            exit 1
+          fi
+          echo "Found environment ID: $ENVIRONMENT_ID"
+          
+          # Create release
+          echo "Creating release $RELEASE_VERSION for project $PROJECT_NAME"
+          RELEASE_DATA=$(jq -n \
+            --arg version "$RELEASE_VERSION" \
+            '{Version: $version}')
+          
+          RELEASE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "$OCTOPUS_URL/api/$SPACE_ID/projects/$PROJECT_ID/releases" \
+            -H "X-Octopus-ApiKey: $API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$RELEASE_DATA")
+          
+          HTTP_CODE=$(echo "$RELEASE_RESPONSE" | tail -n1)
+          RELEASE_BODY=$(echo "$RELEASE_RESPONSE" | sed '$d')
+          
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "Error creating release. HTTP Code: $HTTP_CODE"
+            echo "Response: $RELEASE_BODY"
+            exit 1
+          fi
+          
+          RELEASE_ID=$(echo "$RELEASE_BODY" | jq -r '.Id')
+          echo "✓ Release created with ID: $RELEASE_ID"
+          
+          # Create deployment
+          echo "Creating deployment to $ENVIRONMENT_NAME"
+          DEPLOYMENT_DATA=$(jq -n \
+            --arg releaseId "$RELEASE_ID" \
+            --arg environmentId "$ENVIRONMENT_ID" \
+            '{ReleaseId: $releaseId, EnvironmentId: $environmentId}')
+          
+          DEPLOYMENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "$OCTOPUS_URL/api/$SPACE_ID/deployments" \
+            -H "X-Octopus-ApiKey: $API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$DEPLOYMENT_DATA")
+          
+          HTTP_CODE=$(echo "$DEPLOYMENT_RESPONSE" | tail -n1)
+          DEPLOYMENT_BODY=$(echo "$DEPLOYMENT_RESPONSE" | sed '$d')
+          
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "Error creating deployment. HTTP Code: $HTTP_CODE"
+            echo "Response: $DEPLOYMENT_BODY"
+            exit 1
+          fi
+          
+          DEPLOYMENT_ID=$(echo "$DEPLOYMENT_BODY" | jq -r '.TaskId')
+          echo "✓ Deployment created with task ID: $DEPLOYMENT_ID"
+          echo "Deployment is now running in Octopus Deploy"
           
 
       - name: 'Login via Azure CLI'
