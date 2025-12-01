@@ -134,48 +134,26 @@ jobs:
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: nuget-packages-acceptance
+          name: churchbulletin-nuget-packages
           path: build/*.nupkg
           retention-days: 90
 
-      # Publish packages to GitHub Packages
-      - name: Publish NuGet Packages to GitHub Packages
-        shell: pwsh
-        if: success()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          BUILD_BUILDNUMBER: ${{ env.VERSION }}
-        run: |
-          $ErrorActionPreference = "Stop"
-          
-          # Debug: Show repository information
-          Write-Host "GITHUB_REPOSITORY: $env:GITHUB_REPOSITORY"
-          Write-Host "Repository owner will be: $($env:GITHUB_REPOSITORY.Split('/')[0])"
-          
-          . ./build.ps1
-          Publish-ToGitHubPackages -packageId "ChurchBulletin.UI"
-          Publish-ToGitHubPackages -packageId "ChurchBulletin.Database"
-          Publish-ToGitHubPackages -packageId "ChurchBulletin.AcceptanceTests"
-          Publish-ToGitHubPackages -packageId "ChurchBulletin.Script"
-
-
-      # Publish Octopus packages to Octopus Deploy server
-      - name: Publish Octopus Packages to Octopus Deploy
+      # Publish packages to Octopus Deploy built-in feed
+      - name: Publish Packages to Octopus Deploy
         shell: pwsh
         if: success()
         env:
           OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
           OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
           OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-          VERSION: ${{ env.VERSION }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
         run: |
           $ErrorActionPreference = "Stop"
           
           $octopusUrl = $env:OCTOPUS_URL
           $octopusApiKey = $env:OCTOPUS_API_KEY
           $octopusSpace = $env:OCTOPUS_SPACE
-          $version = $env:VERSION
+          $version = $env:BUILD_BUILDNUMBER
           
           if ([string]::IsNullOrWhiteSpace($octopusUrl)) {
             Write-Warning "OCTOPUS_URL not set. Skipping Octopus package publishing."
@@ -187,7 +165,7 @@ jobs:
             exit 0
           }
           
-          Write-Host "Publishing Octopus packages to: $octopusUrl"
+          Write-Host "Publishing packages to Octopus Deploy: $octopusUrl"
           Write-Host "Package version: $version"
           
           if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
@@ -211,11 +189,11 @@ jobs:
             Write-Host "Added dotnet tools to PATH: $dotnetToolsPath"
           }
           
-          # Find all .nupkg files in the build directory (Octopus packages are also .nupkg files)
+          # Find all .nupkg files in the build directory
           $packageFiles = Get-ChildItem -Path "./build" -Filter "*.nupkg" -ErrorAction SilentlyContinue
           
           if (-not $packageFiles -or $packageFiles.Count -eq 0) {
-            Write-Warning "No Octopus packages found in ./build directory"
+            Write-Warning "No packages found in ./build directory"
             exit 0
           }
           
