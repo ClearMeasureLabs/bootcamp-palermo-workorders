@@ -31,9 +31,3 @@ variable "DatabaseUser" {
         environment = ["prod"]
     }
 }
-
-variable "AzureAccountId" {
-    value "churchbulletin-gh-azure-account" {
-        environment = ["prod", "tdd", "uat"]
-    }
-}
