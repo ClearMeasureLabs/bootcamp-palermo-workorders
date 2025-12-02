@@ -4,20 +4,6 @@ variable "DatabaseName" {
     }
 }
 
-variable "DatabaseServer" {
-    value "bootcamp-palermo-workorders.database.windows.net" {
-        environment = ["tdd"]
-    }
-
-    value "bootcamp-palermo-workorders.database.windows.net" {
-        environment = ["uat"]
-    }
-
-    value "bootcamp-palermo-workorders.database.windows.net" {
-        environment = ["prod"]
-    }
-}
-
 variable "DatabaseUser" {
     value "tdd" {
         environment = ["tdd"]
@@ -42,4 +28,8 @@ variable "NuGetFeed" {
     value "GitHub" {
         environment = ["prod", "tdd", "uat"]
     }
+}
+
+variable "DatabaseServer" {
+    value "bootcamp-palermo-workorders.database.windows.net" {}
 }
