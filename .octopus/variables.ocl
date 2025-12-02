@@ -25,10 +25,6 @@ variable "NuGetFeed" {
 }
 
 variable "DatabaseServer" {
-    value "bootcamp-palermo-workorders-tdd.database.windows.net" {
-        environment = ["tdd"]
-    }
-
     value "bootcamp-palermo-workorders-uat.database.windows.net" {
         description = ""
         environment = ["uat"]
@@ -37,5 +33,9 @@ variable "DatabaseServer" {
     value "bootcamp-palermo-workorders-prod.database.windows.net" {
         description = ""
         environment = ["prod"]
+    }
+
+    value "bootcamp-palermo-workorders-tdd" {
+        environment = ["tdd"]
     }
 }
