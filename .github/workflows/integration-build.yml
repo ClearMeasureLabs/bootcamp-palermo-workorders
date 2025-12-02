@@ -453,7 +453,7 @@ jobs:
 
   deploy-to-tdd:
     name: Deploy to TDD environment and run acceptance tests
-    # needs: [docker-build-image-for-churchbulletin-ui]
+    needs: [docker-build-image-for-churchbulletin-ui]
     # if: success() # Only run if Docker build image job completed successfully
     runs-on: ubuntu-latest
     environment:
