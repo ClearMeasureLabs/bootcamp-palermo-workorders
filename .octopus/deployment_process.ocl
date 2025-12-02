@@ -3,7 +3,7 @@ step "ensure-dotnet-10-installed" {
     name = "Ensure .NET 10 is installed"
 
     action {
-        action_type = "Octopus.PowerShell"
+        action_type = "Octopus.Script"
         is_required = true
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
