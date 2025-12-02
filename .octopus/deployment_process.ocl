@@ -113,6 +113,8 @@ step "apply-database-migrations" {
         is_required = true
         properties = {
             Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
+            Octopus.Action.PowerShell.Edition = "Core"
             Octopus.Action.Script.ScriptBody = <<-EOT
                                                 $ErrorActionPreference = "Stop"
                                                 
@@ -317,5 +319,37 @@ step "get-container-app-fqdn" {
             OctopusUseBundledTooling = "False"
         }
         worker_pool = "hosted-windows"
+    }
+}
+
+step "create-db-schema" {
+    name = "Create DB Schema"
+    properties = {
+        Octopus.Action.TargetRoles = "churchbulletin-gh-targets"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "octopus-server-built-in"
+            Octopus.Action.Package.PackageId = "ChurchBulletin.Database"
+            Octopus.Action.PowerShell.Edition = "Core"
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptFileName = "Scripts\\UpdateAzureSql.ps1"
+            Octopus.Action.Script.ScriptSource = "Package"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = ""
+
+        packages {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "ChurchBulletin.Database"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
     }
 }
