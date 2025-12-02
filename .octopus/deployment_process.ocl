@@ -158,8 +158,8 @@ step "apply-database-migrations" {
                                 Write-Host "Database Assembly: $databaseAssembly"
                                 Write-Host "Scripts Directory: $scriptDir"
                                 Write-Host "Database Server  : $databaseServer"
-                                Write-Host "Database Name    : $databaseName"
                                 Write-Host "                 : $resourceDbServer"
+                                Write-Host "Database Name    : $databaseName"
                                 Write-Host "Database Action  : $databaseAction"
                                 
                                 
@@ -168,7 +168,7 @@ step "apply-database-migrations" {
                                 # Open up the firewall to allow the Octopus worker to connect
                                 az sql server firewall-rule create --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName --start-ip-address $workerIp --end-ip-address $workerIp
 
-                                dotnet $databaseAssembly $databaseAction $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
+#                                dotnet $databaseAssembly $databaseAction $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
                                 
                                 if ($LASTEXITCODE -ne 0) {
                                     throw "Database migration failed with exit code $LASTEXITCODE"
