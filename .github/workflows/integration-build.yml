@@ -316,14 +316,11 @@ jobs:
             path: build/test/**/*.trx
             retention-days: 30
 
-            
-            
-
 
   docker-build-image-for-churchbulletin-ui:
     name: Create and push Docker image for ChurchBulletin.UI
-    needs: [build-linux]
-    if: false # Disabled for now
+    needs: [build-linux, run-acceptance-tests]
+    if: success() # Only run if acceptance tests job completed successfully
     runs-on: ubuntu-latest
     permissions:
       contents: read
