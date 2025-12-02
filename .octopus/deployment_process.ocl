@@ -241,6 +241,7 @@ step "update-ui-gh-container-app" {
 
     action {
         action_type = "Octopus.AzurePowerShell"
+        is_disabled = true
         is_required = true
         properties = {
             Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
@@ -428,5 +429,34 @@ step "create-container-app-environment" {
         }
         worker_pool = "hosted-windows"
         worker_pool_variable = ""
+    }
+}
+
+step "create-container-app" {
+    name = "Create Container App"
+
+    action {
+        action_type = "Octopus.AzureResourceGroup"
+        properties = {
+            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.ResourceGroupDeploymentMode = "Incremental"
+            Octopus.Action.Azure.ResourceGroupName = "bootcamp-tdd"
+            Octopus.Action.Azure.ResourceGroupTemplateParameters = "{}"
+            Octopus.Action.Azure.TemplateSource = "Inline"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-windows"
+        worker_pool_variable = ""
+
+        packages "churchbulletin.ui" {
+            acquisition_location = "NotAcquired"
+            feed = "churchbulletin-github-acr-2"
+            package_id = "churchbulletin.ui"
+            properties = {
+                Extract = "False"
+                Purpose = "DockerImageReference"
+                SelectionMode = "immediate"
+            }
+        }
     }
 }
