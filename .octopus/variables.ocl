@@ -1,9 +1,3 @@
-variable "DatabaseName" {
-    value "ChurchBulletin-gh" {
-        environment = ["prod", "tdd", "uat"]
-    }
-}
-
 variable "DatabaseUser" {
     value "tdd" {
         environment = ["tdd"]
@@ -18,18 +12,18 @@ variable "DatabaseUser" {
     }
 }
 
+variable "DatabaseServer" {
+    value "bootcamp-palermo-workorders.database.windows.net" {}
+}
+
 variable "DatabaseAction" {
-    value "update" {
-        environment = ["prod", "tdd", "uat"]
-    }
+    value "update" {}
+}
+
+variable "DatabaseName" {
+    value "ChurchBulletin-gh" {}
 }
 
 variable "NuGetFeed" {
-    value "GitHub" {
-        environment = ["prod", "tdd", "uat"]
-    }
-}
-
-variable "DatabaseServer" {
-    value "bootcamp-palermo-workorders.database.windows.net" {}
+    value "GitHub" {}
 }
