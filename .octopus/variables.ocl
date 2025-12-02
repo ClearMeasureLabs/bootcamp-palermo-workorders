@@ -34,13 +34,12 @@ variable "DatabaseUser" {
 
 variable "DatabaseAction" {
     value "update" {
-        environment = ["tdd", "uat", "prod"]
+        environment = ["prod", "tdd", "uat"]
     }
 }
 
-
 variable "NuGetFeed" {
     value "GitHub" {
-        environment = ["tdd", "uat", "prod"]
+        environment = ["prod", "tdd", "uat"]
     }
 }
