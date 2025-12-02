@@ -35,7 +35,7 @@ variable "DatabaseServer" {
         environment = ["prod"]
     }
 
-    value "bootcamp-palermo-workorders-tdd" {
+    value "bootcamp-palermo-workorders-tdd.database.windows.net" {
         environment = ["tdd"]
     }
 }
