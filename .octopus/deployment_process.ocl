@@ -139,7 +139,6 @@ step "open-firewall" {
         }
         worker_pool = "hosted-windows"
         worker_pool_variable = ""
-
     }
 }
 
@@ -175,7 +174,6 @@ step "create-db-schema" {
     }
 }
 
-
 step "close-firewall" {
     name = "close up SQL Server for migrations"
 
@@ -210,9 +208,9 @@ step "close-firewall" {
         }
         worker_pool = "hosted-windows"
         worker_pool_variable = ""
-
     }
 }
+
 step "update-ui-gh-container-app" {
     name = "Deploy the ChurchBulletin.UI container to Azure."
 
@@ -332,5 +330,28 @@ step "get-container-app-fqdn" {
             OctopusUseBundledTooling = "False"
         }
         worker_pool = "hosted-windows"
+    }
+}
+
+step "get-db-connection-string" {
+    name = "Get DB Connection String"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        properties = {
+            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                $connstring = az sql db show-connection-string --client ado.net --server $DatabaseServerName --name $DatabaseName 
+                $connstring = $connstring -replace '<username>', $DatabaseUser -replace '<password>', DatabasePassword -replace '"', ''
+                
+                Write-Host "Connection String: $connstring"
+                Set-OctopusVariable -name "connstring" -value $connstring
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-windows"
+        worker_pool_variable = ""
     }
 }
