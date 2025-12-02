@@ -235,6 +235,181 @@ step "get-db-connection-string" {
         worker_pool_variable = ""
     }
 }
+step "create-container-app-environment" {
+    name = "Create Container App Environment"
+    properties = {
+        Octopus.Step.ConditionVariableExpression = "#{if Octopus.Environment.Name == \"TDD\"}true#{else}#{if EnsureEnvironmentsExist}true#{else}False#{/if}#{/if}"
+    }
+
+    action {
+        action_type = "Octopus.AzureResourceGroup"
+        properties = {
+            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.ResourceGroupDeploymentMode = "Incremental"
+            Octopus.Action.Azure.ResourceGroupName = "bootcamp-tdd"
+            Octopus.Action.Azure.ResourceGroupTemplate = <<-EOT
+                                {
+                                  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                                  "contentVersion": "1.0.0.0",
+                                  "parameters": {
+                                    "location": {
+                                      "defaultValue": "canadacentral",
+                                      "type": "String"
+                                    },
+                                    "environment_name": {
+                                      "defaultValue": "myenvironment",
+                                      "type": "String"
+                                    }
+                                  },
+                                  "variables": {},
+                                  "resources": [
+                                    {
+                                      "type": "Microsoft.App/managedEnvironments",
+                                      "apiVersion": "2022-03-01",
+                                      "name": "[parameters('environment_name')]",
+                                      "location": "[parameters('location')]",
+                                      "properties": {
+                                      }
+                                    }
+                                  ]
+                                }
+                EOT
+            Octopus.Action.Azure.ResourceGroupTemplateParameters = "{\"location\":{\"value\":\"canadacentral\"},\"environment_name\":{\"value\":\"myenvironment#{DatabaseServer}\"}}"
+            Octopus.Action.Azure.TemplateSource = "Inline"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-windows"
+        worker_pool_variable = ""
+    }
+}
+
+step "create-container-app" {
+    condition = "Variable"
+    name = "Create Container App"
+    properties = {
+        Octopus.Step.ConditionVariableExpression = "#{if Octopus.Environment.Name == \"TDD\"}true#{else}#{if EnsureEnvironmentsExist}true#{else}False#{/if}#{/if}"
+    }
+
+    action {
+        action_type = "Octopus.AzureResourceGroup"
+        properties = {
+            Octopus.Action.Azure.AccountId = "#{AzureAccount}"
+            Octopus.Action.Azure.ResourceGroupDeploymentMode = "Incremental"
+            Octopus.Action.Azure.ResourceGroupName = "#{ResourceGroupName}"
+            Octopus.Action.Azure.ResourceGroupTemplate = <<-EOT
+                {
+                  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "parameters": {
+                    "containerappName": {
+                      "defaultValue": "mycontainerapp",
+                      "type": "String"
+                    },
+                    "location": {
+                      "defaultValue": "canadacentral",
+                      "type": "String"
+                    },
+                    "environment_name": {
+                      "defaultValue": "myenvironment",
+                      "type": "String"
+                    },
+                    "container_image": {
+                      "type": "String"
+                    },
+                    "registry_password": {
+                      "type": "SecureString"
+                    },
+                    "connection_string": {
+                      "type": "SecureString"
+                    }
+                  },
+                  "variables": {},
+                  "resources": [
+                    {
+                      "apiVersion": "2022-03-01",
+                      "type": "Microsoft.App/containerApps",
+                      "name": "[parameters('containerappName')]",
+                      "location": "[parameters('location')]",
+                      "identity": {
+                        "type": "None"
+                      },
+                      "properties": {
+                        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('environment_name'))]",
+                        "configuration": {
+                          "secrets": [
+                            {
+                              "name": "registrypassword",
+                              "value": "[parameters('registry_password')]"
+                            }
+                          ],          
+                          "ingress": {
+                            "external": true,
+                            "targetPort": 80,
+                            "allowInsecure": false,
+                            "traffic": [
+                              {
+                                "latestRevision": true,
+                                "weight": 100
+                              }
+                            ]
+                          },
+                          "registries": [
+                            {
+                              "server": "#{registry_login_server}",
+                              "username": "#{az_login_appid}",
+                              "passwordSecretRef": "registrypassword"
+                            }
+                          ]
+                        },
+                        "template": {
+                          "revisionSuffix": "[uniqueString(resourceGroup().id, deployment().name)]",
+                          "containers": [
+                            {
+                              "name": "main",
+                              "image": "[parameters('container_image')]",
+                              "env": [
+                                {
+                                  "name": "HTTP_PORT",
+                                  "value": "80"
+                                },
+                                {
+                                  "name": "ConnectionStrings__SqlConnectionString",
+                                  "value": "[parameters('connection_string')]"
+                                }
+                              ],
+                              "resources": {
+                                "cpu": 0.25,
+                                "memory": "0.5Gi"
+                              }
+                            }
+                          ],
+                          "scale": {
+                            "minReplicas": 0,
+                            "maxReplicas": 1,
+                            "rules": [{
+                              "name": "http-rule",
+                              "http": {
+                                "metadata": {
+                                  "concurrentRequests": "1"
+                                }
+                              }
+                            }]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+                EOT
+            Octopus.Action.Azure.ResourceGroupTemplateParameters = "{\"containerappName\":{\"value\":\"#{container_app_name}\"},\"location\":{\"value\":\"#{az_location}\"},\"environment_name\":{\"value\":\"#{container_app_environment_name}\"},\"container_image\":{\"value\":\"#{container_image}\"},\"registry_password\":{\"value\":\"#{az_login_appkey}\"},\"connection_string\":{\"value\":\"#{connection_string}\"}}"
+            Octopus.Action.Azure.TemplateSource = "Inline"
+            Octopus.Action.RunOnServer = "false"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = ""
+    }
+}
+
 
 step "update-ui-gh-container-app" {
     name = "Deploy the ChurchBulletin.UI container to Azure."
@@ -337,6 +512,29 @@ step "update-ui-gh-container-app" {
     }
 }
 
+
+step "get-container-app-fqdn" {
+    name = "Get Container App FQDN"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        properties = {
+            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
+            Octopus.Action.PowerShell.Edition = "Core"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                $fqdn = az containerapp show --name $container_app_name --resource-group $ResourceGroupName --query properties.configuration.ingress.fqdn
+                Write-Host "FQDN: $fqdn"
+                Set-OctopusVariable -name "app_fqdn" -value $fqdn
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-windows"
+    }
+}
+
 step "add-revision-to-container-app" {
     name = "Add Revision to Container App"
 
@@ -362,101 +560,5 @@ step "add-revision-to-container-app" {
         }
         worker_pool = "hosted-windows"
         worker_pool_variable = ""
-    }
-}
-
-step "get-container-app-fqdn" {
-    name = "Get Container App FQDN"
-
-    action {
-        action_type = "Octopus.AzurePowerShell"
-        properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
-            Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
-            Octopus.Action.PowerShell.Edition = "Core"
-            Octopus.Action.Script.ScriptBody = <<-EOT
-                $fqdn = az containerapp show --name $container_app_name --resource-group $ResourceGroupName --query properties.configuration.ingress.fqdn
-                Write-Host "FQDN: $fqdn"
-                Set-OctopusVariable -name "app_fqdn" -value $fqdn
-                EOT
-            Octopus.Action.Script.ScriptSource = "Inline"
-            Octopus.Action.Script.Syntax = "PowerShell"
-            OctopusUseBundledTooling = "False"
-        }
-        worker_pool = "hosted-windows"
-    }
-}
-
-step "create-container-app-environment" {
-    name = "Create Container App Environment"
-
-    action {
-        action_type = "Octopus.AzureResourceGroup"
-        properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
-            Octopus.Action.Azure.ResourceGroupDeploymentMode = "Incremental"
-            Octopus.Action.Azure.ResourceGroupName = "bootcamp-tdd"
-            Octopus.Action.Azure.ResourceGroupTemplate = <<-EOT
-                                {
-                                  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                                  "contentVersion": "1.0.0.0",
-                                  "parameters": {
-                                    "location": {
-                                      "defaultValue": "canadacentral",
-                                      "type": "String"
-                                    },
-                                    "environment_name": {
-                                      "defaultValue": "myenvironment",
-                                      "type": "String"
-                                    }
-                                  },
-                                  "variables": {},
-                                  "resources": [
-                                    {
-                                      "type": "Microsoft.App/managedEnvironments",
-                                      "apiVersion": "2022-03-01",
-                                      "name": "[parameters('environment_name')]",
-                                      "location": "[parameters('location')]",
-                                      "properties": {
-                                      }
-                                    }
-                                  ]
-                                }
-                EOT
-            Octopus.Action.Azure.ResourceGroupTemplateParameters = "{\"location\":{\"value\":\"canadacentral\"},\"environment_name\":{\"value\":\"myenvironment#{DatabaseServer}\"}}"
-            Octopus.Action.Azure.TemplateSource = "Inline"
-            OctopusUseBundledTooling = "False"
-        }
-        worker_pool = "hosted-windows"
-        worker_pool_variable = ""
-    }
-}
-
-step "create-container-app" {
-    name = "Create Container App"
-
-    action {
-        action_type = "Octopus.AzureResourceGroup"
-        properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
-            Octopus.Action.Azure.ResourceGroupDeploymentMode = "Incremental"
-            Octopus.Action.Azure.ResourceGroupName = "bootcamp-tdd"
-            Octopus.Action.Azure.ResourceGroupTemplateParameters = "{}"
-            Octopus.Action.Azure.TemplateSource = "Inline"
-            OctopusUseBundledTooling = "False"
-        }
-        worker_pool = "hosted-windows"
-        worker_pool_variable = ""
-
-        packages "churchbulletin.ui" {
-            acquisition_location = "NotAcquired"
-            feed = "churchbulletin-github-acr-2"
-            package_id = "churchbulletin.ui"
-            properties = {
-                Extract = "False"
-                Purpose = "DockerImageReference"
-                SelectionMode = "immediate"
-            }
-        }
     }
 }

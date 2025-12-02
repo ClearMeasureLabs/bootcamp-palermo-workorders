@@ -1,3 +1,12 @@
+variable "az_location" {
+    value "southcentralus" {}
+}
+
+variable "DatabaseName" {
+    value "ChurchBulletin-gh" {}
+}
+
+
 variable "DatabaseUser" {
     value "tdd" {
         environment = ["tdd"]
@@ -12,30 +21,130 @@ variable "DatabaseUser" {
     }
 }
 
+variable "revisionSuffix" {
+    value "#{Octopus.Release.Number}" {
+        environment = ["tdd", "uat", "prod"]
+    }
+}
+
+variable "containerAppURL" {
+    value "#{Octopus.Action[Get Container App FQDN].Output.app_fqdn}" {}
+}
+
+variable "connection_string" {
+    value "#{Octopus.Action[Get DB Connection String].Output.connstring}" {}
+}
+
+variable "container_image" {
+    value "#{registry_login_server}/churchbulletin.ui:#{Octopus.Release.Number}" {
+        environment = ["tdd", "uat", "prod"]
+    }
+}
+
+variable "registry_login_server" {
+    value "churchbulletingithubacr.azurecr.io.azurecr.io" {
+        environment = ["tdd", "uat", "prod"]
+    }
+}
+
+variable "AzureAccount" {
+    type = "AzureAccount"
+
+    value "churchbulletin-gh-azure-account" {}
+}
+
+variable "DatabaseServer" {
+    value "#{DatabaseServerName}-#{Octopus.Environment.Name | ToLower}.database.windows.net" {
+        description = ""
+    }
+}
+
 variable "DatabaseAction" {
     value "update" {}
 }
 
-variable "DatabaseName" {
-    value "ChurchBulletin-gh" {}
+variable "DatabaseEdition" {
+    value "Basic" {
+        description = ""
+    }
+}
+
+variable "DatabasePerformanceLevel" {
+    value "Basic" {
+        description = ""
+    }
+}
+
+
+variable "container_app_name" {
+    value "ui-gh" {
+        description = ""
+        environment = ["uat"]
+    }
+
+    value "ui-gh" {
+        description = ""
+        environment = ["prod"]
+    }
+
+    value "ui-gh" {
+        description = ""
+        environment = ["tdd"]
+
+        prompt {
+            description = ""
+            label = "Name of the TDD UI container app"
+        }
+    }
+}
+
+variable "az_login_appid" {
+    value "#{AzureAccount.Client}" {}
+}
+
+variable "az_login_tenant" {
+    value "#{AzureAccount.TenantId}" {}
+}
+
+variable "ResourceGroupName" {
+    value "bootcamp-#{Octopus.Environment.Name | ToLower}" {
+        description = ""
+        environment = ["uat", "prod"]
+    }
+
+    value "bootcamp-#{Octopus.Release.Number}" {
+        description = ""
+        environment = ["tdd"]
+
+        prompt {
+            description = ""
+            label = "Name of the TDD resource group (should be release number)"
+        }
+    }
+}
+
+variable "DatabaseServerName" {
+    value "bootcamp-palermo-workorders-#{Octopus.Environment.Name | ToLower}" {
+        environment = ["prod", "uat", "tdd"]
+    }
+}
+
+variable "OctoInstanceURL" {
+    value "https://clearmeasure.octopus.app/" {}
+}
+
+
+variable "EnsureEnvironmentsExist" {
+    value "False" {
+        environment = ["uat"]
+    }
+
+    value "False" {
+        environment = ["prod"]
+    }
 }
 
 variable "NuGetFeed" {
     value "GitHub" {}
 }
 
-variable "DatabaseServer" {
-    value "bootcamp-palermo-workorders-uat.database.windows.net" {
-        description = ""
-        environment = ["uat"]
-    }
-
-    value "bootcamp-palermo-workorders-prod.database.windows.net" {
-        description = ""
-        environment = ["prod"]
-    }
-
-    value "bootcamp-palermo-workorders-tdd.database.windows.net" {
-        environment = ["tdd"]
-    }
-}
