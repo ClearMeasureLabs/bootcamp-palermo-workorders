@@ -50,9 +50,30 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
                            serverName.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
                            serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
 
+
+
+        AnsiConsole.MarkupLine($"[dim]Detected server '{serverName}': isLocalServer={isLocalServer}[/]");   
+        
+        // Format DataSource to use TCP on port 1433 for non-LocalDB connections
+        // This forces TCP instead of Named Pipes
+        var dataSource = options.DatabaseServer ?? string.Empty;
+        var isLocalDb = serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
+                       serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase);
+        
+        if (!isLocalDb)
+        {
+            // For non-LocalDB servers, ensure TCP port 1433 is specified
+            // Check if port is already specified (comma, colon, or backslash indicates port/instance)
+            if (!dataSource.Contains(',') && !dataSource.Contains(':') && !dataSource.Contains('\\'))
+            {
+                // No port specified, add port 1433 to force TCP connection
+                dataSource = $"{dataSource},1433";
+            }
+        }
+        
         var builder = new SqlConnectionStringBuilder
         {
-            DataSource = options.DatabaseServer,
+            DataSource = dataSource,
             InitialCatalog = options.DatabaseName,
             ConnectTimeout = 60 
         };
