@@ -385,3 +385,48 @@ step "get-container-app-fqdn" {
         worker_pool = "hosted-windows"
     }
 }
+
+step "create-container-app-environment" {
+    name = "Create Container App Environment"
+
+    action {
+        action_type = "Octopus.AzureResourceGroup"
+        properties = {
+            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.ResourceGroupDeploymentMode = "Incremental"
+            Octopus.Action.Azure.ResourceGroupName = "bootcamp-tdd"
+            Octopus.Action.Azure.ResourceGroupTemplate = <<-EOT
+                                {
+                                  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                                  "contentVersion": "1.0.0.0",
+                                  "parameters": {
+                                    "location": {
+                                      "defaultValue": "canadacentral",
+                                      "type": "String"
+                                    },
+                                    "environment_name": {
+                                      "defaultValue": "myenvironment",
+                                      "type": "String"
+                                    }
+                                  },
+                                  "variables": {},
+                                  "resources": [
+                                    {
+                                      "type": "Microsoft.App/managedEnvironments",
+                                      "apiVersion": "2022-03-01",
+                                      "name": "[parameters('environment_name')]",
+                                      "location": "[parameters('location')]",
+                                      "properties": {
+                                      }
+                                    }
+                                  ]
+                                }
+                EOT
+            Octopus.Action.Azure.ResourceGroupTemplateParameters = "{\"location\":{\"value\":\"canadacentral\"},\"environment_name\":{\"value\":\"myenvironment#{DatabaseServer}\"}}"
+            Octopus.Action.Azure.TemplateSource = "Inline"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-windows"
+        worker_pool_variable = ""
+    }
+}
