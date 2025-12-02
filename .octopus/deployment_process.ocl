@@ -1,4 +1,4 @@
-step "ensure-dotnet-10-installed" {
+#{AzureAccount}step "ensure-dotnet-10-installed" {
     name = "Ensure .NET 10 is installed"
 
     action {
@@ -112,7 +112,7 @@ step "open-firewall" {
         action_type = "Octopus.AzurePowerShell"
         is_required = true
         properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
             Octopus.Action.PowerShell.Edition = "Core"
             Octopus.Action.Script.ScriptBody = <<-EOT
@@ -181,7 +181,7 @@ step "close-firewall" {
         action_type = "Octopus.AzurePowerShell"
         is_required = true
         properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
             Octopus.Action.PowerShell.Edition = "Core"
             Octopus.Action.Script.ScriptBody = <<-EOT
@@ -217,7 +217,7 @@ step "get-db-connection-string" {
     action {
         action_type = "Octopus.AzurePowerShell"
         properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 $connectionStringTemplate = az sql db show-connection-string --client ado.net --server $DatabaseServer --name $DatabaseName 
                 
@@ -244,9 +244,9 @@ step "create-container-app-environment" {
     action {
         action_type = "Octopus.AzureResourceGroup"
         properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.Azure.ResourceGroupDeploymentMode = "Incremental"
-            Octopus.Action.Azure.ResourceGroupName = "bootcamp-tdd"
+            Octopus.Action.Azure.ResourceGroupName = "#{ResourceGroupName}"
             Octopus.Action.Azure.ResourceGroupTemplate = <<-EOT
                                 {
                                   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
@@ -274,8 +274,9 @@ step "create-container-app-environment" {
                                   ]
                                 }
                 EOT
-            Octopus.Action.Azure.ResourceGroupTemplateParameters = "{\"location\":{\"value\":\"canadacentral\"},\"environment_name\":{\"value\":\"myenvironment#{DatabaseServer}\"}}"
+            Octopus.Action.Azure.ResourceGroupTemplateParameters = "{\"location\":{\"value\":\"#az_location\"},\"environment_name\":{\"value\":\#{container_app_environment_name}\"}}"
             Octopus.Action.Azure.TemplateSource = "Inline"
+            Octopus.Action.RunOnServer = "false"
             OctopusUseBundledTooling = "False"
         }
         worker_pool = "hosted-windows"
@@ -285,7 +286,7 @@ step "create-container-app-environment" {
 
 step "create-container-app" {
     condition = "Variable"
-    name = "Create Container App"
+    name = "Create Container App for TDD"
     properties = {
         Octopus.Step.ConditionVariableExpression = "#{if Octopus.Environment.Name == \"TDD\"}true#{else}#{if EnsureEnvironmentsExist}true#{else}False#{/if}#{/if}"
     }
@@ -419,7 +420,7 @@ step "update-ui-gh-container-app" {
         is_disabled = true
         is_required = true
         properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
             Octopus.Action.PowerShell.Edition = "Core"
             Octopus.Action.Script.ScriptBody = <<-EOT
@@ -519,7 +520,7 @@ step "get-container-app-fqdn" {
     action {
         action_type = "Octopus.AzurePowerShell"
         properties = {
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
             Octopus.Action.PowerShell.Edition = "Core"
             Octopus.Action.Script.ScriptBody = <<-EOT
@@ -543,7 +544,7 @@ step "add-revision-to-container-app" {
         is_required = true
         properties = {
             environments = "System.String[]"
-            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
             Octopus.Action.PowerShell.Edition = "Core"
             Octopus.Action.Script.ScriptBody = <<-EOT
