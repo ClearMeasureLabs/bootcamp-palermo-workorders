@@ -144,7 +144,7 @@ jobs:
         if: success()
         env:
           OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
           OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
         run: |
