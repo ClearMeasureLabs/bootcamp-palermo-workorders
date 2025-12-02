@@ -40,11 +40,15 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
     protected static string GetConnectionString(DatabaseOptions options)
     {
-        // Determine if this is a local server (localhost or LocalDB)
-        var serverName = options.DatabaseServer ?? string.Empty;
-        var isLocalServer = serverName.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
+        // Determine if this is a local server (localhost, 127.0.0.1, or LocalDB)
+        var serverName = (options.DatabaseServer ?? string.Empty).Trim();
+        var isLocalServer = serverName.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                           serverName.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+                           serverName.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase);
+                           serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase) ||
+                           serverName.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+                           serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
 
         var builder = new SqlConnectionStringBuilder
         {
@@ -54,17 +58,20 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         };
 
         // Configure encryption and certificate trust based on server location
+        // These must be explicitly set to ensure DbUp preserves them when creating master connections
         if (isLocalServer)
         {
             // Local servers: don't encrypt, trust certificate
             builder.Encrypt = false;
             builder.TrustServerCertificate = true;
+            AnsiConsole.MarkupLine($"[dim]Detected local server '{serverName}': Encrypt=False, TrustServerCertificate=True[/]");
         }
         else
         {
             // Remote servers or Azure SQL Database: encrypt, don't trust certificate (require proper validation)
             builder.Encrypt = true;
             builder.TrustServerCertificate = false;
+            AnsiConsole.MarkupLine($"[dim]Detected remote server '{serverName}': Encrypt=True, TrustServerCertificate=False[/]");
         }
 
         if (string.IsNullOrWhiteSpace(options.DatabaseUser))
