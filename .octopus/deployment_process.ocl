@@ -154,7 +154,7 @@ step "create-db-schema" {
             Octopus.Action.Package.PackageId = "ChurchBulletin.Database"
             Octopus.Action.PowerShell.Edition = "Core"
             Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Script.ScriptFileName = "scripts\UpdateAzureSql.ps1"
+            Octopus.Action.Script.ScriptFileName = "scripts\\UpdateAzureSql.ps1"
             Octopus.Action.Script.ScriptSource = "Package"
             OctopusUseBundledTooling = "False"
         }
