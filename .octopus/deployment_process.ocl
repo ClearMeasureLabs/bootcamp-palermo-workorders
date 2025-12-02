@@ -163,71 +163,7 @@ step "apply-database-migrations" {
                                 Write-Host "Database Server: $databaseServer"
                                 Write-Host "Database Name: $databaseName"
                                 Write-Host "Database Action: $databaseAction"
-                                
-                                # Check if database has been baselined by checking for SchemaVersions table
-                                $connectionString = "Server=$databaseServer;Database=$databaseName;User Id=$databaseUser;Password=$databasePassword;TrustServerCertificate=True"
-                                
-                                $checkSchemaQuery = @"
-                SELECT CASE WHEN EXISTS (
-                    SELECT 1 FROM INFORMATION_SCHEMA.TABLES 
-                    WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'SchemaVersions'
-                ) THEN 1 ELSE 0 END AS TableExists
-                "@
-                                
-                                try {
-                                    $connection = New-Object System.Data.SqlClient.SqlConnection($connectionString)
-                                    $connection.Open()
-                                    
-                                    $command = $connection.CreateCommand()
-                                    $command.CommandText = $checkSchemaQuery
-                                    $tableExists = $command.ExecuteScalar()
-                                    
-                                    $connection.Close()
-                                    
-                                    if ($tableExists -eq 1) {
-                                        Write-Host "Database has been baselined - SchemaVersions table exists"
-                                        
-                                        # Check for existing records
-                                        $connection.Open()
-                                        $command.CommandText = "SELECT COUNT(*) FROM dbo.SchemaVersions"
-                                        $recordCount = $command.ExecuteScalar()
-                                        $connection.Close()
-                                        
-                                        # Count SQL files in scripts directory
-                                        $sqlFileCount = (Get-ChildItem -Path $scriptDir -Filter "*.sql" -Recurse -File).Count
-                                        
-                                        Write-Host "SchemaVersions table contains $recordCount script record(s)"
-                                        Write-Host "Scripts directory contains $sqlFileCount SQL file(s)"
-                                        
-                                        if ($recordCount -lt $sqlFileCount) {
-                                            Write-Warning "Database may not be fully baselined: dbo.SchemaVersions has $recordCount records vs $sqlFileCount SQL files"
-                #                            Write-Host "Running baseline to sync records..."
-                #                            dotnet $databaseAssembly baseline $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
-                #                            
-                #                            if ($LASTEXITCODE -ne 0) {
-                #                                throw "Database baseline failed with exit code $LASTEXITCODE"
-                #                            }
-                                        } else {
-                                            Write-Host "Database appears fully baselined: record count matches SQL file count"
-                                        }
-                                    } else {
-                                        Write-Host "Database not baselined - SchemaVersions table does not exist. Running baseline..."
-                                        dotnet $databaseAssembly baseline $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
-                                        
-                                        if ($LASTEXITCODE -ne 0) {
-                                            throw "Database baseline failed with exit code $LASTEXITCODE"
-                                        }
-                                    }
-                                } catch {
-                                    Write-Warning "Could not check for SchemaVersions table: $_"
-                                    Write-Host "Attempting baseline anyway..."
-                                    dotnet $databaseAssembly baseline $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
-                                    
-                                    if ($LASTEXITCODE -ne 0) {
-                                        throw "Database baseline failed with exit code $LASTEXITCODE"
-                                    }
-                                }
-                                
+                                                
                                 # Run the database migration
                                 Write-Host "Executing database migration: $databaseAction"
                                 dotnet $databaseAssembly $databaseAction $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
