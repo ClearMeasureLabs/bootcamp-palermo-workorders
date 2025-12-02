@@ -41,7 +41,7 @@ variable "container_image" {
 }
 
 variable "registry_login_server" {
-    value "churchbulletingithubacr.azurecr.io.azurecr.io" {
+    value "churchbulletingithubacr.azurecr.io" {
         environment = ["prod", "tdd", "uat"]
     }
 }

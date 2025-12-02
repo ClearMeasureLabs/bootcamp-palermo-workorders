@@ -144,9 +144,6 @@ step "open-firewall" {
 
 step "create-db-schema" {
     name = "Create DB Schema"
-    properties = {
-        Octopus.Action.TargetRoles = "churchbulletin-gh-targets"
-    }
 
     action {
         action_type = "Octopus.Script"
@@ -242,6 +239,7 @@ step "create-container-app-environment" {
     }
 
     action {
+        is_disabled = true
         action_type = "Octopus.AzureResourceGroup"
         properties = {
             Octopus.Action.Azure.AccountId = "#{AzureAccount}"
@@ -550,10 +548,59 @@ step "add-revision-to-container-app" {
             Octopus.Action.Script.ScriptBody = <<-EOT
                 $ErrorActionPreference = "Stop"
                 
-                Write-Host "Name $container_app_name"
-                az containerapp update --name $container_app_name --resource-group $ResourceGroupName --image $container_image
-                az containerapp update --name $container_app_name --resource-group $ResourceGroupName --set-env-vars ConnectionStrings__SqlConnectionString=$connection_string
+                Write-Host "Updating container app: $container_app_name"
+                Write-Host "Resource Group: $ResourceGroupName"
+                Write-Host "Container Image: $container_image"
+                Write-Host "Using revision suffix: $revisionSuffix"
                 
+                # Update container app with new image and environment variables in a single atomic operation
+                # This ensures the new revision is created with both the image and connection string set
+                az containerapp update `
+                    --name $container_app_name `
+                    --resource-group $ResourceGroupName `
+                    --image $container_image `
+                    --revision-suffix $revisionSuffix `
+                    --set-env-vars "ConnectionStrings__SqlConnectionString=$connection_string" `
+                    --only-show-errors
+                
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Error "Failed to update container app. Exit code: $LASTEXITCODE"
+                    exit $LASTEXITCODE
+                }
+                
+                # Wait for revision to be fully created
+                Write-Host "Waiting for revision to be created..."
+                Start-Sleep -Seconds 10
+                
+                # Get and display the latest revision information
+                $latestRevision = az containerapp revision list `
+                    --name $container_app_name `
+                    --resource-group $ResourceGroupName `
+                    --query "[0].name" `
+                    --output tsv `
+                    --only-show-errors
+                
+                if ($latestRevision) {
+                    Write-Host "✅ Latest revision: $latestRevision"
+                } else {
+                    Write-Warning "Could not retrieve latest revision name"
+                }
+                
+                # Get and display the FQDN
+                $fqdn = az containerapp show `
+                    --name $container_app_name `
+                    --resource-group $ResourceGroupName `
+                    --query properties.configuration.ingress.fqdn `
+                    --output tsv `
+                    --only-show-errors
+                
+                if ($fqdn) {
+                    Write-Host "✅ Container App FQDN: https://$fqdn"
+                } else {
+                    Write-Warning "Could not retrieve container app FQDN"
+                }
+                
+                Write-Host "✅ Container App updated successfully"
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
