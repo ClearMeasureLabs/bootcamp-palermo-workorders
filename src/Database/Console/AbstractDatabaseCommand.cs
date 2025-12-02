@@ -44,9 +44,9 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         {
             DataSource = options.DatabaseServer,
             InitialCatalog = options.DatabaseName,
-            TrustServerCertificate = true,
-            Encrypt = false,
-            ConnectTimeout = 60 // Increased timeout for both LocalDB and Docker SQL Server startup
+            TrustServerCertificate = false,
+            Encrypt = true,
+            ConnectTimeout = 60 
         };
 
         if (string.IsNullOrWhiteSpace(options.DatabaseUser))
