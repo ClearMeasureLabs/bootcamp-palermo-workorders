@@ -12,10 +12,6 @@ variable "DatabaseUser" {
     }
 }
 
-variable "DatabaseServer" {
-    value "bootcamp-palermo-workorders.database.windows.net" {}
-}
-
 variable "DatabaseAction" {
     value "update" {}
 }
@@ -26,4 +22,20 @@ variable "DatabaseName" {
 
 variable "NuGetFeed" {
     value "GitHub" {}
+}
+
+variable "DatabaseServer" {
+    value "bootcamp-palermo-workorders-tdd.database.windows.net" {
+        environment = ["tdd"]
+    }
+
+    value "bootcamp-palermo-workorders-uat.database.windows.net" {
+        description = ""
+        environment = ["uat"]
+    }
+
+    value "bootcamp-palermo-workorders-prod.database.windows.net" {
+        description = ""
+        environment = ["prod"]
+    }
 }
