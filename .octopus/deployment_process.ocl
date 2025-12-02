@@ -128,14 +128,13 @@ step "apply-database-migrations" {
                                 $databasePassword = $OctopusParameters["DatabasePassword"]
                                 $databaseAction = $OctopusParameters["DatabaseAction"]
 
-                                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
-                                
                                 # Find the Database package (deployed as part of release)
                                 $packagePath = $OctopusParameters["Octopus.Action.Package[ChurchBulletin.Database].ExtractedPath"]
                                 if (-not $packagePath) {
                                     throw "Could not find ChurchBulletin.Database package path"
                                 }
-                                
+
+
                                 $databaseAssembly = Get-ChildItem -Path $packagePath `
                                     -Filter "ClearMeasure.Bootcamp.Database.dll" `
                                     -Recurse | Select-Object -First 1 -ExpandProperty FullName
@@ -149,20 +148,34 @@ step "apply-database-migrations" {
                                 if (-not (Test-Path $scriptDir)) {
                                     throw "Scripts directory not found at: $scriptDir"
                                 }
+
+                                # TODO Parameterize this
+                                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
+                                $resourceDbServer = "bootcamp-palermo-workorders-$($OctopusParameters["Octopus.Environment.Slug"])"
+                                $firewallRuleName = "OctopusDeployWorker"
                                 
+
                                 Write-Host "Database Assembly: $databaseAssembly"
                                 Write-Host "Scripts Directory: $scriptDir"
-                                Write-Host "Database Server: $databaseServer"
-                                Write-Host "Database Name: $databaseName"
-                                Write-Host "Database Action: $databaseAction"
+                                Write-Host "Database Server  : $databaseServer"
+                                Write-Host "Database Name    : $databaseName"
+                                Write-Host "                 : $resourceDbServer"
+                                Write-Host "Database Action  : $databaseAction"
+                                
                                 
                                 # Run the database migration
                                 Write-Host "Executing database migration: $databaseAction"
+                                # Open up the firewall to allow the Octopus worker to connect
+                                az sql server firewall-rule create --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName --start-ip-address $workerIp --end-ip-address $workerIp
+
                                 dotnet $databaseAssembly $databaseAction $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
                                 
                                 if ($LASTEXITCODE -ne 0) {
                                     throw "Database migration failed with exit code $LASTEXITCODE"
-                                }                                
+                                }
+                                
+                                # Close up the firewall again.
+                                az sql server firewall-rule delete --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName
                                 
                                 Write-Host "✅ Migrations applied successfully."
                 EOT
