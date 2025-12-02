@@ -124,14 +124,7 @@ step "apply-database-migrations" {
                                 Set-OctopusVariable -name "WorkerIP" -value $workerIp
                                 
                                 $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
-                                $resourceDbServer = "bootcamp-palermo-workorders"
-                                if ($OctopusParameters["Octopus.Environment.Slug"] -ne "tdd") {
-                                    $resourceDbServer += "-$($OctopusParameters["Octopus.Environment.Slug"])"
-                                }
-                                
-                                # Have to open up the firewall briefly so that we can apply the Database migrations.
-                                $firewallRuleName = "OctopusDeployWorker"
-                                az sql server firewall-rule create --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName --start-ip-address $workerIp --end-ip-address $workerIp
+                                 $databaseServer = $OctopusParameters["DatabaseServer"]
                                 
                                 # Get database connection components from Octopus variables
                                 $databaseServer = $OctopusParameters["DatabaseServer"]
@@ -167,18 +160,22 @@ step "apply-database-migrations" {
                                 Write-Host "Database Action: $databaseAction"
                                                 
                                 # Run the database migration
+                                # Have to open up the firewall briefly so that we can apply the Database migrations.
+                                $firewallRuleName = "OctopusDeployWorker"
+                                az sql server firewall-rule create --resource-group $resourceGroup --server $databaseServer --name $firewallRuleName --start-ip-address $workerIp --end-ip-address $workerIp
+                                
                                 Write-Host "Executing database migration: $databaseAction"
                                 dotnet $databaseAssembly $databaseAction $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
                 
                                 
                                 if ($LASTEXITCODE -ne 0) {
-                                # Close up the firewall again.
-                                az sql server firewall-rule delete --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName
+                                  # Close up the firewall again.
+                                  az sql server firewall-rule delete --resource-group $resourceGroup --server $databaseServer --name $firewallRuleName
                                    
                                     throw "Database migration failed with exit code $LASTEXITCODE"
                                 }
                                 # Close up the firewall again.
-                                az sql server firewall-rule delete --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName
+                                az sql server firewall-rule delete --resource-group $resourceGroup --server $databaseServer --name $firewallRuleName
                                 
                 
                                 
