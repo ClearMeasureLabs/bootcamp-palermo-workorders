@@ -78,6 +78,10 @@ variable "az_login_appid" {
     value "#{AzureAccount.Client}" {}
 }
 
+variable "az_login_appkey" {
+    value "#{AzureAccount.Password}" {}
+}
+
 variable "az_login_tenant" {
     value "#{AzureAccount.TenantId}" {}
 }
@@ -109,6 +113,13 @@ variable "NuGetFeed" {
 variable "container_app_name" {
     value "ui-gh" {
         description = ""
+    }
+}
+
+variable "container_app_environment_name" {
+    value "bootcamp-#{Octopus.Environment.Name | ToLower}-churchbulletin-gh" {
+        description = ""
+        environment = ["prod", "tdd", "uat"]
     }
 }
 
