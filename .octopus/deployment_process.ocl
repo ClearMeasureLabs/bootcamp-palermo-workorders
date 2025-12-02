@@ -1,4 +1,4 @@
-#{AzureAccount}step "ensure-dotnet-10-installed" {
+step "ensure-dotnet-10-installed" {
     name = "Ensure .NET 10 is installed"
 
     action {
