@@ -192,13 +192,6 @@ stages:
                     downloadPath: "$(System.DefaultWorkingDirectory)"
                     extract: true
                 - task: PowerShell@2
-                  displayName: "Baseline database schema"
-                  inputs:
-                    pwsh: true
-                    targetType: filePath
-                    filePath: ./scripts/UpdateAzurePipelineSql.ps1
-                    arguments: -DatabaseServer "$(DatabaseServer)" -DatabaseName "ChurchBulletin" -DatabaseAction "baseline" -DatabaseUser "tdd" -DatabasePassword "$(DatabasePassword)"                    
-                - task: PowerShell@2
                   displayName: "Update database schema"
                   inputs:
                     pwsh: true
