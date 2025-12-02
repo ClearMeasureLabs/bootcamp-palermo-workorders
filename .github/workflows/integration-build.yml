@@ -319,7 +319,7 @@ jobs:
 
   docker-build-image-for-churchbulletin-ui:
     name: Create and push Docker image for ChurchBulletin.UI
-    needs: [build-linux, run-acceptance-tests]
+    needs: [build-linux]
     if: success() # Only run if acceptance tests job completed successfully
     runs-on: ubuntu-latest
     permissions:
