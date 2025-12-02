@@ -174,7 +174,6 @@ step "create-db-schema" {
     }
 }
 
-
 step "close-firewall" {
     name = "close up SQL Server for migrations"
 
@@ -220,10 +219,12 @@ step "get-db-connection-string" {
         properties = {
             Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
             Octopus.Action.Script.ScriptBody = <<-EOT
-                $connstring = az sql db show-connection-string --client ado.net --server $DatabaseServerName --name $DatabaseName 
-                $connstring = $connstring -replace '<username>', $DatabaseUser -replace '<password>', DatabasePassword -replace '"', ''
+                $connectionStringTemplate = az sql db show-connection-string --client ado.net --server $DatabaseServerName --name $DatabaseName 
                 
-                Write-Host "Connection String: $connstring"
+                Write-Host "Connection String: $connectionStringTemplate"
+                
+                $connectionString = $connectionStringTemplate.Replace('<username>', $username).Replace('<password>', $password)
+                
                 Set-OctopusVariable -name "connstring" -value $connstring
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
@@ -234,8 +235,6 @@ step "get-db-connection-string" {
         worker_pool_variable = ""
     }
 }
-
-
 
 step "update-ui-gh-container-app" {
     name = "Deploy the ChurchBulletin.UI container to Azure."
@@ -344,13 +343,13 @@ step "add-revision-to-container-app" {
         action_type = "Octopus.AzurePowerShell"
         is_required = true
         properties = {
+            environments = "System.String[]"
             Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
-            environments = ["uat", "prod"]
             Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
             Octopus.Action.PowerShell.Edition = "Core"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 $ErrorActionPreference = "Stop"
-
+                
                 Write-Host "Name $container_app_name"
                 az containerapp update --name $container_app_name --resource-group $ResourceGroupName --image $container_image
                 az containerapp update --name $container_app_name --resource-group $ResourceGroupName --set-env-vars ConnectionStrings__SqlConnectionString=$connection_string
@@ -364,7 +363,6 @@ step "add-revision-to-container-app" {
         worker_pool_variable = ""
     }
 }
-
 
 step "get-container-app-fqdn" {
     name = "Get Container App FQDN"
@@ -387,4 +385,3 @@ step "get-container-app-fqdn" {
         worker_pool = "hosted-windows"
     }
 }
-
