@@ -274,7 +274,7 @@ step "create-container-app-environment" {
                                   ]
                                 }
                 EOT
-            Octopus.Action.Azure.ResourceGroupTemplateParameters = "{\"location\":{\"value\":\"#az_location\"},\"environment_name\":{\"value\":\#{container_app_environment_name}\"}}"
+            Octopus.Action.Azure.ResourceGroupTemplateParameters = "{\"location\":{\"value\":\"#{az_location}\"},\"environment_name\":{\"value\":\"#{container_app_environment_name}\"}}"
             Octopus.Action.Azure.TemplateSource = "Inline"
             Octopus.Action.RunOnServer = "false"
             OctopusUseBundledTooling = "False"
