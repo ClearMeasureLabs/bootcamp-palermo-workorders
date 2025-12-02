@@ -40,14 +40,32 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
     protected static string GetConnectionString(DatabaseOptions options)
     {
+        // Determine if this is a local server (localhost or LocalDB)
+        var serverName = options.DatabaseServer ?? string.Empty;
+        var isLocalServer = serverName.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
+                           serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
+                           serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase);
+
         var builder = new SqlConnectionStringBuilder
         {
             DataSource = options.DatabaseServer,
             InitialCatalog = options.DatabaseName,
-            TrustServerCertificate = false,
-            Encrypt = true,
             ConnectTimeout = 60 
         };
+
+        // Configure encryption and certificate trust based on server location
+        if (isLocalServer)
+        {
+            // Local servers: don't encrypt, trust certificate
+            builder.Encrypt = false;
+            builder.TrustServerCertificate = true;
+        }
+        else
+        {
+            // Remote servers or Azure SQL Database: encrypt, don't trust certificate (require proper validation)
+            builder.Encrypt = true;
+            builder.TrustServerCertificate = false;
+        }
 
         if (string.IsNullOrWhiteSpace(options.DatabaseUser))
         {
@@ -66,6 +84,8 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             builder.UserID = options.DatabaseUser;
             builder.Password = options.DatabasePassword;
         }
+
+
 
         // Log connection string for debugging (password redacted)
         var logBuilder = new SqlConnectionStringBuilder(builder.ToString())
