@@ -53,7 +53,7 @@ variable "AzureAccount" {
 }
 
 variable "DatabaseServer" {
-    value "#{DatabaseServerName}-#{Octopus.Environment.Name | ToLower}.database.windows.net" {
+    value "#{DatabaseServerName}.database.windows.net" {
         description = ""
     }
 }
