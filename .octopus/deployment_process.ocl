@@ -105,8 +105,8 @@ step "ensure-dotnet-10-installed" {
     }
 }
 
-step "apply-database-migrations" {
-    name = "Apply database migrations"
+step "open-firewall" {
+    name = "Open up SQL Server for migrations"
 
     action {
         action_type = "Octopus.AzurePowerShell"
@@ -122,59 +122,82 @@ step "apply-database-migrations" {
                                                 $workerIp = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
                                                 Write-Host "Worker IP Address: $workerIp"
                                                 Set-OctopusVariable -name "WorkerIP" -value $workerIp
-                                                
-                                                # Get database connection components from Octopus variables
-                                                $databaseServer = $OctopusParameters["DatabaseServer"]
-                                                $databaseName = $OctopusParameters["DatabaseName"]
-                                                $databaseUser = $OctopusParameters["DatabaseUser"]
-                                                $databasePassword = $OctopusParameters["DatabasePassword"]
-                                                $databaseAction = $OctopusParameters["DatabaseAction"]
-                
-                                                # Find the Database package (deployed as part of release)
-                                                $packagePath = $OctopusParameters["Octopus.Action.Package[ChurchBulletin.Database].ExtractedPath"]
-                                                if (-not $packagePath) {
-                                                    throw "Could not find ChurchBulletin.Database package path"
-                                                }
-                
-                
-                                                $databaseAssembly = Get-ChildItem -Path $packagePath `
-                                                    -Filter "ClearMeasure.Bootcamp.Database.dll" `
-                                                    -Recurse | Select-Object -First 1 -ExpandProperty FullName
-                                                
-                                                $scriptDir = Join-Path $packagePath "scripts"
-                                                
-                                                if (-not $databaseAssembly) {
-                                                    throw "Could not find ClearMeasure.Bootcamp.Database.dll in ChurchBulletin.Database package"
-                                                }
-                                                
-                                                if (-not (Test-Path $scriptDir)) {
-                                                    throw "Scripts directory not found at: $scriptDir"
-                                                }
                 
                                                 # TODO Parameterize this
                                                 $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
                                                 $resourceDbServer = "bootcamp-palermo-workorders-$($OctopusParameters["Octopus.Environment.Slug"])"
                                                 $firewallRuleName = "OctopusDeployWorker"
                                                 
-                
-                                                Write-Host "Database Assembly: $databaseAssembly"
-                                                Write-Host "Scripts Directory: $scriptDir"
-                                                Write-Host "Database Server  : $databaseServer"
-                                                Write-Host "                 : $resourceDbServer"
-                                                Write-Host "Database Name    : $databaseName"
-                                                Write-Host "Database Action  : $databaseAction"
-                                                
-                                                
-                                                # Run the database migration
-                                                Write-Host "Executing database migration: $databaseAction"
                                                 # Open up the firewall to allow the Octopus worker to connect
                                                 az sql server firewall-rule create --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName --start-ip-address $workerIp --end-ip-address $workerIp
-                
-                #                                dotnet $databaseAssembly $databaseAction $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
+                                                               
+                                                Write-Host "✅ Migrations applied successfully."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-windows"
+        worker_pool_variable = ""
+
+    }
+}
+
+step "create-db-schema" {
+    name = "Create DB Schema"
+    properties = {
+        Octopus.Action.TargetRoles = "churchbulletin-gh-targets"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "octopus-server-built-in"
+            Octopus.Action.Package.PackageId = "ChurchBulletin.Database"
+            Octopus.Action.PowerShell.Edition = "Core"
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptFileName = "Scripts\\UpdateAzureSql.ps1"
+            Octopus.Action.Script.ScriptSource = "Package"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = ""
+
+        packages {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "ChurchBulletin.Database"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+
+step "close-firewall" {
+    name = "close up SQL Server for migrations"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        is_required = true
+        properties = {
+            Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
+            Octopus.Action.PowerShell.Edition = "Core"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                                                $ErrorActionPreference = "Stop"
                                                 
-                                                if ($LASTEXITCODE -ne 0) {
-                                                    throw "Database migration failed with exit code $LASTEXITCODE"
-                                                }
+                                                Write-Host "Getting Octopus Worker IP address..."
+                                                $workerIp = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
+                                                Write-Host "Worker IP Address: $workerIp"
+                                                Set-OctopusVariable -name "WorkerIP" -value $workerIp
+                
+                                                # TODO Parameterize this
+                                                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
+                                                $resourceDbServer = "bootcamp-palermo-workorders-$($OctopusParameters["Octopus.Environment.Slug"])"
+                                                $firewallRuleName = "OctopusDeployWorker"
                                                 
                                                 # Close up the firewall again.
                                                 az sql server firewall-rule delete --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName
@@ -188,18 +211,8 @@ step "apply-database-migrations" {
         worker_pool = "hosted-windows"
         worker_pool_variable = ""
 
-        packages "ChurchBulletin.Database" {
-            acquisition_location = "Server"
-            feed = "octopus-server-built-in"
-            package_id = "ChurchBulletin.Database"
-            properties = {
-                Extract = "True"
-                SelectionMode = "immediate"
-            }
-        }
     }
 }
-
 step "update-ui-gh-container-app" {
     name = "Deploy the ChurchBulletin.UI container to Azure."
 
@@ -319,37 +332,5 @@ step "get-container-app-fqdn" {
             OctopusUseBundledTooling = "False"
         }
         worker_pool = "hosted-windows"
-    }
-}
-
-step "create-db-schema" {
-    name = "Create DB Schema"
-    properties = {
-        Octopus.Action.TargetRoles = "churchbulletin-gh-targets"
-    }
-
-    action {
-        action_type = "Octopus.Script"
-        properties = {
-            Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
-            Octopus.Action.Package.DownloadOnTentacle = "False"
-            Octopus.Action.Package.FeedId = "octopus-server-built-in"
-            Octopus.Action.Package.PackageId = "ChurchBulletin.Database"
-            Octopus.Action.PowerShell.Edition = "Core"
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Script.ScriptFileName = "Scripts\\UpdateAzureSql.ps1"
-            Octopus.Action.Script.ScriptSource = "Package"
-            OctopusUseBundledTooling = "False"
-        }
-        worker_pool_variable = ""
-
-        packages {
-            acquisition_location = "Server"
-            feed = "octopus-server-built-in"
-            package_id = "ChurchBulletin.Database"
-            properties = {
-                SelectionMode = "immediate"
-            }
-        }
     }
 }
