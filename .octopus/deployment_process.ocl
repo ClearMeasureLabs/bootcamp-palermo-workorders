@@ -219,11 +219,11 @@ step "get-db-connection-string" {
         properties = {
             Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
             Octopus.Action.Script.ScriptBody = <<-EOT
-                $connectionStringTemplate = az sql db show-connection-string --client ado.net --server $DatabaseServerName --name $DatabaseName 
+                $connectionStringTemplate = az sql db show-connection-string --client ado.net --server $DatabaseServer --name $DatabaseName 
                 
                 Write-Host "Connection String: $connectionStringTemplate"
                 
-                $connectionString = $connectionStringTemplate.Replace('<username>', $username).Replace('<password>', $password)
+                $connectionString = $connectionStringTemplate.Replace('<username>', $DatabaseUser).Replace('<password>', $DatabasePassword)
                 
                 Set-OctopusVariable -name "connstring" -value $connstring
                 EOT
