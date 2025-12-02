@@ -113,6 +113,8 @@ step "apply-database-migrations" {
         is_required = true
         properties = {
             Octopus.Action.Azure.AccountId = "churchbulletin-gh-azure-account"
+            Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
+            Octopus.Action.PowerShell.Edition = "Desktop"
             Octopus.Action.Script.ScriptBody = <<-EOT
                                 $ErrorActionPreference = "Stop"
                                 
@@ -167,13 +169,18 @@ step "apply-database-migrations" {
                                 # Run the database migration
                                 Write-Host "Executing database migration: $databaseAction"
                                 dotnet $databaseAssembly $databaseAction $databaseServer $databaseName $scriptDir $databaseUser $databasePassword
+                
                                 
                                 if ($LASTEXITCODE -ne 0) {
-                                    throw "Database migration failed with exit code $LASTEXITCODE"
-                                }
-                                
                                 # Close up the firewall again.
                                 az sql server firewall-rule delete --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName
+                                   
+                                    throw "Database migration failed with exit code $LASTEXITCODE"
+                                }
+                                # Close up the firewall again.
+                                az sql server firewall-rule delete --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName
+                                
+                
                                 
                                 Write-Host "✅ Migrations applied successfully."
                 EOT
