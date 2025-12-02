@@ -320,7 +320,7 @@ jobs:
   docker-build-image-for-churchbulletin-ui:
     name: Create and push Docker image for ChurchBulletin.UI
     needs: [build-linux]
-    if: success() # Only run if acceptance tests job completed successfully
+    if: success() 
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -454,7 +454,7 @@ jobs:
   deploy-to-tdd:
     name: Deploy to TDD environment and run acceptance tests
     needs: [docker-build-image-for-churchbulletin-ui]
-    if: success() # Only run if Docker build image job completed successfully
+    if: success() 
     runs-on: ubuntu-latest
     environment:
       name: TDD
@@ -469,7 +469,7 @@ jobs:
           echo "Build version: $version"
 
 
-      - name: Create Octopus Release
+      - name: Create Octopus Release in TDD environment
         uses: OctopusDeploy/create-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -487,7 +487,7 @@ jobs:
 
 
 
-      - name: Deploy Octopus Release
+      - name: Deploy Octopus release to TDD environment
         uses: OctopusDeploy/deploy-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -502,108 +502,3 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
           environments: "TDD"
 
-      - name: 'Login via Azure CLI'
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-    
-      - name: Get Container App URL
-        run: |
-          # Configure Azure CLI to use dynamic extension installation
-          az config set extension.use_dynamic_install=yes_without_prompt
-          
-          # Get the Container App URL
-          CONTAINER_APP_URL=$(az containerapp show \
-            --resource-group ${{ env.TDD_RESOURCE_GROUP }} \
-            --name ${{ env.TDD_APP_NAME }} \
-            --query properties.configuration.ingress.fqdn \
-            --output tsv)
-          
-          # Remove quotes if present and set as environment variable
-          CONTAINER_APP_URL=$(echo "$CONTAINER_APP_URL" | tr -d '"')
-          echo "CONTAINER_APP_URL=$CONTAINER_APP_URL" >> $GITHUB_ENV
-          echo "Container App URL: $CONTAINER_APP_URL"
-
-      # Download acceptance test package from artifacts (created by build-linux job)
-      # This approach uses GitHub Actions artifacts instead of NuGet CLI, eliminating
-      # the need to install external tools and providing better reliability
-      - name: Download Acceptance Test Package
-        uses: actions/download-artifact@v4
-        with:
-          name: churchbulletin-nuget-packages
-          path: ./packages
-
-      - name: Extract Acceptance Test Package
-        run: |
-          # Find the ChurchBulletin.AcceptanceTests package
-          PACKAGE_FILE=$(find ./packages -name "ChurchBulletin.AcceptanceTests.*.nupkg" | head -n 1)
-          
-          if [ -z "$PACKAGE_FILE" ]; then
-            echo "Error: ChurchBulletin.AcceptanceTests package not found"
-            ls -la ./packages/
-            exit 1
-          fi
-          
-          echo "Found package: $PACKAGE_FILE"
-          
-          # Create directory for extraction
-          mkdir -p ./acceptance-tests-extract
-          
-          # Extract the package (NuGet packages are ZIP files)
-          unzip -o "$PACKAGE_FILE" -d ./acceptance-tests-extract
-          
-          # Fix permissions on extracted files
-          find ./acceptance-tests-extract -type d -exec chmod u+rwx {} \;
-          find ./acceptance-tests-extract -type f -exec chmod u+r {} \;
-          
-          # Create the expected directory structure for VSTest
-          mkdir -p ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}
-          
-          # Find the test DLL to determine package structure
-          # dotnet-octo pack packages files from the publish directory
-          TEST_DLL=$(find ./acceptance-tests-extract -name "*AcceptanceTests.dll" 2>/dev/null | head -n 1)
-          
-          if [ -z "$TEST_DLL" ]; then
-            echo "Error: AcceptanceTests DLL not found in package"
-            echo "Package contents:"
-            find ./acceptance-tests-extract -type f 2>/dev/null | head -20
-            exit 1
-          fi
-          
-          # Get the directory containing the test DLL
-          TEST_DIR=$(dirname "$TEST_DLL")
-          
-          # Copy all contents from the test DLL's directory using tar
-          # This preserves directory structure and handles all file types correctly
-          (cd "$TEST_DIR" && tar cf - .) | (cd ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} && tar xf -)
-          
-          # Remove any package metadata files that might have been copied
-          find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -name "*.nuspec" -delete 2>/dev/null || true
-          find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -name "[Content_Types].xml" -delete 2>/dev/null || true
-          find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -name "*.psmdcp" -delete 2>/dev/null || true
-          find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -name "_rels" -type d -exec rm -rf {} + 2>/dev/null || true
-          
-          # Verify we have test DLLs
-          TEST_DLL_COUNT=$(find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -name "*AcceptanceTests.dll" | wc -l)
-          if [ "$TEST_DLL_COUNT" -eq 0 ]; then
-            echo "Error: No AcceptanceTests.dll files found after extraction"
-            echo "Contents:"
-            find ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }} -type f | head -20
-            exit 1
-          else
-            echo "✓ Found $TEST_DLL_COUNT AcceptanceTests DLL file(s)"
-          fi
-          
-          # Clean up
-          rm -rf ./acceptance-tests-extract ./packages
-          echo "✓ Acceptance test package extracted successfully"
-
-      - name: Run tests
-        uses: microsoft/vstest-action@v1.0.0
-        with:
-          testAssembly: |
-            **/*AcceptanceTests.dll
-            !**/*TestAdapter.dll
-            !**/obj/**
-          searchFolder: ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}/
-          runInParallel: false 
