@@ -31,7 +31,7 @@ Write-Host "  Database Assembly: $databaseAssembly"
 Write-Host "  Database Action: $DatabaseAction"
 Write-Host "  Database Server: $DatabaseServer"
 Write-Host "  Database Name: $DatabaseName"
-Write-Host "  Database P: DatabasePassword"
+# Write-Host "  Database P: $DatabasePassword"
 dotnet $databaseAssembly $DatabaseAction $DatabaseServer $DatabaseName $scriptDir $DatabaseUser $DatabasePassword
 if ($lastexitcode -ne 0) {
     throw ("Database migration had an error.")
