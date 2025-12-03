@@ -486,7 +486,7 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
 
       - name: Pause for the release to be created
-        run: sleep 10
+        run: sleep 90
   
       # https://github.com/OctopusDeploy/deploy-release-action  
       - name: Deploy Octopus Release to TDD
@@ -504,7 +504,7 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
           environments: "TDD"
       - name: Pause for the deployment to finish.
-        run: sleep 30
+        run: sleep 180
   deploy-to-uat:
     name: Deploy to UAT 
     needs: [deploy-to-tdd]
@@ -514,8 +514,6 @@ jobs:
       name: UAT
     
     steps:
-      - name: Pause for TDD deploy to complete
-        run: sleep 10
       # Set version environment variable
       - name: Set Version
         run: |
@@ -542,7 +540,7 @@ jobs:
           environments: "UAT"
 
       - name: Pause for the deployment to finish.
-        run: sleep 10
+        run: sleep 180
  
 
   deploy-to-prod:
@@ -555,8 +553,6 @@ jobs:
     
     steps:
       # Set version environment variable
-      - name: Pause for UAT deploy to complete
-        run: sleep 45
 
       - name: Set Version
         run: |
@@ -583,5 +579,5 @@ jobs:
           environments: "Prod"
 
       - name: Pause for the deployment to finish.
-        run: sleep 10
+        run: sleep 180
   
