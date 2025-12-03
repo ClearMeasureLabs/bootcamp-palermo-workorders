@@ -536,7 +536,7 @@ jobs:
             --project '${{ vars.OCTOPUS_PROJECT }}' \
             --from "TDD" \
             --to "UAT" \
-            --releaseNumber "${{ env.VERSION }}"
+            --release "${{ env.VERSION }}"
   deploy-to-prod:
     name: Deploy to Prod
     needs: [deploy-to-uat]
@@ -571,6 +571,4 @@ jobs:
             --project '${{ vars.OCTOPUS_PROJECT }}' \
             --from "UAT" \
             --to "Prod" \
-            --releaseNumber "${{ env.VERSION }}" \
-            --wait-for-deployment \
-            --deployment-timeout "00:30:00"
+            --release "${{ env.VERSION }}"
