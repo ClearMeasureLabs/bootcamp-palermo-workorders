@@ -520,22 +520,21 @@ jobs:
           echo "Build version: $version"
 
 
-      # Install Octopus CLI
-      - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v3
-        with:
-          version: latest
+      - name: Deploy Octopus Release to UAT
+        uses: OctopusDeploy/deploy-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
+          OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
+        with:          
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
+          environments: "UAT"
 
-      # Promote release through lifecycle from TDD to UAT
-      - name: Promote Octopus Release to UAT
-        run: |
-          octopus release deploy \
-            --server ${{ secrets.OCTOPUS_URL }} \
-            --apiKey ${{ secrets.OCTO_API_KEY }} \
-            --space '${{ vars.OCTOPUS_SPACE }}' \
-            --project '${{ vars.OCTOPUS_PROJECT }}' \
-            --environment "UAT" \
-            --version "${{ env.VERSION }}"
   deploy-to-prod:
     name: Deploy to Prod
     needs: [deploy-to-uat]
@@ -554,19 +553,17 @@ jobs:
           echo "Build version: $version"
 
 
-      # Install Octopus CLI
-      - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v3
-        with:
-          version: latest
-
-      # Promote release through lifecycle from UAT to PROD
-      - name: Promote Octopus Release to PROD
-        run: |
-          octopus release deploy \
-            --server ${{ secrets.OCTOPUS_URL }} \
-            --apiKey ${{ secrets.OCTO_API_KEY }} \
-            --space '${{ vars.OCTOPUS_SPACE }}' \
-            --project '${{ vars.OCTOPUS_PROJECT }}' \
-            --environment "Prod" \
-            --version "${{ env.VERSION }}"
+      - name: Deploy Octopus Release to Prod
+        uses: OctopusDeploy/deploy-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
+          OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
+        with:          
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
+          environments: "Prod"
