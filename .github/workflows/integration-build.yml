@@ -571,4 +571,6 @@ jobs:
             --project '${{ vars.OCTOPUS_PROJECT }}' \
             --from "UAT" \
             --to "PROD" \
-            --releaseNumber "${{ env.VERSION }}"
+            --releaseNumber "${{ env.VERSION }}" \
+            --wait-for-deployment \
+            --deployment-timeout "00:30:00"
