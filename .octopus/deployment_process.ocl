@@ -458,10 +458,9 @@ step "add-revision-to-container-app" {
                 Write-Host "Updating container app: $container_app_name"
                 Write-Host "Container Image       : $container_image"
 
-                az containerapp update --name $container_app_name --resource-group $ResourceGroupName `
-                                       --image $container_image `
-                                       --set-env-vars ConnectionStrings__SqlConnectionString=$container_app_connection_string
-                
+                az containerapp update --name $container_app_name --resource-group $ResourceGroupName --image $container_image
+                az containerapp update --name $container_app_name --resource-group $ResourceGroupName --set-env-vars ConnectionStrings__SqlConnectionString=$connection_string
+
                 Write-Host "✅ Container App updated successfully"
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
