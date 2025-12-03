@@ -511,6 +511,8 @@ jobs:
       name: UAT
     
     steps:
+      - name: Pause for TDD deploy to complete
+        run: sleep 45
       # Set version environment variable
       - name: Set Version
         run: |
@@ -546,6 +548,9 @@ jobs:
     
     steps:
       # Set version environment variable
+      - name: Pause for UAT deploy to complete
+        run: sleep 45
+
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
@@ -555,7 +560,7 @@ jobs:
 
 
       # https://github.com/OctopusDeploy/deploy-release-action  
-      - name: Deploy Octopus Release to TDD
+      - name: Deploy Octopus Release to Prod
         uses: OctopusDeploy/deploy-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
