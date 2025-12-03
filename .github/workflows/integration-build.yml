@@ -536,14 +536,12 @@ jobs:
       # Promote release through lifecycle from TDD to UAT
       - name: Promote Octopus Release to UAT
         run: |
-          octopus release progression \
-            --server ${{ secrets.OCTOPUS_URL }} \
-            --api-key ${{ secrets.OCTO_API_KEY }} \
+          octopus release progression allow \
             --space '${{ vars.OCTOPUS_SPACE }}' \
             --project '${{ vars.OCTOPUS_PROJECT }}' \
-            --from "TDD" \
-            --to "UAT" \
-            --release "${{ env.VERSION }}"
+            --version "${{ env.VERSION }}" \
+            --environment "UAT" \
+            --no-prompt
 
   deploy-to-prod:
     name: Deploy to Prod
@@ -579,11 +577,9 @@ jobs:
       # Promote release through lifecycle from UAT to Prod
       - name: Promote Octopus Release to Prod
         run: |
-          octopus release progression \
-            --server ${{ secrets.OCTOPUS_URL }} \
-            --api-key ${{ secrets.OCTO_API_KEY }} \
+          octopus release progression allow \
             --space '${{ vars.OCTOPUS_SPACE }}' \
             --project '${{ vars.OCTOPUS_PROJECT }}' \
-            --from "UAT" \
-            --to "Prod" \
-            --release "${{ env.VERSION }}"
+            --version "${{ env.VERSION }}" \
+            --environment "Prod" \
+            --no-prompt
