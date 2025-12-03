@@ -106,7 +106,7 @@ step "ensure-dotnet-10-installed" {
 }
 
 step "open-firewall" {
-    name = "Open up SQL Server for migrations"
+    name = "Open SQL Server firewall for migrations"
 
     action {
         action_type = "Octopus.AzurePowerShell"
@@ -143,7 +143,7 @@ step "open-firewall" {
 }
 
 step "create-db-schema" {
-    name = "Create DB Schema"
+    name = "Run DB migrations"
 
     action {
         action_type = "Octopus.Script"
@@ -172,7 +172,7 @@ step "create-db-schema" {
 }
 
 step "close-firewall" {
-    name = "close up SQL Server for migrations"
+    name = "Close SQL Server firewall to migrations"
 
     action {
         action_type = "Octopus.AzurePowerShell"
@@ -213,6 +213,7 @@ step "get-db-connection-string" {
 
     action {
         action_type = "Octopus.AzurePowerShell"
+        is_disabled = true
         properties = {
             Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.Script.ScriptBody = <<-EOT
@@ -240,6 +241,8 @@ step "create-container-app-environment" {
 
     action {
         action_type = "Octopus.AzureResourceGroup"
+        is_disabled = true
+
         properties = {
             Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.Azure.ResourceGroupDeploymentMode = "Incremental"
@@ -290,6 +293,7 @@ step "create-container-app" {
 
     action {
         action_type = "Octopus.AzureResourceGroup"
+        is_disabled = true
         properties = {
             Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.Azure.ResourceGroupDeploymentMode = "Incremental"
@@ -409,113 +413,13 @@ step "create-container-app" {
 }
 
 
-step "update-ui-gh-container-app" {
-    name = "Deploy the ChurchBulletin.UI container to Azure."
-
-    action {
-        action_type = "Octopus.AzurePowerShell"
-        is_disabled = true
-        is_required = true
-        properties = {
-            Octopus.Action.Azure.AccountId = "#{AzureAccount}"
-            Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
-            Octopus.Action.PowerShell.Edition = "Core"
-            Octopus.Action.Script.ScriptBody = <<-EOT
-                $ErrorActionPreference = "Stop"
-                 
-                 Write-Host "Getting Octopus Worker IP address..."
-                 try {
-                       $ip = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
-                       Write-Host "Worker IP Address: $ip"
-                       Set-OctopusVariable -name "WorkerIP" -value $ip
-                 } catch {
-                       Write-Warning "Failed to get IP from ifconfig.me, trying alternative..."
-                       $ip = (Invoke-WebRequest -Uri "https://api.ipify.org" -UseBasicParsing).Content
-                       Write-Host "Worker IP Address: $ip"
-                 }
-                
-                    
-                $imageTag = "churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest"
-                $revision = $(Get-Date -Format 'yyyyMMddHHmmss')
-                Write-Host "Using revision suffix: $revision"
-                
-                # Get database connection components from Octopus variables
-                $databaseServer = $OctopusParameters["DatabaseServer"]
-                $databaseName = $OctopusParameters["DatabaseName"]
-                $databaseUser = $OctopusParameters["DatabaseUser"]
-                $databasePassword = $OctopusParameters["DatabasePassword"]
-                
-                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
-                
-                # Build connection string if database variables are configured
-                if (-not [string]::IsNullOrWhiteSpace($databaseServer) -and 
-                      -not [string]::IsNullOrWhiteSpace($databaseName) -and
-                      -not [string]::IsNullOrWhiteSpace($databaseUser) -and
-                      -not [string]::IsNullOrWhiteSpace($databasePassword)) {
-                      # Build SQL Server connection string with authentication
-                      $escapedPassword = $databasePassword -replace "'", "''" -replace ";", "`;"
-                      $databaseConnectionString = "Server=tcp:$databaseServer,1433;Initial Catalog=$databaseName;User ID=$databaseUser;Password=$escapedPassword;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
-                      Write-Host "Setting database connection string for server: $databaseServer, database: $databaseName"
-                      
-                      # Update container app with new image and environment variables in a single operation
-                      # This ensures the new revision is created with the environment variable already set
-                      az containerapp update `
-                      --name ui-gh `
-                      --resource-group $resourceGroup `
-                      --image $imageTag `
-                      --revision-suffix $revision `
-                      --set-env-vars "ConnectionStrings__SqlConnectionString=$databaseConnectionString" `
-                      --only-show-errors
-                } else {
-                      Write-Warning "Database connection variables are not fully configured. Container app will be updated without setting the connection string."
-                      Write-Warning "Required variables: DatabaseServer, DatabaseName, DatabaseUser, DatabasePassword"
-                      
-                      # Update container app with new image only (no environment variables)
-                      az containerapp update `
-                      --name ui-gh `
-                      --resource-group $resourceGroup `
-                      --image $imageTag `
-                      --revision-suffix $revision `
-                      --only-show-errors
-                }
-                
-                
-                # Wait for revision to be fully created
-                Start-Sleep -Seconds 15
-                
-                $latestRevision = az containerapp revision list `
-                    --name ui-gh `
-                    --resource-group $resourceGroup `
-                    --query "[0].name" `
-                    --output tsv `
-                    --only-show-errors
-                Write-Host "Latest revision: $latestRevision"
-                
-                $fqdn = az containerapp show `
-                    --name ui-gh `
-                    --resource-group $resourceGroup `
-                    --query properties.configuration.ingress.fqdn `
-                    --output tsv `
-                    --only-show-errors
-                Write-Host "Container App FQDN: https://$fqdn"
-                
-                Write-Host "✅ Container App updated successfully."
-                EOT
-            Octopus.Action.Script.ScriptSource = "Inline"
-            Octopus.Action.Script.Syntax = "PowerShell"
-            OctopusUseBundledTooling = "False"
-        }
-        worker_pool = "hosted-windows"
-        worker_pool_variable = ""
-    }
-}
-
 
 step "get-container-app-fqdn" {
     name = "Get Container App FQDN"
 
     action {
         action_type = "Octopus.AzurePowerShell"
+        is_disabled = true
         properties = {
             Octopus.Action.Azure.AccountId = "#{AzureAccount}"
             Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
@@ -554,8 +458,9 @@ step "add-revision-to-container-app" {
                 Write-Host "Updating container app: $container_app_name"
                 Write-Host "Container Image       : $container_image"
 
-                az containerapp update --name $container_app_name --resource-group $ResourceGroupName --image $container_image
-                az containerapp update --name $container_app_name --resource-group $ResourceGroupName --set-env-vars ConnectionStrings__SqlConnectionString=$connection_string
+                az containerapp update --name $container_app_name --resource-group $ResourceGroupName `
+                                       --image $container_image `
+                                       --set-env-vars ConnectionStrings__SqlConnectionString=$container_app_connection_string
                 
                 Write-Host "✅ Container App updated successfully"
                 EOT
