@@ -217,6 +217,7 @@ stages:
                     version: "$(Build.BuildNumber)"
                     downloadPath: "$(System.DefaultWorkingDirectory)/tests"
                     extract: true
+
                 - task: DownloadPackage@1
                   displayName: "Download ChurchBulletin.Database Package"
                   inputs:
@@ -258,7 +259,6 @@ stages:
                     script: |
                       $databaseServer = "$(DatabaseServer)"
                       $databasePassword = "$(DatabasePassword)"
-                      $databaseName = "$(DatabaseName)"
                       
                       if ([string]::IsNullOrWhiteSpace($databaseServer)) {
                         Write-Error "DatabaseServer variable is not set or is empty"
@@ -281,7 +281,7 @@ stages:
                       
                       # Construct the connection string with explicit tcp: prefix and port 1433 for Azure SQL Database
                       # This ensures TCP connection and avoids DNS resolution issues
-                      $connectionString = "Server=tcp:$serverName,1433;Database=$databaseName;User ID=tdd;Password=$databasePassword;Encrypt=True;TrustServerCertificate=False;"
+                      $connectionString = "Server=tcp:$serverName,1433;Database=ChurchBulletin;User ID=tdd;Password=$databasePassword;Encrypt=True;TrustServerCertificate=False;"
 
                       # Set the environment variable for this session
                       $env:ConnectionStrings__SqlConnectionString = "$connectionString"
