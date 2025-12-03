@@ -520,28 +520,21 @@ jobs:
           echo "Build version: $version"
 
 
-      # Install Octopus CLI
-      - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v3
-        with:
-          version: latest
-
-      # Authenticate Octopus CLI
-      - name: Authenticate Octopus CLI
-        run: |
-          octopus login \
-            --server ${{ secrets.OCTOPUS_URL }} \
-            --api-key ${{ secrets.OCTO_API_KEY }}
-
-      # Promote release through lifecycle from TDD to UAT
-      - name: Promote Octopus Release to UAT
-        run: |
-          octopus release progression allow \
-            --space '${{ vars.OCTOPUS_SPACE }}' \
-            --project '${{ vars.OCTOPUS_PROJECT }}' \
-            --version "${{ env.VERSION }}" \
-            --environment "UAT" \
-            --no-prompt
+      # https://github.com/OctopusDeploy/deploy-release-action  
+      - name: Deploy Octopus Release to UAT
+        uses: OctopusDeploy/deploy-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
+          OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
+        with:          
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
+          environments: "UAT"
 
   deploy-to-prod:
     name: Deploy to Prod
@@ -561,25 +554,18 @@ jobs:
           echo "Build version: $version"
 
 
-      # Install Octopus CLI
-      - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v3
-        with:
-          version: latest
-
-      # Authenticate Octopus CLI
-      - name: Authenticate Octopus CLI
-        run: |
-          octopus login \
-            --server ${{ secrets.OCTOPUS_URL }} \
-            --api-key ${{ secrets.OCTO_API_KEY }}
-
-      # Promote release through lifecycle from UAT to Prod
-      - name: Promote Octopus Release to Prod
-        run: |
-          octopus release progression allow \
-            --space '${{ vars.OCTOPUS_SPACE }}' \
-            --project '${{ vars.OCTOPUS_PROJECT }}' \
-            --version "${{ env.VERSION }}" \
-            --environment "Prod" \
-            --no-prompt
+      # https://github.com/OctopusDeploy/deploy-release-action  
+      - name: Deploy Octopus Release to TDD
+        uses: OctopusDeploy/deploy-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
+          OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
+        with:          
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
+          environments: "Prod"
