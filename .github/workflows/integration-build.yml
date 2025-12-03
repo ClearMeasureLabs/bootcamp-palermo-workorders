@@ -522,21 +522,20 @@ jobs:
 
       # Install Octopus CLI
       - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v1
+        uses: OctopusDeploy/install-octopus-cli-action@v3
         with:
           version: latest
 
       # Promote release through lifecycle from TDD to UAT
       - name: Promote Octopus Release to UAT
         run: |
-          octo promote-release \
+          octopus release deploy \
             --server ${{ secrets.OCTOPUS_URL }} \
             --apiKey ${{ secrets.OCTO_API_KEY }} \
             --space '${{ vars.OCTOPUS_SPACE }}' \
             --project '${{ vars.OCTOPUS_PROJECT }}' \
-            --from "TDD" \
-            --to "UAT" \
-            --release "${{ env.VERSION }}"
+            --environment "UAT" \
+            --version "${{ env.VERSION }}"
   deploy-to-prod:
     name: Deploy to Prod
     needs: [deploy-to-uat]
@@ -557,18 +556,17 @@ jobs:
 
       # Install Octopus CLI
       - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v1
+        uses: OctopusDeploy/install-octopus-cli-action@v3
         with:
           version: latest
 
       # Promote release through lifecycle from UAT to PROD
       - name: Promote Octopus Release to PROD
         run: |
-          octo promote-release \
+          octopus release deploy \
             --server ${{ secrets.OCTOPUS_URL }} \
             --apiKey ${{ secrets.OCTO_API_KEY }} \
             --space '${{ vars.OCTOPUS_SPACE }}' \
             --project '${{ vars.OCTOPUS_PROJECT }}' \
-            --from "UAT" \
-            --to "Prod" \
-            --release "${{ env.VERSION }}"
+            --environment "Prod" \
+            --version "${{ env.VERSION }}"
