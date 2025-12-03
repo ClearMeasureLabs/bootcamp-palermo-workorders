@@ -128,8 +128,3 @@ variable "ResourceGroupName" {
         environment = ["prod", "tdd", "uat"]
     }
 }
-
-variable "container_app_connection_string" {
-    value "Server=tcp:bootcamp-palermo-workorders-#{Octopus.Environment.Name}.database.windows.net,1433;Initial Catalog=#{DatabaseName};Persist Security Info=False;User ID=#{Octopus.Environment.Name};Password=#{DatabasePassword};MultipleActiveResultSets=False;Encrypt=true;TrustServerCertificate=False;Connection Timeout=30;" {}
-}
-
