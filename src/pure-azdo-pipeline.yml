@@ -253,6 +253,8 @@ stages:
                 - task: VSTest@2
                   continueOnError: true
                   displayName: "VsTest - AcceptanceTests"
+                  env:
+                    ConnectionStrings__SqlConnectionString: "Server=$(DatabaseServer);Database=ChurchBulletin;User ID=tdd;Password=$(DatabasePassword);Encrypt=True;TrustServerCertificate=False;"
                   inputs:
                     testSelector: "testAssemblies"
                     testAssemblyVer2: |
