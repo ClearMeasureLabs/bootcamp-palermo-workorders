@@ -316,7 +316,6 @@ jobs:
             path: build/test/**/*.trx
             retention-days: 30
 
-
   docker-build-image-for-churchbulletin-ui:
     name: Create and push Docker image for ChurchBulletin.UI
     needs: [run-acceptance-tests]
@@ -452,7 +451,7 @@ jobs:
           
 
   deploy-to-tdd:
-    name: Deploy to TDD environment and run acceptance tests
+    name: Run acceptance tests and deploy to TDD
     needs: [docker-build-image-for-churchbulletin-ui]
     if: success() 
     runs-on: ubuntu-latest
@@ -470,7 +469,7 @@ jobs:
 
 
       # https://github.com/OctopusDeploy/create-release-action
-      - name: Create Octopus Release in TDD environment
+      - name: Create Octopus Release
         uses: OctopusDeploy/create-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -488,7 +487,7 @@ jobs:
 
 
       # https://github.com/OctopusDeploy/deploy-release-action  
-      - name: Deploy Octopus release to TDD environment
+      - name: Deploy to TDD via Octopus Deploy
         uses: OctopusDeploy/deploy-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -503,3 +502,69 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
           environments: "TDD"
 
+  deploy-to-uat:
+    name: Deploy to UAT 
+    needs: [deploy-to-tdd]
+    if: success() 
+    runs-on: ubuntu-latest
+    environment:
+      name: UAT
+    
+    steps:
+      # Set version environment variable
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Build version: $version"
+
+
+      # https://github.com/OctopusDeploy/deploy-release-action  
+      - name: Deplop to UAT via Octopus Deploy
+        uses: OctopusDeploy/deploy-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
+          OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
+        with:          
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
+          environments: "UAT"
+  deploy-to-prod:
+    name: Deploy to PROD
+    needs: [deploy-to-uat]
+    if: success() 
+    runs-on: ubuntu-latest
+    environment:
+      name: PROD
+    
+    steps:
+      # Set version environment variable
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Build version: $version"
+
+
+      # https://github.com/OctopusDeploy/deploy-release-action  
+      - name: Deploy to PROD via Octopus Deploy
+        uses: OctopusDeploy/deploy-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
+          OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
+        with:          
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
+          environments: "PROD"
