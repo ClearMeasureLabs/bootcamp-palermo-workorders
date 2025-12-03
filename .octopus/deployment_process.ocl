@@ -239,7 +239,6 @@ step "create-container-app-environment" {
     }
 
     action {
-        is_disabled = true
         action_type = "Octopus.AzureResourceGroup"
         properties = {
             Octopus.Action.Azure.AccountId = "#{AzureAccount}"
