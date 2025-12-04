@@ -138,13 +138,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         order = await ClickWorkOrderNumberFromSearchPage(order);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToHaveValueAsync(order.Instructions!);
 
-        order = await ClickWorkOrderNumberFromSearchPage(order);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToHaveValueAsync(order.Instructions!);
-
         order = await BeginExistingWorkOrder(order);
-        order = await ClickWorkOrderNumberFromSearchPage(order);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToHaveValueAsync(order.Instructions!);
-
         order = await ClickWorkOrderNumberFromSearchPage(order);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToHaveValueAsync(order.Instructions!);
 
