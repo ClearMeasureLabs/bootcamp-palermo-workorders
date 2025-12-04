@@ -511,6 +511,7 @@ jobs:
       name: UAT
     
     steps:
+      - uses: actions/checkout@v4
       # Set version environment variable
       - name: Set Version
         run: |
@@ -557,6 +558,7 @@ jobs:
       name: UAT
     
     steps:
+      - uses: actions/checkout@v4
       # Set version environment variable
       - name: Set Version
         run: |
