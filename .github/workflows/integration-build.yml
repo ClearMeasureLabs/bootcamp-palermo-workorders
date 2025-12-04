@@ -483,7 +483,7 @@ jobs:
           OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
           OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
         run: |
-          octopus server configure --server $OCTOPUS_URL --apiKey $OCTOPUS_API_KEY
+          octopus login --server $OCTOPUS_URL --apiKey $OCTOPUS_API_KEY
 
       - name: Create Octopus Release (CLI)
         run: |
