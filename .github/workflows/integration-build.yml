@@ -469,7 +469,10 @@ jobs:
       # Install Octopus CLI
       - name: Install Octopus CLI
         run: |
-          curl -L https://g.octopushq.com/OctopusCLI-Linux \
+          # Get the latest release version
+          OCTOPUS_CLI_VERSION=$(curl -s https://api.github.com/repos/OctopusDeploy/cli/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Installing Octopus CLI version: $OCTOPUS_CLI_VERSION"
+          curl -L "https://github.com/OctopusDeploy/cli/releases/download/${OCTOPUS_CLI_VERSION}/octopus-linux-amd64" \
             -o /usr/local/bin/octopus \
             && chmod +x /usr/local/bin/octopus
           octopus version
