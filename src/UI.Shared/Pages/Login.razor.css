@@ -130,6 +130,12 @@
     }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .btn-primary {
+        animation: none;
+    }
+}
+
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 25px rgba(123, 104, 238, 0.4);
