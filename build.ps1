@@ -332,7 +332,7 @@ Function PackageUI {
 	
 	# Log package creation (publishing handled separately)
 	if (Test-IsGitHubActions) {
-		Log-Message -Message "Would publish $packageName to GitHub Packages" -Type "INFO"
+		Publish-ToGitHubPackages -packageId "$projectName.UI"
 	}
 	elseif (Test-IsAzureDevOps) {
 		# Azure DevOps pipeline handles publishing via separate task
@@ -347,7 +347,7 @@ Function PackageDatabase {
 	
 	# Log package creation (publishing handled separately)
 	if (Test-IsGitHubActions) {
-		Log-Message -Message "Would publish $projectName.Database.$version.nupkg to GitHub Packages" -Type "INFO"
+		Publish-ToGitHubPackages -packageId "$projectName.Database"
 	}
 	elseif (Test-IsAzureDevOps) {
 		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
@@ -365,7 +365,7 @@ Function PackageAcceptanceTests {
 	
 	# Log package creation (publishing handled separately)
 	if (Test-IsGitHubActions) {
-		Log-Message -Message "Would publish $projectName.AcceptanceTests.$version.nupkg to GitHub Packages" -Type "INFO"
+		Publish-ToGitHubPackages -packageId "$projectName.AcceptanceTests"
 	}
 	elseif (Test-IsAzureDevOps) {
 		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
@@ -382,7 +382,7 @@ Function PackageScript {
 	
 	# Log package creation (publishing handled separately)
 	if (Test-IsGitHubActions) {
-		Log-Message -Message "Would publish $projectName.Script.$version.nupkg to GitHub Packages" -Type "INFO"
+		Publish-ToGitHubPackages -packageId "$projectName.Script"
 	}
 	elseif (Test-IsAzureDevOps) {
 		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
@@ -391,15 +391,6 @@ Function PackageScript {
 
 
 Function Package-Everything{
-	if (Test-IsAzureDevOps) {
-		Write-Output "Packaging nuget packages for Azure DevOps Artifacts"
-	}
-	elseif (Test-IsGitHubActions) {
-		Write-Output "Packaging nuget packages for GitHub Packages"
-	}
-	else {
-		Write-Output "Packaging nuget packages"
-	}
 	
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
 	
@@ -623,6 +614,8 @@ Function Invoke-PrivateBuild {
 		Log-Message -Message "Using default database server for platform: $script:databaseServer" -Type "INFO"
 	}
 	
+	# TODO Drop the SQL Server database.
+
 	# Generate unique database name for this build instance
 	# On Linux with Docker, no need for unique names since container is clean
 	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
