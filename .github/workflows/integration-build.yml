@@ -489,13 +489,10 @@ jobs:
           server: ${{ secrets.OCTOPUS_URL }}
           space: '${{ vars.OCTOPUS_SPACE }}'
           project: '${{ vars.OCTOPUS_PROJECT }}'
-          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
-          git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}          
+          release_number: "${{ env.BUILD_BUILDNUMBER }}"
           deploy_to: "TDD"
           progress: true
-          release_number: "${{ env.BUILD_BUILDNUMBER }}"
           deployment_timeout: 00:30:00
-          package_version: "${{ env.BUILD_BUILDNUMBER }}"
 
   
 
