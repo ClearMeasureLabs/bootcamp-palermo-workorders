@@ -317,7 +317,7 @@ jobs:
 
   docker-build-image-for-churchbulletin-ui:
     name: Create and push Docker image for ChurchBulletin.UI
-    needs: [run-acceptance-tests]
+    needs: [build-linux]
     if: success() 
     runs-on: ubuntu-latest
     permissions:
@@ -447,40 +447,10 @@ jobs:
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
 
-  create-octopus-release:
-    name: Create release in Octopus Deploy
-    needs: [docker-build-image-for-churchbulletin-ui]
-    if: success() 
-    runs-on: ubuntu-latest
-    environment:
-      name: TDD
-    
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set Version
-        run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"      
-      - name: Create Octopus Release with Github Action v3
-        uses: OctopusDeploy/create-release-action@v3
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          BUILD_BUILDNUMBER: ${{ env.VERSION }}
-        with:
-          project: '${{ vars.OCTOPUS_PROJECT }}'
-          release_number: "${{ env.BUILD_BUILDNUMBER }}"
-          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
-          git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
-  
+ 
   deploy-to-tdd:
-    name: Deploy to TDD via Octopus Deploy
-    needs: [create-octopus-release]
+    name: TDD
+    needs: [docker-build-image-for-churchbulletin-ui]
     if: success()
     runs-on: ubuntu-latest
     environment:
@@ -500,6 +470,22 @@ jobs:
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"      
+
+      - name: Create Octopus Release
+        uses: OctopusDeploy/create-release-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+        with:
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          release_number: "${{ env.BUILD_BUILDNUMBER }}"
+          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
+          git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
+  
       - name: Deploy Octopus Release to TDD
         id: start-deploy-to-tdd
         uses: OctopusDeploy/deploy-release-action@v3
@@ -523,7 +509,7 @@ jobs:
           timeout_after: 1800          
 
   deploy-to-uat:
-    name: Deploy to UAT via Octopus Deploy
+    name: UAT
     needs: [deploy-to-tdd]
     if: success() 
     runs-on: ubuntu-latest
@@ -562,7 +548,7 @@ jobs:
           timeout_after: 1800          
           
   deploy-to-prod:
-    name: Deploy to Prod via Octopus Deploy
+    name: Prod
     needs: [deploy-to-uat]
     if: success() 
     runs-on: ubuntu-latest
