@@ -447,12 +447,34 @@ jobs:
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
 
-          
-
+  create-octopus-release:
+    name: Create release in Octopus Deploy          
+    needs: [docker-build-image-for-churchbulletin-ui]
+    if: success() 
+    runs-on: ubuntu-latest
+    environment:
+      name: TDD
+    
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Octopus Release with Github Action v3
+        uses: OctopusDeploy/create-release-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+        with:
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          release_number: "${{ env.BUILD_BUILDNUMBER }}"
+          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
+          git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
   deploy-to-tdd:
     name: Deploy to TDD
     needs: [docker-build-image-for-churchbulletin-ui]
-    if: success() 
+    if: false
     runs-on: ubuntu-latest
     environment:
       name: TDD
@@ -475,32 +497,17 @@ jobs:
       #     * This will cause the deployment to UAT to fail because the lifecycle requirest the release to be deployed to TDD first.
       - name: Install Octopus CLI
         uses: OctopusDeploy/install-octopus-cli-action@v1.2.0
-        
-        with:
-          version: latest
-    
-
-      - name: Create Octopus Release and deploy to TDD
-        uses: OctopusDeploy/create-release-action@v1.0.6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+      - name: Deploy Octopus Release to TDD
+        uses: dmarttinen/deploy-release-action@v0.3.0
         with:
           api_key: ${{ secrets.OCTO_API_KEY  }}
           server: ${{ secrets.OCTOPUS_URL }}
-          space: '${{ vars.OCTOPUS_SPACE }}'
-          project: '${{ vars.OCTOPUS_PROJECT }}'
-          release_number: "${{ env.BUILD_BUILDNUMBER }}"
-          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
-          git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}               
-          deploy_to: "TDD"
-          progress: true
-          debug: true
-          log_level: debug
-          deployment_timeout: 00:30:00
-
-  
+          space: ${{ vars.OCTOPUS_SPACE }}       
+          project: ${{ vars.OCTOPUS_PROJECT }}   
+          deploy_to: "UAT"   
+          progress: true 
+          release_number: ${{env.BUILD_BUILDNUMBER}}
+          timeout: 00:30:00
 
   deploy-to-uat:
     name: Deploy to UAT 
