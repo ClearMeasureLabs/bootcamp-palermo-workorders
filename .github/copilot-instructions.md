@@ -15,8 +15,8 @@ This is a Church Bulletin management application built with:
 
 Build the project using PowerShell:
 ```powershell
-# Full private build (includes tests)
-.\build.ps1 Invoke-PrivateBuild
+# Full private build (includes compile, unit tests, and integration tests)
+.\privatebuild.ps1
 
 # CI build (includes packaging)
 .\build.ps1 Invoke-CIBuild
@@ -36,6 +36,13 @@ dotnet build src/ChurchBulletin.sln --configuration Release
 
 Run tests using PowerShell build script:
 ```powershell
+# Run full private build (unit tests + integration tests)
+.\privatebuild.ps1
+
+# Run acceptance tests (full system test suite)
+.\acceptancetests.ps1
+
+# Individual test steps
 .\build.ps1 UnitTests           # Run unit tests only
 .\build.ps1 IntegrationTest     # Run integration tests (requires database)
 ```
@@ -45,6 +52,12 @@ Or using .NET CLI:
 dotnet test src/UnitTests/UnitTests.csproj
 dotnet test src/IntegrationTests/IntegrationTests.csproj
 ```
+
+## Quality Gates
+
+- **BEFORE committing changes to git**: Run `.\privatebuild.ps1` to ensure all unit and integration tests pass
+- **BEFORE submitting any pull request**: Run `.\acceptancetests.ps1` to ensure full system acceptance tests pass
+- If either script fails, use the output to diagnose and fix the problem before proceeding
 
 ## Special Project Rules
 
