@@ -247,78 +247,78 @@ jobs:
           }
 
           
-  # run-acceptance-tests:
-  #     name: Run Acceptance Tests
-  #     runs-on: ubuntu-latest
-  #     needs: [build-linux]
-  #     if: success()
-  #     permissions:
-  #       contents: read
-  #       packages: write
+  run-acceptance-tests:
+      name: Run Acceptance Tests
+      runs-on: ubuntu-latest
+      needs: [build-linux]
+      if: success()
+      permissions:
+        contents: read
+        packages: write
       
-  #     steps:
-  #       # Checkout code
-  #       - name: Checkout code
-  #         uses: actions/checkout@v4
+      steps:
+        # Checkout code
+        - name: Checkout code
+          uses: actions/checkout@v4
 
-  #       # Install .NET SDK 10.0.100
-  #       - name: Setup .NET SDK 10.0.100
-  #         uses: actions/setup-dotnet@v4
-  #         with:
-  #           dotnet-version: '10.0.100'
+        # Install .NET SDK 10.0.100
+        - name: Setup .NET SDK 10.0.100
+          uses: actions/setup-dotnet@v4
+          with:
+            dotnet-version: '10.0.100'
 
-  #       # Install .NET SDK 6.0 (required by Octopus CLI tool - includes runtime)
-  #       - name: Setup .NET SDK 6.0
-  #         uses: actions/setup-dotnet@v4
-  #         with:
-  #           dotnet-version: '6.0.x'
+        # Install .NET SDK 6.0 (required by Octopus CLI tool - includes runtime)
+        - name: Setup .NET SDK 6.0
+          uses: actions/setup-dotnet@v4
+          with:
+            dotnet-version: '6.0.x'
 
-  #       # Verify .NET 6.0 runtime is available (required by dotnet-octo tool)
-  #       - name: Verify .NET 6.0 runtime
-  #         run: |
-  #           echo "Installed runtimes:"
-  #           dotnet --list-runtimes
-  #           echo ""
-  #           echo "Checking for .NET 6.0 runtime:"
-  #           if dotnet --list-runtimes | grep -q "Microsoft.NETCore.App 6.0"; then
-  #             echo "✓ .NET 6.0 runtime is available"
-  #           else
-  #             echo "✗ .NET 6.0 runtime not found - attempting to install runtime explicitly"
-  #             # Try installing runtime explicitly if SDK installation didn't include it
-  #             curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --runtime dotnet --version 6.0.0
-  #             export PATH="$HOME/.dotnet:$PATH"
-  #             dotnet --list-runtimes
-  #           fi
+        # Verify .NET 6.0 runtime is available (required by dotnet-octo tool)
+        - name: Verify .NET 6.0 runtime
+          run: |
+            echo "Installed runtimes:"
+            dotnet --list-runtimes
+            echo ""
+            echo "Checking for .NET 6.0 runtime:"
+            if dotnet --list-runtimes | grep -q "Microsoft.NETCore.App 6.0"; then
+              echo "✓ .NET 6.0 runtime is available"
+            else
+              echo "✗ .NET 6.0 runtime not found - attempting to install runtime explicitly"
+              # Try installing runtime explicitly if SDK installation didn't include it
+              curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --runtime dotnet --version 6.0.0
+              export PATH="$HOME/.dotnet:$PATH"
+              dotnet --list-runtimes
+            fi
 
-  #       # Set version environment variable
-  #       - name: Set Version
-  #         run: |
-  #           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-  #           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-  #           echo "VERSION=$version" >> $GITHUB_ENV
-  #           echo "Build version: $version"
+        # Set version environment variable
+        - name: Set Version
+          run: |
+            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+            echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+            echo "VERSION=$version" >> $GITHUB_ENV
+            echo "Build version: $version"
 
-  #       # Run Acceptance Tests
-  #       - name: Run Acceptance Tests
-  #         shell: pwsh
-  #         env:
-  #           BuildConfiguration: Release
-  #           BUILD_BUILDNUMBER: ${{ env.VERSION }}
-  #         run: |
-  #           .\AcceptanceTests.ps1
+        # Run Acceptance Tests
+        - name: Run Acceptance Tests
+          shell: pwsh
+          env:
+            BuildConfiguration: Release
+            BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          run: |
+            .\AcceptanceTests.ps1
 
-  #       # Upload test results
-  #       - name: Upload Test Results
-  #         uses: actions/upload-artifact@v4
-  #         if: always()
-  #         with:
-  #           name: test-results-acceptance
-  #           path: build/test/**/*.trx
-  #           retention-days: 30
+        # Upload test results
+        - name: Upload Test Results
+          uses: actions/upload-artifact@v4
+          if: always()
+          with:
+            name: test-results-acceptance
+            path: build/test/**/*.trx
+            retention-days: 30
 
   docker-build-image-for-churchbulletin-ui:
     name: Create and push Docker image for ChurchBulletin.UI
-    needs: [build-linux]
+    needs: [run-acceptance-tests]
     if: success() 
     runs-on: ubuntu-latest
     permissions:
@@ -453,6 +453,7 @@ jobs:
   deploy-to-tdd:
     name: Deploy to TDD
     needs: [docker-build-image-for-churchbulletin-ui]
+    if: success() 
     runs-on: ubuntu-latest
     environment:
       name: TDD
@@ -466,46 +467,9 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
 
-      # Install Octopus CLI
-      - name: Install Octopus CLI
-        run: |
-          # Get the latest release version
-          OCTOPUS_CLI_VERSION=$(curl -s https://api.github.com/repos/OctopusDeploy/cli/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-          echo "Installing Octopus CLI version: $OCTOPUS_CLI_VERSION"
-          curl -L https://github.com/OctopusDeploy/cli/raw/main/scripts/install.sh | VERSION=$OCTOPUS_CLI_VERSION  bash
-          octopus version
-
-      # Configure Octopus CLI with API key and server URL
-      - name: Configure Octopus CLI
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
-          OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
-        run: |
-          octopus login --server $OCTOPUS_URL --api-key $OCTOPUS_API_KEY
-
-      - name: Create Octopus Release (CLI)
-        run: |
-          octopus release create \
-            --space '${{ vars.OCTOPUS_SPACE }}' \
-            --project '${{ vars.OCTOPUS_PROJECT }}' \
-            --version '${{ env.BUILD_BUILDNUMBER }}' \
-            --no-prompt
-
-      - name: Deploy Octopus Release to TDD (CLI)
-        run: |
-          octopus release deploy \
-            --space '${{ vars.OCTOPUS_SPACE }}' \
-            --project '${{ vars.OCTOPUS_PROJECT }}' \
-            --version '${{ env.BUILD_BUILDNUMBER }}' \
-            --environment 'TDD' \
-            --no-prompt
-            --progress
 
       # https://github.com/OctopusDeploy/create-release-action
       - name: Create Octopus Release
-        if: false
         uses: OctopusDeploy/create-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -522,12 +486,10 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
 
       - name: Pause for the release to be created
-        if: false
         run: sleep 90
   
       # https://github.com/OctopusDeploy/deploy-release-action  
       - name: Deploy Octopus Release to TDD
-        if: false
         uses: OctopusDeploy/deploy-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -542,7 +504,6 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
           environments: "TDD"
       - name: Pause for the deployment to finish.
-        if: false
         run: sleep 180
   deploy-to-uat:
     name: Deploy to UAT 
@@ -563,7 +524,7 @@ jobs:
 
 
       # https://github.com/OctopusDeploy/deploy-release-action  
-      - name: Deploy Octopus Release to UAT (GH Action)
+      - name: Deploy Octopus Release to UAT
         uses: OctopusDeploy/deploy-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
