@@ -458,6 +458,7 @@ jobs:
       name: TDD
     
     steps:
+      - uses: actions/checkout@v4
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
@@ -473,13 +474,14 @@ jobs:
       #     * If the deployer is fast enough, they can approve the deployment to UAT _before_ Octopus Deploy has finished deploying the release to TDD.
       #     * This will cause the deployment to UAT to fail because the lifecycle requirest the release to be deployed to TDD first.
       - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v1
+        uses: OctopusDeploy/install-octopus-cli-action@v1.2.0
+        
         with:
           version: latest
     
 
       - name: Create Octopus Release and deploy to TDD
-        uses: OctopusDeploy/create-release-action@v1
+        uses: OctopusDeploy/create-release-action@v1.0.6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -490,6 +492,8 @@ jobs:
           space: '${{ vars.OCTOPUS_SPACE }}'
           project: '${{ vars.OCTOPUS_PROJECT }}'
           release_number: "${{ env.BUILD_BUILDNUMBER }}"
+          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
+          git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}               
           deploy_to: "TDD"
           progress: true
           debug: true
