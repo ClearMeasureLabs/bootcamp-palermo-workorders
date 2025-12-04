@@ -492,6 +492,8 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}"
           deploy_to: "TDD"
           progress: true
+          debug: true
+          log_level: debug
           deployment_timeout: 00:30:00
 
   
