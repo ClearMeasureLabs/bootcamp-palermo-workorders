@@ -491,7 +491,6 @@ jobs:
             --space '${{ vars.OCTOPUS_SPACE }}' \
             --project '${{ vars.OCTOPUS_PROJECT }}' \
             --version '${{ env.BUILD_BUILDNUMBER }}' \
-            --environment 'TDD' \
             --no-prompt
 
       - name: Deploy Octopus Release to TDD (CLI)
