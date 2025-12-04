@@ -457,6 +457,12 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Build version: $version"      
       - name: Create Octopus Release with Github Action v3
         uses: OctopusDeploy/create-release-action@v3
         env:
@@ -488,7 +494,12 @@ jobs:
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
-
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Build version: $version"      
       - name: Deploy Octopus Release to TDD
         id: start-deploy-to-tdd
         uses: OctopusDeploy/deploy-release-action@v3
@@ -549,7 +560,6 @@ jobs:
         with:
           server_task_id: ${{ fromJson(steps.start-deploy-to-uat.outputs.server_tasks)[0].serverTaskId }}
           timeout_after: 1800          
-  
           
   deploy-to-prod:
     name: Deploy to Prod 
