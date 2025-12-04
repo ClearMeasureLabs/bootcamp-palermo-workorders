@@ -448,7 +448,7 @@ jobs:
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
 
   create-octopus-release:
-    name: Create release in Octopus Deploy          
+    name: Create release in Octopus Deploy
     needs: [docker-build-image-for-churchbulletin-ui]
     if: success() 
     runs-on: ubuntu-latest
@@ -471,6 +471,7 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}"
           git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
           git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
+  
   deploy-to-tdd:
     name: Deploy to TDD
     needs: [create-octopus-release]
@@ -488,26 +489,27 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
 
-      # Using older versions of the Github Actions. This is because with @v3 it's possible to experience a 
-      # race condition:
-      #   * Github creates the release and signals Octopus deploy to start deploying the release
-      #   * Octopus Deploy will take some time deploying the release; about 2 minutes.
-      #   * In the GitHub Actions UI, the deployer can then approve and kick of the deployment to UAT.  
-      #     * If the deployer is fast enough, they can approve the deployment to UAT _before_ Octopus Deploy has finished deploying the release to TDD.
-      #     * This will cause the deployment to UAT to fail because the lifecycle requirest the release to be deployed to TDD first.
-      - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v1.2.0
       - name: Deploy Octopus Release to TDD
-        uses: dmarttinen/deploy-release-action@v0.3.0
+        id: start-deploy-to-tdd
+        uses: OctopusDeploy/deploy-release-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
         with:
-          api_key: ${{ secrets.OCTO_API_KEY  }}
-          server: ${{ secrets.OCTOPUS_URL }}
-          space: ${{ vars.OCTOPUS_SPACE }}       
           project: ${{ vars.OCTOPUS_PROJECT }}   
-          deploy_to: "TDD"   
-          progress: true 
-          release_number: ${{env.BUILD_BUILDNUMBER}}
-          timeout: 00:30:00
+          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          environments: "TDD"
+
+      - name: Wait for the TDD deployment to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.start-deploy-to-tdd.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800          
 
   deploy-to-uat:
     name: Deploy to UAT 
@@ -519,85 +521,71 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      # Set version environment variable
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
-      - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v1
-        with:
-          version: latest
-      
-      # Using older versions of the Github Actions. This is because with @v3 it's possible to experience a 
-      # race condition:
-      #   * Github creates the release and signals Octopus deploy to start deploying the release
-      #   * Octopus Deploy will take some time deploying the release; about 2 minutes.
-      #   * In the GitHub Actions UI, the deployer can then approve and kick of the deployment to UAT.  
-      #     * If the deployer is fast enough, they can approve the deployment to UAT _before_ Octopus Deploy has finished deploying the release to TDD.
-      #     * This will cause the deployment to UAT to fail because the lifecycle requirest the release to be deployed to TDD first.
-      - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v1
-        with:
-          version: latest  
-      - name: Deploy Octopus Release to UAT
-        id: deploy-to-uat
-        uses: dmarttinen/deploy-release-action@v0.3.0
-        with:
-          api_key: ${{ secrets.OCTO_API_KEY  }}
-          server: ${{ secrets.OCTOPUS_URL }}
-          space: ${{ vars.OCTOPUS_SPACE }}       
-          project: ${{ vars.OCTOPUS_PROJECT }}   
-          deploy_to: "UAT"   
-          progress: true 
-          release_number: ${{env.BUILD_BUILDNUMBER}}
-          timeout: 00:30:00
-          
 
+      - name: Deploy Octopus Release to UAT
+        uses: OctopusDeploy/deploy-release-action@v3
+        id: start-deploy-to-uat
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          project: ${{ vars.OCTOPUS_PROJECT }}   
+          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          environments: "UAT"
+
+      - name: Wait for the UAT deployment to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.start-deploy-to-uat.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800          
+  
+          
   deploy-to-prod:
-    name: Deploy to prod 
+    name: Deploy to Prod 
     needs: [deploy-to-uat]
     if: success() 
     runs-on: ubuntu-latest
     environment:
-      name: UAT
+      name: Prod
     
     steps:
       - uses: actions/checkout@v4
-      # Set version environment variable
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
-      - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v1
-        with:
-          version: latest
-          
-      # Using older versions of the Github Actions. This is because with @v3 it's possible to experience a 
-      # race condition:
-      #   * Github creates the release and signals Octopus deploy to start deploying the release
-      #   * Octopus Deploy will take some time deploying the release; about 2 minutes.
-      #   * In the GitHub Actions UI, the deployer can then approve and kick of the deployment to UAT.  
-      #     * If the deployer is fast enough, they can approve the deployment to UAT _before_ Octopus Deploy has finished deploying the release to TDD.
-      #     * This will cause the deployment to UAT to fail because the lifecycle requirest the release to be deployed to TDD first.
-      - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v1
-        with:
-          version: latest
+
       - name: Deploy Octopus Release to Prod
-        id: deploy-to-uat
-        uses: dmarttinen/deploy-release-action@v0.3.0
+        uses: OctopusDeploy/deploy-release-action@v3
+        id: start-deploy-to-prod
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
         with:
-          api_key: ${{ secrets.OCTO_API_KEY  }}
-          server: ${{ secrets.OCTOPUS_URL }}
-          space: ${{ vars.OCTOPUS_SPACE }}       
           project: ${{ vars.OCTOPUS_PROJECT }}   
-          deploy_to: "Prod"   
-          progress: true 
-          release_number: ${{env.BUILD_BUILDNUMBER}}
-          timeout: 00:30:00
+          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          environments: "Prod"
+
+      - name: Wait for the Prod deployment to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.start-deploy-to-prod.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800          
