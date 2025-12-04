@@ -473,8 +473,8 @@ jobs:
           git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
   deploy-to-tdd:
     name: Deploy to TDD
-    needs: [docker-build-image-for-churchbulletin-ui]
-    if: false
+    needs: [create-octopus-release]
+    if: success()
     runs-on: ubuntu-latest
     environment:
       name: TDD
@@ -504,7 +504,7 @@ jobs:
           server: ${{ secrets.OCTOPUS_URL }}
           space: ${{ vars.OCTOPUS_SPACE }}       
           project: ${{ vars.OCTOPUS_PROJECT }}   
-          deploy_to: "UAT"   
+          deploy_to: "TDD"   
           progress: true 
           release_number: ${{env.BUILD_BUILDNUMBER}}
           timeout: 00:30:00
