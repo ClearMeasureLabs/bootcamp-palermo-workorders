@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Database.Console;
+﻿﻿using ClearMeasure.Bootcamp.Database.Console;
 using Spectre.Console.Cli;
 
 var app = new CommandApp();
@@ -15,6 +15,9 @@ app.Configure(config =>
 
     config.AddCommand<UpdateDatabaseCommand>("update")
         .WithDescription("Update the database by running only the Update scripts");
+    
+    config.AddCommand<DropDatabaseCommand>("drop")
+        .WithDescription("Drop the specified database if it exists");
 });
 
 return app.Run(args);
