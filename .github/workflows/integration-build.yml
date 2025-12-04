@@ -453,7 +453,6 @@ jobs:
   deploy-to-tdd:
     name: Deploy to TDD
     needs: [docker-build-image-for-churchbulletin-ui]
-    if: success() 
     runs-on: ubuntu-latest
     environment:
       name: TDD
@@ -467,9 +466,42 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
 
+      # Install Octopus CLI
+      - name: Install Octopus CLI
+        run: |
+          npm install -g @octopusdeploy/cli
+          octopus version
+
+      # Configure Octopus CLI with API key and server URL
+      - name: Configure Octopus CLI
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+        run: |
+          octopus server configure --server $OCTOPUS_URL --apiKey $OCTOPUS_API_KEY
+
+      - name: Create Octopus Release (CLI)
+        run: |
+          octopus release create \
+            --space '${{ vars.OCTOPUS_SPACE }}' \
+            --project '${{ vars.OCTOPUS_PROJECT }}' \
+            --version '${{ env.BUILD_BUILDNUMBER }}' \
+            --environment 'TDD' \
+            --no-prompt
+
+      - name: Deploy Octopus Release to TDD (CLI)
+        run: |
+          octopus release deploy \
+            --space '${{ vars.OCTOPUS_SPACE }}' \
+            --project '${{ vars.OCTOPUS_PROJECT }}' \
+            --version '${{ env.BUILD_BUILDNUMBER }}' \
+            --environment 'TDD' \
+            --no-prompt
+            --progress
 
       # https://github.com/OctopusDeploy/create-release-action
       - name: Create Octopus Release
+        if: false
         uses: OctopusDeploy/create-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -486,10 +518,12 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
 
       - name: Pause for the release to be created
+        if: false
         run: sleep 90
   
       # https://github.com/OctopusDeploy/deploy-release-action  
       - name: Deploy Octopus Release to TDD
+        if: false
         uses: OctopusDeploy/deploy-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -504,6 +538,7 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}" # or whatever version you used
           environments: "TDD"
       - name: Pause for the deployment to finish.
+        if: false
         run: sleep 180
   deploy-to-uat:
     name: Deploy to UAT 
@@ -524,7 +559,7 @@ jobs:
 
 
       # https://github.com/OctopusDeploy/deploy-release-action  
-      - name: Deploy Octopus Release to UAT
+      - name: Deploy Octopus Release to UAT (GH Action)
         uses: OctopusDeploy/deploy-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
