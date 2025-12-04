@@ -479,7 +479,7 @@ jobs:
           git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
   
   deploy-to-tdd:
-    name: Deploy to TDD
+    name: Deploy to TDD via Octopus Deploy
     needs: [create-octopus-release]
     if: success()
     runs-on: ubuntu-latest
@@ -523,7 +523,7 @@ jobs:
           timeout_after: 1800          
 
   deploy-to-uat:
-    name: Deploy to UAT 
+    name: Deploy to UAT via Octopus Deploy
     needs: [deploy-to-tdd]
     if: success() 
     runs-on: ubuntu-latest
@@ -562,7 +562,7 @@ jobs:
           timeout_after: 1800          
           
   deploy-to-prod:
-    name: Deploy to Prod 
+    name: Deploy to Prod via Octopus Deploy
     needs: [deploy-to-uat]
     if: success() 
     runs-on: ubuntu-latest
