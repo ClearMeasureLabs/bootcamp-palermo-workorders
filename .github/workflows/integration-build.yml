@@ -246,74 +246,6 @@ jobs:
             Write-Warning "Some packages failed to publish to Octopus Deploy."
           }
           
-  run-acceptance-tests:
-      name: Run Acceptance Tests
-      runs-on: ubuntu-latest
-      needs: [build-linux]
-      if: success()
-      permissions:
-        contents: read
-        packages: write
-      
-      steps:
-        # Checkout code
-        - name: Checkout code
-          uses: actions/checkout@v4
-
-        # Install .NET SDK 10.0.100
-        - name: Setup .NET SDK 10.0.100
-          uses: actions/setup-dotnet@v4
-          with:
-            dotnet-version: '10.0.100'
-
-        # Install .NET SDK 6.0 (required by Octopus CLI tool - includes runtime)
-        - name: Setup .NET SDK 6.0
-          uses: actions/setup-dotnet@v4
-          with:
-            dotnet-version: '6.0.x'
-
-        # Verify .NET 6.0 runtime is available (required by dotnet-octo tool)
-        - name: Verify .NET 6.0 runtime
-          run: |
-            echo "Installed runtimes:"
-            dotnet --list-runtimes
-            echo ""
-            echo "Checking for .NET 6.0 runtime:"
-            if dotnet --list-runtimes | grep -q "Microsoft.NETCore.App 6.0"; then
-              echo "✓ .NET 6.0 runtime is available"
-            else
-              echo "✗ .NET 6.0 runtime not found - attempting to install runtime explicitly"
-              # Try installing runtime explicitly if SDK installation didn't include it
-              curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --runtime dotnet --version 6.0.0
-              export PATH="$HOME/.dotnet:$PATH"
-              dotnet --list-runtimes
-            fi
-
-        # Set version environment variable
-        - name: Set Version
-          run: |
-            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-            echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-            echo "VERSION=$version" >> $GITHUB_ENV
-            echo "Build version: $version"
-
-        # Run Acceptance Tests
-        - name: Run Acceptance Tests
-          shell: pwsh
-          env:
-            BuildConfiguration: Release
-            BUILD_BUILDNUMBER: ${{ env.VERSION }}
-          run: |
-            .\AcceptanceTests.ps1
-
-        # Upload test results
-        - name: Upload Test Results
-          uses: actions/upload-artifact@v4
-          if: always()
-          with:
-            name: test-results-acceptance
-            path: build/test/**/*.trx
-            retention-days: 30
 
   docker-build-image-for-churchbulletin-ui:
     name: Create and push Docker image for ChurchBulletin.UI
@@ -447,7 +379,6 @@ jobs:
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
 
- 
   deploy-to-tdd:
     name: TDD
     needs: [docker-build-image-for-churchbulletin-ui]
@@ -458,12 +389,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      - name: Set Version
-        run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
@@ -507,6 +432,39 @@ jobs:
         with:
           server_task_id: ${{ fromJson(steps.start-deploy-to-tdd.outputs.server_tasks)[0].serverTaskId }}
           timeout_after: 1800          
+
+          
+      - name: Get Container App URL
+        run: |
+          Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile .\AzureCLI.msi
+          Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'
+          az config set extension.use_dynamic_install=yes_without_prompt
+          $containerAppURL = az containerapp show --resource-group ${{env.TDD_RESOURCE_GROUP}}-${{env.BUILD_BUILDNUMBER}} --name ${{env.TDD_APP_NAME}} --query properties.configuration.ingress.fqdn
+          $containerAppURL = $containerAppURL -replace '"', ''
+          [System.Environment]::SetEnvironmentVariable("containerAppURL", $containerAppURL, "User")
+        shell: pwsh
+
+      - name: Download Acceptance Tests Package
+        uses: actions/download-artifact@v4
+        with:
+          name: churchbulletin-nuget-packages
+          path: ./packages
+
+      - name: Extract Acceptance Tests Package
+        run: |
+          unzip -o ./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg -d ./acceptance-tests-package
+
+      - name: Run acceptance tests
+        uses: microsoft/vstest-action@v1.0.0
+        with:
+          testAssembly: |
+            **\*AcceptanceTests.dll
+            !**\*TestAdapter.dll
+            !**\obj\**
+          searchFolder: ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}/
+          runInParallel: true 
+          
+          
 
   deploy-to-uat:
     name: UAT
