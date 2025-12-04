@@ -470,7 +470,9 @@ jobs:
       - name: Install Octopus CLI
         run: |
           # Get the latest release version
-          curl -L https://github.com/OctopusDeploy/cli/raw/main/scripts/install.sh | bash
+          OCTOPUS_CLI_VERSION=$(curl -s https://api.github.com/repos/OctopusDeploy/cli/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Installing Octopus CLI version: $OCTOPUS_CLI_VERSION"
+          curl -L https://github.com/OctopusDeploy/cli/raw/main/scripts/install.sh | VERSION=$OCTOPUS_CLI_VERSION  bash
           octopus version
 
       # Configure Octopus CLI with API key and server URL
@@ -478,6 +480,8 @@ jobs:
         env:
           OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
           OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: '${{ vars.OCTOPUS_SPACE }}'
+          OCTOPUS_PROJECT: '${{ vars.OCTOPUS_PROJECT }}'
         run: |
           octopus server configure --server $OCTOPUS_URL --apiKey $OCTOPUS_API_KEY
 
