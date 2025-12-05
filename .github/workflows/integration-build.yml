@@ -540,6 +540,8 @@ jobs:
           $runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
           $resultsDirectory = Join-Path $test_dir "AcceptanceTests"
 
+          Write-Host -Message "Checking Playwright browsers for Acceptance Tests" 
+
           dotnet build src/ChurchBulletin.sln --configuration ${{ env.BuildConfiguration }}
           
           # Restore and build acceptance tests to ensure Playwright is ready
@@ -555,8 +557,6 @@ jobs:
               -v $verbosity `
               --logger:trx `
               --results-directory $resultsDirectory `
-              --no-build `
-              --no-restore `
               --configuration ${{ env.BuildConfiguration }} `
               --settings:$runSettingsPath `
               --collect:"XPlat Code Coverage"
