@@ -437,6 +437,7 @@ jobs:
           echo "Build version: $version"      
 
       - name: Create Octopus Release
+        id: create-octopus-release
         uses: OctopusDeploy/create-release-action@v3
         env:
           OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
@@ -450,7 +451,17 @@ jobs:
           release_number: "${{ env.BUILD_BUILDNUMBER }}"
           git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
           git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
-  
+
+      - name: Wait for the TDD release to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.create-octopus-release.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800          
+    
       - name: Deploy Octopus Release to TDD
         id: start-deploy-to-tdd
         uses: OctopusDeploy/deploy-release-action@v3
@@ -516,8 +527,10 @@ jobs:
             --resource-group bootcamp-tdd \
             --query "properties.template.containers[0].env[?name=='ConnectionStrings__SqlConnectionString'].value" \
             -o tsv)
+          echo "CONTAINER_APP_CONNECTION_STRING=$CONTAINER_APP_CONNECTION_STRING" >> $GITHUB_ENV
   
       - name: Configure Acceptance Tests
+        if: false
         run: |
           # Find the extracted package directory
           PACKAGE_DIR=$(find ./acceptance-tests-package -type d -name "ChurchBulletin.AcceptanceTests*" | head -n 1)
