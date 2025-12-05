@@ -420,7 +420,7 @@ jobs:
 
   deploy-to-tdd:
     name: TDD
-    # needs: [docker-build-image-for-churchbulletin-ui]
+    needs: [build-linux]
     if: success()
     runs-on: windows-latest
     environment:
@@ -521,26 +521,26 @@ jobs:
           name: churchbulletin-nuget-packages
           path: ./packages  
 
-      # - name: Extract and Configure Acceptance Tests
-      #   if: success()
-      #   shell: pwsh
-      #   run: |
-      #     Write-Host "Extracting package..."
-      #     Expand-Archive -Path "./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg" -DestinationPath "./acceptance-tests-package" -Force
+      - name: Extract and Configure Acceptance Tests
+        if: success()
+        shell: pwsh
+        run: |
+          Write-Host "Extracting package..."
+          Expand-Archive -Path "./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg" -DestinationPath "./acceptance-tests-package" -Force
 
-      #     # Find the test DLL - NuGet packages may extract to different structures
-      #     $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
-      #       Where-Object { $_.Name -notlike "*TestAdapter*" -and $_.Name -notlike "*TestHost*" } | 
-      #       Select-Object -First 1
+          # Find the test DLL - NuGet packages may extract to different structures
+          $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
+            Where-Object { $_.Name -notlike "*TestAdapter*" -and $_.Name -notlike "*TestHost*" } | 
+            Select-Object -First 1
 
-      #     if (-not $testDll) {
-      #       Write-Warning "Test DLL not found. Listing all DLLs:"
-      #       Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.dll" | Select-Object FullName
-      #       Write-Error "Could not find AcceptanceTests DLL in extracted package"
-      #       exit 1
-      #     }
+          if (-not $testDll) {
+            Write-Warning "Test DLL not found. Listing all DLLs:"
+            Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.dll" | Select-Object FullName
+            Write-Error "Could not find AcceptanceTests DLL in extracted package"
+            exit 1
+          }
 
-      #     Write-Host "Found test DLL: $($testDll.FullName)"
+          Write-Host "Found test DLL: $($testDll.FullName)"
 
 
       - name: Install Playwright browsers and driver
