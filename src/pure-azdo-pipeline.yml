@@ -192,14 +192,7 @@ stages:
                     downloadPath: "$(System.DefaultWorkingDirectory)"
                     extract: true
                 - task: PowerShell@2
-                  displayName: "Baseline database schema"
-                  inputs:
-                    pwsh: true
-                    targetType: filePath
-                    filePath: ./scripts/UpdateAzurePipelineSql.ps1
-                    arguments: -DatabaseServer "$(DatabaseServer)" -DatabaseName "ChurchBulletin" -DatabaseAction "baseline" -DatabaseUser "tdd" -DatabasePassword "$(DatabasePassword)"                    
-                - task: PowerShell@2
-                  displayName: "Create database schema"
+                  displayName: "Update database schema"
                   inputs:
                     pwsh: true
                     targetType: filePath
@@ -224,6 +217,7 @@ stages:
                     version: "$(Build.BuildNumber)"
                     downloadPath: "$(System.DefaultWorkingDirectory)/tests"
                     extract: true
+
                 - task: DownloadPackage@1
                   displayName: "Download ChurchBulletin.Database Package"
                   inputs:
@@ -257,9 +251,50 @@ stages:
                     script: |
                       pwsh ./tests/playwright.ps1 install --with-deps
 
+                - task: PowerShell@2
+                  displayName: "Validate and Format Database Server Connection String"
+                  inputs:
+                    pwsh: true
+                    targetType: "inline"
+                    script: |
+                      $databaseServer = "$(DatabaseServer)"
+                      $databasePassword = "$(DatabasePassword)"
+                      
+                      if ([string]::IsNullOrWhiteSpace($databaseServer)) {
+                        Write-Error "DatabaseServer variable is not set or is empty"
+                        exit 1
+                      }
+                      
+                      Write-Host "Original DatabaseServer value: $databaseServer"
+                      
+                      # Ensure Azure SQL Database server name includes .database.windows.net suffix
+                      # If it doesn't already contain .database.windows.net, add it
+                      if ($databaseServer -notmatch '\.database\.windows\.net') {
+                        # Remove any trailing slashes or ports
+                        $serverName = $databaseServer.TrimEnd('/').Split(',')[0].Split(':')[0]
+                        $databaseServer = "$serverName.database.windows.net"
+                        Write-Host "Updated DatabaseServer to: $databaseServer"
+                      }
+                      
+                      # Remove tcp: prefix if present (we'll add it explicitly)
+                      $serverName = $databaseServer -replace '^tcp:', ''
+                      
+                      # Construct the connection string with explicit tcp: prefix and port 1433 for Azure SQL Database
+                      # This ensures TCP connection and avoids DNS resolution issues
+                      $connectionString = "Server=tcp:$serverName,1433;Database=ChurchBulletin;User ID=tdd;Password=$databasePassword;Encrypt=True;TrustServerCertificate=False;"
+
+                      # Set the environment variable for this session
+                      $env:ConnectionStrings__SqlConnectionString = "$connectionString"
+                      Write-Host "Pipeline variable FormattedConnectionString: $connectionString"
+                      Write-Host "##vso[task.setvariable variable=FormattedConnectionString]$connectionString"
+                      Write-Host "Environment variable set to:"
+                      Write-Host $env:ConnectionStrings__SqlConnectionString
+
                 - task: VSTest@2
                   continueOnError: true
                   displayName: "VsTest - AcceptanceTests"
+                  env:
+                    ConnectionStrings__SqlConnectionString: "$(FormattedConnectionString)"
                   inputs:
                     testSelector: "testAssemblies"
                     testAssemblyVer2: |

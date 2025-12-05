@@ -3,71 +3,45 @@ variable "az_location" {
 }
 
 variable "DatabaseName" {
-    value "oniondb-flyway" {
-        environment = ["tdd"]
-    }
-
-    value "oniondb-flyway-uat" {
-        description = ""
-        environment = ["uat"]
-    }
-
-    value "oniondb-flyway-prod" {
-        description = ""
-        environment = ["prod"]
-    }
+    value "ChurchBulletin-gh" {}
 }
 
 variable "DatabaseUser" {
-    value "cappsAdmin" {
+    value "tdd" {
         environment = ["tdd"]
     }
 
-    value "cappsUAT" {
-        description = ""
+    value "uat" {
         environment = ["uat"]
     }
 
-    value "cappsPROD" {
-        description = ""
+    value "prod" {
         environment = ["prod"]
     }
 }
 
 variable "revisionSuffix" {
     value "#{Octopus.Release.Number}" {
-        environment = ["tdd", "uat", "prod"]
+        environment = ["prod", "tdd", "uat"]
     }
 }
 
-variable "containerAppURL" {
-    value "#{Octopus.Action[Get Container App FQDN].Output.app_fqdn}" {}
-}
-
-variable "connection_string" {
-    value "#{Octopus.Action[Get DB Connection String].Output.connstring}" {}
-}
-
-variable "jdbc_connection_url" {
-    value "#{Octopus.Action[Get JDBC Connection URL].Output.connurl}" {}
-}
-
 variable "container_image" {
-    value "#{registry_login_server}/churchbulletin.ui:#{container_version}" {
-        environment = ["tdd", "uat", "prod"]
+    value "#{registry_login_server}/churchbulletin.ui:#{Octopus.Release.Number}" {
+        environment = ["prod", "tdd", "uat"]
     }
 }
 
 variable "registry_login_server" {
-    value "onionarchitecturedotnet8flywayazuresccr.azurecr.io" {
-        environment = ["tdd", "uat", "prod"]
+    value "churchbulletingithubacr.azurecr.io" {
+        environment = ["prod", "tdd", "uat"]
     }
 }
 
 variable "AzureAccount" {
     type = "AzureAccount"
 
-    value "azure-onion-containers" {}
+    value "churchbulletin-gh-azure-account" {}
 }
 
 variable "DatabaseServer" {
@@ -76,18 +50,12 @@ variable "DatabaseServer" {
     }
 }
 
-variable "container_app_environment_name" {
-    value "onion-architecture-dotnet-8-flyway-azure-#{Octopus.Environment.Name}-cae" {
-        description = ""
-    }
-}
-
 variable "DatabaseAction" {
-    value "Update" {}
+    value "update" {}
 }
 
 variable "DatabaseEdition" {
-    value "Standard" {
+    value "Basic" {
         description = ""
     }
 }
@@ -95,28 +63,6 @@ variable "DatabaseEdition" {
 variable "DatabasePerformanceLevel" {
     value "Basic" {
         description = ""
-    }
-}
-
-variable "container_app_name" {
-    value "uat-ui" {
-        description = ""
-        environment = ["uat"]
-    }
-
-    value "prod-ui" {
-        description = ""
-        environment = ["prod"]
-    }
-
-    value "tdd-ui" {
-        description = ""
-        environment = ["tdd"]
-
-        prompt {
-            description = ""
-            label = "Name of the TDD UI container app"
-        }
     }
 }
 
@@ -132,121 +78,48 @@ variable "az_login_tenant" {
     value "#{AzureAccount.TenantId}" {}
 }
 
-variable "ResourceGroupName" {
-    value "onion-architecture-dotnet-8-flyway-azure-#{Octopus.Environment.Name}" {
-        description = ""
-        environment = ["uat", "prod"]
+variable "DatabaseServerName" {
+    value "bootcamp-palermo-workorders-#{Octopus.Environment.Name | ToLower}" {
+        environment = ["prod", "tdd", "uat"]
     }
-
-    value "onion-architecture-dotnet-8-flyway-azure-#{Octopus.Release.Number}" {
-        description = ""
-        environment = ["tdd"]
-
-        prompt {
-            description = ""
-            label = "Name of the TDD resource group"
-        }
-    }
-}
-
-variable "ContainerAppScaledUpReplicas" {
-    value "2" {}
-}
-
-variable "ContainerAppScaledUpCPU" {
-    value "0.5" {}
-}
-
-variable "ContainerAppScaledUpMem" {
-    value "1.0" {}
-}
-
-variable "DBScaledUpPerformanceLevel" {
-    value "S0" {}
-}
-
-variable "EmailAlertActionName" {
-    value "Email Alert" {}
-}
-
-variable "AvailabilityTestName" {
-    value "#{container_app_name}-availability-test" {}
-}
-
-variable "AppInsightsName" {
-    value "#{ResourceGroupName}-Insights" {}
-}
-
-variable "LowAvailabilityAlertName" {
-    value "#{ResourceGroupName} Low Availability" {}
-}
-
-variable "LogAnalyticsWorkspaceName" {
-    value "#{Octopus.Environment.Name}-Log-Analytics" {}
-}
-
-variable "AutomationAccount" {
-    value "#{Octopus.Environment.Name}-#{Octopus.Release.Id | ToLower }-automation" {}
-}
-
-variable "webhookName" {
-    value "#{ResourceGroupName}-webhook" {}
-}
-
-variable "RunbookName" {
-    value "OctoRunbook" {}
-}
-
-variable "ActionName" {
-    value "runRunbook" {}
-}
-
-variable "OctoRunbookName" {
-    value "Unhealthy app alert" {}
-}
-
-variable "azrunbookname" {
-    value "octo-runbook" {}
 }
 
 variable "OctoInstanceURL" {
     value "https://clearmeasure.octopus.app/" {}
 }
 
-variable "http_port" {
-    value "8080" {}
-}
-
-variable "container_version" {
-    value "2.4.49" {}
-}
-
 variable "EnsureEnvironmentsExist" {
-    value "True" {
-        environment = ["prod"]
-    }
-
-    value "True" {
-        environment = ["uat"]
-    }
-}
-
-variable "DatabaseServerName" {
-    value "#{az_login_appid}-dn8-flyway-ss-prd" {
-        environment = ["prod"]
-    }
-
-    value "#{az_login_appid}-dn8-flyway-ss-uat" {
+    value "False" {
         environment = ["uat"]
     }
 
-    value "#{az_login_appid}-dn8fwtdd-#{Octopus.Release.Id | ToLower }" {
-        environment = ["tdd"]
+    value "False" {
+        environment = ["prod"]
     }
 }
 
-variable "gitUser" {
-    value "tonyfauss" {
-        environment = ["uat", "prod", "tdd"]
+variable "NuGetFeed" {
+    value "GitHub" {}
+}
+
+variable "container_app_name" {
+    value "ui-gh" {
+        description = ""
     }
+}
+
+variable "container_app_environment_name" {
+    value "bootcamp-palermo-workorders-container-apps-#{Octopus.Environment.Name}-cae" {
+        description = ""
+    }
+}
+
+variable "ResourceGroupName" {
+    value "bootcamp-#{Octopus.Environment.Name | ToLower}" {
+        description = ""
+    }
+}
+
+variable "connection_string" {
+    value "#{container_app_connection_string}" {}
 }
