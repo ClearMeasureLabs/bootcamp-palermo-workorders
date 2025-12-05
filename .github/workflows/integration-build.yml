@@ -549,113 +549,84 @@ jobs:
           StartLocalServer: "false"
           PLAYWRIGHT_BROWSERS_PATH: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
         run: |
-          Write-Host "Installing Playwright browsers..."
+          Write-Host "Installing Playwright browsers and driver..."
           
           # The .NET Playwright package looks for browsers in .playwright directory in the workspace root
           $expectedBrowsersPath = Join-Path $env:GITHUB_WORKSPACE ".playwright"
           Write-Host "Expected browsers path: $expectedBrowsersPath"
           
-          # Install Playwright via npm (installs to default location)
-          Write-Host "Installing Playwright npm package..."
-          npm install -g playwright@1.54.0
+          # Find the playwright.ps1 script in the extracted package
+          # This script will install both browsers AND the Node.js driver
+          $playwrightScript = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "playwright.ps1" | Select-Object -First 1
           
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "Failed to install Playwright npm package (exit code: $LASTEXITCODE)"
-            exit $LASTEXITCODE
-          }
-          
-          # Install browsers (npm installs to LOCALAPPDATA\ms-playwright by default)
-          Write-Host "Installing Playwright browsers..."
-          playwright install --with-deps
-          
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "Failed to install Playwright browsers (exit code: $LASTEXITCODE)"
-            exit $LASTEXITCODE
-          }
-          
-          # npm installs to LOCALAPPDATA\ms-playwright, but .NET package expects .playwright in workspace
-          # Copy browsers from npm location to expected location
-          $npmBrowsersPath = Join-Path $env:LOCALAPPDATA "ms-playwright"
-          Write-Host "npm browsers path: $npmBrowsersPath"
-          
-          if (-not (Test-Path $npmBrowsersPath)) {
-            Write-Error "Playwright browsers not found at npm location: $npmBrowsersPath"
+          if (-not $playwrightScript) {
+            Write-Error "playwright.ps1 script not found in extracted package"
+            Write-Host "Searching for any .ps1 files:"
+            Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.ps1" | Select-Object FullName
             exit 1
           }
           
-          # Diagnose what's in the npm location
-          Write-Host "Contents of npm browsers path:"
-          Get-ChildItem -Path $npmBrowsersPath -Directory | Select-Object Name | Format-Table
+          Write-Host "Found playwright.ps1 script: $($playwrightScript.FullName)"
+          $scriptDir = Split-Path -Parent $playwrightScript.FullName
           
-          # Find node.exe in npm location
-          $npmNodeExe = Get-ChildItem -Path $npmBrowsersPath -Recurse -Filter "node.exe" | Select-Object -First 1
-          if ($npmNodeExe) {
-            Write-Host "Found node.exe in npm location: $($npmNodeExe.FullName)"
-            Write-Host "Relative path from npm root: $($npmNodeExe.FullName.Replace($npmBrowsersPath, '').TrimStart('\'))"
-          } else {
-            Write-Warning "node.exe not found in npm location. Listing all .exe files:"
-            Get-ChildItem -Path $npmBrowsersPath -Recurse -Filter "*.exe" | Select-Object FullName | Select-Object -First 10
+          # Set PLAYWRIGHT_BROWSERS_PATH so the script installs to the expected location
+          $env:PLAYWRIGHT_BROWSERS_PATH = $expectedBrowsersPath
+          Write-Host "Setting PLAYWRIGHT_BROWSERS_PATH to: $expectedBrowsersPath"
+          
+          # Change to the script directory and run install
+          # The script needs to be run from its directory to find the required assets
+          Push-Location $scriptDir
+          try {
+            Write-Host "Running playwright install from: $scriptDir"
+            Write-Host "Working directory: $(Get-Location)"
+            
+            # The script may need the Microsoft.Playwright.dll in the same directory
+            # Check if it's there
+            $playwrightDll = Join-Path $scriptDir "Microsoft.Playwright.dll"
+            if (Test-Path $playwrightDll) {
+              Write-Host "✓ Microsoft.Playwright.dll found in script directory"
+            } else {
+              Write-Warning "Microsoft.Playwright.dll not in script directory, searching..."
+              $foundDll = Get-ChildItem -Path $scriptDir -Recurse -Filter "Microsoft.Playwright.dll" | Select-Object -First 1
+              if ($foundDll) {
+                Write-Host "Found DLL at: $($foundDll.FullName)"
+              }
+            }
+            
+            # Run the install script
+            & pwsh -File ./playwright.ps1 install --with-deps
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "playwright.ps1 install failed with exit code: $LASTEXITCODE"
+              Write-Host "Trying to get more information..."
+              & pwsh -File ./playwright.ps1 install --with-deps 2>&1 | Write-Host
+              exit $LASTEXITCODE
+            }
+            
+            Write-Host "✓ Playwright install script completed successfully"
+          } finally {
+            Pop-Location
           }
           
-          Write-Host "Copying browsers from npm location to expected location..."
-          
-          # Remove existing .playwright if it exists
-          if (Test-Path $expectedBrowsersPath) {
-            Remove-Item -Path $expectedBrowsersPath -Recurse -Force -ErrorAction SilentlyContinue
-          }
-          
-          # Copy the entire ms-playwright directory to .playwright
-          # Use robocopy for reliable copying on Windows
-          Write-Host "Using robocopy to copy files..."
-          $robocopyOutput = robocopy "$npmBrowsersPath" "$expectedBrowsersPath" /E /NFL /NDL /NJH /NJS 2>&1 | Out-String
-          $robocopyExitCode = $LASTEXITCODE
-          Write-Host "Robocopy exit code: $robocopyExitCode"
-          
-          # Robocopy returns 0-7 for success, 8+ for errors
-          if ($robocopyExitCode -ge 8) {
-            Write-Warning "Robocopy returned exit code $robocopyExitCode, trying PowerShell Copy-Item..."
-            # Fallback to PowerShell Copy-Item
-            Copy-Item -Path $npmBrowsersPath -Destination $expectedBrowsersPath -Recurse -Force -ErrorAction Stop
-            Write-Host "PowerShell Copy-Item completed"
-          }
-          
-          # Verify the copy was successful
-          Write-Host "Verifying copied files..."
-          Write-Host "Expected browsers path: $expectedBrowsersPath"
-          if (Test-Path $expectedBrowsersPath) {
-            Write-Host "✓ .playwright directory exists"
-            Write-Host "Contents:"
-            Get-ChildItem -Path $expectedBrowsersPath -Directory | Select-Object Name | Format-Table
-          } else {
-            Write-Error ".playwright directory was not created"
-            exit 1
-          }
-          
+          # Verify installation
           $nodeExe = Join-Path $expectedBrowsersPath "node" "win32_x64" "node.exe"
+          Write-Host "Verifying installation..."
           Write-Host "Looking for node.exe at: $nodeExe"
           
           if (Test-Path $nodeExe) {
-            Write-Host "✓ Playwright browsers copied successfully to: $expectedBrowsersPath"
-            Write-Host "✓ Node.exe found at: $nodeExe"
+            Write-Host "✓ Playwright driver (node.exe) found at expected location"
           } else {
-            Write-Warning "Node.exe not found at expected path. Searching in copied location..."
-            $foundNodeExe = Get-ChildItem -Path $expectedBrowsersPath -Recurse -Filter "node.exe" | Select-Object -First 1
-            if ($foundNodeExe) {
-              Write-Host "Found node.exe at: $($foundNodeExe.FullName)"
-              Write-Host "Creating expected directory structure..."
-              $expectedNodeDir = Join-Path $expectedBrowsersPath "node" "win32_x64"
-              New-Item -ItemType Directory -Path $expectedNodeDir -Force | Out-Null
-              Copy-Item -Path $foundNodeExe.FullName -Destination $nodeExe -Force
-              Write-Host "✓ Created node.exe at expected location"
-            } else {
-              Write-Error "Failed to find node.exe anywhere in copied location"
-              Write-Host "Full directory tree:"
+            Write-Warning "node.exe not found at expected path. Checking .playwright directory..."
+            if (Test-Path $expectedBrowsersPath) {
+              Write-Host "Contents of .playwright:"
               Get-ChildItem -Path $expectedBrowsersPath -Recurse | Select-Object FullName | Select-Object -First 20
+            } else {
+              Write-Error ".playwright directory was not created"
               exit 1
             }
           }
           
-          # Set environment variable (though .NET package should find it in the expected location)
+          # Set environment variable
           $env:PLAYWRIGHT_BROWSERS_PATH = $expectedBrowsersPath
           "PLAYWRIGHT_BROWSERS_PATH=$expectedBrowsersPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
@@ -743,7 +714,7 @@ jobs:
 
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@v4
-        if: always()
+        if: success()
         with:
           name: acceptance-test-results-tdd
           path: TestResults/**/*.trx
