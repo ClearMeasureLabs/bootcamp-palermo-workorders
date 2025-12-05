@@ -541,8 +541,13 @@ jobs:
           }
 
           Write-Host "Found test DLL: $($testDll.FullName)"
-      - name: Install Playwright Browsers
+      - name: Run acceptance tests the hard way.
         shell: pwsh
+        env:
+          ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
+          ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
+          StartLocalServer: "false"
+          PLAYWRIGHT_BROWSERS_PATH: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
         run: |
           Write-Host "Installing Playwright browsers..."
           
@@ -613,20 +618,88 @@ jobs:
           # Set environment variable (though .NET package should find it in the expected location)
           $env:PLAYWRIGHT_BROWSERS_PATH = $expectedBrowsersPath
           "PLAYWRIGHT_BROWSERS_PATH=$expectedBrowsersPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-      - name: Run acceptance tests
-        uses: josepho0918/vstest-action@main
-        env:
-          ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
-          ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
-          StartLocalServer: "false"
-          PLAYWRIGHT_BROWSERS_PATH: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
-        with:
-          testAssembly: |
-            **\*AcceptanceTests.dll
-            !**\*TestAdapter.dll
-            !**\obj\**
-          searchFolder: ./acceptance-tests-package/
-          runInParallel: true
+
+          ###########################
+          Write-Host "Running Acceptance Tests"
+          
+          # Find VSTest - try common locations
+          $vsTestPaths = @(
+            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe",
+            "C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe",
+            "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe",
+            "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe"
+          )
+          
+          $vsTestPath = $null
+          foreach ($path in $vsTestPaths) {
+            if (Test-Path $path) {
+              $vsTestPath = $path
+              Write-Host "Found VSTest at: $vsTestPath"
+              break
+            }
+          }
+          
+          if (-not $vsTestPath) {
+            Write-Error "VSTest not found in any expected location"
+            exit 1
+          }
+          
+          # Find the test DLL
+          $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
+            Where-Object { $_.Name -notlike "*TestAdapter*" -and $_.Name -notlike "*TestHost*" } | 
+            Select-Object -First 1
+          
+          if (-not $testDll) {
+            Write-Error "Test DLL not found in acceptance-tests-package"
+            exit 1
+          }
+          
+          Write-Host "Found test DLL: $($testDll.FullName)"
+          
+          # Create results directory
+          $resultsDir = Join-Path $PWD "TestResults"
+          New-Item -ItemType Directory -Path $resultsDir -Force | Out-Null
+          
+          # Find runsettings file if it exists
+          $runSettingsFile = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.runsettings" | Select-Object -First 1
+          
+          # Build VSTest command
+          $vstestArgs = @(
+            "`"$($testDll.FullName)`"",
+            "/Logger:trx;LogFileName=AcceptanceTests.trx",
+            "/ResultsDirectory:`"$resultsDir`"",
+            "/Parallel"
+          )
+          
+          if ($runSettingsFile) {
+            $vstestArgs += "/Settings:`"$($runSettingsFile.FullName)`""
+            Write-Host "Using runsettings: $($runSettingsFile.FullName)"
+          }
+          
+          Write-Host "Running VSTest with arguments: $($vstestArgs -join ' ')"
+          
+          # Execute VSTest
+          & "$vsTestPath" $vstestArgs
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "VSTest failed with exit code: $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }          
+
+      # - name: Run acceptance tests
+      #   uses: josepho0918/vstest-action@main
+      #   env:
+      #     ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
+      #     ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
+      #     StartLocalServer: "false"
+      #     PLAYWRIGHT_BROWSERS_PATH: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+      #   with:
+      #     testAssembly: |
+      #       **\*AcceptanceTests.dll
+      #       !**\*TestAdapter.dll
+      #       !**\obj\**
+      #     searchFolder: ./acceptance-tests-package/
+      #     runInParallel: true
 
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@v4
