@@ -124,6 +124,8 @@ jobs:
       - name: Create NuGet Packages
         shell: pwsh
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
         run: |
           . ./build.ps1
