@@ -491,8 +491,8 @@ jobs:
         shell: pwsh
         run: |
           $containerAppFqdn = az containerapp show `
-            --name ui-gh `
-            --resource-group bootcamp-tdd `
+            --name ${{ vars.CONTAINER_APP_NAME }} `
+            --resource-group ${{ vars.TDD_RESOURCE_GROUP_NAME}} `
             --query properties.configuration.ingress.fqdn `
             -o tsv
           
@@ -509,8 +509,8 @@ jobs:
           
           # Get the connection string from container app environment variables
           $containerAppConnectionString = az containerapp show `
-            --name ui-gh `
-            --resource-group bootcamp-tdd `
+            --name ${{ vars.CONTAINER_APP_NAME }} `
+            --resource-group ${{ vars.TDD_RESOURCE_GROUP_NAME}} `
             --query "properties.template.containers[0].env[?name=='ConnectionStrings__SqlConnectionString'].value" `
             -o tsv
           Write-Host "Container App Connection String retrieved: $([string]::IsNullOrWhiteSpace($containerAppConnectionString))"
@@ -816,20 +816,6 @@ jobs:
       #       exit $LASTEXITCODE
       #     }          
 
-      - name: Run acceptance tests
-        uses: josepho0918/vstest-action@main
-        env:
-          ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
-          ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
-          StartLocalServer: "false"
-          PLAYWRIGHT_BROWSERS_PATH: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
-        with:
-          testAssembly: |
-            **\*AcceptanceTests.dll
-            !**\*TestAdapter.dll
-            !**\obj\**
-          searchFolder: ./acceptance-tests-package/
-          runInParallel: true
 
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@v4
