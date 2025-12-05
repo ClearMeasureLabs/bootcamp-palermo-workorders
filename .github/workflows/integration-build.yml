@@ -521,12 +521,10 @@ jobs:
         if: success()
         shell: pwsh
         env: 
-          CONNECTION_STRING: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
-          APPLICATION_BASE_URL: ${{ env.CONTAINER_APP_URL }}
-          ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
-          ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
           BuildConfiguration: Release
+          ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
+          ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           StartLocalServer: "false"
 
         run: |
@@ -542,14 +540,8 @@ jobs:
 
           Write-Host -Message "Checking Playwright browsers for Acceptance Tests" 
 
-          dotnet build src/ChurchBulletin.sln --configuration ${{ env.BuildConfiguration }}
-          
-          # Restore and build acceptance tests to ensure Playwright is ready
-          dotnet restore src/AcceptanceTests/AcceptanceTests.csproj
-          dotnet build src/AcceptanceTests/AcceptanceTests.csproj --configuration ${{env.BuildConfiguration}}
-          
           # Now run the acceptance tests
-          Write-Host "Running acceptance tests on TDD at ${{ env.APPLICATION_BASE_URL }}, settings file: $runSettingsPath"
+          Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
           & dotnet test $acceptanceTestProject `
               /p:CopyLocalLockFileAssemblies=true ` 
               /p:CollectCoverage=true `
