@@ -498,8 +498,8 @@ jobs:
           $containerAppUrl = "https://$containerAppFqdn"
           Write-Host "Container App FQDN: $containerAppFqdn"
           Write-Host "Container App URL: $containerAppUrl"
-          Write-Host "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Write-Host "ApplicationBaseUrl=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "ApplicationBaseUrl=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           
           # Get the connection string from container app environment variables
           $containerAppConnectionString = az containerapp show `
@@ -507,7 +507,9 @@ jobs:
             --resource-group bootcamp-tdd `
             --query "properties.template.containers[0].env[?name=='ConnectionStrings__SqlConnectionString'].value" `
             -o tsv
-          Write-Host "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Container App Connection String retrieved: $([string]::IsNullOrWhiteSpace($containerAppConnectionString))"
+          "ConnectionStrings__SqlConnectionString=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Download Acceptance Tests Package
         uses: actions/download-artifact@v4
         with:
@@ -519,9 +521,6 @@ jobs:
         run: |
           Write-Host "Extracting package..."
           Expand-Archive -Path "./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg" -DestinationPath "./acceptance-tests-package" -Force
-
-          Write-Host "Package extracted. Listing contents:"
-          Get-ChildItem -Path ./acceptance-tests-package -Recurse | Select-Object FullName | Select-Object -First 30
 
           # Find the test DLL - NuGet packages may extract to different structures
           $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
