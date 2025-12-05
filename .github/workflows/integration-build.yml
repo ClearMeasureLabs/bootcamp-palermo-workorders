@@ -434,15 +434,29 @@ jobs:
           timeout_after: 1800          
 
           
-      - name: Get Container App URL
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Container App FQDN
         run: |
-          Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile .\AzureCLI.msi
-          Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'
-          az config set extension.use_dynamic_install=yes_without_prompt
-          $containerAppURL = az containerapp show --resource-group ${{env.TDD_RESOURCE_GROUP}}-${{env.BUILD_BUILDNUMBER}} --name ${{env.TDD_APP_NAME}} --query properties.configuration.ingress.fqdn
-          $containerAppURL = $containerAppURL -replace '"', ''
-          [System.Environment]::SetEnvironmentVariable("containerAppURL", $containerAppURL, "User")
-        shell: pwsh
+          CONTAINER_APP_FQDN=$(az containerapp show \
+            --name ui-gh \
+            --resource-group ${{ env.ResourceGroupName }} \
+            --query properties.configuration.ingress.fqdn \
+            -o tsv)
+          
+          if [ -z "$CONTAINER_APP_FQDN" ]; then
+            echo "Error: Could not retrieve container app FQDN"
+            exit 1
+          fi
+          
+          CONTAINER_APP_URL="https://$CONTAINER_APP_FQDN"
+          echo "Container App FQDN: $CONTAINER_APP_FQDN"
+          echo "Container App URL: $CONTAINER_APP_URL"
+          echo "CONTAINER_APP_URL=$CONTAINER_APP_URL" >> $GITHUB_ENV
+          echo "ApplicationBaseUrl=$CONTAINER_APP_URL" >> $GITHUB_ENV
 
       - name: Download Acceptance Tests Package
         uses: actions/download-artifact@v4
@@ -454,17 +468,55 @@ jobs:
         run: |
           unzip -o ./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg -d ./acceptance-tests-package
 
+      - name: Configure Acceptance Tests
+        run: |
+          # Find the extracted package directory
+          PACKAGE_DIR=$(find ./acceptance-tests-package -type d -name "ChurchBulletin.AcceptanceTests*" | head -n 1)
+          if [ -z "$PACKAGE_DIR" ]; then
+            echo "Error: Could not find extracted package directory"
+            ls -la ./acceptance-tests-package/
+            exit 1
+          fi
+          
+          echo "Found package directory: $PACKAGE_DIR"
+          
+          # Create appsettings.acceptancetests.json with the container app URL
+          APP_SETTINGS_FILE="$PACKAGE_DIR/appsettings.acceptancetests.json"
+          cat > "$APP_SETTINGS_FILE" << EOF
+          {
+            "ConnectionStrings": {
+              "SqlConnectionString": "server=(LocalDb)\\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;TrustServerCertificate=true;"
+            },
+            "ApplicationBaseUrl": "${{ env.CONTAINER_APP_URL }}",
+            "StartLocalServer": "false",
+            "SkipScreenshotsForSpeed": "true",
+            "SlowMo": "100"
+          }
+          EOF
+          
+          echo "Created appsettings file at: $APP_SETTINGS_FILE"
+          echo "ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}"
+          cat "$APP_SETTINGS_FILE"
+
       - name: Run acceptance tests
+        env:
+          ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
         uses: microsoft/vstest-action@v1.0.0
         with:
           testAssembly: |
             **\*AcceptanceTests.dll
             !**\*TestAdapter.dll
             !**\obj\**
-          searchFolder: ./ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}/
-          runInParallel: true 
-          
-          
+          searchFolder: ./acceptance-tests-package/
+          runInParallel: false
+
+      - name: Upload Acceptance Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: acceptance-test-results-tdd
+          path: TestResults/**/*.trx
+          retention-days: 30
 
   deploy-to-uat:
     name: UAT
