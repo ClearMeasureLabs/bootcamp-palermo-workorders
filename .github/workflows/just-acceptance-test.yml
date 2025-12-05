@@ -385,7 +385,6 @@ jobs:
 
       - name: Run acceptance tests
         uses: josepho0918/vstest-action@main
-        if: success()
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
