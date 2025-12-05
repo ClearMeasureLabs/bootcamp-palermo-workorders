@@ -538,11 +538,16 @@ jobs:
           $runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
           $resultsDirectory = Join-Path $test_dir "AcceptanceTests"
 
-          Write-Host -Message "Checking Playwright browsers for Acceptance Tests" 
+          # Build the solution first (since AcceptanceTests uses --no-build)
+          dotnet build src/ChurchBulletin.sln --configuration ${{ env.BuildConfiguration }}
+    
+          # Restore and build acceptance tests to ensure Playwright is ready
+          dotnet restore src/AcceptanceTests/AcceptanceTests.csproj
+          dotnet build src/AcceptanceTests/AcceptanceTests.csproj --configuration ${{ env.BuildConfiguration }}
 
           # Now run the acceptance tests
           Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
-          & dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx --results-directory $resultsDirectory --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath --collect:"XPlat Code Coverage"
+          & dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true --nologo --no-build --no-restor -v $verbosity --logger:trx --results-directory $resultsDirectory --no-build --no-restore --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath --collect:"XPlat Code Coverage"
 
 
       - name: Upload Acceptance Test Results
