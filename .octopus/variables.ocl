@@ -117,7 +117,6 @@ variable "container_app_environment_name" {
 variable "ResourceGroupName" {
     value "bootcamp-#{Octopus.Environment.Name | ToLower}" {
         description = ""
-        environment = ["prod", "tdd", "uat"]
     }
 }
 
