@@ -433,8 +433,8 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          Write-Host "BUILD_BUILDNUMBER=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Write-Host "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "BUILD_BUILDNUMBER=$version" >> $env:GITHUB_ENV
+          "VERSION=$version" >> $env:GITHUB_ENV
           Write-Host "Build version: $version"
 
       - name: Create Octopus Release
