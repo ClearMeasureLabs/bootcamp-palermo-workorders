@@ -564,6 +564,7 @@ jobs:
       - name: Run acceptance tests
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
+          ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
         uses: microsoft/vstest-action@v1.0.0
         with:
           testAssembly: |
