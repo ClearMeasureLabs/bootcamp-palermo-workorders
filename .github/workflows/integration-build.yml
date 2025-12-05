@@ -21,407 +21,406 @@ on:
 env:
   MAJOR_VERSION: 1
   MINOR_VERSION: 3
-
+  RELEASE_VERSION: 588
 jobs:
-  build-linux:
-    name: Build and Test on Linux
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    env:
-      BUILD_CONFIGURATION: Release
+  # build-linux:
+  #   name: Build and Test on Linux
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   env:
+  #     BUILD_CONFIGURATION: Release
     
-    steps:
-      # Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     # Checkout code
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      # Install .NET SDK 10.0.100
-      - name: Setup .NET SDK 10.0.100
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.100'
+  #     # Install .NET SDK 10.0.100
+  #     - name: Setup .NET SDK 10.0.100
+  #       uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: '10.0.100'
 
-      # Install .NET SDK 6.0 (required by Octopus CLI tool - includes runtime)
-      - name: Setup .NET SDK 6.0
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
+  #     # Install .NET SDK 6.0 (required by Octopus CLI tool - includes runtime)
+  #     - name: Setup .NET SDK 6.0
+  #       uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: '6.0.x'
 
-      # Verify .NET 6.0 runtime is available (required by dotnet-octo tool)
-      - name: Verify .NET 6.0 runtime
-        run: |
-          echo "Installed runtimes:"
-          dotnet --list-runtimes
-          echo ""
-          echo "Checking for .NET 6.0 runtime:"
-          if dotnet --list-runtimes | grep -q "Microsoft.NETCore.App 6.0"; then
-            echo "✓ .NET 6.0 runtime is available"
-          else
-            echo "✗ .NET 6.0 runtime not found - attempting to install runtime explicitly"
-            # Try installing runtime explicitly if SDK installation didn't include it
-            curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --runtime dotnet --version 6.0.0
-            export PATH="$HOME/.dotnet:$PATH"
-            dotnet --list-runtimes
-          fi
+  #     # Verify .NET 6.0 runtime is available (required by dotnet-octo tool)
+  #     - name: Verify .NET 6.0 runtime
+  #       run: |
+  #         echo "Installed runtimes:"
+  #         dotnet --list-runtimes
+  #         echo ""
+  #         echo "Checking for .NET 6.0 runtime:"
+  #         if dotnet --list-runtimes | grep -q "Microsoft.NETCore.App 6.0"; then
+  #           echo "✓ .NET 6.0 runtime is available"
+  #         else
+  #           echo "✗ .NET 6.0 runtime not found - attempting to install runtime explicitly"
+  #           # Try installing runtime explicitly if SDK installation didn't include it
+  #           curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --runtime dotnet --version 6.0.0
+  #           export PATH="$HOME/.dotnet:$PATH"
+  #           dotnet --list-runtimes
+  #         fi
 
-      # Set version environment variable
-      - name: Set Version
-        run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
+  #     # Set version environment variable
+  #     - name: Set Version
+  #       run: |
+  #         version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+  #         echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+  #         echo "VERSION=$version" >> $GITHUB_ENV
+  #         echo "Build version: $version"
 
-      - name: Run CI Build 
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          BUILD_BUILDNUMBER: ${{ env.VERSION }}
-        run: |
-          . ./build.ps1
-          Invoke-CIBuild
+  #     - name: Run CI Build 
+  #       shell: pwsh
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         GITHUB_REPOSITORY: ${{ github.repository }}
+  #         BUILD_BUILDNUMBER: ${{ env.VERSION }}
+  #       run: |
+  #         . ./build.ps1
+  #         Invoke-CIBuild
 
-      # Publish test results
-      - name: Test Reporter
-        uses: dorny/test-reporter@v2.1.1
-        if: always()
-        with:
-          name: Linux CI Test Results
-          path: 'build/test/**/*.trx'
-          reporter: dotnet-trx
+  #     # Publish test results
+  #     - name: Test Reporter
+  #       uses: dorny/test-reporter@v2.1.1
+  #       if: always()
+  #       with:
+  #         name: Linux CI Test Results
+  #         path: 'build/test/**/*.trx'
+  #         reporter: dotnet-trx
 
-      # Publish code coverage
-      - name: Publish Code Coverage
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          files: '**/build/test/**/In/**/coverage.cobertura.xml'
-          flags: unittests-linux
-          name: codecov-linux
+  #     # Publish code coverage
+  #     - name: Publish Code Coverage
+  #       uses: codecov/codecov-action@v4
+  #       if: always()
+  #       with:
+  #         files: '**/build/test/**/In/**/coverage.cobertura.xml'
+  #         flags: unittests-linux
+  #         name: codecov-linux
 
-      # Upload test results as artifacts
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-linux
-          path: build/test/**/*.trx
-          retention-days: 30
+  #     # Upload test results as artifacts
+  #     - name: Upload Test Results
+  #       uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: test-results-linux
+  #         path: build/test/**/*.trx
+  #         retention-days: 30
 
-      # Upload code coverage as artifacts
-      - name: Upload Code Coverage
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: code-coverage-linux
-          path: '**/build/test/**/In/**/coverage.cobertura.xml'
-          retention-days: 30
+  #     # Upload code coverage as artifacts
+  #     - name: Upload Code Coverage
+  #       uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: code-coverage-linux
+  #         path: '**/build/test/**/In/**/coverage.cobertura.xml'
+  #         retention-days: 30
 
-      # Package Everything as NuGet Packages
-      - name: Create NuGet Packages
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          BUILD_BUILDNUMBER: ${{ env.VERSION }}
-        run: |
-          . ./build.ps1
-          Package-Everything
+  #     # Package Everything as NuGet Packages
+  #     - name: Create NuGet Packages
+  #       shell: pwsh
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         GITHUB_REPOSITORY: ${{ github.repository }}
+  #         BUILD_BUILDNUMBER: ${{ env.VERSION }}
+  #       run: |
+  #         . ./build.ps1
+  #         Package-Everything
 
-      # Upload packages as artifacts
-      - name: Upload NuGet Packages
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: churchbulletin-nuget-packages
-          path: build/*.nupkg
-          retention-days: 90
+  #     # Upload packages as artifacts
+  #     - name: Upload NuGet Packages
+  #       uses: actions/upload-artifact@v4
+  #       if: success()
+  #       with:
+  #         name: churchbulletin-nuget-packages
+  #         path: build/*.nupkg
+  #         retention-days: 90
 
-      # Publish packages to GitHub Packages
-      - name: Publish Packages to GitHub Packages
-        if: false
-        env:
-          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          OWNER="${{ github.repository_owner }}"
-          FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
+  #     # Publish packages to GitHub Packages
+  #     - name: Publish Packages to GitHub Packages
+  #       if: false
+  #       env:
+  #         NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: |
+  #         OWNER="${{ github.repository_owner }}"
+  #         FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
           
-          echo "Configuring GitHub Packages NuGet source..."
-          echo "Owner: $OWNER"
-          echo "Feed URL: $FEED_URL"
+  #         echo "Configuring GitHub Packages NuGet source..."
+  #         echo "Owner: $OWNER"
+  #         echo "Feed URL: $FEED_URL"
           
-          # Remove existing source if it exists
-          dotnet nuget remove source "github" 2>/dev/null || true
+  #         # Remove existing source if it exists
+  #         dotnet nuget remove source "github" 2>/dev/null || true
           
-          # Configure GitHub Packages as a NuGet source
-          # For GitHub Packages, use the owner as username and token as password
-          dotnet nuget add source $FEED_URL \
-            --name "github" \
-            --username $OWNER \
-            --password "$NUGET_AUTH_TOKEN" \
-            --store-password-in-clear-text
+  #         # Configure GitHub Packages as a NuGet source
+  #         # For GitHub Packages, use the owner as username and token as password
+  #         dotnet nuget add source $FEED_URL \
+  #           --name "github" \
+  #           --username $OWNER \
+  #           --password "$NUGET_AUTH_TOKEN" \
+  #           --store-password-in-clear-text
           
-          # Verify source was added
-          echo "Configured NuGet sources:"
-          dotnet nuget list source
+  #         # Verify source was added
+  #         echo "Configured NuGet sources:"
+  #         dotnet nuget list source
           
-          # Publish all packages
-          for package in build/*.nupkg; do
-            if [ -f "$package" ]; then
-              echo "Publishing $package to GitHub Packages..."
-              dotnet nuget push "$package" \
-                --source "github" \
-                --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
-            fi
-          done
+  #         # Publish all packages
+  #         for package in build/*.nupkg; do
+  #           if [ -f "$package" ]; then
+  #             echo "Publishing $package to GitHub Packages..."
+  #             dotnet nuget push "$package" \
+  #               --source "github" \
+  #               --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
+  #           fi
+  #         done
 
-      # Publish packages to Octopus Deploy built-in feed
-      - name: Publish Packages to Octopus Deploy
-        shell: pwsh
-        if: false
-        env:
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-          BUILD_BUILDNUMBER: ${{ env.VERSION }}
-        run: |
-          $ErrorActionPreference = "Stop"
+  #     # Publish packages to Octopus Deploy built-in feed
+  #     - name: Publish Packages to Octopus Deploy
+  #       shell: pwsh
+  #       if: false
+  #       env:
+  #         OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+  #         OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+  #         OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+  #         BUILD_BUILDNUMBER: ${{ env.VERSION }}
+  #       run: |
+  #         $ErrorActionPreference = "Stop"
           
-          $octopusUrl = $env:OCTOPUS_URL
-          $octopusApiKey = $env:OCTOPUS_API_KEY
-          $octopusSpace = $env:OCTOPUS_SPACE
-          $version = $env:BUILD_BUILDNUMBER
+  #         $octopusUrl = $env:OCTOPUS_URL
+  #         $octopusApiKey = $env:OCTOPUS_API_KEY
+  #         $octopusSpace = $env:OCTOPUS_SPACE
+  #         $version = $env:BUILD_BUILDNUMBER
           
-          if ([string]::IsNullOrWhiteSpace($octopusUrl)) {
-            Write-Warning "OCTOPUS_URL not set. Skipping Octopus package publishing."
-            exit 0
-          }
+  #         if ([string]::IsNullOrWhiteSpace($octopusUrl)) {
+  #           Write-Warning "OCTOPUS_URL not set. Skipping Octopus package publishing."
+  #           exit 0
+  #         }
           
-          if ([string]::IsNullOrWhiteSpace($octopusApiKey)) {
-            Write-Warning "OCTOPUS_API_KEY not set. Skipping Octopus package publishing."
-            exit 0
-          }
+  #         if ([string]::IsNullOrWhiteSpace($octopusApiKey)) {
+  #           Write-Warning "OCTOPUS_API_KEY not set. Skipping Octopus package publishing."
+  #           exit 0
+  #         }
           
-          Write-Host "Publishing packages to Octopus Deploy: $octopusUrl"
-          Write-Host "Package version: $version"
+  #         Write-Host "Publishing packages to Octopus Deploy: $octopusUrl"
+  #         Write-Host "Package version: $version"
           
-          if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
-            Write-Host "Octopus Space: $octopusSpace"
-          }
+  #         if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
+  #           Write-Host "Octopus Space: $octopusSpace"
+  #         }
           
-          # Ensure dotnet-octo tool is available
-          Write-Host "Checking for dotnet-octo tool..."
-          $octoTool = Get-Command dotnet-octo -ErrorAction SilentlyContinue
-          if (-not $octoTool) {
-            Write-Host "Installing dotnet-octo tool..."
-            dotnet tool install --global Octopus.DotNet.Cli
-          }
+  #         # Ensure dotnet-octo tool is available
+  #         Write-Host "Checking for dotnet-octo tool..."
+  #         $octoTool = Get-Command dotnet-octo -ErrorAction SilentlyContinue
+  #         if (-not $octoTool) {
+  #           Write-Host "Installing dotnet-octo tool..."
+  #           dotnet tool install --global Octopus.DotNet.Cli
+  #         }
           
-          # Ensure dotnet tools are in PATH
-          $dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
-          $pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
-          $dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
-          if (-not $dotnetToolsPathPresent) {
-            $env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
-            Write-Host "Added dotnet tools to PATH: $dotnetToolsPath"
-          }
+  #         # Ensure dotnet tools are in PATH
+  #         $dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
+  #         $pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
+  #         $dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
+  #         if (-not $dotnetToolsPathPresent) {
+  #           $env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
+  #           Write-Host "Added dotnet tools to PATH: $dotnetToolsPath"
+  #         }
           
-          # Find all .nupkg files in the build directory
-          $packageFiles = Get-ChildItem -Path "./build" -Filter "*.nupkg" -ErrorAction SilentlyContinue
+  #         # Find all .nupkg files in the build directory
+  #         $packageFiles = Get-ChildItem -Path "./build" -Filter "*.nupkg" -ErrorAction SilentlyContinue
           
-          if (-not $packageFiles -or $packageFiles.Count -eq 0) {
-            Write-Warning "No packages found in ./build directory"
-            exit 0
-          }
+  #         if (-not $packageFiles -or $packageFiles.Count -eq 0) {
+  #           Write-Warning "No packages found in ./build directory"
+  #           exit 0
+  #         }
           
-          Write-Host "Found $($packageFiles.Count) package(s) to publish to Octopus Deploy:"
-          foreach ($packageFile in $packageFiles) {
-            Write-Host "  - $($packageFile.Name)"
-          }
+  #         Write-Host "Found $($packageFiles.Count) package(s) to publish to Octopus Deploy:"
+  #         foreach ($packageFile in $packageFiles) {
+  #           Write-Host "  - $($packageFile.Name)"
+  #         }
           
-          # Publish each package
-          $publishedCount = 0
-          $failedCount = 0
+  #         # Publish each package
+  #         $publishedCount = 0
+  #         $failedCount = 0
           
-          foreach ($packageFile in $packageFiles) {
-            $packageName = $packageFile.Name
-            Write-Host ""
-            Write-Host "Publishing $packageName to Octopus Deploy..."
+  #         foreach ($packageFile in $packageFiles) {
+  #           $packageName = $packageFile.Name
+  #           Write-Host ""
+  #           Write-Host "Publishing $packageName to Octopus Deploy..."
             
-            try {
-              $pushArgs = @(
-                "push",
-                "--package", $packageFile.FullName,
-                "--server", $octopusUrl,
-                "--apiKey", $octopusApiKey
-              )
+  #           try {
+  #             $pushArgs = @(
+  #               "push",
+  #               "--package", $packageFile.FullName,
+  #               "--server", $octopusUrl,
+  #               "--apiKey", $octopusApiKey
+  #             )
               
-              if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
-                $pushArgs += "--space"
-                $pushArgs += $octopusSpace
-              }
+  #             if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
+  #               $pushArgs += "--space"
+  #               $pushArgs += $octopusSpace
+  #             }
               
-              & dotnet-octo $pushArgs
+  #             & dotnet-octo $pushArgs
               
-              if ($LASTEXITCODE -eq 0) {
-                Write-Host "✅ Successfully published $packageName to Octopus Deploy" -ForegroundColor Green
-                $publishedCount++
-              } else {
-                Write-Warning "Failed to publish $packageName (exit code: $LASTEXITCODE)"
-                $failedCount++
-              }
-            } catch {
-              Write-Warning "Error publishing $packageName : $_"
-              $failedCount++
-            }
-          }
+  #             if ($LASTEXITCODE -eq 0) {
+  #               Write-Host "✅ Successfully published $packageName to Octopus Deploy" -ForegroundColor Green
+  #               $publishedCount++
+  #             } else {
+  #               Write-Warning "Failed to publish $packageName (exit code: $LASTEXITCODE)"
+  #               $failedCount++
+  #             }
+  #           } catch {
+  #             Write-Warning "Error publishing $packageName : $_"
+  #             $failedCount++
+  #           }
+  #         }
           
-          Write-Host ""
-          Write-Host "Octopus package publishing summary: $publishedCount published, $failedCount failed"
+  #         Write-Host ""
+  #         Write-Host "Octopus package publishing summary: $publishedCount published, $failedCount failed"
           
-          if ($failedCount -gt 0) {
-            Write-Warning "Some packages failed to publish to Octopus Deploy."
-          }
-          
+  #         if ($failedCount -gt 0) {
+  #           Write-Warning "Some packages failed to publish to Octopus Deploy."
+  #         }
 
-  docker-build-image-for-churchbulletin-ui:
-    name: Create and push Docker image for ChurchBulletin.UI
-    needs: [build-linux]
-    if: success() 
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
+  # docker-build-image-for-churchbulletin-ui:
+  #   name: Create and push Docker image for ChurchBulletin.UI
+  #   needs: [build-linux]
+  #   if: success() 
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     packages: read
     
-    steps:
-      # Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     # Checkout code
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      # Set version environment variable (same as build-linux job)
-      - name: Set Version
-        run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
+  #     # Set version environment variable (same as build-linux job)
+  #     - name: Set Version
+  #       run: |
+  #         version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+  #         echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+  #         echo "VERSION=$version" >> $GITHUB_ENV
+  #         echo "Build version: $version"
 
-      # Install .NET SDK 10.0.100
-      - name: Setup .NET SDK 10.0.100
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.100'
+  #     # Install .NET SDK 10.0.100
+  #     - name: Setup .NET SDK 10.0.100
+  #       uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: '10.0.100'
 
 
-      # Download NuGet packages from build-linux job
-      - name: Download NuGet Packages
-        uses: actions/download-artifact@v4
-        with:
-          name: churchbulletin-nuget-packages
-          path: ./packages
+  #     # Download NuGet packages from build-linux job
+  #     - name: Download NuGet Packages
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: churchbulletin-nuget-packages
+  #         path: ./packages
 
-      # Extract ChurchBulletin.UI NuGet package
-      - name: Extract UI NuGet Package
-        run: |
-          # Find the ChurchBulletin.UI package
-          PACKAGE_FILE=$(find ./packages -name "ChurchBulletin.UI.*.nupkg" | head -n 1)
+  #     # Extract ChurchBulletin.UI NuGet package
+  #     - name: Extract UI NuGet Package
+  #       run: |
+  #         # Find the ChurchBulletin.UI package
+  #         PACKAGE_FILE=$(find ./packages -name "ChurchBulletin.UI.*.nupkg" | head -n 1)
           
-          if [ -z "$PACKAGE_FILE" ]; then
-            echo "Error: ChurchBulletin.UI package not found"
-            ls -la ./packages/
-            exit 1
-          fi
+  #         if [ -z "$PACKAGE_FILE" ]; then
+  #           echo "Error: ChurchBulletin.UI package not found"
+  #           ls -la ./packages/
+  #           exit 1
+  #         fi
           
-          echo "Found package: $PACKAGE_FILE"
+  #         echo "Found package: $PACKAGE_FILE"
           
-          # Create temporary extraction directory
-          mkdir -p ./package-extract
+  #         # Create temporary extraction directory
+  #         mkdir -p ./package-extract
           
-          # Extract the Octopus package (it's a ZIP file)
-          # Use -o to overwrite without prompting
-          unzip -o "$PACKAGE_FILE" -d ./package-extract
+  #         # Extract the Octopus package (it's a ZIP file)
+  #         # Use -o to overwrite without prompting
+  #         unzip -o "$PACKAGE_FILE" -d ./package-extract
           
-          # Fix permissions on extracted files before copying
-          # First, ensure directories are accessible
-          find ./package-extract -type d -exec chmod u+rwx {} \;
-          # Then ensure files are readable
-          find ./package-extract -type f -exec chmod u+r {} \;
+  #         # Fix permissions on extracted files before copying
+  #         # First, ensure directories are accessible
+  #         find ./package-extract -type d -exec chmod u+rwx {} \;
+  #         # Then ensure files are readable
+  #         find ./package-extract -type f -exec chmod u+r {} \;
           
-          # Create built directory (where Dockerfile expects files)
-          mkdir -p ./built
+  #         # Create built directory (where Dockerfile expects files)
+  #         mkdir -p ./built
           
-          # Octopus packages may have files directly in root or nested
-          # Look for the DLL file to determine structure
-          DLL_PATH=$(find ./package-extract -name "ClearMeasure.Bootcamp.UI.Server.dll" 2>/dev/null | head -n 1)
+  #         # Octopus packages may have files directly in root or nested
+  #         # Look for the DLL file to determine structure
+  #         DLL_PATH=$(find ./package-extract -name "ClearMeasure.Bootcamp.UI.Server.dll" 2>/dev/null | head -n 1)
           
-          if [ -z "$DLL_PATH" ]; then
-            echo "Error: ClearMeasure.Bootcamp.UI.Server.dll not found in package"
-            echo "Package contents:"
-            find ./package-extract -type f 2>/dev/null | head -20
-            exit 1
-          fi
+  #         if [ -z "$DLL_PATH" ]; then
+  #           echo "Error: ClearMeasure.Bootcamp.UI.Server.dll not found in package"
+  #           echo "Package contents:"
+  #           find ./package-extract -type f 2>/dev/null | head -20
+  #           exit 1
+  #         fi
           
-          # Get the directory containing the DLL
-          DLL_DIR=$(dirname "$DLL_PATH")
+  #         # Get the directory containing the DLL
+  #         DLL_DIR=$(dirname "$DLL_PATH")
           
-          # Copy all contents from the DLL's directory to built using tar
-          # tar handles permissions and file types (files/directories/symlinks) correctly
-          (cd "$DLL_DIR" && tar cf - .) | (cd ./built && tar xf -)
+  #         # Copy all contents from the DLL's directory to built using tar
+  #         # tar handles permissions and file types (files/directories/symlinks) correctly
+  #         (cd "$DLL_DIR" && tar cf - .) | (cd ./built && tar xf -)
           
-          # Remove any package metadata files that might have been copied
-          find ./built -name "*.nuspec" -delete 2>/dev/null || true
-          find ./built -name "[Content_Types].xml" -delete 2>/dev/null || true
-          find ./built -name "*.psmdcp" -delete 2>/dev/null || true
-          find ./built -name "_rels" -type d -exec rm -rf {} + 2>/dev/null || true
-          find ./built -path "*/package/services/metadata/*" -delete 2>/dev/null || true
+  #         # Remove any package metadata files that might have been copied
+  #         find ./built -name "*.nuspec" -delete 2>/dev/null || true
+  #         find ./built -name "[Content_Types].xml" -delete 2>/dev/null || true
+  #         find ./built -name "*.psmdcp" -delete 2>/dev/null || true
+  #         find ./built -name "_rels" -type d -exec rm -rf {} + 2>/dev/null || true
+  #         find ./built -path "*/package/services/metadata/*" -delete 2>/dev/null || true
           
-          # Verify extracted files
-          echo "Extracted files in built directory:"
-          ls -la built/ | head -20
+  #         # Verify extracted files
+  #         echo "Extracted files in built directory:"
+  #         ls -la built/ | head -20
           
-          # Verify we have the expected DLL
-          if [ -f ./built/ClearMeasure.Bootcamp.UI.Server.dll ]; then
-            echo "✓ Successfully extracted UI Server package"
-          else
-            echo "Error: ClearMeasure.Bootcamp.UI.Server.dll not found after extraction"
-            exit 1
-          fi
+  #         # Verify we have the expected DLL
+  #         if [ -f ./built/ClearMeasure.Bootcamp.UI.Server.dll ]; then
+  #           echo "✓ Successfully extracted UI Server package"
+  #         else
+  #           echo "Error: ClearMeasure.Bootcamp.UI.Server.dll not found after extraction"
+  #           exit 1
+  #         fi
           
-          # Clean up
-          rm -rf ./package-extract ./packages
+  #         # Clean up
+  #         rm -rf ./package-extract ./packages
 
-      # Build Docker image
-      - name: Build Docker image
-        run: |
-          IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
-          docker build -f Dockerfile -t churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG} .
-          docker tag churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG} churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
+  #     # Build Docker image
+  #     - name: Build Docker image
+  #       run: |
+  #         IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
+  #         docker build -f Dockerfile -t churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG} .
+  #         docker tag churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG} churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
 
-      # Login to Azure
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          # TODO:  Need to create the AZURE_CREDENTIALS secret in the GitHub repository.
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     # Login to Azure
+  #     - name: Login to Azure
+  #       uses: azure/login@v1
+  #       with:
+  #         # TODO:  Need to create the AZURE_CREDENTIALS secret in the GitHub repository.
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Login to Azure Container Registry
-      - name: Login to ACR
-        run: |
-          az acr login --name churchbulletingithubacr
+  #     # Login to Azure Container Registry
+  #     - name: Login to ACR
+  #       run: |
+  #         az acr login --name churchbulletingithubacr
 
-      # Push Docker image to ACR
-      - name: Push Docker image to ACR
-        run: |
-          IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
-          docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}
-          docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
+  #     # Push Docker image to ACR
+  #     - name: Push Docker image to ACR
+  #       run: |
+  #         IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
+  #         docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}
+  #         docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
 
   deploy-to-tdd:
     name: TDD
-    needs: [docker-build-image-for-churchbulletin-ui]
+    # needs: [docker-build-image-for-churchbulletin-ui]
     if: success()
     runs-on: windows-latest
     environment:
@@ -438,7 +437,7 @@ jobs:
       - name: Set Version
         shell: pwsh
         run: |
-          $version = "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          $version = "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ env.RELEASE_VERSION }}"
           "BUILD_BUILDNUMBER=$version" >> $env:GITHUB_ENV
           "VERSION=$version" >> $env:GITHUB_ENV
           Write-Host "Build version: $version"
@@ -459,28 +458,28 @@ jobs:
           git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
           git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
 
-      - name: Deploy Octopus Release to TDD
-        id: start-deploy-to-tdd
-        uses: OctopusDeploy/deploy-release-action@v3
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-          BUILD_BUILDNUMBER: ${{ env.VERSION }}
-        with:
-          project: ${{ vars.OCTOPUS_PROJECT }}   
-          release_number: ${{ env.VERSION }}
-          environments: "TDD"
+      # - name: Deploy Octopus Release to TDD
+      #   id: start-deploy-to-tdd
+      #   uses: OctopusDeploy/deploy-release-action@v3
+      #   env:
+      #     OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+      #     OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+      #     OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+      #     BUILD_BUILDNUMBER: ${{ env.VERSION }}
+      #   with:
+      #     project: ${{ vars.OCTOPUS_PROJECT }}   
+      #     release_number: ${{ env.VERSION }}
+      #     environments: "TDD"
 
-      - name: Wait for the TDD deployment to complete
-        uses: OctopusDeploy/await-task-action@v3
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-        with:
-          server_task_id: ${{ fromJson(steps.start-deploy-to-tdd.outputs.server_tasks)[0].serverTaskId }}
-          timeout_after: 1800          
+      # - name: Wait for the TDD deployment to complete
+      #   uses: OctopusDeploy/await-task-action@v3
+      #   env:
+      #     OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+      #     OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+      #     OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+      #   with:
+      #     server_task_id: ${{ fromJson(steps.start-deploy-to-tdd.outputs.server_tasks)[0].serverTaskId }}
+      #     timeout_after: 1800          
 
       - name: Login to Azure
         uses: azure/login@v1
@@ -818,6 +817,7 @@ jobs:
 
       - name: Run acceptance tests
         uses: josepho0918/vstest-action@main
+        if: success()
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
