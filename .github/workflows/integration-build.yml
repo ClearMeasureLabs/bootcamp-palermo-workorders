@@ -541,8 +541,48 @@ jobs:
           }
 
           Write-Host "Found test DLL: $($testDll.FullName)"
-      - name: Run acceptance tests the hard way.
+      - name: Install Playwright browsers and driver
         shell: pwsh
+        run: |
+          dotnet tool install --global Microsoft.Playwright.CLI
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to install Microsoft.Playwright.CLI"
+            exit $LASTEXITCODE
+          }
+          Microsoft.Playwright.CLI install --with-deps
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to install Playwright browsers and driver"
+            exit $LASTEXITCODE
+          }
+          Write-Host "Playwright browsers and driver installed successfully"
+      - name: Run acceptance tests
+        shell: pwsh
+        run: |
+          Write-Host "Running acceptance tests..."
+          # Find the test DLL
+          $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
+            Where-Object { $_.Name -notlike "*TestAdapter*" -and $_.Name -notlike "*TestHost*" } | 
+            Select-Object -First 1
+          
+          if (-not $testDll) {
+            Write-Error "Test DLL not found in acceptance-tests-package"
+            exit 1
+          }
+
+          dotnet test $($testDll.FullName) /Parallel `
+            /Logger:trx;LogFileName=AcceptanceTests-TDD.trx `
+            /ResultsDirectory:./TestResults `
+            /Parallel
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to run acceptance tests"
+            exit $LASTEXITCODE
+          }
+          Write-Host "Acceptance tests completed successfully"
+
+      - name: Run acceptance tests the hard way
+        id: run-acceptance-tests-the-hard-way
+        shell: pwsh
+        if: false
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
@@ -724,10 +764,10 @@ jobs:
             "/Parallel"
           )
           
-          if ($runSettingsFile) {
-            $vstestArgs += "/Settings:$($runSettingsFile.FullName)"
-            Write-Host "Using runsettings: $($runSettingsFile.FullName)"
-          }
+          # if ($runSettingsFile) {
+          #   $vstestArgs += "/Settings:$($runSettingsFile.FullName)"
+          #   Write-Host "Using runsettings: $($runSettingsFile.FullName)"
+          # }
           
           Write-Host "Running VSTest command:"
           Write-Host "  Executable: $vsTestPath"
