@@ -476,15 +476,6 @@ jobs:
           server_task_id: ${{ fromJson(steps.start-deploy-to-tdd.outputs.server_tasks)[0].serverTaskId }}
           timeout_after: 1800          
 
-         
-
-      - name: Download Acceptance Tests Package
-        uses: actions/download-artifact@v4
-        with:
-          name: churchbulletin-nuget-packages
-          path: ./packages
-
-
       - name: Login to Azure
         uses: azure/login@v1
         with:
@@ -517,21 +508,34 @@ jobs:
             --query "properties.template.containers[0].env[?name=='ConnectionStrings__SqlConnectionString'].value" `
             -o tsv
           Write-Host "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append
-  
+      - name: Download Acceptance Tests Package
+        uses: actions/download-artifact@v4
+        with:
+          name: churchbulletin-nuget-packages
+          path: ./packages  
       - name: Extract and Configure Acceptance Tests
         if: success()
         shell: pwsh
         run: |
+          Write-Host "Extracting package..."
           Expand-Archive -Path "./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg" -DestinationPath "./acceptance-tests-package" -Force
-          $packageDir = Get-ChildItem -Path ./acceptance-tests-package -Directory -Filter "ChurchBulletin.AcceptanceTests*" | Select-Object -First 1
-          if (-not $packageDir) {
-            Write-Error "Error: Could not find extracted package directory"
-            Get-ChildItem -Path ./acceptance-tests-package
+
+          Write-Host "Package extracted. Listing contents:"
+          Get-ChildItem -Path ./acceptance-tests-package -Recurse | Select-Object FullName | Select-Object -First 30
+
+          # Find the test DLL - NuGet packages may extract to different structures
+          $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
+            Where-Object { $_.Name -notlike "*TestAdapter*" -and $_.Name -notlike "*TestHost*" } | 
+            Select-Object -First 1
+
+          if (-not $testDll) {
+            Write-Warning "Test DLL not found. Listing all DLLs:"
+            Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.dll" | Select-Object FullName
+            Write-Error "Could not find AcceptanceTests DLL in extracted package"
             exit 1
           }
-          
-          Write-Host "Found package directory: $($packageDir.FullName)"
 
+          Write-Host "Found test DLL: $($testDll.FullName)"
       - name: Run acceptance tests
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
