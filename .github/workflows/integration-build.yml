@@ -586,7 +586,6 @@ jobs:
 
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@v4
-        if: success()
         with:
           name: acceptance-test-results-tdd
           path: build/test/AcceptanceTests/**/*.trx
