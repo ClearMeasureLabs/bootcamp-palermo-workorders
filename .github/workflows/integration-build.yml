@@ -583,6 +583,20 @@ jobs:
             exit 1
           }
           
+          # Diagnose what's in the npm location
+          Write-Host "Contents of npm browsers path:"
+          Get-ChildItem -Path $npmBrowsersPath -Directory | Select-Object Name | Format-Table
+          
+          # Find node.exe in npm location
+          $npmNodeExe = Get-ChildItem -Path $npmBrowsersPath -Recurse -Filter "node.exe" | Select-Object -First 1
+          if ($npmNodeExe) {
+            Write-Host "Found node.exe in npm location: $($npmNodeExe.FullName)"
+            Write-Host "Relative path from npm root: $($npmNodeExe.FullName.Replace($npmBrowsersPath, '').TrimStart('\'))"
+          } else {
+            Write-Warning "node.exe not found in npm location. Listing all .exe files:"
+            Get-ChildItem -Path $npmBrowsersPath -Recurse -Filter "*.exe" | Select-Object FullName | Select-Object -First 10
+          }
+          
           Write-Host "Copying browsers from npm location to expected location..."
           
           # Remove existing .playwright if it exists
@@ -592,27 +606,53 @@ jobs:
           
           # Copy the entire ms-playwright directory to .playwright
           # Use robocopy for reliable copying on Windows
-          $robocopyExitCode = 0
-          robocopy "$npmBrowsersPath" "$expectedBrowsersPath" /E /NFL /NDL /NJH /NJS 2>&1 | Out-Null
+          Write-Host "Using robocopy to copy files..."
+          $robocopyOutput = robocopy "$npmBrowsersPath" "$expectedBrowsersPath" /E /NFL /NDL /NJH /NJS 2>&1 | Out-String
           $robocopyExitCode = $LASTEXITCODE
+          Write-Host "Robocopy exit code: $robocopyExitCode"
           
           # Robocopy returns 0-7 for success, 8+ for errors
           if ($robocopyExitCode -ge 8) {
             Write-Warning "Robocopy returned exit code $robocopyExitCode, trying PowerShell Copy-Item..."
             # Fallback to PowerShell Copy-Item
-            Copy-Item -Path $npmBrowsersPath -Destination $expectedBrowsersPath -Recurse -Force
+            Copy-Item -Path $npmBrowsersPath -Destination $expectedBrowsersPath -Recurse -Force -ErrorAction Stop
+            Write-Host "PowerShell Copy-Item completed"
           }
           
           # Verify the copy was successful
+          Write-Host "Verifying copied files..."
+          Write-Host "Expected browsers path: $expectedBrowsersPath"
+          if (Test-Path $expectedBrowsersPath) {
+            Write-Host "✓ .playwright directory exists"
+            Write-Host "Contents:"
+            Get-ChildItem -Path $expectedBrowsersPath -Directory | Select-Object Name | Format-Table
+          } else {
+            Write-Error ".playwright directory was not created"
+            exit 1
+          }
+          
           $nodeExe = Join-Path $expectedBrowsersPath "node" "win32_x64" "node.exe"
+          Write-Host "Looking for node.exe at: $nodeExe"
+          
           if (Test-Path $nodeExe) {
             Write-Host "✓ Playwright browsers copied successfully to: $expectedBrowsersPath"
             Write-Host "✓ Node.exe found at: $nodeExe"
           } else {
-            Write-Error "Failed to copy Playwright browsers. Node.exe not found at: $nodeExe"
-            Write-Host "Checking npm location contents:"
-            Get-ChildItem -Path $npmBrowsersPath -Recurse -Filter "node.exe" | Select-Object FullName
-            exit 1
+            Write-Warning "Node.exe not found at expected path. Searching in copied location..."
+            $foundNodeExe = Get-ChildItem -Path $expectedBrowsersPath -Recurse -Filter "node.exe" | Select-Object -First 1
+            if ($foundNodeExe) {
+              Write-Host "Found node.exe at: $($foundNodeExe.FullName)"
+              Write-Host "Creating expected directory structure..."
+              $expectedNodeDir = Join-Path $expectedBrowsersPath "node" "win32_x64"
+              New-Item -ItemType Directory -Path $expectedNodeDir -Force | Out-Null
+              Copy-Item -Path $foundNodeExe.FullName -Destination $nodeExe -Force
+              Write-Host "✓ Created node.exe at expected location"
+            } else {
+              Write-Error "Failed to find node.exe anywhere in copied location"
+              Write-Host "Full directory tree:"
+              Get-ChildItem -Path $expectedBrowsersPath -Recurse | Select-Object FullName | Select-Object -First 20
+              exit 1
+            }
           }
           
           # Set environment variable (though .NET package should find it in the expected location)
