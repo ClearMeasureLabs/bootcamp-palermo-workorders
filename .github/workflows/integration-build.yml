@@ -1,22 +1,11 @@
 name: Integration Build
 
 on:
-  push:
-    branches: ['*']
   pull_request:
-    branches: ['*']
+    branches:
+      - master
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
-    inputs:
-      deploy_to_uat:
-        description: 'Deploy to UAT environment'
-        required: false
-        default: false
-        type: boolean
-      deploy_to_prod:
-        description: 'Deploy to Production environment'
-        required: false
-        default: false
-        type: boolean
 
 env:
   MAJOR_VERSION: 1
@@ -25,6 +14,7 @@ env:
 jobs:
   build-linux:
     name: Build and Test on Linux
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.head.ref, 'feature/')
     runs-on: ubuntu-latest
     permissions:
       contents: read
