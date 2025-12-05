@@ -23,66 +23,66 @@ env:
   MINOR_VERSION: 3
   RELEASE_VERSION: 588
 jobs:
-  # build-linux:
-  #   name: Build and Test on Linux
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #   env:
-  #     BUILD_CONFIGURATION: Release
+  build-linux:
+    name: Build and Test on Linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      BUILD_CONFIGURATION: Release
     
-  #   steps:
-  #     # Checkout code
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     # Install .NET SDK 10.0.100
-  #     - name: Setup .NET SDK 10.0.100
-  #       uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: '10.0.100'
+      # Install .NET SDK 10.0.100
+      - name: Setup .NET SDK 10.0.100
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.100'
 
-  #     # Install .NET SDK 6.0 (required by Octopus CLI tool - includes runtime)
-  #     - name: Setup .NET SDK 6.0
-  #       uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: '6.0.x'
+      # Install .NET SDK 6.0 (required by Octopus CLI tool - includes runtime)
+      - name: Setup .NET SDK 6.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
 
-  #     # Verify .NET 6.0 runtime is available (required by dotnet-octo tool)
-  #     - name: Verify .NET 6.0 runtime
-  #       run: |
-  #         echo "Installed runtimes:"
-  #         dotnet --list-runtimes
-  #         echo ""
-  #         echo "Checking for .NET 6.0 runtime:"
-  #         if dotnet --list-runtimes | grep -q "Microsoft.NETCore.App 6.0"; then
-  #           echo "✓ .NET 6.0 runtime is available"
-  #         else
-  #           echo "✗ .NET 6.0 runtime not found - attempting to install runtime explicitly"
-  #           # Try installing runtime explicitly if SDK installation didn't include it
-  #           curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --runtime dotnet --version 6.0.0
-  #           export PATH="$HOME/.dotnet:$PATH"
-  #           dotnet --list-runtimes
-  #         fi
+      # Verify .NET 6.0 runtime is available (required by dotnet-octo tool)
+      - name: Verify .NET 6.0 runtime
+        run: |
+          echo "Installed runtimes:"
+          dotnet --list-runtimes
+          echo ""
+          echo "Checking for .NET 6.0 runtime:"
+          if dotnet --list-runtimes | grep -q "Microsoft.NETCore.App 6.0"; then
+            echo "✓ .NET 6.0 runtime is available"
+          else
+            echo "✗ .NET 6.0 runtime not found - attempting to install runtime explicitly"
+            # Try installing runtime explicitly if SDK installation didn't include it
+            curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --runtime dotnet --version 6.0.0
+            export PATH="$HOME/.dotnet:$PATH"
+            dotnet --list-runtimes
+          fi
 
-  #     # Set version environment variable
-  #     - name: Set Version
-  #       run: |
-  #         version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-  #         echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-  #         echo "VERSION=$version" >> $GITHUB_ENV
-  #         echo "Build version: $version"
+      # Set version environment variable
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Build version: $version"
 
-  #     - name: Run CI Build 
-  #       shell: pwsh
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         GITHUB_REPOSITORY: ${{ github.repository }}
-  #         BUILD_BUILDNUMBER: ${{ env.VERSION }}
-  #       run: |
-  #         . ./build.ps1
-  #         Invoke-CIBuild
+      - name: Run CI Build 
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+        run: |
+          . ./build.ps1
+          Invoke-CIBuild
 
   #     # Publish test results
   #     - name: Test Reporter
@@ -102,14 +102,14 @@ jobs:
   #         flags: unittests-linux
   #         name: codecov-linux
 
-  #     # Upload test results as artifacts
-  #     - name: Upload Test Results
-  #       uses: actions/upload-artifact@v4
-  #       if: always()
-  #       with:
-  #         name: test-results-linux
-  #         path: build/test/**/*.trx
-  #         retention-days: 30
+      # Upload test results as artifacts
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-linux
+          path: build/test/**/*.trx
+          retention-days: 30
 
   #     # Upload code coverage as artifacts
   #     - name: Upload Code Coverage
@@ -178,113 +178,113 @@ jobs:
   #           fi
   #         done
 
-  #     # Publish packages to Octopus Deploy built-in feed
-  #     - name: Publish Packages to Octopus Deploy
-  #       shell: pwsh
-  #       if: false
-  #       env:
-  #         OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-  #         OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-  #         OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-  #         BUILD_BUILDNUMBER: ${{ env.VERSION }}
-  #       run: |
-  #         $ErrorActionPreference = "Stop"
+      # Publish packages to Octopus Deploy built-in feed
+      # - name: Publish Packages to Octopus Deploy
+      #   shell: pwsh
+      #   if: false
+      #   env:
+      #     OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+      #     OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+      #     OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+      #     BUILD_BUILDNUMBER: ${{ env.VERSION }}
+      #   run: |
+      #     $ErrorActionPreference = "Stop"
           
-  #         $octopusUrl = $env:OCTOPUS_URL
-  #         $octopusApiKey = $env:OCTOPUS_API_KEY
-  #         $octopusSpace = $env:OCTOPUS_SPACE
-  #         $version = $env:BUILD_BUILDNUMBER
+      #     $octopusUrl = $env:OCTOPUS_URL
+      #     $octopusApiKey = $env:OCTOPUS_API_KEY
+      #     $octopusSpace = $env:OCTOPUS_SPACE
+      #     $version = $env:BUILD_BUILDNUMBER
           
-  #         if ([string]::IsNullOrWhiteSpace($octopusUrl)) {
-  #           Write-Warning "OCTOPUS_URL not set. Skipping Octopus package publishing."
-  #           exit 0
-  #         }
+      #     if ([string]::IsNullOrWhiteSpace($octopusUrl)) {
+      #       Write-Warning "OCTOPUS_URL not set. Skipping Octopus package publishing."
+      #       exit 0
+      #     }
           
-  #         if ([string]::IsNullOrWhiteSpace($octopusApiKey)) {
-  #           Write-Warning "OCTOPUS_API_KEY not set. Skipping Octopus package publishing."
-  #           exit 0
-  #         }
+      #     if ([string]::IsNullOrWhiteSpace($octopusApiKey)) {
+      #       Write-Warning "OCTOPUS_API_KEY not set. Skipping Octopus package publishing."
+      #       exit 0
+      #     }
           
-  #         Write-Host "Publishing packages to Octopus Deploy: $octopusUrl"
-  #         Write-Host "Package version: $version"
+      #     Write-Host "Publishing packages to Octopus Deploy: $octopusUrl"
+      #     Write-Host "Package version: $version"
           
-  #         if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
-  #           Write-Host "Octopus Space: $octopusSpace"
-  #         }
+      #     if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
+      #       Write-Host "Octopus Space: $octopusSpace"
+      #     }
           
-  #         # Ensure dotnet-octo tool is available
-  #         Write-Host "Checking for dotnet-octo tool..."
-  #         $octoTool = Get-Command dotnet-octo -ErrorAction SilentlyContinue
-  #         if (-not $octoTool) {
-  #           Write-Host "Installing dotnet-octo tool..."
-  #           dotnet tool install --global Octopus.DotNet.Cli
-  #         }
+      #     # Ensure dotnet-octo tool is available
+      #     Write-Host "Checking for dotnet-octo tool..."
+      #     $octoTool = Get-Command dotnet-octo -ErrorAction SilentlyContinue
+      #     if (-not $octoTool) {
+      #       Write-Host "Installing dotnet-octo tool..."
+      #       dotnet tool install --global Octopus.DotNet.Cli
+      #     }
           
-  #         # Ensure dotnet tools are in PATH
-  #         $dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
-  #         $pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
-  #         $dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
-  #         if (-not $dotnetToolsPathPresent) {
-  #           $env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
-  #           Write-Host "Added dotnet tools to PATH: $dotnetToolsPath"
-  #         }
+      #     # Ensure dotnet tools are in PATH
+      #     $dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
+      #     $pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
+      #     $dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
+      #     if (-not $dotnetToolsPathPresent) {
+      #       $env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
+      #       Write-Host "Added dotnet tools to PATH: $dotnetToolsPath"
+      #     }
           
-  #         # Find all .nupkg files in the build directory
-  #         $packageFiles = Get-ChildItem -Path "./build" -Filter "*.nupkg" -ErrorAction SilentlyContinue
+      #     # Find all .nupkg files in the build directory
+      #     $packageFiles = Get-ChildItem -Path "./build" -Filter "*.nupkg" -ErrorAction SilentlyContinue
           
-  #         if (-not $packageFiles -or $packageFiles.Count -eq 0) {
-  #           Write-Warning "No packages found in ./build directory"
-  #           exit 0
-  #         }
+      #     if (-not $packageFiles -or $packageFiles.Count -eq 0) {
+      #       Write-Warning "No packages found in ./build directory"
+      #       exit 0
+      #     }
           
-  #         Write-Host "Found $($packageFiles.Count) package(s) to publish to Octopus Deploy:"
-  #         foreach ($packageFile in $packageFiles) {
-  #           Write-Host "  - $($packageFile.Name)"
-  #         }
+      #     Write-Host "Found $($packageFiles.Count) package(s) to publish to Octopus Deploy:"
+      #     foreach ($packageFile in $packageFiles) {
+      #       Write-Host "  - $($packageFile.Name)"
+      #     }
           
-  #         # Publish each package
-  #         $publishedCount = 0
-  #         $failedCount = 0
+      #     # Publish each package
+      #     $publishedCount = 0
+      #     $failedCount = 0
           
-  #         foreach ($packageFile in $packageFiles) {
-  #           $packageName = $packageFile.Name
-  #           Write-Host ""
-  #           Write-Host "Publishing $packageName to Octopus Deploy..."
+      #     foreach ($packageFile in $packageFiles) {
+      #       $packageName = $packageFile.Name
+      #       Write-Host ""
+      #       Write-Host "Publishing $packageName to Octopus Deploy..."
             
-  #           try {
-  #             $pushArgs = @(
-  #               "push",
-  #               "--package", $packageFile.FullName,
-  #               "--server", $octopusUrl,
-  #               "--apiKey", $octopusApiKey
-  #             )
+      #       try {
+      #         $pushArgs = @(
+      #           "push",
+      #           "--package", $packageFile.FullName,
+      #           "--server", $octopusUrl,
+      #           "--apiKey", $octopusApiKey
+      #         )
               
-  #             if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
-  #               $pushArgs += "--space"
-  #               $pushArgs += $octopusSpace
-  #             }
+      #         if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
+      #           $pushArgs += "--space"
+      #           $pushArgs += $octopusSpace
+      #         }
               
-  #             & dotnet-octo $pushArgs
+      #         & dotnet-octo $pushArgs
               
-  #             if ($LASTEXITCODE -eq 0) {
-  #               Write-Host "✅ Successfully published $packageName to Octopus Deploy" -ForegroundColor Green
-  #               $publishedCount++
-  #             } else {
-  #               Write-Warning "Failed to publish $packageName (exit code: $LASTEXITCODE)"
-  #               $failedCount++
-  #             }
-  #           } catch {
-  #             Write-Warning "Error publishing $packageName : $_"
-  #             $failedCount++
-  #           }
-  #         }
+      #         if ($LASTEXITCODE -eq 0) {
+      #           Write-Host "✅ Successfully published $packageName to Octopus Deploy" -ForegroundColor Green
+      #           $publishedCount++
+      #         } else {
+      #           Write-Warning "Failed to publish $packageName (exit code: $LASTEXITCODE)"
+      #           $failedCount++
+      #         }
+      #       } catch {
+      #         Write-Warning "Error publishing $packageName : $_"
+      #         $failedCount++
+      #       }
+      #     }
           
-  #         Write-Host ""
-  #         Write-Host "Octopus package publishing summary: $publishedCount published, $failedCount failed"
+      #     Write-Host ""
+      #     Write-Host "Octopus package publishing summary: $publishedCount published, $failedCount failed"
           
-  #         if ($failedCount -gt 0) {
-  #           Write-Warning "Some packages failed to publish to Octopus Deploy."
-  #         }
+      #     if ($failedCount -gt 0) {
+      #       Write-Warning "Some packages failed to publish to Octopus Deploy."
+      #     }
 
   # docker-build-image-for-churchbulletin-ui:
   #   name: Create and push Docker image for ChurchBulletin.UI
@@ -442,21 +442,21 @@ jobs:
           "VERSION=$version" >> $env:GITHUB_ENV
           Write-Host "Build version: $version"
 
-      - name: Create Octopus Release
-        id: create-octopus-release
-        uses: OctopusDeploy/create-release-action@v3
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          BUILD_BUILDNUMBER: ${{ env.VERSION }}
-        with:
-          project: '${{ vars.OCTOPUS_PROJECT }}'
-          release_number: "${{ env.VERSION }}"
-          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
-          git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
+      # - name: Create Octopus Release
+      #   id: create-octopus-release
+      #   uses: OctopusDeploy/create-release-action@v3
+      #   env:
+      #     OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+      #     OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+      #     OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     GITHUB_REPOSITORY: ${{ github.repository }}
+      #     BUILD_BUILDNUMBER: ${{ env.VERSION }}
+      #   with:
+      #     project: '${{ vars.OCTOPUS_PROJECT }}'
+      #     release_number: "${{ env.VERSION }}"
+      #     git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
+      #     git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
 
       # - name: Deploy Octopus Release to TDD
       #   id: start-deploy-to-tdd
@@ -520,26 +520,29 @@ jobs:
         with:
           name: churchbulletin-nuget-packages
           path: ./packages  
-      - name: Extract and Configure Acceptance Tests
-        if: success()
-        shell: pwsh
-        run: |
-          Write-Host "Extracting package..."
-          Expand-Archive -Path "./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg" -DestinationPath "./acceptance-tests-package" -Force
 
-          # Find the test DLL - NuGet packages may extract to different structures
-          $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
-            Where-Object { $_.Name -notlike "*TestAdapter*" -and $_.Name -notlike "*TestHost*" } | 
-            Select-Object -First 1
+      # - name: Extract and Configure Acceptance Tests
+      #   if: success()
+      #   shell: pwsh
+      #   run: |
+      #     Write-Host "Extracting package..."
+      #     Expand-Archive -Path "./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg" -DestinationPath "./acceptance-tests-package" -Force
 
-          if (-not $testDll) {
-            Write-Warning "Test DLL not found. Listing all DLLs:"
-            Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.dll" | Select-Object FullName
-            Write-Error "Could not find AcceptanceTests DLL in extracted package"
-            exit 1
-          }
+      #     # Find the test DLL - NuGet packages may extract to different structures
+      #     $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
+      #       Where-Object { $_.Name -notlike "*TestAdapter*" -and $_.Name -notlike "*TestHost*" } | 
+      #       Select-Object -First 1
 
-          Write-Host "Found test DLL: $($testDll.FullName)"
+      #     if (-not $testDll) {
+      #       Write-Warning "Test DLL not found. Listing all DLLs:"
+      #       Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.dll" | Select-Object FullName
+      #       Write-Error "Could not find AcceptanceTests DLL in extracted package"
+      #       exit 1
+      #     }
+
+      #     Write-Host "Found test DLL: $($testDll.FullName)"
+
+
       - name: Install Playwright browsers and driver
         shell: pwsh
         run: |
