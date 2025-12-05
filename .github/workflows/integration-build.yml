@@ -541,22 +541,26 @@ jobs:
           }
 
           Write-Host "Found test DLL: $($testDll.FullName)"
-          
-          # Store the test DLL path for the next step
-          $testDllPath = $testDll.FullName
-          Write-Host "TEST_DLL_PATH=$testDllPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Run acceptance tests
         shell: pwsh
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
         run: |
-          $testDllPath = $env:TEST_DLL_PATH
+          # Find the test DLL - NuGet packages may extract to different structures
+          $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
+            Where-Object { $_.Name -notlike "*TestAdapter*" -and $_.Name -notlike "*TestHost*" } | 
+            Select-Object -First 1
           
-          if ([string]::IsNullOrWhiteSpace($testDllPath) -or -not (Test-Path $testDllPath)) {
-            Write-Error "Test DLL not found at: $testDllPath"
+          if (-not $testDll) {
+            Write-Warning "Test DLL not found. Listing all DLLs:"
+            Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.dll" | Select-Object FullName
+            Write-Error "Could not find AcceptanceTests DLL in extracted package"
             exit 1
           }
+          
+          $testDllPath = $testDll.FullName
+          Write-Host "Found test DLL: $testDllPath"
           
           Write-Host "Running acceptance tests from: $testDllPath"
           Write-Host "ApplicationBaseUrl: $env:ApplicationBaseUrl"
@@ -590,7 +594,7 @@ jobs:
 
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@v4
-        if: always()
+        if: success()
         with:
           name: acceptance-test-results-tdd
           path: TestResults/**/*.trx
