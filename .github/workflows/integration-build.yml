@@ -544,28 +544,42 @@ jobs:
       - name: Install Playwright Browsers
         shell: pwsh
         run: |
-          # Find the playwright.ps1 script in the extracted package
-          $playwrightScript = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "playwright.ps1" | Select-Object -First 1
-          
-          if (-not $playwrightScript) {
-            Write-Warning "playwright.ps1 not found. Listing all files:"
-            Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.ps1" | Select-Object FullName
-            Write-Error "Could not find playwright.ps1 in extracted package"
-            exit 1
-          }
-          
-          Write-Host "Found Playwright script: $($playwrightScript.FullName)"
           Write-Host "Installing Playwright browsers..."
           
-          # Run the Playwright install script
-          & pwsh $playwrightScript.FullName install --with-deps
+          # Install Playwright CLI tool
+          Write-Host "Installing Microsoft.Playwright.CLI tool..."
+          dotnet tool install -g Microsoft.Playwright.CLI --version 1.54.0
+          
+          # Add dotnet tools to PATH
+          $dotnetToolsPath = Join-Path $env:USERPROFILE ".dotnet" "tools"
+          if ($env:PATH -notlike "*$dotnetToolsPath*") {
+            $env:PATH = "$dotnetToolsPath;$env:PATH"
+          }
+          
+          # Verify playwright command is available
+          $playwrightCmd = Get-Command playwright -ErrorAction SilentlyContinue
+          if (-not $playwrightCmd) {
+            Write-Host "playwright command not found in PATH. Current PATH: $env:PATH"
+            # Try to find it directly
+            $playwrightExe = Join-Path $dotnetToolsPath "playwright.exe"
+            if (Test-Path $playwrightExe) {
+              Write-Host "Found playwright.exe at: $playwrightExe"
+              & $playwrightExe install --with-deps
+            } else {
+              Write-Error "Could not find playwright executable"
+              exit 1
+            }
+          } else {
+            Write-Host "Found playwright command: $($playwrightCmd.Source)"
+            playwright install --with-deps
+          }
           
           if ($LASTEXITCODE -ne 0) {
             Write-Error "Failed to install Playwright browsers (exit code: $LASTEXITCODE)"
             exit $LASTEXITCODE
           }
           
-          Write-Host "Playwright browsers installed successfully"
+          Write-Host "✓ Playwright browsers installed successfully"
       - name: Run acceptance tests
         shell: pwsh
         env:
