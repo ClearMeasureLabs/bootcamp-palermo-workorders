@@ -302,10 +302,10 @@ Function Publish-ToGitHubPackages {
 		& dotnet nuget add source $githubFeed --name $sourceName --username $owner --password $githubToken --store-password-in-clear-text
 	}
 	
-	# Push using the configured source
+	# Push using the configured source with API key
 	Log-Message -Message "Pushing package to GitHub Packages..." -Type "INFO"
 	exec {
-		& dotnet nuget push $packageFile.FullName --source $sourceName --skip-duplicate
+		& dotnet nuget push $packageFile.FullName --source $sourceName --api-key $githubToken --skip-duplicate
 	}
 	
 	Log-Message -Message "Successfully published $($packageFile.Name) to GitHub Packages" -Type "INFO"
