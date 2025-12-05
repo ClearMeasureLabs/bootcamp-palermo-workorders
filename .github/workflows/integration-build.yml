@@ -542,7 +542,7 @@ jobs:
 
           Write-Host "Found test DLL: $($testDll.FullName)"
       - name: Run acceptance tests
-        uses: josepho0918/vstest-action@v1.0.0
+        uses: josepho0918/vstest-action@main
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
