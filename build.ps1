@@ -266,6 +266,14 @@ Function Publish-ToGitHubPackages {
 		throw "GITHUB_TOKEN environment variable is required for publishing to GitHub Packages"
 	}
 	
+	# Verify token is not empty (but don't log the actual token)
+	if ($githubToken.Length -lt 10) {
+		Log-Message -Message "GITHUB_TOKEN appears to be invalid (too short)." -Type "ERROR"
+		throw "GITHUB_TOKEN appears to be invalid"
+	}
+	
+	Log-Message -Message "GITHUB_TOKEN found (length: $($githubToken.Length))" -Type "INFO"
+	
 	$githubRepo = $env:GITHUB_REPOSITORY
 	if ([string]::IsNullOrEmpty($githubRepo)) {
 		Log-Message -Message "GITHUB_REPOSITORY not found. Cannot determine GitHub Packages feed." -Type "ERROR"
@@ -285,8 +293,8 @@ Function Publish-ToGitHubPackages {
 	Log-Message -Message "Feed: $githubFeed" -Type "INFO"
 	Log-Message -Message "Owner: $owner" -Type "INFO"
 	
-	# GitHub Packages requires username/password authentication, not API key
-	# Configure the source with authentication first
+	# GitHub Packages authentication: use username (owner) and token as password
+	# Configure source first, then push
 	$sourceName = "GitHub-$owner"
 	
 	# Remove existing source if it exists
@@ -302,9 +310,12 @@ Function Publish-ToGitHubPackages {
 		& dotnet nuget add source $githubFeed --name $sourceName --username $owner --password $githubToken --store-password-in-clear-text
 	}
 	
-	# Push using the configured source with API key
+	# Push using the source with explicit API key (credentials stored with source, but API key ensures authentication)
 	Log-Message -Message "Pushing package to GitHub Packages..." -Type "INFO"
+	Log-Message -Message "Feed: $githubFeed" -Type "INFO"
+	Log-Message -Message "Owner: $owner" -Type "INFO"
 	exec {
+		# Try with source name first (uses stored credentials)
 		& dotnet nuget push $packageFile.FullName --source $sourceName --api-key $githubToken --skip-duplicate
 	}
 	
