@@ -429,6 +429,12 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Setup .NET SDK 10.0.100
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.100'
+      
       - name: Set Version
         shell: pwsh
         run: |
@@ -535,18 +541,52 @@ jobs:
           }
 
           Write-Host "Found test DLL: $($testDll.FullName)"
+          
+          # Store the test DLL path for the next step
+          $testDllPath = $testDll.FullName
+          Write-Host "TEST_DLL_PATH=$testDllPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Run acceptance tests
+        shell: pwsh
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
-        uses: microsoft/vstest-action@v1.0.0
-        with:
-          testAssembly: |
-            **\*AcceptanceTests.dll
-            !**\*TestAdapter.dll
-            !**\obj\**
-          searchFolder: ./acceptance-tests-package/
-          runInParallel: false
+        run: |
+          $testDllPath = $env:TEST_DLL_PATH
+          
+          if ([string]::IsNullOrWhiteSpace($testDllPath) -or -not (Test-Path $testDllPath)) {
+            Write-Error "Test DLL not found at: $testDllPath"
+            exit 1
+          }
+          
+          Write-Host "Running acceptance tests from: $testDllPath"
+          Write-Host "ApplicationBaseUrl: $env:ApplicationBaseUrl"
+          Write-Host "ConnectionStrings__SqlConnectionString: $([string]::IsNullOrWhiteSpace($env:ConnectionStrings__SqlConnectionString))"
+          
+          # Get the directory containing the test DLL (for dependency resolution)
+          $testDllDir = Split-Path -Parent $testDllPath
+          $testDllName = Split-Path -Leaf $testDllPath
+          
+          # Create results directory
+          $resultsDir = Join-Path $PWD "TestResults"
+          New-Item -ItemType Directory -Path $resultsDir -Force | Out-Null
+          
+          # Run tests using dotnet vstest (designed for pre-built test DLLs)
+          # Run from the DLL's directory to ensure dependencies are found
+          Push-Location $testDllDir
+          try {
+            dotnet vstest $testDllName `
+              --logger:trx;LogFileName=AcceptanceTests.trx `
+              --ResultsDirectory:$resultsDir `
+              --Parallel
+              
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Acceptance tests failed with exit code: $LASTEXITCODE"
+              exit $LASTEXITCODE
+            }
+          }
+          finally {
+            Pop-Location
+          }
 
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@v4
