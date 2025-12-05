@@ -142,7 +142,7 @@ jobs:
 
       # Publish packages to GitHub Packages
       - name: Publish Packages to GitHub Packages
-        if: success()
+        if: false
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
