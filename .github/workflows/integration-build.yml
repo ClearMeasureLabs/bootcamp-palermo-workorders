@@ -518,8 +518,8 @@ jobs:
             -o tsv
           Write-Host "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append
   
-      - name: Configure Acceptance Tests
-        if: false
+      - name: Extract and Configure Acceptance Tests
+        if: success()
         shell: pwsh
         run: |
           Expand-Archive -Path "./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg" -DestinationPath "./acceptance-tests-package" -Force
@@ -531,26 +531,6 @@ jobs:
           }
           
           Write-Host "Found package directory: $($packageDir.FullName)"
-          
-          # Create appsettings.acceptancetests.json with the container app URL and connection string
-          $appSettingsFile = Join-Path $packageDir.FullName "appsettings.acceptancetests.json"
-          
-          # Use container app connection string from environment variable
-          $appSettings = @{
-            ConnectionStrings = @{
-              SqlConnectionString = "${{ env.CONTAINER_APP_CONNECTION_STRING }}"
-            }
-            ApplicationBaseUrl = "${{ env.CONTAINER_APP_URL }}"
-            StartLocalServer = "false"
-            SkipScreenshotsForSpeed = "true"
-            SlowMo = "100"
-          } | ConvertTo-Json -Depth 10
-          
-          Set-Content -Path $appSettingsFile -Value $appSettings
-          
-          Write-Host "Created appsettings file at: $appSettingsFile"
-          Write-Host "ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}"
-          Get-Content $appSettingsFile
 
       - name: Run acceptance tests
         env:
