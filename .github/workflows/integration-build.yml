@@ -574,10 +574,11 @@ jobs:
           # Now run the acceptance tests
           Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
 
+          # Re-set environment variables after build.ps1 cleared them
+          $env:ConnectionStrings__SqlConnectionString = "${{ env.CONTAINER_APP_CONNECTION_STRING }}"
+          $env:ApplicationBaseUrl = "${{ env.CONTAINER_APP_URL }}"
+          $env:StartLocalServer = "false"
           dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true --nologo `
-            --environment ConnectionStrings__SqlConnectionString=${{ env.CONTAINER_APP_CONNECTION_STRING }} `
-            --environment ApplicationBaseUrl=${{ env.ApplicationBaseUrl }} `
-            --environment StartLocalServer=${{ env.StartLocalServer }} `
             --no-restore --logger:trx --results-directory $resultsDirectory --no-build `
             -v $verbosity --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath `
             --collect:"XPlat Code Coverage"
