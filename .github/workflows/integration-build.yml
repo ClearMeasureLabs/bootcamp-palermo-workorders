@@ -541,104 +541,28 @@ jobs:
           }
 
           Write-Host "Found test DLL: $($testDll.FullName)"
-      - name: Install Playwright Browsers
-        shell: pwsh
-        run: |
-          Write-Host "Installing Playwright browsers..."
-          
-          # Install Playwright CLI tool
-          Write-Host "Installing Microsoft.Playwright.CLI tool..."
-          dotnet tool install -g Microsoft.Playwright.CLI --version 1.54.0
-          
-          # Add dotnet tools to PATH
-          $dotnetToolsPath = Join-Path $env:USERPROFILE ".dotnet" "tools"
-          if ($env:PATH -notlike "*$dotnetToolsPath*") {
-            $env:PATH = "$dotnetToolsPath;$env:PATH"
-          }
-          
-          # Verify playwright command is available
-          $playwrightCmd = Get-Command playwright -ErrorAction SilentlyContinue
-          if (-not $playwrightCmd) {
-            Write-Host "playwright command not found in PATH. Current PATH: $env:PATH"
-            # Try to find it directly
-            $playwrightExe = Join-Path $dotnetToolsPath "playwright.exe"
-            if (Test-Path $playwrightExe) {
-              Write-Host "Found playwright.exe at: $playwrightExe"
-              & $playwrightExe install --with-deps
-            } else {
-              Write-Error "Could not find playwright executable"
-              exit 1
-            }
-          } else {
-            Write-Host "Found playwright command: $($playwrightCmd.Source)"
-            playwright install --with-deps
-          }
-          
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "Failed to install Playwright browsers (exit code: $LASTEXITCODE)"
-            exit $LASTEXITCODE
-          }
-          
-          Write-Host "✓ Playwright browsers installed successfully"
       - name: Run acceptance tests
-        shell: pwsh
+        uses: josepho0918/vstest-action@v1.0.0
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
           StartLocalServer: "false"
-        run: |
-          # Find the test DLL - NuGet packages may extract to different structures
-          $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
-            Where-Object { $_.Name -notlike "*TestAdapter*" -and $_.Name -notlike "*TestHost*" } | 
-            Select-Object -First 1
-          
-          if (-not $testDll) {
-            Write-Warning "Test DLL not found. Listing all DLLs:"
-            Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.dll" | Select-Object FullName
-            Write-Error "Could not find AcceptanceTests DLL in extracted package"
-            exit 1
-          }
-          
-          $testDllPath = $testDll.FullName
-          Write-Host "Found test DLL: $testDllPath"
-          
-          Write-Host "Running acceptance tests from: $testDllPath"
-          Write-Host "ApplicationBaseUrl: $env:ApplicationBaseUrl"
-          Write-Host "ConnectionStrings__SqlConnectionString: $([string]::IsNullOrWhiteSpace($env:ConnectionStrings__SqlConnectionString))"
-          
-          # Get the directory containing the test DLL (for dependency resolution)
-          $testDllDir = Split-Path -Parent $testDllPath
-          $testDllName = Split-Path -Leaf $testDllPath
-          
-          # Create results directory
-          $resultsDir = Join-Path $PWD "TestResults"
-          New-Item -ItemType Directory -Path $resultsDir -Force | Out-Null
-          
-          # Run tests using dotnet vstest (designed for pre-built test DLLs)
-          # Run from the DLL's directory to ensure dependencies are found
-          Push-Location $testDllDir
-          try {
-            dotnet vstest $testDllName `
-              --logger:trx;LogFileName=AcceptanceTests.trx `
-              --ResultsDirectory:$resultsDir `
-              --Parallel
-              
-            if ($LASTEXITCODE -ne 0) {
-              Write-Error "Acceptance tests failed with exit code: $LASTEXITCODE"
-              exit $LASTEXITCODE
-            }
-          }
-          finally {
-            Pop-Location
-          }
+        with:
+          testAssembly: |
+            **\*AcceptanceTests.dll
+            !**\*TestAdapter.dll
+            !**\obj\**
+          searchFolder: ./acceptance-tests-package/
+          runInParallel: true
 
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
         with:
           name: acceptance-test-results-tdd
           path: TestResults/**/*.trx
-          retention-days: 30
+          retention-days: 30 
+
 
   deploy-to-uat:
     name: UAT
