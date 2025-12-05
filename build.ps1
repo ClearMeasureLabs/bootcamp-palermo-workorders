@@ -326,43 +326,25 @@ Function PackageUI {
 	$packageName = "$projectName.UI.$version.nupkg"
 	$packagePath = Join-Path $build_dir $packageName
 
-	Log-Message -Message "Packaging UI project into NuGet package: $packageName" -Type "INFO"
 	exec {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
 	}
 	
-	Log-Message -Message "Creating Octopus package: $packageName" -Type "INFO"
 	exec {
 		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 	
-	if (Test-Path $packagePath) {
-		$packageSize = (Get-Item $packagePath).Length / 1MB
-		Log-Message -Message "Created package: $packageName ($([math]::Round($packageSize, 2)) MB)" -Type "INFO"
-	}
-	
-	# Log package creation (publishing handled separately)
-	if (Test-IsGitHubActions) {
-		Publish-ToGitHubPackages -packageId "$projectName.UI"
-	}
-	elseif (Test-IsAzureDevOps) {
-		# Azure DevOps pipeline handles publishing via separate task
-		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
-	}
 }
 
 Function PackageDatabase {    
 	exec {
+		& dotnet publish $databaseProjectPath -nologo --no-restore -v $verbosity --configuration Debug
+	}
+	exec {
 		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
 	}
 	
-	# Log package creation (publishing handled separately)
-	if (Test-IsGitHubActions) {
-		Publish-ToGitHubPackages -packageId "$projectName.Database"
-	}
-	elseif (Test-IsAzureDevOps) {
-		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
-	}
+
 }
 
 Function PackageAcceptanceTests {  
@@ -374,13 +356,7 @@ Function PackageAcceptanceTests {
 		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
 	}
 	
-	# Log package creation (publishing handled separately)
-	if (Test-IsGitHubActions) {
-		Publish-ToGitHubPackages -packageId "$projectName.AcceptanceTests"
-	}
-	elseif (Test-IsAzureDevOps) {
-		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
-	}
+	
 }
 
 Function PackageScript {    
@@ -389,15 +365,8 @@ Function PackageScript {
 	}
 	exec {
 		& dotnet-octo pack --id "$projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
-	}
-	
-	# Log package creation (publishing handled separately)
-	if (Test-IsGitHubActions) {
-		Publish-ToGitHubPackages -packageId "$projectName.Script"
-	}
-	elseif (Test-IsAzureDevOps) {
-		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
-	}
+	}	
+
 }
 
 
