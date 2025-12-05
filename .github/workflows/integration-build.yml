@@ -557,8 +557,16 @@ jobs:
           Write-Host "Playwright browsers and driver installed successfully"
       - name: Run acceptance tests
         shell: pwsh
+        env:
+          ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
+          ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
+          StartLocalServer: "false"
         run: |
           Write-Host "Running acceptance tests..."
+          Write-Host "ApplicationBaseUrl: $env:ApplicationBaseUrl"
+          Write-Host "ConnectionStrings__SqlConnectionString: $([string]::IsNullOrWhiteSpace($env:ConnectionStrings__SqlConnectionString))"
+          Write-Host "StartLocalServer: $env:StartLocalServer"
+          
           # Find the test DLL
           $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
             Where-Object { $_.Name -notlike "*TestAdapter*" -and $_.Name -notlike "*TestHost*" } | 
@@ -569,7 +577,7 @@ jobs:
             exit 1
           }
 
-          dotnet test $($testDll.FullName) /Parallel `
+          dotnet test $($testDll.FullName) `
             /Logger:trx;LogFileName=AcceptanceTests-TDD.trx `
             /ResultsDirectory:./TestResults `
             /Parallel
