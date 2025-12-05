@@ -546,6 +546,7 @@ jobs:
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
+          StartLocalServer: "false"
         run: |
           # Find the test DLL - NuGet packages may extract to different structures
           $testDll = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*AcceptanceTests*.dll" | 
