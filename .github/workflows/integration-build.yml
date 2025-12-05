@@ -549,7 +549,9 @@ jobs:
             Write-Error "Failed to install Microsoft.Playwright.CLI"
             exit $LASTEXITCODE
           }
-          Microsoft.Playwright.CLI install --with-deps
+          
+          # Use dotnet tool run to execute the tool (it's not in PATH by default)
+          playwright install --with-deps
           if ($LASTEXITCODE -ne 0) {
             Write-Error "Failed to install Playwright browsers and driver"
             exit $LASTEXITCODE
