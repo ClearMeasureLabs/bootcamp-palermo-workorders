@@ -544,10 +544,14 @@ jobs:
       - name: Install Playwright Browsers
         shell: pwsh
         run: |
-          Write-Host "Installing Playwright browsers using npm..."
+          Write-Host "Installing Playwright browsers..."
           
-          # Install Playwright via npm (this is the most reliable method)
-          # The .NET Playwright package will use browsers installed by npm
+          # The .NET Playwright package looks for browsers in .playwright directory in the workspace root
+          $expectedBrowsersPath = Join-Path $env:GITHUB_WORKSPACE ".playwright"
+          Write-Host "Expected browsers path: $expectedBrowsersPath"
+          
+          # Install Playwright via npm (installs to default location)
+          Write-Host "Installing Playwright npm package..."
           npm install -g playwright@1.54.0
           
           if ($LASTEXITCODE -ne 0) {
@@ -555,8 +559,8 @@ jobs:
             exit $LASTEXITCODE
           }
           
-          # Install browsers and system dependencies
-          Write-Host "Installing Playwright browsers and system dependencies..."
+          # Install browsers (npm installs to LOCALAPPDATA\ms-playwright by default)
+          Write-Host "Installing Playwright browsers..."
           playwright install --with-deps
           
           if ($LASTEXITCODE -ne 0) {
@@ -564,17 +568,49 @@ jobs:
             exit $LASTEXITCODE
           }
           
-          Write-Host "✓ Playwright browsers installed successfully"
+          # npm installs to LOCALAPPDATA\ms-playwright, but .NET package expects .playwright in workspace
+          # Create a symlink/junction from expected location to actual location
+          $npmBrowsersPath = Join-Path $env:LOCALAPPDATA "ms-playwright"
+          Write-Host "npm browsers path: $npmBrowsersPath"
+          Write-Host "Creating junction from expected path to npm path..."
           
-          # Verify installation
-          Write-Host "Verifying Playwright installation..."
-          playwright --version
+          # Remove existing .playwright if it exists
+          if (Test-Path $expectedBrowsersPath) {
+            Remove-Item -Path $expectedBrowsersPath -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          
+          # Create parent directory if needed
+          $parentDir = Split-Path -Parent $expectedBrowsersPath
+          if (-not (Test-Path $parentDir)) {
+            New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+          }
+          
+          # Create junction (Windows directory symlink)
+          cmd /c mklink /J "$expectedBrowsersPath" "$npmBrowsersPath" 2>&1 | Write-Host
+          
+          # Verify the junction was created
+          if (Test-Path $expectedBrowsersPath) {
+            Write-Host "✓ Junction created successfully"
+            $nodeExe = Join-Path $expectedBrowsersPath "node" "win32_x64" "node.exe"
+            if (Test-Path $nodeExe) {
+              Write-Host "✓ Playwright browsers are accessible at expected location"
+            } else {
+              Write-Warning "Node.exe not found at expected path, but junction exists"
+            }
+          } else {
+            Write-Warning "Junction creation may have failed, but continuing..."
+          }
+          
+          # Set environment variable (though .NET package should find it via the junction)
+          $env:PLAYWRIGHT_BROWSERS_PATH = $expectedBrowsersPath
+          "PLAYWRIGHT_BROWSERS_PATH=$expectedBrowsersPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Run acceptance tests
         uses: josepho0918/vstest-action@main
         env:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
           StartLocalServer: "false"
+          PLAYWRIGHT_BROWSERS_PATH: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
         with:
           testAssembly: |
             **\*AcceptanceTests.dll
