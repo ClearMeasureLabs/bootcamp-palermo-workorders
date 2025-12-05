@@ -529,7 +529,7 @@ jobs:
 
         run: |
          
-          $verbosity = "minimal"
+          $verbosity = "normal"
           $base_dir = resolve-path .\
           $source_dir = Join-Path $base_dir "src"
           $test_dir = Join-Path (Join-Path $base_dir "build") "test"
@@ -542,16 +542,8 @@ jobs:
 
           # Now run the acceptance tests
           Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
-          & dotnet test $acceptanceTestProject `
-              /p:CopyLocalLockFileAssemblies=true ` 
-              /p:CollectCoverage=true `
-              -nologo `
-              -v $verbosity `
-              --logger:trx `
-              --results-directory $resultsDirectory `
-              --configuration ${{ env.BuildConfiguration }} `
-              --settings:$runSettingsPath `
-              --collect:"XPlat Code Coverage"
+          & dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx --results-directory $resultsDirectory --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath --collect:"XPlat Code Coverage"
+
 
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@v4
