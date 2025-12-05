@@ -449,7 +449,7 @@ jobs:
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
         with:
           project: '${{ vars.OCTOPUS_PROJECT }}'
-          release_number: "${{ env.BUILD_BUILDNUMBER }}"
+          release_number: "${{ env.VERSION }}"
           git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
           git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
 
@@ -460,9 +460,10 @@ jobs:
           OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
           OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
           OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
         with:
           project: ${{ vars.OCTOPUS_PROJECT }}   
-          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          release_number: ${{ env.VERSION }}
           environments: "TDD"
 
       - name: Wait for the TDD deployment to complete
