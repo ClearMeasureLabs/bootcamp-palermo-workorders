@@ -181,7 +181,7 @@ jobs:
       # Publish packages to Octopus Deploy built-in feed
       - name: Publish Packages to Octopus Deploy
         shell: pwsh
-        if: success()
+        if: false
         env:
           OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
           OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
@@ -430,7 +430,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
-      
       - name: Setup .NET SDK 10.0.100
         uses: actions/setup-dotnet@v5
         with:
@@ -716,22 +715,25 @@ jobs:
           # Find runsettings file if it exists
           $runSettingsFile = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.runsettings" | Select-Object -First 1
           
-          # Build VSTest command
+          # Build VSTest command arguments
+          # Don't quote paths in the array - PowerShell will handle quoting automatically
           $vstestArgs = @(
-            "`"$($testDll.FullName)`"",
+            $testDll.FullName,
             "/Logger:trx;LogFileName=AcceptanceTests.trx",
-            "/ResultsDirectory:`"$resultsDir`"",
+            "/ResultsDirectory:$resultsDir",
             "/Parallel"
           )
           
           if ($runSettingsFile) {
-            $vstestArgs += "/Settings:`"$($runSettingsFile.FullName)`""
+            $vstestArgs += "/Settings:$($runSettingsFile.FullName)"
             Write-Host "Using runsettings: $($runSettingsFile.FullName)"
           }
           
-          Write-Host "Running VSTest with arguments: $($vstestArgs -join ' ')"
+          Write-Host "Running VSTest command:"
+          Write-Host "  Executable: $vsTestPath"
+          Write-Host "  Arguments: $($vstestArgs -join ' ')"
           
-          # Execute VSTest
+          # Execute VSTest - PowerShell will automatically quote paths with spaces
           & "$vsTestPath" $vstestArgs
           
           if ($LASTEXITCODE -ne 0) {
