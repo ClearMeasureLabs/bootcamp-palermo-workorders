@@ -529,25 +529,17 @@ jobs:
           BuildConfiguration: Release
 
         run: |
-          Push-Location -Path ./src/
+         
+          . ./build.ps1
+
+          dotnet build src/ChurchBulletin.sln --configuration Release
           
-          Write-Host "Running acceptance tests on TDD at ${{ env.CONTAINER_APP_URL }}"
-
-          try {
-            . ./build.ps1
-
-            dotnet build ChurchBulletin.sln --configuration Release
-            
-            # Restore and build acceptance tests to ensure Playwright is ready
-            dotnet restore AcceptanceTests/AcceptanceTests.csproj
-            dotnet build AcceptanceTests/AcceptanceTests.csproj --configuration Release
-            
-            # Now run the acceptance tests
-            AcceptanceTests
-
-          } finally {
-             Pop-Location
-          }
+          # Restore and build acceptance tests to ensure Playwright is ready
+          dotnet restore src/AcceptanceTests/AcceptanceTests.csproj
+          dotnet build src/AcceptanceTests/AcceptanceTests.csproj --configuration Release
+          
+          # Now run the acceptance tests
+          AcceptanceTests
 
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@v4
