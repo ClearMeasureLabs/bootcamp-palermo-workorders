@@ -541,6 +541,34 @@ jobs:
           }
 
           Write-Host "Found test DLL: $($testDll.FullName)"
+      - name: Install Playwright Browsers
+        shell: pwsh
+        run: |
+          Write-Host "Installing Playwright browsers using npm..."
+          
+          # Install Playwright via npm (this is the most reliable method)
+          # The .NET Playwright package will use browsers installed by npm
+          npm install -g playwright@1.54.0
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to install Playwright npm package (exit code: $LASTEXITCODE)"
+            exit $LASTEXITCODE
+          }
+          
+          # Install browsers and system dependencies
+          Write-Host "Installing Playwright browsers and system dependencies..."
+          playwright install --with-deps
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to install Playwright browsers (exit code: $LASTEXITCODE)"
+            exit $LASTEXITCODE
+          }
+          
+          Write-Host "✓ Playwright browsers installed successfully"
+          
+          # Verify installation
+          Write-Host "Verifying Playwright installation..."
+          playwright --version
       - name: Run acceptance tests
         uses: josepho0918/vstest-action@main
         env:
