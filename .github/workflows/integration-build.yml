@@ -566,9 +566,16 @@ jobs:
 
           Write-Host "Installing Playwright browsers from $playwrightScript"
           & pwsh $playwrightScript install --with-deps
+          
+          
+          
           # Now run the acceptance tests
           Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
+
           dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true --nologo `
+            --environment ConnectionStrings__SqlConnectionString=${{ env.CONTAINER_APP_CONNECTION_STRING }} `
+            --environment ApplicationBaseUrl=${{ env.ApplicationBaseUrl }} `
+            --environment StartLocalServer=${{ env.StartLocalServer }} `
             --no-restore --logger:trx --results-directory $resultsDirectory --no-build `
             -v $verbosity --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath `
             --collect:"XPlat Code Coverage"
