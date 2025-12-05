@@ -541,6 +541,31 @@ jobs:
           }
 
           Write-Host "Found test DLL: $($testDll.FullName)"
+      - name: Install Playwright Browsers
+        shell: pwsh
+        run: |
+          # Find the playwright.ps1 script in the extracted package
+          $playwrightScript = Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "playwright.ps1" | Select-Object -First 1
+          
+          if (-not $playwrightScript) {
+            Write-Warning "playwright.ps1 not found. Listing all files:"
+            Get-ChildItem -Path ./acceptance-tests-package -Recurse -Filter "*.ps1" | Select-Object FullName
+            Write-Error "Could not find playwright.ps1 in extracted package"
+            exit 1
+          }
+          
+          Write-Host "Found Playwright script: $($playwrightScript.FullName)"
+          Write-Host "Installing Playwright browsers..."
+          
+          # Run the Playwright install script
+          & pwsh $playwrightScript.FullName install --with-deps
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to install Playwright browsers (exit code: $LASTEXITCODE)"
+            exit $LASTEXITCODE
+          }
+          
+          Write-Host "Playwright browsers installed successfully"
       - name: Run acceptance tests
         shell: pwsh
         env:
