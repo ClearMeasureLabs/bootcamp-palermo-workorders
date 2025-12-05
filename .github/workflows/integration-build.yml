@@ -547,7 +547,10 @@ jobs:
 
           # Now run the acceptance tests
           Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
-          dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true --nologo --no-build --no-restor -v $verbosity --logger:trx --results-directory $resultsDirectory --no-build --no-restore --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath --collect:"XPlat Code Coverage"
+          dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true --nologo `
+            --no-restore --logger:trx --results-directory $resultsDirectory --no-build `
+            -v $verbosity --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath `
+            --collect:"XPlat Code Coverage"
 
 
       - name: Upload Acceptance Test Results
