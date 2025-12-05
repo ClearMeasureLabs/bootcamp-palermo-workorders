@@ -532,25 +532,32 @@ jobs:
         run: |
          
           $verbosity = "minimal"
+          $base_dir = resolve-path .\
+          $source_dir = Join-Path $base_dir "src"
+          $test_dir = Join-Path (Join-Path $base_dir "build") "test"
+          $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
+          $acceptanceTestProject = Join-Path $acceptanceTestProjectPath "AcceptanceTests.csproj"
+          $runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
+          $resultsDirectory = Join-Path $test_dir "AcceptanceTests"
 
-          dotnet build src/ChurchBulletin.sln --configuration Release
+          dotnet build src/ChurchBulletin.sln --configuration ${{ env.BuildConfiguration }}
           
           # Restore and build acceptance tests to ensure Playwright is ready
           dotnet restore src/AcceptanceTests/AcceptanceTests.csproj
-          dotnet build src/AcceptanceTests/AcceptanceTests.csproj --configuration Release
+          dotnet build src/AcceptanceTests/AcceptanceTests.csproj --configuration ${{env.BuildConfiguration}}
           
-          $base_dir = resolve-path .\
-          $source_dir = Join-Path $base_dir "src"
-          $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
-          $runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
-          $resultsDirectory = Join-Path $base_dir "build/test/AcceptanceTests"
-          $test_dir = Join-Path (Join-Path $base_dir "build") "test"
-
           # Now run the acceptance tests
-          Write-Host "Running acceptance tests on TDD at ${{ env.CONTAINER_APP_URL }}, settings file: $runSettingsPath"
-          & dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-              --results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
-              --no-restore --configuration ${{ env.BuildConfiguration }} `
+          Write-Host "Running acceptance tests on TDD at ${{ env.APPLICATION_BASE_URL }}, settings file: $runSettingsPath"
+          & dotnet test $acceptanceTestProject `
+              /p:CopyLocalLockFileAssemblies=true ` 
+              /p:CollectCoverage=true `
+              -nologo `
+              -v $verbosity `
+              --logger:trx `
+              --results-directory $resultsDirectory `
+              --no-build `
+              --no-restore `
+              --configuration ${{ env.BuildConfiguration }} `
               --settings:$runSettingsPath `
               --collect:"XPlat Code Coverage"
 
