@@ -423,18 +423,19 @@ jobs:
     name: TDD
     needs: [docker-build-image-for-churchbulletin-ui]
     if: success()
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     environment:
       name: TDD
     
     steps:
       - uses: actions/checkout@v4
       - name: Set Version
+        shell: pwsh
         run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"      
+          $version = "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          Write-Host "BUILD_BUILDNUMBER=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Build version: $version"
 
       - name: Create Octopus Release
         id: create-octopus-release
@@ -492,10 +493,6 @@ jobs:
           name: churchbulletin-nuget-packages
           path: ./packages
 
-      - name: Extract Acceptance Tests Package
-        run: |
-          unzip -o ./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg -d ./acceptance-tests-package
-
 
       - name: Login to Azure
         uses: azure/login@v1
@@ -503,66 +500,66 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
   
       - name: Get Container App FQDN and Connection String
+        shell: pwsh
         run: |
-          CONTAINER_APP_FQDN=$(az containerapp show \
-            --name ui-gh \
-            --resource-group bootcamp-tdd \
-            --query properties.configuration.ingress.fqdn \
-            -o tsv)
+          $containerAppFqdn = az containerapp show `
+            --name ui-gh `
+            --resource-group bootcamp-tdd `
+            --query properties.configuration.ingress.fqdn `
+            -o tsv
           
-          if [ -z "$CONTAINER_APP_FQDN" ]; then
-            echo "Error: Could not retrieve container app FQDN"
+          if ([string]::IsNullOrWhiteSpace($containerAppFqdn)) {
+            Write-Error "Error: Could not retrieve container app FQDN"
             exit 1
-          fi
+          }
           
-          CONTAINER_APP_URL="https://$CONTAINER_APP_FQDN"
-          echo "Container App FQDN: $CONTAINER_APP_FQDN"
-          echo "Container App URL: $CONTAINER_APP_URL"
-          echo "CONTAINER_APP_URL=$CONTAINER_APP_URL" >> $GITHUB_ENV
-          echo "ApplicationBaseUrl=$CONTAINER_APP_URL" >> $GITHUB_ENV
+          $containerAppUrl = "https://$containerAppFqdn"
+          Write-Host "Container App FQDN: $containerAppFqdn"
+          Write-Host "Container App URL: $containerAppUrl"
+          Write-Host "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "ApplicationBaseUrl=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append
           
           # Get the connection string from container app environment variables
-          CONTAINER_APP_CONNECTION_STRING=$(az containerapp show \
-            --name ui-gh \
-            --resource-group bootcamp-tdd \
-            --query "properties.template.containers[0].env[?name=='ConnectionStrings__SqlConnectionString'].value" \
-            -o tsv)
-          echo "CONTAINER_APP_CONNECTION_STRING=$CONTAINER_APP_CONNECTION_STRING" >> $GITHUB_ENV
+          $containerAppConnectionString = az containerapp show `
+            --name ui-gh `
+            --resource-group bootcamp-tdd `
+            --query "properties.template.containers[0].env[?name=='ConnectionStrings__SqlConnectionString'].value" `
+            -o tsv
+          Write-Host "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append
   
       - name: Configure Acceptance Tests
         if: false
+        shell: pwsh
         run: |
-          # Find the extracted package directory
-          PACKAGE_DIR=$(find ./acceptance-tests-package -type d -name "ChurchBulletin.AcceptanceTests*" | head -n 1)
-          if [ -z "$PACKAGE_DIR" ]; then
-            echo "Error: Could not find extracted package directory"
-            ls -la ./acceptance-tests-package/
+          Expand-Archive -Path "./packages/ChurchBulletin.AcceptanceTests.${{ env.BUILD_BUILDNUMBER }}.nupkg" -DestinationPath "./acceptance-tests-package" -Force
+          $packageDir = Get-ChildItem -Path ./acceptance-tests-package -Directory -Filter "ChurchBulletin.AcceptanceTests*" | Select-Object -First 1
+          if (-not $packageDir) {
+            Write-Error "Error: Could not find extracted package directory"
+            Get-ChildItem -Path ./acceptance-tests-package
             exit 1
-          fi
+          }
           
-          echo "Found package directory: $PACKAGE_DIR"
+          Write-Host "Found package directory: $($packageDir.FullName)"
           
           # Create appsettings.acceptancetests.json with the container app URL and connection string
-          APP_SETTINGS_FILE="$PACKAGE_DIR/appsettings.acceptancetests.json"
+          $appSettingsFile = Join-Path $packageDir.FullName "appsettings.acceptancetests.json"
           
-          # Use container app connection string from environment variable if available, otherwise use default
-          # The connection string is set in the previous step via GITHUB_ENV
+          # Use container app connection string from environment variable
+          $appSettings = @{
+            ConnectionStrings = @{
+              SqlConnectionString = "${{ env.CONTAINER_APP_CONNECTION_STRING }}"
+            }
+            ApplicationBaseUrl = "${{ env.CONTAINER_APP_URL }}"
+            StartLocalServer = "false"
+            SkipScreenshotsForSpeed = "true"
+            SlowMo = "100"
+          } | ConvertTo-Json -Depth 10
           
-          cat > "$APP_SETTINGS_FILE" << EOF
-          {
-            "ConnectionStrings": {
-              "SqlConnectionString": "${{ env.CONTAINER_APP_CONNECTION_STRING }}"
-            },
-            "ApplicationBaseUrl": "${{ env.CONTAINER_APP_URL }}",
-            "StartLocalServer": "false",
-            "SkipScreenshotsForSpeed": "true",
-            "SlowMo": "100"
-          }
-          EOF
+          Set-Content -Path $appSettingsFile -Value $appSettings
           
-          echo "Created appsettings file at: $APP_SETTINGS_FILE"
-          echo "ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}"
-          cat "$APP_SETTINGS_FILE"
+          Write-Host "Created appsettings file at: $appSettingsFile"
+          Write-Host "ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}"
+          Get-Content $appSettingsFile
 
       - name: Run acceptance tests
         env:
