@@ -569,39 +569,48 @@ jobs:
           }
           
           # npm installs to LOCALAPPDATA\ms-playwright, but .NET package expects .playwright in workspace
-          # Create a symlink/junction from expected location to actual location
+          # Copy browsers from npm location to expected location
           $npmBrowsersPath = Join-Path $env:LOCALAPPDATA "ms-playwright"
           Write-Host "npm browsers path: $npmBrowsersPath"
-          Write-Host "Creating junction from expected path to npm path..."
+          
+          if (-not (Test-Path $npmBrowsersPath)) {
+            Write-Error "Playwright browsers not found at npm location: $npmBrowsersPath"
+            exit 1
+          }
+          
+          Write-Host "Copying browsers from npm location to expected location..."
           
           # Remove existing .playwright if it exists
           if (Test-Path $expectedBrowsersPath) {
             Remove-Item -Path $expectedBrowsersPath -Recurse -Force -ErrorAction SilentlyContinue
           }
           
-          # Create parent directory if needed
-          $parentDir = Split-Path -Parent $expectedBrowsersPath
-          if (-not (Test-Path $parentDir)) {
-            New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+          # Copy the entire ms-playwright directory to .playwright
+          # Use robocopy for reliable copying on Windows
+          $robocopyExitCode = 0
+          robocopy "$npmBrowsersPath" "$expectedBrowsersPath" /E /NFL /NDL /NJH /NJS 2>&1 | Out-Null
+          $robocopyExitCode = $LASTEXITCODE
+          
+          # Robocopy returns 0-7 for success, 8+ for errors
+          if ($robocopyExitCode -ge 8) {
+            Write-Warning "Robocopy returned exit code $robocopyExitCode, trying PowerShell Copy-Item..."
+            # Fallback to PowerShell Copy-Item
+            Copy-Item -Path $npmBrowsersPath -Destination $expectedBrowsersPath -Recurse -Force
           }
           
-          # Create junction (Windows directory symlink)
-          cmd /c mklink /J "$expectedBrowsersPath" "$npmBrowsersPath" 2>&1 | Write-Host
-          
-          # Verify the junction was created
-          if (Test-Path $expectedBrowsersPath) {
-            Write-Host "✓ Junction created successfully"
-            $nodeExe = Join-Path $expectedBrowsersPath "node" "win32_x64" "node.exe"
-            if (Test-Path $nodeExe) {
-              Write-Host "✓ Playwright browsers are accessible at expected location"
-            } else {
-              Write-Warning "Node.exe not found at expected path, but junction exists"
-            }
+          # Verify the copy was successful
+          $nodeExe = Join-Path $expectedBrowsersPath "node" "win32_x64" "node.exe"
+          if (Test-Path $nodeExe) {
+            Write-Host "✓ Playwright browsers copied successfully to: $expectedBrowsersPath"
+            Write-Host "✓ Node.exe found at: $nodeExe"
           } else {
-            Write-Warning "Junction creation may have failed, but continuing..."
+            Write-Error "Failed to copy Playwright browsers. Node.exe not found at: $nodeExe"
+            Write-Host "Checking npm location contents:"
+            Get-ChildItem -Path $npmBrowsersPath -Recurse -Filter "node.exe" | Select-Object FullName
+            exit 1
           }
           
-          # Set environment variable (though .NET package should find it via the junction)
+          # Set environment variable (though .NET package should find it in the expected location)
           $env:PLAYWRIGHT_BROWSERS_PATH = $expectedBrowsersPath
           "PLAYWRIGHT_BROWSERS_PATH=$expectedBrowsersPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Run acceptance tests
