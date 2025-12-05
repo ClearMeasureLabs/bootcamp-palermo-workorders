@@ -495,7 +495,7 @@ jobs:
         run: |
           CONTAINER_APP_FQDN=$(az containerapp show \
             --name ui-gh \
-            --resource-group ${{ env.ResourceGroupName }} \
+            --resource-group bootcamp-tdd \
             --query properties.configuration.ingress.fqdn \
             -o tsv)
           
@@ -513,7 +513,7 @@ jobs:
           # Get the connection string from container app environment variables
           CONTAINER_APP_CONNECTION_STRING=$(az containerapp show \
             --name ui-gh \
-            --resource-group ${{ env.ResourceGroupName }} \
+            --resource-group bootcamp-tdd \
             --query "properties.template.containers[0].env[?name=='ConnectionStrings__SqlConnectionString'].value" \
             -o tsv)
   
