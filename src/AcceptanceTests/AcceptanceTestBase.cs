@@ -140,6 +140,7 @@ public abstract class AcceptanceTestBase : PageTest
         await locator.FillAsync(value ?? "");
         await locator.BlurAsync();
         await Task.Delay(500);
+        await Expect(locator).ToHaveValueAsync(value ?? "");
     }
 
     protected async Task Select(string elementTestId, string? value)
