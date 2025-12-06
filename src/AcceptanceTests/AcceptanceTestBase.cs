@@ -140,8 +140,21 @@ public abstract class AcceptanceTestBase : PageTest
         await locator.ClearAsync();
         await locator.FillAsync(value ?? "");
         await locator.BlurAsync();
-        await Task.Delay(2250);
+        
+        var delayMs = GetInputDelayMs();
+        await Task.Delay(delayMs);
+        
         await Expect(locator).ToHaveValueAsync(value ?? "");
+    }
+
+    private int GetInputDelayMs()
+    {
+        var envValue = Environment.GetEnvironmentVariable("TEST_INPUT_DELAY_MS");
+        if (int.TryParse(envValue, out var delay))
+        {
+            return delay;
+        }
+        return 100; // Default to 100ms for local performance
     }
 
     protected async Task Select(string elementTestId, string? value)
