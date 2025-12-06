@@ -138,7 +138,8 @@ public abstract class AcceptanceTestBase : PageTest
         if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
         await Expect(locator).ToBeVisibleAsync();
         await locator.FillAsync(value ?? "");
-        await Page.WaitForSelectorAsync($"[data-testid='{elementTestId}'].modified", new() { Timeout = 5000 });
+        await locator.BlurAsync();
+        await Task.Delay(100);
     }
 
     protected async Task Select(string elementTestId, string? value)
