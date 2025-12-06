@@ -137,6 +137,7 @@ public abstract class AcceptanceTestBase : PageTest
         if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
         if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
         await Expect(locator).ToBeVisibleAsync();
+        await locator.ClearAsync();
         await locator.FillAsync(value ?? "");
         await locator.BlurAsync();
         await Task.Delay(2250);
