@@ -568,7 +568,7 @@ jobs:
           $env:ConnectionStrings__SqlConnectionString = "${{ env.CONTAINER_APP_CONNECTION_STRING }}"
           $env:ApplicationBaseUrl = "${{ env.CONTAINER_APP_URL }}"
           $env:StartLocalServer = "false"
-          $env:TEST_INPUT_DELAY_MS = "2000"
+          $env:TEST_INPUT_DELAY_MS = "1000"
           dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true --nologo `
             --no-restore --logger:trx --results-directory $resultsDirectory --no-build `
             -v $verbosity --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath `
@@ -586,7 +586,6 @@ jobs:
   deploy-to-uat:
     name: UAT
     needs: [deploy-to-tdd]
-    if: success() 
     runs-on: ubuntu-latest
     environment:
       name: UAT
@@ -625,7 +624,6 @@ jobs:
   deploy-to-prod:
     name: Prod
     needs: [deploy-to-uat]
-    if: success() 
     runs-on: ubuntu-latest
     environment:
       name: Prod
