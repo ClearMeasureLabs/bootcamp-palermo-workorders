@@ -253,6 +253,7 @@ public abstract class AcceptanceTestBase : PageTest
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs()); // Give time for the save operation to complete on Azure
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         return rehyratedOrder;
     }
