@@ -17,8 +17,10 @@ public class WorkOrderShelveTests : AcceptanceTestBase
         order = await ClickWorkOrderNumberFromSearchPage(order);
         order.Title = "Title from automation";
         order.Description = "Description";
+        order.Instructions = "Follow safety procedures";
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
