@@ -20,8 +20,7 @@ jobs:
     name: Build and Test on Linux
     if: 
       github.event_name == 'workflow_dispatch' || 
-      (github.event_name == 'pull_request' && startsWith(github.event.pull_request.head.ref, 'feature/')) ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'copilot/'))
+      (github.event_name == 'pull_request' && startsWith(github.event.pull_request.head.ref, 'feature/'))
     concurrency:
       group: build-linux
       cancel-in-progress: false
