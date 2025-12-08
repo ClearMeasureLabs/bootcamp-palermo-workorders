@@ -30,7 +30,8 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             return -1;
         }
 
-        return ExecuteInternal(context, options, cancellationToken);
+        var scriptDir = GetScriptDirectory(options);
+        return !Path.Exists(scriptDir) ? Fail($"Could not find script directory {scriptDir}") : ExecuteInternal(context, options, cancellationToken);
     }
 
     // ReSharper disable UnusedParameter.Global
@@ -51,7 +52,6 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
                             serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
 
 
-        AnsiConsole.MarkupLine($"[dim]Detected server '{serverName}': isLocalServer={isLocalServer}[/]");
 
         // Format DataSource to use TCP on port 1433 for non-LocalDB connections
         // This forces TCP instead of Named Pipes
@@ -84,16 +84,12 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             // Local servers: don't encrypt, trust certificate
             builder.Encrypt = false;
             builder.TrustServerCertificate = true;
-            AnsiConsole.MarkupLine(
-                $"[dim]Detected local server '{serverName}': Encrypt=False, TrustServerCertificate=True[/]");
         }
         else
         {
             // Remote servers or Azure SQL Database: encrypt, don't trust certificate (require proper validation)
             builder.Encrypt = true;
             builder.TrustServerCertificate = false;
-            AnsiConsole.MarkupLine(
-                $"[dim]Detected remote server '{serverName}': Encrypt=True, TrustServerCertificate=False[/]");
         }
 
         if (string.IsNullOrWhiteSpace(options.DatabaseUser))
@@ -114,15 +110,6 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             builder.UserID = options.DatabaseUser;
             builder.Password = options.DatabasePassword;
         }
-
-
-        // Log connection string for debugging (password redacted)
-        var logBuilder = new SqlConnectionStringBuilder(builder.ToString())
-        {
-            Password = "******"
-        };
-        AnsiConsole.MarkupLine($"[dim]Connection String: {logBuilder.ToString().EscapeMarkup()}[/]");
-
         return builder.ToString();
     }
 

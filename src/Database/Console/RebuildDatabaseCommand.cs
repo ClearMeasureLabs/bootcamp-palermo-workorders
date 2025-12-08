@@ -17,6 +17,7 @@ public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
     {
         var scriptDir = GetScriptDirectory(options);
+        
         var connectionString = GetConnectionString(options);
 
         // 1) RunOnce scripts: Create + Update (journaled)
