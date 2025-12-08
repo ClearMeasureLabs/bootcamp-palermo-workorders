@@ -16,6 +16,6 @@ public class LandingPageTests : AcceptanceTestBase
         var quoteText = await Page.Locator(".church-footer p").InnerTextAsync();
 
         // Assert
-        quoteText.ShouldBe("\"The foolish man who built his house upon the sand\" - Matthew 7:26");
+        quoteText.ShouldBe("\"Hic sumus ad nostram communitatem adiuvandam... et ne scamna diruantur.\" - Springfield Church Manual");
     }
 }
