@@ -3,6 +3,8 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 [TestFixture]
 public class LandingPageTests : AcceptanceTestBase
 {
+    protected override bool LoadDataOnSetup => false;
+
     [Test]
     public async Task Should_DisplayNewInspirationalQuote_OnLandingPage()
     {
