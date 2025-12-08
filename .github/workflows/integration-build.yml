@@ -5,6 +5,10 @@ on:
     branches:
       - master
     types: [opened, synchronize, reopened, ready_for_review]
+  workflow_run:
+    workflows: ["Claude Code", "Claude Code Review"]
+    types:
+      - completed
   workflow_dispatch:
 
 env:
@@ -16,8 +20,8 @@ jobs:
     name: Build and Test on Linux
     if: 
       github.event_name == 'workflow_dispatch' || 
-      startsWith(github.event.pull_request.head.ref, 'feature/') ||
-      startsWith(github.event.pull_request.head.ref, 'copilot/')
+      (github.event_name == 'pull_request' && startsWith(github.event.pull_request.head.ref, 'feature/')) ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'copilot/'))
     concurrency:
       group: build-linux
       cancel-in-progress: false
@@ -32,6 +36,8 @@ jobs:
       # Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || github.sha }}
 
       # Install .NET SDK 10.0.100
       - name: Setup .NET SDK 10.0.100
@@ -452,8 +458,8 @@ jobs:
         with:
           project: '${{ vars.OCTOPUS_PROJECT }}'
           release_number: "${{ env.VERSION }}"
-          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
-          git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
+          git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || github.event.workflow_run.head_branch || (github.head_ref || github.ref) }}
+          git_commit: ${{ github.event.after || github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
 
       - name: Deploy Octopus Release to TDD
         id: start-deploy-to-tdd
