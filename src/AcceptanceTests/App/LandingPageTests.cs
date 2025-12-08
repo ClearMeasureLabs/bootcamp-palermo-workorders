@@ -16,6 +16,6 @@ public class LandingPageTests : AcceptanceTestBase
         var quoteText = await Page.Locator(".church-footer p").InnerTextAsync();
 
         // Assert
-        quoteText.ShouldBe("\"The foolish man who built his house upon the sand\" - Matthew7:26");
+        quoteText.ShouldBe("\"The foolish man who built his house upon the sand\" - Matthew 7:26");
     }
 }
