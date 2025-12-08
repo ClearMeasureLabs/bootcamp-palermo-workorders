@@ -16,6 +16,6 @@ public class LandingPageTests : AcceptanceTestBase
         var quoteText = await Page.Locator(".church-footer p").InnerTextAsync();
 
         // Assert
-        quoteText.ShouldBe("\"Et omnis qui audit verba mea haec et non facit ea similis erit viro stulto qui aedificavit domum suam supra harenam.\" - Matthew7:26");
+        quoteText.ShouldBe("\"Et omnis qui audit verba mea haec et non facit ea similis erit viro stulto qui aedificavit domum suam supra harenam.\" - Matthew 7:26");
     }
 }
