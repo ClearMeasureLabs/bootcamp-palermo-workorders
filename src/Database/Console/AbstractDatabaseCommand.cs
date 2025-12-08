@@ -35,7 +35,8 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
     }
 
     // ReSharper disable UnusedParameter.Global
-    protected abstract int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken);
+    protected abstract int ExecuteInternal(CommandContext context, DatabaseOptions options,
+        CancellationToken cancellationToken);
     // ReSharper restore UnusedParameter.Global
 
     protected static string GetConnectionString(DatabaseOptions options)
@@ -43,23 +44,22 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         // Determine if this is a local server (localhost, 127.0.0.1, or LocalDB)
         var serverName = (options.DatabaseServer ?? string.Empty).Trim();
         var isLocalServer = serverName.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
+                            serverName.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+                            serverName.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
+                            serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
+                            serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase) ||
+                            serverName.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+                            serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
 
 
+        AnsiConsole.MarkupLine($"[dim]Detected server '{serverName}': isLocalServer={isLocalServer}[/]");
 
-        AnsiConsole.MarkupLine($"[dim]Detected server '{serverName}': isLocalServer={isLocalServer}[/]");   
-        
         // Format DataSource to use TCP on port 1433 for non-LocalDB connections
         // This forces TCP instead of Named Pipes
         var dataSource = options.DatabaseServer ?? string.Empty;
         var isLocalDb = serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
-                       serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase);
-        
+                        serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase);
+
         if (!isLocalDb)
         {
             // For non-LocalDB servers, ensure TCP port 1433 is specified
@@ -70,12 +70,12 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
                 dataSource = $"{dataSource},1433";
             }
         }
-        
+
         var builder = new SqlConnectionStringBuilder
         {
             DataSource = dataSource,
             InitialCatalog = options.DatabaseName,
-            ConnectTimeout = 60 
+            ConnectTimeout = 60
         };
 
         // Configure encryption and certificate trust based on server location
@@ -85,14 +85,16 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             // Local servers: don't encrypt, trust certificate
             builder.Encrypt = false;
             builder.TrustServerCertificate = true;
-            AnsiConsole.MarkupLine($"[dim]Detected local server '{serverName}': Encrypt=False, TrustServerCertificate=True[/]");
+            AnsiConsole.MarkupLine(
+                $"[dim]Detected local server '{serverName}': Encrypt=False, TrustServerCertificate=True[/]");
         }
         else
         {
             // Remote servers or Azure SQL Database: encrypt, don't trust certificate (require proper validation)
             builder.Encrypt = true;
             builder.TrustServerCertificate = false;
-            AnsiConsole.MarkupLine($"[dim]Detected remote server '{serverName}': Encrypt=True, TrustServerCertificate=False[/]");
+            AnsiConsole.MarkupLine(
+                $"[dim]Detected remote server '{serverName}': Encrypt=True, TrustServerCertificate=False[/]");
         }
 
         if (string.IsNullOrWhiteSpace(options.DatabaseUser))
@@ -105,14 +107,14 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             // Use SQL Server Authentication
             if (string.IsNullOrWhiteSpace(options.DatabasePassword))
             {
-                throw new ArgumentException("DatabasePassword is required when DatabaseUser is provided", "DatabasePassword");
+                throw new ArgumentException("DatabasePassword is required when DatabaseUser is provided",
+                    "DatabasePassword");
             }
-            
+
             builder.IntegratedSecurity = false;
             builder.UserID = options.DatabaseUser;
             builder.Password = options.DatabasePassword;
         }
-
 
 
         // Log connection string for debugging (password redacted)
@@ -141,5 +143,32 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
         AnsiConsole.MarkupLine(
             $"[green]{assemblyName} performing {Action} on database {options.DatabaseServer} {options.DatabaseName}. Script directory {GetScriptDirectory(options)} {userInfo}[/]");
+    }
+
+    protected static string GetMasterConnectionString(DatabaseOptions options)
+    {
+        var builder = new SqlConnectionStringBuilder
+        {
+            DataSource = options.DatabaseServer,
+            InitialCatalog = "master",
+            TrustServerCertificate = true,
+            Encrypt = false,
+            ConnectTimeout = 60
+        };
+
+        if (string.IsNullOrWhiteSpace(options.DatabaseUser))
+        {
+            // Use Windows Integrated Security
+            builder.IntegratedSecurity = true;
+        }
+        else
+        {
+            // Use SQL Server Authentication
+            builder.IntegratedSecurity = false;
+            builder.UserID = options.DatabaseUser;
+            builder.Password = options.DatabasePassword;
+        }
+
+        return builder.ToString();
     }
 }

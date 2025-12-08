@@ -59,32 +59,5 @@ public class DropDatabaseCommand() : AbstractDatabaseCommand("Drop")
             return Fail($"Failed to drop database '{databaseName}': {ex.Message}");
         }
     }
-    
-    private static string GetMasterConnectionString(DatabaseOptions options)
-    {
-        var builder = new SqlConnectionStringBuilder
-        {
-            DataSource = options.DatabaseServer,
-            InitialCatalog = "master",
-            TrustServerCertificate = true,
-            Encrypt = false,
-            ConnectTimeout = 60
-        };
-
-        if (string.IsNullOrWhiteSpace(options.DatabaseUser))
-        {
-            // Use Windows Integrated Security
-            builder.IntegratedSecurity = true;
-        }
-        else
-        {
-            // Use SQL Server Authentication
-            builder.IntegratedSecurity = false;
-            builder.UserID = options.DatabaseUser;
-            builder.Password = options.DatabasePassword;
-        }
-
-        return builder.ToString();
-    }
 }
 
