@@ -19,7 +19,6 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
     public override int Execute(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
     {
-        ShowOptionsOnConsole(options);
         var connectionString = GetConnectionString(options);
         try
         {
