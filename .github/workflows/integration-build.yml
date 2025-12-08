@@ -14,7 +14,13 @@ env:
 jobs:
   build-linux:
     name: Build and Test on Linux
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.head.ref, 'feature/') || startsWith(github.event.pull_request.head.ref, 'copilot/')
+    if: 
+      github.event_name == 'workflow_dispatch' || 
+      startsWith(github.event.pull_request.head.ref, 'feature/') ||
+      startsWith(github.event.pull_request.head.ref, 'copilot/')
+    concurrency:
+      group: build-linux
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       contents: read
