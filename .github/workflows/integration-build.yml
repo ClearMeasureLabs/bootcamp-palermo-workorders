@@ -516,6 +516,7 @@ jobs:
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           StartLocalServer: "false"
+          TEST_INPUT_DELAY_MS: "1000"
 
         run: |
          
@@ -564,11 +565,11 @@ jobs:
           # Now run the acceptance tests
           Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
 
-          # Re-set environment variables after build.ps1 cleared them
+          # Re-set environment variables after build.ps1 might havecleared them
           $env:ConnectionStrings__SqlConnectionString = "${{ env.CONTAINER_APP_CONNECTION_STRING }}"
           $env:ApplicationBaseUrl = "${{ env.CONTAINER_APP_URL }}"
           $env:StartLocalServer = "false"
-          $env:TEST_INPUT_DELAY_MS = ""
+          $env:TEST_INPUT_DELAY_MS = "${{ env.TEST_INPUT_DELAY_MS }}"
           dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true --nologo `
             --no-restore --logger:trx --results-directory $resultsDirectory --no-build `
             -v $verbosity --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath `
