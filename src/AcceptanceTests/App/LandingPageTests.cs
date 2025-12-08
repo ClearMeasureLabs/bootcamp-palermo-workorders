@@ -10,6 +10,7 @@ public class LandingPageTests : AcceptanceTestBase
     {
         await Page.GotoAsync("/");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
         
         var pageContent = await Page.ContentAsync();
         pageContent.ShouldContain("Hic sumus ad nostram communitatem adiuvandam... et ne scamna diruantur.");
