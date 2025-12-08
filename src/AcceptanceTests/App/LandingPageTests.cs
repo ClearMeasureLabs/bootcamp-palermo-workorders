@@ -6,7 +6,7 @@ public class LandingPageTests : AcceptanceTestBase
     protected override bool LoadDataOnSetup => false;
 
     [Test]
-    public async Task Should_DisplayNewInspirationalQuote_OnLandingPage()
+    public async Task Should_DisplayInspirationalQuote_OnLandingPage()
     {
         await Page.GotoAsync("/");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
