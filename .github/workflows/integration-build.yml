@@ -519,6 +519,7 @@ jobs:
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           StartLocalServer: "false"
+          TEST_INPUT_DELAY_MS: "1500"
 
         run: |
          
