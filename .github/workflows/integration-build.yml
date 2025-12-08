@@ -20,7 +20,8 @@ jobs:
     name: Build and Test on Linux
     if: 
       github.event_name == 'workflow_dispatch' || 
-      (github.event_name == 'pull_request' && !github.event.pull_request.draft && startsWith(github.event.pull_request.head.ref, 'feature/') && !startsWith(github.event.pull_request.title, '[WIP]'))
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft && startsWith(github.event.pull_request.head.ref, 'feature/') && !startsWith(github.event.pull_request.title, '[WIP]')) ||
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft && startsWith(github.event.pull_request.head.ref, 'copilot/') && !startsWith(github.event.pull_request.title, '[WIP]'))
     concurrency:
       group: build-linux
       cancel-in-progress: false
@@ -28,6 +29,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      pull-requests: read
     env:
       BUILD_CONFIGURATION: Release
     
@@ -37,6 +39,26 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || github.sha }}
+
+      # Check PR approval status for copilot branches
+      - name: Check PR approval status
+        if: github.event_name == 'pull_request' && startsWith(github.event.pull_request.head.ref, 'copilot/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "Checking approval status for PR #$PR_NUMBER on copilot branch"
+          
+          # Check if PR has at least one approval
+          APPROVALS=$(gh pr view $PR_NUMBER --json reviews --jq '[.reviews[] | select(.state == "APPROVED")] | length')
+          
+          if [ "$APPROVALS" -eq 0 ]; then
+            echo "PR #$PR_NUMBER has not been approved yet. Build requires human approval for copilot branches."
+            echo "Please wait for a reviewer to approve the PR before the integration build runs."
+            exit 1
+          fi
+          
+          echo "✓ PR #$PR_NUMBER has $APPROVALS approval(s). Proceeding with build."
 
       # Install .NET SDK 10.0.100
       - name: Setup .NET SDK 10.0.100
