@@ -10,6 +10,7 @@ public class LandingPageTests : AcceptanceTestBase
     {
         // Arrange - Already on landing page from SetUpAsync
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
 
         // Act
         var titleElement = Page.Locator(".church-title");
