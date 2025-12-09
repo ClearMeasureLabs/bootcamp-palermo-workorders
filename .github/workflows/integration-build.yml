@@ -414,6 +414,9 @@ jobs:
     name: TDD
     needs: [docker-build-image-for-churchbulletin-ui]
     if: success()
+    concurrency:
+      group: deploy-to-tdd-serialized
+      cancel-in-progress: false
     runs-on: windows-latest
     environment:
       name: TDD
