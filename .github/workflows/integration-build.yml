@@ -1,5 +1,5 @@
 name: Integration Build
-run-name: "v$1.3.${{ github.run_number }}"
+run-name: "#1.3.${{ github.run_number }}"
 on:
   # Shown in the header of the run before jobs start
   pull_request:
