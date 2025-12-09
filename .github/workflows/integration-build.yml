@@ -15,7 +15,7 @@ env:
 
 jobs:
   build-linux:
-    name: Build and Test on Linux
+    name: Integration Build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -281,7 +281,7 @@ jobs:
           
 
   docker-build-image-for-churchbulletin-ui:
-    name: Create and push Docker image for ChurchBulletin.UI
+    name: Publish Release Candidate
     needs: [build-linux]
     if: success() 
     runs-on: ubuntu-latest
