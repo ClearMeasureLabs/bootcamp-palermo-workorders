@@ -1,6 +1,7 @@
 name: Integration Build
-
+run-name: "v${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
 on:
+  # Shown in the header of the run before jobs start
   pull_request:
     branches:
       - master
@@ -32,7 +33,15 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.100'
-
+          
+      # Set version environment variable
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Build version: $version"
+          
       # Install .NET SDK 6.0 (required by Octopus CLI tool - includes runtime)
       - name: Setup .NET SDK 6.0
         uses: actions/setup-dotnet@v4
@@ -56,13 +65,7 @@ jobs:
             dotnet --list-runtimes
           fi
 
-      # Set version environment variable
-      - name: Set Version
-        run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
+
 
       - name: Run CI Build 
         shell: pwsh
