@@ -30,7 +30,7 @@ jobs:
 
       # Install .NET SDK 10.0.100
       - name: Setup .NET SDK 10.0.100
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5.0.1
         with:
           dotnet-version: '10.0.100'
           
@@ -64,8 +64,6 @@ jobs:
             export PATH="$HOME/.dotnet:$PATH"
             dotnet --list-runtimes
           fi
-
-
 
       - name: Run CI Build 
         shell: pwsh
@@ -624,6 +622,14 @@ jobs:
         with:
           server_task_id: ${{ fromJson(steps.start-deploy-to-uat.outputs.server_tasks)[0].serverTaskId }}
           timeout_after: 1800          
+
+      - name: Retry UAT if necessary
+        uses: nick-fields/retry@v3.0.2
+        with:
+          timeout_minutes: 1
+          max_attempts:  1
+          command: gh run rerun "${{ github.event.workflow_run.id }}" --repo "${{ github.event.repository.full_name }}"" --failed
+          
           
   deploy-to-prod:
     name: Prod
@@ -663,3 +669,11 @@ jobs:
         with:
           server_task_id: ${{ fromJson(steps.start-deploy-to-prod.outputs.server_tasks)[0].serverTaskId }}
           timeout_after: 1800          
+
+      - name: Retry PROD if necessary
+        uses: nick-fields/retry@v3.0.2
+        with:
+          timeout_minutes: 1
+          max_attempts:  1
+          command: gh run rerun "${{ github.event.workflow_run.id }}" --repo "${{ github.event.repository.full_name }}"" --failed
+          
