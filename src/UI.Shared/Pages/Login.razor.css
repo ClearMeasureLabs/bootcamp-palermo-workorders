@@ -118,6 +118,7 @@
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(123, 104, 238, 0.3);
     min-width: 150px;
+    animation: blink 1.5s ease-in-out infinite;
 }
 
 .btn-primary:hover {
@@ -179,6 +180,15 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-primary { animation: none; }
 }
 
 /* Responsive design */
