@@ -517,6 +517,7 @@ jobs:
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           StartLocalServer: "false"
+          TEST_INPUT_DELAY_MS: "1500"
 
         run: |
          
@@ -569,7 +570,8 @@ jobs:
           $env:ConnectionStrings__SqlConnectionString = "${{ env.CONTAINER_APP_CONNECTION_STRING }}"
           $env:ApplicationBaseUrl = "${{ env.CONTAINER_APP_URL }}"
           $env:StartLocalServer = "false"
-          $env:TEST_INPUT_DELAY_MS = ""
+          $env:TEST_INPUT_DELAY_MS = "${{ env.TEST_INPUT_DELAY_MS }}"
+
           dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true --nologo `
             --no-restore --logger:trx --results-directory $resultsDirectory --no-build `
             -v $verbosity --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath `
@@ -623,12 +625,6 @@ jobs:
           server_task_id: ${{ fromJson(steps.start-deploy-to-uat.outputs.server_tasks)[0].serverTaskId }}
           timeout_after: 1800          
 
-      - name: Retry UAT if necessary
-        uses: nick-fields/retry@v3.0.2
-        with:
-          timeout_minutes: 1
-          max_attempts:  1
-          command: gh run rerun "${{ github.event.workflow_run.id }}" --repo "${{ github.event.repository.full_name }}"" --failed
           
           
   deploy-to-prod:
@@ -669,11 +665,3 @@ jobs:
         with:
           server_task_id: ${{ fromJson(steps.start-deploy-to-prod.outputs.server_tasks)[0].serverTaskId }}
           timeout_after: 1800          
-
-      - name: Retry PROD if necessary
-        uses: nick-fields/retry@v3.0.2
-        with:
-          timeout_minutes: 1
-          max_attempts:  1
-          command: gh run rerun "${{ github.event.workflow_run.id }}" --repo "${{ github.event.repository.full_name }}"" --failed
-          
