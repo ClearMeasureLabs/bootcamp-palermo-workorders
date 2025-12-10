@@ -651,3 +651,32 @@ function Join-PathSegments {
     
     return $result
 }
+
+
+function Drop-SqlServerDatabase
+{
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$databaseServer,
+        [Parameter(Mandatory = $true)]
+        [string]$databaseName
+    )
+    
+    $databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+    if (Test-IsLinux)
+    {
+        $containerName = Get-ContainerName -DatabaseName $databaseName
+        $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+        $dbArgs = @($databaseDll, "drop" ,$databaseServer, $databaseName, "sa", $sqlPassword)
+    }
+    else
+    {
+        $dbArgs = @($databaseDll, "drop", $databaseServer, $databaseName)
+    }
+
+    & dotnet $dbArgs
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw "Database migration failed with exit code $LASTEXITCODE"
+    }
+}

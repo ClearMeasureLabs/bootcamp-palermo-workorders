@@ -12,9 +12,20 @@ public class UpdateDatabaseCommand(IDatabaseTasks databaseTasks) : AbstractDatab
     protected override async Task<int> ExecuteInternalAsync(CommandContext context, DatabaseOptions options,
         CancellationToken cancellationToken)
     {
+        var scriptDir = GetScriptDirectory(options);
+        if (!Path.Exists(scriptDir))
+        {
+            throw new DirectoryNotFoundException("Script directory '{scriptDir}' does not exist.");
+        }
+        
+        if (string.IsNullOrEmpty(options.DatabaseName))
+        {
+            throw new InvalidOperationException("The database name is required for UPDATE.");
+        }
+        
         await databaseTasks.EnsureDbabaseExistsAsync(GetConnectionString(options), options.DatabaseName,cancellationToken);
-        var scriptsDir = Path.GetFullPath(options.ScriptDir!);
-        var result2 = await databaseTasks.UpdateDatabaseAsync(GetConnectionString(options), new DirectoryInfo(scriptsDir),
+        
+        var result2 = await databaseTasks.UpdateDatabaseAsync(GetConnectionString(options), new DirectoryInfo(scriptDir),
             cancellationToken);
         if (result2 != 0)
         {

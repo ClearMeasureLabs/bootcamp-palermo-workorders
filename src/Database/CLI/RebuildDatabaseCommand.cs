@@ -9,16 +9,27 @@ namespace ClearMeasure.Bootcamp.Database.CLI;
 [UsedImplicitly]
 public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
 {
-    private readonly IDatabaseTasks _databaseTasks;
+    private readonly IDatabaseTasks _databaseTasks = null!;
 
     public RebuildDatabaseCommand(IDatabaseTasks databaseTasks) : this()
     {
-        _databaseTasks = databaseTasks;
+        _databaseTasks = databaseTasks ?? throw new ArgumentNullException(nameof(databaseTasks));
     }
 
     protected override async Task<int> ExecuteInternalAsync(CommandContext context, DatabaseOptions options,
         CancellationToken cancellationToken)
     {
+        var scriptDir = GetScriptDirectory(options);
+        if (!Path.Exists(scriptDir))
+        {
+            throw new DirectoryNotFoundException("Script directory '{scriptDir}' does not exist.");
+        }
+        
+        if (string.IsNullOrEmpty(options.DatabaseName))
+        {
+            throw new InvalidOperationException("The database name is required for REBUILD.");
+        }        
+        
         var result1 = await _databaseTasks.DropDatabaseAsync(GetMasterConnectionString(options), options.DatabaseName,
             cancellationToken);
         if (result1 != 0)

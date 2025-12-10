@@ -594,7 +594,6 @@ Function Invoke-PrivateBuild {
 		Log-Message -Message "Using default database server for platform: $script:databaseServer" -Type "INFO"
 	}
 	
-	# TODO Drop the SQL Server database.
 
 	# Generate unique database name for this build instance
 	# On Linux with Docker, no need for unique names since container is clean
@@ -625,7 +624,7 @@ Function Invoke-PrivateBuild {
 		if (Test-IsDockerRunning -LogOutput $true) 
 		{
 			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			New-SqlServerDatabase -databaseServer $script:databaseServer -databaseName $script:databaseName
 		}
 		else {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
@@ -635,8 +634,10 @@ Function Invoke-PrivateBuild {
 	
 	# Update appsettings.json files before database migration
 	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-	
-	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+
+    Drop-SqlServerDatabase -databaseServer $script:databaseServer -databaseName $projectName
+
+    MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest
 

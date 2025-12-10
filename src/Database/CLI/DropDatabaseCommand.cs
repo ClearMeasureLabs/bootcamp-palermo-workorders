@@ -12,6 +12,11 @@ public class DropDatabaseCommand(IDatabaseTasks dbTasks) : AbstractDatabaseComma
     protected override async Task<int> ExecuteInternalAsync(CommandContext context, DatabaseOptions options,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(options.DatabaseName))
+        {
+            throw new InvalidOperationException("The database name is required for DROP.");
+        }
+        
         var result1 = await dbTasks.DropDatabaseAsync(GetMasterConnectionString(options), options.DatabaseName,
             cancellationToken);
         return result1 != 0 ? result1 : 0;
