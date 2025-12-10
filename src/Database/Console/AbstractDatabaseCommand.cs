@@ -6,8 +6,14 @@ using Spectre.Console.Cli;
 
 namespace ClearMeasure.Bootcamp.Database.Console;
 
-public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseOptions>
+public abstract class AbstractDatabaseCommand(string action) : AsyncCommand<DatabaseOptions>
 {
+    internal const int CouldNotCreateOrConnectToDatabase = -1;
+    internal const int ScriptDirectoryDoesNotExist = -2;
+    internal const int CouldNotDropDatabase = -3;
+    internal const int FailedToUpdateDatabase = -4;
+    internal const int FailedToBaselineDatabase = -5;
+
     // ReSharper disable once MemberCanBePrivate.Global
     protected readonly string Action = action;
 
@@ -17,29 +23,34 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         return Path.GetFullPath(options.ScriptDir);
     }
 
-    public override int Execute(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
+    public string GetMasterConnectionString(DatabaseOptions options)
     {
-        var connectionString = GetConnectionString(options);
-        try
+        var builder = new SqlConnectionStringBuilder
         {
-            EnsureDatabase.For.SqlDatabase(connectionString);
+            DataSource = options.DatabaseServer,
+            InitialCatalog = "master",
+            TrustServerCertificate = true,
+            Encrypt = false,
+            ConnectTimeout = 60
+        };
+
+        if (string.IsNullOrWhiteSpace(options.DatabaseUser))
+        {
+            // Use Windows Integrated Security
+            builder.IntegratedSecurity = true;
         }
-        catch (Exception ex)
+        else
         {
-            AnsiConsole.WriteException(ex);
-            return -1;
+            // Use SQL Server Authentication
+            builder.IntegratedSecurity = false;
+            builder.UserID = options.DatabaseUser;
+            builder.Password = options.DatabasePassword;
         }
 
-        var scriptDir = GetScriptDirectory(options);
-        return !Path.Exists(scriptDir) ? Fail($"Could not find script directory {scriptDir}") : ExecuteInternal(context, options, cancellationToken);
+        return builder.ToString();
     }
 
-    // ReSharper disable UnusedParameter.Global
-    protected abstract int ExecuteInternal(CommandContext context, DatabaseOptions options,
-        CancellationToken cancellationToken);
-    // ReSharper restore UnusedParameter.Global
-
-    protected static string GetConnectionString(DatabaseOptions options)
+    public string GetConnectionString(DatabaseOptions options)
     {
         // Determine if this is a local server (localhost, 127.0.0.1, or LocalDB)
         var serverName = (options.DatabaseServer ?? string.Empty).Trim();
@@ -50,7 +61,6 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
                             serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase) ||
                             serverName.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
                             serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
-
 
 
         // Format DataSource to use TCP on port 1433 for non-LocalDB connections
@@ -110,10 +120,41 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             builder.UserID = options.DatabaseUser;
             builder.Password = options.DatabasePassword;
         }
+
         return builder.ToString();
     }
 
-    protected static int Fail(string message, int code = -1)
+    public override async Task<int> ExecuteAsync(CommandContext context, DatabaseOptions options,
+        CancellationToken cancellationToken)
+    {
+        var connectionString = GetConnectionString(options);
+        try
+        {
+            EnsureDatabase.For.SqlDatabase(connectionString);
+        }
+        catch (Exception ex)
+        {
+            AnsiConsole.WriteException(ex);
+            return Fail(
+                "Could not create or connect to the database. Please check the connection parameters and ensure the database server is running.");
+        }
+
+        var scriptDir = GetScriptDirectory(options);
+        if (!Path.Exists(scriptDir))
+        {
+            return Fail($"Script directory '{scriptDir}' does not exist.", ScriptDirectoryDoesNotExist);
+        }
+
+        return await ExecuteInternalAsync(context, options, cancellationToken);
+    }
+
+    // ReSharper disable UnusedParameter.Global
+    protected abstract Task<int> ExecuteInternalAsync(CommandContext context, DatabaseOptions options,
+        CancellationToken cancellationToken);
+    // ReSharper restore UnusedParameter.Global
+
+
+    private static int Fail(string message, int code = -1)
     {
         AnsiConsole.MarkupLine($"[red]{message.EscapeMarkup()}[/]");
         return code;
@@ -129,32 +170,5 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
         AnsiConsole.MarkupLine(
             $"[green]{assemblyName} performing {Action} on database {options.DatabaseServer} {options.DatabaseName}. Script directory {GetScriptDirectory(options)} {userInfo}[/]");
-    }
-
-    protected static string GetMasterConnectionString(DatabaseOptions options)
-    {
-        var builder = new SqlConnectionStringBuilder
-        {
-            DataSource = options.DatabaseServer,
-            InitialCatalog = "master",
-            TrustServerCertificate = true,
-            Encrypt = false,
-            ConnectTimeout = 60
-        };
-
-        if (string.IsNullOrWhiteSpace(options.DatabaseUser))
-        {
-            // Use Windows Integrated Security
-            builder.IntegratedSecurity = true;
-        }
-        else
-        {
-            // Use SQL Server Authentication
-            builder.IntegratedSecurity = false;
-            builder.UserID = options.DatabaseUser;
-            builder.Password = options.DatabasePassword;
-        }
-
-        return builder.ToString();
     }
 }
