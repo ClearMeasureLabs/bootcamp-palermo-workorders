@@ -75,6 +75,8 @@ jobs:
           . ./build.ps1
           Invoke-CIBuild
 
+
+
       # Publish test results
       - name: Test Reporter
         uses: dorny/test-reporter@v2.1.1
@@ -520,7 +522,7 @@ jobs:
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           StartLocalServer: "false"
-          TEST_INPUT_DELAY_MS: "1500"
+          TEST_INPUT_DELAY_MS: "2000"
 
         run: |
          
@@ -564,8 +566,9 @@ jobs:
           Write-Host "Installing Playwright browsers from $playwrightScript"
           & pwsh $playwrightScript install --with-deps
           
-          
-          
+          # Make sure the DB for acceptance tests is up to date
+          MigrateDatabaseCI -databaseAction "Update" -source_dir $source_dir
+
           # Now run the acceptance tests
           Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
 

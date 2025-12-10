@@ -117,16 +117,16 @@ Function Update-AppSettingsConnectionStrings {
     if (Test-IsLinux) {
         $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
         $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-        $connectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+        # $connectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
     }
     else {
-        $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+        # $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
     }
 
 
     # Set environment variable for current process
-    $env:ConnectionStrings__SqlConnectionString = $connectionString
-    Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $(Get-RedactedConnectionString -ConnectionString $connectionString)" -Type "INFO"
+    # $env:ConnectionStrings__SqlConnectionString = $connectionString
+    # Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $(Get-RedactedConnectionString -ConnectionString $connectionString)" -Type "INFO"
 
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
@@ -144,7 +144,6 @@ Function Update-AppSettingsConnectionStrings {
             foreach ($property in $connectionStringsObj.PSObject.Properties) {
                 $oldConnectionString = $property.Value
 
-                Log-Message "Found connection string $($property.Name) : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
                 if ($oldConnectionString -match "database=([^;]+)") {
 
                     if (Test-IsLinux) {
@@ -161,7 +160,6 @@ Function Update-AppSettingsConnectionStrings {
                     }
         
                     $connectionStringsObj.$($property.Name) = $newConnectionString
-                    Log-Message "Updated $($property.Name): $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
                 }
             }
        
@@ -470,6 +468,8 @@ Function Test-IsDockerRunning {
     return $true
 }
 
+
+
 Function Generate-UniqueDatabaseName {
     param (
         [Parameter(Mandatory = $true)]
@@ -651,3 +651,5 @@ function Join-PathSegments {
     
     return $result
 }
+
+

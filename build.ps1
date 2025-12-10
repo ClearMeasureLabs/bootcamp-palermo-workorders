@@ -1,11 +1,21 @@
 #!/usr/bin/env pwsh
 . .\BuildFunctions.ps1
 
-# Clean environment variables that may interfere with local builds
-if ($env:ConnectionStrings__SqlConnectionString) {
-	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
-	$env:ConnectionStrings__SqlConnectionString = $null
-	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
+
+if (Test-IsGitHubActions) {
+	Log-Message -Message "Starting build on GitHub Actions..." -Type "INFO"
+}
+elseif (Test-IsAzureDevOps) {
+	Log-Message -Message "Starting build on AzDO environment..." -Type "INFO"
+}
+else {
+	Log-Message -Message "Starting build on local environment. Clearing connetion string environment variable..." -Type "INFO"
+	if ($env:ConnectionStrings__SqlConnectionString) {
+		Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
+		$env:ConnectionStrings__SqlConnectionString = $null
+		[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
+	}
+
 }
 
 $projectName = "ChurchBulletin"
@@ -37,7 +47,6 @@ $script:databaseScripts = Join-PathSegments $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
-
  
 Function Init {
 	# Check for PowerShell 7
@@ -198,6 +207,7 @@ Function AcceptanceTests {
 	}
 }
 
+
 Function MigrateDatabaseLocal {
 	param (
 	 [Parameter(Mandatory = $true)]
@@ -208,6 +218,8 @@ Function MigrateDatabaseLocal {
 		[ValidateNotNullOrEmpty()]
 		[string]$databaseNameFunc
 	)
+
+	Log-Message -Message "Applying db migrations locally..." -Type "INFO"
 	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	
 	if (Test-IsLinux) {
@@ -682,29 +694,99 @@ Invoke-CIBuild
 Requires Docker on Linux. Uses Test-IsLinux, Test-IsAzureDevOps, and Test-IsGitHubActions 
 to detect environment and adjust behavior accordingly.
 #>
+
+
+function MigrateDatabaseCI { 
+	param (
+		[Parameter(Mandatory = $false)]
+		[string]$databaseAction = "Update",
+		[Parameter(Mandatory = $true)]
+		[string]$source_dir
+	)
+
+	Log-Message -Message "Migrating database for CI..." -Type "INFO"
+	# Parse connection string from environment variable
+	$connectionString = $env:ConnectionStrings__SqlConnectionString
+	if ([string]::IsNullOrEmpty($connectionString)) {
+		throw "ConnectionStrings__SqlConnectionString environment variable is not set"
+	}
+
+	# Extract server (supports both "Server=" and "Data Source=")
+	$server = $null
+	if ($connectionString -match "(?:Server|Data Source)=([^;]+)") {
+		$server = $matches[1].Trim()
+	}
+
+	# Extract database (supports both "Database=" and "Initial Catalog=")
+	$database = $null
+	if ($connectionString -match "(?:Database|Initial Catalog)=([^;]+)") {
+		$database = $matches[1].Trim()
+	}
+
+	# Extract user (supports both "User ID=" and "User=")
+	$user = $null
+	if ($connectionString -match "(?:User ID|User)=([^;]+)") {
+		$user = $matches[1].Trim()
+	}
+
+	# Extract password
+	$password = $null
+	if ($connectionString -match "Password=([^;]+)") {
+		$password = $matches[1].Trim()
+	}
+
+	# Set databaseAction to "Update" if not set
+	$action = $databaseAction;
+	if ([string]::IsNullOrEmpty($action)) {
+		$action = "Update"
+	}
+
+	Log-Message "Parsed connection string - Server: $server, Database: $database, User: $user" -Type "INFO"
+
+	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+	$dbArgs = @($databaseDll, $action, $server, $database, $script:databaseScripts, $user, $password)
+	& dotnet $dbArgs
+	if ($LASTEXITCODE -ne 0) {
+		throw "Database migration for CI failed with exit code $LASTEXITCODE"
+	}
+}
+
 Function Invoke-CIBuild {
+	param (
+		[Parameter(Mandatory = $false)]
+		[string]$databaseServer = "",
+		
+		[Parameter(Mandatory = $false)]
+		[string]$databaseName = ""
+	)
+
+	$script:databaseName = $databaseName
+	$script:databaseServer = $databaseServer
+
 	if (Test-IsAzureDevOps) {
 		Log-Message -Message "Starting Invoke-CIBuild on Azure DevOps..." -Type "INFO"
 	}
 	elseif (Test-IsGitHubActions) {
 		Log-Message -Message "Starting Invoke-CIBuild on GitHub Actions..." -Type "INFO"
+
+	  Write-Host "Container App Connection String retrieved: $([string]::IsNullOrWhiteSpace($containerAppConnectionString))"		
 	}
 	else {
-		Log-Message -Message "Starting Invoke-CIBuild..." -Type "INFO"
+		Log-Message -Message "Starting Invoke-CIBuild on local environment..." -Type "INFO"
+
+		# Generate database name based on environment
+		if (Test-IsLinux) {
+			# On Linux with Docker, no need for unique names since container is clean
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $databaseServer
+		}
+		else {
+			# On local Windows builds, use simple name.
+			$script:databaseName = $databaseServer
+		}
 	}
 	
 	$sw = [Diagnostics.Stopwatch]::StartNew()
-	
-	# Generate database name based on environment
-	# On Linux with Docker, no need for unique names since container is clean
-	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (Test-IsLinux) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-	}
-	else {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
-	}
-	
+		
 	Init
 	Compile
 	UnitTests
@@ -734,7 +816,6 @@ Function Invoke-CIBuild {
 		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
 	}
 	
-	# Package-Everything
 
 	$sw.Stop()
 	Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
