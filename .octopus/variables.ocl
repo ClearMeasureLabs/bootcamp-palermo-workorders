@@ -44,9 +44,21 @@ variable "AzureAccount" {
     value "churchbulletin-gh-azure-account" {}
 }
 
+variable "DatabaseServerName" {
+    value "bootcamp-palermo-workorders-#{Octopus.Environment.Name | ToLower}" {
+        environment = ["prod", "uat"]
+    }
+    value "bootcamp-palermo-workorders" {
+        environment = ["tdd"]
+    }
+}
+
 variable "DatabaseServer" {
-    value "#{DatabaseServerName}.database.windows.net" {
-        description = ""
+    value "bootcamp-palermo-workorders-#{Octopus.Environment.Name | ToLower}.database.windows.net" {
+        environment = ["prod", "uat"]
+    }
+    value "bootcamp-palermo-workorders.database.windows.net" {
+        environment = ["tdd"]
     }
 }
 
@@ -76,12 +88,6 @@ variable "az_login_appkey" {
 
 variable "az_login_tenant" {
     value "#{AzureAccount.TenantId}" {}
-}
-
-variable "DatabaseServerName" {
-    value "bootcamp-palermo-workorders-#{Octopus.Environment.Name | ToLower}" {
-        environment = ["prod", "tdd", "uat"]
-    }
 }
 
 variable "OctoInstanceURL" {
