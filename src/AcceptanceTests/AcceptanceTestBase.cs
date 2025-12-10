@@ -147,7 +147,7 @@ public abstract class AcceptanceTestBase : PageTest
         await Expect(locator).ToHaveValueAsync(value ?? "");
     }
 
-    private int GetInputDelayMs()
+    protected int GetInputDelayMs()
     {
         var envValue = Environment.GetEnvironmentVariable("TEST_INPUT_DELAY_MS");
         if (int.TryParse(envValue, out var delay))
