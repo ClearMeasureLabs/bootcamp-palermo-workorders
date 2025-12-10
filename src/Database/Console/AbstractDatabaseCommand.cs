@@ -127,23 +127,14 @@ public abstract class AbstractDatabaseCommand(string action) : AsyncCommand<Data
     public override async Task<int> ExecuteAsync(CommandContext context, DatabaseOptions options,
         CancellationToken cancellationToken)
     {
-        var connectionString = GetConnectionString(options);
-        try
-        {
-            EnsureDatabase.For.SqlDatabase(connectionString);
-        }
-        catch (Exception ex)
-        {
-            AnsiConsole.WriteException(ex);
-            return Fail(
-                "Could not create or connect to the database. Please check the connection parameters and ensure the database server is running.");
-        }
-
         var scriptDir = GetScriptDirectory(options);
         if (!Path.Exists(scriptDir))
         {
             return Fail($"Script directory '{scriptDir}' does not exist.", ScriptDirectoryDoesNotExist);
         }
+        
+
+
 
         return await ExecuteInternalAsync(context, options, cancellationToken);
     }
@@ -158,17 +149,5 @@ public abstract class AbstractDatabaseCommand(string action) : AsyncCommand<Data
     {
         AnsiConsole.MarkupLine($"[red]{message.EscapeMarkup()}[/]");
         return code;
-    }
-
-    private void ShowOptionsOnConsole(DatabaseOptions options)
-    {
-        var assemblyName = Assembly.GetExecutingAssembly().Location;
-
-        var userInfo = !string.IsNullOrWhiteSpace(options.DatabaseUser)
-            ? $"{options.DatabaseUser} <REDACTED>"
-            : string.Empty;
-
-        AnsiConsole.MarkupLine(
-            $"[green]{assemblyName} performing {Action} on database {options.DatabaseServer} {options.DatabaseName}. Script directory {GetScriptDirectory(options)} {userInfo}[/]");
     }
 }

@@ -26,6 +26,8 @@ public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
             return result1;
         }
 
+        await _databaseTasks.EnsureDbabaseExistsAsync(GetConnectionString(options), options.DatabaseName,cancellationToken);
+
         var scriptsDir = Path.GetFullPath(options.ScriptDir!);
         var result2 = await _databaseTasks.UpdateDatabaseAsync(GetConnectionString(options),
             new DirectoryInfo(scriptsDir), cancellationToken);
