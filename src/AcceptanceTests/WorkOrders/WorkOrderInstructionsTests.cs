@@ -93,7 +93,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
         await TakeScreenshotAsync(1, "AddedInstructions");
 
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignCommand.Name);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
