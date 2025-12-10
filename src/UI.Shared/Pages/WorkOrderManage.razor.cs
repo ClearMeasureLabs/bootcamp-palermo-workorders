@@ -121,8 +121,8 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Number = Model.WorkOrderNumber;
         workOrder.Assignee = assignee;
         workOrder.Title = Model.Title;
-        workOrder.Description = Model.Description;
-        workOrder.Instructions = Model.Instructions;
+        workOrder.Description = Model.Description ?? string.Empty;
+        workOrder.Instructions = Model.Instructions ?? string.Empty;
         workOrder.RoomNumber = Model.RoomNumber;
 
         var matchingCommand = new StateCommandList()

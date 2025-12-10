@@ -2,18 +2,18 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 
 public class WorkOrder : EntityBase<WorkOrder>
 {
-    private string? _description = "";
-    private string? _instructions = "";
+    private string _description = "";
+    private string _instructions = "";
 
     public string? Title { get; set; } = "";
 
-    public string? Description
+    public string Description
     {
         get => _description;
         set => _description = getTruncatedString(value);
     }
 
-    public string? Instructions
+    public string Instructions
     {
         get => _instructions;
         set => _instructions = getTruncatedString(value);
@@ -38,7 +38,7 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public DateTime? CompletedDate { get; set; }
 
-    private string? getTruncatedString(string? value)
+    private string getTruncatedString(string? value)
     {
         if (value == null)
         {
