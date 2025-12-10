@@ -75,8 +75,7 @@ jobs:
           DATABASE_NAME: ${{ env.DATABASE_NAME }}
         run: |
           . ./build.ps1
-          Invoke-CIBuild -databaseServer ${{ env.DATABASE_SERVER }} -databaseName ${{ env.DATABASE_NAME }}
-
+          Invoke-CIBuild -databaseServer "tcp:bootcamp-palermo-workorders.database.windows.net,1433" -databaseName "ChurchBulletin-gh"
 
       # Publish test results
       - name: Test Reporter
