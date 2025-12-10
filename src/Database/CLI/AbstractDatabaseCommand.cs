@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System.Reflection;
+using Microsoft.Data.SqlClient;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -18,6 +19,16 @@ public abstract class AbstractDatabaseCommand(string action) : AsyncCommand<Data
 
     protected static string GetScriptDirectory(DatabaseOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (string.IsNullOrEmpty(options.ScriptDir))
+        {
+            // Default to the scripts directory that should be a child of this assembly's location
+            var assemblyLocation = Assembly.GetExecutingAssembly().Location;
+            var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+            return Path.Combine(assemblyDirectory ?? string.Empty, "scripts");
+        }
+
         return Path.GetFullPath(options.ScriptDir);
     }
 
@@ -125,15 +136,6 @@ public abstract class AbstractDatabaseCommand(string action) : AsyncCommand<Data
     public override async Task<int> ExecuteAsync(CommandContext context, DatabaseOptions options,
         CancellationToken cancellationToken)
     {
-        var scriptDir = GetScriptDirectory(options);
-        if (!Path.Exists(scriptDir))
-        {
-            return Fail($"Script directory '{scriptDir}' does not exist.", ScriptDirectoryDoesNotExist);
-        }
-        
-
-
-
         return await ExecuteInternalAsync(context, options, cancellationToken);
     }
 

@@ -15,6 +15,11 @@ public class BaselineDatabaseCommand(IDatabaseTasks dbTasks) : AbstractDatabaseC
         CancellationToken cancellationToken)
     {
         var scriptDir = GetScriptDirectory(options);
+        if (!Path.Exists(scriptDir))
+        {
+            throw new DirectoryNotFoundException("Script directory '{scriptDir}' does not exist.");
+        }
+        
         var connectionString = GetConnectionString(options);
         AnsiConsole.MarkupLine(
             "[yellow]Baselining database - marking all scripts as executed without running them...[/]");
