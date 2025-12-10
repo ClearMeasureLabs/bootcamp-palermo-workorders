@@ -6,17 +6,20 @@ public class LandingPageTests : AcceptanceTestBase
     protected override bool LoadDataOnSetup { get; set; } = false;
 
     [Test]
-    public async Task Should_DisplayLatinQuoteOnLandingPage()
+    public async Task Should_DisplayChurchTitle_WithDarkGreyColor()
     {
-        // Arrange
-        await Page.GotoAsync("/");
+        // Arrange - Already on landing page from SetUpAsync
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
 
         // Act
-        var pageContent = await Page.ContentAsync();
+        var titleElement = Page.Locator(".church-title");
+        await titleElement.WaitForAsync();
 
         // Assert
-        pageContent.ShouldContain("Hic sumus ad nostram communitatem adiuvandam... et ne scamna diruantur.");
-        pageContent.ShouldContain("- Springfield Church Manual");
+        var titleColor = await titleElement.EvaluateAsync<string>("element => window.getComputedStyle(element).color");
+        
+        // Convert #a9a9a9 to rgb(169, 169, 169)
+        titleColor.ShouldBe("rgb(169, 169, 169)");
     }
 }
