@@ -7,17 +7,8 @@ variable "DatabaseName" {
 }
 
 variable "DatabaseUser" {
-    value "tdd" {
-        environment = ["tdd"]
-    }
+    value "#{Octopus.Environment.Name | ToLower}" {}
 
-    value "uat" {
-        environment = ["uat"]
-    }
-
-    value "prod" {
-        environment = ["prod"]
-    }
 }
 
 variable "revisionSuffix" {
@@ -65,7 +56,9 @@ variable "DatabaseServer" {
 }
 
 variable "DatabaseAction" {
-    value "update" {}
+    value "update" {
+        description="Database action to perform for migrations"
+    }
 }
 
 variable "DatabaseEdition" {
