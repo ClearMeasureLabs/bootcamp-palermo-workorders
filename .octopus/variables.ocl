@@ -44,12 +44,6 @@ variable "AzureAccount" {
     value "churchbulletin-gh-azure-account" {}
 }
 
-variable "DatabaseServer" {
-    value "#{DatabaseServerName}.database.windows.net" {
-        description = ""
-    }
-}
-
 variable "DatabaseAction" {
     value "update" {}
 }
@@ -124,6 +118,18 @@ variable "DatabaseServerName" {
     }
 
     value "bootcamp-palermo-workorders" {
+        description = ""
+        environment = ["tdd"]
+    }
+}
+
+variable "DatabaseServer" {
+    value "bootcamp-palermo-workorders-#{Octopus.Environment.Name | ToLower}.database.windows.net" {
+        description = ""
+        environment = ["prod", "uat"]
+    }
+
+    value "bootcamp-palermo-workorders.database.windows.net" {
         description = ""
         environment = ["tdd"]
     }
