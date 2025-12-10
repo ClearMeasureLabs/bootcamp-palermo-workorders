@@ -1,7 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console.Cli;
 
-namespace ClearMeasure.Bootcamp.Database.Console;
+namespace ClearMeasure.Bootcamp.Database.CLI;
 
 /// <summary>
 ///     This should match the AliaSQL "Update" action, which only runs Update.
