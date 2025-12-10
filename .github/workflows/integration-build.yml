@@ -356,26 +356,32 @@ jobs:
           # Clean up
           rm -rf ./package-extract ./packages
 
-
-      # Login to Azure
+      # Login to Azure (before Docker build to enable layer caching)
       - name: Login to Azure
         uses: azure/login@v2
         with:
           # TODO:  Need to create the AZURE_CREDENTIALS secret in the GitHub repository.
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Build Docker image
-      - name: Build Docker image
-        run: |
-          IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
-          docker build -f Dockerfile -t churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG} .
-          docker tag churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG} churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
-
-
-      # Login to Azure Container Registry
+      # Login to Azure Container Registry (before Docker build for caching)
       - name: Login to ACR
         run: |
           az acr login --name churchbulletingithubacr
+
+      # Build Docker image with BuildKit cache
+      - name: Build Docker image
+        run: |
+          IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
+          # Enable BuildKit for better caching
+          export DOCKER_BUILDKIT=1
+          # Pull latest image for layer caching
+          docker pull churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest || true
+          # Build with cache from latest image
+          docker build \
+            --cache-from churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest \
+            -f Dockerfile \
+            -t churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG} \
+            -t churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest .
 
       # Push Docker image to ACR
       - name: Push Docker image to ACR
@@ -397,7 +403,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
 
       - name: Setup .NET SDK v6 and 10
         uses: actions/setup-dotnet@v5.0.1
@@ -514,11 +519,8 @@ jobs:
 
 
           # Build the solution first (since AcceptanceTests uses --no-build)
+          # This restore/build ensures Playwright tooling is ready
           dotnet build src/ChurchBulletin.sln --configuration ${{ env.BuildConfiguration }}
-    
-          # Restore and build acceptance tests to ensure Playwright is ready
-          dotnet restore src/AcceptanceTests/AcceptanceTests.csproj
-          dotnet build src/AcceptanceTests/AcceptanceTests.csproj --configuration ${{ env.BuildConfiguration }}
 
           Push-Location -Path $acceptanceTestProjectPath
           try {
