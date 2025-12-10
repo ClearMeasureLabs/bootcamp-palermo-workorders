@@ -172,7 +172,7 @@ jobs:
       # Publish packages to Octopus Deploy built-in feed
       - name: Publish Packages to Octopus Deploy
         shell: pwsh
-        if: false
+        if: success()
         env:
           OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
           OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
