@@ -118,18 +118,13 @@ step "open-firewall" {
             Octopus.Action.Script.ScriptBody = <<-EOT
                                                 $ErrorActionPreference = "Stop"
                                                 
-                                                Write-Host "Getting Octopus Worker IP address..."
                                                 $workerIp = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
-                                                Write-Host "Worker IP Address: $workerIp"
                                                 Set-OctopusVariable -name "WorkerIP" -value $workerIp
-                
-                                                # TODO Parameterize this
-                                                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
-                                                $resourceDbServer = "bootcamp-palermo-workorders-$($OctopusParameters["Octopus.Environment.Slug"])"
-                                                $firewallRuleName = "OctopusDeployWorker"
-                                                
+
                                                 # Open up the firewall to allow the Octopus worker to connect
-                                                az sql server firewall-rule create --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName --start-ip-address $workerIp --end-ip-address $workerIp
+                                                Write-Host "Opening SQL Firewall rule for $workerIp to $DatabaseServerName"
+                                                $firewallRuleName = "OctopusDeployWorker"
+                                                az sql server firewall-rule create --resource-group $ResourceGroupName --server $DatabaseServerName --name $firewallRuleName --start-ip-address $workerIp --end-ip-address $workerIp                
                                                                
                                                 Write-Host "✅ Migrations applied successfully."
                 EOT
@@ -184,18 +179,13 @@ step "close-firewall" {
             Octopus.Action.Script.ScriptBody = <<-EOT
                                                 $ErrorActionPreference = "Stop"
                                                 
-                                                Write-Host "Getting Octopus Worker IP address..."
                                                 $workerIp = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
-                                                Write-Host "Worker IP Address: $workerIp"
                                                 Set-OctopusVariable -name "WorkerIP" -value $workerIp
-                
-                                                # TODO Parameterize this
-                                                $resourceGroup = "bootcamp-$($OctopusParameters["Octopus.Environment.Slug"])"
-                                                $resourceDbServer = "bootcamp-palermo-workorders-$($OctopusParameters["Octopus.Environment.Slug"])"
-                                                $firewallRuleName = "OctopusDeployWorker"
-                                                
+                                                                
                                                 # Close up the firewall again.
-                                                az sql server firewall-rule delete --resource-group $resourceGroup --server $resourceDbServer --name $firewallRuleName
+                                                Write-Host "Closing SQL Firewall rule for $workerIp to $DatabaseServerName"
+                                                $firewallRuleName = "OctopusDeployWorker"
+                                                az sql server firewall-rule delete --resource-group $ResourceGroupName --server $DatabaseServerName --name $firewallRuleName
                                                 
                                                 Write-Host "✅ Migrations applied successfully."
                 EOT
