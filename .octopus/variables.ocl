@@ -78,12 +78,6 @@ variable "az_login_tenant" {
     value "#{AzureAccount.TenantId}" {}
 }
 
-variable "DatabaseServerName" {
-    value "bootcamp-palermo-workorders-#{Octopus.Environment.Name | ToLower}" {
-        environment = ["prod", "tdd", "uat"]
-    }
-}
-
 variable "OctoInstanceURL" {
     value "https://clearmeasure.octopus.app/" {}
 }
@@ -122,4 +116,15 @@ variable "ResourceGroupName" {
 
 variable "connection_string" {
     value "#{container_app_connection_string}" {}
+}
+
+variable "DatabaseServerName" {
+    value "bootcamp-palermo-workorders-#{Octopus.Environment.Name | ToLower}" {
+        environment = ["prod", "uat"]
+    }
+
+    value "bootcamp-palermo-workorders" {
+        description = ""
+        environment = ["tdd"]
+    }
 }
