@@ -301,12 +301,14 @@ Function New-SqlServerDatabase {
         [Parameter(Mandatory = $true)]
         [string]$serverName,
         [Parameter(Mandatory = $true)]
-        [string]$databaseName
+        [string]$databaseName,
+        [Parameter(Mandatory = $true)]
+        [string]$user ,
+        [Parameter(Mandatory = $true)]
+        [string]$password
     )
 
-    $containerName = Get-ContainerName -DatabaseName $databaseName
-    $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-    $saCred = New-object System.Management.Automation.PSCredential("sa", (ConvertTo-SecureString -String $sqlPassword -AsPlainText -Force))
+    $saCred = New-object System.Management.Automation.PSCredential($user, (ConvertTo-SecureString -String $password -AsPlainText -Force))
     
     $dropDbCmd = @"
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'$databaseName')

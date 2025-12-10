@@ -254,7 +254,7 @@ Function Create-SqlServerInDocker {
 	$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
 
 	New-DockerContainerForSqlServer -containerName $containerName
-	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
+	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName -user "sa" -password $containerName
 
 	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
 	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
@@ -499,8 +499,10 @@ Function Invoke-AcceptanceTests {
 		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
 		if (Test-IsDockerRunning -LogOutput $true) 
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			$containerName = $(Get-ContainerName $script:databaseName)
+			$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+			New-DockerContainerForSqlServer -containerName $containerName
+			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName -user "sa" -password $sqlPassword
 		}
 		else {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
@@ -636,8 +638,11 @@ Function Invoke-PrivateBuild {
 		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
 		if (Test-IsDockerRunning -LogOutput $true) 
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			
+			$containerName = Get-ContainerName -DatabaseName $script:databaseName
+			$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+			New-DockerContainerForSqlServer -containerName $containerName
+			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName -user "sa" -password $sqlPassword
 		}
 		else {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
@@ -777,9 +782,12 @@ Function Invoke-CIBuild {
 	{
 		Log-Message -Message "Setting up SQL Server in Docker for CI" -Type "INFO"
 		if (Test-IsDockerRunning -LogOutput $true) 
-		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		{    
+			$containerName = Get-ContainerName -DatabaseName $databaseName
+			$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+		
+			New-DockerContainerForSqlServer -containerName $containerName
+			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName, "sa", $sqlPassword
 		}
 		else {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
