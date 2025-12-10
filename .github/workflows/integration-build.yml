@@ -71,10 +71,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          DATABASE_SERVER: ${{ env.DATABASE_SERVER }}
+          DATABASE_NAME: ${{ env.DATABASE_NAME }}
         run: |
           . ./build.ps1
-          Invoke-CIBuild
-
+          Invoke-CIBuild -databaseServer ${{ env.DATABASE_SERVER }} -databaseName ${{ env.DATABASE_NAME }}
 
 
       # Publish test results

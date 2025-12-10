@@ -123,10 +123,9 @@ Function Update-AppSettingsConnectionStrings {
         # $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
     }
 
+    # use the existing connection string if it exists.
+    $newConnectionString = $env:ConnectionStrings__SqlConnectionString;
 
-    # Set environment variable for current process
-    # $env:ConnectionStrings__SqlConnectionString = $connectionString
-    # Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $(Get-RedactedConnectionString -ConnectionString $connectionString)" -Type "INFO"
 
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
@@ -145,20 +144,21 @@ Function Update-AppSettingsConnectionStrings {
                 $oldConnectionString = $property.Value
 
                 if ($oldConnectionString -match "database=([^;]+)") {
-
-                    if (Test-IsLinux) {
-                        $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
-                        $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-                        $newConnectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+                    if ([string]::IsNullOrEmpty($newConnectionString)) {
+                        # No connection string found, so let's create one
+                        if (Test-IsLinux) {
+                            $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
+                            $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+                            $newConnectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+                        }
+                        else {
+                            # Replace the database name in the connection string
+                            $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
+                    
+                            # Also update server if needed
+                            $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
+                        }
                     }
-                    else {
-                        # Replace the database name in the connection string
-                        $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
-                
-                        # Also update server if needed
-                        $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
-                    }
-        
                     $connectionStringsObj.$($property.Name) = $newConnectionString
                 }
             }
@@ -650,6 +650,65 @@ function Join-PathSegments {
     }
     
     return $result
+}
+
+Function Get-ConnectionStringComponents {
+    <#
+    .SYNOPSIS
+        Extracts database connection string components from ConnectionStrings__SqlConnectionString environment variable
+    .DESCRIPTION
+        Parses the connection string and extracts the database server, database name, database user, and database password.
+        Supports various connection string formats including Server/Data Source, Database/Initial Catalog, User ID/User, and Password.
+    .OUTPUTS
+        [PSCustomObject] An object with properties: Server, Database, User, Password
+    .EXAMPLE
+        $env:ConnectionStrings__SqlConnectionString = "Server=localhost;Database=mydb;User ID=sa;Password=secret123;"
+        $components = Get-ConnectionStringComponents
+        Returns: @{ Server = "localhost"; Database = "mydb"; User = "sa"; Password = "secret123" }
+    .EXAMPLE
+        $env:ConnectionStrings__SqlConnectionString = "Data Source=server1;Initial Catalog=ChurchBulletin;User=admin;Password=pass123;"
+        $components = Get-ConnectionStringComponents
+        Returns: @{ Server = "server1"; Database = "ChurchBulletin"; User = "admin"; Password = "pass123" }
+    #>
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$ConnectionString = $env:ConnectionStrings__SqlConnectionString
+    )
+
+    if ([string]::IsNullOrEmpty($ConnectionString)) {
+        throw "ConnectionStrings__SqlConnectionString environment variable is not set and no connection string was provided"
+    }
+
+    # Extract server (supports both "Server=" and "Data Source=")
+    $server = $null
+    if ($ConnectionString -match "(?:Server|Data Source)=([^;]+)") {
+        $server = $matches[1].Trim()
+    }
+
+    # Extract database (supports both "Database=" and "Initial Catalog=")
+    $database = $null
+    if ($ConnectionString -match "(?:Database|Initial Catalog)=([^;]+)") {
+        $database = $matches[1].Trim()
+    }
+
+    # Extract user (supports both "User ID=" and "User=")
+    $user = $null
+    if ($ConnectionString -match "(?:User ID|User)=([^;]+)") {
+        $user = $matches[1].Trim()
+    }
+
+    # Extract password
+    $password = $null
+    if ($ConnectionString -match "Password=([^;]+)") {
+        $password = $matches[1].Trim()
+    }
+
+    return [PSCustomObject]@{
+        Server   = $server
+        Database = $database
+        User     = $user
+        Password = $password
+    }
 }
 
 

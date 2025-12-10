@@ -9,7 +9,7 @@ elseif (Test-IsAzureDevOps) {
 	Log-Message -Message "Starting build on AzDO environment..." -Type "INFO"
 }
 else {
-	Log-Message -Message "Starting build on local environment. Clearing connetion string environment variable..." -Type "INFO"
+	Log-Message -Message "Starting build on local environment. Clearing connection string environment variable..." -Type "INFO"
 	if ($env:ConnectionStrings__SqlConnectionString) {
 		Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
 		$env:ConnectionStrings__SqlConnectionString = $null
@@ -711,31 +711,14 @@ function MigrateDatabaseCI {
 		throw "ConnectionStrings__SqlConnectionString environment variable is not set"
 	}
 
-	# Extract server (supports both "Server=" and "Data Source=")
-	$server = $null
-	if ($connectionString -match "(?:Server|Data Source)=([^;]+)") {
-		$server = $matches[1].Trim()
+	$components = Get-ConnectionStringComponents -connectionString $connectionString
+	if ($components -eq $null) {
+		throw "Failed to parse connection string"
 	}
-
-	# Extract database (supports both "Database=" and "Initial Catalog=")
-	$database = $null
-	if ($connectionString -match "(?:Database|Initial Catalog)=([^;]+)") {
-		$database = $matches[1].Trim()
-	}
-
-	# Extract user (supports both "User ID=" and "User=")
-	$user = $null
-	if ($connectionString -match "(?:User ID|User)=([^;]+)") {
-		$user = $matches[1].Trim()
-	}
-
-	# Extract password
-	$password = $null
-	if ($connectionString -match "Password=([^;]+)") {
-		$password = $matches[1].Trim()
-	}
-
-	# Set databaseAction to "Update" if not set
+	$server = $components.Server
+	$database = $components.Database
+	$user = $components.User
+	$password = $components.Password
 	$action = $databaseAction;
 	if ([string]::IsNullOrEmpty($action)) {
 		$action = "Update"
@@ -753,10 +736,10 @@ function MigrateDatabaseCI {
 
 Function Invoke-CIBuild {
 	param (
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $true)]
 		[string]$databaseServer = "",
 		
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $true)]
 		[string]$databaseName = ""
 	)
 
@@ -768,8 +751,7 @@ Function Invoke-CIBuild {
 	}
 	elseif (Test-IsGitHubActions) {
 		Log-Message -Message "Starting Invoke-CIBuild on GitHub Actions..." -Type "INFO"
-
-	  Write-Host "Container App Connection String retrieved: $([string]::IsNullOrWhiteSpace($containerAppConnectionString))"		
+	  	Write-Host "Container App Connection String retrieved: $([string]::IsNullOrWhiteSpace($containerAppConnectionString))"		
 	}
 	else {
 		Log-Message -Message "Starting Invoke-CIBuild on local environment..." -Type "INFO"
@@ -777,11 +759,11 @@ Function Invoke-CIBuild {
 		# Generate database name based on environment
 		if (Test-IsLinux) {
 			# On Linux with Docker, no need for unique names since container is clean
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $databaseServer
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $databaseName
 		}
 		else {
 			# On local Windows builds, use simple name.
-			$script:databaseName = $databaseServer
+			$script:databaseName = $databaseName
 		}
 	}
 	
