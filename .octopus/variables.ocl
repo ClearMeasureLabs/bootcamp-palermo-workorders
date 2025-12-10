@@ -79,8 +79,11 @@ variable "az_login_tenant" {
 }
 
 variable "DatabaseServerName" {
+    value "bootcamp-palermo-workorders" {
+        environment = ["tdd"]
+    }
     value "bootcamp-palermo-workorders-#{Octopus.Environment.Name | ToLower}" {
-        environment = ["prod", "tdd", "uat"]
+        environment = ["prod", "uat"]
     }
 }
 
