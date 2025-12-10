@@ -31,4 +31,4 @@ app.Configure(config =>
         .WithDescription("Drop the specified database if it exists");
 });
 
-return app.Run(args);
+return await app.RunAsync(args);
