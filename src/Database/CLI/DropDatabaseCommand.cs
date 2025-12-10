@@ -1,7 +1,7 @@
 ﻿using JetBrains.Annotations;
 using Spectre.Console.Cli;
 
-namespace ClearMeasure.Bootcamp.Database.Console;
+namespace ClearMeasure.Bootcamp.Database.CLI;
 
 /// <summary>
 ///     Drops the specified database if it exists.

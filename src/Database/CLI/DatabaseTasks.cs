@@ -2,7 +2,7 @@
 using Microsoft.Data.SqlClient;
 using Spectre.Console;
 
-namespace ClearMeasure.Bootcamp.Database.Console;
+namespace ClearMeasure.Bootcamp.Database.CLI;
 
 public interface IDatabaseTasks
 {

@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace ClearMeasure.Bootcamp.Database.Console;
+namespace ClearMeasure.Bootcamp.Database.CLI;
 
 [UsedImplicitly]
 public class DatabaseOptions : CommandSettings

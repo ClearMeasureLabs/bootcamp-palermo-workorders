@@ -1,10 +1,8 @@
-﻿using System.Reflection;
-using DbUp;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace ClearMeasure.Bootcamp.Database.Console;
+namespace ClearMeasure.Bootcamp.Database.CLI;
 
 public abstract class AbstractDatabaseCommand(string action) : AsyncCommand<DatabaseOptions>
 {

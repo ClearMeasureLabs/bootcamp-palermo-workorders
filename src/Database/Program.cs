@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Database.Console;
+﻿using ClearMeasure.Bootcamp.Database.CLI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Spectre.Console.Cli;

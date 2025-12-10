@@ -1,7 +1,7 @@
 ﻿using JetBrains.Annotations;
 using Spectre.Console.Cli;
 
-namespace ClearMeasure.Bootcamp.Database.Console;
+namespace ClearMeasure.Bootcamp.Database.CLI;
 
 /// <summary>
 ///     This should resemble the AliaSQL "Rebuild" action, which runs Create, Update, Everytime, and TestData scripts.
