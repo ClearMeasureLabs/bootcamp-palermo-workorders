@@ -27,7 +27,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var workOrders = await Bus.Send(new WorkOrderAllQuery());
+        var workOrders = await Bus.Send(new WorkOrderSpecificationQuery());
         var workOrder = workOrders.OrderByDescending(x => x.CreatedDate).First();
 
         workOrder.Instructions.ShouldNotBeNull();
@@ -51,7 +51,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var workOrders = await Bus.Send(new WorkOrderAllQuery());
+        var workOrders = await Bus.Send(new WorkOrderSpecificationQuery());
         var workOrder = workOrders.OrderByDescending(x => x.CreatedDate).First();
 
         workOrder.Instructions.ShouldBe(string.Empty);
@@ -113,7 +113,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var workOrders = await Bus.Send(new WorkOrderAllQuery());
+        var workOrders = await Bus.Send(new WorkOrderSpecificationQuery());
         var workOrder = workOrders.OrderByDescending(x => x.CreatedDate).First();
 
         // Navigate back and update instructions
