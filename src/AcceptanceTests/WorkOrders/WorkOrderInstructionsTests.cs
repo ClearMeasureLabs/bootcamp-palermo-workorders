@@ -110,7 +110,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
 
         // Save changes with Assign command
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignCommand.Name);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         // Navigate back to verify instructions persisted
