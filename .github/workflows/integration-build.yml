@@ -28,13 +28,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
-      - name: Setup .NET SDK v6 and 10
+      - name: Setup .NET SDK 10.0.100
         uses: actions/setup-dotnet@v5.0.1
         with:
-          cache: true
-          dotnet-version: | 
-            6.0.x
-            10.0.100
+          dotnet-version: '10.0.100'        
+      - name: Setup .NET SDK 6.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
           
       # Set version environment variable
       - name: Set Version
@@ -51,6 +53,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
         run: |
+          Write-Host "Running CI Build"
           . ./build.ps1
           Invoke-CIBuild
 
@@ -404,13 +407,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Setup .NET SDK v6 and 10
+      - name: Setup .NET SDK 10.0.100
         uses: actions/setup-dotnet@v5.0.1
         with:
-          cache: true
-          dotnet-version: | 
-            6.0.x
-            10.0.100
+          dotnet-version: '10.0.100'        
+      - name: Setup .NET SDK 6.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+
       
       - name: Set Version
         shell: pwsh
