@@ -1,32 +1,29 @@
 param (
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [string]$databaseServer = "",
-	
-    [Parameter(Mandatory=$false)]
-    [string]$databaseName = "",
-	
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$migrateDbWithFlyway = $false
-	
+
+    [Parameter(Mandatory = $false)]
+    [string]$databaseName = ""
 )
 
 . .\build.ps1
 
-# Set default database server based on platform if not provided
-if ([string]::IsNullOrEmpty($databaseServer)) {
-    if (Test-IsLinux) {
+if ( [string]::IsNullOrEmpty($databaseServer))
+{
+    # Set default database server based on platform if not provided
+    if (Test-IsLinux)
+    {
         $databaseServer = "localhost,1433"
     }
-    else {
+    else
+    {
         $databaseServer = "(LocalDb)\MSSQLLocalDB"
     }
 }
 
-# Pass database name to Invoke-PrivateBuild if provided
-if ([string]::IsNullOrEmpty($databaseName)) {
-    Invoke-PrivateBuild -databaseServer $databaseServer
+if ([string]::IsNullOrEmpty($databaseName))
+{
+    $databaseName = "ChurchBulletin"
 }
-else {
-    Invoke-PrivateBuild -databaseServer $databaseServer -databaseName $databaseName
-}
+
+Invoke-PrivateBuild -databaseServer $databaseServer -databaseName $databaseName
