@@ -322,7 +322,6 @@ END
 "@
 
     $createDbCmd = "CREATE DATABASE [$databaseName];"
-	Log-Message "Creating SQL Server in Docker for integration tests for $databaseName on $databaseServer" -Type "INFO"
 
     try {
         if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
@@ -356,12 +355,10 @@ Function New-DockerContainerForSqlServer {
     $imageName = "mcr.microsoft.com/mssql/server:2022-latest"
 
     # Stop any containers using port 1433
-    Log-Message -Message "Checking for containers using port 1433..." -Type "INFO"
     $containersOnPort1433 = docker ps --filter "publish=1433" --format "{{.Names}}"
     
     foreach ($container in $containersOnPort1433) {
         if ($container) {
-            Log-Message -Message "Stopping container '$container' that is using port 1433..." -Type "INFO"
             docker stop $container | Out-Null
             docker rm $container | Out-Null
         }
@@ -370,7 +367,6 @@ Function New-DockerContainerForSqlServer {
     # Check if our specific container exists (running or stopped)
     $existingContainer = docker ps -a --filter "name=^${containerName}$" --format "{{.Names}}"
     if ($existingContainer) {
-        Log-Message -Message "Removing existing container '$containerName'..." -Type "INFO"
         docker rm -f $existingContainer | Out-Null
     }
     
@@ -447,7 +443,6 @@ Function Test-IsDockerRunning {
             Log-Message -Message "Docker found at: $dockerPath" -Type "INFO"
         }
         
-        # Check if Docker daemon is running
         try {
             $dockerVersion = & docker version --format "{{.Server.Version}}" 2>$null
             if ($dockerVersion) {
