@@ -1,30 +1,32 @@
-# Taken from psake https://github.com/psake
 
-# Ensure SqlServer module is installed for Invoke-Sqlcmd
-if (-not (Get-Module -ListAvailable -Name SqlServer)) {
-    Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
-    try {
-        # Register PSGallery if it's not registered
-        if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
-            Register-PSRepository -Default -ErrorAction Stop | Out-Null
+function Install-SqlServerModule {
+    # Ensure SqlServer module is installed for Invoke-Sqlcmd
+    if (-not (Get-Module -ListAvailable -Name SqlServer)) {
+        Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
+        try {
+            # Register PSGallery if it's not registered
+            if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+                Register-PSRepository -Default -ErrorAction Stop | Out-Null
+            }
+            # Trust PSGallery to avoid prompts
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue
+            Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser -Repository PSGallery -ErrorAction Stop
+            Write-Host "SqlServer module installed successfully" -ForegroundColor Green
         }
-        # Trust PSGallery to avoid prompts
-        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue
-        Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser -Repository PSGallery -ErrorAction Stop
-        Write-Host "SqlServer module installed successfully" -ForegroundColor Green
+        catch {
+            Write-Host "Failed to install SqlServer module: $_" -ForegroundColor Red
+            Write-Host "Some database operations may not work without this module" -ForegroundColor Yellow
+        }
+    }
+    
+    try {
+        Import-Module SqlServer -ErrorAction Stop
     }
     catch {
-        Write-Host "Failed to install SqlServer module: $_" -ForegroundColor Red
-        Write-Host "Some database operations may not work without this module" -ForegroundColor Yellow
-    }
+        Write-Host "Warning: Could not import SqlServer module. Invoke-Sqlcmd will not be available." -ForegroundColor Yellow
+    }    
 }
 
-try {
-    Import-Module SqlServer -ErrorAction Stop
-}
-catch {
-    Write-Host "Warning: Could not import SqlServer module. Invoke-Sqlcmd will not be available." -ForegroundColor Yellow
-}
 
 <#
 .SYNOPSIS
@@ -77,6 +79,8 @@ Function Log-Message {
     $logEntry = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [$Type] $Message"
     Write-Host $logEntry -ForegroundColor $color
 }
+
+
 
 Function Get-RedactedConnectionString {
     <#
@@ -796,5 +800,53 @@ function Install-Playwright
         throw "Playwright not found at $playwrightScript"
     }
 }
-  
+ 
+function CleanBuildArtifacts {
+    if (Test-Path "build") {
+		Remove-Item -Path "build" -Recurse -Force
+	}
+	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
+
+	exec {
+		& dotnet clean $solutionName -nologo -v $verbosity
+	}
+	exec {
+		& dotnet restore $solutionName -nologo --interactive -v $verbosity  
+	}
+}
     
+
+function Install-DotNetTools {
+	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
+	
+	# Ensure dotnet tools are in PATH
+	$dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
+	$pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
+	$dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
+	if (-not $dotnetToolsPathPresent) {
+		$env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
+		Log-Message -Message "Added dotnet tools to PATH: $dotnetToolsPath" -Type "INFO"
+	}
+}
+
+Function Init {
+	# Check for PowerShell 7
+	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+	if (-not $pwshPath) {
+		throw "PowerShell 7 is required to run this build script. Please install it from https://aka.ms/powershell"
+	}
+
+	if (Test-IsLinux) {
+		# Set NuGet cache to shorter path for Linux/WSL compatibility (only for local builds)
+		if (-not (Test-IsAzureDevOps) -and -not (Test-IsGitHubActions)) {
+			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
+		}
+
+		if (-not (Test-IsDockerRunning)) {
+			throw "Docker is required to run integration tests on linux. Please start Docker to run SQL Server in a container."
+		}
+	}
+    CleanBuildArtifacts
+    Install-SqlServerModule
+    Install-DotNetTools
+}
