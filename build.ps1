@@ -1,4 +1,6 @@
 #!/usr/bin/env pwsh
+$ErrorActionPreference = "Stop"
+
 . .\BuildFunctions.ps1
 
 # Clean environment variables that may interfere with local builds
@@ -149,17 +151,31 @@ Function MigrateDatabaseLocal {
 		
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$databaseNameFunc
+		[string]$databaseNameFunc,
+		
+		[Parameter(Mandatory = $false)]
+		[string]$databaseUser = "",
+		
+		[Parameter(Mandatory = $false)]
+		[string]$databasePassword = ""
 	)
 	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	
 	if (Test-IsLinux) {
-		$containerName = Get-ContainerName -DatabaseName $databaseNameFunc
-		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts, "sa", $sqlPassword)
+		if ([string]::IsNullOrWhiteSpace($databaseUser)) {
+			$containerName = Get-ContainerName -DatabaseName $databaseNameFunc
+			$databaseUser = "sa"
+			$databasePassword = Get-SqlServerPassword -ContainerName $containerName
+		}
+		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts, $databaseUser, $databasePassword)
 	}
 	else {
-		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts)
+		if (-not [string]::IsNullOrWhiteSpace($databaseUser)) {
+			$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts, $databaseUser, $databasePassword)
+		}
+		else {
+			$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts)
+		}
 	}
 	
 	& dotnet $dbArgs
@@ -187,14 +203,14 @@ Function Create-SqlServerInDocker {
 	New-DockerContainerForSqlServer -containerName $containerName
 	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
-	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
+	#Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
 	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $sqlPassword)
 	& dotnet $dbArgs
 	if ($LASTEXITCODE -ne 0) {
 		throw "Database migration failed with exit code $LASTEXITCODE"
 	}
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	#Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 }
 
 Function Publish-ToGitHubPackages {
@@ -408,7 +424,7 @@ Function Invoke-AcceptanceTests {
 		}
 	}
 
-	Update-AppSettingsConnectionStrings -databaseName $script:databaseName -databaseServer $script:databaseServer -sourceDir $source_dir
+	#Update-AppSettingsConnectionStrings -databaseName $script:databaseName -databaseServer $script:databaseServer -sourceDir $source_dir
 	
 	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
 	# This prevents the Windows LocalDB connection string from overriding appsettings.json
@@ -510,7 +526,7 @@ Function Invoke-PrivateBuild {
 		}
 	}
 	
-	Update-AppSettingsConnectionStrings -databaseServer $script:databaseServer -databaseName $script:databaseName  -sourceDir $source_dir
+	#Update-AppSettingsConnectionStrings -databaseServer $script:databaseServer -databaseName $script:databaseName  -sourceDir $source_dir
     Drop-SqlServerDatabase -databaseServer $script:databaseServer -databaseName $projectName
     MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
@@ -558,6 +574,7 @@ Requires Docker on Linux. Uses Test-IsLinux, Test-IsAzureDevOps, and Test-IsGitH
 to detect environment and adjust behavior accordingly.
 #>
 Function Invoke-CIBuild {
+    
 	if (Test-IsAzureDevOps) {
 		Log-Message -Message "Starting Invoke-CIBuild on Azure DevOps..." -Type "INFO"
 	}
@@ -567,18 +584,22 @@ Function Invoke-CIBuild {
 	else {
 		Log-Message -Message "Starting Invoke-CIBuild..." -Type "INFO"
 	}
-	
+    $connectionString = Get-ConnectionStringComponents
+    if ($connectionString.IsEmpty) {
+        throw "ConnectionStrings__SqlConnectionString is required for Invoke-CIBuild."
+    }
+    
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
 	# Generate database name based on environment
 	# On Linux with Docker, no need for unique names since container is clean
 	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (Test-IsLinux) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-	}
-	else {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
-	}
+#	if (Test-IsLinux) {
+#		$script:databaseName = Generate-UniqueDatabaseName -baseName $connectionString.Database -generateUnique $false
+#	}
+#	else {
+#		$script:databaseName = Generate-UniqueDatabaseName -baseName $connectionString.Database -generateUnique $true
+#	}
 	
 	Init
 	Compile
@@ -589,8 +610,8 @@ Function Invoke-CIBuild {
 		Log-Message -Message "Setting up SQL Server in Docker for CI" -Type "INFO"
 		if (Test-IsDockerRunning -LogOutput $true) 
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $connectionString.Database)
+			New-SqlServerDatabase -serverName $connectionString.Server -databaseName $connectionString.Database
 		}
 		else {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
@@ -598,8 +619,8 @@ Function Invoke-CIBuild {
 		}
 	}
 
-	Update-AppSettingsConnectionStrings  -databaseServer $script:databaseServer -databaseName $script:databaseName -sourceDir $source_dir
-	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $script:databaseName
+#	Update-AppSettingsConnectionStrings -databaseServer $connectionString.Server -databaseName $connectionString.Database -sourceDir $source_dir
+	MigrateDatabaseLocal -databaseServerFunc $connectionString.Server -databaseNameFunc $connectionString.Database -databaseUser $connectionString.User -databasePassword $connectionString.Password
 	
 	IntegrationTest
 	# Restore appsettings files to their original git state
