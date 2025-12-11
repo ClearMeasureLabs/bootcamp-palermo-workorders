@@ -9,6 +9,10 @@ if ($env:ConnectionStrings__SqlConnectionString) {
 }
 
 $script:projectName = "ChurchBulletin"
+$script:projectConfig = $env:BuildConfiguration
+if ([string]::IsNullOrEmpty($script:projectConfig)) { $script:projectConfig = "Release" }
+
+
 $base_dir = resolve-path .\
 $source_dir = Join-Path $base_dir "src"
 $solutionName = Join-Path $source_dir "$script:projectName.sln"
@@ -17,7 +21,7 @@ $integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
 $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
 $uiProjectPath =  Join-PathSegments $source_dir "UI" "Server" 
 $databaseProjectPath = Join-Path $source_dir "Database"
-$projectConfig = $env:BuildConfiguration
+
 $framework = "net10.0"
 $version = $env:BUILD_BUILDNUMBER
 
@@ -36,7 +40,6 @@ if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $script:projectNam
 $script:databaseScripts = Join-PathSegments $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
-if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 
  
 
@@ -44,7 +47,7 @@ if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 Function Compile {
 	exec {
 		& dotnet build $solutionName -nologo --no-restore -v `
-			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
+			$verbosity -maxcpucount --configuration $script:projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
 			/p:Product="Church Bulletin"
@@ -58,7 +61,7 @@ Function UnitTests {
 		exec {
 			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "UnitTests") --no-build `
-				--no-restore --configuration $projectConfig `
+				--no-restore --configuration $script:projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
 	}
@@ -75,7 +78,7 @@ Function IntegrationTest {
 		exec {
 			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
-				--no-restore --configuration $projectConfig `
+				--no-restore --configuration $script:projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
 	}
@@ -85,8 +88,6 @@ Function IntegrationTest {
 }
 
 Function AcceptanceTests {
-	$projectConfig = "Release"
-
 	# Check if UI.Server is already running
 	$uiServerProcess = Get-Process -Name "ClearMeasure.Bootcamp.UI.Server" -ErrorAction SilentlyContinue
 	if ($uiServerProcess) {
@@ -102,7 +103,7 @@ Function AcceptanceTests {
         exec {
             & dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
                 --results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
-                --no-restore --configuration $projectConfig `
+                --no-restore --configuration $script:projectConfig `
                 --settings:$runSettingsPath `
                 --collect:"XPlat Code Coverage"
         }
@@ -129,7 +130,7 @@ Function MigrateDatabaseLocal {
 		[Parameter(Mandatory = $false)]
 		[string]$databasePassword = ""
 	)
-	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $script:projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	
 	if (Test-IsLinux) {
 		if ([string]::IsNullOrWhiteSpace($databaseUser)) {
@@ -227,11 +228,11 @@ Function PackageUI {
 	$packagePath = Join-Path $build_dir $packageName
 
 	exec {
-		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
+		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $script:projectConfig
 	}
 	
 	exec {
-		& dotnet-octo pack --id "$script:projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
+		& dotnet-octo pack --id "$script:projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $script:projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 	
 }
@@ -259,7 +260,7 @@ Function PackageAcceptanceTests {
 
 Function PackageScript {    
 	exec {
-		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
+		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $script:projectConfig
 	}
 	exec {
 		& dotnet-octo pack --id "$script:projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
@@ -268,8 +269,6 @@ Function PackageScript {
 
 
 Function Package-Everything{
-	
-	
 	PackageUI
 	PackageDatabase
 	PackageAcceptanceTests
@@ -329,7 +328,6 @@ Function Invoke-AcceptanceTests {
 	)
 	
 	Log-Message -Message "Starting AcceptanceBuild..." -Type "INFO"
-	$projectConfig = "Release"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
