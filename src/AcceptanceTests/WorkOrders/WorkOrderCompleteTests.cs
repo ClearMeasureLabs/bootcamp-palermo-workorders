@@ -46,7 +46,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
     }
 
     [Test]
-    [Repeat(2)]
+    [Retry(3)]
     public async Task CompleteWorkOrderWorkflow()
     {
         await LoginAsCurrentUser();

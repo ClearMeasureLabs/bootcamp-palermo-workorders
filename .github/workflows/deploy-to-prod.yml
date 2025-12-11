@@ -1,0 +1,59 @@
+name: Deploy to Prod
+run-name: "1.3.${{ github.run_number }} • Deploy to Prod ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
+on:
+  workflow_run:
+    workflows: [ "Deploy to UAT" ]
+    types: [ completed ]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-to-prod-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  MAJOR_VERSION: 1
+  MINOR_VERSION: 3
+  
+jobs:
+  deploy-to-prod:
+    name: Prod
+    # Gate on successful completion of the Deploy to UAT workflow or manual trigger
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: Prod
+    
+    steps:
+      - name: Retrieve build version from the Integration Build workflow
+        uses: actions/download-artifact@v4
+        with:
+          name: build-version
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Set Version
+        run: |
+          version=$(cat build_version.txt)
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Build version: $version"
+
+      - name: Deploy Octopus Release to Prod
+        uses: OctopusDeploy/deploy-release-action@v3
+        id: start-deploy-to-prod
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          project: ${{ vars.OCTOPUS_PROJECT }}   
+          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          environments: "Prod"
+
+      - name: Wait for the Prod deployment to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.start-deploy-to-prod.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800          

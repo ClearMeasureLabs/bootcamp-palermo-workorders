@@ -1,14 +1,21 @@
 name: Integration Build
 run-name: "1.3.${{ github.run_number }} • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
 on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - review_requested
   push:
     branches: ['**']
-  pull_request:
-    branches: ['**']
   workflow_dispatch:
-concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
+
+# concurrency:
+#   group: build-${{ github.ref }}
+#   cancel-in-progress: true
 env:
   MAJOR_VERSION: 1
   MINOR_VERSION: 3
@@ -17,6 +24,11 @@ jobs:
   build-linux:
     name: Integration Build
     runs-on: ubuntu-latest
+    # Run this job only for PRs, manual triggers, and non-Copilot pushes. Work in Progress.
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && github.actor != 'Copilot' && !startsWith(github.ref, 'refs/heads/copilot/'))
     permissions:
       contents: read
       packages: write
@@ -24,7 +36,6 @@ jobs:
       BUILD_CONFIGURATION: Release
     
     steps:
-      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
@@ -36,16 +47,15 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
-
           
-      # Set version environment variable
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
+          echo "$version" > build_version.txt
           echo "Build version: $version"
-
+          
       - name: Run CI Build 
         shell: pwsh
         env:
@@ -104,13 +114,15 @@ jobs:
           . ./build.ps1
           Package-Everything
 
-      # Upload packages as artifacts
-      - name: Upload NuGet Packages
+      # Upload artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: churchbulletin-nuget-packages
-          path: build/*.nupkg
+          path: |
+            build/*.nupkg
+            build_version.txt
           retention-days: 90
 
       # Publish packages to GitHub Packages
@@ -258,7 +270,6 @@ jobs:
           if ($failedCount -gt 0) {
             Write-Warning "Some packages failed to publish to Octopus Deploy."
           }
-          
 
   docker-build-image-for-churchbulletin-ui:
     name: Publish Release Candidate
@@ -411,12 +422,11 @@ jobs:
         uses: actions/setup-dotnet@v5.0.1
         with:
           dotnet-version: '10.0.100'        
+      
       - name: Setup .NET SDK 6.0
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
-
-
       
       - name: Set Version
         shell: pwsh
@@ -550,8 +560,6 @@ jobs:
           Write-Host "Installing Playwright browsers from $playwrightScript"
           & pwsh $playwrightScript install --with-deps
           
-          
-          
           # Now run the acceptance tests
           Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
 
@@ -573,82 +581,3 @@ jobs:
           name: acceptance-test-results-tdd
           path: build/test/AcceptanceTests/**/*.trx
           retention-days: 30 
-
-
-  deploy-to-uat:
-    name: UAT
-    needs: [deploy-to-tdd]
-    if: success() 
-    runs-on: ubuntu-latest
-    environment:
-      name: UAT
-    
-    steps:
-      - name: Set Version
-        run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
-
-      - name: Deploy Octopus Release to UAT
-        uses: OctopusDeploy/deploy-release-action@v3
-        id: start-deploy-to-uat
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-        with:
-          project: ${{ vars.OCTOPUS_PROJECT }}   
-          release_number: ${{ env.BUILD_BUILDNUMBER }}
-          environments: "UAT"
-
-      - name: Wait for the UAT deployment to complete
-        uses: OctopusDeploy/await-task-action@v3
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-        with:
-          server_task_id: ${{ fromJson(steps.start-deploy-to-uat.outputs.server_tasks)[0].serverTaskId }}
-          timeout_after: 1800          
-
-          
-          
-  deploy-to-prod:
-    name: Prod
-    needs: [deploy-to-uat]
-    if: success() 
-    runs-on: ubuntu-latest
-    environment:
-      name: Prod
-    
-    steps:
-      - name: Set Version
-        run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
-
-      - name: Deploy Octopus Release to Prod
-        uses: OctopusDeploy/deploy-release-action@v3
-        id: start-deploy-to-prod
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-        with:
-          project: ${{ vars.OCTOPUS_PROJECT }}   
-          release_number: ${{ env.BUILD_BUILDNUMBER }}
-          environments: "Prod"
-
-      - name: Wait for the Prod deployment to complete
-        uses: OctopusDeploy/await-task-action@v3
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-        with:
-          server_task_id: ${{ fromJson(steps.start-deploy-to-prod.outputs.server_tasks)[0].serverTaskId }}
-          timeout_after: 1800          
