@@ -54,7 +54,7 @@ Function Init {
 		}
 
 		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
-		if (Test-IsDockerRunning!) {
+		if (-not (Test-IsDockerRunning)) {
 			throw "Docker is not running. Please start Docker to run SQL Server in a container."
 		}
 	}
@@ -102,6 +102,7 @@ Function IntegrationTest {
 	Push-Location -Path $integrationTestProjectPath
 
 	try {
+		#  --settings path/to/your.runsettings
 		exec {
 			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
@@ -405,7 +406,7 @@ Function Invoke-AcceptanceTests {
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
-    $isOllamaRunnin = Test-IsOllamaRunning -LogOutput $true
+    $isOllamaRunning = Test-IsOllamaRunning -LogOutput $true
 	
 	Init
 	Compile
@@ -415,8 +416,8 @@ Function Invoke-AcceptanceTests {
 		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
 		if (Test-IsDockerRunning -LogOutput $true) 
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $databaseName)
+			New-SqlServerDatabase -databaseServer $databaseServer -databaseName $databaseName
 		}
 		else {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
@@ -424,7 +425,7 @@ Function Invoke-AcceptanceTests {
 		}
 	}
 
-	#Update-AppSettingsConnectionStrings -databaseName $script:databaseName -databaseServer $script:databaseServer -sourceDir $source_dir
+	Update-AppSettingsConnectionStrings -databaseName $databaseName -databaseServer $databaseServer -sourceDir $source_dir
 	
 	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
 	# This prevents the Windows LocalDB connection string from overriding appsettings.json
@@ -435,7 +436,7 @@ Function Invoke-AcceptanceTests {
 		Set-Content -Path $launchSettingsPath -Value $launchSettings
 	}
 	
-	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
 	AcceptanceTests
 	
 	# Restore appsettings and launchSettings files to their original git state
@@ -500,7 +501,7 @@ Function Invoke-PrivateBuild {
         
 		[Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-		[string]$databaseName = ""
+		[string]$databaseName 
 	)
 	
 	Log-Message -Message "Starting Invoke-PrivateBuild, setting the environment variable ContainerAppURL to localhost:7174" -Type "INFO"
@@ -517,8 +518,8 @@ Function Invoke-PrivateBuild {
 		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
 		if (Test-IsDockerRunning -LogOutput $true) 
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -databaseServer $script:databaseServer -databaseName $script:databaseName
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $databaseName)
+			New-SqlServerDatabase -databaseServer $databaseServer -databaseName $databaseName
 		}
 		else {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
@@ -526,9 +527,9 @@ Function Invoke-PrivateBuild {
 		}
 	}
 	
-	#Update-AppSettingsConnectionStrings -databaseServer $script:databaseServer -databaseName $script:databaseName  -sourceDir $source_dir
-    Drop-SqlServerDatabase -databaseServer $script:databaseServer -databaseName $projectName
-    MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	Update-AppSettingsConnectionStrings -databaseServer $databaseServer -databaseName $databaseName  -sourceDir $source_dir
+	Drop-SqlServerDatabase -databaseServer $databaseServer -databaseName $databaseName
+	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
 	
 	IntegrationTest
 

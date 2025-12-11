@@ -26,7 +26,7 @@ else
         # Set default database server based on platform if not provided
         if (Test-IsLinux)
         {
-            $databaseServer = "localhost,1433"
+            $databaseServer = "tcp:localhost,1433"
         }
         else
         {
