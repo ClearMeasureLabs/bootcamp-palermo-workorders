@@ -674,3 +674,69 @@ function Drop-SqlServerDatabase
         throw "Database migration failed with exit code $LASTEXITCODE"
     }
 }
+
+Function Get-ConnectionStringComponents {
+    <#
+    .SYNOPSIS
+        Extracts database connection string components from ConnectionStrings__SqlConnectionString environment variable
+    .DESCRIPTION
+        Parses the connection string and extracts the database server, database name, database user, and database password.
+        Supports various connection string formats including Server/Data Source, Database/Initial Catalog, User ID/User, and Password.
+    .OUTPUTS
+        [PSCustomObject] An object with properties: Server, Database, User, Password
+    .EXAMPLE
+        $env:ConnectionStrings__SqlConnectionString = "Server=localhost;Database=mydb;User ID=sa;Password=secret123;"
+        $components = Get-ConnectionStringComponents
+        Returns: @{ Server = "localhost"; Database = "mydb"; User = "sa"; Password = "secret123" }
+    .EXAMPLE
+        $env:ConnectionStrings__SqlConnectionString = "Data Source=server1;Initial Catalog=ChurchBulletin;User=admin;Password=pass123;"
+        $components = Get-ConnectionStringComponents
+        Returns: @{ Server = "server1"; Database = "ChurchBulletin"; User = "admin"; Password = "pass123" }
+    #>
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$ConnectionString = $env:ConnectionStrings__SqlConnectionString
+    )
+
+    if ([string]::IsNullOrEmpty($ConnectionString)) {
+        return [PSCustomObject]@{
+            Server   = ""
+            Database = ""
+            User     = ""
+            Password = ""
+            IsEmpty  = $true
+        }
+    }
+
+    # Extract server (supports both "Server=" and "Data Source=")
+    $server = $null
+    if ($ConnectionString -match "(?:Server|Data Source)=([^;]+)") {
+        $server = $matches[1].Trim()
+    }
+
+    # Extract database (supports both "Database=" and "Initial Catalog=")
+    $database = $null
+    if ($ConnectionString -match "(?:Database|Initial Catalog)=([^;]+)") {
+        $database = $matches[1].Trim()
+    }
+
+    # Extract user (supports both "User ID=" and "User=")
+    $user = $null
+    if ($ConnectionString -match "(?:User ID|User)=([^;]+)") {
+        $user = $matches[1].Trim()
+    }
+
+    # Extract password
+    $password = $null
+    if ($ConnectionString -match "Password=([^;]+)") {
+        $password = $matches[1].Trim()
+    }
+
+    return [PSCustomObject]@{
+        Server   = $server
+        Database = $database
+        User     = $user
+        Password = $password
+        IsEmpty  = $false
+    }
+}
