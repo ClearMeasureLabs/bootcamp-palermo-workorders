@@ -2,11 +2,11 @@
 . .\BuildFunctions.ps1
 
 # Clean environment variables that may interfere with local builds
-if ($env:ConnectionStrings__SqlConnectionString) {
-	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
-	$env:ConnectionStrings__SqlConnectionString = $null
-	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
-}
+#if ($env:ConnectionStrings__SqlConnectionString) {
+#	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
+#	$env:ConnectionStrings__SqlConnectionString = $null
+#	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
+#}
 
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
