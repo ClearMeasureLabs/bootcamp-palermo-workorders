@@ -114,20 +114,27 @@ Function Update-AppSettingsConnectionStrings {
         [string]$sourceDir
     )
 
-    # Build the connection string for environment variable
-    if (Test-IsLinux) {
-        $containerName = Get-ContainerName -DatabaseName $databaseName
-        $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-        $connectionString = "server=$serverName;database=$databaseName;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
-    }
-    else {
-        $connectionString = "server=$databaseServer;database=$databaseName;Integrated Security=true;"
+    throw "Update-AppSettingsConnectionStrings is deprecated. Use Get-ConnectionStringComponents and set variable directly."
+
+    $connStr = Get-ConnectionStringComponents
+    $connectionString = ""
+    if ($connStr.IsEmpty) {
+        # Build the connection string for environment variable
+        if (Test-IsLinux) {
+            $containerName = Get-ContainerName -DatabaseName $databaseName
+            $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+            $connectionString = "server=$serverName;database=$databaseName;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+        }
+        else {
+            Write-Host $env:ConnectionStrings__SqlConnectionString
+            $connectionString = "server=$databaseServer;database=$databaseName;Integrated Security=true;"
+        }
+        $env:ConnectionStrings__SqlConnectionString = $connectionString
+
+    } else {
+        $connectionString = $connStr.Value
     }
 
-
-    # Set environment variable for current process
-    $env:ConnectionStrings__SqlConnectionString = $connectionString
-    Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $(Get-RedactedConnectionString -ConnectionString $connectionString)" -Type "INFO"
 
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
@@ -706,6 +713,7 @@ Function Get-ConnectionStringComponents {
             Password = ""
             IsEmpty  = $true
             Value = ""
+            RedactedValue = ""
         }
     }
 
@@ -740,6 +748,7 @@ Function Get-ConnectionStringComponents {
         Password = $password
         IsEmpty  = $false
         Value    = $ConnectionString
+        RedactedValue = Get-RedactedConnectionString -ConnectionString $ConnectionString
     }
 }
 
