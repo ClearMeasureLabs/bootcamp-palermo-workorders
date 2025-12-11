@@ -46,44 +46,22 @@ Function Init {
 		Log-Message -Message "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell" -Type "WARNING"
 		throw "PowerShell 7 is required to run this build script."
 	}
- 	else {
-		Log-Message -Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
-	}
-
-	if (Test-IsAzureDevOps) { 
-		Log-Message -Message "Running in Azure DevOps Pipeline" -Type "INFO"
-	}
-	else {
-		Log-Message -Message "Running in Local Environment" -Type "INFO"
-	}
 
 	if (Test-IsLinux) {
 		# Set NuGet cache to shorter path for Linux/WSL compatibility (only for local builds)
 		if (-not (Test-IsAzureDevOps) -and -not (Test-IsGitHubActions)) {
 			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
-			Log-Message -Message "Setting NUGET_PACKAGES to /tmp/nuget-packages for WSL" -Type "INFO"
 		}
 
-		Log-Message -Message "Running on Linux" -Type "INFO"
 		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
-		if (Test-IsDockerRunning) {
-			Log-Message -Message "Docker is running" -Type "INFO"
-		} else {
-			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-			throw "Docker is not running."
+		if (Test-IsDockerRunning!) {
+			throw "Docker is not running. Please start Docker to run SQL Server in a container."
 		}
 	}
-	elseif (Test-IsWindows) {
-		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
-		Log-Message -Message "Running on Windows" -Type "INFO"
-	}
-	Log-Message "Using $script:databaseServer as database server." -Type "INFO"
-	Log-Message "Using $script:databaseName as the database name." 
 
 	if (Test-Path "build") {
 		Remove-Item -Path "build" -Recurse -Force
 	}
-	
 	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
 
 	exec {
@@ -496,8 +474,7 @@ Function Invoke-AcceptanceTests {
 		}
 	}
 
-	# Update appsettings.json files before database migration
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	Update-AppSettingsConnectionStrings -databaseName $script:databaseName -databaseServer $script:databaseServer -sourceDir $source_dir
 	
 	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
 	# This prevents the Windows LocalDB connection string from overriding appsettings.json
@@ -527,7 +504,6 @@ Function Invoke-AcceptanceTests {
 
 	$sw.Stop()
 	Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
 
 <#
@@ -569,48 +545,17 @@ Requires Docker on Linux. Sets containerAppURL environment variable to "localhos
 #>
 Function Invoke-PrivateBuild {
 	param (
-		[Parameter(Mandatory = $false)]
-		[string]$databaseServer = "",
-		
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+		[string]$databaseServer,
+        
+		[Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
 		[string]$databaseName = ""
 	)
 	
-	Log-Message -Message "Starting Invoke-PrivateBuild..." -Type "INFO"
+	Log-Message -Message "Starting Invoke-PrivateBuild, setting the environment variable ContainerAppURL to localhost:7174" -Type "INFO"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
-	
-	# Set database server from parameter if provided
-	if (-not [string]::IsNullOrEmpty($databaseServer)) {
-		$script:databaseServer = $databaseServer
-		Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "INFO"
-	}
-	else {
-		if (Test-IsLinux) {
-			$script:databaseServer = "localhost"
-		}
-		else {
-			$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
-		}
-		Log-Message -Message "Using default database server for platform: $script:databaseServer" -Type "INFO"
-	}
-	
-
-	# Generate unique database name for this build instance
-	# On Linux with Docker, no need for unique names since container is clean
-	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (-not [string]::IsNullOrEmpty($databaseName)) {
-		$script:databaseName = $databaseName
-		Log-Message -Message "Using database name from parameter: $script:databaseName" -Type "INFO"
-	}
-	elseif (Test-IsLinux) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-	}
-	elseif (Test-IsLocalBuild) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-	}
-	else {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
-	}
 
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
@@ -632,11 +577,8 @@ Function Invoke-PrivateBuild {
 		}
 	}
 	
-	# Update appsettings.json files before database migration
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-
+	Update-AppSettingsConnectionStrings -databaseServer $script:databaseServer -databaseName $script:databaseName  -sourceDir $source_dir
     Drop-SqlServerDatabase -databaseServer $script:databaseServer -databaseName $projectName
-
     MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest
@@ -650,7 +592,6 @@ Function Invoke-PrivateBuild {
 	
 	$sw.Stop()
 	Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
 
 <#
@@ -724,8 +665,8 @@ Function Invoke-CIBuild {
 		}
 	}
 
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	Update-AppSettingsConnectionStrings  -databaseServer $script:databaseServer -databaseName $script:databaseName -sourceDir $source_dir
+	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $script:databaseName
 	
 	IntegrationTest
 	# Restore appsettings files to their original git state
@@ -739,5 +680,4 @@ Function Invoke-CIBuild {
 
 	$sw.Stop()
 	Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }

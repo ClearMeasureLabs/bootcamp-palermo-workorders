@@ -104,23 +104,24 @@ Function Get-RedactedConnectionString {
 Function Update-AppSettingsConnectionStrings {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$databaseNameToUse,
-        [Parameter(Mandatory = $true)]
-        [string]$serverName,
+        [ValidateNotNullOrEmpty()]
+        [string]$databaseServer,
+        [ValidateNotNullOrEmpty()]
+        [Parameter(Mandatory = $true)]  
+        [string]$databaseName,
+        [ValidateNotNullOrEmpty()]
         [Parameter(Mandatory = $true)]
         [string]$sourceDir
     )
 
-    Log-Message "Updating appsettings*.json files with database name: $databaseNameToUse" -Type "INFO"
-
     # Build the connection string for environment variable
     if (Test-IsLinux) {
-        $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
+        $containerName = Get-ContainerName -DatabaseName $databaseName
         $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-        $connectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+        $connectionString = "server=$serverName;database=$databaseName;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
     }
     else {
-        $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
+        $connectionString = "server=$databaseServer;database=$databaseName;Integrated Security=true;"
     }
 
 
@@ -132,7 +133,6 @@ Function Update-AppSettingsConnectionStrings {
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
     
     foreach ($file in $appSettingsFiles) {
-        Log-Message "Processing file: $($file.FullName)" -Type "INFO"
     
         $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
         
@@ -144,24 +144,22 @@ Function Update-AppSettingsConnectionStrings {
             foreach ($property in $connectionStringsObj.PSObject.Properties) {
                 $oldConnectionString = $property.Value
 
-                Log-Message "Found connection string $($property.Name) : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
                 if ($oldConnectionString -match "database=([^;]+)") {
 
                     if (Test-IsLinux) {
-                        $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
+                        $containerName = Get-ContainerName -DatabaseName $databaseName
                         $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-                        $newConnectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+                        $newConnectionString = "server=$serverName;database=$databaseName;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
                     }
                     else {
                         # Replace the database name in the connection string
-                        $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
+                        $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseName"
                 
                         # Also update server if needed
                         $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
                     }
         
                     $connectionStringsObj.$($property.Name) = $newConnectionString
-                    Log-Message "Updated $($property.Name): $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
                 }
             }
        
@@ -571,11 +569,6 @@ Function Test-IsOllamaRunning {
         }
         return $false
     }
-    else {
-        if ($LogOutput) {
-            Log-Message -Message "Ollama found at: $ollamaPath" -Type "INFO"
-        }
-    }
     
     # Check if Ollama service is running by testing the API
     try {
@@ -585,7 +578,6 @@ Function Test-IsOllamaRunning {
                 $content = $response.Content | ConvertFrom-Json
                 $modelCount = ($content.models | Measure-Object).Count
                 Log-Message -Message "Ollama service is running at $OllamaUrl" -Type "INFO"
-                Log-Message -Message "Available models: $modelCount" -Type "INFO"
             }
             return $true
         }
@@ -657,8 +649,10 @@ function Drop-SqlServerDatabase
 {
     param (
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$databaseServer,
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$databaseName
     )
     
