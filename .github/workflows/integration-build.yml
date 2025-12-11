@@ -17,6 +17,7 @@ jobs:
   build-linux:
     name: Integration Build
     runs-on: ubuntu-latest
+    environment: TDD
     permissions:
       contents: read
       packages: write
@@ -36,7 +37,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
-
           
       # Set version environment variable
       - name: Set Version
@@ -45,6 +45,7 @@ jobs:
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
+          echo "${ env.BUILD_BUILDNUMBER }" > build/build_version.txt
 
       - name: Run CI Build 
         shell: pwsh
@@ -104,13 +105,15 @@ jobs:
           . ./build.ps1
           Package-Everything
 
-      # Upload packages as artifacts
-      - name: Upload NuGet Packages
+      # Upload artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: churchbulletin-nuget-packages
-          path: build/*.nupkg
+          path: |
+            build/*.nupkg
+            build/build_version.txt
           retention-days: 90
 
       # Publish packages to GitHub Packages
@@ -258,7 +261,6 @@ jobs:
           if ($failedCount -gt 0) {
             Write-Warning "Some packages failed to publish to Octopus Deploy."
           }
-          
 
   docker-build-image-for-churchbulletin-ui:
     name: Publish Release Candidate
@@ -573,82 +575,3 @@ jobs:
           name: acceptance-test-results-tdd
           path: build/test/AcceptanceTests/**/*.trx
           retention-days: 30 
-
-
-  deploy-to-uat:
-    name: UAT
-    needs: [deploy-to-tdd]
-    if: success() 
-    runs-on: ubuntu-latest
-    environment:
-      name: UAT
-    
-    steps:
-      - name: Set Version
-        run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
-
-      - name: Deploy Octopus Release to UAT
-        uses: OctopusDeploy/deploy-release-action@v3
-        id: start-deploy-to-uat
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-        with:
-          project: ${{ vars.OCTOPUS_PROJECT }}   
-          release_number: ${{ env.BUILD_BUILDNUMBER }}
-          environments: "UAT"
-
-      - name: Wait for the UAT deployment to complete
-        uses: OctopusDeploy/await-task-action@v3
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-        with:
-          server_task_id: ${{ fromJson(steps.start-deploy-to-uat.outputs.server_tasks)[0].serverTaskId }}
-          timeout_after: 1800          
-
-          
-          
-  deploy-to-prod:
-    name: Prod
-    needs: [deploy-to-uat]
-    if: success() 
-    runs-on: ubuntu-latest
-    environment:
-      name: Prod
-    
-    steps:
-      - name: Set Version
-        run: |
-          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
-          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
-
-      - name: Deploy Octopus Release to Prod
-        uses: OctopusDeploy/deploy-release-action@v3
-        id: start-deploy-to-prod
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-        with:
-          project: ${{ vars.OCTOPUS_PROJECT }}   
-          release_number: ${{ env.BUILD_BUILDNUMBER }}
-          environments: "Prod"
-
-      - name: Wait for the Prod deployment to complete
-        uses: OctopusDeploy/await-task-action@v3
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-        with:
-          server_task_id: ${{ fromJson(steps.start-deploy-to-prod.outputs.server_tasks)[0].serverTaskId }}
-          timeout_after: 1800          
