@@ -24,6 +24,7 @@ jobs:
   build-linux:
     name: Integration Build
     runs-on: ubuntu-latest
+    # Run this job only for PRs, manual triggers, and non-Copilot pushes. Work in Progress.
     if: |
       github.event_name == 'workflow_dispatch' || 
       github.event_name == 'pull_request' ||
@@ -35,17 +36,6 @@ jobs:
       BUILD_CONFIGURATION: Release
     
     steps:
-      # Debug: Show actor information
-      - name: Debug Actor Information
-        run: |
-          echo "Event name: ${{ github.event_name }}"
-          echo "Actor: ${{ github.actor }}"
-          echo "Triggered by: ${{ github.triggering_actor }}"
-          echo "Event sender: ${{ github.event.sender.login }}"
-          echo "Ref: ${{ github.ref }}"
-          echo "Head ref: ${{ github.head_ref }}"
-      
-      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
@@ -58,7 +48,6 @@ jobs:
         with:
           dotnet-version: '6.0.x'
           
-      # Set version environment variable
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
@@ -77,7 +66,6 @@ jobs:
           Write-Host "Running CI Build"
           . ./build.ps1
           Invoke-CIBuild
-
 
       # Publish test results
       - name: Test Reporter
@@ -434,12 +422,11 @@ jobs:
         uses: actions/setup-dotnet@v5.0.1
         with:
           dotnet-version: '10.0.100'        
+      
       - name: Setup .NET SDK 6.0
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
-
-
       
       - name: Set Version
         shell: pwsh
@@ -572,8 +559,6 @@ jobs:
 
           Write-Host "Installing Playwright browsers from $playwrightScript"
           & pwsh $playwrightScript install --with-deps
-          
-          
           
           # Now run the acceptance tests
           Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"

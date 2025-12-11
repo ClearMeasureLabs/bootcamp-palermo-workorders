@@ -15,22 +15,18 @@ env:
 jobs:
   deploy-to-uat:
     name: UAT
-    # Gate on successful completion of Workflow A (implies deploy-to-tdd succeeded)
+    # Gate on successful completion of the Integration Build workflow or manual trigger
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     environment:
       name: UAT
     
     steps:
-      - name: Run numbers
-        run: |
-          echo "Run number: ${{ github.run_number }}"
-          echo "Integration build workflow number: ${{ github.event.workflow_run.run_number }}"
-
-      - name: Retrieve build version
+      - name: Retrieve build version from the Integration Build workflow
         uses: actions/download-artifact@v4
         with:
           name: churchbulletin-nuget-packages
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: Set Version
         run: |
@@ -38,6 +34,16 @@ jobs:
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "Build version: $version"
+
+      # Upload artifacts
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: build-version
+          path: |
+            build_version.txt
+          retention-days: 90 
 
       - name: Deploy Octopus Release to UAT
         uses: OctopusDeploy/deploy-release-action@v3
