@@ -43,8 +43,7 @@ Function Init {
 	# Check for PowerShell 7
 	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
 	if (-not $pwshPath) {
-		Log-Message -Message "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell" -Type "WARNING"
-		throw "PowerShell 7 is required to run this build script."
+		throw "PowerShell 7 is required to run this build script. Please install it from https://aka.ms/powershell"
 	}
 
 	if (Test-IsLinux) {
@@ -53,9 +52,8 @@ Function Init {
 			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
 		}
 
-		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 		if (-not (Test-IsDockerRunning)) {
-			throw "Docker is not running. Please start Docker to run SQL Server in a container."
+			throw "Docker is required to run integration tests on linux. Please start Docker to run SQL Server in a container."
 		}
 	}
 
@@ -413,8 +411,7 @@ Function Invoke-AcceptanceTests {
 
 	if (Test-IsLinux) 
 	{
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
-		if (Test-IsDockerRunning -LogOutput $true) 
+		if (Test-IsDockerRunning) 
 		{
 			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $databaseName)
 			New-SqlServerDatabase -databaseServer $databaseServer -databaseName $databaseName
@@ -515,8 +512,7 @@ Function Invoke-PrivateBuild {
 	
 	if (Test-IsLinux) 
 	{
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
-		if (Test-IsDockerRunning -LogOutput $true) 
+		if (Test-IsDockerRunning ) 
 		{
 			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $databaseName)
 			New-SqlServerDatabase -databaseServer $databaseServer -databaseName $databaseName
@@ -608,8 +604,7 @@ Function Invoke-CIBuild {
 
 	if (Test-IsLinux) 
 	{
-		Log-Message -Message "Setting up SQL Server in Docker for CI" -Type "INFO"
-		if (Test-IsDockerRunning -LogOutput $true) 
+		if (Test-IsDockerRunning ) 
 		{
 			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $connectionString.Database)
 			New-SqlServerDatabase -serverName $connectionString.Server -databaseName $connectionString.Database
@@ -620,7 +615,7 @@ Function Invoke-CIBuild {
 		}
 	}
 
-#	Update-AppSettingsConnectionStrings -databaseServer $connectionString.Server -databaseName $connectionString.Database -sourceDir $source_dir
+	Update-AppSettingsConnectionStrings -databaseServer $connectionString.Server -databaseName $connectionString.Database -sourceDir $source_dir
 	MigrateDatabaseLocal -databaseServerFunc $connectionString.Server -databaseNameFunc $connectionString.Database -databaseUser $connectionString.User -databasePassword $connectionString.Password
 	
 	IntegrationTest
