@@ -6,7 +6,7 @@ public class LandingPageTests : AcceptanceTestBase
     protected override bool LoadDataOnSetup { get; set; } = false;
 
     [Test]
-    public async Task Should_DisplayChurchTitle_WithDarkGreyColor()
+    public async Task Should_DisplayChurchTitle_WithWhiteColor()
     {
         // Arrange - Already on landing page from SetUpAsync
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -19,7 +19,7 @@ public class LandingPageTests : AcceptanceTestBase
         // Assert
         var titleColor = await titleElement.EvaluateAsync<string>("element => window.getComputedStyle(element).color");
         
-        // Convert #a9a9a9 to rgb(169, 169, 169)
-        titleColor.ShouldBe("rgb(169, 169, 169)");
+        // Convert #ffffff to rgb(255, 255, 255)
+        titleColor.ShouldBe("rgb(255, 255, 255)");
     }
 }
