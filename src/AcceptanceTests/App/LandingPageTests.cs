@@ -22,4 +22,22 @@ public class LandingPageTests : AcceptanceTestBase
         // Convert #a9a9a9 to rgb(169, 169, 169)
         titleColor.ShouldBe("rgb(169, 169, 169)");
     }
+
+    [Test]
+    public async Task Should_DisplayHammerEmoji_ForWorkOrders()
+    {
+        // Arrange - Already on landing page from SetUpAsync
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        // Act
+        var workOrdersHeading = Page.Locator("h3:has-text('Work Orders')");
+        await workOrdersHeading.WaitForAsync();
+        var headingText = await workOrdersHeading.TextContentAsync();
+
+        // Assert
+        headingText.ShouldNotBeNull();
+        headingText.ShouldContain("🔨");
+        headingText.ShouldNotContain("🏗️");
+    }
 }
