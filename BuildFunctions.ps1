@@ -114,8 +114,6 @@ Function Update-AppSettingsConnectionStrings {
         [string]$sourceDir
     )
 
-    throw "Update-AppSettingsConnectionStrings is deprecated. Use Get-ConnectionStringComponents and set variable directly."
-
     $connStr = Get-ConnectionStringComponents
     $connectionString = ""
     if ($connStr.IsEmpty) {
@@ -306,7 +304,7 @@ Function Test-IsLocalBuild {
 Function New-SqlServerDatabase {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$serverName,
+        [string]$databaseServer,
         [Parameter(Mandatory = $true)]
         [string]$databaseName
     )
@@ -324,12 +322,12 @@ END
 "@
 
     $createDbCmd = "CREATE DATABASE [$databaseName];"
-	Log-Message "Creating SQL Server in Docker for integration tests for $databaseName on $serverName" -Type "INFO"
+	Log-Message "Creating SQL Server in Docker for integration tests for $databaseName on $databaseServer" -Type "INFO"
 
     try {
         if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
-            Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
-            Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+            Invoke-Sqlcmd -ServerInstance $databaseServer -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
+            Invoke-Sqlcmd -ServerInstance $databaseServer -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
         } else {
             # Fallback to docker exec if Invoke-Sqlcmd is not available
             # Using -i for interactive mode to avoid password in command line
@@ -342,11 +340,11 @@ END
         }
     } 
     catch {
-        Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
+        Log-Message -Message "Error creating database '$databaseName' on server '$databaseServer': $_" -Type "ERROR"
         throw $_
     }
 
-    Log-Message -Message "Recreated database '$databaseName' on server '$serverName'" -Type "INFO"
+    Log-Message -Message "Recreated database '$databaseName' on server '$databaseServer'" -Type "INFO"
 }
 
 Function New-DockerContainerForSqlServer {
@@ -664,17 +662,19 @@ function Drop-SqlServerDatabase
     )
     
     $databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+    $scriptDir = Join-PathSegments $source_dir "Database" "Scripts"
     if (Test-IsLinux)
     {
         $containerName = Get-ContainerName -DatabaseName $databaseName
         $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-        $dbArgs = @($databaseDll, "drop" ,$databaseServer, $databaseName, "sa", $sqlPassword)
+        $dbArgs = @($databaseDll, "drop" ,$databaseServer, $databaseName, $scriptDir, "sa", $sqlPassword)
     }
     else
     {
-        $dbArgs = @($databaseDll, "drop", $databaseServer, $databaseName)
+        $dbArgs = @($databaseDll, "drop", $databaseServer, $databaseName, $scriptDir)
     }
 
+    Write-Host "$dbArgs"
     & dotnet $dbArgs
     if ($LASTEXITCODE -ne 0)
     {
