@@ -705,6 +705,7 @@ Function Get-ConnectionStringComponents {
             User     = ""
             Password = ""
             IsEmpty  = $true
+            Value = ""
         }
     }
 
@@ -738,5 +739,58 @@ Function Get-ConnectionStringComponents {
         User     = $user
         Password = $password
         IsEmpty  = $false
+        Value    = $ConnectionString
     }
 }
+
+function Install-Playwright
+{
+    <#
+    .SYNOPSIS
+        Installs Playwright browsers for testing
+    .DESCRIPTION
+        Uses the Playwright CLI to install the necessary browsers for Playwright tests.
+        This is required to run browser-based tests using Playwright.
+    .EXAMPLE
+        Install-PlaywrightBrowsers
+    #>
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$playwrightScript = ""
+    )
+    Log-Message -Message "Installing Playwright browsers..." -Type "INFO"
+
+    if ( [string]::IsNullOrEmpty($playwrightScript))
+    {
+        try
+        {
+            Exec { npx playwright install } "Failed to install Playwright using npx. Ensure Node.js and Playwright are installed."
+            Log-Message -Message "Playwright browsers installed successfully." -Type "INFO"
+        }
+        catch
+        {
+            Log-Message -Message "Error installing Playwright browsers: $_" -Type "ERROR"
+            throw $_
+        }
+        return
+
+    }
+
+    if (Test-Path $playwrightScript)
+    {
+        # Resolve to absolute path
+        $playwrightScript = Resolve-Path $playwrightScript
+        Write-Host "Installing Playwright browsers from $playwrightScript"
+        & pwsh $playwrightScript install --with-deps
+        if ($LASTEXITCODE -ne 0)
+        {
+            throw "Failed to install Playwright browsers"
+        }
+    }
+    else
+    {
+        throw "Playwright not found at $playwrightScript"
+    }
+}
+  
+    

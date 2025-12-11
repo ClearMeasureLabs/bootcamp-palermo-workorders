@@ -2,11 +2,9 @@
 . .\BuildFunctions.ps1
 
 # Clean environment variables that may interfere with local builds
-#if ($env:ConnectionStrings__SqlConnectionString) {
-#	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
-#	$env:ConnectionStrings__SqlConnectionString = $null
-#	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
-#}
+if ($env:ConnectionStrings__SqlConnectionString) {
+	Log-Message "ConnectionStrings__SqlConnectionString is set" -Type "INFO"
+}
 
 $projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
@@ -116,40 +114,6 @@ Function IntegrationTest {
 
 Function AcceptanceTests {
 	$projectConfig = "Release"
-	Push-Location -Path $acceptanceTestProjectPath
-
-	Log-Message -Message "Checking Playwright browsers for Acceptance Tests" -Type "INFO"
-	$playwrightScript = Join-PathSegments "bin" "Release" $framework "playwright.ps1"
-
-	if (Test-Path $playwrightScript) {
-		Log-Message -Message "Playwright script found at $playwrightScript." -Type "INFO"
-		
-		# Check if browsers are installed
-		try {
-			$listOutput = & pwsh $playwrightScript list 2>&1 | Out-String
-			if ($listOutput -match "chromium|webkit|firefox") {
-				Log-Message -Message "Playwright browsers are installed." -Type "INFO"
-			}
-			else {
-				Log-Message -Message "Playwright browsers not detected. Installing..." -Type "WARNING"
-				& pwsh $playwrightScript install --with-deps
-				if ($LASTEXITCODE -ne 0) {
-					throw "Failed to install Playwright browsers"
-				}
-				Log-Message -Message "Playwright browsers installed successfully." -Type "INFO"
-			}
-		}
-		catch {
-			Log-Message -Message "WARNING: Could not verify Playwright browser installation. Attempting to install..." -Type "WARNING"
-			& pwsh $playwrightScript install --with-deps
-			if ($LASTEXITCODE -ne 0) {
-				throw "Failed to install Playwright browsers"
-			}
-		}
-	}
-	else {
-		throw "Playwright script not found at $playwrightScript. Cannot run acceptance tests without the browsers."
-	}
 
 	# Check if UI.Server is already running
 	$uiServerProcess = Get-Process -Name "ClearMeasure.Bootcamp.UI.Server" -ErrorAction SilentlyContinue
@@ -157,20 +121,24 @@ Function AcceptanceTests {
 		Log-Message -Message "Warning: ClearMeasure.Bootcamp.UI.Server is already running in background (PID: $($uiServerProcess.Id)). This may interfere with acceptance tests." -Type "WARNING"
 	}
 
-	Log-Message -Message "Running Acceptance Tests" -Type "INFO"
 	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
-	try {
-		exec {
-			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
-				--no-restore --configuration $projectConfig `
-				--settings:$runSettingsPath `
-				--collect:"XPlat Code Coverage"
-		}
-	}
-	finally {
-		Pop-Location
-	}
+    Push-Location -Path $acceptanceTestProjectPath
+    try {
+        $playwrightScript = Join-PathSegments (Get-Location) "bin" "Release" "net10.0" "playwright.ps1"
+        Install-Playwright $playwrightScript
+        
+        exec {
+            & dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
+                --results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
+                --no-restore --configuration $projectConfig `
+                --settings:$runSettingsPath `
+                --collect:"XPlat Code Coverage"
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
 }
 
 Function MigrateDatabaseLocal {
@@ -421,7 +389,7 @@ Function Invoke-AcceptanceTests {
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
-    Test-IsOllamaRunning -LogOutput $true
+    $isOllamaRunnin = Test-IsOllamaRunning -LogOutput $true
 	
 	Init
 	Compile
