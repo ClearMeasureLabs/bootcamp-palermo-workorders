@@ -8,22 +8,37 @@ param (
 
 . .\build.ps1
 
-if ( [string]::IsNullOrEmpty($databaseServer))
-{
-    # Set default database server based on platform if not provided
-    if (Test-IsLinux)
+
+$connectionString = Get-ConnectionStringComponents
+
+if ([string]::IsNullOrEmpty($databaseServer) -and [string]::IsNullOrEmpty($databaseName))  {
+    # Try and use values from the environment variable.
+    if (-not $connectionString.IsEmpty)
     {
-        $databaseServer = "localhost,1433"
-    }
-    else
-    {
-        $databaseServer = "(LocalDb)\MSSQLLocalDB"
+        $databaseServer = $connectionString.Server
+        $databaseName = $connectionString.Database
     }
 }
-
-if ([string]::IsNullOrEmpty($databaseName))
+else
 {
-    $databaseName = "ChurchBulletin"
+    # Make some guesses.
+    if ( [string]::IsNullOrEmpty($databaseServer))
+    {
+        # Set default database server based on platform if not provided
+        if (Test-IsLinux)
+        {
+            $databaseServer = "localhost,1433"
+        }
+        else
+        {
+            $databaseServer = "(LocalDb)\MSSQLLocalDB"
+        }
+    }
+
+    if ( [string]::IsNullOrEmpty($databaseName))
+    {
+        $databaseName = "ChurchBulletin"
+    }
 }
 
 Invoke-AcceptanceTests -databaseServer $databaseServer -databaseName $databaseName
