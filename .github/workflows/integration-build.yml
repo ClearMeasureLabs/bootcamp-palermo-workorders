@@ -76,7 +76,7 @@ jobs:
           Write-Host "Running CI Build"
           . ./build.ps1
           Invoke-CIBuild
-          echo "${ env.BUILD_BUILDNUMBER }" > build/build_version.txt
+          echo "${ env.BUILD_BUILDNUMBER }" > build_version.txt
 
       # Publish test results
       - name: Test Reporter
@@ -133,7 +133,7 @@ jobs:
           name: churchbulletin-nuget-packages
           path: |
             build/*.nupkg
-            build/build_version.txt
+            build_version.txt
           retention-days: 90
 
       # Publish packages to GitHub Packages
