@@ -120,7 +120,7 @@ step "open-firewall" {
                                                 
                                                 $workerIp = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content
                                                 Set-OctopusVariable -name "WorkerIP" -value $workerIp
-
+                
                                                 # Open up the firewall to allow the Octopus worker to connect
                                                 Write-Host "Opening SQL Firewall rule for $workerIp to $DatabaseServerName"
                                                 $firewallRuleName = "OctopusDeployWorker"
@@ -143,17 +143,18 @@ step "run-db-migrations" {
     action {
         action_type = "Octopus.Script"
         properties = {
+            Octopus.Action.AutoRetry.MaximumCount = "3"
+            Octopus.Action.AutoRetry.MinimumBackoff = "1"
             Octopus.Action.EnabledFeatures = "Octopus.Features.SelectPowerShellEditionForWindows"
             Octopus.Action.Package.DownloadOnTentacle = "False"
             Octopus.Action.Package.FeedId = "octopus-server-built-in"
             Octopus.Action.Package.PackageId = "ChurchBulletin.Database"
             Octopus.Action.PowerShell.Edition = "Core"
-            Octopus.Action.RunOnServer = "false"
             Octopus.Action.Script.ScriptFileName = "scripts\\UpdateAzureSql.ps1"
             Octopus.Action.Script.ScriptSource = "Package"
             OctopusUseBundledTooling = "False"
         }
-        worker_pool_variable = ""
+        worker_pool = "hosted-windows"
 
         packages {
             acquisition_location = "Server"
@@ -203,6 +204,7 @@ step "add-revision-to-container-app" {
     properties = {
         Octopus.Step.ConditionVariableExpression = "#{if EnsureEnvironmentsExist != \"True\"}true#{/if}"
     }
+
     action {
         action_type = "Octopus.AzurePowerShell"
         environments = ["uat", "prod", "tdd"]
@@ -218,10 +220,10 @@ step "add-revision-to-container-app" {
                 Write-Host "Resource Group        : $ResourceGroupName"
                 Write-Host "Updating container app: $container_app_name"
                 Write-Host "Container Image       : $container_image"
-
+                
                 az containerapp update --name $container_app_name --resource-group $ResourceGroupName --image $container_image
                 az containerapp update --name $container_app_name --resource-group $ResourceGroupName --set-env-vars ConnectionStrings__SqlConnectionString=$connection_string
-
+                
                 Write-Host "✅ Container App updated successfully"
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
