@@ -1,14 +1,29 @@
 param (
-    [Parameter(Mandatory=$false)]
-    [string]$databaseServer = ""
+    [Parameter(Mandatory = $false)]
+    [string]$databaseServer = "",
+
+    [Parameter(Mandatory = $false)]
+    [string]$databaseName = ""
 )
 
 . .\build.ps1
 
-# Set database server from pipeline variable if available
-if ([string]::IsNullOrEmpty($databaseServer) -and -not [string]::IsNullOrEmpty($env:DatabaseServer)) {
-	$databaseServer = $env:DatabaseServer
-	Log-Message -Message "Using database server from pipeline variable: $databaseServer" -Type "INFO"
+if ( [string]::IsNullOrEmpty($databaseServer))
+{
+    # Set default database server based on platform if not provided
+    if (Test-IsLinux)
+    {
+        $databaseServer = "localhost,1433"
+    }
+    else
+    {
+        $databaseServer = "(LocalDb)\MSSQLLocalDB"
+    }
 }
 
-Invoke-AcceptanceTests -databaseServer $databaseServer -databaseName "ChurchBulletin"
+if ([string]::IsNullOrEmpty($databaseName))
+{
+    $databaseName = "ChurchBulletin"
+}
+
+Invoke-AcceptanceTests -databaseServer $databaseServer -databaseName $databaseName

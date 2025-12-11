@@ -70,9 +70,6 @@ Function Init {
 	exec {
 		& dotnet restore $solutionName -nologo --interactive -v $verbosity  
 	}
-	
-	Log-Message -Message "Project Config: $projectConfig" -Type "INFO"
-	Log-Message -Message "Version: $version" -Type "INFO"
 }
 
 Function Compile {
@@ -411,51 +408,20 @@ Automatically installs Playwright browsers if not present.
 #>
 Function Invoke-AcceptanceTests {
 	param (
-		[Parameter(Mandatory = $false)]
-		[string]$databaseServer = "",
-		[Parameter(Mandatory=$false)]
-		[string]$databaseName =""
+		[Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+		[string]$databaseServer,
+		[Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+		[string]$databaseName
 	)
 	
-
 	Log-Message -Message "Starting AcceptanceBuild..." -Type "INFO"
 	$projectConfig = "Release"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
     Test-IsOllamaRunning -LogOutput $true
-
-
-	# Set database server from parameter if provided
-	if (-not [string]::IsNullOrEmpty($databaseServer)) {
-		$script:databaseServer = $databaseServer
-	}
-	else {
-		if (Test-IsLinux) {
-			$script:databaseServer = "localhost"
-		}
-		else {
-			$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
-		}
-	}
-	
-	# Generate unique database name for this build instance
-	# On Linux with Docker, no need for unique names since container is clean
-	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (-not [string]::IsNullOrEmpty($databaseName)) {
-		$script:databaseName = $databaseName
-	}
-	else {
-		if (Test-IsLinux) {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-		}
-		elseif (Test-IsLocalBuild) {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-		}
-		else {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
-		}
-	}
 	
 	Init
 	Compile
@@ -480,7 +446,6 @@ Function Invoke-AcceptanceTests {
 	# This prevents the Windows LocalDB connection string from overriding appsettings.json
 	$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
 	if (Test-Path $launchSettingsPath) {
-		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
 		$launchSettings = Get-Content $launchSettingsPath -Raw
 		$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
 		Set-Content -Path $launchSettingsPath -Value $launchSettings
