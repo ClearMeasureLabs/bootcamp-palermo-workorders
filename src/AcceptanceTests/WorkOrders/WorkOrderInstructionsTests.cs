@@ -17,6 +17,10 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
+        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync();
+        var workOrderNumber = await woNumberLocator.InnerTextAsync();
+
         await Input(nameof(WorkOrderManage.Elements.Title), "Test 4000 char instructions");
         await Input(nameof(WorkOrderManage.Elements.Description), "Testing instructions field with max length");
         await Input(nameof(WorkOrderManage.Elements.Instructions), longInstructions);
@@ -26,9 +30,9 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var allOrders = await Bus.Send(new WorkOrdersListAllQuery());
-        var createdOrder = allOrders.OrderByDescending(o => o.CreatedDate).First();
+        var createdOrder = await Bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
         
+        createdOrder.ShouldNotBeNull();
         createdOrder.Instructions.ShouldNotBeNull();
         createdOrder.Instructions.Length.ShouldBe(4000);
         createdOrder.Instructions.ShouldBe(longInstructions);
@@ -42,6 +46,10 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
+        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync();
+        var workOrderNumber = await woNumberLocator.InnerTextAsync();
+
         await Input(nameof(WorkOrderManage.Elements.Title), "Test empty instructions");
         await Input(nameof(WorkOrderManage.Elements.Description), "Testing instructions field when empty");
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), "102");
@@ -50,9 +58,9 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var allOrders = await Bus.Send(new WorkOrdersListAllQuery());
-        var createdOrder = allOrders.OrderByDescending(o => o.CreatedDate).First();
+        var createdOrder = await Bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
         
+        createdOrder.ShouldNotBeNull();
         createdOrder.Instructions.ShouldNotBeNull();
         createdOrder.Instructions.ShouldBe("");
     }
@@ -107,6 +115,10 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
+        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync();
+        var workOrderNumber = await woNumberLocator.InnerTextAsync();
+
         await Input(nameof(WorkOrderManage.Elements.Title), "Test update instructions");
         await Input(nameof(WorkOrderManage.Elements.Description), "Testing instructions update");
         await Input(nameof(WorkOrderManage.Elements.Instructions), "Initial instructions");
@@ -116,12 +128,12 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var allOrders = await Bus.Send(new WorkOrdersListAllQuery());
-        var createdOrder = allOrders.OrderByDescending(o => o.CreatedDate).First();
+        var createdOrder = await Bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
+        createdOrder.ShouldNotBeNull();
         createdOrder.Instructions.ShouldBe("Initial instructions");
 
         // Edit and update instructions
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + createdOrder.Number);
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Input(nameof(WorkOrderManage.Elements.Instructions), "Updated instructions");
@@ -131,7 +143,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         // Verify updated instructions
-        var updatedOrder = await Bus.Send(new WorkOrderByNumberQuery(createdOrder.Number!));
+        var updatedOrder = await Bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
         updatedOrder.ShouldNotBeNull();
         updatedOrder.Instructions.ShouldBe("Updated instructions");
     }
