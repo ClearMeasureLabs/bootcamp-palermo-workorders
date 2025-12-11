@@ -35,6 +35,16 @@ jobs:
       BUILD_CONFIGURATION: Release
     
     steps:
+      # Debug: Show actor information
+      - name: Debug Actor Information
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Triggered by: ${{ github.triggering_actor }}"
+          echo "Event sender: ${{ github.event.sender.login }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Head ref: ${{ github.head_ref }}"
+      
       # Checkout code
       - name: Checkout code
         uses: actions/checkout@v6.0.1
