@@ -8,10 +8,10 @@ if ($env:ConnectionStrings__SqlConnectionString) {
 	Log-Message "ConnectionStrings__SqlConnectionString is set" -Type "INFO"
 }
 
-$projectName = "ChurchBulletin"
+$script:projectName = "ChurchBulletin"
 $base_dir = resolve-path .\
 $source_dir = Join-Path $base_dir "src"
-$solutionName = Join-Path $source_dir "$projectName.sln"
+$solutionName = Join-Path $source_dir "$script:projectName.sln"
 $unitTestProjectPath = Join-Path $source_dir "UnitTests"
 $integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
 $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
@@ -29,46 +29,17 @@ $test_dir = Join-Path $build_dir "test"
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
 
-$databaseName = $projectName
-if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
+$databaseName = $script:projectName
+if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $script:projectName }
 
-$script:databaseServer = $databaseServer;
+#$script:databaseServer = $databaseServer;
 $script:databaseScripts = Join-PathSegments $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 
  
-Function Init {
-	# Check for PowerShell 7
-	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-	if (-not $pwshPath) {
-		throw "PowerShell 7 is required to run this build script. Please install it from https://aka.ms/powershell"
-	}
 
-	if (Test-IsLinux) {
-		# Set NuGet cache to shorter path for Linux/WSL compatibility (only for local builds)
-		if (-not (Test-IsAzureDevOps) -and -not (Test-IsGitHubActions)) {
-			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
-		}
-
-		if (-not (Test-IsDockerRunning)) {
-			throw "Docker is required to run integration tests on linux. Please start Docker to run SQL Server in a container."
-		}
-	}
-
-	if (Test-Path "build") {
-		Remove-Item -Path "build" -Recurse -Force
-	}
-	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
-
-	exec {
-		& dotnet clean $solutionName -nologo -v $verbosity
-	}
-	exec {
-		& dotnet restore $solutionName -nologo --interactive -v $verbosity  
-	}
-}
 
 Function Compile {
 	exec {
@@ -183,35 +154,6 @@ Function MigrateDatabaseLocal {
 	}
 }
 
-Function Create-SqlServerInDocker {
-	param (
-		[Parameter(Mandatory = $true)]
-			[ValidateNotNullOrEmpty()]
-			[string]$serverName,		
-		[Parameter(Mandatory = $true)]
-			[ValidateNotNullOrEmpty()]
-			[string]$dbAction,
-		[Parameter(Mandatory = $true)]
-			[ValidateNotNullOrEmpty()]
-			[string]$scriptDir			
-		)
-	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName -generateUnique $true
-	$containerName = Get-ContainerName -DatabaseName $tempDatabaseName
-	$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-
-	New-DockerContainerForSqlServer -containerName $containerName
-	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
-
-	#Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
-	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $sqlPassword)
-	& dotnet $dbArgs
-	if ($LASTEXITCODE -ne 0) {
-		throw "Database migration failed with exit code $LASTEXITCODE"
-	}
-	#Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
-}
-
 Function Publish-ToGitHubPackages {
 	param(
 		[Parameter(Mandatory = $true)]
@@ -281,7 +223,7 @@ Function Publish-ToGitHubPackages {
 }
 
 Function PackageUI {    
-	$packageName = "$projectName.UI.$version.nupkg"
+	$packageName = "$script:projectName.UI.$version.nupkg"
 	$packagePath = Join-Path $build_dir $packageName
 
 	exec {
@@ -289,7 +231,7 @@ Function PackageUI {
 	}
 	
 	exec {
-		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
+		& dotnet-octo pack --id "$script:projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 	
 }
@@ -299,7 +241,7 @@ Function PackageDatabase {
 		& dotnet publish $databaseProjectPath -nologo --no-restore -v $verbosity --configuration Debug
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
+		& dotnet-octo pack --id "$script:projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
 	}
 	
 
@@ -311,10 +253,8 @@ Function PackageAcceptanceTests {
 		& dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
+		& dotnet-octo pack --id "$script:projectName.AcceptanceTests" --version $version --basePath $(Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
 	}
-	
-	
 }
 
 Function PackageScript {    
@@ -322,24 +262,13 @@ Function PackageScript {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
+		& dotnet-octo pack --id "$script:projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
 	}	
-
 }
 
 
 Function Package-Everything{
 	
-	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
-	
-	# Ensure dotnet tools are in PATH
-	$dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
-	$pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
-	$dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
-	if (-not $dotnetToolsPathPresent) {
-		$env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
-		Log-Message -Message "Added dotnet tools to PATH: $dotnetToolsPath" -Type "INFO"
-	}
 	
 	PackageUI
 	PackageDatabase
