@@ -5,7 +5,6 @@ on:
     workflows: [ "Integration Build" ]
     types: [ completed ]
   workflow_dispatch:
-
 concurrency:
   group: deploy-to-uat-${{ github.ref }}
   cancel-in-progress: true
