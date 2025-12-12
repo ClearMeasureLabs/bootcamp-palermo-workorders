@@ -132,31 +132,16 @@ jobs:
           OWNER="${{ github.repository_owner }}"
           FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
           
-          echo "Configuring GitHub Packages NuGet source..."
+          echo "Publishing packages to GitHub Packages..."
           echo "Owner: $OWNER"
           echo "Feed URL: $FEED_URL"
           
-          # Remove existing source if it exists
-          dotnet nuget remove source "github" 2>/dev/null || true
-          
-          # Configure GitHub Packages as a NuGet source
-          # For GitHub Packages, use the owner as username and token as password
-          dotnet nuget add source $FEED_URL \
-            --name "github" \
-            --username $OWNER \
-            --password "$NUGET_AUTH_TOKEN" \
-            --store-password-in-clear-text
-          
-          # Verify source was added
-          echo "Configured NuGet sources:"
-          dotnet nuget list source
-          
-          # Publish all packages
+          # Publish all packages using direct authentication
           for package in build/*.nupkg; do
             if [ -f "$package" ]; then
               echo "Publishing $package to GitHub Packages..."
               dotnet nuget push "$package" \
-                --source "github" \
+                --source "$FEED_URL" \
                 --api-key "$NUGET_AUTH_TOKEN" \
                 --timeout 600 \
                 --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
