@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
@@ -14,8 +15,12 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
 
         var instructions4000 = new string('X', 4000);
         
-        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync();
+        var newWorkOrderNumber = await woNumberLocator.InnerTextAsync();
 
         await Input(nameof(WorkOrderManage.Elements.Title), "Test with 4000 char instructions");
         await Input(nameof(WorkOrderManage.Elements.Description), "Description for instructions test");
@@ -25,10 +30,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var orders = await Bus.Send(new WorkOrdersListAllQuery());
-        var lastOrder = orders.OrderByDescending(o => o.CreatedDate).First();
-        
-        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(lastOrder.Number!));
+        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
         rehydratedOrder.ShouldNotBeNull();
         rehydratedOrder!.Instructions.ShouldBe(instructions4000);
         rehydratedOrder.Instructions!.Length.ShouldBe(4000);
@@ -39,8 +41,12 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
 
-        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync();
+        var newWorkOrderNumber = await woNumberLocator.InnerTextAsync();
 
         await Input(nameof(WorkOrderManage.Elements.Title), "Test with empty instructions");
         await Input(nameof(WorkOrderManage.Elements.Description), "Description without instructions");
@@ -49,10 +55,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var orders = await Bus.Send(new WorkOrdersListAllQuery());
-        var lastOrder = orders.OrderByDescending(o => o.CreatedDate).First();
-        
-        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(lastOrder.Number!));
+        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
         rehydratedOrder.ShouldNotBeNull();
         rehydratedOrder!.Instructions.ShouldBe(string.Empty);
     }
@@ -62,27 +65,15 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
 
-        // Create work order without instructions
-        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
-        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
-
-        await Input(nameof(WorkOrderManage.Elements.Title), "Test add instructions later");
-        await Input(nameof(WorkOrderManage.Elements.Description), "Initial description");
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
-
-        await Page.WaitForURLAsync("**/workorder/search");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        var orders = await Bus.Send(new WorkOrdersListAllQuery());
-        var lastOrder = orders.OrderByDescending(o => o.CreatedDate).First();
+        var order = await CreateAndSaveNewWorkOrder();
 
         // Verify instructions is empty
-        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(lastOrder.Number!));
+        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
         rehydratedOrder.ShouldNotBeNull();
         rehydratedOrder!.Instructions.ShouldBe(string.Empty);
 
         // Navigate back to work order and add instructions
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + lastOrder.Number);
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var instructionsText = "Added instructions after initial save";
@@ -94,7 +85,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         // Verify instructions persisted
-        rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(lastOrder.Number!));
+        rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
         rehydratedOrder.ShouldNotBeNull();
         rehydratedOrder!.Instructions.ShouldBe(instructionsText);
         rehydratedOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
@@ -105,7 +96,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
 
-        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
