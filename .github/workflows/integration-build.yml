@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: ['**']
   workflow_dispatch:
-concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
 env:
   MAJOR_VERSION: 1
   MINOR_VERSION: 3
@@ -17,6 +14,11 @@ jobs:
   build-linux:
     name: Integration Build
     runs-on: ubuntu-latest
+    concurrency:
+      # Integration Build will be cancelled when new commits arrive on the branch. 
+      # To protect the master branch, use ${{ github.ref != 'refs/heads/main' }} for cancel-in-progress:
+      group: build-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       contents: read
       packages: write
@@ -106,7 +108,7 @@ jobs:
           Package-Everything
 
       # Upload packages as artifacts
-      - name: Upload NuGet Packages
+      - name: Upload NuGet Package artifacts
         uses: actions/upload-artifact@v4
         if: success()
         with:
@@ -114,7 +116,7 @@ jobs:
           path: build/*.nupkg
           retention-days: 90
 
-      - name: Upload NuGet Packages
+      - name: Upload build_version.txt artifact
         uses: actions/upload-artifact@v4
         if: success()
         with:
@@ -122,43 +124,29 @@ jobs:
           path: build_version.txt
           retention-days: 90
 
-      # Publish packages to GitHub Packages
-      # - name: Publish Packages to GitHub Packages
-      #   if: false
-      #   env:
-      #     NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     OWNER="${{ github.repository_owner }}"
-      #     FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
+      - name: Publish nupkgs to GitHub Packages
+        if: success()
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
           
-      #     echo "Configuring GitHub Packages NuGet source..."
-      #     echo "Owner: $OWNER"
-      #     echo "Feed URL: $FEED_URL"
+          echo "Publishing packages to GitHub Packages..."
+          echo "Owner: $OWNER"
+          echo "Feed URL: $FEED_URL"
           
-      #     # Remove existing source if it exists
-      #     dotnet nuget remove source "github" 2>/dev/null || true
-          
-      #     # Configure GitHub Packages as a NuGet source
-      #     # For GitHub Packages, use the owner as username and token as password
-      #     dotnet nuget add source $FEED_URL \
-      #       --name "github" \
-      #       --username $OWNER \
-      #       --password "$NUGET_AUTH_TOKEN" \
-      #       --store-password-in-clear-text
-          
-      #     # Verify source was added
-      #     echo "Configured NuGet sources:"
-      #     dotnet nuget list source
-          
-      #     # Publish all packages
-      #     for package in build/*.nupkg; do
-      #       if [ -f "$package" ]; then
-      #         echo "Publishing $package to GitHub Packages..."
-      #         dotnet nuget push "$package" \
-      #           --source "github" \
-      #           --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
-      #       fi
-      #     done
+          # Publish all packages using direct authentication
+          for package in build/*.nupkg; do
+            if [ -f "$package" ]; then
+              echo "Publishing $package to GitHub Packages..."
+              dotnet nuget push "$package" \
+                --source "$FEED_URL" \
+                --api-key "$NUGET_AUTH_TOKEN" \
+                --timeout 600 \
+                --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
+            fi
+          done
 
       # Publish packages to Octopus Deploy built-in feed
       - name: Publish Packages to Octopus Deploy
@@ -274,6 +262,11 @@ jobs:
     needs: [build-linux]
     if: success() 
     runs-on: ubuntu-latest
+    concurrency:
+      # Stop publishing a release candidate if a newer job arrives.
+      # To protect the master branch, use ${{ github.ref != 'refs/heads/main' }} for cancel-in-progress:
+      group: build-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       contents: read
       packages: read
@@ -407,6 +400,7 @@ jobs:
     needs: [docker-build-image-for-churchbulletin-ui]
     if: success()
     concurrency:
+      # This will protect deployments - there should be no cancellation.
       group: deploy-to-tdd-serialized
       cancel-in-progress: false
     runs-on: windows-latest

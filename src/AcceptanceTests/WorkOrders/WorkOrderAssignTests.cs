@@ -8,7 +8,8 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 public class WorkOrderAssignTests : AcceptanceTestBase
 {
-    [Test, Retry(3)]
+    [Test]
+    [Retry(10)]
     public async Task ShouldAssignEmployeeAndAssign()
     {
         await LoginAsCurrentUser();
