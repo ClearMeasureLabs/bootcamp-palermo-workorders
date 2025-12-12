@@ -122,43 +122,42 @@ jobs:
           path: build_version.txt
           retention-days: 90
 
-      # Publish packages to GitHub Packages
-      # - name: Publish Packages to GitHub Packages
-      #   if: false
-      #   env:
-      #     NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     OWNER="${{ github.repository_owner }}"
-      #     FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
+      - name: Publish nupkgs  to GitHub Packages
+        if: success()
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
           
-      #     echo "Configuring GitHub Packages NuGet source..."
-      #     echo "Owner: $OWNER"
-      #     echo "Feed URL: $FEED_URL"
+          echo "Configuring GitHub Packages NuGet source..."
+          echo "Owner: $OWNER"
+          echo "Feed URL: $FEED_URL"
           
-      #     # Remove existing source if it exists
-      #     dotnet nuget remove source "github" 2>/dev/null || true
+          # Remove existing source if it exists
+          dotnet nuget remove source "github" 2>/dev/null || true
           
-      #     # Configure GitHub Packages as a NuGet source
-      #     # For GitHub Packages, use the owner as username and token as password
-      #     dotnet nuget add source $FEED_URL \
-      #       --name "github" \
-      #       --username $OWNER \
-      #       --password "$NUGET_AUTH_TOKEN" \
-      #       --store-password-in-clear-text
+          # Configure GitHub Packages as a NuGet source
+          # For GitHub Packages, use the owner as username and token as password
+          dotnet nuget add source $FEED_URL \
+            --name "github" \
+            --username $OWNER \
+            --password "$NUGET_AUTH_TOKEN" \
+            --store-password-in-clear-text
           
-      #     # Verify source was added
-      #     echo "Configured NuGet sources:"
-      #     dotnet nuget list source
+          # Verify source was added
+          echo "Configured NuGet sources:"
+          dotnet nuget list source
           
-      #     # Publish all packages
-      #     for package in build/*.nupkg; do
-      #       if [ -f "$package" ]; then
-      #         echo "Publishing $package to GitHub Packages..."
-      #         dotnet nuget push "$package" \
-      #           --source "github" \
-      #           --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
-      #       fi
-      #     done
+          # Publish all packages
+          for package in build/*.nupkg; do
+            if [ -f "$package" ]; then
+              echo "Publishing $package to GitHub Packages..."
+              dotnet nuget push "$package" \
+                --source "github" \
+                --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
+            fi
+          done
 
       # Publish packages to Octopus Deploy built-in feed
       - name: Publish Packages to Octopus Deploy
