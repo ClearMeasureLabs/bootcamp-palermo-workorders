@@ -48,6 +48,7 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "$version" > build_version.txt
           echo "Build version: $version"
+          echo "github.ref=${{ github.ref }}"
 
       - name: Run CI Build 
         shell: pwsh
