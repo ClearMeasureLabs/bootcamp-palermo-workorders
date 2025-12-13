@@ -11,73 +11,8 @@ env:
   MINOR_VERSION: 3
 
 jobs:
-  copilot-finished-check:
-    name: Detect Copilot-created PR + Copilot 'finished' comment
-    runs-on: ubuntu-latest
-    outputs:
-      is_copilot_pr: ${{ steps.detect_pr.outputs.is_copilot_pr }}
-      finished:      ${{ steps.detect_comment.outputs.finished }}
-
-    steps:
-      - name: Initialize outputs
-        id: init
-        run: |
-          echo "is_copilot_pr=false" >> "$GITHUB_OUTPUT"
-          echo "finished=false"      >> "$GITHUB_OUTPUT"
-
-      # ✅ PR author check — was the PR created by Copilot?
-      - name: Detect PR author is Copilot
-        id: detect_pr
-        if: ${{ github.event_name == 'pull_request' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          # PR creator login is provided in the event payload
-          author="${{ github.event.pull_request.user.login }}"
-          lc="$(printf '%s' "$author" | tr '[:upper:]' '[:lower:]')"
-          if echo "$lc" | grep -q 'copilot'; then
-            echo "is_copilot_pr=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_copilot_pr=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      # ✅ Comment check — did Copilot add "finished work on behalf of"?
-      - name: Detect Copilot 'finished work on behalf of' comment
-        id: detect_comment
-        if: ${{ github.event_name == 'pull_request' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          repo="${GITHUB_REPOSITORY}"
-          pr_number="${{ github.event.pull_request.number }}"
-
-          # Fetch PR issue comments
-          comments_json="$(gh api "repos/$repo/issues/$pr_number/comments?per_page=100")"
-
-          # Heuristic: commenter login contains 'copilot' AND body contains the phrase
-          count=$(echo "$comments_json" \
-            | jq -r '[.[] | select((.user.login|ascii_downcase|contains("copilot")) and (.body|ascii_downcase|contains("finished work on behalf of"))) ] | length')
-
-          if [ "$count" -gt 0 ]; then
-            echo "finished=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "finished=false" >> "$GITHUB_OUTPUT"
-          fi
-
   build-linux:
     name: Integration Build
-    needs: [copilot-finished-check]    
-    # ⛔ Run ONLY if:
-    # - event is PR
-    # - PR was created by Copilot
-    # - Copilot has added the 'finished work on behalf of' comment
-    if: |
-      github.event_name == 'pull_request' &&
-      needs.copilot-finished-check.outputs.is_copilot_pr == 'true' &&
-      needs.copilot-finished-check.outputs.finished == 'true'
-    
     runs-on: ubuntu-latest
     concurrency:
       # Integration Build will be cancelled when new commits arrive on the branch. 
