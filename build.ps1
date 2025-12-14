@@ -36,8 +36,7 @@ if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
 $databaseName = $script:projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $script:projectName }
 
-#$script:databaseServer = $databaseServer;
-$script:databaseScripts = Join-PathSegments $source_dir "Database" "scripts"
+$databaseScripts = Join-PathSegments $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 
@@ -46,7 +45,7 @@ if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 
 Function Compile {
 	exec {
-		& dotnet build $solutionName -nologo --no-restore -v `
+		& dotnet build $solutionName -nologo -v `
 			$verbosity -maxcpucount --configuration $script:projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
@@ -129,8 +128,9 @@ Function MigrateDatabaseLocal {
 		
 		[Parameter(Mandatory = $false)]
 		[string]$databasePassword = ""
+
 	)
-	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $script:projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	
 	if (Test-IsLinux) {
 		if ([string]::IsNullOrWhiteSpace($databaseUser)) {
@@ -138,14 +138,14 @@ Function MigrateDatabaseLocal {
 			$databaseUser = "sa"
 			$databasePassword = Get-SqlServerPassword -ContainerName $containerName
 		}
-		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts, $databaseUser, $databasePassword)
+		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $databaseScripts, $databaseUser, $databasePassword)
 	}
 	else {
 		if (-not [string]::IsNullOrWhiteSpace($databaseUser)) {
-			$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts, $databaseUser, $databasePassword)
+			$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $databaseScripts, $databaseUser, $databasePassword)
 		}
 		else {
-			$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts)
+			$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $databaseScripts)
 		}
 	}
 	
@@ -494,11 +494,15 @@ Build steps:
 Invoke-CIBuild
 
 .NOTES
-Requires Docker on Linux. Uses Test-IsLinux, Test-IsAzureDevOps, and Test-IsGitHubActions 
-to detect environment and adjust behavior accordingly.
+Requires Docker on Linux. 
 #>
 Function Invoke-CIBuild {
-    
+
+	$databaseName = ""
+	$databaseServer = ""
+	$databaseUser = ""
+	$databasePassword = ""
+
 	if (Test-IsAzureDevOps) {
 		Log-Message -Message "Starting Invoke-CIBuild on Azure DevOps..." -Type "INFO"
 	}
@@ -506,25 +510,41 @@ Function Invoke-CIBuild {
 		Log-Message -Message "Starting Invoke-CIBuild on GitHub Actions..." -Type "INFO"
 	}
 	else {
-		Log-Message -Message "Starting Invoke-CIBuild..." -Type "INFO"
+		Log-Message -Message "Starting Invoke-CIBuild locally..." -Type "INFO"
 	}
+	
+		
     $connectionString = Get-ConnectionStringComponents
     if ($connectionString.IsEmpty) {
-        throw "ConnectionStrings__SqlConnectionString is required for Invoke-CIBuild."
+		$databaseName = "ChurchBulletin"
+		if (Test-IsLinux) {
+			Write-Host "Linux detected - using Docker SQL Server"
+			$databaseServer = "tcp:localhost,1433"
+			$databaseUser = "sa"
+			$containerName = Get-ContainerName -DatabaseName $databaseName
+            $databasePassword = Get-SqlServerPassword -ContainerName $containerName
+
+		} else {
+			$databaseServer = "(LocalDb)\MSSQLLocalDB"
+		}
     }
-    
+	else {
+		Write-Host "Using connection string from environment"
+		$databaseServer = $connectionString.Server
+		$databaseName = $connectionString.Database
+		$databaseUser = $connectionString.User
+		$databasePassword = $connectionString.Password
+	}
+
+	write-Host "Using database server: $databaseServer"
+	write-Host "Using database name: $databaseName"				
+	write-Host "Using database user: $databaseUser"
+	write-Host "Using database password: $databasePassword	"
+	
+
+
 	$sw = [Diagnostics.Stopwatch]::StartNew()
-	
-	# Generate database name based on environment
-	# On Linux with Docker, no need for unique names since container is clean
-	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-#	if (Test-IsLinux) {
-#		$script:databaseName = Generate-UniqueDatabaseName -baseName $connectionString.Database -generateUnique $false
-#	}
-#	else {
-#		$script:databaseName = Generate-UniqueDatabaseName -baseName $connectionString.Database -generateUnique $true
-#	}
-	
+
 	Init
 	Compile
 	UnitTests
@@ -533,17 +553,16 @@ Function Invoke-CIBuild {
 	{
 		if (Test-IsDockerRunning ) 
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $connectionString.Database)
-			New-SqlServerDatabase -serverName $connectionString.Server -databaseName $connectionString.Database
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $databaseName)
+			New-SqlServerDatabase -databaseServer $databaseServer -databaseName $databaseName
 		}
 		else {
-			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-			throw "Docker is not running."
+			throw "Docker is not running. Please start Docker to run SQL Server in a container."
 		}
 	}
 
-	Update-AppSettingsConnectionStrings -databaseServer $connectionString.Server -databaseName $connectionString.Database -sourceDir $source_dir
-	MigrateDatabaseLocal -databaseServerFunc $connectionString.Server -databaseNameFunc $connectionString.Database -databaseUser $connectionString.User -databasePassword $connectionString.Password
+	Update-AppSettingsConnectionStrings -databaseServer $databaseServer -databaseName $databaseName -sourceDir $source_dir
+	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName -databaseUser $databaseUser -databasePassword $databasePassword
 	
 	IntegrationTest
 	# Restore appsettings files to their original git state

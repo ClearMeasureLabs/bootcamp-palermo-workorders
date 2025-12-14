@@ -661,16 +661,16 @@ function Drop-SqlServerDatabase
     )
     
     $databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-    $scriptDir = Join-PathSegments $source_dir "Database" "Scripts"
+
     if (Test-IsLinux)
     {
         $containerName = Get-ContainerName -DatabaseName $databaseName
         $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-        $dbArgs = @($databaseDll, "drop" ,$databaseServer, $databaseName, $scriptDir, "sa", $sqlPassword)
+        $dbArgs = @($databaseDll, "drop" ,$databaseServer, $databaseName, $databaseScripts, "sa", $sqlPassword)
     }
     else
     {
-        $dbArgs = @($databaseDll, "drop", $databaseServer, $databaseName, $scriptDir)
+        $dbArgs = @($databaseDll, "drop", $databaseServer, $databaseName, $databaseScripts)
     }
 
     Write-Host "$dbArgs"
