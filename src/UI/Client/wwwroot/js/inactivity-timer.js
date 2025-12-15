@@ -79,4 +79,3 @@ window.InactivityTimer = {
         this.dotNetRef = null;
     }
 };
-
