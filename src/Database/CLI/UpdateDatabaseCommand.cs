@@ -15,7 +15,7 @@ public class UpdateDatabaseCommand(IDatabaseTasks databaseTasks) : AbstractDatab
         var scriptDir = GetScriptDirectory(options);
         if (!Path.Exists(scriptDir))
         {
-            throw new DirectoryNotFoundException("Script directory '{scriptDir}' does not exist.");
+            throw new DirectoryNotFoundException($"Script directory '{scriptDir}' does not exist.");
         }
         
         if (string.IsNullOrEmpty(options.DatabaseName))
