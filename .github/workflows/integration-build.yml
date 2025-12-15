@@ -503,7 +503,7 @@ jobs:
 
           Write-Host "Container App FQDN: $containerAppFqdn"
           Write-Host "Container App URL: $containerAppUrl"
-          Write-Host "Container App Connection String retrieved: $(![string]::IsNullOrWhiteSpace($containerAppConnectionString))"
+          Write-Host "Container App Connection String retrieved: $(-not [string]::IsNullOrWhiteSpace($containerAppConnectionString))"
 
       - name: Run Acceptance tests
         if: success()
