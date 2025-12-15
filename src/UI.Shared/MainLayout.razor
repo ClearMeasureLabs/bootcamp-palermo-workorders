@@ -1,4 +1,8 @@
 @inherits Palermo.BlazorMvc.MvcLayoutComponentBase
+@inject IJSRuntime JSRuntime
+@inject CustomAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@implements IAsyncDisposable
 
 <div class="modern-app">
     <aside class="modern-sidebar">
@@ -52,3 +56,100 @@
         </main>
     </div>
 </div>
+
+@if (showWarning)
+{
+    <div class="inactivity-warning-overlay" data-testid="@nameof(Elements.InactivityWarningOverlay)">
+        <div class="inactivity-warning-modal" data-testid="@nameof(Elements.InactivityWarningModal)">
+            <h4>Session Timeout Warning</h4>
+            <p data-testid="@nameof(Elements.InactivityWarningMessage)">You will be logged out in 10 seconds due to inactivity.</p>
+            <button class="btn btn-primary" @onclick="StayLoggedIn" data-testid="@nameof(Elements.StayLoggedInButton)">Stay Logged In</button>
+        </div>
+    </div>
+}
+
+@code {
+    private const int TimeoutSeconds = 60;
+    private const int WarningSeconds = 50;
+    
+    private DotNetObjectReference<MainLayout>? dotNetRef;
+    private bool showWarning = false;
+
+    public enum Elements
+    {
+        InactivityWarningOverlay,
+        InactivityWarningModal,
+        InactivityWarningMessage,
+        StayLoggedInButton
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && AuthStateProvider.IsAuthenticated())
+        {
+            try
+            {
+                dotNetRef = DotNetObjectReference.Create(this);
+                await JSRuntime.InvokeVoidAsync("InactivityTimer.initialize", dotNetRef, TimeoutSeconds, WarningSeconds);
+            }
+            catch (Exception)
+            {
+                // JS interop might not be available yet, silently ignore
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task ShowWarning()
+    {
+        showWarning = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task HideWarning()
+    {
+        showWarning = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task HandleTimeout()
+    {
+        showWarning = false;
+        AuthStateProvider.Logout();
+        Bus.Notify(new UserLoggedOutEvent(AuthStateProvider.GetUsername()));
+        NavigationManager.NavigateTo("/", true);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task StayLoggedIn()
+    {
+        showWarning = false;
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("InactivityTimer.resetTimer");
+        }
+        catch (Exception)
+        {
+            // Silently ignore JS interop errors
+        }
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (dotNetRef != null)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("InactivityTimer.dispose");
+            }
+            catch (Exception)
+            {
+                // Silently ignore disposal errors
+            }
+            dotNetRef?.Dispose();
+        }
+    }
+}
