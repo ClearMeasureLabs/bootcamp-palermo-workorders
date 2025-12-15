@@ -28,10 +28,13 @@ public class BaselineDatabaseCommand(IDatabaseTasks dbTasks) : AbstractDatabaseC
             await dbTasks.BaselineDatabaseAsync(connectionString, new DirectoryInfo(scriptDir), cancellationToken);
 
 
-        AnsiConsole.MarkupLine(
-            $"[yellow]Successfully baselined database '{options.DatabaseName}'. All existing scripts marked as executed.[/]");
-        AnsiConsole.MarkupLine(
-            "[yellow]Note: Everytime and TestData scripts are not journaled and will run on next update/rebuild.[/]");
+        if (result == 0)
+        {
+            AnsiConsole.MarkupLine(
+                $"[yellow]Successfully baselined database '{options.DatabaseName}'. All existing scripts marked as executed.[/]");
+            AnsiConsole.MarkupLine(
+                "[yellow]Note: Everytime and TestData scripts are not journaled and will run on next update/rebuild.[/]");
+        }
 
         return result;
     }
