@@ -536,13 +536,6 @@ Function Invoke-CIBuild {
 		$databasePassword = $connectionString.Password
 	}
 
-	write-Host "Using database server: $databaseServer"
-	write-Host "Using database name: $databaseName"				
-	write-Host "Using database user: $databaseUser"
-	write-Host "Using database password: $databasePassword	"
-	
-
-
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
 	Init

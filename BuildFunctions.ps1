@@ -673,7 +673,6 @@ function Drop-SqlServerDatabase
         $dbArgs = @($databaseDll, "drop", $databaseServer, $databaseName, $databaseScripts)
     }
 
-    Write-Host "$dbArgs"
     & dotnet $dbArgs
     if ($LASTEXITCODE -ne 0)
     {
