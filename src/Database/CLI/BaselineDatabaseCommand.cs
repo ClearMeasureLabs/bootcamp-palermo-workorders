@@ -1,0 +1,41 @@
+using JetBrains.Annotations;
+using Spectre.Console;
+using Spectre.Console.Cli;
+
+namespace ClearMeasure.Bootcamp.Database.CLI;
+
+/// <summary>
+///     Baseline command marks all existing scripts as executed without actually running them.
+///     This is useful when introducing DbUp to an existing database.
+/// </summary>
+[UsedImplicitly]
+public class BaselineDatabaseCommand(IDatabaseTasks dbTasks) : AbstractDatabaseCommand("baseline")
+{
+    protected override async Task<int> ExecuteInternalAsync(CommandContext context, DatabaseOptions options,
+        CancellationToken cancellationToken)
+    {
+        var scriptDir = GetScriptDirectory(options);
+        if (!Path.Exists(scriptDir))
+        {
+            throw new DirectoryNotFoundException("Script directory '{scriptDir}' does not exist.");
+        }
+        
+        var connectionString = GetConnectionString(options);
+        AnsiConsole.MarkupLine(
+            "[yellow]Baselining database - marking all scripts as executed without running them...[/]");
+
+        var result =
+            await dbTasks.BaselineDatabaseAsync(connectionString, new DirectoryInfo(scriptDir), cancellationToken);
+
+
+        if (result == 0)
+        {
+            AnsiConsole.MarkupLine(
+                $"[yellow]Successfully baselined database '{options.DatabaseName}'. All existing scripts marked as executed.[/]");
+            AnsiConsole.MarkupLine(
+                "[yellow]Note: Everytime and TestData scripts are not journaled and will run on next update/rebuild.[/]");
+        }
+
+        return result;
+    }
+}

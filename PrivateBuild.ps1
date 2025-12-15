@@ -1,32 +1,43 @@
 param (
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [string]$databaseServer = "",
-	
-    [Parameter(Mandatory=$false)]
-    [string]$databaseName = "",
-	
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$migrateDbWithFlyway = $false
-	
+
+    [Parameter(Mandatory = $false)]
+    [string]$databaseName = ""
 )
 
 . .\build.ps1
 
-# Set default database server based on platform if not provided
-if ([string]::IsNullOrEmpty($databaseServer)) {
-    if (Test-IsLinux) {
-        $databaseServer = "localhost,1433"
+$connectionString = Get-ConnectionStringComponents
+
+if ([string]::IsNullOrEmpty($databaseServer) -and [string]::IsNullOrEmpty($databaseName))  {
+    # Try and use values from the environment variable.
+    if (-not $connectionString.IsEmpty)
+    {
+        $databaseServer = $connectionString.Server
+        $databaseName = $connectionString.Database
     }
-    else {
-        $databaseServer = "(LocalDb)\MSSQLLocalDB"
+}
+else
+{
+    # Make some guesses.
+    if ( [string]::IsNullOrEmpty($databaseServer))
+    {
+        # Set default database server based on platform if not provided
+        if (Test-IsLinux)
+        {
+            $databaseServer = "tcp:localhost,1433"
+        }
+        else
+        {
+            $databaseServer = "(LocalDb)\MSSQLLocalDB"
+        }
+    }
+
+    if ( [string]::IsNullOrEmpty($databaseName))
+    {
+        $databaseName = "ChurchBulletin"
     }
 }
 
-# Pass database name to Invoke-PrivateBuild if provided
-if ([string]::IsNullOrEmpty($databaseName)) {
-    Invoke-PrivateBuild -databaseServer $databaseServer
-}
-else {
-    Invoke-PrivateBuild -databaseServer $databaseServer -databaseName $databaseName
-}
+Invoke-PrivateBuild -databaseServer $databaseServer -databaseName $databaseName

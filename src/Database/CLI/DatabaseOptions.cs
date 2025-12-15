@@ -3,22 +3,23 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace ClearMeasure.Bootcamp.Database.Console;
+namespace ClearMeasure.Bootcamp.Database.CLI;
 
 [UsedImplicitly]
 public class DatabaseOptions : CommandSettings
 {
     [CommandArgument(0, "<databaseServer>")]
     [Description("The database server name or address")]
-    public string DatabaseServer { get; set; } = string.Empty;
+    public string DatabaseServer { get; set; } = @"(LocalDb)\MSSQLLocalDB";
 
     [CommandArgument(1, "<databaseName>")]
     [Description("The name of the database")]
-    public string DatabaseName { get; set; } = string.Empty;
+    public string? DatabaseName { get; set; } = string.Empty;
 
     [CommandArgument(2, "[scriptDir]")]
     [Description("The directory containing the migration scripts. Defaults to .\\scripts")]
-    public string ScriptDir { get; set; } = ".\\scripts";
+    [DefaultValue(@".\scripts")]
+    public string? ScriptDir { get; set; } = string.Empty;
 
     [CommandArgument(3, "[databaseUser]")]
     [Description("Optional database username for authentication")]

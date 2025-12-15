@@ -1,23 +1,26 @@
 #!/usr/bin/env pwsh
+
 . .\BuildFunctions.ps1
 
 # Clean environment variables that may interfere with local builds
 if ($env:ConnectionStrings__SqlConnectionString) {
-	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
-	$env:ConnectionStrings__SqlConnectionString = $null
-	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
+	Log-Message "ConnectionStrings__SqlConnectionString is set" -Type "INFO"
 }
 
-$projectName = "ChurchBulletin"
+$script:projectName = "ChurchBulletin"
+$script:projectConfig = $env:BuildConfiguration
+if ([string]::IsNullOrEmpty($script:projectConfig)) { $script:projectConfig = "Release" }
+
+
 $base_dir = resolve-path .\
 $source_dir = Join-Path $base_dir "src"
-$solutionName = Join-Path $source_dir "$projectName.sln"
+$solutionName = Join-Path $source_dir "$script:projectName.sln"
 $unitTestProjectPath = Join-Path $source_dir "UnitTests"
 $integrationTestProjectPath = Join-Path $source_dir "IntegrationTests"
 $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
 $uiProjectPath =  Join-PathSegments $source_dir "UI" "Server" 
 $databaseProjectPath = Join-Path $source_dir "Database"
-$projectConfig = $env:BuildConfiguration
+
 $framework = "net10.0"
 $version = $env:BUILD_BUILDNUMBER
 
@@ -29,78 +32,20 @@ $test_dir = Join-Path $build_dir "test"
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
 
-$databaseName = $projectName
-if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
+$databaseName = $script:projectName
+if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $script:projectName }
 
-$script:databaseServer = $databaseServer;
-$script:databaseScripts = Join-PathSegments $source_dir "Database" "scripts"
+$databaseScripts = Join-PathSegments $source_dir "Database" "scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
-if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 
  
-Function Init {
-	# Check for PowerShell 7
-	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-	if (-not $pwshPath) {
-		Log-Message -Message "PowerShell 7 is not installed. Please install it from https://aka.ms/powershell" -Type "WARNING"
-		throw "PowerShell 7 is required to run this build script."
-	}
- 	else {
-		Log-Message -Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
-	}
 
-	if (Test-IsAzureDevOps) { 
-		Log-Message -Message "Running in Azure DevOps Pipeline" -Type "INFO"
-	}
-	else {
-		Log-Message -Message "Running in Local Environment" -Type "INFO"
-	}
-
-	if (Test-IsLinux) {
-		# Set NuGet cache to shorter path for Linux/WSL compatibility (only for local builds)
-		if (-not (Test-IsAzureDevOps) -and -not (Test-IsGitHubActions)) {
-			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
-			Log-Message -Message "Setting NUGET_PACKAGES to /tmp/nuget-packages for WSL" -Type "INFO"
-		}
-
-		Log-Message -Message "Running on Linux" -Type "INFO"
-		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
-		if (Test-IsDockerRunning) {
-			Log-Message -Message "Docker is running" -Type "INFO"
-		} else {
-			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-			throw "Docker is not running."
-		}
-	}
-	elseif (Test-IsWindows) {
-		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
-		Log-Message -Message "Running on Windows" -Type "INFO"
-	}
-	Log-Message "Using $script:databaseServer as database server." -Type "INFO"
-	Log-Message "Using $script:databaseName as the database name." 
-
-	if (Test-Path "build") {
-		Remove-Item -Path "build" -Recurse -Force
-	}
-	
-	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
-
-	exec {
-		& dotnet clean $solutionName -nologo -v $verbosity
-	}
-	exec {
-		& dotnet restore $solutionName -nologo --interactive -v $verbosity  
-	}
-	
-	Log-Message -Message "Project Config: $projectConfig" -Type "INFO"
-	Log-Message -Message "Version: $version" -Type "INFO"
-}
 
 Function Compile {
 	exec {
-		& dotnet build $solutionName -nologo --no-restore -v `
-			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
+		& dotnet build $solutionName -nologo -v `
+			$verbosity -maxcpucount --configuration $script:projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
 			/p:Product="Church Bulletin"
@@ -114,7 +59,7 @@ Function UnitTests {
 		exec {
 			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "UnitTests") --no-build `
-				--no-restore --configuration $projectConfig `
+				--no-restore --configuration $script:projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
 	}
@@ -127,10 +72,11 @@ Function IntegrationTest {
 	Push-Location -Path $integrationTestProjectPath
 
 	try {
+		#  --settings path/to/your.runsettings
 		exec {
 			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
-				--no-restore --configuration $projectConfig `
+				--no-restore --configuration $script:projectConfig `
 				--collect:"XPlat Code Coverage"
 		}
 	}
@@ -140,62 +86,30 @@ Function IntegrationTest {
 }
 
 Function AcceptanceTests {
-	$projectConfig = "Release"
-	Push-Location -Path $acceptanceTestProjectPath
-
-	Log-Message -Message "Checking Playwright browsers for Acceptance Tests" -Type "INFO"
-	$playwrightScript = Join-PathSegments "bin" "Release" $framework "playwright.ps1"
-
-	if (Test-Path $playwrightScript) {
-		Log-Message -Message "Playwright script found at $playwrightScript." -Type "INFO"
-		
-		# Check if browsers are installed
-		try {
-			$listOutput = & pwsh $playwrightScript list 2>&1 | Out-String
-			if ($listOutput -match "chromium|webkit|firefox") {
-				Log-Message -Message "Playwright browsers are installed." -Type "INFO"
-			}
-			else {
-				Log-Message -Message "Playwright browsers not detected. Installing..." -Type "WARNING"
-				& pwsh $playwrightScript install --with-deps
-				if ($LASTEXITCODE -ne 0) {
-					throw "Failed to install Playwright browsers"
-				}
-				Log-Message -Message "Playwright browsers installed successfully." -Type "INFO"
-			}
-		}
-		catch {
-			Log-Message -Message "WARNING: Could not verify Playwright browser installation. Attempting to install..." -Type "WARNING"
-			& pwsh $playwrightScript install --with-deps
-			if ($LASTEXITCODE -ne 0) {
-				throw "Failed to install Playwright browsers"
-			}
-		}
-	}
-	else {
-		throw "Playwright script not found at $playwrightScript. Cannot run acceptance tests without the browsers."
-	}
-
 	# Check if UI.Server is already running
 	$uiServerProcess = Get-Process -Name "ClearMeasure.Bootcamp.UI.Server" -ErrorAction SilentlyContinue
 	if ($uiServerProcess) {
 		Log-Message -Message "Warning: ClearMeasure.Bootcamp.UI.Server is already running in background (PID: $($uiServerProcess.Id)). This may interfere with acceptance tests." -Type "WARNING"
 	}
 
-	Log-Message -Message "Running Acceptance Tests" -Type "INFO"
 	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
-	try {
-		exec {
-			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
-				--results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
-				--no-restore --configuration $projectConfig `
-				--settings:$runSettingsPath `
-				--collect:"XPlat Code Coverage"
-		}
-	}
-	finally {
-		Pop-Location
-	}
+    Push-Location -Path $acceptanceTestProjectPath
+    try {
+        $playwrightScript = Join-PathSegments (Get-Location) "bin" "Release" "net10.0" "playwright.ps1"
+        Install-Playwright $playwrightScript
+        
+        exec {
+            & dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
+                --results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
+                --no-restore --configuration $script:projectConfig `
+                --settings:$runSettingsPath `
+                --collect:"XPlat Code Coverage"
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
 }
 
 Function MigrateDatabaseLocal {
@@ -206,52 +120,38 @@ Function MigrateDatabaseLocal {
 		
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$databaseNameFunc
+		[string]$databaseNameFunc,
+		
+		[Parameter(Mandatory = $false)]
+		[string]$databaseUser = "",
+		
+		[Parameter(Mandatory = $false)]
+		[string]$databasePassword = ""
+
 	)
 	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	
 	if (Test-IsLinux) {
-		$containerName = Get-ContainerName -DatabaseName $databaseNameFunc
-		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts, "sa", $sqlPassword)
+		if ([string]::IsNullOrWhiteSpace($databaseUser)) {
+			$containerName = Get-ContainerName -DatabaseName $databaseNameFunc
+			$databaseUser = "sa"
+			$databasePassword = Get-SqlServerPassword -ContainerName $containerName
+		}
+		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $databaseScripts, $databaseUser, $databasePassword)
 	}
 	else {
-		$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $script:databaseScripts)
+		if (-not [string]::IsNullOrWhiteSpace($databaseUser)) {
+			$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $databaseScripts, $databaseUser, $databasePassword)
+		}
+		else {
+			$dbArgs = @($databaseDll, $databaseAction, $databaseServerFunc, $databaseNameFunc, $databaseScripts)
+		}
 	}
 	
 	& dotnet $dbArgs
 	if ($LASTEXITCODE -ne 0) {
 		throw "Database migration failed with exit code $LASTEXITCODE"
 	}
-}
-
-Function Create-SqlServerInDocker {
-	param (
-		[Parameter(Mandatory = $true)]
-			[ValidateNotNullOrEmpty()]
-			[string]$serverName,		
-		[Parameter(Mandatory = $true)]
-			[ValidateNotNullOrEmpty()]
-			[string]$dbAction,
-		[Parameter(Mandatory = $true)]
-			[ValidateNotNullOrEmpty()]
-			[string]$scriptDir			
-		)
-	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName -generateUnique $true
-	$containerName = Get-ContainerName -DatabaseName $tempDatabaseName
-	$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-
-	New-DockerContainerForSqlServer -containerName $containerName
-	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
-
-	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
-	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
-	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $sqlPassword)
-	& dotnet $dbArgs
-	if ($LASTEXITCODE -ne 0) {
-		throw "Database migration failed with exit code $LASTEXITCODE"
-	}
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
 }
 
 Function Publish-ToGitHubPackages {
@@ -323,15 +223,15 @@ Function Publish-ToGitHubPackages {
 }
 
 Function PackageUI {    
-	$packageName = "$projectName.UI.$version.nupkg"
+	$packageName = "$script:projectName.UI.$version.nupkg"
 	$packagePath = Join-Path $build_dir $packageName
 
 	exec {
-		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
+		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $script:projectConfig
 	}
 	
 	exec {
-		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
+		& dotnet-octo pack --id "$script:projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $script:projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 	
 }
@@ -341,7 +241,7 @@ Function PackageDatabase {
 		& dotnet publish $databaseProjectPath -nologo --no-restore -v $verbosity --configuration Debug
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
+		& dotnet-octo pack --id "$script:projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
 	}
 	
 
@@ -353,36 +253,21 @@ Function PackageAcceptanceTests {
 		& dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
+		& dotnet-octo pack --id "$script:projectName.AcceptanceTests" --version $version --basePath $(Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
 	}
-	
-	
 }
 
 Function PackageScript {    
 	exec {
-		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
+		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $script:projectConfig
 	}
 	exec {
-		& dotnet-octo pack --id "$projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
+		& dotnet-octo pack --id "$script:projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
 	}	
-
 }
 
 
 Function Package-Everything{
-	
-	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
-	
-	# Ensure dotnet tools are in PATH
-	$dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
-	$pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
-	$dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
-	if (-not $dotnetToolsPathPresent) {
-		$env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
-		Log-Message -Message "Added dotnet tools to PATH: $dotnetToolsPath" -Type "INFO"
-	}
-	
 	PackageUI
 	PackageDatabase
 	PackageAcceptanceTests
@@ -433,62 +318,29 @@ Automatically installs Playwright browsers if not present.
 #>
 Function Invoke-AcceptanceTests {
 	param (
-		[Parameter(Mandatory = $false)]
-		[string]$databaseServer = "",
-		[Parameter(Mandatory=$false)]
-		[string]$databaseName =""
+		[Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+		[string]$databaseServer,
+		[Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+		[string]$databaseName
 	)
 	
-
 	Log-Message -Message "Starting AcceptanceBuild..." -Type "INFO"
-	$projectConfig = "Release"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
-    Test-IsOllamaRunning -LogOutput $true
-
-
-	# Set database server from parameter if provided
-	if (-not [string]::IsNullOrEmpty($databaseServer)) {
-		$script:databaseServer = $databaseServer
-	}
-	else {
-		if (Test-IsLinux) {
-			$script:databaseServer = "localhost"
-		}
-		else {
-			$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
-		}
-	}
-	
-	# Generate unique database name for this build instance
-	# On Linux with Docker, no need for unique names since container is clean
-	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (-not [string]::IsNullOrEmpty($databaseName)) {
-		$script:databaseName = $databaseName
-	}
-	else {
-		if (Test-IsLinux) {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-		}
-		elseif (Test-IsLocalBuild) {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-		}
-		else {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
-		}
-	}
+    $isOllamaRunning = Test-IsOllamaRunning -LogOutput $true
 	
 	Init
 	Compile
 
 	if (Test-IsLinux) 
 	{
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
-		if (Test-IsDockerRunning -LogOutput $true) 
+		if (Test-IsDockerRunning) 
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $databaseName)
+			New-SqlServerDatabase -databaseServer $databaseServer -databaseName $databaseName
 		}
 		else {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
@@ -496,20 +348,18 @@ Function Invoke-AcceptanceTests {
 		}
 	}
 
-	# Update appsettings.json files before database migration
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	Update-AppSettingsConnectionStrings -databaseName $databaseName -databaseServer $databaseServer -sourceDir $source_dir
 	
 	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
 	# This prevents the Windows LocalDB connection string from overriding appsettings.json
 	$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
 	if (Test-Path $launchSettingsPath) {
-		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
 		$launchSettings = Get-Content $launchSettingsPath -Raw
 		$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
 		Set-Content -Path $launchSettingsPath -Value $launchSettings
 	}
 	
-	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
 	AcceptanceTests
 	
 	# Restore appsettings and launchSettings files to their original git state
@@ -527,7 +377,6 @@ Function Invoke-AcceptanceTests {
 
 	$sw.Stop()
 	Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
 
 <#
@@ -569,49 +418,17 @@ Requires Docker on Linux. Sets containerAppURL environment variable to "localhos
 #>
 Function Invoke-PrivateBuild {
 	param (
-		[Parameter(Mandatory = $false)]
-		[string]$databaseServer = "",
-		
-		[Parameter(Mandatory = $false)]
-		[string]$databaseName = ""
+		[Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+		[string]$databaseServer,
+        
+		[Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+		[string]$databaseName 
 	)
 	
-	Log-Message -Message "Starting Invoke-PrivateBuild..." -Type "INFO"
+	Log-Message -Message "Starting Invoke-PrivateBuild, setting the environment variable ContainerAppURL to localhost:7174" -Type "INFO"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
-	
-	# Set database server from parameter if provided
-	if (-not [string]::IsNullOrEmpty($databaseServer)) {
-		$script:databaseServer = $databaseServer
-		Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "INFO"
-	}
-	else {
-		if (Test-IsLinux) {
-			$script:databaseServer = "localhost"
-		}
-		else {
-			$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
-		}
-		Log-Message -Message "Using default database server for platform: $script:databaseServer" -Type "INFO"
-	}
-	
-	# TODO Drop the SQL Server database.
-
-	# Generate unique database name for this build instance
-	# On Linux with Docker, no need for unique names since container is clean
-	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (-not [string]::IsNullOrEmpty($databaseName)) {
-		$script:databaseName = $databaseName
-		Log-Message -Message "Using database name from parameter: $script:databaseName" -Type "INFO"
-	}
-	elseif (Test-IsLinux) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-	}
-	elseif (Test-IsLocalBuild) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-	}
-	else {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
-	}
 
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
@@ -621,11 +438,10 @@ Function Invoke-PrivateBuild {
 	
 	if (Test-IsLinux) 
 	{
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
-		if (Test-IsDockerRunning -LogOutput $true) 
+		if (Test-IsDockerRunning ) 
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $databaseName)
+			New-SqlServerDatabase -databaseServer $databaseServer -databaseName $databaseName
 		}
 		else {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
@@ -633,10 +449,9 @@ Function Invoke-PrivateBuild {
 		}
 	}
 	
-	# Update appsettings.json files before database migration
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-	
-	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	Update-AppSettingsConnectionStrings -databaseServer $databaseServer -databaseName $databaseName  -sourceDir $source_dir
+	Drop-SqlServerDatabase -databaseServer $databaseServer -databaseName $databaseName
+	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
 	
 	IntegrationTest
 
@@ -649,7 +464,6 @@ Function Invoke-PrivateBuild {
 	
 	$sw.Stop()
 	Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }
 
 <#
@@ -679,10 +493,15 @@ Build steps:
 Invoke-CIBuild
 
 .NOTES
-Requires Docker on Linux. Uses Test-IsLinux, Test-IsAzureDevOps, and Test-IsGitHubActions 
-to detect environment and adjust behavior accordingly.
+Requires Docker on Linux. 
 #>
 Function Invoke-CIBuild {
+
+	$databaseName = ""
+	$databaseServer = ""
+	$databaseUser = ""
+	$databasePassword = ""
+
 	if (Test-IsAzureDevOps) {
 		Log-Message -Message "Starting Invoke-CIBuild on Azure DevOps..." -Type "INFO"
 	}
@@ -690,41 +509,52 @@ Function Invoke-CIBuild {
 		Log-Message -Message "Starting Invoke-CIBuild on GitHub Actions..." -Type "INFO"
 	}
 	else {
-		Log-Message -Message "Starting Invoke-CIBuild..." -Type "INFO"
+		Log-Message -Message "Starting Invoke-CIBuild locally..." -Type "INFO"
 	}
 	
-	$sw = [Diagnostics.Stopwatch]::StartNew()
-	
-	# Generate database name based on environment
-	# On Linux with Docker, no need for unique names since container is clean
-	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (Test-IsLinux) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-	}
+		
+    $connectionString = Get-ConnectionStringComponents
+    if ($connectionString.IsEmpty) {
+		$databaseName = "ChurchBulletin"
+		if (Test-IsLinux) {
+			Write-Host "Linux detected - using Docker SQL Server"
+			$databaseServer = "tcp:localhost,1433"
+			$databaseUser = "sa"
+			$containerName = Get-ContainerName -DatabaseName $databaseName
+            $databasePassword = Get-SqlServerPassword -ContainerName $containerName
+
+		} else {
+			$databaseServer = "(LocalDb)\MSSQLLocalDB"
+		}
+    }
 	else {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+		Write-Host "Using connection string from environment"
+		$databaseServer = $connectionString.Server
+		$databaseName = $connectionString.Database
+		$databaseUser = $connectionString.User
+		$databasePassword = $connectionString.Password
 	}
-	
+
+	$sw = [Diagnostics.Stopwatch]::StartNew()
+
 	Init
 	Compile
 	UnitTests
 
 	if (Test-IsLinux) 
 	{
-		Log-Message -Message "Setting up SQL Server in Docker for CI" -Type "INFO"
-		if (Test-IsDockerRunning -LogOutput $true) 
+		if (Test-IsDockerRunning ) 
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $databaseName)
+			New-SqlServerDatabase -databaseServer $databaseServer -databaseName $databaseName
 		}
 		else {
-			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-			throw "Docker is not running."
+			throw "Docker is not running. Please start Docker to run SQL Server in a container."
 		}
 	}
 
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	Update-AppSettingsConnectionStrings -databaseServer $databaseServer -databaseName $databaseName -sourceDir $source_dir
+	MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName -databaseUser $databaseUser -databasePassword $databasePassword
 	
 	IntegrationTest
 	# Restore appsettings files to their original git state
@@ -738,5 +568,4 @@ Function Invoke-CIBuild {
 
 	$sw.Stop()
 	Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
 }

@@ -1,30 +1,32 @@
-# Taken from psake https://github.com/psake
 
-# Ensure SqlServer module is installed for Invoke-Sqlcmd
-if (-not (Get-Module -ListAvailable -Name SqlServer)) {
-    Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
-    try {
-        # Register PSGallery if it's not registered
-        if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
-            Register-PSRepository -Default -ErrorAction Stop | Out-Null
+function Install-SqlServerModule {
+    # Ensure SqlServer module is installed for Invoke-Sqlcmd
+    if (-not (Get-Module -ListAvailable -Name SqlServer)) {
+        Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
+        try {
+            # Register PSGallery if it's not registered
+            if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+                Register-PSRepository -Default -ErrorAction Stop | Out-Null
+            }
+            # Trust PSGallery to avoid prompts
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue
+            Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser -Repository PSGallery -ErrorAction Stop
+            Write-Host "SqlServer module installed successfully" -ForegroundColor Green
         }
-        # Trust PSGallery to avoid prompts
-        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue
-        Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser -Repository PSGallery -ErrorAction Stop
-        Write-Host "SqlServer module installed successfully" -ForegroundColor Green
+        catch {
+            Write-Host "Failed to install SqlServer module: $_" -ForegroundColor Red
+            Write-Host "Some database operations may not work without this module" -ForegroundColor Yellow
+        }
+    }
+    
+    try {
+        Import-Module SqlServer -ErrorAction Stop
     }
     catch {
-        Write-Host "Failed to install SqlServer module: $_" -ForegroundColor Red
-        Write-Host "Some database operations may not work without this module" -ForegroundColor Yellow
-    }
+        Write-Host "Warning: Could not import SqlServer module. Invoke-Sqlcmd will not be available." -ForegroundColor Yellow
+    }    
 }
 
-try {
-    Import-Module SqlServer -ErrorAction Stop
-}
-catch {
-    Write-Host "Warning: Could not import SqlServer module. Invoke-Sqlcmd will not be available." -ForegroundColor Yellow
-}
 
 <#
 .SYNOPSIS
@@ -78,6 +80,8 @@ Function Log-Message {
     Write-Host $logEntry -ForegroundColor $color
 }
 
+
+
 Function Get-RedactedConnectionString {
     <#
     .SYNOPSIS
@@ -104,35 +108,40 @@ Function Get-RedactedConnectionString {
 Function Update-AppSettingsConnectionStrings {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$databaseNameToUse,
-        [Parameter(Mandatory = $true)]
-        [string]$serverName,
+        [ValidateNotNullOrEmpty()]
+        [string]$databaseServer,
+        [ValidateNotNullOrEmpty()]
+        [Parameter(Mandatory = $true)]  
+        [string]$databaseName,
+        [ValidateNotNullOrEmpty()]
         [Parameter(Mandatory = $true)]
         [string]$sourceDir
     )
 
-    Log-Message "Updating appsettings*.json files with database name: $databaseNameToUse" -Type "INFO"
+    $connStr = Get-ConnectionStringComponents
+    $connectionString = ""
+    if ($connStr.IsEmpty) {
+        # Build the connection string for environment variable
+        if (Test-IsLinux) {
+            $containerName = Get-ContainerName -DatabaseName $databaseName
+            $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+            $connectionString = "server=$serverName;database=$databaseName;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+        }
+        else {
+            Write-Host $env:ConnectionStrings__SqlConnectionString
+            $connectionString = "server=$databaseServer;database=$databaseName;Integrated Security=true;"
+        }
+        $env:ConnectionStrings__SqlConnectionString = $connectionString
 
-    # Build the connection string for environment variable
-    if (Test-IsLinux) {
-        $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
-        $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-        $connectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+    } else {
+        $connectionString = $connStr.Value
     }
-    else {
-        $connectionString = "server=$serverName;database=$databaseNameToUse;Integrated Security=true;"
-    }
 
-
-    # Set environment variable for current process
-    $env:ConnectionStrings__SqlConnectionString = $connectionString
-    Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $(Get-RedactedConnectionString -ConnectionString $connectionString)" -Type "INFO"
 
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
     
     foreach ($file in $appSettingsFiles) {
-        Log-Message "Processing file: $($file.FullName)" -Type "INFO"
     
         $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
         
@@ -144,24 +153,22 @@ Function Update-AppSettingsConnectionStrings {
             foreach ($property in $connectionStringsObj.PSObject.Properties) {
                 $oldConnectionString = $property.Value
 
-                Log-Message "Found connection string $($property.Name) : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
                 if ($oldConnectionString -match "database=([^;]+)") {
 
                     if (Test-IsLinux) {
-                        $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
+                        $containerName = Get-ContainerName -DatabaseName $databaseName
                         $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-                        $newConnectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+                        $newConnectionString = "server=$serverName;database=$databaseName;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
                     }
                     else {
                         # Replace the database name in the connection string
-                        $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
+                        $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseName"
                 
                         # Also update server if needed
                         $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
                     }
         
                     $connectionStringsObj.$($property.Name) = $newConnectionString
-                    Log-Message "Updated $($property.Name): $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
                 }
             }
        
@@ -301,7 +308,7 @@ Function Test-IsLocalBuild {
 Function New-SqlServerDatabase {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$serverName,
+        [string]$databaseServer,
         [Parameter(Mandatory = $true)]
         [string]$databaseName
     )
@@ -319,12 +326,11 @@ END
 "@
 
     $createDbCmd = "CREATE DATABASE [$databaseName];"
-	Log-Message "Creating SQL Server in Docker for integration tests for $databaseName on $serverName" -Type "INFO"
 
     try {
         if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
-            Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
-            Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+            Invoke-Sqlcmd -ServerInstance $databaseServer -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
+            Invoke-Sqlcmd -ServerInstance $databaseServer -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
         } else {
             # Fallback to docker exec if Invoke-Sqlcmd is not available
             # Using -i for interactive mode to avoid password in command line
@@ -337,11 +343,11 @@ END
         }
     } 
     catch {
-        Log-Message -Message "Error creating database '$databaseName' on server '$serverName': $_" -Type "ERROR"
+        Log-Message -Message "Error creating database '$databaseName' on server '$databaseServer': $_" -Type "ERROR"
         throw $_
     }
 
-    Log-Message -Message "Recreated database '$databaseName' on server '$serverName'" -Type "INFO"
+    Log-Message -Message "Recreated database '$databaseName' on server '$databaseServer'" -Type "INFO"
 }
 
 Function New-DockerContainerForSqlServer {
@@ -353,12 +359,10 @@ Function New-DockerContainerForSqlServer {
     $imageName = "mcr.microsoft.com/mssql/server:2022-latest"
 
     # Stop any containers using port 1433
-    Log-Message -Message "Checking for containers using port 1433..." -Type "INFO"
     $containersOnPort1433 = docker ps --filter "publish=1433" --format "{{.Names}}"
     
     foreach ($container in $containersOnPort1433) {
         if ($container) {
-            Log-Message -Message "Stopping container '$container' that is using port 1433..." -Type "INFO"
             docker stop $container | Out-Null
             docker rm $container | Out-Null
         }
@@ -367,7 +371,6 @@ Function New-DockerContainerForSqlServer {
     # Check if our specific container exists (running or stopped)
     $existingContainer = docker ps -a --filter "name=^${containerName}$" --format "{{.Names}}"
     if ($existingContainer) {
-        Log-Message -Message "Removing existing container '$containerName'..." -Type "INFO"
         docker rm -f $existingContainer | Out-Null
     }
     
@@ -444,7 +447,6 @@ Function Test-IsDockerRunning {
             Log-Message -Message "Docker found at: $dockerPath" -Type "INFO"
         }
         
-        # Check if Docker daemon is running
         try {
             $dockerVersion = & docker version --format "{{.Server.Version}}" 2>$null
             if ($dockerVersion) {
@@ -571,11 +573,6 @@ Function Test-IsOllamaRunning {
         }
         return $false
     }
-    else {
-        if ($LogOutput) {
-            Log-Message -Message "Ollama found at: $ollamaPath" -Type "INFO"
-        }
-    }
     
     # Check if Ollama service is running by testing the API
     try {
@@ -585,7 +582,6 @@ Function Test-IsOllamaRunning {
                 $content = $response.Content | ConvertFrom-Json
                 $modelCount = ($content.models | Measure-Object).Count
                 Log-Message -Message "Ollama service is running at $OllamaUrl" -Type "INFO"
-                Log-Message -Message "Available models: $modelCount" -Type "INFO"
             }
             return $true
         }
@@ -650,4 +646,206 @@ function Join-PathSegments {
     }
     
     return $result
+}
+
+
+function Drop-SqlServerDatabase
+{
+    param (
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$databaseServer,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$databaseName
+    )
+    
+    $databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
+
+    if (Test-IsLinux)
+    {
+        $containerName = Get-ContainerName -DatabaseName $databaseName
+        $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+        $dbArgs = @($databaseDll, "drop" ,$databaseServer, $databaseName, $databaseScripts, "sa", $sqlPassword)
+    }
+    else
+    {
+        $dbArgs = @($databaseDll, "drop", $databaseServer, $databaseName, $databaseScripts)
+    }
+
+    & dotnet $dbArgs
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw "Database migration failed with exit code $LASTEXITCODE"
+    }
+}
+
+Function Get-ConnectionStringComponents {
+    <#
+    .SYNOPSIS
+        Extracts database connection string components from ConnectionStrings__SqlConnectionString environment variable
+    .DESCRIPTION
+        Parses the connection string and extracts the database server, database name, database user, and database password.
+        Supports various connection string formats including Server/Data Source, Database/Initial Catalog, User ID/User, and Password.
+    .OUTPUTS
+        [PSCustomObject] An object with properties: Server, Database, User, Password
+    .EXAMPLE
+        $env:ConnectionStrings__SqlConnectionString = "Server=localhost;Database=mydb;User ID=sa;Password=secret123;"
+        $components = Get-ConnectionStringComponents
+        Returns: @{ Server = "localhost"; Database = "mydb"; User = "sa"; Password = "secret123" }
+    .EXAMPLE
+        $env:ConnectionStrings__SqlConnectionString = "Data Source=server1;Initial Catalog=ChurchBulletin;User=admin;Password=pass123;"
+        $components = Get-ConnectionStringComponents
+        Returns: @{ Server = "server1"; Database = "ChurchBulletin"; User = "admin"; Password = "pass123" }
+    #>
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$ConnectionString = $env:ConnectionStrings__SqlConnectionString
+    )
+
+    if ([string]::IsNullOrEmpty($ConnectionString)) {
+        return [PSCustomObject]@{
+            Server   = ""
+            Database = ""
+            User     = ""
+            Password = ""
+            IsEmpty  = $true
+            Value = ""
+            RedactedValue = ""
+        }
+    }
+
+    # Extract server (supports both "Server=" and "Data Source=")
+    $server = $null
+    if ($ConnectionString -match "(?:Server|Data Source)=([^;]+)") {
+        $server = $matches[1].Trim()
+    }
+
+    # Extract database (supports both "Database=" and "Initial Catalog=")
+    $database = $null
+    if ($ConnectionString -match "(?:Database|Initial Catalog)=([^;]+)") {
+        $database = $matches[1].Trim()
+    }
+
+    # Extract user (supports both "User ID=" and "User=")
+    $user = $null
+    if ($ConnectionString -match "(?:User ID|User)=([^;]+)") {
+        $user = $matches[1].Trim()
+    }
+
+    # Extract password
+    $password = $null
+    if ($ConnectionString -match "Password=([^;]+)") {
+        $password = $matches[1].Trim()
+    }
+
+    return [PSCustomObject]@{
+        Server   = $server
+        Database = $database
+        User     = $user
+        Password = $password
+        IsEmpty  = $false
+        Value    = $ConnectionString
+        RedactedValue = Get-RedactedConnectionString -ConnectionString $ConnectionString
+    }
+}
+
+function Install-Playwright
+{
+    <#
+    .SYNOPSIS
+        Installs Playwright browsers for testing
+    .DESCRIPTION
+        Uses the Playwright CLI to install the necessary browsers for Playwright tests.
+        This is required to run browser-based tests using Playwright.
+    .EXAMPLE
+        Install-PlaywrightBrowsers
+    #>
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$playwrightScript = ""
+    )
+    Log-Message -Message "Installing Playwright browsers..." -Type "INFO"
+
+    if ( [string]::IsNullOrEmpty($playwrightScript))
+    {
+        try
+        {
+            Exec { npx playwright install } "Failed to install Playwright using npx. Ensure Node.js and Playwright are installed."
+            Log-Message -Message "Playwright browsers installed successfully." -Type "INFO"
+        }
+        catch
+        {
+            Log-Message -Message "Error installing Playwright browsers: $_" -Type "ERROR"
+            throw $_
+        }
+        return
+
+    }
+
+    if (Test-Path $playwrightScript)
+    {
+        # Resolve to absolute path
+        $playwrightScript = Resolve-Path $playwrightScript
+        Write-Host "Installing Playwright browsers from $playwrightScript"
+        & pwsh $playwrightScript install --with-deps
+        if ($LASTEXITCODE -ne 0)
+        {
+            throw "Failed to install Playwright browsers"
+        }
+    }
+    else
+    {
+        throw "Playwright not found at $playwrightScript"
+    }
+}
+ 
+function CleanBuildArtifacts {
+    if (Test-Path "build") {
+		Remove-Item -Path "build" -Recurse -Force
+	}
+	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
+
+	exec {
+		& dotnet clean $solutionName -nologo -v $verbosity
+	}
+	exec {
+		& dotnet restore $solutionName -nologo --interactive -v $verbosity  
+	}
+}
+    
+
+function Install-DotNetTools {
+	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
+	
+	# Ensure dotnet tools are in PATH
+	$dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
+	$pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
+	$dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
+	if (-not $dotnetToolsPathPresent) {
+		$env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
+		Log-Message -Message "Added dotnet tools to PATH: $dotnetToolsPath" -Type "INFO"
+	}
+}
+
+Function Init {
+	# Check for PowerShell 7
+	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+	if (-not $pwshPath) {
+		throw "PowerShell 7 is required to run this build script. Please install it from https://aka.ms/powershell"
+	}
+
+	if (Test-IsLinux) {
+		# Set NuGet cache to shorter path for Linux/WSL compatibility (only for local builds)
+		if (-not (Test-IsAzureDevOps) -and -not (Test-IsGitHubActions)) {
+			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
+		}
+
+		if (-not (Test-IsDockerRunning)) {
+			throw "Docker is required to run integration tests on linux. Please start Docker to run SQL Server in a container."
+		}
+	}
+    CleanBuildArtifacts
+    Install-SqlServerModule
+    Install-DotNetTools
 }
