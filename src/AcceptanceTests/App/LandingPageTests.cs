@@ -22,4 +22,26 @@ public class LandingPageTests : AcceptanceTestBase
         // Convert #a9a9a9 to rgb(169, 169, 169)
         titleColor.ShouldBe("rgb(169, 169, 169)");
     }
+
+    [Test]
+    public async Task Should_ApplyBlinkingAnimationToLoginLink()
+    {
+        // Arrange - Already on landing page from SetUpAsync
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        // Act
+        var loginLinkLocator = Page.Locator(".auth-section a");
+        await loginLinkLocator.WaitForAsync();
+
+        // Assert - Check that animation is applied (Blazor CSS isolation adds scope suffix)
+        var animationName = await loginLinkLocator.EvaluateAsync<string>("element => window.getComputedStyle(element).animationName");
+        animationName.ShouldStartWith("blink");
+        
+        var animationDuration = await loginLinkLocator.EvaluateAsync<string>("element => window.getComputedStyle(element).animationDuration");
+        animationDuration.ShouldBe("1s");
+        
+        var animationIterationCount = await loginLinkLocator.EvaluateAsync<string>("element => window.getComputedStyle(element).animationIterationCount");
+        animationIterationCount.ShouldBe("infinite");
+    }
 }
