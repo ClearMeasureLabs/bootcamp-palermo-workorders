@@ -1,0 +1,37 @@
+@if (IsVisible)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog" data-testid="@Elements.InactivityModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Inactivity Warning</h5>
+                </div>
+                <div class="modal-body">
+                    <p data-testid="@Elements.WarningMessage">You will be logged out in @RemainingSeconds seconds due to inactivity.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" 
+                            class="btn btn-primary" 
+                            @onclick="OnStayLoggedIn"
+                            data-testid="@Elements.StayLoggedInButton">
+                        Stay Logged In
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public int RemainingSeconds { get; set; } = 10;
+    [Parameter] public EventCallback OnStayLoggedIn { get; set; }
+
+    public enum Elements
+    {
+        InactivityModal,
+        WarningMessage,
+        StayLoggedInButton
+    }
+}

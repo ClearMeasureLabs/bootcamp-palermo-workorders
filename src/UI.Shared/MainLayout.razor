@@ -1,4 +1,10 @@
 @inherits Palermo.BlazorMvc.MvcLayoutComponentBase
+@using Microsoft.Extensions.Configuration
+@inject IJSRuntime JSRuntime
+@inject CustomAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject IConfiguration Configuration
+@implements IAsyncDisposable
 
 <div class="modern-app">
     <aside class="modern-sidebar">
@@ -52,3 +58,66 @@
         </main>
     </div>
 </div>
+
+<InactivityWarningModal IsVisible="showWarning" 
+                        RemainingSeconds="10" 
+                        OnStayLoggedIn="HandleStayLoggedIn"/>
+
+@code {
+    private DotNetObjectReference<MainLayout>? dotNetReference;
+    private bool showWarning = false;
+    private int timeoutSeconds = 60;
+    private int warningSeconds = 50;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            timeoutSeconds = Configuration.GetValue<int>("InactivityTimeout:TimeoutSeconds", 60);
+            warningSeconds = Configuration.GetValue<int>("InactivityTimeout:WarningSeconds", 50);
+
+            if (AuthStateProvider.IsAuthenticated())
+            {
+                await InitializeInactivityTimer();
+            }
+        }
+    }
+
+    private async Task InitializeInactivityTimer()
+    {
+        dotNetReference = DotNetObjectReference.Create(this);
+        await JSRuntime.InvokeVoidAsync("InactivityTimer.initialize", dotNetReference, timeoutSeconds, warningSeconds);
+    }
+
+    [JSInvokable]
+    public void ShowWarning()
+    {
+        showWarning = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void TriggerLogout()
+    {
+        showWarning = false;
+        AuthStateProvider.Logout();
+        Bus.Notify(new UserLoggedOutEvent(AuthStateProvider.GetUsername()));
+        NavigationManager.NavigateTo("/", forceLoad: true);
+    }
+
+    private async Task HandleStayLoggedIn()
+    {
+        showWarning = false;
+        await JSRuntime.InvokeVoidAsync("InactivityTimer.resetTimer");
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (dotNetReference != null)
+        {
+            await JSRuntime.InvokeVoidAsync("InactivityTimer.dispose");
+            dotNetReference.Dispose();
+        }
+    }
+}
