@@ -14,7 +14,7 @@ public interface IDatabaseTasks
     Task<int> BaselineDatabaseAsync(string connectionString, DirectoryInfo scriptsDirectory,
         CancellationToken cancellationToken);
     
-    Task<int> EnsureDbabaseExistsAsync(string connectionString, string databaseName,
+    Task<int> EnsureDatabaseExistsAsync(string connectionString, string databaseName,
         CancellationToken cancellationToken);
 }
 
