@@ -23,7 +23,7 @@ public class UpdateDatabaseCommand(IDatabaseTasks databaseTasks) : AbstractDatab
             throw new InvalidOperationException("The database name is required for UPDATE.");
         }
         
-        await databaseTasks.EnsureDbabaseExistsAsync(GetConnectionString(options), options.DatabaseName,cancellationToken);
+        await databaseTasks.EnsureDatabaseExistsAsync(GetConnectionString(options), options.DatabaseName,cancellationToken);
         
         var result2 = await databaseTasks.UpdateDatabaseAsync(GetConnectionString(options), new DirectoryInfo(scriptDir),
             cancellationToken);

@@ -198,7 +198,7 @@ public class DatabaseTasks : IDatabaseTasks
     }
 
 
-    public Task<int> EnsureDbabaseExistsAsync(string connectionString, string databaseName, CancellationToken cancellationToken)
+    public Task<int> EnsureDatabaseExistsAsync(string connectionString, string databaseName, CancellationToken cancellationToken)
     {
         try
         {
