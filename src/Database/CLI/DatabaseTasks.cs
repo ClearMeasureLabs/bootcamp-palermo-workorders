@@ -31,30 +31,36 @@ public class DatabaseTasks : IDatabaseTasks
             await connection.OpenAsync(cancellationToken);
 
             // Check if database exists
-            var checkCommand = new SqlCommand(
+            await using (var checkCommand = new SqlCommand(
                 "SELECT database_id FROM sys.databases WHERE Name = @DatabaseName",
-                connection);
-            checkCommand.Parameters.AddWithValue("@DatabaseName", databaseName);
-
-            var result = await checkCommand.ExecuteScalarAsync(cancellationToken);
-
-            if (result == null)
+                connection))
             {
-                AnsiConsole.MarkupLine(
-                    $"[yellow]Database '{databaseName.EscapeMarkup()}' does not exist. Nothing to drop.[/]");
-                return 0;
+                checkCommand.Parameters.AddWithValue("@DatabaseName", databaseName);
+
+                var result = await checkCommand.ExecuteScalarAsync(cancellationToken);
+
+                if (result == null)
+                {
+                    AnsiConsole.MarkupLine(
+                        $"[yellow]Database '{databaseName.EscapeMarkup()}' does not exist. Nothing to drop.[/]");
+                    return 0;
+                }
             }
 
             // Set database to single user mode to drop connections
-            var setSingleUserCommand = new SqlCommand(
+            await using (var setSingleUserCommand = new SqlCommand(
                 $"ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE",
-                connection);
-            await setSingleUserCommand.ExecuteNonQueryAsync(cancellationToken);
+                connection))
+            {
+                await setSingleUserCommand.ExecuteNonQueryAsync(cancellationToken);
+            }
 
             // Drop the database
             AnsiConsole.MarkupLine($"[yellow]Dropping database '{databaseName.EscapeMarkup()}'...[/]");
-            var dropCommand = new SqlCommand($"DROP DATABASE [{databaseName}]", connection);
-            await dropCommand.ExecuteNonQueryAsync(cancellationToken);
+            await using (var dropCommand = new SqlCommand($"DROP DATABASE [{databaseName}]", connection))
+            {
+                await dropCommand.ExecuteNonQueryAsync(cancellationToken);
+            }
 
             AnsiConsole.MarkupLine($"[green]Database '{databaseName.EscapeMarkup()}' dropped successfully.[/]");
 
