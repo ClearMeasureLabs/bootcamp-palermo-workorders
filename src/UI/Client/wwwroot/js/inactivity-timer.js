@@ -4,6 +4,8 @@ window.InactivityTimer = {
     dotNetReference: null,
     timeoutSeconds: 60,
     warningSeconds: 50,
+    boundResetTimer: null,
+    attachedEvents: [],
 
     initialize: function (dotNetRef, timeoutSeconds, warningSeconds) {
         this.dotNetReference = dotNetRef;
@@ -16,11 +18,22 @@ window.InactivityTimer = {
 
     attachEventListeners: function () {
         const events = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll', 'wheel'];
-        const resetTimer = this.resetTimer.bind(this);
+        this.boundResetTimer = this.resetTimer.bind(this);
         
         events.forEach(event => {
-            document.addEventListener(event, resetTimer, { passive: true });
+            document.addEventListener(event, this.boundResetTimer, { passive: true });
+            this.attachedEvents.push(event);
         });
+    },
+
+    removeEventListeners: function () {
+        if (this.boundResetTimer) {
+            this.attachedEvents.forEach(event => {
+                document.removeEventListener(event, this.boundResetTimer, { passive: true });
+            });
+            this.attachedEvents = [];
+            this.boundResetTimer = null;
+        }
     },
 
     resetTimer: function () {
@@ -55,6 +68,7 @@ window.InactivityTimer = {
 
     dispose: function () {
         this.clearTimers();
+        this.removeEventListeners();
         this.dotNetReference = null;
     }
 };
