@@ -5,11 +5,13 @@ window.InactivityTimer = {
     warningSeconds: 50,
     dotNetRef: null,
     events: ['mousemove', 'keydown', 'click', 'touchstart', 'scroll', 'wheel'],
+    activityHandler: null,
 
     initialize: function (dotNetReference, timeoutSeconds, warningSeconds) {
         this.dotNetRef = dotNetReference;
         this.timeoutSeconds = timeoutSeconds;
         this.warningSeconds = warningSeconds;
+        this.activityHandler = () => this.handleActivity();
         this.startTimer();
         this.addEventListeners();
     },
@@ -55,22 +57,26 @@ window.InactivityTimer = {
     },
 
     addEventListeners: function () {
-        const self = this;
-        this.events.forEach(event => {
-            document.addEventListener(event, () => self.handleActivity(), { passive: true });
-        });
+        if (this.activityHandler) {
+            this.events.forEach(event => {
+                document.addEventListener(event, this.activityHandler, { passive: true });
+            });
+        }
     },
 
     removeEventListeners: function () {
-        const self = this;
-        this.events.forEach(event => {
-            document.removeEventListener(event, () => self.handleActivity(), { passive: true });
-        });
+        if (this.activityHandler) {
+            this.events.forEach(event => {
+                document.removeEventListener(event, this.activityHandler, { passive: true });
+            });
+        }
     },
 
     dispose: function () {
         this.clearTimers();
         this.removeEventListeners();
+        this.activityHandler = null;
         this.dotNetRef = null;
     }
 };
+
