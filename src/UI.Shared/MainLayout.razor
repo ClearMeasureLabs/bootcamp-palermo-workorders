@@ -1,9 +1,7 @@
 @inherits Palermo.BlazorMvc.MvcLayoutComponentBase
-@using Microsoft.Extensions.Configuration
 @inject IJSRuntime JSRuntime
 @inject CustomAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
-@inject IConfiguration Configuration
 @implements IAsyncDisposable
 
 <div class="modern-app">
@@ -59,34 +57,34 @@
     </div>
 </div>
 
-<InactivityWarningModal IsVisible="showWarning" 
-                        RemainingSeconds="10" 
-                        OnStayLoggedIn="HandleStayLoggedIn"/>
+<AuthorizeView>
+    <Authorized>
+        <InactivityWarningModal IsVisible="showWarning" 
+                                RemainingSeconds="@remainingSeconds" 
+                                OnStayLoggedIn="HandleStayLoggedIn"/>
+    </Authorized>
+</AuthorizeView>
 
 @code {
     private DotNetObjectReference<MainLayout>? dotNetReference;
     private bool showWarning = false;
-    private int timeoutSeconds = 60;
-    private int warningSeconds = 50;
+    private int remainingSeconds = 10;
+    private const int TimeoutSeconds = 60;
+    private const int WarningSeconds = 50;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && AuthStateProvider.IsAuthenticated())
         {
-            timeoutSeconds = Configuration.GetValue<int>("InactivityTimeout:TimeoutSeconds", 60);
-            warningSeconds = Configuration.GetValue<int>("InactivityTimeout:WarningSeconds", 50);
-
-            if (AuthStateProvider.IsAuthenticated())
-            {
-                await InitializeInactivityTimer();
-            }
+            await InitializeInactivityTimer();
         }
     }
 
     private async Task InitializeInactivityTimer()
     {
         dotNetReference = DotNetObjectReference.Create(this);
-        await JSRuntime.InvokeVoidAsync("InactivityTimer.initialize", dotNetReference, timeoutSeconds, warningSeconds);
+        remainingSeconds = TimeoutSeconds - WarningSeconds;
+        await JSRuntime.InvokeVoidAsync("InactivityTimer.initialize", dotNetReference, TimeoutSeconds, WarningSeconds);
     }
 
     [JSInvokable]
@@ -116,7 +114,14 @@
     {
         if (dotNetReference != null)
         {
-            await JSRuntime.InvokeVoidAsync("InactivityTimer.dispose");
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("InactivityTimer.dispose");
+            }
+            catch
+            {
+                // Ignore disposal errors
+            }
             dotNetReference.Dispose();
         }
     }
