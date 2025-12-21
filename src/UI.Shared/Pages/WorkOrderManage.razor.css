@@ -262,6 +262,29 @@
     margin-bottom: 0.5rem;
 }
 
+.deadline-picker {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.deadline-date {
+    flex: 2;
+    min-width: 150px;
+}
+
+.deadline-time {
+    flex: 1;
+    min-width: 80px;
+    max-width: 100px;
+}
+
+.deadline-ampm {
+    flex: 0 0 auto;
+    width: 80px;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .work-order-page {

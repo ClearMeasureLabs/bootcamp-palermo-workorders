@@ -72,7 +72,7 @@ public partial class WorkOrderManage : AppComponentBase
 
     private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)
     {
-        return new WorkOrderManageModel
+        var model = new WorkOrderManageModel
         {
             WorkOrder = workOrder,
             Mode = mode,
@@ -86,8 +86,22 @@ public partial class WorkOrderManage : AppComponentBase
             RoomNumber = workOrder.RoomNumber,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
-            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
+            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
+            Deadline = workOrder.Deadline
         };
+
+        if (workOrder.Deadline.HasValue)
+        {
+            model.DeadlineDate = workOrder.Deadline.Value.ToString("yyyy-MM-dd");
+            var hour = workOrder.Deadline.Value.Hour;
+            var isPm = hour >= 12;
+            var hour12 = hour % 12;
+            if (hour12 == 0) hour12 = 12;
+            model.DeadlineTime = $"{hour12:D2}:{workOrder.Deadline.Value.Minute:D2}";
+            model.DeadlineAmPm = isPm ? "PM" : "AM";
+        }
+
+        return model;
     }
 
     private async Task LoadUserOptions()
@@ -124,6 +138,7 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Description = Model.Description;
         workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
+        workOrder.Deadline = ParseDeadline();
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
@@ -132,6 +147,35 @@ public partial class WorkOrderManage : AppComponentBase
         EventBus.Notify(new WorkOrderChangedEvent(result));
 
         NavigationManager!.NavigateTo("/workorder/search");
+    }
+
+    private DateTime? ParseDeadline()
+    {
+        if (string.IsNullOrWhiteSpace(Model.DeadlineDate))
+            return null;
+
+        if (!DateTime.TryParse(Model.DeadlineDate, out var date))
+            return null;
+
+        var hour = 0;
+        var minute = 0;
+
+        if (!string.IsNullOrWhiteSpace(Model.DeadlineTime))
+        {
+            var timeParts = Model.DeadlineTime.Split(':');
+            if (timeParts.Length >= 2)
+            {
+                int.TryParse(timeParts[0], out hour);
+                int.TryParse(timeParts[1], out minute);
+            }
+        }
+
+        if (Model.DeadlineAmPm == "PM" && hour < 12)
+            hour += 12;
+        else if (Model.DeadlineAmPm == "AM" && hour == 12)
+            hour = 0;
+
+        return new DateTime(date.Year, date.Month, date.Day, hour, minute, 0);
     }
 }
 

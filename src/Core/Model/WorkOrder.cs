@@ -38,6 +38,10 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public DateTime? CompletedDate { get; set; }
 
+    public DateTime? Deadline { get; set; }
+
+    public bool IsOverdue => Deadline.HasValue && DateTime.Now > Deadline.Value && Status != WorkOrderStatus.Complete && Status != WorkOrderStatus.Cancelled;
+
     private string? getTruncatedString(string? value)
     {
         if (value == null)

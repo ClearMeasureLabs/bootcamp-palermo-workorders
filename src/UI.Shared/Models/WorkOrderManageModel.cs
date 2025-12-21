@@ -31,4 +31,10 @@ public class WorkOrderManageModel
     public string? CreatedDate { get; set; }
 
     public string? RoomNumber { get; set; }
+
+    public DateTime? Deadline { get; set; }
+
+    public string? DeadlineDate { get; set; }
+    public string? DeadlineTime { get; set; }
+    public string? DeadlineAmPm { get; set; }
 }

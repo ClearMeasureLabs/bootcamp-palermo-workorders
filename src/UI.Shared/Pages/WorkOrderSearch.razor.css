@@ -163,6 +163,15 @@
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
+.grid-data tbody tr.overdue {
+    border: 3px solid #e53e3e;
+    background: #fff5f5;
+}
+
+.grid-data tbody tr.overdue:hover {
+    background: #fed7d7;
+}
+
 .grid-data td {
     padding: 1.25rem 1.5rem;
     vertical-align: middle;

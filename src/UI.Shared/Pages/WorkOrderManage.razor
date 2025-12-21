@@ -68,6 +68,19 @@
                         <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">Deadline (optional):</label>
+                    <div class="deadline-picker">
+                        <InputText data-testid="@Elements.DeadlineDate" type="date" @bind-Value="Model.DeadlineDate" class="form-control deadline-date" disabled="@Model.IsReadOnly"/>
+                        <InputText data-testid="@Elements.DeadlineTime" @bind-Value="Model.DeadlineTime" placeholder="HH:MM" class="form-control deadline-time" disabled="@Model.IsReadOnly"/>
+                        <InputSelect data-testid="@Elements.DeadlineAmPm" @bind-Value="Model.DeadlineAmPm" class="form-control deadline-ampm" disabled="@Model.IsReadOnly">
+                            <option value="">--</option>
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                        </InputSelect>
+                    </div>
+                </div>
             </div>
 
             <div class="readonly-info">
@@ -129,6 +142,9 @@
         ReadOnlyMessage,
         CommandButton,
         WorkOrderNumber,
-        Status
+        Status,
+        DeadlineDate,
+        DeadlineTime,
+        DeadlineAmPm
     }
 }

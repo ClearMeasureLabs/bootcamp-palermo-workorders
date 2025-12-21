@@ -83,7 +83,9 @@
                         foreach (var order in Model.Results)
                         {
                             var rowClass = i++ % 2 == 0 ? "odd" : "even";
-                            <tr class="@rowClass">
+                            var overdueClass = order.IsOverdue ? "overdue" : "";
+                            var rowTestId = Elements.WorkOrderRow + order.Number;
+                            <tr class="@rowClass @overdueClass" data-testid="@rowTestId">
                                 <td>
                                     @{
                                         var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
@@ -116,7 +118,8 @@
         AssigneeSelect,
         StatusSelect,
         SearchButton,
-        WorkOrderLink
+        WorkOrderLink,
+        WorkOrderRow
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();
