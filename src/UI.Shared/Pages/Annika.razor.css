@@ -15,6 +15,7 @@
     padding: 2rem;
     background: rgba(255, 255, 255, 0.6);
     border-radius: 20px;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 25px rgba(255, 182, 193, 0.3);
 }
@@ -37,6 +38,7 @@
 .annika-header h2 {
     font-size: 2.8rem;
     font-weight: 700;
+    color: #d946a6;
     background: linear-gradient(135deg, #ff69b4 0%, #dda0dd 50%, #ffc0cb 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
