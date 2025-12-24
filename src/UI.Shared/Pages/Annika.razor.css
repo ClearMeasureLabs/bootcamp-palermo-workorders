@@ -1,0 +1,314 @@
+.annika-page {
+    background: linear-gradient(135deg, #fff0f5 0%, #ffe4e9 50%, #ffd6e0 100%);
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.annika-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.annika-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 25px rgba(255, 182, 193, 0.3);
+}
+
+.header-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.annika-header h2 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ff69b4 0%, #dda0dd 50%, #ffc0cb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    font-family: 'Georgia', serif;
+}
+
+.annika-subtitle {
+    font-size: 1.2rem;
+    color: #d946a6;
+    font-style: italic;
+    font-weight: 500;
+}
+
+.activities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.activity-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.activity-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(255, 105, 180, 0.3);
+}
+
+.activity-card.dancing {
+    border-color: #ff69b4;
+    background: linear-gradient(135deg, #fff 0%, #ffe4f0 100%);
+}
+
+.activity-card.dancing:hover {
+    background: linear-gradient(135deg, #ffe4f0 0%, #ffc0cb 100%);
+}
+
+.activity-card.sewing {
+    border-color: #dda0dd;
+    background: linear-gradient(135deg, #fff 0%, #f0e4f0 100%);
+}
+
+.activity-card.sewing:hover {
+    background: linear-gradient(135deg, #f0e4f0 0%, #dda0dd 100%);
+}
+
+.activity-card.singing {
+    border-color: #ff1493;
+    background: linear-gradient(135deg, #fff 0%, #ffe4ee 100%);
+}
+
+.activity-card.singing:hover {
+    background: linear-gradient(135deg, #ffe4ee 0%, #ff69b4 100%);
+}
+
+.activity-card.tennis {
+    border-color: #98d8c8;
+    background: linear-gradient(135deg, #fff 0%, #e4f4f0 100%);
+}
+
+.activity-card.tennis:hover {
+    background: linear-gradient(135deg, #e4f4f0 0%, #98d8c8 100%);
+}
+
+.activity-card.legos {
+    border-color: #ffa500;
+    background: linear-gradient(135deg, #fff 0%, #fff4e4 100%);
+}
+
+.activity-card.legos:hover {
+    background: linear-gradient(135deg, #fff4e4 0%, #ffd580 100%);
+}
+
+.activity-card.squishmallow {
+    border-color: #ffb6c1;
+    background: linear-gradient(135deg, #fff 0%, #fff0f4 100%);
+}
+
+.activity-card.squishmallow:hover {
+    background: linear-gradient(135deg, #fff0f4 0%, #ffb6c1 100%);
+}
+
+.card-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.activity-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #d946a6;
+    margin-bottom: 0.75rem;
+    font-family: 'Georgia', serif;
+}
+
+.activity-card p {
+    font-size: 1rem;
+    color: #666;
+    line-height: 1.5;
+}
+
+.worship-section {
+    margin-bottom: 3rem;
+}
+
+.worship-card {
+    background: linear-gradient(135deg, #fff 0%, #f8f0ff 100%);
+    border-radius: 20px;
+    padding: 3rem;
+    text-align: center;
+    box-shadow: 0 10px 35px rgba(138, 43, 226, 0.2);
+    border: 3px solid #dda0dd;
+}
+
+.worship-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #8a2be2;
+    margin-bottom: 2rem;
+    font-family: 'Georgia', serif;
+}
+
+.instruments {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    margin-bottom: 2rem;
+}
+
+.instrument {
+    text-align: center;
+}
+
+.instrument-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: swing 2s ease-in-out infinite;
+}
+
+@keyframes swing {
+    0%, 100% {
+        transform: rotate(-5deg);
+    }
+    50% {
+        transform: rotate(5deg);
+    }
+}
+
+.instrument-name {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #8a2be2;
+}
+
+.worship-message {
+    font-size: 1.2rem;
+    color: #666;
+    font-style: italic;
+    margin-top: 1.5rem;
+}
+
+.profile-section {
+    margin-bottom: 2rem;
+}
+
+.profile-card {
+    background: linear-gradient(135deg, #fff 0%, #fff5e6 100%);
+    border-radius: 20px;
+    padding: 3rem;
+    text-align: center;
+    box-shadow: 0 10px 35px rgba(255, 215, 0, 0.2);
+    border: 3px solid #ffd700;
+}
+
+.profile-icon {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+}
+
+.profile-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ff69b4;
+    margin-bottom: 1.5rem;
+    font-family: 'Georgia', serif;
+}
+
+.profile-card p {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.8;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .annika-page {
+        padding: 1rem;
+    }
+    
+    .annika-header {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .annika-header h2 {
+        font-size: 2rem;
+    }
+    
+    .activities-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .instruments {
+        flex-direction: column;
+        gap: 2rem;
+    }
+    
+    .worship-card,
+    .profile-card {
+        padding: 2rem;
+    }
+    
+    .worship-card h3,
+    .profile-card h3 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .annika-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .annika-subtitle {
+        font-size: 1rem;
+    }
+    
+    .card-icon {
+        font-size: 3rem;
+    }
+    
+    .activity-card h3 {
+        font-size: 1.3rem;
+    }
+    
+    .instrument-icon {
+        font-size: 3rem;
+    }
+    
+    .profile-icon {
+        font-size: 4rem;
+    }
+}
