@@ -38,7 +38,7 @@ public class PublisherGateway(HttpClient httpClient) : IPublisherGateway
                 }
                 catch (JsonException)
                 {
-                    // If parsing fails, throw generic exception
+                    // Failed to parse as validation error, continue to EnsureSuccessStatusCode
                 }
             }
             

@@ -30,7 +30,7 @@ public record SaveDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) :
     {
         PerformValidation();
         
-        if (WorkOrder.CreatedDate == null)
+        if (WorkOrder.CreatedDate is null)
         {
             WorkOrder.CreatedDate = context.CurrentDateTime;
         }
