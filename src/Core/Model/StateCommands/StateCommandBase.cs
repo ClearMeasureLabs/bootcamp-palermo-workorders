@@ -25,10 +25,20 @@ public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUse
 
     public virtual void Execute(StateCommandContext context)
     {
+        PerformValidation();
+        PerformExecution(context);
+    }
+
+    protected void PerformValidation()
+    {
         if (GetBeginStatus() == WorkOrderStatus.Draft)
         {
             ValidateWorkOrder();
         }
+    }
+
+    protected void PerformExecution(StateCommandContext context)
+    {
         var currentUserFullName = CurrentUser.GetFullName();
         WorkOrder.ChangeStatus(CurrentUser, context.CurrentDateTime, GetEndStatus());
     }

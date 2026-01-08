@@ -28,20 +28,13 @@ public record SaveDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) :
 
     public override void Execute(StateCommandContext context)
     {
-        // Validate first (from base class)
-        if (GetBeginStatus() == WorkOrderStatus.Draft)
-        {
-            ValidateWorkOrder();
-        }
+        PerformValidation();
         
-        // Set CreatedDate if not already set
         if (WorkOrder.CreatedDate == null)
         {
             WorkOrder.CreatedDate = context.CurrentDateTime;
         }
 
-        // Change status (from base class, but inline to avoid double validation)
-        var currentUserFullName = CurrentUser.GetFullName();
-        WorkOrder.ChangeStatus(CurrentUser, context.CurrentDateTime, GetEndStatus());
+        PerformExecution(context);
     }
 }
