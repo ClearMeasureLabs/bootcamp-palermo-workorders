@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+﻿using ClearMeasure.Bootcamp.Core.Exceptions;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
@@ -39,6 +40,54 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
         order.Title.ShouldBe(workOrder.Title);
+    }
+
+    [Test]
+    public async Task ShouldThrowValidationExceptionWhenTitleIsEmpty()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.CreatedDate = null;
+        workOrder.Creator = currentUser;
+        workOrder.Title = ""; // Empty title should fail validation
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+
+        var ex = await Should.ThrowAsync<ValidationException>(async () => await handler.Handle(command));
+        ex.Errors.ContainsKey("Title").ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task ShouldThrowValidationExceptionWhenDescriptionIsEmpty()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.CreatedDate = null;
+        workOrder.Creator = currentUser;
+        workOrder.Description = ""; // Empty description should fail validation
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+
+        var ex = await Should.ThrowAsync<ValidationException>(async () => await handler.Handle(command));
+        ex.Errors.ContainsKey("Description").ShouldBeTrue();
     }
 
     [Test]
