@@ -147,4 +147,44 @@ public class ValidationTests
 
         Assert.DoesNotThrow(() => command.Execute(new StateCommandContext()));
     }
+
+    [Test]
+    public void ShouldThrowValidationExceptionWhenAssigningWithMissingTitle()
+    {
+        var order = new WorkOrder
+        {
+            Status = WorkOrderStatus.Draft,
+            Title = "",
+            Description = "Valid description"
+        };
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new DraftToAssignedCommand(order, employee);
+
+        var ex = Assert.Throws<ValidationException>(() => 
+            command.Execute(new StateCommandContext()));
+        
+        ex.Errors.ContainsKey("Title").ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldThrowValidationExceptionWhenAssigningWithMissingDescription()
+    {
+        var order = new WorkOrder
+        {
+            Status = WorkOrderStatus.Draft,
+            Title = "Valid title",
+            Description = ""
+        };
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new DraftToAssignedCommand(order, employee);
+
+        var ex = Assert.Throws<ValidationException>(() => 
+            command.Execute(new StateCommandContext()));
+        
+        ex.Errors.ContainsKey("Description").ShouldBeTrue();
+    }
 }

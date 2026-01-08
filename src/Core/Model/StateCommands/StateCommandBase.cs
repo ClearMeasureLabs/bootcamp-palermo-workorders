@@ -25,7 +25,7 @@ public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUse
 
     public virtual void Execute(StateCommandContext context)
     {
-        if (GetEndStatus() == WorkOrderStatus.Draft)
+        if (GetBeginStatus() == WorkOrderStatus.Draft)
         {
             ValidateWorkOrder();
         }
