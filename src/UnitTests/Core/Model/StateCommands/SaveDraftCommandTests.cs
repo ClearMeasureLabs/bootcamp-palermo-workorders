@@ -49,6 +49,8 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         var order = new WorkOrder();
         order.Number = "123";
         order.Status = WorkOrderStatus.Draft;
+        order.Title = "Test title";
+        order.Description = "Test description";
         var employee = new Employee();
         order.Creator = employee;
 

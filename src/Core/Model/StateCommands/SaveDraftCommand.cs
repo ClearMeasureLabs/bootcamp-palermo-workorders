@@ -28,11 +28,11 @@ public record SaveDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) :
 
     public override void Execute(StateCommandContext context)
     {
+        base.Execute(context);
+        
         if (WorkOrder.CreatedDate.Equals(null))
         {
             WorkOrder.CreatedDate = context.CurrentDateTime;
         }
-
-        base.Execute(context);
     }
 }
