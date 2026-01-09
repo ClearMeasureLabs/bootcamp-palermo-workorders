@@ -156,4 +156,96 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
+
+    [Test]
+    public async Task ShouldFailToSaveWorkOrderWithNullTitle()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.Title = null;
+        workOrder.Creator = currentUser;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(async () => await handler.Handle(command));
+        exception.Message.ShouldBe("Title cannot be empty");
+    }
+
+    [Test]
+    public async Task ShouldFailToSaveWorkOrderWithEmptyTitle()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.Title = "";
+        workOrder.Creator = currentUser;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(async () => await handler.Handle(command));
+        exception.Message.ShouldBe("Title cannot be empty");
+    }
+
+    [Test]
+    public async Task ShouldFailToSaveWorkOrderWithNullDescription()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.Description = null;
+        workOrder.Creator = currentUser;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(async () => await handler.Handle(command));
+        exception.Message.ShouldBe("Description cannot be empty");
+    }
+
+    [Test]
+    public async Task ShouldFailToSaveWorkOrderWithEmptyDescription()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.Description = "";
+        workOrder.Creator = currentUser;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(async () => await handler.Handle(command));
+        exception.Message.ShouldBe("Description cannot be empty");
+    }
 }

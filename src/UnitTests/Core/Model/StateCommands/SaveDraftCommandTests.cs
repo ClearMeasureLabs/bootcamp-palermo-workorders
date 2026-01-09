@@ -48,6 +48,8 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     {
         var order = new WorkOrder();
         order.Number = "123";
+        order.Title = "Test Title";
+        order.Description = "Test Description";
         order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
         order.Creator = employee;
@@ -57,6 +59,102 @@ public class SaveDraftCommandTests : StateCommandBaseTests
 
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Draft));
         Assert.That(order.CreatedDate, Is.Not.Null);
+    }
+
+    [Test]
+    public void ShouldThrowWhenTitleIsNull()
+    {
+        var order = new WorkOrder();
+        order.Number = "123";
+        order.Title = null;
+        order.Description = "Test Description";
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        var ex = Assert.Throws<InvalidOperationException>(() => command.Execute(new StateCommandContext()));
+        Assert.That(ex?.Message, Is.EqualTo("Title cannot be empty"));
+    }
+
+    [Test]
+    public void ShouldThrowWhenTitleIsEmpty()
+    {
+        var order = new WorkOrder();
+        order.Number = "123";
+        order.Title = "";
+        order.Description = "Test Description";
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        var ex = Assert.Throws<InvalidOperationException>(() => command.Execute(new StateCommandContext()));
+        Assert.That(ex?.Message, Is.EqualTo("Title cannot be empty"));
+    }
+
+    [Test]
+    public void ShouldThrowWhenTitleIsWhitespace()
+    {
+        var order = new WorkOrder();
+        order.Number = "123";
+        order.Title = "   ";
+        order.Description = "Test Description";
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        var ex = Assert.Throws<InvalidOperationException>(() => command.Execute(new StateCommandContext()));
+        Assert.That(ex?.Message, Is.EqualTo("Title cannot be empty"));
+    }
+
+    [Test]
+    public void ShouldThrowWhenDescriptionIsNull()
+    {
+        var order = new WorkOrder();
+        order.Number = "123";
+        order.Title = "Test Title";
+        order.Description = null;
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        var ex = Assert.Throws<InvalidOperationException>(() => command.Execute(new StateCommandContext()));
+        Assert.That(ex?.Message, Is.EqualTo("Description cannot be empty"));
+    }
+
+    [Test]
+    public void ShouldThrowWhenDescriptionIsEmpty()
+    {
+        var order = new WorkOrder();
+        order.Number = "123";
+        order.Title = "Test Title";
+        order.Description = "";
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        var ex = Assert.Throws<InvalidOperationException>(() => command.Execute(new StateCommandContext()));
+        Assert.That(ex?.Message, Is.EqualTo("Description cannot be empty"));
+    }
+
+    [Test]
+    public void ShouldThrowWhenDescriptionIsWhitespace()
+    {
+        var order = new WorkOrder();
+        order.Number = "123";
+        order.Title = "Test Title";
+        order.Description = "   ";
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        var ex = Assert.Throws<InvalidOperationException>(() => command.Execute(new StateCommandContext()));
+        Assert.That(ex?.Message, Is.EqualTo("Description cannot be empty"));
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)

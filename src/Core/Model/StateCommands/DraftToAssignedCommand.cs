@@ -28,7 +28,22 @@ public record DraftToAssignedCommand(WorkOrder WorkOrder, Employee CurrentUser)
 
     public override void Execute(StateCommandContext context)
     {
+        ValidateWorkOrder();
+        
         WorkOrder.AssignedDate = context.CurrentDateTime;
         base.Execute(context);
+    }
+
+    private void ValidateWorkOrder()
+    {
+        if (string.IsNullOrWhiteSpace(WorkOrder.Title))
+        {
+            throw new InvalidOperationException("Title cannot be empty");
+        }
+
+        if (string.IsNullOrWhiteSpace(WorkOrder.Description))
+        {
+            throw new InvalidOperationException("Description cannot be empty");
+        }
     }
 }
