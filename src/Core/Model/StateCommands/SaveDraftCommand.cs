@@ -37,17 +37,4 @@ public record SaveDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) :
 
         base.Execute(context);
     }
-
-    private void ValidateWorkOrder()
-    {
-        if (string.IsNullOrWhiteSpace(WorkOrder.Title))
-        {
-            throw new InvalidOperationException("Title cannot be empty");
-        }
-
-        if (string.IsNullOrWhiteSpace(WorkOrder.Description))
-        {
-            throw new InvalidOperationException("Description cannot be empty");
-        }
-    }
 }
