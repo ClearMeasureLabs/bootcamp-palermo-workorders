@@ -21,6 +21,7 @@ public class WorkOrderBuilderTests
         Assert.That(workOrder.Assignee, Is.Null);
         Assert.That(workOrder.Title, Is.Empty);
         Assert.That(workOrder.Description, Is.Empty);
+        Assert.That(workOrder.Instructions, Is.Empty);
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
         Assert.That(workOrder.RoomNumber, Is.Null);
     }
