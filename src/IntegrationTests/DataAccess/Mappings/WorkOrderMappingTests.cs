@@ -354,6 +354,6 @@ public class WorkOrderMappingTests
                 .Single(wo => wo.Id == workOrder.Id);
         }
 
-        rehydratedWorkOrder.Instructions.ShouldBeNull();
+        rehydratedWorkOrder.Instructions.ShouldBe(string.Empty);
     }
 }

@@ -89,7 +89,7 @@ public class WorkOrderTests
     {
         var workOrder = new WorkOrder();
         workOrder.Instructions = null;
-        Assert.That(workOrder.Instructions, Is.Null);
+        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
     }
 
     [Test]
@@ -99,5 +99,14 @@ public class WorkOrderTests
         var instructionsText = "Follow these steps carefully";
         workOrder.Instructions = instructionsText;
         Assert.That(workOrder.Instructions, Is.EqualTo(instructionsText));
+    }
+
+    [Test]
+    public void Instructions_ShouldTruncateTo4000Characters()
+    {
+        var longText = new string('x', 4001);
+        var order = new WorkOrder();
+        order.Instructions = longText;
+        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
     }
 }
