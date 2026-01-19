@@ -439,16 +439,16 @@ Added an optional Instructions field to work orders that allows users to provide
 - **Field Name**: Instructions
 - **Location**: Positioned between Description and Room Number fields in the work order form
 - **Type**: Multi-line text input (textarea)
-- **Character Limit**: 3900 characters with automatic truncation
+- **Character Limit**: 3000 characters with automatic truncation
 - **Behavior**: 
   - Optional field (can be left blank)
   - Editable during work order creation and after saving
-  - Automatically truncates input to 3900 characters to match database constraint
+  - Automatically truncates input to 3000 characters to match database constraint
 
 ### Technical Implementation
 - **Domain Layer**: Added `Instructions` property to `WorkOrder` entity with truncation logic
 - **Data Access**: Extended `WorkOrderMap` EF configuration with max length constraint
-- **Database**: Migration script `022_AddInstructionsToWorkOrder.sql` adds NVARCHAR(3900) column
+- **Database**: Migration script `022_AddInstructionsToWorkOrder.sql` adds NVARCHAR(3000) column
 - **UI**: Blazor component updated with Instructions textarea binding
 - **Tests**: Comprehensive test coverage including unit, integration, and acceptance tests
 

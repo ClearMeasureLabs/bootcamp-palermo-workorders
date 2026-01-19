@@ -20,7 +20,7 @@ public class WorkOrderMap : IEntityFrameworkMapping
             entity.Property(e => e.Number).IsRequired().HasMaxLength(7);
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Description).HasMaxLength(4000);
-            entity.Property(e => e.Instructions).HasMaxLength(3900);
+            entity.Property(e => e.Instructions).HasMaxLength(3000);
             entity.Property(e => e.RoomNumber).HasMaxLength(50);
 
             // Configure relationships
