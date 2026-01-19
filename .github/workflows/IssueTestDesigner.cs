@@ -36,18 +36,18 @@ return 0;
 static void PrintUsage()
 {
     Console.WriteLine("""
-AcceptanceTestDesigner - Generate acceptance test specifications from GitHub issues
+IssueTestDesigner - Generate acceptance test specifications from GitHub issues
 
 USAGE:
-    dotnet run AcceptanceTestDesigner.cs -- <repo> <issue-number>
+    dotnet run IssueTestDesigner.cs -- <repo> <issue-number>
 
 ARGUMENTS:
     repo            Repository in format 'owner/repo'
     issue-number    The GitHub issue number to process
 
 EXAMPLES:
-    dotnet run AcceptanceTestDesigner.cs -- ClearMeasureLabs/bootcamp-workorders 42
-    dotnet run AcceptanceTestDesigner.cs -- myorg/myrepo 123
+    dotnet run IssueTestDesigner.cs -- ClearMeasureLabs/bootcamp-workorders 42
+    dotnet run IssueTestDesigner.cs -- myorg/myrepo 123
 
 DESCRIPTION:
     Reads a GitHub issue labeled '4. Test Design', sends it to GitHub
@@ -61,7 +61,7 @@ PREREQUISITES:
 
 WORKFLOW:
     1. Read issue content from GitHub
-    2. Load prompt template from AcceptanceTestDesigner-prompt.md
+    2. Load prompt template from IssueTestDesigner-prompt.md
     3. Send to Copilot CLI for test design generation
     4. Parse response into test specifications
     5. Update issue body with test design section
@@ -71,7 +71,7 @@ WORKFLOW:
 
 static void LogStart(string repo, string issueNumber)
 {
-    LogGroup("AcceptanceTestDesigner Starting", () =>
+    LogGroup("IssueTestDesigner Starting", () =>
     {
         Log($"Repository: {repo}");
         Log($"Issue Number: {issueNumber}");
@@ -129,9 +129,9 @@ static string FindPromptTemplate()
 {
     var candidates = new[]
     {
-        Path.Combine(Environment.CurrentDirectory, ".github", "workflows", "AcceptanceTestDesigner-prompt.md"),
-        Path.Combine(Environment.CurrentDirectory, "AcceptanceTestDesigner-prompt.md"),
-        "AcceptanceTestDesigner-prompt.md"
+        Path.Combine(Environment.CurrentDirectory, ".github", "workflows", "IssueTestDesigner-prompt.md"),
+        Path.Combine(Environment.CurrentDirectory, "IssueTestDesigner-prompt.md"),
+        "IssueTestDesigner-prompt.md"
     };
 
     foreach (var path in candidates)
@@ -139,7 +139,7 @@ static string FindPromptTemplate()
         if (File.Exists(path)) return path;
     }
 
-    throw new FileNotFoundException($"Could not find AcceptanceTestDesigner-prompt.md. Searched: {string.Join(", ", candidates)}");
+    throw new FileNotFoundException($"Could not find IssueTestDesigner-prompt.md. Searched: {string.Join(", ", candidates)}");
 }
 
 static List<TestSpecification> ParseTestDesign(string copilotResponse, TimingMetrics timings)
@@ -302,7 +302,7 @@ static void LogComplete(string issueNumber, TimingMetrics timings)
 {
     var total = timings.ReadIssue + timings.CopilotGeneration + timings.ParseResponse + timings.UpdateIssue + timings.UpdateLabels;
 
-    LogGroup("AcceptanceTestDesigner Complete", () =>
+    LogGroup("IssueTestDesigner Complete", () =>
     {
         Log($"Successfully processed issue #{issueNumber}");
         Log($"Timing Summary:");

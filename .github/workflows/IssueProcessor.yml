@@ -14,7 +14,7 @@ on:
         type: choice
         options:
           - IssueTasker
-          - AcceptanceTestDesigner
+          - IssueTestDesigner
 
 permissions:
   contents: read
@@ -55,10 +55,10 @@ jobs:
           ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
           dotnet run .github/workflows/IssueTasker.cs -- ${{ github.repository }} $ISSUE_NUM
 
-  acceptance-test-designer:
+  issue-test-designer:
     name: "Test Design → Acceptance Tests"
     runs-on: ubuntu-latest
-    if: github.event.label.name == '4. Test Design' || (github.event_name == 'workflow_dispatch' && github.event.inputs.processor == 'AcceptanceTestDesigner')
+    if: github.event.label.name == '4. Test Design' || (github.event_name == 'workflow_dispatch' && github.event.inputs.processor == 'IssueTestDesigner')
 
     steps:
       - name: Checkout repository
@@ -80,11 +80,11 @@ jobs:
       - name: Setup GitHub CLI authentication
         run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-      - name: Run AcceptanceTestDesigner
+      - name: Run IssueTestDesigner
         env:
           GH_TOKEN: ${{ secrets.COPILOT_PAT }}
           GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
         run: |
           ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
-          dotnet run .github/workflows/AcceptanceTestDesigner.cs -- ${{ github.repository }} $ISSUE_NUM
+          dotnet run .github/workflows/IssueTestDesigner.cs -- ${{ github.repository }} $ISSUE_NUM
