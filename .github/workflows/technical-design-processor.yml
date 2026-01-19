@@ -34,6 +34,17 @@ jobs:
           echo "GH_TOKEN=${{ github.token }}" >> $GITHUB_ENV
           echo "GITHUB_TOKEN=${{ github.token }}" >> $GITHUB_ENV
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Copilot CLI
+        run: |
+          npm install -g @githubnext/github-copilot-cli
+          echo "Copilot CLI installed"
+          which copilot || echo "copilot not in path"
+
       - name: Process Technical Design Issue
         env:
           COPILOT_PAT: ${{ secrets.COPILOT_PAT }}
