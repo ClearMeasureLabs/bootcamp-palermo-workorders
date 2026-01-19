@@ -127,15 +127,19 @@ static string GenerateTechnicalTasks(string title, string body, TimingMetrics ti
 
 static string FindPromptTemplate()
 {
-    var scriptDir = Path.GetDirectoryName(AppContext.BaseDirectory) ?? ".";
-    var promptTemplatePath = Path.Combine(scriptDir, ".github", "scripts", "IssueTasker-prompt.md");
-
-    if (!File.Exists(promptTemplatePath))
+    var candidates = new[]
     {
-        promptTemplatePath = Path.Combine(".github", "scripts", "IssueTasker-prompt.md");
+        Path.Combine(Environment.CurrentDirectory, ".github", "scripts", "IssueTasker-prompt.md"),
+        Path.Combine(Environment.CurrentDirectory, "IssueTasker-prompt.md"),
+        "IssueTasker-prompt.md"
+    };
+
+    foreach (var path in candidates)
+    {
+        if (File.Exists(path)) return path;
     }
 
-    return promptTemplatePath;
+    throw new FileNotFoundException($"Could not find IssueTasker-prompt.md. Searched: {string.Join(", ", candidates)}");
 }
 
 static List<string> ParseTasksFromResponse(string copilotResponse, TimingMetrics timings)

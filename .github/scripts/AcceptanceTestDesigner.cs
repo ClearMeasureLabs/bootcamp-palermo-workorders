@@ -127,15 +127,19 @@ static string GenerateTestDesign(string title, string body, TimingMetrics timing
 
 static string FindPromptTemplate()
 {
-    var scriptDir = Path.GetDirectoryName(AppContext.BaseDirectory) ?? ".";
-    var promptTemplatePath = Path.Combine(scriptDir, ".github", "scripts", "AcceptanceTestDesigner-prompt.md");
-
-    if (!File.Exists(promptTemplatePath))
+    var candidates = new[]
     {
-        promptTemplatePath = Path.Combine(".github", "scripts", "AcceptanceTestDesigner-prompt.md");
+        Path.Combine(Environment.CurrentDirectory, ".github", "scripts", "AcceptanceTestDesigner-prompt.md"),
+        Path.Combine(Environment.CurrentDirectory, "AcceptanceTestDesigner-prompt.md"),
+        "AcceptanceTestDesigner-prompt.md"
+    };
+
+    foreach (var path in candidates)
+    {
+        if (File.Exists(path)) return path;
     }
 
-    return promptTemplatePath;
+    throw new FileNotFoundException($"Could not find AcceptanceTestDesigner-prompt.md. Searched: {string.Join(", ", candidates)}");
 }
 
 static List<TestSpecification> ParseTestDesign(string copilotResponse, TimingMetrics timings)
@@ -145,6 +149,10 @@ static List<TestSpecification> ParseTestDesign(string copilotResponse, TimingMet
 
     LogGroup("Parsing Copilot Response", () =>
     {
+        Log("Raw Copilot response:");
+        Log(copilotResponse);
+        Log("--- End of response ---");
+
         var lines = copilotResponse.Split('\n');
         TestSpecification? current = null;
         bool inSteps = false;
@@ -153,27 +161,36 @@ static List<TestSpecification> ParseTestDesign(string copilotResponse, TimingMet
         {
             var line = rawLine.Trim();
 
-            if (line.StartsWith("TEST:", StringComparison.OrdinalIgnoreCase))
+            // Match TEST: or **TEST:** or ### TEST: patterns
+            if (line.StartsWith("TEST:", StringComparison.OrdinalIgnoreCase) ||
+                line.StartsWith("**TEST:", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("TEST:"))
             {
-                if (current != null) tests.Add(current);
-                current = new TestSpecification
-                {
-                    Name = line.Substring(5).Trim()
-                };
+                if (current != null && !string.IsNullOrWhiteSpace(current.Name)) tests.Add(current);
+                var testName = ExtractValue(line, "TEST:");
+                current = new TestSpecification { Name = testName };
                 inSteps = false;
             }
-            else if (line.StartsWith("FIXTURE:", StringComparison.OrdinalIgnoreCase) && current != null)
+            // Match FIXTURE: or **FIXTURE:** patterns
+            else if ((line.StartsWith("FIXTURE:", StringComparison.OrdinalIgnoreCase) ||
+                      line.StartsWith("**FIXTURE:", StringComparison.OrdinalIgnoreCase) ||
+                      line.Contains("FIXTURE:")) && current != null)
             {
-                current.Fixture = line.Substring(8).Trim();
+                current.Fixture = ExtractValue(line, "FIXTURE:");
                 inSteps = false;
             }
-            else if (line.StartsWith("STEPS:", StringComparison.OrdinalIgnoreCase))
+            // Match STEPS: header
+            else if (line.StartsWith("STEPS:", StringComparison.OrdinalIgnoreCase) ||
+                     line.StartsWith("**STEPS:", StringComparison.OrdinalIgnoreCase))
             {
                 inSteps = true;
             }
-            else if (inSteps && current != null && (line.StartsWith("-") || line.StartsWith("*") || line.StartsWith("•")))
+            // Collect step items
+            else if (inSteps && current != null &&
+                     (line.StartsWith("-") || line.StartsWith("*") || line.StartsWith("•") ||
+                      Regex.IsMatch(line, @"^\d+\.")))
             {
-                var step = line.TrimStart('-', '*', '•', ' ', '\t');
+                var step = Regex.Replace(line, @"^[-*•\d.]+\s*", "").Trim();
                 if (!string.IsNullOrWhiteSpace(step))
                 {
                     current.Steps.Add(step);
@@ -181,7 +198,7 @@ static List<TestSpecification> ParseTestDesign(string copilotResponse, TimingMet
             }
         }
 
-        if (current != null) tests.Add(current);
+        if (current != null && !string.IsNullOrWhiteSpace(current.Name)) tests.Add(current);
 
         Log($"Parsed {tests.Count} test specifications:");
         foreach (var test in tests)
@@ -195,6 +212,19 @@ static List<TestSpecification> ParseTestDesign(string copilotResponse, TimingMet
     Log($"Parsing response took {sw.Elapsed.TotalSeconds:F2}s");
 
     return tests;
+}
+
+static string ExtractValue(string line, string key)
+{
+    var idx = line.IndexOf(key, StringComparison.OrdinalIgnoreCase);
+    if (idx >= 0)
+    {
+        var value = line.Substring(idx + key.Length).Trim();
+        // Remove markdown formatting like ** or `
+        value = value.Trim('*', '`', ' ');
+        return value;
+    }
+    return line;
 }
 
 static void UpdateIssueBody(string repo, string issueNumber, string originalBody, List<TestSpecification> tests, TimingMetrics timings)
@@ -232,8 +262,6 @@ static string BuildUpdatedBody(string originalBody, List<TestSpecification> test
     sb.AppendLine("---");
     sb.AppendLine();
     sb.AppendLine("## Acceptance Test Design");
-    sb.AppendLine();
-    sb.AppendLine("_Generated automatically by GitHub Copilot from test design analysis_");
     sb.AppendLine();
 
     foreach (var test in tests)
