@@ -9,11 +9,11 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 public class WorkOrderInstructionsTests : AcceptanceTestBase
 {
     [Test]
-    public async Task ShouldCreateWorkOrderWith3000CharacterInstructions()
+    public async Task ShouldCreateWorkOrderWith3500CharacterInstructions()
     {
         await LoginAsCurrentUser();
 
-        var instructions3000 = new string('X', 3000);
+        var instructions3500 = new string('X', 3500);
         var order = Faker<WorkOrder>();
         order.Title = "Test Instructions Field";
         order.Number = null;
@@ -30,7 +30,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
 
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), instructions3000);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), instructions3500);
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), order.RoomNumber);
         await TakeScreenshotAsync(2, "FormFilled");
 
@@ -45,8 +45,8 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
             rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
         }
         rehydratedOrder.ShouldNotBeNull();
-        rehydratedOrder.Instructions.ShouldBe(instructions3000);
-        rehydratedOrder.Instructions!.Length.ShouldBe(3000);
+        rehydratedOrder.Instructions.ShouldBe(instructions3500);
+        rehydratedOrder.Instructions!.Length.ShouldBe(3500);
     }
 
     [Test]
