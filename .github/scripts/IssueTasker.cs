@@ -51,6 +51,7 @@ LogGroup("Generating Technical Tasks with Copilot", () =>
     var prompt = $"""
 Analyze this GitHub issue and generate a list of specific technical development tasks.
 Each task should be actionable and specific to this issue's requirements.
+Use copilot-instructions to gain context of architecture and standards.
 Return ONLY the tasks as a simple list, one task per line, no numbering or bullet points.
 
 Issue Title: {title}
