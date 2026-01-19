@@ -3,7 +3,7 @@ run-name: "1.3.${{ github.run_number }} • ${{ github.event.pull_request.title 
 on:
   push:
     branches-ignore: ['master', 'main']
-  pull_request:
+  pull_request_target:
     branches-ignore: ['master', 'main']
   workflow_dispatch:
 env:
