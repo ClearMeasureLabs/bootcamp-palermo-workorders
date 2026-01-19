@@ -93,4 +93,57 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         
         rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
+
+    [Test]
+    public async Task CreateWorkOrder_WithMaxLengthRoomName_SavesSuccessfully()
+    {
+        await LoginAsCurrentUser();
+
+        var roomName500 = new string('R', 500);
+
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "Test Max Room Length");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Testing 500 character room name");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), roomName500);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable).ToBeVisibleAsync();
+        var firstWorkOrderLink = workOrderTable.Locator("tbody tr").First.Locator("td").First.Locator("a");
+        var workOrderNumber = await firstWorkOrderLink.TextContentAsync();
+        workOrderNumber.ShouldNotBeNullOrEmpty();
+
+        await firstWorkOrderLink.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
+        await Expect(roomNumberField).ToHaveValueAsync(roomName500);
+    }
+
+    [Test]
+    public async Task EditWorkOrder_UpdateRoomToMaxLength_SavesSuccessfully()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var roomName500 = new string('M', 500);
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), roomName500);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
+        await Expect(roomNumberField).ToHaveValueAsync(roomName500);
+    }
 }
