@@ -3,13 +3,21 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 public class WorkOrder : EntityBase<WorkOrder>
 {
     private string? _description = "";
+    private string? _instructions = "";
 
     public string? Title { get; set; } = "";
 
     public string? Description
     {
         get => _description;
-        set => _description = getTruncatedString(value);
+        set => _description = getTruncatedString(value, 4000);
+    }
+
+    public string? Instructions
+    {
+        get => _instructions;
+        // Automatically truncates input to 3000 characters to match database column constraint
+        set => _instructions = getTruncatedString(value, 3000);
     }
 
     public string? RoomNumber { get; set; } = null;
@@ -31,15 +39,15 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public DateTime? CompletedDate { get; set; }
 
-    private string? getTruncatedString(string? value)
+    private string? getTruncatedString(string? value, int maxLength)
     {
         if (value == null)
         {
             return string.Empty;
         }
 
-        var maxLength = Math.Min(4000, value.Length);
-        return value.Substring(0, maxLength);
+        var length = Math.Min(maxLength, value.Length);
+        return value.Substring(0, length);
     }
 
     protected string getTextForStatus()
