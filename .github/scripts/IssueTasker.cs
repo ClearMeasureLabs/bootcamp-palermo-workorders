@@ -35,9 +35,38 @@ return 0;
 
 static void PrintUsage()
 {
-    Console.WriteLine("Usage: IssueTasker <repo> <issue-number>");
-    Console.WriteLine("  repo: Repository in format 'owner/repo'");
-    Console.WriteLine("  issue-number: The GitHub issue number to process");
+    Console.WriteLine("""
+IssueTasker - Generate technical development tasks from GitHub issues
+
+USAGE:
+    dotnet run IssueTasker.cs -- <repo> <issue-number>
+
+ARGUMENTS:
+    repo            Repository in format 'owner/repo'
+    issue-number    The GitHub issue number to process
+
+EXAMPLES:
+    dotnet run IssueTasker.cs -- ClearMeasureLabs/bootcamp-workorders 42
+    dotnet run IssueTasker.cs -- myorg/myrepo 123
+
+DESCRIPTION:
+    Reads a GitHub issue labeled '3. Technical Design', sends it to GitHub
+    Copilot CLI to generate technical development tasks, updates the issue
+    body with a checklist of tasks, and transitions the label to '4. Test Design'.
+
+PREREQUISITES:
+    - GitHub CLI (gh) authenticated with repo access
+    - GitHub Copilot CLI (copilot) installed and authenticated
+    - Issue must have '3. Technical Design' label
+
+WORKFLOW:
+    1. Read issue content from GitHub
+    2. Load prompt template from IssueTasker-prompt.md
+    3. Send to Copilot CLI for task generation
+    4. Parse response into task list
+    5. Update issue body with task checklist
+    6. Transition label: '3. Technical Design' -> '4. Test Design'
+""");
 }
 
 static void LogStart(string repo, string issueNumber)
