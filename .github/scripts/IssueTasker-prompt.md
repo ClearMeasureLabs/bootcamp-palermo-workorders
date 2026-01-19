@@ -5,7 +5,7 @@ ARCHITECTURE CONTEXT:
 - Domain: WorkOrder, Employee, WorkOrderStatus, Role in src/Core/
 - Data: EF Core handlers in src/DataAccess/, MediatR CQRS pattern
 - UI: Blazor in src/UI/Server/ and src/UI/Client/
-- DB: AliaSQL migrations in src/Database/scripts/Update/ (numbered ###_Name.sql)
+- DB: DbUp migrations in src/Database/scripts/ (numbered ###_Name.sql)
 - Tests: NUnit + Shouldly in src/UnitTests/, src/IntegrationTests/
 
 RULES:

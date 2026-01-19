@@ -11,7 +11,7 @@ This file provides standards for GitHub Copilot to follow when generating code f
 - Data access: `src/DataAccess/` (EF Core, MediatR handlers)
 - UI Server: `src/UI/Server/` (Blazor host, DI via Lamar)
 - UI Client: `src/UI/Client/` (Blazor WASM)
-- DB migrations: `src/Database/scripts/Update/` (AliaSQL, numbered ###_Name.sql)
+- DB migrations: `src/Database/scripts/` (DbUp, numbered ###_Name.sql)
 - Tests: `src/UnitTests/`, `src/IntegrationTests/`, `src/AcceptanceTests/`
 
 **Domain Model:**
