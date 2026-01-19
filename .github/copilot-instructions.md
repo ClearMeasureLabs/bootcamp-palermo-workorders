@@ -162,9 +162,46 @@ dotnet test src/IntegrationTests/IntegrationTests.csproj
 
 ### Test Naming Convention
 - `[MethodName]_[Scenario]_[ExpectedResult]`
-- Examples: 
+- Examples:
   - `GetWorkOrder_WithValidId_ReturnsWorkOrder`
   - `SaveChurchBulletin_WithMissingTitle_ThrowsValidationException`
+
+### Acceptance Tests from Issues (IMPORTANT for Copilot SWE Agent)
+
+When implementing a feature from a GitHub issue:
+
+1. **Check for "Acceptance Test Scenarios" section** in the issue body
+2. **Implement each specified test** in the fixture file indicated (e.g., `WorkOrderManageTests.cs`)
+3. **Follow the steps provided** for each test scenario
+4. **Run acceptance tests** after implementation to verify the feature works
+
+**Acceptance Test Pattern:**
+```csharp
+[Test]
+public async Task TestNameFromIssue()
+{
+    await LoginAsCurrentUser();
+    // Follow steps from issue
+    // Use helper methods: Click(), Input(), Select(), Expect()
+}
+```
+
+**Running Acceptance Tests:**
+```powershell
+cd src/AcceptanceTests
+pwsh bin/Debug/net9.0/playwright.ps1 install  # First time only
+dotnet test --filter "FullyQualifiedName~TestClassName"
+```
+
+**Key Helper Methods (from AcceptanceTestBase):**
+- `LoginAsCurrentUser()` - Authenticate test user
+- `CreateAndSaveNewWorkOrder()` - Create test work order
+- `Click(testId)` - Click element by data-testid
+- `Input(testId, value)` - Fill input field
+- `Select(testId, value)` - Select dropdown option
+- `Expect(locator)` - Playwright assertion
+
+**Workflow:** Feature code → Unit tests → Integration tests → Acceptance tests → All pass → Commit
 
 ## Blazor Guidelines
 
