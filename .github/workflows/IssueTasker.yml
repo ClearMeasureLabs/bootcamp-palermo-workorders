@@ -28,8 +28,11 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install CLI tools
-        run: npm install -g @github/copilot gh
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Verify GitHub CLI
+        run: gh --version
 
       - name: Setup GitHub CLI authentication
         run: |
