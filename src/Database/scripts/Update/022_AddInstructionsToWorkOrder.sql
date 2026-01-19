@@ -1,9 +1,9 @@
 BEGIN TRANSACTION
 GO
-PRINT N'Adding [dbo].[WorkOrder] Instructions column as NVARCHAR(4000)'
+PRINT N'Adding [dbo].[WorkOrder] Instructions column as NVARCHAR(3000)'
 GO
 ALTER TABLE [dbo].[WorkOrder] ADD
-	[Instructions] NVARCHAR(4000) NULL
+	[Instructions] NVARCHAR(3000) NULL
 GO
 IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
 GO

@@ -299,13 +299,13 @@ public class WorkOrderMappingTests
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
-        var instructions4000 = new string('X', 4000);
+        var instructions3000 = new string('X', 3000);
         var workOrder = new WorkOrder
         {
             Number = "WO-07",
             Title = "Test Instructions",
             Description = "Testing instructions field",
-            Instructions = instructions4000,
+            Instructions = instructions3000,
             Creator = creator,
             Status = WorkOrderStatus.Draft
         };
@@ -324,7 +324,7 @@ public class WorkOrderMappingTests
                 .Single(wo => wo.Id == workOrder.Id);
         }
 
-        rehydratedWorkOrder.Instructions.ShouldBe(instructions4000);
-        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
+        rehydratedWorkOrder.Instructions.ShouldBe(instructions3000);
+        rehydratedWorkOrder.Instructions!.Length.ShouldBe(3000);
     }
 }
