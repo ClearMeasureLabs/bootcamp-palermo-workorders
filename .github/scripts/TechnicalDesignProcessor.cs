@@ -38,7 +38,7 @@ string copilotResponse;
 try
 {
     // Use Copilot CLI with -p flag for prompt
-    // Authentication uses COPILOT_PAT or COPILOT_TOKEN environment variables
+    // Authentication uses COPILOT_GITHUB_TOKEN environment variable
     var promptContent = File.ReadAllText(promptFile);
     copilotResponse = RunCommand("copilot", $"-p \"{promptContent.Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "")}\"");
 }

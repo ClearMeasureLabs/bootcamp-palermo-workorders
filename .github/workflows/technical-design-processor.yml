@@ -3,16 +3,16 @@ name: Technical Design Processor
 on:
   issues:
     types: [labeled]
+  workflow_dispatch:  # Allow manual trigger
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
   issues: write
 
 jobs:
   process-technical-design:
-    if: github.event.label.name == '3. Technical Design'
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == '3. Technical Design'
 
     steps:
       - name: Checkout repository
@@ -23,35 +23,32 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Setup GitHub CLI authentication
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # Authenticate gh CLI
-          gh auth status
-
-          # Export token to GITHUB_ENV so it persists for the agent's session
-          echo "GH_TOKEN=${{ github.token }}" >> $GITHUB_ENV
-          echo "GITHUB_TOKEN=${{ github.token }}" >> $GITHUB_ENV
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Install Copilot CLI
+      - name: Install GitHub Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Install GitHub CLI
         run: |
-          npm install -g @githubnext/github-copilot-cli
-          echo "Copilot CLI installed"
-          npm list -g --depth=0
-          ls -la $(npm root -g)/@githubnext/github-copilot-cli/
-          cat $(npm root -g)/@githubnext/github-copilot-cli/package.json | grep -A 10 '"bin"'
+          type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Setup GitHub CLI authentication
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Process Technical Design Issue
         env:
-          COPILOT_PAT: ${{ secrets.COPILOT_PAT }}
-          COPILOT_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+          GH_TOKEN: ${{ secrets.COPILOT_PAT }}
+          GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
-        run: |
-          dotnet run .github/scripts/TechnicalDesignProcessor.cs
+        run: dotnet run .github/scripts/TechnicalDesignProcessor.cs
