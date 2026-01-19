@@ -1,177 +1,232 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+
+// ============================================================================
+// MAIN ENTRY POINT
+// ============================================================================
 
 if (args.Length < 2)
 {
-    Console.WriteLine("Usage: IssueTasker <repo> <issue-number>");
-    Console.WriteLine("  repo: Repository in format 'owner/repo'");
-    Console.WriteLine("  issue-number: The GitHub issue number to process");
+    PrintUsage();
     return 1;
 }
 
 var repo = args[0];
 var issueNumber = args[1];
-var overallStopwatch = Stopwatch.StartNew();
+var timings = new TimingMetrics();
 
-LogGroup("IssueTasker Starting", () =>
-{
-    Log($"Repository: {repo}");
-    Log($"Issue Number: {issueNumber}");
-    Log($"Started at: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-});
+LogStart(repo, issueNumber);
 
-// Read the issue content
-string title;
-string body;
-var readStopwatch = Stopwatch.StartNew();
-LogGroup("Reading Issue Content", () =>
-{
-    var issueJson = RunCommand("gh", $"issue view {issueNumber} --repo {repo} --json title,body,labels");
-    var issue = JsonDocument.Parse(issueJson);
-    title = issue.RootElement.GetProperty("title").GetString() ?? "";
-    body = issue.RootElement.GetProperty("body").GetString() ?? "";
-    Log($"Issue Title: {title}");
-    Log($"Issue Body Length: {body.Length} characters");
-});
-readStopwatch.Stop();
-Log($"⏱️ Reading issue took {readStopwatch.Elapsed.TotalSeconds:F2}s");
+var (title, body) = ReadIssueContent(repo, issueNumber, timings);
+var copilotResponse = GenerateTechnicalTasks(title, body, timings);
+var tasks = ParseTasksFromResponse(copilotResponse, timings);
+UpdateIssueBody(repo, issueNumber, body, tasks, timings);
+TransitionLabels(repo, issueNumber, timings);
 
-// Need to re-read for scope (C# limitation with lambdas)
-var issueJson2 = RunCommand("gh", $"issue view {issueNumber} --repo {repo} --json title,body,labels");
-var issue2 = JsonDocument.Parse(issueJson2);
-title = issue2.RootElement.GetProperty("title").GetString() ?? "";
-body = issue2.RootElement.GetProperty("body").GetString() ?? "";
-
-// Generate technical development tasks using Copilot CLI
-string copilotResponse = "";
-var copilotStopwatch = Stopwatch.StartNew();
-LogGroup("Generating Technical Tasks with Copilot", () =>
-{
-    var prompt = $"""
-Analyze this GitHub issue and generate a list of specific technical development tasks.
-Each task should be actionable and specific to this issue's requirements.
-Use copilot-instructions to gain context of architecture and standards.
-Return ONLY the tasks as a simple list, one task per line, no numbering or bullet points.
-
-Issue Title: {title}
-
-Issue Description:
-{body}
-""";
-
-    Log("Sending prompt to Copilot CLI...");
-    var promptFile = Path.GetTempFileName();
-    File.WriteAllText(promptFile, prompt);
-
-    try
-    {
-        var promptContent = File.ReadAllText(promptFile);
-        copilotResponse = RunCommand("copilot", $"-p \"{promptContent.Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "")}\"");
-        Log($"Copilot response received ({copilotResponse.Length} characters)");
-    }
-    finally
-    {
-        File.Delete(promptFile);
-    }
-});
-copilotStopwatch.Stop();
-Log($"⏱️ Copilot task generation took {copilotStopwatch.Elapsed.TotalSeconds:F2}s");
-
-// Parse the response into tasks
-List<string> technicalTasks = new();
-var parseStopwatch = Stopwatch.StartNew();
-LogGroup("Parsing Copilot Response", () =>
-{
-    technicalTasks = copilotResponse
-        .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-        .Select(line => line.Trim())
-        .Where(line => !string.IsNullOrWhiteSpace(line))
-        .Select(line => line.TrimStart('-', '*', '•', ' ', '\t'))
-        .Select(line => System.Text.RegularExpressions.Regex.Replace(line, @"^\d+[\.\)]\s*", ""))
-        .Where(line => !string.IsNullOrWhiteSpace(line))
-        .ToList();
-
-    Log($"Parsed {technicalTasks.Count} technical tasks:");
-    for (int i = 0; i < technicalTasks.Count; i++)
-    {
-        Log($"  {i + 1}. {technicalTasks[i]}");
-    }
-});
-parseStopwatch.Stop();
-Log($"⏱️ Parsing response took {parseStopwatch.Elapsed.TotalSeconds:F2}s");
-
-// Build and update the issue body
-var updateStopwatch = Stopwatch.StartNew();
-LogGroup("Updating Issue Body", () =>
-{
-    var updatedBody = new StringBuilder(body);
-    updatedBody.AppendLine();
-    updatedBody.AppendLine();
-    updatedBody.AppendLine("---");
-    updatedBody.AppendLine();
-    updatedBody.AppendLine("## Technical Development Tasks");
-    updatedBody.AppendLine();
-    updatedBody.AppendLine("_Generated automatically by GitHub Copilot from technical design analysis_");
-    updatedBody.AppendLine();
-
-    foreach (var task in technicalTasks)
-    {
-        updatedBody.AppendLine($"- [ ] {task}");
-    }
-
-    updatedBody.AppendLine();
-    updatedBody.AppendLine("---");
-
-    var tempFile = Path.GetTempFileName();
-    File.WriteAllText(tempFile, updatedBody.ToString());
-
-    try
-    {
-        Log("Writing updated body to issue...");
-        RunCommand("gh", $"issue edit {issueNumber} --repo {repo} --body-file \"{tempFile}\"");
-        Log("Issue body updated successfully");
-    }
-    finally
-    {
-        File.Delete(tempFile);
-    }
-});
-updateStopwatch.Stop();
-Log($"⏱️ Updating issue body took {updateStopwatch.Elapsed.TotalSeconds:F2}s");
-
-// Update labels
-var labelStopwatch = Stopwatch.StartNew();
-LogGroup("Updating Labels", () =>
-{
-    Log("Removing '3. Technical Design' label...");
-    RunCommand("gh", $"issue edit {issueNumber} --repo {repo} --remove-label \"3. Technical Design\"");
-    Log("Removed '3. Technical Design' label");
-
-    Log("Adding '4. Test Design' label...");
-    RunCommand("gh", $"issue edit {issueNumber} --repo {repo} --add-label \"4. Test Design\"");
-    Log("Added '4. Test Design' label");
-});
-labelStopwatch.Stop();
-Log($"⏱️ Updating labels took {labelStopwatch.Elapsed.TotalSeconds:F2}s");
-
-overallStopwatch.Stop();
-LogGroup("IssueTasker Complete", () =>
-{
-    Log($"✅ Successfully processed issue #{issueNumber}");
-    Log($"📊 Timing Summary:");
-    Log($"   - Read issue:      {readStopwatch.Elapsed.TotalSeconds,6:F2}s");
-    Log($"   - Copilot generation: {copilotStopwatch.Elapsed.TotalSeconds,6:F2}s");
-    Log($"   - Parse response:  {parseStopwatch.Elapsed.TotalSeconds,6:F2}s");
-    Log($"   - Update issue:    {updateStopwatch.Elapsed.TotalSeconds,6:F2}s");
-    Log($"   - Update labels:   {labelStopwatch.Elapsed.TotalSeconds,6:F2}s");
-    Log($"   ─────────────────────────");
-    Log($"   Total:             {overallStopwatch.Elapsed.TotalSeconds,6:F2}s");
-});
+LogComplete(issueNumber, timings);
 
 return 0;
 
-// Helper methods
+// ============================================================================
+// PIPELINE STEPS
+// ============================================================================
+
+static void PrintUsage()
+{
+    Console.WriteLine("Usage: IssueTasker <repo> <issue-number>");
+    Console.WriteLine("  repo: Repository in format 'owner/repo'");
+    Console.WriteLine("  issue-number: The GitHub issue number to process");
+}
+
+static void LogStart(string repo, string issueNumber)
+{
+    LogGroup("IssueTasker Starting", () =>
+    {
+        Log($"Repository: {repo}");
+        Log($"Issue Number: {issueNumber}");
+        Log($"Started at: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+    });
+}
+
+static (string title, string body) ReadIssueContent(string repo, string issueNumber, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+
+    var issueJson = RunCommand("gh", $"issue view {issueNumber} --repo {repo} --json title,body,labels");
+    var issue = JsonDocument.Parse(issueJson);
+    var title = issue.RootElement.GetProperty("title").GetString() ?? "";
+    var body = issue.RootElement.GetProperty("body").GetString() ?? "";
+
+    sw.Stop();
+    timings.ReadIssue = sw.Elapsed;
+    Log($"⏱️ Reading issue took {sw.Elapsed.TotalSeconds:F2}s");
+    Log($"Issue Title: {title}");
+    Log($"Issue Body Length: {body.Length} characters");
+
+    return (title, body);
+}
+
+static string GenerateTechnicalTasks(string title, string body, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+    string response = "";
+
+    LogGroup("Generating Technical Tasks with Copilot", () =>
+    {
+        var promptTemplatePath = FindPromptTemplate();
+        Log($"Loading prompt template from: {promptTemplatePath}");
+
+        var promptTemplate = File.ReadAllText(promptTemplatePath);
+        var prompt = promptTemplate
+            .Replace("{title}", title)
+            .Replace("{body}", body);
+
+        Log("Sending prompt to Copilot CLI...");
+        var escapedPrompt = prompt.Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
+        response = RunCommand("copilot", $"-p \"{escapedPrompt}\"");
+        Log($"Copilot response received ({response.Length} characters)");
+    });
+
+    sw.Stop();
+    timings.CopilotGeneration = sw.Elapsed;
+    Log($"⏱️ Copilot task generation took {sw.Elapsed.TotalSeconds:F2}s");
+
+    return response;
+}
+
+static string FindPromptTemplate()
+{
+    var scriptDir = Path.GetDirectoryName(AppContext.BaseDirectory) ?? ".";
+    var promptTemplatePath = Path.Combine(scriptDir, ".github", "scripts", "IssueTasker-prompt.md");
+
+    if (!File.Exists(promptTemplatePath))
+    {
+        promptTemplatePath = Path.Combine(".github", "scripts", "IssueTasker-prompt.md");
+    }
+
+    return promptTemplatePath;
+}
+
+static List<string> ParseTasksFromResponse(string copilotResponse, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+    List<string> tasks = new();
+
+    LogGroup("Parsing Copilot Response", () =>
+    {
+        tasks = copilotResponse
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .Select(line => line.TrimStart('-', '*', '•', ' ', '\t'))
+            .Select(line => Regex.Replace(line, @"^\d+[\.\)]\s*", ""))
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .ToList();
+
+        Log($"Parsed {tasks.Count} technical tasks:");
+        for (int i = 0; i < tasks.Count; i++)
+        {
+            Log($"  {i + 1}. {tasks[i]}");
+        }
+    });
+
+    sw.Stop();
+    timings.ParseResponse = sw.Elapsed;
+    Log($"⏱️ Parsing response took {sw.Elapsed.TotalSeconds:F2}s");
+
+    return tasks;
+}
+
+static void UpdateIssueBody(string repo, string issueNumber, string originalBody, List<string> tasks, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+
+    LogGroup("Updating Issue Body", () =>
+    {
+        var updatedBody = BuildUpdatedBody(originalBody, tasks);
+        var tempFile = Path.GetTempFileName();
+
+        try
+        {
+            File.WriteAllText(tempFile, updatedBody);
+            Log("Writing updated body to issue...");
+            RunCommand("gh", $"issue edit {issueNumber} --repo {repo} --body-file \"{tempFile}\"");
+            Log("Issue body updated successfully");
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    });
+
+    sw.Stop();
+    timings.UpdateIssue = sw.Elapsed;
+    Log($"⏱️ Updating issue body took {sw.Elapsed.TotalSeconds:F2}s");
+}
+
+static string BuildUpdatedBody(string originalBody, List<string> tasks)
+{
+    var sb = new StringBuilder(originalBody);
+    sb.AppendLine();
+    sb.AppendLine();
+    sb.AppendLine("---");
+    sb.AppendLine();
+    sb.AppendLine("## Technical Development Tasks");
+    sb.AppendLine();
+    sb.AppendLine("_Generated automatically by GitHub Copilot from technical design analysis_");
+    sb.AppendLine();
+
+    foreach (var task in tasks)
+    {
+        sb.AppendLine($"- [ ] {task}");
+    }
+
+    sb.AppendLine();
+    sb.AppendLine("---");
+
+    return sb.ToString();
+}
+
+static void TransitionLabels(string repo, string issueNumber, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+
+    LogGroup("Updating Labels", () =>
+    {
+        Log("Transitioning labels: '3. Technical Design' -> '4. Test Design'...");
+        RunCommand("gh", $"issue edit {issueNumber} --repo {repo} --remove-label \"3. Technical Design\" --add-label \"4. Test Design\"");
+        Log("Labels updated successfully");
+    });
+
+    sw.Stop();
+    timings.UpdateLabels = sw.Elapsed;
+    Log($"⏱️ Updating labels took {sw.Elapsed.TotalSeconds:F2}s");
+}
+
+static void LogComplete(string issueNumber, TimingMetrics timings)
+{
+    var total = timings.ReadIssue + timings.CopilotGeneration + timings.ParseResponse + timings.UpdateIssue + timings.UpdateLabels;
+
+    LogGroup("IssueTasker Complete", () =>
+    {
+        Log($"✅ Successfully processed issue #{issueNumber}");
+        Log($"📊 Timing Summary:");
+        Log($"   - Read issue:         {timings.ReadIssue.TotalSeconds,6:F2}s");
+        Log($"   - Copilot generation: {timings.CopilotGeneration.TotalSeconds,6:F2}s");
+        Log($"   - Parse response:     {timings.ParseResponse.TotalSeconds,6:F2}s");
+        Log($"   - Update issue:       {timings.UpdateIssue.TotalSeconds,6:F2}s");
+        Log($"   - Update labels:      {timings.UpdateLabels.TotalSeconds,6:F2}s");
+        Log($"   ─────────────────────────────");
+        Log($"   Total:                {total.TotalSeconds,6:F2}s");
+    });
+}
+
+// ============================================================================
+// INFRASTRUCTURE
+// ============================================================================
+
 static void Log(string message)
 {
     Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] {message}");
@@ -180,14 +235,12 @@ static void Log(string message)
 static void LogGroup(string groupName, Action action)
 {
     Console.WriteLine($"::group::{groupName}");
-    var sw = Stopwatch.StartNew();
     try
     {
         action();
     }
     finally
     {
-        sw.Stop();
         Console.WriteLine($"::endgroup::");
     }
 }
@@ -217,4 +270,17 @@ static string RunCommand(string command, string arguments)
     }
 
     return output;
+}
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+class TimingMetrics
+{
+    public TimeSpan ReadIssue { get; set; }
+    public TimeSpan CopilotGeneration { get; set; }
+    public TimeSpan ParseResponse { get; set; }
+    public TimeSpan UpdateIssue { get; set; }
+    public TimeSpan UpdateLabels { get; set; }
 }

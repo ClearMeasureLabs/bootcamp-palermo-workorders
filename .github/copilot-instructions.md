@@ -2,14 +2,53 @@
 
 This file provides standards for GitHub Copilot to follow when generating code for this project.
 
+## Quick Reference (AI Tools: Read This First)
+
+**Stack:** .NET 9.0 | Blazor WASM | EF Core 9 | SQL Server | Onion Architecture
+
+**Key Paths:**
+- Domain models: `src/Core/` (WorkOrder, Employee, WorkOrderStatus, Role)
+- Data access: `src/DataAccess/` (EF Core, MediatR handlers)
+- UI Server: `src/UI/Server/` (Blazor host, DI via Lamar)
+- UI Client: `src/UI/Client/` (Blazor WASM)
+- DB migrations: `src/Database/scripts/Update/` (AliaSQL, numbered ###_Name.sql)
+- Tests: `src/UnitTests/`, `src/IntegrationTests/`, `src/AcceptanceTests/`
+
+**Domain Model:**
+- `WorkOrder`: Number, Title, Description, Room, AssignedTo (Employee), Status, CreatedBy
+- `Employee`: UserName, Email, Roles
+- `WorkOrderStatus`: Created, Assigned, Completed, Cancelled
+- `Role`: Employee role definitions
+
+**Architecture Rules (Strict):**
+- Core → no dependencies (domain models, interfaces, queries)
+- DataAccess → references Core only (EF, handlers)
+- UI → outer layer (references all)
+- NO new NuGet packages without approval
+- NO .NET SDK version changes without approval
+
+**Testing Rules:**
+- Framework: NUnit 4.x + Shouldly (NOT FluentAssertions)
+- Test doubles: prefix "Stub" (NOT "Mock")
+- Pattern: AAA without comments
+- Naming: `[Method]_[Scenario]_[Expected]`
+
+**Code Style:**
+- PascalCase classes/methods, camelCase variables
+- Small focused methods, nullable reference types
+- XML docs on public APIs
+
+---
+
 ## Project Overview
 
-This is a Church Bulletin management application built with:
+This is a Work Order management application built with:
 - **.NET 9.0** - Primary framework
-- **Blazor** - UI framework
+- **Blazor** - UI framework (WebAssembly + Server)
 - **Entity Framework Core** - Data access
 - **SQL Server** - Database (LocalDB for development)
 - **Onion Architecture** - Clean architecture pattern with Core, DataAccess, and UI layers
+- **MediatR** - CQRS pattern for queries and commands
 
 ## Build Instructions
 
