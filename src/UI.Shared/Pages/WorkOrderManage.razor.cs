@@ -81,6 +81,7 @@ public partial class WorkOrderManage : AppComponentBase
             CreatorFullName = workOrder.Creator!.GetFullName(),
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
+            Instructions = workOrder.Instructions,
             Description = workOrder.Description,
             RoomNumber = workOrder.RoomNumber,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
@@ -120,6 +121,7 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Number = Model.WorkOrderNumber;
         workOrder.Assignee = assignee;
         workOrder.Title = Model.Title;
+        workOrder.Instructions = Model.Instructions;
         workOrder.Description = Model.Description;
         workOrder.RoomNumber = Model.RoomNumber;
 

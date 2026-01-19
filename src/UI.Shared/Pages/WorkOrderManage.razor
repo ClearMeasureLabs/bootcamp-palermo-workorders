@@ -49,6 +49,13 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="Instructions" class="form-label">Instructions:</label>
+                    <div>
+                        <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="Description" class="form-label">Description:</label>
                     <div>
                         <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
@@ -111,6 +118,7 @@
     {
         Assignee,
         Title,
+        Instructions,
         AssigneeFullName,
         RoomNumber,
         Description,
