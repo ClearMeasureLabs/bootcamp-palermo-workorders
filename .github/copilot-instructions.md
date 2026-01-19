@@ -98,6 +98,20 @@ dotnet test src/IntegrationTests/IntegrationTests.csproj
 - **BEFORE submitting any pull request**: Run `.\acceptancetests.ps1` to ensure full system acceptance tests pass
 - If either script fails, use the output to diagnose and fix the problem before proceeding
 
+## Pull Request Readiness (REQUIRED for Copilot SWE Agent)
+
+Before marking a draft pull request as ready for review, **MUST** complete these steps in order:
+
+1. **Run `.\privatebuild.ps1`** - Must pass (unit tests + integration tests)
+2. **Run `.\acceptancetests.ps1`** - Must pass (full system acceptance tests)
+3. **Only after both pass** - Mark PR as ready for review
+
+If either script fails:
+- Diagnose the failure from the output
+- Fix the issue
+- Re-run both scripts from the beginning
+- Do NOT mark PR ready until both pass
+
 ## Special Project Rules
 
 - **DO NOT** modify files in `.octopus/`, `.octopus_original_from_od/`, or build scripts without explicit approval
