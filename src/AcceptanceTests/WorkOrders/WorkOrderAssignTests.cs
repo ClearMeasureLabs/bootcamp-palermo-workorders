@@ -50,4 +50,26 @@ public class WorkOrderAssignTests : AcceptanceTestBase
 
         rehyratedOrder.AssignedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
+
+    [Test]
+    public async Task ShouldUpdateInstructionsWhenAssigningWorkOrder()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Input(nameof(WorkOrderManage.Elements.Instructions), "Instructions for assigned work order");
+        await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync("Instructions for assigned work order");
+    }
 }

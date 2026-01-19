@@ -70,4 +70,34 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage)))
             .ToHaveTextAsync("This work order is read-only for you at this time.");
     }
+
+    [Test]
+    public async Task ShouldDisplayInstructionsInReadOnlyMode()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Input(nameof(WorkOrderManage.Elements.Instructions), "Instructions before completion");
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+        order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        order = await BeginExistingWorkOrder(order);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        order.Title = "Completed Title";
+        order.Description = "Completed Description";
+        order = await CompleteExistingWorkOrder(order);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToBeDisabledAsync();
+        await Expect(instructionsField).ToHaveValueAsync("Instructions before completion");
+    }
 }
