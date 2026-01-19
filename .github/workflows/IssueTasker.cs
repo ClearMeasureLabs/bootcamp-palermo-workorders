@@ -208,8 +208,6 @@ static string BuildUpdatedBody(string originalBody, List<string> tasks)
     sb.AppendLine();
     sb.AppendLine("## Technical Development Tasks");
     sb.AppendLine();
-    sb.AppendLine("_Generated automatically by GitHub Copilot from technical design analysis_");
-    sb.AppendLine();
 
     foreach (var task in tasks)
     {
