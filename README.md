@@ -430,6 +430,28 @@ Runbooks must be published before they can be consumed by triggers.
 
 Now the container app and database will automatically be scaled up every morning, and scaled down every evening
 
+# Recent Changes
+
+## Work Order Instructions Field
+Added an optional Instructions field to work orders that allows users to provide execution instructions.
+
+### Features
+- **Field Name**: Instructions
+- **Location**: Positioned between Description and Room Number fields in the work order form
+- **Type**: Multi-line text input (textarea)
+- **Character Limit**: 3900 characters with automatic truncation
+- **Behavior**: 
+  - Optional field (can be left blank)
+  - Editable during work order creation and after saving
+  - Automatically truncates input to 3900 characters to match database constraint
+
+### Technical Implementation
+- **Domain Layer**: Added `Instructions` property to `WorkOrder` entity with truncation logic
+- **Data Access**: Extended `WorkOrderMap` EF configuration with max length constraint
+- **Database**: Migration script `022_AddInstructionsToWorkOrder.sql` adds NVARCHAR(3900) column
+- **UI**: Blazor component updated with Instructions textarea binding
+- **Tests**: Comprehensive test coverage including unit, integration, and acceptance tests
+
 # Build and Test
 TODO: Describe and show how to build your code and run the tests. 
 
@@ -442,4 +464,4 @@ If you want to learn more about creating good readme files then refer the follow
 - [Chakra Core](https://github.com/Microsoft/ChakraCore)
 
 
-Last update: 2025-12-12 13:27 MDT
+Last update: 2026-01-19 03:07 UTC
