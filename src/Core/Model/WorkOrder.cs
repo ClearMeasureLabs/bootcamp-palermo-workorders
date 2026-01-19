@@ -16,6 +16,7 @@ public class WorkOrder : EntityBase<WorkOrder>
     public string? Instructions
     {
         get => _instructions;
+        // Automatically truncates input to 4000 characters to match database column constraint
         set => _instructions = getTruncatedString(value);
     }
 
