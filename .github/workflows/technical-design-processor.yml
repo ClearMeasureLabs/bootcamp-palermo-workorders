@@ -1,0 +1,44 @@
+name: Technical Design Processor
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  process-technical-design:
+    if: github.event.label.name == '3. Technical Design'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup GitHub CLI authentication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Authenticate gh CLI
+          gh auth status
+
+          # Export token to GITHUB_ENV so it persists for the agent's session
+          echo "GH_TOKEN=${{ github.token }}" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=${{ github.token }}" >> $GITHUB_ENV
+
+      - name: Process Technical Design Issue
+        env:
+          COPILOT_PAT: ${{ secrets.COPILOT_PAT }}
+          COPILOT_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          dotnet run .github/scripts/TechnicalDesignProcessor.cs
