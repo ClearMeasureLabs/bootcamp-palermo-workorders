@@ -43,7 +43,9 @@ jobs:
         run: |
           npm install -g @githubnext/github-copilot-cli
           echo "Copilot CLI installed"
-          which copilot || echo "copilot not in path"
+          npm list -g --depth=0
+          ls -la $(npm root -g)/@githubnext/github-copilot-cli/
+          cat $(npm root -g)/@githubnext/github-copilot-cli/package.json | grep -A 10 '"bin"'
 
       - name: Process Technical Design Issue
         env:
