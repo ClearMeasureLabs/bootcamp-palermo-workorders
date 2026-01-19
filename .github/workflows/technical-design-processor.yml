@@ -44,11 +44,9 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-      - name: Process Technical Design Issue
+      - name: Run IssueTasker
         env:
           GH_TOKEN: ${{ secrets.COPILOT_PAT }}
           GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          REPO: ${{ github.repository }}
-        run: dotnet run .github/scripts/TechnicalDesignProcessor.cs
+        run: dotnet run .github/scripts/IssueTasker.cs -- ${{ github.repository }} ${{ github.event.issue.number }}
