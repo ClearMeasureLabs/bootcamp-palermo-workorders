@@ -11,6 +11,7 @@ public class WorkOrderTests
         var workOrder = new WorkOrder();
         Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
         Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
+        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
         Assert.That(workOrder.Number, Is.EqualTo(null));
@@ -39,6 +40,7 @@ public class WorkOrderTests
 
         workOrder.Id = guid;
         workOrder.Title = "Title";
+        workOrder.Instructions = "Instructions";
         workOrder.Description = "Description";
         workOrder.Status = WorkOrderStatus.Complete;
         workOrder.Number = "Number";
@@ -47,6 +49,7 @@ public class WorkOrderTests
 
         Assert.That(workOrder.Id, Is.EqualTo(guid));
         Assert.That(workOrder.Title, Is.EqualTo("Title"));
+        Assert.That(workOrder.Instructions, Is.EqualTo("Instructions"));
         Assert.That(workOrder.Description, Is.EqualTo("Description"));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
         Assert.That(workOrder.Number, Is.EqualTo("Number"));
@@ -79,5 +82,22 @@ public class WorkOrderTests
         order.Status = WorkOrderStatus.Draft;
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void Instructions_ShouldAllowNullValue()
+    {
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = null;
+        Assert.That(workOrder.Instructions, Is.Null);
+    }
+
+    [Test]
+    public void Instructions_ShouldStoreValue()
+    {
+        var workOrder = new WorkOrder();
+        var instructionsText = "Follow these steps carefully";
+        workOrder.Instructions = instructionsText;
+        Assert.That(workOrder.Instructions, Is.EqualTo(instructionsText));
     }
 }
