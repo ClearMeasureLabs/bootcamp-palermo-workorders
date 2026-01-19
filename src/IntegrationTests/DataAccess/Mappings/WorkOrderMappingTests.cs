@@ -18,6 +18,7 @@ public class WorkOrderMappingTests
         {
             Number = "WO-01",
             Title = "Fix lighting",
+            Instructions = "Turn off power first",
             Description = "Replace broken light bulbs in conference room",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
@@ -42,6 +43,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Id.ShouldBe(workOrder.Id);
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
+        rehydratedWorkOrder.Instructions.ShouldBe("Turn off power first");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
@@ -61,6 +63,7 @@ public class WorkOrderMappingTests
             Creator = creator,
             Assignee = assignee,
             Title = "foo",
+            Instructions = "bar instructions",
             Description = "bar",
             RoomNumber = "123 a"
         };
@@ -88,6 +91,7 @@ public class WorkOrderMappingTests
             rehydratedWorkOrder.Creator!.Id.ShouldBe(order.Creator.Id);
             rehydratedWorkOrder.Assignee!.Id.ShouldBe(order.Assignee.Id);
             rehydratedWorkOrder.Title.ShouldBe(order.Title);
+            rehydratedWorkOrder.Instructions.ShouldBe(order.Instructions);
             rehydratedWorkOrder.Description.ShouldBe(order.Description);
             rehydratedWorkOrder.Status.ShouldBe(order.Status);
             rehydratedWorkOrder.RoomNumber.ShouldBe(order.RoomNumber);

@@ -14,6 +14,8 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public string? RoomNumber { get; set; } = null;
 
+    public string? Instructions { get; set; } = null;
+
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 
     public Employee? Creator { get; set; } = null;
