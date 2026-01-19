@@ -261,7 +261,7 @@ static string BuildUpdatedBody(string originalBody, List<TestSpecification> test
     sb.AppendLine();
     sb.AppendLine("---");
     sb.AppendLine();
-    sb.AppendLine("## Acceptance Test Design");
+    sb.AppendLine("## Acceptance Test Scenarios");
     sb.AppendLine();
 
     foreach (var test in tests)
