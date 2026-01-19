@@ -73,12 +73,12 @@ public class WorkOrderTests
     }
 
     [Test]
-    public void ShouldTruncateTo3500CharactersOnInstructions()
+    public void ShouldTruncateTo3900CharactersOnInstructions()
     {
-        var longText = new string('x', 3501);
+        var longText = new string('x', 3901);
         var order = new WorkOrder();
         order.Instructions = longText;
-        Assert.That(order.Instructions.Length, Is.EqualTo(3500));
+        Assert.That(order.Instructions.Length, Is.EqualTo(3900));
     }
 
     [Test]
