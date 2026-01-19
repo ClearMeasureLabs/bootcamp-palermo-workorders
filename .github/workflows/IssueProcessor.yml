@@ -53,7 +53,7 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
         run: |
           ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
-          dotnet run .github/scripts/IssueTasker.cs -- ${{ github.repository }} $ISSUE_NUM
+          dotnet run .github/workflows/IssueTasker.cs -- ${{ github.repository }} $ISSUE_NUM
 
   acceptance-test-designer:
     name: "Test Design → Acceptance Tests"
@@ -87,4 +87,4 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
         run: |
           ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
-          dotnet run .github/scripts/AcceptanceTestDesigner.cs -- ${{ github.repository }} $ISSUE_NUM
+          dotnet run .github/workflows/AcceptanceTestDesigner.cs -- ${{ github.repository }} $ISSUE_NUM
