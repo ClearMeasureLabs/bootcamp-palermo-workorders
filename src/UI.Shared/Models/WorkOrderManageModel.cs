@@ -16,7 +16,9 @@ public class WorkOrderManageModel
 
     public string? AssignedToUserName { get; set; }
 
-    [Required] public string? Title { get; set; }
+    [Required]
+    [StringLength(500)]
+    public string? Title { get; set; }
 
     [Required] public string? Description { get; set; }
 
