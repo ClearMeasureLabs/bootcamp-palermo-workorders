@@ -167,7 +167,7 @@ public class ZDataLoader
         christmasOrder1.Creator = revLovejoy;
         christmasOrder1.Assignee = maudeFlanders;
         christmasOrder1.Status = WorkOrderStatus.Draft;
-        christmasOrder1.Title = "Organize Christmas Concert Choir Practice Schedule";
+        christmasOrder1.Title = "Choir Practice";
         christmasOrder1.Description =
             "Coordinate weekly choir rehearsals for the Christmas concert. Schedule practice sessions for November and December leading up to the Christmas Eve service.";
         christmasOrder1.CreatedDate = new DateTime(2024, 10, 15, 9, 0, 0);
@@ -179,7 +179,7 @@ public class ZDataLoader
         christmasOrder2.Creator = revLovejoy;
         christmasOrder2.Assignee = groundskeeperWillie;
         christmasOrder2.Status = WorkOrderStatus.Assigned;
-        christmasOrder2.Title = "Prepare Church Grounds for Christmas Decorations";
+        christmasOrder2.Title = "Church Grounds";
         christmasOrder2.Description =
             "Clean and prepare the church exterior and landscaping for Christmas decorations. Ensure proper lighting infrastructure and safe walkways for concert attendees.";
         christmasOrder2.CreatedDate = new DateTime(2024, 11, 1, 8, 0, 0);
@@ -192,7 +192,7 @@ public class ZDataLoader
         christmasOrder3.Creator = nedFlanders;
         christmasOrder3.Assignee = organistEmployee;
         christmasOrder3.Status = WorkOrderStatus.InProgress;
-        christmasOrder3.Title = "Tune and Maintain Church Organ for Christmas Concert";
+        christmasOrder3.Title = "Tune Organ";
         christmasOrder3.Description =
             "Perform complete maintenance and tuning of the church organ in preparation for Christmas concert performances. Test all stops and ensure optimal sound quality.";
         christmasOrder3.CreatedDate = new DateTime(2024, 11, 5, 14, 0, 0);
@@ -205,7 +205,7 @@ public class ZDataLoader
         christmasOrder4.Creator = revLovejoy;
         christmasOrder4.Assignee = nedFlanders;
         christmasOrder4.Status = WorkOrderStatus.Draft;
-        christmasOrder4.Title = "Setup Audio System for Christmas Concert";
+        christmasOrder4.Title = "Setup Audio Sys";
         christmasOrder4.Description =
             "Configure and test the sanctuary sound system for the Christmas concert. Ensure microphones, speakers, and recording equipment are functioning properly.";
         christmasOrder4.CreatedDate = new DateTime(2024, 11, 10, 16, 0, 0);
@@ -217,7 +217,7 @@ public class ZDataLoader
         christmasOrder5.Creator = nedFlanders;
         christmasOrder5.Assignee = groundskeeperWillie;
         christmasOrder5.Status = WorkOrderStatus.Complete;
-        christmasOrder5.Title = "Install Christmas Tree in Sanctuary";
+        christmasOrder5.Title = "Christmas Tree";
         christmasOrder5.Description =
             "Select, transport, and install the Christmas tree in the sanctuary. Ensure proper placement and safety for the Christmas concert and services.";
         christmasOrder5.CreatedDate = new DateTime(2024, 12, 1, 10, 0, 0);
@@ -231,7 +231,7 @@ public class ZDataLoader
         christmasOrder6.Creator = revLovejoy;
         christmasOrder6.Assignee = maudeFlanders;
         christmasOrder6.Status = WorkOrderStatus.Assigned;
-        christmasOrder6.Title = "Coordinate Christmas Concert Program Design";
+        christmasOrder6.Title = "Program Design";
         christmasOrder6.Description =
             "Design and prepare printed programs for the Christmas concert including song listings, performer credits, and special acknowledgments.";
         christmasOrder6.CreatedDate = new DateTime(2024, 11, 20, 13, 0, 0);

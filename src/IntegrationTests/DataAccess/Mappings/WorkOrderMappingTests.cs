@@ -255,7 +255,7 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = "WO-06",
-            Title = "Test Eager Loading",
+            Title = "Test Eager",
             Description = "Testing that Creator and Assignee are auto-included",
             Creator = creator,
             Assignee = assignee,
