@@ -1,9 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ClearMeasure.Bootcamp.Core.Model;
 
 public class WorkOrder : EntityBase<WorkOrder>
 {
     private string? _description = "";
 
+    [MaxLength(15)]
     public string? Title { get; set; } = "";
 
     public string? Description
