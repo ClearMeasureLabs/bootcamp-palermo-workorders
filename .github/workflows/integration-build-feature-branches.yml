@@ -1,8 +1,8 @@
 name: Integration Build - Branch
 run-name: "1.3.${{ github.run_number }} • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+  push:
+    branches-ignore: ['master', 'main']
   workflow_dispatch:
 env:
   MAJOR_VERSION: 1
@@ -23,14 +23,11 @@ jobs:
       pull-requests: write
     env:
       BUILD_CONFIGURATION: Release
-
+    
     steps:
-      # Checkout PR code (secure pattern for pull_request_target)
+      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v6.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
 
       - name: Setup .NET SDK 10.0.100
         uses: actions/setup-dotnet@v5.0.1
@@ -260,13 +257,22 @@ jobs:
           }
 
       - name: Mark PR as ready for review
-        if: success() && github.event.pull_request.number
+        if: success()
         env:
           GH_TOKEN: ${{ secrets.COPILOT_PAT }}
         run: |
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          echo "Marking PR #$PR_NUMBER as ready for review..."
-          gh pr ready "$PR_NUMBER" || echo "PR may already be ready or unable to mark ready"
+          # Find PR associated with this branch
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "Looking for PR from branch: $BRANCH_NAME"
+
+          PR_NUMBER=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number' 2>/dev/null || echo "")
+
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Found PR #$PR_NUMBER, marking as ready for review..."
+            gh pr ready "$PR_NUMBER" || echo "PR may already be ready or unable to mark ready"
+          else
+            echo "No open PR found for branch $BRANCH_NAME"
+          fi
 
   docker-build-image-for-churchbulletin-ui:
     name: Publish Release Candidate
@@ -283,12 +289,9 @@ jobs:
       packages: read
     
     steps:
-      # Checkout PR code (secure pattern for pull_request_target)
+      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v6.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
 
       # Set version environment variable (same as build-linux job)
       - name: Set Version
@@ -422,12 +425,7 @@ jobs:
       name: TDD
     
     steps:
-      # Checkout PR code (secure pattern for pull_request_target)
-      - name: Checkout code
-        uses: actions/checkout@v6.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
+      - uses: actions/checkout@v6
 
       - name: Setup .NET SDK 10.0.100
         uses: actions/setup-dotnet@v5.0.1
