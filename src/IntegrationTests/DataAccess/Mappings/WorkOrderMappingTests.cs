@@ -320,7 +320,7 @@ public class WorkOrderMappingTests
         }
 
         rehydratedWorkOrder.Title.ShouldBe(title300);
-        rehydratedWorkOrder.Title.Length.ShouldBe(300);
+        rehydratedWorkOrder.Title!.Length.ShouldBe(300);
     }
 
     [Test]
