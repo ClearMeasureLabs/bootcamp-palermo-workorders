@@ -87,7 +87,7 @@ public class WorkOrderTests
         var title300 = new string('X', 300);
         var order = new WorkOrder();
         order.Title = title300;
-        order.Title.ShouldBe(title300);
-        order.Title!.Length.ShouldBe(300);
+        Assert.That(order.Title, Is.EqualTo(title300));
+        Assert.That(order.Title!.Length, Is.EqualTo(300));
     }
 }

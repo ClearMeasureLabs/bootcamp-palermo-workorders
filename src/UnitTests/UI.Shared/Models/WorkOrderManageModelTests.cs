@@ -20,8 +20,8 @@ public class WorkOrderManageModelTests
         var results = new List<ValidationResult>();
         var isValid = Validator.TryValidateObject(model, context, results, true);
 
-        isValid.ShouldBeTrue();
-        results.ShouldBeEmpty();
+        Assert.That(isValid, Is.True);
+        Assert.That(results, Is.Empty);
     }
 
     [Test]
@@ -38,7 +38,7 @@ public class WorkOrderManageModelTests
         var results = new List<ValidationResult>();
         var isValid = Validator.TryValidateObject(model, context, results, true);
 
-        isValid.ShouldBeFalse();
-        results.ShouldContain(r => r.MemberNames.Contains("Title"));
+        Assert.That(isValid, Is.False);
+        Assert.That(results.Any(r => r.MemberNames.Contains("Title")), Is.True);
     }
 }
