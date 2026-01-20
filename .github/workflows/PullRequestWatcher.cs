@@ -31,12 +31,12 @@ if (prsAwaitingReview.Count > 0)
     }
     MarkPRsAsReady(repo, prsAwaitingReview, timings);
     ApproveWorkflowRuns(repo, prsAwaitingReview, timings);
-    exitCode = prsAwaitingReview.Count; // Return count of PRs marked ready (non-zero)
+    exitCode = 0; // Success - PRs were marked ready
 }
 else
 {
     Log($"No PRs for issue #{issueNumber} awaiting review from {currentUser}");
-    exitCode = -1; // Return -1 to signal retry needed
+    exitCode = 2; // No action taken, retry needed
 }
 
 LogComplete(issueNumber, currentUser, linkedPRs.Count, prsAwaitingReview.Count, exitCode, timings);
@@ -81,9 +81,9 @@ WORKFLOW:
     6. Report findings
 
 EXIT CODES:
-    >0  PRs were marked as ready (returns count of PRs)
-    -1  No PRs marked ready, retry needed (no linked PRs or no pending reviews)
+    0   Success - PRs were marked as ready for review
     1   Error (invalid arguments)
+    2   No action taken, retry needed (no linked PRs or no pending reviews)
 """);
 }
 
@@ -349,7 +349,7 @@ static void LogComplete(string issueNumber, string currentUser, int linkedPRCoun
         Log($"User: {currentUser}");
         Log($"PRs linked to issue: {linkedPRCount}");
         Log($"PRs awaiting review: {awaitingReviewCount}");
-        Log($"Exit code: {exitCode} ({(exitCode > 0 ? "PRs marked ready" : exitCode == -1 ? "no action, retry needed" : "success")})");
+        Log($"Exit code: {exitCode} ({(exitCode == 0 ? "success - PRs marked ready" : exitCode == 2 ? "no action, retry needed" : "error")})");
         Log($"Timing Summary:");
         Log($"   - Get user:         {timings.GetUser.TotalSeconds,6:F2}s");
         Log($"   - Find linked PRs:  {timings.FindLinkedPRs.TotalSeconds,6:F2}s");

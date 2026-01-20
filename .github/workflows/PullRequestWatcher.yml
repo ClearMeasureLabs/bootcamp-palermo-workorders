@@ -43,20 +43,18 @@ jobs:
           EXIT_CODE=$?
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
 
-          # Exit code 255 is -1 in unsigned byte (no action taken, retry needed)
-          # Exit code >0 and <255 means PRs were marked ready
-          if [ $EXIT_CODE -eq 255 ]; then
+          # Exit code 0 = success (PRs marked ready)
+          # Exit code 2 = no action taken, retry needed
+          # Exit code 1 = error
+          if [ $EXIT_CODE -eq 2 ]; then
             echo "No PRs marked ready, will schedule retry"
-            exit 0
-          elif [ $EXIT_CODE -gt 0 ] && [ $EXIT_CODE -lt 255 ]; then
-            echo "PRs marked ready (count: $EXIT_CODE)"
             exit 0
           else
             exit $EXIT_CODE
           fi
 
       - name: Schedule retry in 2 minutes
-        if: steps.watcher.outputs.exit_code == '255'
+        if: steps.watcher.outputs.exit_code == '2'
         env:
           GH_TOKEN: ${{ secrets.COPILOT_PAT }}
         run: |
