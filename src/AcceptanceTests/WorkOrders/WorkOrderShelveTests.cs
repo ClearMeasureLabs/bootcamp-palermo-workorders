@@ -15,7 +15,7 @@ public class WorkOrderShelveTests : AcceptanceTestBase
 
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
         order = await ClickWorkOrderNumberFromSearchPage(order);
-        order.Title = "Title from automation";
+        order.Title = "Title from auto";
         order.Description = "Description";
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
