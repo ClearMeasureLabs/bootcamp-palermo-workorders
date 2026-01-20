@@ -101,37 +101,65 @@ static void AssignToCopilot(string repo, string issueNumber, TimingMetrics timin
 
     LogGroup("Assigning to Copilot", () =>
     {
-        // Use gh copilot to start work on the issue
-        // This triggers the Copilot coding agent to begin working on the issue
-        Log("Starting Copilot coding agent on issue...");
+        var parts = repo.Split('/');
+        var owner = parts[0];
+        var repoName = parts[1];
 
-        try
-        {
-            // The gh copilot extension can start work on an issue
-            // Format: gh copilot start <issue-url>
-            var issueUrl = $"https://github.com/{repo}/issues/{issueNumber}";
-            RunCommand("gh", $"copilot start {issueUrl}");
-            Log("Copilot coding agent started successfully");
-        }
-        catch (Exception ex)
-        {
-            Log($"gh copilot start failed: {ex.Message}");
-            Log("Falling back to API-based assignment...");
+        // Step 1: Get the issue node ID
+        Log("Fetching issue node ID...");
+        var issueQuery = $"query {{ repository(owner: \\\"{owner}\\\", name: \\\"{repoName}\\\") {{ issue(number: {issueNumber}) {{ id }} }} }}";
+        var issueResult = RunCommand("gh", $"api graphql -f query=\"{issueQuery}\"");
+        var issueDoc = JsonDocument.Parse(issueResult);
+        var issueId = issueDoc.RootElement
+            .GetProperty("data")
+            .GetProperty("repository")
+            .GetProperty("issue")
+            .GetProperty("id")
+            .GetString();
+        Log($"Issue node ID: {issueId}");
 
-            // Fallback: Use the GitHub API to trigger Copilot
-            // This creates a Copilot session via the REST API
-            var apiPayload = $"{{\"issue_number\": {issueNumber}}}";
-            try
+        // Step 2: Get the copilot-swe-agent bot ID from repository's suggested actors
+        Log("Fetching copilot-swe-agent bot ID from suggested actors...");
+        var actorsQuery = $"query {{ repository(owner: \\\"{owner}\\\", name: \\\"{repoName}\\\") {{ suggestedActors(capabilities: [CAN_BE_ASSIGNED], first: 100) {{ nodes {{ login ... on Bot {{ id }} }} }} }} }}";
+        var actorsResult = RunCommand("gh", $"api graphql -H \"GraphQL-Features: issues_copilot_assignment_api_support\" -f query=\"{actorsQuery}\"");
+        Log($"Actors response: {actorsResult}");
+
+        var actorsDoc = JsonDocument.Parse(actorsResult);
+        var nodes = actorsDoc.RootElement
+            .GetProperty("data")
+            .GetProperty("repository")
+            .GetProperty("suggestedActors")
+            .GetProperty("nodes");
+
+        string? copilotBotId = null;
+        foreach (var node in nodes.EnumerateArray())
+        {
+            var login = node.GetProperty("login").GetString();
+            Log($"Found actor: {login}");
+            if (login == "copilot-swe-agent")
             {
-                RunCommand("gh", $"api repos/{repo}/copilot/sessions -X POST -f issue_number={issueNumber}");
-                Log("Copilot session created via API");
-            }
-            catch (Exception apiEx)
-            {
-                Log($"API fallback also failed: {apiEx.Message}");
-                Log("Manual assignment may be required");
+                if (node.TryGetProperty("id", out var idProp))
+                {
+                    copilotBotId = idProp.GetString();
+                }
+                break;
             }
         }
+
+        if (string.IsNullOrEmpty(copilotBotId))
+        {
+            throw new InvalidOperationException("Could not find copilot-swe-agent in repository's suggested actors. Ensure Copilot coding agent is enabled for this repository.");
+        }
+
+        Log($"Copilot bot ID: {copilotBotId}");
+
+        // Step 3: Assign the issue to copilot-swe-agent
+        Log("Assigning issue to copilot-swe-agent...");
+        var assignMutation = $"mutation {{ addAssigneesToAssignable(input: {{ assignableId: \\\"{issueId}\\\", assigneeIds: [\\\"{copilotBotId}\\\"] }}) {{ assignable {{ ... on Issue {{ assignees(first: 10) {{ nodes {{ login }} }} }} }} }} }}";
+        var assignResult = RunCommand("gh", $"api graphql -H \"GraphQL-Features: issues_copilot_assignment_api_support\" -f query=\"{assignMutation}\"");
+        Log($"Assignment result: {assignResult}");
+
+        Log("Issue assigned to copilot-swe-agent successfully");
     });
 
     sw.Stop();
