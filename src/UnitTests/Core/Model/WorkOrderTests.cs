@@ -80,4 +80,14 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void Title_With300Characters_ShouldAcceptValue()
+    {
+        var title300 = new string('X', 300);
+        var order = new WorkOrder();
+        order.Title = title300;
+        order.Title.ShouldBe(title300);
+        order.Title!.Length.ShouldBe(300);
+    }
 }
