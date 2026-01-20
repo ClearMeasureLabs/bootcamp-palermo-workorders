@@ -100,17 +100,24 @@ dotnet test src/IntegrationTests/IntegrationTests.csproj
 
 ## Pull Request Readiness (REQUIRED for Copilot SWE Agent)
 
-Before marking a draft pull request as ready for review, **MUST** complete these steps in order:
+When code files are changed (*.cs, *.razor, *.sql, etc.), **MUST** complete these steps before finishing:
 
 1. **Run `.\privatebuild.ps1`** - Must pass (unit tests + integration tests)
 2. **Run `.\acceptancetests.ps1`** - Must pass (full system acceptance tests)
-3. **Only after both pass** - Mark PR as ready for review
+3. **Mark PR as ready for review** - Use `gh pr ready` command
+
+```powershell
+# After both scripts pass:
+gh pr ready
+```
 
 If either script fails:
 - Diagnose the failure from the output
 - Fix the issue
 - Re-run both scripts from the beginning
 - Do NOT mark PR ready until both pass
+
+**IMPORTANT:** Always mark the PR as ready for review after both scripts pass. Do NOT leave PRs in draft state when work is complete.
 
 ## Special Project Rules
 
