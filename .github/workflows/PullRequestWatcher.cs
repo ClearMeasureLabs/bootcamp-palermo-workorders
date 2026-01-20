@@ -273,8 +273,9 @@ static void ApproveWorkflowRuns(string repo, List<PullRequestInfo> pullRequests,
 
                 Log($"  PR branch: {headBranch}");
 
-                // Find workflow runs on this branch that are waiting for approval
-                var runsResult = RunCommand("gh", $"run list --repo {repo} --branch {headBranch} --status waiting --json databaseId,name,status --limit 20");
+                // Find workflow runs on this branch that need approval
+                // Runs from external actors (like Copilot) show as completed with conclusion=action_required
+                var runsResult = RunCommand("gh", $"run list --repo {repo} --branch {headBranch} --json databaseId,name,status,conclusion --limit 20");
                 var runsDoc = JsonDocument.Parse(runsResult);
 
                 var approvedCount = 0;
@@ -282,28 +283,40 @@ static void ApproveWorkflowRuns(string repo, List<PullRequestInfo> pullRequests,
                 {
                     var runId = run.GetProperty("databaseId").GetInt64();
                     var runName = run.GetProperty("name").GetString() ?? "";
+                    var status = run.GetProperty("status").GetString() ?? "";
+                    var conclusion = run.TryGetProperty("conclusion", out var concProp) ? concProp.GetString() ?? "" : "";
 
-                    Log($"  Found pending run: {runName} (ID: {runId})");
+                    // Check for runs that need approval:
+                    // - status=waiting (pending approval)
+                    // - status=completed with conclusion=action_required (external actor needs approval)
+                    var needsApproval = status == "waiting" ||
+                                       (status == "completed" && conclusion == "action_required");
+
+                    if (!needsApproval) continue;
+
+                    Log($"  Found run needing approval: {runName} (ID: {runId}, status: {status}, conclusion: {conclusion})");
 
                     try
                     {
-                        RunCommand("gh", $"run approve {runId} --repo {repo}");
-                        Log($"    Approved workflow run {runId}");
+                        // Use rerun to approve and start the workflow
+                        // This runs the workflow with the current user's permissions
+                        RunCommand("gh", $"run rerun {runId} --repo {repo}");
+                        Log($"    Rerun triggered for workflow run {runId}");
                         approvedCount++;
                     }
                     catch (Exception ex)
                     {
-                        Log($"    Warning: Could not approve run {runId}: {ex.Message}");
+                        Log($"    Warning: Could not rerun {runId}: {ex.Message}");
                     }
                 }
 
                 if (approvedCount == 0)
                 {
-                    Log($"  No pending workflow runs found for PR #{pr.Number}");
+                    Log($"  No workflow runs needing approval for PR #{pr.Number}");
                 }
                 else
                 {
-                    Log($"  Approved {approvedCount} workflow run(s) for PR #{pr.Number}");
+                    Log($"  Triggered rerun for {approvedCount} workflow run(s) for PR #{pr.Number}");
                 }
             }
             catch (Exception ex)
