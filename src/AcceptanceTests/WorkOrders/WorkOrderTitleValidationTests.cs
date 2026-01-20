@@ -50,9 +50,9 @@ public class WorkOrderTitleValidationTests : AcceptanceTestBase
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
 
-        var validationSummary = Page.Locator(".validation-message, .validation-errors, .validation-summary");
-        await Expect(validationSummary).ToBeVisibleAsync();
-        var text = await validationSummary.InnerTextAsync();
+        var validationMessage = Page.Locator(".validation-message").First;
+        await Expect(validationMessage).ToBeVisibleAsync();
+        var text = await validationMessage.InnerTextAsync();
         text.ShouldContain("12 characters");
     }
 
@@ -64,17 +64,25 @@ public class WorkOrderTitleValidationTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
-        await Input(nameof(WorkOrderManage.Elements.Title), "Fix Roof Leak!");
+        // Try to input more than 12 characters - maxlength should prevent it
+        var titleLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        await titleLocator.FillAsync("Fix Roof Leak!");
+        
+        // Verify only 12 characters were actually entered due to maxlength
+        var actualValue = await titleLocator.InputValueAsync();
+        actualValue.Length.ShouldBe(12);
+        actualValue.ShouldBe("Fix Roof Lea");
+        
         await Input(nameof(WorkOrderManage.Elements.Description), "Test description");
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
 
+        // The form should be submittable since client-side maxlength enforced 12 chars
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
-
-        var validationSummary = Page.Locator(".validation-message, .validation-errors, .validation-summary");
-        await Expect(validationSummary).ToBeVisibleAsync();
-        var text = await validationSummary.InnerTextAsync();
-        text.ShouldContain("12 characters");
+        
+        // Should succeed and navigate to search page
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.WaitForURLAsync("**/workorder/search");
     }
 
     [Test]
@@ -92,9 +100,9 @@ public class WorkOrderTitleValidationTests : AcceptanceTestBase
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
 
-        var validationSummary = Page.Locator(".validation-message, .validation-errors, .validation-summary");
-        await Expect(validationSummary).ToBeVisibleAsync();
-        var text = await validationSummary.InnerTextAsync();
+        var validationMessage = Page.Locator(".validation-message").First;
+        await Expect(validationMessage).ToBeVisibleAsync();
+        var text = await validationMessage.InnerTextAsync();
         text.ShouldContain("required");
     }
 
@@ -116,9 +124,9 @@ public class WorkOrderTitleValidationTests : AcceptanceTestBase
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
 
-        var validationSummary = Page.Locator(".validation-message, .validation-errors, .validation-summary");
-        await Expect(validationSummary).ToBeVisibleAsync();
-        var text = await validationSummary.InnerTextAsync();
+        var validationMessage = Page.Locator(".validation-message").First;
+        await Expect(validationMessage).ToBeVisibleAsync();
+        var text = await validationMessage.InnerTextAsync();
         text.ShouldContain("12 characters");
     }
 
