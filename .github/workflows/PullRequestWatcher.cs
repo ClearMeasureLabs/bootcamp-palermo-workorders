@@ -31,6 +31,7 @@ if (prsAwaitingReview.Count > 0)
     }
     MarkPRsAsReady(repo, prsAwaitingReview, timings);
     ApproveWorkflowRuns(repo, prsAwaitingReview, timings);
+    TransitionIssueLabel(repo, issueNumber, timings);
     exitCode = 0; // Success - PRs were marked ready
 }
 else
@@ -348,9 +349,32 @@ static void ApproveWorkflowRuns(string repo, List<PullRequestInfo> pullRequests,
     Log($"Approving workflow runs took {sw.Elapsed.TotalSeconds:F2}s");
 }
 
+static void TransitionIssueLabel(string repo, string issueNumber, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+
+    LogGroup("Transitioning Issue Label", () =>
+    {
+        Log($"Removing '5. Development' label and adding '6. Functional Validation' label...");
+        try
+        {
+            RunCommand("gh", $"issue edit {issueNumber} --repo {repo} --remove-label \"5. Development\" --add-label \"6. Functional Validation\"");
+            Log($"Issue #{issueNumber} transitioned to '6. Functional Validation'");
+        }
+        catch (Exception ex)
+        {
+            Log($"Warning: Could not transition labels for issue #{issueNumber}: {ex.Message}");
+        }
+    });
+
+    sw.Stop();
+    timings.TransitionLabel = sw.Elapsed;
+    Log($"Transitioning label took {sw.Elapsed.TotalSeconds:F2}s");
+}
+
 static void LogComplete(string issueNumber, string currentUser, int linkedPRCount, int awaitingReviewCount, int exitCode, TimingMetrics timings)
 {
-    var total = timings.GetUser + timings.FindLinkedPRs + timings.CheckReviews + timings.MarkReady + timings.ApproveWorkflows;
+    var total = timings.GetUser + timings.FindLinkedPRs + timings.CheckReviews + timings.MarkReady + timings.ApproveWorkflows + timings.TransitionLabel;
 
     LogGroup("PullRequestWatcher Complete", () =>
     {
@@ -365,6 +389,7 @@ static void LogComplete(string issueNumber, string currentUser, int linkedPRCoun
         Log($"   - Check reviews:    {timings.CheckReviews.TotalSeconds,6:F2}s");
         Log($"   - Mark ready:       {timings.MarkReady.TotalSeconds,6:F2}s");
         Log($"   - Approve workflows:{timings.ApproveWorkflows.TotalSeconds,6:F2}s");
+        Log($"   - Transition label: {timings.TransitionLabel.TotalSeconds,6:F2}s");
         Log($"   ---------------------------------");
         Log($"   Total:              {total.TotalSeconds,6:F2}s");
     });
@@ -430,6 +455,7 @@ class TimingMetrics
     public TimeSpan CheckReviews { get; set; }
     public TimeSpan MarkReady { get; set; }
     public TimeSpan ApproveWorkflows { get; set; }
+    public TimeSpan TransitionLabel { get; set; }
 }
 
 class PullRequestInfo
