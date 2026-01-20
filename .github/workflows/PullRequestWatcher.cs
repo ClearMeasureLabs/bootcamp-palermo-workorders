@@ -21,6 +21,7 @@ var currentUser = GetCurrentUser(timings);
 var linkedPRs = FindPRsLinkedToIssue(repo, issueNumber, timings);
 var prsAwaitingReview = CheckForPendingReviews(repo, linkedPRs, currentUser, timings);
 
+int exitCode;
 if (prsAwaitingReview.Count > 0)
 {
     Log($"Found {prsAwaitingReview.Count} PR(s) for issue #{issueNumber} awaiting review from {currentUser}");
@@ -30,15 +31,17 @@ if (prsAwaitingReview.Count > 0)
     }
     MarkPRsAsReady(repo, prsAwaitingReview, timings);
     ApproveWorkflowRuns(repo, prsAwaitingReview, timings);
+    exitCode = prsAwaitingReview.Count; // Return count of PRs marked ready (non-zero)
 }
 else
 {
     Log($"No PRs for issue #{issueNumber} awaiting review from {currentUser}");
+    exitCode = -1; // Return -1 to signal retry needed
 }
 
-LogComplete(issueNumber, currentUser, linkedPRs.Count, prsAwaitingReview.Count, timings);
+LogComplete(issueNumber, currentUser, linkedPRs.Count, prsAwaitingReview.Count, exitCode, timings);
 
-return 0;
+return exitCode;
 
 // ============================================================================
 // PIPELINE STEPS
@@ -76,6 +79,11 @@ WORKFLOW:
     4. Mark PRs with pending reviews as ready for review
     5. Approve any workflow runs awaiting approval on those PRs
     6. Report findings
+
+EXIT CODES:
+    >0  PRs were marked as ready (returns count of PRs)
+    -1  No PRs marked ready, retry needed (no linked PRs or no pending reviews)
+    1   Error (invalid arguments)
 """);
 }
 
@@ -331,7 +339,7 @@ static void ApproveWorkflowRuns(string repo, List<PullRequestInfo> pullRequests,
     Log($"Approving workflow runs took {sw.Elapsed.TotalSeconds:F2}s");
 }
 
-static void LogComplete(string issueNumber, string currentUser, int linkedPRCount, int awaitingReviewCount, TimingMetrics timings)
+static void LogComplete(string issueNumber, string currentUser, int linkedPRCount, int awaitingReviewCount, int exitCode, TimingMetrics timings)
 {
     var total = timings.GetUser + timings.FindLinkedPRs + timings.CheckReviews + timings.MarkReady + timings.ApproveWorkflows;
 
@@ -341,6 +349,7 @@ static void LogComplete(string issueNumber, string currentUser, int linkedPRCoun
         Log($"User: {currentUser}");
         Log($"PRs linked to issue: {linkedPRCount}");
         Log($"PRs awaiting review: {awaitingReviewCount}");
+        Log($"Exit code: {exitCode} ({(exitCode > 0 ? "PRs marked ready" : exitCode == -1 ? "no action, retry needed" : "success")})");
         Log($"Timing Summary:");
         Log($"   - Get user:         {timings.GetUser.TotalSeconds,6:F2}s");
         Log($"   - Find linked PRs:  {timings.FindLinkedPRs.TotalSeconds,6:F2}s");
