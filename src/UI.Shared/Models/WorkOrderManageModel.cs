@@ -20,6 +20,9 @@ public class WorkOrderManageModel
 
     [Required] public string? Description { get; set; }
 
+    // Optional plain-text instructions, up to 4000 characters
+    public string? Instructions { get; set; }
+
     public bool IsReadOnly { get; set; }
 
     public string? AssignedDate { get; set; }
