@@ -231,7 +231,7 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = new string('A', 51), // Exceeds 50 char limit
-            Title = new string('B', 201), // Exceeds 200 char limit
+            Title = new string('B', 301), // Exceeds 300 char limit
             Description = new string('C', 1001), // Exceeds 1000 char limit
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
@@ -287,5 +287,62 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee!.Id.ShouldBe(assignee.Id);
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
+    }
+
+    [Test]
+    public void ShouldAccept300CharacterTitle()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var title300 = new string('A', 300);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-300",
+            Title = title300,
+            Description = "Testing 300 character title",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Title.ShouldBe(title300);
+        rehydratedWorkOrder.Title.Length.ShouldBe(300);
+    }
+
+    [Test]
+    public void ShouldReject301CharacterTitle()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var title301 = new string('A', 301);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-301",
+            Title = title301,
+            Description = "Testing 301 character title",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(workOrder);
+
+        Should.Throw<DbUpdateException>(() => context.SaveChanges());
     }
 }
