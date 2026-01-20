@@ -196,32 +196,41 @@ static List<PullRequestInfo> CheckForPendingReviews(string repo, List<PullReques
 
         foreach (var pr in pullRequests)
         {
-            // Get review requests for this PR
-            var reviewResult = RunCommand("gh", $"pr view {pr.Number} --repo {repo} --json reviewRequests");
-            var reviewDoc = JsonDocument.Parse(reviewResult);
-            var reviewRequests = reviewDoc.RootElement.GetProperty("reviewRequests");
-
-            foreach (var request in reviewRequests.EnumerateArray())
+            try
             {
-                string? requestedLogin = null;
+                // Get review requests for this PR
+                var reviewResult = RunCommand("gh", $"pr view {pr.Number} --repo {repo} --json reviewRequests");
+                var reviewDoc = JsonDocument.Parse(reviewResult);
+                var reviewRequests = reviewDoc.RootElement.GetProperty("reviewRequests");
 
-                // Check if it's a user or team request
-                if (request.TryGetProperty("login", out var loginProp))
+                foreach (var request in reviewRequests.EnumerateArray())
                 {
-                    requestedLogin = loginProp.GetString();
-                }
-                else if (request.TryGetProperty("name", out var nameProp))
-                {
-                    // It's a team, skip for now
-                    continue;
-                }
+                    string? requestedLogin = null;
 
-                if (requestedLogin != null && requestedLogin.Equals(currentUser, StringComparison.OrdinalIgnoreCase))
-                {
-                    Log($"  PR #{pr.Number} has pending review request for {currentUser}");
-                    results.Add(pr);
-                    break;
+                    // Check if it's a user or team request
+                    if (request.TryGetProperty("login", out var loginProp))
+                    {
+                        requestedLogin = loginProp.GetString();
+                    }
+                    else if (request.TryGetProperty("name", out var nameProp))
+                    {
+                        // It's a team, skip for now
+                        continue;
+                    }
+
+                    if (requestedLogin != null && requestedLogin.Equals(currentUser, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Log($"  PR #{pr.Number} has pending review request for {currentUser}");
+                        results.Add(pr);
+                        break;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                // May fail if token lacks read:org scope for team review requests
+                Log($"  Warning: Could not check review requests for PR #{pr.Number}: {ex.Message}");
+                Log($"  Note: Token may need 'read:org' scope for team reviewer queries");
             }
         }
 
