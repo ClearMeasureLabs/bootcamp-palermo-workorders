@@ -118,6 +118,7 @@ public class WorkOrderAssignTests : AcceptanceTestBase
 
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         rehyratedOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
+        rehyratedOrder.Assignee.ShouldNotBeNull();
         rehyratedOrder.Assignee.UserName.ShouldBe("duffman");
     }
 }
