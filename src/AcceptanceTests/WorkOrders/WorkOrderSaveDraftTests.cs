@@ -110,7 +110,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var workOrders = await Bus.Send(new WorkOrderSearchSpecification());
+        var workOrders = await Bus.Send(new WorkOrderSpecificationQuery());
         var savedOrder = workOrders.FirstOrDefault(wo => wo.Title == "Test Work Order");
         savedOrder.ShouldNotBeNull();
         savedOrder!.Instructions.ShouldBe("Test Instructions for execution");
@@ -138,7 +138,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var workOrders = await Bus.Send(new WorkOrderSearchSpecification());
+        var workOrders = await Bus.Send(new WorkOrderSpecificationQuery());
         var savedOrder = workOrders.FirstOrDefault(wo => wo.Title == "Test Work Order Blank");
         savedOrder.ShouldNotBeNull();
         savedOrder!.Instructions.ShouldBe(string.Empty);
@@ -161,7 +161,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var workOrders = await Bus.Send(new WorkOrderSearchSpecification());
+        var workOrders = await Bus.Send(new WorkOrderSpecificationQuery());
         var savedOrder = workOrders.FirstOrDefault(wo => wo.Title == "Test Work Order Max");
         savedOrder.ShouldNotBeNull();
         savedOrder!.Instructions.ShouldBe(maxLengthInstructions);
@@ -223,9 +223,9 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         roomBox.ShouldNotBeNull();
 
         // Instructions should be below Description
-        instructionsBox!.Value.Y.ShouldBeGreaterThan(descriptionBox!.Value.Y);
+        instructionsBox.Y.ShouldBeGreaterThan(descriptionBox.Y);
         // Room should be below Instructions
-        roomBox!.Value.Y.ShouldBeGreaterThan(instructionsBox.Value.Y);
+        roomBox.Y.ShouldBeGreaterThan(instructionsBox.Y);
     }
 
     [Test]
