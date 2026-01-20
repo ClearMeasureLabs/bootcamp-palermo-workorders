@@ -29,6 +29,7 @@ if (prsAwaitingReview.Count > 0)
         Log($"  PR #{pr.Number}: {pr.Title}");
     }
     MarkPRsAsReady(repo, prsAwaitingReview, timings);
+    ApproveWorkflowRuns(repo, prsAwaitingReview, timings);
 }
 else
 {
@@ -61,7 +62,8 @@ EXAMPLES:
 DESCRIPTION:
     Finds pull requests linked to a specific issue and checks if the
     current authenticated user (PAT user) has a pending review request.
-    If found, marks those PRs as ready for review.
+    If found, marks those PRs as ready for review and approves any
+    workflow runs that are awaiting approval.
 
 PREREQUISITES:
     - GitHub CLI (gh) authenticated with repo access
@@ -72,7 +74,8 @@ WORKFLOW:
     2. Find PRs linked to the specified issue
     3. Check each PR for pending review requests for the PAT user
     4. Mark PRs with pending reviews as ready for review
-    5. Report findings
+    5. Approve any workflow runs awaiting approval on those PRs
+    6. Report findings
 """);
 }
 
@@ -251,9 +254,73 @@ static void MarkPRsAsReady(string repo, List<PullRequestInfo> pullRequests, Timi
     Log($"Marking PRs as ready took {sw.Elapsed.TotalSeconds:F2}s");
 }
 
+static void ApproveWorkflowRuns(string repo, List<PullRequestInfo> pullRequests, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+
+    LogGroup("Approving Pending Workflow Runs", () =>
+    {
+        foreach (var pr in pullRequests)
+        {
+            Log($"Checking for pending workflow runs on PR #{pr.Number}...");
+
+            try
+            {
+                // Get the PR's head branch
+                var prResult = RunCommand("gh", $"pr view {pr.Number} --repo {repo} --json headRefName");
+                var prDoc = JsonDocument.Parse(prResult);
+                var headBranch = prDoc.RootElement.GetProperty("headRefName").GetString() ?? "";
+
+                Log($"  PR branch: {headBranch}");
+
+                // Find workflow runs on this branch that are waiting for approval
+                var runsResult = RunCommand("gh", $"run list --repo {repo} --branch {headBranch} --status waiting --json databaseId,name,status --limit 20");
+                var runsDoc = JsonDocument.Parse(runsResult);
+
+                var approvedCount = 0;
+                foreach (var run in runsDoc.RootElement.EnumerateArray())
+                {
+                    var runId = run.GetProperty("databaseId").GetInt64();
+                    var runName = run.GetProperty("name").GetString() ?? "";
+
+                    Log($"  Found pending run: {runName} (ID: {runId})");
+
+                    try
+                    {
+                        RunCommand("gh", $"run approve {runId} --repo {repo}");
+                        Log($"    Approved workflow run {runId}");
+                        approvedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"    Warning: Could not approve run {runId}: {ex.Message}");
+                    }
+                }
+
+                if (approvedCount == 0)
+                {
+                    Log($"  No pending workflow runs found for PR #{pr.Number}");
+                }
+                else
+                {
+                    Log($"  Approved {approvedCount} workflow run(s) for PR #{pr.Number}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"  Warning: Error checking workflow runs for PR #{pr.Number}: {ex.Message}");
+            }
+        }
+    });
+
+    sw.Stop();
+    timings.ApproveWorkflows = sw.Elapsed;
+    Log($"Approving workflow runs took {sw.Elapsed.TotalSeconds:F2}s");
+}
+
 static void LogComplete(string issueNumber, string currentUser, int linkedPRCount, int awaitingReviewCount, TimingMetrics timings)
 {
-    var total = timings.GetUser + timings.FindLinkedPRs + timings.CheckReviews + timings.MarkReady;
+    var total = timings.GetUser + timings.FindLinkedPRs + timings.CheckReviews + timings.MarkReady + timings.ApproveWorkflows;
 
     LogGroup("PullRequestWatcher Complete", () =>
     {
@@ -262,12 +329,13 @@ static void LogComplete(string issueNumber, string currentUser, int linkedPRCoun
         Log($"PRs linked to issue: {linkedPRCount}");
         Log($"PRs awaiting review: {awaitingReviewCount}");
         Log($"Timing Summary:");
-        Log($"   - Get user:       {timings.GetUser.TotalSeconds,6:F2}s");
-        Log($"   - Find linked PRs:{timings.FindLinkedPRs.TotalSeconds,6:F2}s");
-        Log($"   - Check reviews:  {timings.CheckReviews.TotalSeconds,6:F2}s");
-        Log($"   - Mark ready:     {timings.MarkReady.TotalSeconds,6:F2}s");
-        Log($"   -------------------------------");
-        Log($"   Total:            {total.TotalSeconds,6:F2}s");
+        Log($"   - Get user:         {timings.GetUser.TotalSeconds,6:F2}s");
+        Log($"   - Find linked PRs:  {timings.FindLinkedPRs.TotalSeconds,6:F2}s");
+        Log($"   - Check reviews:    {timings.CheckReviews.TotalSeconds,6:F2}s");
+        Log($"   - Mark ready:       {timings.MarkReady.TotalSeconds,6:F2}s");
+        Log($"   - Approve workflows:{timings.ApproveWorkflows.TotalSeconds,6:F2}s");
+        Log($"   ---------------------------------");
+        Log($"   Total:              {total.TotalSeconds,6:F2}s");
     });
 }
 
@@ -330,6 +398,7 @@ class TimingMetrics
     public TimeSpan FindLinkedPRs { get; set; }
     public TimeSpan CheckReviews { get; set; }
     public TimeSpan MarkReady { get; set; }
+    public TimeSpan ApproveWorkflows { get; set; }
 }
 
 class PullRequestInfo
