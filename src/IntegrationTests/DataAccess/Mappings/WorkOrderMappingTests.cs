@@ -288,4 +288,73 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
     }
+
+    [Test]
+    public void ShouldSaveWorkOrderWith2500CharacterDescription()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var description = new string('A', 2500);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-07",
+            Title = "Test Max Description",
+            Description = description,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Description.ShouldNotBeNull();
+        rehydratedWorkOrder.Description!.Length.ShouldBe(2500);
+        rehydratedWorkOrder.Description.ShouldBe(description);
+    }
+
+    [Test]
+    public void ShouldTruncateDescriptionExceeding2500Characters()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var longDescription = new string('B', 2600);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-08",
+            Title = "Test Truncation",
+            Description = longDescription,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Description.ShouldNotBeNull();
+        rehydratedWorkOrder.Description!.Length.ShouldBe(2500);
+    }
 }

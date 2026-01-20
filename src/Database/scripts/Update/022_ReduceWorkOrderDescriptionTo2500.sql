@@ -1,0 +1,11 @@
+BEGIN TRANSACTION
+GO
+PRINT N'Altering [dbo].[WorkOrder] Description column from NVARCHAR(4000) to NVARCHAR(2500)'
+GO
+ALTER TABLE [dbo].[WorkOrder] ALTER COLUMN [Description] NVARCHAR(2500) NULL
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO
