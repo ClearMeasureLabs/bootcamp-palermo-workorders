@@ -16,7 +16,9 @@ public class WorkOrderManageModel
 
     public string? AssignedToUserName { get; set; }
 
-    [Required] public string? Title { get; set; }
+    [Required]
+    [StringLength(12, MinimumLength = 12, ErrorMessage = "Title must be exactly 12 characters")]
+    public string? Title { get; set; }
 
     [Required] public string? Description { get; set; }
 
