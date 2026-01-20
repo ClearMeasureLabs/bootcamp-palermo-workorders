@@ -246,6 +246,64 @@ public class WorkOrderMappingTests
     }
 
     [Test]
+    public void RoomNumber_WithFifteenCharacters_ShouldPersist()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var fifteenCharRoom = "Conference Rm A"; // Exactly 15 characters
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-15",
+            Title = "Test Room Length",
+            Description = "Testing 15 character room limit",
+            RoomNumber = fifteenCharRoom,
+            Status = WorkOrderStatus.Draft,
+            Creator = creator
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.RoomNumber.ShouldBe(fifteenCharRoom);
+        rehydratedWorkOrder.RoomNumber!.Length.ShouldBe(15);
+    }
+
+    [Test]
+    public void RoomNumber_WithSixteenCharacters_ShouldThrowException()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-16",
+            Title = "Test Room Length",
+            Description = "Testing 16 character rejection",
+            RoomNumber = new string('R', 16), // Exceeds 15 char limit
+            Status = WorkOrderStatus.Draft,
+            Creator = creator
+        };
+
+        using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(workOrder);
+
+        Should.Throw<DbUpdateException>(() => context.SaveChanges());
+    }
+
+    [Test]
     public void ShouldEagerFetchCreatorAndAssigneeByDefault()
     {
         new DatabaseTests().Clean();

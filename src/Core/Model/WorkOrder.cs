@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ClearMeasure.Bootcamp.Core.Model;
 
 public class WorkOrder : EntityBase<WorkOrder>
@@ -12,6 +14,7 @@ public class WorkOrder : EntityBase<WorkOrder>
         set => _description = getTruncatedString(value);
     }
 
+    [MaxLength(15)]
     public string? RoomNumber { get; set; } = null;
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;

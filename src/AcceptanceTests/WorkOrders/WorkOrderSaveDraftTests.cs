@@ -54,6 +54,79 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     }
 
     [Test]
+    public async Task CreateWorkOrder_WithFifteenCharacterRoom_SavesSuccessfully()
+    {
+        await LoginAsCurrentUser();
+
+        var fifteenCharRoom = "Conference Rm A"; // Exactly 15 characters
+        
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync();
+        var workOrderNumber = await woNumberLocator.InnerTextAsync();
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "Test Room Length");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Testing 15 character room field");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), fifteenCharRoom);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        WorkOrder savedOrder = await Bus.Send(new WorkOrderByNumberQuery(workOrderNumber)) ?? throw new InvalidOperationException();
+        
+        savedOrder.RoomNumber.ShouldBe(fifteenCharRoom);
+        savedOrder.RoomNumber!.Length.ShouldBe(15);
+    }
+
+    [Test]
+    public async Task EditWorkOrder_UpdateRoomToFifteenCharacters_SavesSuccessfully()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var fifteenCharRoom = "Large Room 1234"; // Exactly 15 characters
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), fifteenCharRoom);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
+        await Expect(roomNumberField).ToHaveValueAsync(fifteenCharRoom);
+
+        WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        rehydratedOrder.RoomNumber.ShouldBe(fifteenCharRoom);
+        rehydratedOrder.RoomNumber!.Length.ShouldBe(15);
+    }
+
+    [Test]
+    public async Task CreateWorkOrder_RoomFieldMaxLength_EnforcesFifteenCharacterLimit()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var sixteenCharText = "Conference Rm AB"; // 16 characters
+        await Input(nameof(WorkOrderManage.Elements.Title), "Test Max Length");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Testing maxlength constraint");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), sixteenCharText);
+
+        var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
+        var actualValue = await roomNumberField.InputValueAsync();
+        
+        actualValue.Length.ShouldBeLessThanOrEqualTo(15);
+        actualValue.ShouldBe(sixteenCharText.Substring(0, 15));
+    }
+
+    [Test]
     public async Task ShouldAssignEmployeeAndSave()
     {
         await LoginAsCurrentUser();
