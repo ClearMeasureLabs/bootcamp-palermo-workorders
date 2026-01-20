@@ -20,6 +20,7 @@ on:
 permissions:
   contents: read
   issues: write
+  actions: write
 
 jobs:
   issue-tasker:
@@ -111,3 +112,10 @@ jobs:
         run: |
           ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
           dotnet run .github/workflows/IssueAssigner.cs -- ${{ github.repository }} $ISSUE_NUM
+
+      - name: Trigger PullRequestWatcher
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_PAT }}
+        run: |
+          ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
+          gh workflow run PullRequestWatcher.yml --repo ${{ github.repository }} -f issue_number=$ISSUE_NUM
