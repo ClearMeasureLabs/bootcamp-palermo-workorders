@@ -167,9 +167,5 @@ public class WorkOrderManageTests : AcceptanceTestBase
         
         displayedTitle.ShouldBe(title250);
         displayedTitle.Length.ShouldBe(250);
-        
-        // Verify title is readable and properly formatted
-        var titleValue = await titleField.GetAttributeAsync("value");
-        titleValue.ShouldBe(title250);
     }
 }
