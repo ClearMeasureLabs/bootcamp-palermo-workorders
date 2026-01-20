@@ -19,7 +19,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
-            RoomNumber = "CR-101",
+            RoomNum = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
         };
@@ -43,7 +43,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
-        rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
+        rehydratedWorkOrder.RoomNum.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
         rehydratedWorkOrder.Creator!.Id.ShouldBe(creator.Id);
@@ -62,7 +62,7 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
-            RoomNumber = "123 a"
+            RoomNum = "123 a"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
         order.Number = "123";
@@ -90,7 +90,7 @@ public class WorkOrderMappingTests
             rehydratedWorkOrder.Title.ShouldBe(order.Title);
             rehydratedWorkOrder.Description.ShouldBe(order.Description);
             rehydratedWorkOrder.Status.ShouldBe(order.Status);
-            rehydratedWorkOrder.RoomNumber.ShouldBe(order.RoomNumber);
+            rehydratedWorkOrder.RoomNum.ShouldBe(order.RoomNum);
             rehydratedWorkOrder.Number.ShouldBe(order.Number);
         }
     }
@@ -108,7 +108,7 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
-            RoomNumber = "123 a"
+            RoomNum = "123 a"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
         order.Number = "123";
@@ -233,7 +233,7 @@ public class WorkOrderMappingTests
             Number = new string('A', 51), // Exceeds 50 char limit
             Title = new string('B', 201), // Exceeds 200 char limit
             Description = new string('C', 1001), // Exceeds 1000 char limit
-            RoomNumber = new string('D', 51), // Exceeds 50 char limit
+            RoomNum = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
         };
