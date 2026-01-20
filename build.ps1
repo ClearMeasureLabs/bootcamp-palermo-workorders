@@ -112,7 +112,7 @@ Function UnitTests {
 
 	try {
 		exec {
-			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
+			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "UnitTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
@@ -128,7 +128,7 @@ Function IntegrationTest {
 
 	try {
 		exec {
-			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
+			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--collect:"XPlat Code Coverage"
@@ -186,7 +186,7 @@ Function AcceptanceTests {
 	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
 	try {
 		exec {
-			& dotnet test /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
+			& dotnet test /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--settings:$runSettingsPath `
@@ -266,6 +266,14 @@ Function Publish-ToGitHubPackages {
 		throw "GITHUB_TOKEN environment variable is required for publishing to GitHub Packages"
 	}
 	
+	# Verify token is not empty (but don't log the actual token)
+	if ($githubToken.Length -lt 10) {
+		Log-Message -Message "GITHUB_TOKEN appears to be invalid (too short)." -Type "ERROR"
+		throw "GITHUB_TOKEN appears to be invalid"
+	}
+	
+	Log-Message -Message "GITHUB_TOKEN found (length: $($githubToken.Length))" -Type "INFO"
+	
 	$githubRepo = $env:GITHUB_REPOSITORY
 	if ([string]::IsNullOrEmpty($githubRepo)) {
 		Log-Message -Message "GITHUB_REPOSITORY not found. Cannot determine GitHub Packages feed." -Type "ERROR"
@@ -278,13 +286,39 @@ Function Publish-ToGitHubPackages {
 	$packageFile = Get-ChildItem "$build_dir/$packageId.$version.nupkg" -ErrorAction SilentlyContinue
 	if (-not $packageFile) {
 		Log-Message -Message "Package file not found: $packageId.$version.nupkg" -Type "ERROR"
-		throw "Package file not found"
+		throw "Package file not found: $packageId.$version.nupkg"
 	}
 	
 	Log-Message -Message "Publishing $($packageFile.Name) to GitHub Packages..." -Type "INFO"
-	exec {
-		& dotnet nuget push $packageFile.FullName --source $githubFeed --api-key $githubToken --skip-duplicate
+	Log-Message -Message "Feed: $githubFeed" -Type "INFO"
+	Log-Message -Message "Owner: $owner" -Type "INFO"
+	
+	# GitHub Packages authentication: use username (owner) and token as password
+	# Configure source first, then push
+	$sourceName = "GitHub-$owner"
+	
+	# Remove existing source if it exists
+	$existingSource = dotnet nuget list source | Select-String -Pattern $sourceName -Quiet
+	if ($existingSource) {
+		Log-Message -Message "Removing existing source: $sourceName" -Type "INFO"
+		dotnet nuget remove source $sourceName 2>$null
 	}
+	
+	# Add source with username/password authentication
+	Log-Message -Message "Adding NuGet source with authentication..." -Type "INFO"
+	exec {
+		& dotnet nuget add source $githubFeed --name $sourceName --username $owner --password $githubToken --store-password-in-clear-text
+	}
+	
+	# Push using the source with explicit API key (credentials stored with source, but API key ensures authentication)
+	Log-Message -Message "Pushing package to GitHub Packages..." -Type "INFO"
+	Log-Message -Message "Feed: $githubFeed" -Type "INFO"
+	Log-Message -Message "Owner: $owner" -Type "INFO"
+	exec {
+		# Try with source name first (uses stored credentials)
+		& dotnet nuget push $packageFile.FullName --source $sourceName --api-key $githubToken --skip-duplicate
+	}
+	
 	Log-Message -Message "Successfully published $($packageFile.Name) to GitHub Packages" -Type "INFO"
 }
 
@@ -292,43 +326,25 @@ Function PackageUI {
 	$packageName = "$projectName.UI.$version.nupkg"
 	$packagePath = Join-Path $build_dir $packageName
 
-	Log-Message -Message "Packaging UI project into NuGet package: $packageName" -Type "INFO"
 	exec {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
 	}
 	
-	Log-Message -Message "Creating Octopus package: $packageName" -Type "INFO"
 	exec {
 		& dotnet-octo pack --id "$projectName.UI" --version $version --basePath $(Join-PathSegments $uiProjectPath "bin" $projectConfig $framework "publish") --outFolder $build_dir  --overwrite
 	}
 	
-	if (Test-Path $packagePath) {
-		$packageSize = (Get-Item $packagePath).Length / 1MB
-		Log-Message -Message "Created package: $packageName ($([math]::Round($packageSize, 2)) MB)" -Type "INFO"
-	}
-	
-	# Log package creation (publishing handled separately)
-	if (Test-IsGitHubActions) {
-		Log-Message -Message "Would publish $packageName to GitHub Packages" -Type "INFO"
-	}
-	elseif (Test-IsAzureDevOps) {
-		# Azure DevOps pipeline handles publishing via separate task
-		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
-	}
 }
 
 Function PackageDatabase {    
 	exec {
+		& dotnet publish $databaseProjectPath -nologo --no-restore -v $verbosity --configuration Debug
+	}
+	exec {
 		& dotnet-octo pack --id "$projectName.Database" --version $version --basePath $databaseProjectPath --outFolder $build_dir --overwrite
 	}
 	
-	# Log package creation (publishing handled separately)
-	if (Test-IsGitHubActions) {
-		Log-Message -Message "Would publish $projectName.Database.$version.nupkg to GitHub Packages" -Type "INFO"
-	}
-	elseif (Test-IsAzureDevOps) {
-		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
-	}
+
 }
 
 Function PackageAcceptanceTests {  
@@ -340,13 +356,7 @@ Function PackageAcceptanceTests {
 		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
 	}
 	
-	# Log package creation (publishing handled separately)
-	if (Test-IsGitHubActions) {
-		Log-Message -Message "Would publish $projectName.AcceptanceTests.$version.nupkg to GitHub Packages" -Type "INFO"
-	}
-	elseif (Test-IsAzureDevOps) {
-		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
-	}
+	
 }
 
 Function PackageScript {    
@@ -355,28 +365,12 @@ Function PackageScript {
 	}
 	exec {
 		& dotnet-octo pack --id "$projectName.Script" --version $version --basePath $uiProjectPath --include "*.ps1" --outFolder $build_dir  --overwrite
-	}
-	
-	# Log package creation (publishing handled separately)
-	if (Test-IsGitHubActions) {
-		Log-Message -Message "Would publish $projectName.Script.$version.nupkg to GitHub Packages" -Type "INFO"
-	}
-	elseif (Test-IsAzureDevOps) {
-		Log-Message -Message "Package ready for Azure DevOps Artifacts publishing" -Type "INFO"
-	}
+	}	
+
 }
 
 
 Function Package-Everything{
-	if (Test-IsAzureDevOps) {
-		Write-Output "Packaging nuget packages for Azure DevOps Artifacts"
-	}
-	elseif (Test-IsGitHubActions) {
-		Write-Output "Packaging nuget packages for GitHub Packages"
-	}
-	else {
-		Write-Output "Packaging nuget packages"
-	}
 	
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
 	
@@ -600,6 +594,8 @@ Function Invoke-PrivateBuild {
 		Log-Message -Message "Using default database server for platform: $script:databaseServer" -Type "INFO"
 	}
 	
+	# TODO Drop the SQL Server database.
+
 	# Generate unique database name for this build instance
 	# On Linux with Docker, no need for unique names since container is clean
 	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.

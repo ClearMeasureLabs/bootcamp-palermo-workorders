@@ -1,0 +1,121 @@
+name: IssueProcessor
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to process'
+        required: true
+      processor:
+        description: 'Which processor to run'
+        required: true
+        type: choice
+        options:
+          - IssueTasker
+          - IssueTestDesigner
+          - IssueAssigner
+
+permissions:
+  contents: read
+  issues: write
+  actions: write
+
+jobs:
+  issue-tasker:
+    name: "Technical Design → Tasks"
+    runs-on: ubuntu-latest
+    if: github.event.label.name == '3. Technical Design' || (github.event_name == 'workflow_dispatch' && github.event.inputs.processor == 'IssueTasker')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Setup GitHub CLI authentication
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Run IssueTasker
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_PAT }}
+          GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+        run: |
+          ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
+          dotnet run .github/workflows/IssueTasker.cs -- ${{ github.repository }} $ISSUE_NUM
+
+  issue-test-designer:
+    name: "Test Design → Acceptance Tests"
+    runs-on: ubuntu-latest
+    if: github.event.label.name == '4. Test Design' || (github.event_name == 'workflow_dispatch' && github.event.inputs.processor == 'IssueTestDesigner')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Setup GitHub CLI authentication
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Run IssueTestDesigner
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_PAT }}
+          GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+        run: |
+          ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
+          dotnet run .github/workflows/IssueTestDesigner.cs -- ${{ github.repository }} $ISSUE_NUM
+
+  issue-assigner:
+    name: "Development → Assign to Copilot"
+    runs-on: ubuntu-latest
+    if: github.event.label.name == '5. Development' || (github.event_name == 'workflow_dispatch' && github.event.inputs.processor == 'IssueAssigner')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Run IssueAssigner
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_PAT }}
+          GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+        run: |
+          ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
+          dotnet run .github/workflows/IssueAssigner.cs -- ${{ github.repository }} $ISSUE_NUM
+
+      - name: Trigger PullRequestWatcher
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_PAT }}
+        run: |
+          ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
+          gh workflow run PullRequestWatcher.yml --repo ${{ github.repository }} -f issue_number=$ISSUE_NUM

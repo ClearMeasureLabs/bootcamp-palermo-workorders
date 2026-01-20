@@ -2,14 +2,53 @@
 
 This file provides standards for GitHub Copilot to follow when generating code for this project.
 
+## Quick Reference (AI Tools: Read This First)
+
+**Stack:** .NET 9.0 | Blazor WASM | EF Core 9 | SQL Server | Onion Architecture
+
+**Key Paths:**
+- Domain models: `src/Core/` (WorkOrder, Employee, WorkOrderStatus, Role)
+- Data access: `src/DataAccess/` (EF Core, MediatR handlers)
+- UI Server: `src/UI/Server/` (Blazor host, DI via Lamar)
+- UI Client: `src/UI/Client/` (Blazor WASM)
+- DB migrations: `src/Database/scripts/` (DbUp, numbered ###_Name.sql)
+- Tests: `src/UnitTests/`, `src/IntegrationTests/`, `src/AcceptanceTests/`
+
+**Domain Model:**
+- `WorkOrder`: Number, Title, Description, Room, AssignedTo (Employee), Status, CreatedBy
+- `Employee`: UserName, Email, Roles
+- `WorkOrderStatus`: Created, Assigned, Completed, Cancelled
+- `Role`: Employee role definitions
+
+**Architecture Rules (Strict):**
+- Core → no dependencies (domain models, interfaces, queries)
+- DataAccess → references Core only (EF, handlers)
+- UI → outer layer (references all)
+- NO new NuGet packages without approval
+- NO .NET SDK version changes without approval
+
+**Testing Rules:**
+- Framework: NUnit 4.x + Shouldly (NOT FluentAssertions)
+- Test doubles: prefix "Stub" (NOT "Mock")
+- Pattern: AAA without comments
+- Naming: `[Method]_[Scenario]_[Expected]`
+
+**Code Style:**
+- PascalCase classes/methods, camelCase variables
+- Small focused methods, nullable reference types
+- XML docs on public APIs
+
+---
+
 ## Project Overview
 
-This is a Church Bulletin management application built with:
+This is a Work Order management application built with:
 - **.NET 9.0** - Primary framework
-- **Blazor** - UI framework
+- **Blazor** - UI framework (WebAssembly + Server)
 - **Entity Framework Core** - Data access
 - **SQL Server** - Database (LocalDB for development)
 - **Onion Architecture** - Clean architecture pattern with Core, DataAccess, and UI layers
+- **MediatR** - CQRS pattern for queries and commands
 
 ## Build Instructions
 
@@ -58,6 +97,26 @@ dotnet test src/IntegrationTests/IntegrationTests.csproj
 - **BEFORE committing changes to git**: Run `.\privatebuild.ps1` to ensure all unit and integration tests pass
 - **BEFORE submitting any pull request**: Run `.\acceptancetests.ps1` to ensure full system acceptance tests pass
 - If either script fails, use the output to diagnose and fix the problem before proceeding
+
+## Pull Request Readiness (REQUIRED for Copilot SWE Agent)
+
+**ALWAYS run `gh pr ready` when finished.** Do NOT leave PRs in draft state.
+
+**If code files are changed** (*.cs, *.razor, *.sql, etc.), run builds first:
+
+1. **Run `.\privatebuild.ps1`** - Must pass (unit tests + integration tests)
+2. **Run `.\acceptancetests.ps1`** - Must pass (full system acceptance tests)
+3. **Run `gh pr ready`** - Mark PR as ready for review
+
+If either script fails:
+- Diagnose the failure from the output
+- Fix the issue
+- Re-run both scripts from the beginning
+- Do NOT mark PR ready until both pass
+
+**If only documentation/config files changed** (*.md, *.yml, etc.):
+
+1. **Run `gh pr ready`** - Mark PR as ready for review immediately
 
 ## Special Project Rules
 
@@ -123,9 +182,46 @@ dotnet test src/IntegrationTests/IntegrationTests.csproj
 
 ### Test Naming Convention
 - `[MethodName]_[Scenario]_[ExpectedResult]`
-- Examples: 
+- Examples:
   - `GetWorkOrder_WithValidId_ReturnsWorkOrder`
   - `SaveChurchBulletin_WithMissingTitle_ThrowsValidationException`
+
+### Acceptance Tests from Issues (IMPORTANT for Copilot SWE Agent)
+
+When implementing a feature from a GitHub issue:
+
+1. **Check for "Acceptance Test Scenarios" section** in the issue body
+2. **Implement each specified test** in the fixture file indicated (e.g., `WorkOrderManageTests.cs`)
+3. **Follow the steps provided** for each test scenario
+4. **Run acceptance tests** after implementation to verify the feature works
+
+**Acceptance Test Pattern:**
+```csharp
+[Test]
+public async Task TestNameFromIssue()
+{
+    await LoginAsCurrentUser();
+    // Follow steps from issue
+    // Use helper methods: Click(), Input(), Select(), Expect()
+}
+```
+
+**Running Acceptance Tests:**
+```powershell
+cd src/AcceptanceTests
+pwsh bin/Debug/net9.0/playwright.ps1 install  # First time only
+dotnet test --filter "FullyQualifiedName~TestClassName"
+```
+
+**Key Helper Methods (from AcceptanceTestBase):**
+- `LoginAsCurrentUser()` - Authenticate test user
+- `CreateAndSaveNewWorkOrder()` - Create test work order
+- `Click(testId)` - Click element by data-testid
+- `Input(testId, value)` - Fill input field
+- `Select(testId, value)` - Select dropdown option
+- `Expect(locator)` - Playwright assertion
+
+**Workflow:** Feature code → Unit tests → Integration tests → Acceptance tests → All pass → Commit
 
 ## Blazor Guidelines
 

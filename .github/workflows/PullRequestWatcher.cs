@@ -1,0 +1,467 @@
+using System.Diagnostics;
+using System.Text.Json;
+
+// ============================================================================
+// MAIN ENTRY POINT
+// ============================================================================
+
+if (args.Length < 2)
+{
+    PrintUsage();
+    return 1;
+}
+
+var repo = args[0];
+var issueNumber = args[1];
+var timings = new TimingMetrics();
+
+LogStart(repo, issueNumber);
+
+var currentUser = GetCurrentUser(timings);
+var linkedPRs = FindPRsLinkedToIssue(repo, issueNumber, timings);
+var prsAwaitingReview = CheckForPendingReviews(repo, linkedPRs, currentUser, timings);
+
+int exitCode;
+if (prsAwaitingReview.Count > 0)
+{
+    Log($"Found {prsAwaitingReview.Count} PR(s) for issue #{issueNumber} awaiting review from {currentUser}");
+    foreach (var pr in prsAwaitingReview)
+    {
+        Log($"  PR #{pr.Number}: {pr.Title}");
+    }
+    MarkPRsAsReady(repo, prsAwaitingReview, timings);
+    ApproveWorkflowRuns(repo, prsAwaitingReview, timings);
+    TransitionIssueLabel(repo, issueNumber, timings);
+    exitCode = 0; // Success - PRs were marked ready
+}
+else
+{
+    Log($"No PRs for issue #{issueNumber} awaiting review from {currentUser}");
+    exitCode = 2; // No action taken, retry needed
+}
+
+LogComplete(issueNumber, currentUser, linkedPRs.Count, prsAwaitingReview.Count, exitCode, timings);
+
+return exitCode;
+
+// ============================================================================
+// PIPELINE STEPS
+// ============================================================================
+
+static void PrintUsage()
+{
+    Console.WriteLine("""
+PullRequestWatcher - Watch for pull requests awaiting review for a specific issue
+
+USAGE:
+    dotnet run PullRequestWatcher.cs -- <repo> <issue-number>
+
+ARGUMENTS:
+    repo            Repository in format 'owner/repo'
+    issue-number    The issue number to find linked PRs for
+
+EXAMPLES:
+    dotnet run PullRequestWatcher.cs -- ClearMeasureLabs/bootcamp-workorders 355
+
+DESCRIPTION:
+    Finds pull requests linked to a specific issue and checks if the
+    current authenticated user (PAT user) has a pending review request.
+    If found, marks those PRs as ready for review and approves any
+    workflow runs that are awaiting approval.
+
+PREREQUISITES:
+    - GitHub CLI (gh) authenticated with repo access
+    - GH_TOKEN or GITHUB_TOKEN set with appropriate permissions
+
+WORKFLOW:
+    1. Get current authenticated user
+    2. Find PRs linked to the specified issue
+    3. Check each PR for pending review requests for the PAT user
+    4. Mark PRs with pending reviews as ready for review
+    5. Approve any workflow runs awaiting approval on those PRs
+    6. Report findings
+
+EXIT CODES:
+    0   Success - PRs were marked as ready for review
+    1   Error (invalid arguments)
+    2   No action taken, retry needed (no linked PRs or no pending reviews)
+""");
+}
+
+static void LogStart(string repo, string issueNumber)
+{
+    LogGroup("PullRequestWatcher Starting", () =>
+    {
+        Log($"Repository: {repo}");
+        Log($"Issue Number: {issueNumber}");
+        Log($"Started at: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+    });
+}
+
+static string GetCurrentUser(TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+    string user = "";
+
+    LogGroup("Getting Current User", () =>
+    {
+        var result = RunCommand("gh", "api user --jq .login");
+        user = result.Trim();
+        Log($"Current PAT user: {user}");
+    });
+
+    sw.Stop();
+    timings.GetUser = sw.Elapsed;
+    Log($"Getting user took {sw.Elapsed.TotalSeconds:F2}s");
+
+    return user;
+}
+
+static List<PullRequestInfo> FindPRsLinkedToIssue(string repo, string issueNumber, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+    var results = new List<PullRequestInfo>();
+
+    LogGroup("Finding PRs Linked to Issue", () =>
+    {
+        var parts = repo.Split('/');
+        var owner = parts[0];
+        var repoName = parts[1];
+
+        // Use GraphQL to find PRs that close/reference this issue
+        Log($"Querying PRs linked to issue #{issueNumber}...");
+
+        var query = $"query {{ repository(owner: \\\"{owner}\\\", name: \\\"{repoName}\\\") {{ issue(number: {issueNumber}) {{ timelineItems(itemTypes: [CONNECTED_EVENT, CROSS_REFERENCED_EVENT], first: 50) {{ nodes {{ ... on ConnectedEvent {{ source {{ ... on PullRequest {{ number title url state author {{ login }} }} }} }} ... on CrossReferencedEvent {{ source {{ ... on PullRequest {{ number title url state author {{ login }} }} }} }} }} }} }} }} }}";
+
+        var result = RunCommand("gh", $"api graphql -f query=\"{query}\"");
+        Log($"GraphQL response received");
+
+        var doc = JsonDocument.Parse(result);
+        var timelineItems = doc.RootElement
+            .GetProperty("data")
+            .GetProperty("repository")
+            .GetProperty("issue")
+            .GetProperty("timelineItems")
+            .GetProperty("nodes");
+
+        var seenPRs = new HashSet<int>();
+
+        foreach (var item in timelineItems.EnumerateArray())
+        {
+            if (!item.TryGetProperty("source", out var source)) continue;
+            if (!source.TryGetProperty("number", out var numberProp)) continue;
+
+            var prNumber = numberProp.GetInt32();
+            if (seenPRs.Contains(prNumber)) continue;
+            seenPRs.Add(prNumber);
+
+            var state = source.GetProperty("state").GetString() ?? "";
+            if (state != "OPEN")
+            {
+                Log($"  Skipping PR #{prNumber} - state is {state}");
+                continue;
+            }
+
+            var prTitle = source.GetProperty("title").GetString() ?? "";
+            var prUrl = source.GetProperty("url").GetString() ?? "";
+            var prAuthor = source.GetProperty("author").GetProperty("login").GetString() ?? "";
+
+            Log($"  Found open PR #{prNumber}: {prTitle} (by {prAuthor})");
+            results.Add(new PullRequestInfo
+            {
+                Number = prNumber,
+                Title = prTitle,
+                Url = prUrl,
+                Author = prAuthor
+            });
+        }
+
+        Log($"Found {results.Count} open PR(s) linked to issue #{issueNumber}");
+    });
+
+    sw.Stop();
+    timings.FindLinkedPRs = sw.Elapsed;
+    Log($"Finding linked PRs took {sw.Elapsed.TotalSeconds:F2}s");
+
+    return results;
+}
+
+static List<PullRequestInfo> CheckForPendingReviews(string repo, List<PullRequestInfo> pullRequests, string currentUser, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+    var results = new List<PullRequestInfo>();
+
+    LogGroup("Checking for Pending Reviews", () =>
+    {
+        Log($"Checking {pullRequests.Count} PR(s) for review requests to {currentUser}...");
+
+        foreach (var pr in pullRequests)
+        {
+            try
+            {
+                // Get review requests for this PR
+                var reviewResult = RunCommand("gh", $"pr view {pr.Number} --repo {repo} --json reviewRequests");
+                var reviewDoc = JsonDocument.Parse(reviewResult);
+                var reviewRequests = reviewDoc.RootElement.GetProperty("reviewRequests");
+
+                foreach (var request in reviewRequests.EnumerateArray())
+                {
+                    string? requestedLogin = null;
+
+                    // Check if it's a user or team request
+                    if (request.TryGetProperty("login", out var loginProp))
+                    {
+                        requestedLogin = loginProp.GetString();
+                    }
+                    else if (request.TryGetProperty("name", out var nameProp))
+                    {
+                        // It's a team, skip for now
+                        continue;
+                    }
+
+                    if (requestedLogin != null && requestedLogin.Equals(currentUser, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Log($"  PR #{pr.Number} has pending review request for {currentUser}");
+                        results.Add(pr);
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // May fail if token lacks read:org scope for team review requests
+                Log($"  Warning: Could not check review requests for PR #{pr.Number}: {ex.Message}");
+                Log($"  Note: Token may need 'read:org' scope for team reviewer queries");
+            }
+        }
+
+        Log($"Found {results.Count} PR(s) with pending review requests for {currentUser}");
+    });
+
+    sw.Stop();
+    timings.CheckReviews = sw.Elapsed;
+    Log($"Checking reviews took {sw.Elapsed.TotalSeconds:F2}s");
+
+    return results;
+}
+
+static void MarkPRsAsReady(string repo, List<PullRequestInfo> pullRequests, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+
+    LogGroup("Marking PRs as Ready for Review", () =>
+    {
+        foreach (var pr in pullRequests)
+        {
+            Log($"Marking PR #{pr.Number} as ready for review...");
+            try
+            {
+                RunCommand("gh", $"pr ready {pr.Number} --repo {repo}");
+                Log($"  PR #{pr.Number} marked as ready for review");
+            }
+            catch (Exception ex)
+            {
+                Log($"  Warning: Could not mark PR #{pr.Number} as ready: {ex.Message}");
+                Log($"  PR may already be ready or user lacks permission");
+            }
+        }
+    });
+
+    sw.Stop();
+    timings.MarkReady = sw.Elapsed;
+    Log($"Marking PRs as ready took {sw.Elapsed.TotalSeconds:F2}s");
+}
+
+static void ApproveWorkflowRuns(string repo, List<PullRequestInfo> pullRequests, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+
+    LogGroup("Approving Pending Workflow Runs", () =>
+    {
+        foreach (var pr in pullRequests)
+        {
+            Log($"Checking for pending workflow runs on PR #{pr.Number}...");
+
+            try
+            {
+                // Get the PR's head branch
+                var prResult = RunCommand("gh", $"pr view {pr.Number} --repo {repo} --json headRefName");
+                var prDoc = JsonDocument.Parse(prResult);
+                var headBranch = prDoc.RootElement.GetProperty("headRefName").GetString() ?? "";
+
+                Log($"  PR branch: {headBranch}");
+
+                // Find workflow runs on this branch that need approval
+                // Runs from external actors (like Copilot) show as completed with conclusion=action_required
+                var runsResult = RunCommand("gh", $"run list --repo {repo} --branch {headBranch} --json databaseId,name,status,conclusion --limit 20");
+                var runsDoc = JsonDocument.Parse(runsResult);
+
+                var approvedCount = 0;
+                foreach (var run in runsDoc.RootElement.EnumerateArray())
+                {
+                    var runId = run.GetProperty("databaseId").GetInt64();
+                    var runName = run.GetProperty("name").GetString() ?? "";
+                    var status = run.GetProperty("status").GetString() ?? "";
+                    var conclusion = run.TryGetProperty("conclusion", out var concProp) ? concProp.GetString() ?? "" : "";
+
+                    // Check for runs that need approval:
+                    // - status=waiting (pending approval)
+                    // - status=completed with conclusion=action_required (external actor needs approval)
+                    var needsApproval = status == "waiting" ||
+                                       (status == "completed" && conclusion == "action_required");
+
+                    if (!needsApproval) continue;
+
+                    Log($"  Found run needing approval: {runName} (ID: {runId}, status: {status}, conclusion: {conclusion})");
+
+                    try
+                    {
+                        // Use rerun to approve and start the workflow
+                        // This runs the workflow with the current user's permissions
+                        RunCommand("gh", $"run rerun {runId} --repo {repo}");
+                        Log($"    Rerun triggered for workflow run {runId}");
+                        approvedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"    Warning: Could not rerun {runId}: {ex.Message}");
+                    }
+                }
+
+                if (approvedCount == 0)
+                {
+                    Log($"  No workflow runs needing approval for PR #{pr.Number}");
+                }
+                else
+                {
+                    Log($"  Triggered rerun for {approvedCount} workflow run(s) for PR #{pr.Number}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"  Warning: Error checking workflow runs for PR #{pr.Number}: {ex.Message}");
+            }
+        }
+    });
+
+    sw.Stop();
+    timings.ApproveWorkflows = sw.Elapsed;
+    Log($"Approving workflow runs took {sw.Elapsed.TotalSeconds:F2}s");
+}
+
+static void TransitionIssueLabel(string repo, string issueNumber, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+
+    LogGroup("Transitioning Issue Label", () =>
+    {
+        Log($"Removing '5. Development' label and adding '6. Functional Validation' label...");
+        try
+        {
+            RunCommand("gh", $"issue edit {issueNumber} --repo {repo} --remove-label \"5. Development\" --add-label \"6. Functional Validation\"");
+            Log($"Issue #{issueNumber} transitioned to '6. Functional Validation'");
+        }
+        catch (Exception ex)
+        {
+            Log($"Warning: Could not transition labels for issue #{issueNumber}: {ex.Message}");
+        }
+    });
+
+    sw.Stop();
+    timings.TransitionLabel = sw.Elapsed;
+    Log($"Transitioning label took {sw.Elapsed.TotalSeconds:F2}s");
+}
+
+static void LogComplete(string issueNumber, string currentUser, int linkedPRCount, int awaitingReviewCount, int exitCode, TimingMetrics timings)
+{
+    var total = timings.GetUser + timings.FindLinkedPRs + timings.CheckReviews + timings.MarkReady + timings.ApproveWorkflows + timings.TransitionLabel;
+
+    LogGroup("PullRequestWatcher Complete", () =>
+    {
+        Log($"Issue: #{issueNumber}");
+        Log($"User: {currentUser}");
+        Log($"PRs linked to issue: {linkedPRCount}");
+        Log($"PRs awaiting review: {awaitingReviewCount}");
+        Log($"Exit code: {exitCode} ({(exitCode == 0 ? "success - PRs marked ready" : exitCode == 2 ? "no action, retry needed" : "error")})");
+        Log($"Timing Summary:");
+        Log($"   - Get user:         {timings.GetUser.TotalSeconds,6:F2}s");
+        Log($"   - Find linked PRs:  {timings.FindLinkedPRs.TotalSeconds,6:F2}s");
+        Log($"   - Check reviews:    {timings.CheckReviews.TotalSeconds,6:F2}s");
+        Log($"   - Mark ready:       {timings.MarkReady.TotalSeconds,6:F2}s");
+        Log($"   - Approve workflows:{timings.ApproveWorkflows.TotalSeconds,6:F2}s");
+        Log($"   - Transition label: {timings.TransitionLabel.TotalSeconds,6:F2}s");
+        Log($"   ---------------------------------");
+        Log($"   Total:              {total.TotalSeconds,6:F2}s");
+    });
+}
+
+// ============================================================================
+// INFRASTRUCTURE
+// ============================================================================
+
+static void Log(string message)
+{
+    Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] {message}");
+}
+
+static void LogGroup(string groupName, Action action)
+{
+    Console.WriteLine($"::group::{groupName}");
+    try
+    {
+        action();
+    }
+    finally
+    {
+        Console.WriteLine($"::endgroup::");
+    }
+}
+
+static string RunCommand(string command, string arguments)
+{
+    var processInfo = new ProcessStartInfo
+    {
+        FileName = command,
+        Arguments = arguments,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
+    };
+
+    using var process = Process.Start(processInfo)
+        ?? throw new InvalidOperationException($"Failed to start process: {command}");
+
+    var output = process.StandardOutput.ReadToEnd();
+    var error = process.StandardError.ReadToEnd();
+    process.WaitForExit();
+
+    if (process.ExitCode != 0)
+    {
+        throw new InvalidOperationException($"Command failed: {command} {arguments}\nError: {error}");
+    }
+
+    return output;
+}
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+class TimingMetrics
+{
+    public TimeSpan GetUser { get; set; }
+    public TimeSpan FindLinkedPRs { get; set; }
+    public TimeSpan CheckReviews { get; set; }
+    public TimeSpan MarkReady { get; set; }
+    public TimeSpan ApproveWorkflows { get; set; }
+    public TimeSpan TransitionLabel { get; set; }
+}
+
+class PullRequestInfo
+{
+    public int Number { get; set; }
+    public string Title { get; set; } = "";
+    public string Url { get; set; } = "";
+    public string Author { get; set; } = "";
+}
