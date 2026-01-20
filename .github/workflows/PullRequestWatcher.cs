@@ -28,6 +28,7 @@ if (prsAwaitingReview.Count > 0)
     {
         Log($"  PR #{pr.Number}: {pr.Title}");
     }
+    MarkPRsAsReady(repo, prsAwaitingReview, timings);
 }
 else
 {
@@ -60,6 +61,7 @@ EXAMPLES:
 DESCRIPTION:
     Finds pull requests linked to a specific issue and checks if the
     current authenticated user (PAT user) has a pending review request.
+    If found, marks those PRs as ready for review.
 
 PREREQUISITES:
     - GitHub CLI (gh) authenticated with repo access
@@ -69,7 +71,8 @@ WORKFLOW:
     1. Get current authenticated user
     2. Find PRs linked to the specified issue
     3. Check each PR for pending review requests for the PAT user
-    4. Report findings
+    4. Mark PRs with pending reviews as ready for review
+    5. Report findings
 """);
 }
 
@@ -221,9 +224,36 @@ static List<PullRequestInfo> CheckForPendingReviews(string repo, List<PullReques
     return results;
 }
 
+static void MarkPRsAsReady(string repo, List<PullRequestInfo> pullRequests, TimingMetrics timings)
+{
+    var sw = Stopwatch.StartNew();
+
+    LogGroup("Marking PRs as Ready for Review", () =>
+    {
+        foreach (var pr in pullRequests)
+        {
+            Log($"Marking PR #{pr.Number} as ready for review...");
+            try
+            {
+                RunCommand("gh", $"pr ready {pr.Number} --repo {repo}");
+                Log($"  PR #{pr.Number} marked as ready for review");
+            }
+            catch (Exception ex)
+            {
+                Log($"  Warning: Could not mark PR #{pr.Number} as ready: {ex.Message}");
+                Log($"  PR may already be ready or user lacks permission");
+            }
+        }
+    });
+
+    sw.Stop();
+    timings.MarkReady = sw.Elapsed;
+    Log($"Marking PRs as ready took {sw.Elapsed.TotalSeconds:F2}s");
+}
+
 static void LogComplete(string issueNumber, string currentUser, int linkedPRCount, int awaitingReviewCount, TimingMetrics timings)
 {
-    var total = timings.GetUser + timings.FindLinkedPRs + timings.CheckReviews;
+    var total = timings.GetUser + timings.FindLinkedPRs + timings.CheckReviews + timings.MarkReady;
 
     LogGroup("PullRequestWatcher Complete", () =>
     {
@@ -235,6 +265,7 @@ static void LogComplete(string issueNumber, string currentUser, int linkedPRCoun
         Log($"   - Get user:       {timings.GetUser.TotalSeconds,6:F2}s");
         Log($"   - Find linked PRs:{timings.FindLinkedPRs.TotalSeconds,6:F2}s");
         Log($"   - Check reviews:  {timings.CheckReviews.TotalSeconds,6:F2}s");
+        Log($"   - Mark ready:     {timings.MarkReady.TotalSeconds,6:F2}s");
         Log($"   -------------------------------");
         Log($"   Total:            {total.TotalSeconds,6:F2}s");
     });
@@ -298,6 +329,7 @@ class TimingMetrics
     public TimeSpan GetUser { get; set; }
     public TimeSpan FindLinkedPRs { get; set; }
     public TimeSpan CheckReviews { get; set; }
+    public TimeSpan MarkReady { get; set; }
 }
 
 class PullRequestInfo
