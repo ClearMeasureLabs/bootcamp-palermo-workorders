@@ -15,6 +15,7 @@ on:
         options:
           - IssueTasker
           - IssueTestDesigner
+          - IssueAssigner
 
 permissions:
   contents: read
@@ -88,3 +89,25 @@ jobs:
         run: |
           ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
           dotnet run .github/workflows/IssueTestDesigner.cs -- ${{ github.repository }} $ISSUE_NUM
+
+  issue-assigner:
+    name: "Development → Assign to Copilot"
+    runs-on: ubuntu-latest
+    if: github.event.label.name == '5. Development' || (github.event_name == 'workflow_dispatch' && github.event.inputs.processor == 'IssueAssigner')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Run IssueAssigner
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_PAT }}
+          GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+        run: |
+          ISSUE_NUM="${{ github.event.issue.number || github.event.inputs.issue_number }}"
+          dotnet run .github/workflows/IssueAssigner.cs -- ${{ github.repository }} $ISSUE_NUM
