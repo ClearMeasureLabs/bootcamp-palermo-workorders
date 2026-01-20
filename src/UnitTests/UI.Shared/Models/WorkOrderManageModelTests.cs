@@ -1,5 +1,6 @@
 using ClearMeasure.Bootcamp.UI.Shared.Models;
 using System.ComponentModel.DataAnnotations;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Models;
 
@@ -40,7 +41,7 @@ public class WorkOrderManageModelTests
 
         isValid.ShouldBeFalse();
         results.ShouldNotBeEmpty();
-        results[0].ErrorMessage.ShouldContain("12 characters");
+        results[0].ErrorMessage!.ShouldContain("12 characters");
     }
 
     [Test]
@@ -59,7 +60,7 @@ public class WorkOrderManageModelTests
 
         isValid.ShouldBeFalse();
         results.ShouldNotBeEmpty();
-        results[0].ErrorMessage.ShouldContain("12 characters");
+        results[0].ErrorMessage!.ShouldContain("12 characters");
     }
 
     [Test]
