@@ -5,35 +5,36 @@ using System.Text.Json;
 // MAIN ENTRY POINT
 // ============================================================================
 
-if (args.Length < 1)
+if (args.Length < 2)
 {
     PrintUsage();
     return 1;
 }
 
 var repo = args[0];
-var issueNumber = args.Length > 1 ? args[1] : null;
+var issueNumber = args[1];
 var timings = new TimingMetrics();
 
 LogStart(repo, issueNumber);
 
 var currentUser = GetCurrentUser(timings);
-var pullRequests = FindPullRequestsAwaitingReview(repo, currentUser, issueNumber, timings);
+var linkedPRs = FindPRsLinkedToIssue(repo, issueNumber, timings);
+var prsAwaitingReview = CheckForPendingReviews(repo, linkedPRs, currentUser, timings);
 
-if (pullRequests.Count > 0)
+if (prsAwaitingReview.Count > 0)
 {
-    Log($"Found {pullRequests.Count} PR(s) awaiting review from {currentUser}");
-    foreach (var pr in pullRequests)
+    Log($"Found {prsAwaitingReview.Count} PR(s) for issue #{issueNumber} awaiting review from {currentUser}");
+    foreach (var pr in prsAwaitingReview)
     {
         Log($"  PR #{pr.Number}: {pr.Title}");
     }
 }
 else
 {
-    Log($"No PRs found awaiting review from {currentUser}");
+    Log($"No PRs for issue #{issueNumber} awaiting review from {currentUser}");
 }
 
-LogComplete(currentUser, pullRequests.Count, timings);
+LogComplete(issueNumber, currentUser, linkedPRs.Count, prsAwaitingReview.Count, timings);
 
 return 0;
 
@@ -44,23 +45,21 @@ return 0;
 static void PrintUsage()
 {
     Console.WriteLine("""
-PullRequestWatcher - Watch for pull requests awaiting review
+PullRequestWatcher - Watch for pull requests awaiting review for a specific issue
 
 USAGE:
-    dotnet run PullRequestWatcher.cs -- <repo> [issue-number]
+    dotnet run PullRequestWatcher.cs -- <repo> <issue-number>
 
 ARGUMENTS:
     repo            Repository in format 'owner/repo'
-    issue-number    Optional: Filter to PRs linked to this issue
+    issue-number    The issue number to find linked PRs for
 
 EXAMPLES:
-    dotnet run PullRequestWatcher.cs -- ClearMeasureLabs/bootcamp-workorders
     dotnet run PullRequestWatcher.cs -- ClearMeasureLabs/bootcamp-workorders 355
 
 DESCRIPTION:
-    Checks if the current authenticated user (PAT user) has been requested
-    as a reviewer on any open pull requests. Optionally filters to PRs
-    linked to a specific issue.
+    Finds pull requests linked to a specific issue and checks if the
+    current authenticated user (PAT user) has a pending review request.
 
 PREREQUISITES:
     - GitHub CLI (gh) authenticated with repo access
@@ -68,19 +67,18 @@ PREREQUISITES:
 
 WORKFLOW:
     1. Get current authenticated user
-    2. Query open PRs with review requests
-    3. Filter to PRs where current user is requested reviewer
+    2. Find PRs linked to the specified issue
+    3. Check each PR for pending review requests for the PAT user
     4. Report findings
 """);
 }
 
-static void LogStart(string repo, string? issueNumber)
+static void LogStart(string repo, string issueNumber)
 {
     LogGroup("PullRequestWatcher Starting", () =>
     {
         Log($"Repository: {repo}");
-        if (issueNumber != null)
-            Log($"Filtering to Issue: {issueNumber}");
+        Log($"Issue Number: {issueNumber}");
         Log($"Started at: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
     });
 }
@@ -104,47 +102,56 @@ static string GetCurrentUser(TimingMetrics timings)
     return user;
 }
 
-static List<PullRequestInfo> FindPullRequestsAwaitingReview(string repo, string currentUser, string? issueNumber, TimingMetrics timings)
+static List<PullRequestInfo> FindPRsLinkedToIssue(string repo, string issueNumber, TimingMetrics timings)
 {
     var sw = Stopwatch.StartNew();
     var results = new List<PullRequestInfo>();
 
-    LogGroup("Finding PRs Awaiting Review", () =>
+    LogGroup("Finding PRs Linked to Issue", () =>
     {
-        // Query open PRs with review requests
-        var query = $"repo:{repo} is:pr is:open review-requested:{currentUser}";
-        if (issueNumber != null)
+        var parts = repo.Split('/');
+        var owner = parts[0];
+        var repoName = parts[1];
+
+        // Use GraphQL to find PRs that close/reference this issue
+        Log($"Querying PRs linked to issue #{issueNumber}...");
+
+        var query = $"query {{ repository(owner: \\\"{owner}\\\", name: \\\"{repoName}\\\") {{ issue(number: {issueNumber}) {{ timelineItems(itemTypes: [CONNECTED_EVENT, CROSS_REFERENCED_EVENT], first: 50) {{ nodes {{ ... on ConnectedEvent {{ source {{ ... on PullRequest {{ number title url state author {{ login }} }} }} }} ... on CrossReferencedEvent {{ source {{ ... on PullRequest {{ number title url state author {{ login }} }} }} }} }} }} }} }} }}";
+
+        var result = RunCommand("gh", $"api graphql -f query=\"{query}\"");
+        Log($"GraphQL response received");
+
+        var doc = JsonDocument.Parse(result);
+        var timelineItems = doc.RootElement
+            .GetProperty("data")
+            .GetProperty("repository")
+            .GetProperty("issue")
+            .GetProperty("timelineItems")
+            .GetProperty("nodes");
+
+        var seenPRs = new HashSet<int>();
+
+        foreach (var item in timelineItems.EnumerateArray())
         {
-            // Also check if PR is linked to the issue
-            query += $" linked:issue";
-        }
+            if (!item.TryGetProperty("source", out var source)) continue;
+            if (!source.TryGetProperty("number", out var numberProp)) continue;
 
-        Log($"Searching with query: {query}");
+            var prNumber = numberProp.GetInt32();
+            if (seenPRs.Contains(prNumber)) continue;
+            seenPRs.Add(prNumber);
 
-        var searchResult = RunCommand("gh", $"pr list --repo {repo} --search \"review-requested:{currentUser}\" --json number,title,author,url,headRefName,body --limit 50");
-        var prs = JsonDocument.Parse(searchResult);
-
-        foreach (var pr in prs.RootElement.EnumerateArray())
-        {
-            var prNumber = pr.GetProperty("number").GetInt32();
-            var prTitle = pr.GetProperty("title").GetString() ?? "";
-            var prUrl = pr.GetProperty("url").GetString() ?? "";
-            var prAuthor = pr.GetProperty("author").GetProperty("login").GetString() ?? "";
-            var prBody = pr.TryGetProperty("body", out var bodyProp) ? bodyProp.GetString() ?? "" : "";
-
-            // If filtering by issue, check if PR references the issue
-            if (issueNumber != null)
+            var state = source.GetProperty("state").GetString() ?? "";
+            if (state != "OPEN")
             {
-                var issueRef = $"#{issueNumber}";
-                var issueRefFull = $"issues/{issueNumber}";
-                if (!prTitle.Contains(issueRef) && !prBody.Contains(issueRef) && !prBody.Contains(issueRefFull))
-                {
-                    Log($"  Skipping PR #{prNumber} - not linked to issue {issueNumber}");
-                    continue;
-                }
+                Log($"  Skipping PR #{prNumber} - state is {state}");
+                continue;
             }
 
-            Log($"  Found PR #{prNumber}: {prTitle} (by {prAuthor})");
+            var prTitle = source.GetProperty("title").GetString() ?? "";
+            var prUrl = source.GetProperty("url").GetString() ?? "";
+            var prAuthor = source.GetProperty("author").GetProperty("login").GetString() ?? "";
+
+            Log($"  Found open PR #{prNumber}: {prTitle} (by {prAuthor})");
             results.Add(new PullRequestInfo
             {
                 Number = prNumber,
@@ -153,28 +160,83 @@ static List<PullRequestInfo> FindPullRequestsAwaitingReview(string repo, string 
                 Author = prAuthor
             });
         }
+
+        Log($"Found {results.Count} open PR(s) linked to issue #{issueNumber}");
     });
 
     sw.Stop();
-    timings.FindPRs = sw.Elapsed;
-    Log($"Finding PRs took {sw.Elapsed.TotalSeconds:F2}s");
+    timings.FindLinkedPRs = sw.Elapsed;
+    Log($"Finding linked PRs took {sw.Elapsed.TotalSeconds:F2}s");
 
     return results;
 }
 
-static void LogComplete(string currentUser, int prCount, TimingMetrics timings)
+static List<PullRequestInfo> CheckForPendingReviews(string repo, List<PullRequestInfo> pullRequests, string currentUser, TimingMetrics timings)
 {
-    var total = timings.GetUser + timings.FindPRs;
+    var sw = Stopwatch.StartNew();
+    var results = new List<PullRequestInfo>();
+
+    LogGroup("Checking for Pending Reviews", () =>
+    {
+        Log($"Checking {pullRequests.Count} PR(s) for review requests to {currentUser}...");
+
+        foreach (var pr in pullRequests)
+        {
+            // Get review requests for this PR
+            var reviewResult = RunCommand("gh", $"pr view {pr.Number} --repo {repo} --json reviewRequests");
+            var reviewDoc = JsonDocument.Parse(reviewResult);
+            var reviewRequests = reviewDoc.RootElement.GetProperty("reviewRequests");
+
+            foreach (var request in reviewRequests.EnumerateArray())
+            {
+                string? requestedLogin = null;
+
+                // Check if it's a user or team request
+                if (request.TryGetProperty("login", out var loginProp))
+                {
+                    requestedLogin = loginProp.GetString();
+                }
+                else if (request.TryGetProperty("name", out var nameProp))
+                {
+                    // It's a team, skip for now
+                    continue;
+                }
+
+                if (requestedLogin != null && requestedLogin.Equals(currentUser, StringComparison.OrdinalIgnoreCase))
+                {
+                    Log($"  PR #{pr.Number} has pending review request for {currentUser}");
+                    results.Add(pr);
+                    break;
+                }
+            }
+        }
+
+        Log($"Found {results.Count} PR(s) with pending review requests for {currentUser}");
+    });
+
+    sw.Stop();
+    timings.CheckReviews = sw.Elapsed;
+    Log($"Checking reviews took {sw.Elapsed.TotalSeconds:F2}s");
+
+    return results;
+}
+
+static void LogComplete(string issueNumber, string currentUser, int linkedPRCount, int awaitingReviewCount, TimingMetrics timings)
+{
+    var total = timings.GetUser + timings.FindLinkedPRs + timings.CheckReviews;
 
     LogGroup("PullRequestWatcher Complete", () =>
     {
+        Log($"Issue: #{issueNumber}");
         Log($"User: {currentUser}");
-        Log($"PRs awaiting review: {prCount}");
+        Log($"PRs linked to issue: {linkedPRCount}");
+        Log($"PRs awaiting review: {awaitingReviewCount}");
         Log($"Timing Summary:");
-        Log($"   - Get user:    {timings.GetUser.TotalSeconds,6:F2}s");
-        Log($"   - Find PRs:    {timings.FindPRs.TotalSeconds,6:F2}s");
+        Log($"   - Get user:       {timings.GetUser.TotalSeconds,6:F2}s");
+        Log($"   - Find linked PRs:{timings.FindLinkedPRs.TotalSeconds,6:F2}s");
+        Log($"   - Check reviews:  {timings.CheckReviews.TotalSeconds,6:F2}s");
         Log($"   -------------------------------");
-        Log($"   Total:         {total.TotalSeconds,6:F2}s");
+        Log($"   Total:            {total.TotalSeconds,6:F2}s");
     });
 }
 
@@ -234,7 +296,8 @@ static string RunCommand(string command, string arguments)
 class TimingMetrics
 {
     public TimeSpan GetUser { get; set; }
-    public TimeSpan FindPRs { get; set; }
+    public TimeSpan FindLinkedPRs { get; set; }
+    public TimeSpan CheckReviews { get; set; }
 }
 
 class PullRequestInfo

@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: 'Optional: Issue number to filter PRs'
-        required: false
+        description: 'Issue number to find linked PRs for'
+        required: true
   workflow_call:
     inputs:
       issue_number:
-        description: 'Optional: Issue number to filter PRs'
-        required: false
+        description: 'Issue number to find linked PRs for'
+        required: true
         type: string
 
 permissions:
@@ -36,9 +36,4 @@ jobs:
           GH_TOKEN: ${{ secrets.COPILOT_PAT }}
           GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
         run: |
-          ISSUE_NUM="${{ inputs.issue_number }}"
-          if [ -n "$ISSUE_NUM" ]; then
-            dotnet run .github/workflows/PullRequestWatcher.cs -- ${{ github.repository }} $ISSUE_NUM
-          else
-            dotnet run .github/workflows/PullRequestWatcher.cs -- ${{ github.repository }}
-          fi
+          dotnet run .github/workflows/PullRequestWatcher.cs -- ${{ github.repository }} ${{ inputs.issue_number }}
