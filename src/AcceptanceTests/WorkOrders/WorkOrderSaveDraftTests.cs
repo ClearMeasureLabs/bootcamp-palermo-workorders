@@ -117,9 +117,12 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var sixteenCharText = "Conference Rm AB"; // 16 characters
         await Input(nameof(WorkOrderManage.Elements.Title), "Test Max Length");
         await Input(nameof(WorkOrderManage.Elements.Description), "Testing maxlength constraint");
-        await Input(nameof(WorkOrderManage.Elements.RoomNumber), sixteenCharText);
-
+        
+        // Directly fill the room field without validation
         var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
+        await roomNumberField.FillAsync(sixteenCharText);
+
+        // Verify that maxlength attribute restricted input to 15 characters
         var actualValue = await roomNumberField.InputValueAsync();
         
         actualValue.Length.ShouldBeLessThanOrEqualTo(15);
