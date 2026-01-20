@@ -43,7 +43,7 @@ public class WorkOrderTitleValidationTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
-        await Input(nameof(WorkOrderManage.Elements.Title), "Fix Heater!");
+        await Input(nameof(WorkOrderManage.Elements.Title), "Short");
         await Input(nameof(WorkOrderManage.Elements.Description), "Test description");
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
 
@@ -119,7 +119,7 @@ public class WorkOrderTitleValidationTests : AcceptanceTestBase
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
 
-        await Input(nameof(WorkOrderManage.Elements.Title), "ShortTtl");
+        await Input(nameof(WorkOrderManage.Elements.Title), "Short");
 
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
