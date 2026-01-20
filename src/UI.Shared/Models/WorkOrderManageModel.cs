@@ -18,7 +18,9 @@ public class WorkOrderManageModel
 
     [Required] public string? Title { get; set; }
 
-    [Required] public string? Description { get; set; }
+    [Required]
+    [MaxLength(2000, ErrorMessage = "Description cannot exceed 2000 characters.")]
+    public string? Description { get; set; }
 
     public bool IsReadOnly { get; set; }
 
