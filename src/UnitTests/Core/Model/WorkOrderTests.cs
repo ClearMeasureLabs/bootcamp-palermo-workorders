@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using System.ComponentModel.DataAnnotations;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -79,5 +80,90 @@ public class WorkOrderTests
         order.Status = WorkOrderStatus.Draft;
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void ValidationShouldFail_WhenTitleIsNull()
+    {
+        var workOrder = new WorkOrder
+        {
+            Title = null,
+            Description = "Valid description"
+        };
+
+        var validationResults = new List<ValidationResult>();
+        var context = new ValidationContext(workOrder);
+        var isValid = Validator.TryValidateObject(workOrder, context, validationResults, true);
+
+        Assert.That(isValid, Is.False);
+        Assert.That(validationResults.Any(v => v.MemberNames.Contains("Title")), Is.True);
+    }
+
+    [Test]
+    public void ValidationShouldFail_WhenTitleIsEmpty()
+    {
+        var workOrder = new WorkOrder
+        {
+            Title = "",
+            Description = "Valid description"
+        };
+
+        var validationResults = new List<ValidationResult>();
+        var context = new ValidationContext(workOrder);
+        var isValid = Validator.TryValidateObject(workOrder, context, validationResults, true);
+
+        Assert.That(isValid, Is.False);
+        Assert.That(validationResults.Any(v => v.MemberNames.Contains("Title")), Is.True);
+    }
+
+    [Test]
+    public void ValidationShouldFail_WhenDescriptionIsNull()
+    {
+        var workOrder = new WorkOrder
+        {
+            Title = "Valid title",
+            Description = null
+        };
+
+        var validationResults = new List<ValidationResult>();
+        var context = new ValidationContext(workOrder);
+        var isValid = Validator.TryValidateObject(workOrder, context, validationResults, true);
+
+        Assert.That(isValid, Is.False);
+        Assert.That(validationResults.Any(v => v.MemberNames.Contains("Description")), Is.True);
+    }
+
+    [Test]
+    public void ValidationShouldFail_WhenDescriptionIsEmpty()
+    {
+        var workOrder = new WorkOrder
+        {
+            Title = "Valid title",
+            Description = ""
+        };
+
+        var validationResults = new List<ValidationResult>();
+        var context = new ValidationContext(workOrder);
+        var isValid = Validator.TryValidateObject(workOrder, context, validationResults, true);
+
+        Assert.That(isValid, Is.False);
+        Assert.That(validationResults.Any(v => v.MemberNames.Contains("Description")), Is.True);
+    }
+
+    [Test]
+    public void ValidationShouldSucceed_WhenTitleAndDescriptionAreValid()
+    {
+        var workOrder = new WorkOrder
+        {
+            Title = "Valid title",
+            Description = "Valid description"
+        };
+
+        var validationResults = new List<ValidationResult>();
+        var context = new ValidationContext(workOrder);
+        var isValid = Validator.TryValidateObject(workOrder, context, validationResults, true);
+
+        Assert.That(isValid, Is.True);
+        Assert.That(validationResults.Count, Is.EqualTo(0));
     }
 }
