@@ -93,4 +93,166 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         
         rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
+
+    [Test]
+    public async Task ShouldDisplayRequiredAsterisksOnTitleAndDescriptionFields()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var titleLabel = Page.Locator("label[for='Title']");
+        await Expect(titleLabel).ToContainTextAsync("*");
+
+        var descriptionLabel = Page.Locator("label[for='Description']");
+        await Expect(descriptionLabel).ToContainTextAsync("*");
+    }
+
+    [Test]
+    public async Task ShouldShowValidationModalWhenCreatingWorkOrderWithEmptyTitle()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Valid description");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "Room 101");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+
+        var validationSummary = Page.Locator(".validation-summary");
+        await Expect(validationSummary).ToBeVisibleAsync();
+        await Expect(validationSummary).ToContainTextAsync("Title");
+    }
+
+    [Test]
+    public async Task ShouldShowValidationModalWhenCreatingWorkOrderWithEmptyDescription()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "Valid title");
+        await Input(nameof(WorkOrderManage.Elements.Description), "");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "Room 101");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+
+        var validationSummary = Page.Locator(".validation-summary");
+        await Expect(validationSummary).ToBeVisibleAsync();
+        await Expect(validationSummary).ToContainTextAsync("Description");
+    }
+
+    [Test]
+    public async Task ShouldShowValidationModalWhenCreatingWorkOrderWithBothFieldsEmpty()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "");
+        await Input(nameof(WorkOrderManage.Elements.Description), "");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "Room 101");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+
+        var validationSummary = Page.Locator(".validation-summary");
+        await Expect(validationSummary).ToBeVisibleAsync();
+        await Expect(validationSummary).ToContainTextAsync("Title");
+        await Expect(validationSummary).ToContainTextAsync("Description");
+    }
+
+    [Test]
+    public async Task ShouldSuccessfullyCreateWorkOrderWithValidTitleAndDescription()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        Debug.Assert(order.Number != null, "order.Number != null");
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        await Expect(titleField).ToHaveValueAsync(order.Title!);
+
+        var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
+        await Expect(descriptionField).ToHaveValueAsync(order.Description!);
+    }
+
+    [Test]
+    public async Task ShouldShowValidationModalWhenClearingTitleOnExistingWorkOrder()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+
+        var validationSummary = Page.Locator(".validation-summary");
+        await Expect(validationSummary).ToBeVisibleAsync();
+        await Expect(validationSummary).ToContainTextAsync("Title");
+    }
+
+    [Test]
+    public async Task ShouldShowValidationModalWhenClearingDescriptionOnExistingWorkOrder()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Input(nameof(WorkOrderManage.Elements.Description), "");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+
+        var validationSummary = Page.Locator(".validation-summary");
+        await Expect(validationSummary).ToBeVisibleAsync();
+        await Expect(validationSummary).ToContainTextAsync("Description");
+    }
+
+    [Test]
+    public async Task ShouldSuccessfullyUpdateWorkOrderWithValidTitleAndDescription()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "Updated title");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Updated description");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        await Expect(titleField).ToHaveValueAsync("Updated title");
+
+        var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
+        await Expect(descriptionField).ToHaveValueAsync("Updated description");
+    }
 }
