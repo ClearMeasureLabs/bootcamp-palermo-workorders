@@ -1,11 +1,17 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ClearMeasure.Bootcamp.Core.Model;
 
 public class WorkOrder : EntityBase<WorkOrder>
 {
     private string? _description = "";
 
+    [Required(ErrorMessage = "Title is required")]
+    [MaxLength(200)]
     public string? Title { get; set; } = "";
 
+    [Required(ErrorMessage = "Description is required")]
+    [MaxLength(4000)]
     public string? Description
     {
         get => _description;
