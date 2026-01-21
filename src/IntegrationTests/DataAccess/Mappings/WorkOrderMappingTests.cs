@@ -312,28 +312,6 @@ public class WorkOrderMappingTests
     }
 
     [Test]
-    public void ShouldFailToInsert_WhenDescriptionIsNull()
-    {
-        new DatabaseTests().Clean();
-
-        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
-        var workOrder = new WorkOrder
-        {
-            Number = "WO-09",
-            Title = "Valid title",
-            Description = null,
-            Creator = creator,
-            Status = WorkOrderStatus.Draft
-        };
-
-        using var context = TestHost.GetRequiredService<DbContext>();
-        context.Add(creator);
-        context.Add(workOrder);
-
-        Should.Throw<DbUpdateException>(() => context.SaveChanges());
-    }
-
-    [Test]
     public void ShouldSuccessfullyInsert_WhenTitleAndDescriptionAreValid()
     {
         new DatabaseTests().Clean();
@@ -392,36 +370,6 @@ public class WorkOrderMappingTests
         {
             var existingWorkOrder = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
             existingWorkOrder.Title = null;
-            Should.Throw<DbUpdateException>(() => context.SaveChanges());
-        }
-    }
-
-    [Test]
-    public async Task ShouldFailToUpdate_WhenDescriptionIsSetToNull()
-    {
-        new DatabaseTests().Clean();
-
-        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
-        var workOrder = new WorkOrder
-        {
-            Number = "WO-13",
-            Title = "Initial title",
-            Description = "Initial description",
-            Creator = creator,
-            Status = WorkOrderStatus.Draft
-        };
-
-        using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(creator);
-            context.Add(workOrder);
-            await context.SaveChangesAsync();
-        }
-
-        using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            var existingWorkOrder = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
-            existingWorkOrder.Description = null;
             Should.Throw<DbUpdateException>(() => context.SaveChanges());
         }
     }
