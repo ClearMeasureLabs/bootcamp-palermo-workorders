@@ -28,7 +28,7 @@ public record CancelCommand(WorkOrder WorkOrder, Employee CurrentUser) :
 
     public override string TransitionVerbPastTense => "Cancelled";
 
-    public new bool IsValid()
+    public override bool IsValid()
     {
         // Cancel is valid from Assigned or InProgress status
         var isValidBeginStatus = WorkOrder.Status == WorkOrderStatus.Assigned ||
