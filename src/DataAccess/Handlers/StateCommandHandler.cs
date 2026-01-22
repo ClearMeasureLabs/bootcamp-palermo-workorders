@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -13,9 +14,15 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Executing");
-        request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
-
+        
         var order = request.WorkOrder;
+        var beginStatus = order.Status?.Code;
+        var currentDateTime = time.GetUtcNow().DateTime;
+        
+        request.Execute(new StateCommandContext { CurrentDateTime = currentDateTime });
+
+        var endStatus = order.Status?.Code;
+
         if (order.Assignee == order.Creator)
         {
             order.Assignee = order.Creator; //EFCore reference checking
@@ -32,7 +39,23 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             dbContext.Update(order);
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Create audit entry for status change or save/edit
+        var auditEntry = new AuditEntry
+        {
+            Id = Guid.NewGuid(),
+            WorkOrderId = order.Id,
+            EmployeeId = request.CurrentUser.Id,
+            EmployeeName = request.CurrentUser.GetFullName(),
+            EntryDate = currentDateTime,
+            BeginStatus = beginStatus,
+            EndStatus = endStatus,
+            Action = request.TransitionVerbPastTense
+        };
+
+        dbContext.Add(auditEntry);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         var loweredTransitionVerb = request.TransitionVerbPastTense.ToLower();
         var workOrderNumber = order.Number;
