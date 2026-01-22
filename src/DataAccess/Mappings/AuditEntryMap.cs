@@ -33,7 +33,7 @@ public class AuditEntryMap : IEntityFrameworkMapping
 
             // Configure relationships
             entity.HasOne(e => e.WorkOrder)
-                .WithMany()
+                .WithMany(w => w.AuditEntries)
                 .HasForeignKey(e => e.WorkOrderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
