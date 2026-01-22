@@ -1,0 +1,67 @@
+---
+alwaysApply: true
+---
+
+# Cursor Rules for ChurchBulletin Work Order Management System
+
+## Project Overview
+Work Order management system built with .NET 9.0, implementing Onion Architecture with Blazor WebAssembly UI, Entity Framework Core for data access, and deployed to Azure Container Apps.
+
+## Core Architecture Principles
+
+### Onion Architecture - STRICT DEPENDENCY RULES
+The solution follows strict Onion Architecture with dependency flow inward. **NEVER VIOLATE THESE RULES:**
+
+- **Core** (`src/Core/`): Inner layer - NO DEPENDENCIES on any other project
+  - Contains: Domain models, domain service interfaces, query objects (MediatR)
+  - Key types: `WorkOrder`, `Employee`, `WorkOrderStatus`, `Role`
+  - Uses MediatR for CQRS queries
+  - **Rule**: Core must NEVER reference any other project
+
+- **DataAccess** (`src/DataAccess/`): Depends ONLY on Core
+  - Contains: Entity Framework Core implementation, MediatR query/command handlers
+  - Technology: EF Core 9.0 with SQL Server
+  - Key components: `DataContext`, mapping files, health checks
+  - **Rule**: Only references Core project - NO OTHER REFERENCES
+
+- **UI Layer** (Outer Layer): Can reference Core and DataAccess
+  - `UI.Server` (`src/UI/Server/`): Blazor Server hosting, DI via Lamar, health checks
+  - `UI.Client` (`src/UI/Client/`): Blazor WebAssembly frontend
+  - `UI.Api` (`src/UI/Api/`): Web API endpoints (minimal dependencies)
+  - `UI.Shared` (`src/UI.Shared/`): Shared components
+
+- **Additional Layers**:
+  - `LlmGateway` (`src/LlmGateway/`): Azure OpenAI and Ollama integration
+  - `Database` (`src/Database/`): AliaSQL-based migrations
+  - `DatabaseFlyway` (`src/DatabaseFlyway/`): Alternative Flyway migrations
+
+### When Making Changes
+- **ALWAYS** verify dependency direction before adding project references
+- **NEVER** add references from Core or DataAccess to outer layers
+- **NEVER** add circular dependencies
+
+## Technology Stack
+
+- **.NET**: 9.0 (DO NOT upgrade without explicit approval)
+- **UI**: Blazor WebAssembly + Server
+- **Data Access**: Entity Framework Core 9.0
+- **Database**: SQL Server (Azure SQL in production, LocalDB for local dev)
+- **CQRS**: MediatR
+- **DI Container**: Lamar (StructureMap successor)
+- **Testing**: NUnit 4.x, bUnit (Blazor), Playwright, Shouldly
+- **AI/LLM**: Azure OpenAI, Ollama
+- **Deployment**: Azure Container Apps, Azure DevOps Pipelines
+
+## Dependency Management - CRITICAL
+
+- **DO NOT add NuGet packages or project references without explicit approval**
+- **DO NOT change .NET SDK versions without explicit approval**
+- **Keep existing library versions unless specifically instructed to upgrade**
+- When approval is needed, state what package/reference and why it's needed
+
+## Build and Test Commands
+
+### Build
+```powershell
+# Local build (local dev: clean, compile, unit tests, DB migration, integration tests)
+.\build_local.bat
