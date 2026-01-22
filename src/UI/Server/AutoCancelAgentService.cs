@@ -123,8 +123,8 @@ public class AutoCancelAgentService : BackgroundService
                 return;
             }
 
-            //var cancelCommand = new AssignedToCancelledCommand(workOrder, workOrder.Creator);
-            //await bus.Send(cancelCommand);
+            var cancelCommand = new CancelCommand(workOrder, workOrder.Creator);
+            await bus.Send(cancelCommand);
 
             _logger.LogInformation("Successfully cancelled WorkOrder {WorkOrderNumber}",
                 workOrder.Number);

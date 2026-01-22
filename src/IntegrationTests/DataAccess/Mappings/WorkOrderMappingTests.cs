@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
@@ -124,10 +124,36 @@ public class WorkOrderMappingTests
         dataContext.Attach(order);
         await dataContext.SaveChangesAsync();
 
+        // Create an audit entry for the work order
+        var auditEntry = new AuditEntry
+        {
+            Id = Guid.NewGuid(),
+            WorkOrderId = order.Id,
+            EmployeeId = creator.Id,
+            EmployeeName = creator.GetFullName(),
+            EntryDate = DateTime.UtcNow,
+            BeginStatus = WorkOrderStatus.Draft.Code,
+            EndStatus = WorkOrderStatus.InProgress.Code,
+            Action = "Begun"
+        };
+
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
-            var rehydratedWorkOrder = context.Set<WorkOrder>()
-                .Single(wo => wo.Id == order.Id);
+            context.Add(auditEntry);
+            await context.SaveChangesAsync();
+        }
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydratedAuditEntry = context.Set<AuditEntry>()
+                .Single(ae => ae.Id == auditEntry.Id);
+            
+            rehydratedAuditEntry.WorkOrderId.ShouldBe(order.Id);
+            rehydratedAuditEntry.EmployeeId.ShouldBe(creator.Id);
+            rehydratedAuditEntry.EmployeeName.ShouldBe(creator.GetFullName());
+            rehydratedAuditEntry.BeginStatus.ShouldBe(WorkOrderStatus.Draft.Code);
+            rehydratedAuditEntry.EndStatus.ShouldBe(WorkOrderStatus.InProgress.Code);
+            rehydratedAuditEntry.Action.ShouldBe("Begun");
         }
     }
 
