@@ -20,6 +20,7 @@ public class WorkOrderMap : IEntityFrameworkMapping
             entity.Property(e => e.Number).IsRequired().HasMaxLength(7);
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Description).HasMaxLength(4000);
+            entity.Property(e => e.Instructions).HasMaxLength(4000);
             entity.Property(e => e.RoomNumber).HasMaxLength(50);
 
             // Configure relationships
@@ -36,6 +37,14 @@ public class WorkOrderMap : IEntityFrameworkMapping
             // Configure navigation properties for eager loading
             entity.Navigation(e => e.Creator).AutoInclude();
             entity.Navigation(e => e.Assignee).AutoInclude();
+
+            // Configure AuditEntries collection
+            entity.HasMany(e => e.AuditEntries)
+                .WithOne(a => a.WorkOrder)
+                .HasForeignKey(a => a.WorkOrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Navigation(e => e.AuditEntries).AutoInclude();
 
             // Configure Status with converter
             entity.Property(e => e.Status)

@@ -20,6 +20,8 @@ public class WorkOrderManageModel
 
     [Required] public string? Description { get; set; }
 
+    public string? Instructions { get; set; }
+
     public bool IsReadOnly { get; set; }
 
     public string? AssignedDate { get; set; }
@@ -29,4 +31,6 @@ public class WorkOrderManageModel
     public string? CreatedDate { get; set; }
 
     public string? RoomNumber { get; set; }
+
+    public List<AuditEntry> AuditEntries { get; set; } = new();
 }
