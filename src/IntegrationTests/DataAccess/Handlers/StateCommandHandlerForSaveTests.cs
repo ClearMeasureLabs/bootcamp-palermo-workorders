@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
@@ -155,5 +155,38 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         order.Description.ShouldBe(workOrder.Description);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
+    }
+
+    [Test]
+    public async Task ShouldCreateAuditEntryWhenSavingDraft()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.CreatedDate = null;
+        workOrder.Creator = currentUser;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        var result = await handler.Handle(command);
+
+        var context2 = TestHost.GetRequiredService<DbContext>();
+        var auditEntries = context2.Set<AuditEntry>()
+            .Where(ae => ae.WorkOrderId == result.WorkOrder.Id)
+            .ToList();
+
+        auditEntries.Count.ShouldBe(1);
+        auditEntries[0].EmployeeId.ShouldBe(currentUser.Id);
+        auditEntries[0].EmployeeName.ShouldBe(currentUser.GetFullName());
+        auditEntries[0].Action.ShouldBe("Saved");
+        auditEntries[0].BeginStatus.ShouldBe(WorkOrderStatus.Draft.Code);
+        auditEntries[0].EndStatus.ShouldBe(WorkOrderStatus.Draft.Code);
     }
 }
