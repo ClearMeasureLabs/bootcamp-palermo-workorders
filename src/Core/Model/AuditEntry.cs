@@ -14,9 +14,9 @@ public class AuditEntry : EntityBase<AuditEntry>
     
     public DateTime? Date { get; set; }
     
-    public WorkOrderStatus? BeginStatus { get; set; }
+    public WorkOrderStatus BeginStatus { get; set; } = WorkOrderStatus.None;
     
-    public WorkOrderStatus? EndStatus { get; set; }
+    public WorkOrderStatus EndStatus { get; set; } = WorkOrderStatus.None;
     
     public WorkOrder? WorkOrder { get; set; }
 

@@ -103,8 +103,8 @@
                                 <tr>
                                     <td>@entry.Date?.ToString("G", CultureInfo.CurrentCulture)</td>
                                     <td>@(entry.Employee?.GetFullName() ?? entry.ArchivedEmployeeName)</td>
-                                    <td>@(entry.BeginStatus?.FriendlyName ?? "")</td>
-                                    <td>@(entry.EndStatus?.FriendlyName ?? "")</td>
+                                    <td>@(entry.BeginStatus.IsEmpty() ? "" : entry.BeginStatus.FriendlyName)</td>
+                                    <td>@(entry.EndStatus.IsEmpty() ? "" : entry.EndStatus.FriendlyName)</td>
                                 </tr>
                             }
                         </tbody>
