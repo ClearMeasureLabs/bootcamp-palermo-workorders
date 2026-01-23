@@ -79,9 +79,37 @@
 
                 <span class="label">Completed Date:</span>
                 <span data-testid="@Elements.CompletedDate" class="value">@Model.CompletedDate</span>
-
-
             </div>
+
+            @if (_workOrder?.AuditEntries.Any() == true)
+            {
+                <div class="audit-entries-section">
+                    <h3>History</h3>
+                    <table data-testid="@Elements.AuditEntriesTable" class="audit-entries-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>From Status</th>
+                                <th>To Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in _workOrder.AuditEntries.OrderByDescending(e => e.Date))
+                            {
+                                <tr>
+                                    <td>@entry.Date.ToString("G")</td>
+                                    <td>@entry.EmployeeName</td>
+                                    <td>@entry.Action</td>
+                                    <td>@entry.BeginStatus?.FriendlyName</td>
+                                    <td>@entry.EndStatus?.FriendlyName</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
             
             @if (_workOrder != null)
             {

@@ -13,6 +13,7 @@ public class WorkOrderQueryHandler(DataContext context) :
     public async Task<WorkOrder?> GetWorkOrderAsync(string number)
     {
         return await context.Set<WorkOrder>()
+            .Include(wo => wo.AuditEntries)
             .SingleOrDefaultAsync(wo => wo.Number == number);
     }
 
