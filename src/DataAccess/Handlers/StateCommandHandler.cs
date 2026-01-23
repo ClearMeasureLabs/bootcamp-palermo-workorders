@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -13,13 +14,32 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Executing");
-        request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
+        var currentDateTime = time.GetUtcNow().DateTime;
+        var beginStatus = request.GetBeginStatus();
+        
+        request.Execute(new StateCommandContext { CurrentDateTime = currentDateTime });
 
         var order = request.WorkOrder;
+        var endStatus = order.Status;
+        
         if (order.Assignee == order.Creator)
         {
             order.Assignee = order.Creator; //EFCore reference checking
         }
+
+        // Create audit entry for the action
+        var auditEntry = new AuditEntry
+        {
+            Id = Guid.NewGuid(),
+            WorkOrder = order,
+            Employee = request.CurrentUser,
+            ArchivedEmployeeName = request.CurrentUser.GetFullName(),
+            Date = currentDateTime,
+            BeginStatus = beginStatus,
+            EndStatus = endStatus,
+            Action = request.TransitionVerbPresentTense
+        };
+        order.AuditEntries.Add(auditEntry);
 
         if (order.Id == Guid.Empty)
         {

@@ -20,7 +20,10 @@ public class StateCommandList
         commands.Add(new SaveDraftCommand(workOrder, currentUser));
         commands.Add(new DraftToAssignedCommand(workOrder, currentUser));
         commands.Add(new AssignedToInProgressCommand(workOrder, currentUser));
+        commands.Add(new AssignedToCancelledCommand(workOrder, currentUser));
         commands.Add(new InProgressToCompleteCommand(workOrder, currentUser));
+        commands.Add(new InProgressToAssignedCommand(workOrder, currentUser));
+        commands.Add(new InProgressToCancelledCommand(workOrder, currentUser));
 
         return commands.ToArray();
     }
