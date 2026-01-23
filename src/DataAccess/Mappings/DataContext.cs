@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -28,6 +28,7 @@ public class DataContext : DbContext
         new WorkOrderMap().Map(modelBuilder);
         new EmployeeMap().Map(modelBuilder);
         new RoleMap().Map(modelBuilder);
+        new WorkOrderAuditEntryMap().Map(modelBuilder);
     }
 
     public sealed override string ToString()
