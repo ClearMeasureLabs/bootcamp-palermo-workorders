@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Executing");
+        var beginStatus = request.WorkOrder.Status;
         request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
 
         var order = request.WorkOrder;
@@ -21,7 +23,8 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             order.Assignee = order.Creator; //EFCore reference checking
         }
 
-        if (order.Id == Guid.Empty)
+        var isNewOrder = order.Id == Guid.Empty;
+        if (isNewOrder)
         {
             dbContext.Attach(order);
             dbContext.Add(order);
@@ -32,7 +35,12 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             dbContext.Update(order);
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Create audit entry for status change or save
+        var auditEntry = CreateAuditEntry(order, request.CurrentUser, beginStatus, order.Status, request.TransitionVerbPresentTense);
+        dbContext.Add(auditEntry);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         var loweredTransitionVerb = request.TransitionVerbPastTense.ToLower();
         var workOrderNumber = order.Number;
@@ -43,5 +51,25 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         logger.LogInformation("Executed");
 
         return new StateCommandResult(order, request.TransitionVerbPresentTense, debugMessage);
+    }
+
+    private AuditEntry CreateAuditEntry(WorkOrder workOrder, Employee employee, WorkOrderStatus beginStatus, WorkOrderStatus endStatus, string actionType)
+    {
+        var maxSequence = workOrder.AuditEntries.Any() 
+            ? workOrder.AuditEntries.Max(a => a.Sequence) 
+            : 0;
+
+        return new AuditEntry
+        {
+            Id = Guid.NewGuid(),
+            WorkOrderId = workOrder.Id,
+            Sequence = maxSequence + 1,
+            EmployeeId = employee.Id,
+            ArchivedEmployeeName = employee.GetFullName(),
+            Date = time.GetUtcNow().DateTime,
+            BeginStatus = beginStatus,
+            EndStatus = endStatus,
+            ActionType = actionType
+        };
     }
 }

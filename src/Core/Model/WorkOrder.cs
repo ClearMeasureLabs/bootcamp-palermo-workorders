@@ -12,6 +12,8 @@ public class WorkOrder : EntityBase<WorkOrder>
         set => _description = getTruncatedString(value);
     }
 
+    public string? Instructions { get; set; } = "";
+
     public string? RoomNumber { get; set; } = null;
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
@@ -30,6 +32,8 @@ public class WorkOrder : EntityBase<WorkOrder>
     public DateTime? CreatedDate { get; set; }
 
     public DateTime? CompletedDate { get; set; }
+
+    public ICollection<AuditEntry> AuditEntries { get; set; } = new List<AuditEntry>();
 
     private string? getTruncatedString(string? value)
     {
