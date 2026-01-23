@@ -5,14 +5,114 @@ alwaysApply: true
 
 # Cloud Agent Instructions
 
-- Stack: .NET 9.0, Blazor WASM + Server, EF Core 9, SQL Server, Onion Architecture
-- Key paths: Core, DataAccess, UI Server/Client, Database scripts, Tests
-- Architecture: Core has no deps; DataAccess references Core only; UI is outer layer
-- Restrictions: no new NuGet packages or SDK upgrades without approval; no changes to `.octopus/` or build scripts without approval
-- Code style: PascalCase types/methods, camelCase variables, nullable reference types, small methods, XML docs for public APIs
-- Testing: NUnit + Shouldly only; test doubles use `Stub` prefix; AAA without comments; test names `[Method]_[Scenario]_[Expected]` and start with `Should` or `When`
-- Test coverage: new or updated behavior requires unit tests, integration tests, and acceptance tests (Playwright); acceptance tests may be skipped if the user experience does not change
-- Database: migrations in `src/Database/scripts/Update/` with numbered `###_Name.sql`; use tabs in new SQL scripts
-- Branching: when starting work on an issue, create branch `issues/[issue-number]/[issue-title]`; if branch exists, use it without creating a new one
-- Quality gates: run `.`\privatebuild.ps1` before commit; run `.`\acceptancetests.ps1` before PR; docs-only changes skip builds; run `gh pr ready` when finished
-- Responses: no anthropomorphizing; avoid first/second person; terse statements
+## Scope of Work
+
+**CRITICAL:** Only perform work within these responsibilities. Any request outside this scope requires explicit user confirmation before proceeding.
+
+| Responsibility | Description |
+|----------------|-------------|
+| Repository Knowledge | Answer questions about the codebase |
+| Issue Tracking | Answer questions about existing GitHub issues |
+| Issue Management | Create and update issues (see protocol below) |
+| Issue Implementation | Work on issues by updating code and opening PRs |
+
+---
+
+## Architecture
+
+- **Stack:** .NET 9.0, Blazor WASM + Server, EF Core 9, SQL Server
+- **Pattern:** Onion Architecture
+- **Key Paths:** `Core`, `DataAccess`, `UI/Server`, `UI/Client`, `Database/scripts`, `Tests`
+- **Dependency Rules:**
+  - `Core` → no dependencies (innermost layer)
+  - `DataAccess` → references `Core` only
+  - `UI` → outer layer (can reference all)
+
+## Restrictions
+
+Do NOT perform without explicit approval:
+- Add NuGet packages or change SDK versions
+- Modify `.octopus/` directory
+- Modify build scripts (`build.ps1`, `build.bat`, `build.sh`, `BuildFunctions.ps1`)
+
+## Coding Standards
+
+| Aspect | Rule |
+|--------|------|
+| Types/Methods | PascalCase |
+| Variables | camelCase |
+| Nullable types | Use nullable reference types |
+| Methods | Small, single responsibility |
+| Public APIs | XML documentation required |
+
+## Testing Requirements
+
+### Frameworks & Conventions
+- **Framework:** NUnit + Shouldly (no other assertion libraries)
+- **Test doubles:** Prefix with `Stub` (not `Mock`)
+- **Pattern:** AAA (Arrange, Act, Assert) without comments
+- **Naming:** `[Method]_[Scenario]_[Expected]`, starting with `Should` or `When`
+
+### Coverage Requirements
+New or updated behavior requires:
+1. ✅ Unit tests
+2. ✅ Integration tests
+3. ✅ Acceptance tests (Playwright) — may skip if UX unchanged
+
+## Workflow
+
+### Branching
+- Create branch: `issues/[issue-number]/[issue-title]`
+- If branch exists, use it (do not create new)
+
+### Database Migrations
+- Location: `src/Database/scripts/Update/`
+- Naming: `###_Description.sql` (sequential numbering)
+- Formatting: Use TABS in SQL scripts
+
+### Quality Gates
+| Stage | Command |
+|-------|---------|
+| Before commit | `.\privatebuild.ps1` |
+| Before PR | `.\acceptancetests.ps1` |
+| After PR ready | `gh pr ready` |
+
+**Exception:** Docs-only changes may skip builds.
+
+## Communication Style
+
+- No anthropomorphizing ("I", "me", "you", "we", "us")
+- Avoid first/second person pronouns
+- Use terse, direct statements
+
+---
+
+## Creating GitHub Issues
+
+**Rule:** Conduct a sequential interview—one question at a time. Do not ask for all requirements upfront.
+
+### Interview Steps
+
+| Step | Question | Condition |
+|------|----------|-----------|
+| 1 | Description of the change | Always |
+| 2 | UX requirements (or "N/A" if backend-only) | Always |
+| 3 | Requires authorized user/client? | Always |
+| 4 | Required roles (RBAC) | Only if Step 3 = Yes |
+| 5 | Resource ownership rules | Only if Step 3 = Yes |
+| 6 | Validation rules | Always |
+
+**Note:** If multiple answers provided at once, acknowledge and skip to next unanswered item.
+
+### Conceptual Definition Phase
+
+After completing the interview, generate a non-technical Markdown summary. Avoid implementation details. Request confirmation before creating the issue.
+
+```markdown
+# Conceptual Definition
+**Goal:** [Summary of Goal]
+**UX:** [UX Requirements]
+**Authorization:** [Roles / Rules / "None (Public)"]
+**Validation:** [Validation Rules]
+**Acceptance Criteria:** [Derived from conversation]
+```
