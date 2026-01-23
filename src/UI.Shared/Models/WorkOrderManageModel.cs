@@ -16,9 +16,11 @@ public class WorkOrderManageModel
 
     public string? AssignedToUserName { get; set; }
 
-    [Required] public string? Title { get; set; }
+    [Required(ErrorMessage = "Title is required.")]
+    public string? Title { get; set; }
 
-    [Required] public string? Description { get; set; }
+    [Required(ErrorMessage = "Description is required.")]
+    public string? Description { get; set; }
 
     public bool IsReadOnly { get; set; }
 

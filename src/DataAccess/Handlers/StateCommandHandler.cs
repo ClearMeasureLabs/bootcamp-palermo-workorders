@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,9 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Executing");
+
+        ValidateWorkOrder(request.WorkOrder);
+
         request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
 
         var order = request.WorkOrder;
@@ -43,5 +47,25 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         logger.LogInformation("Executed");
 
         return new StateCommandResult(order, request.TransitionVerbPresentTense, debugMessage);
+    }
+
+    private static void ValidateWorkOrder(WorkOrder workOrder)
+    {
+        var errors = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(workOrder.Title))
+        {
+            errors.Add("Title is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(workOrder.Description))
+        {
+            errors.Add("Description is required.");
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new WorkOrderValidationException(errors);
+        }
     }
 }
