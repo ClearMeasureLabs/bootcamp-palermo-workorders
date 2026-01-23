@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -13,9 +14,12 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Executing");
+        
+        var order = request.WorkOrder;
+        var beginStatus = order.Status;
+        
         request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
 
-        var order = request.WorkOrder;
         if (order.Assignee == order.Creator)
         {
             order.Assignee = order.Creator; //EFCore reference checking
@@ -31,6 +35,10 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             dbContext.Attach(order);
             dbContext.Update(order);
         }
+        
+        // Create audit entry
+        var auditEntry = CreateAuditEntry(order, request.CurrentUser, beginStatus, order.Status, time.GetUtcNow().DateTime);
+        dbContext.Add(auditEntry);
 
         await dbContext.SaveChangesAsync();
 
@@ -43,5 +51,31 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         logger.LogInformation("Executed");
 
         return new StateCommandResult(order, request.TransitionVerbPresentTense, debugMessage);
+    }
+    
+    private AuditEntry CreateAuditEntry(WorkOrder workOrder, Employee employee, WorkOrderStatus beginStatus, WorkOrderStatus endStatus, DateTime date)
+    {
+        var sequence = GetNextSequence(workOrder.Id);
+        
+        return new AuditEntry
+        {
+            WorkOrderId = workOrder.Id,
+            Sequence = sequence,
+            EmployeeId = employee.Id,
+            ArchivedEmployeeName = employee.GetFullName(),
+            Date = date,
+            BeginStatus = beginStatus,
+            EndStatus = endStatus
+        };
+    }
+    
+    private int GetNextSequence(Guid workOrderId)
+    {
+        var maxSequence = dbContext.Set<AuditEntry>()
+            .Where(ae => ae.WorkOrderId == workOrderId)
+            .Select(ae => (int?)ae.Sequence)
+            .Max() ?? 0;
+            
+        return maxSequence + 1;
     }
 }
