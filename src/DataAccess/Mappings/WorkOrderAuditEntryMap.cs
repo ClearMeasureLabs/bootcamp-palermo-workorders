@@ -1,5 +1,6 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Mappings;
 
@@ -7,7 +8,9 @@ public class WorkOrderAuditEntryMap : IEntityFrameworkMapping
 {
     public void Map(ModelBuilder modelBuilder)
     {
-        var statusConverter = new WorkOrderStatusConverter();
+        var nullableStatusConverter = new ValueConverter<WorkOrderStatus?, string?>(
+            v => v == null ? null : v.Code,
+            v => v == null ? null : WorkOrderStatus.FromCode(v));
 
         modelBuilder.Entity<WorkOrderAuditEntry>(entity =>
         {
@@ -22,13 +25,13 @@ public class WorkOrderAuditEntryMap : IEntityFrameworkMapping
             entity.Property(e => e.ActionType).IsRequired().HasMaxLength(50);
             entity.Property(e => e.ActionDetails).HasMaxLength(500);
 
-            // Configure Status with converter
+            // Configure Status with converter for nullable WorkOrderStatus
             entity.Property(e => e.BeginStatus)
-                .HasConversion(statusConverter)
+                .HasConversion(nullableStatusConverter)
                 .HasMaxLength(3);
 
             entity.Property(e => e.EndStatus)
-                .HasConversion(statusConverter)
+                .HasConversion(nullableStatusConverter)
                 .HasMaxLength(3);
 
             // Configure relationships
