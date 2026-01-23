@@ -10,7 +10,7 @@ public class AuditEntry
     
     public string? ArchivedEmployeeName { get; set; }
     
-    public DateTime? Date { get; set; }
+    public DateTime Date { get; set; }
     
     public WorkOrderStatus? BeginStatus { get; set; }
     
