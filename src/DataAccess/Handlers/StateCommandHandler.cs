@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,9 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Executing");
-        request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
+        var beginStatus = request.WorkOrder.Status;
+        var currentDateTime = time.GetUtcNow().DateTime;
+        request.Execute(new StateCommandContext { CurrentDateTime = currentDateTime });
 
         var order = request.WorkOrder;
         if (order.Assignee == order.Creator)
@@ -31,6 +34,24 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             dbContext.Attach(order);
             dbContext.Update(order);
         }
+
+        // Create audit entry for status change or save
+        var auditEntry = new AuditEntry
+        {
+            Id = Guid.NewGuid(),
+            WorkOrderId = order.Id,
+            WorkOrder = order,
+            EmployeeId = request.CurrentUser.Id,
+            Employee = request.CurrentUser,
+            ArchivedEmployeeName = request.CurrentUser.GetFullName(),
+            Date = currentDateTime,
+            BeginStatus = beginStatus,
+            EndStatus = order.Status,
+            Action = request.TransitionVerbPresentTense
+        };
+
+        dbContext.Attach(auditEntry);
+        dbContext.Add(auditEntry);
 
         await dbContext.SaveChangesAsync();
 
