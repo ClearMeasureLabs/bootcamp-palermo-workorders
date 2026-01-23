@@ -22,7 +22,9 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             order.Assignee = order.Creator; //EFCore reference checking
         }
 
-        if (order.Id == Guid.Empty)
+        var isNewWorkOrder = order.Id == Guid.Empty;
+
+        if (isNewWorkOrder)
         {
             dbContext.Attach(order);
             dbContext.Add(order);
@@ -33,13 +35,22 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             dbContext.Update(order);
         }
 
-        // Add audit entries to the database
-        foreach (var auditEntry in context.AuditEntries)
-        {
-            dbContext.Add(auditEntry);
-        }
-
         await dbContext.SaveChangesAsync();
+
+        // Add audit entries only for existing work orders (after SaveChanges so we have the Id)
+        if (!isNewWorkOrder)
+        {
+            foreach (var auditEntry in context.AuditEntries)
+            {
+                // Ensure WorkOrderId is set
+                if (auditEntry.WorkOrderId == Guid.Empty)
+                {
+                    auditEntry.WorkOrderId = order.Id;
+                }
+                dbContext.Add(auditEntry);
+            }
+            await dbContext.SaveChangesAsync();
+        }
 
         var loweredTransitionVerb = request.TransitionVerbPastTense.ToLower();
         var workOrderNumber = order.Number;
