@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
@@ -155,5 +155,110 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         order.Description.ShouldBe(workOrder.Description);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
+    }
+
+    [Test]
+    public async Task ShouldReturnValidationErrorWhenTitleIsEmpty()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.Title = "";
+        workOrder.Description = "Valid description";
+        workOrder.Creator = currentUser;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        var result = await handler.Handle(command);
+
+        result.IsSuccess.ShouldBeFalse();
+        result.ValidationErrors.ShouldNotBeNull();
+        result.ValidationErrors!.ShouldContain("Title is required.");
+    }
+
+    [Test]
+    public async Task ShouldReturnValidationErrorWhenDescriptionIsEmpty()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.Title = "Valid title";
+        workOrder.Description = "";
+        workOrder.Creator = currentUser;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        var result = await handler.Handle(command);
+
+        result.IsSuccess.ShouldBeFalse();
+        result.ValidationErrors.ShouldNotBeNull();
+        result.ValidationErrors!.ShouldContain("Description is required.");
+    }
+
+    [Test]
+    public async Task ShouldReturnValidationErrorsWhenBothTitleAndDescriptionAreEmpty()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.Title = "";
+        workOrder.Description = "";
+        workOrder.Creator = currentUser;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        var result = await handler.Handle(command);
+
+        result.IsSuccess.ShouldBeFalse();
+        result.ValidationErrors.ShouldNotBeNull();
+        result.ValidationErrors!.Count.ShouldBe(2);
+        result.ValidationErrors.ShouldContain("Title is required.");
+        result.ValidationErrors.ShouldContain("Description is required.");
+    }
+
+    [Test]
+    public async Task ShouldNotSaveWorkOrderWhenValidationFails()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.Title = "";
+        workOrder.Description = "";
+        workOrder.Creator = currentUser;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        var result = await handler.Handle(command);
+
+        result.IsSuccess.ShouldBeFalse();
+        result.WorkOrder.Id.ShouldBe(Guid.Empty);
     }
 }

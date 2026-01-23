@@ -42,14 +42,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="Title" class="form-label">Title:</label>
+                    <label for="Title" class="form-label">Title: <span class="required-indicator">*</span></label>
                     <div>
                         <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="Description" class="form-label">Description:</label>
+                    <label for="Description" class="form-label">Description: <span class="required-indicator">*</span></label>
                     <div>
                         <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
                     </div>
@@ -94,7 +94,7 @@
                     {
                         var buttonTestId = Elements.CommandButton + command.TransitionVerbPresentTense;
                         var buttonClass = command.TransitionVerbPresentTense == "Cancel" ? "btn btn-primary btn-red" : "btn btn-primary";
-                        <button data-testid="@buttonTestId" type="submit" @onclick="@(() => SelectedCommand = command.TransitionVerbPresentTense)" class="@buttonClass">
+                        <button data-testid="@buttonTestId" type="submit" @onclick="@(() => SelectedCommand = command.TransitionVerbPresentTense)" class="@buttonClass" disabled="@(!IsFormValid)">
                             @command.TransitionVerbPresentTense
                         </button>
                     }
