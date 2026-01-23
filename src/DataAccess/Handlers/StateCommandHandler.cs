@@ -13,7 +13,8 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Executing");
-        request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
+        var context = new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime };
+        request.Execute(context);
 
         var order = request.WorkOrder;
         if (order.Assignee == order.Creator)
@@ -30,6 +31,12 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
         {
             dbContext.Attach(order);
             dbContext.Update(order);
+        }
+
+        // Add audit entries to the database
+        foreach (var auditEntry in context.AuditEntries)
+        {
+            dbContext.Add(auditEntry);
         }
 
         await dbContext.SaveChangesAsync();
