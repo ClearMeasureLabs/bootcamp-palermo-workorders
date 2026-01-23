@@ -171,6 +171,7 @@ public abstract class AcceptanceTestBase : PageTest
         order.Number = null;
         var testTitle = order.Title;
         var testDescription = order.Description;
+        var testInstructions = order.Instructions;
         var testRoomNumber = order.RoomNumber;
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -184,6 +185,7 @@ public abstract class AcceptanceTestBase : PageTest
         order.Number = newWorkOrderNumber;
         await Input(nameof(WorkOrderManage.Elements.Title), testTitle);
         await Input(nameof(WorkOrderManage.Elements.Description), testDescription);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), testInstructions);
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), testRoomNumber);
         await TakeScreenshotAsync(2, "FormFilled");
 
