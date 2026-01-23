@@ -1,0 +1,46 @@
+BEGIN TRANSACTION
+GO
+
+PRINT N'Creating AuditEntry table'
+GO
+
+CREATE TABLE [dbo].[AuditEntry]
+(
+	[Id] UNIQUEIDENTIFIER NOT NULL,
+	[WorkOrderId] UNIQUEIDENTIFIER NOT NULL,
+	[EmployeeId] UNIQUEIDENTIFIER NULL,
+	[EmployeeName] NVARCHAR(200) NULL,
+	[EntryDate] DATETIME NOT NULL,
+	[BeginStatus] CHAR(3) NULL,
+	[EndStatus] CHAR(3) NULL,
+	[ActionType] NVARCHAR(50) NULL,
+	[Description] NVARCHAR(500) NULL,
+	CONSTRAINT [PK_AuditEntry] PRIMARY KEY CLUSTERED ([Id] ASC)
+) ON [PRIMARY]
+GO
+
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+
+PRINT N'Adding foreign key FK_AuditEntry_WorkOrder'
+GO
+
+ALTER TABLE [dbo].[AuditEntry] ADD CONSTRAINT [FK_AuditEntry_WorkOrder] 
+	FOREIGN KEY ([WorkOrderId]) REFERENCES [dbo].[WorkOrder] ([Id]) ON DELETE CASCADE
+GO
+
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+
+PRINT N'Adding foreign key FK_AuditEntry_Employee'
+GO
+
+ALTER TABLE [dbo].[AuditEntry] ADD CONSTRAINT [FK_AuditEntry_Employee] 
+	FOREIGN KEY ([EmployeeId]) REFERENCES [dbo].[Employee] ([Id]) ON DELETE NO ACTION
+GO
+
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION

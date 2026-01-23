@@ -5,17 +5,17 @@ using ClearMeasure.Bootcamp.Core.Services;
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
 [TestFixture]
-public class InProgressToCancelledCommandTests : StateCommandBaseTests
+public class AssignedToCancelledCommandTests : StateCommandBaseTests
 {
     [Test]
     public void ShouldNotBeValidInWrongStatus()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Assigned;
+        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new InProgressToCancelledCommand(order, employee);
+        var command = new AssignedToCancelledCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -23,11 +23,11 @@ public class InProgressToCancelledCommandTests : StateCommandBaseTests
     public void ShouldNotBeValidWithWrongEmployee()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.InProgress;
+        order.Status = WorkOrderStatus.Assigned;
         var creator = new Employee();
         order.Creator = creator;
 
-        var command = new InProgressToCancelledCommand(order, new Employee());
+        var command = new AssignedToCancelledCommand(order, new Employee());
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -35,11 +35,11 @@ public class InProgressToCancelledCommandTests : StateCommandBaseTests
     public void ShouldBeValid()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.InProgress;
+        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new InProgressToCancelledCommand(order, employee);
+        var command = new AssignedToCancelledCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -48,11 +48,11 @@ public class InProgressToCancelledCommandTests : StateCommandBaseTests
     {
         var order = new WorkOrder();
         order.Number = "123";
-        order.Status = WorkOrderStatus.InProgress;
+        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new InProgressToCancelledCommand(order, employee);
+        var command = new AssignedToCancelledCommand(order, employee);
         command.Execute(new StateCommandContext());
 
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Cancelled));
@@ -60,6 +60,6 @@ public class InProgressToCancelledCommandTests : StateCommandBaseTests
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new InProgressToCancelledCommand(order, employee);
+        return new AssignedToCancelledCommand(order, employee);
     }
 }
