@@ -25,6 +25,22 @@ public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUse
     public virtual void Execute(StateCommandContext context)
     {
         var currentUserFullName = CurrentUser.GetFullName();
+        var oldStatus = WorkOrder.Status.FriendlyName;
         WorkOrder.ChangeStatus(CurrentUser, context.CurrentDateTime, GetEndStatus());
+        var newStatus = WorkOrder.Status.FriendlyName;
+
+        // Record audit entry for status change
+        var auditEntry = new AuditEntry
+        {
+            Id = Guid.NewGuid(),
+            WorkOrderId = WorkOrder.Id,
+            UserName = CurrentUser.UserName,
+            Timestamp = context.CurrentDateTime,
+            Action = TransitionVerbPastTense,
+            OldStatus = oldStatus,
+            NewStatus = newStatus,
+            Details = $"{currentUserFullName} {TransitionVerbPastTense.ToLower()} work order {WorkOrder.Number}"
+        };
+        context.AuditEntries.Add(auditEntry);
     }
 }

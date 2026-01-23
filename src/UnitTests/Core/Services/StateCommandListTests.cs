@@ -25,12 +25,15 @@ public class StateCommandListTests
         var facilitator = new StateCommandList();
         var commands = facilitator.GetAllStateCommands(new WorkOrder(), new Employee());
 
-        Assert.That(commands.Length, Is.EqualTo(4));
+        Assert.That(commands.Length, Is.EqualTo(7));
 
         Assert.That(commands[0], Is.InstanceOf(typeof(SaveDraftCommand)));
         Assert.That(commands[1], Is.InstanceOf(typeof(DraftToAssignedCommand)));
         Assert.That(commands[2], Is.InstanceOf(typeof(AssignedToInProgressCommand)));
         Assert.That(commands[3], Is.InstanceOf(typeof(InProgressToCompleteCommand)));
+        Assert.That(commands[4], Is.InstanceOf(typeof(AssignedToCancelledCommand)));
+        Assert.That(commands[5], Is.InstanceOf(typeof(InProgressToCancelledCommand)));
+        Assert.That(commands[6], Is.InstanceOf(typeof(InProgressToAssignedCommand)));
     }
 
     [Test]
