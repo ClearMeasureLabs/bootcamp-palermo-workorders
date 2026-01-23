@@ -7,8 +7,6 @@ public class AuditEntryMap : IEntityFrameworkMapping
 {
     public void Map(ModelBuilder modelBuilder)
     {
-        var statusConverter = new WorkOrderStatusConverter();
-
         modelBuilder.Entity<AuditEntry>(entity =>
         {
             entity.ToTable("AuditEntry", "dbo");
@@ -23,12 +21,16 @@ public class AuditEntryMap : IEntityFrameworkMapping
             entity.Property(e => e.Date).IsRequired();
             entity.Property(e => e.Action).HasMaxLength(50);
 
-            // Configure Status with converter
+            // Configure Status with converter - use nullable converter
             entity.Property(e => e.BeginStatus)
-                .HasConversion(statusConverter)
+                .HasConversion(
+                    v => v != null ? v.Code : null,
+                    v => v != null ? WorkOrderStatus.FromCode(v) : null)
                 .HasMaxLength(3);
             entity.Property(e => e.EndStatus)
-                .HasConversion(statusConverter)
+                .HasConversion(
+                    v => v != null ? v.Code : null,
+                    v => v != null ? WorkOrderStatus.FromCode(v) : null)
                 .HasMaxLength(3);
 
             // Configure relationships
