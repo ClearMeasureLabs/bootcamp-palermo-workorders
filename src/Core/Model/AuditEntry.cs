@@ -1,6 +1,6 @@
 namespace ClearMeasure.Bootcamp.Core.Model;
 
-public class AuditEntry : EntityBase<AuditEntry>
+public class AuditEntry
 {
     public Guid WorkOrderId { get; set; }
     
@@ -15,10 +15,4 @@ public class AuditEntry : EntityBase<AuditEntry>
     public WorkOrderStatus? BeginStatus { get; set; }
     
     public WorkOrderStatus? EndStatus { get; set; }
-    
-    public override Guid Id
-    {
-        get => WorkOrderId;
-        set => WorkOrderId = value;
-    }
 }

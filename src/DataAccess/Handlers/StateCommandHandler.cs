@@ -36,10 +36,14 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             dbContext.Update(order);
         }
         
-        // Create audit entry
+        // Save to get the WorkOrder Id generated
+        await dbContext.SaveChangesAsync();
+        
+        // Create audit entry after WorkOrder has been saved and has an Id
         var auditEntry = CreateAuditEntry(order, request.CurrentUser, beginStatus, order.Status, time.GetUtcNow().DateTime);
         dbContext.Add(auditEntry);
-
+        
+        // Save again with the audit entry
         await dbContext.SaveChangesAsync();
 
         var loweredTransitionVerb = request.TransitionVerbPastTense.ToLower();
