@@ -24,7 +24,8 @@ public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUse
 
     public virtual void Execute(StateCommandContext context)
     {
-        var currentUserFullName = CurrentUser.GetFullName();
+        var beginStatus = WorkOrder.Status;
         WorkOrder.ChangeStatus(CurrentUser, context.CurrentDateTime, GetEndStatus());
+        WorkOrder.AddAuditEntry(CurrentUser, context.CurrentDateTime, beginStatus, GetEndStatus(), TransitionVerbPastTense);
     }
 }

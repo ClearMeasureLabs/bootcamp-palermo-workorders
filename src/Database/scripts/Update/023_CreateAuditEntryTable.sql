@@ -1,0 +1,36 @@
+BEGIN TRANSACTION
+GO
+PRINT N'Creating [dbo].[AuditEntry] table'
+GO
+CREATE TABLE [dbo].[AuditEntry]
+(
+	[Id] UNIQUEIDENTIFIER NOT NULL,
+	[WorkOrderId] UNIQUEIDENTIFIER NOT NULL,
+	[Date] DATETIME NOT NULL,
+	[EmployeeId] UNIQUEIDENTIFIER NULL,
+	[EmployeeName] NVARCHAR(50) NULL,
+	[BeginStatus] CHAR(3) NULL,
+	[EndStatus] CHAR(3) NULL,
+	[Action] NVARCHAR(50) NULL,
+	CONSTRAINT [PK_AuditEntry] PRIMARY KEY CLUSTERED ([Id])
+)
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT N'Adding foreign key constraints to [dbo].[AuditEntry]'
+GO
+ALTER TABLE [dbo].[AuditEntry] ADD CONSTRAINT [FK_AuditEntry_WorkOrder]
+	FOREIGN KEY ([WorkOrderId]) REFERENCES [dbo].[WorkOrder] ([Id])
+	ON DELETE CASCADE
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+ALTER TABLE [dbo].[AuditEntry] ADD CONSTRAINT [FK_AuditEntry_Employee]
+	FOREIGN KEY ([EmployeeId]) REFERENCES [dbo].[Employee] ([Id])
+	ON DELETE NO ACTION
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO
