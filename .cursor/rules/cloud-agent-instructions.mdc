@@ -11,6 +11,7 @@ alwaysApply: true
 - Restrictions: no new NuGet packages or SDK upgrades without approval; no changes to `.octopus/` or build scripts without approval
 - Code style: PascalCase types/methods, camelCase variables, nullable reference types, small methods, XML docs for public APIs
 - Testing: NUnit + Shouldly only; test doubles use `Stub` prefix; AAA without comments; test names `[Method]_[Scenario]_[Expected]` and start with `Should` or `When`
+- Test coverage: new or updated behavior requires unit tests, integration tests, and acceptance tests (Playwright); acceptance tests may be skipped if the user experience does not change
 - Database: migrations in `src/Database/scripts/Update/` with numbered `###_Name.sql`; use tabs in new SQL scripts
 - Branching: when starting work on an issue, create branch `issues/[issue-number]/[issue-title]`; if branch exists, use it without creating a new one
 - Quality gates: run `.`\privatebuild.ps1` before commit; run `.`\acceptancetests.ps1` before PR; docs-only changes skip builds; run `gh pr ready` when finished
