@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -70,6 +71,30 @@ public class WorkOrderTests
         var order = new WorkOrder();
         order.Description = longText;
         Assert.That(order.Description.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void ShouldTruncateTo4000CharactersOnInstructions()
+    {
+        var longText = new string('x', 4001);
+        var order = new WorkOrder();
+        order.Instructions = longText;
+        order.Instructions!.Length.ShouldBe(4000);
+    }
+
+    [Test]
+    public void ShouldInitializeInstructionsToEmptyString()
+    {
+        var order = new WorkOrder();
+        order.Instructions.ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void ShouldSetAndGetInstructions()
+    {
+        var order = new WorkOrder();
+        order.Instructions = "Test instructions";
+        order.Instructions.ShouldBe("Test instructions");
     }
 
     [Test]
