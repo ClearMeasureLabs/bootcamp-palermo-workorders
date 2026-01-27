@@ -93,4 +93,48 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         
         rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
+
+    [Test]
+    public async Task CreateWorkOrder_WithMaxLengthTitle_SavesSuccessfully()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var longTitle = new string('T', 700);
+        await Input(nameof(WorkOrderManage.Elements.Title), longTitle);
+        await Input(nameof(WorkOrderManage.Elements.Description), "Testing 700 character title");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "R-100");
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var workOrders = await Bus.Send(new WorkOrderSpecificationQuery(new WorkOrderSearchSpecification { Creator = CurrentUser }));
+        workOrders.ShouldNotBeEmpty();
+        var savedOrder = workOrders.OrderByDescending(w => w.CreatedDate).First();
+        savedOrder.Title.ShouldBe(longTitle);
+        savedOrder.Title!.Length.ShouldBe(700);
+    }
+
+    [Test]
+    public async Task EditWorkOrder_ExtendTitleTo700Characters_SavesSuccessfully()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var longTitle = new string('X', 700);
+        await Input(nameof(WorkOrderManage.Elements.Title), longTitle);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        
+        WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        rehydratedOrder.Title.ShouldBe(longTitle);
+        rehydratedOrder.Title!.Length.ShouldBe(700);
+    }
 }
