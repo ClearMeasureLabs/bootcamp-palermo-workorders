@@ -16,7 +16,9 @@ public class WorkOrderManageModel
 
     public string? AssignedToUserName { get; set; }
 
-    [Required] public string? Title { get; set; }
+    [Required]
+    [RegularExpression("^[a-zA-Z]+$", ErrorMessage = "Title must contain only letters (A-Z, a-z)")]
+    public string? Title { get; set; }
 
     [Required] public string? Description { get; set; }
 
