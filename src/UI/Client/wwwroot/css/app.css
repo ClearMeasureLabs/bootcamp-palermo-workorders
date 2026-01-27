@@ -178,6 +178,20 @@ a:hover, .btn-link:hover {
     cursor: not-allowed;
 }
 
+/* Blinking Border Animation */
+@keyframes blinking-border {
+    0%, 100% {
+        border-color: #7b68ee;
+    }
+    50% {
+        border-color: #e2e8f0;
+    }
+}
+
+.input-text, .input-textarea {
+    animation: blinking-border 2s infinite;
+}
+
 /* Card Components */
 .card {
     background: white;
