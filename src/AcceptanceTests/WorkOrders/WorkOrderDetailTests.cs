@@ -21,11 +21,11 @@ public class WorkOrderDetailTests : AcceptanceTestBase
         var commandButtons = new[]
         {
             SaveDraftCommand.Name,
-            AssignCommand.Name,
-            BeginCommand.Name,
-            CompleteCommand.Name,
-            CancelCommand.Name,
-            ShelveCommand.Name
+            DraftToAssignedCommand.Name,
+            AssignedToInProgressCommand.Name,
+            InProgressToCompleteCommand.Name,
+            AssignedToCancelledCommand.Name,
+            InProgressToAssigned.Name
         };
 
         foreach (var command in commandButtons)

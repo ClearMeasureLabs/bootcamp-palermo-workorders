@@ -29,7 +29,7 @@ public class WorkOrderManageTests : AcceptanceTestBase
         }
 
         // Verify "Cancel" button is green (Cancel command if present)
-        var cancelButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + CancelCommand.Name;
+        var cancelButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + AssignedToCancelledCommand.Name;
         var cancelButton = Page.GetByTestId(cancelButtonTestId);
         
         if (await cancelButton.CountAsync() > 0)
@@ -40,7 +40,7 @@ public class WorkOrderManageTests : AcceptanceTestBase
         }
 
         // Verify "Assign" button is green (Assign command if present)
-        var assignButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + AssignCommand.Name;
+        var assignButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name;
         var assignButton = Page.GetByTestId(assignButtonTestId);
         
         if (await assignButton.CountAsync() > 0)
