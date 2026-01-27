@@ -160,6 +160,23 @@ a:hover, .btn-link:hover {
     font-family: inherit;
 }
 
+/* Blinking border animation for text inputs */
+@media (prefers-reduced-motion: no-preference) {
+    input[type="text"].form-control,
+    textarea.form-control {
+        animation: blinkBorder 2s ease-in-out infinite;
+    }
+}
+
+@keyframes blinkBorder {
+    0%, 100% {
+        border-color: #e2e8f0;
+    }
+    50% {
+        border-color: #7b68ee;
+    }
+}
+
 .form-control:focus {
     border-color: #7b68ee;
     box-shadow: 0 0 0 0.2rem rgba(123, 104, 238, 0.25);
