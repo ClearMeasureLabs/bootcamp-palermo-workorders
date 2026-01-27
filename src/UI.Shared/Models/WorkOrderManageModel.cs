@@ -5,6 +5,9 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Models;
 
 public class WorkOrderManageModel
 {
+    public const string TitleValidationPattern = "^[a-zA-Z]+$";
+    public const string TitleValidationErrorMessage = "Title must contain only letters (A-Z, a-z)";
+    
     public WorkOrder? WorkOrder { get; set; }
     public EditMode Mode { get; set; }
 
@@ -17,7 +20,7 @@ public class WorkOrderManageModel
     public string? AssignedToUserName { get; set; }
 
     [Required]
-    [RegularExpression("^[a-zA-Z]+$", ErrorMessage = "Title must contain only letters (A-Z, a-z)")]
+    [RegularExpression(TitleValidationPattern, ErrorMessage = TitleValidationErrorMessage)]
     public string? Title { get; set; }
 
     [Required] public string? Description { get; set; }
