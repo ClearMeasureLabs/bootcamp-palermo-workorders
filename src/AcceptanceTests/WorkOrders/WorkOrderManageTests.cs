@@ -170,34 +170,35 @@ public class WorkOrderManageTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
 
-        // Create work order with invalid title directly via the Bus (bypass UI validation)
-        var order = Faker<WorkOrder>();
-        order.Number = null;
-        order.Title = "Legacy Title With Spaces 123!";
-        order.Description = "Test description";
-        order.RoomNumber = "101";
-        order.Creator = CurrentUser;
+        // Create work order with valid title first using the helper
+        var order = await CreateAndSaveNewWorkOrder();
+        
+        // Now directly update the title in the database to bypass validation
+        // This simulates a legacy work order that was created before validation was added
+        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
+        rehydratedOrder.ShouldNotBeNull();
+        rehydratedOrder.Title = "Legacy Title With Spaces 123!";
+        
+        // Save directly bypassing UI - this uses the existing WorkOrder with its ID
+        var saveCommand = new SaveDraftCommand(rehydratedOrder, CurrentUser);
+        await Bus.Send(saveCommand);
 
-        var command = new SaveDraftCommand(order, CurrentUser);
-        var result = await Bus.Send(command);
-        result.ShouldNotBeNull();
-        var savedOrder = result.WorkOrder;
-
-        // Navigate to work order list
+        // Navigate to work order list page
+        await Page.GotoAsync("/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         // View the work order with invalid title
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + savedOrder.Number);
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         // Verify work order details display correctly
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
-        await Expect(woNumberLocator).ToHaveTextAsync(savedOrder.Number!);
+        await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
 
         var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
-        await Expect(titleField).ToHaveValueAsync(savedOrder.Title!);
+        await Expect(titleField).ToHaveValueAsync("Legacy Title With Spaces 123!");
 
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
-        await Expect(descriptionField).ToHaveValueAsync(savedOrder.Description!);
+        await Expect(descriptionField).ToHaveValueAsync(rehydratedOrder.Description!);
     }
 }
