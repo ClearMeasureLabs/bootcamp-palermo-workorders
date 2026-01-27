@@ -288,4 +288,146 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
     }
+
+    [Test]
+    public void Instructions_ShouldPersistToDatabase()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-07",
+            Title = "Test Instructions",
+            Description = "Testing Instructions field",
+            Instructions = "Follow safety protocols and wear protective equipment",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe("Follow safety protocols and wear protective equipment");
+    }
+
+    [Test]
+    public void Instructions_ShouldAllowNullValue()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-08",
+            Title = "Test Null Instructions",
+            Description = "Testing null Instructions field",
+            Instructions = null,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBeNullOrEmpty();
+    }
+
+    [Test]
+    public async Task Instructions_ShouldUpdateAfterInitialSave()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-09",
+            Title = "Test Instructions Update",
+            Description = "Testing Instructions update",
+            Instructions = "Initial instructions",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+        }
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var workOrderToUpdate = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+            workOrderToUpdate.Instructions = "Updated instructions";
+            await context.SaveChangesAsync();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe("Updated instructions");
+    }
+
+    [Test]
+    public void Instructions_ShouldSave4000Characters()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var longInstructions = new string('x', 4000);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-10",
+            Title = "Test Max Length Instructions",
+            Description = "Testing 4000 character Instructions",
+            Instructions = longInstructions,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe(longInstructions);
+        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
+    }
 }
