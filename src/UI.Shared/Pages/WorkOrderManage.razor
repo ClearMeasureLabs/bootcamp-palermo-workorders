@@ -45,6 +45,11 @@
                     <label for="Title" class="form-label">Title:</label>
                     <div>
                         <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        <ValidationMessage For="@(() => Model.Title)"/>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <small class="form-text text-muted">Title must contain only letters (A-Z, a-z)</small>
+                        }
                     </div>
                 </div>
 
