@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
@@ -47,7 +48,7 @@ public class WorkOrderBlinkingBorderTests : AcceptanceTestBase
     {
         // Arrange & Act
         await LoginAsCurrentUser();
-        await Click(nameof(NavMenu.Elements.WorkOrderSearch));
+        await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "WorkOrderSearchPage");
@@ -89,7 +90,7 @@ public class WorkOrderBlinkingBorderTests : AcceptanceTestBase
         await TakeScreenshotAsync(2, "WorkOrderSaved");
 
         // Navigate to Search page
-        await Click(nameof(NavMenu.Elements.WorkOrderSearch));
+        await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
