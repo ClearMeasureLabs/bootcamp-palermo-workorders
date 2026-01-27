@@ -78,9 +78,9 @@ public class WorkOrderManageTests : AcceptanceTestBase
         var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
         await Expect(titleField).ToHaveValueAsync(title650);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-        rehyratedOrder.Title.ShouldBe(title650);
-        rehyratedOrder.Title!.Length.ShouldBe(650);
+        WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        rehydratedOrder.Title.ShouldBe(title650);
+        rehydratedOrder.Title!.Length.ShouldBe(650);
     }
 
     [Test]
