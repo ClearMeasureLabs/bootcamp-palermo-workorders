@@ -33,7 +33,8 @@ public class WorkOrderManageModelTests
         var validationResults = ValidateModel(model);
         
         validationResults.Count.ShouldBe(1);
-        validationResults[0].ErrorMessage.ShouldContain("Title must contain only letters");
+        validationResults[0].ErrorMessage.ShouldNotBeNull();
+        validationResults[0].ErrorMessage!.ShouldContain("Title must contain only letters");
     }
 
     [Test]
@@ -48,7 +49,8 @@ public class WorkOrderManageModelTests
         var validationResults = ValidateModel(model);
         
         validationResults.Count.ShouldBe(1);
-        validationResults[0].ErrorMessage.ShouldContain("Title must contain only letters");
+        validationResults[0].ErrorMessage.ShouldNotBeNull();
+        validationResults[0].ErrorMessage!.ShouldContain("Title must contain only letters");
     }
 
     [Test]
@@ -63,7 +65,8 @@ public class WorkOrderManageModelTests
         var validationResults = ValidateModel(model);
         
         validationResults.Count.ShouldBe(1);
-        validationResults[0].ErrorMessage.ShouldContain("Title must contain only letters");
+        validationResults[0].ErrorMessage.ShouldNotBeNull();
+        validationResults[0].ErrorMessage!.ShouldContain("Title must contain only letters");
     }
 
     [Test]
