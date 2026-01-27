@@ -167,7 +167,7 @@ public abstract class AcceptanceTestBase : PageTest
     protected async Task<WorkOrder> CreateAndSaveNewWorkOrder()
     {
         var order = Faker<WorkOrder>();
-        order.Title = "from automation";
+        order.Title = "fromautomation";
         order.Number = null;
         var testTitle = order.Title;
         var testDescription = order.Description;
