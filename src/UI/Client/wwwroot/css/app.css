@@ -179,6 +179,15 @@ textarea.form-control {
     animation: blinkBorder 2s ease-in-out infinite;
 }
 
+/* Respect user's motion preferences for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    input.form-control:not([type="checkbox"]):not([type="radio"]),
+    textarea.form-control {
+        animation: none;
+        border-color: #7b68ee;
+    }
+}
+
 .form-control:focus {
     border-color: #7b68ee;
     box-shadow: 0 0 0 0.2rem rgba(123, 104, 238, 0.25);
