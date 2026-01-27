@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -79,5 +80,14 @@ public class WorkOrderTests
         order.Status = WorkOrderStatus.Draft;
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void Title_ShouldAccept650Characters()
+    {
+        var longTitle = new string('x', 650);
+        var order = new WorkOrder();
+        order.Title = longTitle;
+        order.Title!.Length.ShouldBe(650);
     }
 }
