@@ -261,4 +261,35 @@ public class WorkOrderQueryHandlerTests
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
     }
+
+    [Test]
+    public async Task ShouldPersistOffsiteInstructionsToDatabase()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("1", "John", "Doe", "john.doe@example.com");
+        var order = new WorkOrder
+        {
+            Creator = creator,
+            Number = "TEST001",
+            Title = "Test Work Order",
+            Description = "Test Description",
+            RoomNumber = "101",
+            OffsiteInstructions = "Meet at the north entrance"
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderQueryHandler(dataContext);
+        var rehydratedOrder = await repository.GetWorkOrderAsync("TEST001");
+
+        rehydratedOrder.ShouldNotBeNull();
+        rehydratedOrder.OffsiteInstructions.ShouldBe("Meet at the north entrance");
+    }
 }

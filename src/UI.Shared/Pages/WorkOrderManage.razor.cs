@@ -83,6 +83,7 @@ public partial class WorkOrderManage : AppComponentBase
             Title = workOrder.Title,
             Description = workOrder.Description,
             RoomNumber = workOrder.RoomNumber,
+            OffsiteInstructions = workOrder.OffsiteInstructions,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
@@ -122,6 +123,7 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
         workOrder.RoomNumber = Model.RoomNumber;
+        workOrder.OffsiteInstructions = Model.OffsiteInstructions;
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);

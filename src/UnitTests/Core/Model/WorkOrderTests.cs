@@ -16,6 +16,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
         Assert.That(workOrder.Assignee, Is.EqualTo(null));
+        Assert.That(workOrder.OffsiteInstructions, Is.EqualTo(null));
     }
 
     [Test]
@@ -44,6 +45,7 @@ public class WorkOrderTests
         workOrder.Number = "Number";
         workOrder.Creator = creator;
         workOrder.Assignee = assignee;
+        workOrder.OffsiteInstructions = "Offsite Instructions";
 
         Assert.That(workOrder.Id, Is.EqualTo(guid));
         Assert.That(workOrder.Title, Is.EqualTo("Title"));
@@ -52,6 +54,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Number, Is.EqualTo("Number"));
         Assert.That(workOrder.Creator, Is.EqualTo(creator));
         Assert.That(workOrder.Assignee, Is.EqualTo(assignee));
+        Assert.That(workOrder.OffsiteInstructions, Is.EqualTo("Offsite Instructions"));
     }
 
     [Test]

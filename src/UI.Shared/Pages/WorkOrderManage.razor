@@ -61,6 +61,13 @@
                         <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="OffsiteInstructions" class="form-label">Offsite Instructions:</label>
+                    <div>
+                        <InputTextArea data-testid="@Elements.OffsiteInstructions" id="OffsiteInstructions" @bind-Value="Model.OffsiteInstructions" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
             </div>
 
             <div class="readonly-info">
@@ -114,6 +121,7 @@
         AssigneeFullName,
         RoomNumber,
         Description,
+        OffsiteInstructions,
         AssignedDate,
         CompletedDate,
         CreatedDate,
