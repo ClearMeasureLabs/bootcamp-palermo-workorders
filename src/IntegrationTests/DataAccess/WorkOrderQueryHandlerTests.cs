@@ -261,4 +261,36 @@ public class WorkOrderQueryHandlerTests
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
     }
+
+    [Test]
+    public async Task ShouldPersistWorkOrderWith700CharacterTitle()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("1", "John", "Doe", "john.doe@example.com");
+        var title700 = new string('T', 700);
+        var workOrder = new WorkOrder
+        {
+            Creator = creator,
+            Number = "700TEST",
+            Title = title700,
+            Description = "Testing 700 character title",
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderQueryHandler(dataContext);
+        var retrievedOrder = await repository.GetWorkOrderAsync("700TEST");
+
+        retrievedOrder.ShouldNotBeNull();
+        retrievedOrder.Title.ShouldBe(title700);
+        retrievedOrder.Title.Length.ShouldBe(700);
+    }
 }
