@@ -174,7 +174,7 @@ a:hover, .btn-link:hover {
 }
 
 /* Apply blinking border to text inputs and textareas */
-input[type="text"].form-control,
+input.form-control:not([type="checkbox"]):not([type="radio"]),
 textarea.form-control {
     animation: blinkBorder 2s ease-in-out infinite;
 }

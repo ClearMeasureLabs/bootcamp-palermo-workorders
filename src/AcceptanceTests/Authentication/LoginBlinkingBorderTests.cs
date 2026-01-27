@@ -24,7 +24,7 @@ public class LoginBlinkingBorderTests : AcceptanceTestBase
 		await Page.WaitForURLAsync("**/login");
 		await TakeScreenshotAsync(2, "LoginPage");
 
-		var textInputs = await Page.Locator("input[type='text'].form-control, textarea.form-control").AllAsync();
+		var textInputs = await Page.Locator("input.form-control:not([type='checkbox']):not([type='radio']), textarea.form-control").AllAsync();
 
 		foreach (var input in textInputs)
 		{
