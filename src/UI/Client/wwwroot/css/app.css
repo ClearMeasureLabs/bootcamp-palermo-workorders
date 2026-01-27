@@ -148,6 +148,19 @@ a:hover, .btn-link:hover {
     content: var(--blazor-load-percentage-text, "Loading Church Portal...");
 }
 
+/* Blinking Border Animation */
+@keyframes blinkBorder {
+    0% {
+        border-color: #e2e8f0;
+    }
+    50% {
+        border-color: #7b68ee;
+    }
+    100% {
+        border-color: #e2e8f0;
+    }
+}
+
 /* Form Controls Global Styling */
 .form-control {
     border: 2px solid #e2e8f0;
@@ -158,6 +171,12 @@ a:hover, .btn-link:hover {
     background: #f8fafc;
     color: #2d3748;
     font-family: inherit;
+}
+
+/* Apply blinking border to text inputs and textareas */
+input[type="text"].form-control,
+textarea.form-control {
+    animation: blinkBorder 2s ease-in-out infinite;
 }
 
 .form-control:focus {
