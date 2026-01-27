@@ -178,25 +178,26 @@ public class WorkOrderManageTests : AcceptanceTestBase
         order.RoomNumber = "101";
         order.Creator = CurrentUser;
 
-        var command = new SaveDraftCommand(order);
+        var command = new SaveDraftCommand(order, CurrentUser);
         var result = await Bus.Send(command);
         result.ShouldNotBeNull();
+        var savedOrder = result.WorkOrder;
 
         // Navigate to work order list
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         // View the work order with invalid title
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + result.Number);
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + savedOrder.Number);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         // Verify work order details display correctly
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
-        await Expect(woNumberLocator).ToHaveTextAsync(result.Number!);
+        await Expect(woNumberLocator).ToHaveTextAsync(savedOrder.Number!);
 
         var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
-        await Expect(titleField).ToHaveValueAsync(result.Title!);
+        await Expect(titleField).ToHaveValueAsync(savedOrder.Title!);
 
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
-        await Expect(descriptionField).ToHaveValueAsync(result.Description!);
+        await Expect(descriptionField).ToHaveValueAsync(savedOrder.Description!);
     }
 }
