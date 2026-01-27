@@ -276,7 +276,7 @@ public class WorkOrderMappingTests
         }
 
         rehydratedWorkOrder.Title.ShouldBe(title650);
-        rehydratedWorkOrder.Title.Length.ShouldBe(650);
+        rehydratedWorkOrder.Title!.Length.ShouldBe(650);
     }
 
     [Test]
@@ -338,9 +338,9 @@ public class WorkOrderMappingTests
             var wo2 = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-300");
             var wo3 = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-650");
 
-            wo1.Title.Length.ShouldBe(100);
-            wo2.Title.Length.ShouldBe(300);
-            wo3.Title.Length.ShouldBe(650);
+            wo1.Title!.Length.ShouldBe(100);
+            wo2.Title!.Length.ShouldBe(300);
+            wo3.Title!.Length.ShouldBe(650);
         }
     }
 
