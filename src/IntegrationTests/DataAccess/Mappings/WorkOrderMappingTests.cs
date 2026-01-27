@@ -231,8 +231,8 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = new string('A', 51), // Exceeds 50 char limit
-            Title = new string('B', 201), // Exceeds 200 char limit
-            Description = new string('C', 1001), // Exceeds 1000 char limit
+            Title = new string('B', 651), // Exceeds 650 char limit
+            Description = new string('C', 4001), // Exceeds 4000 char limit
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
@@ -243,6 +243,105 @@ public class WorkOrderMappingTests
         context.Add(workOrder);
 
         Should.Throw<DbUpdateException>(() => context.SaveChanges());
+    }
+
+    [Test]
+    public void ShouldPersist650CharacterTitle()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var title650 = new string('T', 650);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-650",
+            Title = title650,
+            Description = "Testing 650 character title",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Title.ShouldBe(title650);
+        rehydratedWorkOrder.Title.Length.ShouldBe(650);
+    }
+
+    [Test]
+    public void ShouldPersistVariousTitleLengths()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.SaveChanges();
+        }
+
+        var title100 = new string('A', 100);
+        var title300 = new string('B', 300);
+        var title650 = new string('C', 650);
+
+        var workOrder1 = new WorkOrder
+        {
+            Number = "WO-100",
+            Title = title100,
+            Description = "Test 100 char title",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        var workOrder2 = new WorkOrder
+        {
+            Number = "WO-300",
+            Title = title300,
+            Description = "Test 300 char title",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        var workOrder3 = new WorkOrder
+        {
+            Number = "WO-650",
+            Title = title650,
+            Description = "Test 650 char title",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Attach(creator);
+            context.Add(workOrder1);
+            context.Add(workOrder2);
+            context.Add(workOrder3);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var wo1 = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-100");
+            var wo2 = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-300");
+            var wo3 = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-650");
+
+            wo1.Title.Length.ShouldBe(100);
+            wo2.Title.Length.ShouldBe(300);
+            wo3.Title.Length.ShouldBe(650);
+        }
     }
 
     [Test]
