@@ -19,6 +19,8 @@ internal class BogusOverrides : AutoGeneratorOverride
             case WorkOrder order:
                 order.Description = order.Description.ClampLength(1, 2000);
                 order.Number = order.Number.ClampLength(1, 5);
+                // Generate title with only letters (A-Z, a-z)
+                order.Title = context.Faker.Random.String2(10, 20, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
                 // order.Status = context.Faker.PickRandom<WorkOrderStatus>(WorkOrderStatus.GetAllItems());
                 break;
             case WorkOrderStatus:
