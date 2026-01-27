@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -87,6 +88,6 @@ public class WorkOrderTests
         var longTitle = new string('x', 650);
         var order = new WorkOrder();
         order.Title = longTitle;
-        order.Title.Length.ShouldBe(650);
+        order.Title!.Length.ShouldBe(650);
     }
 }
