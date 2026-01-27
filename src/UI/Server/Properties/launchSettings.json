@@ -5,7 +5,7 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ConnectionStrings__SqlConnectionString": "server=(LocalDb)\\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;",
+        "_DISABLED_ConnectionStrings__SqlConnectionString": "server=(LocalDb)\\MSSQLLocalDB;database=ChurchBulletin;Integrated Security=true;",
         "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=586d68ed-85bc-4092-ac8a-fabb7a583e93;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=5328e763-3c56-4eae-ad66-aa528a92e984",
         "AI_OpenAI_ApiKey": "",
         "AI_OpenAI_Url": "https://ai-openai-temp-test.openai.azure.com/",
@@ -34,3 +34,4 @@
     }
   }
 }
+

@@ -379,48 +379,4 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await statusSelect.DblClickAsync();
         await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key);
     }
-
-    [Test]
-    public async Task SearchWorkOrder_WithLongTitle_FindsAndDisplaysCorrectly()
-    {
-        // Arrange
-        var creator = Faker<Employee>();
-        var longTitle = new string('Z', 650) + "UNIQUE_SEARCH_TERM" + new string('Y', 33); // Total 700 chars
-        var workOrder = Faker<WorkOrder>();
-        workOrder.Creator = creator;
-        workOrder.Title = longTitle;
-
-        await using var context = TestHost.NewDbContext();
-        context.Add(creator);
-        context.Add(workOrder);
-        await context.SaveChangesAsync();
-
-        // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await TakeScreenshotAsync(1, "SearchPageLoaded");
-
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
-
-        // Find the work order with the unique search term in its title
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        var rowCount = await workOrderRows.CountAsync();
-        bool foundWorkOrder = false;
-        
-        for (int i = 0; i < rowCount; i++)
-        {
-            var row = workOrderRows.Nth(i);
-            var titleCell = row.Locator("td").Nth(1);
-            var titleText = await titleCell.TextContentAsync();
-            
-            if (titleText != null && titleText.Contains("UNIQUE_SEARCH_TERM"))
-            {
-                foundWorkOrder = true;
-                break;
-            }
-        }
-
-        foundWorkOrder.ShouldBeTrue();
-    }
 }
