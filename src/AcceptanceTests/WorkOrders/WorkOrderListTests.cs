@@ -1,3 +1,6 @@
+using ClearMeasure.Bootcamp.UI.Shared;
+using ClearMeasure.Bootcamp.UI.Shared.Pages;
+
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 [TestFixture]
