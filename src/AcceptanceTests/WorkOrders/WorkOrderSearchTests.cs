@@ -379,4 +379,39 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await statusSelect.DblClickAsync();
         await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key);
     }
+
+    [Test]
+    public async Task ViewWorkOrder_WithMaxLengthTitle_DisplaysCorrectly()
+    {
+        // Arrange - Create work order with 300-character title
+        var title300 = new string('M', 300);
+        var creator = Faker<Employee>();
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Creator = creator;
+        workOrder.Title = title300;
+
+        await using (var context = TestHost.NewDbContext())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+        }
+
+        // Act - Navigate to search page
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        
+        // Click on work order link
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrder.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert - Verify full title displays
+        var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        await Expect(titleField).ToBeVisibleAsync();
+        await Expect(titleField).ToHaveValueAsync(title300);
+        
+        var displayedTitle = await titleField.GetAttributeAsync("value");
+        displayedTitle.ShouldBe(title300);
+        displayedTitle!.Length.ShouldBe(300);
+    }
 }
