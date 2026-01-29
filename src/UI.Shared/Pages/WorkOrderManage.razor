@@ -58,7 +58,7 @@
                 <div class="form-group">
                     <label for="RoomNumber" class="form-label">Room:</label>
                     <div>
-                        <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" maxlength="15" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
             </div>

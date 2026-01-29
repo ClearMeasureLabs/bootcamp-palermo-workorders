@@ -80,4 +80,14 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void RoomNumber_WithFifteenCharacters_ShouldAccept()
+    {
+        var order = new WorkOrder();
+        var fifteenCharRoom = "Conference Rm A"; // Exactly 15 characters
+        order.RoomNumber = fifteenCharRoom;
+        Assert.That(order.RoomNumber, Is.EqualTo(fifteenCharRoom));
+        Assert.That(order.RoomNumber.Length, Is.EqualTo(15));
+    }
 }

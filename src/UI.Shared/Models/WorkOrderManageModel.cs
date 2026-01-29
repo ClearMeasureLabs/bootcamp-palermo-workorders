@@ -28,5 +28,6 @@ public class WorkOrderManageModel
 
     public string? CreatedDate { get; set; }
 
+    [MaxLength(15)]
     public string? RoomNumber { get; set; }
 }
