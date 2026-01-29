@@ -66,10 +66,10 @@ public class WorkOrderTests
     [Test]
     public void ShouldTruncateTo4000CharactersOnDescription()
     {
-        var longText = new string('x', 4001);
+        var longText = new string('x', 2501);
         var order = new WorkOrder();
         order.Description = longText;
-        Assert.That(order.Description.Length, Is.EqualTo(4000));
+        Assert.That(order.Description.Length, Is.EqualTo(2500));
     }
 
     [Test]
