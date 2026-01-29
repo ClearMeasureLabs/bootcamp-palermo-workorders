@@ -226,7 +226,7 @@ public class WorkOrderQueryHandlerTests
             Number = "123",
             Title = "Fix plumbing",
             Description = "Fix the plumbing in room 101",
-            RoomNumber = "101",
+            RoomNum = "101",
             Status = WorkOrderStatus.InProgress
         };
 

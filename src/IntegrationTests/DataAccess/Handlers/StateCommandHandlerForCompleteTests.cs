@@ -29,7 +29,7 @@ public class StateCommandHandlerForCompleteTests : IntegratedTestBase
 
         o.Title = "new title";
         o.Description = "new desc";
-        o.RoomNumber = "new room";
+        o.RoomNum = "new room";
         var command = new InProgressToCompleteCommand(o, currentUser);
         var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
 
