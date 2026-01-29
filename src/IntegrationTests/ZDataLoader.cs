@@ -159,6 +159,11 @@ public class ZDataLoader
         msAlbright.AddRole(choir);
         db.Add(msAlbright);
 
+        // Ralph Wiggum - Young parishioner
+        var ralphWiggum = new Employee("rwiggum", "Ralph", "Wiggum", "ralph@wiggum.com");
+        ralphWiggum.AddRole(parishioner);
+        db.Add(ralphWiggum);
+
         db.SaveChanges();
 
         // Create Christmas Concert Work Orders
