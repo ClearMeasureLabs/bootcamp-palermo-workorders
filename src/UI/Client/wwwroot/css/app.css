@@ -279,3 +279,21 @@ html {
     outline: 2px solid #7b68ee;
     outline-offset: 2px;
 }
+
+/* Login Link Blinking Animation */
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.header-login-link {
+    animation: blink 1s infinite;
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    .header-login-link {
+        animation: none;
+    }
+}

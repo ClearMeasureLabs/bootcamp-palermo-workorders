@@ -226,7 +226,8 @@ jobs:
                 "push",
                 "--package", $packageFile.FullName,
                 "--server", $octopusUrl,
-                "--apiKey", $octopusApiKey
+                "--apiKey", $octopusApiKey,
+                "--overwrite-mode", "OverwriteExisting"
               )
               
               if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
