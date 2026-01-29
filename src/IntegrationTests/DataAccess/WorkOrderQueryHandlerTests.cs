@@ -261,4 +261,36 @@ public class WorkOrderQueryHandlerTests
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
     }
+
+    [Test]
+    public async Task ShouldSaveAndRetrieveWorkOrderWithInstructions()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("1", "John", "Doe", "john.doe@example.com");
+        var order = new WorkOrder
+        {
+            Creator = creator,
+            Number = "WO-001",
+            Title = "Test Work Order",
+            Description = "Test Description",
+            Instructions = "Test Instructions for completing this work order",
+            RoomNumber = "101",
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderQueryHandler(dataContext);
+        var retrievedOrder = await repository.GetWorkOrderAsync("WO-001");
+
+        retrievedOrder.ShouldNotBeNull();
+        retrievedOrder!.Instructions.ShouldBe("Test Instructions for completing this work order");
+    }
 }
