@@ -19,7 +19,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         order = await BeginExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-        order.Title = "Title from automation";
+        order.Title = "Title from auto";
         order.Description = "Description";
         order = await CompleteExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);

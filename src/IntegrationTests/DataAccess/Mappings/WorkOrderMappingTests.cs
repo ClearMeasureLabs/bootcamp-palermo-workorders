@@ -231,7 +231,7 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = new string('A', 51), // Exceeds 50 char limit
-            Title = new string('B', 201), // Exceeds 200 char limit
+            Title = new string('B', 16), // Exceeds 15 char limit
             Description = new string('C', 1001), // Exceeds 1000 char limit
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
@@ -255,7 +255,7 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = "WO-06",
-            Title = "Test Eager Loading",
+            Title = "Test Eager",
             Description = "Testing that Creator and Assignee are auto-included",
             Creator = creator,
             Assignee = assignee,
