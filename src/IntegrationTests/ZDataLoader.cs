@@ -159,6 +159,12 @@ public class ZDataLoader
         msAlbright.AddRole(choir);
         db.Add(msAlbright);
 
+        // Duffman - Church volunteer and parishioner
+        var duffman = new Employee("duffman", "Duffman", "Duffman", "duffman@duffbeer.com");
+        duffman.AddRole(parishioner);
+        duffman.AddRole(deacon);
+        db.Add(duffman);
+
         db.SaveChanges();
 
         // Create Christmas Concert Work Orders
