@@ -80,4 +80,14 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void RoomNumber_With500Characters_ShouldAcceptValue()
+    {
+        var roomName500 = new string('A', 500);
+        var order = new WorkOrder();
+        order.RoomNumber = roomName500;
+        Assert.That(order.RoomNumber, Is.EqualTo(roomName500));
+        Assert.That(order.RoomNumber.Length, Is.EqualTo(500));
+    }
 }

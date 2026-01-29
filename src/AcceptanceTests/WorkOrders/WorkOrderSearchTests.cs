@@ -379,4 +379,32 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await statusSelect.DblClickAsync();
         await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key);
     }
+
+    [Test]
+    public async Task ViewWorkOrder_WithMaxLengthRoomName_DisplaysCorrectly()
+    {
+        var roomName500 = new string('C', 500);
+        var creator = Faker<Employee>();
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Creator = creator;
+        workOrder.RoomNumber = roomName500;
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(workOrder);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable).ToBeVisibleAsync();
+
+        var firstWorkOrderLink = workOrderTable.Locator("tbody tr").First.Locator("td").First.Locator("a");
+        await firstWorkOrderLink.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
+        await Expect(roomNumberField).ToHaveValueAsync(roomName500);
+    }
 }

@@ -288,4 +288,39 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
     }
+
+    [Test]
+    public void RoomNumber_With500Characters_ShouldPersistCorrectly()
+    {
+        new DatabaseTests().Clean();
+
+        var roomName500 = new string('R', 500);
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-500",
+            Title = "Test Long Room Name",
+            Description = "Testing 500 character room name",
+            RoomNumber = roomName500,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.RoomNumber.ShouldBe(roomName500);
+        rehydratedWorkOrder.RoomNumber!.Length.ShouldBe(500);
+    }
 }
