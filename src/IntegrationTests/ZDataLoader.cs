@@ -159,6 +159,11 @@ public class ZDataLoader
         msAlbright.AddRole(choir);
         db.Add(msAlbright);
 
+        // Duffman - Mascot and brand ambassador
+        var duffman = new Employee("duffman", "Duffman", "Duffman", "duffman@duffbeer.com");
+        duffman.AddRole(parishioner);
+        db.Add(duffman);
+
         db.SaveChanges();
 
         // Create Christmas Concert Work Orders
