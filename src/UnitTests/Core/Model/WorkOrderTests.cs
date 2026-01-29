@@ -12,6 +12,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
         Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
+        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
@@ -40,6 +41,7 @@ public class WorkOrderTests
         workOrder.Id = guid;
         workOrder.Title = "Title";
         workOrder.Description = "Description";
+        workOrder.Instructions = "Instructions";
         workOrder.Status = WorkOrderStatus.Complete;
         workOrder.Number = "Number";
         workOrder.Creator = creator;
@@ -48,6 +50,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Id, Is.EqualTo(guid));
         Assert.That(workOrder.Title, Is.EqualTo("Title"));
         Assert.That(workOrder.Description, Is.EqualTo("Description"));
+        Assert.That(workOrder.Instructions, Is.EqualTo("Instructions"));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
         Assert.That(workOrder.Number, Is.EqualTo("Number"));
         Assert.That(workOrder.Creator, Is.EqualTo(creator));
@@ -79,5 +82,31 @@ public class WorkOrderTests
         order.Status = WorkOrderStatus.Draft;
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void Instructions_ShouldAcceptNullValue()
+    {
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = null;
+        Assert.That(workOrder.Instructions, Is.Null);
+    }
+
+    [Test]
+    public void Instructions_ShouldAcceptEmptyString()
+    {
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = "";
+        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void Instructions_ShouldAcceptUpTo4000Characters()
+    {
+        var longText = new string('x', 4000);
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = longText;
+        Assert.That(workOrder.Instructions.Length, Is.EqualTo(4000));
+        Assert.That(workOrder.Instructions, Is.EqualTo(longText));
     }
 }
