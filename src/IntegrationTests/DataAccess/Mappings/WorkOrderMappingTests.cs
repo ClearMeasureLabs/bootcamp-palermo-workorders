@@ -288,4 +288,89 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
     }
+
+    [Test]
+    public void ShouldFailToInsert_WhenTitleIsNull()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-07",
+            Title = null,
+            Description = "Valid description",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(workOrder);
+
+        Should.Throw<DbUpdateException>(() => context.SaveChanges());
+    }
+
+    [Test]
+    public void ShouldSuccessfullyInsert_WhenTitleAndDescriptionAreValid()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-11",
+            Title = "Valid title",
+            Description = "Valid description",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Title.ShouldBe("Valid title");
+        rehydratedWorkOrder.Description.ShouldBe("Valid description");
+    }
+
+    [Test]
+    public async Task ShouldFailToUpdate_WhenTitleIsSetToNull()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-12",
+            Title = "Initial title",
+            Description = "Initial description",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var existingWorkOrder = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+            existingWorkOrder.Title = null;
+            Should.Throw<DbUpdateException>(() => context.SaveChanges());
+        }
+    }
 }

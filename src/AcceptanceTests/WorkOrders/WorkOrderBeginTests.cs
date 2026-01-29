@@ -28,4 +28,22 @@ public class WorkOrderBeginTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee))).ToHaveValueAsync(CurrentUser.UserName);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status))).ToHaveTextAsync(WorkOrderStatus.InProgress.FriendlyName);
     }
+
+    [Test]
+    public async Task ShouldEnforceValidationWhenBeginningWorkOrder()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+        order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        await Input(nameof(WorkOrderManage.Elements.Description), "");
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
+
+        var validationSummary = Page.Locator(".validation-summary");
+        await Expect(validationSummary).ToBeVisibleAsync();
+        await Expect(validationSummary).ToContainTextAsync("Description");
+    }
 }

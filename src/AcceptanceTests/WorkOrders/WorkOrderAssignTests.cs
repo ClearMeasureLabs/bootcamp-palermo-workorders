@@ -50,4 +50,27 @@ public class WorkOrderAssignTests : AcceptanceTestBase
 
         rehyratedOrder.AssignedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
+
+    [Test]
+    public async Task ShouldEnforceValidationWhenAssigningWorkOrder()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await woNumberLocator.WaitForAsync();
+        await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
+
+        await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
+        await Input(nameof(WorkOrderManage.Elements.Title), "");
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
+
+        var validationSummary = Page.Locator(".validation-summary");
+        await Expect(validationSummary).ToBeVisibleAsync();
+        await Expect(validationSummary).ToContainTextAsync("Title");
+    }
 }
