@@ -18,6 +18,8 @@ public class WorkOrderManageModel
 
     [Required] public string? Title { get; set; }
 
+    public string? Instructions { get; set; }
+
     [Required] public string? Description { get; set; }
 
     public bool IsReadOnly { get; set; }

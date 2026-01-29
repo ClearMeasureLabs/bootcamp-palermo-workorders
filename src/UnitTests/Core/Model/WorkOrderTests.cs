@@ -12,6 +12,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
         Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
+        Assert.That(workOrder.Instructions, Is.EqualTo(null));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
@@ -39,6 +40,7 @@ public class WorkOrderTests
 
         workOrder.Id = guid;
         workOrder.Title = "Title";
+        workOrder.Instructions = "Instructions";
         workOrder.Description = "Description";
         workOrder.Status = WorkOrderStatus.Complete;
         workOrder.Number = "Number";
@@ -47,6 +49,7 @@ public class WorkOrderTests
 
         Assert.That(workOrder.Id, Is.EqualTo(guid));
         Assert.That(workOrder.Title, Is.EqualTo("Title"));
+        Assert.That(workOrder.Instructions, Is.EqualTo("Instructions"));
         Assert.That(workOrder.Description, Is.EqualTo("Description"));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
         Assert.That(workOrder.Number, Is.EqualTo("Number"));
