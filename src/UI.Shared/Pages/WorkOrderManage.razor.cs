@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+﻿using ClearMeasure.Bootcamp.Core.Exceptions;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
@@ -22,6 +23,8 @@ public partial class WorkOrderManage : AppComponentBase
     public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
+    public string? ValidationErrorMessage { get; set; }
+    public bool ShowValidationModal { get; set; }
 
     [Parameter] public string? Id { get; set; }
 
@@ -126,10 +129,29 @@ public partial class WorkOrderManage : AppComponentBase
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
 
-        var result = await Bus.Send(matchingCommand);
-        EventBus.Notify(new WorkOrderChangedEvent(result));
+        try
+        {
+            var result = await Bus.Send(matchingCommand);
+            EventBus.Notify(new WorkOrderChangedEvent(result));
+            NavigationManager!.NavigateTo("/workorder/search");
+        }
+        catch (ValidationException ex)
+        {
+            ValidationErrorMessage = FormatValidationErrors(ex.Errors);
+            ShowValidationModal = true;
+        }
+    }
 
-        NavigationManager!.NavigateTo("/workorder/search");
+    private string FormatValidationErrors(Dictionary<string, string[]> errors)
+    {
+        var messages = errors.SelectMany(e => e.Value.Select(msg => $"{e.Key}: {msg}"));
+        return string.Join("\n", messages);
+    }
+
+    private void CloseValidationModal()
+    {
+        ShowValidationModal = false;
+        ValidationErrorMessage = null;
     }
 }
 

@@ -104,6 +104,25 @@
     </EditForm>
 </div>
 
+@if (ShowValidationModal)
+{
+    <div class="modal-overlay" data-testid="@Elements.ValidationModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Validation Error</h3>
+                </div>
+                <div class="modal-body" data-testid="@Elements.ValidationErrorMessage">
+                    <p style="white-space: pre-line;">@ValidationErrorMessage</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" @onclick="CloseValidationModal" data-testid="@Elements.CloseModalButton">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code
 {
 
@@ -121,6 +140,9 @@
         ReadOnlyMessage,
         CommandButton,
         WorkOrderNumber,
-        Status
+        Status,
+        ValidationModal,
+        ValidationErrorMessage,
+        CloseModalButton
     }
 }
