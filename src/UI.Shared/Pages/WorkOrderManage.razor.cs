@@ -82,10 +82,12 @@ public partial class WorkOrderManage : AppComponentBase
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
             Description = workOrder.Description,
+            Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
-            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
+            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
+            AuditEntries = workOrder.AuditEntries.OrderByDescending(a => a.Sequence).ToList()
         };
     }
 
@@ -121,6 +123,7 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Assignee = assignee;
         workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
+        workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
 
         var matchingCommand = new StateCommandList()
