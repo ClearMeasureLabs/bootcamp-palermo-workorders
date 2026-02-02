@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
