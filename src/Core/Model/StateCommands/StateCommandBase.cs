@@ -10,7 +10,7 @@ public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUse
     public abstract string TransitionVerbPresentTense { get; }
     public abstract string TransitionVerbPastTense { get; }
 
-    public bool IsValid()
+    public virtual bool IsValid()
     {
         var beginStatusMatches = WorkOrder.Status == GetBeginStatus();
         var currentUserIsCorrectRole = UserCanExecute(CurrentUser);

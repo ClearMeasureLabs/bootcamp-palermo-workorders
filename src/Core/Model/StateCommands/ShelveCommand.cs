@@ -1,9 +1,9 @@
-﻿namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
+namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public record InProgressToAssigned(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder, CurrentUser)
-
+public record ShelveCommand(WorkOrder WorkOrder, Employee CurrentUser) :
+    StateCommandBase(WorkOrder, CurrentUser)
 {
-    public static string Name { get; set; } = "Shelve";
+    public const string Name = "Shelve";
 
     public override WorkOrderStatus GetBeginStatus()
     {
@@ -17,9 +17,11 @@ public record InProgressToAssigned(WorkOrder WorkOrder, Employee CurrentUser) : 
 
     protected override bool UserCanExecute(Employee currentUser)
     {
+        // Only the assignee can shelve
         return currentUser == WorkOrder.Assignee;
     }
 
     public override string TransitionVerbPresentTense => Name;
+
     public override string TransitionVerbPastTense => "Shelved";
 }

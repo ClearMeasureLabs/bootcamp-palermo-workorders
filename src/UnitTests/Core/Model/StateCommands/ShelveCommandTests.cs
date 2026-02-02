@@ -1,20 +1,21 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
-public class AssignedToCancelledCommandTests : StateCommandBaseTests
+[TestFixture]
+public class ShelveCommandTests : StateCommandBaseTests
 {
     [Test]
     public void ShouldNotBeValidInWrongStatus()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Complete;
+        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
-        order.Creator = employee;
+        order.Assignee = employee;
 
-        var command = new AssignedToCancelledCommand(order, employee);
+        var command = new ShelveCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -22,12 +23,11 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
     public void ShouldNotBeValidWithWrongEmployee()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Assigned;
+        order.Status = WorkOrderStatus.InProgress;
         var employee = new Employee();
-        var differentEmployee = new Employee();
-        order.Creator = employee;
+        order.Assignee = employee;
 
-        var command = new AssignedToCancelledCommand(order, differentEmployee);
+        var command = new ShelveCommand(order, new Employee());
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -35,11 +35,11 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
     public void ShouldBeValid()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Assigned;
+        order.Status = WorkOrderStatus.InProgress;
         var employee = new Employee();
-        order.Creator = employee;
+        order.Assignee = employee;
 
-        var command = new AssignedToCancelledCommand(order, employee);
+        var command = new ShelveCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -48,19 +48,18 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
     {
         var order = new WorkOrder();
         order.Number = "123";
-        order.Status = WorkOrderStatus.Assigned;
+        order.Status = WorkOrderStatus.InProgress;
         var employee = new Employee();
-        order.Creator = employee;
+        order.Assignee = employee;
 
-        var command = new AssignedToCancelledCommand(order, employee);
+        var command = new ShelveCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Cancelled));
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
-
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new AssignedToCancelledCommand(order, employee);
+        return new ShelveCommand(order, employee);
     }
 }
