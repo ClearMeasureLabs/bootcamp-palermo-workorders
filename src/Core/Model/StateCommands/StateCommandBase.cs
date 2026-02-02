@@ -27,4 +27,17 @@ public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUse
         var currentUserFullName = CurrentUser.GetFullName();
         WorkOrder.ChangeStatus(CurrentUser, context.CurrentDateTime, GetEndStatus());
     }
+
+    protected void ValidateWorkOrder()
+    {
+        if (string.IsNullOrWhiteSpace(WorkOrder.Title))
+        {
+            throw new InvalidOperationException("Title cannot be empty");
+        }
+
+        if (string.IsNullOrWhiteSpace(WorkOrder.Description))
+        {
+            throw new InvalidOperationException("Description cannot be empty");
+        }
+    }
 }

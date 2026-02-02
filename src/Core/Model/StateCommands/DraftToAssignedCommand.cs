@@ -28,6 +28,8 @@ public record DraftToAssignedCommand(WorkOrder WorkOrder, Employee CurrentUser)
 
     public override void Execute(StateCommandContext context)
     {
+        ValidateWorkOrder();
+        
         WorkOrder.AssignedDate = context.CurrentDateTime;
         base.Execute(context);
     }
