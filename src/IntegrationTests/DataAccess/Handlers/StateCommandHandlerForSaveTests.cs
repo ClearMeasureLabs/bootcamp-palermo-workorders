@@ -24,6 +24,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Id = Guid.Empty;
         workOrder.CreatedDate = null; // Ensure CreatedDate is null to test setting it;
         workOrder.Creator = currentUser;
+        var beginStatus = workOrder.Status; // Capture the status before the command executes
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
@@ -39,6 +40,15 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
         order.Title.ShouldBe(workOrder.Title);
+        
+        // Verify audit entry was created
+        var auditEntries = context3.Set<AuditEntry>()
+            .Where(ae => ae.WorkOrderId == result.WorkOrder.Id)
+            .ToList();
+        auditEntries.Count.ShouldBe(1);
+        auditEntries[0].BeginStatus.ShouldBe(beginStatus);
+        auditEntries[0].EndStatus.ShouldBe(WorkOrderStatus.Draft);
+        auditEntries[0].EmployeeId.ShouldBe(currentUser.Id);
     }
 
     [Test]
