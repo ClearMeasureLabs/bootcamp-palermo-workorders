@@ -288,4 +288,182 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
     }
+
+    [Test]
+    public void Should_MapAndPersistInstructionsField()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var instructions = "1. Turn off power\n2. Replace component\n3. Test functionality";
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-07",
+            Title = "Test Instructions",
+            Description = "Testing Instructions field mapping",
+            Instructions = instructions,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe(instructions);
+    }
+
+    [Test]
+    public void Should_PersistWorkOrderWithEmptyInstructions()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-08",
+            Title = "Test Empty Instructions",
+            Description = "Testing empty Instructions field",
+            Instructions = string.Empty,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void Should_PersistWorkOrderWithNullInstructions()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-09",
+            Title = "Test Null Instructions",
+            Description = "Testing null Instructions field",
+            Instructions = null,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void Should_Persist4000CharacterInstructions()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var instructions4000 = new string('x', 4000);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-10",
+            Title = "Test 4000 Char Instructions",
+            Description = "Testing maximum length Instructions",
+            Instructions = instructions4000,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe(instructions4000);
+        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
+    }
+
+    [Test]
+    public async Task Should_UpdateInstructionsOnExistingWorkOrder()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var initialInstructions = "Initial instructions";
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-11",
+            Title = "Test Instructions Update",
+            Description = "Testing Instructions update",
+            Instructions = initialInstructions,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var updatedInstructions = "Updated instructions with more details";
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var existingWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+            existingWorkOrder.Instructions = updatedInstructions;
+            await context.SaveChangesAsync();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe(updatedInstructions);
+    }
 }
