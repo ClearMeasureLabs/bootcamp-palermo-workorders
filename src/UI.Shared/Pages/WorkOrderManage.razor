@@ -42,16 +42,18 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="Title" class="form-label">Title:</label>
+                    <label for="Title" class="form-label">Title:<span class="required-indicator" data-testid="@Elements.TitleRequiredIndicator">*</span></label>
                     <div>
                         <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        <ValidationMessage For="@(() => Model.Title)" data-testid="@Elements.TitleValidationMessage"/>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="Description" class="form-label">Description:</label>
+                    <label for="Description" class="form-label">Description:<span class="required-indicator" data-testid="@Elements.DescriptionRequiredIndicator">*</span></label>
                     <div>
                         <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
+                        <ValidationMessage For="@(() => Model.Description)" data-testid="@Elements.DescriptionValidationMessage"/>
                     </div>
                 </div>
 
@@ -121,6 +123,10 @@
         ReadOnlyMessage,
         CommandButton,
         WorkOrderNumber,
-        Status
+        Status,
+        TitleRequiredIndicator,
+        DescriptionRequiredIndicator,
+        TitleValidationMessage,
+        DescriptionValidationMessage
     }
 }

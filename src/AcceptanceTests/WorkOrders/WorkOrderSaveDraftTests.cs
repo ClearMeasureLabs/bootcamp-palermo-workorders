@@ -1,9 +1,11 @@
-﻿using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
+using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Microsoft.Playwright;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
@@ -92,5 +94,73 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
         
         rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+    }
+
+    [Test]
+    public async Task ShouldDisplayRequiredIndicatorOnTitleField()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var titleRequiredIndicator = Page.GetByTestId(nameof(WorkOrderManage.Elements.TitleRequiredIndicator));
+        await Expect(titleRequiredIndicator).ToBeVisibleAsync();
+        await Expect(titleRequiredIndicator).ToHaveTextAsync("*");
+    }
+
+    [Test]
+    public async Task ShouldDisplayRequiredIndicatorOnDescriptionField()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var descriptionRequiredIndicator = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionRequiredIndicator));
+        await Expect(descriptionRequiredIndicator).ToBeVisibleAsync();
+        await Expect(descriptionRequiredIndicator).ToHaveTextAsync("*");
+    }
+
+    [Test]
+    public async Task ShouldPreventSubmissionAndShowError_WhenTitleIsEmpty()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await TakeScreenshotAsync(1, "BeforeSubmission");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Valid description");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+        await TakeScreenshotAsync(2, "AfterSubmission");
+
+        await Expect(Page).ToHaveURLAsync(new Regex(".*workorder/manage.*"));
+
+        var validationSummary = Page.Locator(".validation-message, .validation-summary");
+        await Expect(validationSummary.First).ToBeVisibleAsync();
+    }
+
+    [Test]
+    public async Task ShouldPreventSubmissionAndShowError_WhenDescriptionIsEmpty()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await TakeScreenshotAsync(1, "BeforeSubmission");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "Valid title");
+        await Input(nameof(WorkOrderManage.Elements.Description), "");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+        await TakeScreenshotAsync(2, "AfterSubmission");
+
+        await Expect(Page).ToHaveURLAsync(new Regex(".*workorder/manage.*"));
+
+        var validationSummary = Page.Locator(".validation-message, .validation-summary");
+        await Expect(validationSummary.First).ToBeVisibleAsync();
     }
 }
