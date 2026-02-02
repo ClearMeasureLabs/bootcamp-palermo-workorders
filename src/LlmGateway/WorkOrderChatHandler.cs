@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using MediatR;
 using Microsoft.Extensions.AI;
 
@@ -23,6 +23,7 @@ public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workO
             new(ChatRole.System, $"Work Order number is {request.CurrentWorkOrder.Number}"),
             new(ChatRole.System, $"Work Order title is {request.CurrentWorkOrder.Title}"),
             new(ChatRole.System, $"Work Order description is {request.CurrentWorkOrder.Description}"),
+            new(ChatRole.System, $"Work Order instructions are {request.CurrentWorkOrder.Instructions}"),
             new(ChatRole.System, $"Work Order room is {request.CurrentWorkOrder.RoomNumber}"),
             new(ChatRole.System, $"Work Order creator is {request.CurrentWorkOrder.Creator?.GetFullName()}"),
             new(ChatRole.System, $"Limit answer to 3 sentences. Be brief"),
