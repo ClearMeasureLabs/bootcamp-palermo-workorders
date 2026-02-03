@@ -1,0 +1,14 @@
+a {
+    animation: blinkRed 1.5s ease-in-out infinite;
+}
+
+@keyframes blinkRed {
+    0%, 100% {
+        color: #ff0000;
+        opacity: 1;
+    }
+    50% {
+        color: #ff6666;
+        opacity: 0.6;
+    }
+}
