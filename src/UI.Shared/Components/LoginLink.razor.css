@@ -1,5 +1,13 @@
-a {
-    animation: blinkRed 1.5s ease-in-out infinite;
+@media (prefers-reduced-motion: no-preference) {
+    a {
+        animation: blinkRed 1.5s ease-in-out infinite;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    a {
+        color: #ff0000;
+    }
 }
 
 @keyframes blinkRed {
