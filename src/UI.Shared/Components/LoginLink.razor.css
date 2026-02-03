@@ -1,0 +1,22 @@
+@media (prefers-reduced-motion: no-preference) {
+    a {
+        animation: blinkRed 1.5s ease-in-out infinite;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    a {
+        color: #ff0000;
+    }
+}
+
+@keyframes blinkRed {
+    0%, 100% {
+        color: #ff0000;
+        opacity: 1;
+    }
+    50% {
+        color: #ff6666;
+        opacity: 0.6;
+    }
+}
