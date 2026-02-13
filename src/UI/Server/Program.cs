@@ -1,4 +1,6 @@
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -8,9 +10,10 @@ builder.Services.AddSingleton(TimeProvider.System);
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
 
-// Add background service
-
+// Build application
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
