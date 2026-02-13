@@ -17,9 +17,11 @@ internal class BogusOverrides : AutoGeneratorOverride
         switch (context.Instance)
         {
             case WorkOrder order:
-                order.Description = order.Description.ClampLength(1, 2000);
-                order.Number = order.Number.ClampLength(1, 5);
-                // order.Status = context.Faker.PickRandom<WorkOrderStatus>(WorkOrderStatus.GetAllItems());
+                // Database schema constraints from WorkOrderMap.cs
+                order.Number = order.Number.ClampLength(1, 7);        // HasMaxLength(7)
+                order.Title = order.Title.ClampLength(1, 200);        // HasMaxLength(200)
+                order.Description = order.Description.ClampLength(1, 4000); // HasMaxLength(4000)
+                order.RoomNumber = order.RoomNumber.ClampLength(1, 50);     // HasMaxLength(50)
                 break;
             case WorkOrderStatus:
                 context.Instance = context.Faker.PickRandom<WorkOrderStatus>(WorkOrderStatus.GetAllItems());
