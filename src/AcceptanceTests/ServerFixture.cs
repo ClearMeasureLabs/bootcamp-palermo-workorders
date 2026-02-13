@@ -13,6 +13,8 @@ public class ServerFixture
     public static string ApplicationBaseUrl { get; private set; } = string.Empty;
     private Process? _serverProcess;
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
+    public static bool DatabaseInitialized { get; private set; }
+    private static readonly object DatabaseLock = new();
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -22,6 +24,9 @@ public class ServerFixture
         StartLocalServer = configuration.GetValue<bool>("StartLocalServer");
         SkipScreenshotsForSpeed = configuration.GetValue<bool>("SkipScreenshotsForSpeed");
         SlowMo = configuration.GetValue<int>("SlowMo");
+
+        InitializeDatabaseOnce();
+
         if (!StartLocalServer) return;
 
         _serverProcess = new Process
@@ -67,6 +72,19 @@ public class ServerFixture
 
         throw new Exception(
             $"UI.Server did not start in {WaitTimeoutSeconds} seconds. Last exception: {lastException}");
+    }
+
+    private static void InitializeDatabaseOnce()
+    {
+        if (DatabaseInitialized) return;
+
+        lock (DatabaseLock)
+        {
+            if (DatabaseInitialized) return;
+
+            new ZDataLoader().LoadData();
+            DatabaseInitialized = true;
+        }
     }
 
     [OneTimeTearDown]

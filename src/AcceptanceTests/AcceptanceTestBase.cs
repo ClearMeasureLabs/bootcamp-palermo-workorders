@@ -13,19 +13,20 @@ public abstract class AcceptanceTestBase : PageTest
 {
     public Employee CurrentUser { get; set; } = null!;
     protected virtual bool? Headless { get; set; } = true;
-    protected virtual bool LoadDataOnSetup { get; set; } = true;
     protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
     protected new IPage Page { get; private set; }
     public IBus Bus => TestHost.GetRequiredService<IBus>();
+    
+    /// <summary>
+    /// Unique tag for this test instance to isolate test data in parallel execution.
+    /// </summary>
+    protected string TestTag { get; private set; } = null!;
 
     [SetUp]
     public async Task SetUpAsync()
     {
-        if (LoadDataOnSetup)
-        {
-            new ZDataLoader().LoadData();
-            CurrentUser = new ZDataLoader().CreateUser();
-        }
+        TestTag = Guid.NewGuid().ToString("N")[..8];
+        CurrentUser = CreateTestUser();
 
         await Context.Tracing.StartAsync(new TracingStartOptions
         {
@@ -93,6 +94,20 @@ public abstract class AcceptanceTestBase : PageTest
     protected TK Faker<TK>()
     {
         return TestHost.Faker<TK>();
+    }
+
+    /// <summary>
+    /// Creates a unique test user for this test instance to enable parallel test execution.
+    /// </summary>
+    private Employee CreateTestUser()
+    {
+        using var context = TestHost.NewDbContext();
+        var employee = TestHost.Faker<Employee>();
+        employee.UserName = $"test_{TestTag}_{employee.UserName}";
+        employee.AddRole(new Role("admin", true, true));
+        context.Add(employee);
+        context.SaveChanges();
+        return employee;
     }
 
     protected async Task LoginAsCurrentUser()
@@ -167,7 +182,7 @@ public abstract class AcceptanceTestBase : PageTest
     protected async Task<WorkOrder> CreateAndSaveNewWorkOrder()
     {
         var order = Faker<WorkOrder>();
-        order.Title = "from automation";
+        order.Title = $"[{TestTag}] from automation";
         order.Number = null;
         var testTitle = order.Title;
         var testDescription = order.Description;
