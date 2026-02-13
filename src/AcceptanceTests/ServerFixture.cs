@@ -15,6 +15,11 @@ public class ServerFixture
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
     public static bool DatabaseInitialized { get; private set; }
     private static readonly object DatabaseLock = new();
+    
+    /// <summary>
+    /// Shared Playwright instance for all tests. Thread-safe for parallel execution.
+    /// </summary>
+    public static IPlaywright Playwright { get; private set; } = null!;
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -26,6 +31,8 @@ public class ServerFixture
         SlowMo = configuration.GetValue<int>("SlowMo");
 
         InitializeDatabaseOnce();
+        
+        Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
         if (!StartLocalServer) return;
 
@@ -88,12 +95,42 @@ public class ServerFixture
     }
 
     [OneTimeTearDown]
-    public void OneTimeTearDown()
+    public async Task OneTimeTearDown()
     {
         if (_serverProcess != null && !_serverProcess.HasExited)
         {
             _serverProcess.Kill(true);
             _serverProcess.Dispose();
+        }
+        
+        Playwright?.Dispose();
+        
+        StopLocalDb();
+    }
+    
+    private static void StopLocalDb()
+    {
+        try
+        {
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "sqllocaldb",
+                    Arguments = "stop MSSQLLocalDB",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            process.Start();
+            process.WaitForExit(5000);
+            process.Dispose();
+        }
+        catch
+        {
+            // Ignore errors stopping LocalDB - it may not be running or sqllocaldb may not be available
         }
     }
 }
