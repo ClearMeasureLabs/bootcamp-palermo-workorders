@@ -216,13 +216,24 @@ public abstract class AcceptanceTestBase
         if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
         if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
         await Expect(locator).ToBeVisibleAsync();
+
+        // Under parallel load, the Blazor WASM page may render with disabled fields
+        // before the server responds with state commands. Retry with a page reload
+        // if the field is not editable within a short window.
+        if (!await locator.IsEditableAsync())
+        {
+            await Page.ReloadAsync();
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
+        await Expect(locator).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
         await locator.ClearAsync();
         await locator.FillAsync(value ?? "");
         await locator.BlurAsync();
-        
+
         var delayMs = GetInputDelayMs();
         await Task.Delay(delayMs);
-        
+
         await Expect(locator).ToHaveValueAsync(value ?? "");
     }
 
@@ -240,6 +251,14 @@ public abstract class AcceptanceTestBase
     {
         var locator = Page.GetByTestId(elementTestId);
         await Expect(locator).ToBeVisibleAsync();
+
+        if (!await locator.IsEditableAsync())
+        {
+            await Page.ReloadAsync();
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
+        await Expect(locator).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
         await locator.SelectOptionAsync(value ?? "");
     }
 
@@ -284,6 +303,10 @@ public abstract class AcceptanceTestBase
     protected async Task<WorkOrder> ClickWorkOrderNumberFromSearchPage(WorkOrder order)
     {
         await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await woNumberLocator.WaitForAsync();
+        await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         return order;
     }

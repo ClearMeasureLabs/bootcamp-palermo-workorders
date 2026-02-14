@@ -49,6 +49,7 @@ public class ServerFixture
                 CreateNoWindow = true
             }
         };
+        _serverProcess.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
         _serverProcess.Start();
 
         // Wait for server to be ready
