@@ -36,8 +36,16 @@ public class ServerFixture
 
         Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
-        if (!StartLocalServer) return;
+        if (StartLocalServer)
+        {
+            await StartAndWaitForServer();
+        }
 
+        await new BlazorWasmWarmUp(Playwright, ApplicationBaseUrl).ExecuteAsync();
+    }
+
+    private async Task StartAndWaitForServer()
+    {
         _serverProcess = new Process
         {
             StartInfo = new ProcessStartInfo
