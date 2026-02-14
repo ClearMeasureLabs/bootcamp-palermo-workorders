@@ -3,8 +3,6 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 [TestFixture]
 public class LandingPageTests : AcceptanceTestBase
 {
-    protected override bool LoadDataOnSetup { get; set; } = false;
-
     [Test]
     public async Task Should_DisplayChurchTitle_WithDarkGreyColor()
     {

@@ -84,7 +84,7 @@ jobs:
         with:
           name: test-results-linux
           path: build/test/**/*.trx
-          retention-days: 30
+          retention-days: 2
 
       # Upload code coverage as artifacts
       - name: Upload Code Coverage
@@ -93,7 +93,7 @@ jobs:
         with:
           name: code-coverage-linux
           path: '**/build/test/**/In/**/coverage.cobertura.xml'
-          retention-days: 30
+          retention-days: 2
 
       # Package Everything as NuGet Packages
       - name: Create NuGet Packages
@@ -113,7 +113,7 @@ jobs:
         with:
           name: churchbulletin-nuget-packages
           path: build/*.nupkg
-          retention-days: 90
+          retention-days: 2
 
       - name: Upload build_version.txt artifact
         uses: actions/upload-artifact@v4
@@ -121,7 +121,7 @@ jobs:
         with:
           name: build-version
           path: build_version.txt
-          retention-days: 90
+          retention-days: 2
 
       - name: Publish nupkgs to GitHub Packages
         if: success()
@@ -574,7 +574,7 @@ jobs:
         with:
           name: acceptance-test-results-tdd
           path: build/test/AcceptanceTests/**/*.trx
-          retention-days: 30 
+          retention-days: 2 
 
 
   deploy-to-uat:

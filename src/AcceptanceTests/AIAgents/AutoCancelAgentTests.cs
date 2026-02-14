@@ -1,7 +1,6 @@
 ﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.AIAgents;
@@ -17,10 +16,6 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.AIAgents;
 /// </summary>
 public class AutoCancelAgentTests : AcceptanceTestBase
 {
-    public AutoCancelAgentTests()
-    {
-        new ZDataLoader().LoadData();
-    }
     [Test, Retry(2), Explicit]
     public async Task ShouldAutoCancelWorkOrderWithTestKeywords()
     {

@@ -34,6 +34,12 @@ public class AutoCancelAgentService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (string.Equals(Environment.GetEnvironmentVariable("DISABLE_AUTO_CANCEL_AGENT"), "true", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation("AutoCancelAgentService disabled via DISABLE_AUTO_CANCEL_AGENT environment variable");
+            return;
+        }
+
         _logger.LogInformation("AutoCancelAgentService started");
 
         while (!stoppingToken.IsCancellationRequested)

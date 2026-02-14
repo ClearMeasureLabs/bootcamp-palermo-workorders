@@ -13,17 +13,39 @@ public class ServerFixture
     public static string ApplicationBaseUrl { get; private set; } = string.Empty;
     private Process? _serverProcess;
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
+    public static bool HeadlessTestBrowser { get; set; } = true;
+    public static bool DatabaseInitialized { get; private set; }
+    private static readonly object DatabaseLock = new();
+    
+    /// <summary>
+    /// Shared Playwright instance for all tests. Thread-safe for parallel execution.
+    /// </summary>
+    public static IPlaywright Playwright { get; private set; } = null!;
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
+        InitializeDatabaseOnce();
         var configuration = TestHost.GetRequiredService<IConfiguration>();
         ApplicationBaseUrl = configuration["ApplicationBaseUrl"] ?? throw new InvalidOperationException();
         StartLocalServer = configuration.GetValue<bool>("StartLocalServer");
         SkipScreenshotsForSpeed = configuration.GetValue<bool>("SkipScreenshotsForSpeed");
         SlowMo = configuration.GetValue<int>("SlowMo");
-        if (!StartLocalServer) return;
+        HeadlessTestBrowser = configuration.GetValue<bool>("HeadlessTestBrowser");
 
+
+        Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
+
+        if (StartLocalServer)
+        {
+            await StartAndWaitForServer();
+        }
+
+        await new BlazorWasmWarmUp(Playwright, ApplicationBaseUrl).ExecuteAsync();
+    }
+
+    private async Task StartAndWaitForServer()
+    {
         _serverProcess = new Process
         {
             StartInfo = new ProcessStartInfo
@@ -37,6 +59,7 @@ public class ServerFixture
                 CreateNoWindow = true
             }
         };
+        _serverProcess.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
         _serverProcess.Start();
 
         // Wait for server to be ready
@@ -69,13 +92,29 @@ public class ServerFixture
             $"UI.Server did not start in {WaitTimeoutSeconds} seconds. Last exception: {lastException}");
     }
 
+    private static void InitializeDatabaseOnce()
+    {
+        if (DatabaseInitialized) return;
+
+        lock (DatabaseLock)
+        {
+            if (DatabaseInitialized) return;
+
+            new ZDataLoader().LoadData();
+            TestContext.Out.WriteLine("ZDataLoader().LoadData(); - complete");
+            DatabaseInitialized = true;
+        }
+    }
+
     [OneTimeTearDown]
-    public void OneTimeTearDown()
+    public async Task OneTimeTearDown()
     {
         if (_serverProcess != null && !_serverProcess.HasExited)
         {
             _serverProcess.Kill(true);
             _serverProcess.Dispose();
         }
+        
+        Playwright?.Dispose();
     }
 }
