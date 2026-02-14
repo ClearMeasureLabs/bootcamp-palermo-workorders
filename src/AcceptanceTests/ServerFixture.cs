@@ -13,6 +13,7 @@ public class ServerFixture
     public static string ApplicationBaseUrl { get; private set; } = string.Empty;
     private Process? _serverProcess;
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
+    public static bool HeadlessTestBrowser { get; set; } = true;
     public static bool DatabaseInitialized { get; private set; }
     private static readonly object DatabaseLock = new();
     
@@ -24,14 +25,15 @@ public class ServerFixture
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
+        InitializeDatabaseOnce();
         var configuration = TestHost.GetRequiredService<IConfiguration>();
         ApplicationBaseUrl = configuration["ApplicationBaseUrl"] ?? throw new InvalidOperationException();
         StartLocalServer = configuration.GetValue<bool>("StartLocalServer");
         SkipScreenshotsForSpeed = configuration.GetValue<bool>("SkipScreenshotsForSpeed");
         SlowMo = configuration.GetValue<int>("SlowMo");
+        HeadlessTestBrowser = configuration.GetValue<bool>("HeadlessTestBrowser");
 
-        InitializeDatabaseOnce();
-        
+
         Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
         if (!StartLocalServer) return;
@@ -91,6 +93,7 @@ public class ServerFixture
             if (DatabaseInitialized) return;
 
             new ZDataLoader().LoadData();
+            TestContext.Out.WriteLine("ZDataLoader().LoadData(); - complete");
             DatabaseInitialized = true;
         }
     }
@@ -105,33 +108,5 @@ public class ServerFixture
         }
         
         Playwright?.Dispose();
-        
-        StopLocalDb();
-    }
-    
-    private static void StopLocalDb()
-    {
-        try
-        {
-            var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "sqllocaldb",
-                    Arguments = "stop MSSQLLocalDB",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-            process.Start();
-            process.WaitForExit(5000);
-            process.Dispose();
-        }
-        catch
-        {
-            // Ignore errors stopping LocalDB - it may not be running or sqllocaldb may not be available
-        }
     }
 }

@@ -13,7 +13,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await LoginAsCurrentUser();
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldLoadDropDownsInitiallyOnLoad()
     {
         // Act

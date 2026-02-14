@@ -581,7 +581,7 @@ jobs:
           $env:StartLocalServer = "false"
           $env:TEST_INPUT_DELAY_MS = "${{ env.TEST_INPUT_DELAY_MS }}"
 
-          dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true /p:CollectCoverage=true --nologo `
+          dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true --nologo `
             --no-restore --logger:trx --results-directory $resultsDirectory --no-build `
             -v $verbosity --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath `
             --collect:"XPlat Code Coverage"

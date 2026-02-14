@@ -32,7 +32,7 @@ public abstract class AcceptanceTestBase
 {
     private static readonly ConcurrentDictionary<string, TestState> TestStates = new();
     
-    protected virtual bool? Headless { get; set; } = true;
+    protected virtual bool? Headless { get; set; } = ServerFixture.HeadlessTestBrowser;
     protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
     public IBus Bus => TestHost.GetRequiredService<IBus>();
 
@@ -62,22 +62,28 @@ public abstract class AcceptanceTestBase
     /// </summary>
     protected string TestTag => State.TestTag;
 
+    private static readonly Random RandomPosition = new();
+
     [SetUp]
     public async Task SetUpAsync()
     {
         var testTag = Guid.NewGuid().ToString("N")[..8];
         var currentUser = CreateTestUser(testTag);
 
+        var x = RandomPosition.Next(0, 1200);
+        var y = RandomPosition.Next(0, 700);
         var browser = await ServerFixture.Playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
             Headless = Headless,
-            SlowMo = ServerFixture.SlowMo
+            SlowMo = ServerFixture.SlowMo,
+            Args = [$"--window-position={x},{y}", "--window-size=800,600"]
         });
 
         var browserContext = await browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = ServerFixture.ApplicationBaseUrl,
-            IgnoreHTTPSErrors = true
+            IgnoreHTTPSErrors = true,
+            ViewportSize = new ViewportSize { Width = 800, Height = 600 }
         });
         browserContext.SetDefaultTimeout(60_000);
         
