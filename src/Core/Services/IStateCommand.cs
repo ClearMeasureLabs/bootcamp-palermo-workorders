@@ -11,4 +11,10 @@ public interface IStateCommand : IRequest<StateCommandResult>, IRemotableRequest
     bool Matches(string commandName);
     WorkOrderStatus GetBeginStatus();
     void Execute(StateCommandContext context);
+
+    /// <summary>
+    /// Validates the work order fields and returns a list of validation errors.
+    /// </summary>
+    /// <returns>A list of validation error messages. Empty if validation passes.</returns>
+    IReadOnlyList<string> Validate();
 }

@@ -113,5 +113,10 @@ public class StateCommandListTests
         {
             throw new NotImplementedException();
         }
+
+        public IReadOnlyList<string> Validate()
+        {
+            return new List<string>();
+        }
     }
 }
