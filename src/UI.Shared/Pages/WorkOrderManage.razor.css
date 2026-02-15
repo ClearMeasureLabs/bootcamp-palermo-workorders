@@ -62,6 +62,12 @@
     padding-top: 1rem;
 }
 
+.required-indicator {
+    color: #e53e3e;
+    margin-left: 0.25rem;
+    font-weight: bold;
+}
+
 .form-control {
     border: 2px solid #e2e8f0;
     border-radius: 12px;

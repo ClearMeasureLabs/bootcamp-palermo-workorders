@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -13,11 +14,19 @@ public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger 
     private readonly ILogger<SingleApiController> _logger = logger ?? new NullLogger<SingleApiController>();
 
     [HttpPost]
-    public async Task<string> Post(WebServiceMessage webServiceMessage)
+    public async Task<IActionResult> Post(WebServiceMessage webServiceMessage)
     {
-        _logger.LogDebug($"Receiving {webServiceMessage.TypeName}");
-        var result = await bus.Send(webServiceMessage.GetBodyObject()) ?? throw new InvalidOperationException();
-        _logger.LogDebug($"Returning {result.GetType().Name}");
-        return new WebServiceMessage(result).GetJson();
+        try
+        {
+            _logger.LogDebug($"Receiving {webServiceMessage.TypeName}");
+            var result = await bus.Send(webServiceMessage.GetBodyObject()) ?? throw new InvalidOperationException();
+            _logger.LogDebug($"Returning {result.GetType().Name}");
+            return Ok(new WebServiceMessage(result).GetJson());
+        }
+        catch (WorkOrderValidationException ex)
+        {
+            _logger.LogWarning(ex, "Work order validation failed");
+            return BadRequest(new { errors = ex.ValidationErrors, message = ex.Message });
+        }
     }
 }
