@@ -2,10 +2,10 @@
 . .\BuildFunctions.ps1
 
 # Clean environment variables that may interfere with local builds
-if ($env:ConnectionStrings__SqlConnectionString) {
-	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
-	$env:ConnectionStrings__SqlConnectionString = $null
-	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
+if ($env:ConnectionStrings__Sql) {
+	Log-Message "Clearing ConnectionStrings__Sql environment variable" -Type "INFO"
+	$env:ConnectionStrings__Sql = $null
+	[Environment]::SetEnvironmentVariable("ConnectionStrings__Sql", $null, "User")
 }
 
 $projectName = "ChurchBulletin"
@@ -505,7 +505,7 @@ Function Invoke-AcceptanceTests {
 	if (Test-Path $launchSettingsPath) {
 		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
 		$launchSettings = Get-Content $launchSettingsPath -Raw
-		$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
+		$launchSettings = $launchSettings -replace '"ConnectionStrings__Sql":', '"_DISABLED_ConnectionStrings__Sql:'
 		Set-Content -Path $launchSettingsPath -Value $launchSettings
 	}
 	

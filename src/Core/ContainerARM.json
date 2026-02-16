@@ -125,7 +125,7 @@
                   "value": "[parameters('appInsightsConnectionString')]"
                 },
                 {
-                  "name": "ConnectionStrings__SqlConnectionString",
+                  "name": "ConnectionStrings__Sql",
                   "value": "[parameters('connection_string')]"
                 },
                 {

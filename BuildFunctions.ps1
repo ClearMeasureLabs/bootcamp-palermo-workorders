@@ -125,8 +125,8 @@ Function Update-AppSettingsConnectionStrings {
 
 
     # Set environment variable for current process
-    $env:ConnectionStrings__SqlConnectionString = $connectionString
-    Log-Message "Set process environment variable ConnectionStrings__SqlConnectionString: $(Get-RedactedConnectionString -ConnectionString $connectionString)" -Type "INFO"
+    $env:ConnectionStrings__Sql = $connectionString
+    Log-Message "Set process environment variable ConnectionStrings__Sql: $(Get-RedactedConnectionString -ConnectionString $connectionString)" -Type "INFO"
 
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"

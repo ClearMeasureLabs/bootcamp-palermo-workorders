@@ -284,17 +284,17 @@ stages:
                       $connectionString = "Server=tcp:$serverName,1433;Database=ChurchBulletin;User ID=tdd;Password=$databasePassword;Encrypt=True;TrustServerCertificate=False;"
 
                       # Set the environment variable for this session
-                      $env:ConnectionStrings__SqlConnectionString = "$connectionString"
+                      $env:ConnectionStrings__Sql = "$connectionString"
                       Write-Host "Pipeline variable FormattedConnectionString: $connectionString"
                       Write-Host "##vso[task.setvariable variable=FormattedConnectionString]$connectionString"
                       Write-Host "Environment variable set to:"
-                      Write-Host $env:ConnectionStrings__SqlConnectionString
+                      Write-Host $env:ConnectionStrings__Sql
 
                 - task: VSTest@2
                   continueOnError: true
                   displayName: "VsTest - AcceptanceTests"
                   env:
-                    ConnectionStrings__SqlConnectionString: "$(FormattedConnectionString)"
+                    ConnectionStrings__Sql: "$(FormattedConnectionString)"
                   inputs:
                     testSelector: "testAssemblies"
                     testAssemblyVer2: |
