@@ -402,7 +402,7 @@ jobs:
       # This will protect deployments - there should be no cancellation.
       group: deploy-to-tdd-serialized
       cancel-in-progress: false
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     environment:
       name: TDD
     
