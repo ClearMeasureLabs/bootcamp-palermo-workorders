@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
 using Microsoft.AspNetCore.Components;
@@ -33,7 +34,7 @@ public partial class Login : AppComponentBase
         }
     }
 
-    private void HandleLogin()
+    private async Task HandleLogin()
     {
         if (string.IsNullOrEmpty(loginModel.Username))
         {
@@ -41,18 +42,21 @@ public partial class Login : AppComponentBase
             return;
         }
 
-        // Find the selected employee
         var selectedEmployee = employees.FirstOrDefault(e => e.UserName == loginModel.Username);
         if (selectedEmployee != null)
         {
-            // Successful login
+            await Bus.Send(new RecordUserLoginCommand
+            {
+                UserName = selectedEmployee.UserName,
+                FullName = selectedEmployee.GetFullName()
+            });
+
             AuthStateProvider!.Login(loginModel.Username);
             EventBus.Notify(new UserLoggedInEvent(loginModel.Username));
             NavigationManager!.NavigateTo("/");
         }
         else
         {
-            // Failed login
             errorMessage = "Invalid employee selection";
         }
     }

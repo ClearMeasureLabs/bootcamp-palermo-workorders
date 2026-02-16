@@ -17,7 +17,8 @@ public class EmployeeQueryHandler(DataContext context)
     {
         var employee = await context.Set<Employee>()
             .Include("Roles")
-            .SingleAsync(emp => emp.UserName == request.Username);
+            .SingleAsync(emp => emp.UserName == request.Username, cancellationToken);
+
         return employee;
     }
 
