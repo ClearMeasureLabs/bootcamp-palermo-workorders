@@ -42,7 +42,7 @@ public class ChatClientFactory(IBus bus, IConfiguration configuration)
             var uri = new Uri(openAiUrl ?? throw new InvalidOperationException());
             var openAiClient = new AzureOpenAIClient(uri, credential);
 
-            OpenAI.Chat.ChatClient chatClient = openAiClient.GetChatClient(openAiModel);
+            ChatClient chatClient = openAiClient.GetChatClient(openAiModel);
             return chatClient.AsIChatClient();
         }
     }

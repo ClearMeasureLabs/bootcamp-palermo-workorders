@@ -1,6 +1,6 @@
 using System.Diagnostics.Metrics;
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.Core.Commands;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using MediatR;
 
 namespace ClearMeasure.Bootcamp.UI.Server;

@@ -1,5 +1,5 @@
-using ClearMeasure.Bootcamp.Core.Commands;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -23,12 +23,12 @@ public class StubBus() : Bus(null!)
 
         if (request is WorkOrderSpecificationQuery query)
         {
-            return Task.FromResult<TResponse>((TResponse)(object)WorkOrderSpecificationQueryResponse());
+            return Task.FromResult((TResponse)(object)WorkOrderSpecificationQueryResponse());
         }
 
         if (request is RecordUserLoginCommand)
         {
-            return Task.FromResult<TResponse>((TResponse)(object)Unit.Value);
+            return Task.FromResult((TResponse)(object)Unit.Value);
         }
 
         throw new NotImplementedException();
@@ -57,7 +57,7 @@ public class StubBus() : Bus(null!)
     public static Task EmployeeByUserNameQueryResponse<TResponse>()
     {
         var employee = new Employee("hsimpson", "Homer", "Simpson", "homer@springfield.com");
-        return Task.FromResult<TResponse>((TResponse)(object)employee);
+        return Task.FromResult((TResponse)(object)employee);
     }
 
     private Task EmployeeGetAllQueryResponse<TResponse>()
@@ -68,6 +68,6 @@ public class StubBus() : Bus(null!)
             new Employee("mburns", "Montgomery", "Burns", "burns@plant.com"),
             new Employee("nflanders", "Ned", "Flanders", "ned@flanders.com")
         };
-        return Task.FromResult<TResponse>((TResponse)(object)employees);
+        return Task.FromResult((TResponse)(object)employees);
     }
 }

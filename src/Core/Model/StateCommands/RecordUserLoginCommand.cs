@@ -1,7 +1,6 @@
-using ClearMeasure.Bootcamp.Core;
 using MediatR;
 
-namespace ClearMeasure.Bootcamp.Core.Commands;
+namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
 /// <summary>
 /// Command to record a user login event. Sent from WASM client to server for OTEL metric recording.
