@@ -10,7 +10,7 @@ public class TestHostConfigurationTests
     public void ShouldReadVariableFromConfigFile()
     {
         var config = TestHost.GetRequiredService<IConfiguration>();
-        var key = config.GetValue<string>("ConnectionStrings:Sql");
+        var key = config.GetValue<string>("ConnectionStrings:SqlConnectionString");
         key.ShouldNotBeNullOrEmpty();
         Console.WriteLine(key);
     }

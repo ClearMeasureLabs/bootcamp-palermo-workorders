@@ -1,8 +1,5 @@
-using Azure.Monitor.OpenTelemetry.AspNetCore;
-using ClearMeasure.Bootcamp.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -18,7 +15,7 @@ public static class Extensions
     private const string HealthEndpointPath = "/health";
     private const string AlivenessEndpointPath = "/alive";
 
-    public static readonly ActivitySource ApplicationActivitySource = new(TelemetryConstants.ApplicationSourceName, TelemetryConstants.ApplicationVersion);
+    public static readonly ActivitySource ApplicationActivitySource = new("ChurchBulletin.Application", "1.0.0");
 
     /// <summary>
     /// Adds a set of default services and configurations including OpenTelemetry instrumentation, health checks, and service discovery.
@@ -57,24 +54,14 @@ public static class Extensions
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation()
-                    .AddMeter(TelemetryConstants.ApplicationSourceName);
+                    .AddMeter("ChurchBulletin.Application");
             })
             .WithTracing(tracing =>
             {
                 tracing.AddSource(builder.Environment.ApplicationName)
-                    .AddSource(TelemetryConstants.ApplicationSourceName)
-                    .AddSource(TelemetryConstants.LlmGatewaySourceName)
+                    .AddSource("ChurchBulletin.Application")
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .AddSqlClientInstrumentation(options =>
-                    {
-                        options.SetDbStatementForText = true;
-                        options.RecordException = true;
-                    })
-                    .AddEntityFrameworkCoreInstrumentation(options =>
-                    {
-                        options.SetDbStatementForText = true;
-                    });
+                    .AddHttpClientInstrumentation();
             });
 
         builder.AddOpenTelemetryExporters();
@@ -91,7 +78,8 @@ public static class Extensions
 
     /// <summary>
     /// Adds OpenTelemetry exporters based on the presence of configuration.
-    /// Configures OTLP exporter for Aspire dashboard and Azure Monitor for Application Insights.
+    /// If the OTEL_EXPORTER_OTLP_ENDPOINT environment variable is set, the OTLP exporter will be used.
+    /// Otherwise, no exporters will be added.
     /// </summary>
     public static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
@@ -100,17 +88,6 @@ public static class Extensions
         if (useOtlpExporter)
         {
             builder.Services.AddOpenTelemetry().UseOtlpExporter();
-        }
-
-        var appInsightsConnectionString = builder.Configuration.GetConnectionString("AppInsights")
-            ?? builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
-
-        if (!string.IsNullOrWhiteSpace(appInsightsConnectionString))
-        {
-            builder.Services.AddOpenTelemetry().UseAzureMonitor(options =>
-            {
-                options.ConnectionString = appInsightsConnectionString;
-            });
         }
 
         return builder;

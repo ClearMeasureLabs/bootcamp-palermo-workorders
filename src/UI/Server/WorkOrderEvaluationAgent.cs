@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.LlmGateway;
@@ -14,7 +13,6 @@ public class WorkOrderEvaluationAgent(
     IBus bus,
     ILogger<WorkOrderEvaluationAgent> logger)
 {
-    private static readonly ActivitySource LlmActivitySource = new(TelemetryConstants.LlmGatewaySourceName);
     private readonly IBus _bus = bus;
 
     /// <summary>
@@ -22,10 +20,6 @@ public class WorkOrderEvaluationAgent(
     /// </summary>
     public async Task<bool> ShouldCancelWorkOrderAsync(WorkOrder workOrder)
     {
-        using var activity = LlmActivitySource.StartActivity("WorkOrderEvaluationAgent.Evaluate");
-        activity?.SetTag("workorder.number", workOrder.Number);
-        activity?.SetTag("workorder.title", workOrder.Title);
-
         try
         {
             var chatClient = await chatClientFactory.GetChatClient();
@@ -62,9 +56,6 @@ public class WorkOrderEvaluationAgent(
             var response = await chatClient.GetResponseAsync(messages);
             var decision = response.Text?.Trim().ToUpperInvariant();
 
-            activity?.SetTag("llm.decision", decision);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-
             logger.LogInformation("AI evaluation for WorkOrder {WorkOrderNumber}: {Decision}",
                 workOrder.Number, decision);
 
@@ -72,7 +63,6 @@ public class WorkOrderEvaluationAgent(
         }
         catch (Exception ex)
         {
-            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             logger.LogError(ex, "Error evaluating WorkOrder {WorkOrderNumber} for cancellation",
                 workOrder.Number);
             return false;

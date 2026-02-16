@@ -6,6 +6,7 @@ using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Lamar;
 using MediatR;
+using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
 using FunJeffreyCustomEventHealthCheck = ClearMeasure.Bootcamp.UI.Shared.FunJeffreyCustomEventHealthCheck;
 
@@ -22,7 +23,8 @@ public class UiServiceRegistry : ServiceRegistry
         this.AddTransient<IBus>(provider =>
         {
             var mediator = provider.GetRequiredService<IMediator>();
-            return new Bus(mediator);
+            var telemetryClient = provider.GetService<TelemetryClient>();
+            return new Bus(mediator, telemetryClient);
         });
 
         // Register AI agent and background service
