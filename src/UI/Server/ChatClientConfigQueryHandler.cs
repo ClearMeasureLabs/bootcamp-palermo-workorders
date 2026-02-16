@@ -11,9 +11,9 @@ public class ChatClientConfigQueryHandler(IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("AzureOpenAI");
 
-        string? apiKey;
-        string? openAiUrl;
-        string? openAiModel;
+        string? apiKey = null;
+        string? openAiUrl = null;
+        string? openAiModel = null;
 
         if (!string.IsNullOrEmpty(connectionString))
         {
@@ -26,12 +26,10 @@ public class ChatClientConfigQueryHandler(IConfiguration configuration)
             parts.TryGetValue("Endpoint", out openAiUrl);
             parts.TryGetValue("Model", out openAiModel);
         }
-        else
-        {
-            apiKey = configuration.GetValue<string>("AI_OpenAI_ApiKey");
-            openAiUrl = configuration.GetValue<string>("AI_OpenAI_Url");
-            openAiModel = configuration.GetValue<string>("AI_OpenAI_Model");
-        }
+
+        apiKey ??= configuration.GetValue<string>("AI_OpenAI_ApiKey");
+        openAiUrl ??= configuration.GetValue<string>("AI_OpenAI_Url");
+        openAiModel ??= configuration.GetValue<string>("AI_OpenAI_Model");
 
         return Task.FromResult(new ChatClientConfig
         {
