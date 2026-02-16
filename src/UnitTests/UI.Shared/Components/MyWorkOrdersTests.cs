@@ -193,7 +193,7 @@ public class MyWorkOrdersTests
                         Creator = creator
                     }
                 };
-                return Task.FromResult((TResponse)(object)workOrders);
+                return Task.FromResult<TResponse>((TResponse)(object)workOrders);
             }
 
             throw new NotImplementedException();

@@ -14,6 +14,6 @@ public class TestDatabaseConfiguration : IDatabaseConfiguration
 
     public string GetConnectionString()
     {
-        return _configuration.GetConnectionString("Sql") ?? throw new InvalidOperationException();
+        return _configuration.GetConnectionString("SqlConnectionString") ?? throw new InvalidOperationException();
     }
 }

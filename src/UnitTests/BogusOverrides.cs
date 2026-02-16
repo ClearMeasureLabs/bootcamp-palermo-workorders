@@ -24,10 +24,10 @@ internal class BogusOverrides : AutoGeneratorOverride
                 order.RoomNumber = order.RoomNumber.ClampLength(1, 50);     // HasMaxLength(50)
                 break;
             case WorkOrderStatus:
-                context.Instance = context.Faker.PickRandom(WorkOrderStatus.GetAllItems());
+                context.Instance = context.Faker.PickRandom<WorkOrderStatus>(WorkOrderStatus.GetAllItems());
                 break;
             case WorkOrderSpecificationQuery query:
-                query.StatusKey = context.Faker.PickRandom(WorkOrderStatus.GetAllItems()).Key;
+                query.StatusKey = context.Faker.PickRandom<WorkOrderStatus>(WorkOrderStatus.GetAllItems()).Key;
                 break;
         }
     }
