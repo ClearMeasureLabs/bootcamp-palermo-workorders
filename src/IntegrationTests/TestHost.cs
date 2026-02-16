@@ -50,9 +50,9 @@ public static class TestHost
                 var env = context.HostingEnvironment;
 
                 config
+                    .AddJsonFile("appsettings.acceptancetests.json", true, true)
                     .AddJsonFile("appsettings.test.json", false, true)
                     .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true)
-                    .AddJsonFile("appsettings.acceptancetests.json", true, true)
                     .AddEnvironmentVariables();
             })
             .ConfigureServices(s =>
