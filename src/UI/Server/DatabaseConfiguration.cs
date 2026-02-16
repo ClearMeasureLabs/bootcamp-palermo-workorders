@@ -6,7 +6,7 @@ public class DatabaseConfiguration(IConfiguration configuration) : IDatabaseConf
 {
     public string GetConnectionString()
     {
-        return configuration.GetConnectionString("SqlConnectionString") ??
-               throw new InvalidOperationException("SqlConnectionString is missing");
+        return configuration.GetConnectionString("Sql") ??
+               throw new InvalidOperationException("ConnectionStrings:Sql is missing");
     }
 }
