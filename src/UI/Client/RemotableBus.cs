@@ -17,6 +17,6 @@ public class RemotableBus(IMediator mediator, IPublisherGateway gateway) : Bus(m
             return returnEvent;
         }
 
-        return await _mediator.Send(request);
+        return await base.Send(request);
     }
 }
