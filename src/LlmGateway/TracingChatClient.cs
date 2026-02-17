@@ -111,7 +111,7 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
             ? ActivitySource.StartActivity(operationName, ActivityKind.Internal, parentContext.Value)
             : ActivitySource.StartActivity(operationName, ActivityKind.Internal);
 
-        var provider = config.AiOpenAiApiKey != null ? "OpenAI" : "Ollama";
+        var provider = !string.IsNullOrEmpty(config.AiOpenAiApiKey) ? "OpenAI" : "Ollama";
         activity?.SetTag("chat.provider", provider);
         return activity;
     }
