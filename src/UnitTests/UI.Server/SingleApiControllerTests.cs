@@ -14,7 +14,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 public class SingleApiControllerTests
 {
     [Test]
-    public async Task ShouldReturnSerializedResponseForRemotableRequest()
+    public async Task Should_Post_ReturnSerializedResponse_ForRemotableRequest()
     {
         var expectedEmployees = new[] { new Employee("hsimpson", "Homer", "Simpson", "homer@test.com") };
         var stubBus = new StubBus();
@@ -32,7 +32,7 @@ public class SingleApiControllerTests
     }
 
     [Test]
-    public async Task ShouldPublishAndReturnEmptyMessageForRemotableEvent()
+    public async Task Should_Post_PublishAndReturnEmptyMessage_ForRemotableEvent()
     {
         var stubBus = new StubBus();
         var controller = new SingleApiController(stubBus);
@@ -48,7 +48,36 @@ public class SingleApiControllerTests
     }
 
     [Test]
-    public void ShouldThrowForNonRemotableObject()
+    public async Task Should_Post_PublishViaBusNotSend_ForRemotableEvent()
+    {
+        var stubBus = new StubBus();
+        var controller = new SingleApiController(stubBus);
+        var loginEvent = new UserLoggedInEvent("testuser");
+        var message = new WebServiceMessage(loginEvent);
+
+        await controller.Post(message);
+
+        stubBus.LastPublishedNotification.ShouldNotBeNull();
+        stubBus.LastSentObject.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Should_Post_ReturnEmptyTypedWebServiceMessage_ForRemotableEvent()
+    {
+        var stubBus = new StubBus();
+        var controller = new SingleApiController(stubBus);
+        var loginEvent = new UserLoggedInEvent("testuser");
+        var message = new WebServiceMessage(loginEvent);
+
+        var json = await controller.Post(message);
+
+        var responseMessage = JsonSerializer.Deserialize<WebServiceMessage>(json)!;
+        responseMessage.Body.ShouldBeEmpty();
+        responseMessage.TypeName.ShouldBeEmpty();
+    }
+
+    [Test]
+    public void Should_Post_Throw_ForNonRemotableObject()
     {
         var stubBus = new StubBus();
         var controller = new SingleApiController(stubBus);
@@ -58,7 +87,7 @@ public class SingleApiControllerTests
     }
 
     [Test]
-    public async Task ShouldSendBodyObjectToBusForRemotableRequest()
+    public async Task Should_Post_SendBodyObjectToBus_ForRemotableRequest()
     {
         var stubBus = new StubBus();
         stubBus.SetSendResponse(Array.Empty<Employee>());
@@ -72,7 +101,7 @@ public class SingleApiControllerTests
     }
 
     [Test]
-    public void ShouldThrowWhenBusReturnsNullForRemotableRequest()
+    public void Should_Post_Throw_WhenBusReturnsNull_ForRemotableRequest()
     {
         var stubBus = new StubBus();
         stubBus.SetSendResponse(null);
