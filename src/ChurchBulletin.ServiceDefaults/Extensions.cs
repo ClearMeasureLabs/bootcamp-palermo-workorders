@@ -62,8 +62,18 @@ public static class Extensions
                 tracing.AddSource(builder.Environment.ApplicationName)
                     .AddSource("ChurchBulletin.Application")
                     .AddSource("ChurchBulletin.Application.Bus")
+                    .AddSource("ChurchBulletin.LlmGateway")
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation();
+                    .AddHttpClientInstrumentation()
+                    .AddSqlClientInstrumentation(options =>
+                    {
+                        options.SetDbStatementForText = true;
+                        options.RecordException = true;
+                    })
+                    .AddEntityFrameworkCoreInstrumentation(options =>
+                    {
+                        options.SetDbStatementForText = true;
+                    });
             });
 
         builder.AddOpenTelemetryExporters();
