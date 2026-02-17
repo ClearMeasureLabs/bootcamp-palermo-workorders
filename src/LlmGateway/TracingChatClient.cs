@@ -35,13 +35,13 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
         ChatOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var promptActivity = StartActivity("ChatClient.GetStreamingResponseAsync Request");
+        using var promptActivity = StartActivity("ChatClient.GetStreamingResponseAsync Request");
         promptActivity?.SetTag("chat.prompt", GetLastUserMessage(messages));
         promptActivity?.SetStatus(ActivityStatusCode.Ok);
 
         ChatResponseUpdate? lastUpdate = null;
         var responseText = new System.Text.StringBuilder();
-        var responseActivity = StartActivity("ChatClient.GetStreamingResponseAsync Response");
+        using var responseActivity = StartActivity("ChatClient.GetStreamingResponseAsync Response");
 
         await foreach (var update in base.GetStreamingResponseAsync(messages, options, cancellationToken))
         {
