@@ -22,11 +22,25 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
         promptActivity?.SetStatus(ActivityStatusCode.Ok);
 
         using var responseActivity = StartActivity("ChatClient.GetResponseAsync Response");
-        var response = await base.GetResponseAsync(messages, options, cancellationToken);
-        responseActivity?.SetTag("chat.model", response.ModelId);
-        responseActivity?.SetTag("chat.response", response.Text);
-        responseActivity?.SetStatus(ActivityStatusCode.Ok);
-        return response;
+        try
+        {
+            var response = await base.GetResponseAsync(messages, options, cancellationToken);
+            responseActivity?.SetTag("chat.model", response.ModelId);
+            responseActivity?.SetTag("chat.response", response.Text);
+            responseActivity?.SetStatus(ActivityStatusCode.Ok);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            responseActivity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            responseActivity?.AddEvent(new ActivityEvent("exception",
+                tags: new ActivityTagsCollection
+                {
+                    { "exception.type", ex.GetType().FullName },
+                    { "exception.message", ex.Message }
+                }));
+            throw;
+        }
     }
 
     /// <inheritdoc />
@@ -43,15 +57,42 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
         var responseText = new System.Text.StringBuilder();
         using var responseActivity = StartActivity("ChatClient.GetStreamingResponseAsync Response");
 
-        await foreach (var update in base.GetStreamingResponseAsync(messages, options, cancellationToken))
+        ChatResponseUpdate update;
+
+        await using var enumerator = base
+            .GetStreamingResponseAsync(messages, options, cancellationToken)
+            .GetAsyncEnumerator(cancellationToken);
+
+        while (true)
         {
+            try
+            {
+                if (!await enumerator.MoveNextAsync())
+                {
+                    break;
+                }
+
+                update = enumerator.Current;
+            }
+            catch (Exception ex)
+            {
+                responseActivity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                responseActivity?.AddEvent(new ActivityEvent("exception",
+                    tags: new ActivityTagsCollection
+                    {
+                        { "exception.type", ex.GetType().FullName },
+                        { "exception.message", ex.Message }
+                    }));
+                throw;
+            }
+
             lastUpdate = update;
 
             if (string.IsNullOrWhiteSpace(update.Text))
             {
                 continue;
-
             }
+
             responseText.Append(update.Text);
             yield return update;
         }
