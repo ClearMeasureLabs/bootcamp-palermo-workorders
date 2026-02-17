@@ -70,6 +70,7 @@ public class RemotableBusTests
         bus.Publish(notification);
 
         stubMediator.LastNotification.ShouldBe(notification);
+        stubGateway.LastRequest.ShouldBeNull();
     }
 
     [Test]
