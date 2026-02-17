@@ -14,10 +14,10 @@ public class PublisherGateway(HttpClient httpClient) : IPublisherGateway
         return await SendToTopic(message);
     }
 
-    public Task Publish(IRemotableEvent @event)
+    public async Task Publish(IRemotableEvent @event)
     {
         var message = new WebServiceMessage(@event);
-        return SendToTopic(message);
+        await SendToTopic(message);
     }
 
     public virtual async Task<WebServiceMessage?> SendToTopic(WebServiceMessage message)
