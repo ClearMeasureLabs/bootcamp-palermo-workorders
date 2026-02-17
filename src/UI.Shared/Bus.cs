@@ -7,7 +7,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared;
 
 public class Bus : IBus
 {
-    private static readonly ActivitySource ActivitySource = new("ChurchBulletin.Application.Bus");
+    private static readonly ActivitySource ActivitySource = new("ChurchBulletin.Application.Bus", "1.0.0");
 
     private readonly IMediator _mediator;
 
