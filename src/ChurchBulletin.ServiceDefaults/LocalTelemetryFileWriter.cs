@@ -68,7 +68,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
         else
         {
             var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory();
-            TelemetryLogDirectory = Path.Combine(basePath, "logs/telemetry");
+            TelemetryLogDirectory = Path.Combine(basePath, "logs");
         }
     }
 
