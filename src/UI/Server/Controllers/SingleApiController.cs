@@ -2,6 +2,7 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using static FastExpressionCompiler.ExpressionCompiler;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Controllers;
 
@@ -16,8 +17,22 @@ public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger 
     public async Task<string> Post(WebServiceMessage webServiceMessage)
     {
         _logger.LogDebug($"Receiving {webServiceMessage.TypeName}");
-        var result = await bus.Send(webServiceMessage.GetBodyObject()) ?? throw new InvalidOperationException();
-        _logger.LogDebug($"Returning {result.GetType().Name}");
-        return new WebServiceMessage(result).GetJson();
+        var bodyObject = webServiceMessage.GetBodyObject();
+
+        if (bodyObject is IRemotableRequest remotableRequest)
+        {
+            var result = await bus.Send(remotableRequest) ?? throw new InvalidOperationException();
+            _logger.LogDebug($"Returning {result.GetType().Name}");
+            return new WebServiceMessage(result).GetJson();
+        }
+
+        if (bodyObject is IRemotableEvent @event)
+        {
+            await bus.Publish(@event);
+            _logger.LogDebug($"Published {@event.GetType().Name}");
+            return new WebServiceMessage().GetJson();
+        }
+
+        throw new InvalidOperationException($"Received a message of type {webServiceMessage.TypeName} that is not a request or event");
     }
 }

@@ -19,4 +19,15 @@ public class RemotableBus(IMediator mediator, IPublisherGateway gateway) : Bus(m
 
         return await base.Send(request);
     }
+
+    public override async Task Publish(INotification notification)
+    {
+        if (notification is IRemotableEvent remotableEvent)
+        {
+            await gateway.Publish(remotableEvent);
+            return;
+        }
+
+        await base.Publish(notification);
+    }
 }

@@ -1,5 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
-using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Model.Events;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -24,11 +24,6 @@ public class StubBus() : Bus(null!)
         if (request is WorkOrderSpecificationQuery query)
         {
             return Task.FromResult<TResponse>((TResponse)(object)WorkOrderSpecificationQueryResponse());
-        }
-
-        if (request is RecordUserLoginCommand)
-        {
-            return Task.FromResult<TResponse>((TResponse)(object)Unit.Value);
         }
 
         throw new NotImplementedException();

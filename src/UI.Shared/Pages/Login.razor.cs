@@ -50,7 +50,7 @@ public partial class Login : AppComponentBase
             // Successful login
             AuthStateProvider!.Login(loginModel.Username);
             EventBus.Notify(new UserLoggedInEvent(loginModel.Username));
-            await Bus.Send(new RecordUserLoginCommand(loginModel.Username));
+            await Bus.Publish(new Core.Model.Events.UserLoggedInEvent(loginModel.Username));
             NavigationManager!.NavigateTo("/");
         }
         else

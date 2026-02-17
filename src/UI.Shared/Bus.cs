@@ -28,10 +28,10 @@ public class Bus : IBus
         return await _mediator.Send(request);
     }
 
-    public void Publish<TNotification>(TNotification notification) where TNotification : INotification
+    public virtual async Task Publish(INotification notification)
     {
         using var activity = StartActivity(notification!, "Publish");
-        _mediator.Publish(notification);
+        await _mediator.Publish(notification);
     }
 
     private static Activity? StartActivity(object message, string operation = "Send")
