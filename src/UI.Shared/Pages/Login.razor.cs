@@ -35,7 +35,7 @@ public partial class Login : AppComponentBase
         }
     }
 
-    private async void HandleLogin()
+    private async Task HandleLogin()
     {
         if (string.IsNullOrEmpty(loginModel.Username))
         {
