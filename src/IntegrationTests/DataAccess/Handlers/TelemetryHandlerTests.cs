@@ -9,7 +9,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 public class TelemetryHandlerTests
 {
     [Test]
-    public async Task ShouldIncrementsLoginCounter_WhenUserLogsIn()
+    public async Task ShouldIncrementLoginCounter_WhenUserLogsIn()
     {
         long recorded = 0;
         string? recordedUserName = null;
