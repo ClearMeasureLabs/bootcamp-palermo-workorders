@@ -6,8 +6,6 @@ namespace ClearMeasure.Bootcamp.UI.Client;
 
 public class RemotableBus(IMediator mediator, IPublisherGateway gateway) : Bus(mediator)
 {
-    private readonly IMediator _mediator = mediator;
-
     public override async Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
     {
         if (request is IRemotableRequest remotableRequest)
