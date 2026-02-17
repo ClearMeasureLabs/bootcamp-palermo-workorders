@@ -2,7 +2,6 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
-using static FastExpressionCompiler.ExpressionCompiler;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Controllers;
 
