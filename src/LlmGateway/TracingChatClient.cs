@@ -22,6 +22,7 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
         promptActivity?.SetStatus(ActivityStatusCode.Ok);
 
         using var responseActivity = StartActivity("ChatClient.GetResponseAsync Response");
+
         try
         {
             var response = await base.GetResponseAsync(messages, options, cancellationToken);
