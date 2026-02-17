@@ -59,7 +59,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
         _meterListener.SetMeasurementEventCallback<double>(OnMeasurementRecorded);
         _meterListener.SetMeasurementEventCallback<decimal>(OnMeasurementRecorded);
 
-        var configuredPath = configuration?["TelemetryLogDirectory"];
+        var configuredPath = configuration?["LocalTelemetry:LogDirectory"];
 
         if (!string.IsNullOrEmpty(configuredPath))
         {
