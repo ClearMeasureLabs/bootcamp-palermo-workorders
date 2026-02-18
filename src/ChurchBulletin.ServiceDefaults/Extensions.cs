@@ -49,7 +49,7 @@ public static class Extensions
             logging.IncludeScopes = true;
         });
 
-        builder.Services.AddOpenTelemetry()
+        var otelBuilder = builder.Services.AddOpenTelemetry()
             .WithMetrics(metrics =>
             {
                 metrics.AddAspNetCoreInstrumentation()
@@ -76,7 +76,7 @@ public static class Extensions
                     });
             });
 
-        builder.AddOpenTelemetryExporters();
+        builder.AddOpenTelemetryExporters(otelBuilder);
 
         if (builder.Environment.IsDevelopment())
         {
@@ -93,20 +93,20 @@ public static class Extensions
     /// If the OTEL_EXPORTER_OTLP_ENDPOINT environment variable is set, the OTLP exporter will be used.
     /// If ApplicationInsights:ConnectionString is configured, the Azure Monitor exporter will be used.
     /// </summary>
-    public static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    public static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder, OpenTelemetryBuilder otelBuilder) where TBuilder : IHostApplicationBuilder
     {
         var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
 
         if (useOtlpExporter)
         {
-            builder.Services.AddOpenTelemetry().UseOtlpExporter();
+            otelBuilder.UseOtlpExporter();
         }
 
         var useAzureMonitorExporter = !string.IsNullOrEmpty(builder.Configuration["ApplicationInsights:ConnectionString"]);
 
         if (useAzureMonitorExporter)
         {
-            builder.Services.AddOpenTelemetry().UseAzureMonitor();
+            otelBuilder.UseAzureMonitor();
         }
 
         return builder;
