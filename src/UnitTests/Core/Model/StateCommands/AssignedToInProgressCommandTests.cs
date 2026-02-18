@@ -15,7 +15,7 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Assignee = employee;
 
-        var command = new AssignedToInProgressCommand(CorrelationId: Guid.NewGuid(), order, employee);
+        var command = new AssignedToInProgressCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -27,7 +27,7 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Assignee = employee;
 
-        var command = new AssignedToInProgressCommand(CorrelationId: Guid.NewGuid(), order, new Employee());
+        var command = new AssignedToInProgressCommand(order, new Employee());
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -39,7 +39,7 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Assignee = employee;
 
-        var command = new AssignedToInProgressCommand(CorrelationId: Guid.NewGuid(), order, employee);
+        var command = new AssignedToInProgressCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -52,7 +52,7 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Assignee = employee;
 
-        var command = new AssignedToInProgressCommand(CorrelationId: Guid.NewGuid(), order, employee);
+        var command = new AssignedToInProgressCommand(order, employee);
         command.Execute(new StateCommandContext());
 
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.InProgress));
@@ -60,6 +60,6 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new AssignedToInProgressCommand(CorrelationId: Guid.NewGuid(), order, employee);
+        return new AssignedToInProgressCommand(order, employee);
     }
 }

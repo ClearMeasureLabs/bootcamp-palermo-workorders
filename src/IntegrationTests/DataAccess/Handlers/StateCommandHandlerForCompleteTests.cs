@@ -30,7 +30,7 @@ public class StateCommandHandlerForCompleteTests : IntegratedTestBase
         o.Title = "new title";
         o.Description = "new desc";
         o.RoomNumber = "new room";
-        var command = new InProgressToCompleteCommand(CorrelationId: Guid.NewGuid(), o, currentUser);
+        var command = new InProgressToCompleteCommand(o, currentUser);
         var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();

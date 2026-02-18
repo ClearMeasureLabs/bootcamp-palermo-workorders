@@ -1,5 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.Events;
-using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -11,8 +10,6 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 public class StateCommandHandler(DbContext dbContext, TimeProvider time, IDistributedBus distributedBus, ILogger<StateCommandHandler> logger)
     : IRequestHandler<StateCommandBase, StateCommandResult>
 {
-    private const string AiBotRole = "Bot";
-
     public async Task<StateCommandResult> Handle(StateCommandBase request,
         CancellationToken cancellationToken = default)
     {
@@ -48,20 +45,7 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, IDistri
 
         var result = new StateCommandResult(order, request.TransitionVerbPresentTense, debugMessage);
 
-        if (order.Assignee?.Roles is null || string.IsNullOrWhiteSpace(request.TransitionVerbPastTense))
-        {
-            return result;
-        }
-
-        var isAssignedToBot = request.TransitionVerbPastTense.Equals("assigned", StringComparison.InvariantCultureIgnoreCase) &&
-                              order.Assignee.Roles.Select(x => x.Name).Any(role => role == AiBotRole);
-
-        if (isAssignedToBot)
-        {
-            var @event = new WorkOrderAssignedToBotEvent(request.CorrelationId, order.Id, order.Assignee!.Id);
-            await distributedBus.PublishAsync(@event, cancellationToken);
-        }
-
+        await distributedBus.PublishAsync(request.StateTransitionEvent, cancellationToken);
         return result;
     }
 }

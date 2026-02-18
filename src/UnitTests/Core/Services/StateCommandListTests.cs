@@ -14,7 +14,7 @@ public class StateCommandListTests
         var facilitator = new StateCommandList();
         var workOrder = new WorkOrder();
         var employee = new Employee();
-        var commands = facilitator.GetValidStateCommands(correlationId: Guid.NewGuid(), workOrder, employee);
+        var commands = facilitator.GetValidStateCommands(workOrder, employee);
 
         Assert.That(commands.Length, Is.EqualTo(0));
     }
@@ -23,7 +23,7 @@ public class StateCommandListTests
     public void ShouldReturnAllStateCommandsInCorrectOrder()
     {
         var facilitator = new StateCommandList();
-        var commands = facilitator.GetAllStateCommands(correlationId: Guid.NewGuid(), new WorkOrder(), new Employee());
+        var commands = facilitator.GetAllStateCommands(new WorkOrder(), new Employee());
 
         Assert.That(commands.Length, Is.EqualTo(7));
 
@@ -49,7 +49,7 @@ public class StateCommandListTests
 
         stubFacilitator.CommandsToReturn = commandsToReturn;
 
-        var commands = stubFacilitator.GetValidStateCommands(correlationId: Guid.NewGuid(), null!, null!);
+        var commands = stubFacilitator.GetValidStateCommands(null!, null!);
 
         Assert.That(commands.Length, Is.EqualTo(2));
     }
@@ -75,7 +75,7 @@ public class StateCommandListTests
 
         stubFacilitator.CommandsToReturn = commandsToReturn;
 
-        var commands = stubFacilitator.GetMatchingCommand(correlationId: Guid.NewGuid(), workOrder, employee, "Cancel");
+        var commands = stubFacilitator.GetMatchingCommand(workOrder, employee, "Cancel");
 
         Assert.That(commands, Is.SameAs(expected));
         }
@@ -84,7 +84,7 @@ public class StateCommandListTests
     {
         public IStateCommand[] CommandsToReturn { get; set; } = null!;
 
-        public override IStateCommand[] GetAllStateCommands(Guid correlationId, WorkOrder workOrder, Employee employee)
+        public override IStateCommand[] GetAllStateCommands(WorkOrder workOrder, Employee employee)
         {
             return CommandsToReturn;
         }

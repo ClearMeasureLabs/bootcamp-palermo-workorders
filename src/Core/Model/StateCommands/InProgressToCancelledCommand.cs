@@ -1,5 +1,5 @@
 ﻿namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
-public record InProgressToCancelledCommand(Guid CorrelationId, WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(CorrelationId, WorkOrder, CurrentUser)
+public record InProgressToCancelledCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder, CurrentUser)
 {
     public const string Name = "Cancel";
 

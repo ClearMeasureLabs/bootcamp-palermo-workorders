@@ -1,3 +1,3 @@
 ﻿namespace ClearMeasure.Bootcamp.Core.Model.Events;
 
-public record WorkOrderAssignedToBotEvent(Guid CorrelationId, Guid WorkOrderId, Guid BotUserId);
+public record WorkOrderAssignedToBotEvent(Guid WorkOrderId, Guid BotUserId) : IStateTransitionEvent;

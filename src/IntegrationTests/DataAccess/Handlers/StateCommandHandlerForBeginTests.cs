@@ -30,7 +30,7 @@ public class StateCommandHandlerForBeginTests : IntegratedTestBase
         o.Title = "new title";
         o.Description = "new desc";
         o.RoomNumber = "new room";
-        var command = new AssignedToInProgressCommand(CorrelationId: Guid.NewGuid(), o, currentUser);
+        var command = new AssignedToInProgressCommand(o, currentUser);
         var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();

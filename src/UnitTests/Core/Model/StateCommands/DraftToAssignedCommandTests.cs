@@ -15,7 +15,7 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new DraftToAssignedCommand(CorrelationId: Guid.NewGuid(), order, employee);
+        var command = new DraftToAssignedCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -28,7 +28,7 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
         var differentEmployee = new Employee();
         order.Assignee = employee;
 
-        var command = new DraftToAssignedCommand(CorrelationId: Guid.NewGuid(), order, differentEmployee);
+        var command = new DraftToAssignedCommand(order, differentEmployee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -40,7 +40,7 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new DraftToAssignedCommand(CorrelationId: Guid.NewGuid(), order, employee);
+        var command = new DraftToAssignedCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -53,7 +53,7 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new DraftToAssignedCommand(CorrelationId: Guid.NewGuid(), order, employee);
+        var command = new DraftToAssignedCommand(order, employee);
         command.Execute(new StateCommandContext());
 
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
@@ -62,6 +62,6 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new DraftToAssignedCommand(CorrelationId: Guid.NewGuid(), order, employee);
+        return new DraftToAssignedCommand(order, employee);
     }
 }

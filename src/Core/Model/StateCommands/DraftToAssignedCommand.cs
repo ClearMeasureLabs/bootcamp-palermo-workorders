@@ -1,9 +1,11 @@
+using ClearMeasure.Bootcamp.Core.Model.Constants;
+using ClearMeasure.Bootcamp.Core.Model.Events;
 using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public record DraftToAssignedCommand(Guid CorrelationId, WorkOrder WorkOrder, Employee CurrentUser)
-    : StateCommandBase(CorrelationId, WorkOrder, CurrentUser)
+public record DraftToAssignedCommand(WorkOrder WorkOrder, Employee CurrentUser)
+: StateCommandBase(WorkOrder, CurrentUser)
 {
     public const string Name = "Assign";
 
@@ -17,11 +19,6 @@ public record DraftToAssignedCommand(Guid CorrelationId, WorkOrder WorkOrder, Em
         return WorkOrderStatus.Assigned;
     }
 
-    protected override bool UserCanExecute(Employee currentUser)
-    {
-        return currentUser == WorkOrder.Creator;
-    }
-
     public override string TransitionVerbPresentTense => Name;
 
     public override string TransitionVerbPastTense => "Assigned";
@@ -30,5 +27,18 @@ public record DraftToAssignedCommand(Guid CorrelationId, WorkOrder WorkOrder, Em
     {
         WorkOrder.AssignedDate = context.CurrentDateTime;
         base.Execute(context);
+
+        var assignedToAiBot = WorkOrder.Assignee?.Roles
+            .Any(x => x.Name == Roles.Bot) ?? false;
+
+        if (assignedToAiBot)
+        {
+            StateTransitionEvent = new WorkOrderAssignedToBotEvent(WorkOrder.Assignee!.Id, CurrentUser.Id);
+        }
+    }
+
+    protected override bool UserCanExecute(Employee currentUser)
+    {
+        return currentUser == WorkOrder.Creator;
     }
 }
