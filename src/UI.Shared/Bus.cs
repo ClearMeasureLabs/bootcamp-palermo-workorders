@@ -30,7 +30,7 @@ public class Bus : IBus
 
     public virtual async Task Publish(INotification notification)
     {
-        using var activity = StartActivity(notification!, "Publish");
+        using var activity = StartActivity(notification, "Publish");
         await _mediator.Publish(notification);
     }
 
