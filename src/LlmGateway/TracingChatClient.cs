@@ -19,7 +19,6 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
     {
         using var promptActivity = StartActivity("ChatClient.GetResponseAsync Request");
         promptActivity?.SetTag("chat.prompt", GetLastUserMessage(messages));
-        promptActivity?.SetStatus(ActivityStatusCode.Ok);
 
         using var responseActivity = StartActivity("ChatClient.GetResponseAsync Response");
 
@@ -28,7 +27,6 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
             var response = await base.GetResponseAsync(messages, options, cancellationToken);
             responseActivity?.SetTag("chat.model", response.ModelId);
             responseActivity?.SetTag("chat.response", response.Text);
-            responseActivity?.SetStatus(ActivityStatusCode.Ok);
             return response;
         }
         catch (Exception ex)
@@ -52,7 +50,6 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
     {
         using var promptActivity = StartActivity("ChatClient.GetStreamingResponseAsync Request");
         promptActivity?.SetTag("chat.prompt", GetLastUserMessage(messages));
-        promptActivity?.SetStatus(ActivityStatusCode.Ok);
 
         ChatResponseUpdate? lastUpdate = null;
         var responseText = new System.Text.StringBuilder();
@@ -100,7 +97,6 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
 
         responseActivity?.SetTag("chat.model", lastUpdate?.ModelId);
         responseActivity?.SetTag("chat.response", responseText.ToString());
-        responseActivity?.SetStatus(ActivityStatusCode.Ok);
     }
 
     private Activity? StartActivity(string operationName)
