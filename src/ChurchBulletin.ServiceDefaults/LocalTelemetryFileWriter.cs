@@ -59,7 +59,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
         _meterListener.SetMeasurementEventCallback<double>(OnMeasurementRecorded);
         _meterListener.SetMeasurementEventCallback<decimal>(OnMeasurementRecorded);
 
-        var configuredPath = configuration?["TelemetryLogDirectory"];
+        var configuredPath = configuration?["LocalTelemetry:LogDirectory"];
 
         if (!string.IsNullOrEmpty(configuredPath))
         {
@@ -68,7 +68,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
         else
         {
             var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory();
-            TelemetryLogDirectory = Path.Combine(basePath, "logs/telemetry");
+            TelemetryLogDirectory = Path.Combine(basePath, "logs");
         }
     }
 

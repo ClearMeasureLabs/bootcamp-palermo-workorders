@@ -12,20 +12,12 @@ public class ChatClientFactory(IBus bus)
     {
         var config = await bus.Send(new ChatClientConfigQuery());
         var apiKey = config.AiOpenAiApiKey;
-        if (string.IsNullOrEmpty(apiKey)) 
-            return BuildOllamaChatClient();
-        else
-        {
-            var openAiUrl = config.AiOpenAiUrl;
-            var openAiModel = config.AiOpenAiModel;
 
-            var credential = new AzureKeyCredential(apiKey ?? throw new InvalidOperationException());
-            var uri = new Uri(openAiUrl ?? throw new InvalidOperationException());
-            var openAiClient = new AzureOpenAIClient(uri, credential);
+        IChatClient innerClient = string.IsNullOrEmpty(apiKey)
+            ? BuildOllamaChatClient()
+            : BuildAzureOpenAiChatClient(config, apiKey);
 
-            ChatClient chatClient = openAiClient.GetChatClient(openAiModel);
-            return chatClient.AsIChatClient();
-        }
+        return new TracingChatClient(innerClient, config);
     }
 
     private static IChatClient BuildOllamaChatClient()
@@ -37,5 +29,18 @@ public class ChatClientFactory(IBus bus)
             .AsBuilder()
             .UseFunctionInvocation()
             .Build();
+    }
+
+    private static IChatClient BuildAzureOpenAiChatClient(ChatClientConfig config, string apiKey)
+    {
+        var openAiUrl = config.AiOpenAiUrl;
+        var openAiModel = config.AiOpenAiModel;
+
+        var credential = new AzureKeyCredential(apiKey ?? throw new InvalidOperationException());
+        var uri = new Uri(openAiUrl ?? throw new InvalidOperationException());
+        var openAiClient = new AzureOpenAIClient(uri, credential);
+
+        ChatClient chatClient = openAiClient.GetChatClient(openAiModel);
+        return chatClient.AsIChatClient();
     }
 }

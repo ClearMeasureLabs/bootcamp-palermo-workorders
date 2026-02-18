@@ -60,16 +60,32 @@ public class RemotableBusTests
     }
 
     [Test]
-    public void Should_PublishNotification_CallsMediator()
+    public async Task Should_PublishNotification_CallsMediator()
     {
         var stubMediator = new StubMediator();
         var stubGateway = new StubPublisherGateway();
         var bus = new RemotableBus(stubMediator, stubGateway);
         var notification = new TestNotification { Message = "test message" };
 
-        bus.Publish(notification);
+        await bus.Publish(notification);
 
         stubMediator.LastNotification.ShouldBe(notification);
+        stubGateway.LastRequest.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Should_PublishRemotableEvent_CallsGateway()
+    {
+        var stubMediator = new StubMediator();
+        var stubGateway = new StubPublisherGateway();
+        var bus = new RemotableBus(stubMediator, stubGateway);
+        var remotableEvent = new TestRemotableEvent { Message = "remote event" };
+
+        await bus.Publish(remotableEvent);
+
+        stubGateway.LastRequest.ShouldBeOfType<TestRemotableEvent>();
+        ((TestRemotableEvent)stubGateway.LastRequest!).Message.ShouldBe("remote event");
+        stubMediator.LastNotification.ShouldBeNull();
     }
 
     [Test]
@@ -191,6 +207,11 @@ public class RemotableBusTests
     }
 
     private class TestNotification : INotification
+    {
+        public string Message { get; set; } = string.Empty;
+    }
+
+    private class TestRemotableEvent : IRemotableEvent
     {
         public string Message { get; set; } = string.Empty;
     }
