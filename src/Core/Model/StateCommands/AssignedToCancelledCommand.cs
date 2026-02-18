@@ -1,6 +1,6 @@
 ﻿namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public record AssignedToCancelledCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder, CurrentUser)
+public record AssignedToCancelledCommand(Guid CorrelationId, WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(CorrelationId, WorkOrder, CurrentUser)
 {
     public static string Name { get; set; } = "Cancel";
     public override WorkOrderStatus GetBeginStatus()

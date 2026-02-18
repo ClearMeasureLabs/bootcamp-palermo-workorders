@@ -63,6 +63,7 @@ public static class Extensions
                     .AddSource("ChurchBulletin.Application")
                     .AddSource("ChurchBulletin.Application.Bus")
                     .AddSource("ChurchBulletin.LlmGateway")
+                    .AddSource("NServiceBus.Core")
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddSqlClientInstrumentation(options =>

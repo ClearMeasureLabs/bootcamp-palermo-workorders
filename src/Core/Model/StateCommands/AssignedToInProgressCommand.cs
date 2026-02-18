@@ -1,7 +1,7 @@
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public record AssignedToInProgressCommand(WorkOrder WorkOrder, Employee CurrentUser)
-    : StateCommandBase(WorkOrder, CurrentUser)
+public record AssignedToInProgressCommand(Guid CorrelationId, WorkOrder WorkOrder, Employee CurrentUser)
+    : StateCommandBase(CorrelationId, WorkOrder, CurrentUser)
 {
     public const string Name = "Begin";
 

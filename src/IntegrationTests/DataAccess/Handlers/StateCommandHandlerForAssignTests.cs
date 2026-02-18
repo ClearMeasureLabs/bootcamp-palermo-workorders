@@ -27,7 +27,7 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
             await context.SaveChangesAsync();
         }
 
-        var command = RemotableRequestTests.SimulateRemoteObject(new DraftToAssignedCommand(o, currentUser));
+        var command = RemotableRequestTests.SimulateRemoteObject(new DraftToAssignedCommand(CorrelationId: Guid.NewGuid(), o, currentUser));
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
@@ -58,7 +58,7 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
             await context.SaveChangesAsync();
         }
 
-        var command = new DraftToAssignedCommand(o, currentUser);
+        var command = new DraftToAssignedCommand(CorrelationId: Guid.NewGuid(), o, currentUser);
         var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
@@ -88,7 +88,7 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
         }
 
         var remotedOrder = RemotableRequestTests.SimulateRemoteObject(o);
-        var command = new DraftToAssignedCommand(remotedOrder, currentUser);
+        var command = new DraftToAssignedCommand(CorrelationId: Guid.NewGuid(), remotedOrder, currentUser);
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
         var result = await handler.Handle(command);

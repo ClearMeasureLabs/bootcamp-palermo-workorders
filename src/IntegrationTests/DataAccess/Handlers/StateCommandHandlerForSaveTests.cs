@@ -25,7 +25,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.CreatedDate = null; // Ensure CreatedDate is null to test setting it;
         workOrder.Creator = currentUser;
 
-        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(CorrelationId: Guid.NewGuid(), workOrder, currentUser));
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
         var result = await handler.Handle(command);
 
@@ -65,7 +65,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Creator = currentUser;
         workOrder.Assignee = assignee;
 
-        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(CorrelationId: Guid.NewGuid(), workOrder, currentUser));
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
@@ -104,7 +104,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Assignee = assignee;
         workOrder.Title = "newtitle";
 
-        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(CorrelationId: Guid.NewGuid(), workOrder, currentUser));
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
@@ -143,7 +143,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Assignee = assignee;
         workOrder.Title = "newtitle";
 
-        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(CorrelationId: Guid.NewGuid(), workOrder, currentUser));
         var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();

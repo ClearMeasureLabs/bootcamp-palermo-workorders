@@ -15,7 +15,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new SaveDraftCommand(order, employee);
+        var command = new SaveDraftCommand(CorrelationId: Guid.NewGuid(), order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -27,7 +27,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new SaveDraftCommand(order, new Employee());
+        var command = new SaveDraftCommand(CorrelationId: Guid.NewGuid(), order, new Employee());
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -39,7 +39,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new SaveDraftCommand(order, employee);
+        var command = new SaveDraftCommand(CorrelationId: Guid.NewGuid(), order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -52,7 +52,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new SaveDraftCommand(order, employee);
+        var command = new SaveDraftCommand(CorrelationId: Guid.NewGuid(), order, employee);
         command.Execute(new StateCommandContext());
 
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Draft));
@@ -61,6 +61,6 @@ public class SaveDraftCommandTests : StateCommandBaseTests
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new SaveDraftCommand(order, employee);
+        return new SaveDraftCommand(CorrelationId: Guid.NewGuid(), order, employee);
     }
 }

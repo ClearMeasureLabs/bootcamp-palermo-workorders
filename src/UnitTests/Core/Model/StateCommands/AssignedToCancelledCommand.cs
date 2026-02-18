@@ -14,7 +14,7 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new AssignedToCancelledCommand(order, employee);
+        var command = new AssignedToCancelledCommand(CorrelationId: Guid.NewGuid(), order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -27,7 +27,7 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
         var differentEmployee = new Employee();
         order.Creator = employee;
 
-        var command = new AssignedToCancelledCommand(order, differentEmployee);
+        var command = new AssignedToCancelledCommand(CorrelationId: Guid.NewGuid(), order, differentEmployee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -39,7 +39,7 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new AssignedToCancelledCommand(order, employee);
+        var command = new AssignedToCancelledCommand(CorrelationId: Guid.NewGuid(), order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -52,7 +52,7 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new AssignedToCancelledCommand(order, employee);
+        var command = new AssignedToCancelledCommand(CorrelationId: Guid.NewGuid(), order, employee);
         command.Execute(new StateCommandContext());
 
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Cancelled));
@@ -61,6 +61,6 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new AssignedToCancelledCommand(order, employee);
+        return new AssignedToCancelledCommand(CorrelationId: Guid.NewGuid(), order, employee);
     }
 }

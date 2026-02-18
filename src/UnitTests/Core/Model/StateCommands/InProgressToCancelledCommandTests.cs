@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ClearMeasure.Bootcamp.Core.Model;
+﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
-using ClearMeasure.Bootcamp.UnitTests.Core.Services;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
@@ -21,7 +15,7 @@ public class InProgressToCancelledCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new InProgressToCancelledCommand(order, employee);
+        var command = new InProgressToCancelledCommand(CorrelationId: Guid.NewGuid(), order, employee);
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -33,7 +27,7 @@ public class InProgressToCancelledCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Assignee = employee;
 
-        var command = new InProgressToCancelledCommand(order, new Employee());
+        var command = new InProgressToCancelledCommand(CorrelationId: Guid.NewGuid(), order, new Employee());
         Assert.That(command.IsValid(), Is.False);
     }
 
@@ -45,7 +39,7 @@ public class InProgressToCancelledCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new InProgressToCancelledCommand(order, employee);
+        var command = new InProgressToCancelledCommand(CorrelationId: Guid.NewGuid(), order, employee);
         Assert.That(command.IsValid(), Is.True);
     }
 
@@ -58,7 +52,7 @@ public class InProgressToCancelledCommandTests : StateCommandBaseTests
         var employee = new Employee();
         order.Creator = employee;
 
-        var command = new InProgressToCancelledCommand(order, employee);
+        var command = new InProgressToCancelledCommand(CorrelationId: Guid.NewGuid(), order, employee);
         command.Execute(new StateCommandContext());
 
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Cancelled));
@@ -66,6 +60,6 @@ public class InProgressToCancelledCommandTests : StateCommandBaseTests
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new InProgressToCancelledCommand(order, employee);
+        return new InProgressToCancelledCommand(CorrelationId: Guid.NewGuid(), order, employee);
     }
 }

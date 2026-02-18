@@ -2,7 +2,6 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.UI.Shared;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
 
@@ -129,7 +128,7 @@ public class AutoCancelAgentService : BackgroundService
                 return;
             }
 
-            var cancelCommand = new AssignedToCancelledCommand(workOrder, workOrder.Creator);
+            var cancelCommand = new AssignedToCancelledCommand(CorrelationId: Guid.NewGuid(), workOrder, workOrder.Creator);
             await bus.Send(cancelCommand);
 
             _logger.LogInformation("Successfully cancelled WorkOrder {WorkOrderNumber}",

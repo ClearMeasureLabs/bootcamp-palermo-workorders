@@ -2,8 +2,8 @@ using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public record DraftToAssignedCommand(WorkOrder WorkOrder, Employee CurrentUser)
-    : StateCommandBase(WorkOrder, CurrentUser)
+public record DraftToAssignedCommand(Guid CorrelationId, WorkOrder WorkOrder, Employee CurrentUser)
+    : StateCommandBase(CorrelationId, WorkOrder, CurrentUser)
 {
     public const string Name = "Assign";
 

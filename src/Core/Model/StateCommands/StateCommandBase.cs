@@ -2,7 +2,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUser) : IStateCommand
+public abstract record StateCommandBase(Guid CorrelationId, WorkOrder WorkOrder, Employee CurrentUser) : IStateCommand
 {
     public abstract WorkOrderStatus GetBeginStatus();
     public abstract WorkOrderStatus GetEndStatus();

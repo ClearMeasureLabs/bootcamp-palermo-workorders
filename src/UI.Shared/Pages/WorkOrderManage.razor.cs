@@ -64,8 +64,9 @@ public partial class WorkOrderManage : AppComponentBase
 
         Model = CreateViewModel(CurrentMode, workOrder);
         var commandList = new StateCommandList();
-        Model.IsReadOnly = !commandList!.GetValidStateCommands(workOrder, currentUser).Any();
-        ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
+        var correlationId = Guid.NewGuid();
+        Model.IsReadOnly = !commandList!.GetValidStateCommands(correlationId, workOrder, currentUser).Any();
+        ValidCommands = commandList.GetValidStateCommands(correlationId, workOrder, currentUser);
         _workOrder = workOrder;
         
     }
@@ -100,6 +101,7 @@ public partial class WorkOrderManage : AppComponentBase
     private async Task HandleSubmit()
     {
         var currentUser = (await UserSession!.GetCurrentUserAsync())!;
+        var correlationId = Guid.NewGuid();
         WorkOrder workOrder;
 
         if (Model.Mode == EditMode.New)
@@ -124,7 +126,7 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.RoomNumber = Model.RoomNumber;
 
         var matchingCommand = new StateCommandList()
-            .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
+            .GetMatchingCommand(correlationId, workOrder, currentUser, SelectedCommand!);
 
         var result = await Bus.Send(matchingCommand);
         EventBus.Notify(new WorkOrderChangedEvent(result));

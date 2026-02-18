@@ -2,7 +2,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public record InProgressToCompleteCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder,
+public record InProgressToCompleteCommand(Guid CorrelationId, WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(CorrelationId, WorkOrder,
     CurrentUser)
 {
     public const string Name = "Complete";

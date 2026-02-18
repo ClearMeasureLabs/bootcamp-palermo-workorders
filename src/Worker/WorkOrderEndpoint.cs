@@ -1,4 +1,5 @@
-﻿using ClearMeasure.Bootcamp.DataAccess.Messaging;
+﻿using ClearMeasure.Bootcamp.Core.Model.Events;
+using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.HostedEndpoint;
 using ClearMeasure.HostedEndpoint.Configuration;
 
@@ -6,11 +7,14 @@ namespace Worker;
 
 public class WorkOrderEndpoint : ClearHostedEndpoint
 {
+    private const string EndpointName = "WorkOrderProcessing";
+    private const string SchemaName = "nServiceBus";
+
     public WorkOrderEndpoint(IConfiguration configuration) : base(configuration)
     {
         EndpointOptions = new()
         {
-            EndpointName = "WorkOrderProcessing",
+            EndpointName = EndpointName,
             EnableInstallers = true,
             EnableMetrics = true,
             EnableOutbox = true,
@@ -22,7 +26,7 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
         SqlPersistenceOptions = new()
         {
             ConnectionString = Configuration.GetConnectionString("SqlConnectionString"),
-            Schema = "nServiceBus",
+            Schema = SchemaName,
             EnableSagaPersistence = true,
             EnableSubscriptionStorage = true
         };
@@ -37,8 +41,8 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
     // Configure the message transport
     protected override void ConfigureTransport(EndpointConfiguration endpointConfiguration)
     {
-        // endpoint options
-        endpointConfiguration.SendOnly();
+        // OTEL
+        endpointConfiguration.EnableOpenTelemetry();
 
         // transport
         var transport = endpointConfiguration.UseTransport<SqlServerTransport>();
@@ -52,6 +56,8 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
         endpointConfiguration.Conventions().Add(conventions);
 
         // routing
+        var routing = transport.Routing();
+        routing.RouteToEndpoint(typeof(WorkOrderAssignedToBotEvent).Assembly, typeof(WorkOrderAssignedToBotEvent).Namespace, EndpointName);
     }
 
     // Register message handlers and services

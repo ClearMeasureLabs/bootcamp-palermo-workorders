@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
@@ -17,6 +19,7 @@ var endpointConfiguration = new NServiceBus.EndpointConfiguration("UI.Server");
 endpointConfiguration.UseSerialization<SystemJsonSerializer>();
 endpointConfiguration.EnableInstallers();
 endpointConfiguration.SendOnly();
+endpointConfiguration.EnableOpenTelemetry();
 
 // transport
 var transport = endpointConfiguration.UseTransport<SqlServerTransport>();

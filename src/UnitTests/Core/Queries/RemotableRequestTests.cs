@@ -38,7 +38,7 @@ public class RemotableRequestTests
         var rehydratedRole = ((Employee)AssertRemotable(employee)).Roles.Single(role1 => role1 == role);
         ObjectMother.AssertAllProperties(role, rehydratedRole);
 
-        AssertRemotable(new SaveDraftCommand(order, employee));
+        AssertRemotable(new SaveDraftCommand(CorrelationId: Guid.NewGuid(), order, employee));
         AssertRemotable(new StateCommandResult(order, "Save", "message"));
     }
 
@@ -47,7 +47,7 @@ public class RemotableRequestTests
     {
         var order = ObjectMother.Faker<WorkOrder>();
         var employee = ObjectMother.Faker<Employee>();
-        IStateCommand command = new SaveDraftCommand(order, employee);
+        IStateCommand command = new SaveDraftCommand(CorrelationId: Guid.NewGuid(), order, employee);
         AssertRemotable(command);
     }
 
