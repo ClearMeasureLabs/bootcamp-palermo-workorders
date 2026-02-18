@@ -1,6 +1,6 @@
-﻿using ClearMeasure.HostedEndpoint;
+﻿using ClearMeasure.Bootcamp.DataAccess.Messaging;
+using ClearMeasure.HostedEndpoint;
 using ClearMeasure.HostedEndpoint.Configuration;
-using Worker.Messaging;
 
 namespace Worker;
 
@@ -39,13 +39,13 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
     {
         // endpoint options
         endpointConfiguration.SendOnly();
-        endpointConfiguration.EnableOpenTelemetry();
 
         // transport
         var transport = endpointConfiguration.UseTransport<SqlServerTransport>();
         transport.ConnectionString(SqlPersistenceOptions.ConnectionString);
         transport.DefaultSchema(SqlPersistenceOptions.Schema);
         transport.Transactions(TransportTransactionMode.TransactionScope);
+        transport.Transport.TransportTransactionMode = TransportTransactionMode.ReceiveOnly;
 
         // message conventions
         var conventions = new MessagingConventions();

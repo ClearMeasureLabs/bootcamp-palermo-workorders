@@ -14,9 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ChurchBulletin.ServiceDefaults\ChurchBulletin.ServiceDefaults.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Messaging\" />
+    <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
   </ItemGroup>
 </Project>
