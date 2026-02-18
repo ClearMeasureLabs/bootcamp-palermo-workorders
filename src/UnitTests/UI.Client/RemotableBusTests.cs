@@ -60,14 +60,14 @@ public class RemotableBusTests
     }
 
     [Test]
-    public void Should_PublishNotification_CallsMediator()
+    public async Task Should_PublishNotification_CallsMediator()
     {
         var stubMediator = new StubMediator();
         var stubGateway = new StubPublisherGateway();
         var bus = new RemotableBus(stubMediator, stubGateway);
         var notification = new TestNotification { Message = "test message" };
 
-        bus.Publish(notification);
+        await bus.Publish(notification);
 
         stubMediator.LastNotification.ShouldBe(notification);
         stubGateway.LastRequest.ShouldBeNull();
