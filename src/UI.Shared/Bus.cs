@@ -19,19 +19,46 @@ public class Bus : IBus
     public virtual async Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
     {
         using var activity = StartActivity(request);
-        return await _mediator.Send(request);
+
+        try
+        {
+            return await _mediator.Send(request);
+        }
+        catch (Exception ex)
+        {
+            SetActivityError(activity, ex);
+            throw;
+        }
     }
 
     public virtual async Task<object?> Send(object request)
     {
         using var activity = StartActivity(request);
-        return await _mediator.Send(request);
+
+        try
+        {
+            return await _mediator.Send(request);
+        }
+        catch (Exception ex)
+        {
+            SetActivityError(activity, ex);
+            throw;
+        }
     }
 
     public virtual async Task Publish(INotification notification)
     {
         using var activity = StartActivity(notification, "Publish");
-        await _mediator.Publish(notification);
+
+        try
+        {
+            await _mediator.Publish(notification);
+        }
+        catch (Exception ex)
+        {
+            SetActivityError(activity, ex);
+            throw;
+        }
     }
 
     private static Activity? StartActivity(object message, string operation = "Send")
@@ -54,6 +81,17 @@ public class Bus : IBus
         AddPropertyTags(message, activity);
 
         return activity;
+    }
+
+    private static void SetActivityError(Activity? activity, Exception ex)
+    {
+        if (activity is null) return;
+
+        activity.SetStatus(ActivityStatusCode.Error, ex.Message);
+        activity.SetTag("error", true);
+        activity.SetTag("exception.type", ex.GetType().FullName);
+        activity.SetTag("exception.message", ex.Message);
+        activity.SetTag("exception.stacktrace", ex.ToString());
     }
 
     private static void AddPropertyTags(object message, Activity activity)
