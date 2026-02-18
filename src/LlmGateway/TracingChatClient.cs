@@ -17,22 +17,22 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
         ChatOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        using var promptActivity = StartActivity("ChatClient.GetResponseAsync Request");
-        promptActivity?.SetTag("chat.prompt", GetLastUserMessage(messages));
-
-        using var responseActivity = StartActivity("ChatClient.GetResponseAsync Response");
+        using var activity = StartActivity("ChatClient.GetResponseAsync");
+        activity?.SetTag("chat.prompt", GetLastUserMessage(messages));
+        activity?.AddEvent(new ActivityEvent("request.sent"));
 
         try
         {
             var response = await base.GetResponseAsync(messages, options, cancellationToken);
-            responseActivity?.SetTag("chat.model", response.ModelId);
-            responseActivity?.SetTag("chat.response", response.Text);
+            activity?.AddEvent(new ActivityEvent("response.received"));
+            activity?.SetTag("chat.model", response.ModelId);
+            activity?.SetTag("chat.response", response.Text);
             return response;
         }
         catch (Exception ex)
         {
-            responseActivity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            responseActivity?.AddEvent(new ActivityEvent("exception",
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.AddEvent(new ActivityEvent("exception",
                 tags: new ActivityTagsCollection
                 {
                     { "exception.type", ex.GetType().FullName },
@@ -48,12 +48,12 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
         ChatOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        using var promptActivity = StartActivity("ChatClient.GetStreamingResponseAsync Request");
-        promptActivity?.SetTag("chat.prompt", GetLastUserMessage(messages));
+        using var activity = StartActivity("ChatClient.GetStreamingResponseAsync");
+        activity?.SetTag("chat.prompt", GetLastUserMessage(messages));
+        activity?.AddEvent(new ActivityEvent("request.sent"));
 
         ChatResponseUpdate? lastUpdate = null;
         var responseText = new System.Text.StringBuilder();
-        using var responseActivity = StartActivity("ChatClient.GetStreamingResponseAsync Response");
 
         ChatResponseUpdate update;
 
@@ -74,8 +74,8 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
             }
             catch (Exception ex)
             {
-                responseActivity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                responseActivity?.AddEvent(new ActivityEvent("exception",
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                activity?.AddEvent(new ActivityEvent("exception",
                     tags: new ActivityTagsCollection
                     {
                         { "exception.type", ex.GetType().FullName },
@@ -95,8 +95,9 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
             yield return update;
         }
 
-        responseActivity?.SetTag("chat.model", lastUpdate?.ModelId);
-        responseActivity?.SetTag("chat.response", responseText.ToString());
+        activity?.AddEvent(new ActivityEvent("response.received"));
+        activity?.SetTag("chat.model", lastUpdate?.ModelId);
+        activity?.SetTag("chat.response", responseText.ToString());
     }
 
     private Activity? StartActivity(string operationName)
