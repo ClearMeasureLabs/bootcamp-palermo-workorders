@@ -77,13 +77,13 @@ public class SingleApiControllerTests
     }
 
     [Test]
-    public void Should_Post_Throw_ForNonRemotableObject()
+    public async Task Should_Post_Throw_ForNonRemotableObject()
     {
         var stubBus = new StubBus();
         var controller = new SingleApiController(stubBus);
         var message = new WebServiceMessage(new NonRemotableObject { Value = "test" });
 
-        Should.Throw<InvalidOperationException>(async () => await controller.Post(message));
+        await Should.ThrowAsync<InvalidOperationException>(async () => await controller.Post(message));
     }
 
     [Test]
