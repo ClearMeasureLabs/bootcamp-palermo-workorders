@@ -101,7 +101,7 @@ public class SingleApiControllerTests
     }
 
     [Test]
-    public void Should_Post_Throw_WhenBusReturnsNull_ForRemotableRequest()
+    public async Task Should_Post_Throw_WhenBusReturnsNull_ForRemotableRequest()
     {
         var stubBus = new StubBus();
         stubBus.SetSendResponse(null);
@@ -109,7 +109,7 @@ public class SingleApiControllerTests
         var request = new EmployeeGetAllQuery();
         var message = new WebServiceMessage(request);
 
-        Should.Throw<InvalidOperationException>(async () => await controller.Post(message));
+        await Should.ThrowAsync<InvalidOperationException>(async () => await controller.Post(message));
     }
 
     private class StubBus : IBus
