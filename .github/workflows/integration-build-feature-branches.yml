@@ -442,14 +442,27 @@ jobs:
       - name: Setup .NET SDK 10.0.100
         uses: actions/setup-dotnet@v5.0.1
         with:
-          dotnet-version: '10.0.100'        
+          dotnet-version: '10.0.100'
       - name: Setup .NET SDK 6.0
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
 
+      # Configure NuGet authentication for ClearMeasureLabs feed
+      - name: Authenticate to ClearMeasureLabs NuGet feed
+        shell: pwsh
+        run: |
+          # Remove existing source to avoid encryption issues
+          dotnet nuget remove source ClearMeasureLabs 2>$null
+          if ($LASTEXITCODE -ne 0) { $LASTEXITCODE = 0 }
+          # Add source with credentials and clear-text password storage
+          dotnet nuget add source https://nuget.pkg.github.com/ClearMeasureLabs/index.json `
+            --name ClearMeasureLabs `
+            --username ${{ github.actor }} `
+            --password ${{ secrets.CLEARMEASURELABS_NUGET_PAT }} `
+            --store-password-in-clear-text
 
-      
+
       - name: Set Version
         shell: pwsh
         run: |
