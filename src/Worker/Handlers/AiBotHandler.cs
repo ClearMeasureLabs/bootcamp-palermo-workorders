@@ -2,7 +2,7 @@
 
 namespace Worker.Handlers;
 
-// TODO: trigger saga, correlation id is created here, so we can use that to correlate the saga steps
+// TODO: trigger saga, correlation id is created here, so we can use that to correlate the saga steps, saga owns it's own event models
 public class AiBotHandler : IHandleMessages<WorkOrderAssignedToBotEvent>
 {
     public Task Handle(WorkOrderAssignedToBotEvent message, IMessageHandlerContext context)

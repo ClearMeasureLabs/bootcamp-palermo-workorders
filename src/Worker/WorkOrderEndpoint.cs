@@ -49,20 +49,17 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
         transport.ConnectionString(SqlPersistenceOptions.ConnectionString);
         transport.DefaultSchema(SqlPersistenceOptions.Schema);
         transport.Transactions(TransportTransactionMode.TransactionScope);
-        transport.Transport.TransportTransactionMode = TransportTransactionMode.ReceiveOnly;
 
         // message conventions
         var conventions = new MessagingConventions();
         endpointConfiguration.Conventions().Add(conventions);
 
         // routing
-        var routing = transport.Routing();
-        routing.RouteToEndpoint(typeof(WorkOrderAssignedToBotEvent).Assembly, typeof(WorkOrderAssignedToBotEvent).Namespace, EndpointName);
     }
 
-    // Register message handlers and services
+    // Register services
     protected override void RegisterDependencyInjection(IServiceCollection services)
     {
-        // TODO: register services and message handlers here
+
     }
 }
