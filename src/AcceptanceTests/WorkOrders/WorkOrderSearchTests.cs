@@ -223,8 +223,11 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var workOrderTable = Page.Locator(".grid-data");
         await Expect(workOrderTable).ToBeVisibleAsync();
 
+        // Wait for the table body to update with filtered results
+        await workOrderTable.Locator("tbody").WaitForAsync();
+        
         var workOrderRows = workOrderTable.Locator("tbody tr");
-        await Expect(workOrderRows).ToHaveCountAsync(await workOrderRows.CountAsync());
+        await Expect(workOrderRows).ToHaveCountAsync(1);
     }
 
     [Test, Retry(2)]

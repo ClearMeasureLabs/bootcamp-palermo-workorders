@@ -1,35 +1,29 @@
 # Church Bulletin System Diagram
 
+Icons use the [Tabler](https://icones.js.org/collection/tabler) pack from [icones.js.org](https://icones.js.org/). To render with icons, [register the icon pack](https://mermaid.js.org/config/icons.html) (e.g. `@iconify-json/tabler`, name `tabler`).
+
 ```mermaid
-flowchart LR
-  subgraph Users[People]
-    direction TB
-    pastor([fa:fa-user Senior Pastor<br/>Any clergy leader])
-    biblestudyleader([fa:fa-book Bible study leader<br/>leads classes])
-    worshipleader([fa:fa-music Worship Pastor<br/>music/choir])
-    childrenspastor([fa:fa-child Childrens' Pastor<br/>Kids ministry])
-    volunteer([fa:fa-heart Volunteer<br/>Prepares bulletins and projects announcements])
-  end
+C4Context
+  title Church Bulletin System Diagram
+  UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
 
-  churchbulletin([fa:fa-newspaper-o Church Bulletin<br/>Digital signage and printed bulletin])
+  Person(pastor, "Senior Pastor", "Any clergy leader", "tabler:user")
+  Person(biblestudyleader, "Bible study leader", "leads classes", "tabler:users")
+  Person(worshipleader, "Worship Pastor", "music/choir", "tabler:music")
+  Person(childrenspastor, "Childrens' Pastor", "Kids ministry", "tabler:brand-apple-arcade")
+  Person(volunteer, "Volunteer", "Prepares bulletins and projects announcements", "tabler:hand-stop")
 
-  subgraph External[External Systems]
-    direction TB
-    printer([fa:fa-print Printer])
-    projector([fa:fa-television Projector])
-  end
+  System(churchbulletin, "Church Bulletin", "Digital signage and printed bulletin", "tabler:news")
 
-  pastor -->|Add sermons| churchbulletin
-  biblestudyleader -->|Add classes| churchbulletin
-  worshipleader -->|Add services| churchbulletin
-  childrenspastor -->|Add sunday school classes| churchbulletin
-  volunteer -->|Operates system on Sunday morning| churchbulletin
+  System_Ext(printer, "Printer", "", "tabler:printer")
+  System_Ext(projector, "Projector", "", "tabler:device-tv")
 
-  churchbulletin -->|Send PDF to print<br/>Network printer| printer
-  churchbulletin -->|Projects digital signage<br/>Auto-animated| projector
+  Rel_R(pastor, churchbulletin, "Add sermons")
+  Rel_R(biblestudyleader, churchbulletin, "Add classes")
+  Rel_R(worshipleader, churchbulletin, "Add services")
+  Rel_R(childrenspastor, churchbulletin, "Add sunday school classes")
+  Rel_R(volunteer, churchbulletin, "Operates system on Sunday morning")
 
-  class pastor,biblestudyleader,worshipleader,childrenspastor,volunteer person;
-  class churchbulletin system;
-  class printer,projector external;
-  class Users,External boundary;
+  Rel_R(churchbulletin, printer, "Send PDF to print", "Network printer")
+  Rel_R(churchbulletin, projector, "Projects digital signage", "Auto-animated")
 ```
