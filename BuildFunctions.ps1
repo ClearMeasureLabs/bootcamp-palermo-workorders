@@ -134,17 +134,17 @@ Function Update-AppSettingsConnectionStrings {
     foreach ($file in $appSettingsFiles) {
         Log-Message "Processing file: $($file.FullName)" -Type "INFO"
     
-        $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
+        $content = Get-Content $file.FullName -Raw | ConvertFrom-Json -AsHashTable
         
         # Check if ConnectionStrings section exists
-        if ($content.PSObject.Properties.Name -contains "ConnectionStrings") {
-            $connectionStringsObj = $content.ConnectionStrings
+        if ($content.ContainsKey("ConnectionStrings")) {
+            $connectionStringsObj = $content["ConnectionStrings"]
 
-            # Update all connection strings that contain a database reference
-            foreach ($property in $connectionStringsObj.PSObject.Properties) {
-                $oldConnectionString = $property.Value
+            # Update all connection strings that contain a database reference (iterate copy of keys to allow in-place updates)
+            foreach ($key in @($connectionStringsObj.Keys)) {
+                $oldConnectionString = $connectionStringsObj[$key]
 
-                Log-Message "Found connection string $($property.Name) : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
+                Log-Message "Found connection string $key : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
                 if ($oldConnectionString -match "database=([^;]+)") {
 
                     if (Test-IsLinux) {
@@ -160,8 +160,8 @@ Function Update-AppSettingsConnectionStrings {
                         $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
                     }
         
-                    $connectionStringsObj.$($property.Name) = $newConnectionString
-                    Log-Message "Updated $($property.Name): $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
+                    $connectionStringsObj[$key] = $newConnectionString
+                    Log-Message "Updated $key : $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
                 }
             }
        

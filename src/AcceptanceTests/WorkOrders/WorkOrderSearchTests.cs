@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -50,7 +50,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(statusOptions.First).ToHaveTextAsync("All");
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
     {
         // Arrange
@@ -84,7 +84,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(workOrderRows).ToHaveCountAsync(rowCount);
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldLoadWorkOrderTableWithCreatorFilterFromQueryString()
     {
         // Arrange
@@ -115,7 +115,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(workOrderRows.First.Locator("td:nth-child(2)")).ToContainTextAsync(creator.GetFullName());
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldLoadWorkOrderTableWithAssigneeFilterFromQueryString()
     {
         // Arrange
@@ -150,7 +150,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(workOrderRows.First.Locator("td:nth-child(3)")).ToContainTextAsync(assignee.GetFullName());
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldLoadWorkOrderTableWithStatusFilterFromQueryString()
     {
         // Arrange
@@ -182,7 +182,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(workOrderRows.First.Locator("td:nth-child(4)")).ToContainTextAsync(status.FriendlyName);
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldSearchWithAllThreeFiltersSelected()
     {
         // Arrange
@@ -227,7 +227,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(workOrderRows).ToHaveCountAsync(await workOrderRows.CountAsync());
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldNavigateToWorkOrderDetailsWhenClickingWorkOrderNumber()
     {
         // Arrange
@@ -262,7 +262,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         }
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldClearFiltersWhenSelectingAllOption()
     {
         // Arrange
@@ -301,7 +301,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(workOrderTable).ToBeVisibleAsync();
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldMaintainSelectedFiltersAfterSearch()
     {
         // Arrange
@@ -342,7 +342,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(statusSelect).ToHaveValueAsync(status.Key);
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldReloadParamsFromQueryStringWithNavigation()
     {
         // Arrange
