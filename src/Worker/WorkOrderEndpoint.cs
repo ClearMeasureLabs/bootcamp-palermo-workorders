@@ -49,6 +49,7 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
         transport.ConnectionString(SqlPersistenceOptions.ConnectionString);
         transport.DefaultSchema(SqlPersistenceOptions.Schema);
         transport.Transactions(TransportTransactionMode.TransactionScope);
+        transport.Transport.TransportTransactionMode = TransportTransactionMode.ReceiveOnly;
 
         // message conventions
         var conventions = new MessagingConventions();
