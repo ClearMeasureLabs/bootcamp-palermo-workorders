@@ -1,0 +1,103 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css");
+
+:root {
+  --c4-person-fill: #08427b;
+  --c4-person-stroke: #052e56;
+  --c4-system-fill: #1168bd;
+  --c4-system-stroke: #0b4884;
+  --c4-external-fill: #999999;
+  --c4-external-stroke: #666666;
+  --c4-boundary-stroke: #bfc7d5;
+  --c4-text-light: #ffffff;
+  --c4-text-dark: #2c3e50;
+}
+
+/* Shared typography and edge defaults */
+.mermaid {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+.mermaid .edgePath path {
+  stroke-width: 1.5px;
+}
+
+/* Flowchart role styles mapped via `class ... person|system|external|boundary;` */
+.mermaid .node.person rect,
+.mermaid .node.person circle,
+.mermaid .node.person ellipse,
+.mermaid .node.person polygon,
+.mermaid .node.person path {
+  fill: var(--c4-person-fill) !important;
+  stroke: var(--c4-person-stroke) !important;
+  stroke-width: 2px !important;
+}
+
+.mermaid .node.person .label {
+  color: var(--c4-text-light) !important;
+}
+
+.mermaid .node.system rect,
+.mermaid .node.system circle,
+.mermaid .node.system ellipse,
+.mermaid .node.system polygon,
+.mermaid .node.system path {
+  fill: var(--c4-system-fill) !important;
+  stroke: var(--c4-system-stroke) !important;
+  stroke-width: 2px !important;
+}
+
+.mermaid .node.system .label {
+  color: var(--c4-text-light) !important;
+}
+
+.mermaid .node.external rect,
+.mermaid .node.external circle,
+.mermaid .node.external ellipse,
+.mermaid .node.external polygon,
+.mermaid .node.external path {
+  fill: var(--c4-external-fill) !important;
+  stroke: var(--c4-external-stroke) !important;
+  stroke-width: 2px !important;
+}
+
+.mermaid .node.external .label {
+  color: var(--c4-text-light) !important;
+}
+
+.mermaid .cluster.boundary rect {
+  fill: transparent !important;
+  stroke: var(--c4-boundary-stroke) !important;
+  stroke-width: 1px !important;
+}
+
+.mermaid .cluster.boundary .cluster-label {
+  color: var(--c4-text-dark) !important;
+}
+
+/* Class diagram styles mapped via `class EntityName core|supporting|external;` */
+.mermaid g.classGroup.core > rect,
+.mermaid g.classGroup.core .label-container {
+  fill: var(--c4-system-fill) !important;
+  stroke: var(--c4-system-stroke) !important;
+  stroke-width: 2px !important;
+}
+
+.mermaid g.classGroup.supporting > rect,
+.mermaid g.classGroup.supporting .label-container {
+  fill: var(--c4-person-fill) !important;
+  stroke: var(--c4-person-stroke) !important;
+  stroke-width: 2px !important;
+}
+
+.mermaid g.classGroup.external > rect,
+.mermaid g.classGroup.external .label-container {
+  fill: var(--c4-external-fill) !important;
+  stroke: var(--c4-external-stroke) !important;
+  stroke-width: 2px !important;
+}
+
+.mermaid g.classGroup.core .label text,
+.mermaid g.classGroup.supporting .label text,
+.mermaid g.classGroup.external .label text {
+  fill: var(--c4-text-light) !important;
+}
