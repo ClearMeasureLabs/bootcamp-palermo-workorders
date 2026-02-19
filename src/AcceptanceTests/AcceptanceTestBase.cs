@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
@@ -203,6 +203,12 @@ public abstract class AcceptanceTestBase
         await welcomeTextLocator.DblClickAsync(); // causes the browser to finish DOM loading - HACK
     }
 
+    /// <summary>
+    /// Clicks an element by data-testid. Uses EvaluateAsync to trigger the click so Playwright does not
+    /// wait for a full page navigation; Blazor WASM uses client-side routing, so navigation never
+    /// "finishes" in the classic sense and would cause a 60s timeout. Callers that need to wait for a
+    /// new view should use WaitForURLAsync or similar after Click.
+    /// </summary>
     protected async Task Click(string elementTestId)
     {
         await TakeScreenshotAsync();
@@ -212,7 +218,8 @@ public abstract class AcceptanceTestBase
         if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
         if (await locator.IsVisibleAsync()) await locator.FocusAsync();
         if (await locator.IsVisibleAsync()) await locator.BlurAsync();
-        if (await locator.IsVisibleAsync()) await locator.ClickAsync();
+        if (await locator.IsVisibleAsync())
+            await locator.EvaluateAsync("el => el.click()");
     }
 
     protected async Task Input(string elementTestId, string? value)
