@@ -84,16 +84,16 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #7b68ee 0%, #4a90e2 100%);
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
     border: none;
     color: white;
-    box-shadow: 0 4px 15px rgba(123, 104, 238, 0.3);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(123, 104, 238, 0.4);
-    background: linear-gradient(135deg, #6a5acd 0%, #4169e1 100%);
+    box-shadow: 0 6px 25px rgba(34, 197, 94, 0.4);
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
 }
 
 .btn-secondary {
