@@ -14,6 +14,7 @@ public class ServerFixture
     private Process? _serverProcess;
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
     public static bool HeadlessTestBrowser { get; set; } = true;
+    public static bool ReloadTestData { get; set; } = true;
     public static bool DatabaseInitialized { get; private set; }
     private static readonly object DatabaseLock = new();
     
@@ -25,14 +26,28 @@ public class ServerFixture
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
-        InitializeDatabaseOnce();
         var configuration = TestHost.GetRequiredService<IConfiguration>();
-        ApplicationBaseUrl = configuration["ApplicationBaseUrl"] ?? throw new InvalidOperationException();
-        StartLocalServer = configuration.GetValue<bool>("StartLocalServer");
+        var baseUrlParameter = TestContext.Parameters.Get("ApplicationBaseUrl");
+        var startLocalServerParameter = TestContext.Parameters.Get("StartLocalServer");
+        var reloadTestDataParameter = TestContext.Parameters.Get("ReloadTestData");
+
+        ApplicationBaseUrl = !string.IsNullOrWhiteSpace(baseUrlParameter)
+            ? baseUrlParameter
+            : configuration["ApplicationBaseUrl"] ?? throw new InvalidOperationException();
+
+        StartLocalServer = bool.TryParse(startLocalServerParameter, out var startLocalServer)
+            ? startLocalServer
+            : configuration.GetValue<bool>("StartLocalServer");
+
+        ReloadTestData = bool.TryParse(reloadTestDataParameter, out var reloadData)
+            ? reloadData
+            : configuration.GetValue<bool>("ReloadTestData");
+
         SkipScreenshotsForSpeed = configuration.GetValue<bool>("SkipScreenshotsForSpeed");
         SlowMo = configuration.GetValue<int>("SlowMo");
         HeadlessTestBrowser = configuration.GetValue<bool>("HeadlessTestBrowser");
 
+        InitializeDatabaseOnce();
 
         Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
@@ -94,6 +109,12 @@ public class ServerFixture
 
     private static void InitializeDatabaseOnce()
     {
+        if (!ReloadTestData)
+        {
+            DatabaseInitialized = true;
+            return;
+        }
+
         if (DatabaseInitialized) return;
 
         lock (DatabaseLock)
