@@ -1,5 +1,6 @@
 ﻿using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
+using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.UI.Server;
 using ClearMeasure.Bootcamp.UnitTests;
 using Lamar.Microsoft.DependencyInjection;
@@ -60,6 +61,24 @@ public static class TestHost
                 s.AddTransient<IDatabaseConfiguration, TestDatabaseConfiguration>();
                 var stubTimeProvider = new StubTimeProvider(TestTime);
                 s.AddSingleton<TimeProvider>(stubTimeProvider);
+                s.AddScoped<IDistributedBus, DistributedBus>();
+            })
+            .UseNServiceBus(context =>
+            {
+                var endpointConfiguration = new EndpointConfiguration("IntegrationTests");
+                endpointConfiguration.UseSerialization<SystemJsonSerializer>();
+                endpointConfiguration.EnableInstallers();
+                endpointConfiguration.SendOnly();
+                
+                var transport = endpointConfiguration.UseTransport<SqlServerTransport>();
+                transport.ConnectionString(context.Configuration.GetConnectionString("SqlConnectionString"));
+                transport.DefaultSchema("nServiceBus");
+                transport.Transactions(TransportTransactionMode.TransactionScope);
+                
+                var conventions = new MessagingConventions();
+                endpointConfiguration.Conventions().Add(conventions);
+                
+                return endpointConfiguration;
             })
             .Build();
 

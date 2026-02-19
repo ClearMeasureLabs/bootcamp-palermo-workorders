@@ -3,10 +3,11 @@ using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using ClearMeasure.Bootcamp.Core;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger<StateCommandHandler> logger)
+public class StateCommandHandler(DbContext dbContext, TimeProvider time, IDistributedBus distributedBus, ILogger<StateCommandHandler> logger)
     : IRequestHandler<StateCommandBase, StateCommandResult>
 {
     public async Task<StateCommandResult> Handle(StateCommandBase request,
@@ -32,16 +33,19 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, ILogger
             dbContext.Update(order);
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         var loweredTransitionVerb = request.TransitionVerbPastTense.ToLower();
         var workOrderNumber = order.Number;
         var fullName = request.CurrentUser.GetFullName();
-        var debugMessage = string.Format("{0} has {1} work order {2}", fullName, loweredTransitionVerb,
-            workOrderNumber);
+
+        var debugMessage = string.Format("{0} has {1} work order {2}", fullName, loweredTransitionVerb, workOrderNumber);
         logger.LogDebug(debugMessage);
         logger.LogInformation("Executed");
 
-        return new StateCommandResult(order, request.TransitionVerbPresentTense, debugMessage);
+        var result = new StateCommandResult(order, request.TransitionVerbPresentTense, debugMessage);
+
+        await distributedBus.PublishAsync(request.StateTransitionEvent, cancellationToken);
+        return result;
     }
 }

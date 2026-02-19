@@ -37,6 +37,18 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # Configure NuGet authentication for ClearMeasureLabs feed
+      - name: Authenticate to ClearMeasureLabs NuGet feed
+        run: |
+          # Remove existing source to avoid encryption issues
+          dotnet nuget remove source ClearMeasureLabs 2>/dev/null || true
+          # Add source with credentials and clear-text password storage
+          dotnet nuget add source https://nuget.pkg.github.com/ClearMeasureLabs/index.json \
+            --name ClearMeasureLabs \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.CLEARMEASURELABS_NUGET_PAT }} \
+            --store-password-in-clear-text
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -71,6 +83,18 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # Configure NuGet authentication for ClearMeasureLabs feed
+      - name: Authenticate to ClearMeasureLabs NuGet feed
+        run: |
+          # Remove existing source to avoid encryption issues
+          dotnet nuget remove source ClearMeasureLabs 2>/dev/null || true
+          # Add source with credentials and clear-text password storage
+          dotnet nuget add source https://nuget.pkg.github.com/ClearMeasureLabs/index.json \
+            --name ClearMeasureLabs \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.CLEARMEASURELABS_NUGET_PAT }} \
+            --store-password-in-clear-text
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -104,6 +128,18 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+
+      # Configure NuGet authentication for ClearMeasureLabs feed
+      - name: Authenticate to ClearMeasureLabs NuGet feed
+        run: |
+          # Remove existing source to avoid encryption issues
+          dotnet nuget remove source ClearMeasureLabs 2>/dev/null || true
+          # Add source with credentials and clear-text password storage
+          dotnet nuget add source https://nuget.pkg.github.com/ClearMeasureLabs/index.json \
+            --name ClearMeasureLabs \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.CLEARMEASURELABS_NUGET_PAT }} \
+            --store-password-in-clear-text
 
       - name: Run IssueAssigner
         env:
