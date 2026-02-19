@@ -29,7 +29,6 @@ The solution follows strict Onion Architecture with dependency flow inward. **NE
 - **Additional Layers**:
   - `LlmGateway` (`src/LlmGateway/`): Azure OpenAI and Ollama integration
   - `Database` (`src/Database/`): AliaSQL-based migrations
-  - `DatabaseFlyway` (`src/DatabaseFlyway/`): Alternative Flyway migrations
 
 ### When Making Changes
 - **ALWAYS** verify dependency direction before adding project references

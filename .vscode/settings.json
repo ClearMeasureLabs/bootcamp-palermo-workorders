@@ -1,3 +1,8 @@
 {
-    "github.copilot.chat.tools.terminal.autoApprove": true
+    "github.copilot.chat.tools.terminal.autoApprove": true,
+    "markdown.styles": [
+        "arch/mermaid-theme.css"
+    ],
+    "markdown-mermaid.lightModeTheme": "neutral",
+    "markdown-mermaid.darkModeTheme": "dark"
 }

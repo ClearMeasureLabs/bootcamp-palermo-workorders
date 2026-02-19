@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
+using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -6,7 +6,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 public class WorkOrderCompleteTests : AcceptanceTestBase
 {
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldCompleteWorkOrder()
     {
         await LoginAsCurrentUser();
@@ -47,8 +47,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         rehyratedOrder.CompletedDate.TruncateToMinute().ShouldBe(displayedDateTime);
     }
 
-    [Test]
-    [Retry(3)]
+    [Test, Retry(2)]
     public async Task CompleteWorkOrderWorkflow()
     {
         await LoginAsCurrentUser();

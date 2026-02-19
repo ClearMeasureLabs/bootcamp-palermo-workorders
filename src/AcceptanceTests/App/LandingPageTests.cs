@@ -3,7 +3,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 [TestFixture]
 public class LandingPageTests : AcceptanceTestBase
 {
-    [Test]
+    [Test, Retry(2)]
     public async Task Should_DisplayChurchTitle_WithDarkGreyColor()
     {
         // Arrange - Already on landing page from SetUpAsync

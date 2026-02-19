@@ -25,12 +25,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "arch", "arch", "{20334D25-873D-49F0-A78B-003AB1D7D783}"
 	ProjectSection(SolutionItems) = preProject
+		..\arch\arch-c4-class-domain-model.md = ..\arch\arch-c4-class-domain-model.md
 		..\arch\arch-c4-class-domain-model.puml = ..\arch\arch-c4-class-domain-model.puml
+		..\arch\arch-c4-component-project-dependencies.md = ..\arch\arch-c4-component-project-dependencies.md
 		..\arch\arch-c4-component-project-dependencies.puml = ..\arch\arch-c4-component-project-dependencies.puml
+		..\arch\arch-c4-container-deployment.md = ..\arch\arch-c4-container-deployment.md
 		..\arch\arch-c4-container-deployment.puml = ..\arch\arch-c4-container-deployment.puml
+		..\arch\arch-c4-system.md = ..\arch\arch-c4-system.md
 		..\arch\arch-c4-system.puml = ..\arch\arch-c4-system.puml
 		..\arch\PlantUMLSetup.ps1 = ..\arch\PlantUMLSetup.ps1
 		..\arch\SolutionStructure.png = ..\arch\SolutionStructure.png
+		..\arch\WorflowForAssignedToInProgressCommand.md = ..\arch\WorflowForAssignedToInProgressCommand.md
+		..\arch\WorflowForDraftToAssignedCommand.md = ..\arch\WorflowForDraftToAssignedCommand.md
+		..\arch\WorflowForInProgressToCompleteCommand.md = ..\arch\WorflowForInProgressToCompleteCommand.md
+		..\arch\WorflowForSaveDraftCommand.md = ..\arch\WorflowForSaveDraftCommand.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Database", "Database\Database.csproj", "{A1CAEE0D-32BC-46C9-9A91-A8E4B09F7875}"

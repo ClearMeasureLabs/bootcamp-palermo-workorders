@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
+using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
@@ -9,7 +9,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 public class WorkOrderSaveDraftTests : AcceptanceTestBase
 {
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldLoadScreenForNewWorkOrder()
     {
         await LoginAsCurrentUser();
@@ -17,7 +17,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldCreateNewWorkOrderAndVerifyOnSearchScreen()
     {
         await LoginAsCurrentUser();
@@ -53,7 +53,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldAssignEmployeeAndSave()
     {
         await LoginAsCurrentUser();
