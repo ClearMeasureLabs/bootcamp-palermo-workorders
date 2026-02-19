@@ -33,7 +33,7 @@ public record DraftToAssignedCommand(WorkOrder WorkOrder, Employee CurrentUser)
 
         if (assignedToAiBot)
         {
-            StateTransitionEvent = new WorkOrderAssignedToBotEvent(WorkOrder.Assignee!.Id, CurrentUser.Id);
+            StateTransitionEvent = new WorkOrderAssignedToBotEvent(WorkOrder.Id, WorkOrder.Assignee!.Id);
         }
     }
 
