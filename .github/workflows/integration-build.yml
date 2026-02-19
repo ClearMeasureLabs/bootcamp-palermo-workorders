@@ -42,7 +42,7 @@ jobs:
         run: |
           dotnet nuget update source ClearMeasureLabs \
             --username ${{ github.actor }} \
-            --password ${{ secrets.GITHUB_TOKEN }} \
+            --password ${{ secrets.CLEARMEASURELABS_NUGET_PAT }} \
             --store-password-in-clear-text
 
 
