@@ -356,8 +356,6 @@ coverage.cobertura.xml
 /src/IntegrationTests/coverage.json
 /src/UnitTests/coverage.json
 
-#Ignore the Flyway CLI
-/flyway/
 /build
 /.claude/settings.local.json
 nul
