@@ -1,4 +1,4 @@
-# SaveDraftCommand Sequence Diagram
+# DraftToAssignedCommand Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -10,7 +10,7 @@ participant sBus as "Bus : IBus (UI.Server)"
 participant mediator as "IMediator"
 participant empHandler as "EmployeeQueryHandler"
 participant woHandler as "WorkOrderQueryHandler"
-participant cmd as "SaveDraftCommand"
+participant cmd as "DraftToAssignedCommand"
 participant cmdHandler as "StateCommandHandler"
 participant cmdBase as "StateCommandBase"
 participant cmdContext as "StateCommandContext"
@@ -19,17 +19,18 @@ participant result as "StateCommandResult"
 participant db as "DataContext / SQL Server"
 
 user->>api: User input
-api->>sBus: Send(SaveDraftCommand)
-sBus->>mediator: Send(SaveDraftCommand)
+api->>sBus: Send(DraftToAssignedCommand)
+sBus->>mediator: Send(DraftToAssignedCommand)
 mediator->>cmdHandler: Handle(StateCommandBase request)
 cmdHandler->>cmd: Execute(StateCommandContext)
 cmdHandler->>cmdContext: new { CurrentDateTime = UtcNow }
+cmd->>order: AssignedDate = CurrentDateTime
 cmd->>cmdBase: base.Execute(context)
-cmdBase->>order: ChangeStatus(CurrentUser, date, Draft)
+cmdBase->>order: ChangeStatus(CurrentUser, date, Assigned)
 cmdHandler->>db: Attach/Add or Update(order)
 cmdHandler->>db: SaveChangesAsync()
 db-->>cmdHandler: persisted
-cmdHandler->>result: new StateCommandResult(order, "Save", debugMessage)
+cmdHandler->>result: new StateCommandResult(order, "Assign", debugMessage)
 result-->>mediator: return
 mediator-->>sBus: StateCommandResult
 ```
