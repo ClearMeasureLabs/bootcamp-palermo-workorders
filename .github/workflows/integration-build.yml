@@ -40,7 +40,11 @@ jobs:
       # Configure NuGet authentication for ClearMeasureLabs feed
       - name: Authenticate to ClearMeasureLabs NuGet feed
         run: |
-          dotnet nuget update source ClearMeasureLabs \
+          # Remove existing source to avoid encryption issues
+          dotnet nuget remove source ClearMeasureLabs 2>/dev/null || true
+          # Add source with credentials and clear-text password storage
+          dotnet nuget add source https://nuget.pkg.github.com/ClearMeasureLabs/index.json \
+            --name ClearMeasureLabs \
             --username ${{ github.actor }} \
             --password ${{ secrets.CLEARMEASURELABS_NUGET_PAT }} \
             --store-password-in-clear-text
