@@ -22,6 +22,8 @@ public partial class WorkOrderManage : AppComponentBase
     public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
+    public int TitleCharCount { get; set; }
+    public int DescriptionCharCount { get; set; }
 
     [Parameter] public string? Id { get; set; }
 
@@ -72,6 +74,9 @@ public partial class WorkOrderManage : AppComponentBase
 
     private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)
     {
+        TitleCharCount = workOrder.Title?.Length ?? 0;
+        DescriptionCharCount = workOrder.Description?.Length ?? 0;
+
         return new WorkOrderManageModel
         {
             WorkOrder = workOrder,
@@ -130,6 +135,31 @@ public partial class WorkOrderManage : AppComponentBase
         EventBus.Notify(new WorkOrderChangedEvent(result));
 
         NavigationManager!.NavigateTo("/workorder/search");
+    }
+
+    private void OnTitleInput(ChangeEventArgs e)
+    {
+        var text = e.Value?.ToString() ?? "";
+        TitleCharCount = text.Length;
+    }
+
+    private void OnDescriptionInput(ChangeEventArgs e)
+    {
+        var text = e.Value?.ToString() ?? "";
+        DescriptionCharCount = text.Length;
+    }
+
+    private string GetCharCounterClass(int currentCount, int maxCount, int warningThreshold)
+    {
+        if (currentCount >= maxCount)
+        {
+            return "char-counter char-counter-error";
+        }
+        if (currentCount > warningThreshold)
+        {
+            return "char-counter char-counter-warning";
+        }
+        return "char-counter";
     }
 }
 
