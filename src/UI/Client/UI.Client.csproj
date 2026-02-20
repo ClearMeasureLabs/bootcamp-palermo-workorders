@@ -7,6 +7,7 @@
 	  <AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
 	  <RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+    <NoWarn>$(NoWarn);IL2037</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
