@@ -6,10 +6,10 @@
         </h2>
     </div>
 
-    @if (!string.IsNullOrEmpty(ServerErrorMessage))
+    @if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="alert alert-danger" role="alert">
-            @ServerErrorMessage
+        <div class="alert-danger" data-testid="@Elements.ErrorMessage">
+            @errorMessage
         </div>
     }
 

@@ -22,7 +22,7 @@ public partial class WorkOrderManage : AppComponentBase
     public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
-    public string? errorMessage;
+    public string? ServerErrorMessage;
 
     [Parameter] public string? Id { get; set; }
 
@@ -100,7 +100,7 @@ public partial class WorkOrderManage : AppComponentBase
 
     private async Task HandleSubmit()
     {
-        errorMessage = null;
+        ServerErrorMessage = null;
         try
         {
             var currentUser = (await UserSession!.GetCurrentUserAsync())!;
@@ -137,7 +137,7 @@ public partial class WorkOrderManage : AppComponentBase
         }
         catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            ServerErrorMessage = ex.Message;
         }
     }
 }
