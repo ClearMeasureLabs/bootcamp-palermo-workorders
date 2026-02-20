@@ -23,13 +23,20 @@ public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger 
             // Server-side validation for SaveDraftCommand
             if (bodyObject is Core.Model.StateCommands.SaveDraftCommand saveDraftCommand)
             {
+                var errors = new List<string>();
+                
                 if (string.IsNullOrWhiteSpace(saveDraftCommand.WorkOrder.Title))
                 {
-                    return BadRequest("The Title field is required.");
+                    errors.Add("The Title field is required.");
                 }
                 if (string.IsNullOrWhiteSpace(saveDraftCommand.WorkOrder.Description))
                 {
-                    return BadRequest("The Description field is required.");
+                    errors.Add("The Description field is required.");
+                }
+                
+                if (errors.Any())
+                {
+                    return BadRequest(string.Join(" ", errors));
                 }
             }
             

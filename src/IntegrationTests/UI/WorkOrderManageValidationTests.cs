@@ -51,7 +51,7 @@ public class WorkOrderManageValidationTests
     }
 
     [Test]
-    public async Task Post_WithBothTitleAndDescriptionEmpty_ReturnsBadRequestForTitle()
+    public async Task Post_WithBothTitleAndDescriptionEmpty_ReturnsBadRequestForBoth()
     {
         var bus = TestHost.GetRequiredService<IBus>();
         var logger = new NullLogger<SingleApiController>();
@@ -66,7 +66,9 @@ public class WorkOrderManageValidationTests
 
         result.ShouldBeOfType<BadRequestObjectResult>();
         var badRequest = (BadRequestObjectResult)result;
-        badRequest.Value.ToString().ShouldContain("The Title field is required.");
+        var errorMessage = badRequest.Value?.ToString() ?? "";
+        errorMessage.ShouldContain("The Title field is required.");
+        errorMessage.ShouldContain("The Description field is required.");
     }
 
     [Test]
