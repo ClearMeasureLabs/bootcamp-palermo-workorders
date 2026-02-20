@@ -45,7 +45,7 @@ class Employee {
   +CompareTo(other : Employee) : int
   +GetFullName() : string
   +CanCreateWorkOrder() : bool
-  +CanFulfilWorkOrder() : bool
+  +CanFulfillWorkOrder() : bool
   +AddRole(role : Role) : void
   +GetNotificationEmail(day : DayOfWeek) : string
 }
