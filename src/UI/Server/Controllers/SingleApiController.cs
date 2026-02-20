@@ -22,7 +22,7 @@ public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger 
 
             if (bodyObject is IRemotableRequest remotableRequest)
             {
-                // Validate SaveDraftCommand for required fields
+                // Validate state commands for required fields
                 if (bodyObject is IStateCommand stateCommand)
                 {
                     if (string.IsNullOrWhiteSpace(stateCommand.WorkOrder?.Title))
@@ -52,7 +52,7 @@ public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger 
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing message");
-            return BadRequest(ex.Message);
+            return BadRequest("An error occurred while processing your request.");
         }
     }
 }

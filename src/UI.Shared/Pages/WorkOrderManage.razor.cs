@@ -22,7 +22,7 @@ public partial class WorkOrderManage : AppComponentBase
     public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
-    public string? errorMessage { get; set; }
+    public string? errorMessage;
 
     [Parameter] public string? Id { get; set; }
 

@@ -22,7 +22,6 @@ public class PublisherGateway(HttpClient httpClient) : IPublisherGateway
 
     public virtual async Task<WebServiceMessage?> SendToTopic(WebServiceMessage message)
     {
-        HttpContent content = new StringContent(message.GetJson());
         var result = await httpClient.PostAsJsonAsync(ApiRelativeUrl, message);
         if (!result.IsSuccessStatusCode)
         {
