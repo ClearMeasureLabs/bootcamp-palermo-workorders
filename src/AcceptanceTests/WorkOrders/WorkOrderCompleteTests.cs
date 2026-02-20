@@ -42,9 +42,9 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
 
         var displayedDateTime = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CompletedDate));
 
-        var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ??
+        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ??
                              throw new InvalidOperationException();
-        rehyratedOrder.CompletedDate.TruncateToMinute().ShouldBe(displayedDateTime);
+        rehydratedOrder.CompletedDate.TruncateToMinute().ShouldBe(displayedDateTime);
     }
 
     [Test, Retry(2)]
@@ -64,9 +64,9 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         order = await CompleteExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-        var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ??
+        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ??
                              throw new InvalidOperationException();
-        rehyratedOrder.Status.ShouldBe(WorkOrderStatus.Complete);
+        rehydratedOrder.Status.ShouldBe(WorkOrderStatus.Complete);
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage)))
             .ToHaveTextAsync("This work order is read-only for you at this time.");
