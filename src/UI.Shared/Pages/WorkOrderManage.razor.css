@@ -262,6 +262,18 @@
     margin-bottom: 0.5rem;
 }
 
+.char-counter {
+    font-size: 0.875rem;
+    color: #718096;
+    margin-top: 0.5rem;
+    text-align: right;
+}
+
+.char-counter-warning {
+    color: #c53030;
+    font-weight: 600;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .work-order-page {
