@@ -87,6 +87,7 @@
     background: linear-gradient(135deg, #7b68ee 0%, #4a90e2 100%);
     border: none;
     color: white;
+    padding: 1rem 2rem;
     box-shadow: 0 4px 15px rgba(123, 104, 238, 0.3);
 }
 
@@ -100,6 +101,7 @@
     background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
     border: none;
     color: #4a5568;
+    padding: 1rem 2rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
