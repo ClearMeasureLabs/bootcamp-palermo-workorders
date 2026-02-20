@@ -6,6 +6,13 @@
         </h2>
     </div>
 
+    @if (!string.IsNullOrEmpty(ServerErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @ServerErrorMessage
+        </div>
+    }
+
     <EditForm Model="@Model" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator/>
         <ValidationSummary/>
@@ -85,11 +92,6 @@
         </div>
 
         <div class="action-section">
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-danger">@errorMessage</div>
-            }
-            
             @if (Model.IsReadOnly)
             {
                 <div data-testid="@Elements.ReadOnlyMessage" class="readonly-message">This work order is read-only for you at this time.</div>

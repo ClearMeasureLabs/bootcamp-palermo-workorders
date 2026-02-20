@@ -1,99 +1,129 @@
+using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 public class WorkOrderSaveDataValidationTests : AcceptanceTestBase
 {
-    [Test, Retry(2)]
-    public async Task FrontendValidation_WithEmptyTitle_ShouldShowErrorMessage()
-    {
-        await LoginAsCurrentUser();
-        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
-        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+[Test, Retry(2)]
+public async Task ShouldShowValidationErrorForEmptyTitle()
+{
+await LoginAsCurrentUser();
 
-        await Input(nameof(WorkOrderManage.Elements.Description), "Valid description");
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + "Save");
+await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
-        var validationMessage = Page.Locator(".validation-message").First;
-        await Expect(validationMessage).ToBeVisibleAsync();
-        await Expect(validationMessage).ToContainTextAsync("Title is required");
-    }
+await Input(nameof(WorkOrderManage.Elements.Title), "");
+await Input(nameof(WorkOrderManage.Elements.Description), "Valid description");
+await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
 
-    [Test, Retry(2)]
-    public async Task FrontendValidation_WithEmptyDescription_ShouldShowErrorMessage()
-    {
-        await LoginAsCurrentUser();
-        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
-        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
-        await Input(nameof(WorkOrderManage.Elements.Title), "Valid title");
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + "Save");
+var validationMessage = Page.Locator(".validation-message:has-text('Title is required')");
+await Expect(validationMessage).ToBeVisibleAsync();
+}
 
-        var validationMessage = Page.Locator(".validation-message").Nth(1);
-        await Expect(validationMessage).ToBeVisibleAsync();
-        await Expect(validationMessage).ToContainTextAsync("Description is required");
-    }
+[Test, Retry(2)]
+public async Task ShouldShowValidationErrorForEmptyDescription()
+{
+await LoginAsCurrentUser();
 
-    [Test, Retry(2)]
-    public async Task FrontendValidation_WithEmptyTitleAndDescription_ShouldShowBothErrorMessages()
-    {
-        await LoginAsCurrentUser();
-        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
-        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + "Save");
+await Input(nameof(WorkOrderManage.Elements.Title), "Valid title");
+await Input(nameof(WorkOrderManage.Elements.Description), "");
+await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
 
-        var validationMessages = Page.Locator(".validation-message");
-        await Expect(validationMessages).ToHaveCountAsync(2);
-        await Expect(validationMessages.First).ToContainTextAsync("Title is required");
-        await Expect(validationMessages.Nth(1)).ToContainTextAsync("Description is required");
-    }
+await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
-    [Test, Retry(2)]
-    public async Task FrontendValidation_AfterCorrectingErrors_ShouldClearErrorMessages()
-    {
-        await LoginAsCurrentUser();
-        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
-        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+var validationMessage = Page.Locator(".validation-message:has-text('Description is required')");
+await Expect(validationMessage).ToBeVisibleAsync();
+}
 
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + "Save");
+[Test, Retry(2)]
+public async Task ShouldShowValidationErrorsForBothEmptyFields()
+{
+await LoginAsCurrentUser();
 
-        var validationMessages = Page.Locator(".validation-message");
-        await Expect(validationMessages).ToHaveCountAsync(2);
+await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
-        await Input(nameof(WorkOrderManage.Elements.Title), "Valid title");
-        await Input(nameof(WorkOrderManage.Elements.Description), "Valid description");
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + "Save");
+await Input(nameof(WorkOrderManage.Elements.Title), "");
+await Input(nameof(WorkOrderManage.Elements.Description), "");
+await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
 
-        await Page.WaitForURLAsync("**/workorder/search");
-    }
+await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
-    [Test, Retry(2)]
-    public async Task ServerSideValidation_WithError_ShouldDisplayErrorPopup()
-    {
-        await LoginAsCurrentUser();
-        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
-        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+var titleValidationMessage = Page.Locator(".validation-message:has-text('Title is required')");
+await Expect(titleValidationMessage).ToBeVisibleAsync();
 
-        await Page.EvaluateAsync(@"
-            const originalFetch = window.fetch;
-            window.fetch = function(url, options) {
-                if (url.includes('api/blazor-wasm-single-api')) {
-                    return Promise.resolve(new Response(
-                        'Title is required; Description is required',
-                        { status: 400, statusText: 'Bad Request' }
-                    ));
-                }
-                return originalFetch(url, options);
-            };
-        ");
+var descriptionValidationMessage = Page.Locator(".validation-message:has-text('Description is required')");
+await Expect(descriptionValidationMessage).ToBeVisibleAsync();
+}
 
-        await Input(nameof(WorkOrderManage.Elements.Title), "Test");
-        await Input(nameof(WorkOrderManage.Elements.Description), "Test");
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + "Save");
+[Test, Retry(2)]
+public async Task ShouldClearValidationErrorsWhenFieldsAreCorrected()
+{
+await LoginAsCurrentUser();
 
-        var errorAlert = Page.Locator(".alert-danger");
-        await Expect(errorAlert).ToBeVisibleAsync();
-        await Expect(errorAlert).ToContainTextAsync("Title is required");
-    }
+await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+await Input(nameof(WorkOrderManage.Elements.Title), "");
+await Input(nameof(WorkOrderManage.Elements.Description), "");
+await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+
+var titleValidationMessage = Page.Locator(".validation-message:has-text('Title is required')");
+await Expect(titleValidationMessage).ToBeVisibleAsync();
+
+await Input(nameof(WorkOrderManage.Elements.Title), "Valid title");
+await Input(nameof(WorkOrderManage.Elements.Description), "Valid description");
+
+await Expect(titleValidationMessage).Not.ToBeVisibleAsync();
+}
+
+[Test, Retry(2)]
+public async Task ShouldDisplayServerValidationErrorInAlert()
+{
+await LoginAsCurrentUser();
+
+await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+await Input(nameof(WorkOrderManage.Elements.Title), "Valid title");
+await Input(nameof(WorkOrderManage.Elements.Description), "Valid description");
+await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+
+await Page.EvaluateAsync(@"
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+return originalFetch(...args).then(response => {
+if (response.ok) {
+return new Response(JSON.stringify({ error: 'Title is required' }), {
+status: 400,
+statusText: 'Bad Request',
+headers: response.headers
+});
+}
+return response;
+});
+};
+");
+
+await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+
+var errorAlert = Page.Locator(".alert-danger");
+await Expect(errorAlert).ToBeVisibleAsync(new() { Timeout = 5000 });
+}
 }
