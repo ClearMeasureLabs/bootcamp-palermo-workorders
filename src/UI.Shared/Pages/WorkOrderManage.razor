@@ -6,6 +6,13 @@
         </h2>
     </div>
 
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert-danger" data-testid="@Elements.ErrorMessage">
+            @errorMessage
+        </div>
+    }
+
     <EditForm Model="@Model" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator/>
         <ValidationSummary/>
@@ -45,6 +52,7 @@
                     <label for="Title" class="form-label">Title:</label>
                     <div>
                         <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        <ValidationMessage For="@(() => Model.Title)"/>
                     </div>
                 </div>
 
@@ -52,6 +60,7 @@
                     <label for="Description" class="form-label">Description:</label>
                     <div>
                         <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
+                        <ValidationMessage For="@(() => Model.Description)"/>
                     </div>
                 </div>
 
