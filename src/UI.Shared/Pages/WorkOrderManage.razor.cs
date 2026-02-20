@@ -22,6 +22,7 @@ public partial class WorkOrderManage : AppComponentBase
     public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
+    public string? ServerErrorMessage { get; set; }
 
     [Parameter] public string? Id { get; set; }
 
@@ -126,10 +127,17 @@ public partial class WorkOrderManage : AppComponentBase
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
 
-        var result = await Bus.Send(matchingCommand);
-        EventBus.Notify(new WorkOrderChangedEvent(result));
+        try
+        {
+            var result = await Bus.Send(matchingCommand);
+            EventBus.Notify(new WorkOrderChangedEvent(result));
 
-        NavigationManager!.NavigateTo("/workorder/search");
+            NavigationManager!.NavigateTo("/workorder/search");
+        }
+        catch (Exception ex)
+        {
+            ServerErrorMessage = ex.Message;
+        }
     }
 }
 
