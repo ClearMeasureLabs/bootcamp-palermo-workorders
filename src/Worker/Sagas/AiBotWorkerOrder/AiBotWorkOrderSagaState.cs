@@ -6,7 +6,7 @@ public class AiBotWorkOrderSagaState : ContainSagaData
 {
     public Guid SagaId { get; set; }
 
-    public string WorkOrderNumber { get; set; }
+    public string WorkOrderNumber { get; set; } = string.Empty;
 
-    public WorkOrder? WorkOrder { get; set; }
+    public WorkOrder WorkOrder { get; set; } = null!;
 }

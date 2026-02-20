@@ -1,5 +1,6 @@
 ﻿using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.UI.Client;
 using MediatR;
 using Shouldly;

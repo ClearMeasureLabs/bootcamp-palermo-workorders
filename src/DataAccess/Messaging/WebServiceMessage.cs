@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace ClearMeasure.Bootcamp.UI.Client;
+namespace ClearMeasure.Bootcamp.DataAccess.Messaging;
 
 public class WebServiceMessage
 {

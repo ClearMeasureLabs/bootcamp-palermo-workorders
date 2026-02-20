@@ -1,9 +1,14 @@
-﻿using Worker.Sagas.AiBotWorkerOrder.Commands;
+﻿using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.LlmGateway;
+using Microsoft.Extensions.AI;
+using Worker.Sagas.AiBotWorkerOrder.Commands;
 using Worker.Sagas.AiBotWorkerOrder.Events;
 
 namespace Worker.Sagas.AiBotWorkerOrder;
 
-public class AiBotWorkOrderSaga() :
+public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
     Saga<AiBotWorkOrderSagaState>,
     IAmStartedByMessages<StartAiBotWorkOrderSagaCommand>,
     IHandleMessages<AiBotStartedWorkOrderEvent>,
@@ -24,19 +29,17 @@ public class AiBotWorkOrderSaga() :
     {
         Data.WorkOrderNumber = message.WorkOrderNumber;
 
-        //var query = new WorkOrderByNumberQuery(Data.WorkOrderNumber);
-        //var workOrder = await bus.Send(query);
+        var query = new WorkOrderByNumberQuery(Data.WorkOrderNumber);
+        Data.WorkOrder = await bus.Send(query);
 
-        //if (workOrder?.Assignee is null)
-        //{
-        //    MarkAsComplete();
-        //    return;
-        //}
+        if (Data.WorkOrder?.Assignee is null)
+        {
+            MarkAsComplete();
+            return;
+        }
 
-        //Data.WorkOrder = workOrder;
-
-        //var command = new AssignedToInProgressCommand(Data.WorkOrder, Data.WorkOrder.Assignee);
-        //await bus.Send(command);
+        var command = new AssignedToInProgressCommand(Data.WorkOrder, Data.WorkOrder.Assignee);
+        await bus.Send(command);
 
         var @event = new AiBotStartedWorkOrderEvent(Data.SagaId);
         await context.Publish(@event);
@@ -44,12 +47,28 @@ public class AiBotWorkOrderSaga() :
 
     public async Task Handle(AiBotStartedWorkOrderEvent @event, IMessageHandlerContext context)
     {
+        var chatMessages = new List<ChatMessage>()
+        {
+            new(ChatRole.User, "Hello, world!")
+        };
+
+        var chatClient = await chatClientFactory.GetChatClient();
+        var chatResponse = await chatClient.GetResponseAsync(chatMessages, cancellationToken: context.CancellationToken);
+
+        Data.WorkOrder.Description = $"{Data.WorkOrder.Description}{Environment.NewLine}{Environment.NewLine}AI Bot: {chatResponse.Messages.Last()}";
+        var command = new UpdateDescriptionCommand(Data.WorkOrder, Data.WorkOrder.Assignee);
+        await bus.Send(command);
+
         var updatedEvent = new AiBotUpdatedWorkerOrderEvent(Data.SagaId);
         await context.Publish(updatedEvent);
     }
 
     public async Task Handle(AiBotUpdatedWorkerOrderEvent @event, IMessageHandlerContext context)
     {
+        var command = new InProgressToCompleteCommand(Data.WorkOrder, Data.WorkOrder.Assignee);
+        var result = await bus.Send(command);
+        Data.WorkOrder = result.WorkOrder;
+
         var completedEvent = new AiBotCompletedWorkOrderEvent(Data.SagaId);
         await context.Publish(completedEvent);
     }
