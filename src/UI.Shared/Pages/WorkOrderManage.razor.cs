@@ -22,6 +22,7 @@ public partial class WorkOrderManage : AppComponentBase
     public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
+    public string? ServerErrorMessage { get; set; }
 
     [Parameter] public string? Id { get; set; }
 
@@ -99,37 +100,46 @@ public partial class WorkOrderManage : AppComponentBase
 
     private async Task HandleSubmit()
     {
-        var currentUser = (await UserSession!.GetCurrentUserAsync())!;
-        WorkOrder workOrder;
-
-        if (Model.Mode == EditMode.New)
+        try
         {
-            workOrder = WorkOrderBuilder!.CreateNewWorkOrder(currentUser);
+            ServerErrorMessage = null;
+            
+            var currentUser = (await UserSession!.GetCurrentUserAsync())!;
+            WorkOrder workOrder;
+
+            if (Model.Mode == EditMode.New)
+            {
+                workOrder = WorkOrderBuilder!.CreateNewWorkOrder(currentUser);
+            }
+            else
+            {
+                workOrder = (await Bus.Send(new WorkOrderByNumberQuery(Model.WorkOrderNumber!)))!;
+            }
+
+            Employee? assignee = null;
+            if (Model.AssignedToUserName != null)
+            {
+                assignee = await Bus.Send(new EmployeeByUserNameQuery(Model.AssignedToUserName));
+            }
+
+            workOrder.Number = Model.WorkOrderNumber;
+            workOrder.Assignee = assignee;
+            workOrder.Title = Model.Title;
+            workOrder.Description = Model.Description;
+            workOrder.RoomNumber = Model.RoomNumber;
+
+            var matchingCommand = new StateCommandList()
+                .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
+
+            var result = await Bus.Send(matchingCommand);
+            EventBus.Notify(new WorkOrderChangedEvent(result));
+
+            NavigationManager!.NavigateTo("/workorder/search");
         }
-        else
+        catch (Exception ex)
         {
-            workOrder = (await Bus.Send(new WorkOrderByNumberQuery(Model.WorkOrderNumber!)))!;
+            ServerErrorMessage = ex.Message;
         }
-
-        Employee? assignee = null;
-        if (Model.AssignedToUserName != null)
-        {
-            assignee = await Bus.Send(new EmployeeByUserNameQuery(Model.AssignedToUserName));
-        }
-
-        workOrder.Number = Model.WorkOrderNumber;
-        workOrder.Assignee = assignee;
-        workOrder.Title = Model.Title;
-        workOrder.Description = Model.Description;
-        workOrder.RoomNumber = Model.RoomNumber;
-
-        var matchingCommand = new StateCommandList()
-            .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
-
-        var result = await Bus.Send(matchingCommand);
-        EventBus.Notify(new WorkOrderChangedEvent(result));
-
-        NavigationManager!.NavigateTo("/workorder/search");
     }
 }
 

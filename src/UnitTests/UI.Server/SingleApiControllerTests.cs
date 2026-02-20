@@ -5,6 +5,7 @@ using ClearMeasure.Bootcamp.UI.Client;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Server.Controllers;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Shouldly;
 using System.Text.Json;
 
@@ -23,12 +24,16 @@ public class SingleApiControllerTests
         var request = new EmployeeGetAllQuery();
         var message = new WebServiceMessage(request);
 
-        var json = await controller.Post(message);
+        var result = await controller.Post(message);
 
+        result.ShouldBeOfType<OkObjectResult>();
+        var okResult = (OkObjectResult)result;
+        var json = okResult.Value as string;
+        json.ShouldNotBeNull();
         var responseMessage = JsonSerializer.Deserialize<WebServiceMessage>(json)!;
-        var result = (Employee[])responseMessage.GetBodyObject();
-        result.Length.ShouldBe(1);
-        result[0].UserName.ShouldBe("hsimpson");
+        var resultArray = (Employee[])responseMessage.GetBodyObject();
+        resultArray.Length.ShouldBe(1);
+        resultArray[0].UserName.ShouldBe("hsimpson");
     }
 
     [Test]
@@ -39,10 +44,14 @@ public class SingleApiControllerTests
         var loginEvent = new UserLoggedInEvent("testuser");
         var message = new WebServiceMessage(loginEvent);
 
-        var json = await controller.Post(message);
+        var result = await controller.Post(message);
 
+        result.ShouldBeOfType<OkObjectResult>();
         stubBus.LastPublishedNotification.ShouldBeOfType<UserLoggedInEvent>();
         ((UserLoggedInEvent)stubBus.LastPublishedNotification!).UserName.ShouldBe("testuser");
+        var okResult = (OkObjectResult)result;
+        var json = okResult.Value as string;
+        json.ShouldNotBeNull();
         var responseMessage = JsonSerializer.Deserialize<WebServiceMessage>(json)!;
         responseMessage.Body.ShouldBeEmpty();
     }
@@ -69,8 +78,12 @@ public class SingleApiControllerTests
         var loginEvent = new UserLoggedInEvent("testuser");
         var message = new WebServiceMessage(loginEvent);
 
-        var json = await controller.Post(message);
+        var result = await controller.Post(message);
 
+        result.ShouldBeOfType<OkObjectResult>();
+        var okResult = (OkObjectResult)result;
+        var json = okResult.Value as string;
+        json.ShouldNotBeNull();
         var responseMessage = JsonSerializer.Deserialize<WebServiceMessage>(json)!;
         responseMessage.Body.ShouldBeEmpty();
         responseMessage.TypeName.ShouldBeEmpty();
