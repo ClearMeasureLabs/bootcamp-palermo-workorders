@@ -47,10 +47,10 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
+        WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
         
-        rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+        rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
 
     [Test, Retry(2)]
@@ -88,9 +88,9 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var assigneeField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee));
         await Expect(assigneeField).ToHaveValueAsync(CurrentUser.UserName);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
         
-        rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+        rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
 }
