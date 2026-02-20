@@ -80,7 +80,7 @@ public class WorkOrderReformatAgent(
         }
     }
 
-    private static ReformatResult? ParseResponse(string responseText, WorkOrder workOrder)
+    internal static ReformatResult? ParseResponse(string responseText, WorkOrder workOrder)
     {
         var lines = responseText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
