@@ -20,6 +20,8 @@ public class WorkOrderManageModel
 
     [Required] public string? Description { get; set; }
 
+    public List<Guid> RoomIds { get; set; } = new();
+
     public bool IsReadOnly { get; set; }
 
     public string? AssignedDate { get; set; }
@@ -28,5 +30,6 @@ public class WorkOrderManageModel
 
     public string? CreatedDate { get; set; }
 
+    [Obsolete("Use RoomIds instead. Kept for backward compatibility during migration.")]
     public string? RoomNumber { get; set; }
 }

@@ -20,7 +20,19 @@ public class WorkOrderMap : IEntityFrameworkMapping
             entity.Property(e => e.Number).IsRequired().HasMaxLength(7);
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Description).HasMaxLength(4000);
-            entity.Property(e => e.RoomNumber).HasMaxLength(50);
+
+            // Configure Rooms collection (many-to-many)
+            entity.HasMany(e => e.Rooms)
+                .WithMany()
+                .UsingEntity<Dictionary<string, object>>(
+                    "WorkOrderRooms",
+                    r => r.HasOne<Room>().WithMany().HasForeignKey("RoomId").OnDelete(DeleteBehavior.Cascade),
+                    l => l.HasOne<WorkOrder>().WithMany().HasForeignKey("WorkOrderId").OnDelete(DeleteBehavior.Cascade),
+                    j =>
+                    {
+                        j.HasKey("WorkOrderId", "RoomId");
+                        j.ToTable("WorkOrderRooms", "dbo");
+                    });
 
             // Configure relationships
             entity.HasOne(e => e.Creator)

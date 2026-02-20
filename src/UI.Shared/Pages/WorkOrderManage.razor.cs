@@ -20,6 +20,7 @@ public partial class WorkOrderManage : AppComponentBase
 
     public WorkOrderManageModel Model { get; set; } = new();
     public List<SelectListItem> UserOptions { get; set; } = new();
+    public List<SelectListItem> RoomOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
 
@@ -31,6 +32,7 @@ public partial class WorkOrderManage : AppComponentBase
     protected override async Task OnInitializedAsync()
     {
         await LoadUserOptions();
+        await LoadRoomOptions();
         await LoadWorkOrder();
 
     }
@@ -82,7 +84,7 @@ public partial class WorkOrderManage : AppComponentBase
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
             Description = workOrder.Description,
-            RoomNumber = workOrder.RoomNumber,
+            RoomIds = workOrder.Rooms.Select(r => r.Id).ToList(),
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
@@ -95,6 +97,12 @@ public partial class WorkOrderManage : AppComponentBase
         var items = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
         items.Insert(0, new SelectListItem("", ""));
         UserOptions = items;
+    }
+
+    private async Task LoadRoomOptions()
+    {
+        var rooms = await Bus.Send(new RoomGetAllQuery());
+        RoomOptions = rooms.Select(r => new SelectListItem(r.Id.ToString(), r.Name)).ToList();
     }
 
     private async Task HandleSubmit()
@@ -121,7 +129,21 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Assignee = assignee;
         workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
-        workOrder.RoomNumber = Model.RoomNumber;
+        
+        // Update rooms
+        workOrder.Rooms.Clear();
+        if (Model.RoomIds.Any())
+        {
+            var allRooms = await Bus.Send(new RoomGetAllQuery());
+            foreach (var roomId in Model.RoomIds)
+            {
+                var room = allRooms.FirstOrDefault(r => r.Id == roomId);
+                if (room != null)
+                {
+                    workOrder.Rooms.Add(room);
+                }
+            }
+        }
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);

@@ -56,9 +56,24 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="RoomNumber" class="form-label">Room:</label>
+                    <label for="RoomIds" class="form-label">Room:</label>
                     <div>
-                        <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <InputSelect data-testid="@Elements.RoomNumber" id="RoomIds" 
+                                         @bind-Value="Model.RoomIds" 
+                                         class="form-control input-select" 
+                                         multiple>
+                                @foreach (var room in RoomOptions)
+                                {
+                                    <option value="@room.Value">@room.Text</option>
+                                }
+                            </InputSelect>
+                        }
+                        else
+                        {
+                            <span class="value">@string.Join(", ", Model.WorkOrder?.Rooms.Select(r => r.Name) ?? Array.Empty<string>())</span>
+                        }
                     </div>
                 </div>
             </div>
