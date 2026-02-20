@@ -88,6 +88,7 @@
     border: none;
     color: white;
     box-shadow: 0 4px 15px rgba(123, 104, 238, 0.3);
+    transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
@@ -101,6 +102,7 @@
     border: none;
     color: #4a5568;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
 }
 
 .btn-secondary:hover {
