@@ -29,17 +29,17 @@ public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger 
 
                 if (string.IsNullOrWhiteSpace(workOrder.Title))
                 {
-                    errors.Add("Title is required");
+                    errors.Add("The Title field is required.");
                 }
 
                 if (string.IsNullOrWhiteSpace(workOrder.Description))
                 {
-                    errors.Add("Description is required");
+                    errors.Add("The Description field is required.");
                 }
 
                 if (errors.Any())
                 {
-                    return BadRequest(string.Join("; ", errors));
+                    return BadRequest(string.Join(" ", errors));
                 }
             }
 

@@ -39,7 +39,7 @@ public class WorkOrderManageValidationTests : IntegratedTestBase
         var badRequest = (BadRequestObjectResult)result;
         var errorMessage = badRequest.Value as string;
         errorMessage.ShouldNotBeNull();
-        errorMessage.ShouldContain("Title is required");
+        errorMessage.ShouldContain("The Title field is required");
     }
 
     [Test]
@@ -68,7 +68,7 @@ public class WorkOrderManageValidationTests : IntegratedTestBase
         var badRequest = (BadRequestObjectResult)result;
         var errorMessage = badRequest.Value as string;
         errorMessage.ShouldNotBeNull();
-        errorMessage.ShouldContain("Description is required");
+        errorMessage.ShouldContain("The Description field is required");
     }
 
     [Test]
@@ -97,8 +97,8 @@ public class WorkOrderManageValidationTests : IntegratedTestBase
         var badRequest = (BadRequestObjectResult)result;
         var errorMessage = badRequest.Value as string;
         errorMessage.ShouldNotBeNull();
-        errorMessage.ShouldContain("Title is required");
-        errorMessage.ShouldContain("Description is required");
+        errorMessage.ShouldContain("The Title field is required");
+        errorMessage.ShouldContain("The Description field is required");
     }
 
     [Test]
