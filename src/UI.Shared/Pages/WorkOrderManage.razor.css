@@ -262,6 +262,26 @@
     margin-bottom: 0.5rem;
 }
 
+.validation-message {
+    color: #c53030;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    display: block;
+}
+
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+    border: 1px solid #fc8181;
+    color: #c53030;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .work-order-page {

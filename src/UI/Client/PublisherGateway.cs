@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+∩╗┐using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 
@@ -24,6 +24,13 @@ public class PublisherGateway(HttpClient httpClient) : IPublisherGateway
     {
         HttpContent content = new StringContent(message.GetJson());
         var result = await httpClient.PostAsJsonAsync(ApiRelativeUrl, message);
+        
+        if (!result.IsSuccessStatusCode)
+        {
+            var errorMessage = await result.Content.ReadAsStringAsync();
+            throw new InvalidOperationException(errorMessage);
+        }
+        
         var json = await result.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<WebServiceMessage>(json);
     }
