@@ -27,6 +27,7 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
 
     public async Task Handle(StartAiBotWorkOrderSagaCommand message, IMessageHandlerContext context)
     {
+        Data.SagaId = message.SagaId;
         Data.WorkOrderNumber = message.WorkOrderNumber;
 
         var query = new WorkOrderByNumberQuery(Data.WorkOrderNumber);
