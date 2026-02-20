@@ -11,7 +11,8 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers
         public async Task<WorkOrder[]> Handle(WorkOrderSpecificationQuery specification,
             CancellationToken cancellationToken = default)
         {
-            IQueryable<WorkOrder> query = context.Set<WorkOrder>();
+            IQueryable<WorkOrder> query = context.Set<WorkOrder>()
+                .Include(wo => wo.Rooms);
 
             if (specification.Assignee != null)
             {
@@ -26,6 +27,11 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers
             if (specification.Status != null)
             {
                 query = query.Where(wo => wo.Status == specification.Status);
+            }
+
+            if (specification.Room != null)
+            {
+                query = query.Where(wo => wo.Rooms.Any(r => r.Id == specification.Room.Id));
             }
 
             return await query.ToArrayAsync(cancellationToken);
