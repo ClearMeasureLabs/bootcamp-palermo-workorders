@@ -16,9 +16,9 @@ public class WorkOrderManageModel
 
     public string? AssignedToUserName { get; set; }
 
-    [Required] public string? Title { get; set; }
+    [Required(ErrorMessage = "The Title field is required.")] public string? Title { get; set; }
 
-    [Required] public string? Description { get; set; }
+    [Required(ErrorMessage = "The Description field is required.")] public string? Description { get; set; }
 
     public bool IsReadOnly { get; set; }
 
