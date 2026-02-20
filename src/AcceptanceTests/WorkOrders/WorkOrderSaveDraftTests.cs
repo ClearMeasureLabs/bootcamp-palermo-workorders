@@ -44,9 +44,6 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync(order.Description!);
 
-        var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
-        await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
-
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
         
@@ -92,5 +89,39 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
         
         rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldSelectRoomsAndSaveWorkOrder()
+    {
+        await LoginAsCurrentUser();
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync();
+        var newWorkOrderNumber = await woNumberLocator.InnerTextAsync();
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "Test with rooms");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Testing room selection");
+
+        var chapelCheckbox = Page.GetByTestId("room-checkbox-Chapel");
+        var kitchenCheckbox = Page.GetByTestId("room-checkbox-Kitchen");
+        await chapelCheckbox.CheckAsync();
+        await kitchenCheckbox.CheckAsync();
+
+        await TakeScreenshotAsync(1, "RoomsSelected");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        WorkOrder? rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber));
+        rehydratedOrder.ShouldNotBeNull();
+        rehydratedOrder.Rooms.Count.ShouldBe(2);
+        rehydratedOrder.Rooms.Any(r => r.Name == "Chapel").ShouldBeTrue();
+        rehydratedOrder.Rooms.Any(r => r.Name == "Kitchen").ShouldBeTrue();
     }
 }

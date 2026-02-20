@@ -80,4 +80,27 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void RoomsShouldInitializeAsEmptyCollection()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.Rooms, Is.Not.Null);
+        Assert.That(workOrder.Rooms.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void ShouldAddRoomsToWorkOrder()
+    {
+        var workOrder = new WorkOrder();
+        var room1 = new Room { Name = "Chapel" };
+        var room2 = new Room { Name = "Kitchen" };
+
+        workOrder.Rooms.Add(room1);
+        workOrder.Rooms.Add(room2);
+
+        Assert.That(workOrder.Rooms.Count, Is.EqualTo(2));
+        Assert.That(workOrder.Rooms, Does.Contain(room1));
+        Assert.That(workOrder.Rooms, Does.Contain(room2));
+    }
 }

@@ -261,4 +261,41 @@ public class WorkOrderQueryHandlerTests
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
     }
+
+    [Test]
+    public async Task WorkOrderShouldPersistRoomsCollection()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator", "John", "Doe", "john@example.com");
+        var room1 = new Room { Name = "Chapel" };
+        var room2 = new Room { Name = "Kitchen" };
+
+        var workOrder = new WorkOrder
+        {
+            Number = "789",
+            Title = "Test Work Order",
+            Creator = creator
+        };
+        workOrder.Rooms.Add(room1);
+        workOrder.Rooms.Add(room2);
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(room1);
+            context.Add(room2);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderQueryHandler(dataContext);
+        var rehydratedOrder = (await repository.GetWorkOrderAsync("789"))!;
+
+        rehydratedOrder.ShouldNotBeNull();
+        rehydratedOrder.Rooms.Count.ShouldBe(2);
+        rehydratedOrder.Rooms.Any(r => r.Name == "Chapel").ShouldBeTrue();
+        rehydratedOrder.Rooms.Any(r => r.Name == "Kitchen").ShouldBeTrue();
+    }
 }
