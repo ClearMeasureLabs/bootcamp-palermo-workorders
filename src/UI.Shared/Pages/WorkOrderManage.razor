@@ -44,15 +44,23 @@
                 <div class="form-group">
                     <label for="Title" class="form-label">Title:</label>
                     <div>
-                        <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" @oninput="OnTitleInput" maxlength="250" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        <div class="@GetCharCounterClass(TitleCharCount, 250, 225)" aria-live="polite" aria-atomic="true" data-testid="@Elements.TitleCharCounter">
+                            @TitleCharCount/250 characters
+                        </div>
                     </div>
+                    <ValidationMessage For="@(() => Model.Title)"/>
                 </div>
 
                 <div class="form-group">
                     <label for="Description" class="form-label">Description:</label>
                     <div>
-                        <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
+                        <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" @oninput="OnDescriptionInput" maxlength="500" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
+                        <div class="@GetCharCounterClass(DescriptionCharCount, 500, 450)" aria-live="polite" aria-atomic="true" data-testid="@Elements.DescriptionCharCounter">
+                            @DescriptionCharCount/500 characters
+                        </div>
                     </div>
+                    <ValidationMessage For="@(() => Model.Description)"/>
                 </div>
 
                 <div class="form-group">
@@ -111,9 +119,11 @@
     {
         Assignee,
         Title,
+        TitleCharCounter,
         AssigneeFullName,
         RoomNumber,
         Description,
+        DescriptionCharCounter,
         AssignedDate,
         CompletedDate,
         CreatedDate,

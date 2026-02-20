@@ -28,6 +28,16 @@ StateCommandBase(WorkOrder, CurrentUser)
 
     public override void Execute(StateCommandContext context)
     {
+        if (WorkOrder.Title?.Length > 250)
+        {
+            throw new InvalidOperationException("Title cannot exceed 250 characters");
+        }
+
+        if (WorkOrder.Description?.Length > 500)
+        {
+            throw new InvalidOperationException("Description cannot exceed 500 characters");
+        }
+
         if (WorkOrder.CreatedDate.Equals(null))
         {
             WorkOrder.CreatedDate = context.CurrentDateTime;

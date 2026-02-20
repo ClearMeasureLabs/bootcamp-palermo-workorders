@@ -59,6 +59,74 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         Assert.That(order.CreatedDate, Is.Not.Null);
     }
 
+    [Test]
+    public void Execute_WithTitleOver250Characters_ThrowsInvalidOperationException()
+    {
+        var order = new WorkOrder
+        {
+            Status = WorkOrderStatus.Draft,
+            Title = new string('a', 251)
+        };
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        
+        var ex = Assert.Throws<InvalidOperationException>(() => command.Execute(new StateCommandContext()));
+        Assert.That(ex.Message, Is.EqualTo("Title cannot exceed 250 characters"));
+    }
+
+    [Test]
+    public void Execute_WithDescriptionOver500Characters_ThrowsInvalidOperationException()
+    {
+        var order = new WorkOrder
+        {
+            Status = WorkOrderStatus.Draft,
+            Title = "Valid Title",
+            Description = new string('b', 501)
+        };
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        
+        var ex = Assert.Throws<InvalidOperationException>(() => command.Execute(new StateCommandContext()));
+        Assert.That(ex.Message, Is.EqualTo("Description cannot exceed 500 characters"));
+    }
+
+    [Test]
+    public void Execute_WithTitleAt250Characters_Succeeds()
+    {
+        var order = new WorkOrder
+        {
+            Status = WorkOrderStatus.Draft,
+            Title = new string('a', 250)
+        };
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        
+        Assert.DoesNotThrow(() => command.Execute(new StateCommandContext()));
+    }
+
+    [Test]
+    public void Execute_WithDescriptionAt500Characters_Succeeds()
+    {
+        var order = new WorkOrder
+        {
+            Status = WorkOrderStatus.Draft,
+            Title = "Valid Title",
+            Description = new string('b', 500)
+        };
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        
+        Assert.DoesNotThrow(() => command.Execute(new StateCommandContext()));
+    }
+
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
         return new SaveDraftCommand(order, employee);
