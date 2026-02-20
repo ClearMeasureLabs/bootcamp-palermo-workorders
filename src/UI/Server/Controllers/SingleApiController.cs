@@ -22,7 +22,7 @@ public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger 
         if (bodyObject is IRemotableRequest remotableRequest)
         {
             // Server-side validation
-            if (remotableRequest is StateCommandBase stateCommand)
+            if (remotableRequest is StateCommandBase stateCommand && stateCommand.WorkOrder != null)
             {
                 var validationErrors = new List<string>();
                 
