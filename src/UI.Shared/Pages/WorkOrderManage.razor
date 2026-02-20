@@ -44,16 +44,16 @@
                 <div class="form-group">
                     <label for="Title" class="form-label">Title:</label>
                     <div>
-                        <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" @oninput="OnTitleInput" class="form-control input-text" disabled="@Model.IsReadOnly" maxlength="250"/>
-                        <div class="char-counter @(GetCharCounterClass(TitleLength, 250))" data-testid="@Elements.TitleCharCounter" aria-live="polite">@TitleLength/250 characters</div>
+                        <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" @oninput="OnTitleInput" class="form-control input-text" disabled="@Model.IsReadOnly" maxlength="250" aria-describedby="title-char-counter"/>
+                        <div class="char-counter @(GetCharCounterClass(TitleLength, 250))" id="title-char-counter" data-testid="@Elements.TitleCharCounter" aria-live="polite">@TitleLength/250 characters</div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="Description" class="form-label">Description:</label>
                     <div>
-                        <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" @oninput="OnDescriptionInput" class="form-control input-textarea" disabled="@Model.IsReadOnly" maxlength="500"/>
-                        <div class="char-counter @(GetCharCounterClass(DescriptionLength, 500))" data-testid="@Elements.DescriptionCharCounter" aria-live="polite">@DescriptionLength/500 characters</div>
+                        <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" @oninput="OnDescriptionInput" class="form-control input-textarea" disabled="@Model.IsReadOnly" maxlength="500" aria-describedby="description-char-counter"/>
+                        <div class="char-counter @(GetCharCounterClass(DescriptionLength, 500))" id="description-char-counter" data-testid="@Elements.DescriptionCharCounter" aria-live="polite">@DescriptionLength/500 characters</div>
                     </div>
                 </div>
 
