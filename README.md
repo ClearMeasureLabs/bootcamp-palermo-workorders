@@ -1,7 +1,7 @@
 # Introduction 
 TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
 
-This project will create all of the required infrastructure in Azure programatically. The resoureces in the TDD environment will be torn down after automated testing is completed. The UAT and Prod resources will remain. There is an Octopus variable **EnsureEnvironmentsExist** that will tell Octopus to create all of the resources. If the variable is set to **True** Octopus will create all of the resources, if the variable is set to something else, Octopus will not create the resources. **EnsureEnvironmentsExist** should always be set to **True** for the TDD environment. This variable should be set to **False** (or anything other than **True**) for UAT and Prod to save time and preserve the existing resources during subsequent deployments.
+This project will create all of the required infrastructure in Azure programmatically. The resoureces in the TDD environment will be torn down after automated testing is completed. The UAT and Prod resources will remain. There is an Octopus variable **EnsureEnvironmentsExist** that will tell Octopus to create all of the resources. If the variable is set to **True** Octopus will create all of the resources, if the variable is set to something else, Octopus will not create the resources. **EnsureEnvironmentsExist** should always be set to **True** for the TDD environment. This variable should be set to **False** (or anything other than **True**) for UAT and Prod to save time and preserve the existing resources during subsequent deployments.
 
 # Onion Architecture Azure .NET 9/8 Getting Started
 - [Github](#github)
@@ -179,7 +179,7 @@ To create a service connection
 ![Alt text](images/service%20connections%201.png)
 
   - Use the Service Principal (automatic) authentication method
-  - Select your Azure Subscriptoin
+  - Select your Azure Subscription
   - Leave the Resource Group section blank
   - Name the Service Connection: onion-architecture-maui-azure-dotnet-8
   - Check 'Grant access permission to all pipelines'
