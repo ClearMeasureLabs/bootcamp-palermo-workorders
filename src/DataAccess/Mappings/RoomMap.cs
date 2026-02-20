@@ -12,8 +12,7 @@ public class RoomMap : IEntityFrameworkMapping
 			entity.ToTable("Room", "dbo");
 			entity.HasKey(e => e.Id);
 			entity.Property(e => e.Id).IsRequired()
-				.ValueGeneratedOnAdd()
-				.HasDefaultValue(Guid.Empty);
+				.ValueGeneratedOnAdd();
 
 			// Configure properties
 			entity.Property(e => e.Name).IsRequired().HasMaxLength(50);

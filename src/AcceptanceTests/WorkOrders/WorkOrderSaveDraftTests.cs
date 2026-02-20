@@ -44,7 +44,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync(order.Description!);
 
-        // Room field is now multi-select, skip validation for now
+        // TODO: Add validation for room checkboxes in multi-select UI when test infrastructure supports checkbox interaction
 
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));

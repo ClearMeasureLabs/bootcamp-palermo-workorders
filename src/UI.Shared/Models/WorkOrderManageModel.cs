@@ -30,6 +30,6 @@ public class WorkOrderManageModel
 
     public string? CreatedDate { get; set; }
 
-    [Obsolete("Use RoomIds instead. Kept for backward compatibility during migration.")]
+    [Obsolete("Replaced by RoomIds. Will be removed in v2.0 after migration period.")]
     public string? RoomNumber { get; set; }
 }

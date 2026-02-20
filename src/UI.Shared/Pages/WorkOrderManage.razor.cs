@@ -154,13 +154,6 @@ public partial class WorkOrderManage : AppComponentBase
         NavigationManager!.NavigateTo("/workorder/search");
     }
 
-    private void HandleRoomSelectionChanged(ChangeEventArgs e)
-    {
-        // Blazor's ChangeEventArgs for multi-select returns a single value, not an array
-        // We'll use a different approach - use ElementReference and JS interop
-        // For now, store temporarily and get values on form submit
-    }
-
     private void HandleRoomCheckboxChanged(Guid roomId, ChangeEventArgs e)
     {
         if (e.Value is bool isChecked && isChecked)
