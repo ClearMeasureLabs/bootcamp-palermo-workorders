@@ -220,6 +220,21 @@
 
 .btn-red {
     background: linear-gradient(135deg, #ee6868 0%, #e24a8c 100%);
+    color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 15px rgba(238, 104, 104, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-red:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(238, 104, 104, 0.4);
+    background: linear-gradient(135deg, #dc5757 0%, #d1397b 100%);
+}
+
+.btn-red:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(238, 104, 104, 0.3);
 }
 
 .btn-primary:hover {
