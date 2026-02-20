@@ -40,7 +40,8 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
         }
 
         var command = new AssignedToInProgressCommand(Data.WorkOrder, Data.WorkOrder.Assignee);
-        await bus.Send(command);
+        var  commandResult = await bus.Send(command);
+        Data.WorkOrder = commandResult.WorkOrder;
 
         var @event = new AiBotStartedWorkOrderEvent(Data.SagaId);
         await context.Publish(@event);
@@ -58,7 +59,8 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
 
         Data.WorkOrder.Description = $"{Data.WorkOrder.Description}{Environment.NewLine}{Environment.NewLine}AI Bot: {chatResponse.Messages.Last()}";
         var command = new UpdateDescriptionCommand(Data.WorkOrder, Data.WorkOrder.Assignee!);
-        await bus.Send(command);
+        var commandResult = await bus.Send(command);
+        Data.WorkOrder = commandResult.WorkOrder;
 
         var updatedEvent = new AiBotUpdatedWorkerOrderEvent(Data.SagaId);
         await context.Publish(updatedEvent);
@@ -67,8 +69,8 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
     public async Task Handle(AiBotUpdatedWorkerOrderEvent @event, IMessageHandlerContext context)
     {
         var command = new InProgressToCompleteCommand(Data.WorkOrder, Data.WorkOrder.Assignee!);
-        var result = await bus.Send(command);
-        Data.WorkOrder = result.WorkOrder;
+        var commandResult = await bus.Send(command);
+        Data.WorkOrder = commandResult.WorkOrder;
 
         var completedEvent = new AiBotCompletedWorkOrderEvent(Data.SagaId);
         await context.Publish(completedEvent);
