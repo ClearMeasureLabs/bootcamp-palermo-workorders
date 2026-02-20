@@ -16,6 +16,8 @@ public class WorkOrderTests
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
         Assert.That(workOrder.Assignee, Is.EqualTo(null));
+        Assert.That(workOrder.Rooms, Is.Not.Null);
+        Assert.That(workOrder.Rooms, Is.Empty);
     }
 
     [Test]
@@ -79,5 +81,36 @@ public class WorkOrderTests
         order.Status = WorkOrderStatus.Draft;
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void ShouldAddRoomsToCollection()
+    {
+        var order = new WorkOrder();
+        var chapel = new Room("Chapel") { Id = Guid.NewGuid() };
+        var kitchen = new Room("Kitchen") { Id = Guid.NewGuid() };
+
+        order.Rooms.Add(chapel);
+        order.Rooms.Add(kitchen);
+
+        Assert.That(order.Rooms.Count, Is.EqualTo(2));
+        Assert.That(order.Rooms, Does.Contain(chapel));
+        Assert.That(order.Rooms, Does.Contain(kitchen));
+    }
+
+    [Test]
+    public void ShouldRemoveRoomsFromCollection()
+    {
+        var order = new WorkOrder();
+        var chapel = new Room("Chapel") { Id = Guid.NewGuid() };
+        var kitchen = new Room("Kitchen") { Id = Guid.NewGuid() };
+
+        order.Rooms.Add(chapel);
+        order.Rooms.Add(kitchen);
+        order.Rooms.Remove(chapel);
+
+        Assert.That(order.Rooms.Count, Is.EqualTo(1));
+        Assert.That(order.Rooms, Does.Not.Contain(chapel));
+        Assert.That(order.Rooms, Does.Contain(kitchen));
     }
 }
