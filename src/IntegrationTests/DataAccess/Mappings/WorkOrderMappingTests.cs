@@ -60,7 +60,6 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
-            Description = "bar"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
         order.Number = "123";
@@ -105,7 +104,6 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
-            Description = "bar"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
         order.Number = "123";

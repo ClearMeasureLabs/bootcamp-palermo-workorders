@@ -1,9 +1,14 @@
+using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Queries;
 using Microsoft.AspNetCore.Components;
 
 namespace ClearMeasure.Bootcamp.UI.Shared.Components;
 
 public partial class RoomsCheckboxGroup
 {
+    [Inject]
+    private IBus? Bus { get; set; }
+
     [Parameter]
     public List<string> SelectedRooms { get; set; } = new();
 
@@ -13,14 +18,16 @@ public partial class RoomsCheckboxGroup
     [Parameter]
     public bool Disabled { get; set; }
 
-    private readonly List<string> AvailableRooms = new()
+    private List<string> AvailableRooms { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        "Choir",
-        "Kitchen",
-        "Chapel",
-        "Nursery",
-        "Foyer"
-    };
+        if (Bus != null)
+        {
+            var rooms = await Bus.Send(new RoomGetAllQuery());
+            AvailableRooms = rooms.Select(r => r.Name).ToList();
+        }
+    }
 
     private async Task HandleCheckboxChange(string room, ChangeEventArgs e)
     {
