@@ -25,11 +25,11 @@ public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger 
             {
                 if (string.IsNullOrWhiteSpace(saveDraftCommand.WorkOrder.Title))
                 {
-                    return BadRequest("Title is required");
+                    return BadRequest("The Title field is required.");
                 }
                 if (string.IsNullOrWhiteSpace(saveDraftCommand.WorkOrder.Description))
                 {
-                    return BadRequest("Description is required");
+                    return BadRequest("The Description field is required.");
                 }
             }
             

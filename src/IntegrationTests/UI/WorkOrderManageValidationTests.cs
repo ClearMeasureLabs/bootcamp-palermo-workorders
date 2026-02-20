@@ -28,7 +28,7 @@ public class WorkOrderManageValidationTests
 
         result.ShouldBeOfType<BadRequestObjectResult>();
         var badRequest = (BadRequestObjectResult)result;
-        badRequest.Value.ToString().ShouldContain("Title is required");
+        badRequest.Value.ToString().ShouldContain("The Title field is required.");
     }
 
     [Test]
@@ -47,7 +47,7 @@ public class WorkOrderManageValidationTests
 
         result.ShouldBeOfType<BadRequestObjectResult>();
         var badRequest = (BadRequestObjectResult)result;
-        badRequest.Value.ToString().ShouldContain("Description is required");
+        badRequest.Value.ToString().ShouldContain("The Description field is required.");
     }
 
     [Test]
@@ -66,7 +66,7 @@ public class WorkOrderManageValidationTests
 
         result.ShouldBeOfType<BadRequestObjectResult>();
         var badRequest = (BadRequestObjectResult)result;
-        badRequest.Value.ToString().ShouldContain("Title is required");
+        badRequest.Value.ToString().ShouldContain("The Title field is required.");
     }
 
     [Test]
