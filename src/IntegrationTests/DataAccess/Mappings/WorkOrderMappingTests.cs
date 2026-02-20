@@ -232,7 +232,7 @@ public class WorkOrderMappingTests
         {
             Number = new string('A', 51), // Exceeds 50 char limit
             Title = new string('B', 201), // Exceeds 200 char limit
-            Description = new string('C', 1001), // Exceeds 1000 char limit
+            Description = new string('C', 2001), // Exceeds 2000 char limit
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
