@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.UI.Client;
-using MediatR;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Client;

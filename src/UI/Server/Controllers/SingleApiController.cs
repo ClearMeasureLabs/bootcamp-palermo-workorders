@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.UI.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;

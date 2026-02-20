@@ -8,13 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ChurchBulletin.ServiceDefaults\ChurchBulletin.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+    <PackageReference Include="ClearMeasure.HostedEndpoint.SqlServerTransport" Version="1.0.21" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ClearMeasureLabs.HostedEndpoint" Version="1.0.30" />
-    <PackageReference Include="ClearMeasureLabs.HostedEndpoint.SqlServerTransport" Version="1.0.30" />
-    <PackageReference Include="ClearMeasureLabs.HostedService" Version="1.0.30" />
+    <ProjectReference Include="..\ChurchBulletin.ServiceDefaults\ChurchBulletin.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+    <ProjectReference Include="..\LlmGateway\LlmGateway.csproj" />
   </ItemGroup>
 </Project>

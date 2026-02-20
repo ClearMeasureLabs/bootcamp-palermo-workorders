@@ -18,7 +18,6 @@ builder.Services.AddApplicationInsightsTelemetry();
 var endpointConfiguration = new NServiceBus.EndpointConfiguration("UI.Server");
 endpointConfiguration.UseSerialization<SystemJsonSerializer>();
 endpointConfiguration.EnableInstallers();
-endpointConfiguration.SendOnly();
 endpointConfiguration.EnableOpenTelemetry();
 
 // transport

@@ -1,7 +1,9 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.Events;
+﻿using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
+using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.HostedEndpoint;
 using ClearMeasure.HostedEndpoint.Configuration;
+using Worker.Messaging;
 
 namespace Worker;
 
@@ -61,6 +63,14 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
     // Register services
     protected override void RegisterDependencyInjection(IServiceCollection services)
     {
+        var apiUrl = Configuration["RemotableBus:ApiUrl"]
+                     ?? throw new InvalidOperationException("RemotableBus:ApiUrl configuration is required.");
 
+        services.AddHttpClient();
+
+        services.AddSingleton<IBus>(sp =>
+            new RemotableBus(sp.GetRequiredService<HttpClient>(), apiUrl));
+
+        services.AddSingleton<ChatClientFactory>();
     }
 }
