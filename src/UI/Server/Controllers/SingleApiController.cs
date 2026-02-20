@@ -21,7 +21,8 @@ public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger 
 
         if (bodyObject is IRemotableRequest remotableRequest)
         {
-            // Server-side validation
+            // Server-side validation for state commands with work orders
+            // Only StateCommandBase instances that have a non-null WorkOrder are validated
             if (remotableRequest is StateCommandBase stateCommand && stateCommand.WorkOrder != null)
             {
                 var validationErrors = new List<string>();

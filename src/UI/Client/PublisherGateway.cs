@@ -28,7 +28,7 @@ public class PublisherGateway(HttpClient httpClient) : IPublisherGateway
         if (!result.IsSuccessStatusCode)
         {
             var errorContent = await result.Content.ReadAsStringAsync();
-            throw new InvalidOperationException(errorContent);
+            throw new InvalidOperationException($"Failed to send message (Status: {result.StatusCode}): {errorContent}");
         }
         
         var json = await result.Content.ReadAsStringAsync();
