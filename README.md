@@ -430,6 +430,18 @@ Runbooks must be published before they can be consumed by triggers.
 
 Now the container app and database will automatically be scaled up every morning, and scaled down every evening
 
+# Poem
+
+*Code is poetry in motion,*  
+*Each line a verse of devotion,*  
+*From humble start to grand deploy,*  
+*Our work brings purpose, pride, and joy.*
+
+*Through loops and functions, clean and bright,*  
+*We craft solutions day and night,*  
+*In Blazor's glow and .NET's embrace,*  
+*We build with care, we build with grace.*
+
 # Build and Test
 TODO: Describe and show how to build your code and run the tests. 
 
