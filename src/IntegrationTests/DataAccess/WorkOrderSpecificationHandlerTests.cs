@@ -200,7 +200,7 @@ public class WorkOrderSpecificationHandlerTests
             Number = "123",
             Title = "Fix plumbing",
             Description = "Fix the plumbing in room 101",
-            RoomNumber = "101",
+            Description = "Test work order",
             Status = WorkOrderStatus.InProgress
         };
 
