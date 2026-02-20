@@ -14,6 +14,18 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, IDistri
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Executing");
+        
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(request.WorkOrder.Title))
+        {
+            throw new InvalidOperationException("Title is required");
+        }
+        
+        if (string.IsNullOrWhiteSpace(request.WorkOrder.Description))
+        {
+            throw new InvalidOperationException("Description is required");
+        }
+        
         request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
 
         var order = request.WorkOrder;
