@@ -40,7 +40,7 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
         }
 
         var command = new AssignedToInProgressCommand(Data.WorkOrder, Data.WorkOrder.Assignee);
-        var  commandResult = await bus.Send(command);
+        var commandResult = await bus.Send(command);
         Data.WorkOrder = commandResult.WorkOrder;
 
         var @event = new AiBotStartedWorkOrderEvent(Data.SagaId);
