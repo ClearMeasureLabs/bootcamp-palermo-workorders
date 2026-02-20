@@ -30,7 +30,7 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
         Data.WorkOrderNumber = message.WorkOrderNumber;
 
         var query = new WorkOrderByNumberQuery(Data.WorkOrderNumber);
-        Data.WorkOrder = await bus.Send(query);
+        Data.WorkOrder = (await bus.Send(query))!;
 
         if (Data.WorkOrder?.Assignee is null)
         {
@@ -56,7 +56,7 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
         var chatResponse = await chatClient.GetResponseAsync(chatMessages, cancellationToken: context.CancellationToken);
 
         Data.WorkOrder.Description = $"{Data.WorkOrder.Description}{Environment.NewLine}{Environment.NewLine}AI Bot: {chatResponse.Messages.Last()}";
-        var command = new UpdateDescriptionCommand(Data.WorkOrder, Data.WorkOrder.Assignee);
+        var command = new UpdateDescriptionCommand(Data.WorkOrder, Data.WorkOrder.Assignee!);
         await bus.Send(command);
 
         var updatedEvent = new AiBotUpdatedWorkerOrderEvent(Data.SagaId);
@@ -65,7 +65,7 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
 
     public async Task Handle(AiBotUpdatedWorkerOrderEvent @event, IMessageHandlerContext context)
     {
-        var command = new InProgressToCompleteCommand(Data.WorkOrder, Data.WorkOrder.Assignee);
+        var command = new InProgressToCompleteCommand(Data.WorkOrder, Data.WorkOrder.Assignee!);
         var result = await bus.Send(command);
         Data.WorkOrder = result.WorkOrder;
 

@@ -20,7 +20,7 @@ public class RemotableBus(HttpClient httpClient, string apiUrl) : IBus
         }
 
         var response = await PostMessage(remotableRequest);
-        return (TResponse)response?.GetBodyObject();
+        return (TResponse)response!.GetBodyObject();
     }
 
     public async Task<object?> Send(object request)
