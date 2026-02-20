@@ -22,8 +22,12 @@ public class PublisherGateway(HttpClient httpClient) : IPublisherGateway
 
     public virtual async Task<WebServiceMessage?> SendToTopic(WebServiceMessage message)
     {
-        HttpContent content = new StringContent(message.GetJson());
         var result = await httpClient.PostAsJsonAsync(ApiRelativeUrl, message);
+        if (!result.IsSuccessStatusCode)
+        {
+            var errorContent = await result.Content.ReadAsStringAsync();
+            throw new InvalidOperationException(errorContent);
+        }
         var json = await result.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<WebServiceMessage>(json);
     }
