@@ -28,5 +28,5 @@ public class WorkOrderManageModel
 
     public string? CreatedDate { get; set; }
 
-    public string? RoomNumber { get; set; }
+    public List<string> SelectedRooms { get; set; } = new();
 }

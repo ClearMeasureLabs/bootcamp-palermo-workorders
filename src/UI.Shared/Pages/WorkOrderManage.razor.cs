@@ -82,7 +82,7 @@ public partial class WorkOrderManage : AppComponentBase
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
             Description = workOrder.Description,
-            RoomNumber = workOrder.RoomNumber,
+            SelectedRooms = workOrder.Rooms.Select(r => r.Name).ToList(),
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
@@ -121,7 +121,21 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Assignee = assignee;
         workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
-        workOrder.RoomNumber = Model.RoomNumber;
+        
+        // Update rooms
+        workOrder.Rooms.Clear();
+        if (Model.SelectedRooms.Any())
+        {
+            var allRooms = await Bus.Send(new RoomGetAllQuery());
+            foreach (var roomName in Model.SelectedRooms)
+            {
+                var room = allRooms.FirstOrDefault(r => r.Name == roomName);
+                if (room != null)
+                {
+                    workOrder.Rooms.Add(room);
+                }
+            }
+        }
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);

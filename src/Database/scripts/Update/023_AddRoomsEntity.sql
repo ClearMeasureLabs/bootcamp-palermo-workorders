@@ -1,0 +1,85 @@
+BEGIN TRANSACTION
+SET QUOTED_IDENTIFIER ON
+SET ARITHABORT ON
+SET NUMERIC_ROUNDABORT OFF
+SET CONCAT_NULL_YIELDS_NULL ON
+SET ANSI_NULLS ON
+SET ANSI_PADDING ON
+SET ANSI_WARNINGS ON
+COMMIT
+BEGIN TRANSACTION
+GO
+
+-- Create Room table
+CREATE TABLE dbo.Room
+	(
+	Id uniqueidentifier NOT NULL,
+	Name nvarchar(50) NOT NULL
+	) ON [PRIMARY]
+GO
+ALTER TABLE dbo.Room ADD CONSTRAINT
+	PK_Room PRIMARY KEY CLUSTERED 
+	(
+	Id
+	) WITH( STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+
+GO
+ALTER TABLE dbo.Room SET (LOCK_ESCALATION = TABLE)
+GO
+
+-- Insert static rooms
+INSERT INTO dbo.Room (Id, Name) VALUES (NEWID(), 'Choir')
+INSERT INTO dbo.Room (Id, Name) VALUES (NEWID(), 'Kitchen')
+INSERT INTO dbo.Room (Id, Name) VALUES (NEWID(), 'Chapel')
+INSERT INTO dbo.Room (Id, Name) VALUES (NEWID(), 'Nursery')
+INSERT INTO dbo.Room (Id, Name) VALUES (NEWID(), 'Foyer')
+GO
+
+-- Create WorkOrderRooms junction table
+CREATE TABLE dbo.WorkOrderRooms
+	(
+	WorkOrderId uniqueidentifier NOT NULL,
+	RoomId uniqueidentifier NOT NULL
+	) ON [PRIMARY]
+GO
+ALTER TABLE dbo.WorkOrderRooms ADD CONSTRAINT
+	PK_WorkOrderRooms PRIMARY KEY CLUSTERED 
+	(
+	WorkOrderId,
+	RoomId
+	) WITH( STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+
+GO
+ALTER TABLE dbo.WorkOrderRooms ADD CONSTRAINT
+	FK_WorkOrderRooms_WorkOrder FOREIGN KEY
+	(
+	WorkOrderId
+	) REFERENCES dbo.WorkOrder
+	(
+	Id
+	) ON UPDATE NO ACTION 
+	  ON DELETE CASCADE
+	 
+GO
+ALTER TABLE dbo.WorkOrderRooms ADD CONSTRAINT
+	FK_WorkOrderRooms_Room FOREIGN KEY
+	(
+	RoomId
+	) REFERENCES dbo.Room
+	(
+	Id
+	) ON UPDATE NO ACTION 
+	  ON DELETE CASCADE
+	 
+GO
+ALTER TABLE dbo.WorkOrderRooms SET (LOCK_ESCALATION = TABLE)
+GO
+
+-- Drop RoomNumber column from WorkOrder
+ALTER TABLE dbo.WorkOrder
+	DROP COLUMN RoomNumber
+GO
+ALTER TABLE dbo.WorkOrder SET (LOCK_ESCALATION = TABLE)
+GO
+
+COMMIT
