@@ -84,7 +84,6 @@ public partial class WorkOrderManage : AppComponentBase
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
             Description = workOrder.Description,
-            RoomNumber = workOrder.RoomNumber,
             SelectedRoomIds = workOrder.Rooms.Select(r => r.Id).ToList(),
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
@@ -142,13 +141,13 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Assignee = assignee;
         workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
-        workOrder.RoomNumber = Model.RoomNumber;
 
-        // Update room associations
+        // Update room associations - load rooms from database to avoid tracking issues
         workOrder.Rooms.Clear();
+        var allRooms = await Bus.Send(new RoomGetAllQuery());
         foreach (var roomId in Model.SelectedRoomIds)
         {
-            var room = AvailableRooms.FirstOrDefault(r => r.Id == roomId);
+            var room = allRooms.FirstOrDefault(r => r.Id == roomId);
             if (room != null)
             {
                 workOrder.Rooms.Add(room);
