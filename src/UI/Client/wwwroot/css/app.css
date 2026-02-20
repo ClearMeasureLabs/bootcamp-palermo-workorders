@@ -42,6 +42,50 @@ a:hover, .btn-link:hover {
     box-shadow: 0 2px 10px rgba(123, 104, 238, 0.3);
 }
 
+.btn-secondary {
+    color: #4a5568;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, #cbd5e0 0%, #b0b7bf 100%);
+}
+
+.btn-secondary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-red {
+    color: #fff;
+    background: linear-gradient(135deg, #ee6868 0%, #e24a8c 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(238, 104, 104, 0.3);
+}
+
+.btn-red:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(238, 104, 104, 0.4);
+    background: linear-gradient(135deg, #e24a8c 0%, #c7395b 100%);
+}
+
+.btn-red:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(238, 104, 104, 0.3);
+}
+
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #7b68ee;
 }

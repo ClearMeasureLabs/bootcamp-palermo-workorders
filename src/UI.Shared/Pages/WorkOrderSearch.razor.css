@@ -80,31 +80,6 @@
     background: white;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #7b68ee 0%, #4a90e2 100%);
-    border: none;
-    border-radius: 12px;
-    padding: 1rem 2rem;
-    font-size: 1rem;
-    font-weight: 600;
-    color: white;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(123, 104, 238, 0.3);
-    cursor: pointer;
-    min-width: 120px;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(123, 104, 238, 0.4);
-    background: linear-gradient(135deg, #6a5acd 0%, #4169e1 100%);
-}
-
-.btn-primary:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 10px rgba(123, 104, 238, 0.3);
-}
-
 .results-card {
     background: white;
     border-radius: 20px;

@@ -212,27 +212,6 @@
     text-transform: capitalize;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #7b68ee 0%, #4a90e2 100%);
-    color: white;
-    box-shadow: 0 4px 15px rgba(123, 104, 238, 0.3);
-}
-
-.btn-red {
-    background: linear-gradient(135deg, #ee6868 0%, #e24a8c 100%);
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(123, 104, 238, 0.4);
-    background: linear-gradient(135deg, #6a5acd 0%, #4169e1 100%);
-}
-
-.btn-primary:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 10px rgba(123, 104, 238, 0.3);
-}
-
 .readonly-message {
     background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
     color: #c53030;
