@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UI\Server\UI.Server.csproj" />
+    <ProjectReference Include="..\Worker\Worker.csproj" />
   </ItemGroup>
 
 </Project>

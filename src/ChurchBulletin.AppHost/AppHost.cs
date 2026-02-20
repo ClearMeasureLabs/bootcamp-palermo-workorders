@@ -11,4 +11,10 @@ builder.AddProject<Projects.UI_Server>("ui-server")
     .WithReference(ollama)
     .WithReference(openAi);
 
+builder.AddProject<Projects.Worker>("worker")
+    .WithReference(sql)
+    .WithReference(appInsights)
+    .WithReference(ollama)
+    .WithReference(openAi);
+
 builder.Build().Run();
