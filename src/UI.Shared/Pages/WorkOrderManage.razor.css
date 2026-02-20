@@ -262,6 +262,34 @@
     margin-bottom: 0.5rem;
 }
 
+/* Checkbox group styling for multi-select rooms */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    color: #2d3748;
+    cursor: pointer;
+    padding: 0.25rem;
+    margin: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 1.2rem;
+    height: 1.2rem;
+    cursor: pointer;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .work-order-page {

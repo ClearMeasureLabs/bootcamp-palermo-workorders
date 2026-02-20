@@ -56,19 +56,23 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="RoomIds" class="form-label">Room:</label>
+                    <label class="form-label">Rooms:</label>
                     <div>
                         @if (!Model.IsReadOnly)
                         {
-                            <InputSelect data-testid="@Elements.RoomNumber" id="RoomIds" 
-                                         @bind-Value="Model.RoomIds" 
-                                         class="form-control input-select" 
-                                         multiple>
+                            <div data-testid="@Elements.RoomNumber" class="checkbox-group">
                                 @foreach (var room in RoomOptions)
                                 {
-                                    <option value="@room.Value">@room.Text</option>
+                                    var roomId = Guid.Parse(room.Value);
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" 
+                                               value="@room.Value"
+                                               checked="@Model.RoomIds.Contains(roomId)"
+                                               @onchange="@((e) => HandleRoomCheckboxChanged(roomId, e))" />
+                                        @room.Text
+                                    </label>
                                 }
-                            </InputSelect>
+                            </div>
                         }
                         else
                         {
