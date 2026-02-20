@@ -1,0 +1,294 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ClearMeasure.HostedEndpoint.SqlServerTransport</name>
+    </assembly>
+    <members>
+        <member name="T:YourNamespace.SimpleEndpoint">
+            <summary>
+            Example of a simple NServiceBus endpoint using SQL Server transport.
+            </summary>
+        </member>
+        <member name="T:YourNamespace.CustomEndpoint">
+            <summary>
+            Example with custom transport options.
+            </summary>
+        </member>
+        <member name="T:YourNamespace.OrderPlacedHandler">
+            <summary>
+            Example message handler using StorageContext for database operations.
+            </summary>
+        </member>
+        <member name="T:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportExtensions">
+            <summary>
+            Provides extension methods for configuring SQL Server transport with best practices.
+            </summary>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportExtensions.UseSqlServerTransport(NServiceBus.EndpointConfiguration,System.String,ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions)">
+            <summary>
+            Configures SQL Server transport with best practices including:
+            - TransactionScope mode for transaction coordination
+            - Automatic outbox configuration
+            - StorageContext integration for synchronized transactions
+            </summary>
+            <param name="endpointConfiguration">The endpoint configuration.</param>
+            <param name="connectionString">The SQL Server connection string.</param>
+            <param name="options">Optional configuration options.</param>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportExtensions.UseSqlServerTransport(NServiceBus.EndpointConfiguration,System.Func{System.Data.Common.DbConnection},ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions)">
+            <summary>
+            Configures SQL Server transport with a connection factory.
+            </summary>
+            <param name="endpointConfiguration">The endpoint configuration.</param>
+            <param name="connectionFactory">A factory function that creates database connections.</param>
+            <param name="options">Optional configuration options.</param>
+        </member>
+        <member name="T:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions">
+            <summary>
+            Configuration options for SQL Server transport.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions.IsolationLevel">
+            <summary>
+            Gets or sets the transaction isolation level.
+            Default is ReadCommitted.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions.TransactionTimeout">
+            <summary>
+            Gets or sets the transaction timeout.
+            Default is 1 minute.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions.DefaultSchema">
+            <summary>
+            Gets or sets the default schema for queues.
+            If not set, uses the SQL Server default (dbo).
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions.QueueSchemaSettings">
+            <summary>
+            Gets or sets queue schema settings for multi-catalog support.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions.SubscriptionSettings">
+            <summary>
+            Gets or sets subscription settings.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions.ConfigureSubscriptions">
+            <summary>
+            Gets or sets whether to configure subscriptions.
+            Default is false. Set to true if you need pub/sub capabilities.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions.EnableNativeDelayedDelivery">
+            <summary>
+            Gets or sets whether to enable native delayed delivery.
+            Default is true.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions.DelayedDeliveryTableSuffix">
+            <summary>
+            Gets or sets the delayed delivery table suffix.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SqlServerTransportOptions.OutboxDeduplicationPeriod">
+            <summary>
+            Gets or sets the period to keep outbox deduplication data.
+            Default is 7 days.
+            </summary>
+        </member>
+        <member name="T:ClearMeasure.HostedEndpoint.SqlServerTransport.QueueSchemaSettings">
+            <summary>
+            Queue schema settings for multi-catalog support.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.QueueSchemaSettings.QueueName">
+            <summary>
+            Gets or sets the queue name.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.QueueSchemaSettings.Schema">
+            <summary>
+            Gets or sets the schema for the queue.
+            </summary>
+        </member>
+        <member name="T:ClearMeasure.HostedEndpoint.SqlServerTransport.SubscriptionSettings">
+            <summary>
+            Subscription settings for SQL Server transport.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SubscriptionSettings.TableName">
+            <summary>
+            Gets or sets the subscription table name.
+            Default is "SubscriptionRouting".
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SubscriptionSettings.Schema">
+            <summary>
+            Gets or sets the subscription table schema.
+            Default is "dbo".
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SubscriptionSettings.Catalog">
+            <summary>
+            Gets or sets the subscription table catalog (database name).
+            If null, uses the default catalog from the connection string.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.SubscriptionSettings.EnableCaching">
+            <summary>
+            Gets or sets whether to enable subscription caching.
+            Default is true.
+            </summary>
+        </member>
+        <member name="T:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext">
+            <summary>
+            Provides a synchronized storage context for NServiceBus handlers to execute database operations
+            within the same transaction as message processing. This prevents escalation to distributed transactions.
+            </summary>
+            <remarks>
+            StorageContext should be injected as a transient dependency in message handlers.
+            The NServiceBus behavior (<see cref="T:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContextBehavior"/>) will attach the ambient
+            database connection and transaction from the synchronized storage session.
+            </remarks>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.Connection">
+            <summary>
+            Gets the database connection. Throws if not attached by the behavior.
+            </summary>
+        </member>
+        <member name="P:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.Transaction">
+            <summary>
+            Gets the database transaction. Throws if not attached by the behavior.
+            </summary>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.Attach(System.Data.IDbConnection,System.Data.IDbTransaction)">
+            <summary>
+            Attaches the database connection and transaction from the NServiceBus synchronized storage session.
+            This method is called by <see cref="T:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContextBehavior"/>.
+            </summary>
+            <param name="connection">The database connection.</param>
+            <param name="transaction">The database transaction.</param>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.QueryAsync``1(System.String,System.Object,System.Nullable{System.Int32},System.Nullable{System.Data.CommandType})">
+            <summary>
+            Executes a query and returns the result set.
+            </summary>
+            <typeparam name="T">The type to return.</typeparam>
+            <param name="sql">The SQL query.</param>
+            <param name="param">The query parameters.</param>
+            <param name="commandTimeout">The command timeout in seconds.</param>
+            <param name="commandType">The command type.</param>
+            <returns>A collection of results.</returns>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.QuerySingleOrDefaultAsync``1(System.String,System.Object,System.Nullable{System.Int32},System.Nullable{System.Data.CommandType})">
+            <summary>
+            Executes a single-row query.
+            </summary>
+            <typeparam name="T">The type to return.</typeparam>
+            <param name="sql">The SQL query.</param>
+            <param name="param">The query parameters.</param>
+            <param name="commandTimeout">The command timeout in seconds.</param>
+            <param name="commandType">The command type.</param>
+            <returns>The first result or default.</returns>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.QuerySingleAsync``1(System.String,System.Object,System.Nullable{System.Int32},System.Nullable{System.Data.CommandType})">
+            <summary>
+            Executes a single-row query.
+            </summary>
+            <typeparam name="T">The type to return.</typeparam>
+            <param name="sql">The SQL query.</param>
+            <param name="param">The query parameters.</param>
+            <param name="commandTimeout">The command timeout in seconds.</param>
+            <param name="commandType">The command type.</param>
+            <returns>The first result.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown when no result is found.</exception>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.QueryFirstOrDefaultAsync``1(System.String,System.Object,System.Nullable{System.Int32},System.Nullable{System.Data.CommandType})">
+            <summary>
+            Executes a query and returns the first result or default.
+            </summary>
+            <typeparam name="T">The type to return.</typeparam>
+            <param name="sql">The SQL query.</param>
+            <param name="param">The query parameters.</param>
+            <param name="commandTimeout">The command timeout in seconds.</param>
+            <param name="commandType">The command type.</param>
+            <returns>The first result or default.</returns>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.QueryFirstAsync``1(System.String,System.Object,System.Nullable{System.Int32},System.Nullable{System.Data.CommandType})">
+            <summary>
+            Executes a query and returns the first result.
+            </summary>
+            <typeparam name="T">The type to return.</typeparam>
+            <param name="sql">The SQL query.</param>
+            <param name="param">The query parameters.</param>
+            <param name="commandTimeout">The command timeout in seconds.</param>
+            <param name="commandType">The command type.</param>
+            <returns>The first result.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown when no result is found.</exception>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.ExecuteAsync(System.String,System.Object,System.Nullable{System.Int32},System.Nullable{System.Data.CommandType})">
+            <summary>
+            Executes a command that returns no results.
+            </summary>
+            <param name="sql">The SQL command.</param>
+            <param name="param">The command parameters.</param>
+            <param name="commandTimeout">The command timeout in seconds.</param>
+            <param name="commandType">The command type.</param>
+            <returns>The number of rows affected.</returns>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.ExecuteScalarAsync``1(System.String,System.Object,System.Nullable{System.Int32},System.Nullable{System.Data.CommandType})">
+            <summary>
+            Executes a command and returns a scalar value.
+            </summary>
+            <typeparam name="T">The type to return.</typeparam>
+            <param name="sql">The SQL command.</param>
+            <param name="param">The command parameters.</param>
+            <param name="commandTimeout">The command timeout in seconds.</param>
+            <param name="commandType">The command type.</param>
+            <returns>The scalar result.</returns>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.QueryMultipleAsync(System.String,System.Object,System.Nullable{System.Int32},System.Nullable{System.Data.CommandType})">
+            <summary>
+            Executes a query and returns multiple result sets.
+            </summary>
+            <param name="sql">The SQL query.</param>
+            <param name="param">The query parameters.</param>
+            <param name="commandTimeout">The command timeout in seconds.</param>
+            <param name="commandType">The command type.</param>
+            <returns>A grid reader for multiple result sets.</returns>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.Dispose">
+            <summary>
+            Disposes of the storage context. Note: Connection and Transaction are managed by NServiceBus
+            and should not be disposed here.
+            </summary>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContext.Dispose(System.Boolean)">
+            <summary>
+            Disposes of resources.
+            </summary>
+            <param name="disposing">True if disposing managed resources.</param>
+        </member>
+        <member name="T:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContextBehavior">
+            <summary>
+            NServiceBus behavior that attaches the synchronized storage session's database connection
+            and transaction to the StorageContext for use in message handlers.
+            </summary>
+            <remarks>
+            This behavior ensures that all database operations performed through StorageContext
+            participate in the same transaction as the NServiceBus message processing,
+            preventing escalation to distributed transactions.
+            </remarks>
+        </member>
+        <member name="M:ClearMeasure.HostedEndpoint.SqlServerTransport.StorageContextBehavior.Invoke(NServiceBus.Pipeline.IInvokeHandlerContext,System.Func{System.Threading.Tasks.Task})">
+            <summary>
+            Invokes the behavior to attach the storage context.
+            </summary>
+            <param name="context">The message context.</param>
+            <param name="next">The next behavior in the pipeline.</param>
+        </member>
+    </members>
+</doc>
