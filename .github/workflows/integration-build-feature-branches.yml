@@ -96,25 +96,25 @@ jobs:
           path: '**/build/test/**/In/**/coverage.cobertura.xml'
           retention-days: 2
 
-      # # Package Everything as NuGet Packages
-      # - name: Create NuGet Packages
-      #   shell: pwsh
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     GITHUB_REPOSITORY: ${{ github.repository }}
-      #     BUILD_BUILDNUMBER: ${{ env.VERSION }}
-      #   run: |
-      #     . ./build.ps1
-      #     Package-Everything
+      # Package Everything as NuGet Packages
+      - name: Create NuGet Packages
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+        run: |
+          . ./build.ps1
+          Package-Everything
 
-      # # Upload packages as artifacts
-      # - name: Upload NuGet Package artifacts
-      #   uses: actions/upload-artifact@v4
-      #   if: success()
-      #   with:
-      #     name: churchbulletin-nuget-packages
-      #     path: build/*.nupkg
-      #     retention-days: 2
+      # Upload packages as artifacts
+      - name: Upload NuGet Package artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: churchbulletin-nuget-packages
+          path: build/*.nupkg
+          retention-days: 2
 
       - name: Upload build_version.txt artifact
         uses: actions/upload-artifact@v4
@@ -124,137 +124,137 @@ jobs:
           path: build_version.txt
           retention-days: 2
 
-      # - name: Publish nupkgs to GitHub Packages
-      #   if: success()
-      #   env:
-      #     NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     OWNER="${{ github.repository_owner }}"
-      #     FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
+      - name: Publish nupkgs to GitHub Packages
+        if: success()
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
           
-      #     echo "Publishing packages to GitHub Packages..."
-      #     echo "Owner: $OWNER"
-      #     echo "Feed URL: $FEED_URL"
+          echo "Publishing packages to GitHub Packages..."
+          echo "Owner: $OWNER"
+          echo "Feed URL: $FEED_URL"
           
-      #     # Publish all packages using direct authentication
-      #     for package in build/*.nupkg; do
-      #       if [ -f "$package" ]; then
-      #         echo "Publishing $package to GitHub Packages..."
-      #         dotnet nuget push "$package" \
-      #           --source "$FEED_URL" \
-      #           --api-key "$NUGET_AUTH_TOKEN" \
-      #           --timeout 600 \
-      #           --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
-      #       fi
-      #     done
+          # Publish all packages using direct authentication
+          for package in build/*.nupkg; do
+            if [ -f "$package" ]; then
+              echo "Publishing $package to GitHub Packages..."
+              dotnet nuget push "$package" \
+                --source "$FEED_URL" \
+                --api-key "$NUGET_AUTH_TOKEN" \
+                --timeout 600 \
+                --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
+            fi
+          done
 
-      # # Publish packages to Octopus Deploy built-in feed
-      # - name: Publish Packages to Octopus Deploy
-      #   shell: pwsh
-      #   if: success()
-      #   env:
-      #     OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-      #     OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-      #     OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-      #     BUILD_BUILDNUMBER: ${{ env.VERSION }}
-      #   run: |
-      #     $ErrorActionPreference = "Stop"
+      # Publish packages to Octopus Deploy built-in feed
+      - name: Publish Packages to Octopus Deploy
+        shell: pwsh
+        if: success()
+        env:
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+        run: |
+          $ErrorActionPreference = "Stop"
           
-      #     $octopusUrl = $env:OCTOPUS_URL
-      #     $octopusApiKey = $env:OCTOPUS_API_KEY
-      #     $octopusSpace = $env:OCTOPUS_SPACE
-      #     $version = $env:BUILD_BUILDNUMBER
+          $octopusUrl = $env:OCTOPUS_URL
+          $octopusApiKey = $env:OCTOPUS_API_KEY
+          $octopusSpace = $env:OCTOPUS_SPACE
+          $version = $env:BUILD_BUILDNUMBER
           
-      #     if ([string]::IsNullOrWhiteSpace($octopusUrl)) {
-      #       Write-Warning "OCTOPUS_URL not set. Skipping Octopus package publishing."
-      #       exit 0
-      #     }
+          if ([string]::IsNullOrWhiteSpace($octopusUrl)) {
+            Write-Warning "OCTOPUS_URL not set. Skipping Octopus package publishing."
+            exit 0
+          }
           
-      #     if ([string]::IsNullOrWhiteSpace($octopusApiKey)) {
-      #       Write-Warning "OCTOPUS_API_KEY not set. Skipping Octopus package publishing."
-      #       exit 0
-      #     }
+          if ([string]::IsNullOrWhiteSpace($octopusApiKey)) {
+            Write-Warning "OCTOPUS_API_KEY not set. Skipping Octopus package publishing."
+            exit 0
+          }
           
-      #     Write-Host "Publishing packages to Octopus Deploy: $octopusUrl"
-      #     Write-Host "Package version: $version"
+          Write-Host "Publishing packages to Octopus Deploy: $octopusUrl"
+          Write-Host "Package version: $version"
           
-      #     if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
-      #       Write-Host "Octopus Space: $octopusSpace"
-      #     }
+          if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
+            Write-Host "Octopus Space: $octopusSpace"
+          }
           
-      #     # Ensure dotnet-octo tool is available
-      #     Write-Host "Checking for dotnet-octo tool..."
-      #     $octoTool = Get-Command dotnet-octo -ErrorAction SilentlyContinue
-      #     if (-not $octoTool) {
-      #       Write-Host "Installing dotnet-octo tool..."
-      #       dotnet tool install --global Octopus.DotNet.Cli
-      #     }
+          # Ensure dotnet-octo tool is available
+          Write-Host "Checking for dotnet-octo tool..."
+          $octoTool = Get-Command dotnet-octo -ErrorAction SilentlyContinue
+          if (-not $octoTool) {
+            Write-Host "Installing dotnet-octo tool..."
+            dotnet tool install --global Octopus.DotNet.Cli
+          }
           
-      #     # Ensure dotnet tools are in PATH
-      #     $dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
-      #     $pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
-      #     $dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
-      #     if (-not $dotnetToolsPathPresent) {
-      #       $env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
-      #       Write-Host "Added dotnet tools to PATH: $dotnetToolsPath"
-      #     }
+          # Ensure dotnet tools are in PATH
+          $dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
+          $pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
+          $dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
+          if (-not $dotnetToolsPathPresent) {
+            $env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
+            Write-Host "Added dotnet tools to PATH: $dotnetToolsPath"
+          }
           
-      #     # Find all .nupkg files in the build directory
-      #     $packageFiles = Get-ChildItem -Path "./build" -Filter "*.nupkg" -ErrorAction SilentlyContinue
+          # Find all .nupkg files in the build directory
+          $packageFiles = Get-ChildItem -Path "./build" -Filter "*.nupkg" -ErrorAction SilentlyContinue
           
-      #     if (-not $packageFiles -or $packageFiles.Count -eq 0) {
-      #       Write-Warning "No packages found in ./build directory"
-      #       exit 0
-      #     }
+          if (-not $packageFiles -or $packageFiles.Count -eq 0) {
+            Write-Warning "No packages found in ./build directory"
+            exit 0
+          }
           
-      #     Write-Host "Found $($packageFiles.Count) package(s) to publish to Octopus Deploy:"
-      #     foreach ($packageFile in $packageFiles) {
-      #       Write-Host "  - $($packageFile.Name)"
-      #     }
+          Write-Host "Found $($packageFiles.Count) package(s) to publish to Octopus Deploy:"
+          foreach ($packageFile in $packageFiles) {
+            Write-Host "  - $($packageFile.Name)"
+          }
           
-      #     # Publish each package
-      #     $publishedCount = 0
-      #     $failedCount = 0
+          # Publish each package
+          $publishedCount = 0
+          $failedCount = 0
           
-      #     foreach ($packageFile in $packageFiles) {
-      #       $packageName = $packageFile.Name
-      #       Write-Host ""
-      #       Write-Host "Publishing $packageName to Octopus Deploy..."
+          foreach ($packageFile in $packageFiles) {
+            $packageName = $packageFile.Name
+            Write-Host ""
+            Write-Host "Publishing $packageName to Octopus Deploy..."
             
-      #       try {
-      #         $pushArgs = @(
-      #           "push",
-      #           "--package", $packageFile.FullName,
-      #           "--server", $octopusUrl,
-      #           "--apiKey", $octopusApiKey
-      #         )
+            try {
+              $pushArgs = @(
+                "push",
+                "--package", $packageFile.FullName,
+                "--server", $octopusUrl,
+                "--apiKey", $octopusApiKey
+              )
               
-      #         if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
-      #           $pushArgs += "--space"
-      #           $pushArgs += $octopusSpace
-      #         }
+              if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
+                $pushArgs += "--space"
+                $pushArgs += $octopusSpace
+              }
               
-      #         & dotnet-octo $pushArgs
+              & dotnet-octo $pushArgs
               
-      #         if ($LASTEXITCODE -eq 0) {
-      #           Write-Host "✅ Successfully published $packageName to Octopus Deploy" -ForegroundColor Green
-      #           $publishedCount++
-      #         } else {
-      #           Write-Warning "Failed to publish $packageName (exit code: $LASTEXITCODE)"
-      #           $failedCount++
-      #         }
-      #       } catch {
-      #         Write-Warning "Error publishing $packageName : $_"
-      #         $failedCount++
-      #       }
-      #     }
+              if ($LASTEXITCODE -eq 0) {
+                Write-Host "✅ Successfully published $packageName to Octopus Deploy" -ForegroundColor Green
+                $publishedCount++
+              } else {
+                Write-Warning "Failed to publish $packageName (exit code: $LASTEXITCODE)"
+                $failedCount++
+              }
+            } catch {
+              Write-Warning "Error publishing $packageName : $_"
+              $failedCount++
+            }
+          }
           
-      #     Write-Host ""
-      #     Write-Host "Octopus package publishing summary: $publishedCount published, $failedCount failed"
+          Write-Host ""
+          Write-Host "Octopus package publishing summary: $publishedCount published, $failedCount failed"
 
-      #     if ($failedCount -gt 0) {
-      #       Write-Warning "Some packages failed to publish to Octopus Deploy."
-      #     }
+          if ($failedCount -gt 0) {
+            Write-Warning "Some packages failed to publish to Octopus Deploy."
+          }
 
       - name: Mark PR as ready for review
         if: success()
