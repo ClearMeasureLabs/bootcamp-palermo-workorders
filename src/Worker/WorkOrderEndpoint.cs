@@ -1,5 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.Events;
-using ClearMeasure.Bootcamp.DataAccess.Messaging;
+﻿using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.HostedEndpoint;
 using ClearMeasure.HostedEndpoint.Configuration;
 
