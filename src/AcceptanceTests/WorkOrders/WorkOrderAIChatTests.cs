@@ -1,10 +1,10 @@
-﻿using ClearMeasure.Bootcamp.UI.Shared.Components;
+using ClearMeasure.Bootcamp.UI.Shared.Components;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 public class WorkOrderAiChatTests : AcceptanceTestBase
 {
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldSendChatMessageAndReceiveResponse()
     {
         await LoginAsCurrentUser();

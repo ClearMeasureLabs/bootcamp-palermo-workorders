@@ -3,7 +3,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
 public record SaveDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) :
-    StateCommandBase(WorkOrder, CurrentUser)
+StateCommandBase(WorkOrder, CurrentUser)
 {
     public const string Name = "Save";
 

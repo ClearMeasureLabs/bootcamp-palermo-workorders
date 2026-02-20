@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
+﻿namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 public record InProgressToCancelledCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder, CurrentUser)
 {
     public const string Name = "Cancel";

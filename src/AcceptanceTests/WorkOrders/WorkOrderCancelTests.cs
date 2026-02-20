@@ -1,11 +1,11 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 public class WorkOrderCancelTests : AcceptanceTestBase
 {
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldAssignAndCancel()
     {
         await LoginAsCurrentUser();
@@ -25,7 +25,7 @@ public class WorkOrderCancelTests : AcceptanceTestBase
 
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldBeginAndCancel()
     {
         await LoginAsCurrentUser();

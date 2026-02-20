@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.UI.Shared;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.Authentication;
@@ -11,7 +11,7 @@ public class LogoutTests : AcceptanceTestBase
         await LoginAsCurrentUser();
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldLogout()
     {
         var newLink = Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder));

@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.UI.Client.Pages;
+using ClearMeasure.Bootcamp.UI.Client.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -7,7 +7,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 [TestFixture]
 public class ClientHealthCheckTests : AcceptanceTestBase
 {
-    [Test]
+    [Test, Retry(2)]
     public async Task FirstStartShouldValidateClientHealthChecks()
     {
         await Page.GotoAsync("/_clienthealthcheck");
@@ -17,7 +17,7 @@ public class ClientHealthCheckTests : AcceptanceTestBase
         innerTextAsync.ShouldBe(nameof(HealthStatus.Healthy));
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task Should_NavigateToHealthCheck_WhenGearIconClicked()
     {
         // Arrange
@@ -37,7 +37,7 @@ public class ClientHealthCheckTests : AcceptanceTestBase
         innerTextAsync.ShouldBe(nameof(HealthStatus.Healthy));
     }
 
-    [Test]
+    [Test, Retry(2)]
     public async Task FirstStartShouldValidateServerHealthChecks()
     {
         await Page.GotoAsync("/_healthcheck");

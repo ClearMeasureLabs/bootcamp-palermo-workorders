@@ -8,6 +8,11 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class StubBus() : Bus(null!)
 {
+    public override Task Publish(INotification notification)
+    {
+        return Task.CompletedTask;
+    }
+
     public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
     {
         if (request is EmployeeGetAllQuery)

@@ -3,12 +3,7 @@ param (
     [string]$databaseServer = "",
 	
     [Parameter(Mandatory=$false)]
-    [string]$databaseName = "",
-	
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$migrateDbWithFlyway = $false
-	
+    [string]$databaseName = ""
 )
 
 . .\build.ps1

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
@@ -33,7 +34,7 @@ public partial class Login : AppComponentBase
         }
     }
 
-    private void HandleLogin()
+    private async Task HandleLogin()
     {
         if (string.IsNullOrEmpty(loginModel.Username))
         {
@@ -48,6 +49,7 @@ public partial class Login : AppComponentBase
             // Successful login
             AuthStateProvider!.Login(loginModel.Username);
             EventBus.Notify(new UserLoggedInEvent(loginModel.Username));
+            await Bus.Publish(new Core.Model.Events.UserLoggedInEvent(loginModel.Username));
             NavigationManager!.NavigateTo("/");
         }
         else

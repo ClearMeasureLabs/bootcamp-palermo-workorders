@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
+using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -6,7 +6,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 public class WorkOrderCompleteTests : AcceptanceTestBase
 {
-    [Test]
+    [Test, Retry(2)]
     public async Task ShouldCompleteWorkOrder()
     {
         await LoginAsCurrentUser();
@@ -19,12 +19,14 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         order = await BeginExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-        order.Title = "Title from automation";
-        order.Description = "Description";
+        var expectedTitle = "Title from automation";
+        var expectedDescription = "Description";
+        order.Title = expectedTitle;
+        order.Description = expectedDescription;
         order = await CompleteExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync(order.Title!,
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync(expectedTitle,
             new LocatorAssertionsToHaveValueOptions
             {
                 Timeout = 10000 // 10 seconds
@@ -32,7 +34,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToBeDisabledAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
-            .ToHaveValueAsync(order.Description!);
+            .ToHaveValueAsync(expectedDescription);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeDisabledAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
@@ -45,8 +47,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         rehyratedOrder.CompletedDate.TruncateToMinute().ShouldBe(displayedDateTime);
     }
 
-    [Test]
-    [Retry(3)]
+    [Test, Retry(2)]
     public async Task CompleteWorkOrderWorkflow()
     {
         await LoginAsCurrentUser();

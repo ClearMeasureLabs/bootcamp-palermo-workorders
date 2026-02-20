@@ -1,16 +1,42 @@
+using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.DataAccess.Messaging;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
 
-// Add background service
+// Add NServiceBus endpoint
+var endpointConfiguration = new NServiceBus.EndpointConfiguration("UI.Server");
+endpointConfiguration.UseSerialization<SystemJsonSerializer>();
+endpointConfiguration.EnableInstallers();
+endpointConfiguration.SendOnly();
+endpointConfiguration.EnableOpenTelemetry();
 
+// transport
+var transport = endpointConfiguration.UseTransport<SqlServerTransport>();
+transport.ConnectionString(builder.Configuration.GetConnectionString("SqlConnectionString"));
+transport.DefaultSchema("nServiceBus");
+transport.Transactions(TransportTransactionMode.TransactionScope);
+
+// message conventions
+var conventions = new MessagingConventions();
+endpointConfiguration.Conventions().Add(conventions);
+
+builder.Host.UseNServiceBus(_ => endpointConfiguration);
+
+// Build application
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

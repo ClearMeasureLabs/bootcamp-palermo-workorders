@@ -14,12 +14,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Counter\**" />
-	  <EmbeddedResource Remove="Counter\**" />
-	  <None Remove="Counter\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Remove="coverage.cobertura.xml" />
 		<None Remove="coverage.json" />
 	</ItemGroup>

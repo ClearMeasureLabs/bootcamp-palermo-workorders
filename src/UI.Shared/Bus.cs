@@ -1,70 +1,109 @@
 ﻿using System.Collections;
+using System.Diagnostics;
 using ClearMeasure.Bootcamp.Core;
 using MediatR;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
 
 namespace ClearMeasure.Bootcamp.UI.Shared;
 
 public class Bus : IBus
 {
-    private readonly TelemetryClient? _telemetryClient = null;
+    private static readonly ActivitySource ActivitySource = new("ChurchBulletin.Application.Bus", "1.0.0");
+
     private readonly IMediator _mediator;
 
-    public Bus(IMediator mediator) : this(mediator, null)
-    {
-
-    }
-    public Bus(IMediator mediator, TelemetryClient? telemetryClient)
+    public Bus(IMediator mediator)
     {
         _mediator = mediator;
-        _telemetryClient = telemetryClient;
     }
 
     public virtual async Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
     {
-        var response = await _mediator.Send(request);
-        RecordCustomEvent(request);
-        RecordTrace(request);
-        return response;
+        using var activity = StartActivity(request);
+
+        try
+        {
+            return await _mediator.Send(request);
+        }
+        catch (Exception ex)
+        {
+            SetActivityError(activity, ex);
+            throw;
+        }
     }
 
     public virtual async Task<object?> Send(object request)
     {
-        var response = await _mediator.Send(request);
-        RecordCustomEvent(request);
-        RecordTrace(request);
-        return response;
+        using var activity = StartActivity(request);
+
+        try
+        {
+            return await _mediator.Send(request);
+        }
+        catch (Exception ex)
+        {
+            SetActivityError(activity, ex);
+            throw;
+        }
     }
 
-    public void Publish<TNotification>(TNotification notification) where TNotification : INotification
+    public virtual async Task Publish(INotification notification)
     {
-        _mediator.Publish(notification);
+        using var activity = StartActivity(notification, "Publish");
+
+        try
+        {
+            await _mediator.Publish(notification);
+        }
+        catch (Exception ex)
+        {
+            SetActivityError(activity, ex);
+            throw;
+        }
     }
 
-    private void RecordTrace(object message)
+    private static Activity? StartActivity(object message, string operation = "Send")
     {
-        _telemetryClient?.TrackTrace(message.GetType().Name + ":- " + message, SeverityLevel.Verbose);
+        var messageName = message.GetType().Name;
+        var parentContext = Activity.Current?.Context;
+
+        var activity = parentContext.HasValue
+            ? ActivitySource.StartActivity($"Bus.{operation} {messageName}", ActivityKind.Internal, parentContext.Value)
+            : ActivitySource.StartActivity($"Bus.{operation} {messageName}", ActivityKind.Internal);
+
+        if (activity is null)
+        {
+            return null;
+        }
+
+        activity.SetTag("bus.operation", operation);
+        activity.SetTag("bus.message.type", messageName);
+        activity.SetTag("bus.message.fullname", message.GetType().FullName);
+        AddPropertyTags(message, activity);
+
+        return activity;
     }
 
-    private void RecordCustomEvent(object message)
+    private static void SetActivityError(Activity? activity, Exception ex)
     {
-        var telemetry = new EventTelemetry();
-        telemetry.Name = message.GetType().Name;
-        telemetry.Properties.Add("FullName", message.GetType().FullName);
-        AddPropertyValues(message, telemetry.Properties);
-        _telemetryClient?.TrackEvent(telemetry);
+        if (activity is null) return;
+
+        activity.SetStatus(ActivityStatusCode.Error, ex.Message);
+        activity.SetTag("error", true);
+        activity.SetTag("exception.type", ex.GetType().FullName);
+        activity.SetTag("exception.message", ex.Message);
+        activity.SetTag("exception.stacktrace", ex.ToString());
     }
 
-    protected virtual void AddPropertyValues(object message, IDictionary<string, string> eventProperties)
+    private static void AddPropertyTags(object message, Activity activity)
     {
         var properties = message.GetType().GetProperties();
+
         foreach (var property in properties)
         {
             if (!typeof(IEnumerable).IsAssignableFrom(property.PropertyType) || property.PropertyType == typeof(string))
             {
                 var propertyValue = property.GetValue(message);
-                eventProperties.Add(property.Name, propertyValue?.ToString() ?? string.Empty);
+                activity.SetTag($"bus.message.{property.Name}", propertyValue?.ToString() ?? string.Empty);
             }
         }
     }
