@@ -41,7 +41,7 @@ public class WorkOrderEvaluationAgent(
                                  Work Order: {workOrder.Number}
                                  Title: {workOrder.Title}
                                  Description: {workOrder.Description}
-                                 Room Number: {workOrder.RoomNumber}
+                                 Room Number: {workOrder.RoomNum}
                                  Assigned Date: {workOrder.AssignedDate}
                                  Creator: {workOrder.Creator?.GetFullName()}
                                  Assignee: {workOrder.Assignee?.GetFullName()}

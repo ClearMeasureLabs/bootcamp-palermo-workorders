@@ -21,7 +21,7 @@ abstract class EntityBase<T> {
 class WorkOrder {
   +Title : string
   +Description : string
-  +RoomNumber : string
+  +RoomNum : string
   +Status : WorkOrderStatus
   +Creator : Employee
   +Assignee : Employee
