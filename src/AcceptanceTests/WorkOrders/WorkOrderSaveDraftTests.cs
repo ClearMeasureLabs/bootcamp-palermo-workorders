@@ -44,8 +44,12 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync(order.Description!);
 
-        var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
-        await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
+        // Room checkboxes - verify selected rooms match
+        foreach (var room in order.Rooms)
+        {
+            var checkbox = Page.Locator($"#room-{room.Name}");
+            await Expect(checkbox).ToBeCheckedAsync();
+        }
 
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
