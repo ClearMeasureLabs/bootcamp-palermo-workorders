@@ -116,7 +116,7 @@ public class EmployeeTests
     {
         var employee1 = new Employee("", "1", "1", "");
         employee1.AddRole(new Role("", false, true));
-        Assert.That(employee1.CanFulfilWorkOrder(), Is.EqualTo(true));
+        Assert.That(employee1.CanFulfillWorkOrder(), Is.EqualTo(true));
     }
 
     [Test]

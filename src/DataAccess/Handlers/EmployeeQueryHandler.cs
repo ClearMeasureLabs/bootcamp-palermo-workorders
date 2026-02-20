@@ -28,7 +28,7 @@ public class EmployeeQueryHandler(DataContext context)
         var employees = await query.ToListAsync();
         if (EmployeeSpecification.All.CanFulfill)
         {
-            employees = employees.Where(e => e.CanFulfilWorkOrder()).ToList();
+            employees = employees.Where(e => e.CanFulfillWorkOrder()).ToList();
         }
 
         return employees.OrderBy(e => e.LastName).ThenBy(e => e.FirstName).ToArray();
