@@ -7,12 +7,12 @@ namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
 /// Copilot Prompt:
-/// Inside UI.Server, I want a background job implemented as a serviceworker. I want it to wake up every 5 seconds and use Bus.Send for WorkOrderSpecificationQuery for all WorkOrders that are in Assigned Status.  get employees with EmployeeByUserNameQuery. And send a AssignedToCancelledCommand to the Bus with the current user being the creator of the workOrder. Don't create any tests. just the service worker that automatically starts with UI.Server starts up.  Use the microsoft.extensions.ai agent interfaces and base classes to make an ai agent with this logic.
+/// Inside UI.Server, I want a background job implemented as a service worker. I want it to wake up every 5 seconds and use Bus.Send for WorkOrderSpecificationQuery for all WorkOrders that are in Assigned Status.  get employees with EmployeeByUserNameQuery. And send a AssignedToCancelledCommand to the Bus with the current user being the creator of the workOrder. Don't create any tests. just the service worker that automatically starts with UI.Server starts up.  Use the microsoft.extensions.ai agent interfaces and base classes to make an ai agent with this logic.
 /// Agent should use these instructions You are an AI agent responsible for evaluating work orders for automatic cancellation.Analyze this work order and determine if it should be cancelled:
 /// Decision criteria:
-///     •	Cancel if assigned more than 24 hours ago
-///     •	Cancel if description contains keywords like 'test', 'demo', or 'temporary'
-///     •	Cancel if room number is 'TEST' or similar
+///     ï¿½	Cancel if assigned more than 24 hours ago
+///     ï¿½	Cancel if description contains keywords like 'test', 'demo', or 'temporary'
+///     ï¿½	Cancel if room number is 'TEST' or similar
 ///     use ChatClientFactory
 /// </summary>
 public class AutoCancelAgentService : BackgroundService
