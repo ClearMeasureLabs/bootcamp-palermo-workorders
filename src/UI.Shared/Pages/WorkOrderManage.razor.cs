@@ -28,11 +28,14 @@ public partial class WorkOrderManage : AppComponentBase
     [SupplyParameterFromQuery] public string? Mode { get; set; }
     public EditMode CurrentMode => Mode?.ToLower() == "edit" ? EditMode.Edit : EditMode.New;
 
+    public int TitleLength { get; set; }
+    public int DescriptionLength { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadUserOptions();
         await LoadWorkOrder();
-
+        UpdateCharacterCounts();
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
@@ -130,6 +133,30 @@ public partial class WorkOrderManage : AppComponentBase
         EventBus.Notify(new WorkOrderChangedEvent(result));
 
         NavigationManager!.NavigateTo("/workorder/search");
+    }
+
+    private void OnTitleInput(ChangeEventArgs e)
+    {
+        Model.Title = e.Value?.ToString();
+        UpdateCharacterCounts();
+    }
+
+    private void OnDescriptionInput(ChangeEventArgs e)
+    {
+        Model.Description = e.Value?.ToString();
+        UpdateCharacterCounts();
+    }
+
+    private void UpdateCharacterCounts()
+    {
+        TitleLength = Model.Title?.Length ?? 0;
+        DescriptionLength = Model.Description?.Length ?? 0;
+    }
+
+    private string GetCharCounterClass(int currentLength, int maxLength)
+    {
+        var warningThreshold = maxLength * 0.9;
+        return currentLength >= warningThreshold ? "char-counter-warning" : "";
     }
 }
 

@@ -93,4 +93,100 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         
         rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
+
+    [Test, Retry(2)]
+    public async Task CharacterCounterDisplaysForTitleField()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var titleCharCounter = Page.GetByTestId(nameof(WorkOrderManage.Elements.TitleCharCounter));
+        await Expect(titleCharCounter).ToBeVisibleAsync();
+        await Expect(titleCharCounter).ToContainTextAsync("0/250 characters");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "Test Title");
+        await Expect(titleCharCounter).ToContainTextAsync("10/250 characters");
+    }
+
+    [Test, Retry(2)]
+    public async Task CharacterCounterDisplaysForDescriptionField()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var descCharCounter = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCounter));
+        await Expect(descCharCounter).ToBeVisibleAsync();
+        await Expect(descCharCounter).ToContainTextAsync("0/500 characters");
+
+        await Input(nameof(WorkOrderManage.Elements.Description), "Test Description");
+        await Expect(descCharCounter).ToContainTextAsync("16/500 characters");
+    }
+
+    [Test, Retry(2)]
+    public async Task TitleMaxlengthAttributePreventsInputBeyondLimit()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var longTitle = new string('A', 260);
+        await Input(nameof(WorkOrderManage.Elements.Title), longTitle);
+
+        var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        var actualValue = await titleField.InputValueAsync();
+        
+        actualValue.Length.ShouldBeLessThanOrEqualTo(250);
+    }
+
+    [Test, Retry(2)]
+    public async Task DescriptionMaxlengthAttributePreventsInputBeyondLimit()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var longDesc = new string('B', 510);
+        await Input(nameof(WorkOrderManage.Elements.Description), longDesc);
+
+        var descField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
+        var actualValue = await descField.InputValueAsync();
+        
+        actualValue.Length.ShouldBeLessThanOrEqualTo(500);
+    }
+
+    [Test, Retry(2)]
+    public async Task CharacterCounterWarningStateWhenApproachingTitleLimit()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var titleApproachingLimit = new string('A', 226);
+        await Input(nameof(WorkOrderManage.Elements.Title), titleApproachingLimit);
+
+        var titleCharCounter = Page.GetByTestId(nameof(WorkOrderManage.Elements.TitleCharCounter));
+        await Expect(titleCharCounter).ToHaveClassAsync(new Regex("char-counter-warning"));
+    }
+
+    [Test, Retry(2)]
+    public async Task CharacterCounterWarningStateWhenApproachingDescriptionLimit()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var descApproachingLimit = new string('B', 451);
+        await Input(nameof(WorkOrderManage.Elements.Description), descApproachingLimit);
+
+        var descCharCounter = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCounter));
+        await Expect(descCharCounter).ToHaveClassAsync(new Regex("char-counter-warning"));
+    }
 }
