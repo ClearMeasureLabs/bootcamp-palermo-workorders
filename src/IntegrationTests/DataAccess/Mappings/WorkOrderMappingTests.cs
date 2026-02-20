@@ -171,6 +171,40 @@ public class WorkOrderMappingTests
     }
 
     [Test]
+    public void ShouldMapInstructionsField()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-03",
+            Title = "Test Instructions",
+            Description = "Testing instructions field",
+            Instructions = "Follow safety protocols. Wear protective gear.",
+            RoomNumber = "CR-101",
+            Status = WorkOrderStatus.Draft,
+            Creator = creator
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe("Follow safety protocols. Wear protective gear.");
+    }
+
+    [Test]
     public void ShouldMapWorkOrderStatusConversion()
     {
         new DatabaseTests().Clean();
