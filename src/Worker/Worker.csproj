@@ -13,14 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="ClearMeasure.HostedEndpoint">
-      <HintPath>..\..\lib\ClearMeasure.HostedEndpoint.dll</HintPath>
-    </Reference>
-    <Reference Include="ClearMeasure.HostedEndpoint.SqlServerTransport">
-      <HintPath>..\..\lib\ClearMeasure.HostedEndpoint.SqlServerTransport.dll</HintPath>
-    </Reference>
-    <Reference Include="ClearMeasure.HostedService">
-      <HintPath>..\..\lib\ClearMeasure.HostedService.dll</HintPath>
-    </Reference>
+    <PackageReference Include="ClearMeasureLabs.HostedEndpoint" Version="1.0.30" />
+    <PackageReference Include="ClearMeasureLabs.HostedEndpoint.SqlServerTransport" Version="1.0.30" />
+    <PackageReference Include="ClearMeasureLabs.HostedService" Version="1.0.30" />
   </ItemGroup>
 </Project>
