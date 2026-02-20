@@ -25,10 +25,6 @@ public class UiServiceRegistry : ServiceRegistry
             return new Bus(mediator);
         });
 
-        // Register AI agent and background service
-        this.AddTransient<WorkOrderEvaluationAgent>();
-        this.AddHostedService<AutoCancelAgentService>();
-
         Scan(scanner =>
         {
             scanner.WithDefaultConventions();
