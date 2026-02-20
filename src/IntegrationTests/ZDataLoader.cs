@@ -169,6 +169,13 @@ public class ZDataLoader
 
         db.SaveChanges();
 
+        // Load rooms for work order assignments
+        var allRooms = db.Set<Room>().ToList();
+        var sanctuaryRoom = allRooms.FirstOrDefault(r => r.Name == "Chapel") ?? allRooms.First();
+        var exteriorRoom = allRooms.FirstOrDefault(r => r.Name == "Foyer") ?? allRooms.First();
+        var organLoftRoom = allRooms.FirstOrDefault(r => r.Name == "Choir") ?? allRooms.First();
+        var officeRoom = allRooms.FirstOrDefault(r => r.Name == "Kitchen") ?? allRooms.First();
+
         // Create Christmas Concert Work Orders
         var christmasOrder1 = new WorkOrder();
         christmasOrder1.Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
@@ -179,7 +186,7 @@ public class ZDataLoader
         christmasOrder1.Description =
             "Coordinate weekly choir rehearsals for the Christmas concert. Schedule practice sessions for November and December leading up to the Christmas Eve service.";
         christmasOrder1.CreatedDate = new DateTime(2024, 10, 15, 9, 0, 0);
-        christmasOrder1.RoomNumber = "Sanctuary";
+        christmasOrder1.Rooms.Add(sanctuaryRoom);
         db.Add(christmasOrder1);
 
         var christmasOrder2 = new WorkOrder();
@@ -192,7 +199,7 @@ public class ZDataLoader
             "Clean and prepare the church exterior and landscaping for Christmas decorations. Ensure proper lighting infrastructure and safe walkways for concert attendees.";
         christmasOrder2.CreatedDate = new DateTime(2024, 11, 1, 8, 0, 0);
         christmasOrder2.AssignedDate = new DateTime(2024, 11, 2, 10, 0, 0);
-        christmasOrder2.RoomNumber = "Exterior Grounds";
+        christmasOrder2.Rooms.Add(exteriorRoom);
         db.Add(christmasOrder2);
 
         var christmasOrder3 = new WorkOrder();
@@ -205,7 +212,7 @@ public class ZDataLoader
             "Perform complete maintenance and tuning of the church organ in preparation for Christmas concert performances. Test all stops and ensure optimal sound quality.";
         christmasOrder3.CreatedDate = new DateTime(2024, 11, 5, 14, 0, 0);
         christmasOrder3.AssignedDate = new DateTime(2024, 11, 6, 9, 0, 0);
-        christmasOrder3.RoomNumber = "Sanctuary Organ Loft";
+        christmasOrder3.Rooms.Add(organLoftRoom);
         db.Add(christmasOrder3);
 
         var christmasOrder4 = new WorkOrder();
@@ -217,7 +224,7 @@ public class ZDataLoader
         christmasOrder4.Description =
             "Configure and test the sanctuary sound system for the Christmas concert. Ensure microphones, speakers, and recording equipment are functioning properly.";
         christmasOrder4.CreatedDate = new DateTime(2024, 11, 10, 16, 0, 0);
-        christmasOrder4.RoomNumber = "Sanctuary";
+        christmasOrder4.Rooms.Add(sanctuaryRoom);
         db.Add(christmasOrder4);
 
         var christmasOrder5 = new WorkOrder();
@@ -231,7 +238,7 @@ public class ZDataLoader
         christmasOrder5.CreatedDate = new DateTime(2024, 12, 1, 10, 0, 0);
         christmasOrder5.AssignedDate = new DateTime(2024, 12, 1, 11, 0, 0);
         christmasOrder5.CompletedDate = new DateTime(2024, 12, 3, 15, 0, 0);
-        christmasOrder5.RoomNumber = "Sanctuary";
+        christmasOrder5.Rooms.Add(sanctuaryRoom);
         db.Add(christmasOrder5);
 
         var christmasOrder6 = new WorkOrder();
@@ -244,7 +251,7 @@ public class ZDataLoader
             "Design and prepare printed programs for the Christmas concert including song listings, performer credits, and special acknowledgments.";
         christmasOrder6.CreatedDate = new DateTime(2024, 11, 20, 13, 0, 0);
         christmasOrder6.AssignedDate = new DateTime(2024, 11, 21, 9, 0, 0);
-        christmasOrder6.RoomNumber = "Church Office";
+        christmasOrder6.Rooms.Add(officeRoom);
         db.Add(christmasOrder6);
 
         db.SaveChanges();

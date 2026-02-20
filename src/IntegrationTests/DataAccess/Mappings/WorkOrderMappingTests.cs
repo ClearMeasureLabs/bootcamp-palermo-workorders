@@ -14,19 +14,21 @@ public class WorkOrderMappingTests
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var chapel = new Room("Chapel");
         var workOrder = new WorkOrder
         {
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
-            RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
         };
+        workOrder.Rooms.Add(chapel);
 
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
+            context.Add(chapel);
             context.Add(workOrder);
             context.SaveChanges();
         }
@@ -36,6 +38,7 @@ public class WorkOrderMappingTests
         {
             rehydratedWorkOrder = context.Set<WorkOrder>()
                 .Include(wo => wo.Creator)
+                .Include(wo => wo.Rooms)
                 .Single(wo => wo.Id == workOrder.Id);
         }
 
@@ -43,7 +46,8 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
-        rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
+        rehydratedWorkOrder.Rooms.Count.ShouldBe(1);
+        rehydratedWorkOrder.Rooms.First().Name.ShouldBe("Chapel");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
         rehydratedWorkOrder.Creator!.Id.ShouldBe(creator.Id);
@@ -56,14 +60,15 @@ public class WorkOrderMappingTests
 
         var creator = new Employee("1", "1", "1", "1");
         var assignee = new Employee("2", "2", "2", "2");
+        var kitchen = new Room("Kitchen");
         var order = new WorkOrder
         {
             Creator = creator,
             Assignee = assignee,
             Title = "foo",
-            Description = "bar",
-            RoomNumber = "123 a"
+            Description = "bar"
         };
+        order.Rooms.Add(kitchen);
         order.ChangeStatus(WorkOrderStatus.InProgress);
         order.Number = "123";
 
@@ -71,6 +76,7 @@ public class WorkOrderMappingTests
         {
             context.Add(creator);
             context.Add(assignee);
+            context.Add(kitchen);
             await context.SaveChangesAsync();
         }
 
@@ -83,6 +89,7 @@ public class WorkOrderMappingTests
             var rehydratedWorkOrder = context.Set<WorkOrder>()
                 .Include(wo => wo.Creator)
                 .Include(wo => wo.Assignee)
+                .Include(wo => wo.Rooms)
                 .Single(wo => wo.Id == order.Id);
             rehydratedWorkOrder.Id.ShouldBe(order.Id);
             rehydratedWorkOrder.Creator!.Id.ShouldBe(order.Creator.Id);
@@ -90,7 +97,8 @@ public class WorkOrderMappingTests
             rehydratedWorkOrder.Title.ShouldBe(order.Title);
             rehydratedWorkOrder.Description.ShouldBe(order.Description);
             rehydratedWorkOrder.Status.ShouldBe(order.Status);
-            rehydratedWorkOrder.RoomNumber.ShouldBe(order.RoomNumber);
+            rehydratedWorkOrder.Rooms.Count.ShouldBe(1);
+            rehydratedWorkOrder.Rooms.First().Name.ShouldBe("Kitchen");
             rehydratedWorkOrder.Number.ShouldBe(order.Number);
         }
     }
@@ -107,8 +115,7 @@ public class WorkOrderMappingTests
             Creator = creator,
             Assignee = assignee,
             Title = "foo",
-            Description = "bar",
-            RoomNumber = "123 a"
+            Description = "bar"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
         order.Number = "123";
@@ -233,7 +240,6 @@ public class WorkOrderMappingTests
             Number = new string('A', 51), // Exceeds 50 char limit
             Title = new string('B', 201), // Exceeds 200 char limit
             Description = new string('C', 1001), // Exceeds 1000 char limit
-            RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
         };

@@ -13,6 +13,7 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
+    [SupplyParameterFromQuery] public string? RoomId { get; set; }
 
     protected override void OnParametersSet()
     {
@@ -26,6 +27,10 @@ public partial class WorkOrderSearch : AppComponentBase
         var employees = await Bus.Send(new EmployeeGetAllQuery());
         UserOptions = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
         StatusOptions = WorkOrderStatus.GetAllItems().Select(s => new SelectListItem(s.Key, s.FriendlyName)).ToList();
+        
+        var rooms = await Bus.Send(new RoomGetAllQuery());
+        RoomOptions = rooms.Select(r => new SelectListItem(r.Id.ToString(), r.Name)).ToList();
+        
         Model = new WorkOrderSearchModel();
 
         // Apply any query parameters
@@ -42,6 +47,11 @@ public partial class WorkOrderSearch : AppComponentBase
         if (!string.IsNullOrEmpty(Status))
         {
             Model.Filters.Status = Status;
+        }
+
+        if (!string.IsNullOrEmpty(RoomId))
+        {
+            Model.Filters.RoomId = RoomId;
         }
 
         // Perform initial search
@@ -62,10 +72,18 @@ public partial class WorkOrderSearch : AppComponentBase
             ? WorkOrderStatus.FromKey(Model.Filters.Status)
             : null;
 
+        Room? room = null;
+        if (!string.IsNullOrWhiteSpace(Model.Filters.RoomId) && Guid.TryParse(Model.Filters.RoomId, out var roomId))
+        {
+            var allRooms = await Bus.Send(new RoomGetAllQuery());
+            room = allRooms.FirstOrDefault(r => r.Id == roomId);
+        }
+
         var specification = new WorkOrderSpecificationQuery();
         specification.MatchCreator(creator);
         specification.MatchAssignee(assignee);
         specification.MatchStatus(status);
+        specification.MatchRoom(room);
 
         Model.Results = await Bus.Send(specification);
         StateHasChanged();

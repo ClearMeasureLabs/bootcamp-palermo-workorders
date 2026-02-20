@@ -32,16 +32,17 @@ public class WorkOrderEvaluationAgent(
                                - Ignore and skip if work order title is 'from automation'
                                - Cancel if assigned more than 24 hours ago
                                - Cancel if description contains keywords like 'test', 'demo', or 'temporary'
-                               - Cancel if room number is 'TEST' or similar
+                               - Cancel if any room name is 'TEST' or similar
 
                                Respond with only 'YES' if the work order should be cancelled, or 'NO' if it should not be cancelled.
                                """;
 
+            var roomNames = string.Join(", ", workOrder.Rooms.Select(r => r.Name));
             var workOrderInfo = $"""
                                  Work Order: {workOrder.Number}
                                  Title: {workOrder.Title}
                                  Description: {workOrder.Description}
-                                 Room Number: {workOrder.RoomNumber}
+                                 Rooms: {roomNames}
                                  Assigned Date: {workOrder.AssignedDate}
                                  Creator: {workOrder.Creator?.GetFullName()}
                                  Assignee: {workOrder.Assignee?.GetFullName()}

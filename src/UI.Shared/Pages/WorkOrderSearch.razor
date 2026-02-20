@@ -42,6 +42,17 @@
                     </div>
 
                     <div class="filter-group">
+                        <label class="filter-label" for="room">Room</label>
+                        <InputSelect id="@Elements.RoomSelect" @bind-Value="Model.Filters.RoomId" class="form-control">
+                            <option value="">All</option>
+                            @foreach (var room in RoomOptions)
+                            {
+                                <option value="@room.Value">@room.Text</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="filter-group">
                         <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
@@ -115,6 +126,7 @@
         CreatorSelect,
         AssigneeSelect,
         StatusSelect,
+        RoomSelect,
         SearchButton,
         WorkOrderLink
     }
@@ -122,5 +134,6 @@
     public WorkOrderSearchModel Model { get; set; } = new();
     public List<SelectListItem> UserOptions { get; set; } = new();
     public List<SelectListItem> StatusOptions { get; set; } = new();
+    public List<SelectListItem> RoomOptions { get; set; } = new();
     public Func<Task>? OnSearch { get; set; }
 }

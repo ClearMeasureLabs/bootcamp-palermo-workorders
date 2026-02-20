@@ -17,13 +17,14 @@ public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workO
     public async Task<ChatResponse> Handle(WorkOrderChatQuery request, CancellationToken cancellationToken)
     {
         string prompt = request.Prompt;
+        var roomNames = string.Join(", ", request.CurrentWorkOrder.Rooms.Select(r => r.Name));
         var chatMessages = new List<ChatMessage>()
         {
             new(ChatRole.System, "You help user's do the work specified in the WorkOrder"),
             new(ChatRole.System, $"Work Order number is {request.CurrentWorkOrder.Number}"),
             new(ChatRole.System, $"Work Order title is {request.CurrentWorkOrder.Title}"),
             new(ChatRole.System, $"Work Order description is {request.CurrentWorkOrder.Description}"),
-            new(ChatRole.System, $"Work Order room is {request.CurrentWorkOrder.RoomNumber}"),
+            new(ChatRole.System, $"Work Order rooms are {roomNames}"),
             new(ChatRole.System, $"Work Order creator is {request.CurrentWorkOrder.Creator?.GetFullName()}"),
             new(ChatRole.System, $"Limit answer to 3 sentences. Be brief"),
             new(ChatRole.User, prompt)
