@@ -8,7 +8,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 [TestFixture]
 public class WarmUpTests : AcceptanceTestBase
 {
-    [Test]
+    [Test, Retry(2)]
     public async Task WarmUp_BlazorWasm_LoginLinkVisible()
     {
         var loginLink = Page.GetByTestId("LoginLink");

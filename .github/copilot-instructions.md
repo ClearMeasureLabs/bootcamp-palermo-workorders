@@ -1,17 +1,20 @@
 # Coding Standards and Practices
 
-This file provides standards for GitHub Copilot to follow when generating code for this project.
+This file provides standards for GitHub Copilot to follow when generating code for this project. See also `CLAUDE.md` and `.cursor/rules/codebase-structure.mdc` for solution layout and key paths.
 
 ## Quick Reference (AI Tools: Read This First)
 
-**Stack:** .NET 9.0 | Blazor WASM | EF Core 9 | SQL Server | Onion Architecture
+**Stack:** .NET 10.0 | Blazor WASM | EF Core 10 | SQL Server | Onion Architecture
+
+**Solution:** `src/ChurchBulletin.sln` — Core, DataAccess, Database, UI.Server, UI.Client, UI.Api, UI.Shared, LlmGateway, ChurchBulletin.AppHost, ChurchBulletin.ServiceDefaults, UnitTests, IntegrationTests, AcceptanceTests.
 
 **Key Paths:**
 - Domain models: `src/Core/` (WorkOrder, Employee, WorkOrderStatus, Role)
-- Data access: `src/DataAccess/` (EF Core, MediatR handlers)
+- Queries/state commands: `src/Core/Queries/`, `src/Core/Model/StateCommands/`
+- Data access: `src/DataAccess/` (EF Core, MediatR handlers in `Handlers/`, `Mappings/`)
 - UI Server: `src/UI/Server/` (Blazor host, DI via Lamar)
 - UI Client: `src/UI/Client/` (Blazor WASM)
-- DB migrations: `src/Database/scripts/` (DbUp, numbered ###_Name.sql)
+- DB migrations: `src/Database/scripts/Update/` (AliaSQL, numbered ###_Name.sql, TABS)
 - Tests: `src/UnitTests/`, `src/IntegrationTests/`, `src/AcceptanceTests/`
 
 **Domain Model:**
@@ -43,9 +46,9 @@ This file provides standards for GitHub Copilot to follow when generating code f
 ## Project Overview
 
 This is a Work Order management application built with:
-- **.NET 9.0** - Primary framework
+- **.NET 10.0** - Primary framework
 - **Blazor** - UI framework (WebAssembly + Server)
-- **Entity Framework Core** - Data access
+- **Entity Framework Core 10** - Data access
 - **SQL Server** - Database (LocalDB for development)
 - **Onion Architecture** - Clean architecture pattern with Core, DataAccess, and UI layers
 - **MediatR** - CQRS pattern for queries and commands
@@ -122,7 +125,7 @@ If either script fails:
 
 - **DO NOT** modify files in `.octopus/`, `.octopus_original_from_od/`, or build scripts without explicit approval
 - **DO NOT** add new NuGet packages without approval
-- **DO NOT** upgrade .NET SDK version without approval (currently 9.0.0)
+- **DO NOT** upgrade .NET SDK version without approval (currently 10.0.x)
 - **ALWAYS** include unit tests for new functionality
 - **ALWAYS** update XML documentation for public APIs
 - Integration tests require SQL Server LocalDB
@@ -148,8 +151,8 @@ If either script fails:
 
 - Use Entity Framework for data access
 - Follow Commands and Queries and Handlers data access
-- Create mapping files for all entities
-- Include database schema changes in appropriate scripts
+- Create mapping files for all entities in `src/DataAccess/Mappings/`
+- DB schema changes: AliaSQL scripts in `src/Database/scripts/Update/` (###_Description.sql, TABS)
 
 ## Testing Standards
 - After code is generated, ask to generate a test next.
@@ -209,7 +212,7 @@ public async Task TestNameFromIssue()
 **Running Acceptance Tests:**
 ```powershell
 cd src/AcceptanceTests
-pwsh bin/Debug/net9.0/playwright.ps1 install  # First time only
+pwsh bin/Debug/net10.0/playwright.ps1 install  # First time only
 dotnet test --filter "FullyQualifiedName~TestClassName"
 ```
 

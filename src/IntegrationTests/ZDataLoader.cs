@@ -1,4 +1,5 @@
 ﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.Constants;
 using ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,9 +14,11 @@ public class ZDataLoader
         new DatabaseTests().Clean();
         var lead = new Role("Facility Lead", true, false);
         var fulfillment = new Role("Fulfillment", false, true);
+        var bot = new Role(Roles.Bot, false, true);
         var db = TestHost.GetRequiredService<DbContext>();
         db.Add(lead);
         db.Add(fulfillment);
+        db.Add(bot);
         db.SaveChanges();
 
         //Trainer1
@@ -23,6 +26,11 @@ public class ZDataLoader
         jpalermo.AddRole(lead);
         jpalermo.AddRole(fulfillment);
         db.Add(jpalermo);
+
+        //AI Bot
+        var aiBot = new Employee("aibot", "AI", Roles.Bot, "aibot@system.local");
+        aiBot.AddRole(bot);
+        db.Add(aiBot);
 
         //Person 1
 

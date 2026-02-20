@@ -131,41 +131,54 @@ Function Update-AppSettingsConnectionStrings {
     # Find all appsettings*.json files recursively
     $appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
     
+    $useHashTable = (Get-Command ConvertFrom-Json).Parameters.ContainsKey('AsHashTable')
     foreach ($file in $appSettingsFiles) {
         Log-Message "Processing file: $($file.FullName)" -Type "INFO"
     
-        $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
-        
-        # Check if ConnectionStrings section exists
-        if ($content.PSObject.Properties.Name -contains "ConnectionStrings") {
-            $connectionStringsObj = $content.ConnectionStrings
-
-            # Update all connection strings that contain a database reference
-            foreach ($property in $connectionStringsObj.PSObject.Properties) {
-                $oldConnectionString = $property.Value
-
-                Log-Message "Found connection string $($property.Name) : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
+        if ($useHashTable) {
+            $content = Get-Content $file.FullName -Raw | ConvertFrom-Json -AsHashTable
+            if (-not $content.ContainsKey("ConnectionStrings")) { continue }
+            $connectionStringsObj = $content["ConnectionStrings"]
+            foreach ($key in @($connectionStringsObj.Keys)) {
+                $oldConnectionString = $connectionStringsObj[$key]
+                Log-Message "Found connection string $key : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
                 if ($oldConnectionString -match "database=([^;]+)") {
-
                     if (Test-IsLinux) {
                         $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
                         $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
                         $newConnectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
                     }
                     else {
-                        # Replace the database name in the connection string
                         $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
-                
-                        # Also update server if needed
                         $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
                     }
-        
+                    $connectionStringsObj[$key] = $newConnectionString
+                    Log-Message "Updated $key : $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
+                }
+            }
+            $content | ConvertTo-Json -Depth 10 | Set-Content $file.FullName
+        }
+        else {
+            $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
+            if ($content.PSObject.Properties.Name -notcontains "ConnectionStrings") { continue }
+            $connectionStringsObj = $content.ConnectionStrings
+            foreach ($property in $connectionStringsObj.PSObject.Properties) {
+                $oldConnectionString = $property.Value
+                Log-Message "Found connection string $($property.Name) : $(Get-RedactedConnectionString -ConnectionString $oldConnectionString)" -Type "INFO"
+                if ($oldConnectionString -match "database=([^;]+)") {
+                    if (Test-IsLinux) {
+                        $containerName = Get-ContainerName -DatabaseName $databaseNameToUse
+                        $sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+                        $newConnectionString = "server=$serverName;database=$databaseNameToUse;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+                    }
+                    else {
+                        $newConnectionString = $oldConnectionString -replace "database=[^;]+", "database=$databaseNameToUse"
+                        $newConnectionString = $newConnectionString -replace "server=[^;]+", "server=$serverName"
+                    }
                     $connectionStringsObj.$($property.Name) = $newConnectionString
                     Log-Message "Updated $($property.Name): $(Get-RedactedConnectionString -ConnectionString $newConnectionString)" -Type "INFO"
                 }
             }
-       
-            # Save the updated JSON
             $content | ConvertTo-Json -Depth 10 | Set-Content $file.FullName
         }
     }

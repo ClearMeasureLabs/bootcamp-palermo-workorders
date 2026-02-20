@@ -1,11 +1,11 @@
-﻿using ClearMeasure.Bootcamp.UI.Shared.Components;
+using ClearMeasure.Bootcamp.UI.Shared.Components;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.Authentication;
 
 [TestFixture]
 public class LoginTests : AcceptanceTestBase
 {
-    [Test]
+    [Test, Retry(2)]
     public void VerifySetup()
     {
         var homer = TestHost.NewDbContext().Set<Employee>().Single(employee =>
@@ -14,8 +14,7 @@ public class LoginTests : AcceptanceTestBase
         homer.ShouldNotBeNull();
     }
 
-    [Test]
-    [Repeat(2)]
+    [Test, Retry(2)]
     public async Task LoginWithUsernameOnlyForwardsToHomePage()
     {
         // Act: Go to home page

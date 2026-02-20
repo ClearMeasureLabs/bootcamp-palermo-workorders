@@ -1,10 +1,30 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. For solution layout and key paths, see also `.cursor/rules/codebase-structure.mdc`.
 
 ## Project Overview
 
-This is a Work Order management system built with .NET 9.0, implementing Onion Architecture with Blazor WebAssembly UI, Entity Framework Core for data access, and deployed to Azure Container Apps.
+This is a Work Order management system built with .NET 10.0, implementing Onion Architecture with Blazor WebAssembly UI, Entity Framework Core for data access, and deployed to Azure Container Apps.
+
+## Solution Structure
+
+**Solution:** `src/ChurchBulletin.sln`
+
+| Project | Path | Role |
+|---------|------|------|
+| Core | `src/Core/` | Domain; no dependencies |
+| DataAccess | `src/DataAccess/` | EF Core, MediatR handlers; refs Core only |
+| Database | `src/Database/` | DB tooling, AliaSQL |
+| UI.Server | `src/UI/Server/` | Blazor Server host, Lamar DI |
+| UI.Client | `src/UI/Client/` | Blazor WASM |
+| UI.Api | `src/UI/Api/` | Web API |
+| UI.Shared | `src/UI.Shared/` | Shared UI |
+| LlmGateway | `src/LlmGateway/` | Azure OpenAI / Ollama |
+| ChurchBulletin.AppHost | `src/ChurchBulletin.AppHost/` | Aspire AppHost |
+| ChurchBulletin.ServiceDefaults | `src/ChurchBulletin.ServiceDefaults/` | Aspire defaults |
+| UnitTests | `src/UnitTests/` | NUnit + Shouldly |
+| IntegrationTests | `src/IntegrationTests/` | NUnit, LocalDB |
+| AcceptanceTests | `src/AcceptanceTests/` | NUnit + Playwright |
 
 ## Build and Test Commands
 
@@ -35,7 +55,7 @@ dotnet test --configuration Release
 
 # Run acceptance tests (requires Playwright browsers installed)
 cd src/AcceptanceTests
-pwsh bin/Debug/net9.0/playwright.ps1 install
+pwsh bin/Debug/net10.0/playwright.ps1 install
 dotnet test --configuration Debug
 ```
 
@@ -72,7 +92,7 @@ The solution follows strict Onion Architecture with dependency flow inward:
 ### DataAccess (Depends on Core Only)
 - **Location**: `src/DataAccess/`
 - **Purpose**: Entity Framework Core implementation, MediatR query/command handlers
-- **Technology**: EF Core 9.0 with SQL Server
+- **Technology**: EF Core 10.0 with SQL Server
 - **Key Components**: `DataContext`, mapping files, health checks
 - **Rule**: Only references Core project
 
@@ -84,7 +104,6 @@ The solution follows strict Onion Architecture with dependency flow inward:
 
 ### Database Management
 - **Database** (`src/Database/`): AliaSQL-based migrations with numbered scripts in `scripts/Update/` (001, 003, 004, etc.)
-- **DatabaseFlyway** (`src/DatabaseFlyway/`): Alternative Flyway migration approach with `flyway.toml` config
 
 ### Additional Layers
 - **LlmGateway** (`src/LlmGateway/`): Azure OpenAI and Ollama integration for AI agent functionality
@@ -198,13 +217,13 @@ docker run -p 8080:8080 -p 80:80 churchbulletin-ui
 ```
 
 ### Base Image
-`mcr.microsoft.com/dotnet/aspnet:9.0`
+`mcr.microsoft.com/dotnet/aspnet:10.0`
 
 ## Technology Stack
 
-- **.NET**: 9.0
+- **.NET**: 10.0
 - **UI**: Blazor WebAssembly + Server
-- **Data Access**: Entity Framework Core 9.0
+- **Data Access**: Entity Framework Core 10.0
 - **Database**: SQL Server (Azure SQL in production)
 - **CQRS**: MediatR
 - **DI Container**: Lamar
@@ -213,6 +232,9 @@ docker run -p 8080:8080 -p 80:80 churchbulletin-ui
 - **Deployment**: Azure Container Apps, Azure DevOps Pipelines
 
 ## Architecture Documentation
+
+- **Cursor rules:** `.cursor/rules/codebase-structure.mdc` (solution layout, key paths), `.cursor/rules/cloud-agent-instructions.mdc` (scope, workflow).
+- **Copilot:** `.github/copilot-instructions.md`, `.github/copilot-code-review-instructions.md`.
 
 PlantUML diagrams in `arch/`:
 - `arch-c4-system.puml`: System context
