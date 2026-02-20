@@ -319,3 +319,47 @@
         padding: 1.5rem;
     }
 }
+
+/* Room Checkboxes */
+.room-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+.room-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.room-checkbox-item input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 4px;
+    cursor: pointer;
+    accent-color: #7b68ee;
+}
+
+.room-checkbox-item input[type="checkbox"]:focus {
+    outline: 2px solid #7b68ee;
+    outline-offset: 2px;
+}
+
+.room-checkbox-item label {
+    cursor: pointer;
+    user-select: none;
+    color: #2d3748;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.room-checkbox-item input[type="checkbox"]:disabled + label {
+    color: #718096;
+    cursor: not-allowed;
+}

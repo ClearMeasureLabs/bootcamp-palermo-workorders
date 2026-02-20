@@ -20,6 +20,7 @@ public partial class WorkOrderManage : AppComponentBase
 
     public WorkOrderManageModel Model { get; set; } = new();
     public List<SelectListItem> UserOptions { get; set; } = new();
+    public List<Room> AvailableRooms { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
 
@@ -31,6 +32,7 @@ public partial class WorkOrderManage : AppComponentBase
     protected override async Task OnInitializedAsync()
     {
         await LoadUserOptions();
+        await LoadRoomOptions();
         await LoadWorkOrder();
 
     }
@@ -83,6 +85,7 @@ public partial class WorkOrderManage : AppComponentBase
             Title = workOrder.Title,
             Description = workOrder.Description,
             RoomNumber = workOrder.RoomNumber,
+            SelectedRoomIds = workOrder.Rooms.Select(r => r.Id).ToList(),
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
@@ -95,6 +98,24 @@ public partial class WorkOrderManage : AppComponentBase
         var items = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
         items.Insert(0, new SelectListItem("", ""));
         UserOptions = items;
+    }
+
+    private async Task LoadRoomOptions()
+    {
+        var rooms = await Bus.Send(new RoomGetAllQuery());
+        AvailableRooms = rooms.ToList();
+    }
+
+    private void HandleRoomCheckboxChange(Guid roomId, bool isChecked)
+    {
+        if (isChecked && !Model.SelectedRoomIds.Contains(roomId))
+        {
+            Model.SelectedRoomIds.Add(roomId);
+        }
+        else if (!isChecked && Model.SelectedRoomIds.Contains(roomId))
+        {
+            Model.SelectedRoomIds.Remove(roomId);
+        }
     }
 
     private async Task HandleSubmit()
@@ -122,6 +143,17 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
         workOrder.RoomNumber = Model.RoomNumber;
+
+        // Update room associations
+        workOrder.Rooms.Clear();
+        foreach (var roomId in Model.SelectedRoomIds)
+        {
+            var room = AvailableRooms.FirstOrDefault(r => r.Id == roomId);
+            if (room != null)
+            {
+                workOrder.Rooms.Add(room);
+            }
+        }
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);

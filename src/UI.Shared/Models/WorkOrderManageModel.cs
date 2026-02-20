@@ -29,4 +29,6 @@ public class WorkOrderManageModel
     public string? CreatedDate { get; set; }
 
     public string? RoomNumber { get; set; }
+
+    public List<Guid> SelectedRoomIds { get; set; } = new List<Guid>();
 }

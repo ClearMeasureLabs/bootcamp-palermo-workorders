@@ -14,6 +14,8 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public string? RoomNumber { get; set; } = null;
 
+    public ISet<Room> Rooms { get; init; } = new HashSet<Room>();
+
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 
     public Employee? Creator { get; set; } = null;

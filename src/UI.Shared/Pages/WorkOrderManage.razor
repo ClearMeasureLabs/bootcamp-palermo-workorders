@@ -56,9 +56,39 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="RoomNumber" class="form-label">Room:</label>
+                    <label for="RoomNumber" class="form-label">Rooms:</label>
                     <div>
-                        <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <div class="room-checkboxes">
+                                @foreach (var room in AvailableRooms)
+                                {
+                                    var isChecked = Model.SelectedRoomIds.Contains(room.Id);
+                                    var checkboxId = $"room_{room.Id}";
+                                    <div class="room-checkbox-item">
+                                        <input type="checkbox" 
+                                               id="@checkboxId" 
+                                               checked="@isChecked" 
+                                               @onchange="@((e) => HandleRoomCheckboxChange(room.Id, (bool)(e.Value ?? false)))"
+                                               data-testid="@($"room-checkbox-{room.Name}")" />
+                                        <label for="@checkboxId">@room.Name</label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <span data-testid="@Elements.RoomNumber" class="value">
+                                @if (Model.WorkOrder?.Rooms.Any() == true)
+                                {
+                                    @string.Join(", ", Model.WorkOrder.Rooms.Select(r => r.Name))
+                                }
+                                else
+                                {
+                                    <text>No rooms assigned</text>
+                                }
+                            </span>
+                        }
                     </div>
                 </div>
             </div>
