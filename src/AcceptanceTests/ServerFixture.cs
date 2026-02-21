@@ -147,6 +147,14 @@ public class ServerFixture
 
             new ZDataLoader().LoadData();
             TestContext.Out.WriteLine("ZDataLoader().LoadData(); - complete");
+
+            // Flush WAL to the main DB file so the UI.Server child process
+            // sees all seeded data through its own independent connection
+            if (context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                context.Database.ExecuteSqlRaw("PRAGMA wal_checkpoint(TRUNCATE)");
+            }
+
             DatabaseInitialized = true;
         }
     }
