@@ -21,10 +21,18 @@ endpointConfiguration.EnableInstallers();
 endpointConfiguration.EnableOpenTelemetry();
 
 // transport
-var transport = endpointConfiguration.UseTransport<SqlServerTransport>();
-transport.ConnectionString(builder.Configuration.GetConnectionString("SqlConnectionString"));
-transport.DefaultSchema("nServiceBus");
-transport.Transactions(TransportTransactionMode.TransactionScope);
+var sqlConnectionString = builder.Configuration.GetConnectionString("SqlConnectionString") ?? "";
+if (sqlConnectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
+{
+    endpointConfiguration.UseTransport<LearningTransport>();
+}
+else
+{
+    var transport = endpointConfiguration.UseTransport<SqlServerTransport>();
+    transport.ConnectionString(sqlConnectionString);
+    transport.DefaultSchema("nServiceBus");
+    transport.Transactions(TransportTransactionMode.TransactionScope);
+}
 
 // message conventions
 var conventions = new MessagingConventions();

@@ -416,25 +416,29 @@ This function is designed for end-to-end validation before deployment.
 
 On Linux, creates a SQL Server Docker container with a non-unique database name.
 On Windows, uses LocalDB with a unique timestamp-based database name.
+When Docker is not available on Linux, automatically falls back to SQLite.
 
 Build steps:
 1. Init - Clean and restore NuGet packages
 2. Compile - Build the solution
-3. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows)
-4. Update appsettings.json files with connection strings
-5. Temporarily disable ConnectionStrings in launchSettings.json to prevent override
-6. MigrateDatabaseLocal - Run database migrations
+3. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows), or skip if SQLite
+4. Update appsettings.json files with connection strings (skipped for SQLite)
+5. Temporarily disable ConnectionStrings in launchSettings.json to prevent override (skipped for SQLite)
+6. MigrateDatabaseLocal - Run database migrations (skipped for SQLite; uses EnsureCreated)
 7. AcceptanceTests - Run Playwright browser-based acceptance tests (auto-installs browsers)
-8. Restore appsettings.json and launchSettings.json files to git state
-9. Package-Everything - Create NuGet packages for deployment
+8. Restore appsettings.json and launchSettings.json files to git state (skipped for SQLite)
 
 .PARAMETER databaseServer
-Optional. Specifies the database server to use. If not provided, defaults to "localhost" 
-on Linux or "(LocalDb)\MSSQLLocalDB" on Windows.
+Optional. Specifies the database server to use. If not provided, defaults to "localhost"
+on Linux or "(LocalDb)\MSSQLLocalDB" on Windows. Ignored when using SQLite.
 
 .PARAMETER databaseName
-Optional. Specifies the database name to use. If not provided, generates a unique name 
-based on the project name and timestamp (Windows only).
+Optional. Specifies the database name to use. If not provided, generates a unique name
+based on the project name and timestamp (Windows only). Ignored when using SQLite.
+
+.PARAMETER UseSqlite
+Optional switch. Forces SQLite mode, bypassing SQL Server Docker setup and AliaSQL migrations.
+Auto-detected on Linux when Docker is not running.
 
 .EXAMPLE
 Invoke-AcceptanceTests
@@ -442,19 +446,26 @@ Invoke-AcceptanceTests
 .EXAMPLE
 Invoke-AcceptanceTests -databaseServer "localhost" -databaseName "ChurchBulletin_Test"
 
+.EXAMPLE
+Invoke-AcceptanceTests -UseSqlite
+
 .NOTES
-Requires Docker on Linux, Ollama running for AI tests, and Playwright browsers installed.
+Requires Playwright browsers installed. Ollama recommended for AI tests.
 Sets containerAppURL environment variable to "localhost:7174".
 Automatically installs Playwright browsers if not present.
+Falls back to SQLite when Docker is unavailable on Linux.
 #>
 Function Invoke-AcceptanceTests {
 	param (
 		[Parameter(Mandatory = $false)]
 		[string]$databaseServer = "",
 		[Parameter(Mandatory=$false)]
-		[string]$databaseName =""
+		[string]$databaseName ="",
+
+		[Parameter(Mandatory = $false)]
+		[switch]$UseSqlite
 	)
-	
+
 
 	Log-Message -Message "Starting AcceptanceBuild..." -Type "INFO"
 	$projectConfig = "Release"
@@ -463,87 +474,119 @@ Function Invoke-AcceptanceTests {
 
     Test-IsOllamaRunning -LogOutput $true
 
+	# Auto-detect SQLite mode: use SQLite on Linux when Docker cannot run SQL Server
+	if (-not $UseSqlite -and (Test-IsLinux)) {
+		if (-not (Test-IsDockerRunning)) {
+			Log-Message -Message "Docker is not available. Falling back to SQLite for acceptance tests." -Type "INFO"
+			$UseSqlite = $true
+		}
+	}
+
+	# Set script-level flag so Init can skip Docker check
+	$script:useSqlite = $UseSqlite
+
+	if ($UseSqlite) {
+		Log-Message -Message "Using SQLite for acceptance tests (no SQL Server required)" -Type "INFO"
+	}
 
 	# Set database server from parameter if provided
-	if (-not [string]::IsNullOrEmpty($databaseServer)) {
-		$script:databaseServer = $databaseServer
-	}
-	else {
-		if (Test-IsLinux) {
-			$script:databaseServer = "localhost"
+	if (-not $UseSqlite) {
+		if (-not [string]::IsNullOrEmpty($databaseServer)) {
+			$script:databaseServer = $databaseServer
 		}
 		else {
-			$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
+			if (Test-IsLinux) {
+				$script:databaseServer = "localhost"
+			}
+			else {
+				$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
+			}
 		}
 	}
-	
+
 	# Generate unique database name for this build instance
 	# On Linux with Docker, no need for unique names since container is clean
 	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (-not [string]::IsNullOrEmpty($databaseName)) {
-		$script:databaseName = $databaseName
-	}
-	else {
-		if (Test-IsLinux) {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-		}
-		elseif (Test-IsLocalBuild) {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+	if (-not $UseSqlite) {
+		if (-not [string]::IsNullOrEmpty($databaseName)) {
+			$script:databaseName = $databaseName
 		}
 		else {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+			if (Test-IsLinux) {
+				$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+			}
+			elseif (Test-IsLocalBuild) {
+				$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+			}
+			else {
+				$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+			}
 		}
 	}
-	
+
 	Init
 	Compile
 
-	if (Test-IsLinux) 
-	{
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
-		if (Test-IsDockerRunning -LogOutput $true) 
+	if (-not $UseSqlite) {
+		if (Test-IsLinux)
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
+			if (Test-IsDockerRunning -LogOutput $true)
+			{
+				New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+				New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			}
+			else {
+				Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+				throw "Docker is not running."
+			}
 		}
-		else {
-			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-			throw "Docker is not running."
+
+		# Update appsettings.json files before database migration
+		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+
+		# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
+		# This prevents the Windows LocalDB connection string from overriding appsettings.json
+		$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
+		if (Test-Path $launchSettingsPath) {
+			Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
+			$launchSettings = Get-Content $launchSettingsPath -Raw
+			$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
+			Set-Content -Path $launchSettingsPath -Value $launchSettings
 		}
+
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	}
+	else {
+		Log-Message -Message "Skipping SQL Server setup and AliaSQL migration (using SQLite with EnsureCreated)" -Type "INFO"
 	}
 
-	# Update appsettings.json files before database migration
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-	
-	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
-	# This prevents the Windows LocalDB connection string from overriding appsettings.json
-	$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
-	if (Test-Path $launchSettingsPath) {
-		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
-		$launchSettings = Get-Content $launchSettingsPath -Raw
-		$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
-		Set-Content -Path $launchSettingsPath -Value $launchSettings
-	}
-	
-	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	AcceptanceTests
-	
-	# Restore appsettings and launchSettings files to their original git state
-	Log-Message -Message "Restoring appsettings*.json and launchSettings.json files to git state" -Type "INFO"
-	& git restore 'src/**/appsettings*.json'
-	if ($LASTEXITCODE -ne 0) {
-		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
-	}
-	if (Test-Path $launchSettingsPath) {
-		& git restore $launchSettingsPath
+
+	if (-not $UseSqlite) {
+		# Restore appsettings and launchSettings files to their original git state
+		Log-Message -Message "Restoring appsettings*.json and launchSettings.json files to git state" -Type "INFO"
+		& git restore 'src/**/appsettings*.json'
 		if ($LASTEXITCODE -ne 0) {
-			Log-Message -Message "Warning: Failed to restore launchSettings.json file" -Type "WARNING"
+			Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
+		}
+		$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
+		if (Test-Path $launchSettingsPath) {
+			& git restore $launchSettingsPath
+			if ($LASTEXITCODE -ne 0) {
+				Log-Message -Message "Warning: Failed to restore launchSettings.json file" -Type "WARNING"
+			}
 		}
 	}
 
 	$sw.Stop()
-	Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+	if ($UseSqlite) {
+		Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED (SQLite) - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	}
+	else {
+		Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+	}
 }
 
 <#

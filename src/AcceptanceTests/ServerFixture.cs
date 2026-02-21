@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests;
@@ -46,12 +47,22 @@ public class ServerFixture
 
     private async Task StartAndWaitForServer()
     {
+        var configuration = TestHost.GetRequiredService<IConfiguration>();
+        var connectionString = configuration.GetConnectionString("SqlConnectionString") ?? "";
+        var useSqlite = connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
+
+        // Use --no-launch-profile to prevent launchSettings.json from overriding
+        // environment variables (e.g. connection strings) set by the test harness
+        var arguments = useSqlite
+            ? $"run --no-launch-profile --urls={ApplicationBaseUrl}"
+            : $"run --urls={ApplicationBaseUrl}";
+
         _serverProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"run --urls={ApplicationBaseUrl}",
+                Arguments = arguments,
                 WorkingDirectory = ProjectPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -60,6 +71,34 @@ public class ServerFixture
             }
         };
         _serverProcess.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
+
+        if (useSqlite)
+        {
+            _serverProcess.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
+
+            // Provide a dummy Application Insights connection string to prevent the
+            // Azure Monitor exporter from throwing when --no-launch-profile is used
+            _serverProcess.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] =
+                "InstrumentationKey=00000000-0000-0000-0000-000000000000";
+
+            // For SQLite file-based databases, resolve to absolute path so the server
+            // process uses the same database file regardless of its working directory
+            if (!connectionString.Contains(":memory:", StringComparison.OrdinalIgnoreCase))
+            {
+                var dbPath = connectionString["Data Source=".Length..].Trim();
+                var semicolonIndex = dbPath.IndexOf(';');
+                if (semicolonIndex >= 0) dbPath = dbPath[..semicolonIndex];
+
+                if (!Path.IsPathRooted(dbPath))
+                {
+                    var absolutePath = Path.GetFullPath(dbPath);
+                    connectionString = $"Data Source={absolutePath}";
+                }
+            }
+
+            _serverProcess.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] = connectionString;
+        }
+
         _serverProcess.Start();
 
         // Wait for server to be ready
@@ -99,6 +138,12 @@ public class ServerFixture
         lock (DatabaseLock)
         {
             if (DatabaseInitialized) return;
+
+            var context = TestHost.GetRequiredService<DbContext>();
+            if (context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                context.Database.EnsureCreated();
+            }
 
             new ZDataLoader().LoadData();
             TestContext.Out.WriteLine("ZDataLoader().LoadData(); - complete");
