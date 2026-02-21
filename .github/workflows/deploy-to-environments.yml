@@ -1,11 +1,16 @@
 name: Deploy to Environments
-run-name: "Deploy 1.3.${{ github.event.workflow_run.run_number || github.run_number }} to UAT & Prod"
+run-name: "Deploy ${{ inputs.release_number || format('1.3.{0}', github.event.workflow_run.run_number) }}"
 on:
   workflow_run:
     workflows: ["Integration Build"]
     types: [completed]
     branches: ['master', 'main']
   workflow_dispatch:
+    inputs:
+      release_number:
+        description: 'Release version to deploy (must match an existing Integration Build version, e.g. 1.3.394)'
+        required: true
+        type: string
 env:
   MAJOR_VERSION: 1
   MINOR_VERSION: 3
@@ -13,7 +18,12 @@ env:
 jobs:
   deploy-to-uat:
     name: UAT
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # Only deploy on push-triggered builds (not manual workflow_dispatch of the build workflow)
+    # or when this workflow is manually dispatched with a release_number
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     environment:
       name: UAT
@@ -21,14 +31,14 @@ jobs:
     steps:
       - name: Set Version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.event.workflow_run.run_number }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.release_number }}"
           else
-            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.event.workflow_run.run_number }}"
           fi
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
+          echo "Deploy version: $version"
 
       - name: Deploy Octopus Release to UAT
         uses: OctopusDeploy/deploy-release-action@v3
@@ -63,14 +73,14 @@ jobs:
     steps:
       - name: Set Version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.event.workflow_run.run_number }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.release_number }}"
           else
-            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.event.workflow_run.run_number }}"
           fi
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Build version: $version"
+          echo "Deploy version: $version"
 
       - name: Deploy Octopus Release to Prod
         uses: OctopusDeploy/deploy-release-action@v3
