@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using System.Reflection;
+using ClearMeasure.Bootcamp.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -164,22 +164,10 @@ public class ServerFixture
 
             // Release all pooled connections so the server process opens the
             // database file with a clean view of the seeded data
-            if (isSqlite)
-            {
-                ClearLocalConnectionPools();
-            }
+            TestHost.GetRequiredService<IDatabaseConfiguration>().ResetConnectionPool();
 
             DatabaseInitialized = true;
         }
-    }
-
-    private static void ClearLocalConnectionPools()
-    {
-        var connectionType = Type.GetType(
-            "Microsoft.Data.Sqlite.SqliteConnection, Microsoft.Data.Sqlite");
-        var clearAllPools = connectionType?.GetMethod("ClearAllPools",
-            BindingFlags.Static | BindingFlags.Public);
-        clearAllPools?.Invoke(null, null);
     }
 
     [OneTimeTearDown]
