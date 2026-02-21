@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -40,6 +41,7 @@ public class ServerFixture
         if (StartLocalServer)
         {
             await StartAndWaitForServer();
+            await ResetServerDbConnections();
         }
 
         await new BlazorWasmWarmUp(Playwright, ApplicationBaseUrl).ExecuteAsync();
@@ -131,6 +133,17 @@ public class ServerFixture
             $"UI.Server did not start in {WaitTimeoutSeconds} seconds. Last exception: {lastException}");
     }
 
+    private static async Task ResetServerDbConnections()
+    {
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var client = new HttpClient(handler);
+        var response = await client.PostAsync($"{ApplicationBaseUrl}/_diagnostics/reset-db-connections", null);
+        response.EnsureSuccessStatusCode();
+    }
+
     private static void InitializeDatabaseOnce()
     {
         if (DatabaseInitialized) return;
@@ -139,8 +152,9 @@ public class ServerFixture
         {
             if (DatabaseInitialized) return;
 
-            var context = TestHost.GetRequiredService<DbContext>();
-            if (context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+            using var context = TestHost.GetRequiredService<DbContext>();
+            var isSqlite = context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+            if (isSqlite)
             {
                 context.Database.EnsureCreated();
             }
@@ -148,15 +162,24 @@ public class ServerFixture
             new ZDataLoader().LoadData();
             TestContext.Out.WriteLine("ZDataLoader().LoadData(); - complete");
 
-            // Flush WAL to the main DB file so the UI.Server child process
-            // sees all seeded data through its own independent connection
-            if (context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+            // Release all pooled connections so the server process opens the
+            // database file with a clean view of the seeded data
+            if (isSqlite)
             {
-                context.Database.ExecuteSqlRaw("PRAGMA wal_checkpoint(TRUNCATE)");
+                ClearLocalConnectionPools();
             }
 
             DatabaseInitialized = true;
         }
+    }
+
+    private static void ClearLocalConnectionPools()
+    {
+        var connectionType = Type.GetType(
+            "Microsoft.Data.Sqlite.SqliteConnection, Microsoft.Data.Sqlite");
+        var clearAllPools = connectionType?.GetMethod("ClearAllPools",
+            BindingFlags.Static | BindingFlags.Public);
+        clearAllPools?.Invoke(null, null);
     }
 
     [OneTimeTearDown]
