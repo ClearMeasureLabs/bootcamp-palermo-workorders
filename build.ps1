@@ -66,7 +66,10 @@ Function Init {
 
 		Log-Message -Message "Running on Linux" -Type "INFO"
 		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
-		if (Test-IsDockerRunning) {
+		if ($script:useSqlite) {
+			Log-Message -Message "SQLite mode enabled - Docker not required" -Type "INFO"
+		}
+		elseif (Test-IsDockerRunning) {
 			Log-Message -Message "Docker is running" -Type "INFO"
 		} else {
 			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
@@ -127,11 +130,24 @@ Function IntegrationTest {
 	Push-Location -Path $integrationTestProjectPath
 
 	try {
+		$testFilter = ""
+		if ($script:useSqlite) {
+			$testFilter = '--filter "TestCategory!=SqlServerOnly"'
+		}
 		exec {
-			& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
-				--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
-				--no-restore --configuration $projectConfig `
-				--collect:"XPlat Code Coverage"
+			if ($script:useSqlite) {
+				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
+					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
+					--no-restore --configuration $projectConfig `
+					--collect:"XPlat Code Coverage" `
+					--filter "TestCategory!=SqlServerOnly"
+			}
+			else {
+				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
+					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
+					--no-restore --configuration $projectConfig `
+					--collect:"XPlat Code Coverage"
+			}
 		}
 	}
 	finally {
@@ -571,85 +587,115 @@ Function Invoke-PrivateBuild {
 	param (
 		[Parameter(Mandatory = $false)]
 		[string]$databaseServer = "",
-		
+
 		[Parameter(Mandatory = $false)]
-		[string]$databaseName = ""
+		[string]$databaseName = "",
+
+		[Parameter(Mandatory = $false)]
+		[switch]$UseSqlite
 	)
-	
+
 	Log-Message -Message "Starting Invoke-PrivateBuild..." -Type "INFO"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
-	
-	# Set database server from parameter if provided
-	if (-not [string]::IsNullOrEmpty($databaseServer)) {
-		$script:databaseServer = $databaseServer
-		Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "INFO"
+
+	# Auto-detect SQLite mode: use SQLite on Linux when Docker cannot run SQL Server
+	if (-not $UseSqlite -and (Test-IsLinux)) {
+		if (-not (Test-IsDockerRunning)) {
+			Log-Message -Message "Docker is not available. Falling back to SQLite for integration tests." -Type "INFO"
+			$UseSqlite = $true
+		}
 	}
-	else {
-		if (Test-IsLinux) {
-			$script:databaseServer = "localhost"
+
+	# Set script-level flag so Init can skip Docker check
+	$script:useSqlite = $UseSqlite
+
+	if ($UseSqlite) {
+		Log-Message -Message "Using SQLite for integration tests (no SQL Server required)" -Type "INFO"
+	}
+
+	# Set database server from parameter if provided
+	if (-not $UseSqlite) {
+		if (-not [string]::IsNullOrEmpty($databaseServer)) {
+			$script:databaseServer = $databaseServer
+			Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "INFO"
 		}
 		else {
-			$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
+			if (Test-IsLinux) {
+				$script:databaseServer = "localhost"
+			}
+			else {
+				$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
+			}
+			Log-Message -Message "Using default database server for platform: $script:databaseServer" -Type "INFO"
 		}
-		Log-Message -Message "Using default database server for platform: $script:databaseServer" -Type "INFO"
 	}
-	
-	# TODO Drop the SQL Server database.
 
 	# Generate unique database name for this build instance
-	# On Linux with Docker, no need for unique names since container is clean
-	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (-not [string]::IsNullOrEmpty($databaseName)) {
-		$script:databaseName = $databaseName
-		Log-Message -Message "Using database name from parameter: $script:databaseName" -Type "INFO"
-	}
-	elseif (Test-IsLinux) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-	}
-	elseif (Test-IsLocalBuild) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-	}
-	else {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+	if (-not $UseSqlite) {
+		if (-not [string]::IsNullOrEmpty($databaseName)) {
+			$script:databaseName = $databaseName
+			Log-Message -Message "Using database name from parameter: $script:databaseName" -Type "INFO"
+		}
+		elseif (Test-IsLinux) {
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+		}
+		elseif (Test-IsLocalBuild) {
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+		}
+		else {
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+		}
 	}
 
 	$sw = [Diagnostics.Stopwatch]::StartNew()
-	
+
 	Init
 	Compile
 	UnitTests
-	
-	if (Test-IsLinux) 
-	{
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
-		if (Test-IsDockerRunning -LogOutput $true) 
+
+	if (-not $UseSqlite) {
+		if (Test-IsLinux)
 		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
+			if (Test-IsDockerRunning -LogOutput $true)
+			{
+				New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+				New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+			}
+			else {
+				Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+				throw "Docker is not running."
+			}
 		}
-		else {
-			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-			throw "Docker is not running."
-		}
+
+		# Update appsettings.json files before database migration
+		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
-	
-	# Update appsettings.json files before database migration
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-	
-	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	
+	else {
+		Log-Message -Message "Skipping SQL Server setup and AliaSQL migration (using SQLite with EnsureCreated)" -Type "INFO"
+	}
+
 	IntegrationTest
 
-	# Restore appsettings files to their original git state
-	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
-	& git restore 'src/**/appsettings*.json'
-	if ($LASTEXITCODE -ne 0) {
-		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
+	if (-not $UseSqlite) {
+		# Restore appsettings files to their original git state
+		Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
+		& git restore 'src/**/appsettings*.json'
+		if ($LASTEXITCODE -ne 0) {
+			Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
+		}
 	}
-	
+
 	$sw.Stop()
-	Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+	if ($UseSqlite) {
+		Log-Message -Message "PRIVATE BUILD SUCCEEDED (SQLite) - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	}
+	else {
+		Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+	}
 }
 
 <#

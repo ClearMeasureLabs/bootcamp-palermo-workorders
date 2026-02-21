@@ -223,6 +223,7 @@ public class WorkOrderMappingTests
     }
 
     [Test]
+    [Category("SqlServerOnly")]
     public void ShouldRespectMaxLengthConstraints()
     {
         new DatabaseTests().Clean();
