@@ -29,6 +29,8 @@ $test_dir = Join-Path $build_dir "test"
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
 
+$script:databaseEngine = $env:DATABASE_ENGINE
+
 $databaseName = $projectName
 if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName }
 
@@ -38,7 +40,31 @@ $script:databaseScripts = Join-PathSegments $source_dir "Database" "scripts"
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 
- 
+Function Resolve-DatabaseEngine {
+	if ([string]::IsNullOrEmpty($script:databaseEngine)) {
+		if (Test-IsLinux) {
+			if (Test-IsDockerRunning) {
+				$script:databaseEngine = "SQL-Container"
+			}
+			else {
+				$script:databaseEngine = "SQLite"
+			}
+		}
+		else {
+			$script:databaseEngine = "LocalDB"
+		}
+		Log-Message -Message "DATABASE_ENGINE not set. Auto-detected: $script:databaseEngine" -Type "INFO"
+	}
+	else {
+		$validEngines = @("LocalDB", "SQL-Container", "SQLite")
+		if ($script:databaseEngine -notin $validEngines) {
+			throw "Invalid DATABASE_ENGINE value '$($script:databaseEngine)'. Valid values: $($validEngines -join ', ')"
+		}
+		Log-Message -Message "DATABASE_ENGINE set to: $script:databaseEngine" -Type "INFO"
+	}
+	$script:useSqlite = ($script:databaseEngine -eq "SQLite")
+}
+
 Function Init {
 	# Check for PowerShell 7
 	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
@@ -58,30 +84,39 @@ Function Init {
 	}
 
 	if (Test-IsLinux) {
+		Log-Message -Message "Running on Linux" -Type "INFO"
 		# Set NuGet cache to shorter path for Linux/WSL compatibility (only for local builds)
 		if (-not (Test-IsAzureDevOps) -and -not (Test-IsGitHubActions)) {
 			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
 			Log-Message -Message "Setting NUGET_PACKAGES to /tmp/nuget-packages for WSL" -Type "INFO"
 		}
-
-		Log-Message -Message "Running on Linux" -Type "INFO"
-		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
-		if ($script:useSqlite) {
-			Log-Message -Message "SQLite mode enabled - Docker not required" -Type "INFO"
-		}
-		elseif (Test-IsDockerRunning) {
-			Log-Message -Message "Docker is running" -Type "INFO"
-		} else {
-			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-			throw "Docker is not running."
-		}
 	}
 	elseif (Test-IsWindows) {
-		if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
 		Log-Message -Message "Running on Windows" -Type "INFO"
 	}
-	Log-Message "Using $script:databaseServer as database server." -Type "INFO"
-	Log-Message "Using $script:databaseName as the database name." 
+
+	switch ($script:databaseEngine) {
+		"LocalDB" {
+			if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
+		}
+		"SQL-Container" {
+			if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
+			if (Test-IsDockerRunning) {
+				Log-Message -Message "Docker is running" -Type "INFO"
+			} else {
+				Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
+				throw "Docker is not running."
+			}
+		}
+		"SQLite" {
+			Log-Message -Message "SQLite mode enabled - Docker not required" -Type "INFO"
+		}
+	}
+
+	if ($script:databaseEngine -ne "SQLite") {
+		Log-Message "Using $script:databaseServer as database server." -Type "INFO"
+		Log-Message "Using $script:databaseName as the database name."
+	}
 
 	if (Test-Path "build") {
 		Remove-Item -Path "build" -Recurse -Force
@@ -474,40 +509,23 @@ Function Invoke-AcceptanceTests {
 
     Test-IsOllamaRunning -LogOutput $true
 
-	# Auto-detect SQLite mode: use SQLite on Linux when Docker cannot run SQL Server
-	if (-not $UseSqlite -and (Test-IsLinux)) {
-		if (-not (Test-IsDockerRunning)) {
-			Log-Message -Message "Docker is not available. Falling back to SQLite for acceptance tests." -Type "INFO"
-			$UseSqlite = $true
-		}
-	}
-
-	# Set script-level flag so Init can skip Docker check
-	$script:useSqlite = $UseSqlite
-
+	# Override database engine if -UseSqlite switch is provided
 	if ($UseSqlite) {
-		Log-Message -Message "Using SQLite for acceptance tests (no SQL Server required)" -Type "INFO"
+		$script:databaseEngine = "SQLite"
 	}
+
+	# Resolve database engine from DATABASE_ENGINE env var or auto-detection
+	Resolve-DatabaseEngine
 
 	# Set database server from parameter if provided
-	if (-not $UseSqlite) {
+	if ($script:databaseEngine -ne "SQLite") {
 		if (-not [string]::IsNullOrEmpty($databaseServer)) {
 			$script:databaseServer = $databaseServer
-		}
-		else {
-			if (Test-IsLinux) {
-				$script:databaseServer = "localhost"
-			}
-			else {
-				$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
-			}
 		}
 	}
 
 	# Generate unique database name for this build instance
-	# On Linux with Docker, no need for unique names since container is clean
-	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (-not $UseSqlite) {
+	if ($script:databaseEngine -ne "SQLite") {
 		if (-not [string]::IsNullOrEmpty($databaseName)) {
 			$script:databaseName = $databaseName
 		}
@@ -527,34 +545,28 @@ Function Invoke-AcceptanceTests {
 	Init
 	Compile
 
-	if (-not $UseSqlite) {
-		if (Test-IsLinux)
-		{
-			Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
-			if (Test-IsDockerRunning -LogOutput $true)
-			{
-				New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-				New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
-			}
-			else {
-				Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-				throw "Docker is not running."
-			}
-		}
+	if ($script:databaseEngine -eq "SQL-Container") {
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
+		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+	}
 
-		# Update appsettings.json files before database migration
+	# Update appsettings.json files before database migration
+	if ($script:databaseEngine -ne "SQLite") {
 		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	}
 
-		# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
-		# This prevents the Windows LocalDB connection string from overriding appsettings.json
-		$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
-		if (Test-Path $launchSettingsPath) {
-			Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
-			$launchSettings = Get-Content $launchSettingsPath -Raw
-			$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
-			Set-Content -Path $launchSettingsPath -Value $launchSettings
-		}
+	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
+	# This prevents the Windows LocalDB connection string from overriding appsettings.json
+	$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
+	if (Test-Path $launchSettingsPath) {
+		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
+		$launchSettings = Get-Content $launchSettingsPath -Raw
+		$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
+		Set-Content -Path $launchSettingsPath -Value $launchSettings
+	}
 
+	if ($script:databaseEngine -ne "SQLite") {
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
@@ -563,24 +575,23 @@ Function Invoke-AcceptanceTests {
 
 	AcceptanceTests
 
-	if (-not $UseSqlite) {
+	if ($script:databaseEngine -ne "SQLite") {
 		# Restore appsettings and launchSettings files to their original git state
 		Log-Message -Message "Restoring appsettings*.json and launchSettings.json files to git state" -Type "INFO"
 		& git restore 'src/**/appsettings*.json'
 		if ($LASTEXITCODE -ne 0) {
 			Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
 		}
-		$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
-		if (Test-Path $launchSettingsPath) {
-			& git restore $launchSettingsPath
-			if ($LASTEXITCODE -ne 0) {
-				Log-Message -Message "Warning: Failed to restore launchSettings.json file" -Type "WARNING"
-			}
+	}
+	if (Test-Path $launchSettingsPath) {
+		& git restore $launchSettingsPath
+		if ($LASTEXITCODE -ne 0) {
+			Log-Message -Message "Warning: Failed to restore launchSettings.json file" -Type "WARNING"
 		}
 	}
 
 	$sw.Stop()
-	if ($UseSqlite) {
+	if ($script:databaseEngine -eq "SQLite") {
 		Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED (SQLite) - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
 	}
 	else {
@@ -641,40 +652,24 @@ Function Invoke-PrivateBuild {
 	Log-Message -Message "Starting Invoke-PrivateBuild..." -Type "INFO"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 
-	# Auto-detect SQLite mode: use SQLite on Linux when Docker cannot run SQL Server
-	if (-not $UseSqlite -and (Test-IsLinux)) {
-		if (-not (Test-IsDockerRunning)) {
-			Log-Message -Message "Docker is not available. Falling back to SQLite for integration tests." -Type "INFO"
-			$UseSqlite = $true
-		}
-	}
-
-	# Set script-level flag so Init can skip Docker check
-	$script:useSqlite = $UseSqlite
-
+	# Override database engine if -UseSqlite switch is provided
 	if ($UseSqlite) {
-		Log-Message -Message "Using SQLite for integration tests (no SQL Server required)" -Type "INFO"
+		$script:databaseEngine = "SQLite"
 	}
+
+	# Resolve database engine from DATABASE_ENGINE env var or auto-detection
+	Resolve-DatabaseEngine
 
 	# Set database server from parameter if provided
-	if (-not $UseSqlite) {
+	if ($script:databaseEngine -ne "SQLite") {
 		if (-not [string]::IsNullOrEmpty($databaseServer)) {
 			$script:databaseServer = $databaseServer
 			Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "INFO"
 		}
-		else {
-			if (Test-IsLinux) {
-				$script:databaseServer = "localhost"
-			}
-			else {
-				$script:databaseServer = "(LocalDb)\MSSQLLocalDB"
-			}
-			Log-Message -Message "Using default database server for platform: $script:databaseServer" -Type "INFO"
-		}
 	}
 
 	# Generate unique database name for this build instance
-	if (-not $UseSqlite) {
+	if ($script:databaseEngine -ne "SQLite") {
 		if (-not [string]::IsNullOrEmpty($databaseName)) {
 			$script:databaseName = $databaseName
 			Log-Message -Message "Using database name from parameter: $script:databaseName" -Type "INFO"
@@ -696,24 +691,15 @@ Function Invoke-PrivateBuild {
 	Compile
 	UnitTests
 
-	if (-not $UseSqlite) {
-		if (Test-IsLinux)
-		{
-			Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
-			if (Test-IsDockerRunning -LogOutput $true)
-			{
-				New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-				New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
-			}
-			else {
-				Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-				throw "Docker is not running."
-			}
-		}
-
-		# Update appsettings.json files before database migration
+	if ($script:databaseEngine -eq "SQL-Container") {
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
+		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	}
+	elseif ($script:databaseEngine -eq "LocalDB") {
+		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
@@ -722,7 +708,7 @@ Function Invoke-PrivateBuild {
 
 	IntegrationTest
 
-	if (-not $UseSqlite) {
+	if ($script:databaseEngine -ne "SQLite") {
 		# Restore appsettings files to their original git state
 		Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
 		& git restore 'src/**/appsettings*.json'
@@ -732,7 +718,7 @@ Function Invoke-PrivateBuild {
 	}
 
 	$sw.Stop()
-	if ($UseSqlite) {
+	if ($script:databaseEngine -eq "SQLite") {
 		Log-Message -Message "PRIVATE BUILD SUCCEEDED (SQLite) - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
 	}
 	else {
@@ -783,49 +769,57 @@ Function Invoke-CIBuild {
 	}
 	
 	$sw = [Diagnostics.Stopwatch]::StartNew()
-	
+
+	# Resolve database engine from DATABASE_ENGINE env var or auto-detection
+	Resolve-DatabaseEngine
+
 	# Generate database name based on environment
-	# On Linux with Docker, no need for unique names since container is clean
-	# On local Windows builds, use simple name. On CI, use unique name to avoid conflicts.
-	if (Test-IsLinux) {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+	if ($script:databaseEngine -ne "SQLite") {
+		if (Test-IsLinux) {
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
+		}
+		else {
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
+		}
 	}
-	else {
-		$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
-	}
-	
+
 	Init
 	Compile
 	UnitTests
 
-	if (Test-IsLinux) 
-	{
+	if ($script:databaseEngine -eq "SQL-Container") {
 		Log-Message -Message "Setting up SQL Server in Docker for CI" -Type "INFO"
-		if (Test-IsDockerRunning -LogOutput $true) 
-		{
-			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-			New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
-		}
-		else {
-			Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
-			throw "Docker is not running."
+		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+	}
+
+	if ($script:databaseEngine -ne "SQLite") {
+		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	}
+	else {
+		Log-Message -Message "Skipping SQL Server setup and AliaSQL migration (using SQLite with EnsureCreated)" -Type "INFO"
+	}
+
+	IntegrationTest
+
+	if ($script:databaseEngine -ne "SQLite") {
+		# Restore appsettings files to their original git state
+		Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
+		& git restore 'src/**/appsettings*.json'
+		if ($LASTEXITCODE -ne 0) {
+			Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
 		}
 	}
 
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	
-	IntegrationTest
-	# Restore appsettings files to their original git state
-	Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
-	& git restore 'src/**/appsettings*.json'
-	if ($LASTEXITCODE -ne 0) {
-		Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
-	}
-	
 	# Package-Everything
 
 	$sw.Stop()
-	Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-	Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+	if ($script:databaseEngine -eq "SQLite") {
+		Log-Message -Message "Invoke-CIBuild SUCCEEDED (SQLite) - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+	}
+	else {
+		Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+	}
 }
