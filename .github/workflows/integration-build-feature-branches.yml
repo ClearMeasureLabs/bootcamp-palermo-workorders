@@ -1,8 +1,7 @@
-name: Integration Build - Branch
+name: Integration Build
 run-name: "1.3.${{ github.run_number }} • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
 on:
   push:
-    branches-ignore: ['master', 'main']
   workflow_dispatch:
 env:
   MAJOR_VERSION: 1

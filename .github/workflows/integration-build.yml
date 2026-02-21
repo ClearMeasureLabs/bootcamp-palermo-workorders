@@ -1,15 +1,15 @@
-name: Integration Build
+name: Integration Build (Disabled)
 run-name: "1.3.${{ github.run_number }} • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
-on:
-  push:
-    branches: ['master', 'main']
-  workflow_dispatch:
+# Disabled: Replaced by integration-build-feature-branches.yml which now runs on all branches.
+# Deployment stages moved to deploy-to-environments.yml.
+on: []
 env:
   MAJOR_VERSION: 1
   MINOR_VERSION: 3
 
 jobs:
   build-linux:
+    if: false
     name: Integration Build
     runs-on: ubuntu-latest
     concurrency:
@@ -271,7 +271,7 @@ jobs:
   docker-build-image-for-churchbulletin-ui:
     name: Publish Release Candidate
     needs: [build-linux]
-    if: success() 
+    if: false
     runs-on: ubuntu-latest
     concurrency:
       # Stop publishing a release candidate if a newer job arrives.
@@ -409,7 +409,7 @@ jobs:
   deploy-to-tdd:
     name: TDD
     needs: [docker-build-image-for-churchbulletin-ui]
-    if: success()
+    if: false
     concurrency:
       # This will protect deployments - there should be no cancellation.
       group: deploy-to-tdd-serialized
@@ -605,7 +605,7 @@ jobs:
   deploy-to-uat:
     name: UAT
     needs: [deploy-to-tdd]
-    if: success() 
+    if: false
     runs-on: ubuntu-latest
     environment:
       name: UAT
@@ -643,7 +643,7 @@ jobs:
   deploy-to-prod:
     name: Prod
     needs: [deploy-to-uat]
-    if: success() 
+    if: false
     runs-on: ubuntu-latest
     environment:
       name: Prod
