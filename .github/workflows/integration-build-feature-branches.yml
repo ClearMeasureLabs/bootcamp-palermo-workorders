@@ -724,10 +724,34 @@ jobs:
           "ConnectionStrings__SqlConnectionString=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
+      - name: Wait for Container App to become healthy
+        shell: pwsh
+        run: |
+          $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
+          $maxAttempts = 30
+          $delaySeconds = 10
+          Write-Host "Polling $url for healthy response (max ${maxAttempts} attempts, ${delaySeconds}s apart)..."
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            try {
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
+              $body = $response.Content
+              Write-Host "Attempt ${i}: HTTP $($response.StatusCode) - $body"
+              if ($response.StatusCode -eq 200 -and $body -match 'Healthy') {
+                Write-Host "Container App is healthy after $i attempts."
+                exit 0
+              }
+            } catch {
+              Write-Host "Attempt ${i}: $($_.Exception.Message)"
+            }
+            if ($i -lt $maxAttempts) { Start-Sleep -Seconds $delaySeconds }
+          }
+          Write-Error "Container App did not become healthy after $maxAttempts attempts."
+          exit 1
+
       - name: Run Acceptance tests
         if: success()
         shell: pwsh
-        env: 
+        env:
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
           BuildConfiguration: Release
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}

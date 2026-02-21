@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <NUnit>
-    <NumberOfTestWorkers>8</NumberOfTestWorkers>
+    <NumberOfTestWorkers>4</NumberOfTestWorkers>
   </NUnit>
   <LoggerRunSettings>
     <Loggers>

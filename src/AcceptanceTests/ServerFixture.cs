@@ -44,7 +44,45 @@ public class ServerFixture
             await ResetServerDbConnections();
         }
 
+        await WarmUpContainerApp();
         await new BlazorWasmWarmUp(Playwright, ApplicationBaseUrl).ExecuteAsync();
+    }
+
+    /// <summary>
+    /// Sends HTTP warm-up requests to the Container App before Playwright browsers launch.
+    /// This primes server-side caches, JIT compilation, and triggers Blazor WASM bundle download
+    /// so that browser-based tests encounter a warmed-up application.
+    /// </summary>
+    private static async Task WarmUpContainerApp()
+    {
+        if (StartLocalServer) return; // local server is already warmed by StartAndWaitForServer
+
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+
+        string[] warmUpPaths = ["/", "/_healthcheck", "/_clienthealthcheck"];
+
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            TestContext.Out.WriteLine($"HTTP warm-up: round {attempt}/3");
+            foreach (var path in warmUpPaths)
+            {
+                try
+                {
+                    var response = await client.GetAsync($"{ApplicationBaseUrl}{path}");
+                    TestContext.Out.WriteLine($"  {path} -> {(int)response.StatusCode}");
+                }
+                catch (Exception ex)
+                {
+                    TestContext.Out.WriteLine($"  {path} -> {ex.GetType().Name}: {ex.Message}");
+                }
+            }
+
+            await Task.Delay(2000);
+        }
     }
 
     private async Task StartAndWaitForServer()
