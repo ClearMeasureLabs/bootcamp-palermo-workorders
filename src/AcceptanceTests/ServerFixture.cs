@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using ClearMeasure.Bootcamp.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests;
@@ -39,19 +41,68 @@ public class ServerFixture
         if (StartLocalServer)
         {
             await StartAndWaitForServer();
+            await ResetServerDbConnections();
         }
 
+        await WarmUpContainerApp();
         await new BlazorWasmWarmUp(Playwright, ApplicationBaseUrl).ExecuteAsync();
+    }
+
+    /// <summary>
+    /// Sends HTTP warm-up requests to the Container App before Playwright browsers launch.
+    /// This primes server-side caches, JIT compilation, and triggers Blazor WASM bundle download
+    /// so that browser-based tests encounter a warmed-up application.
+    /// </summary>
+    private static async Task WarmUpContainerApp()
+    {
+        if (StartLocalServer) return; // local server is already warmed by StartAndWaitForServer
+
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+
+        string[] warmUpPaths = ["/", "/_healthcheck", "/_clienthealthcheck"];
+
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            TestContext.Out.WriteLine($"HTTP warm-up: round {attempt}/3");
+            foreach (var path in warmUpPaths)
+            {
+                try
+                {
+                    var response = await client.GetAsync($"{ApplicationBaseUrl}{path}");
+                    TestContext.Out.WriteLine($"  {path} -> {(int)response.StatusCode}");
+                }
+                catch (Exception ex)
+                {
+                    TestContext.Out.WriteLine($"  {path} -> {ex.GetType().Name}: {ex.Message}");
+                }
+            }
+
+            await Task.Delay(2000);
+        }
     }
 
     private async Task StartAndWaitForServer()
     {
+        var configuration = TestHost.GetRequiredService<IConfiguration>();
+        var connectionString = configuration.GetConnectionString("SqlConnectionString") ?? "";
+        var useSqlite = connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
+
+        // Use --no-launch-profile to prevent launchSettings.json from overriding
+        // environment variables (e.g. connection strings) set by the test harness
+        var arguments = useSqlite
+            ? $"run --no-launch-profile --urls={ApplicationBaseUrl}"
+            : $"run --urls={ApplicationBaseUrl}";
+
         _serverProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"run --urls={ApplicationBaseUrl}",
+                Arguments = arguments,
                 WorkingDirectory = ProjectPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -60,6 +111,34 @@ public class ServerFixture
             }
         };
         _serverProcess.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
+
+        if (useSqlite)
+        {
+            _serverProcess.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
+
+            // Provide a dummy Application Insights connection string to prevent the
+            // Azure Monitor exporter from throwing when --no-launch-profile is used
+            _serverProcess.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] =
+                "InstrumentationKey=00000000-0000-0000-0000-000000000000";
+
+            // For SQLite file-based databases, resolve to absolute path so the server
+            // process uses the same database file regardless of its working directory
+            if (!connectionString.Contains(":memory:", StringComparison.OrdinalIgnoreCase))
+            {
+                var dbPath = connectionString["Data Source=".Length..].Trim();
+                var semicolonIndex = dbPath.IndexOf(';');
+                if (semicolonIndex >= 0) dbPath = dbPath[..semicolonIndex];
+
+                if (!Path.IsPathRooted(dbPath))
+                {
+                    var absolutePath = Path.GetFullPath(dbPath);
+                    connectionString = $"Data Source={absolutePath}";
+                }
+            }
+
+            _serverProcess.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] = connectionString;
+        }
+
         _serverProcess.Start();
 
         // Wait for server to be ready
@@ -92,6 +171,17 @@ public class ServerFixture
             $"UI.Server did not start in {WaitTimeoutSeconds} seconds. Last exception: {lastException}");
     }
 
+    private static async Task ResetServerDbConnections()
+    {
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var client = new HttpClient(handler);
+        var response = await client.PostAsync($"{ApplicationBaseUrl}/_diagnostics/reset-db-connections", null);
+        response.EnsureSuccessStatusCode();
+    }
+
     private static void InitializeDatabaseOnce()
     {
         if (DatabaseInitialized) return;
@@ -100,8 +190,20 @@ public class ServerFixture
         {
             if (DatabaseInitialized) return;
 
+            using var context = TestHost.GetRequiredService<DbContext>();
+            var isSqlite = context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+            if (isSqlite)
+            {
+                context.Database.EnsureCreated();
+            }
+
             new ZDataLoader().LoadData();
             TestContext.Out.WriteLine("ZDataLoader().LoadData(); - complete");
+
+            // Release all pooled connections so the server process opens the
+            // database file with a clean view of the seeded data
+            TestHost.GetRequiredService<IDatabaseConfiguration>().ResetConnectionPool();
+
             DatabaseInitialized = true;
         }
     }

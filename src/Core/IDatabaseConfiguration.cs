@@ -3,4 +3,5 @@
 public interface IDatabaseConfiguration
 {
     string GetConnectionString();
+    void ResetConnectionPool();
 }

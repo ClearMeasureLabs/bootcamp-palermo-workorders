@@ -51,9 +51,9 @@ public static class TestHost
                 var env = context.HostingEnvironment;
 
                 config
-                    .AddJsonFile("appsettings.test.json", false, true)
                     .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true)
                     .AddJsonFile("appsettings.acceptancetests.json", true, true)
+                    .AddJsonFile("appsettings.test.json", false, true)
                     .AddEnvironmentVariables();
             })
             .ConfigureServices(s =>
@@ -69,15 +69,23 @@ public static class TestHost
                 endpointConfiguration.UseSerialization<SystemJsonSerializer>();
                 endpointConfiguration.EnableInstallers();
                 endpointConfiguration.SendOnly();
-                
-                var transport = endpointConfiguration.UseTransport<SqlServerTransport>();
-                transport.ConnectionString(context.Configuration.GetConnectionString("SqlConnectionString"));
-                transport.DefaultSchema("nServiceBus");
-                transport.Transactions(TransportTransactionMode.TransactionScope);
-                
+
+                var connectionString = context.Configuration.GetConnectionString("SqlConnectionString") ?? "";
+                if (connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
+                {
+                    endpointConfiguration.UseTransport<LearningTransport>();
+                }
+                else
+                {
+                    var transport = endpointConfiguration.UseTransport<SqlServerTransport>();
+                    transport.ConnectionString(connectionString);
+                    transport.DefaultSchema("nServiceBus");
+                    transport.Transactions(TransportTransactionMode.TransactionScope);
+                }
+
                 var conventions = new MessagingConventions();
                 endpointConfiguration.Conventions().Add(conventions);
-                
+
                 return endpointConfiguration;
             })
             .Build();

@@ -16,4 +16,17 @@ public class TestDatabaseConfiguration : IDatabaseConfiguration
     {
         return _configuration.GetConnectionString("SqlConnectionString") ?? throw new InvalidOperationException();
     }
+
+    public void ResetConnectionPool()
+    {
+        var connectionString = GetConnectionString();
+        if (connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        }
+        else
+        {
+            Microsoft.Data.SqlClient.SqlConnection.ClearAllPools();
+        }
+    }
 }

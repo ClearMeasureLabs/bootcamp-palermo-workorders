@@ -286,9 +286,188 @@ jobs:
             echo "No open PR found for branch $BRANCH_NAME"
           fi
 
+  build-sqlite:
+    name: Integration Build (SQLite)
+    runs-on: ubuntu-latest
+    concurrency:
+      group: build-sqlite-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: read
+    env:
+      BUILD_CONFIGURATION: Release
+      DATABASE_ENGINE: SQLite
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: Setup .NET SDK 10.0.100
+        uses: actions/setup-dotnet@v5.0.1
+        with:
+          dotnet-version: '10.0.100'
+      - name: Setup .NET SDK 6.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Authenticate to ClearMeasureLabs NuGet feed
+        run: |
+          dotnet nuget remove source ClearMeasureLabs 2>/dev/null || true
+          dotnet nuget add source https://nuget.pkg.github.com/ClearMeasureLabs/index.json \
+            --name ClearMeasureLabs \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.CLEARMEASURELABS_NUGET_PAT }} \
+            --store-password-in-clear-text
+
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+
+      - name: Run Private Build (SQLite)
+        shell: pwsh
+        env:
+          BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+        run: |
+          Write-Host "Running Private Build with SQLite"
+          . ./build.ps1
+          Invoke-PrivateBuild -UseSqlite
+
+      - name: Test Reporter
+        uses: dorny/test-reporter@v2.1.1
+        if: always()
+        with:
+          name: SQLite Test Results
+          path: 'build/test/**/*.trx'
+          reporter: dotnet-trx
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-sqlite
+          path: build/test/**/*.trx
+          retention-days: 2
+
+  code-analysis:
+    name: Code Analysis
+    runs-on: ubuntu-latest
+    concurrency:
+      group: code-analysis-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: Setup .NET SDK 10.0.100
+        uses: actions/setup-dotnet@v5.0.1
+        with:
+          dotnet-version: '10.0.100'
+      - name: Setup .NET SDK 6.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Authenticate to ClearMeasureLabs NuGet feed
+        run: |
+          dotnet nuget remove source ClearMeasureLabs 2>/dev/null || true
+          dotnet nuget add source https://nuget.pkg.github.com/ClearMeasureLabs/index.json \
+            --name ClearMeasureLabs \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.CLEARMEASURELABS_NUGET_PAT }} \
+            --store-password-in-clear-text
+
+      - name: Restore solution
+        run: dotnet restore src/ChurchBulletin.sln
+
+      - name: Check code style
+        run: dotnet format style src/ChurchBulletin.sln --verify-no-changes --verbosity normal
+
+      - name: Check analyzers
+        run: dotnet format analyzers src/ChurchBulletin.sln --verify-no-changes --verbosity normal
+
+      - name: Build with code analysis
+        run: |
+          dotnet build src/ChurchBulletin.sln --configuration Release --no-restore \
+            /p:TreatWarningsAsErrors=true \
+            /p:EnforceCodeStyleInBuild=true
+
+  build-windows:
+    name: Integration Build (Windows LocalDB)
+    runs-on: windows-latest
+    concurrency:
+      group: build-windows-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: read
+    env:
+      BUILD_CONFIGURATION: Release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: Setup .NET SDK 10.0.100
+        uses: actions/setup-dotnet@v5.0.1
+        with:
+          dotnet-version: '10.0.100'
+      - name: Setup .NET SDK 6.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Authenticate to ClearMeasureLabs NuGet feed
+        shell: pwsh
+        run: |
+          dotnet nuget remove source ClearMeasureLabs 2>$null
+          if ($LASTEXITCODE -ne 0) { $LASTEXITCODE = 0 }
+          dotnet nuget add source https://nuget.pkg.github.com/ClearMeasureLabs/index.json `
+            --name ClearMeasureLabs `
+            --username ${{ github.actor }} `
+            --password ${{ secrets.CLEARMEASURELABS_NUGET_PAT }} `
+            --store-password-in-clear-text
+
+      - name: Set Version
+        shell: pwsh
+        run: |
+          $version = "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          "BUILD_BUILDNUMBER=$version" >> $env:GITHUB_ENV
+
+      - name: Run Private Build (Windows LocalDB)
+        shell: pwsh
+        env:
+          BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+        run: |
+          Write-Host "Running Private Build with Windows LocalDB"
+          . ./build.ps1
+          Invoke-PrivateBuild
+
+      - name: Test Reporter
+        uses: dorny/test-reporter@v2.1.1
+        if: always()
+        with:
+          name: Windows LocalDB Test Results
+          path: 'build/test/**/*.trx'
+          reporter: dotnet-trx
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-windows
+          path: build/test/**/*.trx
+          retention-days: 2
+
   docker-build-image-for-churchbulletin-ui:
     name: Publish Release Candidate
-    needs: [build-linux]
+    needs: [build-linux, build-sqlite, code-analysis, build-windows]
     if: success() 
     runs-on: ubuntu-latest
     concurrency:
@@ -545,10 +724,34 @@ jobs:
           "ConnectionStrings__SqlConnectionString=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
+      - name: Wait for Container App to become healthy
+        shell: pwsh
+        run: |
+          $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
+          $maxAttempts = 30
+          $delaySeconds = 10
+          Write-Host "Polling $url for healthy response (max ${maxAttempts} attempts, ${delaySeconds}s apart)..."
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            try {
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
+              $body = $response.Content
+              Write-Host "Attempt ${i}: HTTP $($response.StatusCode) - $body"
+              if ($response.StatusCode -eq 200 -and $body -match 'Healthy') {
+                Write-Host "Container App is healthy after $i attempts."
+                exit 0
+              }
+            } catch {
+              Write-Host "Attempt ${i}: $($_.Exception.Message)"
+            }
+            if ($i -lt $maxAttempts) { Start-Sleep -Seconds $delaySeconds }
+          }
+          Write-Error "Container App did not become healthy after $maxAttempts attempts."
+          exit 1
+
       - name: Run Acceptance tests
         if: success()
         shell: pwsh
-        env: 
+        env:
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
           BuildConfiguration: Release
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
