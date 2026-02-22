@@ -17,11 +17,27 @@ jobs:
       group: deploy-to-tdd-serialized
       cancel-in-progress: false
     runs-on: windows-latest
+    permissions:
+      contents: read
+      statuses: write
     environment:
       name: TDD
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Report TDD status as pending
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $sha = "${{ github.event.workflow_run.head_sha }}"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          gh api "repos/${{ github.repository }}/statuses/$sha" `
+            -f state="pending" `
+            -f target_url="$runUrl" `
+            -f description="TDD deployment in progress" `
+            -f context="Deploy to TDD"
+
+      - uses: actions/checkout@v6.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
@@ -202,10 +218,6 @@ jobs:
               Pop-Location
           }
 
-          Write-Host "Installing Playwright browsers from $playwrightScript"
-          & pwsh $playwrightScript install --with-deps
-
-
 
           # Now run the acceptance tests
           Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
@@ -228,3 +240,27 @@ jobs:
           name: acceptance-test-results-tdd
           path: build/test/AcceptanceTests/**/*.trx
           retention-days: 2
+
+      - name: Report TDD status to commit
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $sha = "${{ github.event.workflow_run.head_sha }}"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          $jobStatus = "${{ job.status }}"
+
+          if ($jobStatus -eq "success") {
+            $state = "success"
+            $description = "TDD deployment and acceptance tests passed"
+          } else {
+            $state = "failure"
+            $description = "TDD deployment or acceptance tests failed"
+          }
+
+          gh api "repos/${{ github.repository }}/statuses/$sha" `
+            -f state="$state" `
+            -f target_url="$runUrl" `
+            -f description="$description" `
+            -f context="Deploy to TDD"
