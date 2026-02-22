@@ -1,9 +1,15 @@
-name: Deploy to TDD
-run-name: "TDD Deploy • ${{ github.event.workflow_run.head_branch }} • 1.3.${{ github.event.workflow_run.run_number }}"
+name: Deploy
+run-name: "Deploy • ${{ inputs.release_number || format('{0} • 1.3.{1}', github.event.workflow_run.head_branch, github.event.workflow_run.run_number) }}"
 on:
   workflow_run:
     workflows: ["Integration Build"]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      release_number:
+        description: 'Release version to deploy (must match an existing Integration Build version, e.g. 1.3.394)'
+        required: true
+        type: string
 env:
   MAJOR_VERSION: 1
   MINOR_VERSION: 3
@@ -11,7 +17,9 @@ env:
 jobs:
   deploy-to-tdd:
     name: TDD
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success'
     concurrency:
       # This will protect deployments - there should be no cancellation.
       group: deploy-to-tdd-serialized
@@ -245,3 +253,98 @@ jobs:
             -f target_url="$runUrl" `
             -f description="$description" `
             -f context="Deploy to TDD"
+
+  deploy-to-uat:
+    name: UAT
+    needs: [deploy-to-tdd]
+    # Run UAT when:
+    # 1. Manual workflow_dispatch with a release_number (TDD is skipped), OR
+    # 2. TDD succeeded on master/main from a push-triggered Integration Build
+    # !cancelled() is required so the if condition is evaluated even when TDD is skipped
+    if: >-
+      !cancelled() && (
+        github.event_name == 'workflow_dispatch' ||
+        (needs.deploy-to-tdd.result == 'success' &&
+         github.event.workflow_run.event == 'push' &&
+         (github.event.workflow_run.head_branch == 'master' ||
+          github.event.workflow_run.head_branch == 'main'))
+      )
+    runs-on: ubuntu-latest
+    environment:
+      name: UAT
+
+    steps:
+      - name: Set Version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.release_number }}"
+          else
+            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.event.workflow_run.run_number }}"
+          fi
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Deploy version: $version"
+
+      - name: Deploy Octopus Release to UAT
+        uses: OctopusDeploy/deploy-release-action@v3
+        id: start-deploy-to-uat
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          project: ${{ vars.OCTOPUS_PROJECT }}
+          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          environments: "UAT"
+
+      - name: Wait for the UAT deployment to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.start-deploy-to-uat.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800
+
+  deploy-to-prod:
+    name: Prod
+    needs: [deploy-to-uat]
+    if: success()
+    runs-on: ubuntu-latest
+    environment:
+      name: Prod
+
+    steps:
+      - name: Set Version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.release_number }}"
+          else
+            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.event.workflow_run.run_number }}"
+          fi
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Deploy version: $version"
+
+      - name: Deploy Octopus Release to Prod
+        uses: OctopusDeploy/deploy-release-action@v3
+        id: start-deploy-to-prod
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          project: ${{ vars.OCTOPUS_PROJECT }}
+          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          environments: "Prod"
+
+      - name: Wait for the Prod deployment to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.start-deploy-to-prod.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800
