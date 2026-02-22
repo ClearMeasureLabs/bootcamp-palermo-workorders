@@ -21,6 +21,19 @@ jobs:
       name: TDD
 
     steps:
+      - name: Report TDD status as pending
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $sha = "${{ github.event.workflow_run.head_sha }}"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          gh api "repos/${{ github.repository }}/statuses/$sha" `
+            -f state="pending" `
+            -f target_url="$runUrl" `
+            -f description="TDD deployment in progress" `
+            -f context="Deploy to TDD"
+
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
