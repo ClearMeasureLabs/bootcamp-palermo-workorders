@@ -14,9 +14,9 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        _ = InitializeAsync();
+        await InitializeAsync();
     }
 
     private async Task InitializeAsync()
