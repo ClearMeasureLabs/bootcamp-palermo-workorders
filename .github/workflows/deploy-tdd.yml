@@ -228,3 +228,27 @@ jobs:
           name: acceptance-test-results-tdd
           path: build/test/AcceptanceTests/**/*.trx
           retention-days: 2
+
+      - name: Report TDD status to commit
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $sha = "${{ github.event.workflow_run.head_sha }}"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          $jobStatus = "${{ job.status }}"
+
+          if ($jobStatus -eq "success") {
+            $state = "success"
+            $description = "TDD deployment and acceptance tests passed"
+          } else {
+            $state = "failure"
+            $description = "TDD deployment or acceptance tests failed"
+          }
+
+          gh api "repos/${{ github.repository }}/statuses/$sha" `
+            -f state="$state" `
+            -f target_url="$runUrl" `
+            -f description="$description" `
+            -f context="Deploy to TDD"
