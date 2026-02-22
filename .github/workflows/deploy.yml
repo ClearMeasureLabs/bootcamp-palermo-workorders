@@ -269,6 +269,10 @@ jobs:
          (github.event.workflow_run.head_branch == 'master' ||
           github.event.workflow_run.head_branch == 'main'))
       )
+    concurrency:
+      # A newer version waiting for UAT approval will cancel any previous pending run.
+      group: deploy-to-uat-serialized
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     environment:
       name: UAT
