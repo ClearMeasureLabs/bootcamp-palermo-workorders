@@ -242,6 +242,14 @@ PlantUML diagrams in `arch/`:
 - `arch-c4-component-project-dependencies.puml`: Project dependencies
 - `arch-c4-class-domain-model.puml`: Domain model (WorkOrder, Employee, WorkOrderStatus, Role)
 
+## Branch Naming Convention
+
+All branches must be created inside a folder matching the username of the account creating the branch. The format is `{username}/{branch-description}`.
+
+- For user `jeffreypalermo`, branches go under `jeffreypalermo/` (e.g., `jeffreypalermo/fix-work-order-status`)
+- For user `johnsmith`, branches go under `johnsmith/` (e.g., `johnsmith/add-employee-search`)
+- For AI agents (Claude, Copilot, Cursor), use the username of the account that initiated the session
+
 ## Important Notes
 
 - **No Nuget packages**: Do not add new NuGet packages or change SDK versions without explicit approval

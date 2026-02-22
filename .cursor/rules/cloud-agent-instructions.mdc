@@ -62,7 +62,10 @@ New or updated behavior requires:
 ## Workflow
 
 ### Branching
-- Create branch: `issues/[issue-number]/[issue-title]`
+- Create branch inside a folder matching the username of the account creating the branch: `{username}/{branch-description}`
+- Example for user `jeffreypalermo`: `jeffreypalermo/fix-work-order-status`
+- Example for user `johnsmith`: `johnsmith/add-employee-search`
+- For AI agents (Cursor, Copilot, Claude), use the username of the account that initiated the session
 - If branch exists, use it (do not create new)
 
 ### Database Migrations
