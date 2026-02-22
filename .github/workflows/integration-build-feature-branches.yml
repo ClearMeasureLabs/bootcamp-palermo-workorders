@@ -612,8 +612,6 @@ jobs:
       group: deploy-to-tdd-serialized
       cancel-in-progress: false
     runs-on: windows-latest
-    environment:
-      name: TDD
 
     steps:
       - uses: actions/checkout@v6
