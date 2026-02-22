@@ -22,7 +22,8 @@ jobs:
       pull-requests: write
     env:
       BUILD_CONFIGURATION: Release
-    
+      DOTNET_ROLL_FORWARD: LatestMajor
+
     steps:
       # Checkout code
       - name: Checkout code
@@ -31,11 +32,7 @@ jobs:
       - name: Setup .NET SDK 10.0.100
         uses: actions/setup-dotnet@v5.0.1
         with:
-          dotnet-version: '10.0.100'        
-      - name: Setup .NET SDK 6.0
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '10.0.100'
 
       # Set version environment variable
       - name: Set Version
@@ -293,10 +290,6 @@ jobs:
         uses: actions/setup-dotnet@v5.0.1
         with:
           dotnet-version: '10.0.100'
-      - name: Setup .NET SDK 6.0
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
 
       - name: Set Version
         run: |
@@ -346,10 +339,6 @@ jobs:
         uses: actions/setup-dotnet@v5.0.1
         with:
           dotnet-version: '10.0.100'
-      - name: Setup .NET SDK 6.0
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
 
       - name: Restore solution
         run: dotnet restore src/ChurchBulletin.sln
@@ -386,10 +375,6 @@ jobs:
         uses: actions/setup-dotnet@v5.0.1
         with:
           dotnet-version: '10.0.100'
-      - name: Setup .NET SDK 6.0
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
 
       - name: Set Version
         shell: pwsh
@@ -582,10 +567,6 @@ jobs:
         uses: actions/setup-dotnet@v5.0.1
         with:
           dotnet-version: '10.0.100'
-      - name: Setup .NET SDK 6.0
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
 
       - name: Set Version
         run: |
