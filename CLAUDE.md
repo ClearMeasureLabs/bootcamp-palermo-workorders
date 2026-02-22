@@ -199,11 +199,11 @@ The solution follows strict Onion Architecture with dependency flow inward:
 1. **Integration_Build**: Build, test, package (pushes to Azure Artifacts)
 2. **Docker Build & Push**: Build and push to Azure Container Registry
 3. **TDD**: Auto-deploy, migrate DB, run acceptance tests
-4. **UAT**: Manual approval required, deploy
+4. **UAT**: Manual approval required (any person can approve), deploy
 5. **PROD**: Manual approval required, deploy
 
 ### Versioning
-Format: `{major}.{minor}.{Rev:r}` (currently 1.3.x)
+Format: `{major}.{minor}.{Rev:r}` (currently 1.4.x)
 
 ## Docker
 
