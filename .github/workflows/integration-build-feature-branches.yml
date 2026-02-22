@@ -22,7 +22,8 @@ jobs:
       pull-requests: write
     env:
       BUILD_CONFIGURATION: Release
-    
+      DOTNET_ROLL_FORWARD: LatestMajor
+
     steps:
       # Checkout code
       - name: Checkout code

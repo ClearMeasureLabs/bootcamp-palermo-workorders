@@ -422,7 +422,10 @@ Function PackageScript {
 
 
 Function Package-Everything{
-	
+
+	# Allow Octopus.DotNet.Cli (targets net6.0) to run on the current .NET SDK
+	$env:DOTNET_ROLL_FORWARD = "LatestMajor"
+
 	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
 	
 	# Ensure dotnet tools are in PATH
