@@ -17,6 +17,9 @@ jobs:
       group: deploy-to-tdd-serialized
       cancel-in-progress: false
     runs-on: windows-latest
+    permissions:
+      contents: read
+      statuses: write
     environment:
       name: TDD
 
@@ -34,7 +37,7 @@ jobs:
             -f description="TDD deployment in progress" `
             -f context="Deploy to TDD"
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
@@ -214,10 +217,6 @@ jobs:
           } finally {
               Pop-Location
           }
-
-          Write-Host "Installing Playwright browsers from $playwrightScript"
-          & pwsh $playwrightScript install --with-deps
-
 
 
           # Now run the acceptance tests
