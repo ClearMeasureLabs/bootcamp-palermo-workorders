@@ -92,75 +92,8 @@ jobs:
           release_number: ${{ env.VERSION }}
           environments: "TDD"
 
-      - name: Wait for the TDD deployment to complete
-        uses: OctopusDeploy/await-task-action@v3
-        env:
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-        with:
-          server_task_id: ${{ fromJson(steps.start-deploy-to-tdd.outputs.server_tasks)[0].serverTaskId }}
-          timeout_after: 1800
-
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Get Container App FQDN and Connection String
-        shell: pwsh
-        run: |
-          $containerAppFqdn = az containerapp show `
-            --name ${{ vars.CONTAINER_APP_NAME }} `
-            --resource-group ${{ vars.TDD_RESOURCE_GROUP_NAME}} `
-            --query properties.configuration.ingress.fqdn `
-            -o tsv
-
-          if ([string]::IsNullOrWhiteSpace($containerAppFqdn)) {
-            Write-Error "Error: Could not retrieve container app FQDN"
-            exit 1
-          }
-
-          $containerAppUrl = "https://$containerAppFqdn"
-          Write-Host "Container App FQDN: $containerAppFqdn"
-          Write-Host "Container App URL: $containerAppUrl"
-          "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "ApplicationBaseUrl=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-
-          # Get the connection string from container app environment variables
-          $containerAppConnectionString = az containerapp show `
-            --name ${{ vars.CONTAINER_APP_NAME }} `
-            --resource-group ${{ vars.TDD_RESOURCE_GROUP_NAME}} `
-            --query "properties.template.containers[0].env[?name=='ConnectionStrings__SqlConnectionString'].value" `
-            -o tsv
-          Write-Host "Container App Connection String retrieved: $([string]::IsNullOrWhiteSpace($containerAppConnectionString))"
-          "ConnectionStrings__SqlConnectionString=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-
-      - name: Wait for Container App to become healthy
-        shell: pwsh
-        run: |
-          $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
-          $maxAttempts = 30
-          $delaySeconds = 10
-          Write-Host "Polling $url for healthy response (max ${maxAttempts} attempts, ${delaySeconds}s apart)..."
-          for ($i = 1; $i -le $maxAttempts; $i++) {
-            try {
-              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
-              $body = $response.Content
-              Write-Host "Attempt ${i}: HTTP $($response.StatusCode) - $body"
-              if ($response.StatusCode -eq 200 -and $body -match 'Healthy') {
-                Write-Host "Container App is healthy after $i attempts."
-                exit 0
-              }
-            } catch {
-              Write-Host "Attempt ${i}: $($_.Exception.Message)"
-            }
-            if ($i -lt $maxAttempts) { Start-Sleep -Seconds $delaySeconds }
-          }
-          Write-Error "Container App did not become healthy after $maxAttempts attempts."
-          exit 1
-
+      # Download, extract, and install Playwright while Octopus deploys in the background.
+      # These steps only need the build artifact, not the deployed app.
       - name: Download Acceptance Test Package
         uses: actions/download-artifact@v4
         with:
@@ -202,6 +135,8 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
       - name: Install Playwright
         if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -230,6 +165,73 @@ jobs:
               throw "Failed to install Playwright dependencies"
             }
           }
+
+      # Now wait for the Octopus deployment that has been running in parallel
+      - name: Wait for the TDD deployment to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.start-deploy-to-tdd.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Container App FQDN and Connection String
+        shell: pwsh
+        run: |
+          # Single az call to retrieve both FQDN and connection string
+          $appJson = az containerapp show `
+            --name ${{ vars.CONTAINER_APP_NAME }} `
+            --resource-group ${{ vars.TDD_RESOURCE_GROUP_NAME}} `
+            --query "{fqdn: properties.configuration.ingress.fqdn, connStr: properties.template.containers[0].env[?name=='ConnectionStrings__SqlConnectionString'].value | [0]}" `
+            -o json | ConvertFrom-Json
+
+          $containerAppFqdn = $appJson.fqdn
+          if ([string]::IsNullOrWhiteSpace($containerAppFqdn)) {
+            Write-Error "Error: Could not retrieve container app FQDN"
+            exit 1
+          }
+
+          $containerAppUrl = "https://$containerAppFqdn"
+          Write-Host "Container App FQDN: $containerAppFqdn"
+          Write-Host "Container App URL: $containerAppUrl"
+          "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "ApplicationBaseUrl=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          $containerAppConnectionString = $appJson.connStr
+          Write-Host "Container App Connection String retrieved: $(-not [string]::IsNullOrWhiteSpace($containerAppConnectionString))"
+          "ConnectionStrings__SqlConnectionString=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Wait for Container App to become healthy
+        shell: pwsh
+        run: |
+          $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
+          $maxAttempts = 30
+          $delaySeconds = 10
+          Write-Host "Polling $url for healthy response (max ${maxAttempts} attempts, ${delaySeconds}s apart)..."
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            try {
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
+              $body = $response.Content
+              Write-Host "Attempt ${i}: HTTP $($response.StatusCode) - $body"
+              if ($response.StatusCode -eq 200 -and $body -match 'Healthy') {
+                Write-Host "Container App is healthy after $i attempts."
+                exit 0
+              }
+            } catch {
+              Write-Host "Attempt ${i}: $($_.Exception.Message)"
+            }
+            if ($i -lt $maxAttempts) { Start-Sleep -Seconds $delaySeconds }
+          }
+          Write-Error "Container App did not become healthy after $maxAttempts attempts."
+          exit 1
 
       - name: Run Acceptance tests
         if: success()
