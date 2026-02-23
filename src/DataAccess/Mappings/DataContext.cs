@@ -18,7 +18,15 @@ public class DataContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.EnableSensitiveDataLogging();
-        optionsBuilder.UseSqlServer(_config.GetConnectionString());
+        var provider = _config.GetDatabaseProvider();
+        if (string.Equals(provider, "Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+            optionsBuilder.UseSqlite(_config.GetConnectionString());
+        }
+        else
+        {
+            optionsBuilder.UseSqlServer(_config.GetConnectionString());
+        }
 
         base.OnConfiguring(optionsBuilder);
     }

@@ -6,22 +6,80 @@ namespace ClearMeasure.Bootcamp.IntegrationTests;
 public sealed class DatabaseEmptier
 {
     private static readonly string[] _ignoredTables = { "[dbo].[sysdiagrams]", "[dbo].[usd_AppliedDatabaseScript]" };
+    private static readonly string[] _ignoredTablesSqlite = { "sqlite_sequence" };
     private static string? _deleteSql;
     private readonly DatabaseFacade _database;
+    private readonly bool _isSqlite;
 
-    public DatabaseEmptier(DatabaseFacade database)
+    public DatabaseEmptier(DatabaseFacade database, bool isSqlite = false)
     {
         _database = database;
+        _isSqlite = isSqlite || database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite";
     }
 
     public void DeleteAllData()
     {
+        if (_isSqlite)
+        {
+            DeleteAllDataSqlite();
+            return;
+        }
+
+        // Note: static cache is only valid for SQL Server mode
         if (_deleteSql == null)
         {
             _deleteSql = BuildDeleteTableSqlStatement();
         }
 
         _database.ExecuteSqlRaw(_deleteSql);
+    }
+
+    private void DeleteAllDataSqlite()
+    {
+        var tables = GetAllTablesSqlite();
+        var relationships = GetRelationshipsSqlite();
+        var tablesToDelete = BuildTableList(tables, relationships);
+        var sql = "";
+        foreach (var tableName in tablesToDelete)
+        {
+            sql += $"DELETE FROM \"{tableName}\";";
+        }
+
+        if (!string.IsNullOrEmpty(sql))
+        {
+            _database.ExecuteSqlRaw(sql);
+        }
+    }
+
+    private IList<string> GetAllTablesSqlite()
+    {
+        var tables = new List<string>();
+        new SqlExecuter(_database).ExecuteSql(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '__EFMigrationsHistory'",
+            reader => tables.Add(reader.GetString(0)));
+        return tables;
+    }
+
+    private IList<Relationship> GetRelationshipsSqlite()
+    {
+        var tables = GetAllTablesSqlite();
+        var relationships = new List<Relationship>();
+        foreach (var table in tables)
+        {
+            new SqlExecuter(_database).ExecuteSql(
+                $"PRAGMA foreign_key_list(\"{table}\")",
+                reader =>
+                {
+                    var referencedTable = reader["table"].ToString()!;
+                    relationships.Add(new Relationship
+                    {
+                        PrimaryKeyTable = referencedTable,
+                        ForeignKeyTable = table
+                    });
+                });
+        }
+
+        return relationships;
     }
 
     private string BuildDeleteTableSqlStatement()

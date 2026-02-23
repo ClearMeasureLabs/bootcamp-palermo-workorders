@@ -16,4 +16,9 @@ public class TestDatabaseConfiguration : IDatabaseConfiguration
     {
         return _configuration.GetConnectionString("SqlConnectionString") ?? throw new InvalidOperationException();
     }
+
+    public string GetDatabaseProvider()
+    {
+        return _configuration["DatabaseProvider"] ?? "SqlServer";
+    }
 }

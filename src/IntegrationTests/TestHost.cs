@@ -3,6 +3,7 @@ using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.UI.Server;
 using ClearMeasure.Bootcamp.UnitTests;
 using Lamar.Microsoft.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -63,6 +64,14 @@ public static class TestHost
             })
             .Build();
 
+        // When using SQLite, ensure the database schema is created via EF Core
+        var dbConfig = host.Services.GetRequiredService<IDatabaseConfiguration>();
+        if (string.Equals(dbConfig.GetDatabaseProvider(), "Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+            using var scope = host.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+            context.Database.EnsureCreated();
+        }
 
         _host = host;
     }

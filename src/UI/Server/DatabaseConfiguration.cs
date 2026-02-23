@@ -9,4 +9,9 @@ public class DatabaseConfiguration(IConfiguration configuration) : IDatabaseConf
         return configuration.GetConnectionString("SqlConnectionString") ??
                throw new InvalidOperationException("SqlConnectionString is missing");
     }
+
+    public string GetDatabaseProvider()
+    {
+        return configuration["DatabaseProvider"] ?? "SqlServer";
+    }
 }

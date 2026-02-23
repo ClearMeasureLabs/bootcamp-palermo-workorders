@@ -36,6 +36,9 @@ if ([string]::IsNullOrEmpty($databaseName)) { $databaseName = $projectName}
 $script:databaseServer = $databaseServer
 if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB"}
 
+$script:databaseMode = $databaseMode
+if ([string]::IsNullOrEmpty($script:databaseMode)) { $script:databaseMode = "sqllocaldb" }
+
 $databaseScripts = "$source_dir\Database\scripts"
 
 if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0"}
@@ -149,10 +152,19 @@ Function MigrateDatabaseLocal {
 		
 	    [Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$databaseNameFunc
+		[string]$databaseNameFunc,
+
+		[string]$username = $null,
+		[string]$password = $null
 	)
-	exec{
-		& $aliaSql $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
+	if ($username -and $password) {
+		exec{
+			& $aliaSql $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts $username $password
+		}
+	} else {
+		exec{
+			& $aliaSql $databaseAction $databaseServerFunc $databaseNameFunc $databaseScripts
+		}
 	}
 }
 
@@ -200,31 +212,231 @@ Function Package{
 	PackageScript
 }
 
+Function Start-SqlContainer {
+	$containerName = "privatebuild-sqlserver"
+	$saPassword = "P@ssw0rd!Build2024"
+	$port = 11433
+	
+	# Stop and remove existing container if present
+	docker rm -f $containerName 2>$null
+	
+	Write-Host "Starting SQL Server container: $containerName on port $port" -ForegroundColor Cyan
+	exec {
+		docker run -d --name $containerName `
+			-e "ACCEPT_EULA=Y" `
+			-e "MSSQL_SA_PASSWORD=$saPassword" `
+			-p "${port}:1433" `
+			mcr.microsoft.com/mssql/server:2022-latest
+	}
+	
+	# Wait for SQL Server to be ready
+	Write-Host "Waiting for SQL Server container to be ready..." -ForegroundColor Yellow
+	$maxRetries = 30
+	$retryCount = 0
+	$ready = $false
+	while (-not $ready -and $retryCount -lt $maxRetries) {
+		Start-Sleep -Seconds 3
+		$retryCount++
+		try {
+			$result = docker exec $containerName /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $saPassword -C -Q "SELECT 1" 2>$null
+			if ($LASTEXITCODE -eq 0) {
+				$ready = $true
+				Write-Host "SQL Server container is ready after $($retryCount * 3) seconds" -ForegroundColor Green
+			} else {
+				Write-Host "  Retry $retryCount/$maxRetries..." -ForegroundColor Gray
+			}
+		} catch {
+			Write-Host "  Retry $retryCount/$maxRetries..." -ForegroundColor Gray
+		}
+	}
+	
+	if (-not $ready) {
+		throw "SQL Server container did not become ready within $($maxRetries * 3) seconds"
+	}
+	
+	$script:databaseServer = "localhost,$port"
+	$script:sqlContainerName = $containerName
+	$script:sqlContainerPassword = $saPassword
+}
+
+Function Stop-SqlContainer {
+	if ($script:sqlContainerName) {
+		Write-Host "Stopping SQL Server container: $($script:sqlContainerName)" -ForegroundColor Cyan
+		docker rm -f $script:sqlContainerName 2>$null
+	}
+}
+
+Function Update-AppSettingsForSqlite {
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$sqliteDbPath,
+		[Parameter(Mandatory=$true)]
+		[string]$sourceDir
+	)
+	
+	$connectionString = "Data Source=$sqliteDbPath"
+	Write-Host "Configuring SQLite mode with connection string: $connectionString" -ForegroundColor Cyan
+	
+	$env:ConnectionStrings__SqlConnectionString = $connectionString
+	$env:DatabaseProvider = "Sqlite"
+	
+	$appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
+	
+	foreach ($file in $appSettingsFiles) {
+		Write-Host "Processing file: $($file.FullName)" -ForegroundColor Gray
+		$content = Get-Content $file.FullName -Raw | ConvertFrom-Json
+		
+		if ($content.PSObject.Properties.Name -contains "ConnectionStrings") {
+			$content.ConnectionStrings.SqlConnectionString = $connectionString
+			Write-Host "  Updated SqlConnectionString: $connectionString" -ForegroundColor Green
+		}
+		
+		# Add or update DatabaseProvider
+		if ($content.PSObject.Properties.Name -contains "DatabaseProvider") {
+			$content.DatabaseProvider = "Sqlite"
+		} else {
+			$content | Add-Member -NotePropertyName "DatabaseProvider" -NotePropertyValue "Sqlite" -Force
+		}
+		
+		$content | ConvertTo-Json -Depth 10 | Set-Content $file.FullName
+	}
+}
+
+Function Update-AppSettingsForSqlContainer {
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$databaseNameToUse,
+		[Parameter(Mandatory=$true)]
+		[string]$serverName,
+		[Parameter(Mandatory=$true)]
+		[string]$password,
+		[Parameter(Mandatory=$true)]
+		[string]$sourceDir
+	)
+	
+	$connectionString = "server=$serverName;database=$databaseNameToUse;User Id=sa;Password=$password;TrustServerCertificate=true;"
+	Write-Host "Configuring SQL Container mode with connection string: $connectionString" -ForegroundColor Cyan
+	
+	$env:ConnectionStrings__SqlConnectionString = $connectionString
+	if ($env:DatabaseProvider) { Remove-Item Env:\DatabaseProvider -ErrorAction SilentlyContinue }
+	
+	$appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
+	
+	foreach ($file in $appSettingsFiles) {
+		Write-Host "Processing file: $($file.FullName)" -ForegroundColor Gray
+		$content = Get-Content $file.FullName -Raw | ConvertFrom-Json
+		
+		if ($content.PSObject.Properties.Name -contains "ConnectionStrings") {
+			$content.ConnectionStrings.SqlConnectionString = $connectionString
+			Write-Host "  Updated SqlConnectionString: $connectionString" -ForegroundColor Green
+		}
+		
+		# Remove DatabaseProvider if set (SQL Server is default)
+		if ($content.PSObject.Properties.Name -contains "DatabaseProvider") {
+			$content.PSObject.Properties.Remove("DatabaseProvider")
+		}
+		
+		$content | ConvertTo-Json -Depth 10 | Set-Content $file.FullName
+	}
+}
+
+Function Restore-AppSettingsDefaults {
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$sourceDir
+	)
+	
+	$defaultServer = "(LocalDb)\MSSQLLocalDB"
+	$defaultDb = "ChurchBulletin"
+	$defaultConnStr = "server=$defaultServer;database=$defaultDb;Integrated Security=true;"
+	
+	if ($env:DatabaseProvider) { Remove-Item Env:\DatabaseProvider -ErrorAction SilentlyContinue }
+	$env:ConnectionStrings__SqlConnectionString = $null
+	
+	$appSettingsFiles = Get-ChildItem -Path $sourceDir -Recurse -Filter "appsettings*.json"
+	
+	foreach ($file in $appSettingsFiles) {
+		$content = Get-Content $file.FullName -Raw | ConvertFrom-Json
+		
+		if ($content.PSObject.Properties.Name -contains "ConnectionStrings") {
+			$content.ConnectionStrings.SqlConnectionString = $defaultConnStr
+		}
+		
+		if ($content.PSObject.Properties.Name -contains "DatabaseProvider") {
+			$content.PSObject.Properties.Remove("DatabaseProvider")
+		}
+		
+		$content | ConvertTo-Json -Depth 10 | Set-Content $file.FullName
+	}
+	
+	Write-Host "Restored appsettings to defaults" -ForegroundColor Cyan
+}
+
 Function PrivateBuild{
+	param (
+		[string]$mode = $script:databaseMode
+	)
+
 	$projectConfig = "Debug"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	
-	# Generate unique database name for this build instance
-	$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName
+	Write-Host "=== PRIVATE BUILD - Database Mode: $mode ===" -ForegroundColor Magenta
 	
 	Init
 	Compile
 	UnitTests
 	
-	# Update appsettings.json files before database migration
-	Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-	
-	MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	
-	IntegrationTest
-	#AcceptanceTests
+	switch ($mode.ToLower()) {
+		"sqlite" {
+			$sqliteDbPath = "$base_dir\build\privatebuild_test.db"
+			if (Test-Path $sqliteDbPath) { Remove-Item $sqliteDbPath -Force }
+			
+			Update-AppSettingsForSqlite -sqliteDbPath $sqliteDbPath -sourceDir $source_dir
+			
+			# SQLite uses EF Core EnsureCreated - no AliaSQL needed
+			Write-Host "SQLite mode: database will be created by EF Core EnsureCreated" -ForegroundColor Cyan
+			
+			IntegrationTest
+			
+			Restore-AppSettingsDefaults -sourceDir $source_dir
+		}
+		"sqlcontainer" {
+			Start-SqlContainer
+			
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName
+			
+			Update-AppSettingsForSqlContainer -databaseNameToUse $script:databaseName `
+				-serverName $script:databaseServer `
+				-password $script:sqlContainerPassword `
+				-sourceDir $source_dir
+			
+			MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName -username "sa" -password $script:sqlContainerPassword
+			
+			IntegrationTest
+			
+			Restore-AppSettingsDefaults -sourceDir $source_dir
+			Stop-SqlContainer
+		}
+		default {
+			# sqllocaldb mode (original behavior)
+			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName
+			
+			Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+			
+			MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+			
+			IntegrationTest
 
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+			Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+		}
+	}
 	
 	$sw.Stop()
-	write-host "BUILD SUCCEEDED - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
-	write-host "Database used: $script:databaseName" -ForegroundColor Cyan
+	write-host "BUILD SUCCEEDED [$mode] - Build time: " $sw.Elapsed.ToString() -ForegroundColor Green
+	if ($script:databaseName) {
+		write-host "Database used: $script:databaseName" -ForegroundColor Cyan
+	}
 }
 
 Function CIBuild{
