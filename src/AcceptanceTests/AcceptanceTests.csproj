@@ -11,6 +11,9 @@
 
 		<Configurations>Debug;Release;exclude-maui.slnf</Configurations>
 
+		<!-- Include Playwright drivers for all platforms so the nupkg works
+		     when built on Linux and extracted on Windows (TDD deploy). -->
+		<PlaywrightPlatform>all</PlaywrightPlatform>
 	</PropertyGroup>
 
 	<ItemGroup>
