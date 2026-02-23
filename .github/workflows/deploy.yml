@@ -181,9 +181,9 @@ jobs:
           Write-Host "Extracting $($package.Name)..."
           Expand-Archive -Path $package.FullName -DestinationPath ./acceptance-tests -Force
 
-          $testDll = Get-ChildItem -Path ./acceptance-tests -Filter "AcceptanceTests.dll" -Recurse | Select-Object -First 1
+          $testDll = Get-ChildItem -Path ./acceptance-tests -Filter "ClearMeasure.Bootcamp.AcceptanceTests.dll" -Recurse | Select-Object -First 1
           if (-not $testDll) {
-            Write-Error "AcceptanceTests.dll not found in extracted package"
+            Write-Error "ClearMeasure.Bootcamp.AcceptanceTests.dll not found in extracted package"
             exit 1
           }
           Write-Host "Test DLL found at: $($testDll.FullName)"
