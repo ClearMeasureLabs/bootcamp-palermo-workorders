@@ -190,6 +190,12 @@ jobs:
           "TEST_DIR=$($testDll.DirectoryName)" >> $env:GITHUB_ENV
           "TEST_DLL=$($testDll.FullName)" >> $env:GITHUB_ENV
 
+          # Fix execute permissions for Playwright binaries extracted from Windows-built nupkg
+          if ($IsLinux) {
+            chmod -R +x ./acceptance-tests/.playwright/ 2>$null
+            Write-Host "Fixed execute permissions on .playwright/ directory"
+          }
+
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
