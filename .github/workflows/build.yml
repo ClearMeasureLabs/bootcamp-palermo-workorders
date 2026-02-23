@@ -509,6 +509,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
@@ -518,6 +535,7 @@ jobs:
         shell: pwsh
         env:
           BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          PLAYWRIGHT_BROWSERS_CACHED: ${{ steps.playwright-cache.outputs.cache-hit }}
         run: |
           Write-Host "Running Acceptance Tests"
           . ./build.ps1
