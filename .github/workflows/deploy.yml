@@ -21,9 +21,9 @@ jobs:
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success'
     concurrency:
-      # This will protect deployments - there should be no cancellation.
+      # A newer version deploying to TDD will cancel any previous pending or in-progress run.
       group: deploy-to-tdd-serialized
-      cancel-in-progress: false
+      cancel-in-progress: true
     runs-on: windows-latest
     permissions:
       contents: read
