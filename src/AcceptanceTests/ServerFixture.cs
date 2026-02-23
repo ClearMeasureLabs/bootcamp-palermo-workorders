@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using ClearMeasure.Bootcamp.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -45,6 +46,7 @@ public class ServerFixture
         }
 
         await WarmUpContainerApp();
+        await VerifyApplicationHealthy();
         await new BlazorWasmWarmUp(Playwright, ApplicationBaseUrl).ExecuteAsync();
     }
 
@@ -83,6 +85,91 @@ public class ServerFixture
 
             await Task.Delay(2000);
         }
+    }
+
+    /// <summary>
+    /// Verifies the application is reachable and healthy before tests start.
+    /// Checks the site root and the /_healthcheck endpoint (which validates database
+    /// connectivity). Fails fast with a clear diagnostic message instead of letting
+    /// tests hang on an unreachable or unhealthy server.
+    /// </summary>
+    private static async Task VerifyApplicationHealthy()
+    {
+        const int maxAttempts = 3;
+        const int delayBetweenAttemptsMs = 5000;
+
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+
+        // 1. Verify site is reachable
+        TestContext.Out.WriteLine("Health gate: verifying site is reachable...");
+        HttpResponseMessage? siteResponse = null;
+        Exception? lastSiteException = null;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                siteResponse = await client.GetAsync(ApplicationBaseUrl);
+                TestContext.Out.WriteLine($"  GET {ApplicationBaseUrl} -> {(int)siteResponse.StatusCode}");
+                if (siteResponse.IsSuccessStatusCode) break;
+            }
+            catch (Exception ex)
+            {
+                lastSiteException = ex;
+                TestContext.Out.WriteLine($"  GET {ApplicationBaseUrl} -> {ex.GetType().Name}: {ex.Message}");
+            }
+
+            if (attempt < maxAttempts) await Task.Delay(delayBetweenAttemptsMs);
+        }
+
+        if (siteResponse == null || !siteResponse.IsSuccessStatusCode)
+        {
+            var detail = lastSiteException != null
+                ? $"Last exception: {lastSiteException.GetType().Name}: {lastSiteException.Message}"
+                : $"Last status code: {siteResponse?.StatusCode}";
+            Assert.Fail(
+                $"Health gate FAILED: Site is not reachable at {ApplicationBaseUrl} after {maxAttempts} attempts. {detail}");
+        }
+
+        // 2. Verify /_healthcheck returns Healthy (includes database connectivity)
+        TestContext.Out.WriteLine("Health gate: verifying /_healthcheck...");
+        var healthUrl = $"{ApplicationBaseUrl}/_healthcheck";
+        string? healthBody = null;
+        HttpStatusCode? healthStatus = null;
+        Exception? lastHealthException = null;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                var response = await client.GetAsync(healthUrl);
+                healthStatus = response.StatusCode;
+                healthBody = await response.Content.ReadAsStringAsync();
+                TestContext.Out.WriteLine($"  GET {healthUrl} -> {(int)response.StatusCode}: {healthBody}");
+                if (response.IsSuccessStatusCode && healthBody.Contains("Healthy", StringComparison.OrdinalIgnoreCase))
+                    break;
+            }
+            catch (Exception ex)
+            {
+                lastHealthException = ex;
+                TestContext.Out.WriteLine($"  GET {healthUrl} -> {ex.GetType().Name}: {ex.Message}");
+            }
+
+            if (attempt < maxAttempts) await Task.Delay(delayBetweenAttemptsMs);
+        }
+
+        if (healthBody == null || !healthBody.Contains("Healthy", StringComparison.OrdinalIgnoreCase))
+        {
+            var detail = lastHealthException != null
+                ? $"Last exception: {lastHealthException.GetType().Name}: {lastHealthException.Message}"
+                : $"Status: {healthStatus}, Body: {healthBody}";
+            Assert.Fail(
+                $"Health gate FAILED: /_healthcheck did not return Healthy after {maxAttempts} attempts. {detail}");
+        }
+
+        TestContext.Out.WriteLine("Health gate: PASSED - site is reachable and healthy.");
     }
 
     private async Task StartAndWaitForServer()
