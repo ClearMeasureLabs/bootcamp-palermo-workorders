@@ -1,4 +1,4 @@
-name: Integration Build
+name: Builds
 run-name: "1.4.${{ github.run_number }} • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
 on:
   push:
@@ -9,7 +9,7 @@ env:
 
 jobs:
   build-linux:
-    name: Integration Build
+    name: Integration Build (SQL container)
     runs-on: ubuntu-latest
     concurrency:
       # Integration Build will be cancelled when new commits arrive on the branch. 
