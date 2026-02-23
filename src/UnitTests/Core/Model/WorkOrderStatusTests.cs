@@ -70,4 +70,63 @@ public class WorkOrderStatusTests
 
         Assert.That(deserialized!.Status, Is.EqualTo(workOrder.Status));
     }
+
+    [Test]
+    public void ShouldLookUpFromCode()
+    {
+        var result = WorkOrderStatus.FromCode("DFT");
+        Assert.That(result, Is.EqualTo(WorkOrderStatus.Draft));
+
+        var assigned = WorkOrderStatus.FromCode("ASD");
+        Assert.That(assigned, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void ShouldThrowOnNullKey()
+    {
+        Assert.Throws<NotSupportedException>(() => WorkOrderStatus.FromKey(null));
+    }
+
+    [Test]
+    public void ShouldThrowOnInvalidKey()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => WorkOrderStatus.FromKey("InvalidKey"));
+    }
+
+    [Test]
+    public void NoneShouldBeEmpty()
+    {
+        Assert.That(WorkOrderStatus.None.IsEmpty(), Is.True);
+    }
+
+    [Test]
+    public void DraftShouldNotBeEmpty()
+    {
+        Assert.That(WorkOrderStatus.Draft.IsEmpty(), Is.False);
+    }
+
+    [Test]
+    public void ShouldReturnFriendlyNameFromToString()
+    {
+        Assert.That(WorkOrderStatus.InProgress.ToString(), Is.EqualTo("In Progress"));
+        Assert.That(WorkOrderStatus.Draft.ToString(), Is.EqualTo("Draft"));
+    }
+
+    [Test]
+    public void ShouldNotBeEqualToNonWorkOrderStatusObject()
+    {
+        Assert.That(WorkOrderStatus.Draft.Equals("not a status"), Is.False);
+    }
+
+    [Test]
+    public void ShouldNotBeEqualToNull()
+    {
+        Assert.That(WorkOrderStatus.Draft.Equals(null), Is.False);
+    }
+
+    [Test]
+    public void ShouldHaveConsistentHashCode()
+    {
+        Assert.That(WorkOrderStatus.Draft.GetHashCode(), Is.EqualTo(WorkOrderStatus.Draft.GetHashCode()));
+    }
 }

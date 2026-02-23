@@ -80,4 +80,78 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void ShouldChangeStatusWithEmployeeAndDate()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        var date = new DateTime(2024, 6, 15);
+        order.ChangeStatus(employee, date, WorkOrderStatus.Assigned);
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void ShouldGetMessage()
+    {
+        var order = new WorkOrder();
+        order.Number = "ABC123";
+        order.Status = WorkOrderStatus.Draft;
+
+        Assert.That(order.GetMessage(), Is.EqualTo("Work Order ABC123 is now in Status Draft"));
+    }
+
+    [Test]
+    public void ShouldAllowReassignWhenDraft()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Draft;
+
+        Assert.That(order.CanReassign(), Is.True);
+    }
+
+    [Test]
+    public void ShouldNotAllowReassignWhenNotDraft()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Assigned;
+
+        Assert.That(order.CanReassign(), Is.False);
+    }
+
+    [Test]
+    public void ShouldHandleNullDescription()
+    {
+        var order = new WorkOrder();
+        order.Description = null;
+
+        Assert.That(order.Description, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void ShouldSetAndGetRoomNumber()
+    {
+        var order = new WorkOrder();
+        order.RoomNumber = "101A";
+
+        Assert.That(order.RoomNumber, Is.EqualTo("101A"));
+    }
+
+    [Test]
+    public void ShouldSetAndGetDates()
+    {
+        var order = new WorkOrder();
+        var assignedDate = new DateTime(2024, 1, 15);
+        var createdDate = new DateTime(2024, 1, 10);
+        var completedDate = new DateTime(2024, 2, 1);
+
+        order.AssignedDate = assignedDate;
+        order.CreatedDate = createdDate;
+        order.CompletedDate = completedDate;
+
+        Assert.That(order.AssignedDate, Is.EqualTo(assignedDate));
+        Assert.That(order.CreatedDate, Is.EqualTo(createdDate));
+        Assert.That(order.CompletedDate, Is.EqualTo(completedDate));
+    }
 }
