@@ -398,16 +398,29 @@ Function PackageDatabase {
 
 }
 
-Function PackageAcceptanceTests {  
+Function PackageAcceptanceTests {
 	# Use Debug configuration so full symbols are available to display better error messages in test failures
 	exec {
 		& dotnet publish $acceptanceTestProjectPath -nologo --no-restore -v $verbosity --configuration Debug
 	}
-	exec {
-		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $(Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish") --outFolder $build_dir --overwrite
+
+	# Copy the .playwright metadata folder into the publish output so the nupkg
+	# is self-contained.  The playwright.ps1 install command needs this folder to
+	# know which browser versions to download on the target machine.
+	$publishDir = Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish"
+	$playwrightSource = Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework ".playwright"
+	if (Test-Path $playwrightSource) {
+		Log-Message "Copying .playwright metadata into publish output" -Type "INFO"
+		Copy-Item -Path $playwrightSource -Destination (Join-Path $publishDir ".playwright") -Recurse -Force
+	} else {
+		Log-Message "WARNING: .playwright folder not found at $playwrightSource" -Type "WARNING"
 	}
-	
-	
+
+	exec {
+		& dotnet-octo pack --id "$projectName.AcceptanceTests" --version $version --basePath $publishDir --outFolder $build_dir --overwrite
+	}
+
+
 }
 
 Function PackageScript {    
