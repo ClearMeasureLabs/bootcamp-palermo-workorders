@@ -28,6 +28,7 @@ jobs:
     permissions:
       contents: read
       statuses: write
+      actions: read
     environment:
       name: TDD
 
@@ -160,67 +161,68 @@ jobs:
           Write-Error "Container App did not become healthy after $maxAttempts attempts."
           exit 1
 
+      - name: Download Acceptance Test Package
+        uses: actions/download-artifact@v4
+        with:
+          name: churchbulletin-nuget-packages
+          path: ./packages
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Extract Acceptance Test Package
+        shell: pwsh
+        run: |
+          $package = Get-ChildItem -Path ./packages -Filter "ChurchBulletin.AcceptanceTests.*.nupkg" | Select-Object -First 1
+          if (-not $package) {
+            Write-Error "ChurchBulletin.AcceptanceTests package not found"
+            Get-ChildItem -Path ./packages
+            exit 1
+          }
+          Write-Host "Extracting $($package.Name)..."
+          Expand-Archive -Path $package.FullName -DestinationPath ./acceptance-tests -Force
+
+          $testDll = Get-ChildItem -Path ./acceptance-tests -Filter "AcceptanceTests.dll" -Recurse | Select-Object -First 1
+          if (-not $testDll) {
+            Write-Error "AcceptanceTests.dll not found in extracted package"
+            exit 1
+          }
+          Write-Host "Test DLL found at: $($testDll.FullName)"
+          "TEST_DIR=$($testDll.DirectoryName)" >> $env:GITHUB_ENV
+          "TEST_DLL=$($testDll.FullName)" >> $env:GITHUB_ENV
+
+      - name: Install Playwright
+        shell: pwsh
+        run: |
+          $playwrightScript = Join-Path $env:TEST_DIR "playwright.ps1"
+          if (Test-Path $playwrightScript) {
+            Write-Host "Installing Playwright browsers from $playwrightScript"
+            & pwsh $playwrightScript install --with-deps
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to install Playwright browsers"
+            }
+          } else {
+            Write-Warning "Playwright script not found at $playwrightScript"
+          }
+
       - name: Run Acceptance tests
         if: success()
         shell: pwsh
         env:
-          BUILD_BUILDNUMBER: ${{ env.VERSION }}
-          BuildConfiguration: Release
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           StartLocalServer: "false"
           TEST_INPUT_DELAY_MS: "1500"
-
         run: |
+          $resultsDirectory = Join-Path (Resolve-Path .) "build/test/AcceptanceTests"
+          New-Item -ItemType Directory -Path $resultsDirectory -Force | Out-Null
+          $runSettingsPath = Join-Path (Resolve-Path .) "src/AcceptanceTests/AcceptanceTests.runsettings"
 
-          . .\build.ps1
-          $verbosity = "normal"
-          $base_dir = resolve-path .\
-          $source_dir = Join-Path $base_dir "src"
-          $test_dir = Join-Path (Join-Path $base_dir "build") "test"
-          $acceptanceTestProjectPath = Join-Path $source_dir "AcceptanceTests"
-          $acceptanceTestProject = Join-Path $acceptanceTestProjectPath "AcceptanceTests.csproj"
-          $runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
-          $resultsDirectory = Join-Path $test_dir "AcceptanceTests"
+          Write-Host "Running acceptance tests against $env:ApplicationBaseUrl"
+          Write-Host "Test DLL: $env:TEST_DLL"
 
-
-          # Build the solution first (since AcceptanceTests uses --no-build)
-          # This restore/build ensures Playwright tooling is ready
-          dotnet build src/ChurchBulletin.sln --configuration ${{ env.BuildConfiguration }}
-
-          Push-Location -Path $acceptanceTestProjectPath
-          try {
-              $playwrightScript = Join-PathSegments "bin" "Release" "net10.0" "playwright.ps1"
-
-              if (Test-Path $playwrightScript) {
-                  # Resolve to absolute path
-                  $playwrightScript = Resolve-Path $playwrightScript
-                  Write-Host "Installing Playwright browsers from $playwrightScript"
-                  & pwsh $playwrightScript install --with-deps
-                  if ($LASTEXITCODE -ne 0) {
-                      throw "Failed to install Playwright browsers"
-                  }
-              } else {
-                  Write-Warning "Playwright script not found at $playwrightScript"
-              }
-          } finally {
-              Pop-Location
-          }
-
-
-          # Now run the acceptance tests
-          Write-Host "Running acceptance tests on TDD at ${{ env.ApplicationBaseUrl }}, settings file: $runSettingsPath"
-
-          # Re-set environment variables after build.ps1 cleared them
-          $env:ConnectionStrings__SqlConnectionString = "${{ env.CONTAINER_APP_CONNECTION_STRING }}"
-          $env:ApplicationBaseUrl = "${{ env.CONTAINER_APP_URL }}"
-          $env:StartLocalServer = "false"
-          $env:TEST_INPUT_DELAY_MS = "${{ env.TEST_INPUT_DELAY_MS }}"
-
-          dotnet test $acceptanceTestProject /p:CopyLocalLockFileAssemblies=true --nologo `
-            --no-restore --logger:trx --results-directory $resultsDirectory --no-build `
-            -v $verbosity --configuration ${{ env.BuildConfiguration }} --settings:$runSettingsPath `
-            --collect:"XPlat Code Coverage"
+          dotnet test $env:TEST_DLL --nologo --logger:trx `
+            --results-directory $resultsDirectory `
+            --settings $runSettingsPath
 
 
       - name: Upload Acceptance Test Results

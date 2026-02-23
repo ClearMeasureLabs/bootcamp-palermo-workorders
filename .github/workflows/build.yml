@@ -119,138 +119,6 @@ jobs:
           path: build_version.txt
           retention-days: 2
 
-      - name: Publish nupkgs to GitHub Packages
-        if: success()
-        env:
-          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          OWNER="${{ github.repository_owner }}"
-          FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
-          
-          echo "Publishing packages to GitHub Packages..."
-          echo "Owner: $OWNER"
-          echo "Feed URL: $FEED_URL"
-          
-          # Publish all packages using direct authentication
-          for package in build/*.nupkg; do
-            if [ -f "$package" ]; then
-              echo "Publishing $package to GitHub Packages..."
-              dotnet nuget push "$package" \
-                --source "$FEED_URL" \
-                --api-key "$NUGET_AUTH_TOKEN" \
-                --timeout 600 \
-                --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
-            fi
-          done
-
-      # Publish packages to Octopus Deploy built-in feed
-      - name: Publish Packages to Octopus Deploy
-        shell: pwsh
-        if: success()
-        env:
-          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
-          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
-          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
-          BUILD_BUILDNUMBER: ${{ env.VERSION }}
-        run: |
-          $ErrorActionPreference = "Stop"
-          
-          $octopusUrl = $env:OCTOPUS_URL
-          $octopusApiKey = $env:OCTOPUS_API_KEY
-          $octopusSpace = $env:OCTOPUS_SPACE
-          $version = $env:BUILD_BUILDNUMBER
-          
-          if ([string]::IsNullOrWhiteSpace($octopusUrl)) {
-            Write-Warning "OCTOPUS_URL not set. Skipping Octopus package publishing."
-            exit 0
-          }
-          
-          if ([string]::IsNullOrWhiteSpace($octopusApiKey)) {
-            Write-Warning "OCTOPUS_API_KEY not set. Skipping Octopus package publishing."
-            exit 0
-          }
-          
-          Write-Host "Publishing packages to Octopus Deploy: $octopusUrl"
-          Write-Host "Package version: $version"
-          
-          if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
-            Write-Host "Octopus Space: $octopusSpace"
-          }
-          
-          # Ensure dotnet-octo tool is available
-          Write-Host "Checking for dotnet-octo tool..."
-          $octoTool = Get-Command dotnet-octo -ErrorAction SilentlyContinue
-          if (-not $octoTool) {
-            Write-Host "Installing dotnet-octo tool..."
-            dotnet tool install --global Octopus.DotNet.Cli
-          }
-          
-          # Ensure dotnet tools are in PATH
-          $dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
-          $pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
-          $dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
-          if (-not $dotnetToolsPathPresent) {
-            $env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
-            Write-Host "Added dotnet tools to PATH: $dotnetToolsPath"
-          }
-          
-          # Find all .nupkg files in the build directory
-          $packageFiles = Get-ChildItem -Path "./build" -Filter "*.nupkg" -ErrorAction SilentlyContinue
-          
-          if (-not $packageFiles -or $packageFiles.Count -eq 0) {
-            Write-Warning "No packages found in ./build directory"
-            exit 0
-          }
-          
-          Write-Host "Found $($packageFiles.Count) package(s) to publish to Octopus Deploy:"
-          foreach ($packageFile in $packageFiles) {
-            Write-Host "  - $($packageFile.Name)"
-          }
-          
-          # Publish each package
-          $publishedCount = 0
-          $failedCount = 0
-          
-          foreach ($packageFile in $packageFiles) {
-            $packageName = $packageFile.Name
-            Write-Host ""
-            Write-Host "Publishing $packageName to Octopus Deploy..."
-            
-            try {
-              $pushArgs = @(
-                "push",
-                "--package", $packageFile.FullName,
-                "--server", $octopusUrl,
-                "--apiKey", $octopusApiKey
-              )
-              
-              if (-not [string]::IsNullOrWhiteSpace($octopusSpace)) {
-                $pushArgs += "--space"
-                $pushArgs += $octopusSpace
-              }
-              
-              & dotnet-octo $pushArgs
-              
-              if ($LASTEXITCODE -eq 0) {
-                Write-Host "✅ Successfully published $packageName to Octopus Deploy" -ForegroundColor Green
-                $publishedCount++
-              } else {
-                Write-Warning "Failed to publish $packageName (exit code: $LASTEXITCODE)"
-                $failedCount++
-              }
-            } catch {
-              Write-Warning "Error publishing $packageName : $_"
-              $failedCount++
-            }
-          }
-          
-          Write-Host ""
-          Write-Host "Octopus package publishing summary: $publishedCount published, $failedCount failed"
-
-          if ($failedCount -gt 0) {
-            Write-Warning "Some packages failed to publish to Octopus Deploy."
-          }
-
       - name: Mark PR as ready for review
         if: success()
         env:
@@ -544,6 +412,114 @@ jobs:
           IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
+
+  publish-github-packages:
+    name: Publish to GitHub Packages
+    needs: [build-linux]
+    if: success()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Setup .NET SDK 10.0.100
+        uses: actions/setup-dotnet@v5.0.1
+        with:
+          dotnet-version: '10.0.100'
+
+      - name: Download NuGet Packages
+        uses: actions/download-artifact@v4
+        with:
+          name: churchbulletin-nuget-packages
+          path: ./packages
+
+      - name: Publish nupkgs to GitHub Packages
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          FEED_URL="https://nuget.pkg.github.com/$OWNER/index.json"
+
+          echo "Publishing packages to GitHub Packages..."
+          for package in packages/*.nupkg; do
+            if [ -f "$package" ]; then
+              echo "Publishing $package..."
+              dotnet nuget push "$package" \
+                --source "$FEED_URL" \
+                --api-key "$NUGET_AUTH_TOKEN" \
+                --timeout 600 \
+                --skip-duplicate || echo "Warning: Failed to publish $package (may already exist)"
+            fi
+          done
+
+  publish-octopus:
+    name: Publish to Octopus Deploy
+    needs: [build-linux]
+    if: success()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DOTNET_ROLL_FORWARD: LatestMajor
+    steps:
+      - name: Setup .NET SDK 10.0.100
+        uses: actions/setup-dotnet@v5.0.1
+        with:
+          dotnet-version: '10.0.100'
+
+      - name: Download NuGet Packages
+        uses: actions/download-artifact@v4
+        with:
+          name: churchbulletin-nuget-packages
+          path: ./packages
+
+      - name: Publish Packages to Octopus Deploy
+        shell: pwsh
+        env:
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+          BUILD_BUILDNUMBER: "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          if ([string]::IsNullOrWhiteSpace($env:OCTOPUS_URL)) {
+            Write-Warning "OCTOPUS_URL not set. Skipping Octopus package publishing."
+            exit 0
+          }
+          if ([string]::IsNullOrWhiteSpace($env:OCTOPUS_API_KEY)) {
+            Write-Warning "OCTOPUS_API_KEY not set. Skipping Octopus package publishing."
+            exit 0
+          }
+
+          dotnet tool install --global Octopus.DotNet.Cli 2>&1 | Out-Null
+          $dotnetToolsPath = [System.IO.Path]::Combine(
+            [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile),
+            ".dotnet", "tools")
+          if ($env:PATH -notlike "*$dotnetToolsPath*") {
+            $env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
+          }
+
+          $packageFiles = Get-ChildItem -Path "./packages" -Filter "*.nupkg"
+          if (-not $packageFiles -or $packageFiles.Count -eq 0) {
+            Write-Warning "No packages found"
+            exit 0
+          }
+
+          Write-Host "Publishing $($packageFiles.Count) package(s) to Octopus Deploy..."
+          $failed = 0
+          foreach ($pkg in $packageFiles) {
+            $pushArgs = @("push", "--package", $pkg.FullName, "--server", $env:OCTOPUS_URL, "--apiKey", $env:OCTOPUS_API_KEY)
+            if (-not [string]::IsNullOrWhiteSpace($env:OCTOPUS_SPACE)) {
+              $pushArgs += "--space"
+              $pushArgs += $env:OCTOPUS_SPACE
+            }
+            & dotnet-octo $pushArgs
+            if ($LASTEXITCODE -ne 0) { $failed++ }
+          }
+          if ($failed -gt 0) {
+            Write-Warning "$failed package(s) failed to publish to Octopus Deploy."
+          }
 
   acceptance-tests:
     name: Acceptance Tests
