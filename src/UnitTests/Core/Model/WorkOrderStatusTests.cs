@@ -70,4 +70,62 @@ public class WorkOrderStatusTests
 
         Assert.That(deserialized!.Status, Is.EqualTo(workOrder.Status));
     }
+
+    [Test]
+    public void ShouldLookUpStatusFromCode()
+    {
+        Assert.That(WorkOrderStatus.FromCode("DFT"), Is.EqualTo(WorkOrderStatus.Draft));
+        Assert.That(WorkOrderStatus.FromCode("ASD"), Is.EqualTo(WorkOrderStatus.Assigned));
+        Assert.That(WorkOrderStatus.FromCode("IPG"), Is.EqualTo(WorkOrderStatus.InProgress));
+        Assert.That(WorkOrderStatus.FromCode("CMP"), Is.EqualTo(WorkOrderStatus.Complete));
+        Assert.That(WorkOrderStatus.FromCode("CNL"), Is.EqualTo(WorkOrderStatus.Cancelled));
+    }
+
+    [Test]
+    public void ShouldIdentifyEmptyStatus()
+    {
+        Assert.That(WorkOrderStatus.None.IsEmpty(), Is.True);
+        Assert.That(WorkOrderStatus.Draft.IsEmpty(), Is.False);
+    }
+
+    [Test]
+    public void ShouldThrowOnNullKey()
+    {
+        Assert.Throws<NotSupportedException>(() => WorkOrderStatus.FromKey(null));
+    }
+
+    [Test]
+    public void ShouldThrowOnInvalidKey()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => WorkOrderStatus.FromKey("nonexistent"));
+    }
+
+    [Test]
+    public void ShouldReturnFriendlyNameFromToString()
+    {
+        Assert.That(WorkOrderStatus.Draft.ToString(), Is.EqualTo("Draft"));
+        Assert.That(WorkOrderStatus.InProgress.ToString(), Is.EqualTo("In Progress"));
+    }
+
+    [Test]
+    public void ShouldNotBeEqualToNonWorkOrderStatusObject()
+    {
+        Assert.That(WorkOrderStatus.Draft.Equals("Draft"), Is.False);
+    }
+
+    [Test]
+    public void ShouldHaveConsistentHashCodes()
+    {
+        Assert.That(WorkOrderStatus.Draft.GetHashCode(), Is.EqualTo(WorkOrderStatus.Draft.GetHashCode()));
+        Assert.That(WorkOrderStatus.Draft.GetHashCode(), Is.Not.EqualTo(WorkOrderStatus.Complete.GetHashCode()));
+    }
+
+    [Test]
+    public void ShouldHaveCorrectSortByValues()
+    {
+        Assert.That(WorkOrderStatus.Draft.SortBy, Is.LessThan(WorkOrderStatus.Assigned.SortBy));
+        Assert.That(WorkOrderStatus.Assigned.SortBy, Is.LessThan(WorkOrderStatus.InProgress.SortBy));
+        Assert.That(WorkOrderStatus.InProgress.SortBy, Is.LessThan(WorkOrderStatus.Complete.SortBy));
+        Assert.That(WorkOrderStatus.Complete.SortBy, Is.LessThan(WorkOrderStatus.Cancelled.SortBy));
+    }
 }

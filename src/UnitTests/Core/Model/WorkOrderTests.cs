@@ -80,4 +80,87 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void ShouldChangeStatusWithEmployeeAndDate()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        var date = new DateTime(2025, 6, 15);
+
+        order.ChangeStatus(employee, date, WorkOrderStatus.Assigned);
+
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void ShouldReturnMessageWithNumberAndStatus()
+    {
+        var order = new WorkOrder();
+        order.Number = "WO-001";
+        order.Status = WorkOrderStatus.InProgress;
+
+        Assert.That(order.GetMessage(), Is.EqualTo("Work Order WO-001 is now in Status In Progress"));
+    }
+
+    [Test]
+    public void ShouldAllowReassignWhenDraft()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Draft;
+
+        Assert.That(order.CanReassign(), Is.True);
+    }
+
+    [Test]
+    public void ShouldNotAllowReassignWhenNotDraft()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Assigned;
+        Assert.That(order.CanReassign(), Is.False);
+
+        order.Status = WorkOrderStatus.InProgress;
+        Assert.That(order.CanReassign(), Is.False);
+
+        order.Status = WorkOrderStatus.Complete;
+        Assert.That(order.CanReassign(), Is.False);
+
+        order.Status = WorkOrderStatus.Cancelled;
+        Assert.That(order.CanReassign(), Is.False);
+    }
+
+    [Test]
+    public void ShouldHandleNullDescription()
+    {
+        var order = new WorkOrder();
+        order.Description = null;
+
+        Assert.That(order.Description, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void ShouldPreserveDescriptionUnder4000Characters()
+    {
+        var order = new WorkOrder();
+        var text = new string('a', 3999);
+        order.Description = text;
+
+        Assert.That(order.Description.Length, Is.EqualTo(3999));
+    }
+
+    [Test]
+    public void ShouldInitializeRoomNumberToNull()
+    {
+        var order = new WorkOrder();
+        Assert.That(order.RoomNumber, Is.Null);
+    }
+
+    [Test]
+    public void ShouldSetAndGetRoomNumber()
+    {
+        var order = new WorkOrder();
+        order.RoomNumber = "101A";
+        Assert.That(order.RoomNumber, Is.EqualTo("101A"));
+    }
 }
