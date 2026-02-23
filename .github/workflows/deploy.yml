@@ -24,7 +24,7 @@ jobs:
       # A newer version deploying to TDD will cancel any previous pending or in-progress run.
       group: deploy-to-tdd-serialized
       cancel-in-progress: true
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       statuses: write
@@ -190,7 +190,15 @@ jobs:
           "TEST_DIR=$($testDll.DirectoryName)" >> $env:GITHUB_ENV
           "TEST_DLL=$($testDll.FullName)" >> $env:GITHUB_ENV
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+
       - name: Install Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           $playwrightScript = Join-Path $env:TEST_DIR "playwright.ps1"
@@ -204,6 +212,19 @@ jobs:
             Write-Warning "Playwright script not found at $playwrightScript"
           }
 
+      - name: Install Playwright dependencies only
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        shell: pwsh
+        run: |
+          $playwrightScript = Join-Path $env:TEST_DIR "playwright.ps1"
+          if (Test-Path $playwrightScript) {
+            Write-Host "Installing Playwright OS dependencies (browsers cached)"
+            & pwsh $playwrightScript install-deps
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to install Playwright dependencies"
+            }
+          }
+
       - name: Run Acceptance tests
         if: success()
         shell: pwsh
@@ -211,7 +232,7 @@ jobs:
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           StartLocalServer: "false"
-          TEST_INPUT_DELAY_MS: "1500"
+          TEST_INPUT_DELAY_MS: "500"
         run: |
           $resultsDirectory = Join-Path (Resolve-Path .) "build/test/AcceptanceTests"
           New-Item -ItemType Directory -Path $resultsDirectory -Force | Out-Null
