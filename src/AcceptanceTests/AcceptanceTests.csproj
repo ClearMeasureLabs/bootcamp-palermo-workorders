@@ -33,6 +33,10 @@
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
 		<PackageReference Include="microsoft.playwright.nunit" Version="1.54.0" />
+		<PackageReference Include="ModelContextProtocol" Version="1.0.0-rc.1" />
+		<PackageReference Include="Microsoft.Extensions.AI" Version="9.7.0" />
+		<PackageReference Include="Microsoft.Extensions.AI.Ollama" Version="9.7.0-preview.1.25356.2" />
+		<PackageReference Include="OllamaSharp" Version="5.2.10" />
 		<PackageReference Include="NUnit" Version="4.3.2" />
 		<PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
 		<PackageReference Include="NUnit.Analyzers" Version="4.9.2">
@@ -44,6 +48,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Core\Core.csproj" />
 		<ProjectReference Include="..\IntegrationTests\IntegrationTests.csproj" />
+		<ProjectReference Include="..\McpServer\McpServer.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

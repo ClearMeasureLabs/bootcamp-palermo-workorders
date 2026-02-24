@@ -25,7 +25,6 @@ public class McpServiceRegistry : ServiceRegistry
 
         this.AddTransient<IDatabaseConfiguration, DatabaseConfiguration>();
         this.AddSingleton<TimeProvider>(TimeProvider.System);
-        this.AddTransient<IDistributedBus, NullDistributedBus>();
 
         Scan(scanner =>
         {
@@ -34,5 +33,9 @@ public class McpServiceRegistry : ServiceRegistry
             scanner.ConnectImplementationsToTypesClosing(typeof(IRequestHandler<,>));
             scanner.ConnectImplementationsToTypesClosing(typeof(INotificationHandler<>));
         });
+
+        // Register after scanning to override the auto-discovered DistributedBus
+        // which requires NServiceBus IMessageSession (not available in the MCP server)
+        this.AddTransient<IDistributedBus, NullDistributedBus>();
     }
 }

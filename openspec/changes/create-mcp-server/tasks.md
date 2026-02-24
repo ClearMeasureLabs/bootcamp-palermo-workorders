@@ -41,14 +41,14 @@
 
 ## 7. Acceptance Tests
 
-- [ ] 7.1 Add `ModelContextProtocol` and `Microsoft.Extensions.AI` NuGet packages to `AcceptanceTests.csproj`
-- [ ] 7.2 Add project reference to `McpServer.csproj` and `LlmGateway.csproj` from AcceptanceTests
-- [ ] 7.3 Create `McpServerFixture.cs` (`[SetUpFixture]`) that starts the MCP server via `StdioClientTransport` and creates an `McpClient` with cached tool list
-- [ ] 7.4 Create `McpAcceptanceTestBase.cs` base class providing access to `McpClient`, `IList<McpClientTool>`, and a configured `IChatClient` with MCP tools wired in via `UseFunctionInvocation()`
-- [ ] 7.5 Write acceptance test: LLM lists work orders via `list-work-orders` MCP tool
-- [ ] 7.6 Write acceptance test: LLM retrieves a specific work order via `get-work-order` MCP tool
-- [ ] 7.7 Write acceptance test: LLM creates a work order via `create-work-order` MCP tool and verify persistence via `IBus`
-- [ ] 7.8 Write acceptance test: LLM lists employees via `list-employees` MCP tool
+- [x] 7.1 Add `ModelContextProtocol` and `Microsoft.Extensions.AI` NuGet packages to `AcceptanceTests.csproj`
+- [x] 7.2 Add project reference to `McpServer.csproj` from AcceptanceTests
+- [x] 7.3 Create `McpServerFixture.cs` (`[SetUpFixture]`) that starts the MCP server via `StdioClientTransport` and creates an `McpClient` with cached tool list
+- [x] 7.4 Create `McpAcceptanceTestBase.cs` base class providing access to `McpClient`, `IList<McpClientTool>`, and a configured `IChatClient` with MCP tools wired in via `UseFunctionInvocation()`
+- [x] 7.5 Write acceptance test: LLM lists work orders via `list-work-orders` MCP tool
+- [x] 7.6 Write acceptance test: LLM retrieves a specific work order via `get-work-order` MCP tool
+- [x] 7.7 Write acceptance test: LLM creates a work order via `create-work-order` MCP tool and verify persistence via `IBus`
+- [x] 7.8 Write acceptance test: LLM lists employees via `list-employees` MCP tool
 - [ ] 7.9 Verify all acceptance tests pass with Ollama running locally
 
 ## 8. Documentation and Configuration

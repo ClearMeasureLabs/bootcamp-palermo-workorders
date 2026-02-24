@@ -50,26 +50,33 @@ public class WorkOrderTools
         [Description("Description of the work order")] string description,
         [Description("Username of the employee creating the work order")] string creatorUsername)
     {
-        var creator = await FindEmployeeByUsername(bus, creatorUsername);
-        if (creator == null)
+        try
         {
-            return $"Employee with username '{creatorUsername}' not found.";
+            var creator = await FindEmployeeByUsername(bus, creatorUsername);
+            if (creator == null)
+            {
+                return $"Employee with username '{creatorUsername}' not found.";
+            }
+
+            var workOrder = new WorkOrder
+            {
+                Title = title,
+                Description = description,
+                Creator = creator,
+                Status = WorkOrderStatus.Draft,
+                Number = GenerateWorkOrderNumber()
+            };
+
+            var command = new SaveDraftCommand(workOrder, creator);
+            var result = await bus.Send(command);
+
+            return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
+                new JsonSerializerOptions { WriteIndented = true });
         }
-
-        var workOrder = new WorkOrder
+        catch (Exception ex)
         {
-            Title = title,
-            Description = description,
-            Creator = creator,
-            Status = WorkOrderStatus.Draft,
-            Number = GenerateWorkOrderNumber()
-        };
-
-        var command = new SaveDraftCommand(workOrder, creator);
-        var result = await bus.Send(command);
-
-        return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
-            new JsonSerializerOptions { WriteIndented = true });
+            return $"Error creating work order: {ex.Message}";
+        }
     }
 
     [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand, InProgressToCancelledCommand, InProgressToAssigned.")]
