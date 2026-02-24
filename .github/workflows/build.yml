@@ -179,6 +179,53 @@ jobs:
           path: build/test/**/*.trx
           retention-days: 2
 
+  integration-build-arm:
+    name: Integration Build (ARM SQLite)
+    runs-on: ubuntu-24.04-arm
+    concurrency:
+      group: build-arm-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: read
+    env:
+      BUILD_CONFIGURATION: Release
+      DATABASE_ENGINE: SQLite
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+
+      - name: Run Private Build (ARM SQLite)
+        shell: pwsh
+        env:
+          BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+        run: |
+          Write-Host "Running Private Build with SQLite on ARM"
+          . ./build.ps1
+          Invoke-PrivateBuild -UseSqlite
+
+      - name: Test Reporter
+        uses: dorny/test-reporter@v2.1.1
+        if: always()
+        with:
+          name: ARM SQLite Test Results
+          path: 'build/test/**/*.trx'
+          reporter: dotnet-trx
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-arm-sqlite
+          path: build/test/**/*.trx
+          retention-days: 2
+
   code-analysis:
     name: Code Analysis
     runs-on: ubuntu-latest
@@ -257,7 +304,7 @@ jobs:
 
   docker-build-image-for-churchbulletin-ui:
     name: Publish Release Candidate
-    needs: [build-linux, build-sqlite, code-analysis, build-windows]
+    needs: [build-linux, build-sqlite, integration-build-arm, code-analysis, build-windows]
     if: success() 
     runs-on: ubuntu-latest
     concurrency:
