@@ -12,6 +12,11 @@ public class WarmUpTests : AcceptanceTestBase
     public async Task WarmUp_BlazorWasm_LoginLinkVisible()
     {
         var loginLink = Page.GetByTestId("LoginLink");
+        await loginLink.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Attached,
+            Timeout = 30_000
+        });
         await Expect(loginLink).ToBeVisibleAsync();
     }
 }

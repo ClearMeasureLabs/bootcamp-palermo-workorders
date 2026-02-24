@@ -16,12 +16,40 @@ public sealed class DatabaseEmptier
 
     public void DeleteAllData()
     {
+        if (IsSqlite())
+        {
+            DeleteAllDataSqlite();
+            return;
+        }
+
         if (_deleteSql == null)
         {
             _deleteSql = BuildDeleteTableSqlStatement();
         }
 
         _database.ExecuteSqlRaw(_deleteSql);
+    }
+
+    private bool IsSqlite()
+    {
+        return _database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private void DeleteAllDataSqlite()
+    {
+        var tables = new List<string>();
+        new SqlExecuter(_database).ExecuteSql(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+            reader => tables.Add(reader.GetString(0)));
+
+        _database.ExecuteSqlRaw("PRAGMA foreign_keys = OFF");
+        foreach (var table in tables)
+        {
+#pragma warning disable EF1002, EF1003 // Table names from sqlite_master are safe
+            _database.ExecuteSqlRaw("DELETE FROM \"" + table + "\"");
+#pragma warning restore EF1002, EF1003
+        }
+        _database.ExecuteSqlRaw("PRAGMA foreign_keys = ON");
     }
 
     private string BuildDeleteTableSqlStatement()

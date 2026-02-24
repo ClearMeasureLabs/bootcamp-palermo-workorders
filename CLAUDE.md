@@ -199,11 +199,11 @@ The solution follows strict Onion Architecture with dependency flow inward:
 1. **Integration_Build**: Build, test, package (pushes to Azure Artifacts)
 2. **Docker Build & Push**: Build and push to Azure Container Registry
 3. **TDD**: Auto-deploy, migrate DB, run acceptance tests
-4. **UAT**: Manual approval required, deploy
+4. **UAT**: Manual approval required (any person can approve), deploy
 5. **PROD**: Manual approval required, deploy
 
 ### Versioning
-Format: `{major}.{minor}.{Rev:r}` (currently 1.3.x)
+Format: `{major}.{minor}.{Rev:r}` (currently 1.4.x)
 
 ## Docker
 
@@ -241,6 +241,14 @@ PlantUML diagrams in `arch/`:
 - `arch-c4-container-deployment.puml`: Container deployment
 - `arch-c4-component-project-dependencies.puml`: Project dependencies
 - `arch-c4-class-domain-model.puml`: Domain model (WorkOrder, Employee, WorkOrderStatus, Role)
+
+## Branch Naming Convention
+
+All branches must be created inside a folder matching the username of the account creating the branch. The format is `{username}/{branch-description}`.
+
+- For user `jeffreypalermo`, branches go under `jeffreypalermo/` (e.g., `jeffreypalermo/fix-work-order-status`)
+- For user `johnsmith`, branches go under `johnsmith/` (e.g., `johnsmith/add-employee-search`)
+- For AI agents (Claude, Copilot, Cursor), use the username of the account that initiated the session
 
 ## Important Notes
 

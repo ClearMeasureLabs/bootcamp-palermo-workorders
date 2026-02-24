@@ -34,15 +34,18 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         // Assert minimum count (base data has ~18 employees) plus "All" option.
         const int minimumBaseEmployees = 18;
         var creatorOptions = creatorSelect.Locator("option");
+        await Expect(creatorOptions.First).ToHaveTextAsync("All");
+        // Wait for employee data to finish loading via auto-retrying assertion
+        await Expect(creatorOptions.Filter(new(){ HasText = "Timothy Lovejoy"})).ToHaveCountAsync(1);
         var creatorOptionCount = await creatorOptions.CountAsync();
         creatorOptionCount.ShouldBeGreaterThanOrEqualTo(minimumBaseEmployees + 1);
-        await Expect(creatorOptions.First).ToHaveTextAsync("All");
-        await Expect(creatorOptions.Filter(new(){ HasText = "Timothy Lovejoy"})).ToHaveCountAsync(1); //Specific user from test data should always be there.
 
         var assigneeOptions = assigneeSelect.Locator("option");
+        await Expect(assigneeOptions.First).ToHaveTextAsync("All");
+        // Wait for employee data to finish loading via auto-retrying assertion
+        await Expect(assigneeOptions.Filter(new(){ HasText = "Timothy Lovejoy"})).ToHaveCountAsync(1);
         var assigneeOptionCount = await assigneeOptions.CountAsync();
         assigneeOptionCount.ShouldBeGreaterThanOrEqualTo(minimumBaseEmployees + 1);
-        await Expect(assigneeOptions.First).ToHaveTextAsync("All");
 
         // Verify status options are loaded (5 statuses + "All" option = 6 options)
         var statusOptions = statusSelect.Locator("option");

@@ -1,0 +1,382 @@
+name: Deploy
+run-name: "Deploy • ${{ inputs.release_number || format('{0} • 1.4.{1}', github.event.workflow_run.head_branch, github.event.workflow_run.run_number) }}"
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      release_number:
+        description: 'Release version to deploy (must match an existing Integration Build version, e.g. 1.4.394)'
+        required: true
+        type: string
+env:
+  MAJOR_VERSION: 1
+  MINOR_VERSION: 4
+
+jobs:
+  deploy-to-tdd:
+    name: TDD
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success'
+    concurrency:
+      # A newer version deploying to TDD will cancel any previous pending or in-progress run.
+      group: deploy-to-tdd-serialized
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+      actions: read
+    environment:
+      name: TDD
+
+    steps:
+      - name: Report TDD status as pending
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $sha = "${{ github.event.workflow_run.head_sha }}"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          gh api "repos/${{ github.repository }}/statuses/$sha" `
+            -f state="pending" `
+            -f target_url="$runUrl" `
+            -f description="TDD deployment in progress" `
+            -f context="Deploy to TDD"
+
+      - uses: actions/checkout@v6.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Set Version
+        shell: pwsh
+        run: |
+          $version = "${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.event.workflow_run.run_number }}"
+          "BUILD_BUILDNUMBER=$version" >> $env:GITHUB_ENV
+          "VERSION=$version" >> $env:GITHUB_ENV
+          Write-Host "Build version: $version"
+
+      - name: Create Octopus Release
+        id: create-octopus-release
+        uses: OctopusDeploy/create-release-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+        with:
+          project: '${{ vars.OCTOPUS_PROJECT }}'
+          release_number: "${{ env.VERSION }}"
+          git_ref: ${{ github.event.workflow_run.head_branch }}
+          git_commit: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Deploy Octopus Release to TDD
+        id: start-deploy-to-tdd
+        uses: OctopusDeploy/deploy-release-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+          BUILD_BUILDNUMBER: ${{ env.VERSION }}
+        with:
+          project: ${{ vars.OCTOPUS_PROJECT }}
+          release_number: ${{ env.VERSION }}
+          environments: "TDD"
+
+      # Download, extract, and install Playwright while Octopus deploys in the background.
+      # These steps only need the build artifact, not the deployed app.
+      - name: Download Acceptance Test Package
+        uses: actions/download-artifact@v4
+        with:
+          name: churchbulletin-nuget-packages
+          path: ./packages
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Extract Acceptance Test Package
+        shell: pwsh
+        run: |
+          $package = Get-ChildItem -Path ./packages -Filter "ChurchBulletin.AcceptanceTests.*.nupkg" | Select-Object -First 1
+          if (-not $package) {
+            Write-Error "ChurchBulletin.AcceptanceTests package not found"
+            Get-ChildItem -Path ./packages
+            exit 1
+          }
+          Write-Host "Extracting $($package.Name)..."
+          Expand-Archive -Path $package.FullName -DestinationPath ./acceptance-tests -Force
+
+          $testDll = Get-ChildItem -Path ./acceptance-tests -Filter "ClearMeasure.Bootcamp.AcceptanceTests.dll" -Recurse | Select-Object -First 1
+          if (-not $testDll) {
+            Write-Error "ClearMeasure.Bootcamp.AcceptanceTests.dll not found in extracted package"
+            exit 1
+          }
+          Write-Host "Test DLL found at: $($testDll.FullName)"
+          "TEST_DIR=$($testDll.DirectoryName)" >> $env:GITHUB_ENV
+          "TEST_DLL=$($testDll.FullName)" >> $env:GITHUB_ENV
+
+          # Fix execute permissions for Playwright binaries extracted from Windows-built nupkg
+          if ($IsLinux) {
+            chmod -R +x ./acceptance-tests/.playwright/ 2>$null
+            Write-Host "Fixed execute permissions on .playwright/ directory"
+          }
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $playwrightScript = Join-Path $env:TEST_DIR "playwright.ps1"
+          if (Test-Path $playwrightScript) {
+            Write-Host "Installing Playwright browsers from $playwrightScript"
+            & pwsh $playwrightScript install --with-deps
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to install Playwright browsers"
+            }
+          } else {
+            Write-Warning "Playwright script not found at $playwrightScript"
+          }
+
+      - name: Install Playwright dependencies only
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        shell: pwsh
+        run: |
+          $playwrightScript = Join-Path $env:TEST_DIR "playwright.ps1"
+          if (Test-Path $playwrightScript) {
+            Write-Host "Installing Playwright OS dependencies (browsers cached)"
+            & pwsh $playwrightScript install-deps
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to install Playwright dependencies"
+            }
+          }
+
+      # Now wait for the Octopus deployment that has been running in parallel
+      - name: Wait for the TDD deployment to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.start-deploy-to-tdd.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Container App FQDN and Connection String
+        shell: pwsh
+        run: |
+          # Single az call to retrieve both FQDN and connection string
+          $appJson = az containerapp show `
+            --name ${{ vars.CONTAINER_APP_NAME }} `
+            --resource-group ${{ vars.TDD_RESOURCE_GROUP_NAME}} `
+            --query "{fqdn: properties.configuration.ingress.fqdn, connStr: properties.template.containers[0].env[?name=='ConnectionStrings__SqlConnectionString'].value | [0]}" `
+            -o json | ConvertFrom-Json
+
+          $containerAppFqdn = $appJson.fqdn
+          if ([string]::IsNullOrWhiteSpace($containerAppFqdn)) {
+            Write-Error "Error: Could not retrieve container app FQDN"
+            exit 1
+          }
+
+          $containerAppUrl = "https://$containerAppFqdn"
+          Write-Host "Container App FQDN: $containerAppFqdn"
+          Write-Host "Container App URL: $containerAppUrl"
+          "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "ApplicationBaseUrl=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          $containerAppConnectionString = $appJson.connStr
+          Write-Host "Container App Connection String retrieved: $(-not [string]::IsNullOrWhiteSpace($containerAppConnectionString))"
+          "ConnectionStrings__SqlConnectionString=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Wait for Container App to become healthy
+        shell: pwsh
+        run: |
+          $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
+          $maxAttempts = 30
+          $delaySeconds = 10
+          Write-Host "Polling $url for healthy response (max ${maxAttempts} attempts, ${delaySeconds}s apart)..."
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            try {
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
+              $body = $response.Content
+              Write-Host "Attempt ${i}: HTTP $($response.StatusCode) - $body"
+              if ($response.StatusCode -eq 200 -and $body -match 'Healthy') {
+                Write-Host "Container App is healthy after $i attempts."
+                exit 0
+              }
+            } catch {
+              Write-Host "Attempt ${i}: $($_.Exception.Message)"
+            }
+            if ($i -lt $maxAttempts) { Start-Sleep -Seconds $delaySeconds }
+          }
+          Write-Error "Container App did not become healthy after $maxAttempts attempts."
+          exit 1
+
+      - name: Run Acceptance tests
+        if: success()
+        shell: pwsh
+        env:
+          ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
+          ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
+          StartLocalServer: "false"
+          TEST_INPUT_DELAY_MS: "500"
+        run: |
+          $resultsDirectory = Join-Path (Resolve-Path .) "build/test/AcceptanceTests"
+          New-Item -ItemType Directory -Path $resultsDirectory -Force | Out-Null
+          $runSettingsPath = Join-Path (Resolve-Path .) "src/AcceptanceTests/AcceptanceTests.runsettings"
+
+          Write-Host "Running acceptance tests against $env:ApplicationBaseUrl"
+          Write-Host "Test DLL: $env:TEST_DLL"
+
+          dotnet test $env:TEST_DLL --nologo --logger:trx `
+            --results-directory $resultsDirectory `
+            --settings $runSettingsPath
+
+
+      - name: Upload Acceptance Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-test-results-tdd
+          path: build/test/AcceptanceTests/**/*.trx
+          retention-days: 2
+
+      - name: Report TDD status to commit
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $sha = "${{ github.event.workflow_run.head_sha }}"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          $jobStatus = "${{ job.status }}"
+
+          if ($jobStatus -eq "success") {
+            $state = "success"
+            $description = "TDD deployment and acceptance tests passed"
+          } else {
+            $state = "failure"
+            $description = "TDD deployment or acceptance tests failed"
+          }
+
+          gh api "repos/${{ github.repository }}/statuses/$sha" `
+            -f state="$state" `
+            -f target_url="$runUrl" `
+            -f description="$description" `
+            -f context="Deploy to TDD"
+
+  deploy-to-uat:
+    name: UAT
+    needs: [deploy-to-tdd]
+    # Run UAT when:
+    # 1. Manual workflow_dispatch with a release_number (TDD is skipped), OR
+    # 2. TDD succeeded on master/main from a push-triggered Integration Build
+    # !cancelled() is required so the if condition is evaluated even when TDD is skipped
+    if: >-
+      !cancelled() && (
+        github.event_name == 'workflow_dispatch' ||
+        (needs.deploy-to-tdd.result == 'success' &&
+         github.event.workflow_run.event == 'push' &&
+         (github.event.workflow_run.head_branch == 'master' ||
+          github.event.workflow_run.head_branch == 'main'))
+      )
+    concurrency:
+      # A newer version waiting for UAT approval will cancel any previous pending run.
+      group: deploy-to-uat-serialized
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    environment:
+      name: UAT
+    # Note: The UAT environment protection rule should allow any person to approve deployments.
+    # Configure this in GitHub repo Settings > Environments > UAT > Required reviewers.
+
+    steps:
+      - name: Set Version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.release_number }}"
+          else
+            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.event.workflow_run.run_number }}"
+          fi
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Deploy version: $version"
+
+      - name: Deploy Octopus Release to UAT
+        uses: OctopusDeploy/deploy-release-action@v3
+        id: start-deploy-to-uat
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          project: ${{ vars.OCTOPUS_PROJECT }}
+          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          environments: "UAT"
+
+      - name: Wait for the UAT deployment to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.start-deploy-to-uat.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800
+
+  deploy-to-prod:
+    name: Prod
+    needs: [deploy-to-uat]
+    if: success()
+    runs-on: ubuntu-latest
+    environment:
+      name: Prod
+
+    steps:
+      - name: Set Version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.release_number }}"
+          else
+            version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.event.workflow_run.run_number }}"
+          fi
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Deploy version: $version"
+
+      - name: Deploy Octopus Release to Prod
+        uses: OctopusDeploy/deploy-release-action@v3
+        id: start-deploy-to-prod
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          project: ${{ vars.OCTOPUS_PROJECT }}
+          release_number: ${{ env.BUILD_BUILDNUMBER }}
+          environments: "Prod"
+
+      - name: Wait for the Prod deployment to complete
+        uses: OctopusDeploy/await-task-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY  }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+        with:
+          server_task_id: ${{ fromJson(steps.start-deploy-to-prod.outputs.server_tasks)[0].serverTaskId }}
+          timeout_after: 1800
