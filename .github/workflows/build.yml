@@ -580,7 +580,6 @@ jobs:
 
   acceptance-tests:
     name: Acceptance Tests
-    needs: [build-linux]
     if: success()
     runs-on: ubuntu-latest
     concurrency:
@@ -645,7 +644,6 @@ jobs:
 
   acceptance-tests-arm:
     name: Acceptance Tests (ARM SQLite)
-    needs: [build-linux]
     if: success()
     runs-on: ubuntu-24.04-arm
     concurrency:
