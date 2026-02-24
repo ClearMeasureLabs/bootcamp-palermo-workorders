@@ -15,7 +15,7 @@ This file provides standards for GitHub Copilot to follow when generating code f
 - UI Server: `src/UI/Server/` (Blazor host, DI via Lamar)
 - UI Client: `src/UI/Client/` (Blazor WASM)
 - Worker service: `src/Worker/` (hosted endpoint worker)
-- DB migrations: `src/Database/scripts/Update/` (AliaSQL, numbered ###_Name.sql, TABS)
+- DB migrations: `src/Database/scripts/Update/` (DbUp scripts, numbered ###_Name.sql, TABS)
 - Tests: `src/UnitTests/`, `src/IntegrationTests/`, `src/AcceptanceTests/`
 
 **Domain Model:**
@@ -161,7 +161,7 @@ All branches must be created inside a folder matching the username of the accoun
 - Use Entity Framework for data access
 - Follow Commands and Queries and Handlers data access
 - Create mapping files for all entities in `src/DataAccess/Mappings/`
-- DB schema changes: AliaSQL scripts in `src/Database/scripts/Update/` (###_Description.sql, TABS)
+- DB schema changes: DbUp scripts in `src/Database/scripts/Update/` (###_Description.sql, TABS)
 
 ## Testing Standards
 - After code is generated, ask to generate a test next.

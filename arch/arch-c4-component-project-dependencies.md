@@ -11,7 +11,7 @@ C4Component
   Container_Boundary(visualstudiosolution, "ChurchBulletin.sln") {
     Component(core, "Core", "Inner layer of onion architecture", "netstandard2.1/net60", "tabler:package")
     Component(dataAccess, "DataAccess", "House Entity Framework", "Handle interaction with SQL Server", "tabler:database")
-    Component(databaseProject, "Database", "Manage creation and migrating database schema", "AliaSQL", "tabler:schema")
+    Component(databaseProject, "Database", "Manage creation and migrating database schema", "DbUp", "tabler:schema")
     Component(unitTests, "Unit Tests", "Tests all in-memory logic", "NUnit", "tabler:test-pipe")
     Component(integrationTests, "Integration Tests", "Tests all logic that flows between different memory spaces", "NUnit", "tabler:test-pipe")
     Component(uiServer, "Api", "Blazor server project housing web api endpoints", "ASP.NET", "tabler:server")
@@ -22,7 +22,7 @@ C4Component
   
   Rel(uiServer, core, "Project Reference")
   Rel(uiClient, core, "Project Reference")
-  Rel(databaseProject, database, "AliaSQL/DbUP")
+  Rel(databaseProject, database, "DbUp")
   Rel(uiServer, uiClient, "Project Reference")
   Rel(dataAccess, database, "ConnectionString")
   Rel(startup, core, "Project Reference")

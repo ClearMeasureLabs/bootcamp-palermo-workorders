@@ -59,7 +59,7 @@ If there are merge conflicts, request that the PR author resolve them before the
 
 ## Database Changes
 
-- Migration scripts in `src/Database/scripts/Update/` use AliaSQL
+- Migration scripts in `src/Database/scripts/Update/` use DbUp
 - Scripts must be numbered sequentially (###_Name.sql)
 - Scripts must use TABS for indentation
 - Verify scripts are idempotent where possible

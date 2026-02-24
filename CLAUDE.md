@@ -14,7 +14,7 @@ This is a Work Order management system built with .NET 10.0, implementing Onion 
 |---------|------|------|
 | Core | `src/Core/` | Domain; no dependencies |
 | DataAccess | `src/DataAccess/` | EF Core, MediatR handlers; refs Core only |
-| Database | `src/Database/` | DB tooling, AliaSQL |
+| Database | `src/Database/` | DB tooling, DbUp |
 | UI.Server | `src/UI/Server/` | Blazor Server host, Lamar DI |
 | UI.Client | `src/UI/Client/` | Blazor WASM |
 | UI.Api | `src/UI/Api/` | Web API |
@@ -63,13 +63,13 @@ dotnet test --configuration Debug
 
 ### Database Migration
 ```powershell
-# Local database migration using AliaSQL
+# Local database migration using DbUp
 $databaseServer = "(LocalDb)\MSSQLLocalDB"
 $databaseName = "ChurchBulletin"
 MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
 
-# Direct AliaSQL execution
-src/Database/scripts/AliaSQL.exe Rebuild (LocalDb)\MSSQLLocalDB ChurchBulletin src/Database/scripts
+# Direct DbUp execution
+dotnet run --project src/Database -- rebuild --database-server "(LocalDb)\MSSQLLocalDB" --database-name "ChurchBulletin"
 ```
 
 ### Run Application Locally
@@ -109,7 +109,7 @@ The solution follows strict Onion Architecture with dependency flow inward:
 - **UI.Shared** (`src/UI.Shared/`): Shared components
 
 ### Database Management
-- **Database** (`src/Database/`): AliaSQL-based migrations with numbered scripts in `scripts/Update/` (001, 003, 004, etc.)
+- **Database** (`src/Database/`): DbUp-based migrations with numbered scripts in `scripts/Update/` (001, 003, 004, etc.)
 
 ### Additional Layers
 - **LlmGateway** (`src/LlmGateway/`): Azure OpenAI and Ollama integration for AI agent functionality
@@ -185,7 +185,7 @@ The solution follows strict Onion Architecture with dependency flow inward:
 
 ## Database Migrations
 
-### Adding New Migrations (AliaSQL)
+### Adding New Migrations (DbUp)
 1. Create numbered script in `src/Database/scripts/Update/`
 2. Use next sequential number (e.g., if 004 exists, create 005)
 3. Script naming: `###_Description.sql`

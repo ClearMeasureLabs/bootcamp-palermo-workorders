@@ -5,7 +5,7 @@ using Spectre.Console.Cli;
 namespace ClearMeasure.Bootcamp.Database.Console;
 
 /// <summary>
-/// This should match the AliaSQL "Update" action, which only runs Update.
+/// This should match the DbUp "Update" action, which only runs Update.
 /// </summary>
 [UsedImplicitly]
 public class UpdateDatabaseCommand() : AbstractDatabaseCommand("Update")
