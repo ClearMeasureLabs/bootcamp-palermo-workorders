@@ -1,4 +1,4 @@
-name: Builds
+name: Build
 run-name: "1.4.${{ github.run_number }} • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
 on:
   push:
@@ -28,11 +28,6 @@ jobs:
       # Checkout code
       - name: Checkout code
         uses: actions/checkout@v6.0.1
-
-      - name: Setup .NET SDK 10.0.100
-        uses: actions/setup-dotnet@v5.0.1
-        with:
-          dotnet-version: '10.0.100'
 
       # Set version environment variable
       - name: Set Version
@@ -154,11 +149,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
-      - name: Setup .NET SDK 10.0.100
-        uses: actions/setup-dotnet@v5.0.1
-        with:
-          dotnet-version: '10.0.100'
-
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
@@ -203,11 +193,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
-      - name: Setup .NET SDK 10.0.100
-        uses: actions/setup-dotnet@v5.0.1
-        with:
-          dotnet-version: '10.0.100'
-
       - name: Restore solution
         run: dotnet restore src/ChurchBulletin.sln
 
@@ -238,11 +223,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
-
-      - name: Setup .NET SDK 10.0.100
-        uses: actions/setup-dotnet@v5.0.1
-        with:
-          dotnet-version: '10.0.100'
 
       - name: Set Version
         shell: pwsh
@@ -422,11 +402,6 @@ jobs:
       contents: read
       packages: write
     steps:
-      - name: Setup .NET SDK 10.0.100
-        uses: actions/setup-dotnet@v5.0.1
-        with:
-          dotnet-version: '10.0.100'
-
       - name: Download NuGet Packages
         uses: actions/download-artifact@v4
         with:
@@ -462,11 +437,6 @@ jobs:
     env:
       DOTNET_ROLL_FORWARD: LatestMajor
     steps:
-      - name: Setup .NET SDK 10.0.100
-        uses: actions/setup-dotnet@v5.0.1
-        with:
-          dotnet-version: '10.0.100'
-
       - name: Download NuGet Packages
         uses: actions/download-artifact@v4
         with:
@@ -539,10 +509,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
-      - name: Setup .NET SDK 10.0.100
-        uses: actions/setup-dotnet@v5.0.1
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
         with:
-          dotnet-version: '10.0.100'
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
       - name: Set Version
         run: |
