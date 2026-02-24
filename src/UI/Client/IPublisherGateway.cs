@@ -1,5 +1,4 @@
 ﻿using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.DataAccess.Messaging;
 
 namespace ClearMeasure.Bootcamp.UI.Client;
 

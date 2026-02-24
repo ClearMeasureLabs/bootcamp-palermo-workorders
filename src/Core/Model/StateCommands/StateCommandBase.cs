@@ -1,4 +1,3 @@
-using ClearMeasure.Bootcamp.Core.Model.Events;
 using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
@@ -10,8 +9,6 @@ public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUse
     protected abstract bool UserCanExecute(Employee currentUser);
     public abstract string TransitionVerbPresentTense { get; }
     public abstract string TransitionVerbPastTense { get; }
-
-    public IStateTransitionEvent? StateTransitionEvent { get; protected set; }
 
     public bool IsValid()
     {

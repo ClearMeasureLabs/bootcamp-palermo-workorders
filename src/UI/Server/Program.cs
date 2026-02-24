@@ -1,6 +1,3 @@
-using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.DataAccess.Messaging;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
@@ -9,36 +6,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
-
-// Add NServiceBus endpoint
-var endpointConfiguration = new NServiceBus.EndpointConfiguration("UI.Server");
-endpointConfiguration.UseSerialization<SystemJsonSerializer>();
-endpointConfiguration.EnableInstallers();
-endpointConfiguration.EnableOpenTelemetry();
-
-// transport
-var sqlConnectionString = builder.Configuration.GetConnectionString("SqlConnectionString") ?? "";
-if (sqlConnectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
-{
-    endpointConfiguration.UseTransport<LearningTransport>();
-}
-else
-{
-    var transport = endpointConfiguration.UseTransport<SqlServerTransport>();
-    transport.ConnectionString(sqlConnectionString);
-    transport.DefaultSchema("nServiceBus");
-    transport.Transactions(TransportTransactionMode.TransactionScope);
-}
-
-// message conventions
-var conventions = new MessagingConventions();
-endpointConfiguration.Conventions().Add(conventions);
-
-builder.Host.UseNServiceBus(_ => endpointConfiguration);
 
 // Build application
 var app = builder.Build();

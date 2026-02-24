@@ -26,8 +26,8 @@ public class UiServiceRegistry : ServiceRegistry
         });
 
         // Register AI agent and background service
-        this.AddTransient<WorkOrderReformatAgent>();
-        this.AddHostedService<AutoReformatAgentService>();
+        this.AddTransient<WorkOrderEvaluationAgent>();
+        this.AddHostedService<AutoCancelAgentService>();
 
         Scan(scanner =>
         {
