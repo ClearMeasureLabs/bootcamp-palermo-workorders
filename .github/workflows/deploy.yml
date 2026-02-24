@@ -209,7 +209,7 @@ jobs:
         run: |
           $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
           $maxAttempts = 30
-          $delaySeconds = 10
+          $delaySeconds = 5
           Write-Host "Polling $url for healthy response (max ${maxAttempts} attempts, ${delaySeconds}s apart)..."
           for ($i = 1; $i -le $maxAttempts; $i++) {
             try {
@@ -235,7 +235,7 @@ jobs:
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           StartLocalServer: "false"
-          TEST_INPUT_DELAY_MS: "500"
+          TEST_INPUT_DELAY_MS: "200"
         run: |
           $resultsDirectory = Join-Path (Resolve-Path .) "build/test/AcceptanceTests"
           New-Item -ItemType Directory -Path $resultsDirectory -Force | Out-Null
