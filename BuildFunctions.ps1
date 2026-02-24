@@ -642,6 +642,45 @@ Function Test-IsOllamaRunning {
     Join-PathSegments "/home", "user", "projects", "src", "file.txt"
     Returns: /home/user/projects/src/file.txt (on Linux)
 #>
+Function Assert-PortAvailable {
+    <#
+    .SYNOPSIS
+        Asserts that a TCP port is not already in use.
+    .DESCRIPTION
+        Checks active TCP listeners for the given port. If the port is occupied,
+        throws an error with a clear diagnostic message so the caller does not
+        have to wait for a 60-second server-start timeout to discover the conflict.
+    .PARAMETER Port
+        The TCP port number to check.
+    .PARAMETER Url
+        Optional. The full URL shown in the error message for context.
+    .EXAMPLE
+        Assert-PortAvailable -Port 7174 -Url "https://localhost:7174"
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [int]$Port,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Url = ""
+    )
+
+    $listener = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties().GetActiveTcpListeners() |
+        Where-Object { $_.Port -eq $Port }
+
+    if ($listener) {
+        $urlHint = if ($Url) { " (URL: $Url)" } else { "" }
+        $msg = "Port $Port is already in use$urlHint. " +
+               "A previous server process may still be running. " +
+               "Stop the process listening on port $Port before running acceptance tests."
+        Log-Message -Message $msg -Type "ERROR"
+        throw $msg
+    }
+
+    Log-Message -Message "Port check: $Port is available." -Type "INFO"
+}
+
 function Join-PathSegments {
     [CmdletBinding()]
     param(

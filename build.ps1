@@ -251,6 +251,9 @@ Function AcceptanceTests {
 		Log-Message -Message "Warning: ClearMeasure.Bootcamp.UI.Server is already running in background (PID: $($uiServerProcess.Id)). This may interfere with acceptance tests." -Type "WARNING"
 	}
 
+	# Fail fast if the server port is blocked by a leftover process
+	Assert-PortAvailable -Port 7174 -Url "https://localhost:7174"
+
 	Log-Message -Message "Running Acceptance Tests" -Type "INFO"
 	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
 	try {
