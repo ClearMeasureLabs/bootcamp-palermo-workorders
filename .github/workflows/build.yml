@@ -608,9 +608,9 @@ jobs:
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
           restore-keys: |
-            playwright-${{ runner.os }}-
+            playwright-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set Version
         run: |
@@ -673,9 +673,9 @@ jobs:
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-arm-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
           restore-keys: |
-            playwright-${{ runner.os }}-arm-
+            playwright-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set Version
         run: |
