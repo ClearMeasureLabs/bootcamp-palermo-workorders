@@ -8,16 +8,32 @@ namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 
 public abstract class McpAcceptanceTestBase
 {
-    protected McpClient Client => McpServerFixture.McpClientInstance!;
-    protected IList<McpClientTool> Tools => McpServerFixture.Tools!;
+    private readonly string _transportType;
+
+    protected McpAcceptanceTestBase(string transportType)
+    {
+        _transportType = transportType;
+    }
+
+    protected McpClient Client => _transportType == "http"
+        ? McpServerFixture.HttpMcpClientInstance!
+        : McpServerFixture.StdioMcpClientInstance!;
+
+    protected IList<McpClientTool> Tools => _transportType == "http"
+        ? McpServerFixture.HttpTools!
+        : McpServerFixture.StdioTools!;
 
     protected bool RequiresLlm { get; set; } = true;
 
     [SetUp]
     public void EnsureAvailability()
     {
-        if (!McpServerFixture.ServerAvailable)
-            Assert.Inconclusive("MCP server is not available");
+        var available = _transportType == "http"
+            ? McpServerFixture.HttpServerAvailable
+            : McpServerFixture.StdioServerAvailable;
+
+        if (!available)
+            Assert.Inconclusive($"MCP server ({_transportType} transport) is not available");
 
         if (RequiresLlm && !McpServerFixture.LlmAvailable)
             Assert.Inconclusive("No LLM available (set AI_OpenAI_ApiKey/Url/Model or run Ollama locally)");
@@ -57,6 +73,11 @@ public abstract class McpAcceptanceTestBase
         return string.Join("\n", result.Content
             .OfType<TextContentBlock>()
             .Select(c => c.Text));
+    }
+
+    protected async Task<IList<McpClientResource>> ListResources()
+    {
+        return await Client.ListResourcesAsync();
     }
 
     private static IChatClient BuildAzureOpenAiChatClient(string apiKey)

@@ -6,9 +6,12 @@ using Shouldly;
 
 namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 
-[TestFixture]
+[TestFixture("stdio")]
+[TestFixture("http")]
 public class McpServerAcceptanceTests : McpAcceptanceTestBase
 {
+    public McpServerAcceptanceTests(string transportType) : base(transportType) { }
+
     [Test]
     public async Task ShouldDiscoverAllMcpTools()
     {
@@ -45,6 +48,32 @@ public class McpServerAcceptanceTests : McpAcceptanceTestBase
 
         result.ShouldContain("Direct MCP tool test");
         result.ShouldContain("Draft");
+    }
+
+    [Test]
+    public async Task ShouldListEmployeesViaDirectToolCall()
+    {
+        RequiresLlm = false;
+
+        var result = await CallToolDirectly("list-employees", new Dictionary<string, object?>());
+
+        result.ShouldNotBeNullOrEmpty();
+        result.ShouldContain("UserName");
+    }
+
+    [Test]
+    public async Task ShouldListResources()
+    {
+        RequiresLlm = false;
+
+        var resources = await ListResources();
+
+        resources.Count.ShouldBeGreaterThanOrEqualTo(3);
+
+        var resourceNames = resources.Select(r => r.Name).ToList();
+        resourceNames.ShouldContain("work-order-statuses");
+        resourceNames.ShouldContain("roles");
+        resourceNames.ShouldContain("status-transitions");
     }
 
     [Test, Retry(2)]

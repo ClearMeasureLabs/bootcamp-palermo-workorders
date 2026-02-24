@@ -7,9 +7,11 @@ using Shouldly;
 
 namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 
-[TestFixture]
+[TestFixture("stdio")]
+[TestFixture("http")]
 public class McpWorkOrderLifecycleTests : McpAcceptanceTestBase
 {
+    public McpWorkOrderLifecycleTests(string transportType) : base(transportType) { }
     [Test]
     public async Task ShouldCompleteFullLifecycleViaDirectToolCalls()
     {

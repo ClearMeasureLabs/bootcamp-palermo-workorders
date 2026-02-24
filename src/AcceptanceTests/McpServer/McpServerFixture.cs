@@ -3,6 +3,7 @@ using ClearMeasure.Bootcamp.AcceptanceTests;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.IntegrationTests;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using ModelContextProtocol.Client;
 
 namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
@@ -18,12 +19,22 @@ public class McpServerFixture
             ? "Release"
             : "Debug";
 
-    public static McpClient? McpClientInstance { get; private set; }
-    public static IList<McpClientTool>? Tools { get; private set; }
-    public static bool ServerAvailable { get; private set; }
+    public static McpClient? StdioMcpClientInstance { get; private set; }
+    public static IList<McpClientTool>? StdioTools { get; private set; }
+    public static bool StdioServerAvailable { get; private set; }
+
+    public static McpClient? HttpMcpClientInstance { get; private set; }
+    public static IList<McpClientTool>? HttpTools { get; private set; }
+    public static bool HttpServerAvailable { get; private set; }
+
     public static bool LlmAvailable { get; private set; }
     public static string LlmProvider { get; private set; } = "None";
     private static readonly List<string> ServerErrors = new();
+
+    // Backward-compatible aliases for existing code
+    public static McpClient? McpClientInstance => StdioMcpClientInstance;
+    public static IList<McpClientTool>? Tools => StdioTools;
+    public static bool ServerAvailable => StdioServerAvailable;
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -40,17 +51,24 @@ public class McpServerFixture
         // can access the database without contention
         TestHost.GetRequiredService<IDatabaseConfiguration>().ResetConnectionPool();
 
-        await StartMcpServer(connectionString);
+        await StartStdioMcpServer(connectionString);
+        await ConnectHttpMcpClient();
         await CheckLlmAvailability();
     }
 
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        if (McpClientInstance != null)
+        if (StdioMcpClientInstance != null)
         {
-            await McpClientInstance.DisposeAsync();
-            McpClientInstance = null;
+            await StdioMcpClientInstance.DisposeAsync();
+            StdioMcpClientInstance = null;
+        }
+
+        if (HttpMcpClientInstance != null)
+        {
+            await HttpMcpClientInstance.DisposeAsync();
+            HttpMcpClientInstance = null;
         }
     }
 
@@ -104,7 +122,7 @@ public class McpServerFixture
         return connectionString;
     }
 
-    private static async Task StartMcpServer(string connectionString)
+    private static async Task StartStdioMcpServer(string connectionString)
     {
         var mcpServerProjectDir = Path.GetFullPath(
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, McpServerRelativeProjectDir));
@@ -129,7 +147,7 @@ public class McpServerFixture
             {
                 var stderr = await buildProcess.StandardError.ReadToEndAsync();
                 TestContext.Out.WriteLine($"McpServerFixture: build failed: {stderr}");
-                ServerAvailable = false;
+                StdioServerAvailable = false;
                 return;
             }
         }
@@ -155,16 +173,66 @@ public class McpServerFixture
             });
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            McpClientInstance = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
-            Tools = await McpClientInstance.ListToolsAsync(cancellationToken: cts.Token);
+            StdioMcpClientInstance = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
+            StdioTools = await StdioMcpClientInstance.ListToolsAsync(cancellationToken: cts.Token);
 
-            TestContext.Out.WriteLine($"McpServerFixture: connected, {Tools.Count} tools discovered");
-            ServerAvailable = true;
+            TestContext.Out.WriteLine($"McpServerFixture: stdio connected, {StdioTools.Count} tools discovered");
+            StdioServerAvailable = true;
         }
         catch (Exception ex)
         {
-            TestContext.Out.WriteLine($"McpServerFixture: failed to start MCP server: {ex.Message}");
-            ServerAvailable = false;
+            TestContext.Out.WriteLine($"McpServerFixture: failed to start stdio MCP server: {ex.Message}");
+            StdioServerAvailable = false;
+        }
+    }
+
+    private static async Task ConnectHttpMcpClient()
+    {
+        var baseUrl = ServerFixture.ApplicationBaseUrl;
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            var configuration = TestHost.GetRequiredService<IConfiguration>();
+            baseUrl = configuration["ApplicationBaseUrl"] ?? "";
+        }
+
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            TestContext.Out.WriteLine("McpServerFixture: no ApplicationBaseUrl configured, HTTP MCP transport unavailable");
+            HttpServerAvailable = false;
+            return;
+        }
+
+        try
+        {
+            var endpoint = new Uri($"{baseUrl}/mcp");
+            TestContext.Out.WriteLine($"McpServerFixture: connecting to HTTP MCP endpoint at {endpoint}");
+
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+            var httpClient = new HttpClient(handler);
+
+            var options = new HttpClientTransportOptions
+            {
+                Endpoint = endpoint,
+                Name = "ChurchBulletin-HTTP"
+            };
+
+            var transport = new HttpClientTransport(options, httpClient,
+                NullLoggerFactory.Instance, ownsHttpClient: true);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            HttpMcpClientInstance = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
+            HttpTools = await HttpMcpClientInstance.ListToolsAsync(cancellationToken: cts.Token);
+
+            TestContext.Out.WriteLine($"McpServerFixture: HTTP connected, {HttpTools.Count} tools discovered");
+            HttpServerAvailable = true;
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"McpServerFixture: HTTP MCP connection failed: {ex.Message}");
+            HttpServerAvailable = false;
         }
     }
 
