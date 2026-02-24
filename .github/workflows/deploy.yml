@@ -1,5 +1,5 @@
 name: Deploy
-run-name: "Deploy • ${{ inputs.release_number || format('{0} • 1.4.{1}', github.event.workflow_run.head_branch, github.event.workflow_run.run_number) }}"
+run-name: "${{ inputs.release_number && format('{0} • Deploy', inputs.release_number) || format('1.4.{0} • Deploy • {1}', github.event.workflow_run.run_number, github.event.workflow_run.head_branch) }}"
 on:
   workflow_run:
     workflows: ["Build"]
