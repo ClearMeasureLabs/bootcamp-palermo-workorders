@@ -645,7 +645,7 @@ jobs:
 
   acceptance-tests-arm:
     name: Acceptance Tests (ARM SQLite)
-    needs: [docker-build-image-for-churchbulletin-ui]
+    needs: [build-linux]
     if: success()
     runs-on: ubuntu-24.04-arm
     concurrency:
