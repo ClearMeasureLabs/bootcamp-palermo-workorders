@@ -4,9 +4,9 @@ This file provides standards for GitHub Copilot to follow when generating code f
 
 ## Quick Reference (AI Tools: Read This First)
 
-**Stack:** .NET 10.0 | Blazor WASM | EF Core 10 | SQL Server | Onion Architecture
+**Stack:** .NET 10.0 | Blazor WASM + Server | EF Core 10 | SQL Server | Onion Architecture | Aspire
 
-**Solution:** `src/ChurchBulletin.sln` — Core, DataAccess, Database, UI.Server, UI.Client, UI.Api, UI.Shared, LlmGateway, ChurchBulletin.AppHost, ChurchBulletin.ServiceDefaults, UnitTests, IntegrationTests, AcceptanceTests.
+**Solution:** `src/ChurchBulletin.sln` — Core, DataAccess, Database, UI.Server, UI.Client, UI.Api, UI.Shared, LlmGateway, ChurchBulletin.AppHost, ChurchBulletin.ServiceDefaults, Worker, UnitTests, IntegrationTests, AcceptanceTests.
 
 **Key Paths:**
 - Domain models: `src/Core/` (WorkOrder, Employee, WorkOrderStatus, Role)
@@ -14,19 +14,20 @@ This file provides standards for GitHub Copilot to follow when generating code f
 - Data access: `src/DataAccess/` (EF Core, MediatR handlers in `Handlers/`, `Mappings/`)
 - UI Server: `src/UI/Server/` (Blazor host, DI via Lamar)
 - UI Client: `src/UI/Client/` (Blazor WASM)
-- DB migrations: `src/Database/scripts/Update/` (AliaSQL, numbered ###_Name.sql, TABS)
+- Worker service: `src/Worker/` (hosted endpoint worker)
+- DB migrations: `src/Database/scripts/Update/` (DbUp scripts, numbered ###_Name.sql, TABS)
 - Tests: `src/UnitTests/`, `src/IntegrationTests/`, `src/AcceptanceTests/`
 
 **Domain Model:**
-- `WorkOrder`: Number, Title, Description, Room, AssignedTo (Employee), Status, CreatedBy
-- `Employee`: UserName, Email, Roles
-- `WorkOrderStatus`: Created, Assigned, Completed, Cancelled
-- `Role`: Employee role definitions
+- `WorkOrder`: Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate
+- `Employee`: UserName, FirstName, LastName, EmailAddress, Roles
+- `WorkOrderStatus`: Draft, Assigned, InProgress, Complete, Cancelled
+- `Role`: Name, CanCreateWorkOrder, CanFulfillWorkOrder
 
 **Architecture Rules (Strict):**
 - Core → no dependencies (domain models, interfaces, queries)
 - DataAccess → references Core only (EF, handlers)
-- UI → outer layer (references all)
+- UI/Worker/AppHost → outer layer (orchestration and hosting)
 - NO new NuGet packages without approval
 - NO .NET SDK version changes without approval
 
@@ -160,7 +161,7 @@ All branches must be created inside a folder matching the username of the accoun
 - Use Entity Framework for data access
 - Follow Commands and Queries and Handlers data access
 - Create mapping files for all entities in `src/DataAccess/Mappings/`
-- DB schema changes: AliaSQL scripts in `src/Database/scripts/Update/` (###_Description.sql, TABS)
+- DB schema changes: DbUp scripts in `src/Database/scripts/Update/` (###_Description.sql, TABS)
 
 ## Testing Standards
 - After code is generated, ask to generate a test next.

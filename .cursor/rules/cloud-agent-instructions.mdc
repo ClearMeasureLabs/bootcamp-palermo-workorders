@@ -20,9 +20,9 @@ alwaysApply: true
 
 ## Architecture
 
-- **Stack:** .NET 9.0, Blazor WASM + Server, EF Core 9, SQL Server
+- **Stack:** .NET 10.0, Blazor WASM + Server, EF Core 10, SQL Server
 - **Pattern:** Onion Architecture
-- **Key Paths:** `Core`, `DataAccess`, `UI/Server`, `UI/Client`, `Database/scripts`, `Tests`
+- **Key Paths:** `Core`, `DataAccess`, `UI/Server`, `UI/Client`, `Worker`, `Database/scripts/Update`, `AcceptanceTests`
 - **Dependency Rules:**
   - `Core` → no dependencies (innermost layer)
   - `DataAccess` → references `Core` only
@@ -33,6 +33,7 @@ alwaysApply: true
 Do NOT perform without explicit approval:
 - Add NuGet packages or change SDK versions
 - Modify `.octopus/` directory
+- Modify `.octopus_original_from_od/` directory
 - Modify build scripts (`build.ps1`, `build.bat`, `build.sh`, `BuildFunctions.ps1`)
 
 ## Coding Standards

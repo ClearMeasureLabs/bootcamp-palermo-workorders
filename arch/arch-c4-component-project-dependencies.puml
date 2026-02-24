@@ -26,7 +26,7 @@ Container_Boundary(visualstudiosolution, "ChurchBulletin.sln") {
 Rel(dataAccess, core, "Project Reference")
 Rel(uiServer, core, "Project Reference")
 Rel(uiClient, core, "Project Reference")
-Rel(databaseProject, database, "AliaSQL/DbUP")
+Rel(databaseProject, database, "DbUp")
 Rel(uiServer, uiClient, "Project Reference")
 Rel(dataAccess, database, "ConnectionString")
 Rel(startup, core, "Project Reference")

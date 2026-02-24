@@ -506,7 +506,7 @@ Optional. Specifies the database name to use. If not provided, generates a uniqu
 based on the project name and timestamp (Windows only). Ignored when using SQLite.
 
 .PARAMETER UseSqlite
-Optional switch. Forces SQLite mode, bypassing SQL Server Docker setup and AliaSQL migrations.
+Optional switch. Forces SQLite mode, bypassing SQL Server Docker setup and database migrations.
 Auto-detected on Linux when Docker is not running.
 
 .EXAMPLE
@@ -604,7 +604,7 @@ Function Invoke-AcceptanceTests {
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
-		Log-Message -Message "Skipping SQL Server setup and AliaSQL migration (using SQLite with EnsureCreated)" -Type "INFO"
+		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "INFO"
 	}
 
 	AcceptanceTests
@@ -737,7 +737,7 @@ Function Invoke-PrivateBuild {
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
-		Log-Message -Message "Skipping SQL Server setup and AliaSQL migration (using SQLite with EnsureCreated)" -Type "INFO"
+		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "INFO"
 	}
 
 	IntegrationTest
@@ -832,7 +832,7 @@ Function Invoke-CIBuild {
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
-		Log-Message -Message "Skipping SQL Server setup and AliaSQL migration (using SQLite with EnsureCreated)" -Type "INFO"
+		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "INFO"
 	}
 
 	IntegrationTest
