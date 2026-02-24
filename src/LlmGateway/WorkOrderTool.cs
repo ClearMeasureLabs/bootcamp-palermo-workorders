@@ -19,4 +19,32 @@ public class WorkOrderTool(IBus bus)
     {
         return await bus.Send(new EmployeeGetAllQuery());
     }
+
+    [Description("Lists work orders, optionally filtered by a status key. Valid status keys: DFT (Draft), ASD (Assigned), IPG (InProgress), CMP (Complete), CNL (Cancelled). Returns an error message if the status key is invalid.")]
+    public async Task<object> ListWorkOrders(string? status = null)
+    {
+        if (status != null)
+        {
+            try
+            {
+                WorkOrderStatus.FromKey(status);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return $"Invalid status '{status}'. Valid status keys are: {_validStatusKeys}";
+            }
+        }
+
+        var query = new WorkOrderSpecificationQuery { StatusKey = status };
+        return await bus.Send(query);
+    }
+
+    private static readonly string _validStatusKeys =
+        string.Join(", ", WorkOrderStatus.GetAllItems().Select(s => $"{s.Key} ({s.FriendlyName})"));
+
+    [Description("Gets all roles defined in the system from the database, including role name and permissions.")]
+    public async Task<Role[]> GetRoles()
+    {
+        return await bus.Send(new RoleGetAllQuery());
+    }
 }
