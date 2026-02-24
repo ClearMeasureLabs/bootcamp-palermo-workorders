@@ -20,7 +20,6 @@ This is a Work Order management system built with .NET 10.0, implementing Onion 
 | UI.Api | `src/UI/Api/` | Web API |
 | UI.Shared | `src/UI.Shared/` | Shared UI |
 | LlmGateway | `src/LlmGateway/` | Azure OpenAI / Ollama |
-| Worker | `src/Worker/` | Background worker service |
 | ChurchBulletin.AppHost | `src/ChurchBulletin.AppHost/` | Aspire AppHost |
 | ChurchBulletin.ServiceDefaults | `src/ChurchBulletin.ServiceDefaults/` | Aspire defaults |
 | Worker | `src/Worker/` | Hosted endpoint worker service |
