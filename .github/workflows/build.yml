@@ -1,4 +1,4 @@
-name: Builds
+name: Build
 run-name: "1.4.${{ github.run_number }} • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
 on:
   push:
