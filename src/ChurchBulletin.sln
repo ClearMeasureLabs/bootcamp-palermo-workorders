@@ -65,6 +65,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChurchBulletin.ServiceDefau
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worker", "Worker\Worker.csproj", "{AE2E7A56-B64A-4E4C-A342-D4C1737EB7F6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "McpServer", "McpServer\McpServer.csproj", "{E23868C9-DE84-4385-95ED-AC785AD4F47E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -504,6 +506,36 @@ Global
 		{AE2E7A56-B64A-4E4C-A342-D4C1737EB7F6}.Release|x64.Build.0 = Release|Any CPU
 		{AE2E7A56-B64A-4E4C-A342-D4C1737EB7F6}.Release|x86.ActiveCfg = Release|Any CPU
 		{AE2E7A56-B64A-4E4C-A342-D4C1737EB7F6}.Release|x86.Build.0 = Release|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Debug|ARM.Build.0 = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Debug|x64.Build.0 = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Debug|x86.Build.0 = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.exclude-maui.slnf|Any CPU.ActiveCfg = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.exclude-maui.slnf|Any CPU.Build.0 = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.exclude-maui.slnf|ARM.ActiveCfg = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.exclude-maui.slnf|ARM.Build.0 = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.exclude-maui.slnf|ARM64.ActiveCfg = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.exclude-maui.slnf|ARM64.Build.0 = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.exclude-maui.slnf|x64.ActiveCfg = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.exclude-maui.slnf|x64.Build.0 = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.exclude-maui.slnf|x86.ActiveCfg = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.exclude-maui.slnf|x86.Build.0 = Debug|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|ARM.ActiveCfg = Release|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|ARM.Build.0 = Release|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|ARM64.Build.0 = Release|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|x64.ActiveCfg = Release|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|x64.Build.0 = Release|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|x86.ActiveCfg = Release|Any CPU
+		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
