@@ -3,7 +3,10 @@ param (
     [string]$databaseServer = "",
 
     [Parameter(Mandatory=$false)]
-    [string]$databaseName = "ChurchBulletin"
+    [string]$databaseName = "ChurchBulletin",
+
+    [Parameter(Mandatory=$false)]
+    [switch]$Headful
 )
 
 . .\build.ps1
@@ -22,6 +25,11 @@ if ([string]::IsNullOrEmpty($databaseServer)) {
     else {
         $databaseServer = "(LocalDb)\MSSQLLocalDB"
     }
+}
+
+if ($Headful) {
+    $env:HeadlessTestBrowser = "false"
+    Log-Message -Message "Running acceptance tests with headful browser windows." -Type "INFO"
 }
 
 Invoke-AcceptanceTests -databaseServer $databaseServer -databaseName $databaseName
