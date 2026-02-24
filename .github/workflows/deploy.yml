@@ -2,7 +2,7 @@ name: Deploy
 run-name: "Deploy • ${{ inputs.release_number || format('{0} • 1.4.{1}', github.event.workflow_run.head_branch, github.event.workflow_run.run_number) }}"
 on:
   workflow_run:
-    workflows: ["Integration Build"]
+    workflows: ["Builds"]
     types: [completed]
   workflow_dispatch:
     inputs:
