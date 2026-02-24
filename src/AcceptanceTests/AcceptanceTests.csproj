@@ -33,6 +33,8 @@
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
 		<PackageReference Include="microsoft.playwright.nunit" Version="1.54.0" />
+		<PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
+		<PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="9.7.1-preview.1.25365.4" />
 		<PackageReference Include="ModelContextProtocol" Version="1.0.0-rc.1" />
 		<PackageReference Include="Microsoft.Extensions.AI" Version="9.7.0" />
 		<PackageReference Include="Microsoft.Extensions.AI.Ollama" Version="9.7.0-preview.1.25356.2" />

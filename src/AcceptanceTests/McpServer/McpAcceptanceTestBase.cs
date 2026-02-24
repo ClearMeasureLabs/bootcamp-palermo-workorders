@@ -1,3 +1,5 @@
+using Azure;
+using Azure.AI.OpenAI;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -17,16 +19,19 @@ public abstract class McpAcceptanceTestBase
         if (!McpServerFixture.ServerAvailable)
             Assert.Inconclusive("MCP server is not available");
 
-        if (RequiresLlm && !McpServerFixture.OllamaAvailable)
-            Assert.Inconclusive("Ollama LLM is not available at http://localhost:11434");
+        if (RequiresLlm && !McpServerFixture.LlmAvailable)
+            Assert.Inconclusive("No LLM available (set AI_OpenAI_ApiKey/Url/Model or run Ollama locally)");
     }
 
     protected IChatClient BuildChatClient()
     {
-        return new OllamaChatClient("http://localhost:11434/", modelId: "llama3.2")
-            .AsBuilder()
-            .UseFunctionInvocation()
-            .Build();
+        var apiKey = Environment.GetEnvironmentVariable("AI_OpenAI_ApiKey");
+        if (!string.IsNullOrEmpty(apiKey))
+        {
+            return BuildAzureOpenAiChatClient(apiKey);
+        }
+
+        return BuildOllamaChatClient();
     }
 
     protected async Task<ChatResponse> SendPrompt(string prompt)
@@ -52,5 +57,30 @@ public abstract class McpAcceptanceTestBase
         return string.Join("\n", result.Content
             .OfType<TextContentBlock>()
             .Select(c => c.Text));
+    }
+
+    private static IChatClient BuildAzureOpenAiChatClient(string apiKey)
+    {
+        var url = Environment.GetEnvironmentVariable("AI_OpenAI_Url")
+                  ?? throw new InvalidOperationException("AI_OpenAI_Url is required when AI_OpenAI_ApiKey is set");
+        var model = Environment.GetEnvironmentVariable("AI_OpenAI_Model")
+                    ?? throw new InvalidOperationException("AI_OpenAI_Model is required when AI_OpenAI_ApiKey is set");
+
+        var credential = new AzureKeyCredential(apiKey);
+        var openAiClient = new AzureOpenAIClient(new Uri(url), credential);
+        var chatClient = openAiClient.GetChatClient(model);
+
+        return chatClient.AsIChatClient()
+            .AsBuilder()
+            .UseFunctionInvocation()
+            .Build();
+    }
+
+    private static IChatClient BuildOllamaChatClient()
+    {
+        return new OllamaChatClient("http://localhost:11434/", modelId: "llama3.2")
+            .AsBuilder()
+            .UseFunctionInvocation()
+            .Build();
     }
 }

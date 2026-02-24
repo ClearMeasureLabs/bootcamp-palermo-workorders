@@ -16,7 +16,8 @@ public class McpServerFixture
     public static McpClient? McpClientInstance { get; private set; }
     public static IList<McpClientTool>? Tools { get; private set; }
     public static bool ServerAvailable { get; private set; }
-    public static bool OllamaAvailable { get; private set; }
+    public static bool LlmAvailable { get; private set; }
+    public static string LlmProvider { get; private set; } = "None";
     private static readonly List<string> ServerErrors = new();
 
     [OneTimeSetUp]
@@ -35,7 +36,7 @@ public class McpServerFixture
         TestHost.GetRequiredService<IDatabaseConfiguration>().ResetConnectionPool();
 
         await StartMcpServer(connectionString);
-        await CheckOllamaAvailability();
+        await CheckLlmAvailability();
     }
 
     [OneTimeTearDown]
@@ -174,18 +175,36 @@ public class McpServerFixture
         }
     }
 
-    private static async Task CheckOllamaAvailability()
+    private static async Task CheckLlmAvailability()
     {
+        // Azure OpenAI takes priority when configured via environment variables
+        var apiKey = Environment.GetEnvironmentVariable("AI_OpenAI_ApiKey");
+        if (!string.IsNullOrEmpty(apiKey))
+        {
+            var url = Environment.GetEnvironmentVariable("AI_OpenAI_Url");
+            var model = Environment.GetEnvironmentVariable("AI_OpenAI_Model");
+            if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(model))
+            {
+                LlmAvailable = true;
+                LlmProvider = "AzureOpenAI";
+                TestContext.Out.WriteLine($"McpServerFixture: Azure OpenAI configured (model={model})");
+                return;
+            }
+        }
+
+        // Fall back to local Ollama
         try
         {
             using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
             var response = await client.GetAsync("http://localhost:11434/");
-            OllamaAvailable = response.IsSuccessStatusCode;
-            TestContext.Out.WriteLine($"McpServerFixture: Ollama available = {OllamaAvailable}");
+            LlmAvailable = response.IsSuccessStatusCode;
+            LlmProvider = LlmAvailable ? "Ollama" : "None";
+            TestContext.Out.WriteLine($"McpServerFixture: Ollama available = {LlmAvailable}");
         }
         catch
         {
-            OllamaAvailable = false;
+            LlmAvailable = false;
+            LlmProvider = "None";
             TestContext.Out.WriteLine("McpServerFixture: Ollama not available");
         }
     }
