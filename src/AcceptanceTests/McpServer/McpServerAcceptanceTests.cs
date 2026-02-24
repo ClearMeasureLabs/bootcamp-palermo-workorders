@@ -4,7 +4,7 @@ using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Shouldly;
 
-namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
+namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 
 [TestFixture, Explicit]
 public class McpServerAcceptanceTests : McpAcceptanceTestBase

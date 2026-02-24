@@ -79,12 +79,13 @@ public class WorkOrderTools
         }
     }
 
-    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand, InProgressToCancelledCommand, InProgressToAssigned.")]
+    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand, InProgressToCancelledCommand, InProgressToAssigned.")]
     public static async Task<string> ExecuteWorkOrderCommand(
         IBus bus,
         [Description("The work order number")] string workOrderNumber,
         [Description("The command name (e.g., DraftToAssignedCommand)")] string commandName,
-        [Description("Username of the employee executing the command")] string executingUsername)
+        [Description("Username of the employee executing the command")] string executingUsername,
+        [Description("Username of the employee to assign the work order to (required for DraftToAssignedCommand)")] string? assigneeUsername = null)
     {
         var workOrder = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
         if (workOrder == null)
@@ -96,6 +97,22 @@ public class WorkOrderTools
         if (user == null)
         {
             return $"Employee with username '{executingUsername}' not found.";
+        }
+
+        if (commandName == "DraftToAssignedCommand")
+        {
+            if (string.IsNullOrEmpty(assigneeUsername))
+            {
+                return "DraftToAssignedCommand requires an assigneeUsername parameter.";
+            }
+
+            var assignee = await FindEmployeeByUsername(bus, assigneeUsername);
+            if (assignee == null)
+            {
+                return $"Assignee with username '{assigneeUsername}' not found.";
+            }
+
+            workOrder.Assignee = assignee;
         }
 
         StateCommandBase? command = commandName switch

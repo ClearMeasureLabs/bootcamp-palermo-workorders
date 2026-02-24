@@ -2,7 +2,7 @@ using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 
-namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
+namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 
 public abstract class McpAcceptanceTestBase
 {

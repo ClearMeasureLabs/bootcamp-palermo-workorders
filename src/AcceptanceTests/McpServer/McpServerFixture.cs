@@ -1,11 +1,12 @@
 using System.Diagnostics;
+using ClearMeasure.Bootcamp.AcceptanceTests;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.IntegrationTests;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
 
-namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
+namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 
 [SetUpFixture]
 public class McpServerFixture
