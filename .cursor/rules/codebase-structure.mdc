@@ -21,6 +21,7 @@ alwaysApply: true
 | LlmGateway | `src/LlmGateway/LlmGateway.csproj` | Azure OpenAI / Ollama |
 | ChurchBulletin.AppHost | `src/ChurchBulletin.AppHost/` | Aspire AppHost |
 | ChurchBulletin.ServiceDefaults | `src/ChurchBulletin.ServiceDefaults/` | Aspire defaults |
+| Worker | `src/Worker/Worker.csproj` | Hosted endpoint worker service |
 | UnitTests | `src/UnitTests/UnitTests.csproj` | NUnit + Shouldly |
 | IntegrationTests | `src/IntegrationTests/IntegrationTests.csproj` | NUnit, LocalDB |
 | AcceptanceTests | `src/AcceptanceTests/AcceptanceTests.csproj` | NUnit + Playwright |
@@ -44,6 +45,7 @@ alwaysApply: true
 | DB migrations (AliaSQL) | `src/Database/scripts/Update/` (###_Description.sql, TABS) |
 | Blazor Server entry | `src/UI/Server/Program.cs`, `UIServiceRegistry.cs` |
 | Blazor Client entry | `src/UI/Client/Program.cs`, `App.razor` |
+| Worker entry | `src/Worker/Program.cs`, `WorkOrderEndpoint.cs` |
 | API controllers | `src/UI/Api/Controllers/`, `src/UI/Server/Controllers/` |
 | Health checks | DataAccess: `CanConnectToDatabaseHealthCheck`; LlmGateway: LLM; Server: aggregation |
 | Build/test scripts | Repo root: `build.ps1`, `PrivateBuild.ps1`, `AcceptanceTests.ps1` |
@@ -51,10 +53,10 @@ alwaysApply: true
 
 ## Domain Snapshot
 
-- **WorkOrder:** Number, Title, Description, Room, AssignedTo (Employee), Status, CreatedBy.
-- **Employee:** UserName, Email, Roles.
-- **WorkOrderStatus:** Created, Assigned, Completed, Cancelled.
-- **Role:** Employee role definitions.
+- **WorkOrder:** Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate.
+- **Employee:** UserName, FirstName, LastName, EmailAddress, Roles.
+- **WorkOrderStatus:** Draft, Assigned, InProgress, Complete, Cancelled.
+- **Role:** Name, CanCreateWorkOrder, CanFulfillWorkOrder.
 
 ## References for Agents
 

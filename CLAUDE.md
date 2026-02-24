@@ -20,8 +20,10 @@ This is a Work Order management system built with .NET 10.0, implementing Onion 
 | UI.Api | `src/UI/Api/` | Web API |
 | UI.Shared | `src/UI.Shared/` | Shared UI |
 | LlmGateway | `src/LlmGateway/` | Azure OpenAI / Ollama |
+| Worker | `src/Worker/` | Background worker service |
 | ChurchBulletin.AppHost | `src/ChurchBulletin.AppHost/` | Aspire AppHost |
 | ChurchBulletin.ServiceDefaults | `src/ChurchBulletin.ServiceDefaults/` | Aspire defaults |
+| Worker | `src/Worker/` | Hosted endpoint worker service |
 | UnitTests | `src/UnitTests/` | NUnit + Shouldly |
 | IntegrationTests | `src/IntegrationTests/` | NUnit, LocalDB |
 | AcceptanceTests | `src/AcceptanceTests/` | NUnit + Playwright |
@@ -86,6 +88,10 @@ The solution follows strict Onion Architecture with dependency flow inward:
 - **Location**: `src/Core/`
 - **Purpose**: Domain models, domain services interfaces, query objects
 - **Key Types**: `WorkOrder`, `Employee`, `WorkOrderStatus`, `Role`
+- **WorkOrder**: Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate
+- **Employee**: UserName, FirstName, LastName, EmailAddress, Roles
+- **WorkOrderStatus**: Draft, Assigned, InProgress, Complete, Cancelled
+- **Role**: Name, CanCreateWorkOrder, CanFulfillWorkOrder
 - **Pattern**: Uses MediatR for CQRS queries
 - **Rule**: Core must not reference any other project
 
@@ -107,6 +113,7 @@ The solution follows strict Onion Architecture with dependency flow inward:
 
 ### Additional Layers
 - **LlmGateway** (`src/LlmGateway/`): Azure OpenAI and Ollama integration for AI agent functionality
+- **Worker** (`src/Worker/`): Background hosted endpoint for work-order processing
 
 ## Testing Structure
 
@@ -192,14 +199,21 @@ The solution follows strict Onion Architecture with dependency flow inward:
 
 ## CI/CD Pipeline
 
-### Pipeline File
-`src/pure-azdo-pipeline.yml`
+### GitHub Actions (Primary)
+
+Pipeline files in `.github/workflows/`:
+- `build.yml`: Integration build — parallel builds (Linux SQL, SQLite, Windows LocalDB, code analysis), Docker image build/push to ACR, NuGet publishing, acceptance tests
+- `deploy.yml`: Deployment pipeline — TDD → UAT → Prod with Octopus Deploy, Container App health checks, Playwright acceptance tests
+
+### Azure DevOps (Legacy)
+
+Pipeline file: `src/pure-azdo-pipeline.yml`
 
 ### Stages
-1. **Integration_Build**: Build, test, package (pushes to Azure Artifacts)
+1. **Integration_Build**: Build, test, package
 2. **Docker Build & Push**: Build and push to Azure Container Registry
 3. **TDD**: Auto-deploy, migrate DB, run acceptance tests
-4. **UAT**: Manual approval required (any person can approve), deploy
+4. **UAT**: Manual approval required, deploy
 5. **PROD**: Manual approval required, deploy
 
 ### Versioning
@@ -229,7 +243,7 @@ docker run -p 8080:8080 -p 80:80 churchbulletin-ui
 - **DI Container**: Lamar
 - **Testing**: NUnit 4.x, bUnit, Playwright, Shouldly
 - **AI/LLM**: Azure OpenAI, Ollama
-- **Deployment**: Azure Container Apps, Azure DevOps Pipelines
+- **Deployment**: Azure Container Apps, GitHub Actions, Azure DevOps Pipelines
 
 ## Architecture Documentation
 
@@ -237,10 +251,16 @@ docker run -p 8080:8080 -p 80:80 churchbulletin-ui
 - **Copilot:** `.github/copilot-instructions.md`, `.github/copilot-code-review-instructions.md`.
 
 PlantUML diagrams in `arch/`:
-- `arch-c4-system.puml`: System context
-- `arch-c4-container-deployment.puml`: Container deployment
-- `arch-c4-component-project-dependencies.puml`: Project dependencies
-- `arch-c4-class-domain-model.puml`: Domain model (WorkOrder, Employee, WorkOrderStatus, Role)
+- `arch-c4-system.puml` / `.md`: System context
+- `arch-c4-container-deployment.puml` / `.md`: Container deployment
+- `arch-c4-component-project-dependencies.puml` / `.md`: Project dependencies
+- `arch-c4-class-domain-model.puml` / `.md`: Domain model (WorkOrder, Employee, WorkOrderStatus, Role)
+
+Workflow diagrams in `arch/`:
+- `WorflowForSaveDraftCommand.md`
+- `WorflowForDraftToAssignedCommand.md`
+- `WorflowForAssignedToInProgressCommand.md`
+- `WorflowForInProgressToCompleteCommand.md`
 
 ## Branch Naming Convention
 
