@@ -175,14 +175,24 @@ public class McpServerFixture
         }
     }
 
+    internal static string? GetLlmConfigValue(string key)
+    {
+        // Check IConfiguration first (includes user secrets), then fall back to env vars
+        var configuration = TestHost.GetRequiredService<IConfiguration>();
+        var value = configuration.GetValue<string>(key);
+        if (!string.IsNullOrEmpty(value)) return value;
+
+        return Environment.GetEnvironmentVariable(key);
+    }
+
     private static async Task CheckLlmAvailability()
     {
-        // Azure OpenAI takes priority when configured via environment variables
-        var apiKey = Environment.GetEnvironmentVariable("AI_OpenAI_ApiKey");
+        // Azure OpenAI takes priority when configured
+        var apiKey = GetLlmConfigValue("AI_OpenAI_ApiKey");
         if (!string.IsNullOrEmpty(apiKey))
         {
-            var url = Environment.GetEnvironmentVariable("AI_OpenAI_Url");
-            var model = Environment.GetEnvironmentVariable("AI_OpenAI_Model");
+            var url = GetLlmConfigValue("AI_OpenAI_Url");
+            var model = GetLlmConfigValue("AI_OpenAI_Model");
             if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(model))
             {
                 LlmAvailable = true;

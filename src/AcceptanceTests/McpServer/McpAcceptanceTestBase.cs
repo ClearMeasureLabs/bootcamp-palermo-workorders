@@ -25,7 +25,7 @@ public abstract class McpAcceptanceTestBase
 
     protected IChatClient BuildChatClient()
     {
-        var apiKey = Environment.GetEnvironmentVariable("AI_OpenAI_ApiKey");
+        var apiKey = McpServerFixture.GetLlmConfigValue("AI_OpenAI_ApiKey");
         if (!string.IsNullOrEmpty(apiKey))
         {
             return BuildAzureOpenAiChatClient(apiKey);
@@ -61,9 +61,9 @@ public abstract class McpAcceptanceTestBase
 
     private static IChatClient BuildAzureOpenAiChatClient(string apiKey)
     {
-        var url = Environment.GetEnvironmentVariable("AI_OpenAI_Url")
+        var url = McpServerFixture.GetLlmConfigValue("AI_OpenAI_Url")
                   ?? throw new InvalidOperationException("AI_OpenAI_Url is required when AI_OpenAI_ApiKey is set");
-        var model = Environment.GetEnvironmentVariable("AI_OpenAI_Model")
+        var model = McpServerFixture.GetLlmConfigValue("AI_OpenAI_Model")
                     ?? throw new InvalidOperationException("AI_OpenAI_Model is required when AI_OpenAI_ApiKey is set");
 
         var credential = new AzureKeyCredential(apiKey);

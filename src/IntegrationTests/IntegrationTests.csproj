@@ -12,6 +12,7 @@
 		<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 
 		<Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+		<UserSecretsId>dotnet-Worker-b9b5c0f8-4249-469b-8bfb-c4cc9398b886</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
