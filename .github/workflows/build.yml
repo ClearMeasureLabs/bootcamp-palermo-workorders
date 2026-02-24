@@ -643,3 +643,69 @@ jobs:
           path: build/test/**/*.trx
           retention-days: 2
 
+  acceptance-tests-arm:
+    name: Acceptance Tests (ARM SQLite)
+    needs: [docker-build-image-for-churchbulletin-ui]
+    if: success()
+    runs-on: ubuntu-24.04-arm
+    concurrency:
+      group: acceptance-tests-arm-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: read
+    env:
+      BUILD_CONFIGURATION: Release
+      DATABASE_ENGINE: SQLite
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-arm-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-arm-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-arm-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-arm-
+
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+
+      - name: Run Acceptance Tests (ARM SQLite)
+        shell: pwsh
+        env:
+          BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+        run: |
+          Write-Host "Running Acceptance Tests with SQLite on ARM"
+          . ./build.ps1
+          Invoke-AcceptanceTests -UseSqlite
+
+      - name: Test Reporter
+        uses: dorny/test-reporter@v2.1.1
+        if: always()
+        with:
+          name: ARM Acceptance Test Results
+          path: 'build/test/**/*.trx'
+          reporter: dotnet-trx
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-acceptance-arm
+          path: build/test/**/*.trx
+          retention-days: 2
+
