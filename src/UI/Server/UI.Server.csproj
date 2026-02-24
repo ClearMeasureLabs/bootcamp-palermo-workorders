@@ -19,6 +19,7 @@
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.1" />
 		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0" />
+		<PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.0.0-rc.1" />
 		<PackageReference Include="NServiceBus.Extensions.Hosting" Version="3.0.1" />
 		<PackageReference Include="OpenTelemetry" Version="1.12.0" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.12.0" />
@@ -33,6 +34,7 @@
 		<ProjectReference Include="..\..\LlmGateway\LlmGateway.csproj" />
 		<ProjectReference Include="..\Client\UI.Client.csproj" />
 		<ProjectReference Include="..\Api\UI.Api.csproj" />
+		<ProjectReference Include="..\..\McpServer\McpServer.csproj" />
 	</ItemGroup>
 
 

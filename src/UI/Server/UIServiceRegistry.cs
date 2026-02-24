@@ -32,6 +32,7 @@ public class UiServiceRegistry : ServiceRegistry
         Scan(scanner =>
         {
             scanner.WithDefaultConventions();
+            scanner.AssemblyContainingType<IBus>();
             scanner.AssemblyContainingType<CanConnectToDatabaseHealthCheck>();
             scanner.AssemblyContainingType<HealthCheck>();
             scanner.AssemblyContainingType<Is64BitProcessHealthCheck>();
