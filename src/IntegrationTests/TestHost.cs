@@ -54,6 +54,7 @@ public static class TestHost
                     .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true)
                     .AddJsonFile("appsettings.acceptancetests.json", true, true)
                     .AddJsonFile("appsettings.test.json", false, true)
+                    .AddUserSecrets<TestDatabaseConfiguration>(optional: true)
                     .AddEnvironmentVariables();
             })
             .ConfigureServices(s =>

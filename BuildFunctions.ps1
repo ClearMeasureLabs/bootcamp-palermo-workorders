@@ -627,6 +627,82 @@ Function Test-IsOllamaRunning {
     }
 }
 
+Function Test-IsLlmAvailable {
+    <#
+    .SYNOPSIS
+        Tests if any LLM provider (Azure OpenAI or Ollama) is available
+    .DESCRIPTION
+        Checks Azure OpenAI configuration (environment variables or user secrets) first,
+        then falls back to checking if Ollama is running locally. Never prompts for confirmation.
+    .PARAMETER LogOutput
+        If true, outputs details about the LLM availability
+    .OUTPUTS
+        [bool] True if any LLM provider is available, False otherwise
+    #>
+    param (
+        [Parameter(Mandatory = $false)]
+        [bool]$LogOutput = $false
+    )
+
+    # Check Azure OpenAI configuration from environment variables
+    $apiKey = $env:AI_OpenAI_ApiKey
+    $url = $env:AI_OpenAI_Url
+    $model = $env:AI_OpenAI_Model
+    if (-not [string]::IsNullOrEmpty($apiKey) -and -not [string]::IsNullOrEmpty($url) -and -not [string]::IsNullOrEmpty($model)) {
+        if ($LogOutput) {
+            Log-Message -Message "Azure OpenAI configured via environment variables (model=$model)" -Type "INFO"
+        }
+        return $true
+    }
+
+    # Check Azure OpenAI configuration from .NET user secrets
+    try {
+        $secretsProject = Join-Path (Join-Path (Join-Path (Resolve-Path .) "src") "IntegrationTests") "IntegrationTests.csproj"
+        $secretsOutput = & dotnet user-secrets list --project $secretsProject 2>&1
+        if ($LASTEXITCODE -eq 0 -and $secretsOutput) {
+            $hasKey = $secretsOutput | Where-Object { $_ -match "^AI_OpenAI_ApiKey\s*=" -and $_ -notmatch "=\s*$" }
+            $hasUrl = $secretsOutput | Where-Object { $_ -match "^AI_OpenAI_Url\s*=" -and $_ -notmatch "=\s*$" }
+            $hasModel = $secretsOutput | Where-Object { $_ -match "^AI_OpenAI_Model\s*=" -and $_ -notmatch "=\s*$" }
+            if ($hasKey -and $hasUrl -and $hasModel) {
+                if ($LogOutput) {
+                    Log-Message -Message "Azure OpenAI configured via .NET user secrets" -Type "INFO"
+                }
+                return $true
+            }
+        }
+    }
+    catch {
+        # User secrets not available - continue to Ollama check
+    }
+
+    # Fall back to Ollama check (non-blocking)
+    $ollamaPath = (Get-Command ollama -ErrorAction SilentlyContinue).Source
+    if (-not $ollamaPath) {
+        if ($LogOutput) {
+            Log-Message -Message "No LLM configured: Azure OpenAI env vars not set and Ollama not installed. LLM-dependent tests will be skipped." -Type "WARNING"
+        }
+        return $false
+    }
+
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:11434/api/tags" -Method Get -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
+        if ($response.StatusCode -eq 200) {
+            if ($LogOutput) {
+                Log-Message -Message "Ollama is running locally" -Type "INFO"
+            }
+            return $true
+        }
+    }
+    catch {
+        # Ollama not accessible - not an error, just informational
+    }
+
+    if ($LogOutput) {
+        Log-Message -Message "No LLM available: Azure OpenAI not configured and Ollama not running. LLM-dependent tests will be skipped." -Type "WARNING"
+    }
+    return $false
+}
+
 <#
 .SYNOPSIS
     Joins multiple path segments into a single path using nested Join-Path calls.

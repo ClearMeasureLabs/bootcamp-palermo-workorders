@@ -7,7 +7,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UserSecretsId>b21f8fed-bb8c-462d-ad5d-b5dd8cc1e1a2</UserSecretsId>
+    <UserSecretsId>dotnet-Worker-b9b5c0f8-4249-469b-8bfb-c4cc9398b886</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

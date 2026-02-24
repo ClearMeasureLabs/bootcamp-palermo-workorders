@@ -11,6 +11,12 @@ public class ServerFixture
 {
     private const string ProjectPath = "../../../../UI/Server";
     private const int WaitTimeoutSeconds = 60;
+
+    private static string BuildConfiguration =>
+        AppDomain.CurrentDomain.BaseDirectory.Contains(
+            Path.DirectorySeparatorChar + "Release" + Path.DirectorySeparatorChar)
+            ? "Release"
+            : "Debug";
     public static bool StartLocalServer { get; set; } = true;
     public static int SlowMo { get; set; } = 100;
     public static string ApplicationBaseUrl { get; private set; } = string.Empty;
@@ -178,11 +184,13 @@ public class ServerFixture
         var connectionString = configuration.GetConnectionString("SqlConnectionString") ?? "";
         var useSqlite = connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
 
-        // Use --no-launch-profile to prevent launchSettings.json from overriding
+        // Use --no-build to skip recompilation (already built by the build script)
+        // and --no-launch-profile to prevent launchSettings.json from overriding
         // environment variables (e.g. connection strings) set by the test harness
+        var config = BuildConfiguration;
         var arguments = useSqlite
-            ? $"run --no-launch-profile --urls={ApplicationBaseUrl}"
-            : $"run --urls={ApplicationBaseUrl}";
+            ? $"run --no-build --configuration {config} --no-launch-profile --urls={ApplicationBaseUrl}"
+            : $"run --no-build --configuration {config} --urls={ApplicationBaseUrl}";
 
         _serverProcess = new Process
         {
@@ -269,7 +277,7 @@ public class ServerFixture
         response.EnsureSuccessStatusCode();
     }
 
-    private static void InitializeDatabaseOnce()
+    internal static void InitializeDatabaseOnce()
     {
         if (DatabaseInitialized) return;
 
