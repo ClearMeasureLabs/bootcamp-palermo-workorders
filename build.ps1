@@ -29,6 +29,20 @@ $test_dir = Join-Path $build_dir "test"
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
 
+Function Set-DatabaseEngineForArm {
+	$isArmArchitecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -in @(
+		[System.Runtime.InteropServices.Architecture]::Arm,
+		[System.Runtime.InteropServices.Architecture]::Arm64
+	)
+
+	if ($isArmArchitecture) {
+		$env:database_engine = "SQLite"
+		$env:DATABASE_ENGINE = "SQLite"
+		Log-Message -Message "ARM architecture detected. Forcing DATABASE_ENGINE=SQLite." -Type "INFO"
+	}
+}
+
+Set-DatabaseEngineForArm
 $script:databaseEngine = $env:DATABASE_ENGINE
 
 $databaseName = $projectName
