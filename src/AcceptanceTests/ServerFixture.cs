@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.NetworkInformation;
 using ClearMeasure.Bootcamp.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -172,8 +173,34 @@ public class ServerFixture
         TestContext.Out.WriteLine("Health gate: PASSED - site is reachable and healthy.");
     }
 
+    /// <summary>
+    /// Asserts that the port parsed from <see cref="ApplicationBaseUrl"/> is not already
+    /// in use. A blocked port causes <c>StartAndWaitForServer</c> to time out after 60 s
+    /// with no useful diagnostic. This check fails fast with a clear message instead.
+    /// </summary>
+    private static void AssertPortIsAvailable()
+    {
+        var uri = new Uri(ApplicationBaseUrl);
+        var port = uri.Port;
+
+        var listeners = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
+        var blocked = Array.Exists(listeners, ep => ep.Port == port);
+
+        if (blocked)
+        {
+            Assert.Fail(
+                $"Port {port} is already in use. A previous server process may still be running. " +
+                $"Stop the process listening on port {port} before running acceptance tests. " +
+                $"(URL: {ApplicationBaseUrl})");
+        }
+
+        TestContext.Out.WriteLine($"Port check: {port} is available.");
+    }
+
     private async Task StartAndWaitForServer()
     {
+        AssertPortIsAvailable();
+
         var configuration = TestHost.GetRequiredService<IConfiguration>();
         var connectionString = configuration.GetConnectionString("SqlConnectionString") ?? "";
         var useSqlite = connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
