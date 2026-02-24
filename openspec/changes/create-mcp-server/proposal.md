@@ -11,6 +11,7 @@ The ChurchBulletin system currently exposes its domain operations only through a
 - Reuse of existing MediatR queries and `IBus` abstraction — no duplicate business logic
 - Integration into the solution file (`ChurchBulletin.sln`)
 - Integration tests covering MCP tool invocations
+- Acceptance tests that launch the MCP server, connect an MCP client, and validate tools through LLM prompts
 
 ## Capabilities
 
@@ -19,6 +20,7 @@ The ChurchBulletin system currently exposes its domain operations only through a
 - `mcp-work-order-tools`: MCP tools exposing work order query and mutation operations
 - `mcp-employee-tools`: MCP tools exposing employee query operations
 - `mcp-reference-resources`: MCP resources providing read-only reference data (statuses, roles)
+- `mcp-acceptance-tests`: Full system acceptance tests that start the MCP server, connect via MCP client SDK, wire tools into an IChatClient (LLM), and validate end-to-end behavior through natural-language prompts
 
 ### Modified Capabilities
 <!-- No existing spec-level behavior changes. The MCP server is additive and sits in the outer layer. -->
