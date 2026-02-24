@@ -24,14 +24,16 @@ public class EmployeeTools
         IBus bus,
         [Description("The employee's username")] string username)
     {
-        var employee = await bus.Send(new EmployeeByUserNameQuery(username));
-        if (employee == null)
+        try
+        {
+            var employee = await bus.Send(new EmployeeByUserNameQuery(username));
+            return JsonSerializer.Serialize(FormatEmployee(employee),
+                new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (InvalidOperationException)
         {
             return $"No employee found with username '{username}'.";
         }
-
-        return JsonSerializer.Serialize(FormatEmployee(employee),
-            new JsonSerializerOptions { WriteIndented = true });
     }
 
     private static object FormatEmployee(Employee emp) => new

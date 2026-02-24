@@ -50,7 +50,7 @@ public class WorkOrderTools
         [Description("Description of the work order")] string description,
         [Description("Username of the employee creating the work order")] string creatorUsername)
     {
-        var creator = await bus.Send(new EmployeeByUserNameQuery(creatorUsername));
+        var creator = await FindEmployeeByUsername(bus, creatorUsername);
         if (creator == null)
         {
             return $"Employee with username '{creatorUsername}' not found.";
@@ -61,7 +61,8 @@ public class WorkOrderTools
             Title = title,
             Description = description,
             Creator = creator,
-            Status = WorkOrderStatus.Draft
+            Status = WorkOrderStatus.Draft,
+            Number = GenerateWorkOrderNumber()
         };
 
         var command = new SaveDraftCommand(workOrder, creator);
@@ -84,7 +85,7 @@ public class WorkOrderTools
             return $"No work order found with number '{workOrderNumber}'.";
         }
 
-        var user = await bus.Send(new EmployeeByUserNameQuery(executingUsername));
+        var user = await FindEmployeeByUsername(bus, executingUsername);
         if (user == null)
         {
             return $"Employee with username '{executingUsername}' not found.";
@@ -129,7 +130,7 @@ public class WorkOrderTools
             return $"No work order found with number '{workOrderNumber}'.";
         }
 
-        var user = await bus.Send(new EmployeeByUserNameQuery(updatingUsername));
+        var user = await FindEmployeeByUsername(bus, updatingUsername);
         if (user == null)
         {
             return $"Employee with username '{updatingUsername}' not found.";
@@ -146,6 +147,23 @@ public class WorkOrderTools
         var result = await bus.Send(command);
         return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
             new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static async Task<Employee?> FindEmployeeByUsername(IBus bus, string username)
+    {
+        try
+        {
+            return await bus.Send(new EmployeeByUserNameQuery(username));
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    private static string GenerateWorkOrderNumber()
+    {
+        return $"WO-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
     }
 
     private static object FormatWorkOrderSummary(WorkOrder wo) => new

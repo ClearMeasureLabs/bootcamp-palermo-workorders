@@ -34,10 +34,10 @@
 
 ## 6. Integration Tests
 
-- [ ] 6.1 Add MCP server integration test project or test class in existing IntegrationTests
-- [ ] 6.2 Write tests for each work order tool (list, get, create, execute command, update description)
-- [ ] 6.3 Write tests for each employee tool (list, get)
-- [ ] 6.4 Write tests for each reference resource (statuses, roles, transitions)
+- [x] 6.1 Add MCP server integration test project or test class in existing IntegrationTests
+- [x] 6.2 Write tests for each work order tool (list, get, create, execute command, update description)
+- [x] 6.3 Write tests for each employee tool (list, get)
+- [x] 6.4 Write tests for each reference resource (statuses, roles, transitions)
 
 ## 7. Documentation and Configuration
 

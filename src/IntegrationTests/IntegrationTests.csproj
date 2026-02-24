@@ -48,6 +48,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\McpServer\McpServer.csproj" />
 		<ProjectReference Include="..\UI\Server\UI.Server.csproj" />
 		<ProjectReference Include="..\UnitTests\UnitTests.csproj" />
 	</ItemGroup>
