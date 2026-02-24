@@ -29,6 +29,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       # Set version environment variable
       - name: Set Version
         run: |
@@ -39,7 +47,7 @@ jobs:
           echo "Build version: $version"
           echo "github.ref=${{ github.ref }}"
 
-      - name: Run CI Build 
+      - name: Run CI Build
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -149,6 +157,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
@@ -196,6 +212,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-arm-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-arm-
+
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
@@ -240,6 +264,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - name: Restore solution
         run: dotnet restore src/ChurchBulletin.sln
 
@@ -270,6 +302,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
 
       - name: Set Version
         shell: pwsh
@@ -304,7 +344,7 @@ jobs:
 
   docker-build-image-for-churchbulletin-ui:
     name: Publish Release Candidate
-    needs: [build-linux, build-sqlite, integration-build-arm, code-analysis, build-windows]
+    needs: [build-linux]
     if: success() 
     runs-on: ubuntu-latest
     concurrency:
@@ -540,7 +580,7 @@ jobs:
 
   acceptance-tests:
     name: Acceptance Tests
-    needs: [docker-build-image-for-churchbulletin-ui]
+    needs: [build-linux]
     if: success()
     runs-on: ubuntu-latest
     concurrency:
