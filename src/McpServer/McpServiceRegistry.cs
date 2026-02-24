@@ -29,6 +29,7 @@ public class McpServiceRegistry : ServiceRegistry
         Scan(scanner =>
         {
             scanner.WithDefaultConventions();
+            scanner.AssemblyContainingType<IBus>();
             scanner.AssemblyContainingType<DataContext>();
             scanner.ConnectImplementationsToTypesClosing(typeof(IRequestHandler<,>));
             scanner.ConnectImplementationsToTypesClosing(typeof(INotificationHandler<>));

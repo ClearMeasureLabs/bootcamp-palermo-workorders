@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using Microsoft.EntityFrameworkCore;
@@ -106,7 +107,8 @@ public class McpWorkOrderToolTests
         }
 
         var bus = TestHost.GetRequiredService<IBus>();
-        var result = await WorkOrderTools.CreateWorkOrder(bus, "New Work Order", "Fix the broken window", "creator1");
+        var numberGenerator = new WorkOrderNumberGenerator();
+        var result = await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, "New Work Order", "Fix the broken window", "creator1");
 
         result.ShouldContain("New Work Order");
         result.ShouldContain("Fix the broken window");
@@ -117,7 +119,8 @@ public class McpWorkOrderToolTests
     public async Task ShouldReturnErrorForMissingCreator()
     {
         var bus = TestHost.GetRequiredService<IBus>();
-        var result = await WorkOrderTools.CreateWorkOrder(bus, "Title", "Description", "nonexistent_user");
+        var numberGenerator = new WorkOrderNumberGenerator();
+        var result = await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, "Title", "Description", "nonexistent_user");
 
         result.ShouldContain("not found");
     }

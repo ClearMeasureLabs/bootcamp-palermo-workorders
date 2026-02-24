@@ -2,7 +2,6 @@ using System.Diagnostics;
 using ClearMeasure.Bootcamp.AcceptanceTests;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.IntegrationTests;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
 
@@ -12,6 +11,12 @@ namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 public class McpServerFixture
 {
     private const string McpServerRelativeProjectDir = "../../../../McpServer";
+
+    private static string BuildConfiguration =>
+        AppDomain.CurrentDomain.BaseDirectory.Contains(
+            Path.DirectorySeparatorChar + "Release" + Path.DirectorySeparatorChar)
+            ? "Release"
+            : "Debug";
 
     public static McpClient? McpClientInstance { get; private set; }
     public static IList<McpClientTool>? Tools { get; private set; }
@@ -51,19 +56,7 @@ public class McpServerFixture
 
     private static void EnsureDatabaseInitialized()
     {
-        if (ServerFixture.DatabaseInitialized) return;
-
-        using var context = TestHost.GetRequiredService<DbContext>();
-        var isSqlite = context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
-        if (isSqlite)
-        {
-            context.Database.EnsureCreated();
-        }
-
-        new ZDataLoader().LoadData();
-        TestContext.Out.WriteLine("McpServerFixture: ZDataLoader().LoadData() - complete");
-
-        TestHost.GetRequiredService<IDatabaseConfiguration>().ResetConnectionPool();
+        ServerFixture.InitializeDatabaseOnce();
     }
 
     private static void EnableSqliteWalMode(string connectionString)
@@ -122,7 +115,7 @@ public class McpServerFixture
         var buildProcess = Process.Start(new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = $"build \"{mcpServerProjectDir}\" --configuration Debug",
+            Arguments = $"build \"{mcpServerProjectDir}\" --configuration {BuildConfiguration}",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -149,7 +142,7 @@ public class McpServerFixture
             {
                 Name = "ChurchBulletin",
                 Command = "dotnet",
-                Arguments = ["run", "--no-build", "--project", mcpServerProjectDir],
+                Arguments = ["run", "--no-build", "--configuration", BuildConfiguration, "--project", mcpServerProjectDir],
                 EnvironmentVariables = new Dictionary<string, string?>
                 {
                     ["ConnectionStrings__SqlConnectionString"] = connectionString

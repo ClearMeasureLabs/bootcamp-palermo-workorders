@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 
-[TestFixture, Explicit]
+[TestFixture]
 public class McpServerAcceptanceTests : McpAcceptanceTestBase
 {
     [Test]

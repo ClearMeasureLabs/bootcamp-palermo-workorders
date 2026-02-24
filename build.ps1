@@ -541,7 +541,7 @@ Function Invoke-AcceptanceTests {
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
-    Test-IsOllamaRunning -LogOutput $true
+    Test-IsLlmAvailable -LogOutput $true
 
 	# Override database engine if -UseSqlite switch is provided
 	if ($UseSqlite) {

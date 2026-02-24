@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ModelContextProtocol.Server;
 
@@ -46,6 +47,7 @@ public class WorkOrderTools
     [McpServerTool(Name = "create-work-order"), Description("Creates a new draft work order. Requires a title, description, and the username of the creator.")]
     public static async Task<string> CreateWorkOrder(
         IBus bus,
+        IWorkOrderNumberGenerator numberGenerator,
         [Description("Title of the work order")] string title,
         [Description("Description of the work order")] string description,
         [Description("Username of the employee creating the work order")] string creatorUsername)
@@ -64,7 +66,7 @@ public class WorkOrderTools
                 Description = description,
                 Creator = creator,
                 Status = WorkOrderStatus.Draft,
-                Number = GenerateWorkOrderNumber()
+                Number = numberGenerator.GenerateNumber()
             };
 
             var command = new SaveDraftCommand(workOrder, creator);
@@ -183,11 +185,6 @@ public class WorkOrderTools
         {
             return null;
         }
-    }
-
-    private static string GenerateWorkOrderNumber()
-    {
-        return $"WO-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
     }
 
     private static object FormatWorkOrderSummary(WorkOrder wo) => new
