@@ -201,16 +201,13 @@ Function AcceptanceTests {
 		Log-Message -Message "Playwright script found at $playwrightScript." -Type "INFO"
 		
 		# Check if browsers are installed (only chromium is needed)
-		$browsersCached = $env:PLAYWRIGHT_BROWSERS_CACHED -eq 'true'
 		try {
 			$listOutput = & pwsh $playwrightScript list 2>&1 | Out-String
 			if ($listOutput -match "chromium") {
-				if ($browsersCached) {
-					Log-Message -Message "Playwright chromium cached. Installing OS dependencies only." -Type "INFO"
-					& pwsh $playwrightScript install-deps chromium
-				}
-				else {
-					Log-Message -Message "Playwright chromium is installed." -Type "INFO"
+				Log-Message -Message "Playwright chromium is installed. Ensuring OS dependencies are present." -Type "INFO"
+				& pwsh $playwrightScript install-deps chromium
+				if ($LASTEXITCODE -ne 0) {
+					throw "Failed to install Playwright OS dependencies for chromium"
 				}
 			}
 			else {

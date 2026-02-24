@@ -535,7 +535,6 @@ jobs:
         shell: pwsh
         env:
           BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
-          PLAYWRIGHT_BROWSERS_CACHED: ${{ steps.playwright-cache.outputs.cache-hit }}
         run: |
           Write-Host "Running Acceptance Tests"
           . ./build.ps1
