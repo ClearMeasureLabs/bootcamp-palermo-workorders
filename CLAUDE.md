@@ -14,7 +14,7 @@ This is a Work Order management system built with .NET 10.0, implementing Onion 
 |---------|------|------|
 | Core | `src/Core/` | Domain; no dependencies |
 | DataAccess | `src/DataAccess/` | EF Core, MediatR handlers; refs Core only |
-| Database | `src/Database/` | DB tooling, AliaSQL |
+| Database | `src/Database/` | DB tooling, DbUp |
 | UI.Server | `src/UI/Server/` | Blazor Server host, Lamar DI |
 | UI.Client | `src/UI/Client/` | Blazor WASM |
 | UI.Api | `src/UI/Api/` | Web API |
@@ -22,6 +22,7 @@ This is a Work Order management system built with .NET 10.0, implementing Onion 
 | LlmGateway | `src/LlmGateway/` | Azure OpenAI / Ollama |
 | ChurchBulletin.AppHost | `src/ChurchBulletin.AppHost/` | Aspire AppHost |
 | ChurchBulletin.ServiceDefaults | `src/ChurchBulletin.ServiceDefaults/` | Aspire defaults |
+| Worker | `src/Worker/` | Hosted endpoint worker service |
 | UnitTests | `src/UnitTests/` | NUnit + Shouldly |
 | IntegrationTests | `src/IntegrationTests/` | NUnit, LocalDB |
 | AcceptanceTests | `src/AcceptanceTests/` | NUnit + Playwright |
@@ -61,13 +62,13 @@ dotnet test --configuration Debug
 
 ### Database Migration
 ```powershell
-# Local database migration using AliaSQL
+# Local database migration using DbUp
 $databaseServer = "(LocalDb)\MSSQLLocalDB"
 $databaseName = "ChurchBulletin"
 MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
 
-# Direct AliaSQL execution
-src/Database/scripts/AliaSQL.exe Rebuild (LocalDb)\MSSQLLocalDB ChurchBulletin src/Database/scripts
+# Direct DbUp execution
+dotnet run --project src/Database -- rebuild --database-server "(LocalDb)\MSSQLLocalDB" --database-name "ChurchBulletin"
 ```
 
 ### Run Application Locally
@@ -86,6 +87,10 @@ The solution follows strict Onion Architecture with dependency flow inward:
 - **Location**: `src/Core/`
 - **Purpose**: Domain models, domain services interfaces, query objects
 - **Key Types**: `WorkOrder`, `Employee`, `WorkOrderStatus`, `Role`
+- **WorkOrder**: Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate
+- **Employee**: UserName, FirstName, LastName, EmailAddress, Roles
+- **WorkOrderStatus**: Draft, Assigned, InProgress, Complete, Cancelled
+- **Role**: Name, CanCreateWorkOrder, CanFulfillWorkOrder
 - **Pattern**: Uses MediatR for CQRS queries
 - **Rule**: Core must not reference any other project
 
@@ -103,10 +108,11 @@ The solution follows strict Onion Architecture with dependency flow inward:
 - **UI.Shared** (`src/UI.Shared/`): Shared components
 
 ### Database Management
-- **Database** (`src/Database/`): AliaSQL-based migrations with numbered scripts in `scripts/Update/` (001, 003, 004, etc.)
+- **Database** (`src/Database/`): DbUp-based migrations with numbered scripts in `scripts/Update/` (001, 003, 004, etc.)
 
 ### Additional Layers
 - **LlmGateway** (`src/LlmGateway/`): Azure OpenAI and Ollama integration for AI agent functionality
+- **Worker** (`src/Worker/`): Background hosted endpoint for work-order processing
 
 ## Testing Structure
 
@@ -178,7 +184,7 @@ The solution follows strict Onion Architecture with dependency flow inward:
 
 ## Database Migrations
 
-### Adding New Migrations (AliaSQL)
+### Adding New Migrations (DbUp)
 1. Create numbered script in `src/Database/scripts/Update/`
 2. Use next sequential number (e.g., if 004 exists, create 005)
 3. Script naming: `###_Description.sql`
@@ -192,14 +198,21 @@ The solution follows strict Onion Architecture with dependency flow inward:
 
 ## CI/CD Pipeline
 
-### Pipeline File
-`src/pure-azdo-pipeline.yml`
+### GitHub Actions (Primary)
+
+Pipeline files in `.github/workflows/`:
+- `build.yml`: Integration build — parallel builds (Linux SQL, SQLite, Windows LocalDB, code analysis), Docker image build/push to ACR, NuGet publishing, acceptance tests
+- `deploy.yml`: Deployment pipeline — TDD → UAT → Prod with Octopus Deploy, Container App health checks, Playwright acceptance tests
+
+### Azure DevOps (Legacy)
+
+Pipeline file: `src/pure-azdo-pipeline.yml`
 
 ### Stages
-1. **Integration_Build**: Build, test, package (pushes to Azure Artifacts)
+1. **Integration_Build**: Build, test, package
 2. **Docker Build & Push**: Build and push to Azure Container Registry
 3. **TDD**: Auto-deploy, migrate DB, run acceptance tests
-4. **UAT**: Manual approval required (any person can approve), deploy
+4. **UAT**: Manual approval required, deploy
 5. **PROD**: Manual approval required, deploy
 
 ### Versioning
@@ -229,7 +242,7 @@ docker run -p 8080:8080 -p 80:80 churchbulletin-ui
 - **DI Container**: Lamar
 - **Testing**: NUnit 4.x, bUnit, Playwright, Shouldly
 - **AI/LLM**: Azure OpenAI, Ollama
-- **Deployment**: Azure Container Apps, Azure DevOps Pipelines
+- **Deployment**: Azure Container Apps, GitHub Actions, Azure DevOps Pipelines
 
 ## Architecture Documentation
 
@@ -237,10 +250,16 @@ docker run -p 8080:8080 -p 80:80 churchbulletin-ui
 - **Copilot:** `.github/copilot-instructions.md`, `.github/copilot-code-review-instructions.md`.
 
 PlantUML diagrams in `arch/`:
-- `arch-c4-system.puml`: System context
-- `arch-c4-container-deployment.puml`: Container deployment
-- `arch-c4-component-project-dependencies.puml`: Project dependencies
-- `arch-c4-class-domain-model.puml`: Domain model (WorkOrder, Employee, WorkOrderStatus, Role)
+- `arch-c4-system.puml` / `.md`: System context
+- `arch-c4-container-deployment.puml` / `.md`: Container deployment
+- `arch-c4-component-project-dependencies.puml` / `.md`: Project dependencies
+- `arch-c4-class-domain-model.puml` / `.md`: Domain model (WorkOrder, Employee, WorkOrderStatus, Role)
+
+Workflow diagrams in `arch/`:
+- `WorflowForSaveDraftCommand.md`
+- `WorflowForDraftToAssignedCommand.md`
+- `WorflowForAssignedToInProgressCommand.md`
+- `WorflowForInProgressToCompleteCommand.md`
 
 ## Branch Naming Convention
 
