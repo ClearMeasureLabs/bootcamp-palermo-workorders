@@ -590,16 +590,6 @@ Function Invoke-AcceptanceTests {
 		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
 	}
 
-	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
-	# This prevents the Windows LocalDB connection string from overriding appsettings.json
-	$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
-	if (Test-Path $launchSettingsPath) {
-		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
-		$launchSettings = Get-Content $launchSettingsPath -Raw
-		$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
-		Set-Content -Path $launchSettingsPath -Value $launchSettings
-	}
-
 	if ($script:databaseEngine -ne "SQLite") {
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
@@ -610,8 +600,8 @@ Function Invoke-AcceptanceTests {
 	AcceptanceTests
 
 	if ($script:databaseEngine -ne "SQLite") {
-		# Restore appsettings and launchSettings files to their original git state
-		Log-Message -Message "Restoring appsettings*.json and launchSettings.json files to git state" -Type "INFO"
+		# Restore appsettings files to their original git state
+		Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
 		& git restore 'src/**/appsettings*.json'
 		if ($LASTEXITCODE -ne 0) {
 			Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
