@@ -3,19 +3,18 @@ using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using Lamar.Microsoft.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddConsole(options =>
 {
     options.LogToStandardErrorThreshold = LogLevel.Trace;
 });
 
-builder.UseLamar(registry => { registry.IncludeRegistry<McpServiceRegistry>(); });
+builder.Host.UseLamar(registry => { registry.IncludeRegistry<McpServiceRegistry>(); });
 
-builder.Services
+var mcpBuilder = builder.Services
     .AddMcpServer(options =>
     {
         options.ServerInfo = new()
@@ -24,9 +23,27 @@ builder.Services
             Version = "1.0.0"
         };
     })
-    .WithStdioServerTransport()
     .WithTools<WorkOrderTools>()
     .WithTools<EmployeeTools>()
     .WithResources<ReferenceResources>();
 
-await builder.Build().RunAsync();
+var useHttp = args.Contains("--http") ||
+    string.Equals(builder.Configuration["Transport"], "http", StringComparison.OrdinalIgnoreCase);
+
+if (useHttp)
+{
+    mcpBuilder.WithHttpTransport();
+}
+else
+{
+    mcpBuilder.WithStdioServerTransport();
+}
+
+var app = builder.Build();
+
+if (useHttp)
+{
+    app.MapMcp();
+}
+
+await app.RunAsync();
