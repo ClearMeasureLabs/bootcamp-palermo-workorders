@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 
@@ -6,6 +7,7 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 
 public class CanConnectToLlmServerHealthCheck(
     IConfiguration configuration,
+    ChatClientFactory chatClientFactory,
     ILogger<CanConnectToLlmServerHealthCheck> logger) : IHealthCheck
 {
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
@@ -15,36 +17,35 @@ public class CanConnectToLlmServerHealthCheck(
         var openAiUrl = configuration.GetValue<string>("AI_OpenAI_Url");
         var openAiModel = configuration.GetValue<string>("AI_OpenAI_Model");
 
-        var missing = new List<string>();
-        if (string.IsNullOrEmpty(apiKey)) missing.Add("AI_OpenAI_ApiKey");
-        if (string.IsNullOrEmpty(openAiUrl)) missing.Add("AI_OpenAI_Url");
-        if (string.IsNullOrEmpty(openAiModel)) missing.Add("AI_OpenAI_Model");
-
-        if (missing.Count > 0)
+        if (string.IsNullOrEmpty(openAiUrl))
         {
-            var message = $"Azure OpenAI environment variables not set: {string.Join(", ", missing)}";
+            var message = "AI_OpenAI_Url is not configured";
+            logger.LogWarning(message);
+            return HealthCheckResult.Unhealthy(message);
+        }
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            var message = "AI_OpenAI_ApiKey is not configured";
             logger.LogWarning(message);
             return HealthCheckResult.Degraded(message);
         }
 
         try
         {
-            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-            var baseUrl = openAiUrl!.TrimEnd('/');
-            var response = await httpClient.GetAsync(
-                $"{baseUrl}/openai/models?api-version=2024-06-01",
-                cancellationToken);
+            var chatClient = await chatClientFactory.GetChatClient();
+            var response = await chatClient.GetResponseAsync(
+                [new ChatMessage(ChatRole.User, "Reply with OK")],
+                cancellationToken: cancellationToken);
 
-            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized ||
-                response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            if (response.Messages.Count > 0)
             {
-                logger.LogWarning("Azure OpenAI endpoint reachable but API key is invalid");
-                return HealthCheckResult.Unhealthy(
-                    "Azure OpenAI endpoint is reachable but the API key is invalid");
+                logger.LogInformation("Health check success via ChatClientFactory");
+                return HealthCheckResult.Healthy($"Azure OpenAI endpoint reachable, model: {openAiModel}");
             }
 
-            logger.LogInformation("Health check success");
-            return HealthCheckResult.Healthy($"Azure OpenAI endpoint reachable, model: {openAiModel}");
+            logger.LogWarning("Azure OpenAI returned empty response");
+            return HealthCheckResult.Degraded($"$Azure OpenAI returned empty response from endpoint {openAiUrl}");
         }
         catch (Exception ex)
         {
