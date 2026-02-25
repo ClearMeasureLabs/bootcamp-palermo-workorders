@@ -25,4 +25,12 @@
 		<ProjectReference Include="..\UI.Shared\UI.Shared.csproj" />
 	</ItemGroup>
 
+	<!-- When McpServer is referenced by UI.Server, both projects have appsettings.json
+	     which causes NETSDK1152 during publish. Exclude from publish output since
+	     the host provides configuration; appsettings.json remains in build output
+	     for standalone 'dotnet run' during development. -->
+	<ItemGroup>
+		<Content Update="appsettings.json" CopyToPublishDirectory="Never" />
+	</ItemGroup>
+
 </Project>
