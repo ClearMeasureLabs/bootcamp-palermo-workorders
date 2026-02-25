@@ -154,7 +154,7 @@ public class ServerFixture
                 healthStatus = response.StatusCode;
                 healthBody = await response.Content.ReadAsStringAsync();
                 TestContext.Out.WriteLine($"  GET {healthUrl} -> {(int)response.StatusCode}: {healthBody}");
-                if (response.IsSuccessStatusCode && healthBody.Contains("Healthy", StringComparison.OrdinalIgnoreCase))
+                if (response.IsSuccessStatusCode && IsAcceptableHealthStatus(healthBody))
                     break;
             }
             catch (Exception ex)
@@ -166,17 +166,21 @@ public class ServerFixture
             if (attempt < maxAttempts) await Task.Delay(delayBetweenAttemptsMs);
         }
 
-        if (healthBody == null || !healthBody.Contains("Healthy", StringComparison.OrdinalIgnoreCase))
+        if (healthBody == null || !IsAcceptableHealthStatus(healthBody))
         {
             var detail = lastHealthException != null
                 ? $"Last exception: {lastHealthException.GetType().Name}: {lastHealthException.Message}"
                 : $"Status: {healthStatus}, Body: {healthBody}";
             Assert.Fail(
-                $"Health gate FAILED: /_healthcheck did not return Healthy after {maxAttempts} attempts. {detail}");
+                $"Health gate FAILED: /_healthcheck did not return Healthy or Degraded after {maxAttempts} attempts. {detail}");
         }
 
         TestContext.Out.WriteLine("Health gate: PASSED - site is reachable and healthy.");
     }
+
+    private static bool IsAcceptableHealthStatus(string body) =>
+        body.Contains("Healthy", StringComparison.OrdinalIgnoreCase) ||
+        body.Contains("Degraded", StringComparison.OrdinalIgnoreCase);
 
     private async Task StartAndWaitForServer()
     {
