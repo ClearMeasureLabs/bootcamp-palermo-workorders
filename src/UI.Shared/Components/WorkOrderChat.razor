@@ -9,12 +9,12 @@
         <div class="chat-container">
             @if (_chatMessages.Any())
             {
-                <div data-testid="@Elements.ChatHistory" class="chat-history">
+                <div data-testid="@(Elements.ChatHistory.ToString())" class="chat-history">
                     @for (int i = 0; i < _chatMessages.Count; i++)
                     {
                         var message = _chatMessages[i];
                         var messageTestId = message.IsUser ? Elements.UserMessage : Elements.AiMessage;
-                        <div data-testid="@(messageTestId + i)" class="chat-message @(message.IsUser ? "user-message" : "ai-message")">
+                        <div data-testid="@($"{messageTestId}{i}")" class="chat-message @(message.IsUser ? "user-message" : "ai-message")">
                             <div class="message-content">@message.Content</div>
                         </div>
                     }
@@ -23,18 +23,18 @@
 
             @if (_isLoading)
             {
-                <div data-testid="@Elements.LoadingIndicator" class="chat-loading">
+                <div data-testid="@(Elements.LoadingIndicator.ToString())" class="chat-loading">
                     <span>AI is thinking...</span>
                 </div>
             }
 
             <div class="chat-input-container">
                 <InputText @bind-Value="_prompt"
-                           data-testid="@Elements.ChatInput"
+                           data-testid="@(Elements.ChatInput.ToString())"
                            class="form-control chat-input"
                            placeholder="Ask the AI assistant about this work order..."/>
                 <button type="button"
-                        data-testid="@Elements.SendButton"
+                        data-testid="@(Elements.SendButton.ToString())"
                         class="btn btn-secondary chat-send-btn"
                         @onclick="SendMessage">
                     Send
