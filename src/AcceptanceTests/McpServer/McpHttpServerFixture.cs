@@ -1,8 +1,6 @@
-using System.Diagnostics;
 using ClearMeasure.Bootcamp.AcceptanceTests;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.IntegrationTests;
-using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
 
 namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
@@ -10,20 +8,9 @@ namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 [SetUpFixture]
 public class McpHttpServerFixture
 {
-    private const string McpServerRelativeProjectDir = "../../../../McpServer";
-    private const string ServerUrl = "http://localhost:3001";
-
-    private static string BuildConfiguration =>
-        AppDomain.CurrentDomain.BaseDirectory.Contains(
-            Path.DirectorySeparatorChar + "Release" + Path.DirectorySeparatorChar)
-            ? "Release"
-            : "Debug";
-
     public static McpClient? McpClientInstance { get; private set; }
     public static IList<McpClientTool>? Tools { get; private set; }
     public static bool ServerAvailable { get; private set; }
-    private static Process? _serverProcess;
-    private static readonly List<string> ServerErrors = new();
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -34,7 +21,17 @@ public class McpHttpServerFixture
         EnableSqliteWalMode(connectionString);
         TestHost.GetRequiredService<IDatabaseConfiguration>().ResetConnectionPool();
 
-        await StartMcpHttpServer(connectionString);
+        // Wait for UI.Server to start (started by ServerFixture in a sibling namespace)
+        await WaitForServerFixture();
+
+        if (string.IsNullOrEmpty(ServerFixture.ApplicationBaseUrl))
+        {
+            TestContext.Out.WriteLine("McpHttpServerFixture: ServerFixture.ApplicationBaseUrl is not set, skipping MCP connection");
+            ServerAvailable = false;
+            return;
+        }
+
+        await ConnectToMcpEndpoint();
     }
 
     [OneTimeTearDown]
@@ -45,13 +42,63 @@ public class McpHttpServerFixture
             await McpClientInstance.DisposeAsync();
             McpClientInstance = null;
         }
+    }
 
-        if (_serverProcess != null && !_serverProcess.HasExited)
+    private static async Task WaitForServerFixture()
+    {
+        // ServerFixture runs as a [SetUpFixture] in a sibling namespace.
+        // NUnit doesn't guarantee ordering between sibling namespace fixtures,
+        // so poll until the server is reachable or timeout.
+        var baseUrl = ServerFixture.ApplicationBaseUrl;
+        if (string.IsNullOrEmpty(baseUrl))
         {
-            _serverProcess.Kill(entireProcessTree: true);
-            _serverProcess.Dispose();
-            _serverProcess = null;
+            TestContext.Out.WriteLine("McpHttpServerFixture: ApplicationBaseUrl not yet set, waiting for ServerFixture...");
+            var deadline = DateTime.UtcNow.AddSeconds(90);
+            while (DateTime.UtcNow < deadline)
+            {
+                baseUrl = ServerFixture.ApplicationBaseUrl;
+                if (!string.IsNullOrEmpty(baseUrl))
+                    break;
+                await Task.Delay(500);
+            }
         }
+
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            TestContext.Out.WriteLine("McpHttpServerFixture: timed out waiting for ServerFixture");
+            return;
+        }
+
+        TestContext.Out.WriteLine($"McpHttpServerFixture: ApplicationBaseUrl = {baseUrl}, waiting for server to respond...");
+
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var httpClient = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        var deadline2 = DateTime.UtcNow.AddSeconds(90);
+
+        while (DateTime.UtcNow < deadline2)
+        {
+            try
+            {
+                var response = await httpClient.GetAsync(baseUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    TestContext.Out.WriteLine("McpHttpServerFixture: server is reachable");
+                    return;
+                }
+            }
+            catch
+            {
+                // Server not ready yet
+            }
+
+            await Task.Delay(1000);
+        }
+
+        TestContext.Out.WriteLine("McpHttpServerFixture: timed out waiting for server to respond");
     }
 
     private static void EnableSqliteWalMode(string connectionString)
@@ -76,7 +123,7 @@ public class McpHttpServerFixture
 
     private static string ResolveConnectionString()
     {
-        var configuration = TestHost.GetRequiredService<IConfiguration>();
+        var configuration = TestHost.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
         var connectionString = configuration.GetConnectionString("SqlConnectionString") ?? "";
 
         if (connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase)
@@ -97,79 +144,28 @@ public class McpHttpServerFixture
         return connectionString;
     }
 
-    private static async Task StartMcpHttpServer(string connectionString)
+    private static async Task ConnectToMcpEndpoint()
     {
-        var mcpServerProjectDir = Path.GetFullPath(
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, McpServerRelativeProjectDir));
-
-        TestContext.Out.WriteLine($"McpHttpServerFixture: building MCP server at {mcpServerProjectDir}");
-
-        var buildProcess = Process.Start(new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"build \"{mcpServerProjectDir}\" --configuration {BuildConfiguration}",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        });
-
-        if (buildProcess != null)
-        {
-            await buildProcess.WaitForExitAsync();
-            if (buildProcess.ExitCode != 0)
-            {
-                var stderr = await buildProcess.StandardError.ReadToEndAsync();
-                TestContext.Out.WriteLine($"McpHttpServerFixture: build failed: {stderr}");
-                ServerAvailable = false;
-                return;
-            }
-        }
-
-        TestContext.Out.WriteLine("McpHttpServerFixture: build succeeded, starting MCP server in HTTP mode");
-
         try
         {
-            _serverProcess = Process.Start(new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = $"run --no-build --configuration {BuildConfiguration} --project \"{mcpServerProjectDir}\" -- --http",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                Environment =
-                {
-                    ["ConnectionStrings__SqlConnectionString"] = connectionString,
-                    ["ASPNETCORE_URLS"] = ServerUrl
-                }
-            });
+            var mcpUrl = ServerFixture.ApplicationBaseUrl + "/mcp";
+            TestContext.Out.WriteLine($"McpHttpServerFixture: connecting to {mcpUrl}");
 
-            if (_serverProcess == null)
+            var handler = new HttpClientHandler
             {
-                TestContext.Out.WriteLine("McpHttpServerFixture: failed to start server process");
-                ServerAvailable = false;
-                return;
-            }
-
-            _serverProcess.ErrorDataReceived += (_, e) =>
-            {
-                if (e.Data != null)
-                {
-                    ServerErrors.Add(e.Data);
-                    TestContext.Out.WriteLine($"[McpHttpServer stderr] {e.Data}");
-                }
+                ServerCertificateCustomValidationCallback =
+                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             };
-            _serverProcess.BeginErrorReadLine();
 
-            // Wait for the HTTP server to become ready
-            await WaitForServerReady();
+            var httpClient = new HttpClient(handler);
 
-            var transport = new HttpClientTransport(new HttpClientTransportOptions
+            var transportOptions = new HttpClientTransportOptions
             {
-                Endpoint = new Uri(ServerUrl),
+                Endpoint = new Uri(mcpUrl),
                 Name = "ChurchBulletin-HTTP"
-            });
+            };
+
+            var transport = new HttpClientTransport(transportOptions, httpClient);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             McpClientInstance = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
@@ -180,31 +176,8 @@ public class McpHttpServerFixture
         }
         catch (Exception ex)
         {
-            TestContext.Out.WriteLine($"McpHttpServerFixture: failed to start MCP HTTP server: {ex.Message}");
+            TestContext.Out.WriteLine($"McpHttpServerFixture: failed to connect to MCP endpoint: {ex.Message}");
             ServerAvailable = false;
         }
-    }
-
-    private static async Task WaitForServerReady()
-    {
-        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
-        var deadline = DateTime.UtcNow.AddSeconds(15);
-
-        while (DateTime.UtcNow < deadline)
-        {
-            try
-            {
-                var response = await httpClient.GetAsync(ServerUrl);
-                // Any response means the server is listening
-                TestContext.Out.WriteLine("McpHttpServerFixture: server is accepting connections");
-                return;
-            }
-            catch
-            {
-                await Task.Delay(500);
-            }
-        }
-
-        TestContext.Out.WriteLine("McpHttpServerFixture: timed out waiting for server to start");
     }
 }
