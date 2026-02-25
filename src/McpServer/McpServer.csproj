@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -11,18 +11,26 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ModelContextProtocol" Version="1.0.0-rc.1" />
+		<PackageReference Include="ModelContextProtocol" Version="1.0.0" />
+		<PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.0.0" />
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.1" />
 		<PackageReference Include="MediatR" Version="12.4.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Core\Core.csproj" />
 		<ProjectReference Include="..\DataAccess\DataAccess.csproj" />
 		<ProjectReference Include="..\UI.Shared\UI.Shared.csproj" />
+	</ItemGroup>
+
+	<!-- When McpServer is referenced by UI.Server, both projects have appsettings.json
+	     which causes NETSDK1152 during publish. Exclude from publish output since
+	     the host provides configuration; appsettings.json remains in build output
+	     for standalone 'dotnet run' during development. -->
+	<ItemGroup>
+		<Content Update="appsettings.json" CopyToPublishDirectory="Never" />
 	</ItemGroup>
 
 </Project>

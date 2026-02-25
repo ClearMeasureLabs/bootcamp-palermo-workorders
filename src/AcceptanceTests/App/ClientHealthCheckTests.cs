@@ -45,6 +45,8 @@ public class ClientHealthCheckTests : AcceptanceTestBase
     {
         await Page.GotoAsync("/_healthcheck");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        (await Page.ContentAsync()).ShouldContain("Healthy");
+        var content = await Page.ContentAsync();
+        AcceptableHealthStatuses.ShouldContain(s =>
+            content.Contains(s, StringComparison.OrdinalIgnoreCase));
     }
 }

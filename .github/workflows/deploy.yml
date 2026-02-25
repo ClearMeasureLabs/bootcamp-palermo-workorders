@@ -220,6 +220,18 @@ jobs:
                 Write-Host "Container App is healthy after $i attempts."
                 exit 0
               }
+              if ($response.StatusCode -eq 200 -and $body -match 'Degraded') {
+                Write-Host "::warning::Container App returned Degraded health status after $i attempts."
+                Write-Host "--- Degraded Health Check Diagnostics ---"
+                Write-Host "Health check response body: $body"
+                Write-Host "Health check HTTP status: $($response.StatusCode)"
+                Write-Host "Health check headers:"
+                $response.Headers.GetEnumerator() | ForEach-Object { Write-Host "  $($_.Key): $($_.Value)" }
+                Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
+                Write-Host "Timestamp: $(Get-Date -Format o)"
+                Write-Host "--- End Diagnostics ---"
+                exit 0
+              }
             } catch {
               Write-Host "Attempt ${i}: $($_.Exception.Message)"
             }

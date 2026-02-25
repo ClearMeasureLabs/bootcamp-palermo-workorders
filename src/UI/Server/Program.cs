@@ -1,5 +1,9 @@
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Services;
+using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
+using ClearMeasure.Bootcamp.McpServer.Tools;
+using ClearMeasure.Bootcamp.McpServer.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +17,18 @@ builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
+
+// Add MCP server (HTTP transport at /mcp)
+builder.Services.AddTransient<IWorkOrderNumberGenerator, WorkOrderNumberGenerator>();
+builder.Services
+    .AddMcpServer(options =>
+    {
+        options.ServerInfo = new() { Name = "ChurchBulletin", Version = "1.0.0" };
+    })
+    .WithHttpTransport()
+    .WithTools<WorkOrderTools>()
+    .WithTools<EmployeeTools>()
+    .WithResources<ReferenceResources>();
 
 // Add NServiceBus endpoint
 var endpointConfiguration = new NServiceBus.EndpointConfiguration("UI.Server");
@@ -66,6 +82,7 @@ app.UseRouting();
 
 app.MapRazorPages();
 app.MapControllers();
+app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
 app.MapHealthChecks("_healthcheck");
 
