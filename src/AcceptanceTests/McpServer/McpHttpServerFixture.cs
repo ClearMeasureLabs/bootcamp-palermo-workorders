@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.AcceptanceTests;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.IntegrationTests;
+using ClearMeasure.Bootcamp.LlmGateway;
 using ModelContextProtocol.Client;
 
 namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
@@ -11,6 +12,9 @@ public class McpHttpServerFixture
     public static McpClient? McpClientInstance { get; private set; }
     public static IList<McpClientTool>? Tools { get; private set; }
     public static bool ServerAvailable { get; private set; }
+    public static bool LlmAvailable { get; private set; }
+    public static string LlmProvider { get; private set; } = "None";
+    public static McpTestHelper? Helper { get; private set; }
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -32,6 +36,12 @@ public class McpHttpServerFixture
         }
 
         await ConnectToMcpEndpoint();
+        await CheckLlmAvailability();
+
+        if (ServerAvailable && McpClientInstance != null && Tools != null)
+        {
+            Helper = new McpTestHelper(McpClientInstance, Tools, TestHost.GetRequiredService<ChatClientFactory>());
+        }
     }
 
     [OneTimeTearDown]
@@ -142,6 +152,14 @@ public class McpHttpServerFixture
 
         TestContext.Out.WriteLine("McpHttpServerFixture: connection string resolved");
         return connectionString;
+    }
+
+    private static async Task CheckLlmAvailability()
+    {
+        var (available, provider) = await McpTestHelper.CheckLlmAvailability();
+        LlmAvailable = available;
+        LlmProvider = provider;
+        TestContext.Out.WriteLine($"McpHttpServerFixture: LLM available = {available}, provider = {provider}");
     }
 
     private static async Task ConnectToMcpEndpoint()

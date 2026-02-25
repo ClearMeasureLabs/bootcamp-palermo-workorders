@@ -7,12 +7,23 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 
 [TestFixture]
-public class McpChatConversationTests : McpAcceptanceTestBase
+public class McpChatConversationTests
 {
+	private McpTestHelper Helper => McpHttpServerFixture.Helper!;
+
+	[SetUp]
+	public void EnsureAvailability()
+	{
+		if (!McpHttpServerFixture.ServerAvailable)
+			Assert.Inconclusive("MCP server is not available");
+		if (!McpHttpServerFixture.LlmAvailable)
+			Assert.Inconclusive("No LLM available (set AI_OpenAI_ApiKey/Url/Model or run Ollama locally)");
+	}
+
 	[Test, Retry(2)]
 	public async Task ShouldCreateAndAssignWorkOrderFromConversationalPrompt()
 	{
-		var response = await SendPrompt(
+		var response = await Helper.SendPrompt(
 			"I am Timothy Lovejoy (my username is tlovejoy). " +
 			"Create a new work order assigned to Groundskeeper Willie (username gwillie) " +
 			"to cut the grass and make sure that the edging is done and that fertilizer is put down. " +

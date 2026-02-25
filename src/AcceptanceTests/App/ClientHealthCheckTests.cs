@@ -49,4 +49,13 @@ public class ClientHealthCheckTests : AcceptanceTestBase
         AcceptableHealthStatuses.ShouldContain(s =>
             content.Contains(s, StringComparison.OrdinalIgnoreCase));
     }
+
+    [Test, Retry(2)]
+    public async Task HealthCheckEndpoint_ShouldReturnHealthy()
+    {
+        await Page.GotoAsync("/_healthcheck");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        var content = await Page.ContentAsync();
+        content.ShouldContain(nameof(HealthStatus.Healthy));
+    }
 }

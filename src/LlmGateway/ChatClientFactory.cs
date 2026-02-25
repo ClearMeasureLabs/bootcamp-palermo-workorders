@@ -41,6 +41,9 @@ public class ChatClientFactory(IBus bus)
         var openAiClient = new AzureOpenAIClient(uri, credential);
 
         ChatClient chatClient = openAiClient.GetChatClient(openAiModel);
-        return chatClient.AsIChatClient();
+        return chatClient.AsIChatClient()
+            .AsBuilder()
+            .UseFunctionInvocation()
+            .Build();
     }
 }

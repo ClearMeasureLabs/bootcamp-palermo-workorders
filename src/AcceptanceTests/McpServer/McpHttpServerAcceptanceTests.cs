@@ -1,7 +1,6 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using ModelContextProtocol.Protocol;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
@@ -9,6 +8,8 @@ namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
 [TestFixture]
 public class McpHttpServerAcceptanceTests
 {
+    private McpTestHelper Helper => McpHttpServerFixture.Helper!;
+
     [SetUp]
     public void EnsureAvailability()
     {
@@ -19,7 +20,7 @@ public class McpHttpServerAcceptanceTests
     [Test]
     public void ShouldDiscoverAllMcpToolsViaHttp()
     {
-        var tools = McpHttpServerFixture.Tools!;
+        var tools = Helper.Tools;
         tools.Count.ShouldBeGreaterThanOrEqualTo(7);
 
         var toolNames = tools.Select(t => t.Name).ToList();
@@ -35,12 +36,8 @@ public class McpHttpServerAcceptanceTests
     [Test]
     public async Task ShouldListWorkOrdersViaHttp()
     {
-        var result = await McpHttpServerFixture.McpClientInstance!.CallToolAsync("list-work-orders",
+        var text = await Helper.CallToolDirectly("list-work-orders",
             new Dictionary<string, object?>());
-
-        var text = string.Join("\n", result.Content
-            .OfType<TextContentBlock>()
-            .Select(c => c.Text));
 
         text.ShouldNotBeNullOrEmpty();
         text.ShouldContain("Number");
@@ -53,17 +50,13 @@ public class McpHttpServerAcceptanceTests
         var employees = await bus.Send(new EmployeeGetAllQuery());
         var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
 
-        var result = await McpHttpServerFixture.McpClientInstance!.CallToolAsync("create-work-order",
+        var text = await Helper.CallToolDirectly("create-work-order",
             new Dictionary<string, object?>
             {
                 ["title"] = "HTTP transport test",
                 ["description"] = "Created via HTTP MCP transport",
                 ["creatorUsername"] = creator.UserName!
             });
-
-        var text = string.Join("\n", result.Content
-            .OfType<TextContentBlock>()
-            .Select(c => c.Text));
 
         text.ShouldContain("HTTP transport test");
         text.ShouldContain("Draft");
@@ -76,15 +69,11 @@ public class McpHttpServerAcceptanceTests
         var employees = await bus.Send(new EmployeeGetAllQuery());
         var known = employees.First();
 
-        var result = await McpHttpServerFixture.McpClientInstance!.CallToolAsync("get-employee",
+        var text = await Helper.CallToolDirectly("get-employee",
             new Dictionary<string, object?>
             {
                 ["username"] = known.UserName!
             });
-
-        var text = string.Join("\n", result.Content
-            .OfType<TextContentBlock>()
-            .Select(c => c.Text));
 
         text.ShouldNotBeNullOrEmpty();
         text.ShouldContain(known.UserName!);

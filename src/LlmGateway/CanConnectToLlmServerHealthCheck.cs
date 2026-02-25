@@ -40,7 +40,7 @@ public class CanConnectToLlmServerHealthCheck(
 
             if (response.Messages.Count > 0)
             {
-                logger.LogInformation("Health check success via ChatClientFactory");
+                logger.LogDebug("Health check success via ChatClientFactory");
                 return HealthCheckResult.Healthy($"Azure OpenAI endpoint reachable, model: {openAiModel}");
             }
 
