@@ -24,7 +24,7 @@ public class CanConnectToLlmServerHealthCheck(
         {
             var message = $"Azure OpenAI environment variables not set: {string.Join(", ", missing)}";
             logger.LogWarning(message);
-            return HealthCheckResult.Unhealthy(message);
+            return HealthCheckResult.Degraded(message);
         }
 
         try
