@@ -32,7 +32,7 @@ public class McpWorkOrderLifecycleLlmTests : AcceptanceTestBase
     {
         if (!_helper!.Connected)
             Assert.Inconclusive("MCP server is not available");
-        SkipIfNoLlm();
+        SkipIfNoChatClient();
     }
 
     [Test, Retry(2)]

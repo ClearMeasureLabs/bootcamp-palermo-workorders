@@ -7,7 +7,7 @@ public class WorkOrderAiChatTests : AcceptanceTestBase
     [SetUp]
     public void EnsureLlmAvailable()
     {
-        SkipIfNoLlm();
+        SkipIfNoChatClient();
     }
 
     [Test, Retry(2)]
