@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
@@ -48,6 +48,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\LlmGateway\LlmGateway.csproj" />
 		<ProjectReference Include="..\UI\Server\UI.Server.csproj" />
 		<ProjectReference Include="..\UnitTests\UnitTests.csproj" />
 	</ItemGroup>

@@ -1,0 +1,188 @@
+@page "/ai-agent"
+@using ClearMeasure.Bootcamp.LlmGateway
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inherits AppComponentBase
+
+<div class="ai-agent-page">
+    <div class="chat-container">
+        @if (_chatMessages.Any())
+        {
+            <div data-testid="@Elements.ChatHistory" class="chat-history">
+                @for (int i = 0; i < _chatMessages.Count; i++)
+                {
+                    var message = _chatMessages[i];
+                    var messageTestId = message.IsUser ? Elements.UserMessage : Elements.AiMessage;
+                    <div data-testid="@(messageTestId + i)" class="chat-message @(message.IsUser ? "user-message" : "ai-message")">
+                        <div class="message-content">@message.Content</div>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (_isLoading)
+        {
+            <div data-testid="@Elements.LoadingIndicator" class="chat-loading">
+                <span>AI is thinking...</span>
+            </div>
+        }
+
+        <div class="chat-input-container">
+            <InputText @bind-Value="_prompt"
+                      data-testid="@Elements.ChatInput"
+                      class="form-control chat-input"
+                      placeholder="Ask the AI assistant..."
+                      @onkeydown="HandleKeydown"/>
+            <button type="button"
+                    data-testid="@Elements.SendButton"
+                    class="btn btn-secondary chat-send-btn"
+                    @onclick="SendMessage">
+                Send
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] public IUserSession? UserSession { get; set; }
+
+    private Employee? _currentUser;
+    private string _prompt = "";
+    private bool _isLoading;
+    private readonly List<ChatMessage> _chatMessages = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _currentUser = await UserSession!.GetCurrentUserAsync();
+    }
+
+    private void HandleKeydown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            _ = SendMessage();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_prompt) || _isLoading || _currentUser == null)
+            return;
+
+        var userMessage = _prompt.Trim();
+        _chatMessages.Add(new ChatMessage { Content = userMessage, IsUser = true });
+        _isLoading = true;
+        StateHasChanged();
+        _prompt = "";
+
+        try
+        {
+            var query = new AgentChatQuery(userMessage, _currentUser.UserName);
+            var response = await Bus.Send(query);
+
+            var aiContent = response.Text ?? "No response received.";
+            _chatMessages.Add(new ChatMessage { Content = aiContent, IsUser = false });
+        }
+        catch (Exception ex)
+        {
+            _chatMessages.Add(new ChatMessage { Content = $"Error: {ex.Message}", IsUser = false });
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private class ChatMessage
+    {
+        public string Content { get; set; } = "";
+        public bool IsUser { get; set; }
+    }
+
+    public enum Elements
+    {
+        ChatInput,
+        SendButton,
+        ChatHistory,
+        UserMessage,
+        AiMessage,
+        LoadingIndicator
+    }
+}
+
+<style>
+    .ai-agent-page {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+
+    .chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 12px;
+        background-color: #f9f9f9;
+    }
+
+    .chat-history {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        margin-bottom: 12px;
+    }
+
+    .chat-message {
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        max-width: 80%;
+    }
+
+    .user-message {
+        background-color: #007bff;
+        color: white;
+        align-self: flex-end;
+        margin-left: auto;
+        text-align: right;
+    }
+
+    .ai-message {
+        background-color: #e9ecef;
+        color: #333;
+        align-self: flex-start;
+        margin-right: auto;
+    }
+
+    .message-content {
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+
+    .chat-loading {
+        font-style: italic;
+        color: #6c757d;
+        padding: 8px;
+        text-align: center;
+    }
+
+    .chat-input-container {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .chat-input {
+        flex: 1;
+    }
+
+    .chat-send-btn {
+        white-space: nowrap;
+    }
+</style>

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
@@ -18,5 +18,14 @@ public class WorkOrderTool(IBus bus)
     public async Task<Employee[]> GetAllEmployees()
     {
         return await bus.Send(new EmployeeGetAllQuery());
+    }
+
+    [Description("Can list work orders created by a user. Pass the user's username (e.g. tlovejoy). Returns the work orders that user created.")]
+    public async Task<WorkOrder[]> GetWorkOrdersByCreatorUserName(string userName)
+    {
+        var employee = await bus.Send(new EmployeeByUserNameQuery(userName));
+        var query = new WorkOrderSpecificationQuery();
+        query.MatchCreator(employee);
+        return await bus.Send(query);
     }
 }

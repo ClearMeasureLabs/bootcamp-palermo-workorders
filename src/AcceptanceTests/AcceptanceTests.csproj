@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
@@ -44,6 +44,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Core\Core.csproj" />
 		<ProjectReference Include="..\IntegrationTests\IntegrationTests.csproj" />
+		<ProjectReference Include="..\UI.Shared\UI.Shared.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

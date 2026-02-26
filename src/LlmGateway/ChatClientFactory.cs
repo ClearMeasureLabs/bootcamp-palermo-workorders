@@ -8,7 +8,7 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 
 public class ChatClientFactory(IBus bus)
 {
-    public async Task<IChatClient> GetChatClient()
+    public virtual async Task<IChatClient> GetChatClient()
     {
         var config = await bus.Send(new ChatClientConfigQuery());
         var apiKey = config.AiOpenAiApiKey;
