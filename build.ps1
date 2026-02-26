@@ -124,6 +124,10 @@ Function Init {
 			}
 		}
 		"SQLite" {
+			if ([string]::IsNullOrEmpty($env:ConnectionStrings__SqlConnectionString)) {
+				$env:ConnectionStrings__SqlConnectionString = "Data Source=ChurchBulletin.db"
+				Log-Message -Message "Set ConnectionStrings__SqlConnectionString for SQLite: $($env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+			}
 			Log-Message -Message "SQLite mode enabled - Docker not required" -Type "INFO"
 		}
 	}
