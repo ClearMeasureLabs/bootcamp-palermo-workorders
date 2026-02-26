@@ -1,0 +1,22 @@
+%% C4 Component Diagram - Worker project
+%% References: DataAccess, LlmGateway, ChurchBulletin.ServiceDefaults
+
+C4Component
+    title Component Diagram - Worker
+
+    Container_Boundary(worker, "Worker") {
+        Component(program, "Program", "Entry point", "Host builder")
+        Component(endpoint, "WorkOrderEndpoint", "NServiceBus", "Endpoint config")
+        Component(handlers, "Handlers", "AiBotHandler, EventHandler", "Message handlers")
+        Component(sagas, "Sagas.AiBotWorkerOrder", "AiBotWorkOrderSaga, AiBotWorkOrderSagaState", "Saga")
+        Component(events, "Events", "AiBotStartedWorkOrderEvent, AiBotUpdatedWorkerOrderEvent, AiBotCompletedWorkOrderEvent", "")
+        Component(commands, "Commands", "StartAiBotWorkOrderSagaCommand", "")
+        Component(messaging, "Messaging.RemotableBus", "IBus", "Cross-boundary")
+    }
+
+    Rel(program, endpoint, "Configures")
+    Rel(endpoint, handlers, "Registers")
+    Rel(handlers, sagas, "Uses")
+    Rel(sagas, events, "Publishes")
+    Rel(sagas, commands, "Sends")
+    Rel(messaging, handlers, "Sends to handlers")

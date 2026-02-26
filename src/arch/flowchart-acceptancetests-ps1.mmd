@@ -1,0 +1,10 @@
+%% Flowchart - AcceptanceTests.ps1
+%% Wrapper that dots build.ps1 and invokes Invoke-AcceptanceTests
+
+flowchart LR
+    A[AcceptanceTests.ps1] --> B[Param: databaseServer, databaseName]
+    B --> C[. .\build.ps1]
+    C --> D[Use env DatabaseServer if databaseServer empty]
+    D --> E[Default databaseServer: Linux = localhost,1433; Windows = LocalDb]
+    E --> F[Invoke-AcceptanceTests -databaseServer -databaseName]
+    F --> G[build.ps1: Resolve-DatabaseEngine, Init, Compile, DB setup, AcceptanceTests, Restore files]

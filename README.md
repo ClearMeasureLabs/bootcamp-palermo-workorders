@@ -441,6 +441,173 @@ If you want to learn more about creating good readme files then refer the follow
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
 - [Chakra Core](https://github.com/Microsoft/ChakraCore)
 
+---
+
+# Architecture (C4 and Mermaid)
+
+The application is a **Church Bulletin Work Order** system built on **Onion Architecture**: domain and CQRS in **Core**, persistence and MediatR handlers in **DataAccess**, and multiple process heads (**UI.Server**, **Worker**, test projects) at the outer layer. The narrative below is supported by C4-style Mermaid diagrams and flowcharts for build/deploy and scripts.
+
+**Process heads (containers):** **UI.Server** (Blazor Server + Web API + AI agents), **Worker** (NServiceBus background worker and sagas), **ChurchBulletin.AppHost** (Aspire orchestrator), **UnitTests**, **IntegrationTests**, **AcceptanceTests**. Each has a container diagram in `src/arch/` (e.g. `c4-container-ui-server.mmd`).
+
+**Projects (components):** **Core**, **DataAccess**, **Database**, **UI.Server**, **UI.Client**, **UI.Api**, **UI.Shared**, **LlmGateway**, **Worker**, **ChurchBulletin.ServiceDefaults**, **ChurchBulletin.AppHost**, **UnitTests**, **IntegrationTests**, **AcceptanceTests**. Each has a component diagram in `src/arch/` (e.g. `c4-component-core.mmd`).
+
+**Namespaces (class diagrams):** Domain and key types are documented in `src/arch/` (e.g. `class-core-model.mmd`, `class-core-statecommands.mmd`, `class-dataaccess.mmd`, `class-worker.mmd`).
+
+**Build and deploy flow:** GitHub Actions **build.yml** runs parallel jobs (Integration Build on Linux/SQLite/Windows, code analysis), then Docker build and push, then acceptance tests. **deploy.yml** runs after Build succeeds: TDD deploy and acceptance tests, then UAT and Prod with manual approval. Local **build.ps1** (and **BuildFunctions.ps1**) provides Init, Compile, UnitTests, DB migration, IntegrationTest, AcceptanceTests, and packaging; **AcceptanceTests.ps1** is a thin wrapper that invokes `Invoke-AcceptanceTests` from build.ps1.
+
+## System Context (C4)
+
+```mermaid
+C4Context
+    title System Context - Church Bulletin Work Order System
+    Person(pastor, "Senior Pastor", "Clergy leader managing work orders")
+    Person(volunteer, "Volunteer", "Prepares bulletins and work orders")
+    Person(employee, "Facility Employee", "Fulfills assigned work orders")
+    System(churchbulletin, "Church Bulletin", "Work order management, digital signage, and printed bulletin")
+    System_Ext(azure_sql, "Azure SQL Database", "Persistent data store")
+    System_Ext(llm, "LLM Service", "Azure OpenAI / Ollama for AI agents")
+    System_Ext(printer, "Printer", "Network printer for bulletins")
+    System_Ext(octopus, "Octopus Deploy", "Deployment automation")
+    Rel(pastor, churchbulletin, "Manages work orders")
+    Rel(volunteer, churchbulletin, "Creates and operates system")
+    Rel(employee, churchbulletin, "Views and completes work orders")
+    Rel(churchbulletin, azure_sql, "Reads/writes data", "EF Core / SQL")
+    Rel(churchbulletin, llm, "AI chat and reformat", "HTTP")
+    Rel(churchbulletin, printer, "Print bulletins")
+    Rel(octopus, churchbulletin, "Deploys to TDD/UAT/Prod")
+```
+
+## Build workflow (build.yml)
+
+```mermaid
+flowchart TB
+    subgraph trigger["Trigger"]
+        A[push / workflow_dispatch]
+    end
+    A --> B[build-linux: Integration Build SQL container]
+    A --> C[build-sqlite: Integration Build SQLite]
+    A --> D[code-analysis: Code Analysis]
+    A --> E[build-windows: Integration Build Windows LocalDB]
+    B --> F[docker-build-image: Publish Release Candidate]
+    C --> F
+    D --> F
+    E --> F
+    B --> G[publish-github-packages]
+    B --> H[publish-octopus]
+    F --> I[acceptance-tests: Acceptance Tests]
+```
+
+## Deploy workflow (deploy.yml)
+
+```mermaid
+flowchart TB
+    A[workflow_run: Build completed] --> T[deploy-to-tdd]
+    T --> T1[Create Octopus Release]
+    T --> T2[Deploy to TDD]
+    T --> T3[Wait for deployment]
+    T --> T4[Run Acceptance tests against Container App]
+    T4 --> U[deploy-to-uat]
+    U --> U1[Deploy Octopus Release to UAT]
+    U1 --> P[deploy-to-prod]
+    P --> P1[Deploy Octopus Release to Prod]
+```
+
+## Build script flow (build.ps1)
+
+```mermaid
+flowchart LR
+    subgraph PrivateBuild["Invoke-PrivateBuild"]
+        PB1[Resolve-DatabaseEngine] --> PB2[Init]
+        PB2 --> PB3[Compile]
+        PB3 --> PB4[UnitTests]
+        PB4 --> PB5[DB setup + MigrateDatabaseLocal]
+        PB5 --> PB6[IntegrationTest]
+        PB6 --> PB7[Restore appsettings]
+    end
+    subgraph CIBuild["Invoke-CIBuild"]
+        CI1[Resolve-DatabaseEngine] --> CI2[Init]
+        CI2 --> CI3[Compile]
+        CI3 --> CI4[UnitTests]
+        CI4 --> CI5[DB + Migrate]
+        CI5 --> CI6[IntegrationTest]
+        CI6 --> CI7[Restore appsettings]
+    end
+    subgraph AcceptBuild["Invoke-AcceptanceTests"]
+        AB1[Resolve-DatabaseEngine] --> AB2[Init]
+        AB2 --> AB3[Compile]
+        AB3 --> AB4[DB + Migrate]
+        AB4 --> AB5[AcceptanceTests]
+        AB5 --> AB6[Restore files]
+    end
+```
+
+## AcceptanceTests.ps1 flow
+
+```mermaid
+flowchart LR
+    A[AcceptanceTests.ps1] --> B[Param: databaseServer, databaseName]
+    B --> C[. .\build.ps1]
+    C --> D[Default databaseServer by OS]
+    D --> F[Invoke-AcceptanceTests]
+    F --> G[Init, Compile, DB, AcceptanceTests, Restore]
+```
+
+## Domain model (Core.Model) class diagram
+
+```mermaid
+classDiagram
+    class EntityBase~T~ {
+        +Guid Id
+        +Equals(T other) bool
+        +GetHashCode() int
+    }
+    class WorkOrder {
+        +string Title
+        +string Description
+        +string RoomNumber
+        +WorkOrderStatus Status
+        +Employee Creator
+        +Employee Assignee
+        +string Number
+        +ChangeStatus(WorkOrderStatus) void
+        +CanReassign() bool
+    }
+    class Employee {
+        +string UserName
+        +string FirstName
+        +string LastName
+        +string EmailAddress
+        +ISet~Role~ Roles
+        +GetFullName() string
+        +CanCreateWorkOrder() bool
+        +CanFulfilWorkOrder() bool
+    }
+    class Role {
+        +string Name
+        +bool CanCreateWorkOrder
+        +bool CanFulfillWorkOrder
+    }
+    class WorkOrderStatus {
+        +string Code
+        +string Key
+        +string FriendlyName
+        +Draft$
+        +Assigned$
+        +InProgress$
+        +Complete$
+        +Cancelled$
+    }
+    EntityBase <|-- WorkOrder
+    EntityBase <|-- Employee
+    EntityBase <|-- Role
+    WorkOrder --> WorkOrderStatus : status
+    WorkOrder --> Employee : Creator
+    WorkOrder --> Employee : Assignee
+    Employee --> Role : Roles
+```
+
+All C4 container diagrams, component diagrams, and additional class/flowchart diagrams are in **`src/arch/`** as `.mmd` files (e.g. `c4-container-ui-server.mmd`, `c4-component-dataaccess.mmd`, `flowchart-build-yml.mmd`). View them with any Mermaid-compatible viewer (VS Code Mermaid extension, GitHub, or [Mermaid Live](https://mermaid.live/)).
+
 
 Last update: 2025-12-12 13:27 MDT
 

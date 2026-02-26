@@ -1,0 +1,15 @@
+%% C4 Container Diagram - UnitTests (test runner process)
+%% Process head: UnitTests
+
+C4Container
+    title Container Diagram - UnitTests
+
+    Container_Boundary(unit_tests, "UnitTests") {
+        Container(core_tests, "Core Tests", "Model, StateCommands, Services, Queries", "In-memory")
+        Container(ui_tests, "UI Tests", "bUnit", "Blazor component tests")
+        Container(server_tests, "UI.Server Tests", "Bus, SingleApiController, Agents", "Stub dependencies")
+    }
+
+    Rel(core_tests, unit_tests, "NUnit + Shouldly")
+    Rel(ui_tests, unit_tests, "bUnit")
+    Rel(server_tests, unit_tests, "Stub IBus, etc.")

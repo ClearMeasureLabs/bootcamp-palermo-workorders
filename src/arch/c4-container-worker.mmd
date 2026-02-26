@@ -1,0 +1,21 @@
+%% C4 Container Diagram - Worker (background worker process)
+%% Process head: Worker
+
+C4Container
+    title Container Diagram - Worker
+
+    Container_Boundary(worker, "Worker") {
+        Container(endpoints, "WorkOrder Endpoint", "NServiceBus", "Receives messages")
+        Container(handlers, "Event Handlers", "AiBotHandler, EventHandler", "Saga and command handlers")
+        Container(sagas, "Sagas", "AiBotWorkOrderSaga", "Long-running workflows")
+        ContainerDb(db, "Database", "SQL Server", "Via DataAccess")
+    }
+
+    System_Ext(nservicebus, "NServiceBus", "SQL Server Transport")
+    System_Ext(llm, "LlmGateway", "Azure OpenAI / Ollama")
+
+    Rel(nservicebus, endpoints, "Messages")
+    Rel(endpoints, handlers, "In-process")
+    Rel(handlers, sagas, "In-process")
+    Rel(handlers, db, "EF Core")
+    Rel(handlers, llm, "HTTP")

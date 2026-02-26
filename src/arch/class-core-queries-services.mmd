@@ -1,0 +1,48 @@
+%% Class Diagram - Core.Queries and Core.Services namespaces
+%% CQRS queries and service interfaces
+
+classDiagram
+    class IBus {
+        <<interface>>
+        +Send(TRequest) TResponse
+        +Publish(TNotification) void
+    }
+    class IDatabaseConfiguration {
+        <<interface>>
+        +string GetConnectionString()
+    }
+    class IStateCommand {
+        <<interface>>
+        +Execute(StateCommandContext) StateCommandResult
+    }
+    class IWorkOrderNumberGenerator {
+        <<interface>>
+        +string GenerateNumber() string
+    }
+    class IWorkOrderBuilder {
+        <<interface>>
+        +Build(...) WorkOrder
+    }
+    class IUserSession {
+        <<interface>>
+        +string UserName
+        +bool IsAuthenticated
+    }
+    class WorkOrderByNumberQuery {
+        +string Number
+    }
+    class EmployeeByUserNameQuery {
+        +string UserName
+    }
+    class EmployeeGetAllQuery {
+    }
+    class ForecastQuery {
+    }
+    class WorkOrderSpecificationQuery {
+    }
+    class HealthCheckRemotableRequest {
+    }
+    class StateCommandContext {
+        +WorkOrder WorkOrder
+        +Employee Employee
+    }

@@ -1,0 +1,13 @@
+%% C4 Component Diagram - UI.Api project
+%% References: Core only (minimal API surface)
+
+C4Component
+    title Component Diagram - UI.Api
+
+    Container_Boundary(ui_api, "UI.Api") {
+        Component(controllers, "Controllers", "API", "VersionController, WhatDoIHaveController, WeatherForecastController, DiagnosticController")
+        Component(health, "HealthCheck", "Health endpoint", "")
+        Component(pages, "Pages", "Error.cshtml", "Error page")
+    }
+
+    Rel(health, controllers, "Endpoint")

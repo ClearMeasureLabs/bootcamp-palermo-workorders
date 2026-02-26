@@ -1,0 +1,20 @@
+%% C4 Component Diagram - UI.Client project
+%% References: Core, DataAccess, UI.Shared
+
+C4Component
+    title Component Diagram - UI.Client
+
+    Container_Boundary(ui_client, "UI.Client") {
+        Component(program, "Program", "Entry point", "Blazor WASM host")
+        Component(registry, "UIClientServiceRegistry", "Lamar", "DI")
+        Component(publisher, "PublisherGateway", "IPublisherGateway", "Publish events")
+        Component(remotable_bus, "RemotableBus", "IBus", "Cross-boundary MediatR")
+        Component(user_session, "UserSession", "IUserSession", "Auth state")
+        Component(health, "HealthChecks", "ServerHealthCheckQuery, HealthCheckTracer, RemotableBusHealthCheck", "Client health")
+    }
+
+    Rel(program, registry, "Uses")
+    Rel(registry, remotable_bus, "Registers")
+    Rel(registry, publisher, "Registers")
+    Rel(registry, user_session, "Registers")
+    Rel(health, remotable_bus, "Polls via RemotableBus")

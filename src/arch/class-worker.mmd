@@ -1,0 +1,39 @@
+%% Class Diagram - Worker namespaces (Worker, Handlers, Sagas, Messaging)
+%% Key types only
+
+classDiagram
+    class WorkOrderEndpoint {
+        +Configure() void
+    }
+    class EventHandler {
+        +Handle(IRemotableEvent) void
+    }
+    class AiBotHandler {
+        +Handle(StartAiBotWorkOrderSagaCommand) void
+    }
+    class AiBotWorkOrderSaga {
+        +Handle(StartAiBotWorkOrderSagaCommand) void
+        +Handle(AiBotCompletedWorkOrderEvent) void
+    }
+    class AiBotWorkOrderSagaState {
+        +WorkOrderNumber string
+        +State string
+    }
+    class StartAiBotWorkOrderSagaCommand {
+    }
+    class AiBotStartedWorkOrderEvent {
+    }
+    class AiBotUpdatedWorkerOrderEvent {
+    }
+    class AiBotCompletedWorkOrderEvent {
+    }
+    class RemotableBus {
+        +Send(T) TResponse
+        +Publish(T) void
+    }
+    WorkOrderEndpoint --> AiBotHandler : registers
+    WorkOrderEndpoint --> EventHandler : registers
+    AiBotHandler --> AiBotWorkOrderSaga : starts
+    AiBotWorkOrderSaga --> AiBotWorkOrderSagaState : state
+    AiBotWorkOrderSaga --> AiBotCompletedWorkOrderEvent : publishes
+    RemotableBus --> Worker : messaging

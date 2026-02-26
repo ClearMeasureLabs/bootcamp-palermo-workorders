@@ -1,0 +1,18 @@
+%% C4 Component Diagram - Core project
+%% No project references (onion innermost)
+
+C4Component
+    title Component Diagram - Core
+
+    Container_Boundary(core, "Core") {
+        Component(model, "Model", "Domain entities", "WorkOrder, Employee, Role, WorkOrderStatus, EntityBase")
+        Component(queries, "Queries", "CQRS query types", "WorkOrderByNumberQuery, EmployeeByUserNameQuery, ForecastQuery, etc.")
+        Component(services, "Services", "Interfaces and context", "IStateCommand, IBus, IWorkOrderNumberGenerator, StateCommandContext")
+        Component(state_commands, "StateCommands", "State transition commands", "SaveDraftCommand, DraftToAssignedCommand, AssignedToInProgressCommand, etc.")
+        Component(events, "Model.Events", "Domain events", "UserLoggedInEvent, IStateTransitionEvent")
+    }
+
+    Rel(queries, model, "Uses")
+    Rel(state_commands, model, "Uses")
+    Rel(services, state_commands, "Orchestrates")
+    Rel(events, model, "Uses")

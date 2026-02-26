@@ -1,0 +1,74 @@
+%% Class Diagram - ClearMeasure.Bootcamp.Core.Model
+%% Domain entities and value objects
+
+classDiagram
+    class EntityBase~T~ {
+        +Guid Id
+        +Equals(T other) bool
+        +Equals(object obj) bool
+        +GetHashCode() int
+        +ToString() string
+    }
+    class WorkOrder {
+        +string Title
+        +string Description
+        +string RoomNumber
+        +WorkOrderStatus Status
+        +Employee Creator
+        +Employee Assignee
+        +string Number
+        +string FriendlyStatus
+        +DateTime? AssignedDate
+        +DateTime? CreatedDate
+        +DateTime? CompletedDate
+        +ChangeStatus(WorkOrderStatus) void
+        +ChangeStatus(Employee, DateTime, WorkOrderStatus) void
+        +GetMessage() string
+        +CanReassign() bool
+    }
+    class Employee {
+        +string UserName
+        +string FirstName
+        +string LastName
+        +string EmailAddress
+        +ISet~Role~ Roles
+        +CompareTo(Employee) int
+        +GetFullName() string
+        +CanCreateWorkOrder() bool
+        +CanFulfilWorkOrder() bool
+        +AddRole(Role) void
+        +GetNotificationEmail(DayOfWeek) string
+    }
+    class Role {
+        +string Name
+        +bool CanCreateWorkOrder
+        +bool CanFulfillWorkOrder
+    }
+    class WorkOrderStatus {
+        +string Code
+        +string Key
+        +string FriendlyName
+        +byte SortBy
+        +None$
+        +Draft$
+        +Assigned$
+        +InProgress$
+        +Complete$
+        +Cancelled$
+        +GetAllItems() WorkOrderStatus[]
+        +FromCode(string) WorkOrderStatus
+        +FromKey(string) WorkOrderStatus
+        +Parse(string) WorkOrderStatus
+    }
+    class WeatherForecast {
+        +DateTime Date
+        +int TemperatureC
+        +string Summary
+    }
+    EntityBase <|-- WorkOrder
+    EntityBase <|-- Employee
+    EntityBase <|-- Role
+    WorkOrder --> WorkOrderStatus : status
+    WorkOrder --> Employee : Creator
+    WorkOrder --> Employee : Assignee
+    Employee --> Role : Roles

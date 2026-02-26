@@ -1,0 +1,51 @@
+%% Class Diagram - ClearMeasure.Bootcamp.Core.Model.StateCommands
+%% State transition commands and result
+
+classDiagram
+    class IStateCommand {
+        <<interface>>
+        +Execute(StateCommandContext) StateCommandResult
+    }
+    class StateCommandResult {
+        +bool Success
+        +string Message
+    }
+    class StateCommandContext {
+        +WorkOrder WorkOrder
+        +Employee Employee
+        +DateTime? Date
+    }
+    class SaveDraftCommand {
+        +Execute(StateCommandContext) StateCommandResult
+    }
+    class DraftToAssignedCommand {
+        +Execute(StateCommandContext) StateCommandResult
+    }
+    class AssignedToInProgressCommand {
+        +Execute(StateCommandContext) StateCommandResult
+    }
+    class InProgressToCompleteCommand {
+        +Execute(StateCommandContext) StateCommandResult
+    }
+    class InProgressToCancelledCommand {
+        +Execute(StateCommandContext) StateCommandResult
+    }
+    class AssignedToCancelledCommand {
+        +Execute(StateCommandContext) StateCommandResult
+    }
+    class InProgressToAssigned {
+        +Execute(StateCommandContext) StateCommandResult
+    }
+    class UpdateDescriptionCommand {
+        +Execute(StateCommandContext) StateCommandResult
+    }
+    IStateCommand <|.. SaveDraftCommand
+    IStateCommand <|.. DraftToAssignedCommand
+    IStateCommand <|.. AssignedToInProgressCommand
+    IStateCommand <|.. InProgressToCompleteCommand
+    IStateCommand <|.. InProgressToCancelledCommand
+    IStateCommand <|.. AssignedToCancelledCommand
+    IStateCommand <|.. InProgressToAssigned
+    IStateCommand <|.. UpdateDescriptionCommand
+    IStateCommand ..> StateCommandContext : uses
+    IStateCommand ..> StateCommandResult : returns

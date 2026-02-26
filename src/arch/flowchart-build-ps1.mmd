@@ -1,0 +1,80 @@
+%% Flowchart - build.ps1 (main entry and key functions)
+%% Script dots BuildFunctions.ps1; defines Init, Compile, UnitTests, IntegrationTest, AcceptanceTests, MigrateDatabaseLocal, Package-Everything, Invoke-PrivateBuild, Invoke-CIBuild, Invoke-AcceptanceTests
+
+flowchart TB
+    subgraph entry["Entry (build.ps1)"]
+        E1[Source BuildFunctions.ps1]
+        E2[Clean ConnectionStrings env if set]
+        E3[Set paths: solutionName, unitTestProjectPath, integrationTestProjectPath, acceptanceTestProjectPath, uiProjectPath, databaseProjectPath]
+        E4[Resolve-DatabaseEngine: LocalDB / SQL-Container / SQLite]
+    end
+    subgraph init["Init"]
+        I1[Check PowerShell 7]
+        I2[Detect Azure DevOps / Linux / Windows]
+        I3[Remove build dir, New-Item build]
+        I4[dotnet clean]
+        I5[dotnet restore]
+    end
+    subgraph compile["Compile"]
+        C1[dotnet build solutionName with Version, TreatWarningsAsErrors]
+    end
+    subgraph unit["UnitTests"]
+        U1[Push-Location UnitTests]
+        U2[dotnet test with trx, code coverage]
+        U3[Pop-Location]
+    end
+    subgraph db["Database (if not SQLite)"]
+        D1[SQL-Container: New-DockerContainerForSqlServer, New-SqlServerDatabase]
+        D2[Update-AppSettingsConnectionStrings]
+        D3[MigrateDatabaseLocal: dotnet Database.dll Update/Create/Rebuild]
+    end
+    subgraph integration["IntegrationTest"]
+        N1[Push-Location IntegrationTests]
+        N2[dotnet test with optional filter TestCategory!=SqlServerOnly]
+        N3[Pop-Location]
+    end
+    subgraph acceptance["AcceptanceTests"]
+        A1[Check Playwright script, install chromium if needed]
+        A2[Warn if UI.Server already running]
+        A3[dotnet test AcceptanceTests with runsettings, trx, code coverage]
+    end
+    subgraph package["Package-Everything"]
+        P1[Install Octopus.DotNet.Cli]
+        P2[PackageUI: dotnet publish UI.Server, dotnet-octo pack]
+        P3[PackageDatabase]
+        P4[PackageAcceptanceTests]
+        P5[PackageScript]
+    end
+    subgraph private_build["Invoke-PrivateBuild"]
+        PB1[Resolve-DatabaseEngine]
+        PB2[Init]
+        PB3[Compile]
+        PB4[UnitTests]
+        PB5[DB setup + MigrateDatabaseLocal if not SQLite]
+        PB6[IntegrationTest]
+        PB7[Restore appsettings*.json]
+    end
+    subgraph ci_build["Invoke-CIBuild"]
+        CI1[Resolve-DatabaseEngine]
+        CI2[Init]
+        CI3[Compile]
+        CI4[UnitTests]
+        CI5[DB setup + MigrateDatabaseLocal if not SQLite]
+        CI6[IntegrationTest]
+        CI7[Restore appsettings*.json]
+    end
+    subgraph accept_build["Invoke-AcceptanceTests"]
+        AB1[Resolve-DatabaseEngine]
+        AB2[Init]
+        AB3[Compile]
+        AB4[DB setup + MigrateDatabaseLocal if not SQLite]
+        AB5[Disable launchSettings ConnectionStrings]
+        AB6[AcceptanceTests]
+        AB7[Restore appsettings + launchSettings]
+    end
+    E1 --> E2 --> E3 --> E4
+    PB1 --> PB2 --> PB3 --> PB4 --> PB5 --> PB6 --> PB7
+    CI1 --> CI2 --> CI3 --> CI4 --> CI5 --> CI6 --> CI7
+    AB1 --> AB2 --> AB3 --> AB4 --> AB5 --> AB6 --> AB7
+    Init --> I1 --> I2 --> I3 --> I4 --> I5
+    package --> P1 --> P2 --> P3 --> P4 --> P5

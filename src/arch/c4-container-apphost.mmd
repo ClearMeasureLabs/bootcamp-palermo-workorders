@@ -1,0 +1,15 @@
+%% C4 Container Diagram - ChurchBulletin.AppHost (Aspire orchestrator)
+%% Process head: ChurchBulletin.AppHost
+
+C4Container
+    title Container Diagram - ChurchBulletin.AppHost
+
+    Container_Boundary(apphost, "ChurchBulletin.AppHost") {
+        Container(aspire_host, "Aspire AppHost", "Aspire", "Orchestrates services")
+    }
+
+    Container(ui_server, "UI.Server", "Blazor Server", "Referenced project")
+    Container(worker, "Worker", "Background Worker", "Referenced project")
+
+    Rel(aspire_host, ui_server, "Launches")
+    Rel(aspire_host, worker, "Launches")

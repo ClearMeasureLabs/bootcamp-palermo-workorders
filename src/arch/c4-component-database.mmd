@@ -1,0 +1,16 @@
+%% C4 Component Diagram - Database project
+%% No project references; AliaSQL/DbUp scripts
+
+C4Component
+    title Component Diagram - Database
+
+    Container_Boundary(database, "Database") {
+        Component(console, "Console", "Spectre.Console.Cli", "CLI entry")
+        Component(commands, "Commands", "AbstractDatabaseCommand, UpdateDatabaseCommand, BaselineDatabaseCommand, RebuildDatabaseCommand", "AliaSQL/DbUp")
+        Component(options, "DatabaseOptions", "Config", "Connection and script path")
+    }
+
+    ContainerDb(sql, "SQL Server", "Database", "scripts/Update/*.sql")
+
+    Rel(console, commands, "Invokes")
+    Rel(commands, sql, "Executes scripts")

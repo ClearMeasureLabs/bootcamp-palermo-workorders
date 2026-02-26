@@ -1,0 +1,22 @@
+%% C4 Container Diagram - AcceptanceTests (Playwright test runner)
+%% Process head: AcceptanceTests
+
+C4Container
+    title Container Diagram - AcceptanceTests
+
+    Container_Boundary(acceptance_tests, "AcceptanceTests") {
+        Container(server_fixture, "ServerFixture", "Process / URL", "Starts or targets UI.Server")
+        Container(acceptance_base, "AcceptanceTestBase", "NUnit + Playwright", "Browser automation")
+        Container(app_tests, "App Tests", "WarmUp, Landing, Counter", "Blazor app flows")
+        Container(workorder_tests, "WorkOrder Tests", "SaveDraft, Assign, Begin, Cancel", "Work order flows")
+        Container(ai_tests, "AI Agent Tests", "AutoReformatAgentTests", "LLM-backed flows")
+    }
+
+    System_Ext(browser, "Browser", "Chromium via Playwright")
+    System_Ext(ui_server, "UI.Server", "localhost or deployed URL")
+
+    Rel(acceptance_base, server_fixture, "Uses")
+    Rel(acceptance_base, browser, "Controls")
+    Rel(app_tests, browser, "Playwright")
+    Rel(workorder_tests, browser, "Playwright")
+    Rel(browser, ui_server, "HTTPS")

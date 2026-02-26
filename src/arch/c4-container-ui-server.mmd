@@ -1,0 +1,24 @@
+%% C4 Container Diagram - UI.Server (Blazor Server host)
+%% Process head: ClearMeasure.Bootcamp.UI.Server
+
+C4Container
+    title Container Diagram - UI.Server
+
+    Person(user, "User", "Browser user")
+
+    Container_Boundary(ui_server, "UI.Server") {
+        Container(blazor_server, "Blazor Server Host", "ASP.NET Core", "Hosts Blazor Server and WASM")
+        Container(api, "Web API", "REST / SingleApiController", "API endpoints")
+        Container(agents, "AI Agents", "WorkOrderReformatAgent, AutoReformatAgentService", "LLM-backed agents")
+        ContainerDb(db, "Database", "SQL Server / SQLite", "Via DataAccess")
+    }
+
+    System_Ext(llm, "LlmGateway", "Azure OpenAI / Ollama")
+    System_Ext(nservicebus, "NServiceBus", "SQL Server Transport")
+
+    Rel(user, blazor_server, "HTTPS")
+    Rel(blazor_server, api, "In-process")
+    Rel(blazor_server, agents, "In-process")
+    Rel(blazor_server, db, "EF Core")
+    Rel(agents, llm, "HTTP")
+    Rel(blazor_server, nservicebus, "Messaging")

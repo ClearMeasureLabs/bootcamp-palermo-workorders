@@ -1,0 +1,19 @@
+%% C4 Component Diagram - IntegrationTests project
+%% References: UI.Server, UnitTests
+
+C4Component
+    title Component Diagram - IntegrationTests
+
+    Container_Boundary(integration_tests, "IntegrationTests") {
+        Component(integrated_base, "IntegratedTestBase", "WebApplicationFactory", "Test host")
+        Component(test_host, "TestHost", "TestHostConfiguration", "Server config")
+        Component(db_config, "TestDatabaseConfiguration, SqliteDatabaseSetup", "DB", "LocalDB/SQLite")
+        Component(data_loader, "ZDataLoader", "Test data", "Seeds DB")
+        Component(db_tests, "DataAccess.*", "DatabaseTests, WorkOrderQueryHandlerTests, etc.", "EF + handlers")
+        Component(handler_tests, "DataAccess.Handlers.*", "StateCommandHandler*Tests", "MediatR")
+    }
+
+    Rel(integrated_base, test_host, "Uses")
+    Rel(integrated_base, db_config, "Uses")
+    Rel(db_tests, data_loader, "Uses")
+    Rel(handler_tests, db_tests, "Same base")

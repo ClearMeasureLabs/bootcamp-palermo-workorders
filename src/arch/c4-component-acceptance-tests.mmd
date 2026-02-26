@@ -1,0 +1,21 @@
+%% C4 Component Diagram - AcceptanceTests project
+%% References: Core, IntegrationTests
+
+C4Component
+    title Component Diagram - AcceptanceTests
+
+    Container_Boundary(acceptance_tests, "AcceptanceTests") {
+        Component(acceptance_base, "AcceptanceTestBase", "NUnit + Playwright", "Browser, URL")
+        Component(server_fixture, "ServerFixture", "Process / URL", "UI.Server lifecycle")
+        Component(blazor_warmup, "BlazorWasmWarmUp", "Warmup", "First load")
+        Component(app_tests, "App.*", "WarmUpTests, LandingPageTests, CounterTests, ClientHealthCheckTests", "App flows")
+        Component(workorder_tests, "WorkOrders.*", "SaveDraft, Assign, Begin, Cancel", "Work order flows")
+        Component(ai_tests, "AIAgents.*", "AutoReformatAgentTests", "LLM flows")
+        Component(auth_tests, "Authentication.*", "LogoutTests", "Auth")
+        Component(extensions, "Extensions", "DateTimeTestExtensions", "Helpers")
+    }
+
+    Rel(acceptance_base, server_fixture, "Uses")
+    Rel(app_tests, acceptance_base, "Inherits")
+    Rel(workorder_tests, acceptance_base, "Inherits")
+    Rel(ai_tests, acceptance_base, "Inherits")

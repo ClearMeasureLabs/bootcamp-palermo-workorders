@@ -1,0 +1,54 @@
+%% Class Diagram - DataAccess namespaces (Mappings, Handlers, Messaging)
+%% Key types only
+
+classDiagram
+    class DataContext {
+        +DbSet~WorkOrder~ WorkOrders
+        +DbSet~Employee~ Employees
+        +DbSet~Role~ Roles
+        +OnModelCreating(ModelBuilder) void
+        +SaveChanges() int
+    }
+    class WorkOrderMap {
+        +Configure(EntityTypeBuilder) void
+    }
+    class EmployeeMap {
+        +Configure(EntityTypeBuilder) void
+    }
+    class RoleMap {
+        +Configure(EntityTypeBuilder) void
+    }
+    class EntityMapBase~T~ {
+        <<abstract>>
+    }
+    class WorkOrderQueryHandler {
+        +Handle(WorkOrderByNumberQuery) WorkOrder
+    }
+    class EmployeeQueryHandler {
+        +Handle(EmployeeByUserNameQuery) Employee
+    }
+    class StateCommandHandler {
+        +Handle(IStateCommand) StateCommandResult
+    }
+    class WorkOrderSearchHandler {
+        +Handle(WorkOrderSpecificationQuery) IEnumerable
+    }
+    class ForecastQueryHandler {
+        +Handle(ForecastQuery) WeatherForecast[]
+    }
+    class TelemetryHandler {
+        +Handle(IRemotableRequest) void
+    }
+    class DistributedBus {
+        +Send(T) TResponse
+        +Publish(T) void
+    }
+    class CanConnectToDatabaseHealthCheck {
+        +CheckHealthAsync() HealthCheckResult
+    }
+    DataContext --> WorkOrderMap : applies
+    DataContext --> EmployeeMap : applies
+    DataContext --> RoleMap : applies
+    EntityMapBase <|-- WorkOrderMap
+    EntityMapBase <|-- EmployeeMap
+    EntityMapBase <|-- RoleMap

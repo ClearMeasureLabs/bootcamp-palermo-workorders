@@ -1,0 +1,45 @@
+%% Flowchart - .github/workflows/deploy.yml
+%% Deploy workflow (GitHub Actions)
+
+flowchart TB
+    subgraph trigger["Trigger"]
+        A[workflow_run: Build completed]
+        A2[workflow_dispatch with release_number]
+    end
+    subgraph tdd["deploy-to-tdd"]
+        T1[Report TDD status pending]
+        T2[Checkout]
+        T3[Set Version]
+        T4[Create Octopus Release]
+        T5[Deploy Octopus Release to TDD]
+        T6[Download Acceptance Test Package]
+        T7[Extract / Install Playwright]
+        T8[Wait for TDD deployment]
+        T9[Login to Azure]
+        T10[Get Container App FQDN and Connection String]
+        T11[Wait for Container App healthy]
+        T12[Run Acceptance tests]
+        T13[Upload Test Results]
+        T14[Report TDD status to commit]
+    end
+    subgraph uat["deploy-to-uat"]
+        U1[Set Version]
+        U2[Deploy Octopus Release to UAT]
+        U3[Wait for UAT deployment]
+    end
+    subgraph prod["deploy-to-prod"]
+        P1[Set Version]
+        P2[Deploy Octopus Release to Prod]
+        P3[Wait for Prod deployment]
+    end
+    A --> T1
+    A2 --> U1
+    T1 --> T2 --> T3 --> T4 --> T5
+    T5 --> T6
+    T6 --> T7
+    T5 --> T8
+    T8 --> T9 --> T10 --> T11 --> T12 --> T13 --> T14
+    T14 --> U1
+    U1 --> U2 --> U3
+    U3 --> P1
+    P1 --> P2 --> P3

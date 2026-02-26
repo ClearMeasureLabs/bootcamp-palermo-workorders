@@ -1,0 +1,49 @@
+%% Flowchart - .github/workflows/build.yml
+%% Build workflow (GitHub Actions)
+
+flowchart TB
+    subgraph trigger["Trigger"]
+        A[push / workflow_dispatch]
+    end
+    subgraph jobs["Jobs"]
+        B[build-linux: Integration Build SQL container]
+        C[build-sqlite: Integration Build SQLite]
+        D[code-analysis: Code Analysis]
+        E[build-windows: Integration Build Windows LocalDB]
+        F[docker-build-image: Publish Release Candidate]
+        G[publish-github-packages]
+        H[publish-octopus]
+        I[acceptance-tests: Acceptance Tests]
+    end
+    subgraph steps_linux["build-linux steps"]
+        B1[Checkout]
+        B2[Set Version]
+        B3[Run CI Build: build.ps1 + Invoke-CIBuild]
+        B4[Test Reporter]
+        B5[Publish Code Coverage]
+        B6[Upload Test Results]
+        B7[Create NuGet Packages: Package-Everything]
+        B8[Upload NuGet artifacts]
+        B9[Mark PR ready]
+    end
+    subgraph steps_docker["docker-build-image steps"]
+        F1[Checkout]
+        F2[Download NuGet Packages]
+        F3[Extract UI NuGet Package]
+        F4[Login to Azure / ACR]
+        F5[Build Docker image]
+        F6[Push to ACR]
+    end
+    A --> B
+    A --> C
+    A --> D
+    A --> E
+    B --> B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9
+    B --> F
+    C --> F
+    D --> F
+    E --> F
+    F --> F1 --> F2 --> F3 --> F4 --> F5 --> F6
+    B --> G
+    B --> H
+    F --> I
