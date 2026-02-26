@@ -492,10 +492,9 @@ Build steps:
 2. Compile - Build the solution
 3. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows), or skip if SQLite
 4. Update appsettings.json files with connection strings (skipped for SQLite)
-5. Temporarily disable ConnectionStrings in launchSettings.json to prevent override (skipped for SQLite)
-6. MigrateDatabaseLocal - Run database migrations (skipped for SQLite; uses EnsureCreated)
-7. AcceptanceTests - Run Playwright browser-based acceptance tests (auto-installs browsers)
-8. Restore appsettings.json and launchSettings.json files to git state (skipped for SQLite)
+5. MigrateDatabaseLocal - Run database migrations (skipped for SQLite; uses EnsureCreated)
+6. AcceptanceTests - Run Playwright browser-based acceptance tests (auto-installs browsers)
+7. Restore appsettings.json files to git state (skipped for SQLite)
 
 .PARAMETER databaseServer
 Optional. Specifies the database server to use. If not provided, defaults to "localhost"
@@ -607,12 +606,6 @@ Function Invoke-AcceptanceTests {
 			Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
 		}
 	}
-	if (Test-Path $launchSettingsPath) {
-		& git restore $launchSettingsPath
-		if ($LASTEXITCODE -ne 0) {
-			Log-Message -Message "Warning: Failed to restore launchSettings.json file" -Type "WARNING"
-		}
-	}
 
 	$sw.Stop()
 	if ($script:databaseEngine -eq "SQLite") {
@@ -642,7 +635,7 @@ Build steps:
 3. UnitTests - Run unit tests
 4. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows)
 5. Update appsettings.json files with connection strings
-6. MigrateDatabaseLocal - Run database migrations
+5. MigrateDatabaseLocal - Run database migrations
 7. IntegrationTest - Run integration tests
 8. Restore appsettings.json files to git state
 
@@ -769,7 +762,7 @@ Build steps:
 3. UnitTests - Run unit tests
 4. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows)
 5. Update appsettings.json files with connection strings
-6. MigrateDatabaseLocal - Run database migrations
+5. MigrateDatabaseLocal - Run database migrations
 7. IntegrationTest - Run integration tests
 8. Restore appsettings.json files to git state
 9. Package-Everything - Create NuGet packages for deployment

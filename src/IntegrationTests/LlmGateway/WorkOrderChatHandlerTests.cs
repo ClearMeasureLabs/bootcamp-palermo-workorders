@@ -23,7 +23,7 @@ public class WorkOrderChatHandlerTests : IntegratedTestBase
     }
 
     [Test]
-    public async Task ShouldCallEmployeesToolTask()
+    public async Task Handle_WithListEmployeesPrompt_ReturnsEmployeeData()
     {
         new ZDataLoader().LoadData();
         var workOrder = Faker<WorkOrder>();

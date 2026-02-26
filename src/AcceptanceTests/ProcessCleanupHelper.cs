@@ -44,29 +44,6 @@ public static class ProcessCleanupHelper
     {
         try
         {
-            foreach (var process in Process.GetProcessesByName("dotnet"))
-            {
-                try
-                {
-                    if (process.HasExited) continue;
-
-                    var cmdLine = process.MainModule?.FileName ?? "";
-                    // The server is launched via "dotnet run" in the UI/Server directory.
-                    // Child processes inherit environment or have the project dll on the
-                    // command line. Match on the known project directory segment.
-                    if (cmdLine.Length == 0) continue;
-
-                    // StartInfo.Arguments is only populated for processes we started;
-                    // for externally-spawned children, check the process start time.
-                    // As a safety measure, only kill dotnet processes whose working
-                    // directory or module path references the UI.Server project.
-                }
-                catch
-                {
-                    // Access denied or process already exited — skip
-                }
-            }
-
             if (!string.IsNullOrEmpty(applicationBaseUrl))
             {
                 KillProcessOnPort(applicationBaseUrl);
@@ -80,6 +57,7 @@ public static class ProcessCleanupHelper
 
     /// <summary>
     /// Parses the port from the application URL and kills any process listening on it.
+    /// Windows uses netstat; Linux uses lsof.
     /// </summary>
     private static void KillProcessOnPort(string url)
     {
@@ -88,49 +66,91 @@ public static class ProcessCleanupHelper
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return;
             var port = uri.Port;
 
-            var psi = new ProcessStartInfo
+            if (OperatingSystem.IsWindows())
             {
-                FileName = "netstat",
-                Arguments = "-ano",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var netstat = Process.Start(psi);
-            if (netstat == null) return;
-
-            var output = netstat.StandardOutput.ReadToEnd();
-            netstat.WaitForExit(5000);
-
-            var listenPattern = $":{port}";
-            foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                KillProcessOnPortWindows(port);
+            }
+            else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
             {
-                if (!line.Contains(listenPattern) || !line.Contains("LISTENING", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length > 0 && int.TryParse(parts[^1], out var pid) && pid > 0)
-                {
-                    try
-                    {
-                        var proc = Process.GetProcessById(pid);
-                        if (!proc.HasExited)
-                        {
-                            TestContext.Out.WriteLine($"Killing orphaned process {pid} on port {port}");
-                            proc.Kill(true);
-                            proc.WaitForExit(5000);
-                        }
-                    }
-                    catch
-                    {
-                        // Process may have exited between detection and kill
-                    }
-                }
+                KillProcessOnPortUnix(port);
             }
         }
         catch (Exception ex)
         {
             TestContext.Out.WriteLine($"Error killing process on port: {ex.Message}");
+        }
+    }
+
+    private static void KillProcessOnPortWindows(int port)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "netstat",
+            Arguments = "-ano",
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using var netstat = Process.Start(psi);
+        if (netstat == null) return;
+
+        var output = netstat.StandardOutput.ReadToEnd();
+        netstat.WaitForExit(5000);
+
+        var listenPattern = $":{port}";
+        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (!line.Contains(listenPattern) || !line.Contains("LISTENING", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length > 0 && int.TryParse(parts[^1], out var pid) && pid > 0)
+            {
+                KillProcessById(pid, port);
+            }
+        }
+    }
+
+    private static void KillProcessOnPortUnix(int port)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "lsof",
+            Arguments = $"-ti :{port}",
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using var lsof = Process.Start(psi);
+        if (lsof == null) return;
+
+        var output = lsof.StandardOutput.ReadToEnd();
+        lsof.WaitForExit(5000);
+
+        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (int.TryParse(line.Trim(), out var pid) && pid > 0)
+            {
+                KillProcessById(pid, port);
+            }
+        }
+    }
+
+    private static void KillProcessById(int pid, int port)
+    {
+        try
+        {
+            var proc = Process.GetProcessById(pid);
+            if (!proc.HasExited)
+            {
+                TestContext.Out.WriteLine($"Killing orphaned process {pid} on port {port}");
+                proc.Kill(true);
+                proc.WaitForExit(5000);
+            }
+        }
+        catch
+        {
+            // Process may have exited between detection and kill
         }
     }
 }

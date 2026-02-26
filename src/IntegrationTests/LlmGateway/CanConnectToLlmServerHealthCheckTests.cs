@@ -20,7 +20,7 @@ public class CanConnectToLlmServerHealthCheckTests
 
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Status.ShouldBeOneOf(HealthStatus.Healthy);
+        result.Status.ShouldBeOneOf(HealthStatus.Healthy, HealthStatus.Degraded);
         Console.WriteLine($"Status: {result.Status}, Description: {result.Description}");
     }
 

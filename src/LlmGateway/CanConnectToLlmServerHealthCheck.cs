@@ -45,7 +45,7 @@ public class CanConnectToLlmServerHealthCheck(
             }
 
             logger.LogWarning("Azure OpenAI returned empty response");
-            return HealthCheckResult.Degraded($"$Azure OpenAI returned empty response from endpoint {openAiUrl}");
+            return HealthCheckResult.Degraded($"Azure OpenAI returned empty response from endpoint {openAiUrl}");
         }
         catch (Exception ex)
         {

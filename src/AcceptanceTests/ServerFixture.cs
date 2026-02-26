@@ -311,7 +311,7 @@ public class ServerFixture
     public async Task OneTimeTearDown()
     {
         await ProcessCleanupHelper.StopServerProcessAsync(_serverProcess, ApplicationBaseUrl);
-        _serverProcess?.Dispose();
+        try { _serverProcess?.Dispose(); } catch (ObjectDisposedException) { }
         _serverProcess = null;
         Playwright?.Dispose();
     }

@@ -1,5 +1,3 @@
-using Azure;
-using Azure.AI.OpenAI;
 using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.Extensions.AI;
