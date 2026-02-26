@@ -281,6 +281,11 @@ jobs:
           $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           $jobStatus = "${{ job.status }}"
 
+          if ($jobStatus -eq "cancelled") {
+            Write-Host "Job was cancelled (superseded by a newer deployment). Leaving status as pending."
+            exit 0
+          }
+
           if ($jobStatus -eq "success") {
             $state = "success"
             $description = "TDD deployment and acceptance tests passed"
