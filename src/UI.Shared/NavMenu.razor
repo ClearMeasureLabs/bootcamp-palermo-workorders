@@ -28,6 +28,16 @@
             </NavLink>
         </div>
         
+        @if (CurrentUser != null)
+        {
+            <div class="nav-item px-3">
+                <NavLink data-testid="@Elements.AiAgent" class="nav-link" href="ai-agent">
+                    <i class="bi bi-robot nav-icon" aria-hidden="true"></i>
+                    <span class="nav-text">AI Agent</span>
+                </NavLink>
+            </div>
+        }
+
         @if (CurrentUser != null && CurrentUser.CanCreateWorkOrder())
         {
             <div class="nav-item px-3">
@@ -81,6 +91,7 @@
     public enum Elements
     {
         Counter,
+        AiAgent,
         MyWorkOrders,
         WorkOrdersAssignedToMe,
         AllAssignedWorkOrders,

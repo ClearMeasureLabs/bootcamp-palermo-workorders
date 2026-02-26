@@ -1,0 +1,117 @@
+@page "/ai-agent"
+@inherits AppComponentBase
+@using ClearMeasure.Bootcamp.LlmGateway
+
+<PageTitle>AI Agent - Work Order Assistant</PageTitle>
+
+<div class="ai-agent-page">
+    <div class="ai-agent-container">
+        <div class="ai-agent-header">
+            <h2>🤖 AI Agent</h2>
+            <div class="ai-agent-subtitle">Ask questions about work orders, employees, or general assistance</div>
+        </div>
+
+        <div class="chat-container">
+            @if (_chatMessages.Any())
+            {
+                <div data-testid="@Elements.ChatHistory" class="chat-history">
+                    @for (int i = 0; i < _chatMessages.Count; i++)
+                    {
+                        var message = _chatMessages[i];
+                        var messageTestId = message.IsUser ? Elements.UserMessage : Elements.AiMessage;
+                        <div data-testid="@($"{messageTestId}{i}")" class="chat-message @(message.IsUser ? "user-message" : "ai-message")">
+                            <div class="message-content">@message.Content</div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="chat-placeholder">
+                    <p>Start a conversation with the AI Agent. Ask about work orders, employees, or anything else.</p>
+                </div>
+            }
+
+            @if (_isLoading)
+            {
+                <div data-testid="@Elements.LoadingIndicator" class="chat-loading">
+                    <span>AI is thinking...</span>
+                </div>
+            }
+
+            <div class="chat-input-container">
+                <InputText @bind-Value="_prompt"
+                           data-testid="@Elements.ChatInput"
+                           class="form-control chat-input"
+                           placeholder="Ask the AI agent a question..."
+                           @onkeydown="HandleKeyDown"/>
+                <button type="button"
+                        data-testid="@Elements.SendButton"
+                        class="btn btn-primary chat-send-btn"
+                        @onclick="SendMessage">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _prompt = "";
+    private bool _isLoading;
+    private readonly List<ChatMessage> _chatMessages = new();
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_prompt) || _isLoading)
+            return;
+
+        var userMessage = _prompt.Trim();
+        _chatMessages.Add(new ChatMessage { Content = userMessage, IsUser = true });
+        _isLoading = true;
+        await InvokeAsync(StateHasChanged);
+        _prompt = "";
+
+        try
+        {
+            var query = new ApplicationChatQuery(userMessage);
+            var response = await Bus.Send(query);
+
+            var aiContent = response.Text ?? "No response received.";
+            _chatMessages.Add(new ChatMessage { Content = aiContent, IsUser = false });
+        }
+        catch (Exception ex)
+        {
+            _chatMessages.Add(new ChatMessage { Content = $"Error: {ex.Message}", IsUser = false });
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendMessage();
+        }
+    }
+
+    private class ChatMessage
+    {
+        public string Content { get; set; } = "";
+        public bool IsUser { get; set; }
+    }
+
+    public enum Elements
+    {
+        ChatInput,
+        SendButton,
+        ChatHistory,
+        UserMessage,
+        AiMessage,
+        LoadingIndicator
+    }
+}
