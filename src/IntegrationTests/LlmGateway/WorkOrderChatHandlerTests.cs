@@ -6,7 +6,7 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
 [TestFixture]
-public class WorkOrderChatHandlerTests : IntegratedTestBase
+public class WorkOrderChatHandlerTests : LlmTestBase
 {
     [Test]
     public async Task Handle_WithValidWorkOrder_ReturnsChatResponse()

@@ -7,7 +7,7 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
 [TestFixture]
-public class CanConnectToLlmServerHealthCheckTests
+public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
 {
     [Test]
     public async Task CheckHealthAsync_WithCurrentConfiguration_ReturnsResult()
