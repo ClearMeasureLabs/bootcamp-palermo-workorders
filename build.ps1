@@ -2,7 +2,8 @@
 . .\BuildFunctions.ps1
 
 # Clean environment variables that may interfere with local builds
-if ($env:ConnectionStrings__SqlConnectionString) {
+# Only clear for local builds; CI sets this intentionally (e.g. SQLite connection string)
+if ($env:ConnectionStrings__SqlConnectionString -and -not (Test-IsGitHubActions) -and -not (Test-IsAzureDevOps)) {
 	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
 	$env:ConnectionStrings__SqlConnectionString = $null
 	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
