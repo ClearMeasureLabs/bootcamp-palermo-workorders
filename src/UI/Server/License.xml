@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<license type="Non-Production Development" Applications="All" expiration="2026-05-27" id="5cc11913-e424-4e66-b42d-64f0c469309f">
+  <name>jeffrey@clear-measure.com</name>
+  <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+    <SignedInfo>
+      <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+      <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />
+      <Reference URI="">
+        <Transforms>
+          <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+        </Transforms>
+        <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+        <DigestValue>gx22C3+KAMy9YkHcQ/c2iNov+eY=</DigestValue>
+      </Reference>
+    </SignedInfo>
+    <SignatureValue>xBTwQXaJWvZ9Wgd9lWGZ4ynatgZxEcbuZbaXB0+/fPeMBdn0pc6jDMjfwoxWqxLMaQzk/UyKCHNxwjrjqy2j/kkhf7jNLBNVXJ0QBDOgEAnp9xQB8mT6IO8kpmauvdcqyrMIOiAaA3AmqaqoE6lar5fvzm6ycv6TtdCJYUvIOkQ=</SignatureValue>
+  </Signature>
+</license>

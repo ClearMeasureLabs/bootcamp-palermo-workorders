@@ -2,7 +2,8 @@
 . .\BuildFunctions.ps1
 
 # Clean environment variables that may interfere with local builds
-if ($env:ConnectionStrings__SqlConnectionString) {
+# Only clear for local builds; CI sets this intentionally (e.g. SQLite connection string)
+if ($env:ConnectionStrings__SqlConnectionString -and -not (Test-IsGitHubActions) -and -not (Test-IsAzureDevOps)) {
 	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
 	$env:ConnectionStrings__SqlConnectionString = $null
 	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
@@ -493,10 +494,9 @@ Build steps:
 2. Compile - Build the solution
 3. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows), or skip if SQLite
 4. Update appsettings.json files with connection strings (skipped for SQLite)
-5. Temporarily disable ConnectionStrings in launchSettings.json to prevent override (skipped for SQLite)
-6. MigrateDatabaseLocal - Run database migrations (skipped for SQLite; uses EnsureCreated)
-7. AcceptanceTests - Run Playwright browser-based acceptance tests (auto-installs browsers)
-8. Restore appsettings.json and launchSettings.json files to git state (skipped for SQLite)
+5. MigrateDatabaseLocal - Run database migrations (skipped for SQLite; uses EnsureCreated)
+6. AcceptanceTests - Run Playwright browser-based acceptance tests (auto-installs browsers)
+7. Restore appsettings.json files to git state (skipped for SQLite)
 
 .PARAMETER databaseServer
 Optional. Specifies the database server to use. If not provided, defaults to "localhost"
@@ -520,7 +520,7 @@ Invoke-AcceptanceTests -databaseServer "localhost" -databaseName "ChurchBulletin
 Invoke-AcceptanceTests -UseSqlite
 
 .NOTES
-Requires Playwright browsers installed. Ollama recommended for AI tests.
+Requires Playwright browsers installed. Azure OpenId recommended for AI tests.
 Sets containerAppURL environment variable to "localhost:7174".
 Automatically installs Playwright browsers if not present.
 Falls back to SQLite when Docker is unavailable on Linux.
@@ -541,8 +541,6 @@ Function Invoke-AcceptanceTests {
 	$projectConfig = "Release"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
-
-    Test-IsLlmAvailable -LogOutput $true
 
 	# Override database engine if -UseSqlite switch is provided
 	if ($UseSqlite) {
@@ -586,19 +584,10 @@ Function Invoke-AcceptanceTests {
 		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 	}
 
+
 	# Update appsettings.json files before database migration
 	if ($script:databaseEngine -ne "SQLite") {
 		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-	}
-
-	# Temporarily disable ConnectionStrings in launchSettings.json for acceptance tests
-	# This prevents the Windows LocalDB connection string from overriding appsettings.json
-	$launchSettingsPath = Join-PathSegments $source_dir "UI" "Server" "Properties" "launchSettings.json"
-	if (Test-Path $launchSettingsPath) {
-		Log-Message -Message "Temporarily disabling ConnectionStrings in launchSettings.json" -Type "INFO"
-		$launchSettings = Get-Content $launchSettingsPath -Raw
-		$launchSettings = $launchSettings -replace '"ConnectionStrings__SqlConnectionString":', '"_DISABLED_ConnectionStrings__SqlConnectionString":'
-		Set-Content -Path $launchSettingsPath -Value $launchSettings
 	}
 
 	if ($script:databaseEngine -ne "SQLite") {
@@ -611,17 +600,11 @@ Function Invoke-AcceptanceTests {
 	AcceptanceTests
 
 	if ($script:databaseEngine -ne "SQLite") {
-		# Restore appsettings and launchSettings files to their original git state
-		Log-Message -Message "Restoring appsettings*.json and launchSettings.json files to git state" -Type "INFO"
+		# Restore appsettings files to their original git state
+		Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
 		& git restore 'src/**/appsettings*.json'
 		if ($LASTEXITCODE -ne 0) {
 			Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
-		}
-	}
-	if (Test-Path $launchSettingsPath) {
-		& git restore $launchSettingsPath
-		if ($LASTEXITCODE -ne 0) {
-			Log-Message -Message "Warning: Failed to restore launchSettings.json file" -Type "WARNING"
 		}
 	}
 
@@ -653,7 +636,7 @@ Build steps:
 3. UnitTests - Run unit tests
 4. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows)
 5. Update appsettings.json files with connection strings
-6. MigrateDatabaseLocal - Run database migrations
+5. MigrateDatabaseLocal - Run database migrations
 7. IntegrationTest - Run integration tests
 8. Restore appsettings.json files to git state
 
@@ -780,7 +763,7 @@ Build steps:
 3. UnitTests - Run unit tests
 4. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows)
 5. Update appsettings.json files with connection strings
-6. MigrateDatabaseLocal - Run database migrations
+5. MigrateDatabaseLocal - Run database migrations
 7. IntegrationTest - Run integration tests
 8. Restore appsettings.json files to git state
 9. Package-Everything - Create NuGet packages for deployment

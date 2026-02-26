@@ -15,24 +15,27 @@ public class AutoReformatAgentService : BackgroundService
 {
     private readonly IServiceScope _serviceScope;
     private readonly ILogger<AutoReformatAgentService> _logger;
+    private readonly IConfiguration _configuration;
     private readonly TimeProvider _timeProvider;
 
     public AutoReformatAgentService(
         IServiceProvider serviceProvider,
         ILogger<AutoReformatAgentService> logger,
+        IConfiguration configuration,
         TimeProvider timeProvider)
     {
         _serviceScope = serviceProvider.CreateScope();
         _logger = logger;
+        _configuration = configuration;
         _timeProvider = timeProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (string.Equals(Environment.GetEnvironmentVariable("DISABLE_AUTO_REFORMAT_AGENT"), "true",
+        if (string.Equals(_configuration["DISABLE_AUTO_REFORMAT_AGENT"], "true",
                 StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogInformation("AutoReformatAgentService disabled via DISABLE_AUTO_REFORMAT_AGENT environment variable");
+            _logger.LogInformation("AutoReformatAgentService disabled via DISABLE_AUTO_REFORMAT_AGENT configuration");
             return;
         }
 

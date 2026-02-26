@@ -1,22 +1,45 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.IntegrationTests;
+using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Shouldly;
 
-namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
+namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
 [TestFixture]
-public class McpServerAcceptanceTests : McpAcceptanceTestBase
+public class McpServerAcceptanceTests : AcceptanceTestBase
 {
+    protected override bool RequiresBrowser => false;
+
+    private static McpTestHelper? _helper;
+
+    [OneTimeSetUp]
+    public async Task McpSetUp()
+    {
+        _helper = new McpTestHelper(TestHost.GetRequiredService<ChatClientFactory>());
+        await _helper.ConnectAsync();
+    }
+
+    [OneTimeTearDown]
+    public async Task McpTearDown()
+    {
+        if (_helper != null) await _helper.DisposeAsync();
+    }
+
+    [SetUp]
+    public void EnsureAvailability()
+    {
+        if (!_helper!.Connected)
+            Assert.Inconclusive("MCP server is not available");
+    }
+
     [Test]
     public async Task ShouldDiscoverAllMcpTools()
     {
-        RequiresLlm = false;
+        _helper!.Tools.Count.ShouldBeGreaterThanOrEqualTo(7);
 
-        Tools.Count.ShouldBeGreaterThanOrEqualTo(7);
-
-        var toolNames = Tools.Select(t => t.Name).ToList();
+        var toolNames = _helper.Tools.Select(t => t.Name).ToList();
         toolNames.ShouldContain("list-work-orders");
         toolNames.ShouldContain("get-work-order");
         toolNames.ShouldContain("create-work-order");
@@ -29,13 +52,11 @@ public class McpServerAcceptanceTests : McpAcceptanceTestBase
     [Test]
     public async Task ShouldCreateWorkOrderViaDirectToolCall()
     {
-        RequiresLlm = false;
-
         var bus = TestHost.GetRequiredService<IBus>();
         var employees = await bus.Send(new EmployeeGetAllQuery());
         var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
 
-        var result = await CallToolDirectly("create-work-order",
+        var result = await _helper!.CallToolDirectly("create-work-order",
             new Dictionary<string, object?>
             {
                 ["title"] = "Direct MCP tool test",
@@ -50,7 +71,7 @@ public class McpServerAcceptanceTests : McpAcceptanceTestBase
     [Test, Retry(2)]
     public async Task ShouldListWorkOrdersViaLlm()
     {
-        var response = await SendPrompt(
+        var response = await _helper!.SendPrompt(
             "Use the list-work-orders tool to list all work orders in the system. " +
             "Return the work order numbers you find.");
 
@@ -64,7 +85,7 @@ public class McpServerAcceptanceTests : McpAcceptanceTestBase
         var workOrders = await bus.Send(new WorkOrderSpecificationQuery());
         var knownOrder = workOrders.First();
 
-        var response = await SendPrompt(
+        var response = await _helper!.SendPrompt(
             $"Use the get-work-order tool to get the details of work order number '{knownOrder.Number}'. " +
             "Return the title and status.");
 
@@ -79,13 +100,12 @@ public class McpServerAcceptanceTests : McpAcceptanceTestBase
         var employees = await bus.Send(new EmployeeGetAllQuery());
         var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
 
-        var response = await SendPrompt(
+        var response = await _helper!.SendPrompt(
             $"Call the create-work-order tool with these exact parameters: " +
             $"title='Repair sanctuary roof', description='Roof tiles need replacement', " +
             $"creatorUsername='{creator.UserName}'.");
 
         response.Text.ShouldNotBeNullOrEmpty();
-        // The response should indicate the work order was created (contains Draft status or title)
         var responseText = response.Text.ToLowerInvariant();
         (responseText.Contains("repair") || responseText.Contains("draft") || responseText.Contains("created") || responseText.Contains("wo-"))
             .ShouldBeTrue($"Expected creation confirmation in response: {response.Text}");
@@ -98,7 +118,7 @@ public class McpServerAcceptanceTests : McpAcceptanceTestBase
         var employees = await bus.Send(new EmployeeGetAllQuery());
         var knownUsernames = employees.Select(e => e.UserName).ToList();
 
-        var response = await SendPrompt(
+        var response = await _helper!.SendPrompt(
             "Use the list-employees tool to list all employees in the system. " +
             "Return their usernames.");
 

@@ -64,9 +64,13 @@ public abstract class AcceptanceTestBase
 
     private static readonly Random RandomPosition = new();
 
+    protected virtual bool RequiresBrowser => true;
+
     [SetUp]
     public async Task SetUpAsync()
     {
+        if (!RequiresBrowser) return;
+
         var testTag = Guid.NewGuid().ToString("N")[..8];
         var currentUser = CreateTestUser(testTag);
 

@@ -15,7 +15,7 @@ public class CanConnectToDatabaseHealthCheck(ILogger<CanConnectToDatabaseHealthC
             return Task.FromResult(HealthCheckResult.Unhealthy("Cannot connect to database"));
         }
 
-        logger.LogInformation("Health check success");
+        logger.LogDebug("Health check success");
         return Task.FromResult(HealthCheckResult.Healthy());
     }
 }

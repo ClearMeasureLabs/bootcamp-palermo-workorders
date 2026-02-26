@@ -53,6 +53,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
         run: |
           Write-Host "Running CI Build"
           . ./build.ps1
@@ -174,6 +177,10 @@ jobs:
         shell: pwsh
         env:
           BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
+          ConnectionStrings__SqlConnectionString: "Data Source=ChurchBulletin.db"
         run: |
           Write-Host "Running Private Build with SQLite"
           . ./build.ps1
@@ -229,6 +236,10 @@ jobs:
         shell: pwsh
         env:
           BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
+          ConnectionStrings__SqlConnectionString: "Data Source=ChurchBulletin.db"
         run: |
           Write-Host "Running Private Build with SQLite on ARM"
           . ./build.ps1
@@ -322,6 +333,9 @@ jobs:
         shell: pwsh
         env:
           BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
         run: |
           Write-Host "Running Private Build with Windows LocalDB"
           . ./build.ps1
@@ -622,6 +636,9 @@ jobs:
         shell: pwsh
         env:
           BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
         run: |
           Write-Host "Running Acceptance Tests"
           . ./build.ps1
@@ -687,6 +704,10 @@ jobs:
         shell: pwsh
         env:
           BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
+          ConnectionStrings__SqlConnectionString: "Data Source=ChurchBulletin.db"
         run: |
           Write-Host "Running Acceptance Tests with SQLite on ARM"
           . ./build.ps1

@@ -5,7 +5,7 @@ public class Is64BitProcessHealthCheck(ILogger<Is64BitProcessHealthCheck> logger
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
         CancellationToken cancellationToken = new())
     {
-        logger.LogInformation("Health check success");
+        logger.LogDebug("Health check success");
         if (!Environment.Is64BitProcess)
         {
             return Task.FromResult(HealthCheckResult.Degraded());
