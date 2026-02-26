@@ -1,9 +1,11 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Microsoft.Extensions.Configuration;
 using System.Collections.Concurrent;
 using System.Globalization;
 using Login = ClearMeasure.Bootcamp.UI.Shared.Pages.Login;
@@ -35,6 +37,19 @@ public abstract class AcceptanceTestBase
     protected virtual bool? Headless { get; set; } = ServerFixture.HeadlessTestBrowser;
     protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
     public IBus Bus => TestHost.GetRequiredService<IBus>();
+
+    protected static void SkipIfNoLlm()
+    {
+        var configuration = TestHost.GetRequiredService<IConfiguration>();
+        var apiKey = configuration.GetValue<string>("AI_OpenAI_ApiKey");
+        var url = configuration.GetValue<string>("AI_OpenAI_Url");
+        var model = configuration.GetValue<string>("AI_OpenAI_Model");
+
+        if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(url) || string.IsNullOrEmpty(model))
+        {
+            Assert.Ignore("No LLM provider configured. Set AI_OpenAI_ApiKey, AI_OpenAI_Url, and AI_OpenAI_Model to run LLM tests.");
+        }
+    }
 
     private string TestId => TestContext.CurrentContext.Test.ID;
     
