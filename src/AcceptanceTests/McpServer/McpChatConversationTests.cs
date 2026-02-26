@@ -2,28 +2,42 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.IntegrationTests;
+using ClearMeasure.Bootcamp.LlmGateway;
 using Shouldly;
 
-namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
+namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
 [TestFixture]
-public class McpChatConversationTests
+public class McpChatConversationTests : AcceptanceTestBase
 {
-	private McpTestHelper Helper => McpHttpServerFixture.Helper!;
+	protected override bool RequiresBrowser => false;
+
+	private static McpTestHelper? _helper;
+
+	[OneTimeSetUp]
+	public async Task McpSetUp()
+	{
+		_helper = new McpTestHelper(TestHost.GetRequiredService<ChatClientFactory>());
+		await _helper.ConnectAsync();
+	}
+
+	[OneTimeTearDown]
+	public async Task McpTearDown()
+	{
+		if (_helper != null) await _helper.DisposeAsync();
+	}
 
 	[SetUp]
 	public void EnsureAvailability()
 	{
-		if (!McpHttpServerFixture.ServerAvailable)
-			Assert.Inconclusive("MCP server is not available");
-		if (!McpHttpServerFixture.LlmAvailable)
-			Assert.Inconclusive("No LLM available (set AI_OpenAI_ApiKey/Url/Model or run Ollama locally)");
+		if (!_helper!.Connected)
+			Assert.Inconclusive("MCP HTTP server is not available");
 	}
 
 	[Test, Retry(2)]
 	public async Task ShouldCreateAndAssignWorkOrderFromConversationalPrompt()
 	{
-		var response = await Helper.SendPrompt(
+		var response = await _helper!.SendPrompt(
 			"I am Timothy Lovejoy (my username is tlovejoy). " +
 			"Create a new work order assigned to Groundskeeper Willie (username gwillie) " +
 			"to cut the grass and make sure that the edging is done and that fertilizer is put down. " +

@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.AcceptanceTests;
 using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.Extensions.AI;
@@ -5,20 +6,48 @@ using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 
-namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
+namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
 /// <summary>
 /// Provides MCP tool invocation and LLM chat helpers for acceptance tests.
-/// Uses the MCP HTTP endpoint hosted by UI.Server at /mcp.
+/// Connects to the MCP HTTP endpoint hosted by UI.Server at /mcp.
 /// </summary>
-public class McpTestHelper(McpClient client, IList<McpClientTool> tools, ChatClientFactory factory)
+public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
 {
-    public ChatClientFactory Factory { get; } = factory;
-    public IList<McpClientTool> Tools => tools;
+    private McpClient? _client;
+    private IList<McpClientTool>? _tools;
+
+    public IList<McpClientTool> Tools => _tools ?? throw new InvalidOperationException("Not connected to MCP server");
+    public bool Connected => _client != null;
+
+    public async Task ConnectAsync()
+    {
+        var mcpUrl = ServerFixture.ApplicationBaseUrl + "/mcp";
+        TestContext.Out.WriteLine($"McpTestHelper: connecting to {mcpUrl}");
+
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        var httpClient = new HttpClient(handler);
+        var transportOptions = new HttpClientTransportOptions
+        {
+            Endpoint = new Uri(mcpUrl),
+            Name = "ChurchBulletin-HTTP"
+        };
+        var transport = new HttpClientTransport(transportOptions, httpClient);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        _client = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
+        _tools = await _client.ListToolsAsync(cancellationToken: cts.Token);
+
+        TestContext.Out.WriteLine($"McpTestHelper: connected, {_tools.Count} tools discovered");
+    }
 
     public async Task<string> CallToolDirectly(string toolName, Dictionary<string, object?> arguments)
     {
-        var result = await client.CallToolAsync(toolName, arguments);
+        var result = await _client!.CallToolAsync(toolName, arguments);
         return string.Join("\n", result.Content
             .OfType<TextContentBlock>()
             .Select(c => c.Text));
@@ -26,7 +55,7 @@ public class McpTestHelper(McpClient client, IList<McpClientTool> tools, ChatCli
 
     public async Task<ChatResponse> SendPrompt(string prompt)
     {
-        var chatClient = await Factory.GetChatClient();
+        var chatClient = await factory.GetChatClient();
         var messages = new List<ChatMessage>
         {
             new(ChatRole.System,
@@ -37,7 +66,7 @@ public class McpTestHelper(McpClient client, IList<McpClientTool> tools, ChatCli
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
         return await chatClient.GetResponseAsync(messages,
-            new ChatOptions { Tools = [.. tools] },
+            new ChatOptions { Tools = [.. _tools!] },
             cts.Token);
     }
 
@@ -52,37 +81,12 @@ public class McpTestHelper(McpClient client, IList<McpClientTool> tools, ChatCli
         return endIndex < 0 ? string.Empty : json[startIndex..endIndex];
     }
 
-    internal static string? GetLlmConfigValue(string key)
+    public async ValueTask DisposeAsync()
     {
-        var configuration = TestHost.GetRequiredService<IConfiguration>();
-        var value = configuration.GetValue<string>(key);
-        if (!string.IsNullOrEmpty(value)) return value;
-
-        return Environment.GetEnvironmentVariable(key);
-    }
-
-    internal static async Task<(bool Available, string Provider)> CheckLlmAvailability()
-    {
-        var apiKey = GetLlmConfigValue("AI_OpenAI_ApiKey");
-        if (!string.IsNullOrEmpty(apiKey))
+        if (_client != null)
         {
-            var url = GetLlmConfigValue("AI_OpenAI_Url");
-            var model = GetLlmConfigValue("AI_OpenAI_Model");
-            if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(model))
-            {
-                return (true, "AzureOpenAI");
-            }
-        }
-
-        try
-        {
-            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-            var response = await httpClient.GetAsync("http://localhost:11434/");
-            return response.IsSuccessStatusCode ? (true, "Ollama") : (false, "None");
-        }
-        catch
-        {
-            return (false, "None");
+            await _client.DisposeAsync();
+            _client = null;
         }
     }
 }

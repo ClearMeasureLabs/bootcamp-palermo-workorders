@@ -1,26 +1,42 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.IntegrationTests;
+using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Shouldly;
 
-namespace ClearMeasure.Bootcamp.McpAcceptanceTests;
+namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
 [TestFixture]
-public class McpHttpServerAcceptanceTests
+public class McpHttpServerAcceptanceTests : AcceptanceTestBase
 {
-    private McpTestHelper Helper => McpHttpServerFixture.Helper!;
+    protected override bool RequiresBrowser => false;
+
+    private static McpTestHelper? _helper;
+
+    [OneTimeSetUp]
+    public async Task McpSetUp()
+    {
+        _helper = new McpTestHelper(TestHost.GetRequiredService<ChatClientFactory>());
+        await _helper.ConnectAsync();
+    }
+
+    [OneTimeTearDown]
+    public async Task McpTearDown()
+    {
+        if (_helper != null) await _helper.DisposeAsync();
+    }
 
     [SetUp]
     public void EnsureAvailability()
     {
-        if (!McpHttpServerFixture.ServerAvailable)
+        if (!_helper!.Connected)
             Assert.Inconclusive("MCP HTTP server is not available");
     }
 
     [Test]
     public void ShouldDiscoverAllMcpToolsViaHttp()
     {
-        var tools = Helper.Tools;
+        var tools = _helper!.Tools;
         tools.Count.ShouldBeGreaterThanOrEqualTo(7);
 
         var toolNames = tools.Select(t => t.Name).ToList();
@@ -36,7 +52,7 @@ public class McpHttpServerAcceptanceTests
     [Test]
     public async Task ShouldListWorkOrdersViaHttp()
     {
-        var text = await Helper.CallToolDirectly("list-work-orders",
+        var text = await _helper!.CallToolDirectly("list-work-orders",
             new Dictionary<string, object?>());
 
         text.ShouldNotBeNullOrEmpty();
@@ -50,7 +66,7 @@ public class McpHttpServerAcceptanceTests
         var employees = await bus.Send(new EmployeeGetAllQuery());
         var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
 
-        var text = await Helper.CallToolDirectly("create-work-order",
+        var text = await _helper!.CallToolDirectly("create-work-order",
             new Dictionary<string, object?>
             {
                 ["title"] = "HTTP transport test",
@@ -69,7 +85,7 @@ public class McpHttpServerAcceptanceTests
         var employees = await bus.Send(new EmployeeGetAllQuery());
         var known = employees.First();
 
-        var text = await Helper.CallToolDirectly("get-employee",
+        var text = await _helper!.CallToolDirectly("get-employee",
             new Dictionary<string, object?>
             {
                 ["username"] = known.UserName!

@@ -11,24 +11,12 @@ public class ChatClientFactory(IBus bus)
     public async Task<IChatClient> GetChatClient()
     {
         var config = await bus.Send(new ChatClientConfigQuery());
-        var apiKey = config.AiOpenAiApiKey;
+        var apiKey = config.AiOpenAiApiKey
+            ?? throw new InvalidOperationException("AI_OpenAI_ApiKey is not configured.");
 
-        IChatClient innerClient = string.IsNullOrEmpty(apiKey)
-            ? BuildOllamaChatClient()
-            : BuildAzureOpenAiChatClient(config, apiKey);
+        IChatClient innerClient = BuildAzureOpenAiChatClient(config, apiKey);
 
         return new TracingChatClient(innerClient, config);
-    }
-
-    private static IChatClient BuildOllamaChatClient()
-    {
-        var endpoint = "http://localhost:11434/";
-        var modelId = "llama3.2";
-
-        return new OllamaChatClient(endpoint, modelId: modelId)
-            .AsBuilder()
-            .UseFunctionInvocation()
-            .Build();
     }
 
     private static IChatClient BuildAzureOpenAiChatClient(ChatClientConfig config, string apiKey)
