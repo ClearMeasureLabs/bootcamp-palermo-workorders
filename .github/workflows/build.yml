@@ -180,6 +180,7 @@ jobs:
           AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
           AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
           AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
+          ConnectionStrings__SqlConnectionString: "Data Source=ChurchBulletin.db"
         run: |
           Write-Host "Running Private Build with SQLite"
           . ./build.ps1
@@ -238,6 +239,7 @@ jobs:
           AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
           AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
           AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
+          ConnectionStrings__SqlConnectionString: "Data Source=ChurchBulletin.db"
         run: |
           Write-Host "Running Private Build with SQLite on ARM"
           . ./build.ps1
@@ -704,6 +706,7 @@ jobs:
           AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
           AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
           AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
+          ConnectionStrings__SqlConnectionString: "Data Source=ChurchBulletin.db"
         run: |
           Write-Host "Running Acceptance Tests with SQLite on ARM"
           . ./build.ps1
