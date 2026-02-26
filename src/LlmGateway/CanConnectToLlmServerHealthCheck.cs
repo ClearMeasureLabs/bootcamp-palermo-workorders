@@ -11,11 +11,11 @@ public class CanConnectToLlmServerHealthCheck(
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
         CancellationToken cancellationToken = new())
     {
-        if (!await chatClientFactory.IsChatClientAvailable())
+        var availability = await chatClientFactory.IsChatClientAvailable();
+        if (!availability.IsAvailable)
         {
-            const string message = "Chat client is not configured";
-            logger.LogWarning(message);
-            return HealthCheckResult.Degraded(message);
+            logger.LogWarning(availability.Message);
+            return HealthCheckResult.Degraded(availability.Message);
         }
 
         try

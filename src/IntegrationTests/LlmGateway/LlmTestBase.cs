@@ -8,10 +8,11 @@ public abstract class LlmTestBase : IntegratedTestBase
     public async Task SkipWhenChatClientUnavailable()
     {
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
+        var availability = await factory.IsChatClientAvailable();
 
-        if (!await factory.IsChatClientAvailable())
+        if (!availability.IsAvailable)
         {
-            Assert.Ignore("Chat client is not configured. Set AI_OpenAI_ApiKey, AI_OpenAI_Url, and AI_OpenAI_Model to run these tests.");
+            Assert.Ignore(availability.Message);
         }
     }
 }

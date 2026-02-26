@@ -8,12 +8,22 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 
 public class ChatClientFactory(IBus bus)
 {
-    public async Task<bool> IsChatClientAvailable()
+    public async Task<ChatClientAvailabilityResult> IsChatClientAvailable()
     {
         var config = await bus.Send(new ChatClientConfigQuery());
-        return !string.IsNullOrEmpty(config.AiOpenAiApiKey)
-            && !string.IsNullOrEmpty(config.AiOpenAiUrl)
-            && !string.IsNullOrEmpty(config.AiOpenAiModel);
+        var missing = new List<string>();
+
+        if (string.IsNullOrEmpty(config.AiOpenAiApiKey)) missing.Add("AI_OpenAI_ApiKey");
+        if (string.IsNullOrEmpty(config.AiOpenAiUrl)) missing.Add("AI_OpenAI_Url");
+        if (string.IsNullOrEmpty(config.AiOpenAiModel)) missing.Add("AI_OpenAI_Model");
+
+        if (missing.Count > 0)
+        {
+            return new ChatClientAvailabilityResult(false,
+                $"Chat client is not configured. Set the following environment variables: {string.Join(", ", missing)}");
+        }
+
+        return new ChatClientAvailabilityResult(true, "Chat client is configured");
     }
 
     public async Task<IChatClient> GetChatClient()
