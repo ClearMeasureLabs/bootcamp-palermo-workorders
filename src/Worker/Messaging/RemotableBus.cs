@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.DataAccess.Messaging;
+using ClearMeasure.Bootcamp.Core.Messaging;
 using MediatR;
 
 namespace Worker.Messaging;

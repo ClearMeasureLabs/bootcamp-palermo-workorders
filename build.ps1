@@ -155,6 +155,7 @@ Function Compile {
 		& dotnet build $solutionName -nologo --no-restore -v `
 			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
+			/p:MSBuildTreatAllWarningsAsErrors="true" `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
 			/p:Product="Church Bulletin"
 	}
