@@ -27,6 +27,7 @@ public class CounterTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var valueLocator = Page.GetByTestId(nameof(Counter.Elements.CounterValue));
+        await valueLocator.WaitForAsync();
         await Expect(valueLocator).ToBeVisibleAsync();
         await Expect(valueLocator).ToHaveTextAsync("0");
     }
@@ -37,6 +38,7 @@ public class CounterTests : AcceptanceTestBase
         await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GetByTestId(nameof(Counter.Elements.CounterValue)).WaitForAsync();
 
         await Click(nameof(Counter.Elements.IncrementButton));
         await Expect(Page.GetByTestId(nameof(Counter.Elements.CounterValue))).ToHaveTextAsync("1");
@@ -51,6 +53,7 @@ public class CounterTests : AcceptanceTestBase
         await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GetByTestId(nameof(Counter.Elements.CounterValue)).WaitForAsync();
 
         await Click(nameof(Counter.Elements.IncrementButton));
         await Click(nameof(Counter.Elements.IncrementButton));
