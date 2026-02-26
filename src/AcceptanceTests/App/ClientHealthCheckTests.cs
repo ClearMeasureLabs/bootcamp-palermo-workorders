@@ -20,6 +20,7 @@ public class ClientHealthCheckTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         var statusSpan = Page.GetByTestId(nameof(ClientHealthCheck.Elements.Status));
         var innerTextAsync = await statusSpan.InnerTextAsync();
+        innerTextAsync.ShouldBeOneOf(AcceptableHealthStatuses);
         AcceptableHealthStatuses.ShouldContain(innerTextAsync);
     }
 
