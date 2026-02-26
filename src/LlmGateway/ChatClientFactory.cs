@@ -16,7 +16,7 @@ public class ChatClientFactory(IBus bus)
 
         IChatClient innerClient = BuildAzureOpenAiChatClient(config, apiKey);
 
-        return new TracingChatClient(innerClient, config);
+        return new TracingChatClient(innerClient);
     }
 
     private static IChatClient BuildAzureOpenAiChatClient(ChatClientConfig config, string apiKey)

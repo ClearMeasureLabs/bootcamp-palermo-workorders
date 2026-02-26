@@ -518,7 +518,7 @@ Invoke-AcceptanceTests -databaseServer "localhost" -databaseName "ChurchBulletin
 Invoke-AcceptanceTests -UseSqlite
 
 .NOTES
-Requires Playwright browsers installed. Ollama recommended for AI tests.
+Requires Playwright browsers installed. Azure OpenId recommended for AI tests.
 Sets containerAppURL environment variable to "localhost:7174".
 Automatically installs Playwright browsers if not present.
 Falls back to SQLite when Docker is unavailable on Linux.
