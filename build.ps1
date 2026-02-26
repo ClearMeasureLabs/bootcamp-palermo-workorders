@@ -540,8 +540,6 @@ Function Invoke-AcceptanceTests {
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
-    Test-IsLlmAvailable -LogOutput $true
-
 	# Override database engine if -UseSqlite switch is provided
 	if ($UseSqlite) {
 		$script:databaseEngine = "SQLite"
