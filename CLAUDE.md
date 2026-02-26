@@ -19,7 +19,7 @@ This is a Work Order management system built with .NET 10.0, implementing Onion 
 | UI.Client | `src/UI/Client/` | Blazor WASM |
 | UI.Api | `src/UI/Api/` | Web API |
 | UI.Shared | `src/UI.Shared/` | Shared UI |
-| LlmGateway | `src/LlmGateway/` | Azure OpenAI / Ollama |
+| LlmGateway | `src/LlmGateway/` | Azure OpenAI |
 | ChurchBulletin.AppHost | `src/ChurchBulletin.AppHost/` | Aspire AppHost |
 | ChurchBulletin.ServiceDefaults | `src/ChurchBulletin.ServiceDefaults/` | Aspire defaults |
 | Worker | `src/Worker/` | Hosted endpoint worker service |
@@ -111,7 +111,7 @@ The solution follows strict Onion Architecture with dependency flow inward:
 - **Database** (`src/Database/`): DbUp-based migrations with numbered scripts in `scripts/Update/` (001, 003, 004, etc.)
 
 ### Additional Layers
-- **LlmGateway** (`src/LlmGateway/`): Azure OpenAI and Ollama integration for AI agent functionality
+- **LlmGateway** (`src/LlmGateway/`): Azure OpenAI integration for AI agent functionality
 - **Worker** (`src/Worker/`): Background hosted endpoint for work-order processing
 
 ## Testing Structure
@@ -241,7 +241,7 @@ docker run -p 8080:8080 -p 80:80 churchbulletin-ui
 - **CQRS**: MediatR
 - **DI Container**: Lamar
 - **Testing**: NUnit 4.x, bUnit, Playwright, Shouldly
-- **AI/LLM**: Azure OpenAI, Ollama
+- **AI/LLM**: Azure OpenAI
 - **Deployment**: Azure Container Apps, GitHub Actions, Azure DevOps Pipelines
 
 ## Architecture Documentation

@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: MCP server acceptance test infrastructure
-The system SHALL include acceptance tests in `src/AcceptanceTests/McpServer/` that start the MCP server as a child process using `StdioClientTransport`, connect an `McpClient`, wire the discovered tools into an `IChatClient` (Ollama or Azure OpenAI), and validate end-to-end behavior through LLM prompts.
+The system SHALL include acceptance tests in `src/AcceptanceTests/McpServer/` that start the MCP server as a child process using `StdioClientTransport`, connect an `McpClient`, wire the discovered tools into an `IChatClient` (Azure OpenAI), and validate end-to-end behavior through LLM prompts.
 
 #### Scenario: MCP server starts and tools are discoverable
 - **GIVEN** the McpServer project is built
@@ -56,7 +56,6 @@ The system SHALL accept a natural-language prompt asking about employees and ret
 Acceptance tests that require a running LLM SHALL be marked with `[Explicit]` so they do not run in standard CI pipelines. Tests SHALL handle LLM connection failures gracefully with `Assert.Inconclusive` rather than hard failures.
 
 #### Scenario: Test skips when LLM is unavailable
-- **GIVEN** no Ollama instance is running locally
-- **AND** no Azure OpenAI key is configured
+- **GIVEN** no Azure OpenAI key is configured
 - **WHEN** the MCP acceptance test attempts to connect the `IChatClient`
 - **THEN** the test reports `Assert.Inconclusive("LLM not available")`

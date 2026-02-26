@@ -57,7 +57,7 @@ The Web API uses a single-endpoint pattern (`SingleApiController`) that deserial
 **Architecture:**
 
 ```
-[NUnit Test] → [IChatClient (Ollama/Azure OpenAI)]
+[NUnit Test] → [IChatClient (Azure OpenAI)]
                     ↓ (function invocation)
               [McpClientTool (from MCP SDK)]
                     ↓ (stdio JSON-RPC)
@@ -70,7 +70,7 @@ The Web API uses a single-endpoint pattern (`SingleApiController`) that deserial
 
 1. **`McpServerFixture`** (`[SetUpFixture]`): Starts the MCP server as a child process using `StdioClientTransport` from the `ModelContextProtocol` NuGet package. Creates an `McpClient` and caches the tool list. Disposes client and kills process on teardown. Similar lifecycle to the existing `ServerFixture` for the Blazor server.
 
-2. **`McpAcceptanceTestBase`**: Base class providing access to the `McpClient`, `IList<McpClientTool>`, and a configured `IChatClient` with MCP tools wired in. Builds the chat client using the same `ChatClientFactory` pattern (Ollama locally, Azure OpenAI when configured). Wraps `UseFunctionInvocation()` so the LLM automatically calls MCP tools.
+2. **`McpAcceptanceTestBase`**: Base class providing access to the `McpClient`, `IList<McpClientTool>`, and a configured `IChatClient` with MCP tools wired in. Builds the chat client using the same `ChatClientFactory` pattern (Azure OpenAI). Wraps `UseFunctionInvocation()` so the LLM automatically calls MCP tools.
 
 3. **Test flow:**
    ```csharp
@@ -85,7 +85,7 @@ The Web API uses a single-endpoint pattern (`SingleApiController`) that deserial
    var tools = await mcpClient.ListToolsAsync();
 
    // Per-test
-   var chatClient = ollamaOrAzureClient.AsBuilder().UseFunctionInvocation().Build();
+   var chatClient = azureOpenAiClient.AsBuilder().UseFunctionInvocation().Build();
    var response = await chatClient.GetResponseAsync(
        [new ChatMessage(ChatRole.User, "List all work orders")],
        new ChatOptions { Tools = [.. tools] });
@@ -108,7 +108,7 @@ The Web API uses a single-endpoint pattern (`SingleApiController`) that deserial
 - **[State command complexity]** State commands have preconditions (valid transitions, authorization). → Mitigation: Reuse existing `IStateCommand.IsValid()` and status validation. Return clear error messages in MCP tool responses when preconditions fail.
 
 - **[LLM non-determinism]** LLM responses vary between runs; the same prompt may produce different tool call sequences. → Mitigation: Assert on data presence in the response (e.g., "response contains work order number X") rather than exact text. Use simple, directive prompts.
-- **[LLM availability]** Acceptance tests require a running LLM (Ollama or Azure OpenAI). → Mitigation: Mark tests `[Explicit]` and use `Assert.Inconclusive` when the LLM is unreachable. Tests only run on demand or in environments with LLM access.
+- **[LLM availability]** Acceptance tests require Azure OpenAI access. → Mitigation: Mark tests `[Explicit]` and use `Assert.Inconclusive` when the LLM is unreachable. Tests only run on demand or in environments with LLM access.
 - **[MCP SDK client package]** The `ModelContextProtocol` NuGet package must be added to the AcceptanceTests project for `McpClient` and `StdioClientTransport`. → Mitigation: Same package already used by the McpServer project. Approval required per project rules.
 
 ## Open Questions
