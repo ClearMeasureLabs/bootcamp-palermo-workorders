@@ -5,9 +5,9 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 public class WorkOrderAiChatTests : AcceptanceTestBase
 {
     [SetUp]
-    public void EnsureLlmAvailable()
+    public async Task EnsureLlmAvailable()
     {
-        SkipIfNoChatClient();
+        await SkipIfNoChatClient();
     }
 
     [Test, Retry(2)]

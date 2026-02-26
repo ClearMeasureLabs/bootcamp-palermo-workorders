@@ -2,22 +2,18 @@ using Azure;
 using Azure.AI.OpenAI;
 using ClearMeasure.Bootcamp.Core;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Configuration;
 using OpenAI.Chat;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class ChatClientFactory(IBus bus, IConfiguration configuration)
+public class ChatClientFactory(IBus bus)
 {
-    public bool IsChatClientAvailable
+    public async Task<bool> IsChatClientAvailable()
     {
-        get
-        {
-            var apiKey = configuration.GetValue<string>("AI_OpenAI_ApiKey");
-            var url = configuration.GetValue<string>("AI_OpenAI_Url");
-            var model = configuration.GetValue<string>("AI_OpenAI_Model");
-            return !string.IsNullOrEmpty(apiKey) && !string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(model);
-        }
+        var config = await bus.Send(new ChatClientConfigQuery());
+        return !string.IsNullOrEmpty(config.AiOpenAiApiKey)
+            && !string.IsNullOrEmpty(config.AiOpenAiUrl)
+            && !string.IsNullOrEmpty(config.AiOpenAiModel);
     }
 
     public async Task<IChatClient> GetChatClient()

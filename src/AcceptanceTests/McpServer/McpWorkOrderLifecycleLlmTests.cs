@@ -28,11 +28,11 @@ public class McpWorkOrderLifecycleLlmTests : AcceptanceTestBase
     }
 
     [SetUp]
-    public void EnsureAvailability()
+    public async Task EnsureAvailability()
     {
         if (!_helper!.Connected)
             Assert.Inconclusive("MCP server is not available");
-        SkipIfNoChatClient();
+        await SkipIfNoChatClient();
     }
 
     [Test, Retry(2)]

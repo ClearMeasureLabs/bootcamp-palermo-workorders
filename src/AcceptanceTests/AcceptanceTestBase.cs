@@ -38,11 +38,11 @@ public abstract class AcceptanceTestBase
     protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
     public IBus Bus => TestHost.GetRequiredService<IBus>();
 
-    protected static void SkipIfNoChatClient()
+    protected static async Task SkipIfNoChatClient()
     {
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
 
-        if (!factory.IsChatClientAvailable)
+        if (!await factory.IsChatClientAvailable())
         {
             Assert.Ignore("Chat client is not configured. Set AI_OpenAI_ApiKey, AI_OpenAI_Url, and AI_OpenAI_Model to run these tests.");
         }
