@@ -1,6 +1,10 @@
 @page "/ai-agent"
 @inherits AppComponentBase
+@using ClearMeasure.Bootcamp.Core.Model
+@using ClearMeasure.Bootcamp.Core.Queries
 @using ClearMeasure.Bootcamp.LlmGateway
+@using ClearMeasure.Bootcamp.UI.Shared.Authentication
+@inject CustomAuthenticationStateProvider AuthStateProvider
 
 <PageTitle>AI Agent - Work Order Assistant</PageTitle>
 
@@ -74,7 +78,9 @@
 
         try
         {
-            var query = new ApplicationChatQuery(userMessage);
+            var username = AuthStateProvider.GetUsername() ?? "anonymous";
+            var currentUser = await Bus.Send(new EmployeeByUserNameQuery(username));
+            var query = new ApplicationChatQuery(userMessage, currentUser);
             var response = await Bus.Send(query);
 
             var aiContent = response.Text ?? "No response received.";

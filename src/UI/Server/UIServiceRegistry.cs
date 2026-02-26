@@ -1,7 +1,11 @@
 ﻿using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Services;
+using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.LlmGateway;
+using ClearMeasure.Bootcamp.McpServer;
+using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Lamar;
@@ -25,6 +29,8 @@ public class UiServiceRegistry : ServiceRegistry
             return new Bus(mediator);
         });
 
+        this.AddTransient<IWorkOrderNumberGenerator, WorkOrderNumberGenerator>();
+
         // Register AI agent and background service
         this.AddTransient<WorkOrderReformatAgent>();
         this.AddHostedService<AutoReformatAgentService>();
@@ -37,6 +43,7 @@ public class UiServiceRegistry : ServiceRegistry
             scanner.AssemblyContainingType<Is64BitProcessHealthCheck>();
             scanner.AssemblyContainingType<CanConnectToLlmServerHealthCheck>();
             scanner.AssemblyContainingType<FunJeffreyCustomEventHealthCheck>();
+            scanner.AssemblyContainingType<ToolProvider>();
             scanner.ConnectImplementationsToTypesClosing(typeof(IRequestHandler<,>));
             scanner.ConnectImplementationsToTypesClosing(typeof(INotificationHandler<>));
         });
