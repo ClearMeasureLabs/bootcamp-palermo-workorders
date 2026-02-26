@@ -1,54 +1,68 @@
 # AGENTS.md
 
+See `CLAUDE.md` for full project overview, solution structure, architecture, coding standards, and build/test commands.
+
 ## Cursor Cloud specific instructions
 
-### Prerequisites
+### System Dependencies
 
-The VM comes with .NET 10.0 SDK, PowerShell 7, and Docker pre-installed. The update script handles NuGet restore; no additional system dependencies are needed.
+- **.NET SDK 10.0.100** (prerelease) - installed via `dotnet-install.sh`
+- **PowerShell 7 (pwsh)** - required for all build scripts (`build.ps1`, `PrivateBuild.ps1`, `BuildFunctions.ps1`)
+- **Docker** - required for SQL Server container on Linux; needs `fuse-overlayfs` storage driver and `iptables-legacy` in the cloud VM
 
-### Database (SQL Server in Docker)
-
-The build scripts (`build.ps1`) auto-detect Linux and use Docker-based SQL Server (`mcr.microsoft.com/mssql/server:2022-latest`) with container name `churchbulletin-mssql`. The password convention is `{container-name}#1A` (e.g., `churchbulletin-mssql#1A`).
-
-Before running integration tests or the app, start Docker and set up the database:
+### Running the Full Build
 
 ```bash
-# Start Docker daemon (if not running)
-sudo dockerd &>/dev/null &
-
-# Start SQL Server container
-docker rm -f churchbulletin-mssql 2>/dev/null
-docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=churchbulletin-mssql#1A" \
-  -p 1433:1433 --name churchbulletin-mssql -d mcr.microsoft.com/mssql/server:2022-latest
-
-# Wait for readiness (~5-10s), then create and migrate DB
-docker exec -e "SQLCMDPASSWORD=churchbulletin-mssql#1A" churchbulletin-mssql \
-  /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -d master -Q "CREATE DATABASE [ChurchBulletin];" -C
-
-dotnet run --project src/Database --configuration Release -- rebuild "localhost,1433" "ChurchBulletin" "src/Database/scripts" "sa" "churchbulletin-mssql#1A"
+pwsh -NoProfile -ExecutionPolicy Bypass -File ./PrivateBuild.ps1
 ```
 
-Set the connection string env var for the app and integration tests:
+This runs clean, restore, compile, unit tests, Docker SQL Server setup, DB migration, and integration tests. It auto-detects the database engine (SQL-Container on Linux with Docker).
+
+### Running the Application
+
+The `launchSettings.json` contains a Windows-only LocalDB connection string that crashes on Linux. To run the app on Linux, bypass the launch profile and set environment variables manually:
 
 ```bash
 export ConnectionStrings__SqlConnectionString="server=localhost,1433;database=ChurchBulletin;User ID=sa;Password=churchbulletin-mssql#1A;TrustServerCertificate=true;"
+export ASPNETCORE_ENVIRONMENT=Development
+export APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=586d68ed-85bc-4092-ac8a-fabb7a583e93;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=5328e763-3c56-4eae-ad66-aa528a92e984"
+export AI_OpenAI_ApiKey=""
+export AI_OpenAI_Url=""
+export AI_OpenAI_Model=""
+cd src/UI/Server && dotnet run --no-launch-profile --urls "https://localhost:7174;http://localhost:5174"
 ```
 
-### Running commands
+Key gotchas:
+- **Must use `--no-launch-profile`** to avoid the LocalDB connection string override from `launchSettings.json`.
+- **Must set `APPLICATIONINSIGHTS_CONNECTION_STRING`** or the Azure Monitor exporter will crash on startup.
+- **Must set `AI_OpenAI_*` vars to empty strings** to prevent the app from trying to connect to Azure OpenAI (it degrades gracefully).
+- The SQL Server Docker container must already be running (created by `PrivateBuild.ps1` or manually via `docker run`). The container name is `churchbulletin-mssql` and the password is `churchbulletin-mssql#1A`.
 
-Refer to `CLAUDE.md` for build, test, and run commands. Key differences for cloud agents:
+### Docker Daemon
 
-- **Unit tests** do not require a database: `dotnet test src/UnitTests --configuration Release`
-- **Integration tests** require the SQL Server container and `ConnectionStrings__SqlConnectionString` env var.
-- **UI.Server** runs on `https://localhost:7174` (HTTP on `http://localhost:5174`). The dev certificate is untrusted; use `-k` with curl.
-- The **PrivateBuild** script (`./build.sh` or `pwsh PrivateBuild.ps1`) handles Docker setup automatically on Linux if Docker is running.
+In the cloud VM, Docker needs to be started manually:
 
-### SQLite fallback
+```bash
+sudo dockerd &>/tmp/dockerd.log &
+sleep 5
+sudo chmod 666 /var/run/docker.sock
+```
+
+### Database
+
+The build scripts auto-detect the database engine. On Linux with Docker, SQL Server 2022 runs in a container on port 1433. The container is named `churchbulletin-mssql` with password `churchbulletin-mssql#1A`. The `PrivateBuild.ps1` script handles container creation, database creation, and migration automatically.
+
+### SQLite Fallback
 
 If Docker is unavailable, set `DATABASE_ENGINE=SQLite` before running the build scripts. The app and integration tests will use SQLite via EF Core's `EnsureCreated`. Some integration tests tagged `SqlServerOnly` will be skipped.
+
+### Optional Services
+
+- **Ollama** (localhost:11434): Local LLM for AI agent features. Not required; errors in logs about Ollama connection refused are expected and harmless.
+- **Azure OpenAI**: Cloud LLM alternative. Requires `AI_OpenAI_ApiKey`, `AI_OpenAI_Url`, `AI_OpenAI_Model` env vars.
 
 ### Gotchas
 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
-- The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable.
+- The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.

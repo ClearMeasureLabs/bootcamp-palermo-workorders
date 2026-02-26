@@ -28,10 +28,11 @@ public class McpChatConversationTests : AcceptanceTestBase
 	}
 
 	[SetUp]
-	public void EnsureAvailability()
+	public async Task EnsureAvailability()
 	{
 		if (!_helper!.Connected)
 			Assert.Inconclusive("MCP HTTP server is not available");
+		await SkipIfNoChatClient();
 	}
 
 	[Test, Retry(2)]
