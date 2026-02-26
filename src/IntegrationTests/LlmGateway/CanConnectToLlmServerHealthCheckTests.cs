@@ -50,7 +50,7 @@ public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
     }
 
     [Test]
-    public async Task CheckHealthAsync_WithMissingUrl_ReturnsUnhealthy()
+    public async Task CheckHealthAsync_WithMissingUrl_ReturnsDegraded()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -69,7 +69,7 @@ public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
 
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Status.ShouldBe(HealthStatus.Unhealthy);
+        result.Status.ShouldBe(HealthStatus.Degraded);
         result.Description.ShouldNotBeNullOrEmpty();
         Console.WriteLine($"Status: {result.Status}, Description: {result.Description}");
     }

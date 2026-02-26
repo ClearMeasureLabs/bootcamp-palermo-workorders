@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -21,7 +21,7 @@ public class CanConnectToLlmServerHealthCheck(
         {
             var message = "AI_OpenAI_Url is not configured";
             logger.LogWarning(message);
-            return HealthCheckResult.Unhealthy(message);
+            return HealthCheckResult.Degraded(message);
         }
 
         if (string.IsNullOrEmpty(apiKey))
