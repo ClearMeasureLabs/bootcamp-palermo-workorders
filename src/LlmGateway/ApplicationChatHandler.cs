@@ -19,9 +19,16 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
                                  "You can help with general questions, look up work orders, find employees, " +
                                  "and assist with any tasks related to managing work orders."),
             new(ChatRole.System, "Limit answer to 3 sentences. Be brief"),
-            new(ChatRole.System, $"Currently logged in user is {request.CurrentUser.UserName}"),
-            new(ChatRole.User, prompt)
+            new(ChatRole.System, $"Currently logged in user is {request.CurrentUsername}"),
         };
+
+        foreach (var history in request.ChatHistory)
+        {
+            var role = history.Role == "user" ? ChatRole.User : ChatRole.Assistant;
+            chatMessages.Add(new ChatMessage(role, history.Content));
+        }
+
+        chatMessages.Add(new ChatMessage(ChatRole.User, prompt));
 
         IChatClient client = await factory.GetChatClient();
         ChatResponse response = await client.GetResponseAsync(chatMessages, _chatOptions);

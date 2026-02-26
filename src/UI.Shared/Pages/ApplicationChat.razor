@@ -79,8 +79,12 @@
         try
         {
             var username = AuthStateProvider.GetUsername() ?? "anonymous";
-            var currentUser = await Bus.Send(new EmployeeByUserNameQuery(username));
-            var query = new ApplicationChatQuery(userMessage, currentUser);
+            var currentUserName = username;
+            var chatHistory = _chatMessages
+                .Where(m => m != _chatMessages.Last())
+                .Select(m => new ChatHistoryMessage(m.IsUser ? "user" : "assistant", m.Content))
+                .ToList();
+            var query = new ApplicationChatQuery(userMessage, currentUserName) { ChatHistory = chatHistory };
             var response = await Bus.Send(query);
 
             var aiContent = response.Text ?? "No response received.";

@@ -13,7 +13,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     {
         new ZDataLoader().LoadData();
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
-        var currentUser = new Employee("tlovejoy", "Timothy", "Lovejoy Jr", "reverend@firstchurchspringfield.org");
+        var currentUser = "tlovejoy";
         var query = new ApplicationChatQuery("Show me all the work orders that I created", currentUser);
 
         ChatResponse response = await handler.Handle(query, CancellationToken.None);
