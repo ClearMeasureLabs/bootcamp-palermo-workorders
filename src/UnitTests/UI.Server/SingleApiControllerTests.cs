@@ -6,7 +6,7 @@ using ClearMeasure.Bootcamp.UI.Server.Controllers;
 using MediatR;
 using Shouldly;
 using System.Text.Json;
-using ClearMeasure.Bootcamp.DataAccess.Messaging;
+using ClearMeasure.Bootcamp.Core.Messaging;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 

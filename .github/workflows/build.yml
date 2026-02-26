@@ -296,6 +296,7 @@ jobs:
         run: |
           dotnet build src/ChurchBulletin.sln --configuration Release --no-restore \
             /p:TreatWarningsAsErrors=true \
+            /p:MSBuildTreatAllWarningsAsErrors=true \
             /p:EnforceCodeStyleInBuild=true
 
   build-windows:
