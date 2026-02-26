@@ -310,12 +310,9 @@ public class ServerFixture
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        if (_serverProcess != null && !_serverProcess.HasExited)
-        {
-            _serverProcess.Kill(true);
-            _serverProcess.Dispose();
-        }
-        
+        await ProcessCleanupHelper.StopServerProcessAsync(_serverProcess, ApplicationBaseUrl);
+        try { _serverProcess?.Dispose(); } catch (ObjectDisposedException) { }
+        _serverProcess = null;
         Playwright?.Dispose();
     }
 }

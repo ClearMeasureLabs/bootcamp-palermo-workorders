@@ -7,7 +7,7 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 /// <summary>
 /// A delegating chat client that adds distributed tracing spans around chat operations.
 /// </summary>
-public class TracingChatClient(IChatClient innerClient, ChatClientConfig config) : DelegatingChatClient(innerClient)
+public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(innerClient)
 {
     internal static readonly ActivitySource ActivitySource = new("ChurchBulletin.LlmGateway", "1.0.0");
 
@@ -108,7 +108,7 @@ public class TracingChatClient(IChatClient innerClient, ChatClientConfig config)
             ? ActivitySource.StartActivity(operationName, ActivityKind.Internal, parentContext.Value)
             : ActivitySource.StartActivity(operationName, ActivityKind.Internal);
 
-        var provider = !string.IsNullOrEmpty(config.AiOpenAiApiKey) ? "OpenAI" : "Ollama";
+        var provider = "OpenAI";
         activity?.SetTag("chat.provider", provider);
         return activity;
     }

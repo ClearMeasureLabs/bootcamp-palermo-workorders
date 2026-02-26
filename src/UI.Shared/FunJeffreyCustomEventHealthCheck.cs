@@ -18,7 +18,7 @@ public class FunJeffreyCustomEventHealthCheck(
         customEvent.Properties.Add("time", time.GetLocalNow().ToString());
         telemetry.TrackEvent(customEvent);
 
-        logger.LogInformation("Health check success");
+        logger.LogDebug("Health check success");
         return Task.FromResult(new HealthCheckResult(HealthStatus.Healthy));
     }
 }
