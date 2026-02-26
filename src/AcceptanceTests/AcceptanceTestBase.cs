@@ -319,11 +319,12 @@ public abstract class AcceptanceTestBase
         await Click(saveButtonTestId);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder? rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
-        if (rehyratedOrder == null)
+        WorkOrder? rehyratedOrder = null;
+        for (var attempt = 0; attempt < 10; attempt++)
         {
-            await Task.Delay(1000); 
             rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
+            if (rehyratedOrder != null) break;
+            await Task.Delay(1000);
         }
         rehyratedOrder.ShouldNotBeNull();
 
