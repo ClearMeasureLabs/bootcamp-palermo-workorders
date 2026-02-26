@@ -22,6 +22,7 @@ public class CounterTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task Should_ShowInitialCountZero_WhenOpeningCounterPage()
     {
+        await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
@@ -33,6 +34,7 @@ public class CounterTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task Should_IncrementCount_WhenClickingAddActivity()
     {
+        await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
@@ -46,6 +48,7 @@ public class CounterTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task Should_ResetCountToZero_WhenClickingResetCounter()
     {
+        await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
@@ -60,6 +63,7 @@ public class CounterTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task Should_DisplayPageTitle_WhenOnCounterPage()
     {
+        await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
