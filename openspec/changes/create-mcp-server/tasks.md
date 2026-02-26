@@ -49,7 +49,7 @@
 - [x] 7.6 Write acceptance test: LLM retrieves a specific work order via `get-work-order` MCP tool
 - [x] 7.7 Write acceptance test: LLM creates a work order via `create-work-order` MCP tool and verify persistence via `IBus`
 - [x] 7.8 Write acceptance test: LLM lists employees via `list-employees` MCP tool
-- [ ] 7.9 Verify all acceptance tests pass with Ollama running locally
+- [ ] 7.9 Verify all acceptance tests pass with Azure OpenAI configured
 
 ## 8. Documentation and Configuration
 
