@@ -248,6 +248,9 @@ jobs:
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           StartLocalServer: "false"
           TEST_INPUT_DELAY_MS: "200"
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
         run: |
           $resultsDirectory = Join-Path (Resolve-Path .) "build/test/AcceptanceTests"
           New-Item -ItemType Directory -Path $resultsDirectory -Force | Out-Null
