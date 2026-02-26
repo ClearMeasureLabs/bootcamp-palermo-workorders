@@ -28,7 +28,7 @@ public class McpTestHelper(McpClient client, IList<McpClientTool> tools, ChatCli
 
     public async Task<ChatResponse> SendPrompt(string prompt)
     {
-        var chatClient = await factory.GetChatClient();
+        var chatClient = await Factory.GetChatClient();
         var messages = new List<ChatMessage>
         {
             new(ChatRole.System,
