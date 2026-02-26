@@ -69,6 +69,7 @@ public class CounterTests : AcceptanceTestBase
         await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GetByTestId(nameof(Counter.Elements.CounterValue)).WaitForAsync();
 
         await Expect(Page).ToHaveTitleAsync(new System.Text.RegularExpressions.Regex("Counter.*Church Activity Tracker"));
     }
