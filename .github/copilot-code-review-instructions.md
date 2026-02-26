@@ -18,7 +18,7 @@ If there are merge conflicts, request that the PR author resolve them before the
 - **Onion Architecture**: Verify dependency direction flows inward only
   - `Core` → NO dependencies (domain models, interfaces, queries)
   - `DataAccess` → references Core only (EF, handlers)
-  - `UI` → outer layer (can reference all)
+  - `UI/Worker/AppHost` → outer layer (hosting/orchestration)
 - **No new NuGet packages** without explicit approval in the PR description
 - **No .NET SDK version changes** without explicit approval
 - **No modifications** to `.octopus/`, `.octopus_original_from_od/`, or build scripts without approval
@@ -59,7 +59,7 @@ If there are merge conflicts, request that the PR author resolve them before the
 
 ## Database Changes
 
-- Migration scripts in `src/Database/scripts/` use DbUp
+- Migration scripts in `src/Database/scripts/Update/` use DbUp
 - Scripts must be numbered sequentially (###_Name.sql)
 - Scripts must use TABS for indentation
 - Verify scripts are idempotent where possible
@@ -85,10 +85,10 @@ If there are merge conflicts, request that the PR author resolve them before the
 ## Domain Model Reference
 
 When reviewing changes to domain entities, verify consistency with:
-- `WorkOrder`: Number, Title, Description, Room, AssignedTo (Employee), Status, CreatedBy
-- `Employee`: UserName, Email, Roles
-- `WorkOrderStatus`: Created, Assigned, Completed, Cancelled
-- `Role`: Employee role definitions
+- `WorkOrder`: Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate
+- `Employee`: UserName, FirstName, LastName, EmailAddress, Roles
+- `WorkOrderStatus`: Draft, Assigned, InProgress, Complete, Cancelled
+- `Role`: Name, CanCreateWorkOrder, CanFulfillWorkOrder
 
 ## Key Paths Reference
 
@@ -96,5 +96,6 @@ When reviewing changes to domain entities, verify consistency with:
 - Data access: `src/DataAccess/`
 - UI Server: `src/UI/Server/`
 - UI Client: `src/UI/Client/`
-- DB migrations: `src/Database/scripts/`
+- Worker service: `src/Worker/`
+- DB migrations: `src/Database/scripts/Update/`
 - Tests: `src/UnitTests/`, `src/IntegrationTests/`, `src/AcceptanceTests/`

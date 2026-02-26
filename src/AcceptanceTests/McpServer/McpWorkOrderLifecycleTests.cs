@@ -1,0 +1,199 @@
+using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.IntegrationTests;
+using ClearMeasure.Bootcamp.LlmGateway;
+using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Shouldly;
+
+namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
+
+[TestFixture]
+public class McpWorkOrderLifecycleTests : AcceptanceTestBase
+{
+    protected override bool RequiresBrowser => false;
+
+    private static McpTestHelper? _helper;
+
+    [OneTimeSetUp]
+    public async Task McpSetUp()
+    {
+        _helper = new McpTestHelper(TestHost.GetRequiredService<ChatClientFactory>());
+        await _helper.ConnectAsync();
+    }
+
+    [OneTimeTearDown]
+    public async Task McpTearDown()
+    {
+        if (_helper != null) await _helper.DisposeAsync();
+    }
+
+    [SetUp]
+    public void EnsureAvailability()
+    {
+        if (!_helper!.Connected)
+            Assert.Inconclusive("MCP server is not available");
+    }
+
+    [Test]
+    public async Task ShouldCompleteFullLifecycleViaDirectToolCalls()
+    {
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var employees = await bus.Send(new EmployeeGetAllQuery());
+        var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
+        var assignee = employees.First(e =>
+            e.Roles.Any(r => r.CanFulfillWorkOrder) && e.UserName != creator.UserName);
+
+        // Step 1: Create a draft work order
+        var createResult = await _helper!.CallToolDirectly("create-work-order",
+            new Dictionary<string, object?>
+            {
+                ["title"] = "Lifecycle test work order",
+                ["description"] = "Testing full lifecycle via direct MCP tool calls",
+                ["creatorUsername"] = creator.UserName!
+            });
+
+        createResult.ShouldContain("Lifecycle test work order");
+        createResult.ShouldContain("Draft");
+        var workOrderNumber = McpTestHelper.ExtractJsonValue(createResult, "Number");
+        workOrderNumber.ShouldNotBeNullOrEmpty("Work order number should be returned");
+
+        // Step 2: Assign the work order (Draft -> Assigned)
+        var assignResult = await _helper!.CallToolDirectly("execute-work-order-command",
+            new Dictionary<string, object?>
+            {
+                ["workOrderNumber"] = workOrderNumber,
+                ["commandName"] = "DraftToAssignedCommand",
+                ["executingUsername"] = creator.UserName!,
+                ["assigneeUsername"] = assignee.UserName!
+            });
+
+        assignResult.ShouldContain("Assigned");
+        assignResult.ShouldContain(assignee.GetFullName());
+
+        // Step 3: Begin work (Assigned -> InProgress)
+        var beginResult = await _helper!.CallToolDirectly("execute-work-order-command",
+            new Dictionary<string, object?>
+            {
+                ["workOrderNumber"] = workOrderNumber,
+                ["commandName"] = "AssignedToInProgressCommand",
+                ["executingUsername"] = assignee.UserName!
+            });
+
+        beginResult.ShouldContain("In Progress");
+
+        // Step 4: Complete work (InProgress -> Complete)
+        var completeResult = await _helper!.CallToolDirectly("execute-work-order-command",
+            new Dictionary<string, object?>
+            {
+                ["workOrderNumber"] = workOrderNumber,
+                ["commandName"] = "InProgressToCompleteCommand",
+                ["executingUsername"] = assignee.UserName!
+            });
+
+        completeResult.ShouldContain("Complete");
+        completeResult.ShouldContain("CompletedDate");
+
+        // Step 5: Verify final state via get-work-order
+        var getResult = await _helper!.CallToolDirectly("get-work-order",
+            new Dictionary<string, object?>
+            {
+                ["workOrderNumber"] = workOrderNumber
+            });
+
+        getResult.ShouldContain("Complete");
+        getResult.ShouldContain("Lifecycle test work order");
+        getResult.ShouldContain(creator.GetFullName());
+        getResult.ShouldContain(assignee.GetFullName());
+    }
+
+    [Test]
+    public async Task ShouldAssignAndCancelViaDirectToolCalls()
+    {
+        var bus = TestHost.GetRequiredService<IBus>();
+        var employees = await bus.Send(new EmployeeGetAllQuery());
+        var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
+        var assignee = employees.First(e =>
+            e.Roles.Any(r => r.CanFulfillWorkOrder) && e.UserName != creator.UserName);
+
+        // Create and assign
+        var createResult = await _helper!.CallToolDirectly("create-work-order",
+            new Dictionary<string, object?>
+            {
+                ["title"] = "Cancel test work order",
+                ["description"] = "Testing cancellation via direct MCP tool calls",
+                ["creatorUsername"] = creator.UserName!
+            });
+
+        var workOrderNumber = McpTestHelper.ExtractJsonValue(createResult, "Number");
+
+        await _helper!.CallToolDirectly("execute-work-order-command",
+            new Dictionary<string, object?>
+            {
+                ["workOrderNumber"] = workOrderNumber,
+                ["commandName"] = "DraftToAssignedCommand",
+                ["executingUsername"] = creator.UserName!,
+                ["assigneeUsername"] = assignee.UserName!
+            });
+
+        // Cancel from Assigned state (creator cancels)
+        var cancelResult = await _helper!.CallToolDirectly("execute-work-order-command",
+            new Dictionary<string, object?>
+            {
+                ["workOrderNumber"] = workOrderNumber,
+                ["commandName"] = "AssignedToCancelledCommand",
+                ["executingUsername"] = creator.UserName!
+            });
+
+        cancelResult.ShouldContain("Cancelled");
+    }
+
+    [Test]
+    public async Task ShouldBeginAndShelveViaDirectToolCalls()
+    {
+        var bus = TestHost.GetRequiredService<IBus>();
+        var employees = await bus.Send(new EmployeeGetAllQuery());
+        var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
+        var assignee = employees.First(e =>
+            e.Roles.Any(r => r.CanFulfillWorkOrder) && e.UserName != creator.UserName);
+
+        // Create, assign, and begin
+        var createResult = await _helper!.CallToolDirectly("create-work-order",
+            new Dictionary<string, object?>
+            {
+                ["title"] = "Shelve test work order",
+                ["description"] = "Testing shelve via direct MCP tool calls",
+                ["creatorUsername"] = creator.UserName!
+            });
+
+        var workOrderNumber = McpTestHelper.ExtractJsonValue(createResult, "Number");
+
+        await _helper!.CallToolDirectly("execute-work-order-command",
+            new Dictionary<string, object?>
+            {
+                ["workOrderNumber"] = workOrderNumber,
+                ["commandName"] = "DraftToAssignedCommand",
+                ["executingUsername"] = creator.UserName!,
+                ["assigneeUsername"] = assignee.UserName!
+            });
+
+        await _helper!.CallToolDirectly("execute-work-order-command",
+            new Dictionary<string, object?>
+            {
+                ["workOrderNumber"] = workOrderNumber,
+                ["commandName"] = "AssignedToInProgressCommand",
+                ["executingUsername"] = assignee.UserName!
+            });
+
+        // Shelve (InProgress -> Assigned)
+        var shelveResult = await _helper!.CallToolDirectly("execute-work-order-command",
+            new Dictionary<string, object?>
+            {
+                ["workOrderNumber"] = workOrderNumber,
+                ["commandName"] = "InProgressToAssigned",
+                ["executingUsername"] = assignee.UserName!
+            });
+
+        shelveResult.ShouldContain("Assigned");
+    }
+}

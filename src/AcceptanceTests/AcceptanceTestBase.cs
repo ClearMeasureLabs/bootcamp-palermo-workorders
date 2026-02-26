@@ -1,6 +1,8 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.IntegrationTests;
+using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -36,6 +38,17 @@ public abstract class AcceptanceTestBase
     protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
     public IBus Bus => TestHost.GetRequiredService<IBus>();
 
+    protected static async Task SkipIfNoChatClient()
+    {
+        var factory = TestHost.GetRequiredService<ChatClientFactory>();
+        var availability = await factory.IsChatClientAvailable();
+
+        if (!availability.IsAvailable)
+        {
+            Assert.Ignore(availability.Message);
+        }
+    }
+
     private string TestId => TestContext.CurrentContext.Test.ID;
     
     /// <summary>
@@ -64,9 +77,13 @@ public abstract class AcceptanceTestBase
 
     private static readonly Random RandomPosition = new();
 
+    protected virtual bool RequiresBrowser => true;
+
     [SetUp]
     public async Task SetUpAsync()
     {
+        if (!RequiresBrowser) return;
+
         var testTag = Guid.NewGuid().ToString("N")[..8];
         var currentUser = CreateTestUser(testTag);
 
@@ -302,11 +319,12 @@ public abstract class AcceptanceTestBase
         await Click(saveButtonTestId);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder? rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
-        if (rehyratedOrder == null)
+        WorkOrder? rehyratedOrder = null;
+        for (var attempt = 0; attempt < 10; attempt++)
         {
-            await Task.Delay(1000); 
             rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
+            if (rehyratedOrder != null) break;
+            await Task.Delay(1000);
         }
         rehyratedOrder.ShouldNotBeNull();
 

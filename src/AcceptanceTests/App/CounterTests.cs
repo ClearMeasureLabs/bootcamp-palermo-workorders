@@ -22,10 +22,12 @@ public class CounterTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task Should_ShowInitialCountZero_WhenOpeningCounterPage()
     {
+        await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var valueLocator = Page.GetByTestId(nameof(Counter.Elements.CounterValue));
+        await valueLocator.WaitForAsync();
         await Expect(valueLocator).ToBeVisibleAsync();
         await Expect(valueLocator).ToHaveTextAsync("0");
     }
@@ -33,8 +35,10 @@ public class CounterTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task Should_IncrementCount_WhenClickingAddActivity()
     {
+        await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GetByTestId(nameof(Counter.Elements.CounterValue)).WaitForAsync();
 
         await Click(nameof(Counter.Elements.IncrementButton));
         await Expect(Page.GetByTestId(nameof(Counter.Elements.CounterValue))).ToHaveTextAsync("1");
@@ -46,8 +50,10 @@ public class CounterTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task Should_ResetCountToZero_WhenClickingResetCounter()
     {
+        await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GetByTestId(nameof(Counter.Elements.CounterValue)).WaitForAsync();
 
         await Click(nameof(Counter.Elements.IncrementButton));
         await Click(nameof(Counter.Elements.IncrementButton));
@@ -60,8 +66,10 @@ public class CounterTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task Should_DisplayPageTitle_WhenOnCounterPage()
     {
+        await LoginAsCurrentUser();
         await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GetByTestId(nameof(Counter.Elements.CounterValue)).WaitForAsync();
 
         await Expect(Page).ToHaveTitleAsync(new System.Text.RegularExpressions.Regex("Counter.*Church Activity Tracker"));
     }

@@ -11,6 +11,12 @@ public class ServerFixture
 {
     private const string ProjectPath = "../../../../UI/Server";
     private const int WaitTimeoutSeconds = 60;
+
+    private static string BuildConfiguration =>
+        AppDomain.CurrentDomain.BaseDirectory.Contains(
+            Path.DirectorySeparatorChar + "Release" + Path.DirectorySeparatorChar)
+            ? "Release"
+            : "Debug";
     public static bool StartLocalServer { get; set; } = true;
     public static int SlowMo { get; set; } = 100;
     public static string ApplicationBaseUrl { get; private set; } = string.Empty;
@@ -148,7 +154,7 @@ public class ServerFixture
                 healthStatus = response.StatusCode;
                 healthBody = await response.Content.ReadAsStringAsync();
                 TestContext.Out.WriteLine($"  GET {healthUrl} -> {(int)response.StatusCode}: {healthBody}");
-                if (response.IsSuccessStatusCode && healthBody.Contains("Healthy", StringComparison.OrdinalIgnoreCase))
+                if (response.IsSuccessStatusCode && IsAcceptableHealthStatus(healthBody))
                     break;
             }
             catch (Exception ex)
@@ -160,17 +166,21 @@ public class ServerFixture
             if (attempt < maxAttempts) await Task.Delay(delayBetweenAttemptsMs);
         }
 
-        if (healthBody == null || !healthBody.Contains("Healthy", StringComparison.OrdinalIgnoreCase))
+        if (healthBody == null || !IsAcceptableHealthStatus(healthBody))
         {
             var detail = lastHealthException != null
                 ? $"Last exception: {lastHealthException.GetType().Name}: {lastHealthException.Message}"
                 : $"Status: {healthStatus}, Body: {healthBody}";
             Assert.Fail(
-                $"Health gate FAILED: /_healthcheck did not return Healthy after {maxAttempts} attempts. {detail}");
+                $"Health gate FAILED: /_healthcheck did not return Healthy or Degraded after {maxAttempts} attempts. {detail}");
         }
 
         TestContext.Out.WriteLine("Health gate: PASSED - site is reachable and healthy.");
     }
+
+    private static bool IsAcceptableHealthStatus(string body) =>
+        body.Contains("Healthy", StringComparison.OrdinalIgnoreCase) ||
+        body.Contains("Degraded", StringComparison.OrdinalIgnoreCase);
 
     private async Task StartAndWaitForServer()
     {
@@ -178,11 +188,13 @@ public class ServerFixture
         var connectionString = configuration.GetConnectionString("SqlConnectionString") ?? "";
         var useSqlite = connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
 
-        // Use --no-launch-profile to prevent launchSettings.json from overriding
+        // Use --no-build to skip recompilation (already built by the build script)
+        // and --no-launch-profile to prevent launchSettings.json from overriding
         // environment variables (e.g. connection strings) set by the test harness
+        var config = BuildConfiguration;
         var arguments = useSqlite
-            ? $"run --no-launch-profile --urls={ApplicationBaseUrl}"
-            : $"run --urls={ApplicationBaseUrl}";
+            ? $"run --no-build --configuration {config} --no-launch-profile --urls={ApplicationBaseUrl}"
+            : $"run --no-build --configuration {config} --urls={ApplicationBaseUrl}";
 
         _serverProcess = new Process
         {
@@ -269,7 +281,7 @@ public class ServerFixture
         response.EnsureSuccessStatusCode();
     }
 
-    private static void InitializeDatabaseOnce()
+    internal static void InitializeDatabaseOnce()
     {
         if (DatabaseInitialized) return;
 
@@ -298,12 +310,9 @@ public class ServerFixture
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        if (_serverProcess != null && !_serverProcess.HasExited)
-        {
-            _serverProcess.Kill(true);
-            _serverProcess.Dispose();
-        }
-        
+        await ProcessCleanupHelper.StopServerProcessAsync(_serverProcess, ApplicationBaseUrl);
+        try { _serverProcess?.Dispose(); } catch (ObjectDisposedException) { }
+        _serverProcess = null;
         Playwright?.Dispose();
     }
 }

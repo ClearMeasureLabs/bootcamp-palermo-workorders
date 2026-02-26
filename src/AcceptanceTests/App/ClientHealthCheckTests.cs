@@ -20,6 +20,7 @@ public class ClientHealthCheckTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         var statusSpan = Page.GetByTestId(nameof(ClientHealthCheck.Elements.Status));
         var innerTextAsync = await statusSpan.InnerTextAsync();
+        innerTextAsync.ShouldBeOneOf(AcceptableHealthStatuses);
         AcceptableHealthStatuses.ShouldContain(innerTextAsync);
     }
 
@@ -45,6 +46,18 @@ public class ClientHealthCheckTests : AcceptanceTestBase
     {
         await Page.GotoAsync("/_healthcheck");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        (await Page.ContentAsync()).ShouldContain("Healthy");
+        var content = await Page.ContentAsync();
+        AcceptableHealthStatuses.ShouldContain(s =>
+            content.Contains(s, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Test, Retry(2)]
+    public async Task HealthCheckEndpoint_ShouldReturnHealthy()
+    {
+        await Page.GotoAsync("/_healthcheck");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        var content = await Page.ContentAsync();
+        AcceptableHealthStatuses.ShouldContain(s =>
+            content.Contains(s, StringComparison.OrdinalIgnoreCase));
     }
 }

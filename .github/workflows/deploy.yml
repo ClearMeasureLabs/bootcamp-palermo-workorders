@@ -1,5 +1,5 @@
 name: Deploy
-run-name: "Deploy • ${{ inputs.release_number || format('{0} • 1.4.{1}', github.event.workflow_run.head_branch, github.event.workflow_run.run_number) }}"
+run-name: "${{ inputs.release_number && format('{0} • Deploy', inputs.release_number) || format('1.4.{0} • Deploy • {1}', github.event.workflow_run.run_number, github.event.workflow_run.head_branch) }}"
 on:
   workflow_run:
     workflows: ["Build"]
@@ -21,9 +21,10 @@ jobs:
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success'
     concurrency:
-      # A newer version deploying to TDD will cancel any previous pending or in-progress run.
+      # All TDD deploys share one group (single environment), but only branch runs
+      # can be cancelled. Master/main deploys are never cancelled -- they queue instead.
       group: deploy-to-tdd-serialized
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.event.workflow_run.head_branch != 'master' && github.event.workflow_run.head_branch != 'main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -209,7 +210,7 @@ jobs:
         run: |
           $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
           $maxAttempts = 30
-          $delaySeconds = 10
+          $delaySeconds = 5
           Write-Host "Polling $url for healthy response (max ${maxAttempts} attempts, ${delaySeconds}s apart)..."
           for ($i = 1; $i -le $maxAttempts; $i++) {
             try {
@@ -218,6 +219,18 @@ jobs:
               Write-Host "Attempt ${i}: HTTP $($response.StatusCode) - $body"
               if ($response.StatusCode -eq 200 -and $body -match 'Healthy') {
                 Write-Host "Container App is healthy after $i attempts."
+                exit 0
+              }
+              if ($response.StatusCode -eq 200 -and $body -match 'Degraded') {
+                Write-Host "::warning::Container App returned Degraded health status after $i attempts."
+                Write-Host "--- Degraded Health Check Diagnostics ---"
+                Write-Host "Health check response body: $body"
+                Write-Host "Health check HTTP status: $($response.StatusCode)"
+                Write-Host "Health check headers:"
+                $response.Headers.GetEnumerator() | ForEach-Object { Write-Host "  $($_.Key): $($_.Value)" }
+                Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
+                Write-Host "Timestamp: $(Get-Date -Format o)"
+                Write-Host "--- End Diagnostics ---"
                 exit 0
               }
             } catch {
@@ -235,7 +248,10 @@ jobs:
           ConnectionStrings__SqlConnectionString: ${{ env.CONTAINER_APP_CONNECTION_STRING }}
           ApplicationBaseUrl: ${{ env.CONTAINER_APP_URL }}
           StartLocalServer: "false"
-          TEST_INPUT_DELAY_MS: "500"
+          TEST_INPUT_DELAY_MS: "200"
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
         run: |
           $resultsDirectory = Join-Path (Resolve-Path .) "build/test/AcceptanceTests"
           New-Item -ItemType Directory -Path $resultsDirectory -Force | Out-Null
@@ -265,6 +281,11 @@ jobs:
           $sha = "${{ github.event.workflow_run.head_sha }}"
           $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           $jobStatus = "${{ job.status }}"
+
+          if ($jobStatus -eq "cancelled") {
+            Write-Host "Job was cancelled (superseded by a newer deployment). Leaving status as pending."
+            exit 0
+          }
 
           if ($jobStatus -eq "success") {
             $state = "success"

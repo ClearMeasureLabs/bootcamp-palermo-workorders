@@ -10,6 +10,7 @@
 		<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 
 		<Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+		<UserSecretsId>dotnet-Worker-b9b5c0f8-4249-469b-8bfb-c4cc9398b886</UserSecretsId>
 
 		<!-- Include Playwright drivers for all platforms so the nupkg works
 		     when built on Linux and extracted on Windows (TDD deploy). -->
@@ -33,6 +34,10 @@
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
 		<PackageReference Include="microsoft.playwright.nunit" Version="1.54.0" />
+		<PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
+		<PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="9.7.1-preview.1.25365.4" />
+		<PackageReference Include="ModelContextProtocol" Version="1.0.0" />
+		<PackageReference Include="Microsoft.Extensions.AI" Version="9.7.0" />
 		<PackageReference Include="NUnit" Version="4.3.2" />
 		<PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
 		<PackageReference Include="NUnit.Analyzers" Version="4.9.2">
@@ -44,6 +49,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Core\Core.csproj" />
 		<ProjectReference Include="..\IntegrationTests\IntegrationTests.csproj" />
+		<ProjectReference Include="..\McpServer\McpServer.csproj" />
 		<ProjectReference Include="..\UI.Shared\UI.Shared.csproj" />
 	</ItemGroup>
 

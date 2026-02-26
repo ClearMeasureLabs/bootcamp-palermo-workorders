@@ -1,24 +1,44 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class CanConnectToLlmServerHealthCheck(ILogger<CanConnectToLlmServerHealthCheck> logger) : IHealthCheck
+public class CanConnectToLlmServerHealthCheck(
+    ChatClientFactory chatClientFactory,
+    ILogger<CanConnectToLlmServerHealthCheck> logger) : IHealthCheck
 {
-    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
         CancellationToken cancellationToken = new())
     {
-        if (!ConnectedOk())
+        var availability = await chatClientFactory.IsChatClientAvailable();
+        if (!availability.IsAvailable)
         {
-            return Task.FromResult(HealthCheckResult.Unhealthy("Cannot connect to LLM Server"));
+            logger.LogWarning(availability.Message);
+            return HealthCheckResult.Degraded(availability.Message);
         }
 
-        logger.LogInformation("Health check success");
-        return Task.FromResult(HealthCheckResult.Healthy());
-    }
+        try
+        {
+            var chatClient = await chatClientFactory.GetChatClient();
+            var response = await chatClient.GetResponseAsync(
+                [new ChatMessage(ChatRole.User, "Reply with OK")],
+                cancellationToken: cancellationToken);
 
-    private bool ConnectedOk()
-    {
-        return true;
+            if (response.Messages.Count > 0)
+            {
+                logger.LogDebug("Health check success via ChatClientFactory");
+                return HealthCheckResult.Healthy("Chat client is connected");
+            }
+
+            logger.LogWarning("Chat client returned empty response");
+            return HealthCheckResult.Degraded("Chat client returned empty response");
+        }
+        catch (Exception ex)
+        {
+            var message = $"Chat client connection failed: {ex.Message}";
+            logger.LogWarning(message);
+            return HealthCheckResult.Unhealthy(message);
+        }
     }
 }

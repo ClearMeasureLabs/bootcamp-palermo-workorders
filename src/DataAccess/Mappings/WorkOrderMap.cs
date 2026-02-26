@@ -31,6 +31,7 @@ public class WorkOrderMap : IEntityFrameworkMapping
             entity.HasOne(e => e.Assignee)
                 .WithMany()
                 .HasForeignKey("AssigneeId")
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Configure navigation properties for eager loading

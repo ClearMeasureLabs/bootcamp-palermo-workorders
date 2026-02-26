@@ -13,7 +13,7 @@ alwaysApply: true
 |---------|------|------|
 | Core | `src/Core/Core.csproj` | Domain; no dependencies |
 | DataAccess | `src/DataAccess/DataAccess.csproj` | EF Core, MediatR handlers; refs Core only |
-| Database | `src/Database/Database.csproj` | DB tooling, AliaSQL |
+| Database | `src/Database/Database.csproj` | DB tooling, DbUp |
 | UI.Server | `src/UI/Server/UI.Server.csproj` | Blazor Server host, Lamar DI |
 | UI.Client | `src/UI/Client/UI.Client.csproj` | Blazor WASM |
 | UI.Api | `src/UI/Api/UI.Api.csproj` | Web API |
@@ -21,6 +21,7 @@ alwaysApply: true
 | LlmGateway | `src/LlmGateway/LlmGateway.csproj` | Azure OpenAI / Ollama |
 | ChurchBulletin.AppHost | `src/ChurchBulletin.AppHost/` | Aspire AppHost |
 | ChurchBulletin.ServiceDefaults | `src/ChurchBulletin.ServiceDefaults/` | Aspire defaults |
+| Worker | `src/Worker/Worker.csproj` | Hosted endpoint worker service |
 | UnitTests | `src/UnitTests/UnitTests.csproj` | NUnit + Shouldly |
 | IntegrationTests | `src/IntegrationTests/IntegrationTests.csproj` | NUnit, LocalDB |
 | AcceptanceTests | `src/AcceptanceTests/AcceptanceTests.csproj` | NUnit + Playwright |
@@ -41,9 +42,10 @@ alwaysApply: true
 | Bus/MediatR | `src/Core/IBus.cs`; handlers in DataAccess and UI |
 | EF context & mappings | `src/DataAccess/Mappings/` (DataContext, *Map.cs) |
 | Query/command handlers | `src/DataAccess/Handlers/` |
-| DB migrations (AliaSQL) | `src/Database/scripts/Update/` (###_Description.sql, TABS) |
+| DB migrations (DbUp) | `src/Database/scripts/Update/` (###_Description.sql, TABS) |
 | Blazor Server entry | `src/UI/Server/Program.cs`, `UIServiceRegistry.cs` |
 | Blazor Client entry | `src/UI/Client/Program.cs`, `App.razor` |
+| Worker entry | `src/Worker/Program.cs`, `WorkOrderEndpoint.cs` |
 | API controllers | `src/UI/Api/Controllers/`, `src/UI/Server/Controllers/` |
 | Health checks | DataAccess: `CanConnectToDatabaseHealthCheck`; LlmGateway: LLM; Server: aggregation |
 | Build/test scripts | Repo root: `build.ps1`, `PrivateBuild.ps1`, `AcceptanceTests.ps1` |
@@ -51,10 +53,10 @@ alwaysApply: true
 
 ## Domain Snapshot
 
-- **WorkOrder:** Number, Title, Description, Room, AssignedTo (Employee), Status, CreatedBy.
-- **Employee:** UserName, Email, Roles.
-- **WorkOrderStatus:** Created, Assigned, Completed, Cancelled.
-- **Role:** Employee role definitions.
+- **WorkOrder:** Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate.
+- **Employee:** UserName, FirstName, LastName, EmailAddress, Roles.
+- **WorkOrderStatus:** Draft, Assigned, InProgress, Complete, Cancelled.
+- **Role:** Name, CanCreateWorkOrder, CanFulfillWorkOrder.
 
 ## References for Agents
 

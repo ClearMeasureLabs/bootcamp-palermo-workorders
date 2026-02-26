@@ -1,5 +1,5 @@
 name: Build
-run-name: "1.4.${{ github.run_number }} • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
+run-name: "1.4.${{ github.run_number }} • Build • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
 on:
   push:
   workflow_dispatch:
@@ -29,6 +29,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       # Set version environment variable
       - name: Set Version
         run: |
@@ -39,12 +47,15 @@ jobs:
           echo "Build version: $version"
           echo "github.ref=${{ github.ref }}"
 
-      - name: Run CI Build 
+      - name: Run CI Build
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
         run: |
           Write-Host "Running CI Build"
           . ./build.ps1
@@ -149,6 +160,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - name: Set Version
         run: |
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
@@ -158,6 +177,10 @@ jobs:
         shell: pwsh
         env:
           BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
+          ConnectionStrings__SqlConnectionString: "Data Source=ChurchBulletin.db"
         run: |
           Write-Host "Running Private Build with SQLite"
           . ./build.ps1
@@ -179,6 +202,65 @@ jobs:
           path: build/test/**/*.trx
           retention-days: 2
 
+  integration-build-arm:
+    name: Integration Build (ARM SQLite)
+    runs-on: ubuntu-24.04-arm
+    concurrency:
+      group: build-arm-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: read
+    env:
+      BUILD_CONFIGURATION: Release
+      DATABASE_ENGINE: SQLite
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-arm-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-arm-
+
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+
+      - name: Run Private Build (ARM SQLite)
+        shell: pwsh
+        env:
+          BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
+          ConnectionStrings__SqlConnectionString: "Data Source=ChurchBulletin.db"
+        run: |
+          Write-Host "Running Private Build with SQLite on ARM"
+          . ./build.ps1
+          Invoke-PrivateBuild -UseSqlite
+
+      - name: Test Reporter
+        uses: dorny/test-reporter@v2.1.1
+        if: always()
+        with:
+          name: ARM SQLite Test Results
+          path: 'build/test/**/*.trx'
+          reporter: dotnet-trx
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-arm-sqlite
+          path: build/test/**/*.trx
+          retention-days: 2
+
   code-analysis:
     name: Code Analysis
     runs-on: ubuntu-latest
@@ -193,6 +275,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - name: Restore solution
         run: dotnet restore src/ChurchBulletin.sln
 
@@ -206,6 +296,7 @@ jobs:
         run: |
           dotnet build src/ChurchBulletin.sln --configuration Release --no-restore \
             /p:TreatWarningsAsErrors=true \
+            /p:MSBuildTreatAllWarningsAsErrors=true \
             /p:EnforceCodeStyleInBuild=true
 
   build-windows:
@@ -224,6 +315,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - name: Set Version
         shell: pwsh
         run: |
@@ -234,6 +333,9 @@ jobs:
         shell: pwsh
         env:
           BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
         run: |
           Write-Host "Running Private Build with Windows LocalDB"
           . ./build.ps1
@@ -257,7 +359,7 @@ jobs:
 
   docker-build-image-for-churchbulletin-ui:
     name: Publish Release Candidate
-    needs: [build-linux, build-sqlite, code-analysis, build-windows]
+    needs: [build-linux]
     if: success() 
     runs-on: ubuntu-latest
     concurrency:
@@ -493,7 +595,6 @@ jobs:
 
   acceptance-tests:
     name: Acceptance Tests
-    needs: [docker-build-image-for-churchbulletin-ui]
     if: success()
     runs-on: ubuntu-latest
     concurrency:
@@ -522,9 +623,9 @@ jobs:
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
           restore-keys: |
-            playwright-${{ runner.os }}-
+            playwright-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set Version
         run: |
@@ -535,6 +636,9 @@ jobs:
         shell: pwsh
         env:
           BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
         run: |
           Write-Host "Running Acceptance Tests"
           . ./build.ps1
@@ -553,6 +657,75 @@ jobs:
         if: always()
         with:
           name: test-results-acceptance
+          path: build/test/**/*.trx
+          retention-days: 2
+
+  acceptance-tests-arm:
+    name: Acceptance Tests (ARM SQLite)
+    if: success()
+    runs-on: ubuntu-24.04-arm
+    concurrency:
+      group: acceptance-tests-arm-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: read
+    env:
+      BUILD_CONFIGURATION: Release
+      DATABASE_ENGINE: SQLite
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-arm-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-arm-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Set Version
+        run: |
+          version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
+          echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
+
+      - name: Run Acceptance Tests (ARM SQLite)
+        shell: pwsh
+        env:
+          BUILD_BUILDNUMBER: ${{ env.BUILD_BUILDNUMBER }}
+          AI_OpenAI_ApiKey: ${{ secrets.AI_OPENAI_APIKEY }}
+          AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
+          AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
+          ConnectionStrings__SqlConnectionString: "Data Source=ChurchBulletin.db"
+        run: |
+          Write-Host "Running Acceptance Tests with SQLite on ARM"
+          . ./build.ps1
+          Invoke-AcceptanceTests -UseSqlite
+
+      - name: Test Reporter
+        uses: dorny/test-reporter@v2.1.1
+        if: always()
+        with:
+          name: ARM Acceptance Test Results
+          path: 'build/test/**/*.trx'
+          reporter: dotnet-trx
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-acceptance-arm
           path: build/test/**/*.trx
           retention-days: 2
 

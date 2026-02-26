@@ -9,7 +9,7 @@ using Spectre.Console.Cli;
 namespace ClearMeasure.Bootcamp.Database.Console;
 
 /// <summary>
-/// This should resemble the AliaSQL "Rebuild" action, which runs Create, Update, Everytime, and TestData scripts.
+/// This should resemble the DbUp "Rebuild" action, which runs Create, Update, Everytime, and TestData scripts.
 /// </summary>
 [UsedImplicitly]
 public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
