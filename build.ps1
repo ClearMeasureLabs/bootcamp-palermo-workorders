@@ -582,6 +582,7 @@ Function Invoke-AcceptanceTests {
 		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 	}
 
+
 	# Update appsettings.json files before database migration
 	if ($script:databaseEngine -ne "SQLite") {
 		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
