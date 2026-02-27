@@ -1,447 +1,331 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# Work Order Management System
 
-This project will create all of the required infrastructure in Azure programatically. The resoureces in the TDD environment will be torn down after automated testing is completed. The UAT and Prod resources will remain. There is an Octopus variable **EnsureEnvironmentsExist** that will tell Octopus to create all of the resources. If the variable is set to **True** Octopus will create all of the resources, if the variable is set to something else, Octopus will not create the resources. **EnsureEnvironmentsExist** should always be set to **True** for the TDD environment. This variable should be set to **False** (or anything other than **True**) for UAT and Prod to save time and preserve the existing resources during subsequent deployments.
+A work order management application built with .NET 10.0 implementing Onion Architecture. The system uses Blazor WebAssembly for the UI, Entity Framework Core for data access, MediatR for CQRS, and deploys to Azure Container Apps.
 
-# Onion Architecture Azure .NET 9/8 Getting Started
-- [Github](#github)
-- [Azure](#azure)
-  - [Create an Azure Container Registry](#create-an-azure-container-registry)
-  - [Connect Azure to Octopus Deploy](#connect-azure-to-octopus-deploy)
-- [Octopus Deploy Environment Setup:](#octopus-deploy-environment-setup)
-- [Octopus Deploy Project Setup:](#octopus-deploy-project-setup)
-  - [Connect Octopus to GitHub](#connect-octopus-to-github)
-  - [Create a new Version Controlled Project:](#create-a-new-version-controlled-project)
-  - [Optional-Create a runbook for availability monitoring](#optional-create-a-runbook-for-availability-monitoring)
-- [Azure DevOps Setup:](#azure-devops-setup)
-  - [Create Service Connections](#create-service-connections)
-  - [Create an artifact feed](#create-an-artifact-feed)
-  - [Authorize the Pipeline to push packages to the feed](#authorize-the-pipeline-to-push-packages-to-the-feed)
-  - [Add the Azure DevOps Feed to Octopus](#add-the-azure-devops-feed-to-octopus)
-  - [Create the Library Variable Group](#create-the-library-variable-group)
-  - [Grant the pipeline access to the variable group](#grant-the-pipeline-access-to-the-variable-group)
-  - [Create a Pipeline](#create-a-pipeline)
-- [Octopus Deploy Runbook Setup:](#octopus-deploy-runbook-setup)
-  - [Create ContainerAppReplicas variable](#create-containerappreplicas-variable)
-  - [Create Scale Up Runbook](#create-scale-up-runbook)
-  - [Create Scale Down Runbook](#create-scale-down-runbook)
-  - [Publish the runbooks](#publish-the-runbooks)
-  - [Create Scheduled Runbook Triggers](#create-scheduled-runbook-triggers)
+This codebase serves as both a working application and a teaching reference for software architecture. The 51 architectural patterns cataloged below are all demonstrated in the source code.
 
+## Solution Structure
 
-Requirements:
+```
+src/
+  Core/                  Domain layer — models, interfaces, queries (no dependencies)
+  DataAccess/            EF Core, MediatR handlers (references Core only)
+  Database/              DbUp schema migrations
+  UI/Server/             Blazor Server host, Lamar DI
+  UI/Client/             Blazor WebAssembly frontend
+  UI/Api/                Web API endpoints
+  UI.Shared/             Shared UI types
+  LlmGateway/            Azure OpenAI integration
+  Worker/                Background hosted service
+  ChurchBulletin.AppHost/         .NET Aspire orchestration
+  ChurchBulletin.ServiceDefaults/ Aspire service defaults
+  UnitTests/             NUnit + Shouldly
+  IntegrationTests/      NUnit, LocalDB / SQL Server / SQLite
+  AcceptanceTests/       NUnit + Playwright
+```
 
-- Octopus Deploy
-- Azure
-- Github
-- Azure DevOps
+## Prerequisites
 
- 
-# Github
-Create a new repository using the  [onion-architecture-maui-azure-dotnet-8](https://github.com/ClearMeasureLabs/onion-architecture-maui-azure-dotnet-8) template repo
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
+- One of the following database options:
+  - **Windows:** SQL Server LocalDB (included with Visual Studio)
+  - **Linux/macOS with Docker:** SQL Server 2022 runs automatically in a container
+  - **Linux/macOS without Docker:** SQLite (automatic fallback)
+- [PowerShell 7+](https://github.com/PowerShell/PowerShell) (cross-platform, required for build scripts)
+- [Playwright browsers](https://playwright.dev/) (for acceptance tests only)
 
-# Azure
+## Build
 
-## Create an Azure Container Registry
+```powershell
+# Quick build (Windows)
+.\build.bat
 
-[https://learn.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal?tabs=azure-cli](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal?tabs=azure-cli)
+# Quick build (Linux/macOS)
+./build.sh
 
-Name the resource group something identifiable and different than the application environments. 
-e.g. onion-architecture-container-apps-acr
-The resource groups for the application environments will be created and destroyed programatically, the container registry should be kept separate.
+# Full private build — clean, compile, unit tests, DB migration, integration tests
+. .\build.ps1 ; Invoke-PrivateBuild
 
-When creating the container registry, a Basic SKU is sufficient. Name the container registry something identifiable. e.g. onion-architecture-container-apps
+# CI build — private build + packaging
+. .\build.ps1 ; Invoke-CIBuild
 
-## Connect Azure to Octopus Deploy
+# dotnet CLI directly
+dotnet build src/ChurchBulletin.sln --configuration Release
+```
 
-### Create an Azure App Registration for Octopus Deploy
+## Run Tests
 
-- In Azure AD select App Registrations
+```powershell
+# Unit tests
+dotnet test src/UnitTests --configuration Release
 
-![Alt text](images/Create%20azure%20app%20registration%201.png)
+# Integration tests
+dotnet test src/IntegrationTests --configuration Release
 
-- Select New Registration
-    1. Name the Registration something identifiable. e.g. Onion-Containers-Octo
-    2. A Redirect URI is not needed
-    3. Select Register
+# Acceptance tests (install Playwright browsers first)
+pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
+dotnet test src/AcceptanceTests --configuration Debug
+```
 
-![Alt text](images/Create%20azure%20app%20registration%202.png)
+## Run Locally
 
-### Create a Client Secret
+```bash
+cd src/UI/Server
+dotnet run
+```
 
-- Select Certificates and Secrets
-- New Client Secret
-- Provide a description and select add
+The application starts at `https://localhost:7174`. Health check endpoint: `https://localhost:7174/_healthcheck`.
 
-![Alt text](images/Create%20azure%20app%20registration%203.png)
+---
 
-- Save the client secret Value. It will be used in Octopus.
+# Architecture Patterns Reference
 
-### Set Octopus Deploy as an Azure Contributor
+A catalog of 51 architectural patterns and design concepts demonstrated in this codebase, annotated with authoritative reference URLs suitable for student learning.
 
-- In your Azure subscription, navigate to Access Control (IAM), and add a role assignment
-- Select Privileged administrator roles, then Contributor
+---
 
-![Alt text](images/Create%20azure%20app%20registration%204.png)
+## Domain & Application Architecture
 
-- In the Members tab use the + Select Members page to select the App Registration that was created
-- Press Review + assign
+### 1. Onion Architecture
+Layered architecture where dependencies point inward. Inner layers define interfaces; outer layers implement them. Core has zero outward dependencies.
+- **Reference:** [Jeffrey Palermo — The Onion Architecture, Part 1 (2008)](https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/)
 
-![Alt text](images/Create%20azure%20app%20registration%205.png)
+### 2. CQRS (Command Query Responsibility Segregation)
+Separates read models (queries) from write models (commands), allowing each to be optimized independently.
+- **Reference:** [Martin Fowler — CQRS](https://www.martinfowler.com/bliki/CQRS.html)
 
-- Press Review + assign again to save
+### 3. Mediator Pattern
+A behavioral design pattern where a mediator object encapsulates how objects interact, promoting loose coupling. Implemented here via the MediatR library.
+- **Reference:** [Refactoring Guru — Mediator](https://refactoring.guru/design-patterns/mediator)
 
-### Create an Azure Account in Octopus Deploy
+### 4. Domain Model
+An object model of the business domain that incorporates both behavior and data. Business logic lives inside the domain objects themselves.
+- **Reference:** [Martin Fowler — Domain Model (P of EAA)](https://martinfowler.com/eaaCatalog/domainModel.html)
 
-- In Octopus Deploy navigate to Infrastructure -\> Accounts
-- Add an Azure Subscription Account
-    1. Name the account Azure-Onion-Containers
-    2. Fill in the Subscription ID
-        - This can be found in the Subscription Overview page in the Azure web portal
-    3. Leave the Authentication Method as 'Use a Service Principal'
-    4. Fill in the Tenant ID
-        - This can be found in the Overview page of the App Registration in the Azure web portal
-    5. Fill in the Application ID
-        - This is the Application (client) ID from the App registration that was just created. This can be found in the Overview page in the Azure web portal
-    6. Fill in the Application Password / Key
-        - This is the client secret value that was created previously
+### 5. Layer Supertype (Entity Base Class)
+An abstract base class that provides common behavior (identity, equality) for all domain entities in a layer.
+- **Reference:** [Martin Fowler — Layer Supertype (P of EAA)](https://martinfowler.com/eaaCatalog/layerSupertype.html)
 
-![Alt text](images/Create%20azure%20app%20registration%206.png)
+### 6. Value Object
+An immutable object defined entirely by its attributes rather than a unique identity. Two value objects with the same attributes are considered equal.
+- **Reference:** [Martin Fowler — Value Object](https://www.martinfowler.com/bliki/ValueObject.html)
 
-# Octopus Deploy Environment Setup:
+### 7. Enumeration Class (Smart Enum)
+Replaces primitive `enum` types with full classes that carry behavior, enabling richer domain modeling and avoiding primitive obsession.
+- **Reference:** [Microsoft — Enumeration Classes over Enum Types](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/enumeration-classes-over-enum-types)
 
-In Octopus Deploy create 3 environments.
+### 8. State Machine Pattern
+Objects transition through a set of defined states via validated transitions, preventing invalid state changes.
+- **Reference:** [Refactoring Guru — State Pattern](https://refactoring.guru/design-patterns/state)
 
-- TDD
-- UAT
-- Prod
+### 9. Repository Pattern
+Abstracts data access behind a collection-like interface, decoupling the domain from persistence technology. Implemented implicitly via EF Core's `DbContext`.
+- **Reference:** [Martin Fowler — Repository (P of EAA)](https://martinfowler.com/eaaCatalog/repository.html)
 
-No Deployment targets need to be created.
+### 10. Unit of Work
+Tracks all changes made during a business transaction and commits them as a single atomic operation. Implemented implicitly via EF Core's `SaveChanges`.
+- **Reference:** [Martin Fowler — Unit of Work (P of EAA)](https://martinfowler.com/eaaCatalog/unitOfWork.html)
 
-Create a Lifecycle that uses those three environments promoting from TDD -\> UAT -\> Prod
+---
 
-# Octopus Deploy Project Setup:
+## Dependency Management & Wiring
 
-## Connect Octopus to GitHub
+### 11. Dependency Injection / Inversion of Control
+Components declare their dependencies through constructor parameters; an external container resolves and provides them at runtime.
+- **Reference:** [Martin Fowler — Inversion of Control Containers and the Dependency Injection Pattern](https://martinfowler.com/articles/injection.html)
 
-### In GitHub
+### 12. Service Registry
+A well-known object that other objects use to find common services. Centralized registration of services in a single registry class.
+- **Reference:** [Martin Fowler — Registry (P of EAA)](https://martinfowler.com/eaaCatalog/registry.html)
 
-Create a Personal Access Token with repo access only.
-Save the token for use in Octopus
+### 13. Convention over Configuration
+The framework automatically discovers and registers services by scanning assemblies, reducing explicit configuration in favor of naming and structural conventions.
+- **Reference:** [Wikipedia — Convention over Configuration](https://en.wikipedia.org/wiki/Convention_over_configuration)
 
-### In Octopus
+---
 
-Create Git Credentials using the GitHub Personal Access Token
+## UI & Presentation Architecture
 
-## Create a new Version Controlled Project:
+### 14. Blazor WebAssembly (Client-Side SPA)
+A single-page application framework that runs .NET code directly in the browser via WebAssembly, eliminating the need for JavaScript.
+- **Reference:** [Microsoft Learn — ASP.NET Core Blazor Hosting Models](https://learn.microsoft.com/en-us/aspnet/core/blazor/hosting-models)
 
-1. Create a new project, ensure the "Use version control for this project" box is checked
-2. Use the Lifecycle that was just created
+### 15. Server-Side Rendering with Client Hydration
+Initial rendering occurs on the server for fast first paint; the client-side framework then takes over for interactivity.
+- **Reference:** [Microsoft Learn — ASP.NET Core Blazor Render Modes](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/render-modes)
 
-![Alt text](images/new%20version%20controlled%20project%201.png)
+### 16. Backend for Frontend (BFF)
+A dedicated API layer tailored to the needs of a specific frontend, rather than a generic API serving all consumers.
+- **Reference:** [Azure Architecture Center — Backends for Frontends Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends)
 
-3. Click Save AND CONFIGURE VCS
+### 17. Shared Kernel
+A shared set of types and interfaces used across bounded contexts or UI boundaries, maintained as a single shared project.
+- **Reference:** [Wikipedia — Domain-Driven Design (Shared Kernel)](https://en.wikipedia.org/wiki/Domain-driven_design)
 
-      1. Skip the "How do you intend to use this project" popup
-4. Set the Git Repository URL to the URL of the forked repo
-5. Use the Library Git Credentials that were created earlier
+---
 
-![Alt text](images/new%20version%20controlled%20project%202.png)
+## Data & Persistence
 
-7. Click CONFIGURE and push the initial commit to convert the project
+### 18. Evolutionary Database Design (Database Migrations)
+Incremental, versioned schema changes applied via numbered migration scripts, allowing the database to evolve alongside application code.
+- **Reference:** [Martin Fowler — Evolutionary Database Design](https://martinfowler.com/articles/evodb.html)
 
-## Optional-Create a runbook for availability monitoring
+---
 
-In the deployment process Octopus will setup Azure App Insights to monitor the availability of the app. If the healthcheck endpoint returns unhealthy an alert will be created that triggers an Octopus Runbook. 
-To configure the Runbook integration:
-- There is a variable in the project named **OctoRunbookName** this is the name of the Runbook that Azure will run. Create a Runbook with the same name. e.g. Unhealthy app alert
-- In the project create a variable named **azrunbookAPI** Set the value to Sensitive and provide an API key that has access to the project
-- Update **OctoInstanceURL** with the URL of your Octopus instance
+## Infrastructure & Deployment
 
+### 19. Containerization
+Packaging an application and its dependencies into a lightweight, portable container image that runs consistently across environments.
+- **Reference:** [Docker — What is a Container?](https://www.docker.com/resources/what-container/)
 
+### 20. Container Orchestration
+A managed runtime that handles container deployment, scaling, networking, and revision management.
+- **Reference:** [Microsoft Learn — Azure Container Apps Overview](https://learn.microsoft.com/en-us/azure/container-apps/overview)
 
-# Azure DevOps Setup:
+### 21. Continuous Integration
+Automatically building and testing every code change when pushed, providing rapid feedback on integration errors.
+- **Reference:** [Martin Fowler — Continuous Integration](https://martinfowler.com/articles/continuousIntegration.html)
 
-Create a new project
+### 22. Continuous Delivery
+An automated pipeline that ensures code is always in a deployable state, from commit through testing environments to production.
+- **Reference:** [Martin Fowler — Continuous Delivery](https://martinfowler.com/bliki/ContinuousDelivery.html)
 
-Install the Octopus Deploy Integration ([https://marketplace.visualstudio.com/items?itemName=octopusdeploy.octopus-deploy-build-release-tasks](https://marketplace.visualstudio.com/items?itemName=octopusdeploy.octopus-deploy-build-release-tasks))
+### 23. Environment Parity (Dev/Prod Parity)
+Keeping development, staging, and production environments as similar as possible to reduce deployment surprises.
+- **Reference:** [The Twelve-Factor App — X. Dev/Prod Parity](https://12factor.net/dev-prod-parity)
 
-## Create Service Connections
+### 24. Blue-Green / Revision-Based Deployment
+Deploying a new version alongside the old one, then switching traffic, enabling zero-downtime releases and easy rollback.
+- **Reference:** [Martin Fowler — Blue Green Deployment](https://martinfowler.com/bliki/BlueGreenDeployment.html)
 
-To create a service connection
-  - Go to Project Settings in the bottom left
-  - Under the Pipelines heading, select Service Connections
-  - Select Create Service Connection
+### 25. Strangler Fig (Dual Pipeline)
+Incrementally replacing a legacy system by routing functionality to a new implementation while the old one is gradually retired. Applied here to the migration from Azure DevOps to GitHub Actions.
+- **Reference:** [Martin Fowler — Strangler Fig Application](https://martinfowler.com/bliki/StranglerFigApplication.html)
 
-### Create an Azure Resource Manager Service Connection
-  - Select Azure Resource Manager as the new service connection type
+### 26. Infrastructure as Code
+Defining infrastructure declaratively in version-controlled files (ARM templates, pipeline YAML, Octopus OCL) rather than through manual configuration.
+- **Reference:** [Wikipedia — Infrastructure as Code](https://en.wikipedia.org/wiki/Infrastructure_as_code)
 
-![Alt text](images/service%20connections%201.png)
+### 27. Configuration as Code
+Deployment processes, variables, and settings stored as code in the repository, enabling versioning, diffing, and review of deployment configuration.
+- **Reference:** [Octopus Deploy — Deployment Process as Code](https://octopus.com/docs/deployments/patterns/deployment-process-as-code)
 
-  - Use the Service Principal (automatic) authentication method
-  - Select your Azure Subscriptoin
-  - Leave the Resource Group section blank
-  - Name the Service Connection: onion-architecture-maui-azure-dotnet-8
-  - Check 'Grant access permission to all pipelines'
+### 28. Semantic Versioning
+A versioning scheme (`MAJOR.MINOR.PATCH`) with defined rules about when each number increments, communicating the nature of changes to consumers.
+- **Reference:** [Semantic Versioning 2.0.0](https://semver.org/)
 
-![Alt text](images/service%20connections%202.png)
+### 29. Immutable Build Artifacts
+The same compiled artifact flows unchanged through all environments (TDD, UAT, Prod). What was tested is what gets deployed.
+- **Reference:** [Minimum CD — Immutable Artifacts](https://minimumcd.org/minimumcd/immutable/)
 
-  - Save the service connection
+### 30. Approval Gates / Environment Promotion
+Requiring manual reviewer approval before deploying to higher environments, enforcing governance over the release pipeline.
+- **Reference:** [Microsoft Learn — Gates and Approvals](https://learn.microsoft.com/en-us/azure/devops/pipelines/release/approvals/gates)
 
-### Create an Octopus Deploy Service connection
+### 31. Release Management
+Separating the concerns of "build" from "deploy" with a dedicated release management tool that tracks what version is in which environment.
+- **Reference:** [Octopus Deploy — Releases and Deployments](https://octopus.com/docs/best-practices/deployments/releases-and-deployments)
 
-  - In Octopus Deploy create an API key ([https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key](https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key))
-  - In Azure DevOps select New Service Connection, choose Octopus Deploy as the type
+---
 
-![Alt text](images/service%20connections%203.png)
+## Health & Observability
 
-  - Fill in the URL of your Octopus instance
-  - Fill in the API key that was created
-  - Name the service connection: OctoServiceConnection
-  - Check 'Grant access permission to all pipelines'
+### 32. Health Endpoint Monitoring Pattern
+Dedicated endpoints that report system health, enabling load balancers, orchestrators, and deployment pipelines to verify application readiness.
+- **Reference:** [Azure Architecture Center — Health Endpoint Monitoring Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/health-endpoint-monitoring)
 
-![Alt text](images/service%20connections%204.png)
+### 33. Health Check Gating (Deployment Verification)
+Blocking deployment progression (e.g., acceptance test execution) until health endpoints confirm the application is ready.
+- **Reference:** [Azure Architecture Center — Health Endpoint Monitoring Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/health-endpoint-monitoring)
 
-  - Save the service connection
+### 34. Client-Side Health Checks (Distributed Health Monitoring)
+Health checks executed from the client perspective (Blazor WASM) back to the server, providing end-to-end health visibility beyond server-side checks alone.
+- **Reference:** [Microsoft Learn — ASP.NET Core Health Checks](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks)
 
-### Create an Azure Container Registry Service Connection
+---
 
-  - Select New Service Connection, choose Docker Registry as the type
+## Testing Patterns
 
-![Alt text](images/service%20connections%205.png)
+### 35. Test Pyramid
+A layered testing strategy with many fast unit tests at the base, fewer integration tests in the middle, and a small number of end-to-end acceptance tests at the top.
+- **Reference:** [Martin Fowler — Test Pyramid](https://martinfowler.com/bliki/TestPyramid.html)
 
-  - Configure the registry
-    1. Choose Azure Container Registy as the type
-    2. Choose Service Principal as the Authentication Type
-    3. Select your Azure Subscription
-    4. Select the container registry that was created
-    5. Name the service connection: OnionArchACRServiceConnection
-    6. Select 'Grant access permission to all pipelines'
+### 36. Test Double (Stub Pattern)
+Replacing real dependencies with simplified implementations ("stubs") during testing. This codebase uses the "Stub" prefix convention rather than "Mock."
+- **Reference:** [Martin Fowler — Test Double](https://martinfowler.com/bliki/TestDouble.html)
 
-![Alt text](images/service%20connections%206.png)
+### 37. Test Data Builder
+Generating test data with fluent builder objects (via AutoBogus), producing valid domain objects without verbose manual construction.
+- **Reference:** [Nat Pryce — Test Data Builders: An Alternative to the Object Mother Pattern](http://www.natpryce.com/articles/000714.html)
 
-- Save the Service Connection
+### 38. Arrange-Act-Assert (AAA)
+Structuring each test method into three phases: set up preconditions, execute the action under test, and verify the result.
+- **Reference:** [C2 Wiki — Arrange Act Assert](https://wiki.c2.com/?ArrangeActAssert)
 
-## Create an artifact feed
+### 39. Acceptance Testing with Browser Automation
+End-to-end tests that drive a real browser to verify the application behaves correctly from the user's perspective.
+- **Reference:** [Playwright Documentation](https://playwright.dev/)
 
-- In the Azure DevOps project: Go to Artifacts, then select **+ Create Feed**
+### 40. Component Testing (bUnit)
+Unit testing individual UI components in isolation by rendering them in a test host without a browser.
+- **Reference:** [bUnit — A Testing Library for Blazor Components](https://bunit.dev/)
 
-![Alt text](images/feed%201.png)
+### 41. Multi-Database Engine Testing
+Running the same test suite against multiple database engines (SQL Server, SQLite, LocalDB) to validate that data access logic is not vendor-specific.
+- **Reference:** [Microsoft Learn — Choosing a Testing Strategy (EF Core)](https://learn.microsoft.com/en-us/ef/core/testing/choosing-a-testing-strategy)
 
-- Name the feed something relevant, scope it to the current project, select create
+### 42. Multi-Architecture CI (Platform Matrix Testing)
+Running CI builds in parallel across multiple CPU architectures (x86_64, ARM64) to verify cross-platform compatibility.
+- **Reference:** [GitHub Docs — Running Variations of Jobs in a Workflow](https://docs.github.com/actions/writing-workflows/choosing-what-your-workflow-does/running-variations-of-jobs-in-a-workflow)
 
-![Alt text](images/feed%202.png)
+---
 
-## Authorize the Pipeline to push packages to the feed
+## Design Patterns (GoF & Other)
 
-- Set the Project Build Service identity to be a  **Contributor**  on your feed ([https://learn.microsoft.com/en-us/azure/devops/artifacts/feeds/feed-permissions?view=azure-devops#configure-feed-settings](https://learn.microsoft.com/en-us/azure/devops/artifacts/feeds/feed-permissions?view=azure-devops%23configure-feed-settings))
+### 43. Factory Pattern
+Creates objects without exposing the instantiation logic, letting subclasses or configuration determine which concrete class to create.
+- **Reference:** [Refactoring Guru — Factory Method](https://refactoring.guru/design-patterns/factory-method)
 
-![Alt text](images/authorize%20feed%201.png)
+---
 
-## Add the Azure DevOps Feed to Octopus
+## .NET Platform Patterns
 
-### Create a Personal Access Token
+### 44. Hosted Service / Background Worker
+Long-running background tasks implemented as hosted services within the .NET generic host, running alongside the web application.
+- **Reference:** [Microsoft Learn — Worker Services in .NET](https://learn.microsoft.com/en-us/dotnet/core/extensions/workers)
 
-1. Create an Azure DevOps Personal Access Token [https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Windows](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Windows)
-2. Give the token the Packaging Read scope
-3. Save the token for use in Octopus
+### 45. .NET Aspire (Service Orchestration)
+Development-time orchestration of distributed services, wiring connection strings, health checks, and service discovery for local development.
+- **Reference:** [Microsoft Learn — .NET Aspire App Host Overview](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/app-host-overview)
 
-### In Azure DevOps
+### 46. Nullable Reference Types (Compile-Time Null Safety)
+Static analysis annotations that help the compiler detect potential null reference errors at compile time rather than runtime.
+- **Reference:** [Microsoft Learn — Nullable Reference Types](https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references)
 
-1. Navigate to the Artifacts page.
-2. Select the 'Connect to Feed' button
-3. Select Nuget.exe as the feed type
-4. In the Project Setup section, copy the URL from the value field
+### 47. NuGet Package as Deployment Artifact
+Using the NuGet package format not just for library distribution but as the deployment unit that flows through the release pipeline.
+- **Reference:** [Microsoft Learn — What is NuGet?](https://learn.microsoft.com/en-us/nuget/what-is-nuget)
 
-![Alt text](images/add%20feed%20to%20octo%201.png)
+---
 
-### In Octopus Deploy
+## AI / LLM Integration
 
-1. Navigate to Library -\> External Feeds and select ADD FEED
-2. Set the Feed type to NuGet Feed
-3. Name the feed Onion-Architecture-MAUI-Azure-dotnet-8
-4. Paste in the URL that was copied from Azure DevOps
-5. Provide something in the Feed username field. It can be anything other than an empty string. It's not actually used.
-6. Provide the personal access token from Azure DevOps as the Feed Password
+### 48. AI/LLM Gateway Pattern
+An abstraction layer between the application and AI services, encapsulating connection management, health checks, and model configuration.
+- **Reference:** [Azure Architecture Center — Azure OpenAI Gateway Guide](https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/azure-openai-gateway-guide)
 
-![Alt text](images/add%20feed%20to%20octo%202.png)
+---
 
-## Create and Update Project Variables
+## Architecture Documentation
 
-In the Octopus Project navigate to Variables -\> Project
+### 49. C4 Model
+Documenting software architecture at four hierarchical levels of abstraction: System Context, Container, Component, and Code (Class).
+- **Reference:** [The C4 Model for Visualising Software Architecture](https://c4model.com/)
 
-- Create a variable named **DatabasePassword** Set the values to Sensitive and enter passwords for TDD, UAT, and Prod environments
-- Update **registry\_login\_server** to the login server of the Azure Container Registry that was created
-  - This login server can be found in the Overview page of the container registry in the Azure Web Portal
-- Update **EnsureEnvironmentsExist** to True for Prod/UAT to ensure that all resources will be created the first time.
+### 50. 4+1 Architectural View Model
+Describing architecture from five concurrent viewpoints: Logical, Development, Process, Physical, and Scenarios — each addressing different stakeholder concerns.
+- **Reference:** [Wikipedia — 4+1 Architectural View Model](https://en.wikipedia.org/wiki/4%2B1_architectural_view_model)
 
-## Create the Library Variable Group
-
-1. In the Azure DevOps project: Go to Pipelines -\> Library
-
-![Alt text](images/variable%20group%201.png)
-
-2. Create a variable group named **Integration-Build**
-
-    1. Create a variable called **FeedName**. The value will be \<Azure DevOps project name\>/\<Azure DevOps feed name\>
-    2. Create a variable called **OctoProjectGroup** with the value being the Project Group that houses your Octopus Project.
-    3. Create a variable called **OctoProjectName** with the value being the name of your Octopus Project.
-    4. Create a variable called **OctoSpace** with the value being the name of your Octopus Space.
-
-![Alt text](images/variable%20group%202.png)
-
-3. Save the variable group
-
-## Grant the pipeline access to the variable group
-
-1. From the variable group page select the Pipeline permissions tab at the top
-2. Select the hamburger menu, and select Open Access
-
-![Alt text](images/variable%20group%203.png)
-
-3. Select Open access to allow all pipelines in the project to use the variable group
-
-![Alt text](images/variable%20group%204.png)
-
-## Create Environments
-
-1. Go to Pipelines -\> Environments
-2. Select New environment
-3. Create three environments.
-- TDD
-- UAT
-- Prod
-4. In the UAT and Prod environments, add an approval check and select the users that need to approve the appropriate deploy stages.
-
-## Create a Pipeline
-
-1. Go to Pipelines -\> Pipelines
-
-![Alt text](images/pipeline%201.png)
-
-1. Select Create Pipeline
-2. Select Github as the location for your code
-3. Accept and allow Github and Azure DevOps to connect
-
-![Alt text](images/pipeline%202.png)
-
-4. Select the forked repo when asked to select a repository
-5. Select Approve & Install to allow Azure Pipelines to connect to GitHub
-6. When reviewing the pipeline YAML select **Run** to create and run the Pipeline for the first time
-
-![Alt text](images/pipeline%203.png)
-
-The pipeline will build the application, create all of the resources in the TDD environment, deploy the app to TDD, test the app, then destroy the TDD resources. Then the Azure resources in UAT will be created, and the app will be deployed to TDD. Ultimately Prod resources will be created, and the app will be deployed to Prod
-
-
-# Octopus Deploy Runbook Setup:
-
-In the ChurchBulletin.Scripts package that is created there is a script called ScaleInfrastructure.ps1. When provided with appReplicas and/or serviceObjective values the script will set the min and max number of replicas of the container app and the service objective of the database. This is used with Octopus Runbooks ([Runbooks Documentation](https://octopus.com/docs/runbooks#:~:text=To%20create%20or%20manage%20your,%E2%9E%9C%20Runbooks%20%E2%9E%9C%20Add%20Runbook.)) to scale up and down the infrastructure for day and nighttime loads.
-
-## Create ContainerAppReplicas variable
-
-In your Octopus Deploy project, create two new variables
-- **ContainerAppScaledUpReplicas** and give it an integer value. e.g. 2
-- **ContainerAppScaledUpCPU** and give it a float value. e.g. 0.5
-- **ContainerAppScaledUpMem** and give it a float value. e.g. 1.0
-- **DBScaledUpPerformanceLevel** and give it service objective value. e.g. S0
-
-Commit these variables to main. **Variables not in the default branch will not be accessible to runbooks**
-
-![Alt text](images/Replicas1.png)
-
-## Create Scale Up Runbook
-
-- In your Octopus Deploy project, navigate to Operations -> Runbooks and select ADD RUNBOOK
-- Name the runbook Scale Up Infrastructure
-- Select Save
-![Alt text](images/runbook1.png)
-
-- Select DEFINE YOUR RUNBOOK PROCESS near the upper right
-
-![Alt text](images/runbook2.png)
-
-- And then select ADD STEP
-
-- Use the run az Azure Script step template
-
-![Alt text](images/runbook3.png)
-
-- Select ADD
-
-- Name the step **Scale Up Infrastructure**
-- Leave Execution Location, Worker Pool, Container Image, and Azure Tools as default
-
-- Under Azure -> Account select the chain links icon to bind the account value to a variable. Then set the value to **#{AzureAccount}** 
-
-![Alt text](images/runbook4.png)
-
-- Under Script Source select **Script file inside a package** 
-- Under Script File in Package set the Package feed to the feed that was created.
-- Set the Package ID to **ChurchBulletin.Script**
-- Set the Script file name to **ScaleInfrastructure.ps1**
-- Set the Script parameters to **-appReplicas #{ContainerAppScaledUpReplicas} -cpu #{ContainerAppScaledUpCPU} -mem #{ContainerAppScaledUpMem} -serviceObjective #{DBScaledUpPerformanceLevel}**
-
-![Alt text](images/runbook5.png)
-
-Leave the rest of the settings at default, and select SAVE
-
-## Create Scale Down Runbook
-
-Create another runbook named Scale Down Container App using the same directions.
-
-- Change the Step Name to **Scale Down Infrastructure**
-- Leave the Script Parameters blank
-
-## Publish the runbooks
-
-Runbooks must be published before they can be consumed by triggers.
-
-- Navigate to the Scale Up Infrastructure runbook. Select PUBLISH
-![Alt text](images/runbook6.png)
-- Leave the default settings, and select PUBLISH
-![Alt text](images/runbook7.png)
-- Do the same for Scale Down Infrastructure
-
-## Create Scheduled Runbook Triggers
-([Runbook Triggers Documentation](https://octopus.com/docs/runbooks/scheduled-runbook-trigger))
-
-- Navigate to Operations -> Triggers
-- Select ADD SCHEDULED TRIGGER
-- Name the trigger Scale Up Morning
-- Under Runbook select Scale Up Infrastructure
-- Under Target Environments select Prod
-- Leave the schedule at Daily
-- Under Run Days uncheck Saturday and Sunday
-- Set Schedule Timezone to your timezone
-- Leave the Interval at once
-- Set the Start Time to 8:00 AM
-- Click Save
-
-![Alt text](images/trigger1.png)
-
-- Create another trigger named Scale Down Evening
-- Use the Scale Down Container App runbook
-- Under Target Environments select Prod
-- Under Run Days uncheck Saturday and Sunday
-- Set Schedule Timezone to your timezone
-- Set the Start Time to 6:00 PM
-- Click Save
-
-Now the container app and database will automatically be scaled up every morning, and scaled down every evening
-
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
-
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
-
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
-
-
-Last update: 2025-12-12 13:27 MDT
-
-Jeffrey Palermo
+### 51. Architecture Documentation as Code
+Maintaining architecture diagrams (PlantUML, Mermaid) as source files checked into version control alongside application code, enabling versioning, diffing, and review.
+- **Reference:** [The C4 Model — Tooling](https://c4model.com/#Tooling)
