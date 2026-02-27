@@ -19,7 +19,6 @@ builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddApplicationInsightsTelemetry();
 
 // Add MCP server (HTTP transport at /mcp)
-builder.Services.AddTransient<IWorkOrderNumberGenerator, WorkOrderNumberGenerator>();
 builder.Services
     .AddMcpServer(options =>
     {
