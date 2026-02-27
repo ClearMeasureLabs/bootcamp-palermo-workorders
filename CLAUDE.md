@@ -1,280 +1,123 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. For solution layout and key paths, see also `.cursor/rules/codebase-structure.mdc`.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-This is a Work Order management system built with .NET 10.0, implementing Onion Architecture with Blazor WebAssembly UI, Entity Framework Core for data access, and deployed to Azure Container Apps.
-
-## Solution Structure
+Work Order management system. .NET 10.0, Onion Architecture, Blazor WebAssembly + Server UI, EF Core 10, SQL Server, MediatR for CQRS, Lamar DI, deployed to Azure Container Apps.
 
 **Solution:** `src/ChurchBulletin.sln`
 
-| Project | Path | Role |
-|---------|------|------|
-| Core | `src/Core/` | Domain; no dependencies |
-| DataAccess | `src/DataAccess/` | EF Core, MediatR handlers; refs Core only |
-| Database | `src/Database/` | DB tooling, DbUp |
-| UI.Server | `src/UI/Server/` | Blazor Server host, Lamar DI |
-| UI.Client | `src/UI/Client/` | Blazor WASM |
-| UI.Api | `src/UI/Api/` | Web API |
-| UI.Shared | `src/UI.Shared/` | Shared UI |
-| LlmGateway | `src/LlmGateway/` | Azure OpenAI |
-| ChurchBulletin.AppHost | `src/ChurchBulletin.AppHost/` | Aspire AppHost |
-| ChurchBulletin.ServiceDefaults | `src/ChurchBulletin.ServiceDefaults/` | Aspire defaults |
-| Worker | `src/Worker/` | Hosted endpoint worker service |
-| UnitTests | `src/UnitTests/` | NUnit + Shouldly |
-| IntegrationTests | `src/IntegrationTests/` | NUnit, LocalDB |
-| AcceptanceTests | `src/AcceptanceTests/` | NUnit + Playwright |
+## Build and Test
 
-## Build and Test Commands
-
-### Build
 ```powershell
-# Quick build
-.\build.bat
+# Full local build (compile + unit tests + DB migration + integration tests)
+. .\build.ps1 ; Invoke-PrivateBuild
 
-# Private build (local development - includes clean, compile, unit tests, DB migration, integration tests)
-.\build.ps1 ; Invoke-PrivateBuild
-
-# CI build (includes Invoke-PrivateBuild + packaging)
-.\build.ps1 ; Invoke-CIBuild
-
-# Using dotnet CLI directly
+# Build only
 dotnet build src/ChurchBulletin.sln --configuration Release
+
+# Unit tests
+dotnet test src/UnitTests --configuration Release
+
+# Single unit test by name
+dotnet test src/UnitTests --configuration Release --filter "FullyQualifiedName~TestClassName.TestMethodName"
+
+# Integration tests (requires SQL Server — LocalDB on Windows, Docker container on Linux, SQLite fallback)
+dotnet test src/IntegrationTests --configuration Release
+
+# Acceptance tests (Playwright — install browsers first)
+pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
+dotnet test src/AcceptanceTests --configuration Debug
+
+# Single acceptance test
+dotnet test src/AcceptanceTests --configuration Debug --filter "FullyQualifiedName~TestClassName.TestMethodName"
 ```
 
-### Testing
-```powershell
-# Run unit tests
-cd src/UnitTests
-dotnet test --configuration Release
+**Run locally:** `cd src/UI/Server && dotnet run` → `https://localhost:7174` (health: `/_healthcheck`)
 
-# Run integration tests
-cd src/IntegrationTests
-dotnet test --configuration Release
+## Onion Architecture (Strict)
 
-# Run acceptance tests (requires Playwright browsers installed)
-cd src/AcceptanceTests
-pwsh bin/Debug/net10.0/playwright.ps1 install
-dotnet test --configuration Debug
+Dependency flow is inward only. Violations will break the build.
+
+- **Core** (`src/Core/`) → NO project references. Domain models, interfaces, query objects.
+- **DataAccess** (`src/DataAccess/`) → references Core only. EF Core context, MediatR handlers.
+- **UI layer** (`src/UI/Server/`, `src/UI/Client/`, `src/UI/Api/`, `src/UI.Shared/`) → outer layer.
+- **Database** (`src/Database/`) → DbUp migrations, independent of application layers.
+
+## Request Flow (CQRS)
+
+Every operation flows through MediatR via the `IBus` abstraction:
+
+```
+User → Blazor UI → API Controller → IBus.Send(query/command)
+  → MediatR → Handler (in DataAccess/) → DataContext (EF Core) → SQL Server
 ```
 
-### Database Migration
-```powershell
-# Local database migration using DbUp
-$databaseServer = "(LocalDb)\MSSQLLocalDB"
-$databaseName = "ChurchBulletin"
-MigrateDatabaseLocal -databaseServerFunc $databaseServer -databaseNameFunc $databaseName
+**Queries:** Defined in `src/Core/Queries/` (e.g., `WorkOrderByNumberQuery`). Handlers in `src/DataAccess/Handlers/`.
 
-# Direct DbUp execution
-dotnet run --project src/Database -- rebuild --database-server "(LocalDb)\MSSQLLocalDB" --database-name "ChurchBulletin"
-```
+**State Commands:** Defined in `src/Core/Model/StateCommands/`. Each command implements `IStateCommand` and mutates the domain model. Flow: `StateCommandHandler` → `command.Execute(workOrder)` → `DataContext.SaveChangesAsync()`.
 
-### Run Application Locally
-```bash
-cd src/UI/Server
-dotnet run
-# Application runs on https://localhost:7174
-# Health check: https://localhost:7174/_healthcheck
-```
+Work order state transitions: Draft → Assigned → InProgress → Complete (also Cancelled from any state). See `arch/WorflowFor*.md` for sequence diagrams.
 
-## Onion Architecture Implementation
+## Domain Model
 
-The solution follows strict Onion Architecture with dependency flow inward:
-
-### Core (Inner Layer - No Dependencies)
-- **Location**: `src/Core/`
-- **Purpose**: Domain models, domain services interfaces, query objects
-- **Key Types**: `WorkOrder`, `Employee`, `WorkOrderStatus`, `Role`
-- **WorkOrder**: Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate
-- **Employee**: UserName, FirstName, LastName, EmailAddress, Roles
-- **WorkOrderStatus**: Draft, Assigned, InProgress, Complete, Cancelled
+- **WorkOrder**: Number, Title, Description, RoomNumber, Status (WorkOrderStatus), Creator/Assignee (Employee), AssignedDate, CreatedDate, CompletedDate. Methods: `ChangeStatus()`, `CanReassign()`
+- **Employee**: UserName, FirstName, LastName, EmailAddress, Roles. Methods: `CanCreateWorkOrder()`, `CanFulfilWorkOrder()`
+- **WorkOrderStatus**: Smart enum — Draft, Assigned, InProgress, Complete, Cancelled. Factory methods: `FromCode()`, `FromKey()`
 - **Role**: Name, CanCreateWorkOrder, CanFulfillWorkOrder
-- **Pattern**: Uses MediatR for CQRS queries
-- **Rule**: Core must not reference any other project
-
-### DataAccess (Depends on Core Only)
-- **Location**: `src/DataAccess/`
-- **Purpose**: Entity Framework Core implementation, MediatR query/command handlers
-- **Technology**: EF Core 10.0 with SQL Server
-- **Key Components**: `DataContext`, mapping files, health checks
-- **Rule**: Only references Core project
-
-### UI Layer (Outer Layer)
-- **UI.Server** (`src/UI/Server/`): Blazor Server hosting, dependency injection via Lamar, health checks aggregation
-- **UI.Client** (`src/UI/Client/`): Blazor WebAssembly frontend
-- **UI.Api** (`src/UI/Api/`): Web API endpoints (minimal dependencies)
-- **UI.Shared** (`src/UI.Shared/`): Shared components
-
-### Database Management
-- **Database** (`src/Database/`): DbUp-based migrations with numbered scripts in `scripts/Update/` (001, 003, 004, etc.)
-
-### Additional Layers
-- **LlmGateway** (`src/LlmGateway/`): Azure OpenAI integration for AI agent functionality
-- **Worker** (`src/Worker/`): Background hosted endpoint for work-order processing
-
-## Testing Structure
-
-### Unit Tests (`src/UnitTests/`)
-- **Framework**: NUnit 4.x
-- **Test Data**: AutoBogus for generation
-- **UI Testing**: bUnit for Blazor components
-- **Naming**: `[MethodName]_[Scenario]_[ExpectedResult]` pattern
-- **Assertions**: Use Shouldly framework
-- **Test Doubles**: Prefix with "Stub" (e.g., `StubClass`), not "Mock"
-- **Structure**: AAA pattern (Arrange, Act, Assert) without comments
-
-### Integration Tests (`src/IntegrationTests/`)
-- **Framework**: NUnit
-- **Base Classes**: `IntegratedTestBase.cs`, `TestHost.cs`
-- **Database**: Uses LocalDB with `TestDatabaseConfiguration.cs`, `DatabaseEmptier.cs`
-- **Data Loading**: `ZDataLoader.cs` for test data
-
-### Acceptance Tests (`src/AcceptanceTests/`)
-- **Framework**: NUnit + Playwright
-- **Browser Automation**: Microsoft.Playwright.NUnit 1.54.0
-- **Base Classes**: `AcceptanceTestBase.cs`, `ServerFixture.cs`
-- **Test Areas**: App/, AIAgents/, Authentication/, WorkOrders/
-
-## Key Architectural Patterns
-
-### CQRS with MediatR
-- Queries in `Core/Queries/` (e.g., `EmployeeByUserNameQuery`, `WorkOrderByNumberQuery`)
-- Commands via `IStateCommand` interface
-- Handlers distributed across DataAccess and UI layers
-- `IBus` interface wrapping MediatR for abstraction
-
-### Dependency Injection
-- **Container**: Lamar (StructureMap successor)
-- **Registry**: `UIServiceRegistry.cs` for service registration
-- **Scanning**: Automatic registration of handlers and services
-
-### Health Checks
-- `CanConnectToDatabaseHealthCheck` (DataAccess)
-- `CanConnectToLlmServerHealthCheck` (LlmGateway)
-- Custom health checks in Server project
-
-## Coding Standards (from .github/copilot-instructions.md)
-
-### Architecture
-- Follow Onion Architecture principles strictly
-- Keep business logic in Core project
-- Data access isolated in DataAccess
-- Do not add NuGet packages or project references without approval
-- Keep existing .NET SDK and library versions unless specifically instructed to upgrade
-
-### Naming and Style
-- PascalCase for classes/methods, camelCase for variables
-- XML documentation for public APIs
-- Methods should be small and focused on single responsibility
-- Use nullable reference types appropriately
-
-### Testing
-- All tests use Shouldly framework for assertions
-- Follow AAA pattern without adding AAA comments
-- Prefix test methods with "Should" or "When"
-- Test doubles named with "Stub" prefix, not "Mock"
-
-### Response Guidelines
-- Do not anthropomorphize or use "I", "me", "you", "we", "us"
-- No 2nd person pronouns
-- Short, terse responses
-- Example: Say "Checking this file" not "Let me check this file"
 
 ## Database Migrations
 
-### Adding New Migrations (DbUp)
-1. Create numbered script in `src/Database/scripts/Update/`
-2. Use next sequential number (e.g., if 004 exists, create 005)
-3. Script naming: `###_Description.sql`
-4. Run Invoke-PrivateBuild to apply locally
+DbUp scripts in `src/Database/scripts/Update/`, numbered sequentially (`###_Description.sql`).
+- Use TABS for indentation in SQL scripts.
+- To add a migration: find the highest existing number, increment by 1.
+- Apply locally by running `Invoke-PrivateBuild`.
 
-### Migration Actions
-- `Create`: Create new database
-- `Update`: Apply incremental migrations
-- `Rebuild`: Drop and recreate
-- `TestData`: Load test data
+## Key Conventions
 
-## CI/CD Pipeline
+**Architecture rules (violations are auto-rejected in PR review):**
+- Do NOT add NuGet packages or change SDK versions without explicit approval
+- Do NOT modify `.octopus/`, build scripts, or pipeline files without approval
+- Strictly maintain onion dependency rules
 
-### GitHub Actions (Primary)
+**Testing:**
+- Framework: NUnit 4.x with Shouldly assertions (NOT FluentAssertions, NOT Assert.That)
+- Test doubles: prefix with `Stub` (NOT `Mock`)
+- Pattern: AAA (Arrange, Act, Assert) without section comments
+- Test naming: `[MethodName]_[Scenario]_[ExpectedResult]`, prefixed with `Should` or `When`
+- Test data generation: AutoBogus
+- UI component tests: bUnit
+- Acceptance tests: Playwright with helpers from `AcceptanceTestBase` (`LoginAsCurrentUser()`, `Click()`, `Input()`, `Select()`)
 
-Pipeline files in `.github/workflows/`:
-- `build.yml`: Integration build — parallel builds (Linux SQL, SQLite, Windows LocalDB, code analysis), Docker image build/push to ACR, NuGet publishing, acceptance tests
-- `deploy.yml`: Deployment pipeline — TDD → UAT → Prod with Octopus Deploy, Container App health checks, Playwright acceptance tests
+**Code style:**
+- PascalCase for classes/methods, camelCase for variables
+- XML documentation on public APIs
+- Nullable reference types enabled
 
-### Azure DevOps (Legacy)
+**Response style:**
+- No anthropomorphizing — no "I", "me", "you", "we", "us"
+- Terse, direct statements. Say "Checking this file" not "Let me check this file"
 
-Pipeline file: `src/pure-azdo-pipeline.yml`
+## DI and Service Wiring
 
-### Stages
-1. **Integration_Build**: Build, test, package
-2. **Docker Build & Push**: Build and push to Azure Container Registry
-3. **TDD**: Auto-deploy, migrate DB, run acceptance tests
-4. **UAT**: Manual approval required, deploy
-5. **PROD**: Manual approval required, deploy
+Lamar container configured in `src/UI/Server/UIServiceRegistry.cs`. Assembly scanning auto-registers MediatR handlers and services. The `IBus` interface wraps MediatR's `IMediator`.
 
-### Versioning
-Format: `{major}.{minor}.{Rev:r}` (currently 1.4.x)
+## Branch Naming
 
-## Docker
+Format: `{username}/{branch-description}`. AI agents use the username of the account that initiated the session. When on a branch, add/commit/push automatically without asking.
 
-### Build Container
-```bash
-# Requires pre-built artifacts in /built/ directory
-docker build -t churchbulletin-ui .
+## Quality Gates
 
-# Run container
-docker run -p 8080:8080 -p 80:80 churchbulletin-ui
-```
+| When | Command |
+|------|---------|
+| Before commit | `.\privatebuild.ps1` (or `. .\build.ps1 ; Invoke-PrivateBuild`) |
+| Before PR | `.\acceptancetests.ps1` |
+| Docs-only changes | Skip builds |
 
-### Base Image
-`mcr.microsoft.com/dotnet/aspnet:10.0`
+## Further Reference
 
-## Technology Stack
-
-- **.NET**: 10.0
-- **UI**: Blazor WebAssembly + Server
-- **Data Access**: Entity Framework Core 10.0
-- **Database**: SQL Server (Azure SQL in production)
-- **CQRS**: MediatR
-- **DI Container**: Lamar
-- **Testing**: NUnit 4.x, bUnit, Playwright, Shouldly
-- **AI/LLM**: Azure OpenAI
-- **Deployment**: Azure Container Apps, GitHub Actions, Azure DevOps Pipelines
-
-## Architecture Documentation
-
-- **Cursor rules:** `.cursor/rules/codebase-structure.mdc` (solution layout, key paths), `.cursor/rules/cloud-agent-instructions.mdc` (scope, workflow).
-- **Copilot:** `.github/copilot-instructions.md`, `.github/copilot-code-review-instructions.md`.
-
-PlantUML diagrams in `arch/`:
-- `arch-c4-system.puml` / `.md`: System context
-- `arch-c4-container-deployment.puml` / `.md`: Container deployment
-- `arch-c4-component-project-dependencies.puml` / `.md`: Project dependencies
-- `arch-c4-class-domain-model.puml` / `.md`: Domain model (WorkOrder, Employee, WorkOrderStatus, Role)
-
-Workflow diagrams in `arch/`:
-- `WorflowForSaveDraftCommand.md`
-- `WorflowForDraftToAssignedCommand.md`
-- `WorflowForAssignedToInProgressCommand.md`
-- `WorflowForInProgressToCompleteCommand.md`
-
-## Branch Naming Convention
-
-All branches must be created inside a folder matching the username of the account creating the branch. The format is `{username}/{branch-description}`.
-
-- For user `jeffreypalermo`, branches go under `jeffreypalermo/` (e.g., `jeffreypalermo/fix-work-order-status`)
-- For user `johnsmith`, branches go under `johnsmith/` (e.g., `johnsmith/add-employee-search`)
-- For AI agents (Claude, Copilot, Cursor), use the username of the account that initiated the session
-
-## Important Notes
-
-- **No Nuget packages**: Do not add new NuGet packages or change SDK versions without explicit approval
-- **Onion Architecture**: Strictly maintain dependency rules (Core has no dependencies, DataAccess only references Core)
-- **Test-after approach**: Generate code first, then implement tests
-- **Shouldly assertions**: Use Shouldly for all test assertions, not FluentAssertions or Assert.That
-- **Test naming**: Use "Stub" prefix for test doubles, never "Mock"
-- Use TABS when generating new *.sql database migration scripts
-- when on a branch, add/commit/push automatically without asking
+- Architecture diagrams: `arch/` (C4 PlantUML + Mermaid)
+- Copilot standards: `.github/copilot-instructions.md`
+- PR review rules: `.github/copilot-code-review-instructions.md`
+- Codebase structure: `.cursor/rules/codebase-structure.mdc`
