@@ -14,5 +14,6 @@ var path = Path.Combine(
     AppContext.BaseDirectory, "..", "..", "..", "..", "..", "arch", "c4sharp-output");
 
 new PlantumlContext()
+    .UseDiagramImageBuilder()
     .UseDiagramSvgImageBuilder()
-    .Export(path, diagrams);
+    .Export(path, diagrams, new DefaultTheme());

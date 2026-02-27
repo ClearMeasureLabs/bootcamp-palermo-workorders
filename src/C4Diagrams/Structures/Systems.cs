@@ -1,4 +1,5 @@
 using C4Sharp.Elements;
+using C4Sharp.Elements.Relationships;
 
 namespace C4Diagrams.Structures;
 
