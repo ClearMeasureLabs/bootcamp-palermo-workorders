@@ -359,3 +359,8 @@ coverage.cobertura.xml
 /build
 /.claude/settings.local.json
 nul
+
+# Mermaid CLI tooling artifacts
+/package.json
+/package-lock.json
+arch/puppeteer-config.json
