@@ -1,0 +1,33 @@
+@startuml work-order-system-domain-model-c4component
+!include <C4/C4_Component>
+
+UpdateElementStyle("system", $bgColor=#1a67be,$fontColor=#FFFFFF,$borderColor=#175eaa,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="2")
+UpdateElementStyle("external_system", $bgColor=#999999,$fontColor=#FFFFFF,$borderColor=#8a8a8a,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="1")
+UpdateElementStyle("person", $bgColor=#0d437b,$fontColor=#FFFFFF,$borderColor=#0d437b,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="2")
+UpdateElementStyle("component", $bgColor=#85bbf0,$fontColor=#000000,$borderColor=#78a8d9,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="2")
+UpdateElementStyle("external_component", $bgColor=#999999,$fontColor=#FFFFFF,$borderColor=#8a8a8a,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="1")
+UpdateElementStyle("container", $bgColor=#438dd4,$fontColor=#FFFFFF,$borderColor=#3e82c5,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="2")
+UpdateElementStyle("external_container", $bgColor=#999999,$fontColor=#FFFFFF,$borderColor=#8a8a8a,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="1")
+UpdateBoundaryStyle($elementName=system,$fontColor=#000000,$bgColor=#FFFFFF,$borderColor=#000000,$shadowing="false",$shape=RoundedBoxShape())
+UpdateBoundaryStyle($elementName=container,$fontColor=#000000,$bgColor=#FFFFFF,$borderColor=#000000,$shadowing="false",$shape=RoundedBoxShape())
+UpdateBoundaryStyle($elementName=enterprise,$fontColor=#000000,$bgColor=#FFFFFF,$borderColor=#000000,$shadowing="false",$shape=RoundedBoxShape())
+SHOW_PERSON_PORTRAIT()
+LAYOUT_TOP_DOWN()
+
+title Work Order System domain model
+
+Component(entityBase, "EntityBase<T>", "Base class", "Id and equality behavior")
+Component(listItem, "ListItem", "Base class", "Display/value list abstraction")
+Component(workOrder, "WorkOrder", "Domain entity", "Aggregate root for work requests")
+Component(employee, "Employee", "Domain entity", "User profile and role membership")
+Component(role, "Role", "Domain entity", "Authorization role")
+Component(workOrderStatus, "WorkOrderStatus", "Value object", "Status code/key/friendly-name")
+
+Rel(workOrder, entityBase, "inherits")
+Rel(employee, entityBase, "inherits")
+Rel(role, entityBase, "inherits")
+Rel(workOrder, workOrderStatus, "status", "1..1 composition")
+Rel(workOrder, employee, "creator", "0..1 association")
+Rel(workOrder, employee, "assignee", "0..1 association")
+Rel(employee, role, "roles", "0..* composition")
+@enduml

@@ -7,7 +7,12 @@ var diagrams = new DiagramBuilder[]
 {
     new SystemContextDiagram(),
     new ContainerDeploymentDiagram(),
-    new ComponentProjectDependenciesDiagram()
+    new ComponentProjectDependenciesDiagram(),
+    new DomainModelDiagram(),
+    new SaveDraftCommandSequence(),
+    new DraftToAssignedCommandSequence(),
+    new AssignedToInProgressCommandSequence(),
+    new InProgressToCompleteCommandSequence()
 };
 
 var path = Path.Combine(
