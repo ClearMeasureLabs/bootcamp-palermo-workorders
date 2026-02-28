@@ -1,0 +1,15 @@
+%%{init: {"c4": {"layout": "elk"}} }%%
+C4Container
+  title Container diagram
+
+  Person(someuser, "Name", "Description", "tabler:user")
+
+  System_Boundary(system, "Church Bulletin") {
+    ContainerDb(db, "Database", "Azure SQL Database", "Detail", "tabler:database")
+    Container(appservice, "App Service", "Web or Container", "Detail", "tabler:server")
+    Container(ui, "UI/user app", "Blazor WASM", "Detail", "tabler:app-window")
+  }
+
+  Rel_R(someuser, ui, "Uses", "http")
+  Rel_R(ui, appservice, "Calls", "http")
+  Rel_R(appservice, db, "Calls", "tcp")
