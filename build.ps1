@@ -144,10 +144,10 @@ Function Init {
 	New-Item -Path $build_dir -ItemType Directory -Force | Out-Null
 
 	exec {
-		& dotnet clean $solutionName -nologo -v $verbosity
+		& dotnet clean $solutionName -nologo -v $verbosity /p:SuppressNETCoreSdkPreviewMessage=true
 	}
 	exec {
-		& dotnet restore $solutionName -nologo --interactive -v $verbosity  
+		& dotnet restore $solutionName -nologo --interactive -v $verbosity /p:SuppressNETCoreSdkPreviewMessage=true
 	}
 	
 	Log-Message -Message "Project Config: $projectConfig" -Type "INFO"
@@ -160,6 +160,7 @@ Function Compile {
 			$verbosity -maxcpucount --configuration $projectConfig --no-incremental `
 			/p:TreatWarningsAsErrors="true" `
 			/p:MSBuildTreatAllWarningsAsErrors="true" `
+			/p:SuppressNETCoreSdkPreviewMessage=true `
 			/p:Version=$version /p:Authors="Programming with Palermo" `
 			/p:Product="Church Bulletin"
 	}
@@ -319,14 +320,16 @@ Function Create-SqlServerInDocker {
 	New-DockerContainerForSqlServer -containerName $containerName
 	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
-	Update-AppSettingsConnectionStrings -databaseNameToUse $tempDatabaseName -serverName $serverName -sourceDir $source_dir
+	$env:ConnectionStrings__SqlConnectionString = "server=$serverName;database=$tempDatabaseName;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+	Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
 	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $sqlPassword)
 	& dotnet $dbArgs
 	if ($LASTEXITCODE -ne 0) {
 		throw "Database migration failed with exit code $LASTEXITCODE"
 	}
-	Update-AppSettingsConnectionStrings -databaseNameToUse $projectName -serverName $script:databaseServer -sourceDir $source_dir
+	# Restore connection string to default project database
+	$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$projectName;User ID=sa;Password=$(Get-SqlServerPassword -ContainerName $(Get-ContainerName -DatabaseName $projectName));TrustServerCertificate=true;"
 }
 
 Function Publish-ToGitHubPackages {
@@ -586,15 +589,15 @@ Function Invoke-AcceptanceTests {
 		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
 		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
 		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		$containerName = Get-ContainerName -DatabaseName $script:databaseName
+		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
-
-
-	# Update appsettings.json files before database migration
-	if ($script:databaseEngine -ne "SQLite") {
-		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
-	}
-
-	if ($script:databaseEngine -ne "SQLite") {
+	elseif ($script:databaseEngine -eq "LocalDB") {
+		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
@@ -602,15 +605,6 @@ Function Invoke-AcceptanceTests {
 	}
 
 	AcceptanceTests
-
-	if ($script:databaseEngine -ne "SQLite") {
-		# Restore appsettings files to their original git state
-		Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
-		& git restore 'src/**/appsettings*.json'
-		if ($LASTEXITCODE -ne 0) {
-			Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
-		}
-	}
 
 	$sw.Stop()
 	if ($script:databaseEngine -eq "SQLite") {
@@ -717,11 +711,15 @@ Function Invoke-PrivateBuild {
 		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
 		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
 		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
-		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+		$containerName = Get-ContainerName -DatabaseName $script:databaseName
+		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	elseif ($script:databaseEngine -eq "LocalDB") {
-		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
@@ -729,15 +727,6 @@ Function Invoke-PrivateBuild {
 	}
 
 	IntegrationTest
-
-	if ($script:databaseEngine -ne "SQLite") {
-		# Restore appsettings files to their original git state
-		Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
-		& git restore 'src/**/appsettings*.json'
-		if ($LASTEXITCODE -ne 0) {
-			Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
-		}
-	}
 
 	$sw.Stop()
 	if ($script:databaseEngine -eq "SQLite") {
@@ -815,8 +804,16 @@ Function Invoke-CIBuild {
 		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 	}
 
-	if ($script:databaseEngine -ne "SQLite") {
-		Update-AppSettingsConnectionStrings -databaseNameToUse $script:databaseName -serverName $script:databaseServer -sourceDir $source_dir
+	if ($script:databaseEngine -eq "SQL-Container") {
+		$containerName = Get-ContainerName -DatabaseName $script:databaseName
+		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	}
+	elseif ($script:databaseEngine -eq "LocalDB") {
+		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
@@ -824,15 +821,6 @@ Function Invoke-CIBuild {
 	}
 
 	IntegrationTest
-
-	if ($script:databaseEngine -ne "SQLite") {
-		# Restore appsettings files to their original git state
-		Log-Message -Message "Restoring appsettings*.json files to git state" -Type "INFO"
-		& git restore 'src/**/appsettings*.json'
-		if ($LASTEXITCODE -ne 0) {
-			Log-Message -Message "Warning: Failed to restore appsettings*.json files" -Type "WARNING"
-		}
-	}
 
 	# Package-Everything
 
