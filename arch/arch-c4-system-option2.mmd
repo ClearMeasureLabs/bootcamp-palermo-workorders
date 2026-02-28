@@ -1,0 +1,25 @@
+%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+flowchart TD
+  classDef person fill:#08427b,stroke:#073b6f,color:#fff,font-weight:bold
+  classDef system fill:#1168bd,stroke:#0b4884,color:#fff,font-weight:bold
+  classDef external fill:#999,stroke:#6b6b6b,color:#fff,font-weight:bold
+
+  pastor["<b>Senior Pastor</b><br/><i>person</i><br/>Any clergy leader"]:::person
+  biblestudyleader["<b>Bible study leader</b><br/><i>person</i><br/>leads classes"]:::person
+  worshipleader["<b>Worship Pastor</b><br/><i>person</i><br/>music/choir"]:::person
+  childrenspastor["<b>Childrens' Pastor</b><br/><i>person</i><br/>Kids ministry"]:::person
+  volunteer["<b>Volunteer</b><br/><i>person</i><br/>Prepares bulletins and<br/>projects announcements"]:::person
+
+  churchbulletin["<b>Church Bulletin</b><br/><i>system</i><br/>Digital signage and<br/>printed bulletin"]:::system
+
+  printer["<b>Printer</b><br/><i>external system</i>"]:::external
+  projector["<b>Projector</b><br/><i>external system</i>"]:::external
+
+  pastor -->|"Add sermons"| churchbulletin
+  biblestudyleader -->|"Add classes"| churchbulletin
+  worshipleader -->|"Add services"| churchbulletin
+  childrenspastor -->|"Add sunday school classes"| churchbulletin
+  volunteer -->|"Operates system on Sunday morning"| churchbulletin
+
+  churchbulletin -->|"Send PDF to print<br/>[Network printer]"| printer
+  churchbulletin -->|"Projects digital signage<br/>[Auto-animated]"| projector

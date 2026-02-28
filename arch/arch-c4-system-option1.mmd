@@ -1,0 +1,23 @@
+C4Context
+  title Church Bulletin System Diagram
+  UpdateLayoutConfig($c4ShapeInRow="5", $c4BoundaryInRow="1")
+
+  Person(pastor, "Senior Pastor", "Any clergy leader")
+  Person(biblestudyleader, "Bible study leader", "leads classes")
+  Person(worshipleader, "Worship Pastor", "music/choir")
+  Person(childrenspastor, "Childrens' Pastor", "Kids ministry")
+  Person(volunteer, "Volunteer", "Prepares bulletins and projects announcements")
+
+  System(churchbulletin, "Church Bulletin", "Digital signage and printed bulletin")
+
+  System_Ext(printer, "Printer", "")
+  System_Ext(projector, "Projector", "")
+
+  Rel_D(pastor, churchbulletin, "Add sermons")
+  Rel_D(biblestudyleader, churchbulletin, "Add classes")
+  Rel_D(worshipleader, churchbulletin, "Add services")
+  Rel_D(childrenspastor, churchbulletin, "Add sunday school classes")
+  Rel_D(volunteer, churchbulletin, "Operates system on Sunday morning")
+
+  Rel_D(churchbulletin, printer, "Send PDF to print", "Network printer")
+  Rel_D(churchbulletin, projector, "Projects digital signage", "Auto-animated")
