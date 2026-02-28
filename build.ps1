@@ -4,7 +4,7 @@
 # Clean environment variables that may interfere with local builds
 # Only clear for local builds; CI sets this intentionally (e.g. SQLite connection string)
 if ($env:ConnectionStrings__SqlConnectionString -and -not (Test-IsGitHubActions) -and -not (Test-IsAzureDevOps)) {
-	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "INFO"
+	Log-Message "Clearing ConnectionStrings__SqlConnectionString environment variable" -Type "DEBUG"
 	$env:ConnectionStrings__SqlConnectionString = $null
 	[Environment]::SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", $null, "User")
 }
@@ -22,7 +22,7 @@ $projectConfig = $env:BuildConfiguration
 $framework = "net10.0"
 $version = $env:BUILD_BUILDNUMBER
 
-$verbosity = "minimal"
+$verbosity = "quiet"
 
 $build_dir = Join-Path $base_dir "build"
 $test_dir = Join-Path $build_dir "test"
@@ -39,7 +39,7 @@ Function Set-DatabaseEngineForArm {
 	if ($isArmArchitecture) {
 		$env:database_engine = "SQLite"
 		$env:DATABASE_ENGINE = "SQLite"
-		Log-Message -Message "ARM architecture detected. Forcing DATABASE_ENGINE=SQLite." -Type "INFO"
+		Log-Message -Message "ARM architecture detected. Forcing DATABASE_ENGINE=SQLite." -Type "DEBUG"
 	}
 }
 
@@ -68,14 +68,14 @@ Function Resolve-DatabaseEngine {
 		else {
 			$script:databaseEngine = "LocalDB"
 		}
-		Log-Message -Message "DATABASE_ENGINE not set. Auto-detected: $script:databaseEngine" -Type "INFO"
+		Log-Message -Message "DATABASE_ENGINE not set. Auto-detected: $script:databaseEngine" -Type "DEBUG"
 	}
 	else {
 		$validEngines = @("LocalDB", "SQL-Container", "SQLite")
 		if ($script:databaseEngine -notin $validEngines) {
 			throw "Invalid DATABASE_ENGINE value '$($script:databaseEngine)'. Valid values: $($validEngines -join ', ')"
 		}
-		Log-Message -Message "DATABASE_ENGINE set to: $script:databaseEngine" -Type "INFO"
+		Log-Message -Message "DATABASE_ENGINE set to: $script:databaseEngine" -Type "DEBUG"
 	}
 	$script:useSqlite = ($script:databaseEngine -eq "SQLite")
 }
@@ -88,26 +88,26 @@ Function Init {
 		throw "PowerShell 7 is required to run this build script."
 	}
  	else {
-		Log-Message -Message "PowerShell 7 found at: $pwshPath" -Type "INFO"
+		Log-Message -Message "PowerShell 7 found at: $pwshPath" -Type "DEBUG"
 	}
 
 	if (Test-IsAzureDevOps) { 
-		Log-Message -Message "Running in Azure DevOps Pipeline" -Type "INFO"
+		Log-Message -Message "Running in Azure DevOps Pipeline" -Type "DEBUG"
 	}
 	else {
-		Log-Message -Message "Running in Local Environment" -Type "INFO"
+		Log-Message -Message "Running in Local Environment" -Type "DEBUG"
 	}
 
 	if (Test-IsLinux) {
-		Log-Message -Message "Running on Linux" -Type "INFO"
+		Log-Message -Message "Running on Linux" -Type "DEBUG"
 		# Set NuGet cache to shorter path for Linux/WSL compatibility (only for local builds)
 		if (-not (Test-IsAzureDevOps) -and -not (Test-IsGitHubActions)) {
 			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
-			Log-Message -Message "Setting NUGET_PACKAGES to /tmp/nuget-packages for WSL" -Type "INFO"
+			Log-Message -Message "Setting NUGET_PACKAGES to /tmp/nuget-packages for WSL" -Type "DEBUG"
 		}
 	}
 	elseif (Test-IsWindows) {
-		Log-Message -Message "Running on Windows" -Type "INFO"
+		Log-Message -Message "Running on Windows" -Type "DEBUG"
 	}
 
 	switch ($script:databaseEngine) {
@@ -117,7 +117,7 @@ Function Init {
 		"SQL-Container" {
 			if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 			if (Test-IsDockerRunning) {
-				Log-Message -Message "Docker is running" -Type "INFO"
+				Log-Message -Message "Docker is running" -Type "DEBUG"
 			} else {
 				Log-Message -Message "Docker is not running. Please start Docker to run SQL Server in a container." -Type "ERROR"
 				throw "Docker is not running."
@@ -126,15 +126,15 @@ Function Init {
 		"SQLite" {
 			if ([string]::IsNullOrEmpty($env:ConnectionStrings__SqlConnectionString)) {
 				$env:ConnectionStrings__SqlConnectionString = "Data Source=ChurchBulletin.db"
-				Log-Message -Message "Set ConnectionStrings__SqlConnectionString for SQLite: $($env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+				Log-Message -Message "Set ConnectionStrings__SqlConnectionString for SQLite: $($env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
 			}
-			Log-Message -Message "SQLite mode enabled - Docker not required" -Type "INFO"
+			Log-Message -Message "SQLite mode enabled - Docker not required" -Type "DEBUG"
 		}
 	}
 
 	if ($script:databaseEngine -ne "SQLite") {
-		Log-Message "Using $script:databaseServer as database server." -Type "INFO"
-		Log-Message "Using $script:databaseName as the database name."
+		Log-Message "Using $script:databaseServer as database server." -Type "DEBUG"
+		Log-Message "Using $script:databaseName as the database name." -Type "DEBUG"
 	}
 
 	if (Test-Path "build") {
@@ -150,8 +150,8 @@ Function Init {
 		& dotnet restore $solutionName -nologo --interactive -v $verbosity /p:SuppressNETCoreSdkPreviewMessage=true
 	}
 	
-	Log-Message -Message "Project Config: $projectConfig" -Type "INFO"
-	Log-Message -Message "Version: $version" -Type "INFO"
+	Log-Message -Message "Project Config: $projectConfig" -Type "DEBUG"
+	Log-Message -Message "Version: $version" -Type "DEBUG"
 }
 
 Function Compile {
@@ -215,17 +215,17 @@ Function AcceptanceTests {
 	$projectConfig = "Release"
 	Push-Location -Path $acceptanceTestProjectPath
 
-	Log-Message -Message "Checking Playwright browsers for Acceptance Tests" -Type "INFO"
+	Log-Message -Message "Checking Playwright browsers for Acceptance Tests" -Type "DEBUG"
 	$playwrightScript = Join-PathSegments "bin" "Release" $framework "playwright.ps1"
 
 	if (Test-Path $playwrightScript) {
-		Log-Message -Message "Playwright script found at $playwrightScript." -Type "INFO"
+		Log-Message -Message "Playwright script found at $playwrightScript." -Type "DEBUG"
 		
 		# Check if browsers are installed (only chromium is needed)
 		try {
 			$listOutput = & pwsh $playwrightScript list 2>&1 | Out-String
 			if ($listOutput -match "chromium") {
-				Log-Message -Message "Playwright chromium is installed. Ensuring OS dependencies are present." -Type "INFO"
+				Log-Message -Message "Playwright chromium is installed. Ensuring OS dependencies are present." -Type "DEBUG"
 				& pwsh $playwrightScript install-deps chromium
 				if ($LASTEXITCODE -ne 0) {
 					throw "Failed to install Playwright OS dependencies for chromium"
@@ -237,7 +237,7 @@ Function AcceptanceTests {
 				if ($LASTEXITCODE -ne 0) {
 					throw "Failed to install Playwright browsers"
 				}
-				Log-Message -Message "Playwright browsers installed successfully." -Type "INFO"
+				Log-Message -Message "Playwright browsers installed successfully." -Type "DEBUG"
 			}
 		}
 		catch {
@@ -258,7 +258,7 @@ Function AcceptanceTests {
 		Log-Message -Message "Warning: ClearMeasure.Bootcamp.UI.Server is already running in background (PID: $($uiServerProcess.Id)). This may interfere with acceptance tests." -Type "WARNING"
 	}
 
-	Log-Message -Message "Running Acceptance Tests" -Type "INFO"
+	Log-Message -Message "Running Acceptance Tests" -Type "DEBUG"
 	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
 	try {
 		exec {
@@ -321,7 +321,7 @@ Function Create-SqlServerInDocker {
 	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
 	$env:ConnectionStrings__SqlConnectionString = "server=$serverName;database=$tempDatabaseName;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
-	Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+	Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
 	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $sqlPassword)
 	& dotnet $dbArgs
@@ -350,7 +350,7 @@ Function Publish-ToGitHubPackages {
 		throw "GITHUB_TOKEN appears to be invalid"
 	}
 	
-	Log-Message -Message "GITHUB_TOKEN found (length: $($githubToken.Length))" -Type "INFO"
+	Log-Message -Message "GITHUB_TOKEN found (length: $($githubToken.Length))" -Type "DEBUG"
 	
 	$githubRepo = $env:GITHUB_REPOSITORY
 	if ([string]::IsNullOrEmpty($githubRepo)) {
@@ -367,9 +367,9 @@ Function Publish-ToGitHubPackages {
 		throw "Package file not found: $packageId.$version.nupkg"
 	}
 	
-	Log-Message -Message "Publishing $($packageFile.Name) to GitHub Packages..." -Type "INFO"
-	Log-Message -Message "Feed: $githubFeed" -Type "INFO"
-	Log-Message -Message "Owner: $owner" -Type "INFO"
+	Log-Message -Message "Publishing $($packageFile.Name) to GitHub Packages..." -Type "DEBUG"
+	Log-Message -Message "Feed: $githubFeed" -Type "DEBUG"
+	Log-Message -Message "Owner: $owner" -Type "DEBUG"
 	
 	# GitHub Packages authentication: use username (owner) and token as password
 	# Configure source first, then push
@@ -378,26 +378,26 @@ Function Publish-ToGitHubPackages {
 	# Remove existing source if it exists
 	$existingSource = dotnet nuget list source | Select-String -Pattern $sourceName -Quiet
 	if ($existingSource) {
-		Log-Message -Message "Removing existing source: $sourceName" -Type "INFO"
+		Log-Message -Message "Removing existing source: $sourceName" -Type "DEBUG"
 		dotnet nuget remove source $sourceName 2>$null
 	}
 	
 	# Add source with username/password authentication
-	Log-Message -Message "Adding NuGet source with authentication..." -Type "INFO"
+	Log-Message -Message "Adding NuGet source with authentication..." -Type "DEBUG"
 	exec {
 		& dotnet nuget add source $githubFeed --name $sourceName --username $owner --password $githubToken --store-password-in-clear-text
 	}
 	
 	# Push using the source with explicit API key (credentials stored with source, but API key ensures authentication)
-	Log-Message -Message "Pushing package to GitHub Packages..." -Type "INFO"
-	Log-Message -Message "Feed: $githubFeed" -Type "INFO"
-	Log-Message -Message "Owner: $owner" -Type "INFO"
+	Log-Message -Message "Pushing package to GitHub Packages..." -Type "DEBUG"
+	Log-Message -Message "Feed: $githubFeed" -Type "DEBUG"
+	Log-Message -Message "Owner: $owner" -Type "DEBUG"
 	exec {
 		# Try with source name first (uses stored credentials)
 		& dotnet nuget push $packageFile.FullName --source $sourceName --api-key $githubToken --skip-duplicate
 	}
 	
-	Log-Message -Message "Successfully published $($packageFile.Name) to GitHub Packages" -Type "INFO"
+	Log-Message -Message "Successfully published $($packageFile.Name) to GitHub Packages" -Type "DEBUG"
 }
 
 Function PackageUI {    
@@ -437,7 +437,7 @@ Function PackageAcceptanceTests {
 	$publishDir = Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework "publish"
 	$playwrightSource = Join-PathSegments $acceptanceTestProjectPath "bin" "Debug" $framework ".playwright"
 	if (Test-Path $playwrightSource) {
-		Log-Message "Copying .playwright metadata into publish output" -Type "INFO"
+		Log-Message "Copying .playwright metadata into publish output" -Type "DEBUG"
 		Copy-Item -Path $playwrightSource -Destination (Join-Path $publishDir ".playwright") -Recurse -Force
 	} else {
 		Log-Message "WARNING: .playwright folder not found at $playwrightSource" -Type "WARNING"
@@ -474,7 +474,7 @@ Function Package-Everything{
 	$dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
 	if (-not $dotnetToolsPathPresent) {
 		$env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
-		Log-Message -Message "Added dotnet tools to PATH: $dotnetToolsPath" -Type "INFO"
+		Log-Message -Message "Added dotnet tools to PATH: $dotnetToolsPath" -Type "DEBUG"
 	}
 	
 	PackageUI
@@ -586,22 +586,22 @@ Function Invoke-AcceptanceTests {
 	Compile
 
 	if ($script:databaseEngine -eq "SQL-Container") {
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "DEBUG"
 		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
 		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 		$containerName = Get-ContainerName -DatabaseName $script:databaseName
 		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
 		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	elseif ($script:databaseEngine -eq "LocalDB") {
 		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
-		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "INFO"
+		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "DEBUG"
 	}
 
 	AcceptanceTests
@@ -612,7 +612,7 @@ Function Invoke-AcceptanceTests {
 	}
 	else {
 		Log-Message -Message "ACCEPTANCE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-		Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+		Log-Message -Message "Database used: $script:databaseName" -Type "DEBUG"
 	}
 }
 
@@ -680,15 +680,15 @@ Function Invoke-PrivateBuild {
 	if ($script:databaseEngine -ne "SQLite") {
 		if (-not [string]::IsNullOrEmpty($databaseServer)) {
 			$script:databaseServer = $databaseServer
-			Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "INFO"
+			Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "DEBUG"
 		}
 	}
 
 	# Generate unique database name for this build instance
 	if ($script:databaseEngine -ne "SQLite") {
 		if (-not [string]::IsNullOrEmpty($databaseName)) {
-			$script:databaseName = $databaseName
-			Log-Message -Message "Using database name from parameter: $script:databaseName" -Type "INFO"
+		$script:databaseName = $databaseName
+			Log-Message -Message "Using database name from parameter: $script:databaseName" -Type "DEBUG"
 		}
 		elseif (Test-IsLinux) {
 			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
@@ -708,22 +708,22 @@ Function Invoke-PrivateBuild {
 	UnitTests
 
 	if ($script:databaseEngine -eq "SQL-Container") {
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "INFO"
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "DEBUG"
 		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
 		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 		$containerName = Get-ContainerName -DatabaseName $script:databaseName
 		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
 		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	elseif ($script:databaseEngine -eq "LocalDB") {
 		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
-		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "INFO"
+		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "DEBUG"
 	}
 
 	IntegrationTest
@@ -734,7 +734,7 @@ Function Invoke-PrivateBuild {
 	}
 	else {
 		Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-		Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+		Log-Message -Message "Database used: $script:databaseName" -Type "DEBUG"
 	}
 }
 
@@ -799,7 +799,7 @@ Function Invoke-CIBuild {
 	UnitTests
 
 	if ($script:databaseEngine -eq "SQL-Container") {
-		Log-Message -Message "Setting up SQL Server in Docker for CI" -Type "INFO"
+		Log-Message -Message "Setting up SQL Server in Docker for CI" -Type "DEBUG"
 		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
 		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 	}
@@ -808,16 +808,16 @@ Function Invoke-CIBuild {
 		$containerName = Get-ContainerName -DatabaseName $script:databaseName
 		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
 		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	elseif ($script:databaseEngine -eq "LocalDB") {
 		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "INFO"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
 	else {
-		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "INFO"
+		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "DEBUG"
 	}
 
 	IntegrationTest
@@ -830,6 +830,6 @@ Function Invoke-CIBuild {
 	}
 	else {
 		Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
-		Log-Message -Message "Database used: $script:databaseName" -Type "INFO"
+		Log-Message -Message "Database used: $script:databaseName" -Type "DEBUG"
 	}
 }
