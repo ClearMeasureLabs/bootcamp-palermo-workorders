@@ -3,7 +3,7 @@ param (
     [string]$databaseServer = "",
 
     [Parameter(Mandatory=$false)]
-    [string]$databaseName = "ChurchBulletin",
+    [string]$databaseName = "",
 
     [Parameter(Mandatory=$false)]
     [switch]$Headful
@@ -17,19 +17,18 @@ if ([string]::IsNullOrEmpty($databaseServer) -and -not [string]::IsNullOrEmpty($
 	Log-Message -Message "Using database server from pipeline variable: $databaseServer" -Type "INFO"
 }
 
-# Set default database server based on platform if not provided
-if ([string]::IsNullOrEmpty($databaseServer)) {
-    if (Test-IsLinux) {
-        $databaseServer = "localhost,1433"
-    }
-    else {
-        $databaseServer = "(LocalDb)\MSSQLLocalDB"
-    }
-}
-
 if ($Headful) {
     $env:HeadlessTestBrowser = "false"
     Log-Message -Message "Running acceptance tests with headful browser windows." -Type "INFO"
 }
 
-Invoke-AcceptanceTests -databaseServer $databaseServer -databaseName $databaseName
+# Pass through only what the user explicitly provided; build.ps1 owns
+# DATABASE_ENGINE detection and database-server defaulting.
+$buildArgs = @{}
+if (-not [string]::IsNullOrEmpty($databaseServer)) {
+    $buildArgs["databaseServer"] = $databaseServer
+}
+if (-not [string]::IsNullOrEmpty($databaseName)) {
+    $buildArgs["databaseName"] = $databaseName
+}
+Invoke-AcceptanceTests @buildArgs

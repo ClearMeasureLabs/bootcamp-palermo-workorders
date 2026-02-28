@@ -8,20 +8,13 @@ param (
 
 . .\build.ps1
 
-# Set default database server based on platform if not provided
-if ([string]::IsNullOrEmpty($databaseServer)) {
-    if (Test-IsLinux) {
-        $databaseServer = "localhost,1433"
-    }
-    else {
-        $databaseServer = "(LocalDb)\MSSQLLocalDB"
-    }
+# Pass through only what the user explicitly provided; build.ps1 owns
+# DATABASE_ENGINE detection and database-server defaulting.
+$buildArgs = @{}
+if (-not [string]::IsNullOrEmpty($databaseServer)) {
+    $buildArgs["databaseServer"] = $databaseServer
 }
-
-# Pass database name to Invoke-PrivateBuild if provided
-if ([string]::IsNullOrEmpty($databaseName)) {
-    Invoke-PrivateBuild -databaseServer $databaseServer
+if (-not [string]::IsNullOrEmpty($databaseName)) {
+    $buildArgs["databaseName"] = $databaseName
 }
-else {
-    Invoke-PrivateBuild -databaseServer $databaseServer -databaseName $databaseName
-}
+Invoke-PrivateBuild @buildArgs
