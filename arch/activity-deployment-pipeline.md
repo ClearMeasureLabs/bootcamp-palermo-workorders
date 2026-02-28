@@ -3,31 +3,38 @@
 Shows which environment each pipeline step executes in.
 
 ```mermaid
-flowchart TB
-    subgraph eng1["Engineer Workstation"]
-        direction LR
-        A["1. Private Build"]
-    end
-    subgraph build1["Build Server"]
-        direction LR
-        B["2. CI Build"]
-    end
-    subgraph deploy1["Deployed Environment"]
-        direction LR
-        C["3. Acceptance Tests"]
-    end
-    subgraph eng2["Engineer Workstation"]
-        direction LR
-        D["4. Verify Acceptance Tests"]
-        E["5. Correct Problems"]
-    end
-    subgraph build2["Build Server"]
-        direction LR
-        F["6. Build Again"]
-    end
-    subgraph deploy2["Deployed Environment"]
-        direction LR
-        G["7. Deploy Again"]
-    end
-    A --> B --> C --> D --> E --> F --> G
+C4Deployment
+  title Deployment Pipeline Activity Diagram
+
+  Deployment_Node(eng1, "Engineer Workstation") {
+    Container(A, "1. Private Build")
+  }
+
+  Deployment_Node(build1, "Build Server") {
+    Container(B, "2. CI Build")
+  }
+
+  Deployment_Node(deploy1, "Deployed Environment") {
+    Container(C, "3. Acceptance Tests")
+  }
+
+  Deployment_Node(eng2, "Engineer Workstation") {
+    Container(D, "4. Verify Acceptance Tests")
+    Container(E, "5. Correct Problems")
+  }
+
+  Deployment_Node(build2, "Build Server") {
+    Container(F, "6. Build Again")
+  }
+
+  Deployment_Node(deploy2, "Deployed Environment") {
+    Container(G, "7. Deploy Again")
+  }
+
+  Rel(A, B, "")
+  Rel(B, C, "")
+  Rel(C, D, "")
+  Rel(D, E, "")
+  Rel(E, F, "")
+  Rel(F, G, "")
 ```
