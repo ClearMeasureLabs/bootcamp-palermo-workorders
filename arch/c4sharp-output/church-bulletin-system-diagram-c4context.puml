@@ -1,0 +1,35 @@
+@startuml church-bulletin-system-diagram-c4context
+!include <C4/C4_Context>
+
+UpdateElementStyle("system", $bgColor=#1a67be,$fontColor=#FFFFFF,$borderColor=#175eaa,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="2")
+UpdateElementStyle("external_system", $bgColor=#999999,$fontColor=#FFFFFF,$borderColor=#8a8a8a,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="1")
+UpdateElementStyle("person", $bgColor=#0d437b,$fontColor=#FFFFFF,$borderColor=#0d437b,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="2")
+UpdateElementStyle("component", $bgColor=#85bbf0,$fontColor=#000000,$borderColor=#78a8d9,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="2")
+UpdateElementStyle("external_component", $bgColor=#999999,$fontColor=#FFFFFF,$borderColor=#8a8a8a,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="1")
+UpdateElementStyle("container", $bgColor=#438dd4,$fontColor=#FFFFFF,$borderColor=#3e82c5,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="2")
+UpdateElementStyle("external_container", $bgColor=#999999,$fontColor=#FFFFFF,$borderColor=#8a8a8a,$shadowing="false",$shape=RoundedBoxShape(),$borderStyle=SolidLine(),$borderThickness="1")
+UpdateBoundaryStyle($elementName=system,$fontColor=#000000,$bgColor=#FFFFFF,$borderColor=#000000,$shadowing="false",$shape=RoundedBoxShape())
+UpdateBoundaryStyle($elementName=container,$fontColor=#000000,$bgColor=#FFFFFF,$borderColor=#000000,$shadowing="false",$shape=RoundedBoxShape())
+UpdateBoundaryStyle($elementName=enterprise,$fontColor=#000000,$bgColor=#FFFFFF,$borderColor=#000000,$shadowing="false",$shape=RoundedBoxShape())
+SHOW_PERSON_PORTRAIT()
+LAYOUT_TOP_DOWN()
+
+title Church Bulletin System Diagram
+
+Person_Ext(pastor, "Senior Pastor", "Any clergy leader")
+Person_Ext(biblestudyleader, "Bible study leader", "Leads classes")
+Person_Ext(worshipleader, "Worship Pastor", "Music/choir")
+Person_Ext(childrenspastor, "Childrens' Pastor", "Kids ministry")
+Person_Ext(volunteer, "Volunteer", "Prepares bulletins and projects announcements")
+System(churchbulletin, "Church Bulletin", "Digital signage and printed bulletin")
+System_Ext(printer, "Printer", "")
+System_Ext(projector, "Projector", "")
+
+Rel(pastor, churchbulletin, "Add sermons")
+Rel(biblestudyleader, churchbulletin, "Add classes")
+Rel(worshipleader, churchbulletin, "Add services")
+Rel(childrenspastor, churchbulletin, "Add sunday school classes")
+Rel(volunteer, churchbulletin, "Operates system on Sunday morning")
+Rel(churchbulletin, printer, "Send PDF to print", "Network printer")
+Rel(churchbulletin, projector, "Projects digital signage", "Auto-animated")
+@enduml
