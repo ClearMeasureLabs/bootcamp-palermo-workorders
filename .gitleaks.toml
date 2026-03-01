@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[allowlist]
+  description = "Global allowlist"
+  regexTarget = "match"
+  regexes = [
+    '''umentationKey=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}''',
+  ]

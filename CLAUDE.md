@@ -99,6 +99,40 @@ DbUp scripts in `src/Database/scripts/Update/`, numbered sequentially (`###_Desc
 - No anthropomorphizing — no "I", "me", "you", "we", "us"
 - Terse, direct statements. Say "Checking this file" not "Let me check this file"
 
+## Dependencies
+
+**.NET SDK:** 10.0.100 (see `global.json`)
+
+**Core** — MediatR.Contracts 2.0.1, Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions 10.0.0, Microsoft.Extensions.Logging.Abstractions 10.0.0
+
+**DataAccess** — MediatR 12.4.1, Microsoft.EntityFrameworkCore 10.0.0, Microsoft.EntityFrameworkCore.SqlServer 10.0.0, Microsoft.EntityFrameworkCore.Sqlite 10.0.0, NServiceBus.Persistence.Sql.TransactionalSession 8.3.0, ClearMeasureLabs.HostedEndpoint.SqlServerTransport 1.0.30
+
+**Database** — DbUp 5.0.41, dbup-sqlserver 6.0.16, Spectre.Console 0.54.0, Spectre.Console.Cli 0.53.0
+
+**UI.Server** — Lamar.Microsoft.DependencyInjection 15.0.1, Azure.Monitor.OpenTelemetry.AspNetCore 1.3.0, Microsoft.ApplicationInsights.AspNetCore 2.23.0, Microsoft.AspNetCore.Components.WebAssembly.Server 10.0.0, ModelContextProtocol 1.0.0, ModelContextProtocol.AspNetCore 1.0.0, NServiceBus.Extensions.Hosting 3.0.1, OpenTelemetry 1.12.0
+
+**UI.Client** — BlazorApplicationInsights 3.2.1, BlazorMvc 2.1.1, MediatR 12.4.1, Lamar.Microsoft.DependencyInjection 15.0.1, Microsoft.AspNetCore.Components.WebAssembly 10.0.0
+
+**UI.Api** — Lamar.Microsoft.DependencyInjection 15.0.1
+
+**UI.Shared** — BlazorApplicationInsights 3.2.1, BlazorMvc 2.1.1, MediatR 12.4.1, Microsoft.ApplicationInsights 2.23.0, Microsoft.AspNetCore.Components.Authorization 10.0.0
+
+**LlmGateway** — Azure.AI.OpenAI 2.1.0, MediatR 12.4.1, Microsoft.Extensions.AI 9.7.0, Microsoft.Extensions.AI.OpenAI 9.7.1-preview.1.25365.4, Microsoft.Extensions.AI.Abstractions 9.7.1
+
+**McpServer** — ModelContextProtocol 1.0.0, ModelContextProtocol.AspNetCore 1.0.0, Lamar.Microsoft.DependencyInjection 15.0.1, MediatR 12.4.1, Microsoft.EntityFrameworkCore.SqlServer 10.0.0, Microsoft.EntityFrameworkCore.Sqlite 10.0.0
+
+**Worker** — ClearMeasureLabs.HostedEndpoint.SqlServerTransport 1.0.30, Microsoft.Extensions.Hosting 10.0.2
+
+**AppHost** — Aspire.Hosting.AppHost 9.5.0
+
+**ServiceDefaults** — Azure.Monitor.OpenTelemetry.AspNetCore 1.3.0, OpenTelemetry.Exporter.OpenTelemetryProtocol 1.12.0, OpenTelemetry.Extensions.Hosting 1.12.0, Microsoft.Extensions.Http.Resilience 9.9.0, Microsoft.Extensions.ServiceDiscovery 9.5.0
+
+**UnitTests** — NUnit 4.3.2, NUnit3TestAdapter 5.0.0, Shouldly 4.3.0, bunit 1.40.0, AutoBogus.Conventions 2.13.1, MediatR 12.4.1, coverlet.msbuild 6.0.4
+
+**IntegrationTests** — NUnit 4.3.2, NUnit3TestAdapter 5.0.0, Shouldly 4.3.0, Microsoft.EntityFrameworkCore 10.0.0, Microsoft.Extensions.Hosting 10.0.0, coverlet.msbuild 6.0.4
+
+**AcceptanceTests** — NUnit 4.3.2, NUnit3TestAdapter 5.0.0, microsoft.playwright.nunit 1.54.0, Azure.AI.OpenAI 2.1.0, ModelContextProtocol 1.0.0, Microsoft.Extensions.AI 9.7.0, Microsoft.Extensions.AI.OpenAI 9.7.1-preview.1.25365.4
+
 ## DI and Service Wiring
 
 Lamar container configured in `src/UI/Server/UIServiceRegistry.cs`. Assembly scanning auto-registers MediatR handlers and services. The `IBus` interface wraps MediatR's `IMediator`.

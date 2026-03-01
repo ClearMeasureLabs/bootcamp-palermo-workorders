@@ -593,6 +593,105 @@ jobs:
             Write-Warning "$failed package(s) failed to publish to Octopus Deploy."
           }
 
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    concurrency:
+      group: security-scan-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore solution
+        run: dotnet restore src/ChurchBulletin.sln
+
+      - name: Check NuGet packages for known vulnerabilities
+        run: |
+          echo "Scanning NuGet packages for known vulnerabilities..."
+          dotnet list src/ChurchBulletin.sln package --vulnerable --include-transitive 2>&1 | tee vulnerability-report.txt
+          if grep -q "has the following vulnerable packages" vulnerability-report.txt; then
+            echo "::error::Vulnerable NuGet packages detected"
+            exit 1
+          fi
+          echo "No known vulnerabilities found."
+
+      - name: Check for deprecated NuGet packages
+        run: |
+          echo "Scanning for deprecated NuGet packages..."
+          dotnet list src/ChurchBulletin.sln package --deprecated 2>&1 | tee deprecated-report.txt
+          if grep -q "has the following deprecated packages" deprecated-report.txt; then
+            echo "::warning::Deprecated NuGet packages detected. Review deprecated-report.txt for details."
+          else
+            echo "No deprecated packages found."
+          fi
+
+      - name: Scan for secrets with Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Scan for credential files in repository
+        run: |
+          echo "Scanning for potential credential and secret files..."
+          FOUND=0
+          # Check for files that commonly contain secrets
+          for pattern in "*.pfx" "*.p12" "*.key" "*.pem" "*.env" "*.env.*" "credentials.json" "service-account*.json"; do
+            MATCHES=$(find . -name "$pattern" -not -path "./.git/*" -not -path "*/bin/*" -not -path "*/obj/*" 2>/dev/null)
+            if [ -n "$MATCHES" ]; then
+              echo "::warning::Potential secret file(s) matching '$pattern':"
+              echo "$MATCHES"
+              FOUND=1
+            fi
+          done
+          if [ "$FOUND" -eq 0 ]; then
+            echo "No credential files detected."
+          fi
+
+      - name: Check for security-sensitive patterns in code
+        run: |
+          echo "Scanning source code for security-sensitive patterns..."
+          ISSUES=0
+          # Hardcoded connection strings (not in config files)
+          if grep -rn "Password=" src/ --include="*.cs" | grep -v "// " | grep -v "test" | grep -vi "stub" | grep -v "obj/" | grep -v "bin/"; then
+            echo "::warning::Potential hardcoded connection string with password found in source code."
+            ISSUES=$((ISSUES + 1))
+          fi
+          # Hardcoded API keys or tokens
+          if grep -rn "api[_-]\?key\s*=\s*\"[A-Za-z0-9]" src/ --include="*.cs" -i | grep -v "// " | grep -v "Configuration" | grep -v "appsettings" | grep -v "obj/" | grep -v "bin/"; then
+            echo "::warning::Potential hardcoded API key found in source code."
+            ISSUES=$((ISSUES + 1))
+          fi
+          if [ "$ISSUES" -eq 0 ]; then
+            echo "No security-sensitive patterns detected."
+          fi
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            vulnerability-report.txt
+            deprecated-report.txt
+          retention-days: 2
+
   acceptance-tests:
     name: Acceptance Tests
     if: success()
