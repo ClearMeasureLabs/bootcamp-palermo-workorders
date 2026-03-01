@@ -15,12 +15,10 @@ public class McpReferenceResourceTests
         result.ShouldContain("Assigned");
         result.ShouldContain("InProgress");
         result.ShouldContain("Complete");
-        result.ShouldContain("Cancelled");
         result.ShouldContain("DFT");
         result.ShouldContain("ASD");
         result.ShouldContain("IPG");
         result.ShouldContain("CMP");
-        result.ShouldContain("CNL");
     }
 
     [Test]
@@ -43,8 +41,6 @@ public class McpReferenceResourceTests
         result.ShouldContain("DraftToAssignedCommand");
         result.ShouldContain("AssignedToInProgressCommand");
         result.ShouldContain("InProgressToCompleteCommand");
-        result.ShouldContain("AssignedToCancelledCommand");
-        result.ShouldContain("InProgressToCancelledCommand");
         result.ShouldContain("InProgressToAssigned");
     }
 }

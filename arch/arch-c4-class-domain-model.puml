@@ -60,7 +60,6 @@ class WorkOrderStatus {
   {static} +Assigned : WorkOrderStatus
   {static} +InProgress : WorkOrderStatus
   {static} +Complete : WorkOrderStatus
-  {static} +Cancelled : WorkOrderStatus
   {static} +GetAllItems() : WorkOrderStatus[]
   +Equals(obj : object) : bool
   +ToString() : string
