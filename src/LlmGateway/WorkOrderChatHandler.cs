@@ -25,7 +25,7 @@ public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workO
             new(ChatRole.System, $"Work Order description is {request.CurrentWorkOrder.Description}"),
             new(ChatRole.System, $"Work Order room is {request.CurrentWorkOrder.RoomNumber}"),
             new(ChatRole.System, $"Work Order creator is {request.CurrentWorkOrder.Creator?.GetFullName()}"),
-            new(ChatRole.System, $"Limit answer to 3 sentences. Be brief"),
+            new(ChatRole.System, $"Limit answer to 3 sentences unless listing data. When listing items, include ALL items from the tool response. Be brief otherwise."),
             new(ChatRole.User, prompt)
             
         };
