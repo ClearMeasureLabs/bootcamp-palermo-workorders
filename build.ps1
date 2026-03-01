@@ -443,7 +443,7 @@ Invoke-AcceptanceTests -databaseServer "localhost" -databaseName "ChurchBulletin
 Invoke-AcceptanceTests -UseSqlite
 
 .NOTES
-Requires Playwright browsers installed. Azure OpenId recommended for AI tests.
+Requires Playwright browsers installed. Azure OpenID recommended for AI tests.
 Automatically installs Playwright browsers if not present.
 Falls back to SQLite when Docker is unavailable on Linux.
 #>

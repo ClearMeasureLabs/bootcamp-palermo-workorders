@@ -65,7 +65,7 @@ stages:
                 [System.Environment]::SetEnvironmentVariable('Version','$(Build.BuildNumber)')
                 echo "Build Version: $env:Version"
           - task: PowerShell@2
-            displayName: "Run CIBuild"
+            displayName: "Run Build"
             inputs:
               pwsh: true
               targetType: filePath
