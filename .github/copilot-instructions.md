@@ -61,8 +61,8 @@ Build the project using PowerShell:
 # Full private build (includes compile, unit tests, and integration tests)
 .\privatebuild.ps1
 
-# CI build (includes packaging)
-.\build.ps1 Invoke-CIBuild
+# CI build
+. .\build.ps1 ; Build
 
 # Individual build steps
 .\build.ps1 Init      # Clean and restore

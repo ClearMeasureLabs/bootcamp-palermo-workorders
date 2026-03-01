@@ -70,7 +70,7 @@ stages:
               pwsh: true
               targetType: filePath
               filePath: ./build.ps1
-              arguments: ";Invoke-CIBuild"
+              arguments: ";Build"
           - task: PublishTestResults@2
             displayName: "Publish Test Results ./build/test/*.trx"
             inputs:

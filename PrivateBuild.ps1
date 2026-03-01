@@ -17,4 +17,4 @@ if (-not [string]::IsNullOrEmpty($databaseServer)) {
 if (-not [string]::IsNullOrEmpty($databaseName)) {
     $buildArgs["databaseName"] = $databaseName
 }
-Invoke-PrivateBuild @buildArgs
+Build @buildArgs
