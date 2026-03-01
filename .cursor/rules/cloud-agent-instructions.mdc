@@ -28,6 +28,10 @@ alwaysApply: true
   - `DataAccess` → references `Core` only
   - `UI` → outer layer (can reference all)
 
+## Dependencies
+
+**.NET SDK:** 10.0.100 — Core uses MediatR.Contracts 2.0.1. DataAccess uses MediatR 12.4.1, EF Core 10.0.0 (SqlServer + Sqlite), NServiceBus 8.3.0. Database uses DbUp 5.0.41. UI layer uses Lamar 15.0.1, BlazorMvc 2.1.1, OpenTelemetry 1.12.0, ModelContextProtocol 1.0.0. LlmGateway uses Azure.AI.OpenAI 2.1.0, Microsoft.Extensions.AI 9.7.0. Tests use NUnit 4.3.2, Shouldly 4.3.0, bunit 1.40.0, Playwright.NUnit 1.54.0, AutoBogus 2.13.1. Infrastructure uses Aspire 9.5.0.
+
 ## Restrictions
 
 Do NOT perform without explicit approval:
