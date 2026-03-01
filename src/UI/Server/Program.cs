@@ -55,6 +55,9 @@ endpointConfiguration.Conventions().Add(conventions);
 
 builder.Host.UseNServiceBus(_ => endpointConfiguration);
 
+// Host the Worker's NServiceBus "WorkOrderProcessing" endpoint in-process
+builder.Services.AddHostedService<Worker.WorkOrderEndpoint>();
+
 // Build application
 var app = builder.Build();
 

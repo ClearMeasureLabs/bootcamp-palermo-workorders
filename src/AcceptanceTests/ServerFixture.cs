@@ -10,7 +10,6 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests;
 public class ServerFixture
 {
     private const string ProjectPath = "../../../../UI/Server";
-    private const string WorkerProjectPath = "../../../../Worker";
     private const int WaitTimeoutSeconds = 60;
 
     private static string BuildConfiguration =>
@@ -22,8 +21,6 @@ public class ServerFixture
     public static int SlowMo { get; set; } = 100;
     public static string ApplicationBaseUrl { get; private set; } = string.Empty;
     private Process? _serverProcess;
-    private Process? _workerProcess;
-    public static bool StartWorker { get; set; } = true;
     public static bool WorkerStarted { get; private set; }
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
     public static bool HeadlessTestBrowser { get; set; } = true;
@@ -42,7 +39,6 @@ public class ServerFixture
         var configuration = TestHost.GetRequiredService<IConfiguration>();
         ApplicationBaseUrl = configuration["ApplicationBaseUrl"] ?? throw new InvalidOperationException();
         StartLocalServer = configuration.GetValue<bool>("StartLocalServer");
-        StartWorker = configuration.GetValue("StartWorker", true);
         SkipScreenshotsForSpeed = configuration.GetValue<bool>("SkipScreenshotsForSpeed");
         SlowMo = configuration.GetValue<int>("SlowMo");
         HeadlessTestBrowser = configuration.GetValue<bool>("HeadlessTestBrowser");
@@ -50,11 +46,16 @@ public class ServerFixture
 
         Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
+        // Worker now runs in-process with UI.Server (WorkOrderEndpoint hosted service).
+        // WorkerStarted is true when SqlServerTransport is available (non-SQLite).
+        var connStr = configuration.GetConnectionString("SqlConnectionString") ?? "";
+        var isSqlite = connStr.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
+        WorkerStarted = !isSqlite;
+
         if (StartLocalServer)
         {
             await StartAndWaitForServer();
             await ResetServerDbConnections();
-            await StartAndWaitForWorker();
         }
 
         await WarmUpContainerApp();
@@ -276,113 +277,6 @@ public class ServerFixture
             $"UI.Server did not start in {WaitTimeoutSeconds} seconds. Last exception: {lastException}");
     }
 
-    /// <summary>
-    /// Starts the Worker process (NServiceBus message handler host) alongside the UI.Server.
-    /// Worker requires SqlServerTransport, so it is skipped when using SQLite.
-    /// The Worker's RemotableBus calls back to UI.Server, so UI.Server must be started first.
-    /// </summary>
-    private async Task StartAndWaitForWorker()
-    {
-        var configuration = TestHost.GetRequiredService<IConfiguration>();
-        var connectionString = configuration.GetConnectionString("SqlConnectionString") ?? "";
-        var useSqlite = connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
-
-        if (!StartWorker)
-        {
-            TestContext.Out.WriteLine("Worker: skipped (StartWorker=false).");
-            return;
-        }
-
-        if (useSqlite)
-        {
-            TestContext.Out.WriteLine("Worker: skipped (SQLite mode — Worker requires SqlServerTransport).");
-            return;
-        }
-
-        TestContext.Out.WriteLine("Worker: starting...");
-        var config = BuildConfiguration;
-        var arguments = $"run --no-build --configuration {config} --no-launch-profile";
-
-        _workerProcess = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = arguments,
-                WorkingDirectory = WorkerProjectPath,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            }
-        };
-
-        // Connection string for SqlServerTransport
-        _workerProcess.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] = connectionString;
-
-        // Point Worker's RemotableBus back to the test UI.Server instance
-        _workerProcess.StartInfo.Environment["RemotableBus__ApiUrl"] =
-            $"{ApplicationBaseUrl}/api/blazor-wasm-single-api";
-
-        _workerProcess.StartInfo.Environment["DOTNET_ENVIRONMENT"] = "Development";
-        _workerProcess.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
-
-        // Provide a dummy Application Insights connection string to prevent the
-        // Azure Monitor exporter from throwing when --no-launch-profile is used
-        _workerProcess.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] =
-            "InstrumentationKey=00000000-0000-0000-0000-000000000000";
-
-        // Prevent the Worker from trying to connect to Azure OpenAI
-        _workerProcess.StartInfo.Environment["AI_OpenAI_ApiKey"] = "";
-        _workerProcess.StartInfo.Environment["AI_OpenAI_Url"] = "";
-        _workerProcess.StartInfo.Environment["AI_OpenAI_Model"] = "";
-
-        _workerProcess.Start();
-
-        // Worker is a generic host (no HTTP endpoint to poll). Monitor stdout for the
-        // NServiceBus endpoint startup confirmation. NServiceBus logs when the endpoint
-        // is successfully started. As a safety net, SqlServerTransport is durable — any
-        // messages published before Worker is fully ready will be consumed once it starts.
-        var readySignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        _workerProcess.OutputDataReceived += (_, e) =>
-        {
-            if (e.Data == null) return;
-            TestContext.Out.WriteLine($"  [Worker stdout] {e.Data}");
-            // NServiceBus logs the endpoint name when it starts successfully
-            if (e.Data.Contains("started", StringComparison.OrdinalIgnoreCase))
-            {
-                readySignal.TrySetResult(true);
-            }
-        };
-
-        _workerProcess.ErrorDataReceived += (_, e) =>
-        {
-            if (e.Data != null)
-                TestContext.Out.WriteLine($"  [Worker stderr] {e.Data}");
-        };
-
-        _workerProcess.BeginOutputReadLine();
-        _workerProcess.BeginErrorReadLine();
-
-        // Wait for the ready signal or timeout
-        var timeout = Task.Delay(TimeSpan.FromSeconds(WaitTimeoutSeconds));
-        var completed = await Task.WhenAny(readySignal.Task, timeout);
-
-        if (completed == timeout)
-        {
-            TestContext.Out.WriteLine(
-                $"Worker: did not detect startup confirmation within {WaitTimeoutSeconds}s. " +
-                "Proceeding anyway — SqlServerTransport is durable and will deliver queued messages.");
-        }
-        else
-        {
-            TestContext.Out.WriteLine("Worker: started successfully.");
-        }
-
-        WorkerStarted = true;
-    }
-
     private static async Task ResetServerDbConnections()
     {
         var handler = new HttpClientHandler
@@ -423,11 +317,6 @@ public class ServerFixture
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        // Stop Worker first (it calls back to UI.Server via RemotableBus)
-        await ProcessCleanupHelper.StopProcessAsync(_workerProcess);
-        try { _workerProcess?.Dispose(); } catch (ObjectDisposedException) { }
-        _workerProcess = null;
-
         await ProcessCleanupHelper.StopServerProcessAsync(_serverProcess, ApplicationBaseUrl);
         try { _serverProcess?.Dispose(); } catch (ObjectDisposedException) { }
         _serverProcess = null;

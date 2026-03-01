@@ -36,6 +36,7 @@
 		<ProjectReference Include="..\..\McpServer\McpServer.csproj" />
 		<ProjectReference Include="..\Client\UI.Client.csproj" />
 		<ProjectReference Include="..\Api\UI.Api.csproj" />
+		<ProjectReference Include="..\..\Worker\Worker.csproj" />
 	</ItemGroup>
 
 
