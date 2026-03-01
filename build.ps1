@@ -137,6 +137,8 @@ Function Init {
 		Log-Message "Using $script:databaseName as the database name." -Type "DEBUG"
 	}
 
+	Log-Message -Message "Cleaning build artifacts and initializing environment..." -Type "INFO"
+
 	if (Test-Path "build") {
 		Remove-Item -Path "build" -Recurse -Force
 	}
@@ -146,6 +148,8 @@ Function Init {
 	exec {
 		& dotnet clean $solutionName -nologo -v $verbosity /p:SuppressNETCoreSdkPreviewMessage=true
 	}
+
+	Log-Message -Message "Restoring NuGet packages..." -Type "INFO"
 	exec {
 		& dotnet restore $solutionName -nologo --interactive -v $verbosity /p:SuppressNETCoreSdkPreviewMessage=true
 	}
@@ -332,74 +336,6 @@ Function Create-SqlServerInDocker {
 	$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$projectName;User ID=sa;Password=$(Get-SqlServerPassword -ContainerName $(Get-ContainerName -DatabaseName $projectName));TrustServerCertificate=true;"
 }
 
-Function Publish-ToGitHubPackages {
-	param(
-		[Parameter(Mandatory = $true)]
-		[string]$packageId
-	)
-	
-	$githubToken = $env:GITHUB_TOKEN
-	if ([string]::IsNullOrEmpty($githubToken)) {
-		Log-Message -Message "GITHUB_TOKEN not found. Cannot publish $packageId to GitHub Packages." -Type "ERROR"
-		throw "GITHUB_TOKEN environment variable is required for publishing to GitHub Packages"
-	}
-	
-	# Verify token is not empty (but don't log the actual token)
-	if ($githubToken.Length -lt 10) {
-		Log-Message -Message "GITHUB_TOKEN appears to be invalid (too short)." -Type "ERROR"
-		throw "GITHUB_TOKEN appears to be invalid"
-	}
-	
-	Log-Message -Message "GITHUB_TOKEN found (length: $($githubToken.Length))" -Type "DEBUG"
-	
-	$githubRepo = $env:GITHUB_REPOSITORY
-	if ([string]::IsNullOrEmpty($githubRepo)) {
-		Log-Message -Message "GITHUB_REPOSITORY not found. Cannot determine GitHub Packages feed." -Type "ERROR"
-		throw "GITHUB_REPOSITORY environment variable is required"
-	}
-	
-	$owner = $githubRepo.Split('/')[0]
-	$githubFeed = "https://nuget.pkg.github.com/$owner/index.json"
-	
-	$packageFile = Get-ChildItem "$build_dir/$packageId.$version.nupkg" -ErrorAction SilentlyContinue
-	if (-not $packageFile) {
-		Log-Message -Message "Package file not found: $packageId.$version.nupkg" -Type "ERROR"
-		throw "Package file not found: $packageId.$version.nupkg"
-	}
-	
-	Log-Message -Message "Publishing $($packageFile.Name) to GitHub Packages..." -Type "DEBUG"
-	Log-Message -Message "Feed: $githubFeed" -Type "DEBUG"
-	Log-Message -Message "Owner: $owner" -Type "DEBUG"
-	
-	# GitHub Packages authentication: use username (owner) and token as password
-	# Configure source first, then push
-	$sourceName = "GitHub-$owner"
-	
-	# Remove existing source if it exists
-	$existingSource = dotnet nuget list source | Select-String -Pattern $sourceName -Quiet
-	if ($existingSource) {
-		Log-Message -Message "Removing existing source: $sourceName" -Type "DEBUG"
-		dotnet nuget remove source $sourceName 2>$null
-	}
-	
-	# Add source with username/password authentication
-	Log-Message -Message "Adding NuGet source with authentication..." -Type "DEBUG"
-	exec {
-		& dotnet nuget add source $githubFeed --name $sourceName --username $owner --password $githubToken --store-password-in-clear-text
-	}
-	
-	# Push using the source with explicit API key (credentials stored with source, but API key ensures authentication)
-	Log-Message -Message "Pushing package to GitHub Packages..." -Type "DEBUG"
-	Log-Message -Message "Feed: $githubFeed" -Type "DEBUG"
-	Log-Message -Message "Owner: $owner" -Type "DEBUG"
-	exec {
-		# Try with source name first (uses stored credentials)
-		& dotnet nuget push $packageFile.FullName --source $sourceName --api-key $githubToken --skip-duplicate
-	}
-	
-	Log-Message -Message "Successfully published $($packageFile.Name) to GitHub Packages" -Type "DEBUG"
-}
-
 Function PackageUI {    
 	$packageName = "$projectName.UI.$version.nupkg"
 	$packagePath = Join-Path $build_dir $packageName
@@ -583,8 +519,11 @@ Function Invoke-AcceptanceTests {
 	}
 
 	Init
+
+	Log-Message -Message "Compiling solution..." -Type "INFO"
 	Compile
 
+	Log-Message -Message "Setting up database dependencies..." -Type "INFO"
 	if ($script:databaseEngine -eq "SQL-Container") {
 		Log-Message -Message "Setting up SQL Server in Docker" -Type "DEBUG"
 		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
@@ -604,6 +543,7 @@ Function Invoke-AcceptanceTests {
 		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "DEBUG"
 	}
 
+	Log-Message -Message "Running acceptance tests..." -Type "INFO"
 	AcceptanceTests
 
 	$sw.Stop()
@@ -618,31 +558,72 @@ Function Invoke-AcceptanceTests {
 
 <#
 .SYNOPSIS
+Core build pipeline: init, compile, test, database setup, and integration tests.
+
+.DESCRIPTION
+Invoke-CoreBuild contains the shared build steps used by both Invoke-PrivateBuild (local developer builds)
+and Invoke-CIBuild (CI/CD pipeline builds). It is not intended to be called directly.
+
+Build steps:
+1. Init - Clean build artifacts and restore NuGet packages
+2. Compile - Build the solution
+3. UnitTests - Run unit tests
+4. Database setup - Create/migrate database (SQL-Container, LocalDB, or SQLite)
+5. IntegrationTest - Run integration tests
+#>
+Function Invoke-CoreBuild {
+	$script:buildStopwatch = [Diagnostics.Stopwatch]::StartNew()
+
+	Init
+
+	Log-Message -Message "Compiling solution..." -Type "INFO"
+	Compile
+
+	Log-Message -Message "Running unit tests..." -Type "INFO"
+	UnitTests
+
+	Log-Message -Message "Setting up database dependencies..." -Type "INFO"
+	if ($script:databaseEngine -eq "SQL-Container") {
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "DEBUG"
+		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		$containerName = Get-ContainerName -DatabaseName $script:databaseName
+		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	}
+	elseif ($script:databaseEngine -eq "LocalDB") {
+		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	}
+	else {
+		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "DEBUG"
+	}
+
+	Log-Message -Message "Running integration tests..." -Type "INFO"
+	IntegrationTest
+
+	$script:buildStopwatch.Stop()
+}
+
+<#
+.SYNOPSIS
 Executes a local developer build with unit and integration tests.
 
 .DESCRIPTION
-The Invoke-PrivateBuild function runs a complete build process for local development including 
-initialization, compilation, unit tests, database setup, and integration tests. This function 
-is intended for developers to validate changes locally before committing code.
-
-On Linux, creates a SQL Server Docker container with a non-unique database name.
-On Windows, uses LocalDB with a unique timestamp-based database name to avoid conflicts.
-
-Build steps:
-1. Init - Clean and restore NuGet packages
-2. Compile - Build the solution
-3. UnitTests - Run unit tests
-4. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows)
-5. Update appsettings.json files with connection strings
-5. MigrateDatabaseLocal - Run database migrations
-7. IntegrationTest - Run integration tests
-8. Restore appsettings.json files to git state
-
-Note: Does NOT create NuGet packages. Use Invoke-CIBuild or Invoke-AcceptanceTests for packaging.
+Thin wrapper around Invoke-CoreBuild for local development. Accepts optional parameters
+for database server, database name, and SQLite mode. Does NOT create NuGet packages.
 
 .PARAMETER databaseServer
-Optional. Specifies the database server to use. If not provided, defaults to "localhost" 
-on Linux or "(LocalDb)\MSSQLLocalDB" on Windows.
+Optional. Specifies the database server. Defaults to "localhost" on Linux or "(LocalDb)\MSSQLLocalDB" on Windows.
+
+.PARAMETER databaseName
+Optional. Specifies the database name. If not provided, auto-generated based on environment.
+
+.PARAMETER UseSqlite
+Optional switch. Forces SQLite mode, bypassing SQL Server setup.
 
 .EXAMPLE
 Invoke-PrivateBuild
@@ -650,8 +631,8 @@ Invoke-PrivateBuild
 .EXAMPLE
 Invoke-PrivateBuild -databaseServer "localhost"
 
-.NOTES
-Requires Docker on Linux. Sets containerAppURL environment variable to "localhost:7174".
+.EXAMPLE
+Invoke-PrivateBuild -UseSqlite
 #>
 Function Invoke-PrivateBuild {
 	param (
@@ -668,32 +649,23 @@ Function Invoke-PrivateBuild {
 	Log-Message -Message "Starting Invoke-PrivateBuild..." -Type "INFO"
 	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 
-	# Override database engine if -UseSqlite switch is provided
 	if ($UseSqlite) {
 		$script:databaseEngine = "SQLite"
 	}
 
-	# Resolve database engine from DATABASE_ENGINE env var or auto-detection
 	Resolve-DatabaseEngine
 
-	# Set database server from parameter if provided
 	if ($script:databaseEngine -ne "SQLite") {
 		if (-not [string]::IsNullOrEmpty($databaseServer)) {
 			$script:databaseServer = $databaseServer
 			Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "DEBUG"
 		}
-	}
 
-	# Generate unique database name for this build instance
-	if ($script:databaseEngine -ne "SQLite") {
 		if (-not [string]::IsNullOrEmpty($databaseName)) {
-		$script:databaseName = $databaseName
+			$script:databaseName = $databaseName
 			Log-Message -Message "Using database name from parameter: $script:databaseName" -Type "DEBUG"
 		}
-		elseif (Test-IsLinux) {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-		}
-		elseif (Test-IsLocalBuild) {
+		elseif (Test-IsLinux -or Test-IsLocalBuild) {
 			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
 		}
 		else {
@@ -701,72 +673,28 @@ Function Invoke-PrivateBuild {
 		}
 	}
 
-	$sw = [Diagnostics.Stopwatch]::StartNew()
+	Invoke-CoreBuild
 
-	Init
-	Compile
-	UnitTests
-
-	if ($script:databaseEngine -eq "SQL-Container") {
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "DEBUG"
-		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
-		$containerName = Get-ContainerName -DatabaseName $script:databaseName
-		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
-		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	}
-	elseif ($script:databaseEngine -eq "LocalDB") {
-		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
-		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	}
-	else {
-		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "DEBUG"
-	}
-
-	IntegrationTest
-
-	$sw.Stop()
 	if ($script:databaseEngine -eq "SQLite") {
-		Log-Message -Message "PRIVATE BUILD SUCCEEDED (SQLite) - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "PRIVATE BUILD SUCCEEDED (SQLite) - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
 	}
 	else {
-		Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
 		Log-Message -Message "Database used: $script:databaseName" -Type "DEBUG"
 	}
 }
 
 <#
 .SYNOPSIS
-Executes a complete continuous integration build pipeline.
+Executes a continuous integration build pipeline.
 
 .DESCRIPTION
-The Invoke-CIBuild function runs a full CI/CD build process including initialization, compilation, 
-unit tests, database setup, integration tests, and packaging. This function is designed to 
-run in CI/CD environments (Azure DevOps, GitHub Actions) or locally.
-
-On Linux, creates a SQL Server Docker container with a non-unique database name.
-On Windows, uses LocalDB with a unique database name.
-
-Build steps:
-1. Init - Clean and restore NuGet packages
-2. Compile - Build the solution
-3. UnitTests - Run unit tests
-4. Database setup - Create SQL Server (Docker on Linux, LocalDB on Windows)
-5. Update appsettings.json files with connection strings
-5. MigrateDatabaseLocal - Run database migrations
-7. IntegrationTest - Run integration tests
-8. Restore appsettings.json files to git state
-9. Package-Everything - Create NuGet packages for deployment
+Thin wrapper around Invoke-CoreBuild for CI/CD environments (Azure DevOps, GitHub Actions).
+Auto-detects database engine and generates database names. Does NOT package artifacts;
+packaging is handled by a separate workflow step calling Package-Everything directly.
 
 .EXAMPLE
 Invoke-CIBuild
-
-.NOTES
-Requires Docker on Linux. Uses Test-IsLinux, Test-IsAzureDevOps, and Test-IsGitHubActions 
-to detect environment and adjust behavior accordingly.
 #>
 Function Invoke-CIBuild {
 	if (Test-IsAzureDevOps) {
@@ -778,13 +706,9 @@ Function Invoke-CIBuild {
 	else {
 		Log-Message -Message "Starting Invoke-CIBuild..." -Type "INFO"
 	}
-	
-	$sw = [Diagnostics.Stopwatch]::StartNew()
 
-	# Resolve database engine from DATABASE_ENGINE env var or auto-detection
 	Resolve-DatabaseEngine
 
-	# Generate database name based on environment
 	if ($script:databaseEngine -ne "SQLite") {
 		if (Test-IsLinux) {
 			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
@@ -794,42 +718,13 @@ Function Invoke-CIBuild {
 		}
 	}
 
-	Init
-	Compile
-	UnitTests
+	Invoke-CoreBuild
 
-	if ($script:databaseEngine -eq "SQL-Container") {
-		Log-Message -Message "Setting up SQL Server in Docker for CI" -Type "DEBUG"
-		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
-	}
-
-	if ($script:databaseEngine -eq "SQL-Container") {
-		$containerName = Get-ContainerName -DatabaseName $script:databaseName
-		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
-		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	}
-	elseif ($script:databaseEngine -eq "LocalDB") {
-		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
-		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	}
-	else {
-		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "DEBUG"
-	}
-
-	IntegrationTest
-
-	# Package-Everything
-
-	$sw.Stop()
 	if ($script:databaseEngine -eq "SQLite") {
-		Log-Message -Message "Invoke-CIBuild SUCCEEDED (SQLite) - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "Invoke-CIBuild SUCCEEDED (SQLite) - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
 	}
 	else {
-		Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($sw.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
 		Log-Message -Message "Database used: $script:databaseName" -Type "DEBUG"
 	}
 }

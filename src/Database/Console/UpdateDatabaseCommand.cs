@@ -10,15 +10,14 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 [UsedImplicitly]
 public class UpdateDatabaseCommand() : AbstractDatabaseCommand("Update")
 {
-    protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
+    protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, string connectionString, CancellationToken cancellationToken)
     {
         var scriptDir = Path.Join( GetScriptDirectory(options), "Update");
-        var connectionString= GetConnectionString(options);
         var upgradeEngine = DeployChanges.To
             .SqlDatabase(connectionString)
             .WithScriptsFromFileSystem(scriptDir)
             .JournalToSqlTable("dbo", "SchemaVersions")
-            .LogToConsole()
+            .LogTo(new QuietLog())
             .Build();
 
         var result = upgradeEngine.PerformUpgrade();

@@ -14,10 +14,9 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 [UsedImplicitly]
 public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
 {
-    protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
+    protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, string connectionString, CancellationToken cancellationToken)
     {
         var scriptDir = GetScriptDirectory(options);
-        var connectionString = GetConnectionString(options);
 
         // 1) RunOnce scripts: Create + Update (journaled)
         var createAndUpdateEngine = DeployChanges.To
@@ -25,7 +24,7 @@ public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "Create"))
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "Update"))
             .JournalToSqlTable("dbo", "SchemaVersions")
-            .LogToConsole()
+            .LogTo(new QuietLog())
             .Build();
 
         var createAndUpdateResult = createAndUpdateEngine.PerformUpgrade();
@@ -40,7 +39,7 @@ public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "Everytime"),
                 new SqlScriptOptions { ScriptType = ScriptType.RunAlways })
             .JournalTo(new NullJournal())
-            .LogToConsole()
+            .LogTo(new QuietLog())
             .Build();
 
         var everytimeResult = everytimeEngine.PerformUpgrade();
@@ -54,7 +53,7 @@ public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
             .SqlDatabase(connectionString)
             .WithScriptsFromFileSystem(Path.Join(scriptDir, "TestData"))
             .JournalToSqlTable("dbo", "SchemaVersions")
-            .LogToConsole()
+            .LogTo(new QuietLog())
             .Build();
 
         var testDataResult = testDataEngine.PerformUpgrade();
