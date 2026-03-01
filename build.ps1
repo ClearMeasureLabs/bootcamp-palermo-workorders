@@ -48,7 +48,12 @@ if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 
 Function Resolve-DatabaseEngine {
 	$wasEmpty = [string]::IsNullOrEmpty($script:databaseEngine)
-	$script:databaseEngine = Get-ResolvedDatabaseEngine -currentEngine $script:databaseEngine -onLinux (Test-IsLinux) -dockerAvailable (Test-IsDockerRunning)
+	$onLinux = Test-IsLinux
+	$dockerAvailable = $false
+	if ($onLinux) {
+		$dockerAvailable = Test-IsDockerRunning
+	}
+	$script:databaseEngine = Get-ResolvedDatabaseEngine -currentEngine $script:databaseEngine -onLinux $onLinux -dockerAvailable $dockerAvailable
 	if ($wasEmpty) {
 		Log-Message -Message "DATABASE_ENGINE not set. Auto-detected: $script:databaseEngine" -Type "DEBUG"
 	}
