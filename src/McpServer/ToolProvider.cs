@@ -50,7 +50,7 @@ public class ToolProvider(IBus bus, IWorkOrderNumberGenerator numberGenerator) :
         return WorkOrderTools.CreateWorkOrder(bus, numberGenerator, title, description, creatorUsername, roomNumber);
     }
 
-    [Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, InProgressToAssigned.")]
+    [Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand.")]
     private Task<string> ExecuteWorkOrderCommand(
         [Description("The work order number")] string workOrderNumber,
         [Description("The command name (e.g., DraftToAssignedCommand)")] string commandName,
