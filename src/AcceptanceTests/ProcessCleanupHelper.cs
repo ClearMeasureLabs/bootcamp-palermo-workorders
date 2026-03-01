@@ -8,6 +8,34 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests;
 public static class ProcessCleanupHelper
 {
     /// <summary>
+    /// Stops a non-HTTP process (e.g. Worker) by killing its process tree and waiting for exit.
+    /// Unlike <see cref="StopServerProcessAsync"/>, no port-based orphan cleanup is performed
+    /// because the process does not listen on a network port.
+    /// </summary>
+    public static async Task StopProcessAsync(Process? process)
+    {
+        if (process == null) return;
+
+        try
+        {
+            if (!process.HasExited)
+            {
+                TestContext.Out.WriteLine($"Stopping process {process.Id}...");
+                process.Kill(true);
+                await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+            }
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"Error killing process: {ex.Message}");
+        }
+        finally
+        {
+            process.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Stops a server process, waits for exit, then kills any orphaned processes on the given port.
     /// </summary>
     public static async Task StopServerProcessAsync(Process? serverProcess, string applicationBaseUrl)
