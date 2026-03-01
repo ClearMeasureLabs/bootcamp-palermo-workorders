@@ -452,8 +452,7 @@ Invoke-AcceptanceTests -databaseServer "localhost" -databaseName "ChurchBulletin
 Invoke-AcceptanceTests -UseSqlite
 
 .NOTES
-Requires Playwright browsers installed. Azure OpenId recommended for AI tests.
-Sets containerAppURL environment variable to "localhost:7174".
+Requires Playwright browsers installed. Azure OpenID recommended for AI tests.
 Automatically installs Playwright browsers if not present.
 Falls back to SQLite when Docker is unavailable on Linux.
 #>
@@ -471,7 +470,6 @@ Function Invoke-AcceptanceTests {
 
 	Log-Message -Message "Starting AcceptanceBuild..." -Type "INFO"
 	$projectConfig = "Release"
-	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 
 	# Override database engine if -UseSqlite switch is provided
@@ -515,8 +513,8 @@ Function Invoke-AcceptanceTests {
 Core build pipeline: init, compile, test, database setup, and integration tests.
 
 .DESCRIPTION
-Invoke-CoreBuild contains the shared build steps used by both Invoke-PrivateBuild (local developer builds)
-and Invoke-CIBuild (CI/CD pipeline builds). It is not intended to be called directly.
+Invoke-CoreBuild contains the shared build steps used by the Build function.
+It is not intended to be called directly.
 
 Build steps:
 1. Init - Clean build artifacts and restore NuGet packages
@@ -546,11 +544,13 @@ Function Invoke-CoreBuild {
 
 <#
 .SYNOPSIS
-Executes a local developer build with unit and integration tests.
+Executes a full build with unit and integration tests.
 
 .DESCRIPTION
-Thin wrapper around Invoke-CoreBuild for local development. Accepts optional parameters
-for database server, database name, and SQLite mode. Does NOT create NuGet packages.
+Wrapper around Invoke-CoreBuild used by both local developer builds and CI/CD pipelines.
+Accepts optional parameters for database server, database name, and SQLite mode.
+Auto-detects the build environment (Azure DevOps, GitHub Actions, or local).
+Does NOT create NuGet packages; packaging is handled separately by Package-Everything.
 
 .PARAMETER databaseServer
 Optional. Specifies the database server. Defaults to "localhost" on Linux or "(LocalDb)\MSSQLLocalDB" on Windows.
@@ -562,15 +562,15 @@ Optional. Specifies the database name. If not provided, auto-generated based on 
 Optional switch. Forces SQLite mode, bypassing SQL Server setup.
 
 .EXAMPLE
-Invoke-PrivateBuild
+Build
 
 .EXAMPLE
-Invoke-PrivateBuild -databaseServer "localhost"
+Build -databaseServer "localhost"
 
 .EXAMPLE
-Invoke-PrivateBuild -UseSqlite
+Build -UseSqlite
 #>
-Function Invoke-PrivateBuild {
+Function Build {
 	param (
 		[Parameter(Mandatory = $false)]
 		[string]$databaseServer = "",
@@ -582,8 +582,15 @@ Function Invoke-PrivateBuild {
 		[switch]$UseSqlite
 	)
 
-	Log-Message -Message "Starting Invoke-PrivateBuild..." -Type "INFO"
-	[Environment]::SetEnvironmentVariable("containerAppURL", "localhost:7174", "User")
+	if (Test-IsAzureDevOps) {
+		Log-Message -Message "Starting Build on Azure DevOps..." -Type "INFO"
+	}
+	elseif (Test-IsGitHubActions) {
+		Log-Message -Message "Starting Build on GitHub Actions..." -Type "INFO"
+	}
+	else {
+		Log-Message -Message "Starting Build..." -Type "INFO"
+	}
 
 	if ($UseSqlite) {
 		$script:databaseEngine = "SQLite"
@@ -601,10 +608,10 @@ Function Invoke-PrivateBuild {
 	Invoke-CoreBuild
 
 	if ($script:databaseEngine -eq "SQLite") {
-		Log-Message -Message "PRIVATE BUILD SUCCEEDED (SQLite) - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "BUILD SUCCEEDED (SQLite) - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
 	}
 	else {
-		Log-Message -Message "PRIVATE BUILD SUCCEEDED - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "BUILD SUCCEEDED - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
 		Log-Message -Message "Database used: $script:databaseName" -Type "DEBUG"
 	}
 }
@@ -641,10 +648,10 @@ Function Invoke-CIBuild {
 	Invoke-CoreBuild
 
 	if ($script:databaseEngine -eq "SQLite") {
-		Log-Message -Message "Invoke-CIBuild SUCCEEDED (SQLite) - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "BUILD SUCCEEDED (SQLite) - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
 	}
 	else {
-		Log-Message -Message "Invoke-CIBuild SUCCEEDED - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "BUILD SUCCEEDED - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
 		Log-Message -Message "Database used: $script:databaseName" -Type "DEBUG"
 	}
 }

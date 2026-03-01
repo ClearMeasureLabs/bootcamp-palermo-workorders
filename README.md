@@ -43,11 +43,8 @@ src/
 # Quick build (Linux/macOS)
 ./build.sh
 
-# Full private build — clean, compile, unit tests, DB migration, integration tests
-. .\build.ps1 ; Invoke-PrivateBuild
-
-# CI build — private build + packaging
-. .\build.ps1 ; Invoke-CIBuild
+# Full build — clean, compile, unit tests, DB migration, integration tests
+. .\build.ps1 ; Build
 
 # dotnet CLI directly
 dotnet build src/ChurchBulletin.sln --configuration Release

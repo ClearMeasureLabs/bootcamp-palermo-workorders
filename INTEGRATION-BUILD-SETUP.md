@@ -40,7 +40,7 @@ The workflow executes the following steps in order:
 2. Setup .NET SDK and Runtime
 3. Start SQL Server LocalDB
 4. Set version environment variable (format: `MAJOR.MINOR.RUN_NUMBER`)
-5. Run `build.ps1` with `Invoke-CIBuild` function, which:
+5. Run `build.ps1` with `Build` function, which:
    - Cleans and restores dependencies
    - Compiles the solution
    - Runs unit tests with code coverage
