@@ -12,7 +12,7 @@ Work Order management system. .NET 10.0, Onion Architecture, Blazor WebAssembly 
 
 ```powershell
 # Full local build (compile + unit tests + DB migration + integration tests)
-. .\build.ps1 ; Invoke-PrivateBuild
+. .\build.ps1 ; Build
 
 # Build only
 dotnet build src/ChurchBulletin.sln --configuration Release
@@ -72,7 +72,7 @@ Work order state transitions: Draft → Assigned → InProgress → Complete (al
 DbUp scripts in `src/Database/scripts/Update/`, numbered sequentially (`###_Description.sql`).
 - Use TABS for indentation in SQL scripts.
 - To add a migration: find the highest existing number, increment by 1.
-- Apply locally by running `Invoke-PrivateBuild`.
+- Apply locally by running `Build`.
 
 ## Key Conventions
 
@@ -111,7 +111,7 @@ Format: `{username}/{branch-description}`. AI agents use the username of the acc
 
 | When | Command |
 |------|---------|
-| Before commit | `.\privatebuild.ps1` (or `. .\build.ps1 ; Invoke-PrivateBuild`) |
+| Before commit | `.\privatebuild.ps1` (or `. .\build.ps1 ; Build`) |
 | Before PR | `.\acceptancetests.ps1` |
 | Docs-only changes | Skip builds |
 

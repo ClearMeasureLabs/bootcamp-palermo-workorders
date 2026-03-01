@@ -59,7 +59,7 @@ jobs:
         run: |
           Write-Host "Running CI Build"
           . ./build.ps1
-          Invoke-CIBuild
+          Build
 
       # Publish test results
       - name: Test Reporter
@@ -184,8 +184,8 @@ jobs:
         run: |
           Write-Host "Running Private Build with SQLite"
           . ./build.ps1
-          Invoke-PrivateBuild -UseSqlite
-
+          Build -UseSqlite
+ 
       - name: Test Reporter
         uses: dorny/test-reporter@v2.1.1
         if: always()
@@ -243,7 +243,7 @@ jobs:
         run: |
           Write-Host "Running Private Build with SQLite on ARM"
           . ./build.ps1
-          Invoke-PrivateBuild -UseSqlite
+          Build -UseSqlite
 
       - name: Test Reporter
         uses: dorny/test-reporter@v2.1.1
@@ -339,7 +339,7 @@ jobs:
         run: |
           Write-Host "Running Private Build with Windows LocalDB"
           . ./build.ps1
-          Invoke-PrivateBuild
+          Build
 
       - name: Test Reporter
         uses: dorny/test-reporter@v2.1.1
