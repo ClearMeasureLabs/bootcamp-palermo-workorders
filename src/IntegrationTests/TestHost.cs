@@ -1,4 +1,5 @@
 ﻿using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Model.Messages;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.UI.Server;
@@ -69,12 +70,13 @@ public static class TestHost
                 var endpointConfiguration = new EndpointConfiguration("IntegrationTests");
                 endpointConfiguration.UseSerialization<SystemJsonSerializer>();
                 endpointConfiguration.EnableInstallers();
-                endpointConfiguration.SendOnly();
 
                 var connectionString = context.Configuration.GetConnectionString("SqlConnectionString") ?? "";
                 if (connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
                 {
-                    endpointConfiguration.UseTransport<LearningTransport>();
+                    var learningTransport = endpointConfiguration.UseTransport<LearningTransport>();
+                    learningTransport.Routing()
+                        .RouteToEndpoint(typeof(TracerBulletCommand), "WorkOrderProcessing");
                 }
                 else
                 {
@@ -82,6 +84,8 @@ public static class TestHost
                     transport.ConnectionString(connectionString);
                     transport.DefaultSchema("nServiceBus");
                     transport.Transactions(TransportTransactionMode.TransactionScope);
+                    transport.Routing()
+                        .RouteToEndpoint(typeof(TracerBulletCommand), "WorkOrderProcessing");
                 }
 
                 var conventions = new MessagingConventions();
@@ -91,7 +95,7 @@ public static class TestHost
             })
             .Build();
 
-
+        host.Start();
         _host = host;
     }
 
