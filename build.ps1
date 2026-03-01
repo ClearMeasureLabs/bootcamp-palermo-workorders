@@ -225,31 +225,11 @@ Function AcceptanceTests {
 	if (Test-Path $playwrightScript) {
 		Log-Message -Message "Playwright script found at $playwrightScript." -Type "DEBUG"
 		
-		# Check if browsers are installed (only chromium is needed)
-		try {
-			$listOutput = & pwsh $playwrightScript list 2>&1 | Out-String
-			if ($listOutput -match "chromium") {
-				Log-Message -Message "Playwright chromium is installed. Ensuring OS dependencies are present." -Type "DEBUG"
-				& pwsh $playwrightScript install-deps chromium
-				if ($LASTEXITCODE -ne 0) {
-					throw "Failed to install Playwright OS dependencies for chromium"
-				}
-			}
-			else {
-				Log-Message -Message "Playwright chromium not detected. Installing..." -Type "WARNING"
-				& pwsh $playwrightScript install chromium --with-deps
-				if ($LASTEXITCODE -ne 0) {
-					throw "Failed to install Playwright browsers"
-				}
-				Log-Message -Message "Playwright browsers installed successfully." -Type "DEBUG"
-			}
-		}
-		catch {
-			Log-Message -Message "WARNING: Could not verify Playwright browser installation. Attempting to install..." -Type "WARNING"
-			& pwsh $playwrightScript install chromium --with-deps
-			if ($LASTEXITCODE -ne 0) {
-				throw "Failed to install Playwright browsers"
-			}
+		# Ensure Playwright chromium is installed (idempotent - skips if already present)
+		Log-Message -Message "Ensuring Playwright chromium browser is installed..." -Type "DEBUG"
+		& pwsh $playwrightScript install chromium --with-deps
+		if ($LASTEXITCODE -ne 0) {
+			throw "Failed to install Playwright chromium"
 		}
 	}
 	else {
@@ -266,7 +246,7 @@ Function AcceptanceTests {
 	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
 	try {
 		exec {
-			& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
+		& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v normal --logger:trx `
 				--results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--settings:$runSettingsPath `
