@@ -30,20 +30,11 @@ $test_dir = Join-Path $build_dir "test"
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
 
-Function Set-DatabaseEngineForArm {
-	$isArmArchitecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -in @(
-		[System.Runtime.InteropServices.Architecture]::Arm,
-		[System.Runtime.InteropServices.Architecture]::Arm64
-	)
-
-	if ($isArmArchitecture) {
-		$env:database_engine = "SQLite"
-		$env:DATABASE_ENGINE = "SQLite"
-		Log-Message -Message "ARM architecture detected. Forcing DATABASE_ENGINE=SQLite." -Type "DEBUG"
-	}
+if (Test-IsArmArchitecture) {
+	$env:database_engine = "SQLite"
+	$env:DATABASE_ENGINE = "SQLite"
+	Log-Message -Message "ARM architecture detected. Forcing DATABASE_ENGINE=SQLite." -Type "DEBUG"
 }
-
-Set-DatabaseEngineForArm
 $script:databaseEngine = $env:DATABASE_ENGINE
 
 $databaseName = $projectName
@@ -56,25 +47,17 @@ if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
 if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 
 Function Resolve-DatabaseEngine {
-	if ([string]::IsNullOrEmpty($script:databaseEngine)) {
-		if (Test-IsLinux) {
-			if (Test-IsDockerRunning) {
-				$script:databaseEngine = "SQL-Container"
-			}
-			else {
-				$script:databaseEngine = "SQLite"
-			}
-		}
-		else {
-			$script:databaseEngine = "LocalDB"
-		}
+	$wasEmpty = [string]::IsNullOrEmpty($script:databaseEngine)
+	$onLinux = Test-IsLinux
+	$dockerAvailable = $false
+	if ($onLinux) {
+		$dockerAvailable = Test-IsDockerRunning
+	}
+	$script:databaseEngine = Get-ResolvedDatabaseEngine -currentEngine $script:databaseEngine -onLinux $onLinux -dockerAvailable $dockerAvailable
+	if ($wasEmpty) {
 		Log-Message -Message "DATABASE_ENGINE not set. Auto-detected: $script:databaseEngine" -Type "DEBUG"
 	}
 	else {
-		$validEngines = @("LocalDB", "SQL-Container", "SQLite")
-		if ($script:databaseEngine -notin $validEngines) {
-			throw "Invalid DATABASE_ENGINE value '$($script:databaseEngine)'. Valid values: $($validEngines -join ', ')"
-		}
 		Log-Message -Message "DATABASE_ENGINE set to: $script:databaseEngine" -Type "DEBUG"
 	}
 	$script:useSqlite = ($script:databaseEngine -eq "SQLite")
@@ -90,6 +73,8 @@ Function Init {
  	else {
 		Log-Message -Message "PowerShell 7 found at: $pwshPath" -Type "DEBUG"
 	}
+
+	Initialize-SqlServerModule
 
 	if (Test-IsAzureDevOps) { 
 		Log-Message -Message "Running in Azure DevOps Pipeline" -Type "DEBUG"
@@ -110,12 +95,14 @@ Function Init {
 		Log-Message -Message "Running on Windows" -Type "DEBUG"
 	}
 
+	# Set default database server if not already specified
+	if ([string]::IsNullOrEmpty($script:databaseServer)) {
+		$script:databaseServer = Get-DefaultDatabaseServer -engine $script:databaseEngine
+	}
+
+	# Engine-specific validation and setup
 	switch ($script:databaseEngine) {
-		"LocalDB" {
-			if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "(LocalDb)\MSSQLLocalDB" }
-		}
 		"SQL-Container" {
-			if ([string]::IsNullOrEmpty($script:databaseServer)) { $script:databaseServer = "localhost" }
 			if (Test-IsDockerRunning) {
 				Log-Message -Message "Docker is running" -Type "DEBUG"
 			} else {
@@ -285,6 +272,28 @@ Function MigrateDatabaseLocal {
 	}
 }
 
+Function Setup-DatabaseForBuild {
+	Log-Message -Message "Setting up database dependencies..." -Type "INFO"
+	if ($script:databaseEngine -eq "SQL-Container") {
+		Log-Message -Message "Setting up SQL Server in Docker" -Type "DEBUG"
+		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
+		$containerName = Get-ContainerName -DatabaseName $script:databaseName
+		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
+		$env:ConnectionStrings__SqlConnectionString = New-SqlServerConnectionString -server $script:databaseServer -database $script:databaseName -password $sqlPassword
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	}
+	elseif ($script:databaseEngine -eq "LocalDB") {
+		$env:ConnectionStrings__SqlConnectionString = New-IntegratedConnectionString -server $script:databaseServer -database $script:databaseName
+		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	}
+	else {
+		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "DEBUG"
+	}
+}
+
 Function Create-SqlServerInDocker {
 	param (
 		[Parameter(Mandatory = $true)]
@@ -304,7 +313,7 @@ Function Create-SqlServerInDocker {
 	New-DockerContainerForSqlServer -containerName $containerName
 	New-SqlServerDatabase -serverName $serverName -databaseName $tempDatabaseName 
 
-	$env:ConnectionStrings__SqlConnectionString = "server=$serverName;database=$tempDatabaseName;User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
+	$env:ConnectionStrings__SqlConnectionString = New-SqlServerConnectionString -server $serverName -database $tempDatabaseName -password $sqlPassword
 	Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
 	$databaseDll = Join-PathSegments $source_dir "Database" "bin" $projectConfig $framework "ClearMeasure.Bootcamp.Database.dll"
 	$dbArgs = @($databaseDll, $dbAction, $serverName, $tempDatabaseName, $scriptDir, "sa", $sqlPassword)
@@ -313,7 +322,7 @@ Function Create-SqlServerInDocker {
 		throw "Database migration failed with exit code $LASTEXITCODE"
 	}
 	# Restore connection string to default project database
-	$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$projectName;User ID=sa;Password=$(Get-SqlServerPassword -ContainerName $(Get-ContainerName -DatabaseName $projectName));TrustServerCertificate=true;"
+	$env:ConnectionStrings__SqlConnectionString = New-SqlServerConnectionString -server $script:databaseServer -database $projectName -password (Get-SqlServerPassword -ContainerName (Get-ContainerName -DatabaseName $projectName))
 }
 
 Function PackageUI {    
@@ -443,7 +452,7 @@ Invoke-AcceptanceTests -databaseServer "localhost" -databaseName "ChurchBulletin
 Invoke-AcceptanceTests -UseSqlite
 
 .NOTES
-Requires Playwright browsers installed. Azure OpenId recommended for AI tests.
+Requires Playwright browsers installed. Azure OpenID recommended for AI tests.
 Automatically installs Playwright browsers if not present.
 Falls back to SQLite when Docker is unavailable on Linux.
 #>
@@ -471,29 +480,12 @@ Function Invoke-AcceptanceTests {
 	# Resolve database engine from DATABASE_ENGINE env var or auto-detection
 	Resolve-DatabaseEngine
 
-	# Set database server from parameter if provided
+	# Set database server and name from parameters or defaults
 	if ($script:databaseEngine -ne "SQLite") {
 		if (-not [string]::IsNullOrEmpty($databaseServer)) {
 			$script:databaseServer = $databaseServer
 		}
-	}
-
-	# Generate unique database name for this build instance
-	if ($script:databaseEngine -ne "SQLite") {
-		if (-not [string]::IsNullOrEmpty($databaseName)) {
-			$script:databaseName = $databaseName
-		}
-		else {
-			if (Test-IsLinux) {
-				$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-			}
-			elseif (Test-IsLocalBuild) {
-				$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-			}
-			else {
-				$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
-			}
-		}
+		$script:databaseName = Get-ResolvedDatabaseName -explicitName $databaseName -baseName $projectName -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
 	}
 
 	Init
@@ -501,25 +493,7 @@ Function Invoke-AcceptanceTests {
 	Log-Message -Message "Compiling solution..." -Type "INFO"
 	Compile
 
-	Log-Message -Message "Setting up database dependencies..." -Type "INFO"
-	if ($script:databaseEngine -eq "SQL-Container") {
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "DEBUG"
-		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
-		$containerName = Get-ContainerName -DatabaseName $script:databaseName
-		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
-		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	}
-	elseif ($script:databaseEngine -eq "LocalDB") {
-		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
-		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	}
-	else {
-		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "DEBUG"
-	}
+	Setup-DatabaseForBuild
 
 	Log-Message -Message "Running acceptance tests..." -Type "INFO"
 	AcceptanceTests
@@ -560,25 +534,7 @@ Function Invoke-CoreBuild {
 	Log-Message -Message "Running unit tests..." -Type "INFO"
 	UnitTests
 
-	Log-Message -Message "Setting up database dependencies..." -Type "INFO"
-	if ($script:databaseEngine -eq "SQL-Container") {
-		Log-Message -Message "Setting up SQL Server in Docker" -Type "DEBUG"
-		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
-		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
-		$containerName = Get-ContainerName -DatabaseName $script:databaseName
-		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
-		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);User ID=sa;Password=$sqlPassword;TrustServerCertificate=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $(Get-RedactedConnectionString -ConnectionString $env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
-		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	}
-	elseif ($script:databaseEngine -eq "LocalDB") {
-		$env:ConnectionStrings__SqlConnectionString = "server=$($script:databaseServer);database=$($script:databaseName);Integrated Security=true;"
-		Log-Message "Set ConnectionStrings__SqlConnectionString for process: $($env:ConnectionStrings__SqlConnectionString)" -Type "DEBUG"
-		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
-	}
-	else {
-		Log-Message -Message "Skipping SQL Server setup and database migration (using SQLite with EnsureCreated)" -Type "DEBUG"
-	}
+	Setup-DatabaseForBuild
 
 	Log-Message -Message "Running integration tests..." -Type "INFO"
 	IntegrationTest
@@ -645,19 +601,48 @@ Function Build {
 	if ($script:databaseEngine -ne "SQLite") {
 		if (-not [string]::IsNullOrEmpty($databaseServer)) {
 			$script:databaseServer = $databaseServer
-			Log-Message -Message "Using database server from parameter: $script:databaseServer" -Type "DEBUG"
 		}
+		$script:databaseName = Get-ResolvedDatabaseName -explicitName $databaseName -baseName $projectName -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
+	}
 
-		if (-not [string]::IsNullOrEmpty($databaseName)) {
-			$script:databaseName = $databaseName
-			Log-Message -Message "Using database name from parameter: $script:databaseName" -Type "DEBUG"
-		}
-		elseif (Test-IsLinux -or Test-IsLocalBuild) {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $false
-		}
-		else {
-			$script:databaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
-		}
+	Invoke-CoreBuild
+
+	if ($script:databaseEngine -eq "SQLite") {
+		Log-Message -Message "BUILD SUCCEEDED (SQLite) - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
+	}
+	else {
+		Log-Message -Message "BUILD SUCCEEDED - Build time: $($script:buildStopwatch.Elapsed.ToString())" -Type "INFO"
+		Log-Message -Message "Database used: $script:databaseName" -Type "DEBUG"
+	}
+}
+
+<#
+.SYNOPSIS
+Executes a continuous integration build pipeline.
+
+.DESCRIPTION
+Thin wrapper around Invoke-CoreBuild for CI/CD environments (Azure DevOps, GitHub Actions).
+Auto-detects database engine and generates database names. Does NOT package artifacts;
+packaging is handled by a separate workflow step calling Package-Everything directly.
+
+.EXAMPLE
+Invoke-CIBuild
+#>
+Function Invoke-CIBuild {
+	if (Test-IsAzureDevOps) {
+		Log-Message -Message "Starting Invoke-CIBuild on Azure DevOps..." -Type "INFO"
+	}
+	elseif (Test-IsGitHubActions) {
+		Log-Message -Message "Starting Invoke-CIBuild on GitHub Actions..." -Type "INFO"
+	}
+	else {
+		Log-Message -Message "Starting Invoke-CIBuild..." -Type "INFO"
+	}
+
+	Resolve-DatabaseEngine
+
+	if ($script:databaseEngine -ne "SQLite") {
+		$script:databaseName = Get-ResolvedDatabaseName -baseName $projectName -onLinux (Test-IsLinux) -localBuild $false
 	}
 
 	Invoke-CoreBuild
