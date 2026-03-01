@@ -1,29 +1,35 @@
 # Taken from psake https://github.com/psake
 
-# Ensure SqlServer module is installed for Invoke-Sqlcmd
-if (-not (Get-Module -ListAvailable -Name SqlServer)) {
-    Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
-    try {
-        # Register PSGallery if it's not registered
-        if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
-            Register-PSRepository -Default -ErrorAction Stop | Out-Null
+Function Initialize-SqlServerModule {
+    <#
+    .SYNOPSIS
+        Installs and imports the SqlServer PowerShell module if not already available.
+    .DESCRIPTION
+        Ensures the SqlServer module is installed from PSGallery and imported.
+        Called explicitly during Init rather than at dot-source time.
+    #>
+    if (-not (Get-Module -ListAvailable -Name SqlServer)) {
+        Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
+        try {
+            if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+                Register-PSRepository -Default -ErrorAction Stop | Out-Null
+            }
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue
+            Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser -Repository PSGallery -ErrorAction Stop
+            Write-Host "SqlServer module installed successfully" -ForegroundColor Green
         }
-        # Trust PSGallery to avoid prompts
-        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue
-        Install-Module -Name SqlServer -Force -AllowClobber -Scope CurrentUser -Repository PSGallery -ErrorAction Stop
-        Write-Host "SqlServer module installed successfully" -ForegroundColor Green
+        catch {
+            Write-Host "Failed to install SqlServer module: $_" -ForegroundColor Red
+            Write-Host "Some database operations may not work without this module" -ForegroundColor Yellow
+        }
+    }
+
+    try {
+        Import-Module SqlServer -ErrorAction Stop
     }
     catch {
-        Write-Host "Failed to install SqlServer module: $_" -ForegroundColor Red
-        Write-Host "Some database operations may not work without this module" -ForegroundColor Yellow
+        Write-Host "Warning: Could not import SqlServer module. Invoke-Sqlcmd will not be available." -ForegroundColor Yellow
     }
-}
-
-try {
-    Import-Module SqlServer -ErrorAction Stop
-}
-catch {
-    Write-Host "Warning: Could not import SqlServer module. Invoke-Sqlcmd will not be available." -ForegroundColor Yellow
 }
 
 <#
@@ -510,4 +516,159 @@ function Join-PathSegments {
     }
     
     return $result
+}
+
+Function Test-IsArmArchitecture {
+    <#
+    .SYNOPSIS
+        Tests if the current system is running on ARM architecture.
+    .OUTPUTS
+        [bool] True if ARM or ARM64, False otherwise.
+    #>
+    return [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -in @(
+        [System.Runtime.InteropServices.Architecture]::Arm,
+        [System.Runtime.InteropServices.Architecture]::Arm64
+    )
+}
+
+Function Get-ResolvedDatabaseEngine {
+    <#
+    .SYNOPSIS
+        Determines the database engine to use based on environment and capabilities.
+    .PARAMETER currentEngine
+        The currently configured engine value (from DATABASE_ENGINE env var), or empty string.
+    .PARAMETER onLinux
+        Whether the current platform is Linux.
+    .PARAMETER dockerAvailable
+        Whether Docker is installed and running.
+    .OUTPUTS
+        [string] One of: "LocalDB", "SQL-Container", "SQLite"
+    #>
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$currentEngine = "",
+        [Parameter(Mandatory = $false)]
+        [bool]$onLinux = $false,
+        [Parameter(Mandatory = $false)]
+        [bool]$dockerAvailable = $false
+    )
+
+    if ([string]::IsNullOrEmpty($currentEngine)) {
+        if ($onLinux) {
+            if ($dockerAvailable) { return "SQL-Container" }
+            else { return "SQLite" }
+        }
+        else {
+            return "LocalDB"
+        }
+    }
+
+    $validEngines = @("LocalDB", "SQL-Container", "SQLite")
+    if ($currentEngine -notin $validEngines) {
+        throw "Invalid DATABASE_ENGINE value '$currentEngine'. Valid values: $($validEngines -join ', ')"
+    }
+    return $currentEngine
+}
+
+Function Get-DefaultDatabaseServer {
+    <#
+    .SYNOPSIS
+        Returns the default database server name for a given engine type.
+    .PARAMETER engine
+        The database engine: "LocalDB", "SQL-Container", or "SQLite".
+    .OUTPUTS
+        [string] The default server name, or empty string for SQLite.
+    #>
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$engine
+    )
+
+    switch ($engine) {
+        "LocalDB"       { return "(LocalDb)\MSSQLLocalDB" }
+        "SQL-Container" { return "localhost" }
+        default         { return "" }
+    }
+}
+
+Function Get-ResolvedDatabaseName {
+    <#
+    .SYNOPSIS
+        Determines the database name to use based on explicit input or environment.
+    .PARAMETER explicitName
+        An explicitly provided database name. If non-empty, returned as-is.
+    .PARAMETER baseName
+        The base project name used to generate a database name.
+    .PARAMETER onLinux
+        Whether the current platform is Linux.
+    .PARAMETER localBuild
+        Whether this is a local (non-CI) build.
+    .OUTPUTS
+        [string] The resolved database name.
+    #>
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$explicitName = "",
+        [Parameter(Mandatory = $true)]
+        [string]$baseName,
+        [Parameter(Mandatory = $false)]
+        [bool]$onLinux = $false,
+        [Parameter(Mandatory = $false)]
+        [bool]$localBuild = $false
+    )
+
+    if (-not [string]::IsNullOrEmpty($explicitName)) {
+        return $explicitName
+    }
+
+    if ($onLinux -or $localBuild) {
+        return Generate-UniqueDatabaseName -baseName $baseName -generateUnique $false
+    }
+    return Generate-UniqueDatabaseName -baseName $baseName -generateUnique $true
+}
+
+Function New-SqlServerConnectionString {
+    <#
+    .SYNOPSIS
+        Builds a SQL Server connection string with SQL authentication.
+    .PARAMETER server
+        The database server address.
+    .PARAMETER database
+        The database name.
+    .PARAMETER password
+        The SA password.
+    .OUTPUTS
+        [string] A SQL Server connection string.
+    #>
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$server,
+        [Parameter(Mandatory = $true)]
+        [string]$database,
+        [Parameter(Mandatory = $true)]
+        [string]$password
+    )
+
+    return "server=$server;database=$database;User ID=sa;Password=$password;TrustServerCertificate=true;"
+}
+
+Function New-IntegratedConnectionString {
+    <#
+    .SYNOPSIS
+        Builds a SQL Server connection string with Windows Integrated Security.
+    .PARAMETER server
+        The database server address.
+    .PARAMETER database
+        The database name.
+    .OUTPUTS
+        [string] A connection string using Integrated Security.
+    #>
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$server,
+        [Parameter(Mandatory = $true)]
+        [string]$database
+    )
+
+    return "server=$server;database=$database;Integrated Security=true;"
 }
