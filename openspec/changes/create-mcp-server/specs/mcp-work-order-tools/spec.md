@@ -35,7 +35,7 @@ The system SHALL expose an MCP tool named `create-work-order` that creates a new
 - **THEN** an error message is returned indicating the employee was not found
 
 ### Requirement: Execute state command tool
-The system SHALL expose an MCP tool named `execute-work-order-command` that executes a named state command (e.g., `DraftToAssignedCommand`, `AssignedToInProgressCommand`, `InProgressToCompleteCommand`, `InProgressToAssigned`) against a work order. Each `IStateCommand` implementation validates its own preconditions via `IsValid()` and defines the valid begin/end statuses.
+The system SHALL expose an MCP tool named `execute-work-order-command` that executes a named state command (e.g., `DraftToAssignedCommand`, `AssignedToInProgressCommand`, `InProgressToCompleteCommand`) against a work order. Each `IStateCommand` implementation validates its own preconditions via `IsValid()` and defines the valid begin/end statuses.
 
 #### Scenario: Valid command execution
 - **WHEN** the `execute-work-order-command` tool is invoked with a work order number and command name (e.g., "AssignedToInProgressCommand")

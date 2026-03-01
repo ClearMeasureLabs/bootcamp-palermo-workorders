@@ -55,8 +55,7 @@ public class ReferenceResources
             },
             InProgress = new[]
             {
-                new { Command = "InProgressToCompleteCommand", TargetStatus = "Complete" },
-                new { Command = "InProgressToAssigned", TargetStatus = "Assigned" }
+                new { Command = "InProgressToCompleteCommand", TargetStatus = "Complete" }
             },
             Complete = System.Array.Empty<object>()
         };
