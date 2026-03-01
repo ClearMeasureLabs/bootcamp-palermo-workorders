@@ -26,9 +26,9 @@ public class ToolProvider(IBus bus, IWorkOrderNumberGenerator numberGenerator) :
         ];
     }
 
-    [Description("Lists all work orders, optionally filtered by status. Valid statuses: Draft, Assigned, InProgress, Complete, Cancelled.")]
+    [Description("Lists all work orders, optionally filtered by status. Valid statuses: Draft, Assigned, InProgress, Complete.")]
     private Task<string> ListWorkOrders(
-        [Description("Optional status filter (Draft, Assigned, InProgress, Complete, Cancelled)")] string? status = null)
+        [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null)
     {
         return WorkOrderTools.ListWorkOrders(bus, status);
     }
@@ -50,7 +50,7 @@ public class ToolProvider(IBus bus, IWorkOrderNumberGenerator numberGenerator) :
         return WorkOrderTools.CreateWorkOrder(bus, numberGenerator, title, description, creatorUsername, roomNumber);
     }
 
-    [Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand, InProgressToCancelledCommand, InProgressToAssigned.")]
+    [Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, InProgressToAssigned.")]
     private Task<string> ExecuteWorkOrderCommand(
         [Description("The work order number")] string workOrderNumber,
         [Description("The command name (e.g., DraftToAssignedCommand)")] string commandName,

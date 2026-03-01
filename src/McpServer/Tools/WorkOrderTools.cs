@@ -13,10 +13,10 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class WorkOrderTools
 {
-    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status. Valid statuses: Draft, Assigned, InProgress, Complete, Cancelled.")]
+    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status. Valid statuses: Draft, Assigned, InProgress, Complete.")]
     public static async Task<string> ListWorkOrders(
         IBus bus,
-        [Description("Optional status filter (Draft, Assigned, InProgress, Complete, Cancelled)")] string? status = null)
+        [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null)
     {
         var query = new WorkOrderSpecificationQuery();
         if (!string.IsNullOrEmpty(status))
@@ -83,7 +83,7 @@ public class WorkOrderTools
         }
     }
 
-    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand, InProgressToCancelledCommand, InProgressToAssigned.")]
+    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, InProgressToAssigned.")]
     public static async Task<string> ExecuteWorkOrderCommand(
         IBus bus,
         [Description("The work order number")] string workOrderNumber,
@@ -124,15 +124,13 @@ public class WorkOrderTools
             "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
             "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
             "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
-            "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
-            "InProgressToCancelledCommand" => new InProgressToCancelledCommand(workOrder, user),
             "InProgressToAssigned" => new InProgressToAssigned(workOrder, user),
             _ => null
         };
 
         if (command == null)
         {
-            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand, InProgressToCancelledCommand, InProgressToAssigned.";
+            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand, InProgressToAssigned.";
         }
 
         if (!command.IsValid())

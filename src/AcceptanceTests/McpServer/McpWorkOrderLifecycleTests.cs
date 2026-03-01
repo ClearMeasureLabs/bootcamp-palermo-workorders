@@ -108,47 +108,6 @@ public class McpWorkOrderLifecycleTests : AcceptanceTestBase
     }
 
     [Test]
-    public async Task ShouldAssignAndCancelViaDirectToolCalls()
-    {
-        var bus = TestHost.GetRequiredService<IBus>();
-        var employees = await bus.Send(new EmployeeGetAllQuery());
-        var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
-        var assignee = employees.First(e =>
-            e.Roles.Any(r => r.CanFulfillWorkOrder) && e.UserName != creator.UserName);
-
-        // Create and assign
-        var createResult = await _helper!.CallToolDirectly("create-work-order",
-            new Dictionary<string, object?>
-            {
-                ["title"] = "Cancel test work order",
-                ["description"] = "Testing cancellation via direct MCP tool calls",
-                ["creatorUsername"] = creator.UserName!
-            });
-
-        var workOrderNumber = McpTestHelper.ExtractJsonValue(createResult, "Number");
-
-        await _helper!.CallToolDirectly("execute-work-order-command",
-            new Dictionary<string, object?>
-            {
-                ["workOrderNumber"] = workOrderNumber,
-                ["commandName"] = "DraftToAssignedCommand",
-                ["executingUsername"] = creator.UserName!,
-                ["assigneeUsername"] = assignee.UserName!
-            });
-
-        // Cancel from Assigned state (creator cancels)
-        var cancelResult = await _helper!.CallToolDirectly("execute-work-order-command",
-            new Dictionary<string, object?>
-            {
-                ["workOrderNumber"] = workOrderNumber,
-                ["commandName"] = "AssignedToCancelledCommand",
-                ["executingUsername"] = creator.UserName!
-            });
-
-        cancelResult.ShouldContain("Cancelled");
-    }
-
-    [Test]
     public async Task ShouldBeginAndShelveViaDirectToolCalls()
     {
         var bus = TestHost.GetRequiredService<IBus>();

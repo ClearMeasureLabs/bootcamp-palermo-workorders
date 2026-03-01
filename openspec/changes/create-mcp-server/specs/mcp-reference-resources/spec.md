@@ -5,7 +5,7 @@ The system SHALL expose an MCP resource at URI `churchbulletin://reference/work-
 
 #### Scenario: Read work order statuses
 - **WHEN** an MCP client reads the `churchbulletin://reference/work-order-statuses` resource
-- **THEN** all statuses are returned including their code, key, and friendly name (Draft, Assigned, InProgress, Complete, Cancelled)
+- **THEN** all statuses are returned including their code, key, and friendly name (Draft, Assigned, InProgress, Complete)
 
 ### Requirement: Roles resource
 The system SHALL expose an MCP resource at URI `churchbulletin://reference/roles` that returns all defined roles.
@@ -19,4 +19,4 @@ The system SHALL expose an MCP resource at URI `churchbulletin://reference/statu
 
 #### Scenario: Read valid transitions
 - **WHEN** an MCP client reads the `churchbulletin://reference/status-transitions` resource
-- **THEN** a mapping of each status to its valid target statuses is returned (e.g., Draft can transition to Assigned; Assigned can transition to InProgress or Cancelled)
+- **THEN** a mapping of each status to its valid target statuses is returned (e.g., Draft can transition to Assigned; Assigned can transition to InProgress)

@@ -42,9 +42,9 @@ public class WorkOrderSearchTests
         assigneeOptions.Length.ShouldBe(4);
         assigneeOptions[0].TextContent.ShouldBe("All");
 
-        // Verify status options are loaded (5 statuses + "All" option = 6 options)
+        // Verify status options are loaded (4 statuses + "All" option = 5 options)
         var statusOptions = statusSelect.QuerySelectorAll("option");
-        statusOptions.Length.ShouldBe(6);
+        statusOptions.Length.ShouldBe(5);
         statusOptions[0].TextContent.ShouldBe("All");
     }
 

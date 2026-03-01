@@ -25,15 +25,13 @@ public class StateCommandListTests
         var facilitator = new StateCommandList();
         var commands = facilitator.GetAllStateCommands(new WorkOrder(), new Employee());
 
-        Assert.That(commands.Length, Is.EqualTo(7));
+        Assert.That(commands.Length, Is.EqualTo(5));
 
-        Assert.That(commands[0], Is.InstanceOf(typeof(InProgressToCancelledCommand)));
-        Assert.That(commands[1], Is.InstanceOf(typeof(SaveDraftCommand)));
-        Assert.That(commands[2], Is.InstanceOf(typeof(DraftToAssignedCommand)));
-        Assert.That(commands[3], Is.InstanceOf(typeof(AssignedToCancelledCommand)));
-        Assert.That(commands[4], Is.InstanceOf(typeof(AssignedToInProgressCommand)));
-        Assert.That(commands[5], Is.InstanceOf(typeof(InProgressToCompleteCommand)));
-        Assert.That(commands[6], Is.InstanceOf(typeof(InProgressToAssigned)));
+        Assert.That(commands[0], Is.InstanceOf(typeof(SaveDraftCommand)));
+        Assert.That(commands[1], Is.InstanceOf(typeof(DraftToAssignedCommand)));
+        Assert.That(commands[2], Is.InstanceOf(typeof(AssignedToInProgressCommand)));
+        Assert.That(commands[3], Is.InstanceOf(typeof(InProgressToCompleteCommand)));
+        Assert.That(commands[4], Is.InstanceOf(typeof(InProgressToAssigned)));
     }
 
     [Test]
@@ -63,7 +61,7 @@ public class StateCommandListTests
         var stubFacilitator = new StubStateCommandList();
         var expected = new StubbedStateCommand(true)
         {
-            TransitionVerbPresentTense = "Cancel",
+            TransitionVerbPresentTense = "Save",
         };
 
         var commandsToReturn = new IStateCommand[]
@@ -75,7 +73,7 @@ public class StateCommandListTests
 
         stubFacilitator.CommandsToReturn = commandsToReturn;
 
-        var commands = stubFacilitator.GetMatchingCommand(workOrder, employee, "Cancel");
+        var commands = stubFacilitator.GetMatchingCommand(workOrder, employee, "Save");
 
         Assert.That(commands, Is.SameAs(expected));
         }

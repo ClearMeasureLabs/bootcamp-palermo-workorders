@@ -51,17 +51,14 @@ public class ReferenceResources
             },
             Assigned = new[]
             {
-                new { Command = "AssignedToInProgressCommand", TargetStatus = "InProgress" },
-                new { Command = "AssignedToCancelledCommand", TargetStatus = "Cancelled" }
+                new { Command = "AssignedToInProgressCommand", TargetStatus = "InProgress" }
             },
             InProgress = new[]
             {
                 new { Command = "InProgressToCompleteCommand", TargetStatus = "Complete" },
-                new { Command = "InProgressToCancelledCommand", TargetStatus = "Cancelled" },
                 new { Command = "InProgressToAssigned", TargetStatus = "Assigned" }
             },
-            Complete = System.Array.Empty<object>(),
-            Cancelled = System.Array.Empty<object>()
+            Complete = System.Array.Empty<object>()
         };
 
         return JsonSerializer.Serialize(transitions, JsonOptions);
