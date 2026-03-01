@@ -11,12 +11,6 @@ param (
 
 . .\build.ps1
 
-# Set database server from pipeline variable if available
-if ([string]::IsNullOrEmpty($databaseServer) -and -not [string]::IsNullOrEmpty($env:DatabaseServer)) {
-	$databaseServer = $env:DatabaseServer
-	Log-Message -Message "Using database server from pipeline variable: $databaseServer" -Type "INFO"
-}
-
 if ($Headful) {
     $env:HeadlessTestBrowser = "false"
     Log-Message -Message "Running acceptance tests with headful browser windows." -Type "INFO"

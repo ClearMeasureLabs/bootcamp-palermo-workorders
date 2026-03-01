@@ -67,10 +67,16 @@ Function Log-Message {
         [string]$Type = "INFO"
     )
 
+    # Suppress DEBUG messages unless BUILD_LOG_LEVEL is set to DEBUG
+    if ($Type -eq "DEBUG" -and $env:BUILD_LOG_LEVEL -ne "DEBUG") {
+        return
+    }
+
     $color = switch ($Type) {
         "ERROR" { "Red" }
         "WARNING" { "Yellow" }
         "INFO" { "Cyan" }
+        "DEBUG" { "DarkGray" }
         default { "White" }
     }
 
@@ -249,7 +255,7 @@ END
 "@
 
     $createDbCmd = "CREATE DATABASE [$databaseName];"
-	Log-Message "Creating SQL Server in Docker for integration tests for $databaseName on $serverName" -Type "INFO"
+	Log-Message "Creating SQL Server in Docker for integration tests for $databaseName on $serverName" -Type "DEBUG"
 
     try {
         if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
@@ -271,7 +277,7 @@ END
         throw $_
     }
 
-    Log-Message -Message "Recreated database '$databaseName' on server '$serverName'" -Type "INFO"
+    Log-Message -Message "Recreated database '$databaseName' on server '$serverName'" -Type "DEBUG"
 }
 
 Function New-DockerContainerForSqlServer {
@@ -283,12 +289,12 @@ Function New-DockerContainerForSqlServer {
     $imageName = "mcr.microsoft.com/mssql/server:2022-latest"
 
     # Stop any containers using port 1433
-    Log-Message -Message "Checking for containers using port 1433..." -Type "INFO"
+    Log-Message -Message "Checking for containers using port 1433..." -Type "DEBUG"
     $containersOnPort1433 = docker ps --filter "publish=1433" --format "{{.Names}}"
     
     foreach ($container in $containersOnPort1433) {
         if ($container) {
-            Log-Message -Message "Stopping container '$container' that is using port 1433..." -Type "INFO"
+            Log-Message -Message "Stopping container '$container' that is using port 1433..." -Type "DEBUG"
             docker stop $container | Out-Null
             docker rm $container | Out-Null
         }
@@ -297,7 +303,7 @@ Function New-DockerContainerForSqlServer {
     # Check if our specific container exists (running or stopped)
     $existingContainer = docker ps -a --filter "name=^${containerName}$" --format "{{.Names}}"
     if ($existingContainer) {
-        Log-Message -Message "Removing existing container '$containerName'..." -Type "INFO"
+        Log-Message -Message "Removing existing container '$containerName'..." -Type "DEBUG"
         docker rm -f $existingContainer | Out-Null
     }
     
@@ -307,7 +313,7 @@ Function New-DockerContainerForSqlServer {
     
     # Create new container
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$sqlPassword" -p 1433:1433 --name $containerName -d $imageName 
-    Log-Message -Message "Waiting for SQL Server to be ready..." -Type "INFO"
+    Log-Message -Message "Waiting for SQL Server to be ready..." -Type "DEBUG"
     
     $maxWaitSeconds = 120
     $waitIntervalSeconds = 3
@@ -341,7 +347,7 @@ Function New-DockerContainerForSqlServer {
         throw "SQL Server Docker container '$containerName' did not become ready in time."
     }
     
-    Log-Message -Message "SQL Server Docker container '$containerName' should be running." -Type "INFO"
+    Log-Message -Message "SQL Server Docker container '$containerName' should be running." -Type "DEBUG"
 
 }
 
@@ -365,13 +371,13 @@ Function Test-IsDockerRunning {
     if (-not $dockerPath) {
         if ($LogOutput) {
             Log-Message -Message "Docker is not installed or not in PATH" -Type "ERROR"
-            Log-Message -Message "Install Docker from: https://docs.docker.com/engine/install/" -Type "INFO"
+            Log-Message -Message "Install Docker from: https://docs.docker.com/engine/install/" -Type "DEBUG"
         }
         return $false
     }
     else {
         if ($LogOutput) {
-            Log-Message -Message "Docker found at: $dockerPath" -Type "INFO"
+            Log-Message -Message "Docker found at: $dockerPath" -Type "DEBUG"
         }
         
         # Check if Docker daemon is running
@@ -379,7 +385,7 @@ Function Test-IsDockerRunning {
             $dockerVersion = & docker version --format "{{.Server.Version}}" 2>$null
             if ($dockerVersion) {
                 if ($LogOutput) {
-                    Log-Message -Message "Docker daemon is running (version: $dockerVersion)" -Type "INFO"
+                    Log-Message -Message "Docker daemon is running (version: $dockerVersion)" -Type "DEBUG"
                 }
             }
             else {
@@ -414,11 +420,11 @@ Function Generate-UniqueDatabaseName {
         $randomChars = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
         $uniqueName = "${baseName}_${timestamp}_${randomChars}"
      
-        Log-Message -Message "Generated unique database name: $uniqueName" -Type "INFO"
+        Log-Message -Message "Generated unique database name: $uniqueName" -Type "DEBUG"
         return $uniqueName
     }
     else {
-        Log-Message -Message "Using base database name: $baseName" -Type "INFO"
+        Log-Message -Message "Using base database name: $baseName" -Type "DEBUG"
         return $baseName
     }
 }

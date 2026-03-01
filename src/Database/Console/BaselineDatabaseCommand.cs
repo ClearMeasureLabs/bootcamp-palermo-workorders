@@ -13,22 +13,11 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 [UsedImplicitly]
 public class BaselineDatabaseCommand() : AbstractDatabaseCommand("baseline")
 {
-    protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
+    protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, string connectionString, CancellationToken cancellationToken)
     {
         var scriptDir = GetScriptDirectory(options);
-        var connectionString = GetConnectionString(options);
 
         AnsiConsole.MarkupLine("[yellow]Baselining database - marking all scripts as executed without running them...[/]");
-
-        try
-        {
-            EnsureDatabase.For.SqlDatabase(connectionString);
-        }
-        catch (Exception ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Error ensuring database exists: {ex.Message.EscapeMarkup()}[/]");
-            return -1;
-        }
 
         // Mark Create scripts as executed
         var createResult = MarkScriptsAsExecuted(connectionString, Path.Join(scriptDir, "Create"), "Create");
@@ -62,7 +51,7 @@ public class BaselineDatabaseCommand() : AbstractDatabaseCommand("baseline")
             .SqlDatabase(connectionString)
             .WithScriptsFromFileSystem(scriptPath)
             .JournalToSqlTable("dbo", "SchemaVersions")
-            .LogToConsole()
+            .LogTo(new QuietLog())
             .Build();
 
         var scripts = upgradeEngine.GetScriptsToExecute();

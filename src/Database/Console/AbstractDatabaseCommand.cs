@@ -1,4 +1,3 @@
-﻿using System.Reflection;
 using DbUp;
 using Microsoft.Data.SqlClient;
 using Spectre.Console;
@@ -23,7 +22,7 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         var connectionString = GetConnectionString(options);
         try
         {
-            EnsureDatabase.For.SqlDatabase(connectionString);
+            EnsureDatabase.For.SqlDatabase(connectionString, new QuietLog());
         }
         catch (Exception ex)
         {
@@ -31,11 +30,11 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             return -1;
         }
 
-        return ExecuteInternal(context, options, cancellationToken);
+        return ExecuteInternal(context, options, connectionString, cancellationToken);
     }
 
     // ReSharper disable UnusedParameter.Global
-    protected abstract int ExecuteInternal(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken);
+    protected abstract int ExecuteInternal(CommandContext context, DatabaseOptions options, string connectionString, CancellationToken cancellationToken);
     // ReSharper restore UnusedParameter.Global
 
     protected static string GetConnectionString(DatabaseOptions options)
@@ -52,7 +51,6 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
 
 
-        AnsiConsole.MarkupLine($"[dim]Detected server '{serverName}': isLocalServer={isLocalServer}[/]");   
         
         // Format DataSource to use TCP on port 1433 for non-LocalDB connections
         // This forces TCP instead of Named Pipes
@@ -85,14 +83,14 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             // Local servers: don't encrypt, trust certificate
             builder.Encrypt = false;
             builder.TrustServerCertificate = true;
-            AnsiConsole.MarkupLine($"[dim]Detected local server '{serverName}': Encrypt=False, TrustServerCertificate=True[/]");
+            // Diagnostic logging suppressed for clean build output
         }
         else
         {
             // Remote servers or Azure SQL Database: encrypt, don't trust certificate (require proper validation)
             builder.Encrypt = true;
             builder.TrustServerCertificate = false;
-            AnsiConsole.MarkupLine($"[dim]Detected remote server '{serverName}': Encrypt=True, TrustServerCertificate=False[/]");
+            // Diagnostic logging suppressed for clean build output
         }
 
         if (string.IsNullOrWhiteSpace(options.DatabaseUser))
@@ -115,13 +113,6 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
 
 
-        // Log connection string for debugging (password redacted)
-        var logBuilder = new SqlConnectionStringBuilder(builder.ToString())
-        {
-            Password = "******"
-        };
-        AnsiConsole.MarkupLine($"[dim]Connection String: {logBuilder.ToString().EscapeMarkup()}[/]");
-
         return builder.ToString();
     }
 
@@ -133,13 +124,6 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
     private void ShowOptionsOnConsole(DatabaseOptions options)
     {
-        var assemblyName = Assembly.GetExecutingAssembly().Location;
-
-        var userInfo = !string.IsNullOrWhiteSpace(options.DatabaseUser)
-            ? $"{options.DatabaseUser} <REDACTED>"
-            : string.Empty;
-
-        AnsiConsole.MarkupLine(
-            $"[green]{assemblyName} performing {Action} on database {options.DatabaseServer} {options.DatabaseName}. Script directory {GetScriptDirectory(options)} {userInfo}[/]");
+        // Suppressed for clean build output; details available at DEBUG log level
     }
 }
