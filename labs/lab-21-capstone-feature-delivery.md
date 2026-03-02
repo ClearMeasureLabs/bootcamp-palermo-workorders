@@ -90,21 +90,3 @@ Branch, commit, push, and create a PR with checklist.
 
 ---
 
-## Synthesis: The Five Pillars
-
-| Pillar | How This Lab Demonstrates It |
-|--------|------------------------------|
-| **Create Clarity** | Clear requirements: cancel from Draft/Assigned, Creator only |
-| **Establish Quality** | Tests at L0 and L1, static analysis passing |
-| **Achieve Stability** | No regressions — existing tests green |
-| **Increase Speed** | Patterns accelerated development |
-| **Optimize the Team** | PR review enables knowledge sharing |
-
----
-
-## Discussion Questions
-
-1. How long did this take compared to without established patterns?
-2. The command overrides `IsValid()` for multiple begin statuses. Design smell or valid extension?
-3. What UI and MCP tool changes would complete this feature?
-4. Reflect: what three practices from this course could create positive momentum at work?

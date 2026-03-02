@@ -57,10 +57,3 @@ Review comments on your own PR and push fixes.
 
 - A properly created PR with checklist completed
 - Experience giving and receiving code review feedback
-
----
-
-## Discussion Questions
-
-1. How does PR review implement the "Second Way of DevOps" (Amplify Feedback Loops)?
-2. What is the cost/benefit tradeoff of formal PR reviews?

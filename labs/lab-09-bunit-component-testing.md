@@ -16,37 +16,46 @@ Write bUnit tests for Blazor components using the project's stub pattern. Unders
 
 ### Step 1: Study Existing bUnit Tests
 
-Open `src/UnitTests/UI.Shared/Components/MyWorkOrdersTests.cs`. Study the pattern: `TestContext` → stub injection via `ctx.Services.AddSingleton` → `ctx.RenderComponent<T>()` → assert on `component.Instance`.
+Open `src/UnitTests/UI.Shared/Pages/WorkOrderSearchTests.cs`. Study the pattern: `TestContext` → stub injection via `ctx.Services.AddSingleton` → `ctx.RenderComponent<WorkOrderSearch>()` → find HTML elements → assert on rendered output.
 
 ### Step 2: Study the Stub Implementations
 
-In the same file, examine `StubBusWithWorkOrders` and `StubBusWithNoWorkOrders`. Note the `Stub` prefix convention and how they extend `Bus(null!)` to override `Send<TResponse>`.
+Open `src/UnitTests/UI.Shared/Pages/StubBus.cs`. Note the `Stub` prefix convention and how `StubBus` extends `Bus(null!)` to override `Send<TResponse>`. It handles `EmployeeGetAllQuery`, `EmployeeByUserNameQuery`, and `WorkOrderSpecificationQuery` with canned test data.
+
+Open `src/UnitTests/UI.Shared/Pages/StubUiBus.cs`. This is a no-op implementation of `IUiBus` for test isolation.
 
 ### Step 3: Study the Component Under Test
 
-Open `src/UI.Shared/Components/MyWorkOrders.razor`. Understand its injected services (`IBus`, `IUserSession`, `IUiBus`), initialization behavior, and `Handle(WorkOrderChangedEvent)` method.
+Open `src/UI.Shared/Pages/WorkOrderSearch.razor` and its code-behind `WorkOrderSearch.razor.cs`. Understand:
+- The `Elements` enum that provides stable test IDs for `CreatorSelect`, `AssigneeSelect`, `StatusSelect`, `SearchButton`, and `WorkOrderLink`
+- How the component loads dropdown options from `EmployeeGetAllQuery`
+- How `SearchWorkOrders()` builds a `WorkOrderSpecificationQuery` from the filter model
+- How query string parameters (`Creator`, `Assignee`, `Status`) are applied on initialization
 
-### Step 4: Write a New bUnit Test
+### Step 4: Study the Existing Tests
 
-Add to `MyWorkOrdersTests.cs` a test that verifies the component handles a completed work order event and increments its count.
+Read through the six tests in `WorkOrderSearchTests.cs`:
+- `ShouldLoadDropDownsInitiallyOnLoad` — verifies dropdowns render with correct options
+- `ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad` — verifies the results table renders
+- Three tests for individual query string filters (`Creator`, `Assignee`, `Status`)
+- `AfterInitialLoadSelectingAllThreeOptionsShouldLoadWorkOrders` — simulates user interaction (selecting filters and clicking Search)
 
-### Step 5: Run Tests
+Notice how `component.Find()` uses the `Elements` enum for stable selectors, and how `creatorSelect.Change("jpalermo")` simulates user input.
+
+### Step 5: Write a New bUnit Test
+
+Add a new test to `WorkOrderSearchTests.cs` that verifies the search results table displays the correct work order data. For example, assert that the rendered table rows contain the expected work order numbers (`WO-001`, `WO-002`) from the `StubBus` test data.
+
+### Step 6: Run Tests
 
 ```powershell
-dotnet test src/UnitTests --configuration Release --filter "FullyQualifiedName~MyWorkOrdersTests"
+dotnet test src/UnitTests --configuration Release --filter "FullyQualifiedName~WorkOrderSearchTests"
 ```
 
 ---
 
 ## Expected Outcome
 
-- New passing bUnit tests using the stub pattern
+- New passing bUnit test using the stub pattern
 - Understanding of in-memory Blazor component rendering
-
----
-
-## Discussion Questions
-
-1. How does bUnit achieve L0 speed for UI tests?
-2. Why use `Stub` classes instead of a mocking framework?
-3. Compare bUnit (L0) to Playwright (L2). What does each catch that the other cannot?
+- Understanding of how `Elements` enum provides stable test selectors

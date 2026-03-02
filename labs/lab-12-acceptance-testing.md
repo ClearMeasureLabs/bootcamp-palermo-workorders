@@ -75,10 +75,3 @@ dotnet test src/AcceptanceTests --configuration Debug --filter "FullyQualifiedNa
 ## Expected Outcome
 
 - A passing Playwright test exercising Draft → Assigned → InProgress → Complete
-
----
-
-## Discussion Questions
-
-1. This test takes seconds/minutes. Unit tests cover the same transitions in milliseconds. Why is the L2 test still valuable?
-2. Each test gets its own browser and user via `TestState`. Why is this isolation important for parallel execution?

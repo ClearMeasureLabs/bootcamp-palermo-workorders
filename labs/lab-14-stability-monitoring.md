@@ -43,10 +43,3 @@ Stop the application and attempt to hit the health endpoint. Observe what a load
 ## Expected Outcome
 
 - Understanding of the health check system and its role in production stability
-
----
-
-## Discussion Questions
-
-1. How does the health check implement "Recovery Quickly"?
-2. What metrics would you add beyond health checks? (Latency, error rates, queue depth)

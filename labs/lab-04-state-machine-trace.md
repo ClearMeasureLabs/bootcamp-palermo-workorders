@@ -56,11 +56,3 @@ What files would need to change to add a "Cancelled" state from Draft or Assigne
 
 - Complete state machine diagram with all transitions
 - Understanding of the command pattern and two-part validation
-
----
-
-## Discussion Questions
-
-1. Why is each state transition a separate class instead of a switch/case?
-2. How does this relate to "structuring services by volatility"?
-3. The `WorkOrderAssignedToBotEvent` in `DraftToAssignedCommand` shows event-driven behavior. How does this enable extensibility?

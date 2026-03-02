@@ -35,25 +35,24 @@ These documents constrain what the AI agent can do. A good spec narrows the solu
 
 Write a spec for this feature:
 
-> **Feature: Work Order Priority Field**
+> **Feature: Work Order Instructions Field**
 >
 > **Domain Change:**
-> - Add a `Priority` property to `WorkOrder` (type: `string?`, default: `"Normal"`)
-> - Valid values: `"Low"`, `"Normal"`, `"High"`, `"Urgent"`
+> - Add an `Instructions` property to `WorkOrder` (type: `string?`, nullable, no default value)
 >
 > **Database:**
-> - Add migration: `ALTER TABLE dbo.WorkOrder ADD Priority NVARCHAR(20) NULL DEFAULT 'Normal'`
+> - Add migration: `ALTER TABLE dbo.WorkOrder ADD Instructions NVARCHAR(4000) NULL`
 > - Use next sequential migration number after existing scripts in `src/Database/scripts/Update/`
 >
 > **EF Core Mapping:**
-> - Map `Priority` in `WorkOrderMap.cs` with `HasMaxLength(20)`
+> - Map `Instructions` in `WorkOrderMap.cs` with `HasMaxLength(4000)`
 >
 > **Unit Tests (src/UnitTests):**
-> - `Priority_WhenNotSet_ShouldDefaultToNormal`
-> - `Priority_WhenSetToUrgent_ShouldRetainValue`
+> - `Instructions_WhenNotSet_ShouldBeNull`
+> - `Instructions_WhenSet_ShouldRetainValue`
 >
 > **Integration Test (src/IntegrationTests):**
-> - Save a work order with Priority "Urgent", read it back, verify persistence
+> - Save a work order with Instructions text, read it back, verify persistence
 >
 > **Constraints:**
 > - No new NuGet packages
@@ -79,10 +78,10 @@ Review the generated code against the specification:
 | Spec Requirement | Implemented? | Correct? |
 |------------------|-------------|----------|
 | Property added to `WorkOrder.cs` in Core | | |
-| Default value is `"Normal"` | | |
+| Property is `string?` with no default | | |
 | Migration script with correct number | | |
-| EF mapping with `HasMaxLength(20)` | | |
-| Unit test for default value | | |
+| EF mapping with `HasMaxLength(4000)` | | |
+| Unit test for null default | | |
 | Unit test for explicit value | | |
 | Integration test for persistence | | |
 | No new NuGet packages | | |
@@ -101,7 +100,7 @@ If the output was incorrect, identify which specification was ambiguous or missi
 ### Step 7: Compare Spec Quality to Output Quality
 
 Run the experiment twice:
-1. **Vague spec:** "Add a Priority field to work orders with tests"
+1. **Vague spec:** "Add an Instructions field to work orders with tests"
 2. **Precise spec:** The full specification from Step 2
 
 Compare the outputs. The precise spec should produce significantly better results.
@@ -113,14 +112,3 @@ Compare the outputs. The precise spec should produce significantly better result
 - A feature implemented entirely from a written specification
 - Understanding of how spec precision affects output quality
 - A refined specification that produces correct, convention-following code
-
----
-
-## Discussion Questions
-
-1. How much time did you spend writing the spec vs. how much time would you spend writing the code manually? At what team size does spec-driven development become more efficient?
-2. The spec references specific file paths and conventions. Why is this level of detail necessary for AI agents?
-3. What happens when the spec contradicts the `CLAUDE.md` guardrails? Which wins?
-4. Could this spec be used as an acceptance criterion in a GitHub issue? How would you combine spec-driven development with issue tracking?
-5. The curriculum mentions "Extreme Agile — AI-Driven Development." How does spec-driven development change the sprint planning process?
-6. What types of specifications are easy to write? What types are hard? (Easy: data model changes. Hard: complex UI interactions, performance requirements)

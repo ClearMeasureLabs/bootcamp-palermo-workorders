@@ -75,11 +75,3 @@ dotnet test src/IntegrationTests --configuration Release
 
 - New integration tests validating real database persistence
 - Understanding of test isolation via `DatabaseTests().Clean()`
-
----
-
-## Discussion Questions
-
-1. Why does each test start with `DatabaseTests().Clean()`? What happens without it?
-2. Why use `RemotableRequestTests.SimulateRemoteObject()`? What bug class does this catch?
-3. Why use separate DbContext instances for write and read?

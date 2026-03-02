@@ -43,11 +43,3 @@ dotnet format style src/ChurchBulletin.sln --verify-no-changes
 
 - Experience using AI within architectural constraints
 - Understanding that guardrails make AI more productive (fewer rejected PRs)
-
----
-
-## Discussion Questions
-
-1. Did the AI follow project conventions on first attempt? What corrections were needed?
-2. Why are architectural standards MORE important when using AI?
-3. How does PR review serve as a safety net for AI-generated code?

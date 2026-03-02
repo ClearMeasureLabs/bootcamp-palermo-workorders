@@ -61,11 +61,3 @@ The layers from `IBus.Send()` downward are **identical** to the UI path. MCP is 
 
 - Understanding of how MCP tools map to CQRS commands/queries
 - A new passing MCP integration test
-
----
-
-## Discussion Questions
-
-1. Why does the Onion Architecture make multiple entry points (UI, API, MCP) possible?
-2. How do state command validations protect against AI agents corrupting data?
-3. What new MCP tools would you add? What should remain human-only?
