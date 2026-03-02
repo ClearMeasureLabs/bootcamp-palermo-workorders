@@ -270,13 +270,26 @@ public class ZDataLoader
         christmasOrder6.Creator = revLovejoy;
         christmasOrder6.Assignee = maudeFlanders;
         christmasOrder6.Status = WorkOrderStatus.Assigned;
-        christmasOrder6.Title = "Coordinate Christmas Concert Program Design";
+        christmasOrder6.Title = "Coordinate Christmas Concert Program TEST";
         christmasOrder6.Description =
             "Design and prepare printed programs for the Christmas concert including song listings, performer credits, and special acknowledgments.";
         christmasOrder6.CreatedDate = new DateTime(2024, 11, 20, 13, 0, 0);
         christmasOrder6.AssignedDate = new DateTime(2024, 11, 21, 9, 0, 0);
         christmasOrder6.RoomNumber = "Church Office";
         db.Add(christmasOrder6);
+
+        var christmasOrder7 = new WorkOrder();
+        christmasOrder7.Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
+        christmasOrder7.Creator = revLovejoy;
+        christmasOrder7.Assignee = maudeFlanders;
+        christmasOrder7.Status = WorkOrderStatus.Cancelled;
+        christmasOrder7.Title = "Get Bulletin Published";
+        christmasOrder7.Description =
+            "Design and prepare printed programs for the Christmas concert including song listings, performer credits, and special acknowledgments.";
+        christmasOrder7.CreatedDate = new DateTime(2024, 11, 20, 13, 0, 0);
+        christmasOrder7.AssignedDate = new DateTime(2024, 11, 21, 9, 0, 0);
+        christmasOrder7.RoomNumber = "Sanctuary";
+        db.Add(christmasOrder7);
 
         db.SaveChanges();
     }
