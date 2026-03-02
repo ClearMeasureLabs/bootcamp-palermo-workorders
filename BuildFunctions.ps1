@@ -212,11 +212,12 @@ Function Test-IsGitHubActions {
 Function Test-IsLocalBuild {
     <#
     .SYNOPSIS
-        Tests if the current script is running locally (not in CI/CD)
+        Tests if the current script is running locally (not in GitHub Actions)
     .DESCRIPTION
-        Returns true if not running in GitHub Actions
+        Returns true if the GITHUB_ACTIONS environment variable is not set.
+        Only detects GitHub Actions as the CI environment; other CI systems are not checked.
     .OUTPUTS
-        [bool] True if running locally, False if in CI/CD
+        [bool] True if not running in GitHub Actions, False otherwise
     #>
 
     return -not (Test-IsGitHubActions)

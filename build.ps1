@@ -65,7 +65,7 @@ Function Init {
 	switch ($script:databaseEngine) {
 		"SQL-Container" {
 			if (-not (Test-IsDockerRunning)) {
-				throw "Docker is not running."
+				throw "Docker is not running. Start Docker (for example, Docker Desktop) so the container-based SQL Server required for 'SQL-Container' builds can run, then rerun this build script."
 			}
 		}
 		"SQLite" {
@@ -163,7 +163,7 @@ Function Package-Everything{
 	# Allow Octopus.DotNet.Cli (targets net6.0) to run on the current .NET SDK
 	$env:DOTNET_ROLL_FORWARD = "LatestMajor"
 
-	dotnet tool install --global Octopus.DotNet.Cli | Write-Output $_ -ErrorAction SilentlyContinue #prevents red color is already installed
+	dotnet tool install --global Octopus.DotNet.Cli 2>$null # prevents red 'already installed' message
 
 	# Ensure dotnet tools are in PATH
 	$dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
@@ -287,9 +287,6 @@ Function MigrateDatabaseLocal {
 }
 
 Function PackageUI {
-	$packageName = "$projectName.UI.$version.nupkg"
-	$packagePath = Join-Path $build_dir $packageName
-
 	exec {
 		& dotnet publish $uiProjectPath -nologo --no-restore --no-build -v $verbosity --configuration $projectConfig
 	}
@@ -431,7 +428,7 @@ Function Create-SqlServerInDocker {
 			[ValidateNotNullOrEmpty()]
 			[string]$scriptDir
 		)
-	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $script:projectName -generateUnique $true
+	$tempDatabaseName = Generate-UniqueDatabaseName -baseName $projectName -generateUnique $true
 	$containerName = Get-ContainerName -DatabaseName $tempDatabaseName
 	$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
 
