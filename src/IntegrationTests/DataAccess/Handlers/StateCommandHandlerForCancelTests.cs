@@ -88,7 +88,7 @@ public class StateCommandHandlerForCancelTests : IntegratedTestBase
         }
 
         var remotedOrder = RemotableRequestTests.SimulateRemoteObject(o);
-        var command = new DraftToAssignedCommand(remotedOrder, currentUser);
+        var command = new AssignedToCancelCommand(remotedOrder, currentUser);
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
         var result = await handler.Handle(command);
