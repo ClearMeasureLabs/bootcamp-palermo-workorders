@@ -26,7 +26,7 @@ public class ServerFixture
     public static bool StartWorker { get; set; } = true;
     public static bool WorkerStarted { get; private set; }
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
-    public static bool HeadlessTestBrowser { get; set; } = true;
+    public static bool HeadlessTestBrowser { get; set; } = false;
     public static bool DatabaseInitialized { get; private set; }
     private static readonly object DatabaseLock = new();
     

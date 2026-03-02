@@ -1,0 +1,12 @@
+BEGIN TRANSACTION
+GO
+PRINT N'englarging the title to 300'
+GO
+ALTER TABLE WorkOrder
+ALTER COLUMN Title nvarchar(300) NOT NULL;
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO
