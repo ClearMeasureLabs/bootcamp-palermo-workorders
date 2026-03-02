@@ -383,9 +383,9 @@ public abstract class AcceptanceTestBase
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        var rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
 
-        return rehyratedOrder;
+        return rehydratedOrder;
     }
 
     protected async Task<WorkOrder> ShelveExistingWorkOrder(WorkOrder order)
