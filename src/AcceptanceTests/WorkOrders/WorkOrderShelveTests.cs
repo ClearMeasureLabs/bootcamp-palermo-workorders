@@ -1,9 +1,6 @@
 ﻿using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
