@@ -232,7 +232,7 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = new string('A', 51), // Exceeds 50 char limit
-            Title = new string('B', 201), // Exceeds 200 char limit
+            Title = new string('B', 301), // Exceeds 300 char limit
             Description = new string('C', 1001), // Exceeds 1000 char limit
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
@@ -244,6 +244,32 @@ public class WorkOrderMappingTests
         context.Add(workOrder);
 
         Should.Throw<DbUpdateException>(() => context.SaveChanges());
+    }
+
+    [Test]
+    [Category("SqlServerOnly")]
+    public void ShouldSupportMaxLengthTitle()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "number",
+            Title = new string('B', 300),
+            Description = "description",
+            RoomNumber = "room number",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(workOrder);
+
+        context.SaveChanges();
+
+        workOrder.Title.Length.ShouldBe(300);
     }
 
     [Test]
