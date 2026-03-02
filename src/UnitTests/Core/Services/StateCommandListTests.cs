@@ -25,7 +25,7 @@ public class StateCommandListTests
         var facilitator = new StateCommandList();
         var commands = facilitator.GetAllStateCommands(new WorkOrder(), new Employee());
 
-        Assert.That(commands.Length, Is.EqualTo(4));
+        Assert.That(commands.Length, Is.EqualTo(5));
 
         Assert.That(commands[0], Is.InstanceOf(typeof(SaveDraftCommand)));
         Assert.That(commands[1], Is.InstanceOf(typeof(DraftToAssignedCommand)));

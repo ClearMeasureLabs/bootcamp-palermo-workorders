@@ -15,7 +15,6 @@ public class WorkOrderStatus
     public static readonly WorkOrderStatus Assigned = new("ASD", "Assigned", "Assigned", 2);
     public static readonly WorkOrderStatus InProgress = new("IPG", "InProgress", "In Progress", 3);
     public static readonly WorkOrderStatus Complete = new("CMP", "Complete", "Complete", 4);
-    public static readonly WorkOrderStatus Shelved = new("SH", "Shelve", "Shelved", 5);
 
     public WorkOrderStatus()
     {
