@@ -1,6 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
+<Project Sdk="Aspire.AppHost.Sdk/13.1.2">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,10 +7,6 @@
     <Nullable>enable</Nullable>
     <UserSecretsId>dotnet-Worker-b9b5c0f8-4249-469b-8bfb-c4cc9398b886</UserSecretsId>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.0" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\UI\Server\UI.Server.csproj" />
