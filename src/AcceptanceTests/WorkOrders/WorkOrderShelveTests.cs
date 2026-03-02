@@ -4,7 +4,7 @@ using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
-public class WorkOrderShelvedTests : AcceptanceTestBase
+public class WorkOrderShelveTests : AcceptanceTestBase
 {
     [Test, Retry(2)]
     public async Task ShouldShelveWorkOrder()
