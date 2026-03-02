@@ -37,14 +37,13 @@ public class McpServerAcceptanceTests : AcceptanceTestBase
     [Test]
     public async Task ShouldDiscoverAllMcpTools()
     {
-        _helper!.Tools.Count.ShouldBeGreaterThanOrEqualTo(7);
+        _helper!.Tools.Count.ShouldBeGreaterThanOrEqualTo(6);
 
         var toolNames = _helper.Tools.Select(t => t.Name).ToList();
         toolNames.ShouldContain("list-work-orders");
         toolNames.ShouldContain("get-work-order");
         toolNames.ShouldContain("create-work-order");
         toolNames.ShouldContain("execute-work-order-command");
-        toolNames.ShouldContain("update-work-order-description");
         toolNames.ShouldContain("list-employees");
         toolNames.ShouldContain("get-employee");
     }

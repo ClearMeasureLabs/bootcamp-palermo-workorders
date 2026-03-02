@@ -58,9 +58,6 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
         var chatResponse = await chatClient.GetResponseAsync(chatMessages, cancellationToken: context.CancellationToken);
 
         Data.WorkOrder.Description = $"{Data.WorkOrder.Description}{Environment.NewLine}{Environment.NewLine}AI Bot: {chatResponse.Messages.Last()}";
-        var command = new UpdateDescriptionCommand(Data.WorkOrder, Data.WorkOrder.Assignee!);
-        var commandResult = await bus.Send(command);
-        Data.WorkOrder = commandResult.WorkOrder;
 
         var updatedEvent = new AiBotUpdatedWorkerOrderEvent(Data.SagaId);
         await context.Publish(updatedEvent);

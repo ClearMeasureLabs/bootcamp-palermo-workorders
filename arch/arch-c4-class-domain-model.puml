@@ -76,19 +76,38 @@ class Role {
   +CanFulfillWorkOrder : bool
 }
 
-abstract class ListItem {
-  -displayName : string
-  -value : int
-  +Value : int
-  +DisplayName : string
-  +CompareTo(other : object) : int
-  +ToString() : string
-  {static} +GetAll<T>() : IEnumerable<T>
-  {static} +GetAll(type : Type) : IEnumerable<ListItem>
-  +Equals(obj : object) : bool
-  +GetHashCode() : int
-  {static} +FromValue<T>(value : int) : T
-  {static} +FromDisplayName<T>(displayName : string) : T
+abstract class StateCommandBase <<record>> {
+  +WorkOrder : WorkOrder
+  +CurrentUser : Employee
+  +StateTransitionEvent : IStateTransitionEvent?
+  +TransitionVerbPresentTense : string
+  +TransitionVerbPastTense : string
+  +GetBeginStatus() : WorkOrderStatus
+  +GetEndStatus() : WorkOrderStatus
+  +IsValid() : bool
+  +Matches(commandName : string) : bool
+  +Execute(context : StateCommandContext) : void
+}
+
+class SaveDraftCommand <<record>> {
+  +Execute(context : StateCommandContext) : void
+}
+
+class DraftToAssignedCommand <<record>> {
+  +Execute(context : StateCommandContext) : void
+}
+
+class AssignedToInProgressCommand <<record>> {
+}
+
+class InProgressToCompleteCommand <<record>> {
+  +Execute(context : StateCommandContext) : void
+}
+
+class StateCommandResult <<record>> {
+  +WorkOrder : WorkOrder
+  +TransitionVerbPresentTense : string
+  +DebugMessage : string
 }
 
 ' Inheritance relationships
@@ -96,11 +115,22 @@ WorkOrder --|> EntityBase
 Employee --|> EntityBase
 Role --|> EntityBase
 
+' State command inheritance
+SaveDraftCommand --|> StateCommandBase
+DraftToAssignedCommand --|> StateCommandBase
+AssignedToInProgressCommand --|> StateCommandBase
+InProgressToCompleteCommand --|> StateCommandBase
+
 ' Associations
 WorkOrder "1" *-- "1" WorkOrderStatus : status
 WorkOrder "1" --> "0..1" Employee : creator
 WorkOrder "1" --> "0..1" Employee : assignee
 Employee "1" *-- "0..*" Role : roles
+
+' State command associations
+StateCommandBase --> WorkOrder : operates on
+StateCommandBase --> Employee : CurrentUser
+StateCommandResult --> WorkOrder : contains
 
 center footer
     C4 Architecture: Class Diagram $(Version)

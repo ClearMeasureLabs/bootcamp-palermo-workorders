@@ -1,0 +1,103 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title Church Bulletin DevOps Pipeline
+
+Person(dev, "Developer", "Initiates code changes")
+
+System_Boundary(privatebuild, "Private Build (Developer Workstation)") {
+    Component(pb_init, "Init", "Powershell", "clean + restore")
+    Component(pb_compile, "Compile", ".NET CLI", "warnings-as-errors")
+    Component(pb_unit, "Unit Tests", "NUnit", "NUnit + Shouldly")
+    Component(pb_db, "DB Setup", "Script", "LocalDB / SQLite / Docker")
+    Component(pb_int, "Integration Tests", "NUnit", "")
+    Component(pb_accept, "Acceptance Tests", "Playwright", "")
+
+    Rel_R(pb_init, pb_compile, " ")
+    Rel_R(pb_compile, pb_unit, " ")
+    Rel(pb_unit, pb_db, " ")
+    Rel_R(pb_db, pb_int, " ")
+    Rel_R(pb_int, pb_accept, " ")
+}
+
+System_Boundary(github, "GitHub") {
+    Component(feature_push, "Feature Branch", "Git", "push trigger")
+
+    System_Boundary(pr, "Pull Request") {
+        Component(branch_checks, "Branch Protection", "GitHub Actions", "Checks")
+        Component(copilot_review, "Copilot Code Review", "GitHub Copilot", "")
+        Component(human_review, "Human Reviewer", "Team Member", "")
+    }
+
+    System_Boundary(build_wf, "Build Workflow (.github/workflows/build.yml)") {
+        Component(build_linux, "Integration Build", "SQL Container", "Linux")
+        Component(build_sqlite, "Integration Build", "SQLite", "Linux")
+        Component(build_arm, "Integration Build", "ARM SQLite", "")
+        Component(build_win, "Integration Build", "Windows LocalDB", "")
+        Component(code_analysis, "Code Analysis", "Tool", "format + analyzers")
+        Component(security_scan, "Security Scan", "Tool", "vulnerabilities + Gitleaks")
+        Component(at_x86, "Acceptance Tests", "x86 SQLite", "")
+        Component(at_arm, "Acceptance Tests", "ARM SQLite", "")
+    }
+
+    System_Boundary(publish, "Publish (needs: build-linux)") {
+        Component(docker_push, "Docker Build", "ACR", "")
+        Component(gh_packages, "Publish to GitHub Packages", "Nuget", "")
+        Component(octo_push, "Publish to Octopus Deploy", "Octopus CLI", "")
+    }
+
+    Component(merge, "Merge to master", "Git", "")
+    Component(master_build, "Build Workflow", "GitHub Actions", "master push")
+}
+
+System_Boundary(deploy_wf, "Deploy Workflow (.github/workflows/deploy.yml)") {
+    System_Boundary(tdd, "Deploy to TDD") {
+        Component(tdd_release, "Create Octopus Release", "Octo CLI", "")
+        Component(tdd_deploy, "Deploy via Octopus", "Octopus", "")
+        Component(tdd_health, "Health Check Polling", "HTTP", "/_healthcheck")
+        Component(tdd_accept, "Run Acceptance Tests", "Playwright", "vs TDD")
+        Component(tdd_status, "Report Status", "GitHub API", "to Commit SHA")
+
+        Rel_R(tdd_release, tdd_deploy, " ")
+        Rel_R(tdd_deploy, tdd_health, " ")
+        Rel_R(tdd_health, tdd_accept, " ")
+        Rel_R(tdd_accept, tdd_status, " ")
+    }
+
+    Component(uat, "Deploy to UAT", "Pipeline", "manual approval")
+    Component(prod, "Deploy to Prod", "Pipeline", "manual approval")
+}
+
+System_Boundary(octopus, "Octopus Deploy (per environment)") {
+    Component(octo_dotnet, "Ensure .NET 10 Installed", "Tool", "")
+    Component(octo_db, "Run DB Migrations", "DbUp", "")
+    Component(octo_app, "Update Container App", "AZ CLI", "az containerapp update")
+
+    Rel_R(octo_dotnet, octo_db, " ")
+    Rel_R(octo_db, octo_app, " ")
+}
+
+' Flow
+Rel(dev, privatebuild, "privatebuild.ps1 / acceptancetests.ps1")
+Rel(dev, feature_push, "git push")
+
+Rel(feature_push, build_wf, "on: push (all branches)")
+Rel(build_linux, publish, "artifacts")
+
+Rel(build_wf, branch_checks, "status checks")
+Rel(branch_checks, copilot_review, " ")
+Rel(copilot_review, human_review, " ")
+Rel(human_review, merge, "approve")
+
+Rel(merge, master_build, "on: push (master)")
+Rel(master_build, deploy_wf, "workflow_run (completed + master)")
+
+Rel(tdd, uat, "needs + master only")
+Rel(uat, prod, "needs + success")
+
+Rel(deploy_wf, octopus, "each environment executes")
+
+center footer DevOps Pipeline
+@enduml
