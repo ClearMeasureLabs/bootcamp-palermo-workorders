@@ -22,5 +22,5 @@ public record AssignedToCancelCommand(WorkOrder WorkOrder, Employee CurrentUser)
 
     public override string TransitionVerbPresentTense => Name;
 
-    public override string TransitionVerbPastTense => "Begun";
+    public override string TransitionVerbPastTense => "Canceled";
 }
