@@ -5,7 +5,7 @@ namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 public record InProgressToAssignedCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder,
 CurrentUser)
 {
-    public const string Name = "Assign";
+    public const string Name = "Shelve";
     public override string TransitionVerbPresentTense => Name;
 
     public override string TransitionVerbPastTense => "Assigned";
