@@ -38,6 +38,10 @@ public class ZDataLoader
         db.Add(jcuevas);
 
         //Person 2
+        var rpuckett = new Employee("rpuckett", "Ron", "Puckett", "ron.puckett@lw.com");
+        rpuckett.AddRole(fulfillment);
+        db.Add(rpuckett);
+
 
         //Person 3
 
