@@ -33,7 +33,10 @@ public class ZDataLoader
         db.Add(aiBot);
 
         //Person 1
-
+        var hdaley = new Employee("hntr", "Hunter", "Daley", "hunter.daley@biberk.com");
+        hdaley.AddRole(lead);
+        hdaley.AddRole(fulfillment);
+        db.Add(hdaley);
         //Person 2
 
         //Person 3

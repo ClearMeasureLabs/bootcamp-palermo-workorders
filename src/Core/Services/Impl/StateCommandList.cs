@@ -16,11 +16,14 @@ public class StateCommandList
 
     public virtual IStateCommand[] GetAllStateCommands(WorkOrder workOrder, Employee currentUser)
     {
-        var commands = new List<IStateCommand>();
-        commands.Add(new SaveDraftCommand(workOrder, currentUser));
-        commands.Add(new DraftToAssignedCommand(workOrder, currentUser));
-        commands.Add(new AssignedToInProgressCommand(workOrder, currentUser));
-        commands.Add(new InProgressToCompleteCommand(workOrder, currentUser));
+        var commands = new List<IStateCommand>
+        {
+            new SaveDraftCommand(workOrder, currentUser),
+            new DraftToAssignedCommand(workOrder, currentUser),
+            new AssignedToInProgressCommand(workOrder, currentUser),
+            new InProgressToCompleteCommand(workOrder, currentUser),
+            new InProgressToAssignedCommand(workOrder, currentUser)
+        };
 
         return commands.ToArray();
     }
