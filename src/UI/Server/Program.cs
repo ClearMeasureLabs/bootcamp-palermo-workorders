@@ -1,9 +1,11 @@
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Model.Messages;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,7 +41,9 @@ endpointConfiguration.EnableOpenTelemetry();
 var sqlConnectionString = builder.Configuration.GetConnectionString("SqlConnectionString") ?? "";
 if (sqlConnectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
 {
-    endpointConfiguration.UseTransport<LearningTransport>();
+    var learningTransport = endpointConfiguration.UseTransport<LearningTransport>();
+    learningTransport.Routing()
+        .RouteToEndpoint(typeof(TracerBulletCommand), "WorkOrderProcessing");
 }
 else
 {
@@ -47,6 +51,8 @@ else
     transport.ConnectionString(sqlConnectionString);
     transport.DefaultSchema("nServiceBus");
     transport.Transactions(TransportTransactionMode.TransactionScope);
+    transport.Routing()
+        .RouteToEndpoint(typeof(TracerBulletCommand), "WorkOrderProcessing");
 }
 
 // message conventions
@@ -83,8 +89,16 @@ app.MapRazorPages();
 app.MapControllers();
 app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
-app.MapHealthChecks("_healthcheck");
+app.MapHealthChecks("_healthcheck", new HealthCheckOptions
+{
+    Predicate = registration => !registration.Tags.Contains("tracerbullet")
+});
+app.MapHealthChecks("_tracerbullets", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("tracerbullet")
+});
 
-await app.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync();
+await app.Services.GetRequiredService<HealthCheckService>()
+    .CheckHealthAsync(r => !r.Tags.Contains("tracerbullet"));
 
 app.Run();
