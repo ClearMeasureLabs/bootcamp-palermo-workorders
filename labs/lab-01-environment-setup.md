@@ -51,13 +51,13 @@ Open `build.ps1` in your editor. Identify these key functions:
 | `Compile` | Build solution with warnings-as-errors |
 | `UnitTests` | Run unit tests with code coverage |
 | `IntegrationTest` | Run integration tests against a real database |
-| `Package-Everything` | Create NuGet packages for deployment |
+| `Package-Everything` | Create deployment packages |
 
 **Question to answer:** What is the database engine detection logic? (Hint: look for `Setup-DatabaseForBuild`)
 
 ### Step 4: Open the Solution
 
-Open `src/ChurchBulletin.sln` in Visual Studio. Take a moment to explore the Solution Explorer:
+Open `src/ChurchBulletin.sln` in Visual Studio. Explore the Solution Explorer:
 
 - **Core** — Domain models, interfaces, queries (zero project references)
 - **DataAccess** — EF Core context, MediatR handlers (references Core only)
@@ -69,7 +69,7 @@ Open `src/ChurchBulletin.sln` in Visual Studio. Take a moment to explore the Sol
 
 Open `src/IntegrationTests/ZDataLoader.cs`. Find the placeholder comments (`//Person 1` through `//Person 13`).
 
-Add yourself as a new Employee following the existing pattern. For example, under `//Person 1`:
+Add yourself as a new Employee following the `jpalermo` pattern (lines 24-28):
 
 ```csharp
 //Person 1
@@ -79,15 +79,11 @@ yourName.AddRole(fulfillment);
 db.Add(yourName);
 ```
 
-Use the `jpalermo` block (lines 24-28) as your template. Assign both `lead` and `fulfillment` roles so you can create and fulfil work orders.
-
 ### Step 6: Verify the Build Still Passes
 
 ```powershell
 .\privatebuild.ps1
 ```
-
-All tests must remain green after your change.
 
 ### Step 7: Run the Application
 
@@ -96,9 +92,7 @@ cd src/UI/Server
 dotnet run
 ```
 
-Navigate to `https://localhost:7174`. Click the login dropdown and verify your name appears in the list.
-
-> **Health check:** Visit `https://localhost:7174/_healthcheck` to confirm the application is healthy.
+Navigate to `https://localhost:7174`. Verify your name appears in the login dropdown. Check health at `https://localhost:7174/_healthcheck`.
 
 ### Step 8: Submit a Pull Request
 
@@ -109,7 +103,7 @@ git commit -m "Add [YourName] to ZDataLoader"
 git push -u origin yourusername/add-myself-to-dataloader
 ```
 
-Create a pull request on GitHub. Use the PR template in `.github/pull_request_template.md`.
+Create a pull request on GitHub using the template in `.github/pull_request_template.md`.
 
 ---
 
