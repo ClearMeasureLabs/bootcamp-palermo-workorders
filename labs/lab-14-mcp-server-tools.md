@@ -1,4 +1,4 @@
-# Lab 18: MCP Server - AI Tool Integration
+# Lab 14: MCP Server - AI Tool Integration
 
 **Curriculum Section:** Section 08 (AI-Driven Development - Model Context Protocol)
 **Estimated Time:** 45 minutes

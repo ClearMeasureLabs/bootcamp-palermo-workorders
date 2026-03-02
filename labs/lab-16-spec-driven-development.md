@@ -1,4 +1,4 @@
-# Lab 20: Spec-Driven Development with OpenSpec
+# Lab 16: Spec-Driven Development with OpenSpec
 
 **Curriculum Section:** Section 08 (AI-Driven Development)
 **Estimated Time:** 45 minutes

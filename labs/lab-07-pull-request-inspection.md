@@ -1,4 +1,4 @@
-# Lab 11: Pull Request as a Formal Inspection
+# Lab 07: Pull Request as a Formal Inspection
 
 **Curriculum Section:** Section 06 (Operate/Execute - Pull Requests as Formal Inspections)
 **Estimated Time:** 35 minutes

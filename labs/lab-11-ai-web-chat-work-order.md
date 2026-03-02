@@ -1,4 +1,4 @@
-# Lab 15: AI Web Chat for a Single Work Order
+# Lab 11: AI Web Chat for a Single Work Order
 
 **Curriculum Section:** Section 08 (AI-Driven Development)
 **Estimated Time:** 40 minutes

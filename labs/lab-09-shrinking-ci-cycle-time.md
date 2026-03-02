@@ -1,4 +1,4 @@
-# Lab 13: Shrinking Continuous Integration Cycle Time
+# Lab 09: Shrinking Continuous Integration Cycle Time
 
 **Curriculum Section:** Sections 04-06 (Project Design Strategy / Team Process Design / Operate-Execute)
 **Estimated Time:** 40 minutes

@@ -1,4 +1,4 @@
-# Lab 17: AI-Driven Development - Using Copilot with Architecture Guardrails
+# Lab 13: AI-Driven Development - Using Copilot with Architecture Guardrails
 
 **Curriculum Section:** Section 08 (AI-Driven Development)
 **Estimated Time:** 45 minutes

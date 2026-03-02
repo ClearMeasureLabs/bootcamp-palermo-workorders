@@ -1,4 +1,4 @@
-# Lab 10: Tracer Bullet Transactions - Proving Distributed Messaging
+# Lab 06: Tracer Bullet Transactions - Proving Distributed Messaging
 
 **Curriculum Section:** Section 05-06 (Team/Process Design / Operate-Execute)
 **Estimated Time:** 40 minutes

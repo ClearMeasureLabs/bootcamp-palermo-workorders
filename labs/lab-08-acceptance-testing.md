@@ -1,4 +1,4 @@
-# Lab 12: Acceptance Testing with Playwright - L2 Testing
+# Lab 08: Acceptance Testing with Playwright - L2 Testing
 
 **Curriculum Section:** Section 06 (Operate/Execute - UX Testing After Deployment)
 **Estimated Time:** 50 minutes

@@ -1,4 +1,4 @@
-# Lab 09: Blazor Component Testing with bUnit
+# Lab 05: Blazor Component Testing with bUnit
 
 **Curriculum Section:** Section 05 (Team/Process Design - L0 Tests for UI)
 **Estimated Time:** 40 minutes

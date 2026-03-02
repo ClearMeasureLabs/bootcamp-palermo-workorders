@@ -1,4 +1,4 @@
-# Lab 21: Capstone - End-to-End Feature Delivery
+# Lab 17: Capstone - End-to-End Feature Delivery
 
 **Curriculum Section:** All Sections (Synthesis)
 **Estimated Time:** 60 minutes

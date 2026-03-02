@@ -1,4 +1,4 @@
-# Lab 08: Database DevOps - Writing a Migration
+# Lab 04: Database DevOps - Writing a Migration
 
 **Curriculum Section:** Section 05 (Team/Process Design - Database DevOps)
 **Estimated Time:** 40 minutes

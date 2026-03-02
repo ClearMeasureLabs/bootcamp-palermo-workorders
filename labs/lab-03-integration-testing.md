@@ -1,4 +1,4 @@
-# Lab 07: Integration Testing with a Real Database - L1 Testing
+# Lab 03: Integration Testing with a Real Database - L1 Testing
 
 **Curriculum Section:** Section 05 (Team/Process Design - L1 Tests)
 **Estimated Time:** 50 minutes

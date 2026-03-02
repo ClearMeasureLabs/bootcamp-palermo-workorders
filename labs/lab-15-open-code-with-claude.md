@@ -1,4 +1,4 @@
-# Lab 19: Open Code with Claude Opus - Driving a Feature to Pull Request
+# Lab 15: Open Code with Claude Opus - Driving a Feature to Pull Request
 
 **Curriculum Section:** Section 08 (AI-Driven Development)
 **Estimated Time:** 50 minutes
@@ -66,7 +66,7 @@ Check the agent's work against the project standards:
 
 ### Step 5: Review the PR
 
-If the agent created a PR, review it using the same criteria from Lab 11 (Pull Request as Formal Inspection).
+If the agent created a PR, review it using the same criteria from Lab 07 (Pull Request as Formal Inspection).
 
 ### Step 6: Iterate
 

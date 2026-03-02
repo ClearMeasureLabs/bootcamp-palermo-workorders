@@ -1,4 +1,4 @@
-# Lab 04: Tracing the State Machine - Domain Model Deep Dive
+# Lab 02: Tracing the State Machine - Domain Model Deep Dive
 
 **Curriculum Section:** Section 03 (System Architecture - Vision)
 **Estimated Time:** 45 minutes

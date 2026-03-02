@@ -1,4 +1,4 @@
-# Lab 14: Production Stability - Health Checks & Monitoring
+# Lab 10: Production Stability - Health Checks & Monitoring
 
 **Curriculum Section:** Sections 06-07 (Operate/Execute & Reporting)
 **Estimated Time:** 30 minutes

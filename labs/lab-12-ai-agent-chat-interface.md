@@ -1,4 +1,4 @@
-# Lab 16: AI Agent Chat Interface to Control the Application
+# Lab 12: AI Agent Chat Interface to Control the Application
 
 **Curriculum Section:** Section 08 (AI-Driven Development - MCP & AI Agents)
 **Estimated Time:** 45 minutes
@@ -14,7 +14,7 @@ Explore how an AI agent can control the entire application through conversationa
 
 ## Context
 
-While Lab 15 covers AI chat scoped to a single work order, this lab explores the **Application Chat** — a general-purpose AI assistant that can execute any operation. Combined with the MCP server, an external AI agent can manage the full work order lifecycle through natural language.
+While Lab 11 covers AI chat scoped to a single work order, this lab explores the **Application Chat** — a general-purpose AI assistant that can execute any operation. Combined with the MCP server, an external AI agent can manage the full work order lifecycle through natural language.
 
 ---
 
@@ -83,7 +83,7 @@ var beginResult = await _helper!.CallToolDirectly("execute-work-order-command", 
 var completeResult = await _helper!.CallToolDirectly("execute-work-order-command", ...);
 ```
 
-Compare this to the Playwright acceptance test from Lab 12 — same workflow, different entry point.
+Compare this to the Playwright acceptance test from Lab 08 — same workflow, different entry point.
 
 ### Step 6: Study the MCP Test Helper
 
