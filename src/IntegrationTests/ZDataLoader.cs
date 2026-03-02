@@ -27,7 +27,7 @@ public class ZDataLoader
         jpalermo.AddRole(fulfillment);
         db.Add(jpalermo);
 
-        // Sean Spaniel - 
+        //Trainer2 - Sean Spaniel
         var sspaniel = new Employee("sspaniel", "Sean", "Spaniel", "sean.spaniel@clear-measure.com");
         sspaniel.AddRole(lead);
         sspaniel.AddRole(fulfillment);
