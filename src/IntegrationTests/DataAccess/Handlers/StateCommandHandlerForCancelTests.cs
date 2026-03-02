@@ -10,7 +10,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 public class StateCommandHandlerForCancelTests : IntegratedTestBase
 {
     [Test]
-    public async Task ShouldSaveWorkOrderWithAssigneeAndCreator()
+    public async Task ShouldSaveWorkOrderWithNoAssigneeAndCreator()
     {
         new DatabaseTests().Clean();
 
@@ -20,6 +20,7 @@ public class StateCommandHandlerForCancelTests : IntegratedTestBase
         var assignee = Faker<Employee>();
         o.Creator = currentUser;
         o.Assignee = assignee;
+        o.Status = WorkOrderStatus.Assigned;
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(currentUser);
@@ -38,7 +39,7 @@ public class StateCommandHandlerForCancelTests : IntegratedTestBase
         order.Title.ShouldBe(order.Title);
         order.Description.ShouldBe(order.Description);
         order.Creator.ShouldBe(currentUser);
-        order.Assignee.ShouldBe(assignee);
+        order.Assignee.ShouldBeNull();
         order.AssignedDate.ShouldBeNull();
     }
 
