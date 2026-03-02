@@ -1,9 +1,9 @@
 BEGIN TRANSACTION
 GO
-PRINT N'englarging the title to 300'
+PRINT N'enlarging the title to 300'
 GO
-ALTER TABLE WorkOrder
-ALTER COLUMN Title nvarchar(300) NOT NULL;
+ALTER TABLE [dbo].[WorkOrder]
+ALTER COLUMN [Title] NVARCHAR(300) NOT NULL;
 GO
 IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
 GO
