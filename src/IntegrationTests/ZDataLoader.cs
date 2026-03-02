@@ -37,13 +37,13 @@ public class ZDataLoader
         jcuevas.AddRole(fulfillment);
         db.Add(jcuevas);
 
-        //Person 2
+
+
+        //rpuckett
         var rpuckett = new Employee("rpuckett", "Ron", "Puckett", "ron.puckett@lw.com");
         rpuckett.AddRole(fulfillment);
         db.Add(rpuckett);
 
-
-        //Person 3
 
         //Person 4
 
