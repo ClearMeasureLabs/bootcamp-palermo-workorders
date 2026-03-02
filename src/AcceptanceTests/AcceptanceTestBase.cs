@@ -388,6 +388,19 @@ public abstract class AcceptanceTestBase
         return rehyratedOrder;
     }
 
+    protected async Task<WorkOrder> ShelveExistingWorkOrder(WorkOrder order)
+    {
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await woNumberLocator.WaitForAsync();
+        await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
+        await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
+        await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToAssignedCommand.Name);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        return rehyratedOrder;
+    }   
+
     protected async Task<WorkOrder> CompleteExistingWorkOrder(WorkOrder order)
     {
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
