@@ -70,6 +70,11 @@ public class ZDataLoader
         hsimpson.AddRole(fulfillment);
         db.Add(hsimpson);
 
+        var ndoughton = new Employee("ndoughton", "Noah", "Doughton", "noah.doughton@biberk.com");
+        ndoughton.AddRole(lead);
+        ndoughton.AddRole(fulfillment);
+        db.Add(ndoughton);
+
         db.SaveChanges();
         db.Dispose();
 
