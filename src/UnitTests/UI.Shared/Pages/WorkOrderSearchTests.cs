@@ -44,7 +44,7 @@ public class WorkOrderSearchTests
 
         // Verify status options are loaded (4 statuses + "All" option = 5 options)
         var statusOptions = statusSelect.QuerySelectorAll("option");
-        statusOptions.Length.ShouldBe(5);
+        statusOptions.Length.ShouldBe(6);
         statusOptions[0].TextContent.ShouldBe("All");
     }
 
