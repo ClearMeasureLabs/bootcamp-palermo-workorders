@@ -39,7 +39,8 @@ public class WorkOrderStatus
             Draft,
             Assigned,
             InProgress,
-            Complete
+            Complete,
+            Canceled
         };
     }
 
