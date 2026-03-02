@@ -263,14 +263,18 @@ public class WorkOrderMappingTests
             Status = WorkOrderStatus.Draft
         };
 
-        using var context = TestHost.GetRequiredService<DbContext>();
-        context.Add(creator);
-        context.Add(workOrder);
-        context.SaveChanges();  
+        int workOrderId;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+            workOrderId = workOrder.Id;
+        }
 
         using var context2 = TestHost.GetRequiredService<DbContext>();
         var workOrder2 = context2.Set<WorkOrder>()
-            .Single(w => w.Id == workOrder.Id);
+            .Single(w => w.Id == workOrderId);
 
         workOrder2.Title!.Length.ShouldBe(300);
     }
