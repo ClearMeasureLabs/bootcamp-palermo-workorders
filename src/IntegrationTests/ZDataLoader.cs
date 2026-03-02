@@ -56,12 +56,16 @@ public class ZDataLoader
 
         //Person 12
 
+        var will = new Employee("will", "Will", "Perea", "wperea@setworks.com");
+        will.AddRole(lead);
+        will.AddRole(fulfillment);
         //Person 13
 
         var hsimpson = new Employee("hsimpson", "Homer", "Simpson", "homer@simpson.com");
         hsimpson.AddRole(lead);
         hsimpson.AddRole(fulfillment);
         db.Add(hsimpson);
+        db.Add(will);
 
         db.SaveChanges();
         db.Dispose();
