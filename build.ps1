@@ -204,8 +204,15 @@ Function Build {
 		$script:databaseName = Get-ResolvedDatabaseName -explicitName $databaseName -baseName $projectName -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
 	}
 
-	Invoke-CoreBuild
+	$script:buildStopwatch = [Diagnostics.Stopwatch]::StartNew()
 
+	Init
+	Compile
+	UnitTests
+	Setup-DatabaseForBuild
+	IntegrationTest
+
+	$script:buildStopwatch.Stop()
 	$elapsed = $script:buildStopwatch.Elapsed.ToString()
 	if ($script:databaseEngine -eq "SQLite") {
 		Log-Message -Message "BUILD SUCCEEDED (SQLite) - Build time: $elapsed" -Type "INFO"
@@ -222,8 +229,15 @@ Function Invoke-CIBuild {
 		$script:databaseName = Get-ResolvedDatabaseName -baseName $projectName -onLinux (Test-IsLinux) -localBuild $false
 	}
 
-	Invoke-CoreBuild
+	$script:buildStopwatch = [Diagnostics.Stopwatch]::StartNew()
 
+	Init
+	Compile
+	UnitTests
+	Setup-DatabaseForBuild
+	IntegrationTest
+
+	$script:buildStopwatch.Stop()
 	$elapsed = $script:buildStopwatch.Elapsed.ToString()
 	if ($script:databaseEngine -eq "SQLite") {
 		Log-Message -Message "BUILD SUCCEEDED (SQLite) - Build time: $elapsed" -Type "INFO"
@@ -243,18 +257,6 @@ Function Resolve-DatabaseEngine {
 	}
 	$script:databaseEngine = Get-ResolvedDatabaseEngine -currentEngine $script:databaseEngine -onLinux $onLinux -dockerAvailable $dockerAvailable
 	$script:useSqlite = ($script:databaseEngine -eq "SQLite")
-}
-
-Function Invoke-CoreBuild {
-	$script:buildStopwatch = [Diagnostics.Stopwatch]::StartNew()
-
-	Init
-	Compile
-	UnitTests
-	Setup-DatabaseForBuild
-	IntegrationTest
-
-	$script:buildStopwatch.Stop()
 }
 
 Function MigrateDatabaseLocal {
