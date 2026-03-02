@@ -1,0 +1,17 @@
+@startuml
+title Work Order State Transitions
+
+left to right direction
+
+[*] --> Draft : Create
+
+Draft --> Draft : SaveDraftCommand
+Draft --> Assigned : DraftToAssignedCommand
+
+Assigned --> InProgress : AssignedToInProgressCommand
+
+InProgress --> Complete : InProgressToCompleteCommand
+
+Complete --> [*]
+
+@enduml

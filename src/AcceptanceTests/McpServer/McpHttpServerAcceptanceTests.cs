@@ -37,14 +37,13 @@ public class McpHttpServerAcceptanceTests : AcceptanceTestBase
     public void ShouldDiscoverAllMcpToolsViaHttp()
     {
         var tools = _helper!.Tools;
-        tools.Count.ShouldBeGreaterThanOrEqualTo(7);
+        tools.Count.ShouldBeGreaterThanOrEqualTo(6);
 
         var toolNames = tools.Select(t => t.Name).ToList();
         toolNames.ShouldContain("list-work-orders");
         toolNames.ShouldContain("get-work-order");
         toolNames.ShouldContain("create-work-order");
         toolNames.ShouldContain("execute-work-order-command");
-        toolNames.ShouldContain("update-work-order-description");
         toolNames.ShouldContain("list-employees");
         toolNames.ShouldContain("get-employee");
     }

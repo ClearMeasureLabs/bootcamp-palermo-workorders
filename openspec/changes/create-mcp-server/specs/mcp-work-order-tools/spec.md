@@ -50,15 +50,3 @@ The system SHALL expose an MCP tool named `execute-work-order-command` that exec
 #### Scenario: Unknown command name
 - **WHEN** the `execute-work-order-command` tool is invoked with a command name that does not match any registered `IStateCommand`
 - **THEN** an error message listing the available command names is returned
-
-### Requirement: Update work order description tool
-The system SHALL expose an MCP tool named `update-work-order-description` that updates the description of an existing work order via the `UpdateDescriptionCommand`.
-
-#### Scenario: Successful description update
-- **WHEN** the `update-work-order-description` tool is invoked with a work order number and new description
-- **THEN** the work order description is updated
-- **AND** the updated work order details are returned
-
-#### Scenario: Work order not found for description update
-- **WHEN** the `update-work-order-description` tool is invoked with a number that does not match any work order
-- **THEN** an error message is returned indicating the work order was not found

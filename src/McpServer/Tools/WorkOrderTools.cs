@@ -142,38 +142,6 @@ public class WorkOrderTools
             new JsonSerializerOptions { WriteIndented = true });
     }
 
-    [McpServerTool(Name = "update-work-order-description"), Description("Updates the description of an existing work order.")]
-    public static async Task<string> UpdateWorkOrderDescription(
-        IBus bus,
-        [Description("The work order number")] string workOrderNumber,
-        [Description("The new description")] string newDescription,
-        [Description("Username of the employee making the update")] string updatingUsername)
-    {
-        var workOrder = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
-        if (workOrder == null)
-        {
-            return $"No work order found with number '{workOrderNumber}'.";
-        }
-
-        var user = await FindEmployeeByUsername(bus, updatingUsername);
-        if (user == null)
-        {
-            return $"Employee with username '{updatingUsername}' not found.";
-        }
-
-        workOrder.Description = newDescription;
-        var command = new UpdateDescriptionCommand(workOrder, user);
-
-        if (!command.IsValid())
-        {
-            return $"User '{updatingUsername}' is not authorized to update this work order's description.";
-        }
-
-        var result = await bus.Send(command);
-        return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
-            new JsonSerializerOptions { WriteIndented = true });
-    }
-
     private static async Task<Employee?> FindEmployeeByUsername(IBus bus, string username)
     {
         try
