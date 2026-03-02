@@ -14,14 +14,14 @@ public static class TracerBulletSignal
     /// <summary>
     /// Registers a correlation ID and returns a task that completes when the reply arrives.
     /// </summary>
-    public static async Task WaitForReply(Guid correlationId, TimeSpan timeout)
+    public static async Task WaitForReply(Guid correlationId, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
         var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         Signals[correlationId] = tcs;
 
         try
         {
-            await tcs.Task.WaitAsync(timeout);
+            await tcs.Task.WaitAsync(timeout, cancellationToken);
         }
         finally
         {

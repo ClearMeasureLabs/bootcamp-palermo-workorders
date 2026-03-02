@@ -21,15 +21,15 @@ public class TracerBulletHealthCheck(
 
         try
         {
-            var replyTask = TracerBulletSignal.WaitForReply(correlationId, Timeout);
+            var replyTask = TracerBulletSignal.WaitForReply(correlationId, Timeout, cancellationToken);
 
             await messageSession.Send(new TracerBulletCommand(correlationId));
-            logger.LogInformation(
+            logger.LogDebug(
                 "TracerBullet health check: command sent with CorrelationId={CorrelationId}",
                 correlationId);
 
             await replyTask;
-            logger.LogInformation(
+            logger.LogDebug(
                 "TracerBullet health check: reply received for CorrelationId={CorrelationId}",
                 correlationId);
 
@@ -40,7 +40,7 @@ public class TracerBulletHealthCheck(
             logger.LogWarning(
                 "TracerBullet health check: timed out waiting for reply. CorrelationId={CorrelationId}",
                 correlationId);
-            return HealthCheckResult.Unhealthy("Worker round-trip timed out after 60 seconds.");
+            return HealthCheckResult.Unhealthy($"Worker round-trip timed out after {Timeout.TotalSeconds:F0} seconds.");
         }
         catch (Exception ex)
         {
