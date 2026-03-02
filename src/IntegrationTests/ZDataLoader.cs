@@ -94,6 +94,11 @@ public class ZDataLoader
         ndoughton.AddRole(fulfillment);
         db.Add(ndoughton);
 
+        var will = new Employee("will", "Will", "Perea", "wperea@setworks.com");
+        will.AddRole(lead);
+        will.AddRole(fulfillment);
+        db.Add(will);
+
         db.SaveChanges();
         db.Dispose();
 
