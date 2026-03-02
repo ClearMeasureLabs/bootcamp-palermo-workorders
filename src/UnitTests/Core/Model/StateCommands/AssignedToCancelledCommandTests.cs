@@ -25,7 +25,7 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
         var order = new WorkOrder();
         order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
-        order.Assignee = employee;
+        order.Creator = employee;
 
         var command = new AssignedToCancelledCommand(order, new Employee());
         Assert.That(command.IsValid(), Is.False);
@@ -60,6 +60,6 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
-        return new AssignedToInProgressCommand(order, employee);
+        return new AssignedToCancelledCommand(order, employee);
     }
 }
