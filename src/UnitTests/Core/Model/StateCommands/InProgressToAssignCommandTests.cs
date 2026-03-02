@@ -23,7 +23,7 @@ public class InProgressToAssignedCommandTests : StateCommandBaseTests
     public void ShouldNotBeValidWithWrongEmployee()
     {
         var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Assigned;
+        order.Status = WorkOrderStatus.InProgress;
         var employee = new Employee();
         order.Assignee = employee;
 
