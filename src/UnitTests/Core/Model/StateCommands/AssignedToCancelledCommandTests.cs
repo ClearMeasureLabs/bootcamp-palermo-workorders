@@ -51,10 +51,12 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
         order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
         order.Assignee = employee;
+        order.Creator = employee;
 
         var command = new AssignedToCancelledCommand(order, employee);
         command.Execute(new StateCommandContext());
 
+        Assert.That(order.Creator, Is.EqualTo(employee));
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Cancelled));
     }
 
