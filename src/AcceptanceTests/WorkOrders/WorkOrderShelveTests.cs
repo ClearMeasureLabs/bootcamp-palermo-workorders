@@ -22,8 +22,6 @@ public class WorkOrderShelveTests : AcceptanceTestBase
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ??
             throw new InvalidOperationException();
