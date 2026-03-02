@@ -1,6 +1,6 @@
 BEGIN TRANSACTION
 GO
-PRINT N'englarging the title to 300'
+PRINT N'enlarging the title to 300'
 GO
 ALTER TABLE [dbo].[WorkOrder]
 ALTER COLUMN [Title] NVARCHAR(300) NOT NULL;
