@@ -247,6 +247,35 @@ public class WorkOrderMappingTests
     }
 
     [Test]
+    [Category("SqlServerOnly")]
+    public void ShouldSupport300LengthTitle()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "foo",
+            Title = new string('B', 300), 
+            Description = "desc",
+            RoomNumber = "222",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(workOrder);
+        context.SaveChanges();
+
+        using var context1 = TestHost.GetRequiredService<DbContext>();
+        var rehydratedWorkOrder = context.Set<WorkOrder>()    
+            .Single(wo => wo.Id == workOrder.Id);
+
+        rehydratedWorkOrder.Title!.Length.ShouldBe(300);
+    }
+
+    [Test]
     public void ShouldEagerFetchCreatorAndAssigneeByDefault()
     {
         new DatabaseTests().Clean();
