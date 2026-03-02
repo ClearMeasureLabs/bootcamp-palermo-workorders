@@ -32,7 +32,11 @@ public class ZDataLoader
         aiBot.AddRole(bot);
         db.Add(aiBot);
 
-        //Person 1
+        //Ron
+        var rpuckett = new Employee("rpuckett", "Ron", "Piuckett", "ron.puckett@lw.com");
+        rpuckett.AddRole(lead);
+        rpuckett.AddRole(fulfillment);
+        db.Add(rpuckett);
 
         //Person 2
 
