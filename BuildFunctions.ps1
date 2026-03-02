@@ -209,34 +209,18 @@ Function Test-IsGitHubActions {
     return $false
 }
 
-Function Test-IsAzureDevOps {
-    <#
-    .SYNOPSIS
-        Tests if the current script is running in Azure DevOps
-    .DESCRIPTION
-        Returns true if the current PowerShell session is running within an Azure DevOps pipeline
-    .OUTPUTS
-        [bool] True if running in Azure DevOps, False otherwise
-    #>
-    
-    if ($env:TF_BUILD -eq "True") {
-        return $true
-    }
-
-    return $false
-}
-
 Function Test-IsLocalBuild {
     <#
     .SYNOPSIS
-        Tests if the current script is running locally (not in CI/CD)
+        Tests if the current script is running locally (not in GitHub Actions)
     .DESCRIPTION
-        Returns true if not running in GitHub Actions or Azure DevOps
+        Returns true if the GITHUB_ACTIONS environment variable is not set.
+        Only detects GitHub Actions as the CI environment; other CI systems are not checked.
     .OUTPUTS
-        [bool] True if running locally, False if in CI/CD
+        [bool] True if not running in GitHub Actions, False otherwise
     #>
-    
-    return -not ((Test-IsGitHubActions) -or (Test-IsAzureDevOps))
+
+    return -not (Test-IsGitHubActions)
 }
 
 

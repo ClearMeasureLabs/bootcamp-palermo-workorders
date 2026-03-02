@@ -1,0 +1,50 @@
+@startuml
+
+title DraftToAssignedCommand Sequence Diagram
+
+actor "User" as user
+participant "Blazor WASM Client" as ui
+participant "SingleApiController\n(UI.Server)" as api
+participant "Bus : IBus" as sBus
+participant "IMediator" as mediator
+participant "StateCommandHandler" as cmdHandler
+participant "DraftToAssignedCommand" as cmd
+participant "StateCommandBase" as cmdBase
+participant "WorkOrder" as order
+database "DataContext\n(EF Core)" as db
+participant "DistributedBus\n: IDistributedBus" as dBus
+participant "NServiceBus" as nsb
+
+autonumber
+
+user -> ui : Assign work order
+ui -> api : POST WebServiceMessage\n(DraftToAssignedCommand)
+api -> api : Deserialize\nWebServiceMessage.GetBodyObject()
+api -> sBus : Send(DraftToAssignedCommand)
+sBus -> mediator : Send(DraftToAssignedCommand)
+mediator -> cmdHandler : Handle(DraftToAssignedCommand,\nCancellationToken)
+cmdHandler -> cmd : Execute(StateCommandContext\n{ CurrentDateTime = UtcNow })
+cmd -> order : AssignedDate = CurrentDateTime
+cmd -> cmdBase : base.Execute(context)
+cmdBase -> order : ChangeStatus(CurrentUser,\nCurrentDateTime, Assigned)
+
+alt Assignee has Bot role
+    cmd -> cmd : Create WorkOrderAssignedToBotEvent
+end
+
+cmdHandler -> db : Attach/Add or Update(order)
+cmdHandler -> db : SaveChangesAsync()
+db --> cmdHandler : persisted
+cmdHandler -> cmdHandler : Build debug message
+cmdHandler -> dBus : PublishAsync(StateTransitionEvent)
+
+alt WorkOrderAssignedToBotEvent exists
+    dBus -> nsb : Publish(WorkOrderAssignedToBotEvent)
+end
+
+cmdHandler --> mediator : StateCommandResult\n(order, "Assign", debugMessage)
+mediator --> sBus : StateCommandResult
+sBus --> api : StateCommandResult
+api --> ui : WebServiceMessage\n(serialized result)
+
+@enduml

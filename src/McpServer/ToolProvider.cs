@@ -20,7 +20,6 @@ public class ToolProvider(IBus bus, IWorkOrderNumberGenerator numberGenerator) :
             AIFunctionFactory.Create(GetWorkOrder),
             AIFunctionFactory.Create(CreateWorkOrder),
             AIFunctionFactory.Create(ExecuteWorkOrderCommand),
-            AIFunctionFactory.Create(UpdateWorkOrderDescription),
             AIFunctionFactory.Create(ListEmployees),
             AIFunctionFactory.Create(GetEmployee),
         ];
@@ -58,15 +57,6 @@ public class ToolProvider(IBus bus, IWorkOrderNumberGenerator numberGenerator) :
         [Description("Username of the employee to assign the work order to (required for DraftToAssignedCommand)")] string? assigneeUsername = null)
     {
         return WorkOrderTools.ExecuteWorkOrderCommand(bus, workOrderNumber, commandName, executingUsername, assigneeUsername);
-    }
-
-    [Description("Updates the description of an existing work order.")]
-    private Task<string> UpdateWorkOrderDescription(
-        [Description("The work order number")] string workOrderNumber,
-        [Description("The new description")] string newDescription,
-        [Description("Username of the employee making the update")] string updatingUsername)
-    {
-        return WorkOrderTools.UpdateWorkOrderDescription(bus, workOrderNumber, newDescription, updatingUsername);
     }
 
     [Description("Lists all employees in the system with their username, name, email, and roles.")]

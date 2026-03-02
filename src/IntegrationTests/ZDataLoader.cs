@@ -27,12 +27,21 @@ public class ZDataLoader
         jpalermo.AddRole(fulfillment);
         db.Add(jpalermo);
 
+        //Trainer2 - Sean Spaniel
+        var sspaniel = new Employee("sspaniel", "Sean", "Spaniel", "sean.spaniel@clear-measure.com");
+        sspaniel.AddRole(lead);
+        sspaniel.AddRole(fulfillment);
+        db.Add(sspaniel);
+
         //AI Bot
         var aiBot = new Employee("aibot", "AI", Roles.Bot, "aibot@system.local");
         aiBot.AddRole(bot);
         db.Add(aiBot);
 
         //Person 1
+        var jcuevas = new Employee("jcuevas", "Joe", "Cuevas", "joecuevasjr@gmail.com");
+        jcuevas.AddRole(fulfillment);
+        db.Add(jcuevas);
 
         //Person 2
 
@@ -45,16 +54,29 @@ public class ZDataLoader
         //Person 6
 
         //Person 7
+        var cklaips = new Employee("cklaips", "Casey", "Klaips", "cklaips@gmail.com");
+        cklaips.AddRole(lead);
+        cklaips.AddRole(fulfillment);
+        db.Add(cklaips);
 
         //Person 8
 
         //Person 9
+        var csullivan = new Employee("csullivan", "Cole", "Sullivan", "cole.sullivan@biberk.com");
+        csullivan.AddRole(lead);
+        csullivan.AddRole(fulfillment);
+        db.Add(csullivan);
 
         //Person 10
 
         //Person 11
 
         //Person 12
+        //trivial comment
+        var nlarsen = new Employee("nlarsen", "Nick", "Larsen", "nick@larsen.com");
+        nlarsen.AddRole(lead);
+        nlarsen.AddRole(fulfillment);
+        db.Add(nlarsen);
 
         //Person 13
         var pludecker = new Employee("pludecker", "Paige", "Ludecker", "pludecker@gmail.com");
@@ -66,6 +88,11 @@ public class ZDataLoader
         hsimpson.AddRole(lead);
         hsimpson.AddRole(fulfillment);
         db.Add(hsimpson);
+
+        var ndoughton = new Employee("ndoughton", "Noah", "Doughton", "noah.doughton@biberk.com");
+        ndoughton.AddRole(lead);
+        ndoughton.AddRole(fulfillment);
+        db.Add(ndoughton);
 
         db.SaveChanges();
         db.Dispose();

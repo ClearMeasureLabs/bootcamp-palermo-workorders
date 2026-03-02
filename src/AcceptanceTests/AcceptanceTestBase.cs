@@ -125,9 +125,21 @@ public abstract class AcceptanceTestBase
         
         TestStates[TestId] = state;
 
-        await page.GotoAsync("/");
-        await page.WaitForURLAsync("/");
-        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        const int maxRetries = 3;
+        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                await page.GotoAsync("/");
+                await page.WaitForURLAsync("/");
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                break;
+            }
+            catch (PlaywrightException) when (attempt < maxRetries)
+            {
+                await Task.Delay(2000);
+            }
+        }
     }
 
     [TearDown]

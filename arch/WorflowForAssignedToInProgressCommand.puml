@@ -1,0 +1,40 @@
+@startuml
+
+title AssignedToInProgressCommand Sequence Diagram
+
+actor "User" as user
+participant "Blazor WASM Client" as ui
+participant "SingleApiController\n(UI.Server)" as api
+participant "Bus : IBus" as sBus
+participant "IMediator" as mediator
+participant "StateCommandHandler" as cmdHandler
+participant "AssignedToInProgressCommand" as cmd
+participant "StateCommandBase" as cmdBase
+participant "WorkOrder" as order
+database "DataContext\n(EF Core)" as db
+participant "DistributedBus\n: IDistributedBus" as dBus
+
+autonumber
+
+user -> ui : Begin work order
+ui -> api : POST WebServiceMessage\n(AssignedToInProgressCommand)
+api -> api : Deserialize\nWebServiceMessage.GetBodyObject()
+api -> sBus : Send(AssignedToInProgressCommand)
+sBus -> mediator : Send(AssignedToInProgressCommand)
+mediator -> cmdHandler : Handle(AssignedToInProgressCommand,\nCancellationToken)
+cmdHandler -> cmd : Execute(StateCommandContext\n{ CurrentDateTime = UtcNow })
+note right of cmd : No override - uses\nbase.Execute directly
+cmd -> cmdBase : base.Execute(context)
+cmdBase -> order : ChangeStatus(CurrentUser,\nCurrentDateTime, InProgress)
+cmdHandler -> db : Attach/Add or Update(order)
+cmdHandler -> db : SaveChangesAsync()
+db --> cmdHandler : persisted
+cmdHandler -> cmdHandler : Build debug message
+cmdHandler -> dBus : PublishAsync(StateTransitionEvent)
+note right of dBus : StateTransitionEvent is null\nfor this command
+cmdHandler --> mediator : StateCommandResult\n(order, "Begin", debugMessage)
+mediator --> sBus : StateCommandResult
+sBus --> api : StateCommandResult
+api --> ui : WebServiceMessage\n(serialized result)
+
+@enduml

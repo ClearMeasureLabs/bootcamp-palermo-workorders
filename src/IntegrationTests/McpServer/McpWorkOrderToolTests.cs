@@ -126,42 +126,6 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
-    public async Task ShouldUpdateWorkOrderDescription()
-    {
-        var employee = new Employee("user1", "John", "Doe", "john@test.com");
-        var order = new WorkOrder { Creator = employee, Number = "WO-200", Title = "Original", Description = "Old description" };
-
-        using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            context.Add(order);
-            await context.SaveChangesAsync();
-        }
-
-        var bus = TestHost.GetRequiredService<IBus>();
-        var result = await WorkOrderTools.UpdateWorkOrderDescription(bus, "WO-200", "Updated description", "user1");
-
-        result.ShouldContain("Updated description");
-    }
-
-    [Test]
-    public async Task ShouldReturnErrorForDescriptionUpdateOnMissingWorkOrder()
-    {
-        var employee = new Employee("user1", "John", "Doe", "john@test.com");
-
-        using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            await context.SaveChangesAsync();
-        }
-
-        var bus = TestHost.GetRequiredService<IBus>();
-        var result = await WorkOrderTools.UpdateWorkOrderDescription(bus, "MISSING", "New desc", "user1");
-
-        result.ShouldContain("No work order found");
-    }
-
-    [Test]
     public async Task ShouldReturnErrorForUnknownCommand()
     {
         var employee = new Employee("user1", "John", "Doe", "john@test.com");

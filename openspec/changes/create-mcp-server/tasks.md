@@ -19,7 +19,6 @@
 - [x] 3.2 Implement `get-work-order` tool using `WorkOrderByNumberQuery` via IBus
 - [x] 3.3 Implement `create-work-order` tool using `SaveDraftCommand` via IBus
 - [x] 3.4 Implement `execute-work-order-command` tool that resolves the named IStateCommand and sends it via IBus
-- [x] 3.5 Implement `update-work-order-description` tool using `UpdateDescriptionCommand` via IBus
 
 ## 4. Employee Tools
 

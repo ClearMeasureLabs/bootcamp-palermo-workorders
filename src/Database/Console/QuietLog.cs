@@ -20,7 +20,11 @@ public class QuietLog : IUpgradeLog
 
     public void LogInformation(string format, params object[] args)
     {
-        // Suppressed to reduce build noise
+        var message = string.Format(format, args);
+        if (message.Contains(".sql", StringComparison.OrdinalIgnoreCase))
+        {
+            System.Console.WriteLine(message);
+        }
     }
 
     public void LogWarning(string format, params object[] args)

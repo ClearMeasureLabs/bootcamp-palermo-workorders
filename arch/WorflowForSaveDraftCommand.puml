@@ -1,0 +1,40 @@
+@startuml
+
+title SaveDraftCommand Sequence Diagram
+
+actor "User" as user
+participant "Blazor WASM Client" as ui
+participant "SingleApiController\n(UI.Server)" as api
+participant "Bus : IBus" as sBus
+participant "IMediator" as mediator
+participant "StateCommandHandler" as cmdHandler
+participant "SaveDraftCommand" as cmd
+participant "StateCommandBase" as cmdBase
+participant "WorkOrder" as order
+database "DataContext\n(EF Core)" as db
+participant "DistributedBus\n: IDistributedBus" as dBus
+
+autonumber
+
+user -> ui : Submit work order form
+ui -> api : POST WebServiceMessage\n(SaveDraftCommand)
+api -> api : Deserialize\nWebServiceMessage.GetBodyObject()
+api -> sBus : Send(SaveDraftCommand)
+sBus -> mediator : Send(SaveDraftCommand)
+mediator -> cmdHandler : Handle(SaveDraftCommand,\nCancellationToken)
+cmdHandler -> cmd : Execute(StateCommandContext\n{ CurrentDateTime = UtcNow })
+cmd -> cmd : if CreatedDate is null,\nset CreatedDate = CurrentDateTime
+cmd -> cmdBase : base.Execute(context)
+cmdBase -> order : ChangeStatus(CurrentUser,\nCurrentDateTime, Draft)
+cmdHandler -> db : Attach/Add or Update(order)
+cmdHandler -> db : SaveChangesAsync()
+db --> cmdHandler : persisted
+cmdHandler -> cmdHandler : Build debug message
+cmdHandler -> dBus : PublishAsync(StateTransitionEvent)
+note right of dBus : StateTransitionEvent is null\nfor SaveDraft
+cmdHandler --> mediator : StateCommandResult\n(order, "Save", debugMessage)
+mediator --> sBus : StateCommandResult
+sBus --> api : StateCommandResult
+api --> ui : WebServiceMessage\n(serialized result)
+
+@enduml
