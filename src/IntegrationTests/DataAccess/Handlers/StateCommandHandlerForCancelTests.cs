@@ -10,7 +10,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 public class StateCommandHandlerForCancelTests : IntegratedTestBase
 {
     [Test]
-    public async Task ShouldBeginWorkOrder()
+    public async Task ShouldCancelWorkOrder()
     {
         new DatabaseTests().Clean();
 
