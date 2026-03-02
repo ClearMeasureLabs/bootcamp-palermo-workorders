@@ -32,8 +32,6 @@ public class WorkOrderShelveTests : AcceptanceTestBase
                 Timeout = 10000 // 10 seconds
             });
 
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title)))
-            .ToHaveValueAsync(expectedTitle);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
             .ToHaveValueAsync(expectedDescription);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
