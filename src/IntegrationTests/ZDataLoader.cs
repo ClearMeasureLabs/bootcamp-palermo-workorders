@@ -45,6 +45,10 @@ public class ZDataLoader
         //Person 6
 
         //Person 7
+        var cklaips = new Employee("cklaips", "Casey", "Klaips", "cklaips@gmail.com");
+        cklaips.AddRole(lead);
+        cklaips.AddRole(fulfillment);
+        db.Add(cklaips);
 
         //Person 8
 
