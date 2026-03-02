@@ -224,6 +224,34 @@ public class WorkOrderMappingTests
 
     [Test]
     [Category("SqlServerOnly")]
+    public void ShouldRespectNewMaxTitleLengthConstraints()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = new string('A', 3), // Exceeds 50 char limit
+            Title = new string('B', 300), // Exceeds 300 char limit
+            Description = new string('C', 999), // Exceeds 1000 char limit
+            RoomNumber = new string('D', 49), // Exceeds 50 char limit
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(workOrder);
+        context.SaveChanges();
+
+        using var context2 = TestHost.GetRequiredService<DbContext>();
+        var rehydratedWorkOrder = context2.Set<WorkOrder>()
+            .Single(wo => wo.Id == workOrder.Id);
+        rehydratedWorkOrder.Title!.Length.ShouldBe(300);
+    }
+
+    [Test]
+    [Category("SqlServerOnly")]
     public void ShouldRespectMaxLengthConstraints()
     {
         new DatabaseTests().Clean();
