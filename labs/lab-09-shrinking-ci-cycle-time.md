@@ -14,7 +14,7 @@ Understand how the CI pipeline uses multiple parallel build checks on every comm
 
 ## Context
 
-The curriculum emphasizes: "Defining Speed: Theory of Constraints & DevOps" and "The Goal: Projects should accelerate over time." The CI pipeline demonstrates this by running **11 checks in parallel** on every push, catching different defect classes simultaneously rather than sequentially.
+The curriculum emphasizes: "Defining Speed: Theory of Constraints & DevOps" and "The Goal: Projects should accelerate over time." The CI pipeline demonstrates this by defining 11 jobs in total: 8 quality-gate jobs that run in parallel on every push, plus 3 dependent publishing jobs that run only after the main build succeeds. This catches different defect classes simultaneously rather than sequentially.
 
 ---
 
@@ -33,7 +33,7 @@ on:
 
 ### Step 2: Map the Parallel Build Matrix
 
-Identify all jobs that run concurrently:
+Identify all jobs that run concurrently (no `needs:` dependency):
 
 | Job | OS | Database | What It Catches |
 |-----|-------|----------|-----------------|
@@ -43,24 +43,24 @@ Identify all jobs that run concurrently:
 | `integration-build-arm` | Ubuntu ARM64 | SQLite | Architecture-specific bugs |
 | `code-analysis` | Ubuntu | — | Style violations, analyzer warnings |
 | `security-scan` | Ubuntu | — | Vulnerabilities, secrets, deprecated packages |
+| `acceptance-tests` | Ubuntu | SQL Container | End-to-end Playwright tests |
+| `acceptance-tests-arm` | Ubuntu ARM64 | SQLite | E2E tests on ARM architecture |
 
-These 6 jobs start **simultaneously** on every push.
+These 8 jobs start **simultaneously** on every push.
 
 ### Step 3: Map the Sequential Dependencies
 
-After the parallel jobs, these run in sequence:
+After `build-linux` succeeds, these dependent jobs run:
 
 ```
-[All parallel builds complete]
+build-linux (must succeed first)
         ↓
-acceptance-tests (Playwright E2E on Linux)
-        ↓
-acceptance-tests-arm (Playwright on ARM)
-        ↓
-docker-build-image (only after build-linux succeeds)
-        ↓
-publish-github-packages → publish-octopus (deployment artifacts)
+docker-build-image-for-churchbulletin-ui (Publish Release Candidate)
+publish-github-packages (Publish to GitHub Packages)
+publish-octopus (Publish to Octopus Deploy)
 ```
+
+These 3 publishing jobs all depend on `build-linux` via `needs: [build-linux]`. They download the NuGet package artifacts produced by the main build. All other quality-gate jobs (acceptance tests, code analysis, security scan, etc.) run independently with no dependencies.
 
 ### Step 4: Study Concurrency Groups
 
@@ -84,14 +84,15 @@ This means: when a new commit arrives on a branch, **cancel any in-progress buil
 - Code analysis: ~2 min
 - Security scan: ~2 min
 - Acceptance tests: ~10 min
-- **Total: ~34 minutes**
+- Acceptance tests ARM: ~10 min
+- **Total: ~44 minutes**
 
 **Parallel approach** (current pipeline):
-- Parallel builds: ~5 min (all run simultaneously)
-- Acceptance tests: ~10 min (after builds)
-- **Total: ~15 minutes**
+- All 8 quality-gate jobs run simultaneously: ~10 min (limited by slowest job)
+- Publishing jobs run after build-linux: ~3 min
+- **Total: ~13 minutes**
 
-That's a **55% reduction** in cycle time from parallelization alone.
+That's a **70% reduction** in cycle time from parallelization alone.
 
 ### Step 6: Study the Security Scan
 

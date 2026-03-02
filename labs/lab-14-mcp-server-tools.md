@@ -23,9 +23,8 @@ Open `src/McpServer/Tools/WorkOrderTools.cs`. Map each tool to its underlying CQ
 | `list-work-orders` | `WorkOrderSpecificationQuery` |
 | `get-work-order` | `WorkOrderByNumberQuery` |
 | `create-work-order` | `SaveDraftCommand` |
-| `assign-work-order` | `DraftToAssignedCommand` |
-| `begin-work-order` | `AssignedToInProgressCommand` |
-| `complete-work-order` | `InProgressToCompleteCommand` |
+| `execute-work-order-command` | State commands (`DraftToAssignedCommand`, `AssignedToInProgressCommand`, `InProgressToCompleteCommand`) |
+| `update-work-order-description` | `UpdateDescriptionCommand` |
 
 ### Step 2: Explore Employee Tools
 

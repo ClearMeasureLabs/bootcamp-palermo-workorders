@@ -34,10 +34,10 @@ Give the AI agent this specification:
 > Add a `RoomNumber` validation rule to the `WorkOrder` domain model. Room numbers must be non-empty when transitioning from Draft to Assigned (the `DraftToAssignedCommand`). If a work order has no room number, the assign command should be invalid.
 >
 > Requirements:
-> - Modify `DraftToAssignedCommand.IsValid()` or `UserCanExecute()` to check for room number
+> - Add the room number validation to `DraftToAssignedCommand.UserCanExecute()` (do not modify `IsValid()` on `StateCommandBase` — it is not virtual)
 > - Add unit tests covering: valid with room number, invalid without room number
 > - Add an integration test that verifies the handler rejects assignment without a room number
-> - Run privatebuild.ps1 to confirm all tests pass
+> - Run PrivateBuild.ps1 to confirm all tests pass
 > - Create a feature branch and commit
 
 ### Step 3: Observe the Agent's Approach
@@ -61,7 +61,7 @@ Check the agent's work against the project standards:
 | Test naming follows `[Method]_[Scenario]_[Result]` convention | |
 | No new NuGet packages added | |
 | Integration test uses `DatabaseTests().Clean()` pattern | |
-| `privatebuild.ps1` passes | |
+| `PrivateBuild.ps1` passes | |
 | Commit message is clear and descriptive | |
 
 ### Step 5: Review the PR

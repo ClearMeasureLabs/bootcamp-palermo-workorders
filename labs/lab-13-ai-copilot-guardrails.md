@@ -34,7 +34,7 @@ Ask AI to add FluentValidation. Observe: this requires a new NuGet package (reje
 
 ```powershell
 dotnet format style src/ChurchBulletin.sln --verify-no-changes
-.\privatebuild.ps1
+.\PrivateBuild.ps1
 ```
 
 ---

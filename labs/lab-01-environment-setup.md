@@ -34,7 +34,7 @@ cd bootcamp-palermo-workorders
 ### Step 2: Run the Private Build
 
 ```powershell
-.\privatebuild.ps1
+.\PrivateBuild.ps1
 ```
 
 This executes the full local build: compile, unit tests, database migration, and integration tests. Verify all tests pass with a green result.
@@ -82,7 +82,7 @@ db.Add(yourName);
 ### Step 6: Verify the Build Still Passes
 
 ```powershell
-.\privatebuild.ps1
+.\PrivateBuild.ps1
 ```
 
 ### Step 7: Run the Application
@@ -109,6 +109,6 @@ Create a pull request on GitHub using the template in `.github/pull_request_temp
 
 ## Expected Outcome
 
-- Green build on `privatebuild.ps1`
+- Green build on `PrivateBuild.ps1`
 - Your name visible in the application login dropdown
 - An open pull request on GitHub

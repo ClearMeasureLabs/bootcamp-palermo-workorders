@@ -19,7 +19,7 @@ Practice the PR review process as a quality gate by creating a PR for your work 
 Ensure all code changes from prior labs are on a feature branch. Run:
 
 ```powershell
-.\privatebuild.ps1
+.\PrivateBuild.ps1
 dotnet format style src/ChurchBulletin.sln --verify-no-changes
 ```
 

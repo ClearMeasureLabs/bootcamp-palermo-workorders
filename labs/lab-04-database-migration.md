@@ -51,7 +51,7 @@ entity.Property(e => e.Instructions).HasMaxLength(4000);
 ### Step 5: Run the Build
 
 ```powershell
-.\privatebuild.ps1
+.\PrivateBuild.ps1
 ```
 
 The private build will run the migration against the database, compile with the updated model, and execute all existing tests. All tests should pass.

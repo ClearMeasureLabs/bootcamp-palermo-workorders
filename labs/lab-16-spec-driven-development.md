@@ -86,7 +86,7 @@ Review the generated code against the specification:
 | Integration test for persistence | | |
 | No new NuGet packages | | |
 | Shouldly assertions used | | |
-| `privatebuild.ps1` passes | | |
+| `PrivateBuild.ps1` passes | | |
 
 ### Step 6: Refine the Spec
 
