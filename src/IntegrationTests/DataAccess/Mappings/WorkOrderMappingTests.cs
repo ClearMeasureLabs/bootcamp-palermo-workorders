@@ -247,6 +247,30 @@ public class WorkOrderMappingTests
     }
 
     [Test]
+    [Category("SqlServerOnly")]
+    public void ShouldVerify300LengthTitle()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "Random",
+            Title = new string('B', 300),
+            Description = "Random",
+            RoomNumber = "Random",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(workOrder);
+        context.SaveChanges();
+        context.Set<WorkOrder>().Any(a => a.Title!.Length == 300).ShouldBeTrue();
+    }
+
+    [Test]
     public void ShouldEagerFetchCreatorAndAssigneeByDefault()
     {
         new DatabaseTests().Clean();
