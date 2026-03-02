@@ -256,14 +256,14 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = "test",
-            Title = new string('B', 300), // 
+            Title = new string('B', 300),
             Description = "test", 
             RoomNumber = "5", 
             Creator = creator,
             Status = WorkOrderStatus.Draft
         };
 
-        int workOrderId;
+        Guid workOrderId;
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
