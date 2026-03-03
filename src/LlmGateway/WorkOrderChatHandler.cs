@@ -10,6 +10,7 @@ public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workO
     {
         Tools = [
             AIFunctionFactory.Create(workOrderTool.GetWorkOrderByNumber),
+            AIFunctionFactory.Create(workOrderTool.GetAllEmployees)
         ]
     };
 
