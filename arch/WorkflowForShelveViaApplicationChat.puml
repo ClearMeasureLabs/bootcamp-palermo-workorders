@@ -1,0 +1,180 @@
+@startuml
+
+title Shelve Work Order via Application Chat\n(with required code changes)
+
+actor "User" as user
+participant "ApplicationChat.razor\n(Blazor WASM)" as ui
+participant "RemotableBus" as rBus
+participant "PublisherGateway" as gateway
+participant "SingleApiController\n(UI.Server)" as api
+participant "Bus : IBus" as sBus
+participant "IMediator" as mediator
+participant "ApplicationChatHandler" as handler
+participant "ToolProvider\n(MCP Loopback Client)" as toolProvider
+participant "MCP HTTP Endpoint\n(/mcp)" as mcpEndpoint
+participant "ChatClientFactory" as factory
+participant "IChatClient\n(Azure OpenAI)" as chatClient
+participant "WorkOrderTools\n(MCP Server)" as mcpTools
+participant "ReferenceResources\n(MCP Server)" as mcpResources
+participant "StateCommandHandler\n(DataAccess)" as stateHandler
+database "DataContext\n(EF Core)" as db
+
+autonumber
+
+== User Sends Shelve Request via Chat ==
+
+user -> ui : Type "Shelve work order WO-001"\nand click Send
+ui -> ui : Add user message to\n_chatMessages list
+ui -> ui : Set _isLoading = true
+ui -> ui : Build ChatHistory from\nprevious messages
+ui -> ui : Create ApplicationChatQuery\n(prompt, currentUsername,\nchatHistory)
+ui -> rBus : Bus.Send(ApplicationChatQuery)
+rBus -> rBus : Detect IRemotableRequest
+rBus -> gateway : Publish(remotableRequest)
+gateway -> gateway : Wrap in WebServiceMessage
+gateway -> api : POST api/blazor-wasm-single-api\n(WebServiceMessage JSON)
+
+== Server-Side: Handler Setup ==
+
+api -> api : Deserialize\nWebServiceMessage.GetBodyObject()
+api -> sBus : Send(ApplicationChatQuery)
+sBus -> mediator : Send(ApplicationChatQuery)
+mediator -> handler : Handle(ApplicationChatQuery,\nCancellationToken)
+
+== Discover MCP Tools ==
+
+handler -> toolProvider : GetToolsAsync()
+toolProvider -> mcpEndpoint : HTTP ListTools\n(loopback to /mcp)
+mcpEndpoint --> toolProvider : Tool list:\n[list-work-orders, get-work-order,\ncreate-work-order,\nexecute-work-order-command,\nlist-employees, get-employee]
+toolProvider --> handler : IList<AITool>
+
+== Build Chat Messages ==
+
+handler -> handler : Create List<ChatMessage>\n- System: "You are a helpful AI\nassistant for work order mgmt..."\n- System: "Limit to 3 sentences"\n- System: "Currently logged in\nuser is {username}"\n- (prior chat history)\n- User: "Shelve work order WO-001"
+
+== Get Chat Client ==
+
+handler -> factory : GetChatClient()
+factory --> handler : IChatClient\n(with UseFunctionInvocation)
+
+== LLM Conversation with Tool Calls ==
+
+handler -> chatClient : GetResponseAsync(\nchatMessages, chatOptions)
+
+chatClient -> chatClient : Send to Azure OpenAI API\nwith tool definitions
+
+note right of chatClient
+  LLM analyzes the prompt and
+  decides it needs to:
+  1. Look up the work order
+  2. Execute the shelve command
+end note
+
+== Tool Call 1: Get Work Order Details ==
+
+chatClient -> mcpEndpoint : invoke tool:\nget-work-order\n{ workOrderNumber: "WO-001" }
+mcpEndpoint -> mcpTools : GetWorkOrder(bus, "WO-001")
+mcpTools -> sBus : Send(WorkOrderByNumberQuery\n("WO-001"))
+sBus -> db : Query work order
+db --> sBus : WorkOrder entity
+sBus --> mcpTools : WorkOrder
+mcpTools --> mcpEndpoint : JSON with work order details\n(Status: "InProgress",\nAssignee: current user)
+mcpEndpoint --> chatClient : Tool result
+
+chatClient -> chatClient : LLM sees status=InProgress\nand decides to shelve
+
+== Tool Call 2: Execute Shelve Command ==
+
+chatClient -> mcpEndpoint : invoke tool:\nexecute-work-order-command\n{ workOrderNumber: "WO-001",\n  commandName:\n  "InProgressToAssignedCommand",\n  executingUsername: "{username}" }
+mcpEndpoint -> mcpTools : ExecuteWorkOrderCommand(\nbus, "WO-001",\n"InProgressToAssignedCommand",\n"{username}")
+
+note right of mcpTools #FFD2D2
+  **CODE CHANGE 1** (WorkOrderTools.cs:122-128)
+  Add to the switch statement:
+  ""InProgressToAssignedCommand""
+    => new InProgressToAssignedCommand(
+         workOrder, user)
+end note
+
+mcpTools -> mcpTools : Resolve command via switch\nto InProgressToAssignedCommand
+mcpTools -> mcpTools : command.IsValid()\n(checks status=InProgress\nand user==Assignee)
+mcpTools -> sBus : Send(InProgressToAssigned\nCommand)
+sBus -> mediator : Send(StateCommandBase)
+mediator -> stateHandler : Handle(StateCommandBase,\nCancellationToken)
+
+== State Transition: InProgress -> Assigned ==
+
+stateHandler -> stateHandler : command.Execute()\nSets status to Assigned
+stateHandler -> db : Attach & Update WorkOrder
+db --> stateHandler : SaveChangesAsync()
+stateHandler -> stateHandler : Log: "{user} has shelved\nwork order WO-001"
+stateHandler --> mediator : StateCommandResult
+mediator --> sBus : StateCommandResult
+sBus --> mcpTools : StateCommandResult
+
+mcpTools -> mcpTools : FormatWorkOrderDetail(\nresult.WorkOrder)
+mcpTools --> mcpEndpoint : JSON: work order\n(Status: "Assigned")
+mcpEndpoint --> chatClient : Tool result
+
+== LLM Final Response ==
+
+chatClient -> chatClient : LLM composes natural\nlanguage response
+chatClient --> handler : ChatResponse:\n"Work order WO-001 has been\nshelved. It has been moved\nfrom InProgress back to\nAssigned status."
+
+== Return Response to UI ==
+
+handler --> mediator : ChatResponse
+mediator --> sBus : ChatResponse
+sBus --> api : ChatResponse
+api -> api : Wrap in WebServiceMessage
+api --> gateway : WebServiceMessage JSON
+gateway --> rBus : WebServiceMessage
+rBus --> ui : ChatResponse
+
+== Update UI ==
+
+ui -> ui : Extract response.Text
+ui -> ui : Add AI message to\n_chatMessages list
+ui -> ui : Set _isLoading = false
+ui -> ui : StateHasChanged()
+ui --> user : Display: "Work order WO-001\nhas been shelved..."
+
+== Required Code Changes ==
+
+note over mcpTools #FFD2D2
+  **CHANGE 1: WorkOrderTools.cs - execute-work-order-command switch (line 122)**
+  Add case to the commandName switch expression:
+  ----
+  ""InProgressToAssignedCommand"" => new InProgressToAssignedCommand(workOrder, user),
+  ----
+  This enables the MCP tool to create the shelve command.
+end note
+
+note over mcpTools #FFD2D2
+  **CHANGE 2: WorkOrderTools.cs - Tool description (line 86)**
+  Update the [Description] attribute to include:
+  ----
+  "InProgressToAssignedCommand (shelve - moves InProgress back to Assigned)"
+  ----
+  So the LLM knows the shelve command exists and when to use it.
+end note
+
+note over mcpTools #FFD2D2
+  **CHANGE 3: WorkOrderTools.cs - Error message (line 133)**
+  Update the error message to list InProgressToAssignedCommand
+  as an available command.
+end note
+
+note over mcpResources #FFD2D2
+  **CHANGE 4: ReferenceResources.cs - status-transitions (line 56-59)**
+  Add the shelve transition to the InProgress status:
+  ----
+  InProgress = new[] {
+    new { Command = "InProgressToCompleteCommand", TargetStatus = "Complete" },
+    new { Command = "InProgressToAssignedCommand", TargetStatus = "Assigned" }
+  }
+  ----
+  So the LLM resource accurately reflects all valid transitions.
+end note
+
+@enduml

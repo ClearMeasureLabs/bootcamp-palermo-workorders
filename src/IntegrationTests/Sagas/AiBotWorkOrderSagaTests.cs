@@ -54,7 +54,7 @@ public class AiBotWorkOrderSagaTests : LlmTestBase
 
         completedOrder.ShouldNotBeNull();
         completedOrder.Status.ShouldBe(WorkOrderStatus.Complete);
-        completedOrder.Description.ShouldContain("AI Bot");
+        completedOrder.Description!.ShouldContain("AI Bot");
         completedOrder.Assignee!.UserName.ShouldBe(aibot.UserName);
         completedOrder.AssignedDate.ShouldNotBeNull();
         completedOrder.CompletedDate.ShouldNotBeNull();
