@@ -69,7 +69,7 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
         var commandResult = await bus.Send(command);
         Data.WorkOrder = commandResult.WorkOrder;
 
-        var completedEvent = new AiBotCompletedWorkOrderEvent(Data.SagaId);
+        var completedEvent = new AiBotCompletedWorkOrderEvent(Data.SagaId, Data.WorkOrderNumber);
         await context.Publish(completedEvent);
     }
 

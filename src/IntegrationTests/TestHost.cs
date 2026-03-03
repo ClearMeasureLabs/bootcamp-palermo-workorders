@@ -75,6 +75,7 @@ public static class TestHost
                 var endpointConfiguration = new EndpointConfiguration("IntegrationTests");
                 endpointConfiguration.UseSerialization<SystemJsonSerializer>();
                 endpointConfiguration.EnableInstallers();
+                endpointConfiguration.UsePersistence<LearningPersistence>();
 
                 var connectionString = context.Configuration.GetConnectionString("SqlConnectionString") ?? "";
                 if (connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
