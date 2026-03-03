@@ -1,0 +1,135 @@
+SESSION TRANSCRIPT (RECONSTRUCTED)
+Date: 2026-03-03 (America/Chicago)
+Note: Reconstructed from visible conversation context in this agent session.
+
+--- USER ---
+git pull, clean working copy, checkout master
+
+--- ASSISTANT ---
+Located actual git repository at:
+C:\Users\JeffreyPalermo\source\repos\ClearMeasureLabs\bootcamp-palermo-workorders-cursor\bootcamp-palermo-workorders
+
+Actions taken:
+1) Checked branch/status
+2) `git checkout master`
+3) `git reset --hard HEAD`
+4) `git clean -fd`
+5) `git pull` (required escalated network permission)
+
+Result:
+- Fast-forward pull from 93358ee -> 1be966d
+- Final status clean/up-to-date: `## master...origin/master`
+
+--- USER ---
+do you have the ability to use gh.exe and create issues in github?
+
+--- ASSISTANT ---
+Verified:
+- `gh --version` => installed (2.87.2)
+- `gh auth status` => token invalid for github.com account `jeffreypalermo`
+
+Response:
+- Yes, gh.exe is available.
+- Cannot create issues until `gh auth login -h github.com` is completed.
+
+--- USER ---
+create a github issue with a spec for a new feature. Give me a good thorough spec that is compatible with an AI coding tool for the following feature and put it in a github issue. This feature is an enhancement on the AI Agent screen when the browser window is resized larger or smaller the chat area sometimes goes off the screen and the prompt box is hidden and the user has to scroll downward in order to make it visible This is a usability problem We need to modify the CSS Cascading style sheets so that the prompt box is always visible on the screen no matter how many prompts and replies are being used in the chat window itself this should be resilient to the changing of browser windows . Implementing this should include some B unit unit tests and a acceptance test to exercise the chat screen . This should be done on a new feature branch and when complete and private build succeeds and acceptance tests succeed then a new pull request should be created then the pull request should be monitored for the build pull request checks once all of the Czechs succeed any poll request comments should be read and responded to as well as any problems fixed after that the pull request should be monitored for all of the billed checks to succeed and once that happens merge the pull request back to master and close the issue
+
+--- ASSISTANT ---
+Actions taken:
+- Confirmed repo slug: ClearMeasureLabs/bootcamp-palermo-workorders
+- Drafted detailed issue spec markdown file
+- Created issue with `gh issue create`
+
+Created issue:
+- https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders/issues/631
+Title:
+- Spec: AI Agent chat prompt must remain visible during resize and long conversations
+
+Also saved local draft body:
+- issue-ai-agent-prompt-visibility.md (later deleted)
+
+--- USER ---
+complete issue 631
+
+--- ASSISTANT ---
+Executed full implementation workflow:
+
+Branching:
+- Created branch: `feature/ai-agent-persistent-prompt-visibility`
+
+Code changes:
+1) Updated AI Agent component markup and test selectors:
+- src/UI.Shared/Pages/ApplicationChat.razor
+  - Added selectors: ChatShell, ChatContainer, ChatHistoryViewport, ChatInputContainer
+  - Wrapped history in a dedicated wrapper + viewport structure
+
+2) Updated layout/CSS behavior:
+- src/UI.Shared/Pages/ApplicationChat.razor.css
+  - Converted to constrained shell with internal scroll behavior
+  - Ensured chat history is scroll region
+  - Kept prompt/input area pinned and visible under resize scenarios
+  - Iterated after acceptance feedback to avoid clipping (`min-height: 0`)
+
+3) Added bUnit tests:
+- src/UnitTests/UI.Shared/Pages/ApplicationChatTests.cs
+  - Shell/input rendering contract
+  - History viewport appears after send
+  - Prompt remains available after many messages
+
+4) Added acceptance test:
+- src/AcceptanceTests/App/AiAgentPageTests.cs
+  - Exercises long conversation
+  - Resizes viewport across multiple dimensions
+  - Asserts input/send are visible and in viewport
+  - Verifies history scroll-container behavior robustly
+
+Validation steps run:
+- `dotnet test src/UnitTests/UnitTests.csproj --filter "FullyQualifiedName~ApplicationChatTests"`
+- `dotnet test src/AcceptanceTests/AcceptanceTests.csproj --filter "FullyQualifiedName~AiAgentPageTests"`
+- `./PrivateBuild.ps1`
+
+Notes:
+- Some runs initially failed due sandbox/network/tooling or transient conditions.
+- Re-runs with escalation and test refinements passed.
+
+Git commits:
+- `fafa00b` Fix AI Agent prompt visibility on resize and long chats
+- `d7bfddd` Address PR feedback on chat sizing and scroll assertion
+
+PR lifecycle:
+- Pushed branch to origin
+- Created PR: https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders/pull/633
+- Monitored checks until all green
+- Reviewed Copilot comments; applied actionable fixes
+- Posted PR response comment documenting resolutions and retest evidence
+- Re-ran checks to green
+- Merged PR to master and deleted branch
+
+Final verification:
+- PR merged: https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders/pull/633
+  - state: MERGED
+  - mergedAt: 2026-03-03T06:07:17Z
+- Issue closed: https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders/issues/631
+
+--- USER ---
+<environment_context>
+  <shell>powershell</shell>
+  <current_date>2026-03-03</current_date>
+  <timezone>America/Chicago</timezone>
+</environment_context>
+
+--- USER ---
+export this entire session to a text file
+
+--- ASSISTANT ---
+Could not directly export platform-native full transcript from shell access.
+Offered two options:
+1) action log
+2) reconstructed transcript from visible context
+
+--- USER ---
+2
+
+--- ASSISTANT ---
+Created this reconstructed transcript file.
