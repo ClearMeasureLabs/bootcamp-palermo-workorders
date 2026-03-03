@@ -59,4 +59,40 @@ public class ApplicationChatHandlerTests : LlmTestBase
         workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
         workOrder.Status.ShouldBe(WorkOrderStatus.Draft);
     }
+
+    [Test]
+    public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilie()
+    {
+        new ZDataLoader().LoadData();
+        var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
+        var query = new ApplicationChatQuery(
+            "have groundskeeper willie mow the grass. Yes, assign the new work order. confirmed",
+            "tlovejoy");
+
+        ChatResponse response = await handler.Handle(query, CancellationToken.None);
+
+        var responseText = response.Messages.LastOrDefault()?.Text;
+        await TestContext.Out.WriteLineAsync($"LLM response: {responseText}");
+
+        var factory = TestHost.GetRequiredService<ChatClientFactory>();
+        IChatClient parseClient = await factory.GetChatClient();
+        ChatResponse parseResponse = await parseClient.GetResponseAsync(
+        [
+            new(ChatRole.System,
+                "Extract only the work order number from the following text. " +
+                "Return nothing but the work order number itself, with no extra text."),
+            new(ChatRole.User, responseText)
+        ]);
+        var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
+        await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
+
+        var db = TestHost.GetRequiredService<DataContext>();
+        var workOrder = await db.Set<WorkOrder>()
+            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+
+        workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
+        workOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
+        workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+        workOrder?.Creator?.FirstName.ShouldBe("Timothy");
+    }
 }
