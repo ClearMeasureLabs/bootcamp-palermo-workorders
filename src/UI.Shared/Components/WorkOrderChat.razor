@@ -30,9 +30,10 @@
 
             <div class="chat-input-container">
                 <InputText @bind-Value="_prompt"
-                           data-testid="@(Elements.ChatInput.ToString())"
-                           class="form-control chat-input"
-                           placeholder="Ask the AI assistant about this work order..."/>
+                    @onkeydown="OnKeyDownAsync"
+                    data-testid="@(Elements.ChatInput.ToString())"
+                    class="form-control chat-input"
+                    placeholder="Ask the AI assistant about this work order..."/>
                 <button type="button"
                         data-testid="@(Elements.SendButton.ToString())"
                         class="btn btn-secondary chat-send-btn"
@@ -102,6 +103,14 @@
         UserMessage,
         AiMessage,
         LoadingIndicator
+    }
+
+    private async Task OnKeyDownAsync(KeyboardEventArgs args)
+    {
+        if (args.Key != "Enter")
+            return;
+
+        await SendMessage();
     }
 }
 
