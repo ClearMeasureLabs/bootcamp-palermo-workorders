@@ -83,7 +83,7 @@ public class WorkOrderTools
         }
     }
 
-    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.")]
+    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, InProgressToAssignedCommand, AssignedToCancelledCommand.")]
     public static async Task<string> ExecuteWorkOrderCommand(
         IBus bus,
         [Description("The work order number")] string workOrderNumber,

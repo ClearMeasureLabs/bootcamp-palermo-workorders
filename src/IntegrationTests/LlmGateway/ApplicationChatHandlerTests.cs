@@ -95,4 +95,43 @@ public class ApplicationChatHandlerTests : LlmTestBase
         workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
         workOrder?.Creator?.FirstName.ShouldBe("Timothy");
     }
+
+    [Test]
+    public async Task Handle_CreateAndAssignWorkOrder_CreatesAssignedAndShelves()
+    {
+        new ZDataLoader().LoadData();
+        var db = TestHost.GetRequiredService<DataContext>();
+        var employee = db.Set<Employee>().FirstOrDefault();
+        var creator = db.Set<Employee>().OrderByDescending(e => e.Id).FirstOrDefault();
+        var newWorkOrder = new WorkOrder()
+        {
+            AssignedDate = DateTime.Now,
+            Status = WorkOrderStatus.InProgress,
+            Assignee = employee,
+            Creator = creator,
+            Description = "",
+            Number = "EB0A9",
+            Title = "Work order title"
+        };
+
+        await db.AddAsync(newWorkOrder);
+
+        await db.SaveChangesAsync();
+
+        var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
+        var query = new ApplicationChatQuery(
+            $"shelve work order num {newWorkOrder.Number} as employee {employee?.UserName}. I confirm that I want you to do that now.",
+            employee?.UserName ?? "");
+
+        ChatResponse response = await handler.Handle(query, CancellationToken.None);
+
+        var responseText = response.Messages.LastOrDefault()?.Text;
+        await TestContext.Out.WriteLineAsync($"LLM response: {responseText}");
+        
+        var workOrder = await db.Set<WorkOrder>()
+            .SingleOrDefaultAsync(wo => wo.Number == newWorkOrder.Number);
+
+        workOrder.ShouldNotBeNull($"No work order found with number '{newWorkOrder.Number}'");
+        workOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
+    }
 }
