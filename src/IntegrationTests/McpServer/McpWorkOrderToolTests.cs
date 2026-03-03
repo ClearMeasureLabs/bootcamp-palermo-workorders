@@ -172,5 +172,11 @@ public class McpWorkOrderToolTests
 
         result.ShouldContain("Cancelled");
         result.ShouldNotContain("Unknown command");
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var cancelledOrder = await context.Set<WorkOrder>().SingleAsync(wo => wo.Number == "WO-400");
+            cancelledOrder.Status.ShouldBe(WorkOrderStatus.Cancelled);
+        }
     }
 }
