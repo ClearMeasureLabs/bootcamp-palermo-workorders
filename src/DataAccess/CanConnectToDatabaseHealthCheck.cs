@@ -5,15 +5,15 @@ using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.DataAccess;
 
-public class CanConnectToDatabaseHealthCheck(DbContext context, ILogger<CanConnectToDatabaseHealthCheck> logger)
+public class CanConnectToDatabaseHealthCheck(DbContext dbContext, ILogger<CanConnectToDatabaseHealthCheck> logger)
     : IHealthCheck
 {
-    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context1,
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext hcContext,
         CancellationToken cancellationToken = new())
     {
         try
         {
-            var canConnect = await context.Database.CanConnectAsync(cancellationToken);
+            var canConnect = await dbContext.Database.CanConnectAsync(cancellationToken);
             if (canConnect)
             {
                 logger.LogDebug("Health check success via DbContext");
