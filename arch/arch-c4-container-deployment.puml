@@ -16,7 +16,6 @@ System_Boundary(system, "Church Bulletin") {
     Container(ui, "Blazor WASM Client", "Blazor WebAssembly", "Interactive browser application")
     Container(server, "UI Server", "ASP.NET / Azure Container App", "Hosts API, Blazor Server, MCP endpoint")
     Container(worker, "Worker", ".NET Worker Service", "NServiceBus endpoint for async processing")
-    Container(mcpServer, "MCP Server", "ASP.NET", "Model Context Protocol tools for AI agents")
     ContainerDb(db, "Database", "Azure SQL Server", "Work orders, employees, roles")
     ContainerDb(nsbTransport, "NServiceBus Transport", "SQL Server", "Message queues and saga persistence")
 }
@@ -30,10 +29,10 @@ Rel(server, db, "Reads/writes", "EF Core / TCP")
 Rel(server, nsbTransport, "Sends messages", "NServiceBus")
 Rel(worker, nsbTransport, "Processes messages", "NServiceBus")
 Rel(worker, db, "Reads/writes", "EF Core / TCP")
-Rel(server, mcpServer, "Hosts at /mcp", "HTTP")
 Rel(server, azureOpenAI, "LLM calls", "HTTPS")
 Rel(worker, azureOpenAI, "LLM calls", "HTTPS")
 Rel(acr, server, "Deploys image", "Docker")
+Rel(acr, worker, "Deploys image", "Docker")
 
 center footer
     C4 Architecture: Container Diagram Footer $(Version)
