@@ -40,7 +40,7 @@ public class WorkOrderChatHandlerTests : LlmTestBase
         }
     }
 
-    [Test, Ignore("This isn't implemented yet")]
+    [Test]
     public async Task Handle_WithListEmployeesPrompt_ReturnsEmployeeData()
     {
         new ZDataLoader().LoadData();
