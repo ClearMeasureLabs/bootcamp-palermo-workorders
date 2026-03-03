@@ -126,6 +126,30 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
+    public async Task ShouldCancelAssignedWorkOrder()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var order = new WorkOrder { Creator = employee, Number = "WO-300", Title = "Test", Assignee = employee, Status = WorkOrderStatus.Assigned };
+
+        await using(var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        await WorkOrderTools.ExecuteWorkOrderCommand(bus, order.Number, nameof(AssignedToCancelledCommand), employee.UserName);
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var updatedOrder = await context.Set<WorkOrder>().FirstOrDefaultAsync(o => o.Number == order.Number);
+            updatedOrder.ShouldNotBeNull();
+            updatedOrder.Status.ShouldBe(WorkOrderStatus.Cancelled);
+        }
+    }
+
+    [Test]
     public async Task ShouldReturnErrorForUnknownCommand()
     {
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
