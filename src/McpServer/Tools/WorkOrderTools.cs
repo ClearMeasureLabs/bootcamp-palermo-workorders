@@ -6,6 +6,8 @@ using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
 using ModelContextProtocol.Server;
 
 namespace ClearMeasure.Bootcamp.McpServer.Tools;
@@ -139,6 +141,7 @@ public class WorkOrderTools
         }
 
         var result = await bus.Send(command);
+        await bus.Send(new ClearContextCommand()); // Clear the context to ensure we get fresh data when we retrieve the work order again
         return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
             new JsonSerializerOptions { WriteIndented = true });
     }
