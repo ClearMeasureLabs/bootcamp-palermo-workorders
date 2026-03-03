@@ -232,7 +232,7 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = new string('A', 51), // Exceeds 50 char limit
-            Title = new string('B', 301), // Exceeds 300 char limit
+            Title = new string('B', 351), // Exceeds 350 char limit
             Description = new string('C', 1001), // Exceeds 1000 char limit
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
@@ -256,7 +256,7 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = "number",
-            Title = new string('B', 300),
+            Title = new string('B', 350),
             Description = "description",
             RoomNumber = "room number",
             Creator = creator,
@@ -269,7 +269,7 @@ public class WorkOrderMappingTests
 
         context.SaveChanges();
 
-        workOrder.Title.Length.ShouldBe(300);
+        workOrder.Title.Length.ShouldBe(350);
     }
 
     [Test]
