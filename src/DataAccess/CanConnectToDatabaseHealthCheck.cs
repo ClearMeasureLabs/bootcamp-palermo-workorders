@@ -6,7 +6,7 @@ namespace ClearMeasure.Bootcamp.DataAccess;
 public class CanConnectToDatabaseHealthCheck(DbContext dbContext)
     : IHealthCheck
 {
-    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context1,
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
         CancellationToken cancellationToken = new())
     {
         try
