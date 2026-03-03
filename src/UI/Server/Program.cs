@@ -13,7 +13,6 @@ builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
-builder.Services.AddHealthChecks();
 
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
