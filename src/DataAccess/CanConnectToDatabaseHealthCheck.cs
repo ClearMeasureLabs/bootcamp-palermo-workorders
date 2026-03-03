@@ -13,14 +13,22 @@ public class CanConnectToDatabaseHealthCheck(DbContext context, ILogger<CanConne
     {
         try
         {
-            await context.Database.CanConnectAsync(cancellationToken);
-            logger.LogDebug("Health check success via DbContext");
+            var canConnect = await context.Database.CanConnectAsync(cancellationToken);
+            if (canConnect)
+            {
+                logger.LogDebug("Health check success via DbContext");
+                return new HealthCheckResult(HealthStatus.Healthy);
+            }
+            else
+            {
+                logger.LogWarning("Health check failed: Cannot connect to database");
+                return new HealthCheckResult(HealthStatus.Unhealthy, description: "Cannot connect to database");
+            }
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Database connection failed");
             return new HealthCheckResult(HealthStatus.Unhealthy, exception: ex);
         }
-        return new HealthCheckResult(HealthStatus.Healthy);
     }
 }
