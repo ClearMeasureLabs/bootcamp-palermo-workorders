@@ -36,12 +36,7 @@ public class ToolProvider(IServer server, ILogger<ToolProvider> logger) : IToolP
             var mcpUrl = address.TrimEnd('/') + "/mcp";
             logger.LogInformation("ToolProvider: connecting to MCP endpoint at {McpUrl}", mcpUrl);
 
-            var handler = new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback =
-                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            };
-            var httpClient = new HttpClient(handler);
+            var httpClient = new HttpClient();
             var transportOptions = new HttpClientTransportOptions
             {
                 Endpoint = new Uri(mcpUrl),
@@ -50,10 +45,19 @@ public class ToolProvider(IServer server, ILogger<ToolProvider> logger) : IToolP
             var transport = new HttpClientTransport(transportOptions, httpClient);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            _client = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
+            var localClient = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
 
-            var mcpTools = await _client.ListToolsAsync(cancellationToken: cts.Token);
-            _tools = mcpTools.Cast<AITool>().ToList();
+            try
+            {
+                var mcpTools = await localClient.ListToolsAsync(cancellationToken: cts.Token);
+                _client = localClient;
+                _tools = mcpTools.Cast<AITool>().ToList();
+            }
+            catch
+            {
+                await localClient.DisposeAsync();
+                throw;
+            }
 
             logger.LogInformation("ToolProvider: discovered {ToolCount} tools via MCP", _tools.Count);
             return _tools;
