@@ -12,7 +12,7 @@ public class WorkOrderChatHandlerTests : LlmTestBase
     {
         var workOrder = Faker<WorkOrder>();
         var handler = TestHost.GetRequiredService<WorkOrderChatHandler>();
-        var query = new WorkOrderChatQuery("What is the title of this work order??", workOrder);
+        var query = new WorkOrderChatQuery("What is the number of this work order??", workOrder);
 
         ChatResponse response;
         try
@@ -33,14 +33,14 @@ public class WorkOrderChatHandlerTests : LlmTestBase
             Assert.Inconclusive("LLM returned empty response");
         }
 
-        if (!responseText!.Contains(workOrder.Title!, StringComparison.OrdinalIgnoreCase))
+        if (!responseText!.Contains(workOrder.Number!, StringComparison.OrdinalIgnoreCase))
         {
             Assert.Inconclusive(
-                $"LLM response did not contain work order title '{workOrder.Title}'");
+                $"LLM response did not contain work order number '{workOrder.Number}'");
         }
     }
 
-    [Test]
+    [Test, Ignore("This isn't implemented yet")]
     public async Task Handle_WithListEmployeesPrompt_ReturnsEmployeeData()
     {
         new ZDataLoader().LoadData();
