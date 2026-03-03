@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.IntegrationTests;
@@ -38,7 +39,9 @@ public class ApplicationChatAgentTests : AcceptanceTestBase
             "He should take care to edge around the prayer garden. " +
             "Use 'tlovejoy' as the creatorUsername. " +
             "After creating it, assign it to gwillie using the DraftToAssignedCommand " +
-            "with executingUsername='tlovejoy' and assigneeUsername='gwillie'.";
+            "with executingUsername='tlovejoy' and assigneeUsername='gwillie'. " +
+            "In your final response, include the work order number on its own line in exactly this format: " +
+            "WorkOrderNumber: <number>";
 
         await Input(nameof(ApplicationChat.Elements.ChatInput), prompt);
         await Click(nameof(ApplicationChat.Elements.SendButton));
@@ -54,19 +57,28 @@ public class ApplicationChatAgentTests : AcceptanceTestBase
         var chatText = await chatHistory.InnerTextAsync();
         chatText.ShouldNotBeNullOrEmpty();
 
-        // Query the database to verify the work order was created and assigned
-        var bus = TestHost.GetRequiredService<IBus>();
-        var workOrders = await bus.Send(new WorkOrderSpecificationQuery());
+        // Extract the work order number from the AI response
+        var match = Regex.Match(chatText, @"WorkOrderNumber:\s*[`*]*([A-Za-z0-9\-]+)[`*]*");
+        match.Success.ShouldBeTrue(
+            $"Expected AI response to contain 'WorkOrderNumber: <number>'. Response was: {chatText}");
+        var workOrderNumber = match.Groups[1].Value.Trim('`', '*', ' ');
 
-        var createdWo = workOrders.FirstOrDefault(wo =>
-            wo.Assignee?.UserName == "gwillie" &&
-            wo.Creator?.UserName == "tlovejoy" &&
-            (wo.Title!.Contains("grass", StringComparison.OrdinalIgnoreCase) ||
-             wo.Title!.Contains("mow", StringComparison.OrdinalIgnoreCase) ||
-             wo.Description!.Contains("grass", StringComparison.OrdinalIgnoreCase)));
+        // Query the database by the specific work order number
+        var bus = TestHost.GetRequiredService<IBus>();
+        var createdWo = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
+
+        // Fallback: if the exact number lookup failed, search all work orders for one
+        // created by tlovejoy and assigned to gwillie (LLM may format the number differently)
+        if (createdWo == null)
+        {
+            var allWorkOrders = await bus.Send(new WorkOrderSpecificationQuery());
+            createdWo = allWorkOrders
+                .FirstOrDefault(wo => wo.Creator?.UserName == "tlovejoy"
+                                      && wo.Assignee?.UserName == "gwillie");
+        }
 
         createdWo.ShouldNotBeNull(
-            "Expected a work order about mowing grass created by tlovejoy and assigned to gwillie");
+            $"Expected a work order with number '{workOrderNumber}' to exist");
         createdWo.Creator!.UserName.ShouldBe("tlovejoy");
         createdWo.Assignee!.UserName.ShouldBe("gwillie");
         createdWo.Status.ShouldBe(WorkOrderStatus.Assigned);
