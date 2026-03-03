@@ -162,6 +162,13 @@ public class McpWorkOrderToolTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-002", "AssignedToCancelledCommand", "user1");
 
+        WorkOrder? wo = null;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            wo = context.Set<WorkOrder>().Where(wo => wo.Number == "WO-002").Single();
+        }
+
+        wo.Status.ShouldBe(WorkOrderStatus.Cancelled);
         result.ShouldContain("Cancelled");
     }
 }
