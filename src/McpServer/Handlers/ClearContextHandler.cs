@@ -2,7 +2,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
+namespace ClearMeasure.Bootcamp.McpServer.Handlers;
 
 public class ClearContextCommandHandler(DbContext context) : IRequestHandler<ClearContextCommand>
 {

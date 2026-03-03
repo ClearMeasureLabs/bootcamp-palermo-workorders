@@ -141,9 +141,23 @@ public class WorkOrderTools
         }
 
         var result = await bus.Send(command);
-        await bus.Send(new ClearContextCommand()); // Clear the context to ensure we get fresh data when we retrieve the work order again
+
+        await TryToClearContext(bus); 
+        
         return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
             new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    static async Task TryToClearContext(IBus bus)
+    {
+        try
+        {
+            await bus.Send(new ClearContextCommand());
+        }
+        catch
+        {
+            // Ignore any exceptions - this is just a best effort to clear the context after executing a command
+        }
     }
 
     private static async Task<Employee?> FindEmployeeByUsername(IBus bus, string username)
