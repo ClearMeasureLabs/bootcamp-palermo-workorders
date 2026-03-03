@@ -116,6 +116,40 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
+    public async Task ShouldCancelWorkOrder()
+    {
+        var employee = new Employee("creator1", "Jane", "Smith", "jane@test.com");
+        var description = "Fix the broken window";
+        var numberGenerator = new WorkOrderNumberGenerator();
+        var workOrder = new WorkOrder
+        {
+            Number = numberGenerator.GenerateNumber(),
+            Status = WorkOrderStatus.Assigned,
+            Assignee = employee,
+            AssignedDate = DateTime.UtcNow,
+            Creator = employee,
+            Description = description
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var assignResult = await WorkOrderTools.ExecuteWorkOrderCommand(bus, workOrder.Number,
+                "DraftToAssignedCommand", employee.UserName, employee.UserName);
+
+        var r = await WorkOrderTools.ExecuteWorkOrderCommand(bus, workOrder.Number, "AssignedToCancelledCommand",
+            employee.UserName);
+        r.ShouldNotBeNullOrEmpty();
+        r.ShouldContain("Cancelled");
+    }
+
+    [Test]
     public async Task ShouldReturnErrorForMissingCreator()
     {
         var bus = TestHost.GetRequiredService<IBus>();

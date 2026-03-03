@@ -1,18 +1,42 @@
-using System.ComponentModel;
-using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
-using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ModelContextProtocol.Server;
+using System.ComponentModel;
+using System.Text.Json;
 
 namespace ClearMeasure.Bootcamp.McpServer.Tools;
 
 [McpServerToolType]
 public class WorkOrderTools
 {
+    [McpServerTool(Name = "cancel-work-order"), Description("Cancels a work order.")]
+    public static async Task<string> CancelWorkOrder(
+        IBus bus,
+        [Description("The work order number")] string workOrderNumber,
+        [Description("Username of the employee executing the cancellation")] string executingUsername)
+    {
+        var workOrder = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
+        if (workOrder == null)
+        {
+            return $"No work order found with number '{workOrderNumber}'.";
+        }
+
+        var creator = await FindEmployeeByUsername(bus, executingUsername);
+        if (creator == null)
+        {
+            return $"Employee with username '{executingUsername}' not found.";
+        }
+
+        var command = new AssignedToCancelledCommand(workOrder, creator);
+        var result = await bus.Send(command);
+
+        return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
+            new JsonSerializerOptions { WriteIndented = true });
+    }
+
     [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status. Valid statuses: Draft, Assigned, InProgress, Complete.")]
     public static async Task<string> ListWorkOrders(
         IBus bus,
@@ -83,7 +107,7 @@ public class WorkOrderTools
         }
     }
 
-    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand.")]
+    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.")]
     public static async Task<string> ExecuteWorkOrderCommand(
         IBus bus,
         [Description("The work order number")] string workOrderNumber,
@@ -124,6 +148,7 @@ public class WorkOrderTools
             "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
             "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
             "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
+            "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
             _ => null
         };
 
