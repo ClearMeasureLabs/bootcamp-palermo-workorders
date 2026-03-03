@@ -1,5 +1,5 @@
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.DataAccess;
+using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 
