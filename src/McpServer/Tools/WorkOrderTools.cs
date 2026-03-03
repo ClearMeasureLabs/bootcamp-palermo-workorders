@@ -12,31 +12,6 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class WorkOrderTools
 {
-    [McpServerTool(Name = "cancel-work-order"), Description("Cancels a work order.")]
-    public static async Task<string> CancelWorkOrder(
-        IBus bus,
-        [Description("The work order number")] string workOrderNumber,
-        [Description("Username of the employee executing the cancellation")] string executingUsername)
-    {
-        var workOrder = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
-        if (workOrder == null)
-        {
-            return $"No work order found with number '{workOrderNumber}'.";
-        }
-
-        var creator = await FindEmployeeByUsername(bus, executingUsername);
-        if (creator == null)
-        {
-            return $"Employee with username '{executingUsername}' not found.";
-        }
-
-        var command = new AssignedToCancelledCommand(workOrder, creator);
-        var result = await bus.Send(command);
-
-        return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
-            new JsonSerializerOptions { WriteIndented = true });
-    }
-
     [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status. Valid statuses: Draft, Assigned, InProgress, Complete.")]
     public static async Task<string> ListWorkOrders(
         IBus bus,
