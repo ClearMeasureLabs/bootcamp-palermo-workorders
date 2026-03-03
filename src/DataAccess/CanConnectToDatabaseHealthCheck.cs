@@ -5,29 +5,30 @@ using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.DataAccess;
 
-public class CanConnectToDatabaseHealthCheck(DbContext context, ILogger<CanConnectToDatabaseHealthCheck> logger)
+public class CanConnectToDatabaseHealthCheck(DbContext dbContext, ILogger<CanConnectToDatabaseHealthCheck> logger)
     : IHealthCheck
 {
-    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context1,
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext hcContext,
         CancellationToken cancellationToken = new())
     {
         try
         {
-            var canConnect = await context.Database.CanConnectAsync(cancellationToken);
-            
+            var canConnect = await dbContext.Database.CanConnectAsync(cancellationToken);
             if (canConnect)
             {
-                logger.LogDebug("Database connection health check passed");
-                return HealthCheckResult.Healthy("Database connection is healthy");
+                logger.LogDebug("Health check success via DbContext");
+                return new HealthCheckResult(HealthStatus.Healthy);
             }
-            
-            logger.LogWarning("Database connection health check failed: unable to connect");
-            return HealthCheckResult.Unhealthy("Cannot connect to database");
+            else
+            {
+                logger.LogWarning("Health check failed: Cannot connect to database");
+                return new HealthCheckResult(HealthStatus.Unhealthy, description: "Cannot connect to database");
+            }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Database connection health check encountered an exception");
-            return HealthCheckResult.Unhealthy("Database connection failed with exception", ex);
+            logger.LogWarning(ex, "Database connection failed");
+            return new HealthCheckResult(HealthStatus.Unhealthy, exception: ex);
         }
     }
 }
