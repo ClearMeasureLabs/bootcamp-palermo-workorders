@@ -114,22 +114,35 @@ public static class TestHost
 
     /// <summary>
     /// Provides tools directly via AIFunctionFactory for integration tests
-    /// that don't have a running MCP server.
+    /// that don't have a running MCP server. Creates a new DI scope per tool
+    /// invocation to match the real MCP server's per-request scope behavior.
     /// </summary>
-    private class InProcessToolProvider(IBus bus, IWorkOrderNumberGenerator numberGenerator) : IToolProvider
+    private class InProcessToolProvider(IServiceProvider serviceProvider) : IToolProvider
     {
+        private IBus CreateScopedBus()
+        {
+            var scope = serviceProvider.CreateScope();
+            return scope.ServiceProvider.GetRequiredService<IBus>();
+        }
+
+        private IWorkOrderNumberGenerator CreateScopedNumberGenerator()
+        {
+            var scope = serviceProvider.CreateScope();
+            return scope.ServiceProvider.GetRequiredService<IWorkOrderNumberGenerator>();
+        }
+
         public Task<IList<AITool>> GetToolsAsync()
         {
             IList<AITool> tools =
             [
                 AIFunctionFactory.Create(
                     ([System.ComponentModel.Description("Optional status filter")] string? status = null)
-                        => WorkOrderTools.ListWorkOrders(bus, status),
+                        => WorkOrderTools.ListWorkOrders(CreateScopedBus(), status),
                     "ListWorkOrders",
                     "Lists all work orders, optionally filtered by status."),
                 AIFunctionFactory.Create(
                     ([System.ComponentModel.Description("The work order number")] string workOrderNumber)
-                        => WorkOrderTools.GetWorkOrder(bus, workOrderNumber),
+                        => WorkOrderTools.GetWorkOrder(CreateScopedBus(), workOrderNumber),
                     "GetWorkOrder",
                     "Retrieves a single work order by its number."),
                 AIFunctionFactory.Create(
@@ -137,7 +150,7 @@ public static class TestHost
                      [System.ComponentModel.Description("Description")] string description,
                      [System.ComponentModel.Description("Creator username")] string creatorUsername,
                      [System.ComponentModel.Description("Optional room number")] string? roomNumber = null)
-                        => WorkOrderTools.CreateWorkOrder(bus, numberGenerator, title, description, creatorUsername, roomNumber),
+                        => WorkOrderTools.CreateWorkOrder(CreateScopedBus(), CreateScopedNumberGenerator(), title, description, creatorUsername, roomNumber),
                     "CreateWorkOrder",
                     "Creates a new draft work order."),
                 AIFunctionFactory.Create(
@@ -145,16 +158,16 @@ public static class TestHost
                      [System.ComponentModel.Description("Command name")] string commandName,
                      [System.ComponentModel.Description("Executing username")] string executingUsername,
                      [System.ComponentModel.Description("Assignee username")] string? assigneeUsername = null)
-                        => WorkOrderTools.ExecuteWorkOrderCommand(bus, workOrderNumber, commandName, executingUsername, assigneeUsername),
+                        => WorkOrderTools.ExecuteWorkOrderCommand(CreateScopedBus(), workOrderNumber, commandName, executingUsername, assigneeUsername),
                     "ExecuteWorkOrderCommand",
                     "Executes a state command on a work order."),
                 AIFunctionFactory.Create(
-                    () => EmployeeTools.ListEmployees(bus),
+                    () => EmployeeTools.ListEmployees(CreateScopedBus()),
                     "ListEmployees",
                     "Lists all employees."),
                 AIFunctionFactory.Create(
                     ([System.ComponentModel.Description("Username")] string username)
-                        => EmployeeTools.GetEmployee(bus, username),
+                        => EmployeeTools.GetEmployee(CreateScopedBus(), username),
                     "GetEmployee",
                     "Retrieves a single employee by username."),
             ];
