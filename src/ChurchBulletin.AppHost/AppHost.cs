@@ -5,7 +5,8 @@ var appInsights = builder.AddConnectionString("AppInsights");
 
 builder.AddProject<Projects.UI_Server>("ui-server")
     .WithReference(sql)
-    .WithReference(appInsights);
+    .WithReference(appInsights)
+    .WithHttpHealthCheck("/_healthcheck");
 
 builder.AddProject<Projects.Worker>("worker")
     .WithReference(sql)
