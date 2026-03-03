@@ -1,16 +1,18 @@
-﻿using ClearMeasure.Bootcamp.DataAccess.Mappings;
-using Microsoft.EntityFrameworkCore;
+using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.DataAccess;
 
-public class CanConnectToDatabaseHealthCheck()
+public class CanConnectToDatabaseHealthCheck(DataContext dataContext)
     : IHealthCheck
 {
-    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context1,
-        CancellationToken cancellationToken = new())
+    public async Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default)
     {
-        return new HealthCheckResult(HealthStatus.Healthy);
+        var canConnect = await dataContext.Database.CanConnectAsync(cancellationToken);
+        return canConnect
+            ? HealthCheckResult.Healthy()
+            : HealthCheckResult.Unhealthy("Cannot connect to the database.");
     }
 }
