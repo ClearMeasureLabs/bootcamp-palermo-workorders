@@ -2,6 +2,7 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
+using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using Microsoft.EntityFrameworkCore;
@@ -143,5 +144,30 @@ public class McpWorkOrderToolTests
 
         result.ShouldContain("Unknown command");
         result.ShouldContain("Available commands");
+    }
+
+    [Test]
+    public async Task ShouldCancelWorkOrderByNumber()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var order = new WorkOrder { Creator = employee, Status=WorkOrderStatus.Assigned, Number = "WO-MCP", Title = "Test order", Description = "A description", RoomNumber = "101" };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        
+        var cancelResult = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-MCP", "AssignedToCancelledCommand", "user1");
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var result = context.Set<WorkOrder>().Where(wo => wo.Number == "WO-MCP").FirstOrDefault();
+            result.ShouldNotBeNull();
+            result!.Status.ShouldBe(WorkOrderStatus.Cancelled);
+        }
     }
 }
