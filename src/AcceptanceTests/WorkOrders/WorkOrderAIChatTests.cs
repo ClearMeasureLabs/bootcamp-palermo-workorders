@@ -68,8 +68,7 @@ public class WorkOrderAiChatTests : AcceptanceTestBase
         chatHistoryText.ShouldContain(order.Number!);
     }
 
-    [Test, Retry(2)]
-    [Ignore("This isn't implemented yet")]
+    [Test, Ignore("Not yet implemented")]
     public async Task ShouldListEmployees()
     {
         await LoginAsCurrentUser();
