@@ -95,4 +95,41 @@ public class ApplicationChatHandlerTests : LlmTestBase
         workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
         workOrder?.Creator?.FirstName.ShouldBe("Timothy");
     }
+
+    [Test]
+    public async Task Handle_CreateAndAssignWorkOrder_ShelveWorkOrderForWilie()
+    {
+        new ZDataLoader().LoadData();
+        var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
+
+        var setupOrder = new WorkOrder
+        {
+            Number = "WO-01",
+            Title = "Mow the grass",
+            Description = "Get mowing Willie",
+            RoomNumber = "CR-101",
+            Status = WorkOrderStatus.InProgress,
+            Creator = new Employee("creator1", "John", "Doe", "john@example.com"),
+            Assignee = new Employee("gwillie", "Groundskeeper Willie", "MacDougal", "willie@springfieldelementary.edu")
+        };
+        var db = TestHost.GetRequiredService<DataContext>();
+
+        db.Add(setupOrder);
+        db.SaveChangesAsync();
+        var workOrderNumber = setupOrder.Number;
+
+        var shelveQuery = new ApplicationChatQuery(
+            "shelve work order " + workOrderNumber,
+            "gwillie");
+
+        var resp = await handler.Handle(shelveQuery, CancellationToken.None);
+
+        var workOrder = await db.Set<WorkOrder>()
+            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+
+        workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
+        workOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
+        workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+        workOrder?.Creator?.FirstName.ShouldBe("Timothy");
+    }
 }
