@@ -10,7 +10,16 @@ public class CanConnectToDatabaseHealthCheck(DataContext dataContext)
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
-        var canConnect = await dataContext.Database.CanConnectAsync(cancellationToken);
+        bool canConnect;
+        try
+        {
+            canConnect = await dataContext.Database.CanConnectAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return HealthCheckResult.Unhealthy("Cannot connect: operation cancelled.");
+        }
+
         return canConnect
             ? HealthCheckResult.Healthy()
             : HealthCheckResult.Unhealthy("Cannot connect to the database.");
