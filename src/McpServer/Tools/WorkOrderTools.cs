@@ -124,6 +124,7 @@ public class WorkOrderTools
             "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
             "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
             "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
+            "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
             _ => null
         };
 
