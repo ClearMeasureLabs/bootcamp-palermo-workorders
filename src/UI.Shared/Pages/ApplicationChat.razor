@@ -4,7 +4,9 @@
 @using ClearMeasure.Bootcamp.Core.Queries
 @using ClearMeasure.Bootcamp.LlmGateway
 @using ClearMeasure.Bootcamp.UI.Shared.Authentication
+@using Microsoft.JSInterop
 @inject CustomAuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
 
 <PageTitle>AI Agent - Work Order Assistant</PageTitle>
 
@@ -19,7 +21,7 @@
             @if (_chatMessages.Any())
             {
                 <div data-testid="@Elements.ChatHistory" class="chat-history-wrapper">
-                    <div data-testid="@Elements.ChatHistoryViewport" class="chat-history">
+                    <div @ref="_chatHistoryRef" data-testid="@Elements.ChatHistoryViewport" class="chat-history">
                         @for (int i = 0; i < _chatMessages.Count; i++)
                         {
                             var message = _chatMessages[i];
@@ -66,6 +68,21 @@
     private string _prompt = "";
     private bool _isLoading;
     private readonly List<ChatMessage> _chatMessages = new();
+    private ElementReference _chatHistoryRef;
+    private bool _shouldScrollToBottom;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_shouldScrollToBottom)
+        {
+            _shouldScrollToBottom = false;
+            try
+            {
+                await JS.InvokeVoidAsync("scrollToBottom", _chatHistoryRef);
+            }
+            catch (JSDisconnectedException) { }
+        }
+    }
 
     private async Task SendMessage()
     {
@@ -75,6 +92,7 @@
         var userMessage = _prompt.Trim();
         _chatMessages.Add(new ChatMessage { Content = userMessage, IsUser = true });
         _isLoading = true;
+        _shouldScrollToBottom = true;
         await InvokeAsync(StateHasChanged);
         _prompt = "";
 
@@ -99,6 +117,7 @@
         finally
         {
             _isLoading = false;
+            _shouldScrollToBottom = true;
             await InvokeAsync(StateHasChanged);
         }
     }
