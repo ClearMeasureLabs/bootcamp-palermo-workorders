@@ -7,5 +7,5 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 /// </summary>
 public interface IToolProvider
 {
-    IList<AITool> GetTools();
+    Task<IList<AITool>> GetToolsAsync();
 }
