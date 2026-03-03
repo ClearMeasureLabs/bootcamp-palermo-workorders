@@ -90,6 +90,7 @@ public static class TestHost
                     transport.ConnectionString(connectionString);
                     transport.DefaultSchema("nServiceBus");
                     transport.Transactions(TransportTransactionMode.TransactionScope);
+                    transport.Transport.TransportTransactionMode = TransportTransactionMode.ReceiveOnly;
                     transport.Routing()
                         .RouteToEndpoint(typeof(TracerBulletCommand), "WorkOrderProcessing");
                 }
