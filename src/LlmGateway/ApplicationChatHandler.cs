@@ -5,13 +5,11 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 
 public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider toolProvider) : IRequestHandler<ApplicationChatQuery, ChatResponse>
 {
-    private readonly ChatOptions _chatOptions = new()
-    {
-        Tools = toolProvider.GetTools()
-    };
-
     public async Task<ChatResponse> Handle(ApplicationChatQuery request, CancellationToken cancellationToken)
     {
+        var tools = await toolProvider.GetToolsAsync();
+        var chatOptions = new ChatOptions { Tools = tools };
+
         string prompt = request.Prompt;
         var chatMessages = new List<ChatMessage>()
         {
@@ -31,7 +29,7 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
         chatMessages.Add(new ChatMessage(ChatRole.User, prompt));
 
         IChatClient client = await factory.GetChatClient();
-        ChatResponse response = await client.GetResponseAsync(chatMessages, _chatOptions);
+        ChatResponse response = await client.GetResponseAsync(chatMessages, chatOptions);
         return response;
     }
 }

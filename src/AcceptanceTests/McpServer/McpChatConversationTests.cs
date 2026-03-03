@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
@@ -48,23 +49,21 @@ public class McpChatConversationTests : AcceptanceTestBase
 			"(cutting grass, edging, and fertilizer), creatorUsername='tlovejoy', and roomNumber='Outdoor Lawn'.\n" +
 			"2. Take the work order Number returned from step 1 and call execute-work-order-command with " +
 			"commandName='DraftToAssignedCommand', executingUsername='tlovejoy', assigneeUsername='gwillie'.\n" +
-			"Report the final work order details including the number, title, description, status, assignee, and room number.");
+			"In your final response, include the work order number on its own line in exactly this format: " +
+			"WorkOrderNumber: <number>");
 
 		response.Text.ShouldNotBeNullOrEmpty();
 
-		var bus = TestHost.GetRequiredService<IBus>();
-		var workOrders = await bus.Send(new WorkOrderSpecificationQuery());
+		var match = Regex.Match(response.Text, @"WorkOrderNumber:\s*(\S+)");
+		match.Success.ShouldBeTrue(
+			$"Expected response to contain 'WorkOrderNumber: <number>'. Response was: {response.Text}");
+		var workOrderNumber = match.Groups[1].Value;
 
-		var lawnWorkOrder = workOrders.FirstOrDefault(wo =>
-			wo.Assignee?.UserName == "gwillie" &&
-			wo.Status == WorkOrderStatus.Assigned &&
-			wo.Creator?.UserName == "tlovejoy" &&
-			(wo.Title!.Contains("grass", StringComparison.OrdinalIgnoreCase) ||
-			 wo.Title!.Contains("lawn", StringComparison.OrdinalIgnoreCase) ||
-			 wo.Description!.Contains("grass", StringComparison.OrdinalIgnoreCase)));
+		var bus = TestHost.GetRequiredService<IBus>();
+		var lawnWorkOrder = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
 
 		lawnWorkOrder.ShouldNotBeNull(
-			"Expected a work order for lawn care created by tlovejoy and assigned to gwillie");
+			$"Expected a work order with number '{workOrderNumber}' to exist");
 		lawnWorkOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
 		lawnWorkOrder.Creator!.UserName.ShouldBe("tlovejoy");
 		lawnWorkOrder.Assignee!.UserName.ShouldBe("gwillie");

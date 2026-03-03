@@ -1,10 +1,14 @@
-﻿using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model.Messages;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
+using ClearMeasure.Bootcamp.LlmGateway;
+using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Server;
 using ClearMeasure.Bootcamp.UnitTests;
 using Lamar.Microsoft.DependencyInjection;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -64,6 +68,7 @@ public static class TestHost
                 var stubTimeProvider = new StubTimeProvider(TestTime);
                 s.AddSingleton<TimeProvider>(stubTimeProvider);
                 s.AddScoped<IDistributedBus, DistributedBus>();
+                s.AddTransient<IToolProvider, InProcessToolProvider>();
             })
             .UseNServiceBus(context =>
             {
@@ -104,6 +109,56 @@ public static class TestHost
         public override DateTimeOffset GetUtcNow()
         {
             return testTime;
+        }
+    }
+
+    /// <summary>
+    /// Provides tools directly via AIFunctionFactory for integration tests
+    /// that don't have a running MCP server.
+    /// </summary>
+    private class InProcessToolProvider(IBus bus, IWorkOrderNumberGenerator numberGenerator) : IToolProvider
+    {
+        public Task<IList<AITool>> GetToolsAsync()
+        {
+            IList<AITool> tools =
+            [
+                AIFunctionFactory.Create(
+                    ([System.ComponentModel.Description("Optional status filter")] string? status = null)
+                        => WorkOrderTools.ListWorkOrders(bus, status),
+                    "ListWorkOrders",
+                    "Lists all work orders, optionally filtered by status."),
+                AIFunctionFactory.Create(
+                    ([System.ComponentModel.Description("The work order number")] string workOrderNumber)
+                        => WorkOrderTools.GetWorkOrder(bus, workOrderNumber),
+                    "GetWorkOrder",
+                    "Retrieves a single work order by its number."),
+                AIFunctionFactory.Create(
+                    ([System.ComponentModel.Description("Title")] string title,
+                     [System.ComponentModel.Description("Description")] string description,
+                     [System.ComponentModel.Description("Creator username")] string creatorUsername,
+                     [System.ComponentModel.Description("Optional room number")] string? roomNumber = null)
+                        => WorkOrderTools.CreateWorkOrder(bus, numberGenerator, title, description, creatorUsername, roomNumber),
+                    "CreateWorkOrder",
+                    "Creates a new draft work order."),
+                AIFunctionFactory.Create(
+                    ([System.ComponentModel.Description("Work order number")] string workOrderNumber,
+                     [System.ComponentModel.Description("Command name")] string commandName,
+                     [System.ComponentModel.Description("Executing username")] string executingUsername,
+                     [System.ComponentModel.Description("Assignee username")] string? assigneeUsername = null)
+                        => WorkOrderTools.ExecuteWorkOrderCommand(bus, workOrderNumber, commandName, executingUsername, assigneeUsername),
+                    "ExecuteWorkOrderCommand",
+                    "Executes a state command on a work order."),
+                AIFunctionFactory.Create(
+                    () => EmployeeTools.ListEmployees(bus),
+                    "ListEmployees",
+                    "Lists all employees."),
+                AIFunctionFactory.Create(
+                    ([System.ComponentModel.Description("Username")] string username)
+                        => EmployeeTools.GetEmployee(bus, username),
+                    "GetEmployee",
+                    "Retrieves a single employee by username."),
+            ];
+            return Task.FromResult(tools);
         }
     }
 
