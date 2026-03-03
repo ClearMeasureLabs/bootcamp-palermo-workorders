@@ -1,5 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
-using MediatR;
+﻿using MediatR;
 using Microsoft.Extensions.AI;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
@@ -10,6 +9,7 @@ public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workO
     {
         Tools = [
             AIFunctionFactory.Create(workOrderTool.GetWorkOrderByNumber),
+            AIFunctionFactory.Create(workOrderTool.GetAllEmployees)
         ]
     };
 
@@ -22,11 +22,10 @@ public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workO
             new(ChatRole.System, $"Work Order number is {request.CurrentWorkOrder.Number}"),
             new(ChatRole.System, $"Limit answer to 3 sentences unless listing data. When listing items, include ALL items from the tool response. Be brief otherwise."),
             new(ChatRole.User, prompt)
-            
         };
 
         IChatClient client = await factory.GetChatClient();
-        ChatResponse responseAsync = await client.GetResponseAsync(chatMessages, _chatOptions);
+        ChatResponse responseAsync = await client.GetResponseAsync(chatMessages, _chatOptions, cancellationToken);
         return responseAsync;
     }
 }
