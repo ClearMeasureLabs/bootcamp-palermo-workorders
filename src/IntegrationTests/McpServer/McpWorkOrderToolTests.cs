@@ -144,4 +144,29 @@ public class McpWorkOrderToolTests
         result.ShouldContain("Unknown command");
         result.ShouldContain("Available commands");
     }
+
+    [Test]
+    public async Task ShouldCancelAssignedWorkOrder()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var assignee = new Employee("user2", "John", "Doe", "john@test.com");
+        var order = new WorkOrder { Creator = employee, Number = "WO-301", Title = "Test", Assignee = assignee, Status = WorkOrderStatus.Assigned };
+
+        using var context = TestHost.GetRequiredService<DbContext>();
+        {
+            context.Add(employee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-301", "AssignedToCancelledCommand", "user1");
+
+        using var context2 = TestHost.GetRequiredService<DbContext>();
+        {
+            context2.Set<WorkOrder>()
+                .First(w => w.Number == "WO-301")
+                .Status.ShouldBe(WorkOrderStatus.Cancelled);
+        }
+    }
 }
