@@ -1,0 +1,142 @@
+@startuml
+
+title AiBotWorkOrderSaga Integration Test\nHandle_AssignedToBot_SagaCompletesAndUpdatesDescription
+
+participant "AiBotWorkOrderSagaTests\n(Integration Test)" as test
+participant "AiBotSagaSignal\n(Static ConcurrentDictionary)" as signal
+participant "StateCommandHandler\n(DataAccess)" as stateHandler
+participant "DraftToAssignedCommand\n(StateCommandBase)" as draftCmd
+participant "DistributedBus\n(IMessageSession.Publish)" as distBus
+participant "EventHandler\n(Worker.Handlers)" as eventHandler
+participant "AiBotWorkOrderSaga\n(NServiceBus Saga)" as saga
+participant "IBus\n(MediatR Send)" as bus
+participant "AssignedToInProgressCommand" as assignCmd
+participant "ChatClientFactory" as factory
+participant "IChatClient\n(Azure OpenAI)" as chatClient
+participant "InProgressToCompleteCommand" as completeCmd
+participant "AiBotCompletedTestHandler\n(Test Handler)" as completedHandler
+database "DataContext\n(EF Core)" as db
+
+autonumber
+
+== Test Setup: Seed Database ==
+
+test -> test : Clean database\n(DatabaseTests.Clean())
+test -> test : Create Role("Facility Lead")\nCreate Role("Bot")
+test -> test : Create Employee "testcreator"\nwith Facility Lead role
+test -> test : Create Employee "aibot"\nwith Bot role
+test -> test : Create WorkOrder\n(Id=Empty, Status=Draft,\nCreator=testcreator,\nAssignee=aibot,\nDescription="Original description")
+test -> db : SaveChangesAsync()\n(persist roles, employees,\nwork order)
+
+== Test Execution: Fire Command & Wait ==
+
+test -> test : Create DraftToAssignedCommand\n(workOrder, creator)
+test -> stateHandler : Resolve StateCommandHandler\nfrom DI container
+test -> signal : WaitForCompletion(\nworkOrderNumber, 30s)\n→ registers TaskCompletionSource
+test -> stateHandler : Handle(DraftToAssignedCommand)
+
+== StateCommandHandler: Draft → Assigned ==
+
+stateHandler -> draftCmd : Execute(StateCommandContext\n{ CurrentDateTime })
+draftCmd -> draftCmd : Set WorkOrder.AssignedDate\n= CurrentDateTime
+draftCmd -> draftCmd : base.Execute():\nWorkOrder.ChangeStatus(\nCurrentUser, DateTime,\nAssigned)
+
+note right of draftCmd
+  Detects assignee has Bot role:
+  WorkOrder.Assignee.Roles
+    .Any(r => r.Name == "Bot")
+  → creates WorkOrderAssignedToBotEvent
+end note
+
+draftCmd -> draftCmd : StateTransitionEvent =\nnew WorkOrderAssignedToBotEvent(\nworkOrderNumber, assigneeId)
+draftCmd --> stateHandler : Execute complete
+
+stateHandler -> db : Attach & Update WorkOrder\n(Status = Assigned)
+stateHandler -> db : SaveChangesAsync()
+stateHandler -> stateHandler : Log: "{creator} has assigned\nwork order {number}"
+stateHandler -> distBus : PublishAsync(\nWorkOrderAssignedToBotEvent)
+distBus -> distBus : IMessageSession.Publish(\nWorkOrderAssignedToBotEvent)
+
+note right of distBus
+  NServiceBus publishes event
+  to LearningTransport (test)
+  or SqlServerTransport
+end note
+
+stateHandler --> test : StateCommandResult returned\n(test awaits signalTask)
+
+== NServiceBus: EventHandler Receives Event ==
+
+distBus ->> eventHandler : WorkOrderAssignedToBotEvent\n(async via NServiceBus)
+eventHandler -> eventHandler : Create StartAiBotWorkOrderSagaCommand\n(SagaId=new Guid,\nWorkOrderNumber)
+eventHandler -> eventHandler : context.SendLocal(\nStartAiBotWorkOrderSagaCommand)
+
+== Saga Step 1: Start — Assigned → InProgress ==
+
+eventHandler ->> saga : StartAiBotWorkOrderSagaCommand\n(IAmStartedByMessages)
+saga -> saga : Data.SagaId = message.SagaId\nData.WorkOrderNumber =\nmessage.WorkOrderNumber
+saga -> bus : Send(WorkOrderByNumberQuery\n(workOrderNumber))
+bus -> db : Query work order by number
+db --> bus : WorkOrder entity
+bus --> saga : WorkOrder\n(Status=Assigned)
+
+saga -> saga : WorkOrder.Assignee is not null\n→ continue
+
+saga -> bus : Send(AssignedToInProgressCommand\n(workOrder, assignee))
+bus -> stateHandler : Handle(AssignedToInProgress\nCommand)
+stateHandler -> assignCmd : Execute(context)\nWorkOrder.ChangeStatus(\nCurrentUser, DateTime,\nInProgress)
+stateHandler -> db : Attach & Update WorkOrder\n(Status = InProgress)
+stateHandler -> db : SaveChangesAsync()
+stateHandler --> bus : StateCommandResult
+bus --> saga : StateCommandResult\nData.WorkOrder updated
+
+saga -> saga : Publish(AiBotStartedWorkOrderEvent\n(sagaId))
+
+== Saga Step 2: Started — Call LLM & Update Description ==
+
+saga ->> saga : Handle(AiBotStartedWorkOrderEvent)
+saga -> saga : Create ChatMessages:\n[User: "Hello, world!"]
+saga -> factory : GetChatClient()
+factory --> saga : IChatClient (Azure OpenAI)
+saga -> chatClient : GetResponseAsync(\nchatMessages)
+chatClient --> saga : ChatResponse\n(AI-generated text)
+saga -> saga : Data.WorkOrder.Description =\n"{original}\n\nAI Bot: {response}"
+saga -> saga : Publish(AiBotUpdatedWorkerOrder\nEvent(sagaId))
+
+== Saga Step 3: Updated — InProgress → Complete ==
+
+saga ->> saga : Handle(AiBotUpdatedWorkerOrderEvent)
+saga -> bus : Send(InProgressToCompleteCommand\n(workOrder, assignee))
+bus -> stateHandler : Handle(InProgressToComplete\nCommand)
+stateHandler -> completeCmd : Execute(context)\nWorkOrder.CompletedDate =\nCurrentDateTime\nWorkOrder.ChangeStatus(\nCurrentUser, DateTime,\nComplete)
+stateHandler -> db : Attach & Update WorkOrder\n(Status = Complete)
+stateHandler -> db : SaveChangesAsync()
+stateHandler --> bus : StateCommandResult
+bus --> saga : StateCommandResult\nData.WorkOrder updated
+
+saga -> saga : Publish(AiBotCompletedWorkOrder\nEvent(sagaId, workOrderNumber))
+
+== Saga Step 4: Completed — End Saga ==
+
+saga ->> saga : Handle(AiBotCompletedWorkOrderEvent)
+saga -> saga : MarkAsComplete()\n(ends NServiceBus saga)
+
+== Test Handler: Signal Completion ==
+
+saga ->> completedHandler : AiBotCompletedWorkOrderEvent\n(NServiceBus subscriber in\ntest assembly)
+completedHandler -> signal : Complete(workOrderNumber)
+signal -> signal : TrySetResult(true)\non TaskCompletionSource
+
+== Test Verification ==
+
+signal --> test : signalTask completes\n(test unblocks)
+test -> db : Create fresh DbContext\nFind<WorkOrder>(id)
+db --> test : WorkOrder entity
+
+test -> test : Assert: Status == Complete
+test -> test : Assert: Description\ncontains "AI Bot"
+test -> test : Assert: Assignee.UserName\n== "aibot"
+test -> test : Assert: AssignedDate\nis not null
+test -> test : Assert: CompletedDate\nis not null
+
+@enduml
