@@ -72,6 +72,7 @@ public class ApplicationChatTests
     private static TestContext CreateContext()
     {
         var ctx = new TestContext();
+        ctx.JSInterop.SetupVoid("scrollToBottom", _ => true);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new ApplicationChatStubBus());
 

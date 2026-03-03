@@ -38,6 +38,13 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+    <script>
+        window.scrollToBottom = function (element) {
+            if (element) {
+                element.scrollTop = element.scrollHeight;
+            }
+        };
+    </script>
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 
