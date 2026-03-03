@@ -29,12 +29,14 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, IDistri
         }
         else
         {
+            dbContext.Entry(order).State = EntityState.Detached; // Detach the entity to avoid tracking issues
+            dbContext.ChangeTracker.Clear(); // Clear the change tracker to avoid tracking issues with detached entities
             dbContext.Attach(order);
             dbContext.Update(order);
         }
-
+        
         await dbContext.SaveChangesAsync(cancellationToken);
-
+  
         var loweredTransitionVerb = request.TransitionVerbPastTense.ToLower();
         var workOrderNumber = order.Number;
         var fullName = request.CurrentUser.GetFullName();
