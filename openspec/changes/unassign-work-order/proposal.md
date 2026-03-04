@@ -8,7 +8,7 @@ When a creator assigns a work order too quickly or to the wrong person, there is
 - Only the original creator of the work order can execute this command
 - The assignee and assigned date are cleared when the work order returns to Draft
 - The state transition map and UI are updated to expose this action to the creator
-- The MCP server's `execute-work-order-command` tool and reference resources automatically support the new command through the existing `StateCommandList` pattern
+- The MCP server's `execute-work-order-command` tool is updated to include the new `AssignedToDraftCommand` in its command switch
 
 ## Capabilities
 
@@ -24,5 +24,5 @@ When a creator assigns a work order too quickly or to the wrong person, there is
 - **Unit tests**: New test class following the existing 4-test pattern in `src/UnitTests/Core/Model/StateCommands/`
 - **Integration tests**: New persistence test class in `src/IntegrationTests/DataAccess/Handlers/`
 - **StateCommandList**: One additional command registration — existing `GetValidStateCommands`, `GetAllStateCommands`, and `GetMatchingCommand` methods work without modification
-- **MCP server**: No changes needed — the `execute-work-order-command` tool dynamically resolves commands from `StateCommandList`
+- **MCP server**: `execute-work-order-command` tool updated to include `AssignedToDraftCommand` in the command switch and description
 - **UI**: The existing command button rendering logic in the Blazor UI will automatically show the new transition when valid

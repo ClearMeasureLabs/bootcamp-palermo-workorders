@@ -21,6 +21,9 @@ public class StateCommandHandlerForUnassignTests : IntegratedTestBase
         o.Creator = currentUser;
         o.Assignee = assignee;
         o.Status = WorkOrderStatus.Assigned;
+        o.AssignedDate = DateTime.UtcNow;
+        var expectedTitle = o.Title;
+        var expectedDescription = o.Description;
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(currentUser);
@@ -36,8 +39,8 @@ public class StateCommandHandlerForUnassignTests : IntegratedTestBase
 
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
-        order.Title.ShouldBe(order.Title);
-        order.Description.ShouldBe(order.Description);
+        order.Title.ShouldBe(expectedTitle);
+        order.Description.ShouldBe(expectedDescription);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBeNull();
         order.AssignedDate.ShouldBeNull();
@@ -54,6 +57,8 @@ public class StateCommandHandlerForUnassignTests : IntegratedTestBase
         var currentUser = Faker<Employee>();
         o.Creator = currentUser;
         o.Status = WorkOrderStatus.Assigned;
+        var expectedTitle = o.Title;
+        var expectedDescription = o.Description;
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(currentUser);
@@ -69,8 +74,8 @@ public class StateCommandHandlerForUnassignTests : IntegratedTestBase
 
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
-        order.Title.ShouldBe(order.Title);
-        order.Description.ShouldBe(order.Description);
+        order.Title.ShouldBe(expectedTitle);
+        order.Description.ShouldBe(expectedDescription);
         order.Creator.ShouldBe(currentUser);
     }
 
@@ -84,6 +89,8 @@ public class StateCommandHandlerForUnassignTests : IntegratedTestBase
         var currentUser = Faker<Employee>();
         o.Creator = currentUser;
         o.Status = WorkOrderStatus.Assigned;
+        var expectedTitle = o.Title;
+        var expectedDescription = o.Description;
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(currentUser);
@@ -99,8 +106,8 @@ public class StateCommandHandlerForUnassignTests : IntegratedTestBase
 
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
-        order.Title.ShouldBe(order.Title);
-        order.Description.ShouldBe(order.Description);
+        order.Title.ShouldBe(expectedTitle);
+        order.Description.ShouldBe(expectedDescription);
         order.Creator.ShouldBe(currentUser);
     }
 }
