@@ -79,7 +79,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     }
 
     [Test]
-    public void Execute_WithNullTitle_DoesNotThrow()
+    public void Execute_WithNullTitle_NormalizesToEmptyString()
     {
         var employee = new Employee();
         var order = new WorkOrder
@@ -93,7 +93,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         var command = new SaveDraftCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        order.Title.ShouldBeNull();
+        order.Title.ShouldBe(string.Empty);
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
