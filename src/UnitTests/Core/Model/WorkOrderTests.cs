@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -76,14 +77,14 @@ public class WorkOrderTests
     public void WorkOrder_Building_ShouldDefaultToNull()
     {
         var workOrder = new WorkOrder();
-        Assert.That(workOrder.Building, Is.Null);
+        workOrder.Building.ShouldBeNull();
     }
 
     [Test]
     public void WorkOrder_Floor_ShouldDefaultToNull()
     {
         var workOrder = new WorkOrder();
-        Assert.That(workOrder.Floor, Is.Null);
+        workOrder.Floor.ShouldBeNull();
     }
 
     [Test]
