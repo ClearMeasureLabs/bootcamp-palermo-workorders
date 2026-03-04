@@ -88,7 +88,8 @@ public class WorkOrderChatTests
             Assignee = assignee
         };
 
-        component.InvokeAsync(() => component.Instance.Handle(new WorkOrderSelectedEvent(workOrder)));
+        var renderTask = component.InvokeAsync(() => component.Instance.Handle(new WorkOrderSelectedEvent(workOrder)));
+        renderTask.GetAwaiter().GetResult();
     }
 
     private sealed class StubBusForWorkOrderChat() : Bus(null!)
