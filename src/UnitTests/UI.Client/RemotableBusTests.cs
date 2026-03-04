@@ -1,5 +1,4 @@
 ﻿using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using ClearMeasure.Bootcamp.UI.Client;
 using MediatR;
@@ -96,7 +95,7 @@ public class RemotableBusTests
         var stubGateway = new StubPublisherGateway();
         stubGateway.SetResponse<object>(null);
         var bus = new RemotableBus(stubMediator, stubGateway);
-        var request = new ForecastQuery();
+        var request = new TestRemotableRequest();
 
         Should.Throw<Exception>(() => bus.Send(request).Result);
     }
