@@ -80,4 +80,27 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void ShouldGetAndSetInstructions()
+    {
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = "Step 1: Replace the filter. Step 2: Test airflow.";
+        Assert.That(workOrder.Instructions, Is.EqualTo("Step 1: Replace the filter. Step 2: Test airflow."));
+    }
+
+    [Test]
+    public void Instructions_ShouldNotAutoUppercase()
+    {
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = "Mixed Case Instructions";
+        Assert.That(workOrder.Instructions, Is.EqualTo("Mixed Case Instructions"));
+    }
+
+    [Test]
+    public void Instructions_ShouldDefaultToNull()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.Instructions, Is.Null);
+    }
 }
