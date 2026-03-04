@@ -15,6 +15,7 @@ public class EmployeeTests
         Assert.That(employee.FirstName, Is.EqualTo(null));
         Assert.That(employee.LastName, Is.EqualTo(null));
         Assert.That(employee.EmailAddress, Is.EqualTo(null));
+        Assert.That(employee.PreferredLanguage, Is.EqualTo("en-US"));
     }
 
     [Test]
@@ -35,12 +36,14 @@ public class EmployeeTests
         employee.Id = guid;
         employee.LastName = "Joe";
         employee.UserName = "bobjoe";
+        employee.PreferredLanguage = "fr-FR";
 
         Assert.That(employee.EmailAddress, Is.EqualTo("Test"));
         Assert.That(employee.FirstName, Is.EqualTo("Bob"));
         Assert.That(employee.Id, Is.EqualTo(guid));
         Assert.That(employee.LastName, Is.EqualTo("Joe"));
         Assert.That(employee.UserName, Is.EqualTo("bobjoe"));
+        Assert.That(employee.PreferredLanguage, Is.EqualTo("fr-FR"));
     }
 
     [Test]
@@ -127,6 +130,28 @@ public class EmployeeTests
 
         var roles = employee.Roles;
         Assert.That(roles.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void PreferredLanguageShouldDefaultToEnUS()
+    {
+        var employee = new Employee();
+        Assert.That(employee.PreferredLanguage, Is.EqualTo("en-US"));
+    }
+
+    [Test]
+    public void PreferredLanguageShouldDefaultToEnUSWithConstructor()
+    {
+        var employee = new Employee("user", "First", "Last", "email@test.com");
+        Assert.That(employee.PreferredLanguage, Is.EqualTo("en-US"));
+    }
+
+    [Test]
+    public void ShouldSetPreferredLanguage()
+    {
+        var employee = new Employee();
+        employee.PreferredLanguage = "de-DE";
+        employee.PreferredLanguage.ShouldBe("de-DE");
     }
 
     public class EmployeeProxy : Employee

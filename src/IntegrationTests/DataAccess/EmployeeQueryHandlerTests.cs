@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Microsoft.EntityFrameworkCore;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
 
@@ -57,5 +58,44 @@ public class EmployeeQueryHandlerTests
         Assert.That(employees[0].FirstName, Is.EqualTo("first1"));
         Assert.That(employees[0].LastName, Is.EqualTo("last1"));
         Assert.That(employees[0].EmailAddress, Is.EqualTo("email1"));
+    }
+
+    [Test]
+    public void ShouldPersistPreferredLanguage()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("testuser", "Test", "User", "test@test.com");
+        employee.PreferredLanguage = "fr-FR";
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydratedEmployee = context.Set<Employee>().First(e => e.Id == employee.Id);
+            rehydratedEmployee.PreferredLanguage.ShouldBe("fr-FR");
+        }
+    }
+
+    [Test]
+    public void ShouldPersistDefaultPreferredLanguage()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("testuser", "Test", "User", "test@test.com");
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydratedEmployee = context.Set<Employee>().First(e => e.Id == employee.Id);
+            rehydratedEmployee.PreferredLanguage.ShouldBe("en-US");
+        }
     }
 }

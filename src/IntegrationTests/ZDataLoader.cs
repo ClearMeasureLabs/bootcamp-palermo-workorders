@@ -40,6 +40,7 @@ public class ZDataLoader
 
         //Person 1
         var jcuevas = new Employee("jcuevas", "Joe", "Cuevas", "joecuevasjr@gmail.com");
+        jcuevas.PreferredLanguage = "es-ES";
         jcuevas.AddRole(fulfillment);
         db.Add(jcuevas);
 
@@ -78,12 +79,14 @@ public class ZDataLoader
         //Person 12
         //trivial comment
         var nlarsen = new Employee("nlarsen", "Nick", "Larsen", "nick@larsen.com");
+        nlarsen.PreferredLanguage = "de-DE";
         nlarsen.AddRole(lead);
         nlarsen.AddRole(fulfillment);
         db.Add(nlarsen);
 
         //Person 13
         var pludecker = new Employee("pludecker", "Paige", "Ludecker", "pludecker@gmail.com");
+        pludecker.PreferredLanguage = "de-DE";
         pludecker.AddRole(lead);
         pludecker.AddRole(fulfillment);
         db.Add(pludecker);
@@ -99,6 +102,7 @@ public class ZDataLoader
         db.Add(ndoughton);
 
         var will = new Employee("will", "Will", "Perea", "wperea@setworks.com");
+        will.PreferredLanguage = "es-ES";
         will.AddRole(lead);
         will.AddRole(fulfillment);
         db.Add(will);
