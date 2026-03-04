@@ -5,6 +5,7 @@ using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using MediatR;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
@@ -67,6 +68,24 @@ public class ApplicationChatTests
         component.Find($"[data-testid='{ApplicationChat.Elements.ChatInput}']").ShouldNotBeNull();
         component.Find($"[data-testid='{ApplicationChat.Elements.SendButton}']").ShouldNotBeNull();
         component.FindAll(".chat-message").Count.ShouldBeGreaterThanOrEqualTo(24);
+    }
+
+    [Test]
+    public void ShouldSendMessageWhenEnterKeyPressed()
+    {
+        using var ctx = CreateContext();
+        var component = ctx.RenderComponent<ApplicationChat>();
+
+        var chatInput = component.Find($"[data-testid='{ApplicationChat.Elements.ChatInput}']");
+        chatInput.Change("test prompt via enter");
+        chatInput.KeyDown(new KeyboardEventArgs { Key = "Enter" });
+
+        component.WaitForAssertion(() =>
+        {
+            component.Find($"[data-testid='{ApplicationChat.Elements.ChatHistory}']").ShouldNotBeNull();
+            component.FindAll(".chat-message").Count.ShouldBeGreaterThanOrEqualTo(1);
+            component.Markup.ShouldContain("test prompt via enter");
+        });
     }
 
     private static TestContext CreateContext()

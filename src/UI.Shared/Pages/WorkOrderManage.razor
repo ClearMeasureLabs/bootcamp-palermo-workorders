@@ -97,6 +97,36 @@
             {
                 <WorkOrderChat/>
             }
+
+            @if (_attachments.Length > 0)
+            {
+                <div class="attachments-section" data-testid="@Elements.AttachmentsSection">
+                    <h4>Attachments</h4>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Content Type</th>
+                                <th>Size</th>
+                                <th>Uploaded By</th>
+                                <th>Upload Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var attachment in _attachments)
+                            {
+                                <tr data-testid="@Elements.AttachmentRow">
+                                    <td data-testid="@Elements.AttachmentFileName">@attachment.FileName</td>
+                                    <td data-testid="@Elements.AttachmentContentType">@attachment.ContentType</td>
+                                    <td data-testid="@Elements.AttachmentFileSize">@attachment.FileSize</td>
+                                    <td data-testid="@Elements.AttachmentUploadedBy">@attachment.UploadedBy?.GetFullName()</td>
+                                    <td data-testid="@Elements.AttachmentUploadedDate">@attachment.UploadedDate.ToString("G")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
 
         <div class="action-section">
@@ -139,6 +169,13 @@
         CommandButton,
         WorkOrderNumber,
         Status,
-        TemplateSelect
+        TemplateSelect,
+        AttachmentsSection,
+        AttachmentRow,
+        AttachmentFileName,
+        AttachmentContentType,
+        AttachmentFileSize,
+        AttachmentUploadedBy,
+        AttachmentUploadedDate
     }
 }
