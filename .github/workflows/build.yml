@@ -759,6 +759,24 @@ jobs:
           path: build/test/**/*.trx
           retention-days: 2
 
+      - name: Upload Acceptance Test Screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: acceptance-test-screenshots
+          path: src/AcceptanceTests/final-screenshots/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload Playwright Traces
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: acceptance-test-traces
+          path: src/AcceptanceTests/playwright-traces/
+          retention-days: 7
+          if-no-files-found: ignore
+
   acceptance-tests-arm:
     name: Acceptance Tests (ARM SQLite)
     if: success()
@@ -827,4 +845,22 @@ jobs:
           name: test-results-acceptance-arm
           path: build/test/**/*.trx
           retention-days: 2
+
+      - name: Upload Acceptance Test Screenshots (ARM)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: acceptance-test-screenshots-arm
+          path: src/AcceptanceTests/final-screenshots/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload Playwright Traces (ARM)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: acceptance-test-traces-arm
+          path: src/AcceptanceTests/playwright-traces/
+          retention-days: 7
+          if-no-files-found: ignore
 
