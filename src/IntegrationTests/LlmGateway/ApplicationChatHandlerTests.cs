@@ -3,6 +3,7 @@ using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
@@ -96,11 +97,12 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
     private async Task<WorkOrder?> WaitForWorkOrderAsync(string workOrderNumber, WorkOrderStatus targetStatus)
     {
-        var db = TestHost.GetRequiredService<DataContext>();
-
         for (var attempt = 0; attempt < 10; attempt++)
         {
+            using var scope = TestHost.GetRequiredService<IServiceScopeFactory>().CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<DataContext>();
             var workOrder = await db.Set<WorkOrder>()
+                .AsNoTracking()
                 .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
 
             if (workOrder != null && workOrder.Status == targetStatus)
@@ -111,7 +113,10 @@ public class ApplicationChatHandlerTests : LlmTestBase
             await Task.Delay(250);
         }
 
-        return await db.Set<WorkOrder>()
+        using var finalScope = TestHost.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        var finalDb = finalScope.ServiceProvider.GetRequiredService<DataContext>();
+        return await finalDb.Set<WorkOrder>()
+            .AsNoTracking()
             .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
     }
 }
