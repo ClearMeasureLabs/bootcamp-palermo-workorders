@@ -3,7 +3,7 @@ using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using System.Diagnostics;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
@@ -28,11 +28,15 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(3, "WorkOrderSearchAfterSave");
 
-        Debug.Assert(order.Number != null, "order.Number != null");
+        order.Number.ShouldNotBeNullOrWhiteSpace();
         string orderNumber = order.Number;
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + orderNumber);
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Expect(Page).ToHaveURLAsync($"/workorder/manage/{orderNumber}?mode=Edit");
+
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + orderNumber);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await TakeScreenshotAsync(4, "WorkOrderLinkVisible");
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+        await Expect(Page).ToHaveURLAsync($"**/workorder/manage/{orderNumber}?mode=Edit");
         await TakeScreenshotAsync(5, "WorkOrderManagePage");
 
         var workOrderNumber = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
@@ -47,10 +51,10 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
+        WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
-        
-        rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+
+        rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
 
     [Test, Retry(2)]
