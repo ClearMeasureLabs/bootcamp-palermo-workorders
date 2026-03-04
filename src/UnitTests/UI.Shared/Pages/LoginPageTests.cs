@@ -60,13 +60,19 @@ public class LoginPageTests
 
         var options = component.FindAll("option");
         options.Count.ShouldBe(4);
-        
-        var employeeOptions = options.Skip(1).ToList();
-        foreach (var option in employeeOptions)
+
+        var expectedEmployeeOptions = new[]
         {
-            var text = option.TextContent;
-            text.ShouldBe(text.ToUpperInvariant());
-            text.ShouldContain(", ");
+            "SIMPSON, HOMER",
+            "BURNS, MONTGOMERY",
+            "FLANDERS, NED"
+        };
+
+        var employeeOptions = options.Skip(1).ToList();
+        employeeOptions.Count.ShouldBe(expectedEmployeeOptions.Length);
+        for (var i = 0; i < expectedEmployeeOptions.Length; i++)
+        {
+            employeeOptions[i].TextContent.ShouldBe(expectedEmployeeOptions[i]);
         }
     }
 
