@@ -11,7 +11,7 @@ public class WorkOrderStatus
     private static readonly ILogger _logger = NullLogger<WorkOrderStatus>.Instance;
 
     public static readonly WorkOrderStatus None = new("", "", " ", 0);
-    public static readonly WorkOrderStatus Draft = new("DRT", "Draft", "Draft", 1);
+    public static readonly WorkOrderStatus Draft = new("DFT", "Draft", "Draft", 1);
     public static readonly WorkOrderStatus Assigned = new("ASD", "Assigned", "Assigned", 2);
     public static readonly WorkOrderStatus InProgress = new("IPG", "InProgress", "In Progress", 3);
     public static readonly WorkOrderStatus Complete = new("CMP", "Complete", "Complete", 4);
