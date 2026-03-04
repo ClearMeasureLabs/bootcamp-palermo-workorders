@@ -52,9 +52,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
         var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
-        var db = TestHost.GetRequiredService<DataContext>();
-        var workOrder = await db.Set<WorkOrder>()
-            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+        var workOrder = await WaitForWorkOrderAsync(workOrderNumber, WorkOrderStatus.Assigned);
 
         workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
         workOrder.Status.ShouldBe(WorkOrderStatus.Draft);
@@ -94,5 +92,26 @@ public class ApplicationChatHandlerTests : LlmTestBase
         workOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
         workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
         workOrder?.Creator?.FirstName.ShouldBe("Timothy");
+    }
+
+    private async Task<WorkOrder?> WaitForWorkOrderAsync(string workOrderNumber, WorkOrderStatus targetStatus)
+    {
+        var db = TestHost.GetRequiredService<DataContext>();
+
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            var workOrder = await db.Set<WorkOrder>()
+                .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+
+            if (workOrder != null && workOrder.Status == targetStatus)
+            {
+                return workOrder;
+            }
+
+            await Task.Delay(250);
+        }
+
+        return await db.Set<WorkOrder>()
+            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
     }
 }
