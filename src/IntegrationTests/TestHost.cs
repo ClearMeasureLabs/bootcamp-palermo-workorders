@@ -1,4 +1,4 @@
-using ClearMeasure.Bootcamp.Core;
+    using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model.Messages;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
@@ -160,7 +160,7 @@ public static class TestHost
                      [System.ComponentModel.Description("Assignee username")] string? assigneeUsername = null)
                         => WorkOrderTools.ExecuteWorkOrderCommand(CreateScopedBus(), workOrderNumber, commandName, executingUsername, assigneeUsername),
                     "ExecuteWorkOrderCommand",
-                    "Executes a state command on a work order."),
+                    "Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand, InProgressToAssignedCommand (also known as 'shelve' - moves a work order from InProgress back to Assigned)."),
                 AIFunctionFactory.Create(
                     () => EmployeeTools.ListEmployees(CreateScopedBus()),
                     "ListEmployees",

@@ -102,6 +102,10 @@ public class ApplicationChatHandlerTests : LlmTestBase
         new ZDataLoader().LoadData();
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
 
+        var db = TestHost.GetRequiredService<DataContext>();
+        var creator = await db.Set<Employee>().SingleAsync(e => e.UserName == "tlovejoy");
+        var assignee = await db.Set<Employee>().SingleAsync(e => e.UserName == "gwillie");
+
         var setupOrder = new WorkOrder
         {
             Number = "WO-01",
@@ -109,13 +113,12 @@ public class ApplicationChatHandlerTests : LlmTestBase
             Description = "Get mowing Willie",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.InProgress,
-            Creator = new Employee("creator1", "John", "Doe", "john@example.com"),
-            Assignee = new Employee("gwillie", "Groundskeeper Willie", "MacDougal", "willie@springfieldelementary.edu")
+            Creator = creator,
+            Assignee = assignee
         };
-        var db = TestHost.GetRequiredService<DataContext>();
 
         db.Add(setupOrder);
-        db.SaveChangesAsync();
+        await db.SaveChangesAsync();
         var workOrderNumber = setupOrder.Number;
 
         var shelveQuery = new ApplicationChatQuery(
@@ -124,7 +127,11 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         var resp = await handler.Handle(shelveQuery, CancellationToken.None);
 
-        var workOrder = await db.Set<WorkOrder>()
+        using var verifyDb = TestHost.GetRequiredService<DataContext>();
+        var workOrder = await verifyDb.Set<WorkOrder>()
+            .AsNoTracking()
+            .Include(wo => wo.Creator)
+            .Include(wo => wo.Assignee)
             .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
 
         workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");

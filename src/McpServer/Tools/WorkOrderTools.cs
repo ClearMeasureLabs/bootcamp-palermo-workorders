@@ -83,7 +83,7 @@ public class WorkOrderTools
         }
     }
 
-    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.")]
+    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand, InProgressToAssignedCommand (also known as 'shelve' - moves a work order from InProgress back to Assigned).")]
     public static async Task<string> ExecuteWorkOrderCommand(
         IBus bus,
         [Description("The work order number")] string workOrderNumber,
@@ -125,12 +125,13 @@ public class WorkOrderTools
             "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
             "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
             "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
+            "InProgressToAssignedCommand" or "shelve" => new InProgressToAssignedCommand(workOrder, user),
             _ => null
         };
 
         if (command == null)
         {
-            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.";
+            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand, InProgressToAssignedCommand.";
         }
 
         if (!command.IsValid())
