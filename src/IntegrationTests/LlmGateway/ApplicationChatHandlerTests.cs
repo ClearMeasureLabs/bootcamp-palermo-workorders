@@ -101,6 +101,12 @@ public class ApplicationChatHandlerTests : LlmTestBase
     {
         new ZDataLoader().LoadData();
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
+        var db = TestHost.GetRequiredService<DataContext>();
+
+        var willie = await db.Set<Employee>()
+            .SingleOrDefaultAsync(em => em.UserName == "gwillie");
+        var tim = await db.Set<Employee>()
+            .SingleOrDefaultAsync(em => em.UserName == "tlovejoy");
 
         var setupOrder = new WorkOrder
         {
@@ -109,13 +115,12 @@ public class ApplicationChatHandlerTests : LlmTestBase
             Description = "Get mowing Willie",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.InProgress,
-            Creator = new Employee("creator1", "John", "Doe", "john@example.com"),
-            Assignee = new Employee("gwillie", "Groundskeeper Willie", "MacDougal", "willie@springfieldelementary.edu")
+            Creator = tim,
+            Assignee = willie
         };
-        var db = TestHost.GetRequiredService<DataContext>();
 
         db.Add(setupOrder);
-        db.SaveChangesAsync();
+        await db.SaveChangesAsync();
         var workOrderNumber = setupOrder.Number;
 
         var shelveQuery = new ApplicationChatQuery(
