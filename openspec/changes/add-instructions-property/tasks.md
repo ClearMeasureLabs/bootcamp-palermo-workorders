@@ -25,4 +25,4 @@
 
 ## 7. Validation
 
-- [ ] 7.1 Run `privatebuild.ps1` to confirm all unit and integration tests pass
+- [ ] 7.1 Run `.\privatebuild.ps1` to confirm all unit and integration tests pass
