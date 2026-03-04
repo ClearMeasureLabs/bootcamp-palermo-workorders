@@ -3,8 +3,16 @@ param (
     [string]$databaseServer = "",
 	
     [Parameter(Mandatory=$false)]
-    [string]$databaseName = ""
+    [string]$databaseName = "",
+
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("", "LocalDB", "SQL-Container", "SQLite", "SqlServer")]
+    [string]$databaseEngine = ""
 )
+
+if (-not [string]::IsNullOrEmpty($databaseEngine)) {
+    $env:DATABASE_ENGINE = $databaseEngine
+}
 
 . .\build.ps1
 

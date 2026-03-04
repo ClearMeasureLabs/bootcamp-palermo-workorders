@@ -525,8 +525,11 @@ Function Get-ResolvedDatabaseEngine {
         Whether the current platform is Linux.
     .PARAMETER dockerAvailable
         Whether Docker is installed and running.
+    .PARAMETER databaseServer
+        The explicitly provided database server name, if any. When "localhost" or
+        "127.0.0.1" on Windows with no explicit engine, resolves to "SqlServer".
     .OUTPUTS
-        [string] One of: "LocalDB", "SQL-Container", "SQLite"
+        [string] One of: "LocalDB", "SQL-Container", "SQLite", "SqlServer"
     #>
     param (
         [Parameter(Mandatory = $false)]
@@ -534,7 +537,9 @@ Function Get-ResolvedDatabaseEngine {
         [Parameter(Mandatory = $false)]
         [bool]$onLinux = $false,
         [Parameter(Mandatory = $false)]
-        [bool]$dockerAvailable = $false
+        [bool]$dockerAvailable = $false,
+        [Parameter(Mandatory = $false)]
+        [string]$databaseServer = ""
     )
 
     if ([string]::IsNullOrEmpty($currentEngine)) {
@@ -543,11 +548,14 @@ Function Get-ResolvedDatabaseEngine {
             else { return "SQLite" }
         }
         else {
+            if ($databaseServer -eq "localhost" -or $databaseServer -eq "127.0.0.1") {
+                return "SqlServer"
+            }
             return "LocalDB"
         }
     }
 
-    $validEngines = @("LocalDB", "SQL-Container", "SQLite")
+    $validEngines = @("LocalDB", "SQL-Container", "SQLite", "SqlServer")
     if ($currentEngine -notin $validEngines) {
         throw "Invalid DATABASE_ENGINE value '$currentEngine'. Valid values: $($validEngines -join ', ')"
     }
@@ -559,7 +567,7 @@ Function Get-DefaultDatabaseServer {
     .SYNOPSIS
         Returns the default database server name for a given engine type.
     .PARAMETER engine
-        The database engine: "LocalDB", "SQL-Container", or "SQLite".
+        The database engine: "LocalDB", "SQL-Container", "SqlServer", or "SQLite".
     .OUTPUTS
         [string] The default server name, or empty string for SQLite.
     #>
@@ -571,6 +579,7 @@ Function Get-DefaultDatabaseServer {
     switch ($engine) {
         "LocalDB"       { return "(LocalDb)\MSSQLLocalDB" }
         "SQL-Container" { return "localhost" }
+        "SqlServer"     { return "localhost" }
         default         { return "" }
     }
 }
@@ -654,5 +663,5 @@ Function New-IntegratedConnectionString {
         [string]$database
     )
 
-    return "server=$server;database=$database;Integrated Security=true;"
+    return "server=$server;database=$database;Integrated Security=true;TrustServerCertificate=true;"
 }

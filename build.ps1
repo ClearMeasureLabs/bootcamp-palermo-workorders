@@ -127,6 +127,10 @@ Function Setup-DatabaseForBuild {
 		$env:ConnectionStrings__SqlConnectionString = New-SqlServerConnectionString -server $script:databaseServer -database $script:databaseName -password $sqlPassword
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
 	}
+	elseif ($script:databaseEngine -eq "SqlServer") {
+		$env:ConnectionStrings__SqlConnectionString = New-IntegratedConnectionString -server $script:databaseServer -database $script:databaseName
+		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
+	}
 	elseif ($script:databaseEngine -eq "LocalDB") {
 		$env:ConnectionStrings__SqlConnectionString = New-IntegratedConnectionString -server $script:databaseServer -database $script:databaseName
 		MigrateDatabaseLocal -databaseServerFunc $script:databaseServer -databaseNameFunc $script:databaseName
@@ -195,12 +199,14 @@ Function Build {
 		$script:databaseEngine = "SQLite"
 	}
 
+	# Set server before engine resolution so the resolver can detect SqlServer from localhost
+	if (-not [string]::IsNullOrEmpty($databaseServer)) {
+		$script:databaseServer = $databaseServer
+	}
+
 	Resolve-DatabaseEngine
 
 	if ($script:databaseEngine -ne "SQLite") {
-		if (-not [string]::IsNullOrEmpty($databaseServer)) {
-			$script:databaseServer = $databaseServer
-		}
 		$script:databaseName = Get-ResolvedDatabaseName -explicitName $databaseName -baseName $projectName -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
 	}
 
@@ -255,7 +261,7 @@ Function Resolve-DatabaseEngine {
 	if ($onLinux) {
 		$dockerAvailable = Test-IsDockerRunning
 	}
-	$script:databaseEngine = Get-ResolvedDatabaseEngine -currentEngine $script:databaseEngine -onLinux $onLinux -dockerAvailable $dockerAvailable
+	$script:databaseEngine = Get-ResolvedDatabaseEngine -currentEngine $script:databaseEngine -onLinux $onLinux -dockerAvailable $dockerAvailable -databaseServer $script:databaseServer
 	$script:useSqlite = ($script:databaseEngine -eq "SQLite")
 }
 
@@ -392,12 +398,14 @@ Function Invoke-AcceptanceTests {
 		$script:databaseEngine = "SQLite"
 	}
 
+	# Set server before engine resolution so the resolver can detect SqlServer from localhost
+	if (-not [string]::IsNullOrEmpty($databaseServer)) {
+		$script:databaseServer = $databaseServer
+	}
+
 	Resolve-DatabaseEngine
 
 	if ($script:databaseEngine -ne "SQLite") {
-		if (-not [string]::IsNullOrEmpty($databaseServer)) {
-			$script:databaseServer = $databaseServer
-		}
 		$script:databaseName = Get-ResolvedDatabaseName -explicitName $databaseName -baseName $projectName -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
 	}
 
