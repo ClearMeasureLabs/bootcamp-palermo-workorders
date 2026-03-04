@@ -61,6 +61,26 @@
                         <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="EstimatedCost" class="form-label">Estimated Cost:</label>
+                    <div>
+                        <InputNumber data-testid="@Elements.EstimatedCost" id="EstimatedCost" @bind-Value="Model.EstimatedCost" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ActualCost" class="form-label">Actual Cost:</label>
+                    <div>
+                        @{
+                            var actualCostDisabled = Model.IsReadOnly ||
+                                (Model.WorkOrder != null &&
+                                 Model.WorkOrder.Status != WorkOrderStatus.InProgress &&
+                                 Model.WorkOrder.Status != WorkOrderStatus.Complete);
+                        }
+                        <InputNumber data-testid="@Elements.ActualCost" id="ActualCost" @bind-Value="Model.ActualCost" class="form-control input-text" disabled="@actualCostDisabled"/>
+                    </div>
+                </div>
             </div>
 
             <div class="readonly-info">
@@ -121,6 +141,8 @@
         ReadOnlyMessage,
         CommandButton,
         WorkOrderNumber,
-        Status
+        Status,
+        EstimatedCost,
+        ActualCost
     }
 }

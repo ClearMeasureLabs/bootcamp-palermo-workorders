@@ -21,6 +21,8 @@ public class WorkOrderMap : IEntityFrameworkMapping
             entity.Property(e => e.Title).IsRequired().HasMaxLength(300);
             entity.Property(e => e.Description).HasMaxLength(4000);
             entity.Property(e => e.RoomNumber).HasMaxLength(50);
+            entity.Property(e => e.EstimatedCost).HasColumnType("decimal(10,2)").IsRequired(false);
+            entity.Property(e => e.ActualCost).HasColumnType("decimal(10,2)").IsRequired(false);
 
             // Configure relationships
             entity.HasOne(e => e.Creator)

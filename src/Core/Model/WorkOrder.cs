@@ -31,6 +31,28 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public DateTime? CompletedDate { get; set; }
 
+    private decimal? _estimatedCost;
+    public decimal? EstimatedCost
+    {
+        get => _estimatedCost;
+        set
+        {
+            if (value < 0) throw new ArgumentException("EstimatedCost must be non-negative.");
+            _estimatedCost = value;
+        }
+    }
+
+    private decimal? _actualCost;
+    public decimal? ActualCost
+    {
+        get => _actualCost;
+        set
+        {
+            if (value < 0) throw new ArgumentException("ActualCost must be non-negative.");
+            _actualCost = value;
+        }
+    }
+
     private string? getTruncatedString(string? value)
     {
         if (value == null)

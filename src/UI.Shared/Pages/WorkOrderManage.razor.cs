@@ -85,7 +85,9 @@ public partial class WorkOrderManage : AppComponentBase
             RoomNumber = workOrder.RoomNumber,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
-            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
+            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
+            EstimatedCost = workOrder.EstimatedCost,
+            ActualCost = workOrder.ActualCost
         };
     }
 
@@ -122,6 +124,11 @@ public partial class WorkOrderManage : AppComponentBase
         workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
         workOrder.RoomNumber = Model.RoomNumber;
+        workOrder.EstimatedCost = Model.EstimatedCost;
+        if (workOrder.Status == WorkOrderStatus.InProgress || workOrder.Status == WorkOrderStatus.Complete)
+        {
+            workOrder.ActualCost = Model.ActualCost;
+        }
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);

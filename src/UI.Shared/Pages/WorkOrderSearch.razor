@@ -75,6 +75,8 @@
                         <th>Assignee</th>
                         <th>Status</th>
                         <th>Title</th>
+                        <th>Estimated Cost</th>
+                        <th>Actual Cost</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -98,6 +100,8 @@
                                     <span class="status-badge">@order.Status</span>
                                 </td>
                                 <td>@order.Title</td>
+                                <td data-testid="@(Elements.EstimatedCost + order.Number)">@(order.EstimatedCost.HasValue ? order.EstimatedCost.Value.ToString("C") : "")</td>
+                                <td data-testid="@(Elements.ActualCost + order.Number)">@(order.ActualCost.HasValue ? order.ActualCost.Value.ToString("C") : "")</td>
                             </tr>
                         }
                     }
@@ -116,7 +120,9 @@
         AssigneeSelect,
         StatusSelect,
         SearchButton,
-        WorkOrderLink
+        WorkOrderLink,
+        EstimatedCost,
+        ActualCost
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();

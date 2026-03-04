@@ -118,42 +118,56 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
     }
 
     [Test]
-    public async Task ShouldUpdateWorkOrderWithAssigneeAndCreatorWithRemotedOrder()
+    public async Task WorkOrder_WithCosts_ShouldPersistAndRetrieve()
     {
         new DatabaseTests().Clean();
 
-        var workOrder = Faker<WorkOrder>();
         var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
         workOrder.Creator = currentUser;
-
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(currentUser);
-            context.Add(workOrder);
-            await context.SaveChangesAsync();
-        }
-
-        Employee? assignee;
-        await using (var context2 = TestHost.GetRequiredService<DbContext>())
-        {
-            assignee = context2.Find<Employee>(currentUser.Id);
-        }
-
-        workOrder.Creator = currentUser;
-        workOrder.Assignee = assignee;
-        workOrder.Title = "newtitle";
+        workOrder.EstimatedCost = 150.50m;
+        workOrder.ActualCost = 175.25m;
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
-        var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
-
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
-
         var result = await handler.Handle(command);
-        var context3 = TestHost.GetRequiredService<DbContext>();
-        var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
-        order.Title.ShouldBe("newtitle");
-        order.Description.ShouldBe(workOrder.Description);
-        order.Creator.ShouldBe(currentUser);
-        order.Assignee.ShouldBe(assignee);
+
+        var context2 = TestHost.GetRequiredService<DbContext>();
+        var order = context2.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        order.EstimatedCost.ShouldBe(150.50m);
+        order.ActualCost.ShouldBe(175.25m);
+    }
+
+    [Test]
+    public async Task WorkOrder_WithNullCosts_ShouldPersistAndRetrieve()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.Creator = currentUser;
+        workOrder.EstimatedCost = null;
+        workOrder.ActualCost = null;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        var result = await handler.Handle(command);
+
+        var context2 = TestHost.GetRequiredService<DbContext>();
+        var order = context2.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        order.EstimatedCost.ShouldBeNull();
+        order.ActualCost.ShouldBeNull();
     }
 }

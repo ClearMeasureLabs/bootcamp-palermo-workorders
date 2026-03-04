@@ -80,4 +80,32 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void WorkOrder_EstimatedCost_ShouldDefaultToNull()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.EstimatedCost, Is.Null);
+    }
+
+    [Test]
+    public void WorkOrder_ActualCost_ShouldDefaultToNull()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.ActualCost, Is.Null);
+    }
+
+    [Test]
+    public void WorkOrder_EstimatedCost_ShouldRejectNegativeValues()
+    {
+        var workOrder = new WorkOrder();
+        Assert.Throws<ArgumentException>(() => workOrder.EstimatedCost = -1m);
+    }
+
+    [Test]
+    public void WorkOrder_ActualCost_ShouldRejectNegativeValues()
+    {
+        var workOrder = new WorkOrder();
+        Assert.Throws<ArgumentException>(() => workOrder.ActualCost = -0.01m);
+    }
 }
