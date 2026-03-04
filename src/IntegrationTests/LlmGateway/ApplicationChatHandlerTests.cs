@@ -103,7 +103,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
         new ZDataLoader().LoadData();
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
         var query = new ApplicationChatQuery(
-            $"have ${currentUsername} mow the grass. Yes, assign the new work order. And set it to in progress. Confirmed",
+            $"have {currentUsername} mow the grass. Yes, assign the new work order. And set it to in progress. Confirmed",
             currentUsername);
 
         ChatResponse response = await handler.Handle(query, CancellationToken.None);
@@ -124,7 +124,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
         var shelveCommand =
-            new ApplicationChatQuery($"shelve the work order with number ${workOrderNumber}.", currentUsername);
+            new ApplicationChatQuery($"shelve the work order with number {workOrderNumber}.", currentUsername);
         var shelveResponse = await handler.Handle(shelveCommand, CancellationToken.None);
         var shelveResponseText = shelveResponse.Messages.LastOrDefault()?.Text;
 
@@ -137,7 +137,6 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
         workOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
-        //workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
         workOrder?.Creator?.FirstName.ShouldBe("Timothy");
 
     }
