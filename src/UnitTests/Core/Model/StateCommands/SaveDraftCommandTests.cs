@@ -59,6 +59,38 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         Assert.That(order.CreatedDate, Is.Not.Null);
     }
 
+    [Test]
+    public void Execute_WithLowercaseTitle_ShouldConvertToUppercase()
+    {
+        var order = new WorkOrder();
+        order.Number = "123";
+        order.Status = WorkOrderStatus.Draft;
+        order.Title = "fix leaky faucet";
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        Assert.That(order.Title, Is.EqualTo("FIX LEAKY FAUCET"));
+    }
+
+    [Test]
+    public void Execute_WithMixedCaseTitle_ShouldConvertToUppercase()
+    {
+        var order = new WorkOrder();
+        order.Number = "456";
+        order.Status = WorkOrderStatus.Draft;
+        order.Title = "Replace HVAC Filter";
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        Assert.That(order.Title, Is.EqualTo("REPLACE HVAC FILTER"));
+    }
+
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
         return new SaveDraftCommand(order, employee);
