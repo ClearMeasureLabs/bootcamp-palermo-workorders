@@ -1,6 +1,7 @@
 ﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.LlmGateway;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Shouldly;
@@ -95,4 +96,74 @@ public class ApplicationChatHandlerTests : LlmTestBase
         workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
         workOrder?.Creator?.FirstName.ShouldBe("Timothy");
     }
+
+    [Test]
+    public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilie_AssignShelve()
+    {
+        new ZDataLoader().LoadData();
+        var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
+        var query = new ApplicationChatQuery(
+            "create a work order to mow then assign to it to gwillie",
+            "tlovejoy");
+
+        ChatResponse response = await handler.Handle(query, CancellationToken.None);
+
+        var responseText = response.Messages.LastOrDefault()?.Text;
+        await TestContext.Out.WriteLineAsync($"LLM response: {responseText}");
+
+        var factory = TestHost.GetRequiredService<ChatClientFactory>();
+        IChatClient parseClient = await factory.GetChatClient();
+        ChatResponse parseResponse = await parseClient.GetResponseAsync(
+        [
+            new(ChatRole.System,
+                "Extract only the work order number from the following text. " +
+                "Return nothing but the work order number itself, with no extra text."),
+            new(ChatRole.User, responseText)
+        ]);
+        var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
+        await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
+
+        var handler2 = TestHost.GetRequiredService<ApplicationChatHandler>();
+        var query2 = new ApplicationChatQuery(
+            $"please mark work order {workOrderNumber} as in progress",
+            "gwillie");
+
+        ChatResponse response2 = await handler2.Handle(query2, CancellationToken.None);
+
+        var responseText2 = response2.Messages.LastOrDefault()?.Text;
+        await TestContext.Out.WriteLineAsync($"LLM response: {responseText2}");
+        
+        var factory2 = TestHost.GetRequiredService<ChatClientFactory>();
+        IChatClient parseClient2 = await factory2.GetChatClient();
+
+        var db = TestHost.GetRequiredService<DataContext>();
+        var workOrder = await db.Set<WorkOrder>()
+            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+
+        workOrder.Status.ShouldBe(WorkOrderStatus.InProgress);
+
+        var handler3 = TestHost.GetRequiredService<ApplicationChatHandler>();
+        var query3 = new ApplicationChatQuery(
+            $"Please shelve the work order {workOrderNumber}",
+            "gwillie");
+
+        ChatResponse response3 = await handler3.Handle(query3, CancellationToken.None);
+
+        var responseText3 = response3.Messages.LastOrDefault()?.Text;
+        await TestContext.Out.WriteLineAsync($"LLM response: {responseText3}");
+
+        var factory3 = TestHost.GetRequiredService<ChatClientFactory>();
+        IChatClient parseClient3 = await factory3.GetChatClient();
+
+        var db2 = TestHost.GetRequiredService<DataContext>();
+        var workOrder2 = await db.Set<WorkOrder>()
+            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+
+        workOrder2.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
+        workOrder2.Status.ShouldBe(WorkOrderStatus.Assigned);
+        workOrder2?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+        workOrder2?.Creator?.FirstName.ShouldBe("Timothy");
+
+    }
+
 }
