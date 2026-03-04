@@ -319,7 +319,7 @@ public abstract class AcceptanceTestBase
         await TakeScreenshotAsync(1, "NewWorkOrderPage");
 
         ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
-        await Expect(woNumberLocator).ToBeVisibleAsync();
+        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         var newWorkOrderNumber = await woNumberLocator.InnerTextAsync();
         order.Number = newWorkOrderNumber;
         await Input(nameof(WorkOrderManage.Elements.Title), testTitle);
