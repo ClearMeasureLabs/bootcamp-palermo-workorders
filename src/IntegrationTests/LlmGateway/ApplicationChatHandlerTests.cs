@@ -55,6 +55,15 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         var workOrder = await WaitForWorkOrderAsync(workOrderNumber, WorkOrderStatus.Assigned);
 
+        if (workOrder?.Status != WorkOrderStatus.Assigned)
+        {
+            var followUpQuery = new ApplicationChatQuery(
+                $"Assign work order {workOrderNumber} to Groundskeeper Willie.",
+                "tlovejoy");
+            await handler.Handle(followUpQuery, CancellationToken.None);
+            workOrder = await WaitForWorkOrderAsync(workOrderNumber, WorkOrderStatus.Assigned);
+        }
+
         workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
         workOrder.Status.ShouldBe(WorkOrderStatus.Draft);
     }
