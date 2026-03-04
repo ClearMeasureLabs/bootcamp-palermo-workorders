@@ -22,20 +22,16 @@ public class CreateWorkOrderFromTemplateCommandTests
         };
 
         var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jeff@example.com");
+        var createdDate = new DateTime(2026, 1, 1, 12, 0, 0);
 
-        var workOrder = new WorkOrder
-        {
-            Title = template.Title,
-            Description = template.Description,
-            RoomNumber = template.RoomNumber,
-            Creator = creator,
-            Status = WorkOrderStatus.Draft
-        };
+        var workOrder = template.ToWorkOrder(creator, "WO-001", createdDate);
 
         workOrder.Title.ShouldBe(template.Title);
         workOrder.Description.ShouldBe(template.Description);
         workOrder.RoomNumber.ShouldBe(template.RoomNumber);
         workOrder.Creator.ShouldBe(creator);
+        workOrder.Number.ShouldBe("WO-001");
+        workOrder.CreatedDate.ShouldBe(createdDate);
     }
 
     [Test]
@@ -52,13 +48,9 @@ public class CreateWorkOrderFromTemplateCommandTests
             CreatedDate = DateTime.UtcNow
         };
 
-        var workOrder = new WorkOrder
-        {
-            Title = template.Title,
-            Description = template.Description,
-            RoomNumber = template.RoomNumber,
-            Status = WorkOrderStatus.Draft
-        };
+        var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jeff@example.com");
+
+        var workOrder = template.ToWorkOrder(creator, "WO-001", DateTime.UtcNow);
 
         workOrder.Status.ShouldBe(WorkOrderStatus.Draft);
     }

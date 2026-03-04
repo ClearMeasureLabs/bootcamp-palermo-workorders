@@ -24,16 +24,7 @@ public class CreateWorkOrderFromTemplateCommandHandler(
             .Include("Roles")
             .SingleAsync(e => e.Id == request.CreatorId, cancellationToken);
 
-        var workOrder = new WorkOrder
-        {
-            Number = numberGenerator.GenerateNumber(),
-            Creator = creator,
-            Status = WorkOrderStatus.Draft,
-            Title = template.Title,
-            Description = template.Description,
-            RoomNumber = template.RoomNumber,
-            CreatedDate = time.GetUtcNow().DateTime
-        };
+        var workOrder = template.ToWorkOrder(creator, numberGenerator.GenerateNumber(), time.GetUtcNow().DateTime);
 
         context.Add(workOrder);
         await context.SaveChangesAsync(cancellationToken);
