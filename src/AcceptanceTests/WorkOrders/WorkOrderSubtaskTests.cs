@@ -13,10 +13,7 @@ public class WorkOrderSubtaskTests : AcceptanceTestBase
         var order = await CreateAndSaveNewWorkOrder();
         await ClickWorkOrderNumberFromSearchPage(order);
 
-        var subtaskInput = Page.GetByTestId(nameof(WorkOrderManage.Elements.SubtaskNewTitle));
-        await Expect(subtaskInput).ToBeVisibleAsync();
-        await subtaskInput.FillAsync("Replace light fixture");
-
+        await Input(nameof(WorkOrderManage.Elements.SubtaskNewTitle), "Replace light fixture");
         await Click(nameof(WorkOrderManage.Elements.SubtaskAddButton));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
@@ -32,17 +29,16 @@ public class WorkOrderSubtaskTests : AcceptanceTestBase
         var order = await CreateAndSaveNewWorkOrder();
         await ClickWorkOrderNumberFromSearchPage(order);
 
-        var subtaskInput = Page.GetByTestId(nameof(WorkOrderManage.Elements.SubtaskNewTitle));
-        await subtaskInput.FillAsync("Fix wiring");
+        await Input(nameof(WorkOrderManage.Elements.SubtaskNewTitle), "Fix wiring");
         await Click(nameof(WorkOrderManage.Elements.SubtaskAddButton));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var checkboxes = Page.Locator($"[data-testid^='{nameof(WorkOrderManage.Elements.SubtaskToggle)}']");
-        await checkboxes.First.WaitForAsync();
-        await checkboxes.First.CheckAsync();
+        var checkbox = Page.Locator($"[data-testid^='{nameof(WorkOrderManage.Elements.SubtaskToggle)}']").First;
+        await checkbox.WaitForAsync();
+        await checkbox.CheckAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Expect(checkboxes.First).ToBeCheckedAsync();
+        await Expect(checkbox).ToBeCheckedAsync();
     }
 
     [Test, Retry(2)]
@@ -55,13 +51,13 @@ public class WorkOrderSubtaskTests : AcceptanceTestBase
 
         foreach (var title in new[] { "Task A", "Task B", "Task C" })
         {
-            var input = Page.GetByTestId(nameof(WorkOrderManage.Elements.SubtaskNewTitle));
-            await input.FillAsync(title);
+            await Input(nameof(WorkOrderManage.Elements.SubtaskNewTitle), title);
             await Click(nameof(WorkOrderManage.Elements.SubtaskAddButton));
             await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         }
 
         var checkboxes = Page.Locator($"[data-testid^='{nameof(WorkOrderManage.Elements.SubtaskToggle)}']");
+        await checkboxes.Nth(0).WaitForAsync();
         await checkboxes.Nth(0).CheckAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await checkboxes.Nth(1).CheckAsync();

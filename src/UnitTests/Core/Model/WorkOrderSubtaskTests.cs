@@ -17,7 +17,7 @@ public class WorkOrderSubtaskTests
     }
 
     [Test]
-    public void WorkOrderSubtask_ShouldRequireTitle()
+    public void WorkOrderSubtask_ShouldDefaultTitleToEmptyString()
     {
         var subtask = new WorkOrderSubtask();
 

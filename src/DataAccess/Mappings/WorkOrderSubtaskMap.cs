@@ -11,9 +11,7 @@ public class WorkOrderSubtaskMap : IEntityFrameworkMapping
         {
             entity.ToTable("WorkOrderSubtask", "dbo");
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).IsRequired()
-                .ValueGeneratedOnAdd()
-                .HasDefaultValue(Guid.Empty);
+            entity.Property(e => e.Id).IsRequired();
 
             entity.Property(e => e.Title).IsRequired().HasMaxLength(300);
             entity.Property(e => e.IsCompleted).IsRequired();
