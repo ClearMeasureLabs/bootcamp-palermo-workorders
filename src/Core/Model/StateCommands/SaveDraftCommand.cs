@@ -28,11 +28,12 @@ StateCommandBase(WorkOrder, CurrentUser)
 
     public override void Execute(StateCommandContext context)
     {
-        if (WorkOrder.CreatedDate.Equals(null))
+        if (WorkOrder.CreatedDate is null)
         {
-        WorkOrder.CreatedDate = context.CurrentDateTime;
+            WorkOrder.CreatedDate = context.CurrentDateTime;
         }
 
+        WorkOrder.Title = WorkOrder.Title?.ToUpperInvariant();
         WorkOrder.Description = WorkOrder.Description?.ToUpperInvariant();
 
         base.Execute(context);

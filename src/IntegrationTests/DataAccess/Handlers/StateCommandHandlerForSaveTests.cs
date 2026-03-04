@@ -73,7 +73,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(workOrder.Title);
-        order.Description.ShouldBe(workOrder.Description);
+        order.Description.ShouldBe(workOrder.Description?.ToUpperInvariant());
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -111,8 +111,8 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
-        order.Title.ShouldBe("newtitle");
-        order.Description.ShouldBe(workOrder.Description);
+        order.Title.ShouldBe("NEWTITLE");
+        order.Description.ShouldBe(workOrder.Description?.ToUpperInvariant());
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -151,8 +151,8 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
-        order.Title.ShouldBe("newtitle");
-        order.Description.ShouldBe(workOrder.Description);
+        order.Title.ShouldBe("NEWTITLE");
+        order.Description.ShouldBe(workOrder.Description?.ToUpperInvariant());
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }

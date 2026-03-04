@@ -84,7 +84,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     }
 
     [Test]
-    public void Execute_WithNullDescription_DoesNotThrow()
+    public void Execute_WithNullDescription_ReturnsEmptyString()
     {
         var employee = new Employee();
         var order = new WorkOrder
@@ -99,5 +99,41 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         command.Execute(new StateCommandContext());
 
         order.Description.ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void Execute_WithMixedCaseTitle_ConvertsTitleToUpperCase()
+    {
+        var employee = new Employee();
+        var order = new WorkOrder
+        {
+            Number = "456",
+            Title = "Fix Leaky Faucet",
+            Status = WorkOrderStatus.Draft,
+            Creator = employee
+        };
+
+        var command = new SaveDraftCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        order.Title.ShouldBe("FIX LEAKY FAUCET");
+    }
+
+    [Test]
+    public void Execute_WithNullTitle_DoesNotThrow()
+    {
+        var employee = new Employee();
+        var order = new WorkOrder
+        {
+            Number = "789",
+            Title = null,
+            Status = WorkOrderStatus.Draft,
+            Creator = employee
+        };
+
+        var command = new SaveDraftCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        order.Title.ShouldBeNull();
     }
 }
