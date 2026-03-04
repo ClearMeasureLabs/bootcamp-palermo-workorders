@@ -100,26 +100,26 @@
                     }
                 </div>
             }
+
+            @if (_workOrder?.CanReassign() == true && _currentUser?.Id == _workOrder?.Creator?.Id)
+            {
+                <div class="reassign-section">
+                    <div class="form-group">
+                        <label class="form-label">Reassign To:</label>
+                        <InputSelect data-testid="@Elements.ReassignAssignee" @bind-Value="ReassignToUserName" class="form-control input-select">
+                            @foreach (var user in UserOptions)
+                            {
+                                <option value="@user.Value">@user.Text</option>
+                            }
+                        </InputSelect>
+                        <button data-testid="@Elements.ReassignButton" type="button" @onclick="HandleReassign" class="btn btn-warning">
+                            Reassign
+                        </button>
+                    </div>
+                </div>
+            }
         </div>
     </EditForm>
-
-@if (_workOrder?.CanReassign() == true && _currentUser?.Id == _workOrder?.Creator?.Id)
-{
-    <div class="reassign-section">
-        <div class="form-group">
-            <label class="form-label">Reassign To:</label>
-            <select data-testid="@Elements.ReassignAssignee" @bind="ReassignToUserName" class="form-control input-select">
-                @foreach (var user in UserOptions)
-                {
-                    <option value="@user.Value">@user.Text</option>
-                }
-            </select>
-            <button data-testid="@Elements.ReassignButton" type="button" @onclick="HandleReassign" class="btn btn-warning">
-                Reassign
-            </button>
-        </div>
-    </div>
-}
 </div>
 
 @code

@@ -31,6 +31,7 @@ public class ReassignWorkOrderCommandHandlerTests : IntegratedTestBase
             context.Add(creator);
             context.Add(originalAssignee);
             context.Add(newAssignee);
+            context.Add(order);
             await context.SaveChangesAsync();
         }
 
@@ -67,6 +68,7 @@ public class ReassignWorkOrderCommandHandlerTests : IntegratedTestBase
             context.Add(creator);
             context.Add(originalAssignee);
             context.Add(newAssignee);
+            context.Add(order);
             await context.SaveChangesAsync();
         }
 

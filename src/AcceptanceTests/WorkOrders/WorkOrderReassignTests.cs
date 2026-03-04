@@ -31,6 +31,7 @@ public class WorkOrderReassignTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReassignButton))).ToBeVisibleAsync();
 
         await Select(nameof(WorkOrderManage.Elements.ReassignAssignee), secondEmployee.UserName);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(WorkOrderManage.Elements.ReassignButton));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
@@ -56,6 +57,7 @@ public class WorkOrderReassignTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReassignButton))).ToBeVisibleAsync();
 
         await Select(nameof(WorkOrderManage.Elements.ReassignAssignee), secondEmployee.UserName);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(WorkOrderManage.Elements.ReassignButton));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
