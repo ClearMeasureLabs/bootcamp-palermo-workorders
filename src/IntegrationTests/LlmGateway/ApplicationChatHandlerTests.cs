@@ -102,22 +102,25 @@ public class ApplicationChatHandlerTests : LlmTestBase
         new ZDataLoader().LoadData();
 
         var workOrderNumber = await ExecuteAsync(
-            "Create a new work order for gwillie to 'mow the grass' and assign only return the work order number");
+            "Create a new work order to 'mow the grass', assign it to Groundskeeper Willie, " +
+            "only return the work order number");
 
         await CheckStatusAsync(WorkOrderStatus.Assigned);
 
-        await ExecuteAsync($"make work order {workOrderNumber} 'in progress'");
+        await ExecuteAsync(
+            $"make work order {workOrderNumber} in progress, only use the available work order commands",
+            "gwillie");
 
         await CheckStatusAsync(WorkOrderStatus.InProgress);
 
-        await ExecuteAsync($"Shelve work order {workOrderNumber}");
+        await ExecuteAsync($"Shelve work order {workOrderNumber}", "gwillie");
 
         await CheckStatusAsync(WorkOrderStatus.Assigned);
 
-        async Task<string> ExecuteAsync(string text)
+        async Task<string> ExecuteAsync(string text, string user = "tlovejoy")
         {
             var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
-            var query = new ApplicationChatQuery(text, "tlovejoy");
+            var query = new ApplicationChatQuery(text, user);
 
             ChatResponse response = await handler.Handle(query, CancellationToken.None);
 
