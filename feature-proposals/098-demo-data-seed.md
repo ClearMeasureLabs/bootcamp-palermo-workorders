@@ -29,7 +29,7 @@ Sales demonstrations, developer onboarding, and testing environments all require
 - **src/DataAccess/Services/** - New `DatabaseSeeder` implementation
 - **src/DataAccess/Handlers/** - New seed command handler
 - **src/UI/Server/Program.cs** - `--seed` command-line argument handling
-- **Dependencies** - No new NuGet packages required; leverages existing AutoBogus patterns for realistic data
+- **Dependencies** - No new NuGet packages required; uses hardcoded realistic sample data or standard `Random` for variety (note: AutoBogus is test-only in `src/UnitTests/` and must NOT be used in production seeding code)
 - **Database** - No schema changes; data only
 
 ## Acceptance Criteria

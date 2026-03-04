@@ -2,13 +2,15 @@
 As the API evolves, breaking changes to request/response contracts will disrupt existing integrations. URL path versioning enables introducing new API versions while maintaining backward compatibility, giving integration partners a stable contract and a clear migration path.
 
 ## What Changes
-- Add API versioning configuration in `src/UI/Server/Program.cs` using `Asp.Versioning` built-in support with URL segment strategy (`/api/v1/`, `/api/v2/`)
+- Add API versioning configuration in `src/UI/Server/Program.cs` using `Asp.Versioning.Mvc` with URL segment strategy (`/api/v1/`, `/api/v2/`)
 - Move existing API controllers under `v1` namespace in `src/UI/Api/V1/`
 - Add versioned response DTOs: `WorkOrderV1Dto` in `src/UI/Api/V1/Models/` mirroring current contract
 - Add `v2` controller namespace placeholder in `src/UI/Api/V2/` with `WorkOrderV2Dto` adding new fields
 - Apply `[ApiVersion("1.0")]` and `[ApiVersion("2.0")]` attributes to respective controllers
 - Configure default version as `1.0` for requests without explicit version
 - Add `api-supported-versions` and `api-deprecated-versions` response headers
+
+> **Note:** `Asp.Versioning.Mvc` is delivered via NuGet (not part of the base .NET SDK) and requires explicit package approval per project conventions before implementation.
 
 ## Capabilities
 ### New Capabilities
@@ -25,7 +27,7 @@ As the API evolves, breaking changes to request/response contracts will disrupt 
 - **src/UI/Server/** - API versioning services registered in `Program.cs`
 - **src/Core/** - No changes
 - **src/DataAccess/** - No changes
-- **Dependencies** - No new NuGet packages; uses built-in `Asp.Versioning.Mvc` in .NET 10
+- **Dependencies** - Requires `Asp.Versioning.Mvc` NuGet package (not part of the base .NET SDK; needs explicit approval per project conventions)
 
 ## Acceptance Criteria
 ### Unit Tests

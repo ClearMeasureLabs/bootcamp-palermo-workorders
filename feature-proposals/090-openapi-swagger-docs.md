@@ -7,9 +7,10 @@ API consumers need accurate, interactive documentation to understand available e
 - Add Swagger UI middleware serving interactive documentation at `/swagger`
 - Annotate API controllers with XML documentation comments for endpoint descriptions
 - Add `[ProducesResponseType]` attributes to controller actions for accurate response documentation
-- Include request/response examples using `[SwaggerRequestExample]` and `[SwaggerResponseExample]` attributes
 - Document authentication requirements (API key header) in OpenAPI security scheme definition
 - Enable XML documentation file generation in API project build settings
+
+> **Note:** `Swashbuckle.AspNetCore` is not currently in the project dependencies and would require explicit NuGet package approval per project conventions. Alternatively, .NET 10's built-in OpenAPI support (`Microsoft.AspNetCore.OpenApi`) may be used without an additional package. The `[SwaggerRequestExample]` and `[SwaggerResponseExample]` attributes require a separate package (`Swashbuckle.AspNetCore.Filters`) and are not recommended; use XML documentation comments and `[ProducesResponseType]` attributes instead for documenting request/response shapes.
 
 ## Capabilities
 ### New Capabilities
@@ -26,7 +27,7 @@ API consumers need accurate, interactive documentation to understand available e
 - **src/UI/Server/** - Swagger services and middleware registered in `Program.cs`
 - **src/UI/Api/** - XML documentation comments and response type attributes added to controllers
 - **src/UI/Api/UI.Api.csproj** - Enable `GenerateDocumentationFile` in build properties
-- **Dependencies** - May require `Swashbuckle.AspNetCore` if not using built-in .NET 10 OpenAPI; requires explicit approval per project conventions
+- **Dependencies** - Requires `Swashbuckle.AspNetCore` NuGet package (needs explicit approval per project conventions), or can use built-in .NET 10 `Microsoft.AspNetCore.OpenApi` without additional packages
 
 ## Acceptance Criteria
 ### Unit Tests

@@ -4,10 +4,10 @@ Different organizations and departments use distinct work order prefixes to iden
 ## What Changes
 - Add `WorkOrderPrefix` setting in `appsettings.json` under a `WorkOrderSettings` section (default value: "WO-")
 - Add `WorkOrderSettings` configuration class in `src/Core/` with `Prefix` property
-- Update `WorkOrderNumberGenerator` (or equivalent number assignment logic) in `src/DataAccess/` to prepend the configured prefix when generating new work order numbers
+- Update `WorkOrderNumberGenerator` in `src/Core/Services/Impl/` (currently generates 7-character uppercase GUID substring via `GenerateNumber()`) to prepend the configured prefix when generating new work order numbers
 - Register `WorkOrderSettings` in `UIServiceRegistry.cs` via `IOptions<WorkOrderSettings>` pattern
 - Ensure existing work orders without prefix remain valid and displayable
-- Update work order search to handle prefix in search queries (strip prefix for numeric comparison when needed)
+- Update work order search to handle prefix in search queries (strip prefix for comparison when needed)
 - Add configuration validation: prefix must be 0-10 characters, alphanumeric and hyphens only
 
 ## Capabilities
@@ -23,22 +23,22 @@ Different organizations and departments use distinct work order prefixes to iden
 
 ## Impact
 - **src/Core/** - New `WorkOrderSettings` configuration class
-- **src/DataAccess/** - `WorkOrderNumberGenerator` updated to use configured prefix
+- **src/Core/Services/Impl/WorkOrderNumberGenerator.cs** - Updated to prepend configured prefix to the 7-char GUID substring
 - **src/UI/Server/appsettings.json** - New `WorkOrderSettings` section with `Prefix` property
 - **src/UI/Server/UIServiceRegistry.cs** - Registration of `IOptions<WorkOrderSettings>`
 - **src/DataAccess/Handlers/** - Search handler updated for prefix-aware querying
 - **Dependencies** - No new NuGet packages required
-- **Database** - No schema changes required; prefix is part of the generated number string
+- **Database** - No schema changes required; prefix is part of the generated number string (note: DB column length may need review since current Number is 7 chars and prefix adds length)
 
 ## Acceptance Criteria
 ### Unit Tests
-- `NumberGenerator_DefaultPrefix_PrependsWO` - Default configuration generates numbers like "WO-00001"
-- `NumberGenerator_CustomPrefix_PrependsMNT` - Configuration with prefix "MNT-" generates "MNT-00001"
-- `NumberGenerator_EmptyPrefix_GeneratesNumberWithoutPrefix` - Empty prefix generates "00001" without leading characters
+- `NumberGenerator_DefaultPrefix_PrependsWO` - Default configuration generates numbers like "WO-A1B2C3D" (prefix + 7-char GUID substring)
+- `NumberGenerator_CustomPrefix_PrependsMNT` - Configuration with prefix "MNT-" generates "MNT-" followed by 7-char GUID substring
+- `NumberGenerator_EmptyPrefix_GeneratesGuidOnly` - Empty prefix generates 7-char GUID substring without leading characters
 - `NumberGenerator_PrefixValidation_RejectsSpecialCharacters` - Prefix "WO@#" throws configuration validation error
 - `NumberGenerator_PrefixValidation_RejectsOverLength` - Prefix longer than 10 characters throws validation error
-- `NumberGenerator_Sequential_MaintainsIncrementWithPrefix` - Two consecutive generations produce "WO-00001" and "WO-00002"
-- `WorkOrderSearch_PrefixedNumber_FindsWorkOrder` - Search for "WO-00001" returns the correct work order
+- `NumberGenerator_TwoCalls_ProducesDifferentNumbers` - Two consecutive generations produce unique GUID-based numbers with prefix
+- `WorkOrderSearch_PrefixedNumber_FindsWorkOrder` - Search for "WO-A1B2C3D" returns the correct work order
 
 ### Integration Tests
 - `NumberPrefix_ConfiguredInSettings_AppliedToNewWorkOrders` - Configure prefix in settings, create work order, verify persisted number contains prefix
