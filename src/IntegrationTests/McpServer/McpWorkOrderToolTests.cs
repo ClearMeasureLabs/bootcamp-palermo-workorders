@@ -171,4 +171,39 @@ public class McpWorkOrderToolTests
         wo.Status.ShouldBe(WorkOrderStatus.Cancelled);
         result.ShouldContain("Cancelled");
     }
+
+    [Test]
+    public async Task ShouldExecuteShelveCommandAlias()
+    {
+        var creator = new Employee("creator1", "Jane", "Smith", "jane@test.com");
+        var assignee = new Employee("assignee1", "Willie", "Groundskeeper", "willie@test.com");
+        var inProgressOrder = new WorkOrder
+        {
+            Creator = creator,
+            Assignee = assignee,
+            Number = "WO-004",
+            Title = "In progress order",
+            Status = WorkOrderStatus.InProgress
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(assignee);
+            context.Add(inProgressOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-004", "shelve", "assignee1");
+
+        WorkOrder? wo;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            wo = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-004");
+        }
+
+        wo.Status.ShouldBe(WorkOrderStatus.Assigned);
+        result.ShouldContain("Assigned");
+    }
 }

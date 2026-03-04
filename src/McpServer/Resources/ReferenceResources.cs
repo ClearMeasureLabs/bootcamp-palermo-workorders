@@ -51,10 +51,12 @@ public class ReferenceResources
             },
             Assigned = new[]
             {
-                new { Command = "AssignedToInProgressCommand", TargetStatus = "InProgress" }
+                new { Command = "AssignedToInProgressCommand", TargetStatus = "InProgress" },
+                new { Command = "AssignedToCancelledCommand", TargetStatus = "Cancelled" }
             },
             InProgress = new[]
             {
+                new { Command = "InProgressToAssignedCommand", TargetStatus = "Assigned" },
                 new { Command = "InProgressToCompleteCommand", TargetStatus = "Complete" }
             },
             Complete = System.Array.Empty<object>()

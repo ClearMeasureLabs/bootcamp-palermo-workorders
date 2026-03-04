@@ -83,11 +83,11 @@ public class WorkOrderTools
         }
     }
 
-    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.")]
+    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToAssignedCommand (or 'shelve'), InProgressToCompleteCommand, AssignedToCancelledCommand.")]
     public static async Task<string> ExecuteWorkOrderCommand(
         IBus bus,
         [Description("The work order number")] string workOrderNumber,
-        [Description("The command name (e.g., DraftToAssignedCommand)")] string commandName,
+        [Description("The command name (e.g., DraftToAssignedCommand, InProgressToAssignedCommand, or 'shelve')")] string commandName,
         [Description("Username of the employee executing the command")] string executingUsername,
         [Description("Username of the employee to assign the work order to (required for DraftToAssignedCommand)")] string? assigneeUsername = null)
     {
@@ -103,7 +103,9 @@ public class WorkOrderTools
             return $"Employee with username '{executingUsername}' not found.";
         }
 
-        if (commandName == "DraftToAssignedCommand")
+        var normalizedCommandName = NormalizeCommandName(commandName);
+
+        if (normalizedCommandName == "DraftToAssignedCommand")
         {
             if (string.IsNullOrEmpty(assigneeUsername))
             {
@@ -119,10 +121,11 @@ public class WorkOrderTools
             workOrder.Assignee = assignee;
         }
 
-        StateCommandBase? command = commandName switch
+        StateCommandBase? command = normalizedCommandName switch
         {
             "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
             "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
+            "InProgressToAssignedCommand" => new InProgressToAssignedCommand(workOrder, user),
             "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
             "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
             _ => null
@@ -130,12 +133,12 @@ public class WorkOrderTools
 
         if (command == null)
         {
-            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.";
+            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand (or shelve), InProgressToCompleteCommand, AssignedToCancelledCommand.";
         }
 
         if (!command.IsValid())
         {
-            return $"Command '{commandName}' cannot be executed. Work order is in '{workOrder.Status.FriendlyName}' status but the command requires '{command.GetBeginStatus().FriendlyName}' status.";
+            return $"Command '{normalizedCommandName}' cannot be executed. Work order is in '{workOrder.Status.FriendlyName}' status but the command requires '{command.GetBeginStatus().FriendlyName}' status.";
         }
 
         var result = await bus.Send(command);
@@ -165,6 +168,21 @@ public class WorkOrderTools
             UploadedByUsername = a.UploadedBy?.UserName,
             a.UploadedDate
         }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static string NormalizeCommandName(string commandName)
+    {
+        var normalized = commandName.Trim();
+        return normalized.ToLowerInvariant() switch
+        {
+            "drafttoassignedcommand" => "DraftToAssignedCommand",
+            "assignedtoinprogresscommand" => "AssignedToInProgressCommand",
+            "inprogresstoassignedcommand" => "InProgressToAssignedCommand",
+            "shelve" => "InProgressToAssignedCommand",
+            "inprogresstocompletecommand" => "InProgressToCompleteCommand",
+            "assignedtocancelledcommand" => "AssignedToCancelledCommand",
+            _ => normalized
+        };
     }
 
     private static async Task<Employee?> FindEmployeeByUsername(IBus bus, string username)
