@@ -95,4 +95,46 @@ public class ApplicationChatHandlerTests : LlmTestBase
         workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
         workOrder?.Creator?.FirstName.ShouldBe("Timothy");
     }
+
+    [Test]
+    public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
+    {
+        new ZDataLoader().LoadData();
+
+        var workOrderNumber = await ExecuteAsync(
+            "Create a new work order to 'mow the grass', assign it to Groundskeeper Willie, " +
+            "only return the work order number");
+
+        await CheckStatusAsync(WorkOrderStatus.Assigned);
+
+        await ExecuteAsync($"make work order {workOrderNumber} in progress", "gwillie");
+
+        await CheckStatusAsync(WorkOrderStatus.InProgress);
+
+        await ExecuteAsync($"Shelve work order {workOrderNumber}", "gwillie");
+
+        await CheckStatusAsync(WorkOrderStatus.Assigned);
+
+        async Task<string> ExecuteAsync(string text, string user = "tlovejoy")
+        {
+            var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
+            var query = new ApplicationChatQuery(text, user);
+
+            ChatResponse response = await handler.Handle(query, CancellationToken.None);
+
+            return response.Messages.LastOrDefault()?.Text!;
+        }
+
+        async Task CheckStatusAsync(WorkOrderStatus status)
+        {
+            var db = TestHost.GetRequiredService<DataContext>();
+            var workOrder = await db.Set<WorkOrder>()
+                .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+
+            workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
+            workOrder.Status.ShouldBe(status);
+            workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+            workOrder?.Creator?.FirstName.ShouldBe("Timothy");
+        }
+    }
 }
