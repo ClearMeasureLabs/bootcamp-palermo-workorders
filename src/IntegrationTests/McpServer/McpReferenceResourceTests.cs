@@ -15,7 +15,7 @@ public class McpReferenceResourceTests
         result.ShouldContain("Assigned");
         result.ShouldContain("InProgress");
         result.ShouldContain("Complete");
-        result.ShouldContain("DFT");
+        result.ShouldContain("DRT");
         result.ShouldContain("ASD");
         result.ShouldContain("IPG");
         result.ShouldContain("CMP");
