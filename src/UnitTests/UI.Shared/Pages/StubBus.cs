@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -28,6 +29,23 @@ public class StubBus() : Bus(null!)
         if (request is WorkOrderSpecificationQuery query)
         {
             return Task.FromResult<TResponse>((TResponse)(object)WorkOrderSpecificationQueryResponse());
+        }
+
+        if (request is AddSubtaskCommand addCmd)
+        {
+            var subtask = new WorkOrderSubtask { Id = Guid.NewGuid(), WorkOrderId = addCmd.WorkOrderId, Title = addCmd.Title, SortOrder = addCmd.SortOrder };
+            return Task.FromResult<TResponse>((TResponse)(object)subtask);
+        }
+
+        if (request is ToggleSubtaskCommand toggleCmd)
+        {
+            var subtask = new WorkOrderSubtask { Id = toggleCmd.SubtaskId, IsCompleted = true };
+            return Task.FromResult<TResponse>((TResponse)(object)subtask);
+        }
+
+        if (request is RemoveSubtaskCommand)
+        {
+            return Task.FromResult<TResponse>((TResponse)(object)true);
         }
 
         throw new NotImplementedException();

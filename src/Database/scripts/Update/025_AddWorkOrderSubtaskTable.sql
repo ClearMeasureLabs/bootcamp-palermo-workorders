@@ -1,0 +1,10 @@
+CREATE TABLE [dbo].[WorkOrderSubtask] (
+	[Id]			UNIQUEIDENTIFIER	NOT NULL	DEFAULT (NEWSEQUENTIALID()),
+	[WorkOrderId]	UNIQUEIDENTIFIER	NOT NULL,
+	[Title]			NVARCHAR(300)		NOT NULL,
+	[IsCompleted]	BIT					NOT NULL	DEFAULT (0),
+	[SortOrder]		INT					NOT NULL	DEFAULT (0),
+	CONSTRAINT [PK_WorkOrderSubtask] PRIMARY KEY ([Id]),
+	CONSTRAINT [FK_WorkOrderSubtask_WorkOrder] FOREIGN KEY ([WorkOrderId])
+		REFERENCES [dbo].[WorkOrder] ([Id]) ON DELETE CASCADE
+);

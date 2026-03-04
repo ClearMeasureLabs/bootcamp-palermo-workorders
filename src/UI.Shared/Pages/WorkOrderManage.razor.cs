@@ -14,6 +14,8 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 public partial class WorkOrderManage : AppComponentBase
 {
     private WorkOrder? _workOrder;
+    private string _newSubtaskTitle = string.Empty;
+
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
     [Inject] public IUserSession? UserSession { get; set; }
     [Inject] private NavigationManager? NavigationManager { get; set; }
@@ -130,6 +132,42 @@ public partial class WorkOrderManage : AppComponentBase
         EventBus.Notify(new WorkOrderChangedEvent(result));
 
         NavigationManager!.NavigateTo("/workorder/search");
+    }
+
+    private async Task AddSubtask()
+    {
+        if (string.IsNullOrWhiteSpace(_newSubtaskTitle) || _workOrder == null) return;
+
+        var sortOrder = _workOrder.Subtasks.Count > 0
+            ? _workOrder.Subtasks.Max(s => s.SortOrder) + 1
+            : 0;
+
+        var subtask = await Bus.Send(new AddSubtaskCommand(_workOrder.Id, _newSubtaskTitle.Trim(), sortOrder));
+        _workOrder.Subtasks.Add(subtask);
+        _newSubtaskTitle = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task ToggleSubtask(Guid subtaskId)
+    {
+        var updated = await Bus.Send(new ToggleSubtaskCommand(subtaskId));
+        var existing = _workOrder!.Subtasks.FirstOrDefault(s => s.Id == subtaskId);
+        if (existing != null)
+        {
+            existing.IsCompleted = updated.IsCompleted;
+        }
+        StateHasChanged();
+    }
+
+    private async Task RemoveSubtask(Guid subtaskId)
+    {
+        await Bus.Send(new RemoveSubtaskCommand(subtaskId));
+        var existing = _workOrder!.Subtasks.FirstOrDefault(s => s.Id == subtaskId);
+        if (existing != null)
+        {
+            _workOrder.Subtasks.Remove(existing);
+        }
+        StateHasChanged();
     }
 }
 

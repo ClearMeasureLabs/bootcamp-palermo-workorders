@@ -31,6 +31,9 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public DateTime? CompletedDate { get; set; }
 
+    /// <summary>Gets the subtasks associated with this work order.</summary>
+    public ICollection<WorkOrderSubtask> Subtasks { get; set; } = new List<WorkOrderSubtask>();
+
     private string? getTruncatedString(string? value)
     {
         if (value == null)

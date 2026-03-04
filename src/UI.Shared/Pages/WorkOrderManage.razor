@@ -102,6 +102,50 @@
             }
         </div>
     </EditForm>
+
+    @if (_workOrder != null && _workOrder.Id != Guid.Empty)
+    {
+        <div class="subtask-section" data-testid="@Elements.SubtaskChecklist">
+            <h4>Subtasks</h4>
+            @{
+                var completedCount = _workOrder.Subtasks.Count(s => s.IsCompleted);
+                var totalCount = _workOrder.Subtasks.Count;
+            }
+            @if (totalCount > 0)
+            {
+                <div data-testid="@Elements.SubtaskProgress" class="subtask-progress">
+                    @completedCount of @totalCount complete
+                </div>
+            }
+            <ul class="subtask-list">
+                @foreach (var subtask in _workOrder.Subtasks.OrderBy(s => s.SortOrder))
+                {
+                    var subtaskTestId = $"{Elements.SubtaskItem}{subtask.Id}";
+                    var toggleTestId = $"{Elements.SubtaskToggle}{subtask.Id}";
+                    var removeTestId = $"{Elements.SubtaskRemove}{subtask.Id}";
+                    <li data-testid="@subtaskTestId" class="subtask-item @(subtask.IsCompleted ? "completed" : "")">
+                        <input type="checkbox" data-testid="@toggleTestId" checked="@subtask.IsCompleted"
+                               @onchange="@(() => ToggleSubtask(subtask.Id))" />
+                        <span class="subtask-title">@subtask.Title</span>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <button type="button" data-testid="@removeTestId" class="btn-remove-subtask"
+                                    @onclick="@(() => RemoveSubtask(subtask.Id))">✕</button>
+                        }
+                    </li>
+                }
+            </ul>
+            @if (!Model.IsReadOnly)
+            {
+                <div class="subtask-add">
+                    <input type="text" data-testid="@Elements.SubtaskNewTitle" @bind="_newSubtaskTitle"
+                           placeholder="New subtask title" class="form-control subtask-input" />
+                    <button type="button" data-testid="@Elements.SubtaskAddButton" class="btn btn-secondary"
+                            @onclick="AddSubtask">Add Subtask</button>
+                </div>
+            }
+        </div>
+    }
 </div>
 
 @code
@@ -121,6 +165,13 @@
         ReadOnlyMessage,
         CommandButton,
         WorkOrderNumber,
-        Status
+        Status,
+        SubtaskChecklist,
+        SubtaskProgress,
+        SubtaskNewTitle,
+        SubtaskAddButton,
+        SubtaskItem,
+        SubtaskToggle,
+        SubtaskRemove
     }
 }
