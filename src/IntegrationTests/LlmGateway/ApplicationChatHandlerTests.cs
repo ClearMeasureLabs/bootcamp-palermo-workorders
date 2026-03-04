@@ -156,7 +156,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
         IChatClient parseClient3 = await factory3.GetChatClient();
 
         var db2 = TestHost.GetRequiredService<DataContext>();
-        var workOrder2 = await db.Set<WorkOrder>()
+        var workOrder2 = await db2.Set<WorkOrder>()
             .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
 
         workOrder2.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");

@@ -83,7 +83,7 @@ public class WorkOrderTools
         }
     }
 
-    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.")]
+    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToAssignedCommand (also known as Shelve), InProgressToCompleteCommand, AssignedToCancelledCommand.")]
     public static async Task<string> ExecuteWorkOrderCommand(
         IBus bus,
         [Description("The work order number")] string workOrderNumber,
@@ -103,7 +103,7 @@ public class WorkOrderTools
             return $"Employee with username '{executingUsername}' not found.";
         }
 
-        if (commandName == "DraftToAssignedCommand")
+        if (commandName.Equals("DraftToAssignedCommand", StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrEmpty(assigneeUsername))
             {
@@ -119,18 +119,21 @@ public class WorkOrderTools
             workOrder.Assignee = assignee;
         }
 
-        StateCommandBase? command = commandName switch
+        var normalizedCommand = commandName.Trim();
+        StateCommandBase? command = normalizedCommand switch
         {
-            "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
-            "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
-            "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
-            "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
+            _ when normalizedCommand.Equals("DraftToAssignedCommand", StringComparison.OrdinalIgnoreCase) => new DraftToAssignedCommand(workOrder, user),
+            _ when normalizedCommand.Equals("AssignedToInProgressCommand", StringComparison.OrdinalIgnoreCase) => new AssignedToInProgressCommand(workOrder, user),
+            _ when normalizedCommand.Equals("InProgressToAssignedCommand", StringComparison.OrdinalIgnoreCase)
+                || normalizedCommand.Equals("Shelve", StringComparison.OrdinalIgnoreCase) => new InProgressToAssignedCommand(workOrder, user),
+            _ when normalizedCommand.Equals("InProgressToCompleteCommand", StringComparison.OrdinalIgnoreCase) => new InProgressToCompleteCommand(workOrder, user),
+            _ when normalizedCommand.Equals("AssignedToCancelledCommand", StringComparison.OrdinalIgnoreCase) => new AssignedToCancelledCommand(workOrder, user),
             _ => null
         };
 
         if (command == null)
         {
-            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.";
+            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.";
         }
 
         if (!command.IsValid())
