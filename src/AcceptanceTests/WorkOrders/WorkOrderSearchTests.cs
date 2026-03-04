@@ -394,4 +394,89 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await statusSelect.DblClickAsync();
         await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key);
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldDisplayCorrectUrgencyBadgeForEachPriority()
+    {
+        // Arrange
+        var creator = Faker<Employee>();
+        var orderLow = Faker<WorkOrder>();
+        var orderMedium = Faker<WorkOrder>();
+        var orderHigh = Faker<WorkOrder>();
+        var orderCritical = Faker<WorkOrder>();
+        orderLow.Creator = creator;
+        orderLow.Priority = WorkOrderPriority.Low;
+        orderMedium.Creator = creator;
+        orderMedium.Priority = WorkOrderPriority.Medium;
+        orderHigh.Creator = creator;
+        orderHigh.Priority = WorkOrderPriority.High;
+        orderCritical.Creator = creator;
+        orderCritical.Priority = WorkOrderPriority.Critical;
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(orderLow);
+        context.Add(orderMedium);
+        context.Add(orderHigh);
+        context.Add(orderCritical);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        await Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}").ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "UrgencyBadges");
+
+        // Assert
+        await Expect(Page.Locator($"[data-testid='urgency-badge-{orderLow.Number}']")).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("urgency-low"));
+        await Expect(Page.Locator($"[data-testid='urgency-badge-{orderMedium.Number}']")).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("urgency-medium"));
+        await Expect(Page.Locator($"[data-testid='urgency-badge-{orderHigh.Number}']")).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("urgency-high"));
+        await Expect(Page.Locator($"[data-testid='urgency-badge-{orderCritical.Number}']")).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("urgency-critical"));
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowOverdueIndicatorForPastDueDateWorkOrder()
+    {
+        // Arrange
+        var creator = CurrentUser;
+        var overdueOrder = Faker<WorkOrder>();
+        overdueOrder.Creator = creator;
+        overdueOrder.Status = WorkOrderStatus.Draft;
+        overdueOrder.DueDate = DateTime.Today.AddDays(-3);
+        overdueOrder.Title = $"[{TestTag}] overdue test";
+
+        await using var context = TestHost.NewDbContext();
+        context.Attach(creator);
+        context.Add(overdueOrder);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.MyWorkOrders));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "OverdueOrder");
+
+        // Assert — the row for the overdue order should have the overdue-row class
+        var row = Page.Locator($"[data-testid='urgency-badge-{overdueOrder.Number}']").Locator("xpath=ancestor::tr");
+        await Expect(row).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("overdue-row"));
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldDisplayUrgencyLegendOnSearchPage()
+    {
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "LegendVisible");
+
+        // Assert
+        var legend = Page.Locator("[data-testid='urgency-legend']");
+        await Expect(legend).ToBeVisibleAsync();
+        await Expect(legend.Locator(".urgency-low")).ToBeVisibleAsync();
+        await Expect(legend.Locator(".urgency-medium")).ToBeVisibleAsync();
+        await Expect(legend.Locator(".urgency-high")).ToBeVisibleAsync();
+        await Expect(legend.Locator(".urgency-critical")).ToBeVisibleAsync();
+    }
 }

@@ -6,7 +6,7 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
-public class StubBus() : Bus(null!)
+public class StubBus(WorkOrder[]? workOrders = null) : Bus(null!)
 {
     public override Task Publish(INotification notification)
     {
@@ -33,7 +33,7 @@ public class StubBus() : Bus(null!)
         throw new NotImplementedException();
     }
 
-    public Func<WorkOrder[]> WorkOrderSpecificationQueryResponse => () =>
+    public Func<WorkOrder[]> WorkOrderSpecificationQueryResponse => () => workOrders ??
     [
         new WorkOrder
         {

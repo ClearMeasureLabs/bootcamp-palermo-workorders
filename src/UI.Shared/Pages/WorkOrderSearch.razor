@@ -55,6 +55,15 @@
                 <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length work orders)
             </div>
 
+            <div class="urgency-legend" data-testid="urgency-legend">
+                <span class="legend-title">Priority:</span>
+                <span class="urgency-badge urgency-low">Low</span>
+                <span class="urgency-badge urgency-medium">Medium</span>
+                <span class="urgency-badge urgency-high">High</span>
+                <span class="urgency-badge urgency-critical">Critical</span>
+                <span class="legend-overdue">⚠ Overdue</span>
+            </div>
+
             @if (Model.Results.Length == 0)
             {
                 <div class="empty-results">
@@ -74,6 +83,7 @@
                         <th>Creator</th>
                         <th>Assignee</th>
                         <th>Status</th>
+                        <th>Urgency</th>
                         <th>Title</th>
                     </tr>
                     </thead>
@@ -83,7 +93,8 @@
                         foreach (var order in Model.Results)
                         {
                             var rowClass = i++ % 2 == 0 ? "odd" : "even";
-                            <tr class="@rowClass">
+                            var overdueClass = GetOverdueClass(order);
+                            <tr class="@rowClass @overdueClass">
                                 <td>
                                     @{
                                         var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
@@ -96,6 +107,9 @@
                                 <td>@order.Assignee?.GetFullName()</td>
                                 <td>
                                     <span class="status-badge">@order.Status</span>
+                                </td>
+                                <td>
+                                    <span class="urgency-badge @GetUrgencyCssClass(order.Priority)" data-testid="urgency-badge-@order.Number">@order.Priority</span>
                                 </td>
                                 <td>@order.Title</td>
                             </tr>
@@ -123,4 +137,22 @@
     public List<SelectListItem> UserOptions { get; set; } = new();
     public List<SelectListItem> StatusOptions { get; set; } = new();
     public Func<Task>? OnSearch { get; set; }
+
+    public static string GetUrgencyCssClass(WorkOrderPriority priority) => priority switch
+    {
+        WorkOrderPriority.Low => "urgency-low",
+        WorkOrderPriority.Medium => "urgency-medium",
+        WorkOrderPriority.High => "urgency-high",
+        WorkOrderPriority.Critical => "urgency-critical",
+        _ => "urgency-low"
+    };
+
+    public static bool IsOverdue(WorkOrder order) =>
+        order.DueDate.HasValue &&
+        order.DueDate.Value.Date < DateTime.Today &&
+        order.Status != WorkOrderStatus.Complete &&
+        order.Status != WorkOrderStatus.Cancelled;
+
+    public static string GetOverdueClass(WorkOrder order) =>
+        IsOverdue(order) ? "overdue-row" : string.Empty;
 }

@@ -31,6 +31,10 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public DateTime? CompletedDate { get; set; }
 
+    public DateTime? DueDate { get; set; }
+
+    public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Low;
+
     private string? getTruncatedString(string? value)
     {
         if (value == null)
