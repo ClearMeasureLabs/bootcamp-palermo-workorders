@@ -32,7 +32,7 @@ public class WorkOrderCostTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var estimatedCostInput = Page.GetByTestId(nameof(WorkOrderManage.Elements.EstimatedCost));
-        await Expect(estimatedCostInput).ToHaveValueAsync("250");
+        await Expect(estimatedCostInput).ToHaveValueAsync("250.00");
     }
 
     [Test, Retry(2)]
@@ -44,19 +44,14 @@ public class WorkOrderCostTests : AcceptanceTestBase
         order = await ClickWorkOrderNumberFromSearchPage(order);
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
         order = await ClickWorkOrderNumberFromSearchPage(order);
+        order = await BeginExistingWorkOrder(order);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
 
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title ?? "Updated Title");
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description ?? "Updated Description");
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
         await Input(nameof(WorkOrderManage.Elements.ActualCost), "310.75");
 
-        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
-        await Click(saveButtonTestId);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
@@ -95,9 +90,9 @@ public class WorkOrderCostTests : AcceptanceTestBase
         await Expect(actualCostHeader).ToHaveCountAsync(1);
 
         var estimatedCostCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.EstimatedCost) + order.Number);
-        await Expect(estimatedCostCell).ToContainTextAsync("$");
+        await Expect(estimatedCostCell).ToContainTextAsync("100.00");
 
         var actualCostCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.ActualCost) + order.Number);
-        await Expect(actualCostCell).ToContainTextAsync("$");
+        await Expect(actualCostCell).ToContainTextAsync("95.50");
     }
 }
