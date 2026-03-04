@@ -90,7 +90,7 @@ public class WorkOrderTests
     }
 
     [Test]
-    public void Instructions_ShouldNotAutoUppercase()
+    public void ShouldNotAutoUppercaseInstructions()
     {
         var workOrder = new WorkOrder();
         workOrder.Instructions = "Mixed Case Instructions";
@@ -98,9 +98,18 @@ public class WorkOrderTests
     }
 
     [Test]
-    public void Instructions_ShouldDefaultToNull()
+    public void ShouldDefaultInstructionsToNull()
     {
         var workOrder = new WorkOrder();
         Assert.That(workOrder.Instructions, Is.Null);
+    }
+
+    [Test]
+    public void ShouldTruncateTo4000CharactersOnInstructions()
+    {
+        var longText = new string('x', 4001);
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = longText;
+        Assert.That(workOrder.Instructions.Length, Is.EqualTo(4000));
     }
 }
