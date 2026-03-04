@@ -161,6 +161,20 @@ public abstract class AcceptanceTestBase
             // Ignore tracing errors during teardown
         }
 
+        try
+        {
+            var screenshotDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, "final-screenshots");
+            Directory.CreateDirectory(screenshotDir);
+            var screenshotFileName = $"{TestContext.CurrentContext.Test.ClassName}-{TestContext.CurrentContext.Test.Name}-final-{TestId}.png";
+            var screenshotPath = Path.Combine(screenshotDir, screenshotFileName);
+            await state.Page.ScreenshotAsync(new PageScreenshotOptions { Path = screenshotPath });
+            TestContext.AddTestAttachment(screenshotPath);
+        }
+        catch
+        {
+            // Ignore screenshot errors during teardown to prevent affecting other teardown operations
+        }
+
         try { await state.Page.CloseAsync(); } catch { }
         try { await state.BrowserContext.CloseAsync(); } catch { }
         try { await state.Browser.CloseAsync(); } catch { }
