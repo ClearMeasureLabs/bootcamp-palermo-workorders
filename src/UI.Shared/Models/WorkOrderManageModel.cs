@@ -29,4 +29,8 @@ public class WorkOrderManageModel
     public string? CreatedDate { get; set; }
 
     public string? RoomNumber { get; set; }
+
+    public string? Building { get; set; }
+
+    public string? Floor { get; set; }
 }

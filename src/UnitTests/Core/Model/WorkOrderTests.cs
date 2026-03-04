@@ -73,6 +73,20 @@ public class WorkOrderTests
     }
 
     [Test]
+    public void WorkOrder_Building_ShouldDefaultToNull()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.Building, Is.Null);
+    }
+
+    [Test]
+    public void WorkOrder_Floor_ShouldDefaultToNull()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.Floor, Is.Null);
+    }
+
+    [Test]
     public void ShouldChangeStatus()
     {
         var order = new WorkOrder();

@@ -42,6 +42,16 @@
                     </div>
 
                     <div class="filter-group">
+                        <label class="filter-label" for="building">Building</label>
+                        <InputText id="@Elements.BuildingInput" @bind-Value="Model.Filters.Building" class="form-control" placeholder="All"/>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label" for="floor">Floor</label>
+                        <InputText id="@Elements.FloorInput" @bind-Value="Model.Filters.Floor" class="form-control" placeholder="All"/>
+                    </div>
+
+                    <div class="filter-group">
                         <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
@@ -75,6 +85,8 @@
                         <th>Assignee</th>
                         <th>Status</th>
                         <th>Title</th>
+                        <th>Building</th>
+                        <th>Floor</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -98,6 +110,8 @@
                                     <span class="status-badge">@order.Status</span>
                                 </td>
                                 <td>@order.Title</td>
+                                <td>@order.Building</td>
+                                <td>@order.Floor</td>
                             </tr>
                         }
                     }
@@ -115,6 +129,8 @@
         CreatorSelect,
         AssigneeSelect,
         StatusSelect,
+        BuildingInput,
+        FloorInput,
         SearchButton,
         WorkOrderLink
     }

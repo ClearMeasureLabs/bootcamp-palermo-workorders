@@ -20,10 +20,22 @@ public record WorkOrderSpecificationQuery : IRequest<WorkOrder[]>, IRemotableReq
         Creator = creator;
     }
 
+    public void MatchBuilding(string? building)
+    {
+        Building = building;
+    }
+
+    public void MatchFloor(string? floor)
+    {
+        Floor = floor;
+    }
+
     public string? StatusKey { get; set; }
 
     public Employee? Assignee { get; set; }
 
     public Employee? Creator { get; set; }
+    public string? Building { get; set; }
+    public string? Floor { get; set; }
     public WorkOrderStatus? Status => StatusKey != null ? WorkOrderStatus.FromKey(StatusKey) : null;
 }

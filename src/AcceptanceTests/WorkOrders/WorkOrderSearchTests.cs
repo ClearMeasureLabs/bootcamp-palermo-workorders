@@ -394,4 +394,49 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await statusSelect.DblClickAsync();
         await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key);
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldFilterByBuildingAndReturnOnlyMatchingResults()
+    {
+        // Arrange - create one work order with "Science Building" and one without
+        var creator = Faker<Employee>();
+        var orderInBuilding = Faker<WorkOrder>();
+        orderInBuilding.Creator = creator;
+        orderInBuilding.Building = "Science Building";
+        orderInBuilding.Title = $"[{TestTag}] in building";
+
+        var orderElsewhere = Faker<WorkOrder>();
+        orderElsewhere.Creator = creator;
+        orderElsewhere.Building = "Other Building";
+        orderElsewhere.Title = $"[{TestTag}] other building";
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(orderInBuilding);
+        context.Add(orderElsewhere);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+
+        var buildingInput = Page.Locator($"#{WorkOrderSearch.Elements.BuildingInput}");
+        await buildingInput.FillAsync("Science Building");
+
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "BuildingFiltered");
+
+        // Assert
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable).ToBeVisibleAsync();
+
+        var workOrderRows = workOrderTable.Locator("tbody tr");
+        await Expect(workOrderRows).ToHaveCountAsync(1);
+        await Expect(workOrderRows.First.Locator("td").Nth(5)).ToContainTextAsync("Science Building");
+    }
 }

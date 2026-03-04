@@ -61,6 +61,20 @@
                         <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="Building" class="form-label">Building:</label>
+                    <div>
+                        <InputText data-testid="@Elements.Building" id="Building" @bind-Value="Model.Building" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Floor" class="form-label">Floor:</label>
+                    <div>
+                        <InputText data-testid="@Elements.Floor" id="Floor" @bind-Value="Model.Floor" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
             </div>
 
             <div class="readonly-info">
@@ -113,6 +127,8 @@
         Title,
         AssigneeFullName,
         RoomNumber,
+        Building,
+        Floor,
         Description,
         AssignedDate,
         CompletedDate,

@@ -11,6 +11,92 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
 public class WorkOrderSpecificationHandlerTests
 {
     [Test]
+    public async Task WorkOrder_WithBuildingAndFloor_ShouldPersistAndRetrieve()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var order = new WorkOrder
+        {
+            Creator = employee,
+            Number = "123",
+            Building = "Main Hall",
+            Floor = "2nd"
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchCreator(employee);
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Building.ShouldBe("Main Hall");
+        orders[0].Floor.ShouldBe("2nd");
+    }
+
+    [Test]
+    public async Task WorkOrderSearchQuery_FilterByBuilding_ShouldReturnMatchingResults()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var order1 = new WorkOrder { Creator = employee, Number = "123", Building = "Main Hall" };
+        var order2 = new WorkOrder { Creator = employee, Number = "456", Building = "Science Wing" };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order1);
+            context.Add(order2);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchBuilding("Main Hall");
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Building.ShouldBe("Main Hall");
+    }
+
+    [Test]
+    public async Task WorkOrderSearchQuery_FilterByFloor_ShouldReturnMatchingResults()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var order1 = new WorkOrder { Creator = employee, Number = "123", Floor = "1st" };
+        var order2 = new WorkOrder { Creator = employee, Number = "456", Floor = "3rd" };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order1);
+            context.Add(order2);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchFloor("3rd");
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Floor.ShouldBe("3rd");
+    }
+
+    [Test]
     public void ShouldHandleRemotedQuery()
     {
         new WorkOrderSpecificationQuery();

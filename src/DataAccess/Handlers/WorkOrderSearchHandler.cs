@@ -28,6 +28,16 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers
                 query = query.Where(wo => wo.Status == specification.Status);
             }
 
+            if (!string.IsNullOrWhiteSpace(specification.Building))
+            {
+                query = query.Where(wo => wo.Building == specification.Building);
+            }
+
+            if (!string.IsNullOrWhiteSpace(specification.Floor))
+            {
+                query = query.Where(wo => wo.Floor == specification.Floor);
+            }
+
             return await query.ToArrayAsync(cancellationToken);
         }
     }

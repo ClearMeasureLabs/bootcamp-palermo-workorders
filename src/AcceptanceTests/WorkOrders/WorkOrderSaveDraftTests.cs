@@ -93,4 +93,36 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         
         rehyratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldCreateWorkOrderWithBuildingAndFloorAndVerifyOnDetailPage()
+    {
+        await LoginAsCurrentUser();
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync();
+        var newWorkOrderNumber = await woNumberLocator.InnerTextAsync();
+
+        await Input(nameof(WorkOrderManage.Elements.Title), $"[{TestTag}] building floor test");
+        await Input(nameof(WorkOrderManage.Elements.Description), "test description");
+        await Input(nameof(WorkOrderManage.Elements.Building), "Science Building");
+        await Input(nameof(WorkOrderManage.Elements.Floor), "3rd Floor");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + newWorkOrderNumber);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var buildingField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Building));
+        await Expect(buildingField).ToHaveValueAsync("Science Building");
+
+        var floorField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Floor));
+        await Expect(floorField).ToHaveValueAsync("3rd Floor");
+    }
 }

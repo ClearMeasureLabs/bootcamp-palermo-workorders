@@ -66,6 +66,8 @@ public partial class WorkOrderSearch : AppComponentBase
         specification.MatchCreator(creator);
         specification.MatchAssignee(assignee);
         specification.MatchStatus(status);
+        specification.MatchBuilding(!string.IsNullOrWhiteSpace(Model.Filters.Building) ? Model.Filters.Building : null);
+        specification.MatchFloor(!string.IsNullOrWhiteSpace(Model.Filters.Floor) ? Model.Filters.Floor : null);
 
         Model.Results = await Bus.Send(specification);
         StateHasChanged();
