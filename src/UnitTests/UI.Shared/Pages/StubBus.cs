@@ -8,6 +8,8 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class StubBus() : Bus(null!)
 {
+    public WorkOrder? WorkOrderByNumberResult { get; set; }
+
     public override Task Publish(INotification notification)
     {
         return Task.CompletedTask;
@@ -28,6 +30,11 @@ public class StubBus() : Bus(null!)
         if (request is WorkOrderSpecificationQuery query)
         {
             return Task.FromResult<TResponse>((TResponse)(object)WorkOrderSpecificationQueryResponse());
+        }
+
+        if (request is WorkOrderByNumberQuery)
+        {
+            return Task.FromResult<TResponse>((TResponse)(object)WorkOrderByNumberResult!);
         }
 
         throw new NotImplementedException();

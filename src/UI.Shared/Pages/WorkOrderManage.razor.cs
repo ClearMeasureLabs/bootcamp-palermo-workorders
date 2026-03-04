@@ -14,6 +14,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 public partial class WorkOrderManage : AppComponentBase
 {
     private WorkOrder? _workOrder;
+    private Employee? _currentUser;
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
     [Inject] public IUserSession? UserSession { get; set; }
     [Inject] private NavigationManager? NavigationManager { get; set; }
@@ -22,6 +23,7 @@ public partial class WorkOrderManage : AppComponentBase
     public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
+    public string? ReassignToUserName { get; set; }
 
     [Parameter] public string? Id { get; set; }
 
@@ -67,6 +69,7 @@ public partial class WorkOrderManage : AppComponentBase
         Model.IsReadOnly = !commandList!.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
         _workOrder = workOrder;
+        _currentUser = currentUser;
         
     }
 
@@ -127,6 +130,21 @@ public partial class WorkOrderManage : AppComponentBase
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
 
         var result = await Bus.Send(matchingCommand);
+        EventBus.Notify(new WorkOrderChangedEvent(result));
+
+        NavigationManager!.NavigateTo("/workorder/search");
+    }
+
+    private async Task HandleReassign()
+    {
+        if (string.IsNullOrEmpty(ReassignToUserName)) return;
+
+        var currentUser = (await UserSession!.GetCurrentUserAsync())!;
+        var workOrder = (await Bus.Send(new WorkOrderByNumberQuery(Model.WorkOrderNumber!)))!;
+        var newAssignee = await Bus.Send(new EmployeeByUserNameQuery(ReassignToUserName));
+
+        var command = new ReassignWorkOrderCommand(workOrder, newAssignee!, currentUser);
+        var result = await Bus.Send(command);
         EventBus.Notify(new WorkOrderChangedEvent(result));
 
         NavigationManager!.NavigateTo("/workorder/search");

@@ -71,6 +71,6 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public bool CanReassign()
     {
-        return Status == WorkOrderStatus.Draft;
+        return Status == WorkOrderStatus.Assigned || Status == WorkOrderStatus.InProgress;
     }
 }

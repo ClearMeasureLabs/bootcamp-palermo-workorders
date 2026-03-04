@@ -26,7 +26,7 @@
                         {
                             <InputSelect data-testid="@Elements.Assignee" id="AssignedToUserName"
                                          @bind-Value="Model.AssignedToUserName"
-                                         disabled="@(Model.WorkOrder != null && !Model.WorkOrder.CanReassign())"
+                                         disabled="@(Model.WorkOrder == null || Model.WorkOrder.Status != WorkOrderStatus.Draft)"
                                          class="form-control input-select">
                                 @foreach (var user in UserOptions)
                                 {
@@ -102,6 +102,24 @@
             }
         </div>
     </EditForm>
+
+@if (_workOrder?.CanReassign() == true && _currentUser?.Id == _workOrder?.Creator?.Id)
+{
+    <div class="reassign-section">
+        <div class="form-group">
+            <label class="form-label">Reassign To:</label>
+            <select data-testid="@Elements.ReassignAssignee" @bind="ReassignToUserName" class="form-control input-select">
+                @foreach (var user in UserOptions)
+                {
+                    <option value="@user.Value">@user.Text</option>
+                }
+            </select>
+            <button data-testid="@Elements.ReassignButton" type="button" @onclick="HandleReassign" class="btn btn-warning">
+                Reassign
+            </button>
+        </div>
+    </div>
+}
 </div>
 
 @code
@@ -121,6 +139,8 @@
         ReadOnlyMessage,
         CommandButton,
         WorkOrderNumber,
-        Status
+        Status,
+        ReassignButton,
+        ReassignAssignee
     }
 }
