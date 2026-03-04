@@ -9,7 +9,7 @@ public class WorkOrder : EntityBase<WorkOrder>
     public string? Description
     {
         get => _description;
-        set => _description = getTruncatedString(value);
+        set => _description = getTruncatedString(value)?.ToUpper();
     }
 
     public string? RoomNumber { get; set; } = null;
