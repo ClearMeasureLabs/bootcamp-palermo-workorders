@@ -74,6 +74,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(workOrder.Title);
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe(workOrder.Instructions);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -113,6 +114,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe(workOrder.Instructions);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -153,6 +155,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe(workOrder.Instructions);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
