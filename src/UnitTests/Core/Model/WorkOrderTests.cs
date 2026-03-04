@@ -47,7 +47,7 @@ public class WorkOrderTests
 
         Assert.That(workOrder.Id, Is.EqualTo(guid));
         Assert.That(workOrder.Title, Is.EqualTo("Title"));
-        Assert.That(workOrder.Description, Is.EqualTo("Description"));
+        Assert.That(workOrder.Description, Is.EqualTo("DESCRIPTION"));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
         Assert.That(workOrder.Number, Is.EqualTo("Number"));
         Assert.That(workOrder.Creator, Is.EqualTo(creator));
@@ -70,6 +70,22 @@ public class WorkOrderTests
         var order = new WorkOrder();
         order.Description = longText;
         Assert.That(order.Description.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void ShouldForceDescriptionToUpperCase()
+    {
+        var order = new WorkOrder();
+        order.Description = "this is a lowercase description";
+        Assert.That(order.Description, Is.EqualTo("THIS IS A LOWERCASE DESCRIPTION"));
+    }
+
+    [Test]
+    public void ShouldForceDescriptionToUpperCaseWithMixedCase()
+    {
+        var order = new WorkOrder();
+        order.Description = "Mixed Case Description With Numbers 123";
+        Assert.That(order.Description, Is.EqualTo("MIXED CASE DESCRIPTION WITH NUMBERS 123"));
     }
 
     [Test]
