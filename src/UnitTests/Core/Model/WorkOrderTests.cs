@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -85,21 +86,21 @@ public class WorkOrderTests
     public void WorkOrder_SlaResponseHours_ShouldDefaultToNull()
     {
         var workOrder = new WorkOrder();
-        Assert.That(workOrder.SlaResponseHours, Is.Null);
+        workOrder.SlaResponseHours.ShouldBeNull();
     }
 
     [Test]
     public void WorkOrder_SlaResolutionHours_ShouldDefaultToNull()
     {
         var workOrder = new WorkOrder();
-        Assert.That(workOrder.SlaResolutionHours, Is.Null);
+        workOrder.SlaResolutionHours.ShouldBeNull();
     }
 
     [Test]
     public void WorkOrder_GetResponseSlaStatus_ShouldReturnNull_WhenNoSlaSet()
     {
         var workOrder = new WorkOrder();
-        Assert.That(workOrder.GetResponseSlaStatus(), Is.Null);
+        workOrder.GetResponseSlaStatus().ShouldBeNull();
     }
 
     [Test]
@@ -112,7 +113,7 @@ public class WorkOrderTests
             CreatedDate = now.AddHours(-4),  // 50% elapsed
             AssignedDate = now
         };
-        Assert.That(workOrder.GetResponseSlaStatus(), Is.EqualTo(SlaStatus.OnTrack));
+        workOrder.GetResponseSlaStatus().ShouldBe(SlaStatus.OnTrack);
     }
 
     [Test]
@@ -125,7 +126,7 @@ public class WorkOrderTests
             CreatedDate = now.AddHours(-7),  // 87.5% elapsed
             AssignedDate = now
         };
-        Assert.That(workOrder.GetResponseSlaStatus(), Is.EqualTo(SlaStatus.AtRisk));
+        workOrder.GetResponseSlaStatus().ShouldBe(SlaStatus.AtRisk);
     }
 
     [Test]
@@ -138,7 +139,7 @@ public class WorkOrderTests
             CreatedDate = now.AddHours(-5),  // 125% elapsed
             AssignedDate = now
         };
-        Assert.That(workOrder.GetResponseSlaStatus(), Is.EqualTo(SlaStatus.Breached));
+        workOrder.GetResponseSlaStatus().ShouldBe(SlaStatus.Breached);
     }
 
     [Test]
@@ -153,6 +154,6 @@ public class WorkOrderTests
             CompletedDate = completed,
             Status = WorkOrderStatus.Complete
         };
-        Assert.That(workOrder.GetResolutionSlaStatus(), Is.EqualTo(SlaStatus.AtRisk));
+        workOrder.GetResolutionSlaStatus().ShouldBe(SlaStatus.AtRisk);
     }
 }
