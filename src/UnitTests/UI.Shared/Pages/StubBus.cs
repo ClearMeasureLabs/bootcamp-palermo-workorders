@@ -32,6 +32,11 @@ public class StubBus() : Bus(null!)
             return Task.FromResult<TResponse>((TResponse)(object)WorkOrderSpecificationQueryResponse());
         }
 
+        if (request is WorkOrderAttachmentsQuery)
+        {
+            return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderAttachment>());
+        }
+
         if (request is WorkOrderByNumberQuery)
         {
             return Task.FromResult<TResponse>((TResponse)(object)WorkOrderByNumberResult!);

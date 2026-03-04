@@ -73,4 +73,6 @@ public class WorkOrder : EntityBase<WorkOrder>
     {
         return Status == WorkOrderStatus.Assigned || Status == WorkOrderStatus.InProgress;
     }
+
+    public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();
 }
