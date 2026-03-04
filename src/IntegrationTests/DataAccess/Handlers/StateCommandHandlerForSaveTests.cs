@@ -111,7 +111,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
-        order.Title.ShouldBe("newtitle");
+        order.Title.ShouldBe("NEWTITLE");
         order.Description.ShouldBe(workOrder.Description);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
@@ -151,7 +151,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
-        order.Title.ShouldBe("newtitle");
+        order.Title.ShouldBe("NEWTITLE");
         order.Description.ShouldBe(workOrder.Description);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);

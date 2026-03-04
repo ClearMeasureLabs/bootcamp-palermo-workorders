@@ -59,6 +59,22 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         Assert.That(order.CreatedDate, Is.Not.Null);
     }
 
+    [Test]
+    public void ShouldConvertTitleToUpperCase()
+    {
+        var order = new WorkOrder();
+        order.Number = "123";
+        order.Title = "lowercase title";
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        Assert.That(order.Title, Is.EqualTo("LOWERCASE TITLE"));
+    }
+
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
         return new SaveDraftCommand(order, employee);
