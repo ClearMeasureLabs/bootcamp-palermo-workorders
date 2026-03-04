@@ -30,8 +30,10 @@ StateCommandBase(WorkOrder, CurrentUser)
     {
         if (WorkOrder.CreatedDate.Equals(null))
         {
-            WorkOrder.CreatedDate = context.CurrentDateTime;
+        WorkOrder.CreatedDate = context.CurrentDateTime;
         }
+
+        WorkOrder.Description = WorkOrder.Description?.ToUpperInvariant();
 
         base.Execute(context);
     }
