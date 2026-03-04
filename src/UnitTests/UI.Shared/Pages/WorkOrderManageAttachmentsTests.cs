@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
+using Toolbelt.Blazor.Extensions.DependencyInjection;
 using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
@@ -45,6 +46,8 @@ public class WorkOrderManageAttachmentsTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(workOrderId));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(uploader));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
@@ -100,5 +103,13 @@ public class WorkOrderManageAttachmentsTests
     private class StubUserSession(Employee user) : IUserSession
     {
         public Task<Employee?> GetCurrentUserAsync() => Task.FromResult<Employee?>(user);
+    }
+
+    private class StubTranslationService : ITranslationService
+    {
+        public Task<string> TranslateAsync(string text, string targetLanguageCode)
+        {
+            return Task.FromResult(text);
+        }
     }
 }

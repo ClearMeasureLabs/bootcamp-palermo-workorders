@@ -6,6 +6,7 @@ using Lamar.Microsoft.DependencyInjection;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -23,6 +24,7 @@ builder.Services.AddBlazorApplicationInsights(x =>
 
 // Add authentication services
 builder.Services.AddAuthorizationCore();
+builder.Services.AddSpeechSynthesis();
 builder.ConfigureContainer<ServiceRegistry>(
     new LamarServiceProviderFactory(), registry =>
         registry.IncludeRegistry<UIClientServiceRegistry>());

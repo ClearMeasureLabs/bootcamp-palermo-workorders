@@ -29,6 +29,9 @@ internal class BogusOverrides : AutoGeneratorOverride
             case WorkOrderSpecificationQuery query:
                 query.StatusKey = context.Faker.PickRandom<WorkOrderStatus>(WorkOrderStatus.GetAllItems()).Key;
                 break;
+            case Employee employee:
+                employee.PreferredLanguage = context.Faker.PickRandom("en-US", "es-ES", "fr-FR", "de-DE", "pt-BR");
+                break;
         }
     }
 }
