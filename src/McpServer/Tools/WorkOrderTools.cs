@@ -124,13 +124,14 @@ public class WorkOrderTools
             "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
             "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
             "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
+            "InProgressToAssignedCommand" => new InProgressToAssignedCommand(workOrder, user),
             "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
             _ => null
         };
 
         if (command == null)
         {
-            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.";
+            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand (Assign), AssignedToInProgressCommand (Begin), InProgressToCompleteCommand (Complete), InProgressToAssignedCommand (Shelve), AssignedToCancelledCommand (Cancel).";
         }
 
         if (!command.IsValid())

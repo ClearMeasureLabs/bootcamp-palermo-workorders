@@ -109,7 +109,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
             Status = WorkOrderStatus.InProgress,
             Assignee = employee,
             Creator = creator,
-            Description = "",
+            Description = "Do the thing",
             Number = "EB0A9",
             Title = "Work order title"
         };
@@ -120,15 +120,16 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
         var query = new ApplicationChatQuery(
-            $"shelve work order num {newWorkOrder.Number} as employee {employee?.UserName}. I confirm that I want you to do that now.",
+            $"Shelve work order num {newWorkOrder.Number} as employee {employee?.UserName}. I confirm that I want you to do that now.",
             employee?.UserName ?? "");
 
         ChatResponse response = await handler.Handle(query, CancellationToken.None);
 
         var responseText = response.Messages.LastOrDefault()?.Text;
         await TestContext.Out.WriteLineAsync($"LLM response: {responseText}");
-        
-        var workOrder = await db.Set<WorkOrder>()
+
+        var freshDb = TestHost.GetRequiredService<DataContext>();
+        var workOrder = await freshDb.Set<WorkOrder>()
             .SingleOrDefaultAsync(wo => wo.Number == newWorkOrder.Number);
 
         workOrder.ShouldNotBeNull($"No work order found with number '{newWorkOrder.Number}'");
