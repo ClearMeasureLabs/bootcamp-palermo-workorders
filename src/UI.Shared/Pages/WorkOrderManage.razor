@@ -18,8 +18,7 @@
                         <label for="TemplateSelect" class="form-label">Create from Template:</label>
                         <div>
                             <select data-testid="@Elements.TemplateSelect" id="TemplateSelect"
-                                    value="@SelectedTemplateId"
-                                    @onchange="ApplyTemplate"
+                                    @bind="SelectedTemplateId"
                                     class="form-control input-select">
                                 <option value="">-- Select a template --</option>
                                 @foreach (var template in Templates)

@@ -23,7 +23,26 @@ public partial class WorkOrderManage : AppComponentBase
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
     public WorkOrderTemplate[] Templates { get; set; } = [];
-    public string? SelectedTemplateId { get; set; }
+
+    private string? _selectedTemplateId;
+    public string? SelectedTemplateId
+    {
+        get => _selectedTemplateId;
+        set
+        {
+            _selectedTemplateId = value;
+            if (value != null && Guid.TryParse(value, out var templateId))
+            {
+                var template = Templates.FirstOrDefault(t => t.Id == templateId);
+                if (template != null)
+                {
+                    Model.Title = template.Title;
+                    Model.Description = template.Description;
+                    Model.RoomNumber = template.RoomNumber;
+                }
+            }
+        }
+    }
 
     [Parameter] public string? Id { get; set; }
 
@@ -78,20 +97,6 @@ public partial class WorkOrderManage : AppComponentBase
     private async Task LoadTemplates()
     {
         Templates = await Bus.Send(new WorkOrderTemplatesQuery());
-    }
-
-    private async Task ApplyTemplate(ChangeEventArgs e)
-    {
-        if (e.Value is string idString && Guid.TryParse(idString, out var templateId))
-        {
-            var template = await Bus.Send(new WorkOrderTemplateByIdQuery(templateId));
-            if (template != null)
-            {
-                Model.Title = template.Title;
-                Model.Description = template.Description;
-                Model.RoomNumber = template.RoomNumber;
-            }
-        }
     }
 
     private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)

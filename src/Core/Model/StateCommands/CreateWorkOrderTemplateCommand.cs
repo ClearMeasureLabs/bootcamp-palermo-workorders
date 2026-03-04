@@ -8,4 +8,4 @@ public record CreateWorkOrderTemplateCommand(
     string Title,
     string? Description,
     string? RoomNumber,
-    Guid CreatedById) : IRequest<WorkOrderTemplate>;
+    Guid CreatedById) : IRequest<WorkOrderTemplate>, IRemotableRequest;

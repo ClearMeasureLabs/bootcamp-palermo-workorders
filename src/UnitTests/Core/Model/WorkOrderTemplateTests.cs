@@ -1,5 +1,6 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using Shouldly;
+using System.ComponentModel.DataAnnotations;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -20,8 +21,12 @@ public class WorkOrderTemplateTests
             CreatedDate = DateTime.UtcNow
         };
 
-        template.Title.ShouldBe("");
-        template.Title.Length.ShouldBe(0);
+        var results = new List<ValidationResult>();
+        var context = new ValidationContext(template);
+        var isValid = Validator.TryValidateObject(template, context, results, validateAllProperties: true);
+
+        isValid.ShouldBeFalse();
+        results.ShouldContain(r => r.MemberNames.Contains(nameof(WorkOrderTemplate.Title)));
     }
 
     [Test]

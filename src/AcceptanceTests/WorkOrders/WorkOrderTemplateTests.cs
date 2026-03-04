@@ -41,7 +41,7 @@ public class WorkOrderTemplateTests : AcceptanceTestBase
         var templateDescription = "Clean all bathrooms on floor 1";
         var templateRoomNumber = "B101";
 
-        var template = await Bus.Send(new CreateWorkOrderTemplateCommand(
+        await Bus.Send(new CreateWorkOrderTemplateCommand(
             templateTitle,
             templateDescription,
             templateRoomNumber,
@@ -54,12 +54,15 @@ public class WorkOrderTemplateTests : AcceptanceTestBase
         var templateSelectLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.TemplateSelect));
         await Expect(templateSelectLocator).ToBeVisibleAsync();
 
-        await templateSelectLocator.SelectOptionAsync(template.Id.ToString());
+        await templateSelectLocator.SelectOptionAsync(new SelectOptionValue { Label = templateTitle });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync(templateTitle);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToHaveValueAsync(templateDescription);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber))).ToHaveValueAsync(templateRoomNumber);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title)))
+            .ToHaveValueAsync(templateTitle, new LocatorAssertionsToHaveValueOptions { Timeout = 10_000 });
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
+            .ToHaveValueAsync(templateDescription, new LocatorAssertionsToHaveValueOptions { Timeout = 10_000 });
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber)))
+            .ToHaveValueAsync(templateRoomNumber, new LocatorAssertionsToHaveValueOptions { Timeout = 10_000 });
     }
 
     [Test, Retry(2)]
@@ -82,20 +85,17 @@ public class WorkOrderTemplateTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
-        await Expect(woNumberLocator).ToBeVisibleAsync();
-        var workOrderNumber = await woNumberLocator.InnerTextAsync();
+        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        var workOrderNumber = (await woNumberLocator.InnerTextAsync()).Trim();
 
         var templateSelectLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.TemplateSelect));
         await Expect(templateSelectLocator).ToBeVisibleAsync();
 
-        var options = await templateSelectLocator.EvaluateAsync<string[]>(
-            "el => Array.from(el.options).filter(o => o.value).map(o => o.value)");
-        var templateOptionValue = options.FirstOrDefault();
-        if (templateOptionValue != null)
-        {
-            await templateSelectLocator.SelectOptionAsync(templateOptionValue);
-            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        }
+        await templateSelectLocator.SelectOptionAsync(new SelectOptionValue { Label = templateTitle });
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title)))
+            .ToHaveValueAsync(templateTitle, new LocatorAssertionsToHaveValueOptions { Timeout = 10_000 });
 
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
