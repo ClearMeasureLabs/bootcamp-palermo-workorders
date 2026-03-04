@@ -1,15 +1,19 @@
+using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.Core.Services;
 using Microsoft.Extensions.AI;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class TranslationService(ChatClientFactory chatClientFactory) : ITranslationService
+public partial class TranslationService(ChatClientFactory chatClientFactory) : ITranslationService
 {
+    [GeneratedRegex(@"^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{1,8})*$")]
+    private static partial Regex Bcp47Regex();
+
     public async Task<string> TranslateAsync(string text, string targetLanguageCode)
     {
         if (string.IsNullOrEmpty(text))
         {
-            return text;
+            return text ?? string.Empty;
         }
 
         if (targetLanguageCode == "en-US")
@@ -17,13 +21,20 @@ public class TranslationService(ChatClientFactory chatClientFactory) : ITranslat
             return text;
         }
 
-        var availability = await chatClientFactory.IsChatClientAvailable();
-        if (!availability.IsAvailable)
+        if (!Bcp47Regex().IsMatch(targetLanguageCode))
         {
             return text;
         }
 
-        var chatClient = await chatClientFactory.GetChatClient();
+        IChatClient chatClient;
+        try
+        {
+            chatClient = await chatClientFactory.GetChatClient();
+        }
+        catch
+        {
+            return text;
+        }
 
         var systemPrompt =
             $"Translate the following text into the language identified by BCP 47 code '{targetLanguageCode}'. Return ONLY the translated text, nothing else.";

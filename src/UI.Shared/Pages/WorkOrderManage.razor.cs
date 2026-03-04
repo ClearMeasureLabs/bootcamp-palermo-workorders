@@ -171,7 +171,7 @@ public partial class WorkOrderManage : AppComponentBase
 
             var voices = await SpeechSynthesis.GetVoicesAsync();
             var langPrefix = _preferredLanguage.Split('-')[0];
-            var matchingVoice = voices.FirstOrDefault(v => v.Lang.StartsWith(langPrefix));
+            var matchingVoice = voices.FirstOrDefault(v => v.Lang?.StartsWith(langPrefix, StringComparison.OrdinalIgnoreCase) == true);
             if (matchingVoice != null)
             {
                 utterance.Voice = matchingVoice;

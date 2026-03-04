@@ -45,7 +45,7 @@
                     <label for="Title" class="form-label">Title:</label>
                     <div>
                         <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
-                        <button type="button" data-testid="@Elements.SpeakTitle" class="btn btn-sm btn-outline-secondary" @onclick="SpeakTitleAsync">&#x1F50A;</button>
+                        <button type="button" data-testid="@Elements.SpeakTitle" class="btn btn-sm btn-outline-secondary" aria-label="Speak title" title="Speak title" @onclick="SpeakTitleAsync">&#x1F50A;</button>
                     </div>
                 </div>
 
@@ -53,7 +53,7 @@
                     <label for="Description" class="form-label">Description:</label>
                     <div>
                         <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
-                        <button type="button" data-testid="@Elements.SpeakDescription" class="btn btn-sm btn-outline-secondary" @onclick="SpeakDescriptionAsync">&#x1F50A;</button>
+                        <button type="button" data-testid="@Elements.SpeakDescription" class="btn btn-sm btn-outline-secondary" aria-label="Speak description" title="Speak description" @onclick="SpeakDescriptionAsync">&#x1F50A;</button>
                     </div>
                 </div>
 

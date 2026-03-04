@@ -55,7 +55,20 @@ public class TranslationServiceTests
 
         var result = await service.TranslateAsync(null!, "es-ES");
 
-        result.ShouldBeNull();
+        result.ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public async Task ShouldReturnOriginalTextWhenLanguageCodeIsInvalid()
+    {
+        var bus = new StubBus(available: true);
+        var factory = new ChatClientFactory(bus);
+        var service = new TranslationService(factory);
+
+        var result = await service.TranslateAsync("Hello", "'; DROP TABLE Users;--");
+
+        result.ShouldBe("Hello");
+        bus.ChatClientConfigQueryCount.ShouldBe(0);
     }
 
     private class StubBus(bool available) : Bus(null!)
