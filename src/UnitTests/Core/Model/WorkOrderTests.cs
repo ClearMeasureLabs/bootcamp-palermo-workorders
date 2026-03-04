@@ -96,4 +96,20 @@ public class WorkOrderTests
         order.Description = "Fix the Broken Pipe in Room 101";
         Assert.That(order.Description, Is.EqualTo("FIX THE BROKEN PIPE IN ROOM 101"));
     }
+
+    [Test]
+    public void ShouldHandleUnicodeAtTruncationBoundary()
+    {
+        // Verify that non-ASCII characters at the truncation boundary are handled
+        // correctly. In .NET 10, ß.ToUpperInvariant() returns ß (no expansion),
+        // so the string stays at 4000 chars. The re-truncation guard in the setter
+        // is defensive for future runtime changes where uppercasing could expand length.
+        var prefix = new string('a', 3999);
+        var input = prefix + "\u00DF"; // 4000 chars, last char is ß
+        var order = new WorkOrder();
+        order.Description = input;
+        Assert.That(order.Description.Length, Is.EqualTo(4000));
+        Assert.That(order.Description, Does.StartWith(new string('A', 3999)));
+        Assert.That(order.Description[3999], Is.EqualTo('\u00DF'));
+    }
 }
