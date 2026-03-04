@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using Shouldly;
 
@@ -15,10 +16,10 @@ public class McpReferenceResourceTests
         result.ShouldContain("Assigned");
         result.ShouldContain("InProgress");
         result.ShouldContain("Complete");
-        result.ShouldContain("DFT");
-        result.ShouldContain("ASD");
-        result.ShouldContain("IPG");
-        result.ShouldContain("CMP");
+        result.ShouldContain(WorkOrderStatusCodes.Draft);
+        result.ShouldContain(WorkOrderStatusCodes.Assigned);
+        result.ShouldContain(WorkOrderStatusCodes.InProgress);
+        result.ShouldContain(WorkOrderStatusCodes.Complete);
     }
 
     [Test]
