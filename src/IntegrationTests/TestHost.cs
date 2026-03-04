@@ -8,6 +8,7 @@ using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Server;
 using ClearMeasure.Bootcamp.UnitTests;
 using Lamar.Microsoft.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -70,6 +71,8 @@ public static class TestHost
                 s.AddSingleton<TimeProvider>(stubTimeProvider);
                 s.AddScoped<IDistributedBus, DistributedBus>();
                 s.AddTransient<IToolProvider, InProcessToolProvider>();
+                s.AddScoped<DataContext>(sp => new TestDataContext(sp.GetRequiredService<IDatabaseConfiguration>()));
+                s.AddScoped<DbContext>(sp => sp.GetRequiredService<DataContext>());
             })
             .UseNServiceBus(context =>
             {
@@ -110,6 +113,16 @@ public static class TestHost
         public override DateTimeOffset GetUtcNow()
         {
             return testTime;
+        }
+    }
+
+    private class TestDataContext(IDatabaseConfiguration config) : DataContext(config)
+    {
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            var result = await base.SaveChangesAsync(cancellationToken);
+            ChangeTracker.Clear();
+            return result;
         }
     }
 
@@ -155,12 +168,12 @@ public static class TestHost
                     "Creates a new draft work order."),
                 AIFunctionFactory.Create(
                     ([System.ComponentModel.Description("Work order number")] string workOrderNumber,
-                     [System.ComponentModel.Description("Command name")] string commandName ,
+                     [System.ComponentModel.Description("Command name (DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand for shelve, InProgressToCompleteCommand, AssignedToCancelledCommand)")] string commandName ,
                      [System.ComponentModel.Description("Executing username")] string executingUsername,
                      [System.ComponentModel.Description("Assignee username")] string? assigneeUsername = null)
                         => WorkOrderTools.ExecuteWorkOrderCommand(CreateScopedBus(), workOrderNumber, commandName, executingUsername, assigneeUsername),
                     "ExecuteWorkOrderCommand",
-                    "Executes a state command on a work order."),
+                    "Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToAssignedCommand (shelve - moves from InProgress back to Assigned), InProgressToCompleteCommand, AssignedToCancelledCommand."),
                 AIFunctionFactory.Create(
                     () => EmployeeTools.ListEmployees(CreateScopedBus()),
                     "ListEmployees",
