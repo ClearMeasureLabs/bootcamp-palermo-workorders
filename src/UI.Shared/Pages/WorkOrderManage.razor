@@ -76,10 +76,6 @@
 
             </div>
             
-            @if (_workOrder != null)
-            {
-                <WorkOrderChat/>
-            }
         </div>
 
         <div class="action-section">
@@ -102,6 +98,11 @@
             }
         </div>
     </EditForm>
+
+    @if (_workOrder != null)
+    {
+        <WorkOrderChat/>
+    }
 </div>
 
 @code
