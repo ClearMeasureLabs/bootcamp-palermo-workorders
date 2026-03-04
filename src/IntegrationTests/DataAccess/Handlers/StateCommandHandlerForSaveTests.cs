@@ -118,7 +118,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
     }
 
     [Test]
-    public async Task WorkOrder_WithCosts_ShouldPersistAndRetrieve()
+    public async Task SaveDraftCommand_WithCosts_ShouldPersistAndRetrieve()
     {
         new DatabaseTests().Clean();
 
@@ -145,7 +145,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
     }
 
     [Test]
-    public async Task WorkOrder_WithNullCosts_ShouldPersistAndRetrieve()
+    public async Task SaveDraftCommand_WithNullCosts_ShouldPersistAndRetrieve()
     {
         new DatabaseTests().Clean();
 

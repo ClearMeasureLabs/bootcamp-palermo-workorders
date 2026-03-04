@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -85,27 +86,27 @@ public class WorkOrderTests
     public void WorkOrder_EstimatedCost_ShouldDefaultToNull()
     {
         var workOrder = new WorkOrder();
-        Assert.That(workOrder.EstimatedCost, Is.Null);
+        workOrder.EstimatedCost.ShouldBeNull();
     }
 
     [Test]
     public void WorkOrder_ActualCost_ShouldDefaultToNull()
     {
         var workOrder = new WorkOrder();
-        Assert.That(workOrder.ActualCost, Is.Null);
+        workOrder.ActualCost.ShouldBeNull();
     }
 
     [Test]
     public void WorkOrder_EstimatedCost_ShouldRejectNegativeValues()
     {
         var workOrder = new WorkOrder();
-        Assert.Throws<ArgumentException>(() => workOrder.EstimatedCost = -1m);
+        Should.Throw<ArgumentException>(() => workOrder.EstimatedCost = -1m);
     }
 
     [Test]
     public void WorkOrder_ActualCost_ShouldRejectNegativeValues()
     {
         var workOrder = new WorkOrder();
-        Assert.Throws<ArgumentException>(() => workOrder.ActualCost = -0.01m);
+        Should.Throw<ArgumentException>(() => workOrder.ActualCost = -0.01m);
     }
 }
