@@ -102,7 +102,7 @@ public class WorkOrderReformatAgent(
         title ??= workOrder.Title;
         description ??= workOrder.Description;
 
-        if (title == workOrder.Title && description == workOrder.Description)
+        if (title == workOrder.Title && string.Equals(description, workOrder.Description, StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }
