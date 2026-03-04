@@ -81,6 +81,7 @@
                 await JS.InvokeVoidAsync("scrollToBottom", _chatHistoryRef);
             }
             catch (JSDisconnectedException) { }
+            catch (JSException) { }
         }
     }
 
