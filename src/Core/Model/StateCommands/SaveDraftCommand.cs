@@ -33,14 +33,7 @@ StateCommandBase(WorkOrder, CurrentUser)
             WorkOrder.CreatedDate = context.CurrentDateTime;
         }
 
-        if (WorkOrder.Description == null)
-        {
-            WorkOrder.Description = string.Empty;
-        }
-        else if (WorkOrder.Description.Length > 0)
-        {
-            WorkOrder.Description = WorkOrder.Description.ToUpperInvariant();
-        }
+        WorkOrder.Description = (WorkOrder.Description ?? string.Empty).ToUpperInvariant();
 
         base.Execute(context);
     }

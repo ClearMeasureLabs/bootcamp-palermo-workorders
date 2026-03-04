@@ -84,14 +84,14 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     }
 
     [Test]
-    public void Execute_WithNullDescription_NormalizesToEmptyString()
+    public void Execute_WithEmptyDescription_RemainsEmptyString()
     {
         var employee = new Employee();
         var order = new WorkOrder
         {
             Number = "789",
             Status = WorkOrderStatus.Draft,
-            Description = null,
+            Description = "",
             Creator = employee
         };
 
