@@ -82,7 +82,7 @@ public class McpWorkOrderToolTests
 
         result.ShouldContain("WO-100");
         result.ShouldContain("Test order");
-        result.ShouldContain("A description");
+        result.ShouldContain("A DESCRIPTION");
         result.ShouldContain("101");
     }
 
@@ -111,7 +111,7 @@ public class McpWorkOrderToolTests
         var result = await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, "New Work Order", "Fix the broken window", "creator1");
 
         result.ShouldContain("New Work Order");
-        result.ShouldContain("Fix the broken window");
+        result.ShouldContain("FIX THE BROKEN WINDOW");
         result.ShouldContain("Draft");
     }
 

@@ -38,7 +38,7 @@ public class WorkOrderAssignTests : AcceptanceTestBase
         await Expect(titleField).ToHaveValueAsync("newtitle");
         
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
-        await Expect(descriptionField).ToHaveValueAsync("newdesc");
+        await Expect(descriptionField).ToHaveValueAsync("NEWDESC");
         
         var assigneeField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee));
         await Expect(assigneeField).ToBeDisabledAsync();

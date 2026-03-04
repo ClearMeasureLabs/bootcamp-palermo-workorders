@@ -24,7 +24,7 @@ public class WorkOrderReformatAgentTests
     public void ShouldReturnNullWhenNoChangesNeeded()
     {
         var workOrder = new WorkOrder { Title = "Same title", Description = "Same description" };
-        var responseText = "TITLE: Same title\nDESCRIPTION: Same description";
+        var responseText = "TITLE: Same title\nDESCRIPTION: SAME DESCRIPTION";
 
         var result = WorkOrderReformatAgent.ParseResponse(responseText, workOrder);
 
@@ -80,7 +80,7 @@ public class WorkOrderReformatAgentTests
 
         result.ShouldNotBeNull();
         result.Title.ShouldBe("Old title");
-        result.Description.ShouldBe("Original Description");
+        result.Description.ShouldBe("ORIGINAL DESCRIPTION");
     }
 
     [Test]
