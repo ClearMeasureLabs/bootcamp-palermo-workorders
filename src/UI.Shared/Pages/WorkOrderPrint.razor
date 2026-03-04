@@ -1,0 +1,85 @@
+@layout PrintLayout
+@page "/workorder/print/{id}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<div class="print-container">
+    <div class="print-header">
+        <h1>Work Order #<span data-testid="@Elements.WorkOrderNumber">@_workOrder?.Number</span></h1>
+        <div class="print-status">Status: <span data-testid="@Elements.Status">@_workOrder?.Status?.FriendlyName</span></div>
+    </div>
+
+    <div class="print-body">
+        <div class="print-field">
+            <span class="print-label">Title:</span>
+            <span data-testid="@Elements.Title" class="print-value">@_workOrder?.Title</span>
+        </div>
+
+        <div class="print-field">
+            <span class="print-label">Description:</span>
+            <span data-testid="@Elements.Description" class="print-value">@_workOrder?.Description</span>
+        </div>
+
+        <div class="print-field">
+            <span class="print-label">Room:</span>
+            <span data-testid="@Elements.RoomNumber" class="print-value">@_workOrder?.RoomNumber</span>
+        </div>
+
+        <div class="print-field">
+            <span class="print-label">Creator:</span>
+            <span data-testid="@Elements.Creator" class="print-value">@_workOrder?.Creator?.GetFullName()</span>
+        </div>
+
+        <div class="print-field">
+            <span class="print-label">Assignee:</span>
+            <span data-testid="@Elements.Assignee" class="print-value">@_workOrder?.Assignee?.GetFullName()</span>
+        </div>
+
+        <div class="print-field">
+            <span class="print-label">Created Date:</span>
+            <span data-testid="@Elements.CreatedDate" class="print-value">@_workOrder?.CreatedDate?.ToString("G")</span>
+        </div>
+
+        <div class="print-field">
+            <span class="print-label">Assigned Date:</span>
+            <span data-testid="@Elements.AssignedDate" class="print-value">@_workOrder?.AssignedDate?.ToString("G")</span>
+        </div>
+
+        <div class="print-field">
+            <span class="print-label">Completed Date:</span>
+            <span data-testid="@Elements.CompletedDate" class="print-value">@_workOrder?.CompletedDate?.ToString("G")</span>
+        </div>
+    </div>
+
+    <div data-testid="@Elements.SignatureLine" class="signature-section">
+        <div class="signature-line">
+            <span class="signature-label">Verified by:</span>
+            <span class="signature-blank">_____________________________</span>
+            <span class="signature-label">Date:</span>
+            <span class="signature-blank">_______________</span>
+        </div>
+    </div>
+
+    <div class="no-print print-actions">
+        <button data-testid="@Elements.PrintButton" class="btn-print" @onclick="PrintPage">Print</button>
+    </div>
+</div>
+
+@code
+{
+    public enum Elements
+    {
+        WorkOrderNumber,
+        Status,
+        Title,
+        Description,
+        RoomNumber,
+        Creator,
+        Assignee,
+        CreatedDate,
+        AssignedDate,
+        CompletedDate,
+        SignatureLine,
+        PrintButton
+    }
+}

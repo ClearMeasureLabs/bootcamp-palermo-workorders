@@ -200,6 +200,11 @@
     flex-wrap: wrap;
 }
 
+.print-button-container {
+    margin-top: 1rem;
+    text-align: center;
+}
+
 .btn {
     border: none;
     border-radius: 12px;
@@ -216,6 +221,20 @@
     background: linear-gradient(135deg, #7b68ee 0%, #4a90e2 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(123, 104, 238, 0.3);
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: #4a5568;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-secondary:hover {
+    background: #cbd5e0;
+    color: #2d3748;
 }
 
 .btn-red {

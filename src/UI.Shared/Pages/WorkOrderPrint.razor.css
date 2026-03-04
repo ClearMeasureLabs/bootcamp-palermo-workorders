@@ -1,0 +1,111 @@
+.print-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    font-family: 'Georgia', serif;
+    background: white;
+}
+
+.print-header {
+    text-align: center;
+    border-bottom: 2px solid #333;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}
+
+.print-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0 0 0.5rem;
+}
+
+.print-status {
+    font-size: 1rem;
+    color: #4a5568;
+    font-weight: 600;
+}
+
+.print-body {
+    margin-bottom: 2rem;
+}
+
+.print-field {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.print-label {
+    font-weight: 700;
+    color: #4a5568;
+}
+
+.print-value {
+    color: #2d3748;
+}
+
+.signature-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #333;
+}
+
+.signature-line {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.signature-label {
+    font-weight: 700;
+    color: #4a5568;
+}
+
+.signature-blank {
+    color: #a0aec0;
+    letter-spacing: 2px;
+}
+
+.print-actions {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.btn-print {
+    background: #7b68ee;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-print:hover {
+    background: #6a5acd;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .print-container {
+        margin: 0;
+        padding: 1rem;
+        max-width: 100%;
+    }
+
+    .print-header h1 {
+        font-size: 1.5rem;
+    }
+
+    body {
+        font-size: 12pt;
+    }
+}
