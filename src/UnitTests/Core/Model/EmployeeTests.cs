@@ -66,6 +66,17 @@ public class EmployeeTests
     }
 
     [Test]
+    public void GetFullNameForDisplay_ShouldReturnUppercaseLastNameFirstName()
+    {
+        var employee = new Employee();
+
+        employee.FirstName = "Bob";
+        employee.LastName = "Joe";
+
+        Assert.That(employee.GetFullNameForDisplay(), Is.EqualTo("JOE, BOB"));
+    }
+
+    [Test]
     public void ShouldCompareEmployeesByLastName()
     {
         var employee1 = new Employee("", "1", "1", "");

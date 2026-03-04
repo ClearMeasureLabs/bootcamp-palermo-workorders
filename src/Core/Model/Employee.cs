@@ -46,6 +46,11 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
         return string.Format("{0} {1}", FirstName, LastName);
     }
 
+    public string GetFullNameForDisplay()
+    {
+        return $"{LastName}, {FirstName}".ToUpperInvariant();
+    }
+
     public override string ToString()
     {
         return GetFullName();

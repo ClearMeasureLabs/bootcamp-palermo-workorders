@@ -60,6 +60,14 @@ public class LoginPageTests
 
         var options = component.FindAll("option");
         options.Count.ShouldBe(4);
+        
+        var employeeOptions = options.Skip(1).ToList();
+        foreach (var option in employeeOptions)
+        {
+            var text = option.TextContent;
+            text.ShouldBe(text.ToUpperInvariant());
+            text.ShouldContain(", ");
+        }
     }
 
     [Test]
