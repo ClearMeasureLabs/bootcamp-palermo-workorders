@@ -15,7 +15,7 @@ public partial class WorkOrderManage : AppComponentBase
 {
     private WorkOrder? _workOrder;
     private string _newSubtaskTitle = string.Empty;
-
+    private WorkOrderAttachment[] _attachments = [];
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
     [Inject] public IUserSession? UserSession { get; set; }
     [Inject] private NavigationManager? NavigationManager { get; set; }
@@ -69,7 +69,11 @@ public partial class WorkOrderManage : AppComponentBase
         Model.IsReadOnly = !commandList!.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
         _workOrder = workOrder;
-        
+
+        if (workOrder.Id != Guid.Empty)
+        {
+            _attachments = await Bus.Send(new WorkOrderAttachmentsQuery(workOrder.Id));
+        }
     }
 
     private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)

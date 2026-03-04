@@ -75,6 +75,11 @@ public class WorkOrderManageSubtaskTests
                 return Task.FromResult<TResponse>((TResponse)(object)workOrder);
             }
 
+            if (request is WorkOrderAttachmentsQuery)
+            {
+                return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderAttachment>());
+            }
+
             if (request is AddSubtaskCommand addCmd)
             {
                 var subtask = new WorkOrderSubtask { Id = Guid.NewGuid(), WorkOrderId = addCmd.WorkOrderId, Title = addCmd.Title, SortOrder = addCmd.SortOrder };

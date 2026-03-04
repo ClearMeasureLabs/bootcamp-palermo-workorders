@@ -76,4 +76,6 @@ public class WorkOrder : EntityBase<WorkOrder>
     {
         return Status == WorkOrderStatus.Draft;
     }
+
+    public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();
 }

@@ -143,6 +143,30 @@ public class WorkOrderTools
             new JsonSerializerOptions { WriteIndented = true });
     }
 
+    [McpServerTool(Name = "list-work-order-attachments"), Description("Lists all attachment metadata for a given work order by its number.")]
+    public static async Task<string> ListWorkOrderAttachments(
+        IBus bus,
+        [Description("The work order number")] string workOrderNumber)
+    {
+        var workOrder = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
+        if (workOrder == null)
+        {
+            return $"No work order found with number '{workOrderNumber}'.";
+        }
+
+        var attachments = await bus.Send(new WorkOrderAttachmentsQuery(workOrder.Id));
+        return JsonSerializer.Serialize(attachments.Select(a => new
+        {
+            a.Id,
+            a.FileName,
+            a.ContentType,
+            a.FileSize,
+            UploadedBy = a.UploadedBy?.GetFullName(),
+            UploadedByUsername = a.UploadedBy?.UserName,
+            a.UploadedDate
+        }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
+    }
+
     private static async Task<Employee?> FindEmployeeByUsername(IBus bus, string username)
     {
         try

@@ -54,6 +54,24 @@ public class StubBus() : Bus(null!)
             return Task.FromResult<TResponse>((TResponse)(object)true);
         }
 
+        if (request is WorkOrderAttachmentsQuery)
+        {
+            return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderAttachment>());
+        }
+
+        if (request is WorkOrderByNumberQuery)
+        {
+            var workOrder = new WorkOrder
+            {
+                Id = Guid.NewGuid(),
+                Number = "WO-001",
+                Title = "Fix broken door",
+                Status = WorkOrderStatus.Draft,
+                Creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com")
+            };
+            return Task.FromResult<TResponse>((TResponse)(object)workOrder);
+        }
+
         throw new NotImplementedException();
     }
 
