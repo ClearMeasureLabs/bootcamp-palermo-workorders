@@ -103,7 +103,9 @@ public class ApplicationChatHandlerTests : LlmTestBase
         new ZDataLoader().LoadData();
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
         var query = new ApplicationChatQuery(
-            $"have {currentUsername} mow the grass. Yes, assign the new work order. And set it to in progress. Confirmed",
+            $"Use tools and do these steps in order: create a new work order for mowing grass with creatorUsername '{currentUsername}', " +
+            $"then execute DraftToAssignedCommand with executingUsername '{currentUsername}' and assigneeUsername '{currentUsername}'. " +
+            $"Return the work order number only.",
             currentUsername);
 
         ChatResponse response = await handler.Handle(query, CancellationToken.None);
@@ -124,7 +126,9 @@ public class ApplicationChatHandlerTests : LlmTestBase
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
         var shelveCommand =
-            new ApplicationChatQuery($"shelve the work order with number {workOrderNumber}.", currentUsername);
+            new ApplicationChatQuery(
+                $"Call ExecuteWorkOrderCommand for work order number {workOrderNumber} with commandName 'shelve' and executingUsername '{currentUsername}'.",
+                currentUsername);
         var shelveResponse = await handler.Handle(shelveCommand, CancellationToken.None);
         var shelveResponseText = shelveResponse.Messages.LastOrDefault()?.Text;
 
