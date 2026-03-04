@@ -4,7 +4,7 @@ Short or meaningless work order titles like "fix" or "help" make it difficult fo
 ## What Changes
 - Add title length validation in `SaveDraftCommand.Execute()` in `src/Core/Model/StateCommands/` that throws a domain validation exception when title is fewer than 5 characters
 - Add `ValidationException` class in `src/Core/Exceptions/` if not already present
-- Update `SaveDraftCommandHandler` in `src/DataAccess/Handlers/` to catch and return validation errors
+- Update `StateCommandHandler` in `src/DataAccess/Handlers/` (the existing handler that executes state commands and persists work orders) to catch and return validation errors
 - Add client-side validation in the work order creation form in `src/UI/Client/` displaying inline error message "Title must be at least 5 characters"
 - Update API controllers to return 400 Bad Request with validation error details when title is too short
 - Add `MinimumTitleLength` constant in `WorkOrder` entity or domain constants class
@@ -22,7 +22,7 @@ Short or meaningless work order titles like "fix" or "help" make it difficult fo
 ## Impact
 - **src/Core/Model/StateCommands/** - `SaveDraftCommand` updated with title length validation
 - **src/Core/Exceptions/** - New or updated `ValidationException` class
-- **src/DataAccess/Handlers/** - Handler updated to handle validation exceptions
+- **src/DataAccess/Handlers/** - `StateCommandHandler` updated to handle validation exceptions (note: no dedicated `SaveDraftCommandHandler` exists; `StateCommandHandler` handles all state command requests)
 - **src/UI/Client/** - Work order creation form updated with inline validation
 - **src/UI/Api/** - Controller returns 400 for validation failures
 - **Dependencies** - No new NuGet packages required

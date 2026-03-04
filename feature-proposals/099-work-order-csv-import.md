@@ -28,7 +28,7 @@ Facility managers migrating from spreadsheet-based tracking or receiving bulk ma
 - **src/DataAccess/Handlers/** - New `CsvImportHandler` with CSV parsing and validation logic
 - **src/UI/Client/Pages/** - File upload component and "Import CSV" button added to work order list page
 - **src/UI/Api/** - New `CsvImportController`
-- **Dependencies** - No new NuGet packages required; CSV parsing implemented with standard string splitting or built-in APIs
+- **Dependencies** - No new NuGet packages required; CSV parsing should use `Microsoft.VisualBasic.FileIO.TextFieldParser` (included in .NET runtime) for robust handling of quoted fields, embedded commas, and newlines — naive string splitting is insufficient for production use
 - **Database** - No schema changes; creates work orders using existing schema
 
 ## Acceptance Criteria

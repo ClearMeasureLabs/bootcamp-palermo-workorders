@@ -2,28 +2,27 @@
 Different facilities use different numbering conventions for tracking maintenance requests. Making the work order number format configurable allows each deployment to match its existing numbering scheme, improving consistency with legacy systems and reducing confusion during migration.
 
 ## What Changes
-- Add `NumberFormatConfiguration` entity in `src/Core/Model/` with properties: Prefix (string), Length (int), Pattern (string template, e.g., "{Prefix}{Number:D{Length}}")
+- Add `NumberFormatConfiguration` entity in `src/Core/Model/` with properties: Prefix (string), Pattern (string template, e.g., "{Prefix}-{GuidSegment}")
 - Add `NumberFormatSettings` configuration class in `src/Core/` bound to `appsettings.json` section `WorkOrderNumberFormat`
-- Add `IWorkOrderNumberGenerator` interface in `src/Core/Interfaces/` with method `GenerateNext()`
-- Add `WorkOrderNumberGenerator` implementation in `src/DataAccess/Services/` that reads configuration and generates formatted numbers
-- Update `SaveDraftCommand` handler to use `IWorkOrderNumberGenerator` instead of hardcoded format
+- Extend existing `IWorkOrderNumberGenerator` interface in `src/Core/Services/` (currently has `GenerateNumber()`) with an overload or update to accept format configuration
+- Update existing `WorkOrderNumberGenerator` implementation in `src/Core/Services/Impl/` (currently generates 7-character uppercase GUID substring) to support configurable prefix prepended to the GUID-based number
+- Update `SaveDraftCommand` handler to pass format configuration to the existing number generator
 - Add database migration script in `src/Database/scripts/Update/` to add `NumberFormatConfiguration` table with default row
 - Add admin UI section in `src/UI/Client/Pages/` for configuring number format
 
 ## Capabilities
 ### New Capabilities
-- Configurable work order number prefix (e.g., "WO-", "MNT-", "REQ-")
-- Configurable numeric portion length with zero-padding (e.g., 5 digits produces "00001")
-- Pattern template supporting prefix and padded number combination
+- Configurable work order number prefix (e.g., "WO-", "MNT-", "REQ-") prepended to the existing 7-character GUID-based number
+- Pattern template supporting prefix and GUID-based number combination (e.g., "WO-A1B2C3D")
 - Admin UI page for viewing and updating number format configuration
 
 ### Modified Capabilities
-- `SaveDraftCommand` handler updated to use configurable number generator instead of hardcoded format
+- `SaveDraftCommand` handler updated to pass format configuration to the existing number generator
 
 ## Impact
 - **src/Core/Model/** - New `NumberFormatConfiguration` entity
-- **src/Core/Interfaces/** - New `IWorkOrderNumberGenerator` interface
-- **src/DataAccess/Services/** - New `WorkOrderNumberGenerator` implementation
+- **src/Core/Services/IWorkOrderNumberGenerator.cs** - Extended existing interface (currently has `GenerateNumber()`)
+- **src/Core/Services/Impl/WorkOrderNumberGenerator.cs** - Updated existing implementation (currently generates 7-char GUID substring)
 - **src/DataAccess/Handlers/** - Updated `SaveDraftCommand` handler
 - **src/Database/** - New migration script for `NumberFormatConfiguration` table
 - **src/UI/Client/** - New admin configuration page
@@ -32,11 +31,11 @@ Different facilities use different numbering conventions for tracking maintenanc
 
 ## Acceptance Criteria
 ### Unit Tests
-- `NumberGenerator_DefaultConfig_GeneratesExpectedFormat` - Default configuration produces numbers like "WO-00001"
-- `NumberGenerator_CustomPrefix_AppliesPrefix` - Configuration with prefix "MNT-" generates "MNT-00001"
-- `NumberGenerator_CustomLength_PadsCorrectly` - Configuration with length 8 produces "WO-00000001"
-- `NumberGenerator_Sequential_IncrementsCorrectly` - Two consecutive calls produce incrementing numbers
-- `NumberGenerator_EmptyPrefix_GeneratesNumberOnly` - Empty prefix configuration produces "00001"
+- `NumberGenerator_DefaultConfig_GeneratesExpectedFormat` - Default configuration produces numbers like "WO-A1B2C3D" (prefix + 7-char GUID substring)
+- `NumberGenerator_CustomPrefix_AppliesPrefix` - Configuration with prefix "MNT-" generates "MNT-" followed by 7-character GUID substring
+- `NumberGenerator_EmptyPrefix_GeneratesGuidOnly` - Empty prefix configuration produces 7-character GUID substring without prefix
+- `NumberGenerator_TwoCalls_ProducesUniqueNumbers` - Two consecutive calls produce different GUID-based numbers
+- `NumberGenerator_GeneratedNumber_MatchesExpectedLength` - Output length matches prefix length + 7
 
 ### Integration Tests
 - `NumberFormat_ConfigurationPersisted_GeneratesMatchingNumbers` - Save configuration to database, generate number, verify format matches
