@@ -1,0 +1,70 @@
+@using ClearMeasure.Bootcamp.Core.Model
+@using ClearMeasure.Bootcamp.Core.Model.StateCommands
+
+<div class="templates-container">
+    <h2>Work Order Templates</h2>
+
+    <div class="template-form mb-4">
+        <h4>Create New Template</h4>
+        <EditForm Model="@NewTemplate" OnValidSubmit="HandleCreateTemplate">
+            <DataAnnotationsValidator/>
+            <ValidationSummary/>
+            <div class="form-group mb-2">
+                <label class="form-label">Title:</label>
+                <input data-testid="@Elements.TemplateTitle" type="text" @bind="NewTemplate.Title" class="form-control" placeholder="Template title"/>
+            </div>
+            <div class="form-group mb-2">
+                <label class="form-label">Description:</label>
+                <textarea data-testid="@Elements.TemplateDescription" @bind="NewTemplate.Description" class="form-control" placeholder="Description"></textarea>
+            </div>
+            <div class="form-group mb-2">
+                <label class="form-label">Room Number:</label>
+                <input data-testid="@Elements.TemplateRoomNumber" type="text" @bind="NewTemplate.RoomNumber" class="form-control" placeholder="Room number"/>
+            </div>
+            <button data-testid="@Elements.SaveTemplateButton" type="submit" class="btn btn-primary">Save Template</button>
+        </EditForm>
+    </div>
+
+    <h4>Active Templates</h4>
+    @if (Templates.Length == 0)
+    {
+        <p data-testid="@Elements.NoTemplatesMessage">No active templates found.</p>
+    }
+    else
+    {
+        <table data-testid="@Elements.TemplatesTable" class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Room</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var template in Templates)
+                {
+                    <tr data-testid="@(Elements.TemplateRow + template.Title)">
+                        <td data-testid="@(Elements.TemplateRowTitle + template.Title)">@template.Title</td>
+                        <td>@template.Description</td>
+                        <td>@template.RoomNumber</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code
+{
+    public enum Elements
+    {
+        TemplateTitle,
+        TemplateDescription,
+        TemplateRoomNumber,
+        SaveTemplateButton,
+        NoTemplatesMessage,
+        TemplatesTable,
+        TemplateRow,
+        TemplateRowTitle
+    }
+}

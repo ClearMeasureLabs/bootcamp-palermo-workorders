@@ -22,6 +22,8 @@ public partial class WorkOrderManage : AppComponentBase
     public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
+    public WorkOrderTemplate[] Templates { get; set; } = [];
+    public string? SelectedTemplateId { get; set; }
 
     [Parameter] public string? Id { get; set; }
 
@@ -32,7 +34,10 @@ public partial class WorkOrderManage : AppComponentBase
     {
         await LoadUserOptions();
         await LoadWorkOrder();
-
+        if (CurrentMode == EditMode.New)
+        {
+            await LoadTemplates();
+        }
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
@@ -68,6 +73,25 @@ public partial class WorkOrderManage : AppComponentBase
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
         _workOrder = workOrder;
         
+    }
+
+    private async Task LoadTemplates()
+    {
+        Templates = await Bus.Send(new WorkOrderTemplatesQuery());
+    }
+
+    private async Task ApplyTemplate(ChangeEventArgs e)
+    {
+        if (e.Value is string idString && Guid.TryParse(idString, out var templateId))
+        {
+            var template = await Bus.Send(new WorkOrderTemplateByIdQuery(templateId));
+            if (template != null)
+            {
+                Model.Title = template.Title;
+                Model.Description = template.Description;
+                Model.RoomNumber = template.RoomNumber;
+            }
+        }
     }
 
     private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)

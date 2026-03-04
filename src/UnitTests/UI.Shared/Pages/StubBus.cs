@@ -30,6 +30,11 @@ public class StubBus() : Bus(null!)
             return Task.FromResult<TResponse>((TResponse)(object)WorkOrderSpecificationQueryResponse());
         }
 
+        if (request is WorkOrderTemplatesQuery)
+        {
+            return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderTemplate>());
+        }
+
         throw new NotImplementedException();
     }
 

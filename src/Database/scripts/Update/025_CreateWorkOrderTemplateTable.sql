@@ -1,0 +1,20 @@
+BEGIN TRANSACTION
+GO
+PRINT N'Creating [dbo].[WorkOrderTemplate] table'
+GO
+CREATE TABLE [dbo].[WorkOrderTemplate] (
+	[Id] UNIQUEIDENTIFIER NOT NULL DEFAULT (NEWID()),
+	[Title] NVARCHAR(300) NOT NULL,
+	[Description] NVARCHAR(4000) NULL,
+	[RoomNumber] NVARCHAR(50) NULL,
+	[IsActive] BIT NOT NULL DEFAULT (1),
+	[CreatedById] UNIQUEIDENTIFIER NOT NULL,
+	[CreatedDate] DATETIME2 NOT NULL,
+	CONSTRAINT [PK_WorkOrderTemplate] PRIMARY KEY ([Id])
+)
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO

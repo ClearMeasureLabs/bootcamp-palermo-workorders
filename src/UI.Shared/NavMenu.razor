@@ -46,6 +46,12 @@
                     <span class="nav-text">New Work Order</span>
                 </NavLink>
             </div>
+            <div class="nav-item px-3">
+                <NavLink data-testid="@Elements.Templates" class="nav-link" href="workorder/templates">
+                    <i class="bi bi-journal-text nav-icon" aria-hidden="true"></i>
+                    <span class="nav-text">Templates</span>
+                </NavLink>
+            </div>
         }
 
         @if (CurrentUser != null)
@@ -98,6 +104,7 @@
         AllWorkOrdersInProgress,
         Search,
         NewWorkOrder,
-        LastWorkOrder
+        LastWorkOrder,
+        Templates
     }
 }
