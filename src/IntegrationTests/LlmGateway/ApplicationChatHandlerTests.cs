@@ -107,9 +107,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         await CheckStatusAsync(WorkOrderStatus.Assigned);
 
-        await ExecuteAsync(
-            $"make work order {workOrderNumber} in progress, only use the available work order commands",
-            "gwillie");
+        await ExecuteAsync($"make work order {workOrderNumber} in progress", "gwillie");
 
         await CheckStatusAsync(WorkOrderStatus.InProgress);
 
