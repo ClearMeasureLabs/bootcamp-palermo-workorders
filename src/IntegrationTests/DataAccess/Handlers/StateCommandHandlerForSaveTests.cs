@@ -31,14 +31,14 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
 
         result.TransitionVerbPresentTense.ShouldBe(command.TransitionVerbPresentTense);
         result.WorkOrder.Creator.ShouldBe(currentUser);
-        result.WorkOrder.Title.ShouldBe(workOrder.Title);
+        result.WorkOrder.Title.ShouldBe(workOrder.Title.ToUpperInvariant());
         result.WorkOrder.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
         result.WorkOrder.Id.ShouldNotBe(Guid.Empty);
         var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
-        order.Title.ShouldBe(workOrder.Title);
+        order.Title.ShouldBe(workOrder.Title.ToUpperInvariant());
     }
 
     [Test]
@@ -72,7 +72,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
-        order.Title.ShouldBe(workOrder.Title);
+        order.Title.ShouldBe(workOrder.Title.ToUpperInvariant());
         order.Description.ShouldBe(workOrder.Description?.ToUpperInvariant());
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
