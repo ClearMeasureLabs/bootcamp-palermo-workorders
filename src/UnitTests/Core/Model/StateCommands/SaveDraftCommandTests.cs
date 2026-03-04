@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
@@ -41,6 +42,38 @@ public class SaveDraftCommandTests : StateCommandBaseTests
 
         var command = new SaveDraftCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
+    }
+
+    [Test]
+    public void ShouldConvertTitleToUpperCase()
+    {
+        var order = new WorkOrder();
+        order.Number = "456";
+        order.Title = "Fix the Leaky Faucet";
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        order.Title.ShouldBe("FIX THE LEAKY FAUCET");
+    }
+
+    [Test]
+    public void ShouldHandleNullTitle()
+    {
+        var order = new WorkOrder();
+        order.Number = "789";
+        order.Title = null;
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        order.Title.ShouldBeNull();
     }
 
     [Test]
