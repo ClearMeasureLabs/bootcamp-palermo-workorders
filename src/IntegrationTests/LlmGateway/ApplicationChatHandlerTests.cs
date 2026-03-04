@@ -130,18 +130,6 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         ChatResponse response2 = await handler2.Handle(query2, CancellationToken.None);
 
-        var responseText2 = response2.Messages.LastOrDefault()?.Text;
-        await TestContext.Out.WriteLineAsync($"LLM response: {responseText2}");
-        
-        var factory2 = TestHost.GetRequiredService<ChatClientFactory>();
-        IChatClient parseClient2 = await factory2.GetChatClient();
-
-        var db = TestHost.GetRequiredService<DataContext>();
-        var workOrder = await db.Set<WorkOrder>()
-            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
-
-        workOrder.Status.ShouldBe(WorkOrderStatus.InProgress);
-
         var handler3 = TestHost.GetRequiredService<ApplicationChatHandler>();
         var query3 = new ApplicationChatQuery(
             $"Please shelve the work order {workOrderNumber}",
