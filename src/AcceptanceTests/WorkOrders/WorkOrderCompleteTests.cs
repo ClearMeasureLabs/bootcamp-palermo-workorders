@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -32,13 +33,16 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
                 Timeout = 10000 // 10 seconds
             });
 
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToBeDisabledAsync();
+        // The assignee can reopen a completed work order, so the form remains editable
+        // with the Reopen button visible instead of being read-only/disabled.
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToBeEditableAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
             .ToHaveValueAsync(expectedDescription);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeDisabledAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
 
+        var reopenButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + CompleteToInProgressCommand.Name;
+        await Expect(Page.GetByTestId(reopenButtonTestId)).ToBeVisibleAsync();
 
         var displayedDateTime = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CompletedDate));
 
@@ -68,7 +72,9 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
                              throw new InvalidOperationException();
         rehyratedOrder.Status.ShouldBe(WorkOrderStatus.Complete);
 
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage)))
-            .ToHaveTextAsync("This work order is read-only for you at this time.");
+        // The assignee can reopen a completed work order, so the Reopen button
+        // is visible instead of a read-only message.
+        var reopenButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + CompleteToInProgressCommand.Name;
+        await Expect(Page.GetByTestId(reopenButtonTestId)).ToBeVisibleAsync();
     }
 }
