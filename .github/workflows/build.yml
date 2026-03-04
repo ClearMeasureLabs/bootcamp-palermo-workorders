@@ -764,7 +764,7 @@ jobs:
         if: always()
         with:
           name: acceptance-test-screenshots
-          path: src/AcceptanceTests/final-screenshots/
+          path: src/AcceptanceTests/**/final-screenshots/**
           retention-days: 7
           if-no-files-found: ignore
 
