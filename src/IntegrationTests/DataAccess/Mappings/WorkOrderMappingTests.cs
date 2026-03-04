@@ -235,7 +235,7 @@ public class WorkOrderMappingTests
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
         var workOrder = new WorkOrder
         {
-            Number = new string('A', 51), // Exceeds 50 char limit
+            Number = new string('A', 8), // Exceeds 7 character limit
             Title = new string('B', 301), // Exceeds 300 char limit
             Description = new string('C', 4001), // Exceeds 4000 char limit
             Instructions = new string('E', 4001), // Exceeds 4000 char limit
