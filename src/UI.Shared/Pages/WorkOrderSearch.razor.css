@@ -196,6 +196,29 @@
     letter-spacing: 0.5px;
 }
 
+.sla-badge {
+    padding: 0.3rem 0.7rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.sla-ontrack {
+    background-color: #c6f6d5;
+    color: #276749;
+}
+
+.sla-atrisk {
+    background-color: #fefcbf;
+    color: #744210;
+}
+
+.sla-breached {
+    background-color: #fed7d7;
+    color: #822727;
+}
+
 .empty-results {
     text-align: center;
     padding: 3rem;

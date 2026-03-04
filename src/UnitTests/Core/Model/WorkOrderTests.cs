@@ -80,4 +80,79 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void WorkOrder_SlaResponseHours_ShouldDefaultToNull()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.SlaResponseHours, Is.Null);
+    }
+
+    [Test]
+    public void WorkOrder_SlaResolutionHours_ShouldDefaultToNull()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.SlaResolutionHours, Is.Null);
+    }
+
+    [Test]
+    public void WorkOrder_GetResponseSlaStatus_ShouldReturnNull_WhenNoSlaSet()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.GetResponseSlaStatus(), Is.Null);
+    }
+
+    [Test]
+    public void WorkOrder_GetResponseSlaStatus_ShouldReturnOnTrack_WhenUnder75Percent()
+    {
+        var now = DateTime.UtcNow;
+        var workOrder = new WorkOrder
+        {
+            SlaResponseHours = 8,
+            CreatedDate = now.AddHours(-4),  // 50% elapsed
+            AssignedDate = now
+        };
+        Assert.That(workOrder.GetResponseSlaStatus(), Is.EqualTo(SlaStatus.OnTrack));
+    }
+
+    [Test]
+    public void WorkOrder_GetResponseSlaStatus_ShouldReturnAtRisk_WhenBetween75And100Percent()
+    {
+        var now = DateTime.UtcNow;
+        var workOrder = new WorkOrder
+        {
+            SlaResponseHours = 8,
+            CreatedDate = now.AddHours(-7),  // 87.5% elapsed
+            AssignedDate = now
+        };
+        Assert.That(workOrder.GetResponseSlaStatus(), Is.EqualTo(SlaStatus.AtRisk));
+    }
+
+    [Test]
+    public void WorkOrder_GetResponseSlaStatus_ShouldReturnBreached_WhenOver100Percent()
+    {
+        var now = DateTime.UtcNow;
+        var workOrder = new WorkOrder
+        {
+            SlaResponseHours = 4,
+            CreatedDate = now.AddHours(-5),  // 125% elapsed
+            AssignedDate = now
+        };
+        Assert.That(workOrder.GetResponseSlaStatus(), Is.EqualTo(SlaStatus.Breached));
+    }
+
+    [Test]
+    public void WorkOrder_GetResolutionSlaStatus_ShouldUseCompletedDate_WhenComplete()
+    {
+        var created = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var completed = created.AddHours(20);  // 20/24 = 83% elapsed → AtRisk
+        var workOrder = new WorkOrder
+        {
+            SlaResolutionHours = 24,
+            CreatedDate = created,
+            CompletedDate = completed,
+            Status = WorkOrderStatus.Complete
+        };
+        Assert.That(workOrder.GetResolutionSlaStatus(), Is.EqualTo(SlaStatus.AtRisk));
+    }
 }

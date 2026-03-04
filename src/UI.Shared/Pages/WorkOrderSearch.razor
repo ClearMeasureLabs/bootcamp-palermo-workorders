@@ -75,6 +75,8 @@
                         <th>Assignee</th>
                         <th>Status</th>
                         <th>Title</th>
+                        <th>Response SLA</th>
+                        <th>Resolution SLA</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -98,6 +100,24 @@
                                     <span class="status-badge">@order.Status</span>
                                 </td>
                                 <td>@order.Title</td>
+                                <td>
+                                    @{
+                                        var responseSlaStatus = order.GetResponseSlaStatus();
+                                    }
+                                    @if (responseSlaStatus != null)
+                                    {
+                                        <span class="sla-badge sla-@responseSlaStatus.ToString()!.ToLower()">@responseSlaStatus</span>
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        var resolutionSlaStatus = order.GetResolutionSlaStatus();
+                                    }
+                                    @if (resolutionSlaStatus != null)
+                                    {
+                                        <span class="sla-badge sla-@resolutionSlaStatus.ToString()!.ToLower()">@resolutionSlaStatus</span>
+                                    }
+                                </td>
                             </tr>
                         }
                     }

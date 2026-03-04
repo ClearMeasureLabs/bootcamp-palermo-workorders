@@ -29,4 +29,8 @@ public class WorkOrderManageModel
     public string? CreatedDate { get; set; }
 
     public string? RoomNumber { get; set; }
+
+    public int? SlaResponseHours { get; set; }
+
+    public int? SlaResolutionHours { get; set; }
 }

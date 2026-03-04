@@ -315,4 +315,72 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
     }
+
+    [Test]
+    public void WorkOrder_WithSlaHours_ShouldPersistAndRetrieve()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-SLA1",
+            Title = "SLA Test",
+            Description = "Testing SLA persistence",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft,
+            SlaResponseHours = 4,
+            SlaResolutionHours = 24
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.SlaResponseHours.ShouldBe(4);
+        rehydratedWorkOrder.SlaResolutionHours.ShouldBe(24);
+    }
+
+    [Test]
+    public void WorkOrder_WithNullSlaHours_ShouldPersistAndRetrieve()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator2", "Jane", "Doe", "jane@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-SLA2",
+            Title = "SLA Null Test",
+            Description = "Testing null SLA persistence",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.SlaResponseHours.ShouldBeNull();
+        rehydratedWorkOrder.SlaResolutionHours.ShouldBeNull();
+    }
 }

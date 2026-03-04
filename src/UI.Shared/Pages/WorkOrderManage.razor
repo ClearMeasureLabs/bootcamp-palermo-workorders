@@ -61,6 +61,20 @@
                         <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="SlaResponseHours" class="form-label">SLA Response Hours:</label>
+                    <div>
+                        <InputNumber data-testid="@Elements.SlaResponseHours" id="SlaResponseHours" @bind-Value="Model.SlaResponseHours" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="SlaResolutionHours" class="form-label">SLA Resolution Hours:</label>
+                    <div>
+                        <InputNumber data-testid="@Elements.SlaResolutionHours" id="SlaResolutionHours" @bind-Value="Model.SlaResolutionHours" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
             </div>
 
             <div class="readonly-info">
@@ -73,7 +87,17 @@
                 <span class="label">Completed Date:</span>
                 <span data-testid="@Elements.CompletedDate" class="value">@Model.CompletedDate</span>
 
+                @if (Model.WorkOrder?.GetResponseSlaStatus() != null)
+                {
+                    <span class="label">Response SLA:</span>
+                    <span data-testid="@Elements.ResponseSlaStatus" class="value sla-status sla-@Model.WorkOrder!.GetResponseSlaStatus()!.ToString()!.ToLower()">@Model.WorkOrder!.GetResponseSlaStatus()</span>
+                }
 
+                @if (Model.WorkOrder?.GetResolutionSlaStatus() != null)
+                {
+                    <span class="label">Resolution SLA:</span>
+                    <span data-testid="@Elements.ResolutionSlaStatus" class="value sla-status sla-@Model.WorkOrder!.GetResolutionSlaStatus()!.ToString()!.ToLower()">@Model.WorkOrder!.GetResolutionSlaStatus()</span>
+                }
             </div>
             
             @if (_workOrder != null)
@@ -121,6 +145,10 @@
         ReadOnlyMessage,
         CommandButton,
         WorkOrderNumber,
-        Status
+        Status,
+        SlaResponseHours,
+        SlaResolutionHours,
+        ResponseSlaStatus,
+        ResolutionSlaStatus
     }
 }
