@@ -261,4 +261,60 @@ public class WorkOrderQueryHandlerTests
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
     }
+
+    [Test]
+    public async Task ShouldPersistInstructions()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("1", "1", "1", "1");
+        var order = new WorkOrder
+        {
+            Creator = creator,
+            Number = "789",
+            Title = "Test",
+            Description = "Test description",
+            Instructions = "Test instructions for this work order"
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(order);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderQueryHandler(dataContext);
+        var rehydrated = (await repository.GetWorkOrderAsync("789"))!;
+
+        rehydrated.Instructions.ShouldBe("Test instructions for this work order");
+    }
+
+    [Test]
+    public async Task ShouldPersistNullInstructionsAsDefault()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("1", "1", "1", "1");
+        var order = new WorkOrder
+        {
+            Creator = creator,
+            Number = "790",
+            Title = "Test"
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(order);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderQueryHandler(dataContext);
+        var rehydrated = (await repository.GetWorkOrderAsync("790"))!;
+
+        rehydrated.Instructions.ShouldBe(string.Empty);
+    }
 }
