@@ -38,8 +38,9 @@ public class WorkOrder : EntityBase<WorkOrder>
             return string.Empty;
         }
 
-        var maxLength = Math.Min(4000, value.Length);
-        return value.Substring(0, maxLength);
+        var upperValue = value.ToUpper();
+        var maxLength = Math.Min(4000, upperValue.Length);
+        return upperValue.Substring(0, maxLength);
     }
 
     protected string getTextForStatus()
