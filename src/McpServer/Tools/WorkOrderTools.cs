@@ -51,7 +51,8 @@ public class WorkOrderTools
         [Description("Title of the work order")] string title,
         [Description("Description of the work order")] string description,
         [Description("Username of the employee creating the work order")] string creatorUsername,
-        [Description("Optional room number or location for the work order")] string? roomNumber = null)
+        [Description("Optional room number or location for the work order")] string? roomNumber = null,
+        [Description("Optional instructions for how to perform the work")] string? instructions = null)
     {
         try
         {
@@ -65,6 +66,7 @@ public class WorkOrderTools
             {
                 Title = title,
                 Description = description,
+                Instructions = instructions,
                 Creator = creator,
                 Status = WorkOrderStatus.Draft,
                 Number = numberGenerator.GenerateNumber(),
@@ -195,6 +197,7 @@ public class WorkOrderTools
         wo.Number,
         wo.Title,
         wo.Description,
+        wo.Instructions,
         Status = wo.Status.FriendlyName,
         wo.RoomNumber,
         Creator = wo.Creator?.GetFullName(),
