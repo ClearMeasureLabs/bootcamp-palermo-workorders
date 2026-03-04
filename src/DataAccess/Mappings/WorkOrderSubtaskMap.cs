@@ -25,8 +25,6 @@ public class WorkOrderSubtaskMap : IEntityFrameworkMapping
                 .WithOne()
                 .HasForeignKey(s => s.WorkOrderId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            entity.Navigation(e => e.Subtasks).AutoInclude();
         });
     }
 }

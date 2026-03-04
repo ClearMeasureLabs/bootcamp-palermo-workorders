@@ -125,11 +125,13 @@
                     var removeTestId = $"{Elements.SubtaskRemove}{subtask.Id}";
                     <li data-testid="@subtaskTestId" class="subtask-item @(subtask.IsCompleted ? "completed" : "")">
                         <input type="checkbox" data-testid="@toggleTestId" checked="@subtask.IsCompleted"
+                               disabled="@Model.IsReadOnly"
                                @onchange="@(() => ToggleSubtask(subtask.Id))" />
                         <span class="subtask-title">@subtask.Title</span>
                         @if (!Model.IsReadOnly)
                         {
                             <button type="button" data-testid="@removeTestId" class="btn-remove-subtask"
+                                    aria-label="@($"Remove subtask {subtask.Title}")"
                                     @onclick="@(() => RemoveSubtask(subtask.Id))">✕</button>
                         }
                     </li>

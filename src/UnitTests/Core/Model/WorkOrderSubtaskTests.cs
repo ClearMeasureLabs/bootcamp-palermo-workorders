@@ -25,6 +25,21 @@ public class WorkOrderSubtaskTests
     }
 
     [Test]
+    public void WorkOrderSubtask_ShouldRequireTitle()
+    {
+        Should.Throw<ArgumentException>(() => WorkOrderSubtask.ValidateTitle(""));
+        Should.Throw<ArgumentException>(() => WorkOrderSubtask.ValidateTitle("   "));
+    }
+
+    [Test]
+    public void WorkOrderSubtask_ShouldRejectTitleExceedingMaxLength()
+    {
+        var longTitle = new string('x', 301);
+
+        Should.Throw<ArgumentException>(() => WorkOrderSubtask.ValidateTitle(longTitle));
+    }
+
+    [Test]
     public void AddSubtaskCommand_ShouldAddSubtaskToWorkOrder()
     {
         var workOrder = new WorkOrder { Id = Guid.NewGuid() };

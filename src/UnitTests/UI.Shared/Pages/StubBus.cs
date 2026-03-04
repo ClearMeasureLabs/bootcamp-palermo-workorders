@@ -9,6 +9,8 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class StubBus() : Bus(null!)
 {
+    private readonly Dictionary<Guid, bool> _subtaskCompletionState = new();
+
     public override Task Publish(INotification notification)
     {
         return Task.CompletedTask;
@@ -33,13 +35,17 @@ public class StubBus() : Bus(null!)
 
         if (request is AddSubtaskCommand addCmd)
         {
-            var subtask = new WorkOrderSubtask { Id = Guid.NewGuid(), WorkOrderId = addCmd.WorkOrderId, Title = addCmd.Title, SortOrder = addCmd.SortOrder };
+            var id = Guid.NewGuid();
+            _subtaskCompletionState[id] = false;
+            var subtask = new WorkOrderSubtask { Id = id, WorkOrderId = addCmd.WorkOrderId, Title = addCmd.Title, SortOrder = addCmd.SortOrder };
             return Task.FromResult<TResponse>((TResponse)(object)subtask);
         }
 
         if (request is ToggleSubtaskCommand toggleCmd)
         {
-            var subtask = new WorkOrderSubtask { Id = toggleCmd.SubtaskId, IsCompleted = true };
+            var current = _subtaskCompletionState.GetValueOrDefault(toggleCmd.SubtaskId, false);
+            _subtaskCompletionState[toggleCmd.SubtaskId] = !current;
+            var subtask = new WorkOrderSubtask { Id = toggleCmd.SubtaskId, IsCompleted = !current };
             return Task.FromResult<TResponse>((TResponse)(object)subtask);
         }
 

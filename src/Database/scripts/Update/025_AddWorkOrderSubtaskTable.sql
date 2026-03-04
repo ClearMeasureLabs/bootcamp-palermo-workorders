@@ -8,3 +8,6 @@ CREATE TABLE [dbo].[WorkOrderSubtask] (
 	CONSTRAINT [FK_WorkOrderSubtask_WorkOrder] FOREIGN KEY ([WorkOrderId])
 		REFERENCES [dbo].[WorkOrder] ([Id]) ON DELETE CASCADE
 );
+
+CREATE NONCLUSTERED INDEX [IX_WorkOrderSubtask_WorkOrderId_SortOrder]
+	ON [dbo].[WorkOrderSubtask] ([WorkOrderId], [SortOrder]);

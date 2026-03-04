@@ -9,6 +9,8 @@ public class AddSubtaskCommandHandler(DbContext dbContext) : IRequestHandler<Add
 {
     public async Task<WorkOrderSubtask> Handle(AddSubtaskCommand request, CancellationToken cancellationToken = default)
     {
+        WorkOrderSubtask.ValidateTitle(request.Title);
+
         var subtask = new WorkOrderSubtask
         {
             Id = Guid.NewGuid(),
