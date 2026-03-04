@@ -29,8 +29,8 @@
             }
 
             <div class="chat-input-container">
-                <InputText @bind-Value="_prompt"
-                    @onkeydown="OnKeyDownAsync"
+                <input type="text" @bind="_prompt"
+                    @onkeydown="OnKeyDownAsync" @onkeydown:preventDefault="_preventEnterDefault"
                     data-testid="@(Elements.ChatInput.ToString())"
                     class="form-control chat-input"
                     placeholder="Ask the AI assistant about this work order..."/>
@@ -49,6 +49,7 @@
     private WorkOrder? _currentWorkOrder;
     private string _prompt = "";
     private bool _isLoading;
+    private bool _preventEnterDefault;
     private readonly List<ChatMessage> _chatMessages = new();
 
     public void Handle(WorkOrderSelectedEvent theEvent)
@@ -107,10 +108,15 @@
 
     private async Task OnKeyDownAsync(KeyboardEventArgs args)
     {
-        if (args.Key != "Enter")
-            return;
-
-        await SendMessage();
+        if (args.Key == "Enter")
+        {
+            _preventEnterDefault = true;
+            await SendMessage();
+        }
+        else
+        {
+            _preventEnterDefault = false;
+        }
     }
 }
 
