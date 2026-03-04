@@ -28,6 +28,8 @@ StateCommandBase(WorkOrder, CurrentUser)
 
     public override void Execute(StateCommandContext context)
     {
+        WorkOrder.Title = WorkOrder.Title?.ToUpperInvariant();
+
         if (WorkOrder.CreatedDate.Equals(null))
         {
             WorkOrder.CreatedDate = context.CurrentDateTime;

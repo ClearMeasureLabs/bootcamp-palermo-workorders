@@ -59,6 +59,22 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         Assert.That(order.CreatedDate, Is.Not.Null);
     }
 
+    [Test]
+    public void ShouldUppercaseTitleWhenSavingDraft()
+    {
+        var order = new WorkOrder();
+        order.Number = "123";
+        order.Status = WorkOrderStatus.Draft;
+        order.Title = "newtitle";
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new SaveDraftCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        Assert.That(order.Title, Is.EqualTo("NEWTITLE"));
+    }
+
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
         return new SaveDraftCommand(order, employee);
