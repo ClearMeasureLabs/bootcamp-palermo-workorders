@@ -12,10 +12,18 @@ public class ReassignWorkOrderCommandHandler(DbContext dbContext, ILogger<Reassi
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Executing reassignment");
+
+        if (!request.IsValid())
+        {
+            throw new InvalidOperationException($"Reassignment command is not valid for work order {request.WorkOrder.Number}.");
+        }
+
         request.Execute();
 
         var order = request.WorkOrder;
-        if (order.Creator?.Id == request.NewAssignee.Id)
+        if (order.Assignee != null &&
+            order.Creator != null &&
+            order.Assignee.Id == order.Creator.Id)
         {
             order.Assignee = order.Creator;
         }
