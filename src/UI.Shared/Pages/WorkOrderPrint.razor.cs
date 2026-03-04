@@ -23,6 +23,7 @@ public partial class WorkOrderPrint : AppComponentBase
 
     private async Task PrintPage()
     {
-        await JSRuntime!.InvokeVoidAsync("window.print");
+        if (JSRuntime != null)
+            await JSRuntime.InvokeVoidAsync("window.print");
     }
 }
