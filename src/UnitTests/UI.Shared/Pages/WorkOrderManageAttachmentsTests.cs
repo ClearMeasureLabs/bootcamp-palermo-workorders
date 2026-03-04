@@ -41,7 +41,7 @@ public class WorkOrderManageAttachmentsTests
             }
         };
 
-        ctx.Services.AddSingleton<IBus>(new WorkOrderManageStubBus(attachments));
+        ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus(attachments));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(workOrderId));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(uploader));
@@ -61,7 +61,7 @@ public class WorkOrderManageAttachmentsTests
         fileNameCell.TextContent.ShouldBe("damage-photo.jpg");
     }
 
-    private class WorkOrderManageStubBus(WorkOrderAttachment[] attachments) : Bus(null!)
+    private class StubWorkOrderManageBus(WorkOrderAttachment[] attachments) : Bus(null!)
     {
         public override Task Publish(INotification notification) => Task.CompletedTask;
 
