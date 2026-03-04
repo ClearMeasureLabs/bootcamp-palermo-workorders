@@ -83,7 +83,7 @@ public class WorkOrderTools
         }
     }
 
-    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.")]
+    [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands (class name or friendly name): DraftToAssignedCommand/Assign (requires assigneeUsername), AssignedToInProgressCommand/Begin, InProgressToCompleteCommand/Complete, InProgressToAssignedCommand/Shelve, AssignedToCancelledCommand/Cancel.")]
     public static async Task<string> ExecuteWorkOrderCommand(
         IBus bus,
         [Description("The work order number")] string workOrderNumber,
@@ -103,7 +103,9 @@ public class WorkOrderTools
             return $"Employee with username '{executingUsername}' not found.";
         }
 
-        if (commandName == "DraftToAssignedCommand")
+        var normalizedCommand = commandName.Trim();
+        if (normalizedCommand.Equals("DraftToAssignedCommand", StringComparison.OrdinalIgnoreCase) ||
+            normalizedCommand.Equals(DraftToAssignedCommand.Name, StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrEmpty(assigneeUsername))
             {
@@ -119,18 +121,11 @@ public class WorkOrderTools
             workOrder.Assignee = assignee;
         }
 
-        StateCommandBase? command = commandName switch
-        {
-            "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
-            "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
-            "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
-            "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
-            _ => null
-        };
+        StateCommandBase? command = ResolveCommand(normalizedCommand, workOrder, user);
 
         if (command == null)
         {
-            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand, AssignedToCancelledCommand.";
+            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand/Assign, AssignedToInProgressCommand/Begin, InProgressToCompleteCommand/Complete, InProgressToAssignedCommand/Shelve, AssignedToCancelledCommand/Cancel.";
         }
 
         if (!command.IsValid())
@@ -141,6 +136,31 @@ public class WorkOrderTools
         var result = await bus.Send(command);
         return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
             new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static StateCommandBase? ResolveCommand(string name, WorkOrder workOrder, Employee user)
+    {
+        if (name.Equals(nameof(DraftToAssignedCommand), StringComparison.OrdinalIgnoreCase) ||
+            name.Equals(DraftToAssignedCommand.Name, StringComparison.OrdinalIgnoreCase))
+            return new DraftToAssignedCommand(workOrder, user);
+
+        if (name.Equals(nameof(AssignedToInProgressCommand), StringComparison.OrdinalIgnoreCase) ||
+            name.Equals(AssignedToInProgressCommand.Name, StringComparison.OrdinalIgnoreCase))
+            return new AssignedToInProgressCommand(workOrder, user);
+
+        if (name.Equals(nameof(InProgressToCompleteCommand), StringComparison.OrdinalIgnoreCase) ||
+            name.Equals(InProgressToCompleteCommand.Name, StringComparison.OrdinalIgnoreCase))
+            return new InProgressToCompleteCommand(workOrder, user);
+
+        if (name.Equals(nameof(InProgressToAssignedCommand), StringComparison.OrdinalIgnoreCase) ||
+            name.Equals(InProgressToAssignedCommand.Name, StringComparison.OrdinalIgnoreCase))
+            return new InProgressToAssignedCommand(workOrder, user);
+
+        if (name.Equals(nameof(AssignedToCancelledCommand), StringComparison.OrdinalIgnoreCase) ||
+            name.Equals(AssignedToCancelledCommand.Name, StringComparison.OrdinalIgnoreCase))
+            return new AssignedToCancelledCommand(workOrder, user);
+
+        return null;
     }
 
     private static async Task<Employee?> FindEmployeeByUsername(IBus bus, string username)
