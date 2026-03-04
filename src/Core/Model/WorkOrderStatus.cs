@@ -10,12 +10,12 @@ public class WorkOrderStatus
 {
     private static readonly ILogger _logger = NullLogger<WorkOrderStatus>.Instance;
 
-    public static readonly WorkOrderStatus None = new("", "", " ", 0);
-    public static readonly WorkOrderStatus Draft = new("DRT", "Draft", "Draft", 1);
-    public static readonly WorkOrderStatus Assigned = new("ASD", "Assigned", "Assigned", 2);
-    public static readonly WorkOrderStatus InProgress = new("IPG", "InProgress", "In Progress", 3);
-    public static readonly WorkOrderStatus Complete = new("CMP", "Complete", "Complete", 4);
-    public static readonly WorkOrderStatus Cancelled = new("CNL", "Cancelled", "Cancelled", 5);
+    public static readonly WorkOrderStatus None = new(WorkOrderStatusCodes.None, "", " ", 0);
+    public static readonly WorkOrderStatus Draft = new(WorkOrderStatusCodes.Draft, "Draft", "Draft", 1);
+    public static readonly WorkOrderStatus Assigned = new(WorkOrderStatusCodes.Assigned, "Assigned", "Assigned", 2);
+    public static readonly WorkOrderStatus InProgress = new(WorkOrderStatusCodes.InProgress, "InProgress", "In Progress", 3);
+    public static readonly WorkOrderStatus Complete = new(WorkOrderStatusCodes.Complete, "Complete", "Complete", 4);
+    public static readonly WorkOrderStatus Cancelled = new(WorkOrderStatusCodes.Cancelled, "Cancelled", "Cancelled", 5);
 
     public WorkOrderStatus()
     {
