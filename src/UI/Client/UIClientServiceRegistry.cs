@@ -40,6 +40,7 @@ public class UIClientServiceRegistry : ServiceRegistry
             scanner.WithDefaultConventions();
             scanner.AssemblyContainingType<UIClientServiceRegistry>();
             scanner.AssemblyContainingType<IRemotableRequest>();
+            scanner.AssemblyContainingType<CanConnectToLlmServerHealthCheck>();
             scanner.ConnectImplementationsToTypesClosing(typeof(IRequestHandler<,>));
             scanner.ConnectImplementationsToTypesClosing(typeof(INotificationHandler<>));
         });
