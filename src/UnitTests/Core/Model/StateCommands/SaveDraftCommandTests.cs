@@ -1,7 +1,6 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
-using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
@@ -73,7 +72,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         var command = new SaveDraftCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        order.Title.ShouldBe("FIX LEAKY FAUCET");
+        Assert.That(order.Title, Is.EqualTo("FIX LEAKY FAUCET"));
     }
 
     [Test]
@@ -89,7 +88,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         var command = new SaveDraftCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        order.Title.ShouldBe("REPLACE HVAC FILTER");
+        Assert.That(order.Title, Is.EqualTo("REPLACE HVAC FILTER"));
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
