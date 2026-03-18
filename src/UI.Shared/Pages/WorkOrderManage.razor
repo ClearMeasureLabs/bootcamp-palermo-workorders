@@ -6,6 +6,12 @@
         </h2>
     </div>
 
+    <ConfirmAssignmentModal Visible="@_showAssignmentConfirmationModal"
+                             InProgressWorkOrder="@_inProgressWorkOrder"
+                             Assignee="@_pendingAssignee"
+                             OnConfirm="@OnConfirmAssignment"
+                             OnCancel="@OnCancelAssignment"/>
+
     <EditForm Model="@Model" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator/>
         <ValidationSummary/>

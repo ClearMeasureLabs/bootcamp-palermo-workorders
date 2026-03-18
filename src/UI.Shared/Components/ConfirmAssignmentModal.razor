@@ -1,0 +1,55 @@
+@using ClearMeasure.Bootcamp.Core.Model
+
+@if (Visible && InProgressWorkOrder != null && Assignee != null)
+{
+    <div class="modal-overlay" @onkeydown="HandleKeyDown">
+        <div class="modal-content" role="dialog" aria-modal="true">
+            <div class="modal-message" role="alert">
+                @Assignee.GetFullName() is currently working on @InProgressWorkOrder.Number: @InProgressWorkOrder.Title, please confirm to assign a new work order.
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-primary" aria-label="Confirm assignment" @onclick="OnConfirmAsync">
+                    Confirm
+                </button>
+                <button type="button" class="btn btn-secondary" aria-label="Cancel assignment" @onclick="OnCancelAsync">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public WorkOrder? InProgressWorkOrder { get; set; }
+
+    [Parameter]
+    public Employee? Assignee { get; set; }
+
+    [Parameter]
+    public EventCallback OnConfirm { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private async Task OnConfirmAsync()
+    {
+        await OnConfirm.InvokeAsync();
+    }
+
+    private async Task OnCancelAsync()
+    {
+        await OnCancel.InvokeAsync();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await OnCancelAsync();
+        }
+    }
+}
