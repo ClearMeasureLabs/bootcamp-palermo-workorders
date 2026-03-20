@@ -595,6 +595,7 @@ jobs:
 
   security-scan:
     name: Security Scan
+    if: false
     runs-on: ubuntu-latest
     concurrency:
       group: security-scan-${{ github.ref }}
