@@ -84,4 +84,21 @@ public class LoginPageTests
         provider.IsAuthenticated().ShouldBeTrue();
         provider.GetUsername().ShouldBe("hsimpson");
     }
+
+    [Test]
+    public void ShouldDisplayFirstChurchOfShelbyvilleSubtitle()
+    {
+        using var ctx = new TestContext();
+
+        var provider = new CustomAuthenticationStateProvider();
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.RenderComponent<Login>();
+
+        var subtitle = component.Find(".login-subtitle");
+        subtitle.TextContent.ShouldBe("First Church of Shelbyville");
+    }
 }
