@@ -327,4 +327,4 @@ Describing architecture from five concurrent viewpoints: Logical, Development, P
 Maintaining architecture diagrams (PlantUML, Mermaid) as source files checked into version control alongside application code, enabling versioning, diffing, and review.
 - **Reference:** [The C4 Model — Tooling](https://c4model.com/#Tooling)
 
-hello world
+Hello, World! 👋
