@@ -1,6 +1,10 @@
-﻿@page "/"
+@page "/"
 
 <PageTitle>Clear Measure - .NET Bootcamp - Work Order Application</PageTitle>
+
+<div class="greeting-banner" data-testid="@nameof(Elements.GreetingBanner)">
+    <p>Welcome to the AI Software Factory!</p>
+</div>
 
 <div class="church-hero">
     <div class="church-header">
@@ -50,3 +54,10 @@
         <p>"Blessed are those who maintain the house of the Lord" - Springfield Church Manual</p>
     </div>
 </div>
+
+@code {
+    public enum Elements
+    {
+        GreetingBanner
+    }
+}

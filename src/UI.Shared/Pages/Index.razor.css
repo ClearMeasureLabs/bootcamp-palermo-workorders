@@ -1,3 +1,20 @@
+.greeting-banner {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: #fff;
+    text-align: center;
+    padding: 1.5rem 2rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.greeting-banner p {
+    margin: 0;
+}
+
 .church-hero {
     background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 50%, #87ceeb 100%);
     min-height: 80vh;
