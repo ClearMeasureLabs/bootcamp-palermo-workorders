@@ -1,5 +1,8 @@
 using Bunit;
+using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Microsoft.Extensions.DependencyInjection;
+using Palermo.BlazorMvc;
 using Shouldly;
 using TestContext = Bunit.TestContext;
 
@@ -12,6 +15,8 @@ public class HelloWorldTests
     public void ShouldRenderGreeting()
     {
         using var ctx = new TestContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.RenderComponent<HelloWorld>();
 
@@ -24,6 +29,8 @@ public class HelloWorldTests
     public void ShouldHaveCorrectPageTitle()
     {
         using var ctx = new TestContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.RenderComponent<HelloWorld>();
 
