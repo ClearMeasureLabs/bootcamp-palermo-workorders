@@ -1,6 +1,6 @@
 using Bunit;
-using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Shouldly;
+using IndexPage = ClearMeasure.Bootcamp.UI.Shared.Pages.Index;
 using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
@@ -13,9 +13,9 @@ public class IndexPageTests
     {
         using var ctx = new TestContext();
 
-        var component = ctx.RenderComponent<Index>();
+        var component = ctx.RenderComponent<IndexPage>();
 
-        var banner = component.Find($"[data-testid='{nameof(Index.Elements.GreetingBanner)}']");
+        var banner = component.Find($"[data-testid='{nameof(IndexPage.Elements.GreetingBanner)}']");
         banner.ShouldNotBeNull();
         banner.TextContent.ShouldContain("Welcome to the AI Software Factory!");
     }
