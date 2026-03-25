@@ -27,6 +27,12 @@
                 <span class="nav-text">Fetch data</span>
             </NavLink>
         </div>
+        <div class="nav-item px-3">
+            <NavLink data-testid="@Elements.HelloWorld" class="nav-link" href="helloworld">
+                <i class="bi bi-globe nav-icon" aria-hidden="true"></i>
+                <span class="nav-text">Hello World</span>
+            </NavLink>
+        </div>
         
         @if (CurrentUser != null)
         {
@@ -91,6 +97,7 @@
     public enum Elements
     {
         Counter,
+        HelloWorld,
         AiAgent,
         MyWorkOrders,
         WorkOrdersAssignedToMe,
