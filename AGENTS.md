@@ -6,7 +6,7 @@ See `CLAUDE.md` for full project overview, solution structure, architecture, cod
 
 ### System Dependencies
 
-- **.NET SDK 10.0.100** (prerelease) - installed via `dotnet-install.sh`
+- **.NET SDK 10.0.100** - installed via `dotnet-install.sh`
 - **PowerShell 7 (pwsh)** - required for all build scripts (`build.ps1`, `PrivateBuild.ps1`, `BuildFunctions.ps1`)
 - **Docker** - required for SQL Server container on Linux; needs `fuse-overlayfs` storage driver and `iptables-legacy` in the cloud VM
 
