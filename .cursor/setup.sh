@@ -87,7 +87,7 @@ echo "    Docker $(docker --version)"
 
 # ── 4. NuGet restore ──────────────────────────────────────────────────────
 echo "==> Restoring NuGet packages..."
-dotnet restore
+dotnet restore src/ChurchBulletin.sln
 
 echo ""
 echo "==> Environment setup complete."
