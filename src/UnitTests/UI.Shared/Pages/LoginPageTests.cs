@@ -86,6 +86,25 @@ public class LoginPageTests
     }
 
     [Test]
+    public void ShouldDisplayEmployeeNamesInUpperCase()
+    {
+        using var ctx = new TestContext();
+
+        var provider = new CustomAuthenticationStateProvider();
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.RenderComponent<Login>();
+
+        var options = component.FindAll("option");
+        options[1].TextContent.ShouldBe("HOMER SIMPSON");
+        options[2].TextContent.ShouldBe("MONTGOMERY BURNS");
+        options[3].TextContent.ShouldBe("NED FLANDERS");
+    }
+
+    [Test]
     public void ShouldDisplayFirstChurchOfShelbyvilleSubtitle()
     {
         using var ctx = new TestContext();
