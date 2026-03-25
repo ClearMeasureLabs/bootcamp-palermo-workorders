@@ -1,4 +1,4 @@
-using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using IndexPage = ClearMeasure.Bootcamp.UI.Shared.Pages.Index;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
@@ -25,7 +25,7 @@ public class LandingPageTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs());
 
-        var banner = Page.GetByTestId(nameof(Index.Elements.GreetingBanner));
+        var banner = Page.GetByTestId(nameof(IndexPage.Elements.GreetingBanner));
         await banner.WaitForAsync();
 
         await Expect(banner).ToBeVisibleAsync();
