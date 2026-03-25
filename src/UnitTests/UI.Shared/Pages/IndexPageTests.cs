@@ -1,4 +1,7 @@
 using Bunit;
+using ClearMeasure.Bootcamp.Core;
+using Microsoft.Extensions.DependencyInjection;
+using Palermo.BlazorMvc;
 using Shouldly;
 using IndexPage = ClearMeasure.Bootcamp.UI.Shared.Pages.Index;
 using TestContext = Bunit.TestContext;
@@ -12,6 +15,8 @@ public class IndexPageTests
     public void ShouldDisplayGreetingBanner()
     {
         using var ctx = new TestContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.RenderComponent<IndexPage>();
 
