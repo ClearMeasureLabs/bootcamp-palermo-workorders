@@ -17,7 +17,7 @@
                         <option value="">-- Select a parishioner or staff member --</option>
                         @foreach (var employee in employees)
                         {
-                            <option value="@employee.UserName">@employee.GetFullName()</option>
+                            <option value="@employee.UserName">@employee.GetFullName().ToUpperInvariant()</option>
                         }
                     </InputSelect>
                     <ValidationMessage For="@(() => loginModel.Username)"/>
