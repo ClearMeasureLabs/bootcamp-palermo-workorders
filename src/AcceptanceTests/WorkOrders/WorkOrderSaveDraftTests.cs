@@ -154,6 +154,6 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page).Not.ToHaveURLAsync("**/workorder/search");
-        await Expect(Page.Locator(".validation-summary")).ToBeVisibleAsync();
+        await Expect(Page.GetByText("maximum length of 4000", new() { Exact = false })).ToBeVisibleAsync();
     }
 }
