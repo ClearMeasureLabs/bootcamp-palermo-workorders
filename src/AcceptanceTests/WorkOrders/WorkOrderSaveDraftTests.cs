@@ -97,8 +97,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await ClickWorkOrderNumberFromSearchPage(order);
 
-        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
-        await Expect(instructionsField).ToHaveValueAsync(order.Instructions!);
+        await ExpectInstructionsDisplayedAsync(order.Instructions!);
 
         var fromBus = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         fromBus.Instructions.ShouldBe(order.Instructions);
@@ -119,9 +118,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
 
-        var summary = Page.Locator(".validation-summary");
-        await Expect(summary).ToBeVisibleAsync();
-        await Expect(summary).ToContainTextAsync("Instructions");
+        await ExpectWorkOrderValidationSummaryContainsAsync("Instructions");
     }
 
     [Test, Retry(2)]

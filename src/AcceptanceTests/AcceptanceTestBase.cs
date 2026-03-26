@@ -251,6 +251,28 @@ public abstract class AcceptanceTestBase
             await locator.EvaluateAsync("el => el.click()");
     }
 
+    protected async Task ExpectInstructionsDisplayedAsync(string expected)
+    {
+        var locator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        var isTextArea = await locator.EvaluateAsync<bool>(
+            "el => el.tagName === 'TEXTAREA' || el.tagName === 'INPUT'");
+        if (isTextArea)
+        {
+            await Expect(locator).ToHaveValueAsync(expected);
+        }
+        else
+        {
+            await Expect(locator).ToHaveTextAsync(expected);
+        }
+    }
+
+    protected async Task ExpectWorkOrderValidationSummaryContainsAsync(string substring)
+    {
+        var summary = Page.Locator(".validation-summary, ul.validation-errors");
+        await Expect(summary).ToBeVisibleAsync();
+        await Expect(summary).ToContainTextAsync(substring);
+    }
+
     protected async Task Input(string elementTestId, string? value)
     {
         var locator = Page.GetByTestId(elementTestId);

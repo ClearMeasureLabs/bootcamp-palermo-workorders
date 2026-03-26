@@ -36,9 +36,8 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
             .ToHaveValueAsync(expectedDescription);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeDisabledAsync();
-        var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
-        await Expect(instructionsLocator).ToHaveTextAsync(order.Instructions ?? string.Empty);
-        await Expect(instructionsLocator).Not.ToBeEditableAsync();
+        await ExpectInstructionsDisplayedAsync(order.Instructions ?? string.Empty);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).Not.ToBeEditableAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
 
