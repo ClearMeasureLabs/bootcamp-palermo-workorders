@@ -7,10 +7,20 @@ using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
+/// <summary>
+/// LLM + tool-calling assertions can be non-deterministic across models and CI hosts (e.g. ARM SQLite).
+/// Category <see cref="LlmToolDeterminismSensitiveCategory"/> excludes these from the ARM SQLite integration job only.
+/// </summary>
+public static class LlmToolDeterminismSensitiveCategory
+{
+    public const string Name = "LlmToolDeterminismSensitive";
+}
+
 [TestFixture]
 public class ApplicationChatHandlerTests : LlmTestBase
 {
     [Test]
+    [Category(LlmToolDeterminismSensitiveCategory.Name)]
     [Retry(3)]
     public async Task Handle_AskForWorkOrdersICreated_ReturnsWorkOrderData()
     {
@@ -28,6 +38,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
+    [Category(LlmToolDeterminismSensitiveCategory.Name)]
     [Retry(3)]
     public async Task Handle_CreateAndAssignWorkOrder_CreatesAssignedWorkOrderForGwillie()
     {
@@ -63,6 +74,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
+    [Category(LlmToolDeterminismSensitiveCategory.Name)]
     [Retry(3)]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilie()
     {
@@ -100,6 +112,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
+    [Category(LlmToolDeterminismSensitiveCategory.Name)]
     [Retry(3)]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
     {

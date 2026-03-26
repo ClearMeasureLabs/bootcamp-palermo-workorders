@@ -139,11 +139,16 @@ Function IntegrationTest {
 	try {
 		exec {
 			if ($script:useSqlite) {
+				$sqliteTestFilter = if (-not [string]::IsNullOrWhiteSpace($env:INTEGRATION_TEST_NUNIT_FILTER)) {
+					$env:INTEGRATION_TEST_NUNIT_FILTER
+				} else {
+					"TestCategory!=SqlServerOnly"
+				}
 				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
 					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 					--no-restore --configuration $projectConfig `
 					--collect:"XPlat Code Coverage" `
-					--filter "TestCategory!=SqlServerOnly"
+					--filter $sqliteTestFilter
 			}
 			else {
 				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
