@@ -108,10 +108,11 @@ public class McpWorkOrderToolTests
 
         var bus = TestHost.GetRequiredService<IBus>();
         var numberGenerator = new WorkOrderNumberGenerator();
-        var result = await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, "New Work Order", "Fix the broken window", "creator1");
+        var result = await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, "New Work Order", "Fix the broken window", "creator1", instructions: "Wear PPE.");
 
         result.ShouldContain("New Work Order");
         result.ShouldContain("Fix the broken window");
+        result.ShouldContain("Wear PPE.");
         result.ShouldContain("Draft");
     }
 
