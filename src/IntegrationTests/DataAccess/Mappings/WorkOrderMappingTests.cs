@@ -250,17 +250,18 @@ public class WorkOrderMappingTests
 
     [Test]
     [Category("SqlServerOnly")]
-    public void ShouldRejectInstructionsExceedingMaxLength()
+    public void ShouldSupportMaxLengthInstructions()
     {
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var instructions4000 = new string('Z', 4000);
         var workOrder = new WorkOrder
         {
             Number = "WO-99",
             Title = "Task",
             Description = "Desc",
-            Instructions = new string('Z', 4001),
+            Instructions = instructions4000,
             RoomNumber = "101",
             Creator = creator,
             Status = WorkOrderStatus.Draft
@@ -269,8 +270,43 @@ public class WorkOrderMappingTests
         using var context = TestHost.GetRequiredService<DbContext>();
         context.Add(creator);
         context.Add(workOrder);
+        context.SaveChanges();
 
-        Should.Throw<DbUpdateException>(() => context.SaveChanges());
+        using var context2 = TestHost.GetRequiredService<DbContext>();
+        var loaded = context2.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+        loaded.Instructions!.Length.ShouldBe(4000);
+        loaded.Instructions.ShouldBe(instructions4000);
+    }
+
+    [Test]
+    public void ShouldTruncateInstructionsTo4000CharactersBeforeSave()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-TR",
+            Title = "Task",
+            Description = "Desc",
+            Instructions = new string('Y', 4001),
+            RoomNumber = "101",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        workOrder.Instructions!.Length.ShouldBe(4000);
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        using var context2 = TestHost.GetRequiredService<DbContext>();
+        var loaded = context2.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+        loaded.Instructions!.Length.ShouldBe(4000);
     }
 
     [Test]
