@@ -273,6 +273,20 @@ public abstract class AcceptanceTestBase
         await Expect(summary).ToContainTextAsync(substring);
     }
 
+    protected async Task ExpectInstructionsReadOnlyAsync()
+    {
+        var locator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        var tag = await locator.EvaluateAsync<string>("el => el.tagName");
+        if (tag is "TEXTAREA" or "INPUT")
+        {
+            await Expect(locator).ToBeDisabledAsync();
+        }
+        else
+        {
+            tag.ShouldBe("SPAN");
+        }
+    }
+
     protected async Task Input(string elementTestId, string? value)
     {
         var locator = Page.GetByTestId(elementTestId);

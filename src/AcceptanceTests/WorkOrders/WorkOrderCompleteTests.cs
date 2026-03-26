@@ -37,7 +37,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
             .ToHaveValueAsync(expectedDescription);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeDisabledAsync();
         await ExpectInstructionsDisplayedAsync(order.Instructions ?? string.Empty);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).Not.ToBeEditableAsync();
+        await ExpectInstructionsReadOnlyAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
 
