@@ -24,6 +24,12 @@ public sealed class ComponentHealthEntry
 
     /// <summary>One of <see cref="ComponentHealthStatus"/> values.</summary>
     public required string Status { get; init; }
+
+    /// <summary>Optional probe detail from <see cref="Microsoft.Extensions.Diagnostics.HealthChecks.HealthReportEntry.Description"/>.</summary>
+    public string? Description { get; init; }
+
+    /// <summary>Optional execution duration for the check (ISO-8601 duration when serialized).</summary>
+    public TimeSpan? Duration { get; init; }
 }
 
 /// <summary>

@@ -1,27 +1,58 @@
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+
 namespace ClearMeasure.Bootcamp.UI.Api;
 
 /// <summary>
-/// Builds the detailed health report. Initial implementation uses static entries;
-/// later work can swap in real health-check probe results.
+/// Builds <see cref="DetailedHealthReport"/> from the ASP.NET Core health pipeline.
+/// Entry keys must match logical names registered in <c>UIServiceRegistry.AddHealthChecks</c>
+/// (<c>LlmGateway</c>, <c>DataAccess</c>, <c>Server</c>, <c>API</c>, <c>Jeffrey</c>).
 /// </summary>
 public static class HealthReportBuilder
 {
     /// <summary>
-    /// Logical names align with registered checks in <c>UIServiceRegistry</c> where applicable.
+    /// Order and names match <c>UIServiceRegistry.AddHealthChecks</c>. Other registrations
+    /// (e.g. Aspire <c>self</c>) are omitted so the JSON contract stays stable for operators.
     /// </summary>
-    public static DetailedHealthReport Build(TimeProvider? timeProvider = null)
+    private static readonly string[] UiHealthCheckNames =
+    [
+        "LlmGateway",
+        "DataAccess",
+        "Server",
+        "API",
+        "Jeffrey"
+    ];
+
+    /// <summary>
+    /// Maps a live <see cref="HealthReport"/> to the JSON-oriented detailed report.
+    /// </summary>
+    public static DetailedHealthReport FromHealthReport(HealthReport report, TimeProvider? timeProvider = null)
     {
         var clock = timeProvider ?? TimeProvider.System;
         var checkedAt = clock.GetUtcNow().UtcDateTime;
 
-        var components = new ComponentHealthEntry[]
+        var components = new List<ComponentHealthEntry>(UiHealthCheckNames.Length);
+        foreach (var name in UiHealthCheckNames)
         {
-            new() { Name = "LlmGateway", Status = ComponentHealthStatus.Healthy },
-            new() { Name = "DataAccess", Status = ComponentHealthStatus.Healthy },
-            new() { Name = "Server", Status = ComponentHealthStatus.Healthy },
-            new() { Name = "API", Status = ComponentHealthStatus.Healthy },
-            new() { Name = "Jeffrey", Status = ComponentHealthStatus.Degraded }
-        };
+            if (!report.Entries.TryGetValue(name, out var entry))
+            {
+                components.Add(new ComponentHealthEntry
+                {
+                    Name = name,
+                    Status = ComponentHealthStatus.Unhealthy,
+                    Description = "Health check was not present in the report.",
+                    Duration = null
+                });
+                continue;
+            }
+
+            components.Add(new ComponentHealthEntry
+            {
+                Name = name,
+                Status = MapStatus(entry.Status),
+                Description = entry.Description,
+                Duration = entry.Duration
+            });
+        }
 
         return new DetailedHealthReport
         {
@@ -30,6 +61,13 @@ public static class HealthReportBuilder
             OverallStatus = AggregateWorst(components)
         };
     }
+
+    internal static string MapStatus(HealthStatus status) => status switch
+    {
+        HealthStatus.Unhealthy => ComponentHealthStatus.Unhealthy,
+        HealthStatus.Degraded => ComponentHealthStatus.Degraded,
+        _ => ComponentHealthStatus.Healthy
+    };
 
     internal static string AggregateWorst(IReadOnlyList<ComponentHealthEntry> components)
     {
