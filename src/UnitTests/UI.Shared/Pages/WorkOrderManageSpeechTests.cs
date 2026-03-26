@@ -49,6 +49,35 @@ public class WorkOrderManageSpeechTests
     }
 
     [Test]
+    public void ShouldRenderInstructionsFieldWithAccessibleLabel()
+    {
+        using var ctx = new TestContext();
+
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
+        user.Id = Guid.NewGuid();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.RenderComponent<WorkOrderManage>();
+
+        component.WaitForAssertion(() =>
+        {
+            var textarea = component.Find($"[data-testid='{WorkOrderManage.Elements.Instructions}']");
+            textarea.GetAttribute("id").ShouldBe("Instructions");
+            var label = component.Find("label[for='Instructions']");
+            label.TextContent.ShouldContain("Instructions");
+        });
+    }
+
+    [Test]
     public void ShouldRenderSpeakDescriptionButton()
     {
         using var ctx = new TestContext();
