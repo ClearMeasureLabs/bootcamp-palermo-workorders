@@ -5,6 +5,12 @@ namespace ClearMeasure.Bootcamp.UI.Shared;
 
 public partial class MainLayout : IAsyncDisposable
 {
+    /// <summary>
+    /// Must stay aligned with <c>@media (max-width: 768px)</c> in <c>MainLayout.razor.css</c> and the
+    /// <c>matchMedia</c> argument in <c>mainLayoutNav.js</c>.
+    /// </summary>
+    public const string NavRailBreakpointMediaQuery = "(max-width: 768px)";
+
     public enum Elements
     {
         NavRailToggle
@@ -66,7 +72,7 @@ public partial class MainLayout : IAsyncDisposable
             _jsModule = await Js.InvokeAsync<IJSObjectReference>("import",
                 "./_content/ClearMeasure.Bootcamp.UI.Shared/js/mainLayoutNav.js");
             _navToggleHelper = await _jsModule.InvokeAsync<IJSObjectReference>("initNavToggle", _dotNetRef,
-                "(max-width: 768px)");
+                NavRailBreakpointMediaQuery);
         }
         catch (JSDisconnectedException)
         {
