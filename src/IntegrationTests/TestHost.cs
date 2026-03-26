@@ -64,14 +64,11 @@ public static class TestHost
                     .AddUserSecrets<TestDatabaseConfiguration>(optional: true)
                     .AddEnvironmentVariables();
 
-                var envEngine = Environment.GetEnvironmentVariable("DATABASE_ENGINE");
                 var envConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__SqlConnectionString");
-                var forceSqlite =
-                    string.Equals(envEngine, "SQLite", StringComparison.OrdinalIgnoreCase)
-                    || (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                        && (string.IsNullOrEmpty(envConnectionString)
-                            || envConnectionString.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase)));
-                if (forceSqlite)
+                var forceSqliteInMemory = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                    && (string.IsNullOrEmpty(envConnectionString)
+                        || envConnectionString.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase));
+                if (forceSqliteInMemory)
                 {
                     config.AddInMemoryCollection(new Dictionary<string, string?>
                     {
