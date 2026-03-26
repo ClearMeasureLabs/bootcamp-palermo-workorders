@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +11,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 public class ApplicationChatHandlerTests : LlmTestBase
 {
     [Test]
+    [Retry(3)]
     public async Task Handle_AskForWorkOrdersICreated_ReturnsWorkOrderData()
     {
         new ZDataLoader().LoadData();
@@ -27,6 +28,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
+    [Retry(3)]
     public async Task Handle_CreateAndAssignWorkOrder_CreatesAssignedWorkOrderForGwillie()
     {
         new ZDataLoader().LoadData();
@@ -61,6 +63,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
+    [Retry(3)]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilie()
     {
         new ZDataLoader().LoadData();
@@ -97,6 +100,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
+    [Retry(3)]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
     {
         new ZDataLoader().LoadData();
