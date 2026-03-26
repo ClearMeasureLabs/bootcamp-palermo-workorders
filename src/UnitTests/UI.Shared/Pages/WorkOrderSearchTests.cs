@@ -1,4 +1,4 @@
-﻿using Bunit;
+using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -33,13 +33,13 @@ public class WorkOrderSearchTests
         assigneeSelect.ShouldNotBeNull();
         statusSelect.ShouldNotBeNull();
 
-        // Verify user options are loaded (3 employees + "All" option = 4 options)
+        // Verify user options are loaded (4 employees + "All" option = 5 options)
         var creatorOptions = creatorSelect.QuerySelectorAll("option");
-        creatorOptions.Length.ShouldBe(4);
+        creatorOptions.Length.ShouldBe(5);
         creatorOptions[0].TextContent.ShouldBe("All");
 
         var assigneeOptions = assigneeSelect.QuerySelectorAll("option");
-        assigneeOptions.Length.ShouldBe(4);
+        assigneeOptions.Length.ShouldBe(5);
         assigneeOptions[0].TextContent.ShouldBe("All");
 
         // Verify status options are loaded (4 statuses + "All" option = 5 options)
