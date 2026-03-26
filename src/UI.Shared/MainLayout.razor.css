@@ -240,6 +240,7 @@
     border-radius: 12px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow: visible;
 }
 
 .user-section ::deep span {
@@ -248,17 +249,17 @@
 }
 
 .user-section ::deep a,
-.auth-section ::deep a {
+.auth-section ::deep a:not(.login-prompt-link) {
     color: #4a5568;
     text-decoration: none;
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: color 0.3s ease, background-color 0.3s ease, text-decoration 0.3s ease;
     padding: 0.5rem 1rem;
     border-radius: 8px;
 }
 
 .user-section ::deep a:hover,
-.auth-section ::deep a:hover {
+.auth-section ::deep a:not(.login-prompt-link):hover {
     background: #e2e8f0;
     color: #2d3748;
     text-decoration: none;
@@ -364,13 +365,13 @@
 
 /* Focus states for accessibility */
 .user-section ::deep a:focus,
-.auth-section ::deep a:focus {
+.auth-section ::deep a:not(.login-prompt-link):focus {
     outline: 2px solid #4a5568;
     outline-offset: 2px;
 }
 
-/* Animation for smooth transitions */
-.modern-app * {
+/* Animation for smooth transitions (exclude header login emphasis — it uses its own keyframes) */
+.modern-app *:not(.login-prompt-link) {
     transition: all 0.2s ease;
 }
 

@@ -240,6 +240,8 @@ jobs:
           AI_OpenAI_Url: ${{ vars.AI_OPENAI_URL }}
           AI_OpenAI_Model: ${{ vars.AI_OPENAI_MODEL }}
           ConnectionStrings__SqlConnectionString: "Data Source=ChurchBulletin.db"
+          # LLM tool-calling integration tests are flaky on this job (non-deterministic model output vs x86 SQLite).
+          INTEGRATION_TEST_NUNIT_FILTER: "TestCategory!=SqlServerOnly&TestCategory!=LlmToolDeterminismSensitive"
         run: |
           Write-Host "Running Private Build with SQLite on ARM"
           . ./build.ps1

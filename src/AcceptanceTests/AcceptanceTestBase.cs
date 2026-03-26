@@ -55,7 +55,7 @@ public abstract class AcceptanceTestBase
     /// Gets the current test's state container.
     /// </summary>
     private TestState State => TestStates[TestId];
-    
+
     /// <summary>
     /// Gets the browser page for the current test.
     /// </summary>
@@ -75,7 +75,7 @@ public abstract class AcceptanceTestBase
     /// </summary>
     protected string TestTag => State.TestTag;
 
-    private static readonly Random RandomPosition = new();
+    protected static readonly Random RandomPosition = new();
 
     protected virtual bool RequiresBrowser => true;
 
@@ -401,5 +401,28 @@ public abstract class AcceptanceTestBase
         await Task.Delay(GetInputDelayMs()); // Give time for the save operation to complete on Azure
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         return rehyratedOrder;
+    }
+
+    /// <summary>
+    /// Runs an action with a fresh browser context (e.g. different reduced-motion settings) without
+    /// replacing the per-test <see cref="Page"/> used by the default fixture lifecycle.
+    /// </summary>
+    protected async Task RunWithExtraBrowserContextAsync(
+        BrowserNewContextOptions contextOptions,
+        Func<IPage, Task> action)
+    {
+        var state = TestStates[TestId];
+        var context = await state.Browser.NewContextAsync(contextOptions).ConfigureAwait(false);
+        context.SetDefaultTimeout(60_000);
+        var page = await context.NewPageAsync().ConfigureAwait(false);
+        try
+        {
+            await action(page).ConfigureAwait(false);
+        }
+        finally
+        {
+            try { await page.CloseAsync().ConfigureAwait(false); } catch { }
+            try { await context.CloseAsync().ConfigureAwait(false); } catch { }
+        }
     }
 }
