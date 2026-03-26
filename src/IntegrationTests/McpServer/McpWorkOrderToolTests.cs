@@ -68,7 +68,15 @@ public class McpWorkOrderToolTests
     public async Task ShouldGetWorkOrderByNumber()
     {
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
-        var order = new WorkOrder { Creator = employee, Number = "WO-100", Title = "Test order", Description = "A description", RoomNumber = "101" };
+        var order = new WorkOrder
+        {
+            Creator = employee,
+            Number = "WO-100",
+            Title = "Test order",
+            Description = "A description",
+            Instructions = "Wear PPE in the mechanical room.",
+            RoomNumber = "101"
+        };
 
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
@@ -84,6 +92,7 @@ public class McpWorkOrderToolTests
         result.ShouldContain("Test order");
         result.ShouldContain("A description");
         result.ShouldContain("101");
+        result.ShouldContain("Wear PPE in the mechanical room.");
     }
 
     [Test]
@@ -113,6 +122,33 @@ public class McpWorkOrderToolTests
         result.ShouldContain("New Work Order");
         result.ShouldContain("Fix the broken window");
         result.ShouldContain("Draft");
+    }
+
+    [Test]
+    public async Task ShouldCreateDraftWorkOrder_WithOptionalInstructions()
+    {
+        var employee = new Employee("creator1", "Jane", "Smith", "jane@test.com");
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var numberGenerator = new WorkOrderNumberGenerator();
+        var result = await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, "With instructions", "Fix leak", "creator1",
+            roomNumber: null, instructions: "Shut off water main first.");
+
+        result.ShouldContain("Shut off water main first.");
+
+        WorkOrder? persisted = null;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            persisted = context.Set<WorkOrder>().Single(w => w.Title == "With instructions");
+        }
+
+        persisted!.Instructions.ShouldBe("Shut off water main first.");
     }
 
     [Test]
