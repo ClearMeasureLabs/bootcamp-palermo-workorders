@@ -4,12 +4,14 @@ using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
+using ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddApplicationPart(typeof(DetailedHealthController).Assembly);
 builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
