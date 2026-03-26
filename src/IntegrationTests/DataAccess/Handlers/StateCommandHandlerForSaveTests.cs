@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
@@ -103,6 +103,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Creator = currentUser;
         workOrder.Assignee = assignee;
         workOrder.Title = "newtitle";
+        workOrder.Instructions = "Updated execution notes";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
 
@@ -113,6 +114,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe("Updated execution notes");
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -142,6 +144,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Creator = currentUser;
         workOrder.Assignee = assignee;
         workOrder.Title = "newtitle";
+        workOrder.Instructions = "Updated execution notes";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
         var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
@@ -153,6 +156,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe("Updated execution notes");
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }

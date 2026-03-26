@@ -40,6 +40,34 @@ public class WorkOrderQueryHandlerTests
         order456.Id.ShouldBe(order2.Id);
     }
 
+    [Test]
+    public async Task ShouldReturnInstructionsWhenGettingWorkOrderByNumber()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("1", "1", "1", "1");
+        var order = new WorkOrder
+        {
+            Creator = creator,
+            Number = "WO-INS",
+            Title = "T",
+            Description = "D",
+            Instructions = "Bring ladder and spare bulbs"
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(order);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderQueryHandler(dataContext);
+        var loaded = (await repository.GetWorkOrderAsync("WO-INS"))!;
+
+        loaded.Instructions.ShouldBe("Bring ladder and spare bulbs");
+    }
 
     [Test]
     public async Task ShouldSearchBySpecificationWithAssignee()
