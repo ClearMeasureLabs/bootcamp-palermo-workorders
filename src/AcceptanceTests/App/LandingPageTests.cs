@@ -30,5 +30,9 @@ public class LandingPageTests : AcceptanceTestBase
 
         await Expect(banner).ToBeVisibleAsync();
         await Expect(banner).ToContainTextAsync("Welcome to the AI Software Factory!");
+
+        var emoji = Page.GetByTestId(nameof(IndexPage.Elements.GreetingBannerEmoji));
+        await emoji.WaitForAsync();
+        await Expect(emoji).ToBeVisibleAsync();
     }
 }
