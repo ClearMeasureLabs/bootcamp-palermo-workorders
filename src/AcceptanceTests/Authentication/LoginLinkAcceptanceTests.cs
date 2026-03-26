@@ -18,6 +18,9 @@ public class LoginLinkAcceptanceTests : AcceptanceTestBase
             await page.WaitForURLAsync("/");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         }
+
+        var loginLink = page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await loginLink.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
     }
 
     [Test, Retry(2)]
@@ -30,6 +33,12 @@ public class LoginLinkAcceptanceTests : AcceptanceTestBase
 
         var animationName = await link.EvaluateAsync<string>("el => getComputedStyle(el).animationName");
         animationName.ShouldNotBe("none");
+
+        var animationDuration = await link.EvaluateAsync<string>("el => getComputedStyle(el).animationDuration");
+        animationDuration.ShouldNotBe("0s");
+
+        var iterationCount = await link.EvaluateAsync<string>("el => getComputedStyle(el).animationIterationCount");
+        iterationCount.ShouldNotBe("0");
 
         var opacity1 = await link.EvaluateAsync<double>("el => parseFloat(getComputedStyle(el).opacity)");
         var shadow1 = await link.EvaluateAsync<string>("el => getComputedStyle(el).boxShadow");
@@ -81,6 +90,7 @@ public class LoginLinkAcceptanceTests : AcceptanceTestBase
         await EnsureLoggedOutAsync(Page);
 
         var link = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await link.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await Expect(link).ToBeVisibleAsync();
         await link.FocusAsync();
 
@@ -111,17 +121,19 @@ public class LoginLinkAcceptanceTests : AcceptanceTestBase
                 await Assertions.Expect(title).ToBeVisibleAsync();
                 await Assertions.Expect(link).ToBeVisibleAsync();
 
+                var loginTestId = nameof(LoginLink.Elements.LoginLink);
                 var overlap = await page.EvaluateAsync<bool>(
-                    @"() => {
+                    @"({ selector }) => {
                         const t = document.querySelector('.header-title h3');
-                        const a = document.querySelector('[data-testid=""LoginLink""]');
+                        const a = document.querySelector(selector);
                         if (!t || !a) return true;
                         const r1 = t.getBoundingClientRect();
                         const r2 = a.getBoundingClientRect();
                         const xOverlap = r1.left < r2.right && r2.left < r1.right;
                         const yOverlap = r1.top < r2.bottom && r2.top < r1.bottom;
                         return xOverlap && yOverlap;
-                    }");
+                    }",
+                    new { selector = $"[data-testid=\"{loginTestId}\"]" });
                 overlap.ShouldBeFalse();
             });
     }

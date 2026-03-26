@@ -33,6 +33,7 @@
 	}
 }
 
+.login-prompt-link:focus,
 .login-prompt-link:focus-visible {
 	outline: 3px solid #2c5282;
 	outline-offset: 3px;
