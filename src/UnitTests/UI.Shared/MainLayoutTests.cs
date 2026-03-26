@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
+using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 using Bunit.TestDoubles;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -88,6 +89,43 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderLoginLink_InHeader_WhenUserIsNotAuthenticated()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.GetAttribute("href").ShouldBe("/login");
+        loginAnchor.ClassList.ShouldContain("login-prompt-link");
+    }
+
+    [Test]
+    public void ShouldNotRenderLoginLink_WhenUserIsAuthenticated()
+    {
+        using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.FindAll($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']").Count.ShouldBe(0);
+        layout.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']").ShouldNotBeNull();
+    }
+
+    [Test]
+    public void ShouldPreserveLoginLinkInteraction_Unchanged()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.GetAttribute("href").ShouldBe("/login");
+    }
+
+    [Test]
     public async Task ShouldInvokeFocusOnNavRailToggleWhenClosingOverlayOnNarrowViewport()
     {
         using var ctx = CreateContext();
@@ -108,16 +146,26 @@ public class MainLayoutTests
         ctx.JSInterop.VerifyFocusAsyncInvoke();
     }
 
-    private static TestContext CreateContext()
+    private static TestContext CreateContext(string? authenticateAsUser = null)
     {
         var ctx = new TestContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        ctx.AddTestAuthorization();
+        var bunitAuth = ctx.AddTestAuthorization();
+        if (authenticateAsUser != null)
+        {
+            bunitAuth.SetAuthorized(authenticateAsUser);
+        }
+
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession());
-        var auth = new CustomAuthenticationStateProvider();
-        ctx.Services.AddSingleton<AuthenticationStateProvider>(auth);
+        var customAuth = new CustomAuthenticationStateProvider();
+        if (authenticateAsUser != null)
+        {
+            customAuth.Login(authenticateAsUser);
+        }
+
+        ctx.Services.AddSingleton(customAuth);
         return ctx;
     }
 
