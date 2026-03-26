@@ -120,9 +120,27 @@
     min-width: 150px;
 }
 
+.btn.btn-login-portal {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.btn.btn-login-portal:focus-visible {
+    outline: 3px solid #2d3748;
+    outline-offset: 3px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
-    .btn-primary {
-        animation: blink 1.5s ease-in-out infinite;
+    .btn.btn-login-portal {
+        animation: portal-submit-emphasis 1.2s ease-in-out infinite;
+        will-change: transform, opacity, box-shadow;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn.btn-login-portal {
+        animation: none;
+        border: 3px solid #2b6cb0;
+        box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.35), 0 4px 15px rgba(123, 104, 238, 0.35);
     }
 }
 
@@ -187,12 +205,16 @@
     }
 }
 
-@keyframes blink {
+@keyframes portal-submit-emphasis {
     0%, 100% {
         opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(123, 104, 238, 0.35), 0 0 0 0 rgba(255, 255, 255, 0.5);
     }
     50% {
-        opacity: 0.5;
+        opacity: 0.92;
+        transform: scale(1.05);
+        box-shadow: 0 8px 28px rgba(123, 104, 238, 0.55), 0 0 0 5px rgba(255, 255, 255, 0.25);
     }
 }
 

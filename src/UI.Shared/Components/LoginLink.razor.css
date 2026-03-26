@@ -1,0 +1,37 @@
+.login-prompt-link {
+	display: inline-block;
+	transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+	animation: login-prompt-emphasis 1.2s ease-in-out infinite;
+	will-change: transform, opacity, box-shadow;
+}
+
+@keyframes login-prompt-emphasis {
+	0%, 100% {
+		opacity: 1;
+		transform: scale(1);
+		box-shadow: 0 0 0 0 rgba(123, 104, 238, 0.85), 0 0 12px 2px rgba(74, 144, 226, 0.45);
+	}
+	50% {
+		opacity: 0.88;
+		transform: scale(1.08);
+		box-shadow: 0 0 0 6px rgba(123, 104, 238, 0.35), 0 0 22px 6px rgba(74, 144, 226, 0.55);
+	}
+}
+
+.login-prompt-link:focus-visible {
+	outline: 2px solid #4a5568;
+	outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.login-prompt-link {
+		animation: none;
+		opacity: 1;
+		transform: none;
+		font-weight: 700;
+		color: #1a365d;
+		background-color: #bee3f8;
+		border: 3px solid #2b6cb0;
+		box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.35);
+	}
+}
