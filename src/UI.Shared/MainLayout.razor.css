@@ -1,4 +1,4 @@
-﻿/* Modern App Container */
+/* Modern App Container */
 .modern-app {
     display: flex;
     min-height: 100vh;
@@ -17,6 +17,9 @@
     height: 100vh;
     z-index: 1000;
     overflow-y: auto;
+    left: 0;
+    top: 0;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .modern-sidebar::-webkit-scrollbar {
@@ -132,6 +135,16 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    transition: margin-left 0.25s ease;
+}
+
+.modern-app.rail-collapsed .main-container {
+    margin-left: 0;
+}
+
+.modern-sidebar.rail-hidden {
+    transform: translateX(-100%);
+    box-shadow: none;
 }
 
 /* Modern Header */
@@ -150,10 +163,52 @@
     align-items: center;
     padding: 1.5rem 2rem;
     max-width: 100%;
+    gap: 1rem;
+}
+
+.header-leading {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.nav-rail-toggle {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    color: #2d3748;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nav-rail-toggle:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.nav-rail-toggle:focus {
+    outline: 2px solid #4a5568;
+    outline-offset: 2px;
+}
+
+.nav-rail-toggle i {
+    font-size: 1.35rem;
+    line-height: 1;
 }
 
 .header-title {
     flex: 1;
+    min-width: 0;
 }
 
 .header-title h3 {
@@ -244,13 +299,17 @@
 @media (max-width: 768px) {
     .modern-sidebar {
         width: 100%;
+        max-width: 280px;
         transform: translateX(-100%);
-        transition: transform 0.3s ease;
         position: fixed;
     }
     
     .modern-sidebar.open {
         transform: translateX(0);
+    }
+
+    .modern-sidebar.rail-hidden {
+        transform: translateX(-100%);
     }
     
     .main-container {
@@ -264,9 +323,16 @@
         align-items: stretch;
         padding: 1rem;
     }
+
+    .header-leading {
+        flex-direction: row;
+        align-items: center;
+        width: 100%;
+    }
     
     .header-title {
-        text-align: center;
+        text-align: left;
+        flex: 1;
     }
     
     .header-title h3 {
