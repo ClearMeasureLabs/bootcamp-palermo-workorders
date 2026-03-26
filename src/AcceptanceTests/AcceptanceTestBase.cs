@@ -55,6 +55,16 @@ public abstract class AcceptanceTestBase
     /// Gets the current test's state container.
     /// </summary>
     private TestState State => TestStates[TestId];
+
+    /// <summary>
+    /// Current Playwright session for this test (browser, context, page).
+    /// </summary>
+    protected TestState CurrentTestState => TestStates[TestId];
+
+    /// <summary>
+    /// Replaces the Playwright session for the current test (e.g. new context with different viewport). TearDown still disposes the replaced instance.
+    /// </summary>
+    protected void ReplaceTestState(TestState state) => TestStates[TestId] = state;
     
     /// <summary>
     /// Gets the browser page for the current test.
@@ -75,9 +85,24 @@ public abstract class AcceptanceTestBase
     /// </summary>
     protected string TestTag => State.TestTag;
 
-    private static readonly Random RandomPosition = new();
+    protected static readonly Random RandomPosition = new();
 
     protected virtual bool RequiresBrowser => true;
+
+    /// <summary>
+    /// When true, <see cref="SetUpAsync"/> navigates to <c>/</c> after creating the page. Set false for tests that need a custom first navigation or context (e.g. logged-out header before session cookies apply).
+    /// </summary>
+    protected virtual bool NavigateToApplicationRootOnSetup => true;
+
+    /// <summary>
+    /// Playwright context options for the browser created in <see cref="SetUpAsync"/>. Override to set viewport, media emulation, or other context defaults.
+    /// </summary>
+    protected virtual BrowserNewContextOptions CreateBrowserNewContextOptions() => new()
+    {
+        BaseURL = ServerFixture.ApplicationBaseUrl,
+        IgnoreHTTPSErrors = true,
+        ViewportSize = new ViewportSize { Width = 800, Height = 600 }
+    };
 
     [SetUp]
     public async Task SetUpAsync()
@@ -96,12 +121,7 @@ public abstract class AcceptanceTestBase
             Args = [$"--window-position={x},{y}", "--window-size=800,600"]
         });
 
-        var browserContext = await browser.NewContextAsync(new BrowserNewContextOptions
-        {
-            BaseURL = ServerFixture.ApplicationBaseUrl,
-            IgnoreHTTPSErrors = true,
-            ViewportSize = new ViewportSize { Width = 800, Height = 600 }
-        });
+        var browserContext = await browser.NewContextAsync(CreateBrowserNewContextOptions());
         browserContext.SetDefaultTimeout(60_000);
         
         await browserContext.Tracing.StartAsync(new TracingStartOptions
@@ -124,6 +144,9 @@ public abstract class AcceptanceTestBase
         };
         
         TestStates[TestId] = state;
+
+        if (!NavigateToApplicationRootOnSetup)
+            return;
 
         const int maxRetries = 3;
         for (var attempt = 1; attempt <= maxRetries; attempt++)
