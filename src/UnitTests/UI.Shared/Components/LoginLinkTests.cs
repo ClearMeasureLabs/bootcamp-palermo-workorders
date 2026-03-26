@@ -24,6 +24,7 @@ public class LoginLinkTests
         var anchor = component.Find("a");
         anchor.GetAttribute("href").ShouldBe("/login");
         anchor.GetAttribute("data-testid").ShouldBe(nameof(LoginLink.Elements.LoginLink));
+        anchor.GetAttribute("aria-label").ShouldBe("Sign in to the church portal");
         anchor.ClassList.ShouldContain("login-prompt-link");
         anchor.TextContent.ShouldBe("Login");
     }

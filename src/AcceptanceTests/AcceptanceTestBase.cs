@@ -402,4 +402,27 @@ public abstract class AcceptanceTestBase
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         return rehyratedOrder;
     }
+
+    /// <summary>
+    /// Runs an action with a fresh browser context (e.g. different reduced-motion settings) without
+    /// replacing the per-test <see cref="Page"/> used by the default fixture lifecycle.
+    /// </summary>
+    protected async Task RunWithExtraBrowserContextAsync(
+        BrowserNewContextOptions contextOptions,
+        Func<IPage, Task> action)
+    {
+        var state = TestStates[TestId];
+        var context = await state.Browser.NewContextAsync(contextOptions).ConfigureAwait(false);
+        context.SetDefaultTimeout(60_000);
+        var page = await context.NewPageAsync().ConfigureAwait(false);
+        try
+        {
+            await action(page).ConfigureAwait(false);
+        }
+        finally
+        {
+            try { await page.CloseAsync().ConfigureAwait(false); } catch { }
+            try { await context.CloseAsync().ConfigureAwait(false); } catch { }
+        }
+    }
 }

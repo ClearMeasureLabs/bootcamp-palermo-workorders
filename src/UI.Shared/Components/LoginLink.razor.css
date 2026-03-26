@@ -1,26 +1,37 @@
 .login-prompt-link {
 	display: inline-block;
-	transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-	animation: login-prompt-emphasis 1.2s ease-in-out infinite;
-	will-change: transform, opacity, box-shadow;
+	box-sizing: border-box;
+	max-width: 100%;
+	font-weight: 700;
+	color: #1a365d;
+	text-decoration: none;
+	background-color: #e6f2ff;
+	border: 2px solid #2b6cb0;
+	border-radius: 8px;
+	padding: 0.35rem 0.65rem;
+	transition: opacity 0.12s linear, box-shadow 0.12s linear, background-color 0.12s linear, color 0.12s linear, border-color 0.12s linear;
+	animation: login-prompt-emphasis 1.5s ease-in-out infinite;
+	will-change: opacity, box-shadow;
 }
 
 @keyframes login-prompt-emphasis {
 	0%, 100% {
 		opacity: 1;
-		transform: scale(1);
-		box-shadow: 0 0 0 0 rgba(123, 104, 238, 0.85), 0 0 12px 2px rgba(74, 144, 226, 0.45);
+		box-shadow: 0 0 0 0 rgba(43, 108, 176, 0.95), 0 0 14px 3px rgba(59, 130, 246, 0.55);
+		background-color: #e6f2ff;
+		color: #1a365d;
 	}
 	50% {
-		opacity: 0.88;
-		transform: scale(1.08);
-		box-shadow: 0 0 0 6px rgba(123, 104, 238, 0.35), 0 0 22px 6px rgba(74, 144, 226, 0.55);
+		opacity: 0.35;
+		box-shadow: 0 0 0 10px rgba(43, 108, 176, 0.2), 0 0 28px 8px rgba(59, 130, 246, 0.75);
+		background-color: #fff5f5;
+		color: #9b2c2c;
 	}
 }
 
 .login-prompt-link:focus-visible {
-	outline: 2px solid #4a5568;
-	outline-offset: 2px;
+	outline: 3px solid #2c5282;
+	outline-offset: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -28,10 +39,10 @@
 		animation: none;
 		opacity: 1;
 		transform: none;
-		font-weight: 700;
+		font-weight: 800;
 		color: #1a365d;
 		background-color: #bee3f8;
 		border: 3px solid #2b6cb0;
-		box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.35);
+		box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.45), 0 2px 8px rgba(0, 0, 0, 0.12);
 	}
 }
