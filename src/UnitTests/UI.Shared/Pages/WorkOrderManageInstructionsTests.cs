@@ -47,7 +47,7 @@ public class WorkOrderManageInstructionsTests
         });
     }
 
-    private class StubBus : Bus(null!)
+    private class StubBus() : Bus(null!)
     {
         public override Task Publish(INotification notification) => Task.CompletedTask;
 
