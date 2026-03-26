@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
@@ -9,7 +9,7 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 public class WorkOrderTool(IBus bus)
 {
     [Description("Retrieves a specific work order by its unique number. " +
-                 "Returns the full work order including title, description, room number, status, " +
+                 "Returns the full work order including title, description, instructions (when present), room number, status, " +
                  "the employee who created it (creator), and the employee it is assigned to (assignee). " +
                  "Use this when the user asks about a specific work order, its details, status, or who is involved.")]
     public async Task<WorkOrder?> GetWorkOrderByNumber(
