@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
@@ -74,6 +74,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(workOrder.Title);
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe(workOrder.Instructions);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }

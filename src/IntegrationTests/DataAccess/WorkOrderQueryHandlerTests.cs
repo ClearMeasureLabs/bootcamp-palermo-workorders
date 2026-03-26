@@ -261,4 +261,34 @@ public class WorkOrderQueryHandlerTests
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
     }
+
+    [Test]
+    public async Task ShouldReturnInstructionsFromWorkOrderByNumberQuery()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("1", "1", "1", "1");
+        var order = new WorkOrder
+        {
+            Creator = creator,
+            Number = "WO-INST",
+            Title = "T",
+            Description = "D",
+            Instructions = "Follow safety checklist.",
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(order);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new WorkOrderQueryHandler(dataContext);
+        var loaded = (await handler.GetWorkOrderAsync("WO-INST"))!;
+
+        loaded.Instructions.ShouldBe("Follow safety checklist.");
+    }
 }

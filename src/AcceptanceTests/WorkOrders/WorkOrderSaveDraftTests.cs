@@ -59,6 +59,72 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldDisplayInstructionsBetweenDescriptionAndRoom()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var description = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
+        var instructions = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        var room = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
+
+        await Expect(description).ToBeVisibleAsync();
+        await Expect(instructions).ToBeVisibleAsync();
+        await Expect(room).ToBeVisibleAsync();
+
+        var descY = await description.EvaluateAsync<int>("el => el.getBoundingClientRect().top");
+        var instY = await instructions.EvaluateAsync<int>("el => el.getBoundingClientRect().top");
+        var roomY = await room.EvaluateAsync<int>("el => el.getBoundingClientRect().top");
+
+        instY.ShouldBeGreaterThan(descY);
+        roomY.ShouldBeGreaterThan(instY);
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldSaveOptionalInstructionsAndReload()
+    {
+        await LoginAsCurrentUser();
+
+        var order = Faker<WorkOrder>();
+        order.Title = $"[{TestTag}] instructions flow";
+        order.Number = null;
+        order.Instructions = "Line one\nLine two";
+
+        await CreateAndSaveNewWorkOrderFromOrder(order);
+
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await ClickWorkOrderNumberFromSearchPage(order);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync(order.Instructions!);
+
+        var fromBus = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        fromBus.Instructions.ShouldBe(order.Instructions);
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowValidationSummaryWhenInstructionsExceed4000Characters()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "Title for validation");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Desc");
+        var tooLong = new string('x', 4001);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), tooLong);
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        var summary = Page.Locator(".validation-summary");
+        await Expect(summary).ToBeVisibleAsync();
+        await Expect(summary).ToContainTextAsync("Instructions");
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldAssignEmployeeAndSave()
     {
         await LoginAsCurrentUser();

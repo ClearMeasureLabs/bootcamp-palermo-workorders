@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
@@ -19,6 +19,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
+            Instructions = "Turn off breaker before replacing bulbs.",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
@@ -43,6 +44,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
+        rehydratedWorkOrder.Instructions.ShouldBe("Turn off breaker before replacing bulbs.");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
@@ -235,6 +237,31 @@ public class WorkOrderMappingTests
             Title = new string('B', 301), // Exceeds 300 char limit
             Description = new string('C', 1001), // Exceeds 1000 char limit
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(workOrder);
+
+        Should.Throw<DbUpdateException>(() => context.SaveChanges());
+    }
+
+    [Test]
+    [Category("SqlServerOnly")]
+    public void ShouldRejectInstructionsExceedingMaxLength()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-99",
+            Title = "Task",
+            Description = "Desc",
+            Instructions = new string('Z', 4001),
+            RoomNumber = "101",
             Creator = creator,
             Status = WorkOrderStatus.Draft
         };
