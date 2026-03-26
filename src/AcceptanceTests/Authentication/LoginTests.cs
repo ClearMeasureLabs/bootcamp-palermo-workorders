@@ -26,7 +26,11 @@ public class LoginTests : AcceptanceTestBase
         if (await logoutLink.CountAsync() > 0)
         {
             await logoutLink.ClickAsync();
-            await Page.WaitForURLAsync("**/");
+            await Page.WaitForURLAsync("**/login");
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            await Page.GotoAsync("/");
+            await Page.WaitForURLAsync("/");
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         }
 
         // Click Login link in top bar
