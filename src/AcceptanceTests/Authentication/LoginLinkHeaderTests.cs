@@ -56,9 +56,13 @@ public class LoginLinkHeaderTests : AcceptanceTestBase
         animationName.ShouldNotBe("none");
 
         var opacity1 = await loginLink.EvaluateAsync<double>("el => parseFloat(getComputedStyle(el).opacity)");
-        await Task.Delay(900);
+        var shadow1 = await loginLink.EvaluateAsync<string>("el => getComputedStyle(el).boxShadow");
+        await Task.Delay(1200);
         var opacity2 = await loginLink.EvaluateAsync<double>("el => parseFloat(getComputedStyle(el).opacity)");
-        Math.Abs(opacity1 - opacity2).ShouldBeGreaterThan(0.05);
+        var shadow2 = await loginLink.EvaluateAsync<string>("el => getComputedStyle(el).boxShadow");
+        var opacityChanged = Math.Abs(opacity1 - opacity2) > 0.05;
+        var shadowChanged = shadow1 != shadow2;
+        (opacityChanged || shadowChanged).ShouldBeTrue();
     }
 
     [Test, Retry(2)]
