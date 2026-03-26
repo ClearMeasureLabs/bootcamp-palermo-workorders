@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.LlmGateway;
@@ -10,6 +11,20 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 [TestFixture]
 public class ApplicationChatHandlerTests : LlmTestBase
 {
+    private static readonly Regex WorkOrderNumberPattern = new("[0-9A-F]{7}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static string NormalizeParsedWorkOrderNumber(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = text.Trim();
+        var match = WorkOrderNumberPattern.Match(trimmed);
+        return match.Success ? match.Value.ToUpperInvariant() : trimmed;
+    }
+
     [Test]
     [Retry(3)]
     public async Task Handle_AskForWorkOrdersICreated_ReturnsWorkOrderData()
@@ -51,7 +66,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
                 "Return nothing but the work order number itself, with no extra text."),
             new(ChatRole.User, responseText)
         ]);
-        var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
+        var workOrderNumber = NormalizeParsedWorkOrderNumber(parseResponse.Messages.Last().Text);
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
         var db = TestHost.GetRequiredService<DataContext>();
@@ -86,7 +101,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
                 "Return nothing but the work order number itself, with no extra text."),
             new(ChatRole.User, responseText)
         ]);
-        var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
+        var workOrderNumber = NormalizeParsedWorkOrderNumber(parseResponse.Messages.Last().Text);
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
         var db = TestHost.GetRequiredService<DataContext>();
@@ -105,9 +120,9 @@ public class ApplicationChatHandlerTests : LlmTestBase
     {
         new ZDataLoader().LoadData();
 
-        var workOrderNumber = await ExecuteAsync(
+        var workOrderNumber = NormalizeParsedWorkOrderNumber(await ExecuteAsync(
             "Create a new work order to 'mow the grass', assign it to Groundskeeper Willie, " +
-            "only return the work order number");
+            "only return the work order number"));
 
         await CheckStatusAsync(WorkOrderStatus.Assigned);
 
