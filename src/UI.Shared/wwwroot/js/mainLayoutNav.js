@@ -1,3 +1,4 @@
+// Breakpoint string must match MainLayout.NavRailBreakpointMediaQuery and @media in MainLayout.razor.css.
 export function initNavToggle(dotNetRef, mediaQuery) {
 	const mq = window.matchMedia(mediaQuery);
 	const handler = () => {

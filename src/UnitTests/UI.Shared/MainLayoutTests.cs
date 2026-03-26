@@ -81,6 +81,33 @@ public class MainLayoutTests
         toggle.GetAttribute("aria-expanded").ShouldBe("true");
     }
 
+    [Test]
+    public void ShouldUseDocumentedNavRailBreakpointMediaQuery()
+    {
+        MainLayout.NavRailBreakpointMediaQuery.ShouldBe("(max-width: 768px)");
+    }
+
+    [Test]
+    public async Task ShouldInvokeFocusOnNavRailToggleWhenClosingOverlayOnNarrowViewport()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        component.WaitForAssertion(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        await component.InvokeAsync(() => layout.Instance.OnViewportChanged(true));
+
+        var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        toggle.Click();
+        toggle.Click();
+
+        ctx.JSInterop.VerifyFocusAsyncInvoke();
+    }
+
     private static TestContext CreateContext()
     {
         var ctx = new TestContext();
