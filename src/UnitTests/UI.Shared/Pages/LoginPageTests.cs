@@ -59,7 +59,7 @@ public class LoginPageTests
         employeeSelect.ShouldNotBeNull();
 
         var options = component.FindAll("option");
-        options.Count.ShouldBe(5);
+        options.Count.ShouldBe(6);
 
         options[0].GetAttribute("value").ShouldBe(string.Empty);
         options[0].TextContent.ShouldBe("-- Select a parishioner or staff member --");
@@ -83,6 +83,9 @@ public class LoginPageTests
 
         var jdoeOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "jdoe");
         jdoeOption.TextContent.ShouldBe("Mary Jane Simpson");
+
+        var msmithOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "msmith");
+        msmithOption.TextContent.ShouldBe("Mary-Jane Smith");
     }
 
     [Test]
