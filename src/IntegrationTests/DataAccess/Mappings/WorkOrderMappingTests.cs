@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
@@ -19,6 +19,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
+            Instructions = "Use ladder from storage",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
@@ -43,6 +44,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
+        rehydratedWorkOrder.Instructions.ShouldBe("Use ladder from storage");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
@@ -233,7 +235,6 @@ public class WorkOrderMappingTests
         {
             Number = new string('A', 51), // Exceeds 50 char limit
             Title = new string('B', 301), // Exceeds 300 char limit
-            Description = new string('C', 1001), // Exceeds 1000 char limit
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft

@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
@@ -21,8 +22,10 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
 
         var expectedTitle = "Title from automation";
         var expectedDescription = "Description";
+        var expectedInstructions = "Wear hard hat in sanctuary";
         order.Title = expectedTitle;
         order.Description = expectedDescription;
+        order.Instructions = expectedInstructions;
         order = await CompleteExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
@@ -36,6 +39,9 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
             .ToHaveValueAsync(expectedDescription);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeDisabledAsync();
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions)))
+            .ToHaveValueAsync(expectedInstructions);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToBeDisabledAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
 
@@ -45,6 +51,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ??
                              throw new InvalidOperationException();
         rehyratedOrder.CompletedDate.TruncateToMinute().ShouldBe(displayedDateTime);
+        rehyratedOrder.Instructions.ShouldBe(expectedInstructions);
     }
 
     [Test, Retry(2)]
