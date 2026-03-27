@@ -79,7 +79,7 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
-    public async Task Should_ListExpectedComponentEntries_When_MockPayload()
+    public async Task Should_ListRegisteredComponentNames_When_LiveHealthReport()
     {
         var response = await _client!.GetAsync("/api/health/detailed");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -87,17 +87,29 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        var names = report!.Components.Select(c => c.Name).ToHashSet();
-        names.ShouldContain("LlmGateway");
-        names.ShouldContain("DataAccess");
-        names.ShouldContain("Server");
-        names.ShouldContain("API");
-        names.ShouldContain("Jeffrey");
+        var names = report!.Components.Select(c => c.Name).Order(StringComparer.Ordinal).ToArray();
+        names.ShouldBe(new[] { "API", "DataAccess", "Jeffrey", "LlmGateway", "Server" });
         foreach (var c in report.Components)
         {
             (c.Status == ComponentHealthStatus.Healthy
                 || c.Status == ComponentHealthStatus.Degraded
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
+        }
+    }
+
+    [Test]
+    public async Task Should_IncludeOptionalDescription_When_ModelExtended()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("components", out var components).ShouldBeTrue();
+        foreach (var el in components.EnumerateArray())
+        {
+            el.TryGetProperty("name", out _).ShouldBeTrue();
+            el.TryGetProperty("status", out _).ShouldBeTrue();
         }
     }
 }
