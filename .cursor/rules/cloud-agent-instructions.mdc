@@ -124,3 +124,22 @@ After completing the interview, generate a non-technical Markdown summary. Avoid
 **Validation:** [Validation Rules]
 **Acceptance Criteria:** [Derived from conversation]
 ```
+
+---
+
+## GitHub REST API — Issue body updates (Cloud Agent)
+
+When updating an issue body via a **child process** (`python3`, `curl` with `-d @-`, etc.), any dynamic text must reach that process explicitly.
+
+### Failure mode: empty appended section
+
+Shell variables are **not** visible to child processes unless **exported**. A pattern such as `UX_DESIGN_CONTENT='...long text...'` followed by `python3 -c "… os.environ.get('UX_DESIGN_CONTENT') …"` produces an **empty** value and can PATCH the issue with only a heading and no design text. The API still returns **200**, so HTTP status alone is not enough.
+
+### Required practices
+
+1. **Pass prose reliably** — use one of:
+   - `export UX_DESIGN_CONTENT='…'` (or `export` immediately after assignment) before invoking Python; **or**
+   - Define the design text **inside** the Python script / heredoc (no cross-process env); **or**
+   - Pipe or write the full body via **stdin** / a **temp file** and read it in the updater.
+2. **Verify content, not only status** — after a successful PATCH, `GET` the issue (or use the PATCH response body) and confirm the **User Experience Design** section contains substantive text (e.g. minimum character count after the heading, or required keywords). If verification fails, **do not** post “complete” comments or apply workflow labels; retry the update instead.
+3. **Order of operations** — automation labels (e.g. ready-to-move) must run **only after** body content verification succeeds.

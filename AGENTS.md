@@ -61,6 +61,10 @@ If Docker is unavailable, set `DATABASE_ENGINE=SQLite` before running the build 
 - **Ollama** (localhost:11434): Local LLM for AI agent features. Not required; errors in logs about Ollama connection refused are expected and harmless.
 - **Azure OpenAI**: Cloud LLM alternative. Requires `AI_OpenAI_ApiKey`, `AI_OpenAI_Url`, `AI_OpenAI_Model` env vars.
 
+### GitHub issue updates from scripts
+
+When appending issue bodies via `python3` or other subprocesses: **export** any variable the child reads (`export VAR=...`), or embed the text in the script. Unexported shell variables appear **empty** in the child, which can produce a successful API response with **blank** content. See **GitHub REST API — Issue body updates** in `.cursor/rules/cloud-agent-instructions.mdc`.
+
 ### Gotchas
 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
