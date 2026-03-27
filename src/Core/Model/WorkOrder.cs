@@ -3,6 +3,7 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 public class WorkOrder : EntityBase<WorkOrder>
 {
     private string? _description = "";
+    private string? _instructions;
 
     public string? Title { get; set; } = "";
 
@@ -10,6 +11,12 @@ public class WorkOrder : EntityBase<WorkOrder>
     {
         get => _description;
         set => _description = getTruncatedString(value);
+    }
+
+    public string? Instructions
+    {
+        get => _instructions;
+        set => _instructions = getTruncatedOptionalString(value);
     }
 
     public string? RoomNumber { get; set; } = null;
@@ -38,7 +45,23 @@ public class WorkOrder : EntityBase<WorkOrder>
             return string.Empty;
         }
 
-        var maxLength = Math.Min(4000, value.Length);
+        return truncateToMaxLength(value);
+    }
+
+    private string? getTruncatedOptionalString(string? value)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+
+        return truncateToMaxLength(value);
+    }
+
+    private static string truncateToMaxLength(string value)
+    {
+        const int maxChars = 4000;
+        var maxLength = Math.Min(maxChars, value.Length);
         return value.Substring(0, maxLength);
     }
 
