@@ -80,4 +80,59 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void CanReassign_WithCurrentUser_ShouldReturnTrueForDraftStatus()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Draft;
+        var employee = new Employee();
+
+        Assert.That(order.CanReassign(employee), Is.True);
+    }
+
+    [Test]
+    public void CanReassign_WithCurrentUser_ShouldReturnTrueForCompleteStatusWhenUserIsCreator()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Complete;
+        var creator = new Employee();
+        order.Creator = creator;
+
+        Assert.That(order.CanReassign(creator), Is.True);
+    }
+
+    [Test]
+    public void CanReassign_WithCurrentUser_ShouldReturnFalseForCompleteStatusWhenUserIsNotCreator()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Complete;
+        var creator = new Employee();
+        var otherEmployee = new Employee();
+        order.Creator = creator;
+
+        Assert.That(order.CanReassign(otherEmployee), Is.False);
+    }
+
+    [Test]
+    public void CanReassign_WithCurrentUser_ShouldReturnFalseForAssignedStatus()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Assigned;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        Assert.That(order.CanReassign(employee), Is.False);
+    }
+
+    [Test]
+    public void CanReassign_WithCurrentUser_ShouldReturnFalseForInProgressStatus()
+    {
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.InProgress;
+        var employee = new Employee();
+        order.Creator = employee;
+
+        Assert.That(order.CanReassign(employee), Is.False);
+    }
 }

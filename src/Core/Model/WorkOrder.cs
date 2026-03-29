@@ -74,5 +74,20 @@ public class WorkOrder : EntityBase<WorkOrder>
         return Status == WorkOrderStatus.Draft;
     }
 
+    public bool CanReassign(Employee currentUser)
+    {
+        if (Status == WorkOrderStatus.Draft)
+        {
+            return true;
+        }
+
+        if (Status == WorkOrderStatus.Complete && currentUser == Creator)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();
 }

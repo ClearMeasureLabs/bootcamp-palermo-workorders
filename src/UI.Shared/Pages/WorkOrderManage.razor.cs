@@ -17,6 +17,7 @@ public partial class WorkOrderManage : AppComponentBase
     private WorkOrder? _workOrder;
     private WorkOrderAttachment[] _attachments = [];
     private string _preferredLanguage = "en-US";
+    private Employee? _currentUser;
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
     [Inject] public IUserSession? UserSession { get; set; }
     [Inject] private NavigationManager? NavigationManager { get; set; }
@@ -52,6 +53,7 @@ public partial class WorkOrderManage : AppComponentBase
     private async Task LoadWorkOrder()
     {
         var currentUser = (await UserSession!.GetCurrentUserAsync())!;
+        _currentUser = currentUser;
         _preferredLanguage = currentUser.PreferredLanguage;
         WorkOrder workOrder;
 
@@ -183,6 +185,16 @@ public partial class WorkOrderManage : AppComponentBase
         {
             // Speech synthesis may not be available in all environments
         }
+    }
+
+    private bool CanReassignAssignee()
+    {
+        if (Model.WorkOrder == null || _currentUser == null)
+        {
+            return false;
+        }
+
+        return Model.WorkOrder.CanReassign(_currentUser);
     }
 }
 
