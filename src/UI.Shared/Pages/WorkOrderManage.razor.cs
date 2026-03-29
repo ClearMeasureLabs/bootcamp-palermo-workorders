@@ -28,6 +28,12 @@ public partial class WorkOrderManage : AppComponentBase
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
 
+    private bool _showConfirmationModal;
+    private WorkOrder? _inProgressWorkOrder;
+    private Employee? _pendingAssignee;
+    private WorkOrder? _pendingWorkOrder;
+    private IStateCommand? _pendingCommand;
+
     [Parameter] public string? Id { get; set; }
 
     [SupplyParameterFromQuery] public string? Mode { get; set; }
@@ -127,6 +133,25 @@ public partial class WorkOrderManage : AppComponentBase
             assignee = await Bus.Send(new EmployeeByUserNameQuery(Model.AssignedToUserName));
         }
 
+        if (assignee != null)
+        {
+            _inProgressWorkOrder = await Bus.Send(new EmployeeInProgressWorkOrderQuery(assignee));
+            if (_inProgressWorkOrder != null)
+            {
+                _pendingAssignee = assignee;
+                _pendingWorkOrder = workOrder;
+                _pendingWorkOrder.Number = Model.WorkOrderNumber;
+                _pendingWorkOrder.Title = Model.Title;
+                _pendingWorkOrder.Description = Model.Description;
+                _pendingWorkOrder.RoomNumber = Model.RoomNumber;
+                _pendingCommand = new StateCommandList()
+                    .GetMatchingCommand(_pendingWorkOrder, currentUser, SelectedCommand!);
+                _showConfirmationModal = true;
+                StateHasChanged();
+                return;
+            }
+        }
+
         workOrder.Number = Model.WorkOrderNumber;
         workOrder.Assignee = assignee;
         workOrder.Title = Model.Title;
@@ -140,6 +165,28 @@ public partial class WorkOrderManage : AppComponentBase
         EventBus.Notify(new WorkOrderChangedEvent(result));
 
         NavigationManager!.NavigateTo("/workorder/search");
+    }
+
+    private async Task OnConfirmAssignment()
+    {
+        if (_pendingAssignee != null && _pendingWorkOrder != null && _pendingCommand != null)
+        {
+            _pendingWorkOrder.Assignee = _pendingAssignee;
+            var result = await Bus.Send(_pendingCommand);
+            EventBus.Notify(new WorkOrderChangedEvent(result));
+            _showConfirmationModal = false;
+            NavigationManager!.NavigateTo("/workorder/search");
+        }
+    }
+
+    private void OnCancelAssignment()
+    {
+        _showConfirmationModal = false;
+        _inProgressWorkOrder = null;
+        _pendingAssignee = null;
+        _pendingWorkOrder = null;
+        _pendingCommand = null;
+        StateHasChanged();
     }
 
     private async Task SpeakTitleAsync()
