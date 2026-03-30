@@ -52,6 +52,12 @@ public class RemotableBus(IHttpClientFactory httpClientFactory) : IBus
     private async Task<WebServiceMessage?> PostMessage(object payload)
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientName);
+        if (httpClient.BaseAddress is null)
+        {
+            throw new InvalidOperationException(
+                $"HttpClient '{HttpClientName}' must have BaseAddress set (register with AddHttpClient and configure BaseAddress).");
+        }
+
         var message = new WebServiceMessage(payload);
         var result = await httpClient.PostAsJsonAsync(string.Empty, message);
         var json = await result.Content.ReadAsStringAsync();

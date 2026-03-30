@@ -11,7 +11,6 @@ using ClearMeasure.Bootcamp.UI.Shared;
 using Lamar;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Http;
 using FunJeffreyCustomEventHealthCheck = ClearMeasure.Bootcamp.UI.Shared.FunJeffreyCustomEventHealthCheck;
 
 namespace ClearMeasure.Bootcamp.UI.Server;

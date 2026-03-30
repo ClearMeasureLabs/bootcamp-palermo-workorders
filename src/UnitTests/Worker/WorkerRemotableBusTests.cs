@@ -13,6 +13,15 @@ namespace ClearMeasure.Bootcamp.UnitTests.Worker;
 public class WorkerRemotableBusTests
 {
     [Test]
+    public async Task Send_WithMissingBaseAddress_ThrowsInvalidOperationException()
+    {
+        using var client = new HttpClient(new StubHttpMessageHandler());
+        var bus = new RemotableBus(new StubHttpClientFactory(client));
+
+        await Should.ThrowAsync<InvalidOperationException>(() => bus.Send(new HealthCheckRemotableRequest()));
+    }
+
+    [Test]
     public async Task Send_WithRemotableRequest_PostsToClientBaseAddress()
     {
         var stubHandler = new StubHttpMessageHandler();

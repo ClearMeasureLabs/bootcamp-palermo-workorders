@@ -1,6 +1,7 @@
 ﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Mappings;
@@ -10,7 +11,8 @@ public class WorkOrderMappingTests
 {
     private static bool UsesSqlServer()
     {
-        using var context = TestHost.GetRequiredService<DbContext>();
+        using var scope = TestHost.Instance.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<DbContext>();
         var provider = context.Database.ProviderName ?? "";
         return provider.Contains("SqlServer", StringComparison.OrdinalIgnoreCase);
     }
