@@ -18,6 +18,10 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File ./PrivateBuild.ps1
 
 This runs clean, restore, compile, unit tests, Docker SQL Server setup, DB migration, and integration tests. It auto-detects the database engine (SQL-Container on Linux with Docker).
 
+### Server logging
+
+UI.Server, Worker, and standalone McpServer emit **structured logs as JSON lines** on the standard console (Serilog `CompactJsonFormatter`), suitable for container log aggregation (for example Azure Container Apps). Levels and namespace overrides are driven by the `Serilog` section in each host’s `appsettings*.json`.
+
 ### Running the Application
 
 The `launchSettings.json` contains a Windows-only LocalDB connection string that crashes on Linux. To run the app on Linux, bypass the launch profile and set environment variables manually:
