@@ -7,6 +7,8 @@ using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using Lamar;
 using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpenAI;
 using Palermo.BlazorMvc;
@@ -22,6 +24,15 @@ public class UIClientServiceRegistry : ServiceRegistry
         this.AddScoped<CustomAuthenticationStateProvider>();
         this.AddScoped<AuthenticationStateProvider>(provider =>
             provider.GetRequiredService<CustomAuthenticationStateProvider>());
+
+        this.AddHttpClient(PublisherGateway.HttpClientName, (sp, client) =>
+        {
+            var env = sp.GetRequiredService<IWebAssemblyHostEnvironment>();
+            client.BaseAddress = new Uri(env.BaseAddress);
+        });
+        this.AddTransient<IPublisherGateway>(sp =>
+            new PublisherGateway(sp.GetRequiredService<IHttpClientFactory>()
+                .CreateClient(PublisherGateway.HttpClientName)));
 
         this.AddScoped<IUiBus>(provider => new MvcBus(NullLogger<MvcBus>.Instance));
         this.AddScoped<IUserSession, UserSession>();

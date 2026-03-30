@@ -359,3 +359,6 @@ coverage.cobertura.xml
 /build
 /.claude/settings.local.json
 nul
+
+# NServiceBus LearningTransport (SQLite / dev)
+src/.learningtransport/

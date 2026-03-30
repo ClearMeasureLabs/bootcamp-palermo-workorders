@@ -3,6 +3,7 @@ using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.HostedEndpoint;
 using ClearMeasure.HostedEndpoint.Configuration;
+using Microsoft.Extensions.Http;
 using Worker.Messaging;
 
 namespace Worker;
@@ -66,10 +67,14 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
         var apiUrl = Configuration["RemotableBus:ApiUrl"]
                      ?? throw new InvalidOperationException("RemotableBus:ApiUrl configuration is required.");
 
-        services.AddHttpClient();
+        services.AddHttpClient(RemotableBus.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(apiUrl);
+        });
 
         services.AddSingleton<IBus>(sp =>
-            new RemotableBus(sp.GetRequiredService<HttpClient>(), apiUrl));
+            new RemotableBus(sp.GetRequiredService<IHttpClientFactory>()
+                .CreateClient(RemotableBus.HttpClientName)));
 
         services.AddSingleton<ChatClientFactory>();
     }

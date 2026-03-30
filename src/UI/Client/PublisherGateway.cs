@@ -8,6 +8,10 @@ namespace ClearMeasure.Bootcamp.UI.Client;
 public class PublisherGateway(HttpClient httpClient) : IPublisherGateway
 {
     /// <summary>
+    /// Typed client name for <see cref="IHttpClientFactory"/> registration.
+    /// </summary>
+    public const string HttpClientName = nameof(PublisherGateway);
+    /// <summary>
     /// Path segment after <c>api/</c> (no leading slash). Used with versioned base <c>api/v1.0/{path}</c>.
     /// </summary>
     public const string ApiRelativePath = "blazor-wasm-single-api";

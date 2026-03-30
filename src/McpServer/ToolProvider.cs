@@ -2,6 +2,7 @@ using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 
@@ -11,8 +12,14 @@ namespace ClearMeasure.Bootcamp.McpServer;
 /// Discovers AI tools by connecting to the co-hosted MCP HTTP endpoint at /mcp.
 /// Replaces the previous manual wrapper approach with a loopback MCP client.
 /// </summary>
-public class ToolProvider(IServer server, ILogger<ToolProvider> logger) : IToolProvider, IAsyncDisposable
+public class ToolProvider(IServer server, IHttpClientFactory httpClientFactory, ILogger<ToolProvider> logger)
+    : IToolProvider, IAsyncDisposable
 {
+    /// <summary>
+    /// Typed client name for MCP loopback <see cref="HttpClient"/> from <see cref="IHttpClientFactory"/>.
+    /// </summary>
+    public const string McpLoopbackHttpClientName = "McpLoopback";
+
     private readonly SemaphoreSlim _lock = new(1, 1);
     private McpClient? _client;
     private IList<AITool>? _tools;
@@ -36,7 +43,7 @@ public class ToolProvider(IServer server, ILogger<ToolProvider> logger) : IToolP
             var mcpUrl = address.TrimEnd('/') + "/mcp";
             logger.LogInformation("ToolProvider: connecting to MCP endpoint at {McpUrl}", mcpUrl);
 
-            var httpClient = new HttpClient();
+            var httpClient = httpClientFactory.CreateClient(McpLoopbackHttpClientName);
             var transportOptions = new HttpClientTransportOptions
             {
                 Endpoint = new Uri(mcpUrl),

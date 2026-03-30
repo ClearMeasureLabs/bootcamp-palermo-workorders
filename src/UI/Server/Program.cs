@@ -9,6 +9,7 @@ using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
+using NServiceBus.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,7 @@ var sqlConnectionString = builder.Configuration.GetConnectionString("SqlConnecti
 if (sqlConnectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
 {
     endpointConfiguration.UseTransport<LearningTransport>();
+    endpointConfiguration.DisableFeature<Sagas>();
 }
 else
 {

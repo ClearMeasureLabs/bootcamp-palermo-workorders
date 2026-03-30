@@ -9,8 +9,12 @@ namespace Worker.Messaging;
 /// <summary>
 /// Sends <see cref="IRemotableRequest"/> and <see cref="IRemotableEvent"/> messages to the UI server API and
 /// </summary>
-public class RemotableBus(HttpClient httpClient, string apiUrl) : IBus
+public class RemotableBus(HttpClient httpClient) : IBus
 {
+    /// <summary>
+    /// Typed client name for <see cref="IHttpClientFactory"/> registration.
+    /// </summary>
+    public const string HttpClientName = nameof(RemotableBus);
 
     public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
     {
@@ -47,7 +51,7 @@ public class RemotableBus(HttpClient httpClient, string apiUrl) : IBus
     private async Task<WebServiceMessage?> PostMessage(object payload)
     {
         var message = new WebServiceMessage(payload);
-        var result = await httpClient.PostAsJsonAsync(apiUrl, message);
+        var result = await httpClient.PostAsJsonAsync(string.Empty, message);
         var json = await result.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<WebServiceMessage>(json);
     }

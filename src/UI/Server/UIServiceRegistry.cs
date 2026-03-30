@@ -11,6 +11,7 @@ using ClearMeasure.Bootcamp.UI.Shared;
 using Lamar;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Http;
 using FunJeffreyCustomEventHealthCheck = ClearMeasure.Bootcamp.UI.Shared.FunJeffreyCustomEventHealthCheck;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
@@ -30,6 +31,8 @@ public class UiServiceRegistry : ServiceRegistry
         });
 
         this.AddTransient<IWorkOrderNumberGenerator, WorkOrderNumberGenerator>();
+
+        this.AddHttpClient(ToolProvider.McpLoopbackHttpClientName);
 
         // Register AI agent and background service
         this.AddTransient<WorkOrderReformatAgent>();

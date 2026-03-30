@@ -7,6 +7,8 @@ using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpClient(ToolProvider.McpLoopbackHttpClientName);
+
 builder.AddSerilogJsonConsole();
 
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<McpServiceRegistry>(); });
