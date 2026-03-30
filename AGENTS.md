@@ -20,7 +20,7 @@ This runs clean, restore, compile, unit tests, Docker SQL Server setup, DB migra
 
 ### Server logging
 
-UI.Server, Worker, and standalone McpServer emit **structured logs as JSON lines** on the standard console (Serilog `CompactJsonFormatter`), suitable for container log aggregation (for example Azure Container Apps). Levels and namespace overrides are driven by the `Serilog` section in each host’s `appsettings*.json`.
+UI.Server, Worker, and standalone McpServer emit **structured logs as JSON lines** on the standard console (Serilog `RenderedCompactJsonFormatter`), suitable for container log aggregation (for example Azure Container Apps). Levels and namespace overrides are driven by the `Serilog` section in each host’s `appsettings*.json`.
 
 ### Running the Application
 

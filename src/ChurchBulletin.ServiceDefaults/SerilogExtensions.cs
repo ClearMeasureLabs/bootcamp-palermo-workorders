@@ -48,7 +48,7 @@ public static class SerilogExtensions
             .ReadFrom.Services(services)
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Application", context.HostingEnvironment.ApplicationName)
-            .WriteTo.Console(new CompactJsonFormatter());
+            .WriteTo.Console(new RenderedCompactJsonFormatter());
     }
 
     /// <summary>
