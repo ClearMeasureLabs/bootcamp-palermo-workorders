@@ -6,10 +6,12 @@ using Microsoft.Extensions.Configuration;
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
 /// <summary>
-/// Same as <see cref="ApiVersioningRoutingWebApplicationFactory"/> with request body buffering turned off.
+/// UI.Server test host with API key validation enabled for <c>/api/*</c> (except public version/time).
 /// </summary>
-public sealed class RequestBodyBufferingDisabledWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
+public sealed class ApiKeyProtectedWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
 {
+    public const string TestApiKey = "integration-test-api-key";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -23,9 +25,8 @@ public sealed class RequestBodyBufferingDisabledWebApplicationFactory : WebAppli
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
                 ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
-                ["ApiKeyAuthentication:Enabled"] = "false",
-                ["ApiKeyAuthentication:ValidationKey"] = "",
-                [$"{RequestBodyBufferingOptions.SectionName}:Enabled"] = "false"
+                ["ApiKeyAuthentication:Enabled"] = "true",
+                ["ApiKeyAuthentication:ValidationKey"] = TestApiKey
             });
         });
     }
