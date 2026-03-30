@@ -7,7 +7,20 @@ namespace ClearMeasure.Bootcamp.UI.Client;
 
 public class PublisherGateway(HttpClient httpClient) : IPublisherGateway
 {
-    public const string ApiRelativeUrl = "api/blazor-wasm-single-api";
+    /// <summary>
+    /// Path segment after <c>api/</c> (no leading slash). Used with versioned base <c>api/v1.0/{path}</c>.
+    /// </summary>
+    public const string ApiRelativePath = "blazor-wasm-single-api";
+
+    /// <summary>
+    /// Legacy unversioned URL for the Blazor WASM single-API endpoint.
+    /// </summary>
+    public const string ApiRelativeUrl = "api/" + ApiRelativePath;
+
+    /// <summary>
+    /// Versioned URL using the current default API version in the path.
+    /// </summary>
+    public const string ApiRelativeUrlV1 = "api/v1.0/" + ApiRelativePath;
 
     public async Task<WebServiceMessage?> Publish(IRemotableRequest request)
     {

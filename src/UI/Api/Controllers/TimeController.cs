@@ -1,4 +1,6 @@
 using System.Globalization;
+using Asp.Versioning;
+using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +10,9 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 /// Exposes the current UTC instant for operators and integrations.
 /// </summary>
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/time")]
+[Route($"{ApiRoutes.VersionedApiPrefix}/time")]
 public class TimeController(TimeProvider timeProvider) : ControllerBase
 {
     /// <summary>

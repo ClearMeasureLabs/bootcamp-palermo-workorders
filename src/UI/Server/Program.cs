@@ -1,3 +1,5 @@
+using Asp.Versioning;
+using Microsoft.AspNetCore.Http;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
@@ -12,6 +14,14 @@ builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllersWithViews()
     .AddApplicationPart(typeof(DetailedHealthController).Assembly);
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+    options.UnsupportedApiVersionStatusCode = StatusCodes.Status400BadRequest;
+}).AddMvc();
 builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
