@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.AspNetCore;
 using System.Diagnostics;
 
 namespace Microsoft.Extensions.Hosting;
@@ -36,6 +40,25 @@ public static class Extensions
         });
 
         return builder;
+    }
+
+    /// <summary>
+    /// Registers Serilog as the logging provider using the <c>Serilog</c> configuration section.
+    /// Console output uses compact JSON when configured in appsettings (see <c>RenderedCompactJsonFormatter</c>).
+    /// </summary>
+    public static WebApplicationBuilder AddStructuredSerilog(this WebApplicationBuilder builder)
+    {
+        builder.Host.UseSerilog(ConfigureSerilogFromHost);
+        return builder;
+    }
+
+    private static void ConfigureSerilogFromHost(HostBuilderContext context, IServiceProvider services, LoggerConfiguration loggerConfiguration)
+    {
+        loggerConfiguration
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("Application", context.HostingEnvironment.ApplicationName);
     }
 
     /// <summary>
@@ -130,6 +153,8 @@ public static class Extensions
     /// </summary>
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
+        app.UseSerilogRequestLogging();
+
         app.MapHealthChecks(HealthEndpointPath);
 
         app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
