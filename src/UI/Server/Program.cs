@@ -75,6 +75,8 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
+app.UseCorrelationId();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();

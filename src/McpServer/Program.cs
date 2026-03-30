@@ -43,6 +43,7 @@ var app = builder.Build();
 
 if (useHttp)
 {
+    app.UseCorrelationId();
     app.MapMcp();
 }
 
