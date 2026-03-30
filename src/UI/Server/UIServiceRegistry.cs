@@ -1,5 +1,7 @@
 ﻿using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
+using ClearMeasure.Bootcamp.Core.Validation;
+using ClearMeasure.Bootcamp.UI.Server.Validation;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
@@ -8,6 +10,7 @@ using ClearMeasure.Bootcamp.McpServer;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Shared;
+using FluentValidation;
 using Lamar;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +22,9 @@ public class UiServiceRegistry : ServiceRegistry
 {
     public UiServiceRegistry()
     {
+        this.AddValidatorsFromAssemblyContaining<WebServiceMessageValidator>();
+        this.AddValidatorsFromAssemblyContaining<EmployeeGetAllQueryValidator>();
+
         this.AddScoped<DbContext, DataContext>();
 
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<UiServiceRegistry>());

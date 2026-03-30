@@ -8,6 +8,7 @@ using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using Microsoft.AspNetCore.RateLimiting;
+using ClearMeasure.Bootcamp.UI.Server.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -92,6 +93,8 @@ app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseMiddleware<WebServiceMessageValidationMiddleware>();
 
 app.UseApiRateLimiting();
 
