@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.ResponseCompression;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
@@ -7,10 +8,18 @@ using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
+using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using ClearMeasure.Bootcamp.UI.Server.Grpc;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ConfigureEndpointDefaults(listenOptions => { listenOptions.Protocols = HttpProtocols.Http1AndHttp2; });
+});
 
 builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
@@ -32,6 +41,21 @@ builder.Services.AddApiRateLimiting(builder.Configuration);
 builder.Services.Configure<RequestBodyBufferingOptions>(
     builder.Configuration.GetSection(RequestBodyBufferingOptions.SectionName));
 builder.Services.AddServerCors(builder.Configuration);
+
+builder.Services.AddOutputCache(options =>
+{
+    options.AddBasePolicy(policy => policy.NoCache());
+    options.AddPolicy(OutputCachePolicyNames.VersionMetadata, policy => policy
+        .Expire(TimeSpan.FromMinutes(10))
+        .SetVaryByQuery("*")
+        .SetVaryByHeader("Accept"));
+    options.AddPolicy(OutputCachePolicyNames.WeatherSample, policy => policy
+        .Expire(TimeSpan.FromSeconds(30))
+        .SetVaryByQuery("*")
+        .SetVaryByHeader("Accept"));
+});
+
+builder.Services.AddGrpc();
 
 builder.Services.AddResponseCompression(options =>
 {
@@ -135,6 +159,7 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
 app.UseRequestBodyBuffering();
 
 app.UseMiddleware<RateLimitingMiddleware>();
+app.UseOutputCache();
 
 app.MapRazorPages();
 var apiControllers = app.MapControllers();
@@ -143,6 +168,7 @@ if (app.Services.IsServerCorsActive())
     apiControllers.RequireCors(ServerCorsOptions.PolicyName);
 }
 
+app.MapGrpcService<WorkOrdersGrpcService>();
 app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
 app.MapHealthChecks("_healthcheck");
