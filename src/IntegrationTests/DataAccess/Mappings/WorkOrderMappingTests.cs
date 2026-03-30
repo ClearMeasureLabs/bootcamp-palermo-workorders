@@ -8,6 +8,13 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Mappings;
 [TestFixture]
 public class WorkOrderMappingTests
 {
+    private static bool UsesSqlServer()
+    {
+        using var context = TestHost.GetRequiredService<DbContext>();
+        var provider = context.Database.ProviderName ?? "";
+        return provider.Contains("SqlServer", StringComparison.OrdinalIgnoreCase);
+    }
+
     [Test]
     public void ShouldMapWorkOrderBasicProperties()
     {
@@ -226,6 +233,11 @@ public class WorkOrderMappingTests
     [Category("SqlServerOnly")]
     public void ShouldRespectMaxLengthConstraints()
     {
+        if (!UsesSqlServer())
+        {
+            Assert.Ignore("SQL Server enforces mapped max lengths; SQLite does not.");
+        }
+
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
@@ -250,6 +262,11 @@ public class WorkOrderMappingTests
     [Category("SqlServerOnly")]
     public void ShouldSupportMaxLengthTitle()
     {
+        if (!UsesSqlServer())
+        {
+            Assert.Ignore("SQL Server enforces mapped max lengths; SQLite does not.");
+        }
+
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
