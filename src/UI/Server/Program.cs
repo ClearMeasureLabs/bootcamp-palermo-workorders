@@ -13,6 +13,7 @@ using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UI.Server.Grpc;
+using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 
@@ -45,6 +46,7 @@ builder.Services.Configure<ApiKeyAuthenticationOptions>(
     builder.Configuration.GetSection(ApiKeyAuthenticationOptions.SectionName));
 builder.Services.PostConfigure<ApiKeyAuthenticationOptions>(o =>
     o.ValidationKey = string.IsNullOrWhiteSpace(o.ValidationKey) ? null : o.ValidationKey.Trim());
+builder.Services.AddRequestDecompression();
 builder.Services.Configure<RequestBodyBufferingOptions>(
     builder.Configuration.GetSection(RequestBodyBufferingOptions.SectionName));
 builder.Services.AddServerCors(builder.Configuration);
@@ -140,6 +142,7 @@ else
 
 app.UseHttpsRedirection();
 
+app.UseRequestDecompression();
 app.UseResponseCompression();
 
 app.UseBlazorFrameworkFiles();
@@ -171,9 +174,17 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
         var second = await secondReader.ReadToEndAsync(cancellationToken);
         return Results.Json(new { first, second });
     });
+    app.MapPost("/__test/request-body-echo", async (HttpContext httpContext) =>
+    {
+        httpContext.Response.ContentType = "text/plain; charset=utf-8";
+        using var reader = new StreamReader(httpContext.Request.Body);
+        await httpContext.Response.WriteAsync(await reader.ReadToEndAsync());
+    });
 }
 
 app.UseRequestBodyBuffering();
+
+app.UseMiddleware<WebServiceMessageValidationMiddleware>();
 
 app.UseMiddleware<RateLimitingMiddleware>();
 app.UseOutputCache();

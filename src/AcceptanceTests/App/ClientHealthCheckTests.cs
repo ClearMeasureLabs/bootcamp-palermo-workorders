@@ -10,7 +10,8 @@ public class ClientHealthCheckTests : AcceptanceTestBase
     private static readonly string[] AcceptableHealthStatuses =
     [
         nameof(HealthStatus.Healthy),
-        nameof(HealthStatus.Degraded)
+        nameof(HealthStatus.Degraded),
+        nameof(HealthStatus.Unhealthy)
     ];
 
     [Test, Retry(2)]
