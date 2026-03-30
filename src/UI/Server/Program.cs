@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.ResponseCompression;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
@@ -7,6 +8,7 @@ using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
+using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 
@@ -32,6 +34,19 @@ builder.Services.AddApiRateLimiting(builder.Configuration);
 builder.Services.Configure<RequestBodyBufferingOptions>(
     builder.Configuration.GetSection(RequestBodyBufferingOptions.SectionName));
 builder.Services.AddServerCors(builder.Configuration);
+
+builder.Services.AddOutputCache(options =>
+{
+    options.AddBasePolicy(policy => policy.NoCache());
+    options.AddPolicy(OutputCachePolicyNames.VersionMetadata, policy => policy
+        .Expire(TimeSpan.FromMinutes(10))
+        .SetVaryByQuery("*")
+        .SetVaryByHeader("Accept"));
+    options.AddPolicy(OutputCachePolicyNames.WeatherSample, policy => policy
+        .Expire(TimeSpan.FromSeconds(30))
+        .SetVaryByQuery("*")
+        .SetVaryByHeader("Accept"));
+});
 
 builder.Services.AddResponseCompression(options =>
 {
@@ -135,6 +150,7 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
 app.UseRequestBodyBuffering();
 
 app.UseMiddleware<RateLimitingMiddleware>();
+app.UseOutputCache();
 
 app.MapRazorPages();
 var apiControllers = app.MapControllers();
