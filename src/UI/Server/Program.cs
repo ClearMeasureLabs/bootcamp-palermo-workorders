@@ -137,15 +137,16 @@ app.MapFallback(async context =>
     }
 
     var env = context.RequestServices.GetRequiredService<IWebHostEnvironment>();
-    var filePath = Path.Combine(env.WebRootPath ?? string.Empty, "index.html");
-    if (!File.Exists(filePath))
+    var fileInfo = env.WebRootFileProvider.GetFileInfo("index.html");
+    if (!fileInfo.Exists)
     {
         context.Response.StatusCode = StatusCodes.Status404NotFound;
         return;
     }
 
     context.Response.ContentType = "text/html; charset=utf-8";
-    await context.Response.SendFileAsync(filePath);
+    await using var stream = fileInfo.CreateReadStream();
+    await stream.CopyToAsync(context.Response.Body);
 });
 app.MapHealthChecks("_healthcheck");
 
