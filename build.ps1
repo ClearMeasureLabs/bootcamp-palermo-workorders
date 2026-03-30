@@ -138,12 +138,25 @@ Function IntegrationTest {
 
 	try {
 		exec {
+			$filterParts = @()
 			if ($script:useSqlite) {
+				$filterParts += "Category!=SqlServerOnly"
+			}
+			if ($env:GITHUB_ACTIONS -eq "true") {
+				# Multi-step LLM scenarios are flaky on CI; run locally with a real API key.
+				$filterParts += "Category!=LlmScenario"
+			}
+			$testFilter = $null
+			if ($filterParts.Count -gt 0) {
+				$testFilter = ($filterParts -join "&")
+			}
+
+			if ($testFilter) {
 				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
 					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 					--no-restore --configuration $projectConfig `
 					--collect:"XPlat Code Coverage" `
-					--filter "Category!=SqlServerOnly"
+					--filter $testFilter
 			}
 			else {
 				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
