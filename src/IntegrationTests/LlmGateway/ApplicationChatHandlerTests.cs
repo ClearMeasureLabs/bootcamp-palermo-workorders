@@ -100,7 +100,8 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
-    [Retry(25)]
+    [Retry(3)]
+    [Category("SqlServerOnly")]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
     {
         new ZDataLoader().LoadData();

@@ -1,9 +1,10 @@
 using System.Threading.RateLimiting;
+using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using ClearMeasure.Bootcamp.UI.Api;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
 
@@ -52,9 +53,10 @@ public static class ApiRateLimitingExtensions
 
     private static readonly PathString ApiPrefix = new("/api");
 
-    private static readonly PathString BlazorSingleApiPath = new("/api/blazor-wasm-single-api");
+    private static readonly PathString BlazorSingleApiPath = new("/" + WebServiceApiRoutes.LegacyRelativeUrl);
 
-    private static readonly PathString BlazorSingleApiPathV1 = new("/api/v1.0/blazor-wasm-single-api");
+    private static readonly PathString BlazorSingleApiPathV1 =
+        new("/api/v1.0/" + WebServiceApiRoutes.AbstractPathSegment);
 
     /// <remarks>
     /// gRPC requests are not matched by this helper, so they are not subject to the API sliding-window policy.
@@ -62,10 +64,14 @@ public static class ApiRateLimitingExtensions
     internal static bool ShouldApplyToPath(PathString path)
     {
         if (path.StartsWithSegments(ApiPrefix, StringComparison.OrdinalIgnoreCase))
+        {
             return true;
+        }
 
         if (path.StartsWithSegments(BlazorSingleApiPath, StringComparison.OrdinalIgnoreCase))
+        {
             return true;
+        }
 
         return path.StartsWithSegments(BlazorSingleApiPathV1, StringComparison.OrdinalIgnoreCase);
     }
@@ -77,16 +83,22 @@ public static class ApiRateLimitingExtensions
         {
             var k = keyValues.ToString();
             if (!string.IsNullOrWhiteSpace(k))
+            {
                 return "key:" + k;
+            }
         }
 
         var userName = httpContext.User.Identity?.Name;
         if (!string.IsNullOrEmpty(userName))
+        {
             return "user:" + userName;
+        }
 
         var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
         if (!string.IsNullOrEmpty(remoteIp))
+        {
             return "ip:" + remoteIp;
+        }
 
         return "anonymous";
     }
