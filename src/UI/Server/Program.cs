@@ -1,5 +1,7 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.ResponseCompression;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
@@ -8,8 +10,7 @@ using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
-using Microsoft.AspNetCore.OutputCaching;
-using Microsoft.AspNetCore.RateLimiting;
+using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,13 @@ builder.Services.AddOutputCache(options =>
         .Expire(TimeSpan.FromSeconds(30))
         .SetVaryByQuery("*")
         .SetVaryByHeader("Accept"));
+});
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
 });
 
 // Add Application Insights
@@ -87,9 +95,12 @@ builder.Host.UseNServiceBus(_ => endpointConfiguration);
 // Build application
 var app = builder.Build();
 
+app.UseSerilogShutdown();
 app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
+app.UseCorrelationId();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
@@ -103,16 +114,23 @@ else
 
 app.UseHttpsRedirection();
 
+app.UseResponseCompression();
+
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseApiRateLimiting();
+if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
+{
+    app.MapGet("/_test/compression-probe", () => Results.Text(new string('A', 4096), "text/plain; charset=utf-8"));
+}
+
+app.UseMiddleware<RateLimitingMiddleware>();
 app.UseOutputCache();
 
 app.MapRazorPages();
-app.MapControllers().RequireRateLimiting(ApiRateLimitingPolicyNames.ApiSlidingWindow);
+app.MapControllers();
 app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
 app.MapHealthChecks("_healthcheck");

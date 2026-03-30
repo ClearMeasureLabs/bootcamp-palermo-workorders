@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.AspNetCore;
 using System.Diagnostics;
 
 namespace Microsoft.Extensions.Hosting;
@@ -25,9 +29,13 @@ public static class Extensions
     {
         builder.ConfigureOpenTelemetry();
 
+        builder.AddSerilogJsonConsole();
+
         builder.AddDefaultHealthChecks();
 
         builder.Services.AddServiceDiscovery();
+
+        builder.Services.AddHttpClient();
 
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
@@ -65,7 +73,10 @@ public static class Extensions
                     .AddSource("ChurchBulletin.LlmGateway")
                     .AddSource("NServiceBus.Core")
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
+                    .AddHttpClientInstrumentation(options =>
+                    {
+                        options.RecordException = true;
+                    })
                     .AddSqlClientInstrumentation(options =>
                     {
                         options.SetDbStatementForText = true;
@@ -130,6 +141,8 @@ public static class Extensions
     /// </summary>
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
+        app.UseSerilogRequestLogging();
+
         app.MapHealthChecks(HealthEndpointPath);
 
         app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions

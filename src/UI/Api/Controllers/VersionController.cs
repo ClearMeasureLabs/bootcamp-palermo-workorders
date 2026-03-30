@@ -5,6 +5,7 @@ using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Hosting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
@@ -16,6 +17,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("api/version")]
 [Route($"{ApiRoutes.VersionedApiPrefix}/version")]
+[EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class VersionController(IHostEnvironment hostEnvironment) : ControllerBase
 {
     /// <summary>

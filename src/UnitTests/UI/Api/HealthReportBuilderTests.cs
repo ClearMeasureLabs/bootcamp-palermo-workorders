@@ -12,13 +12,17 @@ public class HealthReportBuilderTests
     }
 
     [Test]
-    public void HealthReportBuilder_Build_Should_ReturnNonNullPayload()
+    public void HealthReportBuilder_FromEntries_Should_ReturnNonNullPayload()
     {
-        var report = HealthReportBuilder.Build();
+        var components = new[]
+        {
+            new ComponentHealthEntry { Name = "A", Status = ComponentHealthStatus.Healthy }
+        };
+        var report = HealthReportBuilder.FromEntries(TimeProvider.System, components);
 
         report.ShouldNotBeNull();
         report.Components.ShouldNotBeNull();
-        report.Components.Count.ShouldBeGreaterThan(0);
+        report.Components.Count.ShouldBe(1);
     }
 
     [Test]
@@ -48,32 +52,27 @@ public class HealthReportBuilderTests
     }
 
     [Test]
-    public void HealthReportBuilder_Build_Should_SetCheckedAtUtc()
+    public void HealthReportBuilder_FromEntries_Should_SetCheckedAtUtc()
     {
         var fixedTime = new DateTime(2026, 3, 26, 12, 0, 0, DateTimeKind.Utc);
-        var report = HealthReportBuilder.Build(new FixedUtcTimeProvider(fixedTime));
+        var report = HealthReportBuilder.FromEntries(
+            new FixedUtcTimeProvider(fixedTime),
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
 
         report.CheckedAtUtc.ShouldBe(fixedTime);
         report.CheckedAtUtc.Kind.ShouldBe(DateTimeKind.Utc);
     }
 
     [Test]
-    public void Should_Build_When_DefaultMockData_ExpectDegradedOverallBecauseJeffrey()
+    public void HealthReportBuilder_FromEntries_Should_AggregateWorstAcrossComponents()
     {
-        var report = HealthReportBuilder.Build();
+        var components = new[]
+        {
+            new ComponentHealthEntry { Name = "LlmGateway", Status = ComponentHealthStatus.Healthy },
+            new ComponentHealthEntry { Name = "Jeffrey", Status = ComponentHealthStatus.Degraded }
+        };
+        var report = HealthReportBuilder.FromEntries(TimeProvider.System, components);
 
         report.OverallStatus.ShouldBe(ComponentHealthStatus.Degraded);
-        var names = report.Components.Select(c => c.Name).ToHashSet();
-        names.ShouldContain("LlmGateway");
-        names.ShouldContain("DataAccess");
-        names.ShouldContain("Server");
-        names.ShouldContain("API");
-        names.ShouldContain("Jeffrey");
-        foreach (var c in report.Components)
-        {
-            (c.Status == ComponentHealthStatus.Healthy
-                || c.Status == ComponentHealthStatus.Degraded
-                || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
-        }
     }
 }
