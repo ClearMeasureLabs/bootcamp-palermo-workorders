@@ -6,7 +6,9 @@ using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
+using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +30,19 @@ builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddApiRateLimiting(builder.Configuration);
+
+builder.Services.AddOutputCache(options =>
+{
+    options.AddBasePolicy(policy => policy.NoCache());
+    options.AddPolicy(OutputCachePolicyNames.VersionMetadata, policy => policy
+        .Expire(TimeSpan.FromMinutes(10))
+        .SetVaryByQuery("*")
+        .SetVaryByHeader("Accept"));
+    options.AddPolicy(OutputCachePolicyNames.WeatherSample, policy => policy
+        .Expire(TimeSpan.FromSeconds(30))
+        .SetVaryByQuery("*")
+        .SetVaryByHeader("Accept"));
+});
 
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
@@ -94,6 +109,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseApiRateLimiting();
+app.UseOutputCache();
 
 app.MapRazorPages();
 app.MapControllers().RequireRateLimiting(ApiRateLimitingPolicyNames.ApiSlidingWindow);

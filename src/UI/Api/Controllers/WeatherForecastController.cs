@@ -2,6 +2,7 @@ using Asp.Versioning;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
@@ -17,6 +18,7 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
     ];
 
     [HttpGet]
+    [OutputCache(PolicyName = OutputCachePolicyNames.WeatherSample)]
     public IEnumerable<WeatherForecast> Get()
     {
         // _logger.LogError("LogError Get Weather");

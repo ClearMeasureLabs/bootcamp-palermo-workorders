@@ -4,6 +4,7 @@ using Asp.Versioning;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Hosting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
@@ -22,6 +23,7 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
+    [OutputCache(PolicyName = OutputCachePolicyNames.VersionMetadata)]
     public ActionResult<VersionMetadataResponse> Get()
     {
         var assembly = Assembly.GetExecutingAssembly();
