@@ -23,7 +23,7 @@ public static class RequestBodyBufferingExtensions
     /// After enabling buffering, the request body position is reset to 0 when the stream supports seeking.
     /// </para>
     /// <para>
-    /// Call after <c>UseRouting</c> and before middleware or endpoints that read the body (before <c>UseApiRateLimiting</c> and <c>MapControllers</c>).
+    /// Call after <c>UseRouting</c> and before middleware or endpoints that read the body (before <c>RateLimitingMiddleware</c> and <c>MapControllers</c>).
     /// </para>
     /// </remarks>
     public static IApplicationBuilder UseRequestBodyBuffering(this IApplicationBuilder app)
