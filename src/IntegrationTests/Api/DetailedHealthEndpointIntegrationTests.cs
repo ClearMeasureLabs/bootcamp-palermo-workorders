@@ -119,7 +119,7 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
-    public async Task Should_ListExpectedComponentEntries_When_MockPayload()
+    public async Task Should_ListExpectedComponentEntries_When_AggregatedFromRegisteredChecks()
     {
         var response = await _client!.GetAsync("/api/health/detailed");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);

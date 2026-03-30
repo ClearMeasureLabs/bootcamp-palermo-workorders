@@ -18,6 +18,10 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File ./PrivateBuild.ps1
 
 This runs clean, restore, compile, unit tests, Docker SQL Server setup, DB migration, and integration tests. It auto-detects the database engine (SQL-Container on Linux with Docker).
 
+### Server logging
+
+UI.Server, Worker, and standalone McpServer emit **structured logs as JSON lines** on the standard console (Serilog `RenderedCompactJsonFormatter`), suitable for container log aggregation (for example Azure Container Apps). Levels and namespace overrides are driven by the `Serilog` section in each host’s `appsettings*.json`.
+
 ### Running the Application
 
 The `launchSettings.json` contains a Windows-only LocalDB connection string that crashes on Linux. To run the app on Linux, bypass the launch profile and set environment variables manually:
@@ -37,6 +41,26 @@ Key gotchas:
 - **Must set `APPLICATIONINSIGHTS_CONNECTION_STRING`** or the Azure Monitor exporter will crash on startup.
 - **Must set `AI_OpenAI_*` vars to empty strings** to prevent the app from trying to connect to Azure OpenAI (it degrades gracefully).
 - The SQL Server Docker container must already be running (created by `PrivateBuild.ps1` or manually via `docker run`). The container name is `churchbulletin-mssql` and the password is `churchbulletin-mssql#1A`.
+
+### gRPC (work orders)
+
+- **Contract:** `src/UI/Server/Protos/workorders.proto`. Generated C# is checked in under `src/UI/Server/Generated/Protos/` so Linux ARM64 CI avoids `Grpc.Tools` `protoc` (which can segfault on that platform). After changing the `.proto`, regenerate on an x64 machine with `Grpc.Tools` and replace those files.
+- **Endpoint:** Same base URL as UI.Server (for example `https://localhost:7174`). Clients should use **HTTP/2** (TLS in development; configure ingress/proxy for HTTP/2 or h2c in production as appropriate).
+- **Surface:** `workorders.WorkOrders` — `Ping` (smoke) and `GetWorkOrderByNumber` (reads via `IBus` / `WorkOrderByNumberQuery`, same path as HTTP APIs).
+- **Auth:** Anonymous for the shipped RPCs (no `[Authorize]` on the service).
+- **Rate limiting:** The sliding-window policy applies only to `/api/*` (and the Blazor single-API path); gRPC calls are not covered by that limiter.
+- **Client example (.NET):**
+
+```csharp
+using Grpc.Net.Client;
+using ClearMeasure.Bootcamp.UI.Server.Grpc;
+
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+using var channel = GrpcChannel.ForAddress("https://localhost:7174");
+var client = new WorkOrders.WorkOrdersClient(channel);
+var reply = await client.GetWorkOrderByNumberAsync(
+    new GetWorkOrderByNumberRequest { Number = "WO-123" });
+```
 
 ### Docker Daemon
 

@@ -13,6 +13,7 @@ using ClearMeasure.Bootcamp.UI.Shared;
 using FluentValidation;
 using Lamar;
 using MediatR;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using FunJeffreyCustomEventHealthCheck = ClearMeasure.Bootcamp.UI.Shared.FunJeffreyCustomEventHealthCheck;
 
@@ -22,6 +23,7 @@ public class UiServiceRegistry : ServiceRegistry
 {
     public UiServiceRegistry()
     {
+        this.AddSingleton<IStartupFilter, TestingDatabaseStartupFilter>();
         this.AddValidatorsFromAssemblyContaining<WebServiceMessageValidator>();
         this.AddValidatorsFromAssemblyContaining<EmployeeGetAllQueryValidator>();
 
@@ -60,5 +62,7 @@ public class UiServiceRegistry : ServiceRegistry
             .AddCheck<Is64BitProcessHealthCheck>("Server")
             .AddCheck<HealthCheck>("API")
             .AddCheck<FunJeffreyCustomEventHealthCheck>("Jeffrey");
+
+        this.AddSingleton<IDetailedHealthReportProvider, DetailedHealthReportProvider>();
     }
 }
