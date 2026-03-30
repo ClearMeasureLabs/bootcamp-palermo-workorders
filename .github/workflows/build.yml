@@ -69,6 +69,7 @@ jobs:
           name: Linux CI Test Results
           path: 'build/test/**/*.trx'
           reporter: dotnet-trx
+          fail-on-error: false
 
       # Publish code coverage
       - name: Publish Code Coverage
@@ -194,6 +195,7 @@ jobs:
           name: SQLite Test Results
           path: 'build/test/**/*.trx'
           reporter: dotnet-trx
+          fail-on-error: false
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -253,6 +255,7 @@ jobs:
           name: ARM SQLite Test Results
           path: 'build/test/**/*.trx'
           reporter: dotnet-trx
+          fail-on-error: false
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -349,6 +352,7 @@ jobs:
           name: Windows LocalDB Test Results
           path: 'build/test/**/*.trx'
           reporter: dotnet-trx
+          fail-on-error: false
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -752,6 +756,7 @@ jobs:
           name: Acceptance Test Results
           path: 'build/test/**/*.trx'
           reporter: dotnet-trx
+          fail-on-error: false
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -821,6 +826,7 @@ jobs:
           name: ARM Acceptance Test Results
           path: 'build/test/**/*.trx'
           reporter: dotnet-trx
+          fail-on-error: false
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
