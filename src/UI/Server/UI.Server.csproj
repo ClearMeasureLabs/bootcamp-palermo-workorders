@@ -37,6 +37,7 @@
 		<ProjectReference Include="..\..\McpServer\McpServer.csproj" />
 		<ProjectReference Include="..\Client\UI.Client.csproj" />
 		<ProjectReference Include="..\Api\UI.Api.csproj" />
+		<ProjectReference Include="..\..\UI.Shared\UI.Shared.csproj" />
 	</ItemGroup>
 
 

@@ -28,6 +28,10 @@ builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddApiRateLimiting(builder.Configuration);
+builder.Services.Configure<ApiKeyAuthenticationOptions>(
+    builder.Configuration.GetSection(ApiKeyAuthenticationOptions.SectionName));
+builder.Services.PostConfigure<ApiKeyAuthenticationOptions>(o =>
+    o.ValidationKey = string.IsNullOrWhiteSpace(o.ValidationKey) ? null : o.ValidationKey.Trim());
 
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
@@ -92,6 +96,8 @@ app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
 
 app.UseApiRateLimiting();
 

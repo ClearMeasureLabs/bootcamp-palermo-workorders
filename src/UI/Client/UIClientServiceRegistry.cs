@@ -7,6 +7,7 @@ using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using Lamar;
 using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpenAI;
 using Palermo.BlazorMvc;
@@ -26,6 +27,8 @@ public class UIClientServiceRegistry : ServiceRegistry
         this.AddScoped<IUiBus>(provider => new MvcBus(NullLogger<MvcBus>.Instance));
         this.AddScoped<IUserSession, UserSession>();
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<RemotableBus>());
+        this.AddTransient<IPublisherGateway>(sp =>
+            new PublisherGateway(sp.GetRequiredService<HttpClient>(), sp.GetRequiredService<IConfiguration>()));
         this.AddTransient<IBus, RemotableBus>();
 
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<UIClientServiceRegistry>());

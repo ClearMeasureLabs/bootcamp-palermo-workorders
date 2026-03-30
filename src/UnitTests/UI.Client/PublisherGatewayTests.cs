@@ -2,7 +2,9 @@ using System.Net;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Messaging;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Client;
+using Microsoft.Extensions.Configuration;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Client;
@@ -83,6 +85,26 @@ public class PublisherGatewayTests
         ((TestRemotableRequest)result.GetBodyObject()).Data.ShouldBe("response data");
     }
 
+    [Test]
+    public async Task SendToTopic_When_ConfigurationHasKey_AddsXApiKeyHeader()
+    {
+        var stubHandler = new StubHttpMessageHandler();
+        stubHandler.SetResponse(JsonSerializer.Serialize(new WebServiceMessage()));
+        var httpClient = new HttpClient(stubHandler) { BaseAddress = new Uri("http://localhost/") };
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ApiKeyAuthentication:ValidationKey"] = "  client-secret  "
+        }).Build();
+        var gateway = new PublisherGateway(httpClient, configuration);
+        var message = new WebServiceMessage(new TestRemotableRequest { Data = "req" });
+
+        await gateway.SendToTopic(message);
+
+        stubHandler.LastRequest.ShouldNotBeNull();
+        stubHandler.LastRequest!.Headers.TryGetValues(ApiKeyConstants.HeaderName, out var values).ShouldBeTrue();
+        values!.Single().ShouldBe("client-secret");
+    }
+
     private class StubPublisherGateway : PublisherGateway
     {
         private WebServiceMessage? _sendToTopicResponse = new();
@@ -111,6 +133,8 @@ public class PublisherGatewayTests
 
         public Uri? LastRequestUri { get; private set; }
 
+        public HttpRequestMessage? LastRequest { get; private set; }
+
         public void SetResponse(string content)
         {
             _responseContent = content;
@@ -119,6 +143,7 @@ public class PublisherGatewayTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
+            LastRequest = request;
             LastRequestUri = request.RequestUri;
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {

@@ -2,7 +2,7 @@ using Asp.Versioning;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using ClearMeasure.Bootcamp.UI.Api;
-using ClearMeasure.Bootcamp.UI.Client;
+using ClearMeasure.Bootcamp.UI.Shared;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -10,8 +10,8 @@ namespace ClearMeasure.Bootcamp.UI.Server.Controllers;
 
 [ApiController]
 [ApiVersion("1.0")]
-[Route(PublisherGateway.ApiRelativeUrl)]
-[Route($"{ApiRoutes.VersionedApiPrefix}/{PublisherGateway.ApiRelativePath}")]
+[Route(WebServiceApiRoutes.LegacyRelativeUrl)]
+[Route($"{ApiRoutes.VersionedApiPrefix}/{WebServiceApiRoutes.AbstractPathSegment}")]
 public class SingleApiController(IBus bus, ILogger<SingleApiController>? logger = null)
     : ControllerBase
 {

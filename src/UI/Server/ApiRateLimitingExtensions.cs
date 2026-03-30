@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using ClearMeasure.Bootcamp.UI.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
@@ -14,7 +15,7 @@ namespace ClearMeasure.Bootcamp.UI.Server;
 public static class ApiRateLimitingExtensions
 {
     private static readonly PathString ApiPrefix = new("/api");
-    private static readonly PathString BlazorSingleApiPath = new("/api/blazor-wasm-single-api");
+    private static readonly PathString BlazorSingleApiPath = new("/" + WebServiceApiRoutes.LegacyRelativeUrl);
 
     /// <summary>
     /// Adds rate limiter services using <see cref="ApiRateLimitingOptions"/> from configuration.
