@@ -3,13 +3,17 @@ using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using Lamar.Microsoft.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.AddConsole(options =>
+builder.Logging.ClearProviders();
+builder.Host.UseSerilog((context, _, configuration) =>
 {
-    options.LogToStandardErrorThreshold = LogLevel.Trace;
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Application", context.HostingEnvironment.ApplicationName);
 });
 
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<McpServiceRegistry>(); });

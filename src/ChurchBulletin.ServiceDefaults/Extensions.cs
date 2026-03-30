@@ -23,6 +23,8 @@ public static class Extensions
     /// </summary>
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.AddSerilogWithJsonConsole();
+
         builder.ConfigureOpenTelemetry();
 
         builder.AddDefaultHealthChecks();
