@@ -7,7 +7,11 @@ using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
+/// <summary>
+/// LLM-backed scenarios; excluded from SQLite integration builds (<c>TestCategory!=SqlServerOnly</c>) because outcomes depend on model behavior.
+/// </summary>
 [TestFixture]
+[Category("SqlServerOnly")]
 public class ApplicationChatHandlerTests : LlmTestBase
 {
     [Test]
