@@ -31,6 +31,8 @@ public class ApiRateLimitingWebTests
         limited.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
         limited.Headers.TryGetValues("Retry-After", out var ra).ShouldBeTrue();
         ra!.First().ShouldBe("60");
+        limited.Content.Headers.ContentType?.MediaType.ShouldBe("text/plain");
+        (await limited.Content.ReadAsStringAsync()).ShouldBe("Too many requests. Please try again later.");
     }
 
     [Test]

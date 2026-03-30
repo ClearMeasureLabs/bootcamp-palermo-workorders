@@ -102,6 +102,9 @@ public sealed class RateLimitingMiddleware
         context.Response.Headers[HeaderReset] = DateTimeOffset.UtcNow.Add(window).ToUnixTimeSeconds()
             .ToString(NumberFormatInfo.InvariantInfo);
         if (context.Features.Get<IHttpResponseFeature>()?.HasStarted != true)
-            await context.Response.WriteAsync("Too many requests.", context.RequestAborted);
+        {
+            context.Response.ContentType = "text/plain; charset=utf-8";
+            await context.Response.WriteAsync("Too many requests. Please try again later.", context.RequestAborted);
+        }
     }
 }

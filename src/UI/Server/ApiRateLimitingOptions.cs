@@ -33,7 +33,7 @@ public sealed class ApiRateLimitingOptions
     public int QueueLimit { get; set; } = 0;
 
     /// <summary>
-    /// Optional header for per-client key; when absent, connection remote IP is used.
+    /// Optional header for per-client key; when absent, user name or connection remote IP is used.
     /// </summary>
     public string ApiKeyHeaderName { get; set; } = "X-API-Key";
 }
