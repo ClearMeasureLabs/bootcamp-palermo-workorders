@@ -63,7 +63,6 @@ var sqlConnectionString = builder.Configuration.GetConnectionString("SqlConnecti
 if (sqlConnectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
 {
     endpointConfiguration.UseTransport<LearningTransport>();
-    endpointConfiguration.DisableFeature<Sagas>();
 }
 else
 {
@@ -72,6 +71,9 @@ else
     transport.DefaultSchema("nServiceBus");
     transport.Transactions(TransportTransactionMode.TransactionScope);
 }
+
+// UI.Server does not configure saga-capable persistence (sagas run in Worker).
+endpointConfiguration.DisableFeature<Sagas>();
 
 // message conventions
 var conventions = new MessagingConventions();
