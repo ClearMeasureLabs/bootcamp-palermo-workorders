@@ -10,7 +10,7 @@ public class WorkOrderAiChatTests : AcceptanceTestBase
         await SkipIfNoChatClient();
     }
 
-    [Test, Retry(5)]
+    [Test, Retry(2)]
     public async Task ShouldSendChatMessageAndReceiveResponse()
     {
         await LoginAsCurrentUser();
@@ -39,7 +39,7 @@ public class WorkOrderAiChatTests : AcceptanceTestBase
         chatHistoryText.ShouldContain(prompt);
     }
 
-    [Test, Retry(5)]
+    [Test, Retry(2)]
     public async Task ShouldRespondToChat()
     {
         await LoginAsCurrentUser();
@@ -62,10 +62,13 @@ public class WorkOrderAiChatTests : AcceptanceTestBase
         var chatHistory = Page.GetByTestId(nameof(WorkOrderChat.Elements.ChatHistory));
         await Expect(chatHistory).ToBeVisibleAsync();
 
-        // Verify chat history contains text content (messages were added)
+        // User message is always in history; LLM may not echo the work order number verbatim.
         var chatHistoryText = await chatHistory.InnerTextAsync();
         chatHistoryText.ShouldNotBeNullOrEmpty();
-        chatHistoryText.ShouldContain(order.Number!);
+        chatHistoryText.ShouldContain(prompt);
+
+        var aiOnlyText = await aiMessage.InnerTextAsync();
+        aiOnlyText.ShouldNotBeNullOrWhiteSpace();
     }
 
     [Test, Ignore("Not yet implemented")]
