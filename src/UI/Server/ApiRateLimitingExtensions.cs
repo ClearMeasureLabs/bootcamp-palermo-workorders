@@ -42,6 +42,7 @@ public static class ApiRateLimitingExtensions
                         seconds.ToString(System.Globalization.NumberFormatInfo.InvariantInfo);
                 }
 
+                context.HttpContext.Response.ContentType = "text/plain; charset=utf-8";
                 await context.HttpContext.Response.WriteAsync(
                     "Too many requests. Please try again later.",
                     cancellationToken);
