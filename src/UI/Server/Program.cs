@@ -1,3 +1,5 @@
+using Asp.Versioning;
+using Microsoft.AspNetCore.Http;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
@@ -5,6 +7,7 @@ using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,10 +15,19 @@ builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllersWithViews()
     .AddApplicationPart(typeof(DetailedHealthController).Assembly);
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+    options.UnsupportedApiVersionStatusCode = StatusCodes.Status400BadRequest;
+}).AddMvc();
 builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
+builder.Services.AddApiRateLimiting(builder.Configuration);
 
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
@@ -82,8 +94,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseApiRateLimiting();
+
 app.MapRazorPages();
-app.MapControllers();
+app.MapControllers().RequireRateLimiting(ApiRateLimitingPolicyNames.ApiSlidingWindow);
 app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
 app.MapHealthChecks("_healthcheck");
