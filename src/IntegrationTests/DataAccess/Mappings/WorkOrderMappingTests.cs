@@ -1,6 +1,7 @@
 ﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
+using NUnit.Framework;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Mappings;
@@ -226,6 +227,12 @@ public class WorkOrderMappingTests
     [Category("SqlServerOnly")]
     public void ShouldRespectMaxLengthConstraints()
     {
+        using var probeContext = TestHost.GetRequiredService<DbContext>();
+        if (probeContext.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            Assert.Ignore("SQLite does not enforce the same column length constraints as SQL Server.");
+        }
+
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");

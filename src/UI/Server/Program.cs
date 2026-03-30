@@ -42,6 +42,7 @@ builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddApiRateLimiting(builder.Configuration);
+builder.Services.AddRequestDecompression();
 builder.Services.Configure<RequestBodyBufferingOptions>(
     builder.Configuration.GetSection(RequestBodyBufferingOptions.SectionName));
 builder.Services.AddServerCors(builder.Configuration);
@@ -137,6 +138,7 @@ else
 
 app.UseHttpsRedirection();
 
+app.UseRequestDecompression();
 app.UseResponseCompression();
 
 app.UseBlazorFrameworkFiles();
@@ -166,6 +168,12 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
         using var secondReader = new StreamReader(request.Body, leaveOpen: true);
         var second = await secondReader.ReadToEndAsync(cancellationToken);
         return Results.Json(new { first, second });
+    });
+    app.MapPost("/__test/request-body-echo", async (HttpContext httpContext) =>
+    {
+        httpContext.Response.ContentType = "text/plain; charset=utf-8";
+        using var reader = new StreamReader(httpContext.Request.Body);
+        await httpContext.Response.WriteAsync(await reader.ReadToEndAsync());
     });
 }
 

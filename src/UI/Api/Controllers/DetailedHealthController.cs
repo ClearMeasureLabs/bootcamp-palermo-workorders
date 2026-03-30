@@ -15,15 +15,25 @@ public class DetailedHealthController(
     IDetailedHealthReportProvider detailedHealthReportProvider) : ControllerBase
 {
     [HttpGet]
-    public ActionResult<SimpleHealthResponse> Get()
+    public IActionResult Get()
     {
-        return Ok(SimpleHealthResponseBuilder.Build(timeProvider));
+        var payload = SimpleHealthResponseBuilder.Build(timeProvider);
+        return ConditionalJson(payload);
     }
 
     [HttpGet("detailed")]
-    public async Task<ActionResult<DetailedHealthReport>> GetDetailed(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetDetailed(CancellationToken cancellationToken)
     {
-        var report = await detailedHealthReportProvider.GetReportAsync(cancellationToken);
-        return Ok(report);
+        var payload = await detailedHealthReportProvider.GetReportAsync(cancellationToken);
+        return ConditionalJson(payload);
+    }
+
+    private IActionResult ConditionalJson<T>(T payload)
+    {
+        var etag = ConditionalGetEtag.CreateWeakEtagForJson(payload);
+        Response.Headers.ETag = etag.ToString();
+        if (ConditionalGetEtag.IfNoneMatchIncludesEtag(Request, etag))
+            return StatusCode(StatusCodes.Status304NotModified);
+        return ConditionalGetEtag.JsonContent(payload!);
     }
 }
