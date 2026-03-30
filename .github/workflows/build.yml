@@ -78,6 +78,7 @@ jobs:
           files: '**/build/test/**/In/**/coverage.cobertura.xml'
           flags: unittests-linux
           name: codecov-linux
+          fail_ci_if_error: false
 
       # Upload test results as artifacts
       - name: Upload Test Results
