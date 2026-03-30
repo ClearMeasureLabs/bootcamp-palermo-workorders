@@ -11,14 +11,25 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 public class DetailedHealthController(TimeProvider timeProvider) : ControllerBase
 {
     [HttpGet]
-    public ActionResult<SimpleHealthResponse> Get()
+    public IActionResult Get()
     {
-        return Ok(SimpleHealthResponseBuilder.Build(timeProvider));
+        var payload = SimpleHealthResponseBuilder.Build(timeProvider);
+        return ConditionalJson(payload);
     }
 
     [HttpGet("detailed")]
-    public ActionResult<DetailedHealthReport> GetDetailed()
+    public IActionResult GetDetailed()
     {
-        return Ok(HealthReportBuilder.Build(timeProvider));
+        var payload = HealthReportBuilder.Build(timeProvider);
+        return ConditionalJson(payload);
+    }
+
+    private IActionResult ConditionalJson<T>(T payload)
+    {
+        var etag = ConditionalGetEtag.CreateWeakEtagForJson(payload);
+        Response.Headers.ETag = etag.ToString();
+        if (ConditionalGetEtag.IfNoneMatchIncludesEtag(Request, etag))
+            return StatusCode(StatusCodes.Status304NotModified);
+        return ConditionalGetEtag.JsonContent(payload!);
     }
 }
