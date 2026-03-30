@@ -42,6 +42,7 @@ app.UseSerilogShutdown();
 
 if (useHttp)
 {
+    app.UseCorrelationId();
     app.MapMcp();
 }
 

@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.ResponseCompression;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
@@ -7,8 +8,7 @@ using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.ResponseCompression;
+using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,6 +85,8 @@ app.UseSerilogShutdown();
 app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
+app.UseCorrelationId();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
@@ -115,14 +117,15 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
     app.MapGet("/_test/compression-probe", () => Results.Text(new string('A', 4096), "text/plain; charset=utf-8"));
 }
 
-app.UseApiRateLimiting();
+app.UseMiddleware<RateLimitingMiddleware>();
 
 app.MapRazorPages();
-var apiControllers = app.MapControllers().RequireRateLimiting(ApiRateLimitingPolicyNames.ApiSlidingWindow);
+var apiControllers = app.MapControllers();
 if (app.Services.IsServerCorsActive())
 {
     apiControllers.RequireCors(ServerCorsOptions.PolicyName);
 }
+
 app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
 app.MapHealthChecks("_healthcheck");
