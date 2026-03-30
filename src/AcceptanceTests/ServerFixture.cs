@@ -209,8 +209,10 @@ public class ServerFixture
                 FileName = "dotnet",
                 Arguments = arguments,
                 WorkingDirectory = ProjectPath,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                // Do not redirect: high-volume Serilog JSON would fill a bounded pipe and stall the server,
+                // and forwarding every line to TestContext can slow NUnit on Windows agents.
+                RedirectStandardOutput = false,
+                RedirectStandardError = false,
                 UseShellExecute = false,
                 CreateNoWindow = true
             }
