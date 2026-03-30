@@ -1,7 +1,7 @@
 using ClearMeasure.Bootcamp.Core.Model.Events;
 using FluentValidation;
 
-namespace ClearMeasure.Bootcamp.Core.Validation;
+namespace ClearMeasure.Bootcamp.UI.Server.Validation;
 
 public sealed class UserLoggedInEventValidator : AbstractValidator<UserLoggedInEvent>
 {

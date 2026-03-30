@@ -1,6 +1,5 @@
 ﻿using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
-using ClearMeasure.Bootcamp.Core.Validation;
 using ClearMeasure.Bootcamp.UI.Server.Validation;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess;
