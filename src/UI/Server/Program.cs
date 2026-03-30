@@ -1,4 +1,3 @@
-using Serilog;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
@@ -9,7 +8,6 @@ using ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddStructuredSerilog();
 builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllersWithViews()
@@ -62,6 +60,7 @@ builder.Host.UseNServiceBus(_ => endpointConfiguration);
 // Build application
 var app = builder.Build();
 
+app.UseSerilogShutdown();
 app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
@@ -91,11 +90,4 @@ app.MapHealthChecks("_healthcheck");
 
 await app.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync();
 
-try
-{
-    app.Run();
-}
-finally
-{
-    Log.CloseAndFlush();
-}
+app.Run();

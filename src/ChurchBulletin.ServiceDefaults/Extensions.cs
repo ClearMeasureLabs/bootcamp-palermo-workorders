@@ -29,6 +29,8 @@ public static class Extensions
     {
         builder.ConfigureOpenTelemetry();
 
+        builder.AddSerilogJsonConsole();
+
         builder.AddDefaultHealthChecks();
 
         builder.Services.AddServiceDiscovery();
@@ -40,25 +42,6 @@ public static class Extensions
         });
 
         return builder;
-    }
-
-    /// <summary>
-    /// Registers Serilog as the logging provider using the <c>Serilog</c> configuration section.
-    /// Console output uses compact JSON when configured in appsettings (see <c>RenderedCompactJsonFormatter</c>).
-    /// </summary>
-    public static WebApplicationBuilder AddStructuredSerilog(this WebApplicationBuilder builder)
-    {
-        builder.Host.UseSerilog(ConfigureSerilogFromHost);
-        return builder;
-    }
-
-    private static void ConfigureSerilogFromHost(HostBuilderContext context, IServiceProvider services, LoggerConfiguration loggerConfiguration)
-    {
-        loggerConfiguration
-            .ReadFrom.Configuration(context.Configuration)
-            .ReadFrom.Services(services)
-            .Enrich.FromLogContext()
-            .Enrich.WithProperty("Application", context.HostingEnvironment.ApplicationName);
     }
 
     /// <summary>
