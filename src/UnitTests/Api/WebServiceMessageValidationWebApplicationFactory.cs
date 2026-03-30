@@ -3,22 +3,22 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 
-namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
+namespace ClearMeasure.Bootcamp.UnitTests.Api;
 
 /// <summary>
-/// In-process UI.Server host with SQLite in-memory for HTTP routing tests (no LocalDB / NServiceBus from full integration host).
+/// Hosts UI.Server in-process with SQLite in-memory for exercising the Blazor WASM single-API pipeline.
 /// </summary>
-public sealed class ApiVersioningRoutingWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
+public sealed class WebServiceMessageValidationWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.UseSetting("ConnectionStrings:SqlConnectionString", WebApplicationTestingDatabase.SqliteSharedMemoryConnectionString);
+        builder.UseSetting("ConnectionStrings:SqlConnectionString", "Data Source=:memory:");
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:SqlConnectionString"] = WebApplicationTestingDatabase.SqliteSharedMemoryConnectionString,
+                ["ConnectionStrings:SqlConnectionString"] = "Data Source=:memory:",
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",

@@ -1,4 +1,7 @@
+using System.Text.Json;
+using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -13,13 +16,21 @@ public class VersionControllerTests
     public void Get_Should_ReturnOk_WithExpectedShape()
     {
         var stubHostEnvironment = new StubHostEnvironment("TestEnvironment");
-        var controller = new VersionController(stubHostEnvironment);
+        var controller = new VersionController(stubHostEnvironment)
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
 
         var result = controller.Get();
 
-        var ok = result.Result.ShouldBeOfType<OkObjectResult>();
-        var payload = ok.Value.ShouldBeOfType<VersionMetadataResponse>();
-        payload.AssemblyVersion.ShouldNotBeNullOrEmpty();
+        var content = result.ShouldBeOfType<ContentResult>();
+        content.ContentType.ShouldNotBeNull();
+        content.ContentType!.ShouldContain("application/json");
+        var payload = JsonSerializer.Deserialize<VersionMetadataResponse>(
+            content.Content!,
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        payload!.AssemblyVersion.ShouldNotBeNullOrEmpty();
         payload.InformationalVersion.ShouldNotBeNullOrEmpty();
         payload.Environment.ShouldBe("TestEnvironment");
         payload.MachineName.ShouldBe(Environment.MachineName);

@@ -26,17 +26,22 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
     [HttpGet]
     [AllowAnonymous]
     [OutputCache(PolicyName = OutputCachePolicyNames.VersionMetadata)]
-    public ActionResult<VersionMetadataResponse> Get()
+    public IActionResult Get()
     {
         var assembly = Assembly.GetExecutingAssembly();
         var assemblyVersion = assembly.GetName().Version?.ToString();
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        return Ok(new VersionMetadataResponse(
+        var payload = new VersionMetadataResponse(
             AssemblyVersion: assemblyVersion,
             InformationalVersion: informationalVersion,
             Environment: hostEnvironment.EnvironmentName,
             MachineName: Environment.MachineName,
-            FrameworkDescription: RuntimeInformation.FrameworkDescription));
+            FrameworkDescription: RuntimeInformation.FrameworkDescription);
+        var etag = ConditionalGetEtag.CreateWeakEtagForJson(payload);
+        Response.Headers.ETag = etag.ToString();
+        if (ConditionalGetEtag.IfNoneMatchIncludesEtag(Request, etag))
+            return StatusCode(StatusCodes.Status304NotModified);
+        return ConditionalGetEtag.JsonContent(payload);
     }
 }
 
