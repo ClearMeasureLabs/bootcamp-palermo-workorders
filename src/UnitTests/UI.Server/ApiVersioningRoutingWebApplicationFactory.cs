@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 
-namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
+namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
 /// <summary>
-/// Hosts UI.Server in-process with SQLite in-memory so CI can exercise <c>/api/*</c> without LocalDB.
+/// In-process UI.Server host with SQLite in-memory for HTTP routing tests (no LocalDB / NServiceBus from full integration host).
 /// </summary>
-public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
+public sealed class ApiVersioningRoutingWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
