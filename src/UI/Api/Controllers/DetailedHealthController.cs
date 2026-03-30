@@ -8,7 +8,9 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("api/health")]
 [Route($"{ApiRoutes.VersionedApiPrefix}/health")]
-public class DetailedHealthController(TimeProvider timeProvider) : ControllerBase
+public class DetailedHealthController(
+    TimeProvider timeProvider,
+    IDetailedHealthReportProvider detailedHealthReportProvider) : ControllerBase
 {
     [HttpGet]
     public ActionResult<SimpleHealthResponse> Get()
@@ -17,8 +19,9 @@ public class DetailedHealthController(TimeProvider timeProvider) : ControllerBas
     }
 
     [HttpGet("detailed")]
-    public ActionResult<DetailedHealthReport> GetDetailed()
+    public async Task<ActionResult<DetailedHealthReport>> GetDetailed(CancellationToken cancellationToken)
     {
-        return Ok(HealthReportBuilder.Build(timeProvider));
+        var report = await detailedHealthReportProvider.GetReportAsync(cancellationToken);
+        return Ok(report);
     }
 }
