@@ -3,6 +3,7 @@ using Asp.Versioning;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
@@ -13,6 +14,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("api/time")]
 [Route($"{ApiRoutes.VersionedApiPrefix}/time")]
+[EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class TimeController(TimeProvider timeProvider) : ControllerBase
 {
     /// <summary>

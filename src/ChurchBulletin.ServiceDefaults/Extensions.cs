@@ -35,6 +35,8 @@ public static class Extensions
 
         builder.Services.AddServiceDiscovery();
 
+        builder.Services.AddHttpClient();
+
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
             http.AddStandardResilienceHandler();
@@ -71,7 +73,10 @@ public static class Extensions
                     .AddSource("ChurchBulletin.LlmGateway")
                     .AddSource("NServiceBus.Core")
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
+                    .AddHttpClientInstrumentation(options =>
+                    {
+                        options.RecordException = true;
+                    })
                     .AddSqlClientInstrumentation(options =>
                     {
                         options.SetDbStatementForText = true;

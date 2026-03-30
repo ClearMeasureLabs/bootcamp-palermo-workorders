@@ -54,5 +54,7 @@ public class UiServiceRegistry : ServiceRegistry
             .AddCheck<Is64BitProcessHealthCheck>("Server")
             .AddCheck<HealthCheck>("API")
             .AddCheck<FunJeffreyCustomEventHealthCheck>("Jeffrey");
+
+        this.AddSingleton<IDetailedHealthReportProvider, DetailedHealthReportProvider>();
     }
 }
