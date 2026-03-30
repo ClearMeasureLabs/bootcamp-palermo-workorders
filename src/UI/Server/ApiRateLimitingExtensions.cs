@@ -85,6 +85,9 @@ public static class ApiRateLimitingExtensions
         return app.UseRateLimiter();
     }
 
+    /// <remarks>
+    /// gRPC requests are not matched by this helper, so they are not subject to the API sliding-window policy.
+    /// </remarks>
     private static bool ShouldApplyToPath(PathString path)
     {
         if (path.StartsWithSegments(ApiPrefix, StringComparison.OrdinalIgnoreCase))

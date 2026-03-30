@@ -7,10 +7,17 @@ using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using ClearMeasure.Bootcamp.UI.Server.Grpc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ConfigureEndpointDefaults(listenOptions => { listenOptions.Protocols = HttpProtocols.Http1AndHttp2; });
+});
 
 builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
@@ -29,6 +36,8 @@ builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddApiRateLimiting(builder.Configuration);
+
+builder.Services.AddGrpc();
 
 builder.Services.AddResponseCompression(options =>
 {
@@ -115,6 +124,7 @@ app.UseApiRateLimiting();
 
 app.MapRazorPages();
 app.MapControllers().RequireRateLimiting(ApiRateLimitingPolicyNames.ApiSlidingWindow);
+app.MapGrpcService<WorkOrdersGrpcService>();
 app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
 app.MapHealthChecks("_healthcheck");

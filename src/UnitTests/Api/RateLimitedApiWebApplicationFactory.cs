@@ -12,12 +12,19 @@ namespace ClearMeasure.Bootcamp.UnitTests.Api;
 /// </summary>
 public sealed class RateLimitedApiWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
 {
+    private readonly string _sqlConnectionString;
+
+    public RateLimitedApiWebApplicationFactory(string? sqlConnectionString = null)
+    {
+        _sqlConnectionString = sqlConnectionString ?? WebApplicationTestingDatabase.SqliteSharedMemoryConnectionString;
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // Avoid appsettings.Development.json (LocalDB) which overrides in-memory SQLite on Linux.
         builder.UseEnvironment("Testing");
         // Host settings are visible to Program.cs before merged app configuration from WebApplicationFactory.
-        builder.UseSetting("ConnectionStrings:SqlConnectionString", "Data Source=:memory:");
+        builder.UseSetting("ConnectionStrings:SqlConnectionString", _sqlConnectionString);
         builder.UseSetting("ApiRateLimiting:Enabled", "true");
         builder.UseSetting("ApiRateLimiting:PermitLimit", "1");
         builder.UseSetting("ApiRateLimiting:WindowSeconds", "60");
@@ -26,7 +33,7 @@ public sealed class RateLimitedApiWebApplicationFactory : WebApplicationFactory<
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:SqlConnectionString"] = "Data Source=:memory:",
+                ["ConnectionStrings:SqlConnectionString"] = _sqlConnectionString,
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",

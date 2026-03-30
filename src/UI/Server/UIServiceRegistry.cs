@@ -10,6 +10,7 @@ using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Lamar;
 using MediatR;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using FunJeffreyCustomEventHealthCheck = ClearMeasure.Bootcamp.UI.Shared.FunJeffreyCustomEventHealthCheck;
 
@@ -19,6 +20,7 @@ public class UiServiceRegistry : ServiceRegistry
 {
     public UiServiceRegistry()
     {
+        this.AddSingleton<IStartupFilter, TestingDatabaseStartupFilter>();
         this.AddScoped<DbContext, DataContext>();
 
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<UiServiceRegistry>());
