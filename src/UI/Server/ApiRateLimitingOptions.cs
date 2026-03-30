@@ -1,7 +1,7 @@
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
-/// Configuration for sliding-window rate limiting on <c>/api/*</c> and <c>/api/blazor-wasm-single-api</c> routes.
+/// Configuration for sliding-window rate limiting on <c>/api/*</c> routes (including Blazor single-API endpoints).
 /// </summary>
 public sealed class ApiRateLimitingOptions
 {
