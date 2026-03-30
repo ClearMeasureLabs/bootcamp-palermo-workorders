@@ -1,6 +1,29 @@
 namespace ClearMeasure.Bootcamp.UI.Api;
 
 /// <summary>
+/// Lightweight JSON payload for <c>GET /api/health</c>.
+/// </summary>
+public sealed class SimpleHealthResponse
+{
+    /// <summary>Application-reported status (e.g. <see cref="SimpleHealthStatus.Healthy"/>).</summary>
+    public required string Status { get; init; }
+
+    /// <summary>Current instant in UTC (ISO-8601 when serialized).</summary>
+    public required DateTime CurrentTimeUtc { get; init; }
+
+    /// <summary>Elapsed time since the host process started.</summary>
+    public required TimeSpan Uptime { get; init; }
+}
+
+/// <summary>
+/// Allowed values for <see cref="SimpleHealthResponse.Status"/>.
+/// </summary>
+public static class SimpleHealthStatus
+{
+    public const string Healthy = nameof(Healthy);
+}
+
+/// <summary>
 /// Machine-oriented detailed health payload for <c>GET /api/health/detailed</c>.
 /// </summary>
 public sealed class DetailedHealthReport
