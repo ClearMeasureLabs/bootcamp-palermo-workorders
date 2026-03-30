@@ -12,8 +12,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-var http = new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) };
-builder.Services.AddScoped(sp => http);
+builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 var configurationModel = new ConfigurationModel
     { AppInsightsConnectionString = "" }; //await http.GetFromJsonAsync<ConfigurationModel>("Configuration");}
 
@@ -30,8 +29,6 @@ builder.ConfigureContainer<ServiceRegistry>(
         registry.IncludeRegistry<UIClientServiceRegistry>());
 
 
-var url = builder.HostEnvironment.BaseAddress;
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(url) });
 var app = builder.Build();
 await app.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync();
 await app.RunAsync();

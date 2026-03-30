@@ -43,7 +43,9 @@ public sealed class RateLimitedApiWebApplicationFactory : WebApplicationFactory<
                 ["ApiRateLimiting:PermitLimit"] = "1",
                 ["ApiRateLimiting:WindowSeconds"] = "60",
                 ["ApiRateLimiting:SegmentsPerWindow"] = "2",
-                ["ApiRateLimiting:QueueLimit"] = "0"
+                ["ApiRateLimiting:QueueLimit"] = "0",
+                ["ApiKeyAuthentication:Enabled"] = "false",
+                ["ApiKeyAuthentication:ValidationKey"] = ""
             });
         });
 

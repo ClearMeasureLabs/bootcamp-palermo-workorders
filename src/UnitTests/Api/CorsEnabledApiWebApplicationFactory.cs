@@ -25,6 +25,8 @@ public sealed class CorsEnabledApiWebApplicationFactory : WebApplicationFactory<
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
                 ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
+                ["ApiKeyAuthentication:Enabled"] = "false",
+                ["ApiKeyAuthentication:ValidationKey"] = "",
                 ["Cors:Enabled"] = "true",
                 ["Cors:AllowedOrigins:0"] = "https://allowed.example"
             });

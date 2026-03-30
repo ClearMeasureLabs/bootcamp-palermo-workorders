@@ -244,6 +244,11 @@ public class ServerFixture
             _serverProcess.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] = connectionString;
         }
 
+        // Acceptance runs inherit CI environment variables; disable API key auth so Blazor WASM
+        // (PublisherGateway) and health checks are not blocked when the pipeline sets ApiKeyAuthentication.
+        _serverProcess.StartInfo.Environment["ApiKeyAuthentication__Enabled"] = "false";
+        _serverProcess.StartInfo.Environment["ApiKeyAuthentication__ValidationKey"] = "";
+
         _serverProcess.OutputDataReceived += (_, e) =>
         {
             if (e.Data != null)
