@@ -7,7 +7,7 @@ using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
-using Microsoft.AspNetCore.RateLimiting;
+using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,7 +82,7 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore/hsts.
     app.UseHsts();
 }
 
@@ -93,10 +93,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseApiRateLimiting();
+app.UseMiddleware<RateLimitingMiddleware>();
 
 app.MapRazorPages();
-app.MapControllers().RequireRateLimiting(ApiRateLimitingPolicyNames.ApiSlidingWindow);
+app.MapControllers();
 app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
 app.MapHealthChecks("_healthcheck");

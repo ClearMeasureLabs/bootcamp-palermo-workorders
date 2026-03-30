@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
@@ -8,6 +9,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("api/health")]
 [Route($"{ApiRoutes.VersionedApiPrefix}/health")]
+[EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class DetailedHealthController(TimeProvider timeProvider) : ControllerBase
 {
     [HttpGet]
