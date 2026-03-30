@@ -6,6 +6,12 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [Route("api/health")]
 public class DetailedHealthController(TimeProvider timeProvider) : ControllerBase
 {
+    [HttpGet]
+    public ActionResult<SimpleHealthResponse> Get()
+    {
+        return Ok(SimpleHealthResponseBuilder.Build(timeProvider));
+    }
+
     [HttpGet("detailed")]
     public ActionResult<DetailedHealthReport> GetDetailed()
     {
