@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
@@ -10,18 +11,19 @@ namespace ClearMeasure.Bootcamp.UI.Server;
 public static class RequestBodyBufferingExtensions
 {
     /// <summary>
-    /// Enables buffering for the request body when <see cref="RequestBodyBufferingOptions.Enabled"/> is true.
-    /// Call after <c>UseRouting</c> and before middleware or endpoints that read the body (e.g. before rate limiting that
-    /// might inspect the request, and before <c>MapControllers</c>).
+    /// Inserts middleware that calls <see cref="HttpRequestRewindExtensions.EnableBuffering(HttpRequest,int,long)"/>.
+    /// when <see cref="RequestBodyBufferingOptions.Enabled"/> is true.
     /// </summary>
     /// <remarks>
     /// <para>
     /// Buffering runs only for <see cref="HttpMethods.Post"/>, <see cref="HttpMethods.Put"/>, and <see cref="HttpMethods.Patch"/>.
-    /// If the <c>Content-Length</c> header is present and equals 0, buffering is skipped (no body to buffer).
-    /// If <c>Content-Length</c> is absent (e.g. chunked transfer), buffering may still run so a body can be read.
+    /// If <see cref="HttpRequest.ContentLength"/> is 0, buffering is skipped. If it is null (for example chunked transfer), buffering still runs.
     /// </para>
     /// <para>
     /// After enabling buffering, the request body position is reset to 0 when the stream supports seeking.
+    /// </para>
+    /// <para>
+    /// Call after <c>UseRouting</c> and before middleware or endpoints that read the body (before <c>UseApiRateLimiting</c> and <c>MapControllers</c>).
     /// </para>
     /// </remarks>
     public static IApplicationBuilder UseRequestBodyBuffering(this IApplicationBuilder app)
@@ -32,14 +34,15 @@ public static class RequestBodyBufferingExtensions
             if (opts.Enabled && ShouldBuffer(context.Request))
             {
                 var threshold = ClampBufferThreshold(opts.BufferThreshold);
-                context.Request.EnableBuffering(threshold);
+                var thresholdInt = threshold > int.MaxValue ? int.MaxValue : (int)threshold;
+                context.Request.EnableBuffering(thresholdInt, long.MaxValue);
                 if (context.Request.Body.CanSeek)
                 {
                     context.Request.Body.Position = 0;
                 }
             }
 
-            await next();
+            await next(context);
         });
     }
 
@@ -51,7 +54,7 @@ public static class RequestBodyBufferingExtensions
             return false;
         }
 
-        if (request.Headers.ContentLength.HasValue && request.Headers.ContentLength.Value == 0)
+        if (request.ContentLength == 0)
         {
             return false;
         }
