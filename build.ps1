@@ -142,8 +142,8 @@ Function IntegrationTest {
 			if ($script:useSqlite) {
 				$filterParts += "Category!=SqlServerOnly"
 			}
-			if ($env:GITHUB_ACTIONS -eq "true") {
-				# Multi-step LLM scenarios are flaky on CI; run locally with a real API key.
+			if (Test-IsGitHubActions) {
+				# LLM-backed integration tests are flaky on CI; run locally with a real API key.
 				$filterParts += "Category!=LlmScenario"
 			}
 			$testFilter = $null

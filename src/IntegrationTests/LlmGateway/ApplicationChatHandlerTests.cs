@@ -8,6 +8,7 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
 [TestFixture]
+[Category("LlmScenario")]
 public class ApplicationChatHandlerTests : LlmTestBase
 {
     [Test]
@@ -101,7 +102,6 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
     [Test]
     [Retry(10)]
-    [Category("LlmScenario")]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
     {
         new ZDataLoader().LoadData();
