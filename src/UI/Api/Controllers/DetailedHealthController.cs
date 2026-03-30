@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
@@ -8,7 +9,10 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("api/health")]
 [Route($"{ApiRoutes.VersionedApiPrefix}/health")]
-public class DetailedHealthController(TimeProvider timeProvider) : ControllerBase
+[EnableRateLimiting(ApiRateLimiting.PolicyName)]
+public class DetailedHealthController(
+    TimeProvider timeProvider,
+    IDetailedHealthReportProvider detailedHealthReportProvider) : ControllerBase
 {
     [HttpGet]
     public IActionResult Get()
@@ -18,9 +22,9 @@ public class DetailedHealthController(TimeProvider timeProvider) : ControllerBas
     }
 
     [HttpGet("detailed")]
-    public IActionResult GetDetailed()
+    public async Task<IActionResult> GetDetailed(CancellationToken cancellationToken)
     {
-        var payload = HealthReportBuilder.Build(timeProvider);
+        var payload = await detailedHealthReportProvider.GetReportAsync(cancellationToken);
         return ConditionalJson(payload);
     }
 

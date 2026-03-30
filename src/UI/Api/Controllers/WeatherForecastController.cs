@@ -2,6 +2,7 @@ using Asp.Versioning;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
@@ -9,6 +10,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("[controller]")]
 [Route($"{ApiRoutes.VersionedApiPrefix}/[controller]")]
+[EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class WeatherForecastController(ILogger<WeatherForecastController> logger) : ControllerBase
 {
     private static readonly string[] Summaries =
