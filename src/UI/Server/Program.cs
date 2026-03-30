@@ -72,6 +72,7 @@ builder.Host.UseNServiceBus(_ => endpointConfiguration);
 // Build application
 var app = builder.Build();
 
+app.UseSerilogShutdown();
 app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.

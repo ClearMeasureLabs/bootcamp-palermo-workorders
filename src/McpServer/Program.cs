@@ -3,14 +3,11 @@ using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using Lamar.Microsoft.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.AddConsole(options =>
-{
-    options.LogToStandardErrorThreshold = LogLevel.Trace;
-});
+builder.AddSerilogJsonConsole();
 
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<McpServiceRegistry>(); });
 
@@ -40,6 +37,8 @@ else
 }
 
 var app = builder.Build();
+
+app.UseSerilogShutdown();
 
 if (useHttp)
 {

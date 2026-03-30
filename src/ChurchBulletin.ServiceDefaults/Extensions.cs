@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.AspNetCore;
 using System.Diagnostics;
 
 namespace Microsoft.Extensions.Hosting;
@@ -24,6 +28,8 @@ public static class Extensions
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.ConfigureOpenTelemetry();
+
+        builder.AddSerilogJsonConsole();
 
         builder.AddDefaultHealthChecks();
 
@@ -130,6 +136,8 @@ public static class Extensions
     /// </summary>
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
+        app.UseSerilogRequestLogging();
+
         app.MapHealthChecks(HealthEndpointPath);
 
         app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
