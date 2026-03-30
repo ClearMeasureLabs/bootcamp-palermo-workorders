@@ -12,7 +12,9 @@ public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Development");
+        // Avoid appsettings.Development.json (LocalDB) overriding SQLite on Linux CI.
+        builder.UseEnvironment("Testing");
+        builder.UseSetting("ConnectionStrings:SqlConnectionString", "Data Source=:memory:");
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
