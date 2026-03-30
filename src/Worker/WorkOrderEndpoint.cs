@@ -66,10 +66,13 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
         var apiUrl = Configuration["RemotableBus:ApiUrl"]
                      ?? throw new InvalidOperationException("RemotableBus:ApiUrl configuration is required.");
 
-        services.AddHttpClient();
+        const string remotableBusClientName = "RemotableBus";
+        services.AddHttpClient(remotableBusClientName);
 
         services.AddSingleton<IBus>(sp =>
-            new RemotableBus(sp.GetRequiredService<HttpClient>(), apiUrl));
+            new RemotableBus(
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient(remotableBusClientName),
+                apiUrl));
 
         services.AddSingleton<ChatClientFactory>();
     }

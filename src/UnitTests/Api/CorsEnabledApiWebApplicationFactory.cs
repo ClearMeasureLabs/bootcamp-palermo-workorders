@@ -6,28 +6,16 @@ using Microsoft.Extensions.Configuration;
 namespace ClearMeasure.Bootcamp.UnitTests.Api;
 
 /// <summary>
-/// Hosts UI.Server with arbitrary <c>ApiRateLimiting:*</c> settings for middleware tests.
+/// Hosts UI.Server with CORS enabled and a fixed allowed origin for integration-style HTTP tests.
 /// </summary>
-public sealed class TunableApiRateLimitWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
+public sealed class CorsEnabledApiWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
 {
-    private readonly IReadOnlyDictionary<string, string?> _overrides;
-
-    public TunableApiRateLimitWebApplicationFactory(IReadOnlyDictionary<string, string?> overrides)
-    {
-        _overrides = overrides;
-    }
-
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:SqlConnectionString", "Data Source=:memory:");
-        builder.UseSetting("AI_OpenAI_ApiKey", "");
-        builder.UseSetting("AI_OpenAI_Url", "");
-        builder.UseSetting("AI_OpenAI_Model", "");
-        builder.UseSetting("APPLICATIONINSIGHTS_CONNECTION_STRING", "");
-        foreach (var kv in _overrides)
-            builder.UseSetting(kv.Key, kv.Value ?? "");
-
+        builder.UseSetting("Cors:Enabled", "true");
+        builder.UseSetting("Cors:AllowedOrigins:0", "https://allowed.example");
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
@@ -36,7 +24,9 @@ public sealed class TunableApiRateLimitWebApplicationFactory : WebApplicationFac
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
-                ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = ""
+                ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
+                ["Cors:Enabled"] = "true",
+                ["Cors:AllowedOrigins:0"] = "https://allowed.example"
             });
         });
     }

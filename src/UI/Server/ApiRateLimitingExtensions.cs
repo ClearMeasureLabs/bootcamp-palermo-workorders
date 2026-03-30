@@ -52,20 +52,8 @@ public static class ApiRateLimitingExtensions
 
     private static readonly PathString ApiPrefix = new("/api");
 
-    private static readonly PathString BlazorSingleApiPath = new("/api/blazor-wasm-single-api");
-
-    private static readonly PathString BlazorSingleApiPathV1 = new("/api/v1.0/blazor-wasm-single-api");
-
-    internal static bool ShouldApplyToPath(PathString path)
-    {
-        if (path.StartsWithSegments(ApiPrefix, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (path.StartsWithSegments(BlazorSingleApiPath, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return path.StartsWithSegments(BlazorSingleApiPathV1, StringComparison.OrdinalIgnoreCase);
-    }
+    internal static bool ShouldApplyToPath(PathString path) =>
+        path.StartsWithSegments(ApiPrefix, StringComparison.OrdinalIgnoreCase);
 
     internal static string ResolvePartitionKey(HttpContext httpContext, string apiKeyHeaderName)
     {

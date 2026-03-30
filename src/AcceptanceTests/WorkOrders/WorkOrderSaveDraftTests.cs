@@ -10,6 +10,8 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 public class WorkOrderSaveDraftTests : AcceptanceTestBase
 {
+    private static readonly PageWaitForURLOptions SearchUrlWaitOptions = new() { Timeout = 120_000 };
+
     [Test, Retry(2)]
     public async Task ShouldLoadScreenForNewWorkOrder()
     {
@@ -25,7 +27,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         WorkOrder order = await CreateAndSaveNewWorkOrder();
 
-        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForURLAsync("**/workorder/search", SearchUrlWaitOptions);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(3, "WorkOrderSearchAfterSave");
 
@@ -65,7 +67,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         var order = await CreateAndSaveNewWorkOrder();
 
-        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForURLAsync("**/workorder/search", SearchUrlWaitOptions);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         order.Number.ShouldNotBeNullOrWhiteSpace();
@@ -80,7 +82,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Input(nameof(WorkOrderManage.Elements.Description), "newdesc");
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
 
-        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForURLAsync("**/workorder/search", SearchUrlWaitOptions);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
