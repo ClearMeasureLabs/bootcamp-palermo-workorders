@@ -44,7 +44,7 @@ Key gotchas:
 
 ### gRPC (work orders)
 
-- **Contract:** `src/UI/Server/Protos/workorders.proto` (generated types in namespace `ClearMeasure.Bootcamp.UI.Server.Grpc`).
+- **Contract:** `src/UI/Server/Protos/workorders.proto`. Generated C# is checked in under `src/UI/Server/Generated/Protos/` so Linux ARM64 CI avoids `Grpc.Tools` `protoc` (which can segfault on that platform). After changing the `.proto`, regenerate on an x64 machine with `Grpc.Tools` and replace those files.
 - **Endpoint:** Same base URL as UI.Server (for example `https://localhost:7174`). Clients should use **HTTP/2** (TLS in development; configure ingress/proxy for HTTP/2 or h2c in production as appropriate).
 - **Surface:** `workorders.WorkOrders` — `Ping` (smoke) and `GetWorkOrderByNumber` (reads via `IBus` / `WorkOrderByNumberQuery`, same path as HTTP APIs).
 - **Auth:** Anonymous for the shipped RPCs (no `[Authorize]` on the service).
