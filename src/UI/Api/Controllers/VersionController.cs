@@ -1,5 +1,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Asp.Versioning;
+using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
@@ -10,7 +12,9 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 /// Exposes build and deployment metadata for operators and integrations.
 /// </summary>
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/version")]
+[Route($"{ApiRoutes.VersionedApiPrefix}/version")]
 public class VersionController(IHostEnvironment hostEnvironment) : ControllerBase
 {
     /// <summary>
@@ -33,7 +37,7 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
 }
 
 /// <summary>
-/// JSON payload for <c>GET /api/version</c>.
+/// JSON payload for <c>GET /api/version</c> and <c>GET /api/v1.0/version</c>.
 /// </summary>
 public record VersionMetadataResponse(
     string? AssemblyVersion,
