@@ -329,6 +329,7 @@ public abstract class AcceptanceTestBase
 
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         WorkOrder? rehyratedOrder = null;

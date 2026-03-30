@@ -69,4 +69,15 @@ public class ApiVersioningEndpointTests
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("text/plain");
     }
+
+    [Test]
+    public async Task Should_IncludeSupportedVersionsHeader_When_GetVersionedEndpoint()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/health");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.TryGetValues("api-supported-versions", out var values).ShouldBeTrue();
+        values.ShouldNotBeNull();
+        string.Join(", ", values!).ShouldContain("1.0");
+    }
 }

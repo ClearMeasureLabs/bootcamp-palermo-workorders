@@ -1,15 +1,17 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.ResponseCompression;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
+using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UI.Server.Grpc;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.ResponseCompression;
+using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +38,22 @@ builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddApiRateLimiting(builder.Configuration);
+builder.Services.Configure<RequestBodyBufferingOptions>(
+    builder.Configuration.GetSection(RequestBodyBufferingOptions.SectionName));
+builder.Services.AddServerCors(builder.Configuration);
+
+builder.Services.AddOutputCache(options =>
+{
+    options.AddBasePolicy(policy => policy.NoCache());
+    options.AddPolicy(OutputCachePolicyNames.VersionMetadata, policy => policy
+        .Expire(TimeSpan.FromMinutes(10))
+        .SetVaryByQuery("*")
+        .SetVaryByHeader("Accept"));
+    options.AddPolicy(OutputCachePolicyNames.WeatherSample, policy => policy
+        .Expire(TimeSpan.FromSeconds(30))
+        .SetVaryByQuery("*")
+        .SetVaryByHeader("Accept"));
+});
 
 builder.Services.AddGrpc();
 
@@ -115,15 +133,41 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+if (app.Services.IsServerCorsActive())
+{
+    app.UseCors(ServerCorsOptions.PolicyName);
+}
+
 if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
 {
     app.MapGet("/_test/compression-probe", () => Results.Text(new string('A', 4096), "text/plain; charset=utf-8"));
+    app.MapPost("/_test/body-buffer-probe", async (HttpRequest request, CancellationToken cancellationToken) =>
+    {
+        using var firstReader = new StreamReader(request.Body, leaveOpen: true);
+        var first = await firstReader.ReadToEndAsync(cancellationToken);
+        if (request.Body.CanSeek)
+        {
+            request.Body.Position = 0;
+        }
+
+        using var secondReader = new StreamReader(request.Body, leaveOpen: true);
+        var second = await secondReader.ReadToEndAsync(cancellationToken);
+        return Results.Json(new { first, second });
+    });
 }
 
-app.UseApiRateLimiting();
+app.UseRequestBodyBuffering();
+
+app.UseMiddleware<RateLimitingMiddleware>();
+app.UseOutputCache();
 
 app.MapRazorPages();
-app.MapControllers().RequireRateLimiting(ApiRateLimitingPolicyNames.ApiSlidingWindow);
+var apiControllers = app.MapControllers();
+if (app.Services.IsServerCorsActive())
+{
+    apiControllers.RequireCors(ServerCorsOptions.PolicyName);
+}
+
 app.MapGrpcService<WorkOrdersGrpcService>();
 app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
