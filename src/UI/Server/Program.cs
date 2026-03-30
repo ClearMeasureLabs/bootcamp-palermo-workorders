@@ -1,4 +1,6 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
@@ -14,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
+builder.Services.AddProblemDetails();
 builder.Services.AddControllersWithViews()
     .AddApplicationPart(typeof(DetailedHealthController).Assembly);
 builder.Services.AddApiVersioning(options =>
@@ -86,6 +89,13 @@ app.MapDefaultEndpoints();
 // Configure the HTTP request pipeline.
 app.UseCorrelationId();
 
+app.UseWhen(
+    context => ProblemDetailsPaths.IsMachineOriented(context.Request.Path),
+    branch => branch.UseExceptionHandler(new ExceptionHandlerOptions
+    {
+        ExceptionHandler = context => ProblemDetailsExceptionHandler.HandleAsync(context, app.Environment)
+    }));
+
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
@@ -106,6 +116,8 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseMachineClientStatusCodeProblemDetails();
+
 if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
 {
     app.MapGet("/_test/compression-probe", () => Results.Text(new string('A', 4096), "text/plain; charset=utf-8"));
@@ -116,7 +128,25 @@ app.UseApiRateLimiting();
 app.MapRazorPages();
 app.MapControllers().RequireRateLimiting(ApiRateLimitingPolicyNames.ApiSlidingWindow);
 app.MapMcp("/mcp");
-app.MapFallbackToFile("index.html");
+app.MapFallback(async context =>
+{
+    if (ProblemDetailsPaths.IsMachineOriented(context.Request.Path))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    var env = context.RequestServices.GetRequiredService<IWebHostEnvironment>();
+    var filePath = Path.Combine(env.WebRootPath ?? string.Empty, "index.html");
+    if (!File.Exists(filePath))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.SendFileAsync(filePath);
+});
 app.MapHealthChecks("_healthcheck");
 
 await app.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync();
