@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using System.Runtime.InteropServices;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 
@@ -62,6 +63,18 @@ public static class TestHost
                     .AddJsonFile("appsettings.test.json", false, true)
                     .AddUserSecrets<TestDatabaseConfiguration>(optional: true)
                     .AddEnvironmentVariables();
+
+                var envConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__SqlConnectionString");
+                var forceSqliteInMemory = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                    && (string.IsNullOrEmpty(envConnectionString)
+                        || envConnectionString.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase));
+                if (forceSqliteInMemory)
+                {
+                    config.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["ConnectionStrings:SqlConnectionString"] = "Data Source=:memory:"
+                    });
+                }
             })
             .ConfigureServices(s =>
             {

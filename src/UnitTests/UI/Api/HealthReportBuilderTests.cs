@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.UI.Api;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
@@ -12,13 +13,56 @@ public class HealthReportBuilderTests
     }
 
     [Test]
-    public void HealthReportBuilder_Build_Should_ReturnNonNullPayload()
+    public void HealthReportBuilder_FromHealthReport_Should_MapEntriesAndOverall()
     {
-        var report = HealthReportBuilder.Build();
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["LlmGateway"] = new(HealthStatus.Healthy, "ok", TimeSpan.FromMilliseconds(10), null, null),
+            ["DataAccess"] = new(HealthStatus.Degraded, "slow", TimeSpan.FromMilliseconds(20), null, null),
+            ["Server"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null),
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null),
+            ["Jeffrey"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null)
+        };
+        var report = new HealthReport(entries, TimeSpan.FromMilliseconds(30));
 
-        report.ShouldNotBeNull();
-        report.Components.ShouldNotBeNull();
-        report.Components.Count.ShouldBeGreaterThan(0);
+        var built = HealthReportBuilder.FromHealthReport(report, new FixedUtcTimeProvider(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)));
+
+        built.OverallStatus.ShouldBe(ComponentHealthStatus.Degraded);
+        built.Components.Count.ShouldBe(5);
+        var llm = built.Components.Single(c => c.Name == "LlmGateway");
+        llm.Status.ShouldBe(ComponentHealthStatus.Healthy);
+        llm.Description.ShouldBe("ok");
+        llm.Duration.ShouldBe(TimeSpan.FromMilliseconds(10));
+        var data = built.Components.Single(c => c.Name == "DataAccess");
+        data.Status.ShouldBe(ComponentHealthStatus.Degraded);
+        data.Description.ShouldBe("slow");
+    }
+
+    [Test]
+    public void HealthReportBuilder_FromHealthReport_Should_MarkMissingAsUnhealthy()
+    {
+        var report = new HealthReport(
+            new Dictionary<string, HealthReportEntry>
+            {
+                ["LlmGateway"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null),
+                ["DataAccess"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null),
+                ["Server"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null),
+                ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null)
+            },
+            TimeSpan.Zero);
+
+        var built = HealthReportBuilder.FromHealthReport(report);
+
+        built.Components.Single(c => c.Name == "Jeffrey").Status.ShouldBe(ComponentHealthStatus.Unhealthy);
+        built.OverallStatus.ShouldBe(ComponentHealthStatus.Unhealthy);
+    }
+
+    [Test]
+    public void HealthReportBuilder_MapStatus_Should_MapEnumStrings()
+    {
+        HealthReportBuilder.MapStatus(HealthStatus.Healthy).ShouldBe(ComponentHealthStatus.Healthy);
+        HealthReportBuilder.MapStatus(HealthStatus.Degraded).ShouldBe(ComponentHealthStatus.Degraded);
+        HealthReportBuilder.MapStatus(HealthStatus.Unhealthy).ShouldBe(ComponentHealthStatus.Unhealthy);
     }
 
     [Test]
@@ -48,32 +92,23 @@ public class HealthReportBuilderTests
     }
 
     [Test]
-    public void HealthReportBuilder_Build_Should_SetCheckedAtUtc()
+    public void HealthReportBuilder_FromHealthReport_Should_SetCheckedAtUtc()
     {
         var fixedTime = new DateTime(2026, 3, 26, 12, 0, 0, DateTimeKind.Utc);
-        var report = HealthReportBuilder.Build(new FixedUtcTimeProvider(fixedTime));
+        var report = new HealthReport(
+            new Dictionary<string, HealthReportEntry>
+            {
+                ["LlmGateway"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null),
+                ["DataAccess"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null),
+                ["Server"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null),
+                ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null),
+                ["Jeffrey"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, null)
+            },
+            TimeSpan.Zero);
 
-        report.CheckedAtUtc.ShouldBe(fixedTime);
-        report.CheckedAtUtc.Kind.ShouldBe(DateTimeKind.Utc);
-    }
+        var built = HealthReportBuilder.FromHealthReport(report, new FixedUtcTimeProvider(fixedTime));
 
-    [Test]
-    public void Should_Build_When_DefaultMockData_ExpectDegradedOverallBecauseJeffrey()
-    {
-        var report = HealthReportBuilder.Build();
-
-        report.OverallStatus.ShouldBe(ComponentHealthStatus.Degraded);
-        var names = report.Components.Select(c => c.Name).ToHashSet();
-        names.ShouldContain("LlmGateway");
-        names.ShouldContain("DataAccess");
-        names.ShouldContain("Server");
-        names.ShouldContain("API");
-        names.ShouldContain("Jeffrey");
-        foreach (var c in report.Components)
-        {
-            (c.Status == ComponentHealthStatus.Healthy
-                || c.Status == ComponentHealthStatus.Degraded
-                || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
-        }
+        built.CheckedAtUtc.ShouldBe(fixedTime);
+        built.CheckedAtUtc.Kind.ShouldBe(DateTimeKind.Utc);
     }
 }
