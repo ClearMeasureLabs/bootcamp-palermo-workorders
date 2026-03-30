@@ -143,8 +143,8 @@ Function IntegrationTest {
 				$filterParts += "Category!=SqlServerOnly"
 			}
 			if (Test-IsGitHubActions) {
-				# LLM-backed integration tests are flaky on CI; run locally with a real API key.
-				$filterParts += "Category!=LlmScenario"
+				# LLM integration tests live under LlmGateway; Category filters are unreliable with dotnet test.
+				$filterParts += "FullyQualifiedName!~ClearMeasure.Bootcamp.IntegrationTests.LlmGateway"
 			}
 			$testFilter = $null
 			if ($filterParts.Count -gt 0) {

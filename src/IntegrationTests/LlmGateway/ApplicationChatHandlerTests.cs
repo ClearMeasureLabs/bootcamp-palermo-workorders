@@ -8,7 +8,6 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
 [TestFixture]
-[Category("LlmScenario")]
 public class ApplicationChatHandlerTests : LlmTestBase
 {
     [Test]
