@@ -249,7 +249,20 @@ public class ServerFixture
         _serverProcess.StartInfo.Environment["ApiKeyAuthentication__Enabled"] = "false";
         _serverProcess.StartInfo.Environment["ApiKeyAuthentication__ValidationKey"] = "";
 
+        _serverProcess.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+                TestContext.Out.WriteLine($"  [Server stdout] {e.Data}");
+        };
+        _serverProcess.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+                TestContext.Out.WriteLine($"  [Server stderr] {e.Data}");
+        };
+
         _serverProcess.Start();
+        _serverProcess.BeginOutputReadLine();
+        _serverProcess.BeginErrorReadLine();
 
         // Wait for server to be ready
         var handler = new HttpClientHandler
