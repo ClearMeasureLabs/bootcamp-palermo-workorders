@@ -27,6 +27,46 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_Return200AndJson_When_GetSimpleHealth()
+    {
+        var response = await _client!.GetAsync("/api/health");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("application/json");
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("status", out var status).ShouldBeTrue();
+        status.GetString().ShouldBe(SimpleHealthStatus.Healthy);
+        doc.RootElement.TryGetProperty("currentTimeUtc", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("uptime", out _).ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task Should_AllowAnonymousAccess_When_GetSimpleHealth()
+    {
+        using var anonymous = _factory!.CreateClient();
+        var response = await anonymous.GetAsync("/api/health");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_ReturnRecentUtcAndNonNegativeUptime_When_GetSimpleHealth()
+    {
+        var response = await _client!.GetAsync("/api/health");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var payload = await response.Content.ReadFromJsonAsync<SimpleHealthResponse>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        payload.ShouldNotBeNull();
+        payload!.CurrentTimeUtc.Kind.ShouldBe(DateTimeKind.Utc);
+        (DateTime.UtcNow - payload.CurrentTimeUtc).Duration().ShouldBeLessThan(TimeSpan.FromMinutes(5));
+        payload.Uptime.ShouldBeGreaterThanOrEqualTo(TimeSpan.Zero);
+    }
+
+    [Test]
     public async Task Should_Return200AndJson_When_GetDetailedHealth()
     {
         var response = await _client!.GetAsync("/api/health/detailed");
