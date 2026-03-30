@@ -36,13 +36,9 @@ builder.Services.AddOutputCache(options =>
 {
     options.AddBasePolicy(policy => policy.NoCache());
     options.AddPolicy(OutputCachePolicyNames.VersionMetadata, policy => policy
-        .Expire(TimeSpan.FromMinutes(10))
-        .SetVaryByQuery("*")
-        .SetVaryByHeader("Accept"));
+        .Expire(TimeSpan.FromMinutes(10)));
     options.AddPolicy(OutputCachePolicyNames.WeatherSample, policy => policy
-        .Expire(TimeSpan.FromSeconds(30))
-        .SetVaryByQuery("*")
-        .SetVaryByHeader("Accept"));
+        .Expire(TimeSpan.FromSeconds(30)));
 });
 
 builder.Services.AddResponseCompression(options =>
