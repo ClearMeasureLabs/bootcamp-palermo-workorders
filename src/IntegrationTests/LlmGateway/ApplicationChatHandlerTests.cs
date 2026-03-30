@@ -19,7 +19,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
         var currentUser = "tlovejoy";
         var query = new ApplicationChatQuery("Show me all the work orders that I created", currentUser);
 
-        ChatResponse response = await handler.Handle(query, CancellationToken.None);
+        ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
 
         response.ShouldNotBeNull();
         response.Messages.ShouldNotBeEmpty();
@@ -37,20 +37,20 @@ public class ApplicationChatHandlerTests : LlmTestBase
             "As tlovejoy, create a work order for mowing grass ",
             "tlovejoy");
 
-        ChatResponse response = await handler.Handle(query, CancellationToken.None);
+        ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
 
         var responseText = response.Messages.LastOrDefault()?.Text;
         await TestContext.Out.WriteLineAsync($"LLM response: {responseText}");
 
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
         IChatClient parseClient = await factory.GetChatClient();
-        ChatResponse parseResponse = await parseClient.GetResponseAsync(
+        ChatResponse parseResponse = await ExecuteLlmAsync(() => parseClient.GetResponseAsync(
         [
             new(ChatRole.System,
                 "Extract only the work order number from the following text. " +
                 "Return nothing but the work order number itself, with no extra text."),
             new(ChatRole.User, responseText)
-        ]);
+        ]));
         var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
@@ -72,20 +72,20 @@ public class ApplicationChatHandlerTests : LlmTestBase
             "have groundskeeper willie mow the grass. Yes, assign the new work order. confirmed",
             "tlovejoy");
 
-        ChatResponse response = await handler.Handle(query, CancellationToken.None);
+        ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
 
         var responseText = response.Messages.LastOrDefault()?.Text;
         await TestContext.Out.WriteLineAsync($"LLM response: {responseText}");
 
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
         IChatClient parseClient = await factory.GetChatClient();
-        ChatResponse parseResponse = await parseClient.GetResponseAsync(
+        ChatResponse parseResponse = await ExecuteLlmAsync(() => parseClient.GetResponseAsync(
         [
             new(ChatRole.System,
                 "Extract only the work order number from the following text. " +
                 "Return nothing but the work order number itself, with no extra text."),
             new(ChatRole.User, responseText)
-        ]);
+        ]));
         var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
@@ -124,7 +124,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
             var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
             var query = new ApplicationChatQuery(text, user);
 
-            ChatResponse response = await handler.Handle(query, CancellationToken.None);
+            ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
 
             return response.Messages.LastOrDefault()?.Text!;
         }
