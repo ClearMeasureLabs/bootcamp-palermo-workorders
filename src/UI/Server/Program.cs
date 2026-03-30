@@ -13,6 +13,7 @@ using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UI.Server.Grpc;
+using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 
@@ -169,6 +170,8 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
 }
 
 app.UseRequestBodyBuffering();
+
+app.UseMiddleware<WebServiceMessageValidationMiddleware>();
 
 app.UseMiddleware<RateLimitingMiddleware>();
 app.UseOutputCache();
