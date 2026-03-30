@@ -30,6 +30,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddApiRateLimiting(builder.Configuration);
 builder.Services.AddRequestDecompression();
+builder.Services.AddServerCors(builder.Configuration);
 
 builder.Services.AddResponseCompression(options =>
 {
@@ -108,6 +109,11 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+if (app.Services.IsServerCorsActive())
+{
+    app.UseCors(ServerCorsOptions.PolicyName);
+}
+
 if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
 {
     app.MapGet("/_test/compression-probe", () => Results.Text(new string('A', 4096), "text/plain; charset=utf-8"));
@@ -116,7 +122,12 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
 app.UseMiddleware<RateLimitingMiddleware>();
 
 app.MapRazorPages();
-app.MapControllers();
+var apiControllers = app.MapControllers();
+if (app.Services.IsServerCorsActive())
+{
+    apiControllers.RequireCors(ServerCorsOptions.PolicyName);
+}
+
 app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
 app.MapHealthChecks("_healthcheck");
