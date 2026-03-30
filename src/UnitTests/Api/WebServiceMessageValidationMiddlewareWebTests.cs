@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using ClearMeasure.Bootcamp.Core.Model.Events;
@@ -33,6 +34,18 @@ public class WebServiceMessageValidationMiddlewareWebTests
 
         var message = new WebServiceMessage(new UserLoggedInEvent("testuser"));
         var response = await PostSingleApiAsync(client, message);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_Return200_When_WebServiceMessageJsonUsesCamelCase_LikePostAsJsonAsync()
+    {
+        await using var factory = new WebServiceMessageValidationWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var message = new WebServiceMessage(new UserLoggedInEvent("testuser"));
+        var response = await client.PostAsJsonAsync(PublisherGateway.ApiRelativeUrlV1, message);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }

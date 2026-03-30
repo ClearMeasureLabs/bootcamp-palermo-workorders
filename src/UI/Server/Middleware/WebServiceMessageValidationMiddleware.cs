@@ -15,7 +15,11 @@ public sealed class WebServiceMessageValidationMiddleware
     private const string SingleApiPathSuffix = "/blazor-wasm-single-api";
 
     private static readonly JsonSerializerOptions JsonOptions =
-        new(JsonSerializerDefaults.General) { IncludeFields = false };
+        new(JsonSerializerDefaults.Web)
+        {
+            IncludeFields = false,
+            PropertyNameCaseInsensitive = true
+        };
 
     private readonly RequestDelegate _next;
     private readonly ILogger<WebServiceMessageValidationMiddleware> _logger;
