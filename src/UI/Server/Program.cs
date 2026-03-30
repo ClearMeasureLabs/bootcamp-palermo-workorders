@@ -76,6 +76,8 @@ else
 
 app.UseHttpsRedirection();
 
+app.UseMiddleware<HttpRequestLoggingMiddleware>();
+
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
