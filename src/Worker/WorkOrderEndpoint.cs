@@ -72,9 +72,7 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
             client.BaseAddress = new Uri(apiUrl);
         });
 
-        services.AddSingleton<IBus>(sp =>
-            new RemotableBus(sp.GetRequiredService<IHttpClientFactory>()
-                .CreateClient(RemotableBus.HttpClientName)));
+        services.AddSingleton<IBus>(sp => new RemotableBus(sp.GetRequiredService<IHttpClientFactory>()));
 
         services.AddSingleton<ChatClientFactory>();
     }

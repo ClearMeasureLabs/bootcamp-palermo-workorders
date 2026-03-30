@@ -8,7 +8,7 @@ namespace ClearMeasure.Bootcamp.UI.Client;
 public class PublisherGateway(HttpClient httpClient) : IPublisherGateway
 {
     /// <summary>
-    /// Typed client name for <see cref="IHttpClientFactory"/> registration.
+    /// Named client key for <see cref="IHttpClientFactory.CreateClient(string)"/> (see <c>AddHttpClient</c> registration).
     /// </summary>
     public const string HttpClientName = nameof(PublisherGateway);
     /// <summary>

@@ -3,16 +3,17 @@ using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using MediatR;
+using Microsoft.Extensions.Http;
 
 namespace Worker.Messaging;
 
 /// <summary>
 /// Sends <see cref="IRemotableRequest"/> and <see cref="IRemotableEvent"/> messages to the UI server API and
 /// </summary>
-public class RemotableBus(HttpClient httpClient) : IBus
+public class RemotableBus(IHttpClientFactory httpClientFactory) : IBus
 {
     /// <summary>
-    /// Typed client name for <see cref="IHttpClientFactory"/> registration.
+    /// Named client key for <see cref="IHttpClientFactory.CreateClient(string)"/> (see <c>AddHttpClient</c> registration).
     /// </summary>
     public const string HttpClientName = nameof(RemotableBus);
 
@@ -50,6 +51,7 @@ public class RemotableBus(HttpClient httpClient) : IBus
 
     private async Task<WebServiceMessage?> PostMessage(object payload)
     {
+        using var httpClient = httpClientFactory.CreateClient(HttpClientName);
         var message = new WebServiceMessage(payload);
         var result = await httpClient.PostAsJsonAsync(string.Empty, message);
         var json = await result.Content.ReadAsStringAsync();

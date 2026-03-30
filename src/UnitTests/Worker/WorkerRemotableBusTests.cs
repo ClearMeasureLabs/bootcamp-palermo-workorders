@@ -3,6 +3,7 @@ using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Http;
 using Shouldly;
 using Worker.Messaging;
 
@@ -20,13 +21,18 @@ public class WorkerRemotableBusTests
         stubHandler.SetResponse(JsonSerializer.Serialize(responseMessage));
         var baseUri = new Uri("https://api.example.test/api/blazor-wasm-single-api");
         using var httpClient = new HttpClient(stubHandler) { BaseAddress = baseUri };
-        var bus = new RemotableBus(httpClient);
+        var bus = new RemotableBus(new StubHttpClientFactory(httpClient));
 
         var result = await bus.Send(new HealthCheckRemotableRequest());
 
         result.ShouldBe(expectedStatus);
         stubHandler.LastRequestUri.ShouldNotBeNull();
         stubHandler.LastRequestUri!.ShouldBe(baseUri);
+    }
+
+    private sealed class StubHttpClientFactory(HttpClient client) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => client;
     }
 
     private sealed class StubHttpMessageHandler : HttpMessageHandler

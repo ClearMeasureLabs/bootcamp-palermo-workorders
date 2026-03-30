@@ -16,7 +16,7 @@ public class ToolProvider(IServer server, IHttpClientFactory httpClientFactory, 
     : IToolProvider, IAsyncDisposable
 {
     /// <summary>
-    /// Typed client name for MCP loopback <see cref="HttpClient"/> from <see cref="IHttpClientFactory"/>.
+    /// Named client key for MCP loopback <see cref="HttpClient"/> from <see cref="IHttpClientFactory"/>.
     /// </summary>
     public const string McpLoopbackHttpClientName = "McpLoopback";
 
