@@ -1,4 +1,6 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -10,12 +12,20 @@ using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using ClearMeasure.Bootcamp.UI.Server.Grpc;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ConfigureEndpointDefaults(listenOptions => { listenOptions.Protocols = HttpProtocols.Http1AndHttp2; });
+});
+
 builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
+builder.Services.AddProblemDetails();
 builder.Services.AddControllersWithViews()
     .AddApplicationPart(typeof(DetailedHealthController).Assembly);
 builder.Services.AddApiVersioning(options =>
@@ -51,6 +61,8 @@ builder.Services.AddOutputCache(options =>
         .SetVaryByQuery("*")
         .SetVaryByHeader("Accept"));
 });
+
+builder.Services.AddGrpc();
 
 builder.Services.AddResponseCompression(options =>
 {
@@ -108,6 +120,13 @@ app.MapDefaultEndpoints();
 // Configure the HTTP request pipeline.
 app.UseCorrelationId();
 
+app.UseWhen(
+    context => ProblemDetailsPaths.IsMachineOriented(context.Request.Path),
+    branch => branch.UseExceptionHandler(new ExceptionHandlerOptions
+    {
+        ExceptionHandler = context => ProblemDetailsExceptionHandler.HandleAsync(context, app.Environment)
+    }));
+
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
@@ -129,6 +148,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
+app.UseMachineClientStatusCodeProblemDetails();
 
 if (app.Services.IsServerCorsActive())
 {
@@ -165,8 +185,28 @@ if (app.Services.IsServerCorsActive())
     apiControllers.RequireCors(ServerCorsOptions.PolicyName);
 }
 
+app.MapGrpcService<WorkOrdersGrpcService>();
 app.MapMcp("/mcp");
-app.MapFallbackToFile("index.html");
+app.MapFallback(async context =>
+{
+    if (ProblemDetailsPaths.IsMachineOriented(context.Request.Path))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    var env = context.RequestServices.GetRequiredService<IWebHostEnvironment>();
+    var fileInfo = env.WebRootFileProvider.GetFileInfo("index.html");
+    if (!fileInfo.Exists)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await using var stream = fileInfo.CreateReadStream();
+    await stream.CopyToAsync(context.Response.Body);
+});
 app.MapHealthChecks("_healthcheck");
 
 await app.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync();

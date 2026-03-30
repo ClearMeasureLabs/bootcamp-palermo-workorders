@@ -58,6 +58,9 @@ public static class ApiRateLimitingExtensions
     private static readonly PathString BlazorSingleApiPathV1 =
         new("/api/v1.0/" + WebServiceApiRoutes.AbstractPathSegment);
 
+    /// <remarks>
+    /// gRPC requests are not matched by this helper, so they are not subject to the API sliding-window policy.
+    /// </remarks>
     internal static bool ShouldApplyToPath(PathString path)
     {
         if (path.StartsWithSegments(ApiPrefix, StringComparison.OrdinalIgnoreCase))
