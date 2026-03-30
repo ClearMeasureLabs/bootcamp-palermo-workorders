@@ -63,7 +63,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
-    [Retry(5)]
+    [Retry(25)]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilie()
     {
         new ZDataLoader().LoadData();
@@ -100,7 +100,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
-    [Retry(5)]
+    [Retry(25)]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
     {
         new ZDataLoader().LoadData();

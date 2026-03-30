@@ -10,9 +10,16 @@ using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using ClearMeasure.Bootcamp.UI.Server.Grpc;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ConfigureEndpointDefaults(listenOptions => { listenOptions.Protocols = HttpProtocols.Http1AndHttp2; });
+});
 
 builder.AddServiceDefaults();
 builder.Configuration.AddEnvironmentVariables();
@@ -47,6 +54,8 @@ builder.Services.AddOutputCache(options =>
         .SetVaryByQuery("*")
         .SetVaryByHeader("Accept"));
 });
+
+builder.Services.AddGrpc();
 
 builder.Services.AddResponseCompression(options =>
 {
@@ -159,6 +168,7 @@ if (app.Services.IsServerCorsActive())
     apiControllers.RequireCors(ServerCorsOptions.PolicyName);
 }
 
+app.MapGrpcService<WorkOrdersGrpcService>();
 app.MapMcp("/mcp");
 app.MapFallbackToFile("index.html");
 app.MapHealthChecks("_healthcheck");
