@@ -28,6 +28,8 @@ builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
+builder.Services.Configure<RequestBodyBufferingOptions>(
+    builder.Configuration.GetSection(RequestBodyBufferingOptions.SectionName));
 builder.Services.AddApiRateLimiting(builder.Configuration);
 
 builder.Services.AddResponseCompression(options =>
@@ -109,7 +111,22 @@ app.UseRouting();
 if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
 {
     app.MapGet("/_test/compression-probe", () => Results.Text(new string('A', 4096), "text/plain; charset=utf-8"));
+    app.MapPost("/_test/body-buffer-probe", async (HttpRequest request, CancellationToken cancellationToken) =>
+    {
+        using var firstReader = new StreamReader(request.Body, leaveOpen: true);
+        var first = await firstReader.ReadToEndAsync(cancellationToken);
+        if (request.Body.CanSeek)
+        {
+            request.Body.Position = 0;
+        }
+
+        using var secondReader = new StreamReader(request.Body, leaveOpen: true);
+        var second = await secondReader.ReadToEndAsync(cancellationToken);
+        return Results.Json(new { first, second });
+    });
 }
+
+app.UseRequestBodyBuffering();
 
 app.UseApiRateLimiting();
 
