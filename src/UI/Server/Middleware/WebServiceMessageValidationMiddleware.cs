@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using FluentValidation;
@@ -20,6 +21,9 @@ public sealed class WebServiceMessageValidationMiddleware
             IncludeFields = false,
             PropertyNameCaseInsensitive = true
         };
+
+    private static readonly ConcurrentDictionary<Type, Func<object, IServiceProvider, CancellationToken, Task<ValidationResult?>>> PayloadValidators =
+        new();
 
     private readonly RequestDelegate _next;
     private readonly ILogger<WebServiceMessageValidationMiddleware> _logger;
@@ -90,41 +94,47 @@ public sealed class WebServiceMessageValidationMiddleware
             return;
         }
 
-        var validatorInterface = typeof(IValidator<>).MakeGenericType(payload.GetType());
-        var payloadValidator = services.GetService(validatorInterface);
-        if (payloadValidator is null)
+        var validatePayload = PayloadValidators.GetOrAdd(payload.GetType(), CreatePayloadValidator);
+        var payloadResult = await validatePayload(payload, services, context.RequestAborted);
+
+        if (payloadResult is null)
         {
-            await WriteBadRequestAsync(
-                context,
-                $"No validator registered for type {payload.GetType().FullName}.");
+            await _next(context);
             return;
         }
 
-        var validateMethod = validatorInterface.GetMethod(
-            "ValidateAsync",
-            new[] { payload.GetType(), typeof(CancellationToken) });
-        if (validateMethod is null)
+        if (!payloadResult.IsValid)
         {
-            await WriteBadRequestAsync(context, "Validation configuration error.");
-            return;
-        }
-
-        var validateTask = (Task)validateMethod.Invoke(
-            payloadValidator,
-            new object?[] { payload, context.RequestAborted })!;
-
-        await validateTask.ConfigureAwait(false);
-
-        var resultProperty = validateTask.GetType().GetProperty(nameof(Task<object>.Result))!;
-        var validationResult = (ValidationResult)resultProperty.GetValue(validateTask)!;
-
-        if (!validationResult.IsValid)
-        {
-            await WriteValidationProblemAsync(context, validationResult.Errors);
+            await WriteValidationProblemAsync(context, payloadResult.Errors);
             return;
         }
 
         await _next(context);
+    }
+
+    private static Func<object, IServiceProvider, CancellationToken, Task<ValidationResult?>> CreatePayloadValidator(
+        Type payloadType)
+    {
+        var validatorInterface = typeof(IValidator<>).MakeGenericType(payloadType);
+        var validateMethod = validatorInterface.GetMethod(
+            "ValidateAsync",
+            new[] { payloadType, typeof(CancellationToken) })
+            ?? throw new InvalidOperationException(
+                $"Could not resolve ValidateAsync for {validatorInterface.Name}.");
+
+        return async (payload, services, cancellationToken) =>
+        {
+            var validator = services.GetService(validatorInterface);
+            if (validator is null)
+            {
+                return null;
+            }
+
+            var task = (Task)validateMethod.Invoke(validator, new object?[] { payload, cancellationToken })!;
+            await task.ConfigureAwait(false);
+            var resultProperty = task.GetType().GetProperty(nameof(Task<object>.Result))!;
+            return (ValidationResult)resultProperty.GetValue(task)!;
+        };
     }
 
     private static bool IsBlazorWasmSingleApiPost(HttpRequest request)

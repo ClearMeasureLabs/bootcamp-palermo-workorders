@@ -184,9 +184,8 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
 
 app.UseRequestBodyBuffering();
 
-app.UseMiddleware<WebServiceMessageValidationMiddleware>();
-
 app.UseMiddleware<RateLimitingMiddleware>();
+app.UseMiddleware<WebServiceMessageValidationMiddleware>();
 app.UseOutputCache();
 
 app.MapRazorPages();

@@ -1,6 +1,7 @@
+using ClearMeasure.Bootcamp.Core;
 using FluentValidation;
 
-namespace ClearMeasure.Bootcamp.Core.Validation;
+namespace ClearMeasure.Bootcamp.UI.Server.Validation;
 
 public sealed class HealthCheckRemotableRequestValidator : AbstractValidator<HealthCheckRemotableRequest>
 {
