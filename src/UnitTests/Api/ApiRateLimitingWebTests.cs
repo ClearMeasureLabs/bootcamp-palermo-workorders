@@ -17,6 +17,8 @@ public class ApiRateLimitingWebTests
         var limited = await client.GetAsync("/api/version");
         limited.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
         limited.Headers.RetryAfter.ShouldNotBeNull();
+        limited.Content.Headers.ContentType?.MediaType.ShouldBe("text/plain");
+        (await limited.Content.ReadAsStringAsync()).ShouldBe("Too many requests. Please try again later.");
     }
 
     [Test]
