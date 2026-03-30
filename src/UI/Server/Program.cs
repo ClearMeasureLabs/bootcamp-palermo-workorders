@@ -28,6 +28,7 @@ builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddApiRateLimiting(builder.Configuration);
+builder.Services.AddRequestDecompression();
 
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
@@ -88,6 +89,8 @@ else
 
 app.UseHttpsRedirection();
 
+app.UseRequestDecompression();
+
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
@@ -102,5 +105,15 @@ app.MapFallbackToFile("index.html");
 app.MapHealthChecks("_healthcheck");
 
 await app.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync();
+
+if (app.Environment.IsEnvironment("Testing"))
+{
+    app.MapPost("/__test/request-body-echo", async (HttpContext httpContext) =>
+    {
+        httpContext.Response.ContentType = "text/plain; charset=utf-8";
+        using var reader = new StreamReader(httpContext.Request.Body);
+        await httpContext.Response.WriteAsync(await reader.ReadToEndAsync());
+    });
+}
 
 app.Run();
