@@ -84,7 +84,6 @@ public static class TestHost
                     var learningTransport = endpointConfiguration.UseTransport<LearningTransport>();
                     learningTransport.Routing()
                         .RouteToEndpoint(typeof(TracerBulletCommand), "WorkOrderProcessing");
-                    endpointConfiguration.DisableFeature<Sagas>();
                 }
                 else
                 {
@@ -95,6 +94,8 @@ public static class TestHost
                     transport.Routing()
                         .RouteToEndpoint(typeof(TracerBulletCommand), "WorkOrderProcessing");
                 }
+
+                endpointConfiguration.DisableFeature<Sagas>();
 
                 var conventions = new MessagingConventions();
                 endpointConfiguration.Conventions().Add(conventions);

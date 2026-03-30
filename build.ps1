@@ -143,7 +143,7 @@ Function IntegrationTest {
 					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 					--no-restore --configuration $projectConfig `
 					--collect:"XPlat Code Coverage" `
-					--filter "TestCategory!=SqlServerOnly"
+					--filter "Category!=SqlServerOnly"
 			}
 			else {
 				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
