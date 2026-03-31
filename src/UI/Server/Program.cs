@@ -16,6 +16,7 @@ using ClearMeasure.Bootcamp.UI.Server.Grpc;
 using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
+using ClearMeasure.Bootcamp.UI.Server.Testing;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;
@@ -44,6 +45,10 @@ builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IdempotencyOptions>(
+    builder.Configuration.GetSection(IdempotencyOptions.SectionName));
+builder.Services.AddSingleton<IdempotencyProbeState>();
 builder.Services.AddApiRateLimiting(builder.Configuration);
 builder.Services.AddApiRequestTimeouts(builder.Configuration);
 builder.Services.Configure<ApiKeyAuthenticationOptions>(
@@ -206,6 +211,8 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
 
 app.UseRequestBodyBuffering();
 
+app.UseMiddleware<IdempotencyMiddleware>();
+
 app.UseMiddleware<WebServiceMessageValidationMiddleware>();
 
 app.UseMiddleware<RateLimitingMiddleware>();
@@ -222,6 +229,14 @@ if (apiRequestTimeoutOpts.Enabled && apiRequestTimeoutOpts.TimeoutSeconds > 0)
 if (app.Services.IsServerCorsActive())
 {
     apiControllers.RequireCors(ServerCorsOptions.PolicyName);
+}
+
+if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
+{
+    static IResult Probe(IdempotencyProbeState state) =>
+        Results.Text($"count={state.Next()}", "text/plain; charset=utf-8");
+    app.MapPost("/api/_test/idempotency-probe", Probe);
+    app.MapPut("/api/_test/idempotency-probe", Probe);
 }
 
 app.MapGrpcService<WorkOrdersGrpcService>();
