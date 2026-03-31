@@ -17,7 +17,9 @@ using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 using ClearMeasure.Bootcamp.UI.Server.Testing;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +50,7 @@ builder.Services.Configure<IdempotencyOptions>(
     builder.Configuration.GetSection(IdempotencyOptions.SectionName));
 builder.Services.AddSingleton<IdempotencyProbeState>();
 builder.Services.AddApiRateLimiting(builder.Configuration);
+builder.Services.AddApiRequestTimeouts(builder.Configuration);
 builder.Services.Configure<ApiKeyAuthenticationOptions>(
     builder.Configuration.GetSection(ApiKeyAuthenticationOptions.SectionName));
 builder.Services.PostConfigure<ApiKeyAuthenticationOptions>(o =>
@@ -156,6 +159,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseWhen(
+    context => ApiRateLimitingExtensions.ShouldApplyToPath(context.Request.Path),
+    branch => branch.UseRequestTimeouts());
+
 app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
 app.UseMachineClientStatusCodeProblemDetails();
 
@@ -192,6 +199,14 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
         using var reader = new StreamReader(httpContext.Request.Body);
         await httpContext.Response.WriteAsync(await reader.ReadToEndAsync());
     });
+    app.MapGet(
+            "/api/_test/request-timeout-probe",
+            async (HttpContext httpContext) =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(30), httpContext.RequestAborted);
+                return Results.Ok();
+            })
+        .WithRequestTimeout(TimeSpan.FromMilliseconds(500));
 }
 
 app.UseRequestBodyBuffering();
@@ -205,6 +220,12 @@ app.UseOutputCache();
 
 app.MapRazorPages();
 var apiControllers = app.MapControllers();
+var apiRequestTimeoutOpts = app.Services.GetRequiredService<IOptions<ApiRequestTimeoutOptions>>().Value;
+if (apiRequestTimeoutOpts.Enabled && apiRequestTimeoutOpts.TimeoutSeconds > 0)
+{
+    apiControllers.WithRequestTimeout(ApiRequestTimeoutsExtensions.ApiControllersPolicyName);
+}
+
 if (app.Services.IsServerCorsActive())
 {
     apiControllers.RequireCors(ServerCorsOptions.PolicyName);
