@@ -58,6 +58,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="Instructions" class="form-label">Instructions:</label>
+                    <div>
+                        <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
+                        <button type="button" data-testid="@Elements.SpeakInstructions" class="btn btn-sm btn-outline-secondary" aria-label="Speak instructions" title="Speak instructions" @onclick="SpeakInstructionsAsync">&#x1F50A;</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="RoomNumber" class="form-label">Room:</label>
                     <div>
                         <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
@@ -162,6 +170,8 @@
         AttachmentUploadedBy,
         AttachmentUploadedDate,
         SpeakTitle,
-        SpeakDescription
+        SpeakDescription,
+        Instructions,
+        SpeakInstructions
     }
 }

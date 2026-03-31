@@ -312,6 +312,7 @@ public abstract class AcceptanceTestBase
         var testTitle = order.Title;
         var testDescription = order.Description;
         var testRoomNumber = order.RoomNumber;
+        var testInstructions = order.Instructions;
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
@@ -324,6 +325,7 @@ public abstract class AcceptanceTestBase
         order.Number = newWorkOrderNumber;
         await Input(nameof(WorkOrderManage.Elements.Title), testTitle);
         await Input(nameof(WorkOrderManage.Elements.Description), testDescription);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), testInstructions);
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), testRoomNumber);
         await TakeScreenshotAsync(2, "FormFilled");
 
