@@ -1,5 +1,7 @@
 ﻿using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
+using ClearMeasure.Bootcamp.Core.Validation;
+using ClearMeasure.Bootcamp.UI.Server.Validation;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
@@ -9,8 +11,10 @@ using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using ClearMeasure.Bootcamp.UI.Shared;
+using FluentValidation;
 using Lamar;
 using MediatR;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using FunJeffreyCustomEventHealthCheck = ClearMeasure.Bootcamp.UI.Shared.FunJeffreyCustomEventHealthCheck;
 
@@ -20,6 +24,10 @@ public class UiServiceRegistry : ServiceRegistry
 {
     public UiServiceRegistry()
     {
+        this.AddSingleton<IStartupFilter, TestingDatabaseStartupFilter>();
+        this.AddValidatorsFromAssemblyContaining<WebServiceMessageValidator>();
+        this.AddValidatorsFromAssemblyContaining<EmployeeGetAllQueryValidator>();
+
         this.AddScoped<DbContext, DataContext>();
 
         this.AddSingleton<RealtimeNotificationHub>();
@@ -62,5 +70,7 @@ public class UiServiceRegistry : ServiceRegistry
             .AddCheck<Is64BitProcessHealthCheck>("Server")
             .AddCheck<HealthCheck>("API")
             .AddCheck<FunJeffreyCustomEventHealthCheck>("Jeffrey");
+
+        this.AddSingleton<IDetailedHealthReportProvider, DetailedHealthReportProvider>();
     }
 }

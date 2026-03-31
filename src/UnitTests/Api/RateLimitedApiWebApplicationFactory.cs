@@ -12,21 +12,29 @@ namespace ClearMeasure.Bootcamp.UnitTests.Api;
 /// </summary>
 public sealed class RateLimitedApiWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
 {
+    private readonly string _sqlConnectionString;
+
+    public RateLimitedApiWebApplicationFactory(string? sqlConnectionString = null)
+    {
+        _sqlConnectionString = sqlConnectionString ?? WebApplicationTestingDatabase.SqliteSharedMemoryConnectionString;
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // Avoid appsettings.Development.json (LocalDB) which overrides in-memory SQLite on Linux.
         builder.UseEnvironment("Testing");
         // Host settings are visible to Program.cs before merged app configuration from WebApplicationFactory.
-        builder.UseSetting("ConnectionStrings:SqlConnectionString", "Data Source=:memory:");
+        builder.UseSetting("ConnectionStrings:SqlConnectionString", _sqlConnectionString);
         builder.UseSetting("ApiRateLimiting:Enabled", "true");
         builder.UseSetting("ApiRateLimiting:PermitLimit", "1");
         builder.UseSetting("ApiRateLimiting:WindowSeconds", "60");
         builder.UseSetting("ApiRateLimiting:SegmentsPerWindow", "2");
+        builder.UseSetting("ApiRateLimiting:QueueLimit", "0");
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:SqlConnectionString"] = "Data Source=:memory:",
+                ["ConnectionStrings:SqlConnectionString"] = _sqlConnectionString,
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
@@ -34,7 +42,10 @@ public sealed class RateLimitedApiWebApplicationFactory : WebApplicationFactory<
                 ["ApiRateLimiting:Enabled"] = "true",
                 ["ApiRateLimiting:PermitLimit"] = "1",
                 ["ApiRateLimiting:WindowSeconds"] = "60",
-                ["ApiRateLimiting:SegmentsPerWindow"] = "2"
+                ["ApiRateLimiting:SegmentsPerWindow"] = "2",
+                ["ApiRateLimiting:QueueLimit"] = "0",
+                ["ApiKeyAuthentication:Enabled"] = "false",
+                ["ApiKeyAuthentication:ValidationKey"] = ""
             });
         });
 
@@ -46,6 +57,7 @@ public sealed class RateLimitedApiWebApplicationFactory : WebApplicationFactory<
                 o.PermitLimit = 1;
                 o.WindowSeconds = 60;
                 o.SegmentsPerWindow = 2;
+                o.QueueLimit = 0;
             });
         });
     }

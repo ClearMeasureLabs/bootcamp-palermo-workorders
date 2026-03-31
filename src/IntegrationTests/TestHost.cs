@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using NServiceBus.Features;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 
@@ -60,8 +61,33 @@ public static class TestHost
                     .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true)
                     .AddJsonFile("appsettings.acceptancetests.json", true, true)
                     .AddJsonFile("appsettings.test.json", false, true)
-                    .AddUserSecrets<TestDatabaseConfiguration>(optional: true)
-                    .AddEnvironmentVariables();
+                    .AddUserSecrets<TestDatabaseConfiguration>(optional: true);
+
+                if (string.Equals(Environment.GetEnvironmentVariable("DATABASE_ENGINE"), "SQLite",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    var sqliteConnection = Environment.GetEnvironmentVariable("ConnectionStrings__SqlConnectionString")
+                        ?? "Data Source=integration-tests.db";
+                    config.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["ConnectionStrings:SqlConnectionString"] = sqliteConnection
+                    });
+                }
+                else if (OperatingSystem.IsLinux()
+                    && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ConnectionStrings__SqlConnectionString")))
+                {
+                    var interim = config.Build();
+                    var connectionString = interim.GetConnectionString("SqlConnectionString") ?? "";
+                    if (connectionString.Contains("LocalDb", StringComparison.OrdinalIgnoreCase))
+                    {
+                        config.AddInMemoryCollection(new Dictionary<string, string?>
+                        {
+                            ["ConnectionStrings:SqlConnectionString"] = "Data Source=integration-tests.db"
+                        });
+                    }
+                }
+
+                config.AddEnvironmentVariables();
             })
             .ConfigureServices(s =>
             {
@@ -83,6 +109,7 @@ public static class TestHost
                     var learningTransport = endpointConfiguration.UseTransport<LearningTransport>();
                     learningTransport.Routing()
                         .RouteToEndpoint(typeof(TracerBulletCommand), "WorkOrderProcessing");
+                    endpointConfiguration.DisableFeature<Sagas>();
                 }
                 else
                 {

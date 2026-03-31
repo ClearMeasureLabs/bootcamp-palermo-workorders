@@ -12,7 +12,7 @@ public class TranslationServiceTests : LlmTestBase
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
         var service = new TranslationService(factory);
 
-        var result = await service.TranslateAsync("Fix the broken pipe", "es-ES");
+        var result = await ExecuteLlmAsync(() => service.TranslateAsync("Fix the broken pipe", "es-ES"));
 
         result.ShouldNotBeNullOrWhiteSpace();
         result.ShouldNotBe("Fix the broken pipe");
@@ -24,7 +24,7 @@ public class TranslationServiceTests : LlmTestBase
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
         var service = new TranslationService(factory);
 
-        var result = await service.TranslateAsync("Organize Christmas Concert", "de-DE");
+        var result = await ExecuteLlmAsync(() => service.TranslateAsync("Organize Christmas Concert", "de-DE"));
 
         result.ShouldNotBeNullOrWhiteSpace();
         result.ShouldNotBe("Organize Christmas Concert");
