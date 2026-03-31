@@ -151,19 +151,25 @@ Function IntegrationTest {
 				$testFilter = ($filterParts -join "&")
 			}
 
+			$integrationTestArgs = @(
+				"test"
+				"/p:CopyLocalLockFileAssemblies=true"
+				"-nologo"
+				"-v"
+				$verbosity
+				"--logger:trx"
+				"--results-directory"
+				$(Join-Path $test_dir "IntegrationTests")
+				"--no-build"
+				"--no-restore"
+				"--configuration"
+				$projectConfig
+				"--collect:XPlat Code Coverage"
+			)
 			if ($testFilter) {
-				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
-					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
-					--no-restore --configuration $projectConfig `
-					--collect:"XPlat Code Coverage" `
-					--filter $testFilter
+				$integrationTestArgs += @("--filter", $testFilter)
 			}
-			else {
-				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
-					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
-					--no-restore --configuration $projectConfig `
-					--collect:"XPlat Code Coverage"
-			}
+			& dotnet @integrationTestArgs
 		}
 	}
 	finally {
