@@ -9,6 +9,7 @@ using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.McpServer;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using ClearMeasure.Bootcamp.UI.Shared;
 using FluentValidation;
 using Lamar;
@@ -29,12 +30,19 @@ public class UiServiceRegistry : ServiceRegistry
 
         this.AddScoped<DbContext, DataContext>();
 
-        this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<UiServiceRegistry>());
-        this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<HealthCheck>());
+        this.AddSingleton<RealtimeNotificationHub>();
+        this.AddSingleton<IRealtimeNotificationHub>(sp => sp.GetRequiredService<RealtimeNotificationHub>());
+
+        this.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssemblyContaining<UiServiceRegistry>();
+            cfg.RegisterServicesFromAssemblyContaining<HealthCheck>();
+        });
         this.AddTransient<IBus>(provider =>
         {
             var mediator = provider.GetRequiredService<IMediator>();
-            return new Bus(mediator);
+            var hub = provider.GetRequiredService<IRealtimeNotificationHub>();
+            return new ServerRealtimeBus(mediator, hub);
         });
 
         this.AddTransient<IWorkOrderNumberGenerator, WorkOrderNumberGenerator>();

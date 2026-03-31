@@ -14,6 +14,7 @@ using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UI.Server.Grpc;
 using ClearMeasure.Bootcamp.UI.Server.Middleware;
+using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 
@@ -158,9 +159,15 @@ if (app.Services.IsServerCorsActive())
     app.UseCors(ServerCorsOptions.PolicyName);
 }
 
+app.UseWebSockets();
+app.UseMiddleware<RealtimeNotificationWebSocketMiddleware>();
+
 if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
 {
     app.MapGet("/_test/compression-probe", () => Results.Text(new string('A', 4096), "text/plain; charset=utf-8"));
+    app.MapGet(
+        "/_test/realtime/connection-count",
+        (IRealtimeNotificationHub hub) => Results.Json(new { count = hub.ConnectionCount }));
     app.MapPost("/_test/body-buffer-probe", async (HttpRequest request, CancellationToken cancellationToken) =>
     {
         using var firstReader = new StreamReader(request.Body, leaveOpen: true);
