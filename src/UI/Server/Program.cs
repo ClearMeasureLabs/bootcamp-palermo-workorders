@@ -7,6 +7,7 @@ using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 
@@ -106,9 +107,15 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseWebSockets();
+app.UseMiddleware<RealtimeNotificationWebSocketMiddleware>();
+
 if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
 {
     app.MapGet("/_test/compression-probe", () => Results.Text(new string('A', 4096), "text/plain; charset=utf-8"));
+    app.MapGet(
+        "/_test/realtime/connection-count",
+        (IRealtimeNotificationHub hub) => Results.Json(new { count = hub.ConnectionCount }));
 }
 
 app.UseApiRateLimiting();
