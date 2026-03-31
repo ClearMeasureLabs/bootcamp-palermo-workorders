@@ -62,14 +62,6 @@ public static class TestHost
                     .AddJsonFile("appsettings.test.json", false, true)
                     .AddUserSecrets<TestDatabaseConfiguration>(optional: true)
                     .AddEnvironmentVariables();
-
-                if (!OperatingSystem.IsWindows())
-                {
-                    config.AddInMemoryCollection(new Dictionary<string, string?>
-                    {
-                        ["ConnectionStrings:SqlConnectionString"] = "Data Source=:memory:"
-                    });
-                }
             })
             .ConfigureServices(s =>
             {
