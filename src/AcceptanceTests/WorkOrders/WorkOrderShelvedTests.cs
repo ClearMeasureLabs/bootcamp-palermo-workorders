@@ -19,13 +19,16 @@ public class WorkOrderShelvedTests : AcceptanceTestBase
 
         order.Title = "Title from automation";
         order.Description = "Description";
+        order.Instructions = "Detailed instructions";
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToAssignedCommand.Name);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync(order.Title!);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToHaveValueAsync(order.Description!);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToHaveValueAsync(order.Instructions!);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee))).ToHaveValueAsync(CurrentUser.UserName);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status))).ToHaveTextAsync(WorkOrderStatus.Assigned.FriendlyName);
     }
