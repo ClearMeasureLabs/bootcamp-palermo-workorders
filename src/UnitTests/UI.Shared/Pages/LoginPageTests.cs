@@ -66,7 +66,7 @@ public class LoginPageTests
     }
 
     [Test]
-    public void ShouldDisplayTitleCasedLabelsInLoginDropdown_ForMixedAndAllCapsNames()
+    public void ShouldDisplayAllCapsLabelsInLoginDropdown_ForMixedAndAllCapsNames()
     {
         using var ctx = new TestContext();
 
@@ -79,10 +79,10 @@ public class LoginPageTests
         var component = ctx.RenderComponent<Login>();
 
         var hsimpsonOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "hsimpson");
-        hsimpsonOption.TextContent.ShouldBe("Homer Simpson");
+        hsimpsonOption.TextContent.ShouldBe("HOMER SIMPSON");
 
         var jdoeOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "jdoe");
-        jdoeOption.TextContent.ShouldBe("Mary Jane Simpson");
+        jdoeOption.TextContent.ShouldBe("MARY JANE SIMPSON");
     }
 
     [Test]
