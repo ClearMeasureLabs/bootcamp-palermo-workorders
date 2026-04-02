@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -32,10 +33,10 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
                 Timeout = 10000 // 10 seconds
             });
 
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToBeDisabledAsync();
+        // The creator can reassign completed work orders, so fields are editable for them
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + CompleteToAssignedCommand.Name)).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
             .ToHaveValueAsync(expectedDescription);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeDisabledAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
 
@@ -68,7 +69,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
                              throw new InvalidOperationException();
         rehyratedOrder.Status.ShouldBe(WorkOrderStatus.Complete);
 
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage)))
-            .ToHaveTextAsync("This work order is read-only for you at this time.");
+        // The creator can reassign completed work orders, so the Reassign button should be visible
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + CompleteToAssignedCommand.Name)).ToBeVisibleAsync();
     }
 }
