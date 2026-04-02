@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
@@ -62,5 +63,41 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
         return new SaveDraftCommand(order, employee);
+    }
+
+    [Test]
+    public void Execute_WithMixedCaseDescription_ConvertsDescriptionToUpperCase()
+    {
+        var employee = new Employee();
+        var order = new WorkOrder
+        {
+            Number = "456",
+            Status = WorkOrderStatus.Draft,
+            Description = "Fix Leaky Faucet",
+            Creator = employee
+        };
+
+        var command = new SaveDraftCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        order.Description.ShouldBe("FIX LEAKY FAUCET");
+    }
+
+    [Test]
+    public void Execute_WithEmptyDescription_RemainsEmptyString()
+    {
+        var employee = new Employee();
+        var order = new WorkOrder
+        {
+            Number = "789",
+            Status = WorkOrderStatus.Draft,
+            Description = "",
+            Creator = employee
+        };
+
+        var command = new SaveDraftCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        order.Description.ShouldBe(string.Empty);
     }
 }
