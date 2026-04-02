@@ -134,6 +134,13 @@
             }
         </div>
     </EditForm>
+
+    <ConfirmAssignmentModal
+        Visible="@_showConfirmationModal"
+        InProgressWorkOrder="@_inProgressWorkOrder"
+        Assignee="@_pendingAssignee"
+        OnConfirm="@OnConfirmAssignment"
+        OnCancel="@OnCancelAssignment"/>
 </div>
 
 @code
