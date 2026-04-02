@@ -176,8 +176,9 @@ public static class TestHost
                     ([System.ComponentModel.Description("Title")] string title,
                      [System.ComponentModel.Description("Description")] string description,
                      [System.ComponentModel.Description("Creator username")] string creatorUsername,
-                     [System.ComponentModel.Description("Optional room number")] string? roomNumber = null)
-                        => WorkOrderTools.CreateWorkOrder(CreateScopedBus(), CreateScopedNumberGenerator(), title, description, creatorUsername, roomNumber),
+                     [System.ComponentModel.Description("Optional room number")] string? roomNumber = null,
+                     [System.ComponentModel.Description("Optional instructions")] string? instructions = null)
+                        => WorkOrderTools.CreateWorkOrder(CreateScopedBus(), CreateScopedNumberGenerator(), title, description, creatorUsername, roomNumber, instructions),
                     "CreateWorkOrder",
                     "Creates a new draft work order."),
                 AIFunctionFactory.Create(
