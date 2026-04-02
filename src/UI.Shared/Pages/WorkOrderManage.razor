@@ -8,7 +8,7 @@
 
     <EditForm Model="@Model" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator/>
-        <ValidationSummary/>
+        <ValidationSummary class="validation-summary"/>
 
         <div class="form-container">
             <div class="form-grid">
@@ -54,6 +54,14 @@
                     <div>
                         <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
                         <button type="button" data-testid="@Elements.SpeakDescription" class="btn btn-sm btn-outline-secondary" aria-label="Speak description" title="Speak description" @onclick="SpeakDescriptionAsync">&#x1F50A;</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Instructions" class="form-label">Instructions:</label>
+                    <div>
+                        <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
+                        <button type="button" data-testid="@Elements.SpeakInstructions" class="btn btn-sm btn-outline-secondary" aria-label="Speak instructions" title="Speak instructions" @onclick="SpeakInstructionsAsync">&#x1F50A;</button>
                     </div>
                 </div>
 
@@ -146,6 +154,7 @@
         AssigneeFullName,
         RoomNumber,
         Description,
+        Instructions,
         AssignedDate,
         CompletedDate,
         CreatedDate,
@@ -162,6 +171,7 @@
         AttachmentUploadedBy,
         AttachmentUploadedDate,
         SpeakTitle,
-        SpeakDescription
+        SpeakDescription,
+        SpeakInstructions
     }
 }

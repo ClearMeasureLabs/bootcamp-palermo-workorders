@@ -77,5 +77,6 @@ public class WorkOrderSpeechTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.SpeakTitle))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.SpeakDescription))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.SpeakInstructions))).ToBeVisibleAsync();
     }
 }
