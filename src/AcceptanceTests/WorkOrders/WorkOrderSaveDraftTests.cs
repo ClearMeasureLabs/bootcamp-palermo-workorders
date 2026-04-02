@@ -90,7 +90,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
 
         var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
-        await Expect(titleField).ToHaveValueAsync("newtitle");
+        await Expect(titleField).ToHaveValueAsync("NEWTITLE");
 
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync("newdesc");
