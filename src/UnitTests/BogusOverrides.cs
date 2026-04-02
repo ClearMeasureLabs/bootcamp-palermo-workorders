@@ -22,6 +22,7 @@ internal class BogusOverrides : AutoGeneratorOverride
                 order.Title = order.Title.ClampLength(1, 200);        // HasMaxLength(200)
                 order.Description = order.Description.ClampLength(1, 4000); // HasMaxLength(4000)
                 order.RoomNumber = order.RoomNumber.ClampLength(1, 50);     // HasMaxLength(50)
+                order.Instructions = order.Instructions.ClampLength(1, 4000); // HasMaxLength(4000)
                 break;
             case WorkOrderStatus:
                 context.Instance = context.Faker.PickRandom<WorkOrderStatus>(WorkOrderStatus.GetAllItems());
