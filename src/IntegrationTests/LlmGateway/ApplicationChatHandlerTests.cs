@@ -107,8 +107,8 @@ public class ApplicationChatHandlerTests : LlmTestBase
         new ZDataLoader().LoadData();
 
         var workOrderNumber = await ExecuteAsync(
-            "Create a new work order to 'mow the grass', assign it to Groundskeeper Willie, " +
-            "only return the work order number");
+            "As tlovejoy, have Groundskeeper Willie mow the grass. Create the work order and assign it to him. " +
+            "Yes, assign the new work order. confirmed. Reply with only the work order number.");
 
         await CheckStatusAsync(WorkOrderStatus.Assigned);
 
