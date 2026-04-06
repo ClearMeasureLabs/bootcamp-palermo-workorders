@@ -69,7 +69,8 @@ public class UiServiceRegistry : ServiceRegistry
             .AddCheck<CanConnectToDatabaseHealthCheck>("DataAccess")
             .AddCheck<Is64BitProcessHealthCheck>("Server")
             .AddCheck<HealthCheck>("API")
-            .AddCheck<FunJeffreyCustomEventHealthCheck>("Jeffrey");
+            .AddCheck<FunJeffreyCustomEventHealthCheck>("Jeffrey")
+            .AddCheck<NeedsRebootHealthCheck>("NeedsReboot");
 
         this.AddSingleton<IDetailedHealthReportProvider, DetailedHealthReportProvider>();
     }

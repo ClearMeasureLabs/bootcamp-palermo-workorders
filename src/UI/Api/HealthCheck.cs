@@ -8,6 +8,6 @@ public class HealthCheck(ILogger<HealthCheck> logger) : IHealthCheck
         CancellationToken cancellationToken = new())
     {
         logger.LogDebug("Health check success");
-        return Task.FromResult(HealthCheckResult.Healthy());
+        return Task.FromResult(HealthCheckResult.Healthy("API layer is healthy"));
     }
 }

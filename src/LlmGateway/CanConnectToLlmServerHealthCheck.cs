@@ -38,7 +38,7 @@ public class CanConnectToLlmServerHealthCheck(
         {
             var message = $"Chat client connection failed: {ex.Message}";
             logger.LogWarning(message);
-            return HealthCheckResult.Unhealthy(message);
+            return HealthCheckResult.Unhealthy(message, ex);
         }
     }
 }
