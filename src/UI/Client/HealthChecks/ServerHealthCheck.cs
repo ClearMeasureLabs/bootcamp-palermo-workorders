@@ -8,8 +8,19 @@ public class ServerHealthCheck(IBus bus, ILogger<ServerHealthCheck> logger) : IH
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
         CancellationToken cancellationToken = new())
     {
-        var status = await bus.Send(new ServerHealthCheckQuery());
-        logger.LogInformation(status.ToString());
-        return new HealthCheckResult(status);
+        try
+        {
+            var status = await bus.Send(new ServerHealthCheckQuery());
+            logger.LogInformation(status.ToString());
+            return status == HealthStatus.Healthy
+                ? new HealthCheckResult(status, "Server health checks passed")
+                : new HealthCheckResult(status, $"Server health checks returned {status}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Server health check failed");
+            return HealthCheckResult.Unhealthy(
+                $"Server health check failed: {ex.Message}", ex);
+        }
     }
 }

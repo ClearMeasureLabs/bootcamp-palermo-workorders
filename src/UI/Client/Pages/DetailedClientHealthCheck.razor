@@ -1,0 +1,140 @@
+@page "/_clienthealthcheck/detailed"
+@using Microsoft.Extensions.Diagnostics.HealthChecks
+
+<style>
+    .health-status-healthy {
+        color: green;
+        font-weight: bold;
+    }
+
+    .health-status-degraded {
+        color: #ffa500;
+        font-weight: bold;
+    }
+
+    .health-status-unhealthy {
+        color: red;
+        font-weight: bold;
+    }
+
+    .diagnostic-section {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        margin-top: 5px;
+        font-family: monospace;
+        font-size: 0.85em;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .data-table {
+        border-collapse: collapse;
+        margin-top: 5px;
+    }
+
+    .data-table th, .data-table td {
+        border: 1px solid #dee2e6;
+        padding: 4px 8px;
+        text-align: left;
+        font-size: 0.85em;
+    }
+
+    .data-table th {
+        background-color: #e9ecef;
+    }
+</style>
+
+<h3>Detailed Application Health Status</h3>
+
+@if (_report == null)
+{
+    <p>Loading detailed health report...</p>
+}
+else
+{
+    <p>
+        <strong>Overall Status:</strong>
+        <span data-testid="@DetailedClientHealthCheck.Elements.Status"
+              class="@GetStatusCssClass(_report.Status)">@_report.Status</span>
+    </p>
+    <p><strong>Total Duration:</strong> @_report.TotalDuration.TotalMilliseconds.ToString("F2") ms</p>
+
+    <ul>
+        @foreach (var entry in _report.Entries.OrderBy(e => e.Key))
+        {
+            <li>
+                <strong>@entry.Key</strong><br/>
+                Status: <span class="@GetStatusCssClass(entry.Value.Status)">@entry.Value.Status</span><br/>
+                Duration: @entry.Value.Duration.TotalMilliseconds.ToString("F2") ms<br/>
+
+                @if (!string.IsNullOrEmpty(entry.Value.Description))
+                {
+                    <span><strong>Description:</strong> @entry.Value.Description</span>
+                    <br/>
+                }
+
+                @if (entry.Value.Exception != null)
+                {
+                    <div>
+                        <strong style="color:red">Exception:</strong>
+                        <div class="diagnostic-section">@entry.Value.Exception.ToString()</div>
+                    </div>
+                }
+
+                @if (entry.Value.Data.Count > 0)
+                {
+                    <div>
+                        <strong>Diagnostic Data:</strong>
+                        <table class="data-table">
+                            <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Value</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var kvp in entry.Value.Data)
+                            {
+                                <tr>
+                                    <td>@kvp.Key</td>
+                                    <td>@kvp.Value</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </li>
+        }
+    </ul>
+}
+
+@code {
+
+    public enum Elements
+    {
+        Status
+    }
+
+    private HealthReport _report = null!;
+
+    [Inject] public HealthCheckService Service { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _report = await Service.CheckHealthAsync();
+    }
+
+    private string GetStatusCssClass(HealthStatus status)
+    {
+        return status switch
+        {
+            HealthStatus.Healthy => "health-status-healthy",
+            HealthStatus.Degraded => "health-status-degraded",
+            HealthStatus.Unhealthy => "health-status-unhealthy",
+            _ => ""
+        };
+    }
+}

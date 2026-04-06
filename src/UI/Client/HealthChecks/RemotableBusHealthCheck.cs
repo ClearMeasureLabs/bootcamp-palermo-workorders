@@ -9,9 +9,20 @@ public class RemotableBusHealthCheck(IBus bus, ILogger<RemotableBusHealthCheck> 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
         CancellationToken cancellationToken = new())
     {
-        IRequest<HealthStatus> remotableRequest = new HealthCheckRemotableRequest();
-        var result = await bus.Send(remotableRequest);
-        logger.LogInformation(result.ToString());
-        return new HealthCheckResult(result);
+        try
+        {
+            IRequest<HealthStatus> remotableRequest = new HealthCheckRemotableRequest();
+            var result = await bus.Send(remotableRequest);
+            logger.LogInformation(result.ToString());
+            return result == HealthStatus.Healthy
+                ? new HealthCheckResult(result, "RemotableBus is healthy")
+                : new HealthCheckResult(result, $"RemotableBus returned {result}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "RemotableBus health check failed");
+            return HealthCheckResult.Unhealthy(
+                $"RemotableBus health check failed: {ex.Message}", ex);
+        }
     }
 }

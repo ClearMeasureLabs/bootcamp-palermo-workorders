@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OutputCaching;
@@ -262,6 +263,10 @@ app.MapFallback(async context =>
     await stream.CopyToAsync(context.Response.Body);
 });
 app.MapHealthChecks("_healthcheck");
+app.MapHealthChecks("_healthcheck/detailed", new HealthCheckOptions
+{
+    ResponseWriter = DetailedHealthCheckResponseWriter.WriteAsync
+});
 
 await app.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync();
 

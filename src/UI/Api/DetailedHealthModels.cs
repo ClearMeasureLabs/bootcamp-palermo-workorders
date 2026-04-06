@@ -43,10 +43,26 @@ public sealed class DetailedHealthReport
 /// </summary>
 public sealed class ComponentHealthEntry
 {
+    /// <summary>Logical name of the health check component.</summary>
     public required string Name { get; init; }
 
     /// <summary>One of <see cref="ComponentHealthStatus"/> values.</summary>
     public required string Status { get; init; }
+
+    /// <summary>Human-readable description returned by the health check (null when healthy with no description).</summary>
+    public string? Description { get; init; }
+
+    /// <summary>Exception message when the check captured a failure (null when no exception occurred).</summary>
+    public string? ExceptionMessage { get; init; }
+
+    /// <summary>Full exception detail including stack trace (null when no exception occurred).</summary>
+    public string? ExceptionDetail { get; init; }
+
+    /// <summary>Duration in milliseconds the health check took to execute.</summary>
+    public double? DurationMs { get; init; }
+
+    /// <summary>Arbitrary key-value data reported by the health check for additional diagnostic context.</summary>
+    public IReadOnlyDictionary<string, object>? Data { get; init; }
 }
 
 /// <summary>

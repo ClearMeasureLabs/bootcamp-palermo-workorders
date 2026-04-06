@@ -23,11 +23,7 @@ public sealed class DetailedHealthReportProvider(
     internal static DetailedHealthReport FromHealthReport(HealthReport report, TimeProvider clock)
     {
         var components = report.Entries
-            .Select(pair => new ComponentHealthEntry
-            {
-                Name = pair.Key,
-                Status = MapComponentStatus(pair.Value.Status)
-            })
+            .Select(pair => BuildComponentEntry(pair.Key, pair.Value))
             .OrderBy(c => c.Name, StringComparer.Ordinal)
             .ToList();
 
@@ -74,4 +70,20 @@ public sealed class DetailedHealthReportProvider(
         HealthStatus.Degraded => ComponentHealthStatus.Degraded,
         _ => ComponentHealthStatus.Healthy
     };
+
+    internal static ComponentHealthEntry BuildComponentEntry(string name, HealthReportEntry entry)
+    {
+        return new ComponentHealthEntry
+        {
+            Name = name,
+            Status = MapComponentStatus(entry.Status),
+            Description = entry.Description,
+            ExceptionMessage = entry.Exception?.Message,
+            ExceptionDetail = entry.Exception?.ToString(),
+            DurationMs = entry.Duration.TotalMilliseconds,
+            Data = entry.Data.Count > 0
+                ? entry.Data.ToDictionary(d => d.Key, d => d.Value)
+                : null
+        };
+    }
 }
