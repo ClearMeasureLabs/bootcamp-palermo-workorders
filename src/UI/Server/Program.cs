@@ -262,6 +262,12 @@ app.MapFallback(async context =>
     await using var stream = fileInfo.CreateReadStream();
     await stream.CopyToAsync(context.Response.Body);
 });
+app.MapGet("/_demo/setneedsreboot/{value:bool}", (bool value) =>
+{
+    NeedsRebootHealthCheck.NeedsReboot = value;
+    return Results.Text($"NeedsReboot set to {value}");
+});
+
 app.MapHealthChecks("_healthcheck");
 app.MapHealthChecks("_healthcheck/detailed", new HealthCheckOptions
 {
