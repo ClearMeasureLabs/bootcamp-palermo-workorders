@@ -93,5 +93,6 @@ public class DetailedHealthCheckEndpointIntegrationTests
         names.ShouldContain("Server");
         names.ShouldContain("API");
         names.ShouldContain("Jeffrey");
+        names.ShouldContain("NeedsReboot");
     }
 }
