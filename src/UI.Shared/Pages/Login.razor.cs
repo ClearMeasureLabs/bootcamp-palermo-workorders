@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
@@ -36,13 +35,11 @@ public partial class Login : AppComponentBase
     }
 
     /// <summary>
-    /// Display-only formatting for the login member select. Lowercases first so all-caps mainframe
-    /// names and mixed local casing both normalize to title case; does not alter stored names.
+    /// Display-only formatting for the login member select: uppercase to match mainframe all-caps; does not alter stored names.
     /// </summary>
     private static string GetLoginDropdownDisplayName(Employee employee)
     {
-        var fullName = employee.GetFullName();
-        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(fullName.ToLowerInvariant());
+        return LoginDisplayNameFormatter.FormatForLoginDropdown(employee.GetFullName());
     }
 
     private async Task HandleLogin()
