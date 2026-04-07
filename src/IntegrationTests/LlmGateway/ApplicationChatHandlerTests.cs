@@ -106,9 +106,10 @@ public class ApplicationChatHandlerTests : LlmTestBase
     {
         new ZDataLoader().LoadData();
 
-        var workOrderNumber = await ExecuteAsync(
+        var createResponseText = await ExecuteAsync(
             "Create a new work order to 'mow the grass', assign it to Groundskeeper Willie, " +
             "only return the work order number");
+        var workOrderNumber = await ParseWorkOrderNumberAsync(createResponseText);
 
         await CheckStatusAsync(WorkOrderStatus.Assigned);
 
@@ -128,6 +129,24 @@ public class ApplicationChatHandlerTests : LlmTestBase
             ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
 
             return response.Messages.LastOrDefault()?.Text!;
+        }
+
+        async Task<string> ParseWorkOrderNumberAsync(string? responseText)
+        {
+            await TestContext.Out.WriteLineAsync($"LLM response (before parse): {responseText}");
+
+            var factory = TestHost.GetRequiredService<ChatClientFactory>();
+            IChatClient parseClient = await factory.GetChatClient();
+            ChatResponse parseResponse = await ExecuteLlmAsync(() => parseClient.GetResponseAsync(
+            [
+                new(ChatRole.System,
+                    "Extract only the work order number from the following text. " +
+                    "Return nothing but the work order number itself, with no extra text."),
+                new(ChatRole.User, responseText ?? string.Empty)
+            ]));
+            var number = parseResponse.Messages.Last().Text!.Trim();
+            await TestContext.Out.WriteLineAsync($"Parsed work order number: {number}");
+            return number;
         }
 
         async Task CheckStatusAsync(WorkOrderStatus status)
