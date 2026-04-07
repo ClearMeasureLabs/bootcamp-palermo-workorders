@@ -43,12 +43,12 @@ public class MainLayoutNavRailTests : AcceptanceTestBase
         await Page.SetViewportSizeAsync(390, 844);
         await Page.ReloadAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(500);
 
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
         var rail = Page.Locator("#app-navigation-rail");
 
         await Expect(toggle).ToBeVisibleAsync();
+        await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false");
         await Expect(rail).Not.ToContainClassAsync("open");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
