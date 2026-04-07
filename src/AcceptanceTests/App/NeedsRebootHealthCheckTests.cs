@@ -2,6 +2,11 @@ using System.Net;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
+/// <summary>
+/// Uses a process-wide static flag on the server; must not run in parallel with itself or
+/// <see cref="TearDown"/> from another instance can clear the flag between set and assert.
+/// </summary>
+[Parallelizable(ParallelScope.None)]
 [TestFixture]
 public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 {
