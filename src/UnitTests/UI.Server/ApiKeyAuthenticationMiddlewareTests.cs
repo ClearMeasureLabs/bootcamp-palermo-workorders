@@ -12,6 +12,8 @@ public class ApiKeyAuthenticationMiddlewareTests
     [TestCase("/api/v1.0/version", true)]
     [TestCase("/api/time", true)]
     [TestCase("/api/v1.0/time", true)]
+    [TestCase("/api/tools/random", true)]
+    [TestCase("/api/v1.0/tools/random", true)]
     [TestCase("/api/WeatherForecast", false)]
     public void ShouldValidate_ReturnsExpected_When_PathAndOptions(string path, bool expectPublicSkip)
     {
