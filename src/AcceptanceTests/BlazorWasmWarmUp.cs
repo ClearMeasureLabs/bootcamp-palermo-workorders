@@ -51,8 +51,13 @@ public class BlazorWasmWarmUp
 
             try
             {
-                await page.GotoAsync("/", new PageGotoOptions { Timeout = TimeoutSeconds * 1000 });
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle,
+                // Avoid NetworkIdle: Blazor WASM often keeps connections open so "idle" never arrives in time.
+                await page.GotoAsync("/", new PageGotoOptions
+                {
+                    Timeout = TimeoutSeconds * 1000,
+                    WaitUntil = WaitUntilState.DOMContentLoaded
+                });
+                await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded,
                     new PageWaitForLoadStateOptions { Timeout = TimeoutSeconds * 1000 });
 
                 var loginLink = page.GetByTestId("LoginLink");
@@ -82,8 +87,12 @@ public class BlazorWasmWarmUp
                     TestContext.Out.WriteLine("Blazor WASM warm-up: reloading page...");
                     try
                     {
-                        await page.ReloadAsync(new PageReloadOptions { Timeout = TimeoutSeconds * 1000 });
-                        await page.WaitForLoadStateAsync(LoadState.NetworkIdle,
+                        await page.ReloadAsync(new PageReloadOptions
+                        {
+                            Timeout = TimeoutSeconds * 1000,
+                            WaitUntil = WaitUntilState.DOMContentLoaded
+                        });
+                        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded,
                             new PageWaitForLoadStateOptions { Timeout = TimeoutSeconds * 1000 });
                     }
                     catch (TimeoutException)
