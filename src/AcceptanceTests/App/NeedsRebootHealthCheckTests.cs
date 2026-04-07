@@ -2,7 +2,12 @@ using System.Net;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
+/// <summary>
+/// Uses static <see cref="ClearMeasure.Bootcamp.UI.Server.NeedsRebootHealthCheck.NeedsReboot"/> on the shared app host;
+/// must not run in parallel with other tests in this fixture.
+/// </summary>
 [TestFixture]
+[NonParallelizable]
 public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 {
     protected override bool RequiresBrowser => false;
