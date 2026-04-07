@@ -7,7 +7,11 @@ using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
-[TestFixture]
+/// <summary>
+/// Uses the shared <see cref="TestHost"/> database; parallel tests elsewhere call
+/// <c>DatabaseTests.Clean()</c> and can wipe rows between LLM work and DB assertions.
+/// </summary>
+[TestFixture, NonParallelizable]
 public class ApplicationChatHandlerTests : LlmTestBase
 {
     [Test]
