@@ -161,4 +161,13 @@ public class ApiRateLimitingWebTests
         for (var i = 0; i < 5; i++)
             (await client.GetAsync("/api/time")).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Test]
+    public async Task RateLimiting_EchoEndpoint_EnforcesSamePolicyAsOtherApiRoutes()
+    {
+        await using var factory = new TunableApiRateLimitWebApplicationFactory(StrictLimitSettings(1));
+        using var client = factory.CreateClient();
+        (await client.GetAsync("/api/echo")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.GetAsync("/api/echo")).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
 }
