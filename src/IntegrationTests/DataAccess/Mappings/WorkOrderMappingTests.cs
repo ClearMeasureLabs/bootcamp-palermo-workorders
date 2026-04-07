@@ -229,11 +229,13 @@ public class WorkOrderMappingTests
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        // WorkOrder.Description setter truncates to 4000 before EF sees the value, so length violations
+        // for Description are not observable through the domain model here.
         var workOrder = new WorkOrder
         {
-            Number = new string('A', 51), // Exceeds 50 char limit
+            Number = new string('A', 8), // Exceeds 7 char limit (WorkOrderMap)
             Title = new string('B', 301), // Exceeds 300 char limit
-            Description = new string('C', 1001), // Exceeds 1000 char limit
+            Description = "valid",
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
