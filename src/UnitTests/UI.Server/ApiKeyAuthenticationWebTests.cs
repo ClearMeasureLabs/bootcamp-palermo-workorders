@@ -65,4 +65,15 @@ public class ApiKeyAuthenticationWebTests
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Test]
+    public async Task Should_Return200_When_TimestampConverterWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/tools/timestamp-converter?value=1700000000");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }
