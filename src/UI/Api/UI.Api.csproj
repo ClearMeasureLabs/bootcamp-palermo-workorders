@@ -10,6 +10,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+			<_Parameter1>BuildConfiguration</_Parameter1>
+			<_Parameter2>$(Configuration)</_Parameter2>
+		</AssemblyAttribute>
+	</ItemGroup>
+
+	<ItemGroup>
 		<InternalsVisibleTo Include="ClearMeasure.Bootcamp.UnitTests" />
 		<InternalsVisibleTo Include="ClearMeasure.Bootcamp.IntegrationTests" />
 	</ItemGroup>
