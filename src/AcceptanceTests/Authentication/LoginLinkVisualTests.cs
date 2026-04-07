@@ -10,6 +10,7 @@ public class LoginLinkVisualTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task LoginLink_Visible_And_Emphasized_WhenUnauthenticated()
     {
+        await Page.EmulateMediaAsync(new PageEmulateMediaOptions { ReducedMotion = ReducedMotion.NoPreference });
         await EnsureLoggedOutAsync();
 
         var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
@@ -18,6 +19,33 @@ public class LoginLinkVisualTests : AcceptanceTestBase
         var animationName = await loginLink.EvaluateAsync<string>(
             "el => getComputedStyle(el).animationName");
         animationName.ShouldNotBe("none");
+    }
+
+    [Test, Retry(2)]
+    public async Task LoginLink_OpacityDipsBelowThreshold_WhenMotionAllowed()
+    {
+        await Page.EmulateMediaAsync(new PageEmulateMediaOptions { ReducedMotion = ReducedMotion.NoPreference });
+        await EnsureLoggedOutAsync();
+
+        var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await Expect(loginLink).ToBeVisibleAsync();
+
+        const double dimThreshold = 0.55;
+        var sawDim = false;
+        for (var i = 0; i < 30; i++)
+        {
+            var opacity = await loginLink.EvaluateAsync<double>(
+                "el => parseFloat(getComputedStyle(el).opacity)");
+            if (opacity < dimThreshold)
+            {
+                sawDim = true;
+                break;
+            }
+
+            await Task.Delay(80);
+        }
+
+        sawDim.ShouldBeTrue("login link opacity should dip during login-prompt-emphasis when motion is allowed");
     }
 
     [Test, Retry(2)]
