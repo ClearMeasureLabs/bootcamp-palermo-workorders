@@ -45,6 +45,7 @@ builder.Services.AddApiVersioning(options =>
 builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IRequestMetrics, RequestMetrics>();
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddMemoryCache();
 builder.Services.Configure<IdempotencyOptions>(
@@ -131,6 +132,8 @@ app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
 app.UseCorrelationId();
+
+app.UseMiddleware<RequestCountingMiddleware>();
 
 app.UseWhen(
     context => ProblemDetailsPaths.IsMachineOriented(context.Request.Path),

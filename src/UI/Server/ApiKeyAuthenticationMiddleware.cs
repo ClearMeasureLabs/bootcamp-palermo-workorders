@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
-/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version and time endpoints.
+/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, and metrics summary endpoints.
 /// </summary>
 public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 {
@@ -80,12 +80,30 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);
         }
 
-        if (segments.Length >= 3
+        if (segments.Length == 3)
+        {
+            if (segments[1].Equals("metrics", StringComparison.OrdinalIgnoreCase)
+                && segments[2].Equals("summary", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
+            {
+                var leaf = segments[2];
+                return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
+                       || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        if (segments.Length >= 4
             && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
         {
             var leaf = segments[2];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);
+                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
+                   || (leaf.Equals("metrics", StringComparison.OrdinalIgnoreCase)
+                       && segments[3].Equals("summary", StringComparison.OrdinalIgnoreCase));
         }
 
         return false;
