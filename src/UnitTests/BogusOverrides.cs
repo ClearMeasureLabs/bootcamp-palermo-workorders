@@ -19,7 +19,7 @@ internal class BogusOverrides : AutoGeneratorOverride
         {
             case WorkOrder order:
                 order.Number = new WorkOrderNumberGenerator().GenerateNumber();
-                order.Title = order.Title.ClampLength(1, 200);        // HasMaxLength(200)
+                order.Title = order.Title.ClampLength(1, 300);        // HasMaxLength(300)
                 order.Description = order.Description.ClampLength(1, 4000); // HasMaxLength(4000)
                 order.Instructions = order.Instructions == null
                     ? null

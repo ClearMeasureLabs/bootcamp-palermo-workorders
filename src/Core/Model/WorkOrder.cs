@@ -2,6 +2,8 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 
 public class WorkOrder : EntityBase<WorkOrder>
 {
+    private const int MaxLongTextLength = 4000;
+
     private string? _description = "";
     private string? _instructions;
 
@@ -40,23 +42,23 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     private string? getTruncatedNullableString(string? value)
     {
-        if (value == null || value.Length == 0)
+        if (value == null)
         {
             return null;
         }
 
-        var maxLength = Math.Min(4000, value.Length);
-        return value.Substring(0, maxLength);
+        var truncated = getTruncatedString(value);
+        return truncated.Length == 0 ? null : truncated;
     }
 
-    private string? getTruncatedString(string? value)
+    private string getTruncatedString(string? value)
     {
         if (value == null)
         {
             return string.Empty;
         }
 
-        var maxLength = Math.Min(4000, value.Length);
+        var maxLength = Math.Min(MaxLongTextLength, value.Length);
         return value.Substring(0, maxLength);
     }
 
