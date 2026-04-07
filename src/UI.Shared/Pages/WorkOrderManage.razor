@@ -60,14 +60,7 @@
                 <div class="form-group">
                     <label for="Instructions" class="form-label">Instructions:</label>
                     <div>
-                        @if (!Model.IsReadOnly)
-                        {
-                            <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
-                        }
-                        else
-                        {
-                            <span data-testid="@Elements.Instructions" class="value">@Model.Instructions</span>
-                        }
+                        <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
 

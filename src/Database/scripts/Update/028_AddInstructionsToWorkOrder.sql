@@ -1,3 +1,7 @@
+BEGIN TRANSACTION
+GO
+PRINT N'Adding [Instructions] to [dbo].[WorkOrder]'
+GO
 IF NOT EXISTS (
 	SELECT 1
 	FROM sys.columns
@@ -6,5 +10,11 @@ IF NOT EXISTS (
 )
 BEGIN
 	ALTER TABLE [dbo].[WorkOrder]
-	ADD [Instructions] [nvarchar](4000) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL CONSTRAINT [DF_WorkOrder_Instructions] DEFAULT ('');
+	ADD [Instructions] [nvarchar](4000) NULL;
 END
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO

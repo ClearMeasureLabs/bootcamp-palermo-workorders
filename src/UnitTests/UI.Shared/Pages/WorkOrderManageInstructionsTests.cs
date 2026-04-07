@@ -47,7 +47,7 @@ public class WorkOrderManageInstructionsTests
     }
 
     [Test]
-    public void ShouldRenderInstructionsAsPlainText_When_ReadOnly()
+    public void ShouldRenderInstructionsInDisabledTextArea_When_ReadOnly()
     {
         using var ctx = new TestContext();
 
@@ -82,8 +82,11 @@ public class WorkOrderManageInstructionsTests
 
         component.WaitForAssertion(() =>
         {
-            var span = component.Find($"span[data-testid='{WorkOrderManage.Elements.Instructions}']");
-            span.TextContent.ShouldBe("Bring tools from shed");
+            var instructions = component.Find($"[data-testid='{WorkOrderManage.Elements.Instructions}']");
+            instructions.ShouldNotBeNull();
+            instructions.TagName.ShouldBe("TEXTAREA", StringCompareShould.IgnoreCase);
+            instructions.GetAttribute("value").ShouldBe("Bring tools from shed");
+            instructions.HasAttribute("disabled").ShouldBeTrue();
         });
     }
 
