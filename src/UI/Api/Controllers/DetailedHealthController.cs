@@ -25,7 +25,11 @@ public class DetailedHealthController(
     public async Task<IActionResult> GetDetailed(CancellationToken cancellationToken)
     {
         var payload = await detailedHealthReportProvider.GetReportAsync(cancellationToken);
-        return ConditionalJson(payload);
+        var etag = ConditionalGetEtag.CreateWeakEtagForDetailedHealthStable(payload);
+        Response.Headers.ETag = etag.ToString();
+        if (ConditionalGetEtag.IfNoneMatchIncludesEtag(Request, etag))
+            return StatusCode(StatusCodes.Status304NotModified);
+        return ConditionalGetEtag.JsonContent(payload);
     }
 
     private IActionResult ConditionalJson<T>(T payload)

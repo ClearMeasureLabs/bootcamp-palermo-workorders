@@ -57,7 +57,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return false;
         }
 
-        if (IsPublicVersionOrTimePath(value))
+        if (IsPublicVersionOrTimePath(value) || IsPublicHealthApiPath(value))
         {
             return false;
         }
@@ -86,6 +86,43 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             var leaf = segments[2];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Health probe URLs under <c>/api/health</c> (including <c>detailed</c>) are public when API key auth is enabled.
+    /// </summary>
+    internal static bool IsPublicHealthApiPath(string pathValue)
+    {
+        var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length < 2 || !segments[0].Equals("api", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (segments.Length >= 2 && segments[1].Equals("health", StringComparison.OrdinalIgnoreCase))
+        {
+            if (segments.Length == 2)
+            {
+                return true;
+            }
+
+            return segments.Length == 3
+                   && segments[2].Equals("detailed", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (segments.Length >= 3 && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("health", StringComparison.OrdinalIgnoreCase))
+        {
+            if (segments.Length == 3)
+            {
+                return true;
+            }
+
+            return segments.Length == 4
+                   && segments[3].Equals("detailed", StringComparison.OrdinalIgnoreCase);
         }
 
         return false;
