@@ -13,13 +13,13 @@
 
 @media (prefers-reduced-motion: no-preference) {
 	.login-prompt-link {
-		animation: login-prompt-emphasis 0.85s ease-in-out infinite;
+		animation: login-prompt-emphasis 1.15s ease-in-out infinite;
 		will-change: transform, opacity, box-shadow, filter;
 	}
 }
 
 @keyframes login-prompt-emphasis {
-	0%, 100% {
+	0%, 12% {
 		opacity: 1;
 		transform: scale(1);
 		box-shadow: 0 0 0 0 rgba(221, 107, 32, 0.95), 0 0 0 0 rgba(255, 255, 255, 0.85), 0 4px 18px rgba(221, 107, 32, 0.55);
@@ -27,29 +27,37 @@
 		filter: brightness(1);
 		text-shadow: 0 0 0 transparent;
 	}
-	40% {
-		opacity: 1;
-		transform: scale(1.08);
-		box-shadow: 0 0 0 10px rgba(221, 107, 32, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.95), 0 8px 26px rgba(221, 107, 32, 0.7);
-		border-color: #dd6b20;
-		filter: brightness(1.12);
-		text-shadow: 0 0 12px rgba(255, 255, 255, 0.95), 0 0 20px rgba(255, 200, 50, 0.9);
-	}
-	48% {
-		opacity: 0.15;
-		transform: scale(0.92);
-		box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
-		border-color: #9b2c2c;
-		filter: brightness(0.75);
+	18%, 24% {
+		opacity: 0.04;
+		transform: scale(0.86);
+		box-shadow: 0 0 0 0 transparent, 0 2px 4px rgba(0, 0, 0, 0.35);
+		border-color: #742a2a;
+		filter: brightness(0.45);
 		text-shadow: none;
 	}
-	52% {
+	35%, 48% {
 		opacity: 1;
 		transform: scale(1.12);
-		box-shadow: 0 0 0 14px rgba(255, 214, 10, 0.5), 0 0 0 4px rgba(255, 255, 255, 1), 0 10px 32px rgba(221, 107, 32, 0.75);
+		box-shadow: 0 0 0 14px rgba(255, 214, 10, 0.55), 0 0 0 4px rgba(255, 255, 255, 1), 0 10px 32px rgba(221, 107, 32, 0.8);
+		border-color: #dd6b20;
+		filter: brightness(1.22);
+		text-shadow: 0 0 14px rgba(255, 255, 255, 1), 0 0 28px rgba(255, 180, 0, 0.95);
+	}
+	54%, 60% {
+		opacity: 0.04;
+		transform: scale(0.86);
+		box-shadow: 0 0 0 0 transparent, 0 2px 4px rgba(0, 0, 0, 0.35);
+		border-color: #742a2a;
+		filter: brightness(0.45);
+		text-shadow: none;
+	}
+	72%, 100% {
+		opacity: 1;
+		transform: scale(1.05);
+		box-shadow: 0 0 0 8px rgba(221, 107, 32, 0.45), 0 0 0 2px rgba(255, 255, 255, 0.9), 0 8px 24px rgba(221, 107, 32, 0.65);
 		border-color: #c05621;
-		filter: brightness(1.2);
-		text-shadow: 0 0 14px rgba(255, 255, 255, 1), 0 0 24px rgba(255, 180, 0, 0.95);
+		filter: brightness(1.1);
+		text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 18px rgba(255, 200, 50, 0.85);
 	}
 }
 
