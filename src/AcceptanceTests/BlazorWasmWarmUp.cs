@@ -7,8 +7,8 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests;
 /// </summary>
 public class BlazorWasmWarmUp
 {
-    private const int MaxAttempts = 5;
-    private const int TimeoutSeconds = 30;
+    private const int MaxAttempts = 6;
+    private const int TimeoutSeconds = 60;
 
     private readonly IPlaywright _playwright;
     private readonly string _baseUrl;
@@ -49,12 +49,13 @@ public class BlazorWasmWarmUp
             jsErrors.Clear();
             TestContext.Out.WriteLine($"Blazor WASM warm-up: attempt {attempt}/{MaxAttempts}");
 
-            await page.GotoAsync("/");
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-            var loginLink = page.GetByTestId("LoginLink");
             try
             {
+                await page.GotoAsync("/", new PageGotoOptions { Timeout = TimeoutSeconds * 1000 });
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle,
+                    new PageWaitForLoadStateOptions { Timeout = TimeoutSeconds * 1000 });
+
+                var loginLink = page.GetByTestId("LoginLink");
                 await loginLink.WaitForAsync(new LocatorWaitForOptions
                 {
                     State = WaitForSelectorState.Visible,
@@ -69,7 +70,7 @@ public class BlazorWasmWarmUp
             catch (TimeoutException)
             {
                 TestContext.Out.WriteLine(
-                    $"Blazor WASM warm-up: LoginLink not visible after {TimeoutSeconds}s. " +
+                    $"Blazor WASM warm-up: timeout (navigation, network idle, or LoginLink) after {TimeoutSeconds}s. " +
                     $"JS errors captured: {jsErrors.Count}");
                 foreach (var error in jsErrors)
                 {
@@ -79,8 +80,16 @@ public class BlazorWasmWarmUp
                 if (attempt < MaxAttempts)
                 {
                     TestContext.Out.WriteLine("Blazor WASM warm-up: reloading page...");
-                    await page.ReloadAsync();
-                    await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                    try
+                    {
+                        await page.ReloadAsync(new PageReloadOptions { Timeout = TimeoutSeconds * 1000 });
+                        await page.WaitForLoadStateAsync(LoadState.NetworkIdle,
+                            new PageWaitForLoadStateOptions { Timeout = TimeoutSeconds * 1000 });
+                    }
+                    catch (TimeoutException)
+                    {
+                        TestContext.Out.WriteLine("Blazor WASM warm-up: reload timed out; will retry from root on next attempt.");
+                    }
                 }
             }
         }
