@@ -48,6 +48,11 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
             AssigneeUsername = source.Assignee?.UserName ?? ""
         };
 
+        if (!string.IsNullOrEmpty(source.Instructions))
+        {
+            message.Instructions = source.Instructions;
+        }
+
         if (source.AssignedDate.HasValue)
         {
             message.AssignedDateUtc = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(

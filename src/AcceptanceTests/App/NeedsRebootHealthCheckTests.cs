@@ -2,7 +2,12 @@ using System.Net;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
+/// <summary>
+/// Uses a process-wide static flag on the server; must not run in parallel with other tests
+/// that call the same demo endpoints or the flag is reset by another test's tear-down.
+/// </summary>
 [TestFixture]
+[NonParallelizable]
 public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 {
     protected override bool RequiresBrowser => false;

@@ -36,4 +36,5 @@ message WorkOrder {
   optional google.protobuf.Timestamp assigned_date_utc = 8;
   optional google.protobuf.Timestamp created_date_utc = 9;
   optional google.protobuf.Timestamp completed_date_utc = 10;
+  optional string instructions = 11;
 }
