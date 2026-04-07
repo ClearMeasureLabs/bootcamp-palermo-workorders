@@ -1,3 +1,4 @@
+using System.Globalization;
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
@@ -124,6 +125,59 @@ public class MainLayoutTests
 
         var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
         loginAnchor.GetAttribute("href").ShouldBe("/login");
+    }
+
+    [Test]
+    public void ShouldRenderCopyrightFooter_WithCurrentYear_OrganizationAndLink_WhenNotAuthenticated()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        footer.TagName.ShouldBe("FOOTER");
+        layout.FindAll("#app-navigation-rail footer").Count.ShouldBe(0);
+
+        var yearText = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
+        footer.TextContent.ShouldContain(yearText);
+        footer.TextContent.ShouldContain("ClearMeasure Labs");
+
+        var link = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}'] .site-footer-link");
+        link.GetAttribute("href")!.TrimEnd('/').ShouldBe("https://clearmeasure.com");
+        link.TextContent.Trim().ShouldBe("ClearMeasure Labs");
+    }
+
+    [Test]
+    public void ShouldRenderCopyrightFooter_WhenAuthenticated()
+    {
+        using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        var yearText = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
+        footer.TextContent.ShouldContain(yearText);
+        footer.TextContent.ShouldContain("ClearMeasure Labs");
+        layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}'] .site-footer-link").GetAttribute("href")!.TrimEnd('/').ShouldBe("https://clearmeasure.com");
+    }
+
+    [Test]
+    public void ShouldRenderCompanyLink_WithAccessibleAttributes_WhenExternalLinkUsesNewTab()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var link = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}'] .site-footer-link");
+        link.GetAttribute("target").ShouldBe("_blank");
+        var rel = link.GetAttribute("rel");
+        rel.ShouldNotBeNull();
+        rel.ShouldContain("noopener");
+        rel.ShouldContain("noreferrer");
+        link.TextContent.Trim().ShouldNotContain("://");
     }
 
     [Test]
