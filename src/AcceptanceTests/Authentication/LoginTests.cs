@@ -1,4 +1,6 @@
 using ClearMeasure.Bootcamp.UI.Shared.Components;
+using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Microsoft.Playwright;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.Authentication;
 
@@ -34,8 +36,12 @@ public class LoginTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/login");
         await TakeScreenshotAsync(2);
 
+        var memberSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        var homerOption = memberSelect.Locator("option[value='hsimpson']");
+        await Expect(homerOption).ToHaveTextAsync("Homer Simpson");
+
         // Fill in username only
-        await Select(nameof(UI.Shared.Pages.Login.Elements.User), "hsimpson");
+        await Select(nameof(Login.Elements.User), "hsimpson");
         await TakeScreenshotAsync(3);
 
         // Submit form
