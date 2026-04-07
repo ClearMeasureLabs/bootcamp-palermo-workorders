@@ -32,6 +32,8 @@ public class MainLayoutTests
         toggle.GetAttribute("aria-controls").ShouldBe("app-navigation-rail");
         toggle.GetAttribute("title")!.ShouldContain("Hide");
         toggle.GetAttribute("aria-label")!.ShouldContain("Hide");
+        toggle.InnerHtml.ShouldContain("bi-list");
+        toggle.InnerHtml.ShouldNotContain("bi-chevron-double-left");
         layout.Find("#app-navigation-rail").ClassList.ShouldContain("modern-sidebar");
         layout.Find(".modern-app").ClassList.ShouldNotContain("rail-collapsed");
     }
