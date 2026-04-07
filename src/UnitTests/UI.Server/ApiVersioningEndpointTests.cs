@@ -71,6 +71,31 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_Return200AndSameHash_When_PostToolsHash_LegacyAndV1Paths()
+    {
+        using var legacyContent = new StringContent(
+            """{"text":"a"}""",
+            System.Text.Encoding.UTF8,
+            "application/json");
+        using var v1Content = new StringContent(
+            """{"text":"a"}""",
+            System.Text.Encoding.UTF8,
+            "application/json");
+
+        var legacy = await _client!.PostAsync("/api/tools/hash", legacyContent);
+        var v1 = await _client.PostAsync("/api/v1.0/tools/hash", v1Content);
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var legacyJson = await legacy.Content.ReadAsStringAsync();
+        var v1Json = await v1.Content.ReadAsStringAsync();
+        legacyJson.ShouldBe(v1Json);
+        legacyJson.ShouldContain("SHA-256");
+        legacyJson.ShouldContain("ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb");
+    }
+
+    [Test]
     public async Task Should_IncludeSupportedVersionsHeader_When_GetVersionedEndpoint()
     {
         var response = await _client!.GetAsync("/api/v1.0/health");

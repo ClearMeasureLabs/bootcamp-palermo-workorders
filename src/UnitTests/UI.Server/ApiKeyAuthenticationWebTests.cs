@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;
 
@@ -62,6 +63,18 @@ public class ApiKeyAuthenticationWebTests
         using var client = factory.CreateClient();
 
         var response = await client.GetAsync("/api/time");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_Return200_When_ToolsHashPostWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+        using var content = new StringContent("""{"text":"x"}""", Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync("/api/v1.0/tools/hash", content);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
