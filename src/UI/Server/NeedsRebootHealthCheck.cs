@@ -1,3 +1,5 @@
+using System.Threading;
+
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
@@ -7,10 +9,17 @@ namespace ClearMeasure.Bootcamp.UI.Server;
 /// </summary>
 public class NeedsRebootHealthCheck(ILogger<NeedsRebootHealthCheck> logger) : IHealthCheck
 {
+    private static int _needsReboot;
+
     /// <summary>
     /// Static flag toggled at runtime to simulate a corrupted process that needs a restart.
+    /// Uses <see cref="Volatile"/> so HTTP handlers and health-check worker threads observe updates immediately.
     /// </summary>
-    public static bool NeedsReboot { get; set; }
+    public static bool NeedsReboot
+    {
+        get => Volatile.Read(ref _needsReboot) != 0;
+        set => Volatile.Write(ref _needsReboot, value ? 1 : 0);
+    }
 
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
         CancellationToken cancellationToken = new())
