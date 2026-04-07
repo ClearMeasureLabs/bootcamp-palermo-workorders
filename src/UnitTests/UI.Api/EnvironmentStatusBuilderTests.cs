@@ -56,6 +56,22 @@ public class EnvironmentStatusBuilderTests
         probe.Value.ShouldBe(EnvironmentStatusBuilder.RedactedValueMarker);
     }
 
+    [Test]
+    public void Build_Should_MarkVariableSet_When_SimulatedConfigValueIsEmptyString()
+    {
+        var stubHost = new StubHostEnvironment("UnitTest");
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            [EnvironmentStatusBuilder.SimulatedEnvironmentVariablesConfigurationPrefix + "ENV_STATUS_PROBE_SECRET"] = ""
+        }).Build();
+
+        var payload = EnvironmentStatusBuilder.Build(stubHost, config);
+        var probe = payload.EnvironmentVariables.Single(e => e.Name == "ENV_STATUS_PROBE_SECRET");
+
+        probe.IsSet.ShouldBeTrue();
+        probe.Value.ShouldBe(EnvironmentStatusBuilder.RedactedValueMarker);
+    }
+
     private sealed class StubHostEnvironment(string environmentName) : IHostEnvironment
     {
         public string EnvironmentName { get; set; } = environmentName;

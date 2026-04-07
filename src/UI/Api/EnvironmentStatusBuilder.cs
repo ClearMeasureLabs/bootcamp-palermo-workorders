@@ -11,7 +11,7 @@ public static class EnvironmentStatusBuilder
 {
     /// <summary>
     /// Configuration prefix for optional simulated values (integration tests). Keys are
-    /// <c>EnvironmentStatus:SimulatedEnvironmentVariables:{VARIABLE_NAME}</c>. Values are never emitted; they only force <see cref="EnvironmentVariableEntry.IsSet"/>.
+    /// <c>EnvironmentStatus:SimulatedEnvironmentVariables:{VARIABLE_NAME}</c>. If the key exists (including empty string), the variable is treated as set; values are never emitted in JSON.
     /// </summary>
     public const string SimulatedEnvironmentVariablesConfigurationPrefix = "EnvironmentStatus:SimulatedEnvironmentVariables:";
 
@@ -39,9 +39,10 @@ public static class EnvironmentStatusBuilder
         var variables = new List<EnvironmentVariableEntry>(ReportedVariableNames.Count);
         foreach (var name in ReportedVariableNames)
         {
-            var simulated = configuration[SimulatedEnvironmentVariablesConfigurationPrefix + name];
+            var configKey = SimulatedEnvironmentVariablesConfigurationPrefix + name;
+            var simulated = configuration[configKey];
             string? raw;
-            if (!string.IsNullOrEmpty(simulated))
+            if (simulated is not null)
                 raw = simulated;
             else
                 raw = Environment.GetEnvironmentVariable(name);
