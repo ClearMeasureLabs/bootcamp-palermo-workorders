@@ -24,26 +24,24 @@ public class LoginLinkVisualTests : AcceptanceTestBase
             "el => getComputedStyle(el).animationDuration");
         ParseCssSeconds(durationText).ShouldBeGreaterThanOrEqualTo(1.5);
 
-        var minOpacity = 1.0;
-        var maxOpacity = 0.0;
-        for (var i = 0; i < 45; i++)
-        {
-            var opacity = await loginLink.EvaluateAsync<double>(
-                "el => parseFloat(getComputedStyle(el).opacity)");
-            if (opacity < minOpacity)
-            {
-                minOpacity = opacity;
+        var opacityDeltaSeen = await loginLink.EvaluateAsync<bool>(
+            """
+            async el => {
+                let minO = 1;
+                let maxO = 0;
+                const threshold = 0.2;
+                const deadline = performance.now() + 4500;
+                while (performance.now() < deadline) {
+                    const o = parseFloat(getComputedStyle(el).opacity);
+                    if (o < minO) minO = o;
+                    if (o > maxO) maxO = o;
+                    if (maxO - minO > threshold) return true;
+                    await new Promise(r => requestAnimationFrame(r));
+                }
+                return maxO - minO > threshold;
             }
-
-            if (opacity > maxOpacity)
-            {
-                maxOpacity = opacity;
-            }
-
-            await Page.WaitForTimeoutAsync(100);
-        }
-
-        (maxOpacity - minOpacity).ShouldBeGreaterThan(0.2);
+            """);
+        opacityDeltaSeen.ShouldBeTrue();
     }
 
     [Test, Retry(2)]
