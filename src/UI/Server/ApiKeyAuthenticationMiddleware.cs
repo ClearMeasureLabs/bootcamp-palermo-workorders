@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
-/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version and time endpoints.
+/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, and echo endpoints.
 /// </summary>
 public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 {
@@ -77,7 +77,8 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         {
             var leaf = segments[1];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);
+                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
+                   || leaf.Equals("echo", StringComparison.OrdinalIgnoreCase);
         }
 
         if (segments.Length >= 3
@@ -85,7 +86,8 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         {
             var leaf = segments[2];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);
+                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
+                   || leaf.Equals("echo", StringComparison.OrdinalIgnoreCase);
         }
 
         return false;
