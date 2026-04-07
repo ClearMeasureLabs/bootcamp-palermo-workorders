@@ -42,7 +42,7 @@ public partial class Login : AppComponentBase
     private static string GetLoginDropdownDisplayName(Employee employee)
     {
         var fullName = employee.GetFullName();
-        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(fullName.ToLowerInvariant());
+        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(fullName.ToLowerInvariant());
     }
 
     private async Task HandleLogin()
