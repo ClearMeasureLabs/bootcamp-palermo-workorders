@@ -49,6 +49,24 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_Return200_When_GetVersion_LegacyPath()
+    {
+        var response = await _client!.GetAsync("/api/version");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("application/json");
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = doc.RootElement;
+        root.GetProperty("assemblyVersion").GetString().ShouldNotBeNullOrEmpty();
+        root.GetProperty("informationalVersion").GetString().ShouldNotBeNullOrEmpty();
+        root.GetProperty("buildConfiguration").GetString().ShouldNotBeNullOrEmpty();
+        root.GetProperty("environment").GetString().ShouldNotBeNullOrEmpty();
+    }
+
+    [Test]
     public async Task Should_Return200_When_GetVersion_V1Path()
     {
         var response = await _client!.GetAsync("/api/v1.0/version");
