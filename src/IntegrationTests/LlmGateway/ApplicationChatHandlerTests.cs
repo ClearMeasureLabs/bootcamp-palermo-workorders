@@ -64,6 +64,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
     [Test]
     [Retry(40)]
+    [Category("SqlServerOnly")]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilie()
     {
         new ZDataLoader().LoadData();
