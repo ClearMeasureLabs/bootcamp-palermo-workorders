@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Text.Json;
 using Shouldly;
@@ -40,6 +41,28 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_Return200AndSameStructuralContract_When_GetDetailedHealth_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var v1 = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using var legacyDoc = JsonDocument.Parse(await legacy.Content.ReadAsStringAsync());
+        using var v1Doc = JsonDocument.Parse(await v1.Content.ReadAsStringAsync());
+        legacyDoc.RootElement.GetProperty("overallStatus").GetString()
+            .ShouldBe(v1Doc.RootElement.GetProperty("overallStatus").GetString());
+        legacyDoc.RootElement.TryGetProperty("checkedAtUtc", out _).ShouldBeTrue();
+        v1Doc.RootElement.TryGetProperty("checkedAtUtc", out _).ShouldBeTrue();
+        var legacyNames = legacyDoc.RootElement.GetProperty("components").EnumerateArray()
+            .Select(e => e.GetProperty("name").GetString()).OrderBy(s => s).ToList();
+        var v1Names = v1Doc.RootElement.GetProperty("components").EnumerateArray()
+            .Select(e => e.GetProperty("name").GetString()).OrderBy(s => s).ToList();
+        legacyNames.ShouldBe(v1Names);
+    }
+
+    [Test]
     public async Task Should_ReturnNotSuccess_When_GetSimpleHealth_UnsupportedVersion()
     {
         var response = await _client!.GetAsync("/api/v2.0/health");
@@ -74,6 +97,17 @@ public class ApiVersioningEndpointTests
     public async Task Should_IncludeSupportedVersionsHeader_When_GetVersionedEndpoint()
     {
         var response = await _client!.GetAsync("/api/v1.0/health");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.TryGetValues("api-supported-versions", out var values).ShouldBeTrue();
+        values.ShouldNotBeNull();
+        string.Join(", ", values!).ShouldContain("1.0");
+    }
+
+    [Test]
+    public async Task Should_IncludeSupportedVersionsHeader_When_GetVersionedDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/health/detailed");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         response.Headers.TryGetValues("api-supported-versions", out var values).ShouldBeTrue();

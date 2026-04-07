@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Server;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -133,11 +134,96 @@ public class DetailedHealthEndpointIntegrationTests
         names.ShouldContain("Server");
         names.ShouldContain("API");
         names.ShouldContain("Jeffrey");
+        names.ShouldContain("NeedsReboot");
         foreach (var c in report.Components)
         {
             (c.Status == ComponentHealthStatus.Healthy
                 || c.Status == ComponentHealthStatus.Degraded
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
+        }
+    }
+
+    [Test]
+    public async Task Should_Return200_When_GetDetailedHealth_V1Path()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/health/detailed");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("application/json");
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("overallStatus", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("checkedAtUtc", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("components", out var components).ShouldBeTrue();
+        components.ValueKind.ShouldBe(JsonValueKind.Array);
+        components.GetArrayLength().ShouldBeGreaterThan(0);
+    }
+
+    [Test]
+    public async Task Should_IncludeSupportedVersionsHeader_When_GetDetailedHealth_V1Path()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/health/detailed");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.TryGetValues("api-supported-versions", out var values).ShouldBeTrue();
+        values.ShouldNotBeNull();
+        string.Join(", ", values!).ShouldContain("1.0");
+    }
+
+    [Test]
+    public async Task Should_Return304NotModified_When_IfNoneMatchMatchesEtag_OnDetailedHealth()
+    {
+        var first = await _client!.GetAsync("/api/health/detailed");
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var etag = first.Headers.ETag;
+        etag.ShouldNotBeNull();
+
+        using var second = new HttpRequestMessage(HttpMethod.Get, "/api/health/detailed");
+        second.Headers.IfNoneMatch.Add(etag!);
+        var notModified = await _client!.SendAsync(second);
+        notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
+        (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task Should_ReflectDatabaseHealth_When_DataAccessCheckRuns()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        var dataAccess = report!.Components.Single(c => c.Name == "DataAccess");
+        dataAccess.Status.ShouldBe(ComponentHealthStatus.Healthy);
+    }
+
+    [Test]
+    public async Task Should_SurfaceFailingComponent_When_RegisteredCheckUnhealthy()
+    {
+        var previous = NeedsRebootHealthCheck.NeedsReboot;
+        try
+        {
+            NeedsRebootHealthCheck.NeedsReboot = true;
+
+            var response = await _client!.GetAsync("/api/health/detailed");
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+            var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            report.ShouldNotBeNull();
+            report!.OverallStatus.ShouldBe(ComponentHealthStatus.Unhealthy);
+            var needsReboot = report.Components.Single(c => c.Name == "NeedsReboot");
+            needsReboot.Status.ShouldBe(ComponentHealthStatus.Unhealthy);
+            needsReboot.Description.ShouldNotBeNull();
+            needsReboot.Description!.ShouldContain("memory is corrupted", Case.Insensitive);
+        }
+        finally
+        {
+            NeedsRebootHealthCheck.NeedsReboot = previous;
         }
     }
 }

@@ -6,8 +6,10 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 [TestFixture]
 public class ApiKeyAuthenticationMiddlewareTests
 {
-    [TestCase("/api/health", false)]
-    [TestCase("/api/v1.0/health", false)]
+    [TestCase("/api/health", true)]
+    [TestCase("/api/health/detailed", true)]
+    [TestCase("/api/v1.0/health", true)]
+    [TestCase("/api/v1.0/health/detailed", true)]
     [TestCase("/api/version", true)]
     [TestCase("/api/v1.0/version", true)]
     [TestCase("/api/time", true)]
