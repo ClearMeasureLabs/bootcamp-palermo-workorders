@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
@@ -83,7 +84,17 @@ public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 
         var detailedResponse = await client.GetAsync("/_healthcheck/detailed");
         var detailedBody = await detailedResponse.Content.ReadAsStringAsync();
-        detailedBody.ShouldContain("memory is corrupted");
-        detailedBody.ShouldContain("Restart process");
+        using var doc = JsonDocument.Parse(detailedBody);
+        var entries = doc.RootElement.GetProperty("entries");
+        var needsReboot = entries.EnumerateArray()
+            .First(e => string.Equals(
+                e.GetProperty("name").GetString(),
+                "NeedsReboot",
+                StringComparison.OrdinalIgnoreCase));
+        needsReboot.GetProperty("status").GetString().ShouldBe("Unhealthy");
+        var description = needsReboot.GetProperty("description").GetString();
+        description.ShouldNotBeNull();
+        description!.ShouldContain("memory is corrupted");
+        description.ShouldContain("Restart process");
     }
 }
