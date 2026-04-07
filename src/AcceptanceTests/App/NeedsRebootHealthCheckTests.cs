@@ -30,6 +30,12 @@ public class NeedsRebootHealthCheckTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task SetNeedsRebootTrue_HealthCheckReturnsUnhealthy()
     {
+        if (!ServerFixture.StartLocalServer)
+        {
+            Assert.Ignore(
+                "NeedsReboot toggles process-static state; requires a single server instance (local dotnet run).");
+        }
+
         using var client = CreateHttpClient();
 
         var setResponse = await client.GetAsync("/_demo/setneedsreboot/true");
@@ -45,6 +51,12 @@ public class NeedsRebootHealthCheckTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task SetNeedsRebootFalse_HealthCheckDoesNotReturnUnhealthy()
     {
+        if (!ServerFixture.StartLocalServer)
+        {
+            Assert.Ignore(
+                "NeedsReboot toggles process-static state; requires a single server instance (local dotnet run).");
+        }
+
         using var client = CreateHttpClient();
 
         await client.GetAsync("/_demo/setneedsreboot/true");
@@ -77,6 +89,12 @@ public class NeedsRebootHealthCheckTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task SetNeedsRebootTrue_DetailedHealthCheckShowsCorruptionMessage()
     {
+        if (!ServerFixture.StartLocalServer)
+        {
+            Assert.Ignore(
+                "NeedsReboot toggles process-static state; requires a single server instance (local dotnet run).");
+        }
+
         using var client = CreateHttpClient();
 
         await client.GetAsync("/_demo/setneedsreboot/true");

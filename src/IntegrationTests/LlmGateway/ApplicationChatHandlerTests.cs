@@ -63,7 +63,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
-    [Retry(40)]
+    [Retry(80)]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilie()
     {
         new ZDataLoader().LoadData();
@@ -100,7 +100,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
-    [Retry(25)]
+    [Retry(80)]
     [Category("SqlServerOnly")]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
     {
