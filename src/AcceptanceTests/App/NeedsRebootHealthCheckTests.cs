@@ -2,7 +2,12 @@ using System.Net;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
+/// <summary>
+/// Serial execution: <see cref="NeedsRebootHealthCheck.NeedsReboot"/> is a static process flag toggled via demo routes;
+/// parallel acceptance tests would race with <see cref="TearDown"/>.
+/// </summary>
 [TestFixture]
+[Parallelizable(ParallelScope.None)]
 public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 {
     protected override bool RequiresBrowser => false;
