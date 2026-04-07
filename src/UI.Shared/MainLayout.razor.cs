@@ -13,8 +13,14 @@ public partial class MainLayout : IAsyncDisposable
 
     public enum Elements
     {
-        NavRailToggle
+        NavRailToggle,
+        CopyrightFooter
     }
+
+    /// <summary>
+    /// Calendar year shown in the site copyright line (UTC, matches acceptance tests).
+    /// </summary>
+    protected int CopyrightYear => DateTime.UtcNow.Year;
 
     [Inject]
     private IJSRuntime Js { get; set; } = default!;
