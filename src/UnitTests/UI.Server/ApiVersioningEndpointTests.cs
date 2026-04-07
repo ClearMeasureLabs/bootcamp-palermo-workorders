@@ -80,4 +80,43 @@ public class ApiVersioningEndpointTests
         values.ShouldNotBeNull();
         string.Join(", ", values!).ShouldContain("1.0");
     }
+
+    [Test]
+    public async Task Should_Return200AndJsonWithExpectedProperties_When_GetMetricsSummary_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/metrics/summary");
+        var v1 = await _client.GetAsync("/api/v1.0/metrics/summary");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        foreach (var response in new[] { legacy, v1 })
+        {
+            var mediaType = response.Content.Headers.ContentType?.MediaType;
+            mediaType.ShouldNotBeNull();
+            mediaType!.ShouldContain("application/json");
+
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var root = doc.RootElement;
+            root.GetProperty("uptime").GetString().ShouldNotBeNullOrWhiteSpace();
+            root.GetProperty("memoryBytes").GetInt64().ShouldBeGreaterThanOrEqualTo(0);
+            root.GetProperty("heapSizeBytes").GetInt64().ShouldBeGreaterThanOrEqualTo(0);
+            root.GetProperty("totalRequestsServed").GetInt64().ShouldBeGreaterThanOrEqualTo(1);
+            root.GetProperty("timestampUtc").GetString().ShouldNotBeNullOrWhiteSpace();
+
+            var gc = root.GetProperty("gcCollections");
+            gc.GetProperty("gen0").GetInt32().ShouldBeGreaterThanOrEqualTo(0);
+            gc.GetProperty("gen1").GetInt32().ShouldBeGreaterThanOrEqualTo(0);
+            gc.GetProperty("gen2").GetInt32().ShouldBeGreaterThanOrEqualTo(0);
+        }
+    }
+
+    [Test]
+    public async Task Should_ReturnNotSuccess_When_GetMetricsSummary_UnsupportedVersion()
+    {
+        var response = await _client!.GetAsync("/api/v2.0/metrics/summary");
+
+        response.IsSuccessStatusCode.ShouldBeFalse();
+        response.StatusCode.ShouldBeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
+    }
 }
