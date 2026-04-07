@@ -1,3 +1,4 @@
+using System.Globalization;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using Microsoft.Playwright;
 using Shouldly;
@@ -18,6 +19,29 @@ public class LoginLinkVisualTests : AcceptanceTestBase
         var animationName = await loginLink.EvaluateAsync<string>(
             "el => getComputedStyle(el).animationName");
         animationName.ShouldNotBe("none");
+
+        var durationText = await loginLink.EvaluateAsync<string>(
+            "el => getComputedStyle(el).animationDuration");
+        ParseCssSeconds(durationText).ShouldBeGreaterThanOrEqualTo(1.5);
+
+        var opacityDeltaSeen = await loginLink.EvaluateAsync<bool>(
+            """
+            async el => {
+                let minO = 1;
+                let maxO = 0;
+                const threshold = 0.2;
+                const deadline = performance.now() + 4500;
+                while (performance.now() < deadline) {
+                    const o = parseFloat(getComputedStyle(el).opacity);
+                    if (o < minO) minO = o;
+                    if (o > maxO) maxO = o;
+                    if (maxO - minO > threshold) return true;
+                    await new Promise(r => requestAnimationFrame(r));
+                }
+                return maxO - minO > threshold;
+            }
+            """);
+        opacityDeltaSeen.ShouldBeTrue();
     }
 
     [Test, Retry(2)]
@@ -93,5 +117,21 @@ public class LoginLinkVisualTests : AcceptanceTestBase
             await logoutLink.ClickAsync();
             await Page.WaitForURLAsync("**/");
         }
+    }
+
+    private static double ParseCssSeconds(string value)
+    {
+        var token = value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)[0];
+        if (token.EndsWith("ms", StringComparison.Ordinal))
+        {
+            return double.Parse(token[..^2], CultureInfo.InvariantCulture) / 1000.0;
+        }
+
+        if (token.EndsWith('s'))
+        {
+            return double.Parse(token[..^1], CultureInfo.InvariantCulture);
+        }
+
+        return double.Parse(token, CultureInfo.InvariantCulture);
     }
 }

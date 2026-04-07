@@ -13,7 +13,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
 	.login-prompt-link {
-		animation: login-prompt-emphasis 0.85s ease-in-out infinite;
+		animation: login-prompt-emphasis 2.6s ease-in-out infinite;
 		will-change: transform, opacity, box-shadow, filter;
 	}
 }
@@ -27,29 +27,69 @@
 		filter: brightness(1);
 		text-shadow: 0 0 0 transparent;
 	}
-	40% {
+	12% {
 		opacity: 1;
-		transform: scale(1.08);
-		box-shadow: 0 0 0 10px rgba(221, 107, 32, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.95), 0 8px 26px rgba(221, 107, 32, 0.7);
+		transform: scale(1.1);
+		box-shadow: 0 0 0 12px rgba(221, 107, 32, 0.45), 0 0 0 4px rgba(255, 255, 255, 0.95), 0 8px 28px rgba(221, 107, 32, 0.72);
 		border-color: #dd6b20;
-		filter: brightness(1.12);
-		text-shadow: 0 0 12px rgba(255, 255, 255, 0.95), 0 0 20px rgba(255, 200, 50, 0.9);
+		filter: brightness(1.15);
+		text-shadow: 0 0 14px rgba(255, 255, 255, 0.95), 0 0 22px rgba(255, 200, 50, 0.85);
 	}
-	48% {
-		opacity: 0.15;
-		transform: scale(0.92);
-		box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
-		border-color: #9b2c2c;
-		filter: brightness(0.75);
+	18% {
+		opacity: 0.06;
+		transform: scale(0.9);
+		box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.35), 0 2px 8px rgba(0, 0, 0, 0.25);
+		border-color: #744210;
+		filter: brightness(0.65);
 		text-shadow: none;
 	}
-	52% {
+	24% {
 		opacity: 1;
-		transform: scale(1.12);
-		box-shadow: 0 0 0 14px rgba(255, 214, 10, 0.5), 0 0 0 4px rgba(255, 255, 255, 1), 0 10px 32px rgba(221, 107, 32, 0.75);
+		transform: scale(1.08);
+		box-shadow: 0 0 0 10px rgba(255, 214, 10, 0.48), 0 0 0 3px rgba(255, 255, 255, 1), 0 10px 30px rgba(221, 107, 32, 0.78);
 		border-color: #c05621;
-		filter: brightness(1.2);
-		text-shadow: 0 0 14px rgba(255, 255, 255, 1), 0 0 24px rgba(255, 180, 0, 0.95);
+		filter: brightness(1.22);
+		text-shadow: 0 0 16px rgba(255, 255, 255, 1), 0 0 26px rgba(255, 180, 0, 0.9);
+	}
+	38% {
+		opacity: 1;
+		transform: scale(1);
+		box-shadow: 0 0 0 0 rgba(221, 107, 32, 0.95), 0 0 0 0 rgba(255, 255, 255, 0.85), 0 4px 18px rgba(221, 107, 32, 0.55);
+		border-color: #c05621;
+		filter: brightness(1);
+		text-shadow: 0 0 0 transparent;
+	}
+	50% {
+		opacity: 1;
+		transform: scale(1.1);
+		box-shadow: 0 0 0 12px rgba(221, 107, 32, 0.45), 0 0 0 4px rgba(255, 255, 255, 0.95), 0 8px 28px rgba(221, 107, 32, 0.72);
+		border-color: #dd6b20;
+		filter: brightness(1.15);
+		text-shadow: 0 0 14px rgba(255, 255, 255, 0.95), 0 0 22px rgba(255, 200, 50, 0.85);
+	}
+	56% {
+		opacity: 0.06;
+		transform: scale(0.9);
+		box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.35), 0 2px 8px rgba(0, 0, 0, 0.25);
+		border-color: #744210;
+		filter: brightness(0.65);
+		text-shadow: none;
+	}
+	62% {
+		opacity: 1;
+		transform: scale(1.08);
+		box-shadow: 0 0 0 10px rgba(255, 214, 10, 0.48), 0 0 0 3px rgba(255, 255, 255, 1), 0 10px 30px rgba(221, 107, 32, 0.78);
+		border-color: #c05621;
+		filter: brightness(1.22);
+		text-shadow: 0 0 16px rgba(255, 255, 255, 1), 0 0 26px rgba(255, 180, 0, 0.9);
+	}
+	78% {
+		opacity: 1;
+		transform: scale(1);
+		box-shadow: 0 0 0 0 rgba(221, 107, 32, 0.95), 0 0 0 0 rgba(255, 255, 255, 0.85), 0 4px 18px rgba(221, 107, 32, 0.55);
+		border-color: #c05621;
+		filter: brightness(1);
+		text-shadow: 0 0 0 transparent;
 	}
 }
 
