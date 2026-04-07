@@ -12,6 +12,14 @@ public class WorkOrder : EntityBase<WorkOrder>
         set => _description = getTruncatedString(value);
     }
 
+    private string? _instructions = "";
+
+    public string? Instructions
+    {
+        get => _instructions;
+        set => _instructions = getTruncatedString(value);
+    }
+
     public string? RoomNumber { get; set; } = null;
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
