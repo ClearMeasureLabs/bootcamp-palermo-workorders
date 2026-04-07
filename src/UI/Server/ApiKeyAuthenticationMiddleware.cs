@@ -80,7 +80,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return true;
         }
 
-        if (segments.Length >= 4
+        if (segments.Length == 4
             && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase)
             && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
             && segments[3].Equals("hash", StringComparison.OrdinalIgnoreCase))
