@@ -57,6 +57,13 @@ public class MainLayoutTests
         toggle.GetAttribute("title")!.ShouldContain("Show");
         layout.Find(".modern-app").ClassList.ShouldContain("rail-collapsed");
         layout.Find("#app-navigation-rail").ClassList.ShouldContain("rail-hidden");
+
+        toggle.Click();
+
+        toggle.GetAttribute("aria-expanded").ShouldBe("true");
+        toggle.GetAttribute("title")!.ShouldContain("Hide");
+        layout.Find(".modern-app").ClassList.ShouldNotContain("rail-collapsed");
+        layout.Find("#app-navigation-rail").ClassList.ShouldNotContain("rail-hidden");
     }
 
     [Test]
