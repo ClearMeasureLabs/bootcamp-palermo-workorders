@@ -1,3 +1,4 @@
+using System.Globalization;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using Microsoft.Playwright;
 using Shouldly;
@@ -18,6 +19,31 @@ public class LoginLinkVisualTests : AcceptanceTestBase
         var animationName = await loginLink.EvaluateAsync<string>(
             "el => getComputedStyle(el).animationName");
         animationName.ShouldNotBe("none");
+
+        var durationText = await loginLink.EvaluateAsync<string>(
+            "el => getComputedStyle(el).animationDuration");
+        ParseCssSeconds(durationText).ShouldBeGreaterThanOrEqualTo(1.5);
+
+        var minOpacity = 1.0;
+        var maxOpacity = 0.0;
+        for (var i = 0; i < 45; i++)
+        {
+            var opacity = await loginLink.EvaluateAsync<double>(
+                "el => parseFloat(getComputedStyle(el).opacity)");
+            if (opacity < minOpacity)
+            {
+                minOpacity = opacity;
+            }
+
+            if (opacity > maxOpacity)
+            {
+                maxOpacity = opacity;
+            }
+
+            await Page.WaitForTimeoutAsync(100);
+        }
+
+        (maxOpacity - minOpacity).ShouldBeGreaterThan(0.2);
     }
 
     [Test, Retry(2)]
@@ -93,5 +119,21 @@ public class LoginLinkVisualTests : AcceptanceTestBase
             await logoutLink.ClickAsync();
             await Page.WaitForURLAsync("**/");
         }
+    }
+
+    private static double ParseCssSeconds(string value)
+    {
+        var token = value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)[0];
+        if (token.EndsWith("ms", StringComparison.Ordinal))
+        {
+            return double.Parse(token[..^2], CultureInfo.InvariantCulture) / 1000.0;
+        }
+
+        if (token.EndsWith('s'))
+        {
+            return double.Parse(token[..^1], CultureInfo.InvariantCulture);
+        }
+
+        return double.Parse(token, CultureInfo.InvariantCulture);
     }
 }
