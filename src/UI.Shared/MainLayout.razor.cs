@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -24,6 +25,9 @@ public partial class MainLayout : IAsyncDisposable
 
     [Inject]
     private IJSRuntime Js { get; set; } = default!;
+
+    [Inject]
+    private ThemePreferenceService Theme { get; set; } = default!;
 
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
@@ -79,6 +83,15 @@ public partial class MainLayout : IAsyncDisposable
                 "./_content/ClearMeasure.Bootcamp.UI.Shared/js/mainLayoutNav.js");
             _navToggleHelper = await _jsModule.InvokeAsync<IJSObjectReference>("initNavToggle", _dotNetRef,
                 NavRailBreakpointMediaQuery);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        try
+        {
+            await Theme.InitializeAsync();
+            await InvokeAsync(StateHasChanged);
         }
         catch (JSDisconnectedException)
         {

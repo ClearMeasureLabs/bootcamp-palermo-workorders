@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Client.HealthChecks;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Lamar;
 using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -37,6 +38,7 @@ public class UIClientServiceRegistry : ServiceRegistry
         
         this.AddSingleton<ChatClientFactory>();
         this.AddTransient<WorkOrderTool>();
+        this.AddSingleton<ThemePreferenceService>();
 
         Scan(scanner =>
         {

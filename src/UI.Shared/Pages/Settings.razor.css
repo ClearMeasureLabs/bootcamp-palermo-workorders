@@ -1,0 +1,106 @@
+.settings-page {
+    min-height: 100%;
+    padding: 2rem 1rem 3rem;
+}
+
+.settings-container {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.settings-header {
+    margin-bottom: 2rem;
+}
+
+.settings-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0 0 0.5rem;
+    font-family: 'Georgia', serif;
+}
+
+.settings-subtitle {
+    margin: 0;
+    color: #718096;
+    font-size: 1rem;
+}
+
+.settings-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0 0 1rem;
+}
+
+.settings-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+}
+
+.settings-dark-switch-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin: 0;
+    min-height: 3rem;
+}
+
+.settings-dark-switch-row .form-check-input {
+    width: 3rem;
+    height: 1.5rem;
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.settings-switch-labels {
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-switch-labels .form-check-label {
+    font-weight: 600;
+    color: #2d3748;
+    cursor: pointer;
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+.settings-helper {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #718096;
+    line-height: 1.5;
+}
+
+@media (max-width: 576px) {
+    .settings-dark-switch-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .settings-dark-switch-row .form-check-input {
+        align-self: flex-start;
+    }
+}
+
+:global(html[data-theme="dark"]) .settings-header h1,
+:global(html[data-theme="dark"]) .settings-section-title,
+:global(html[data-theme="dark"]) .settings-switch-labels .form-check-label {
+    color: #f7fafc;
+}
+
+:global(html[data-theme="dark"]) .settings-subtitle,
+:global(html[data-theme="dark"]) .settings-helper {
+    color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .settings-card {
+    background: #2d3748;
+    border-color: #4a5568;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}

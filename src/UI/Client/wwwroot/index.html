@@ -2,6 +2,19 @@
 <html lang="en">
 
 <head>
+    <script>
+        (function () {
+            try {
+                var k = 'churchbulletin-theme';
+                var v = localStorage.getItem(k);
+                var theme = (v === 'dark' || v === 'light')
+                    ? v
+                    : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            } catch (e) { }
+        })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Clear Measure - Bootcamp</title>

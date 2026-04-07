@@ -242,3 +242,24 @@
         padding: 1.5rem;
     }
 }
+
+:global(html[data-theme="dark"]) .login-card {
+    background: rgba(45, 55, 72, 0.96);
+    border: 1px solid #4a5568;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+:global(html[data-theme="dark"]) .login-body {
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .login-body label {
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .login-body .form-control,
+:global(html[data-theme="dark"]) .login-body select {
+    background: #374151;
+    border-color: #4a5568;
+    color: #f7fafc;
+}
