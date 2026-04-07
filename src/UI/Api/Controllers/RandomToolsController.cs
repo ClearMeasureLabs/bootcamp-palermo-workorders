@@ -21,6 +21,7 @@ public sealed class RandomToolsController : ControllerBase
 
     /// <summary>
     /// Returns one random value according to <paramref name="type"/>.
+    /// For <c>type=number</c>, <c>value</c> is a uniform random signed 32-bit integer in <c>[int.MinValue, int.MaxValue]</c>.
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
@@ -31,7 +32,7 @@ public sealed class RandomToolsController : ControllerBase
 
         if (type.Equals("number", StringComparison.OrdinalIgnoreCase))
         {
-            var value = Random.Shared.Next();
+            var value = (int)Random.Shared.NextInt64(int.MinValue, (long)int.MaxValue + 1);
             var payload = new RandomValueResponse("number", value);
             return JsonWithConditionalGet(payload);
         }

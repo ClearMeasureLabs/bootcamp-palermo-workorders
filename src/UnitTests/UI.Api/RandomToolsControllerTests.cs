@@ -35,12 +35,22 @@ public class RandomToolsControllerTests
     public void Get_Should_ReturnJsonNumber_When_TypeNumber()
     {
         var controller = CreateController();
+        var sawNonNegative = false;
+        var sawNegative = false;
 
-        var result = controller.Get("number");
+        for (var i = 0; i < 256; i++)
+        {
+            var payload = AssertJsonPayload(controller.Get("number"));
+            payload["type"]!.GetValue<string>().ShouldBe("number");
+            var value = payload["value"]!.GetValue<int>();
+            if (value >= 0)
+                sawNonNegative = true;
+            if (value < 0)
+                sawNegative = true;
+        }
 
-        var payload = AssertJsonPayload(result);
-        payload["type"]!.GetValue<string>().ShouldBe("number");
-        payload["value"]!.GetValue<int>().ShouldBeInRange(int.MinValue, int.MaxValue);
+        sawNonNegative.ShouldBeTrue();
+        sawNegative.ShouldBeTrue("Expected at least one negative sample across full int32 range");
     }
 
     [Test]

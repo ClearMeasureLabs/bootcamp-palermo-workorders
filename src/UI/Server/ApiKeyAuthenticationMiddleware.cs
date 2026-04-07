@@ -90,7 +90,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         if (segments.Length >= 3
             && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
         {
-            if (segments.Length >= 4
+            if (segments.Length == 4
                 && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
                 && segments[3].Equals("random", StringComparison.OrdinalIgnoreCase))
             {
