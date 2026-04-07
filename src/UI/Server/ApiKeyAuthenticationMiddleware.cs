@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
-/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version and time endpoints.
+/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, and tools random endpoints.
 /// </summary>
 public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 {
@@ -57,7 +57,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return false;
         }
 
-        if (IsPublicVersionOrTimePath(value))
+        if (IsPublicApiKeyBypassPath(value))
         {
             return false;
         }
@@ -65,7 +65,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         return true;
     }
 
-    internal static bool IsPublicVersionOrTimePath(string pathValue)
+    internal static bool IsPublicApiKeyBypassPath(string pathValue)
     {
         var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length < 2 || !segments[0].Equals("api", StringComparison.OrdinalIgnoreCase))
@@ -80,9 +80,23 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);
         }
 
+        if (segments.Length == 3
+            && segments[1].Equals("tools", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("random", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         if (segments.Length >= 3
             && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
         {
+            if (segments.Length == 4
+                && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
+                && segments[3].Equals("random", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
             var leaf = segments[2];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);

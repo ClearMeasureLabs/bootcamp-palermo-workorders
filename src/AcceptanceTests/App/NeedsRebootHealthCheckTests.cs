@@ -1,8 +1,12 @@
 using System.Net;
+using NUnit.Framework;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
-[TestFixture]
+/// <summary>
+/// Uses a process-wide static flag; must not run in parallel with itself or other tests that touch the same flag.
+/// </summary>
+[TestFixture, NonParallelizable]
 public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 {
     protected override bool RequiresBrowser => false;
