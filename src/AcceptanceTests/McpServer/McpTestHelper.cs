@@ -1,3 +1,4 @@
+using System.Net;
 using ClearMeasure.Bootcamp.AcceptanceTests;
 using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
+using NUnit.Framework;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
@@ -14,6 +16,8 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 /// </summary>
 public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
 {
+    private const string ClientResultExceptionFullName = "System.ClientModel.ClientResultException";
+
     private McpClient? _client;
     private IList<McpClientTool>? _tools;
 
@@ -65,9 +69,40 @@ public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
-        return await chatClient.GetResponseAsync(messages,
-            new ChatOptions { Tools = [.. _tools!] },
-            cts.Token);
+        try
+        {
+            return await chatClient.GetResponseAsync(messages,
+                new ChatOptions { Tools = [.. _tools!] },
+                cts.Token);
+        }
+        catch (Exception ex)
+        {
+            if (IsAzureOpenAiRateLimited(ex))
+            {
+                Assert.Ignore($"Skipped: Azure OpenAI rate limited (HTTP 429). {ex.Message}");
+            }
+
+            throw;
+        }
+    }
+
+    private static bool IsAzureOpenAiRateLimited(Exception ex)
+    {
+        for (var e = ex; e != null; e = e.InnerException)
+        {
+            if (e is HttpRequestException http && http.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                return true;
+            }
+
+            if (string.Equals(e.GetType().FullName, ClientResultExceptionFullName, StringComparison.Ordinal)
+                && e.Message.Contains("429", StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static string ExtractJsonValue(string json, string propertyName)
