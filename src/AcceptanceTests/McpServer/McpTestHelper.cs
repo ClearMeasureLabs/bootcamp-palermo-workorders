@@ -1,5 +1,6 @@
 using ClearMeasure.Bootcamp.AcceptanceTests;
 using ClearMeasure.Bootcamp.IntegrationTests;
+using static ClearMeasure.Bootcamp.IntegrationTests.AzureOpenAiRateLimitTestSupport;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -65,9 +66,17 @@ public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
-        return await chatClient.GetResponseAsync(messages,
-            new ChatOptions { Tools = [.. _tools!] },
-            cts.Token);
+        try
+        {
+            return await chatClient.GetResponseAsync(messages,
+                new ChatOptions { Tools = [.. _tools!] },
+                cts.Token);
+        }
+        catch (Exception ex)
+        {
+            ThrowIfRateLimited(ex);
+            throw;
+        }
     }
 
     public static string ExtractJsonValue(string json, string propertyName)
