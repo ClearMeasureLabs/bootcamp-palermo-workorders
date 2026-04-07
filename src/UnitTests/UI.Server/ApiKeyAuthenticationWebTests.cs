@@ -8,14 +8,36 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 public class ApiKeyAuthenticationWebTests
 {
     [Test]
-    public async Task Should_Return401_When_ApiHealthCalledWithoutKey()
+    public async Task Should_Return200_When_ApiHealthCalledWithoutKey()
     {
         await using var factory = new ApiKeyProtectedWebApplicationFactory();
         using var client = factory.CreateClient();
 
         var response = await client.GetAsync("/api/health");
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_Return200_When_ApiHealthDetailedCalledWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/health/detailed");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_Return200_When_ApiV1HealthDetailedCalledWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1.0/health/detailed");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Test]
@@ -39,7 +61,7 @@ public class ApiKeyAuthenticationWebTests
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Add(ApiKeyConstants.HeaderName, "wrong");
 
-        var response = await client.GetAsync("/api/v1.0/health");
+        var response = await client.GetAsync("/api/WeatherForecast");
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }

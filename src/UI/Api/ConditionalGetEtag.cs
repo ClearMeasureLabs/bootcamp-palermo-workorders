@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -34,6 +35,30 @@ public static class ConditionalGetEtag
     {
         var bytes = JsonSerializer.SerializeToUtf8Bytes(value, JsonSerializerOptions);
         return CreateWeakEtag(bytes);
+    }
+
+    /// <summary>
+    /// Weak ETag for <see cref="DetailedHealthReport"/> excluding <see cref="DetailedHealthReport.CheckedAtUtc"/>
+    /// and per-component <see cref="ComponentHealthEntry.DurationMs"/> so conditional GET can return 304 when
+    /// only timing fields change between requests.
+    /// </summary>
+    public static EntityTagHeaderValue CreateWeakEtagForDetailedHealthStable(DetailedHealthReport report)
+    {
+        var stablePayload = new
+        {
+            report.OverallStatus,
+            Components = report.Components.Select(c => new
+            {
+                c.Name,
+                c.Status,
+                c.Description,
+                c.ExceptionMessage,
+                c.ExceptionDetail,
+                c.Data
+            }).ToList()
+        };
+
+        return CreateWeakEtagForJson(stablePayload);
     }
 
     /// <summary>
