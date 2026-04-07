@@ -13,7 +13,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
 	.login-prompt-link {
-		animation: login-prompt-emphasis 0.85s ease-in-out infinite;
+		animation: login-prompt-emphasis 1.35s ease-in-out infinite;
 		will-change: transform, opacity, box-shadow, filter;
 	}
 }
@@ -27,29 +27,53 @@
 		filter: brightness(1);
 		text-shadow: 0 0 0 transparent;
 	}
-	40% {
+	12% {
 		opacity: 1;
-		transform: scale(1.08);
-		box-shadow: 0 0 0 10px rgba(221, 107, 32, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.95), 0 8px 26px rgba(221, 107, 32, 0.7);
+		transform: scale(1.1);
+		box-shadow: 0 0 0 12px rgba(221, 107, 32, 0.45), 0 0 0 4px rgba(255, 255, 255, 0.95), 0 8px 28px rgba(221, 107, 32, 0.72);
 		border-color: #dd6b20;
-		filter: brightness(1.12);
-		text-shadow: 0 0 12px rgba(255, 255, 255, 0.95), 0 0 20px rgba(255, 200, 50, 0.9);
+		filter: brightness(1.15);
+		text-shadow: 0 0 12px rgba(255, 255, 255, 0.95), 0 0 22px rgba(255, 200, 50, 0.95);
 	}
-	48% {
-		opacity: 0.15;
-		transform: scale(0.92);
-		box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+	18%, 22% {
+		opacity: 0.06;
+		transform: scale(0.9);
+		box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.4), 0 2px 8px rgba(0, 0, 0, 0.25);
 		border-color: #9b2c2c;
-		filter: brightness(0.75);
+		filter: brightness(0.65);
 		text-shadow: none;
 	}
-	52% {
+	28% {
 		opacity: 1;
-		transform: scale(1.12);
-		box-shadow: 0 0 0 14px rgba(255, 214, 10, 0.5), 0 0 0 4px rgba(255, 255, 255, 1), 0 10px 32px rgba(221, 107, 32, 0.75);
+		transform: scale(1.14);
+		box-shadow: 0 0 0 16px rgba(255, 214, 10, 0.55), 0 0 0 5px rgba(255, 255, 255, 1), 0 12px 36px rgba(221, 107, 32, 0.8);
 		border-color: #c05621;
-		filter: brightness(1.2);
-		text-shadow: 0 0 14px rgba(255, 255, 255, 1), 0 0 24px rgba(255, 180, 0, 0.95);
+		filter: brightness(1.25);
+		text-shadow: 0 0 16px rgba(255, 255, 255, 1), 0 0 28px rgba(255, 180, 0, 1);
+	}
+	44% {
+		opacity: 1;
+		transform: scale(1.06);
+		box-shadow: 0 0 0 8px rgba(221, 107, 32, 0.38), 0 0 0 3px rgba(255, 255, 255, 0.9), 0 6px 22px rgba(221, 107, 32, 0.62);
+		border-color: #dd6b20;
+		filter: brightness(1.1);
+		text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 18px rgba(255, 200, 50, 0.85);
+	}
+	52%, 56% {
+		opacity: 0.06;
+		transform: scale(0.9);
+		box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.4), 0 2px 8px rgba(0, 0, 0, 0.25);
+		border-color: #9b2c2c;
+		filter: brightness(0.65);
+		text-shadow: none;
+	}
+	62% {
+		opacity: 1;
+		transform: scale(1.14);
+		box-shadow: 0 0 0 16px rgba(255, 214, 10, 0.55), 0 0 0 5px rgba(255, 255, 255, 1), 0 12px 36px rgba(221, 107, 32, 0.8);
+		border-color: #c05621;
+		filter: brightness(1.25);
+		text-shadow: 0 0 16px rgba(255, 255, 255, 1), 0 0 28px rgba(255, 180, 0, 1);
 	}
 }
 

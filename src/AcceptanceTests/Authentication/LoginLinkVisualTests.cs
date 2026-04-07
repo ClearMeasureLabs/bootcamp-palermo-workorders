@@ -18,6 +18,26 @@ public class LoginLinkVisualTests : AcceptanceTestBase
         var animationName = await loginLink.EvaluateAsync<string>(
             "el => getComputedStyle(el).animationName");
         animationName.ShouldNotBe("none");
+
+        var minOpacity = 1.0;
+        for (var i = 0; i < 50; i++)
+        {
+            var opacity = await loginLink.EvaluateAsync<double>(
+                "el => parseFloat(getComputedStyle(el).opacity)");
+            if (opacity < minOpacity)
+            {
+                minOpacity = opacity;
+            }
+
+            if (minOpacity <= 0.2)
+            {
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        minOpacity.ShouldBeLessThanOrEqualTo(0.2);
     }
 
     [Test, Retry(2)]
