@@ -29,21 +29,22 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             "eRIPCgdtZXNzYWdlGAEgASgJIi0KG0dldFdvcmtPcmRlckJ5TnVtYmVyUmVx",
             "dWVzdBIOCgZudW1iZXIYASABKAkiRgoZR2V0V29ya09yZGVyQnlOdW1iZXJS",
             "ZXBseRIpCgp3b3JrX29yZGVyGAEgASgLMhUud29ya29yZGVycy5Xb3JrT3Jk",
-            "ZXIiqQMKCVdvcmtPcmRlchIOCgZudW1iZXIYASABKAkSDQoFdGl0bGUYAiAB",
+            "ZXIivwMKCVdvcmtPcmRlchIOCgZudW1iZXIYASABKAkSDQoFdGl0bGUYAiAB",
             "KAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEwoLcm9vbV9udW1iZXIYBCABKAkS",
             "EgoKc3RhdHVzX2tleRgFIAEoCRIYChBjcmVhdG9yX3VzZXJuYW1lGAYgASgJ",
             "EhkKEWFzc2lnbmVlX3VzZXJuYW1lGAcgASgJEjoKEWFzc2lnbmVkX2RhdGVf",
             "dXRjGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgAiAEBEjkK",
             "EGNyZWF0ZWRfZGF0ZV91dGMYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGlt",
             "ZXN0YW1wSAGIAQESOwoSY29tcGxldGVkX2RhdGVfdXRjGAogASgLMhouZ29v",
-            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcEgCiAEBEhQKDGluc3RydWN0aW9ucxgL",
-            "IAEoCUIUChJfYXNzaWduZWRfZGF0ZV91dGNCEwoRX2NyZWF0ZWRfZGF0ZV91",
-            "dGNCFQoTX2NvbXBsZXRlZF9kYXRlX3V0YzKsAQoKV29ya09yZGVycxI2CgRQ",
-            "aW5nEhcud29ya29yZGVycy5QaW5nUmVxdWVzdBoVLndvcmtvcmRlcnMuUGlu",
-            "Z1JlcGx5EmYKFEdldFdvcmtPcmRlckJ5TnVtYmVyEicud29ya29yZGVycy5H",
-            "ZXRXb3JrT3JkZXJCeU51bWJlclJlcXVlc3QaJS53b3Jrb3JkZXJzLkdldFdv",
-            "cmtPcmRlckJ5TnVtYmVyUmVwbHlCJ6oCJENsZWFyTWVhc3VyZS5Cb290Y2Ft",
-            "cC5VSS5TZXJ2ZXIuR3JwY2IGcHJvdG8z"));
+            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcEgCiAEBEhkKDGluc3RydWN0aW9ucxgL",
+            "IAEoCUgDiAEBQhQKEl9hc3NpZ25lZF9kYXRlX3V0Y0ITChFfY3JlYXRlZF9k",
+            "YXRlX3V0Y0IVChNfY29tcGxldGVkX2RhdGVfdXRjQg8KDV9pbnN0cnVjdGlv",
+            "bnMyrAEKCldvcmtPcmRlcnMSNgoEUGluZxIXLndvcmtvcmRlcnMuUGluZ1Jl",
+            "cXVlc3QaFS53b3Jrb3JkZXJzLlBpbmdSZXBseRJmChRHZXRXb3JrT3JkZXJC",
+            "eU51bWJlchInLndvcmtvcmRlcnMuR2V0V29ya09yZGVyQnlOdW1iZXJSZXF1",
+            "ZXN0GiUud29ya29yZGVycy5HZXRXb3JrT3JkZXJCeU51bWJlclJlcGx5Qieq",
+            "AiRDbGVhck1lYXN1cmUuQm9vdGNhbXAuVUkuU2VydmVyLkdycGNiBnByb3Rv",
+            "Mw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.TimestampReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -51,7 +52,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply.Parser, new[]{ "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest.Parser, new[]{ "Number" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply.Parser, new[]{ "WorkOrder" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "Instructions" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "Instructions" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "Instructions" }, null, null, null)
           }));
     }
     #endregion
@@ -999,14 +1000,28 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
 
     /// <summary>Field number for the "instructions" field.</summary>
     public const int InstructionsFieldNumber = 11;
-    private string instructions_ = "";
+    private readonly static string InstructionsDefaultValue = "";
+
+    private string instructions_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string Instructions {
-      get { return instructions_; }
+      get { return instructions_ ?? InstructionsDefaultValue; }
       set {
         instructions_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
+    }
+    /// <summary>Gets whether the "instructions" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasInstructions {
+      get { return instructions_ != null; }
+    }
+    /// <summary>Clears the value of the "instructions" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearInstructions() {
+      instructions_ = null;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1052,7 +1067,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (assignedDateUtc_ != null) hash ^= AssignedDateUtc.GetHashCode();
       if (createdDateUtc_ != null) hash ^= CreatedDateUtc.GetHashCode();
       if (completedDateUtc_ != null) hash ^= CompletedDateUtc.GetHashCode();
-      if (Instructions.Length != 0) hash ^= Instructions.GetHashCode();
+      if (HasInstructions) hash ^= Instructions.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1111,7 +1126,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         output.WriteRawTag(82);
         output.WriteMessage(CompletedDateUtc);
       }
-      if (Instructions.Length != 0) {
+      if (HasInstructions) {
         output.WriteRawTag(90);
         output.WriteString(Instructions);
       }
@@ -1165,7 +1180,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         output.WriteRawTag(82);
         output.WriteMessage(CompletedDateUtc);
       }
-      if (Instructions.Length != 0) {
+      if (HasInstructions) {
         output.WriteRawTag(90);
         output.WriteString(Instructions);
       }
@@ -1209,7 +1224,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (completedDateUtc_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(CompletedDateUtc);
       }
-      if (Instructions.Length != 0) {
+      if (HasInstructions) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Instructions);
       }
       if (_unknownFields != null) {
@@ -1263,7 +1278,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         }
         CompletedDateUtc.MergeFrom(other.CompletedDateUtc);
       }
-      if (other.Instructions.Length != 0) {
+      if (other.HasInstructions) {
         Instructions = other.Instructions;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
