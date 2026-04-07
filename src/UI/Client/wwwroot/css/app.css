@@ -279,3 +279,99 @@ html {
     outline: 2px solid #7b68ee;
     outline-offset: 2px;
 }
+
+/* Dark theme (html data-theme set by theme.js / inline boot script) */
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] a,
+html[data-theme="dark"] .btn-link {
+    color: #a3bffa;
+}
+
+html[data-theme="dark"] a:hover,
+html[data-theme="dark"] .btn-link:hover {
+    color: #c3dafe;
+}
+
+html[data-theme="dark"] .btn:focus,
+html[data-theme="dark"] .btn:active:focus,
+html[data-theme="dark"] .btn-link.nav-link:focus,
+html[data-theme="dark"] .form-control:focus,
+html[data-theme="dark"] .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem #2d3748, 0 0 0 0.25rem #7b68ee;
+}
+
+html[data-theme="dark"] #blazor-error-ui {
+    background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 100%);
+    color: #fed7d7;
+    border-top-color: #fc8181;
+}
+
+html[data-theme="dark"] #blazor-error-ui .dismiss {
+    color: #fed7d7;
+    background: #2d3748;
+}
+
+html[data-theme="dark"] .loading-progress circle {
+    stroke: #4a5568;
+}
+
+html[data-theme="dark"] .loading-progress circle:last-child {
+    stroke: #a3bffa;
+}
+
+html[data-theme="dark"] .loading-progress-text {
+    color: #a3bffa;
+}
+
+html[data-theme="dark"] .form-control {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #f7fafc;
+}
+
+html[data-theme="dark"] .form-control:focus {
+    background: #374151;
+}
+
+html[data-theme="dark"] .form-control:hover:not(:disabled) {
+    background: #374151;
+    border-color: #718096;
+}
+
+html[data-theme="dark"] .form-control:disabled {
+    background: #1a202c;
+    color: #a0aec0;
+}
+
+html[data-theme="dark"] .card {
+    background: #2d3748;
+    border-color: #4a5568;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="dark"] .alert-danger {
+    background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 100%);
+    border-color: #fc8181;
+    color: #fed7d7;
+}
+
+html[data-theme="dark"] .alert-success {
+    background: linear-gradient(135deg, #22543d 0%, #276749 100%);
+    border-color: #68d391;
+    color: #c6f6d5;
+}
+
+html[data-theme="dark"] .alert-info {
+    background: linear-gradient(135deg, #2c5282 0%, #2b6cb0 100%);
+    border-color: #63b3ed;
+    color: #bee3f8;
+}
+
+html[data-theme="dark"] :focus-visible {
+    outline-color: #a3bffa;
+}

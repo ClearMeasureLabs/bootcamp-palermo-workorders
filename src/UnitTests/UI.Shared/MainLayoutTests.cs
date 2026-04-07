@@ -6,6 +6,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 using Bunit.TestDoubles;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -88,6 +89,19 @@ public class MainLayoutTests
     public void ShouldUseDocumentedNavRailBreakpointMediaQuery()
     {
         MainLayout.NavRailBreakpointMediaQuery.ShouldBe("(max-width: 768px)");
+    }
+
+    [Test]
+    public void MainLayout_AfterFirstRender_ShouldCallThemeInitialize_WhenImplemented()
+    {
+        using var ctx = CreateContext();
+        var themeModule = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
+        themeModule.Setup<string>("getTheme").SetResult("light");
+        themeModule.SetupVoid("syncDomFromTheme", _ => true);
+
+        ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+
+        themeModule.VerifyInvoke("getTheme");
     }
 
     [Test]
@@ -214,6 +228,8 @@ public class MainLayoutTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession());
+        ctx.Services.AddSingleton<IJSRuntime>(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddSingleton<ThemePreferenceService>();
         var customAuth = new CustomAuthenticationStateProvider();
         if (authenticateAsUser != null)
         {

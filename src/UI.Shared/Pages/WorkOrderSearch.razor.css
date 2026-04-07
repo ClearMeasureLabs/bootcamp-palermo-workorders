@@ -257,3 +257,78 @@
         font-size: 0.8rem;
     }
 }
+
+:global(html[data-theme="dark"]) .search-page {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+:global(html[data-theme="dark"]) .search-header h2 {
+    color: #f7fafc;
+    text-shadow: none;
+}
+
+:global(html[data-theme="dark"]) .search-subtitle {
+    color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .search-filters-card,
+:global(html[data-theme="dark"]) .results-card {
+    background: #2d3748;
+    border-color: #4a5568;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+:global(html[data-theme="dark"]) .filter-label {
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .form-control {
+    background: #374151;
+    border-color: #4a5568;
+    color: #f7fafc;
+}
+
+:global(html[data-theme="dark"]) .form-control:focus {
+    background: #4a5568;
+}
+
+:global(html[data-theme="dark"]) .grid-data {
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .grid-data thead th {
+    background: #1a202c;
+    color: #cbd5e0;
+    border-color: #4a5568;
+}
+
+:global(html[data-theme="dark"]) .grid-data td {
+    border-color: #4a5568;
+}
+
+:global(html[data-theme="dark"]) .empty-results {
+    color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .grid-data tbody tr {
+    border-bottom-color: #4a5568;
+}
+
+:global(html[data-theme="dark"]) .grid-data tbody tr.odd {
+    background: #2d3748;
+}
+
+:global(html[data-theme="dark"]) .grid-data tbody tr.even {
+    background: #374151;
+}
+
+:global(html[data-theme="dark"]) .grid-data tbody tr:hover,
+:global(html[data-theme="dark"]) .grid-data tbody tr:hover.odd,
+:global(html[data-theme="dark"]) .grid-data tbody tr:hover.even {
+    background: #4a5568;
+}
+
+:global(html[data-theme="dark"]) .grid-data td {
+    color: #e2e8f0;
+}

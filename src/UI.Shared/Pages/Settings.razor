@@ -1,0 +1,33 @@
+<PageTitle>Settings</PageTitle>
+
+<div class="settings-page">
+    <div class="settings-container">
+        <header class="settings-header">
+            <h1>Settings</h1>
+            <p class="settings-subtitle">Manage preferences for this browser.</p>
+        </header>
+
+        <section class="settings-section" aria-labelledby="appearance-heading">
+            <h2 id="appearance-heading" class="settings-section-title">Appearance</h2>
+            <div class="settings-card">
+                <div class="form-check form-switch settings-dark-switch-row">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           role="switch"
+                           id="dark-mode-switch"
+                           data-testid="@nameof(Elements.DarkModeSwitch)"
+                           checked="@Theme.IsDarkMode"
+                           aria-checked="@Theme.IsDarkMode.ToString().ToLowerInvariant()"
+                           @onchange="OnDarkModeChanged" />
+                    <div class="settings-switch-labels">
+                        <label class="form-check-label" for="dark-mode-switch">Dark mode</label>
+                        <p class="settings-helper" id="dark-mode-help">
+                            Applies to the whole app on this device. The choice is saved in this browser until changed again.
+                            If no saved choice exists, the site follows the device light or dark setting until a choice is made here.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

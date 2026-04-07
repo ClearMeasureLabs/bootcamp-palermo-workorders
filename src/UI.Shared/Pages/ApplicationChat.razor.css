@@ -173,3 +173,32 @@
         max-width: 90%;
     }
 }
+
+:global(html[data-theme="dark"]) .ai-agent-page {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+:global(html[data-theme="dark"]) .ai-agent-header h2 {
+    color: #f7fafc;
+}
+
+:global(html[data-theme="dark"]) .ai-agent-subtitle {
+    color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .chat-container {
+    background: #2d3748;
+    border-color: #4a5568;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+:global(html[data-theme="dark"]) .chat-message {
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .chat-input-container textarea,
+:global(html[data-theme="dark"]) .chat-input-container input {
+    background: #374151;
+    border-color: #4a5568;
+    color: #f7fafc;
+}

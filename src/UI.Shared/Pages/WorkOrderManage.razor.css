@@ -319,3 +319,41 @@
         padding: 1.5rem;
     }
 }
+
+:global(html[data-theme="dark"]) .work-order-page {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+:global(html[data-theme="dark"]) .work-order-header {
+    background: #2d3748;
+    border-color: #4a5568;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+:global(html[data-theme="dark"]) .work-order-header h2 {
+    color: #f7fafc;
+    text-shadow: none;
+}
+
+:global(html[data-theme="dark"]) .work-order-header span {
+    color: #a3bffa;
+}
+
+:global(html[data-theme="dark"]) .form-container,
+:global(html[data-theme="dark"]) .action-section {
+    background: #2d3748;
+    border-color: #4a5568;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+:global(html[data-theme="dark"]) .form-container label,
+:global(html[data-theme="dark"]) .form-group label {
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .form-control,
+:global(html[data-theme="dark"]) textarea.form-control {
+    background: #374151;
+    border-color: #4a5568;
+    color: #f7fafc;
+}

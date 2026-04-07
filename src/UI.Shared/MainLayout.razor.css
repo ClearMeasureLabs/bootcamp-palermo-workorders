@@ -430,47 +430,150 @@
     transition: all 0.2s ease;
 }
 
-/* Dark mode support (if needed later) */
-@media (prefers-color-scheme: dark) {
-    .modern-app {
-        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-    }
-    
-    .modern-header {
-        background: #2d3748;
-        border-bottom-color: #4a5568;
-    }
-    
-    .header-title h3 {
-        color: #f7fafc;
-    }
-    
-    .subtitle {
-        color: #a0aec0;
-    }
-    
-    .modern-main {
-        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-    }
+/* Dark theme (user preference via html[data-theme="dark"]) */
+:global(html[data-theme="dark"]) .modern-app {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
 
-    .site-footer {
-        border-top-color: #4a5568;
-        background: rgba(45, 55, 72, 0.5);
-    }
+:global(html[data-theme="dark"]) .modern-sidebar {
+    background: linear-gradient(180deg, #2d3748 0%, #1a202c 50%, #171923 100%);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
+}
 
-    .site-footer-line {
-        color: #a0aec0;
-    }
+:global(html[data-theme="dark"]) .modern-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
 
-    .site-footer-link {
-        color: #cbd5e0;
-    }
+:global(html[data-theme="dark"]) .modern-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
 
-    .site-footer-link:hover {
-        color: #f7fafc;
-    }
+:global(html[data-theme="dark"]) .sidebar-header {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.15);
+}
 
-    .site-footer-link:focus-visible {
-        outline-color: #cbd5e0;
-    }
+:global(html[data-theme="dark"]) .church-brand,
+:global(html[data-theme="dark"]) .brand-text h4,
+:global(html[data-theme="dark"]) .church-icon {
+    color: #f7fafc;
+    text-shadow: none;
+}
+
+:global(html[data-theme="dark"]) .brand-text span {
+    color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .sidebar-footer {
+    border-top-color: rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.15);
+}
+
+:global(html[data-theme="dark"]) .sidebar-footer ::deep a,
+:global(html[data-theme="dark"]) .health-check-link {
+    color: #cbd5e0 !important;
+}
+
+:global(html[data-theme="dark"]) .sidebar-footer ::deep a:hover,
+:global(html[data-theme="dark"]) .health-check-link:hover {
+    color: #f7fafc !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+:global(html[data-theme="dark"]) .sidebar-nav ::deep .nav-item .nav-link {
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .sidebar-nav ::deep .nav-item .nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f7fafc;
+}
+
+:global(html[data-theme="dark"]) .sidebar-nav ::deep .nav-item .nav-link.active {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+    color: #f7fafc;
+    border-left-color: #90cdf4;
+}
+
+:global(html[data-theme="dark"]) .sidebar-nav ::deep .nav-icon {
+    color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .sidebar-nav ::deep .nav-item .nav-link:hover .nav-icon,
+:global(html[data-theme="dark"]) .sidebar-nav ::deep .nav-item .nav-link.active .nav-icon {
+    color: #f7fafc;
+}
+
+:global(html[data-theme="dark"]) .modern-header {
+    background: #2d3748;
+    border-bottom-color: #4a5568;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+:global(html[data-theme="dark"]) .header-title h3 {
+    color: #f7fafc;
+}
+
+:global(html[data-theme="dark"]) .subtitle {
+    color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .nav-rail-toggle {
+    border-color: #4a5568;
+    background: linear-gradient(135deg, #374151 0%, #2d3748 100%);
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .nav-rail-toggle:hover {
+    background: #4a5568;
+    border-color: #718096;
+}
+
+:global(html[data-theme="dark"]) .user-section,
+:global(html[data-theme="dark"]) .auth-section {
+    background: linear-gradient(135deg, #374151 0%, #2d3748 100%);
+    border-color: #4a5568;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+:global(html[data-theme="dark"]) .user-section ::deep span,
+:global(html[data-theme="dark"]) .user-section ::deep a,
+:global(html[data-theme="dark"]) .auth-section ::deep a:not(.login-prompt-link) {
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .user-section ::deep a:hover,
+:global(html[data-theme="dark"]) .auth-section ::deep a:not(.login-prompt-link):hover {
+    background: #4a5568;
+    color: #f7fafc;
+}
+
+:global(html[data-theme="dark"]) .modern-main {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+:global(html[data-theme="dark"]) .site-footer {
+    border-top-color: #4a5568;
+    background: rgba(26, 32, 44, 0.85);
+}
+
+:global(html[data-theme="dark"]) .site-footer-line {
+    color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .site-footer-link {
+    color: #cbd5e0;
+}
+
+:global(html[data-theme="dark"]) .site-footer-link:hover {
+    color: #f7fafc;
+}
+
+:global(html[data-theme="dark"]) .site-footer-link:focus-visible {
+    outline-color: #cbd5e0;
+}
+
+:global(html[data-theme="dark"]) .user-section ::deep a:focus,
+:global(html[data-theme="dark"]) .auth-section ::deep a:not(.login-prompt-link):focus {
+    outline-color: #90cdf4;
 }
