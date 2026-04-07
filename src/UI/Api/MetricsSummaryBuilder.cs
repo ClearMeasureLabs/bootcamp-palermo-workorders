@@ -12,30 +12,29 @@ public static class MetricsSummaryBuilder
     /// </summary>
     public static MetricsSummaryResponse Build(TimeProvider timeProvider, long totalRequestsServed)
     {
-        var processStartUtc = new DateTimeOffset(Process.GetCurrentProcess().StartTime).ToUniversalTime();
-        return Build(timeProvider, processStartUtc, totalRequestsServed);
+        using var process = Process.GetCurrentProcess();
+        var processStartUtc = new DateTimeOffset(process.StartTime).ToUniversalTime();
+        return Build(timeProvider, processStartUtc, process.WorkingSet64, totalRequestsServed);
     }
 
     /// <summary>
-    /// Creates a snapshot for a known process start instant (UTC), for tests.
+    /// Creates a snapshot for a known process start instant and working set, for tests.
     /// </summary>
     public static MetricsSummaryResponse Build(
         TimeProvider timeProvider,
-        DateTimeOffset processStartUtcUtc,
+        DateTimeOffset processStartUtc,
+        long workingSetBytes,
         long totalRequestsServed)
     {
         var now = timeProvider.GetUtcNow();
-        var startUtc = processStartUtcUtc.ToUniversalTime();
+        var startUtc = processStartUtc.ToUniversalTime();
         var uptime = now - startUtc;
-
-        var process = Process.GetCurrentProcess();
-        var workingSet = process.WorkingSet64;
 
         return new MetricsSummaryResponse
         {
             Uptime = uptime,
             TotalRequestsServed = totalRequestsServed,
-            WorkingSetBytes = workingSet,
+            WorkingSetBytes = workingSetBytes,
             GcGen0Collections = GC.CollectionCount(0),
             GcGen1Collections = GC.CollectionCount(1),
             GcGen2Collections = GC.CollectionCount(2)

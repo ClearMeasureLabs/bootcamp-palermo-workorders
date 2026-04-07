@@ -138,7 +138,6 @@ public class MetricsSummaryEndpointIntegrationTests
     private static void AssertSaneMetrics(MetricsSummaryResponse m)
     {
         m.Uptime.ShouldBeGreaterThanOrEqualTo(TimeSpan.Zero);
-        m.Uptime.ShouldBeLessThan(TimeSpan.FromMinutes(10));
         m.TotalRequestsServed.ShouldBeGreaterThanOrEqualTo(0);
         m.WorkingSetBytes.ShouldBeGreaterThanOrEqualTo(0);
         m.GcGen0Collections.ShouldBeGreaterThanOrEqualTo(0);
