@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
-/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version and time endpoints.
+/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, and feature-flag endpoints.
 /// </summary>
 public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 {
@@ -57,7 +57,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return false;
         }
 
-        if (IsPublicVersionOrTimePath(value))
+        if (IsPublicVersionOrTimePath(value) || IsPublicFeatureFlagsPath(value))
         {
             return false;
         }
@@ -86,6 +86,32 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             var leaf = segments[2];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
+    }
+
+    internal static bool IsPublicFeatureFlagsPath(string pathValue)
+    {
+        var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length < 3 || !segments[0].Equals("api", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (segments.Length == 3
+            && segments[1].Equals("features", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("flags", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (segments.Length >= 4
+            && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("features", StringComparison.OrdinalIgnoreCase)
+            && segments[3].Equals("flags", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
         }
 
         return false;

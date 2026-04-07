@@ -71,6 +71,30 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_Return200AndParseableFlags_When_GetFeatureFlags_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/features/flags");
+        var v1 = await _client.GetAsync("/api/v1.0/features/flags");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var legacyMedia = legacy.Content.Headers.ContentType?.MediaType;
+        var v1Media = v1.Content.Headers.ContentType?.MediaType;
+        legacyMedia.ShouldNotBeNull();
+        v1Media.ShouldNotBeNull();
+        legacyMedia!.ShouldContain("application/json");
+        v1Media!.ShouldContain("application/json");
+
+        using var legacyDoc = JsonDocument.Parse(await legacy.Content.ReadAsStringAsync());
+        using var v1Doc = JsonDocument.Parse(await v1.Content.ReadAsStringAsync());
+        legacyDoc.RootElement.GetProperty("flags").GetArrayLength().ShouldBeGreaterThan(0);
+        v1Doc.RootElement.GetProperty("flags").GetArrayLength().ShouldBeGreaterThan(0);
+        var legacyFirst = legacyDoc.RootElement.GetProperty("flags")[0];
+        legacyFirst.GetProperty("key").GetString().ShouldNotBeNullOrEmpty();
+        _ = legacyFirst.GetProperty("enabled").GetBoolean();
+    }
+
+    [Test]
     public async Task Should_IncludeSupportedVersionsHeader_When_GetVersionedEndpoint()
     {
         var response = await _client!.GetAsync("/api/v1.0/health");
