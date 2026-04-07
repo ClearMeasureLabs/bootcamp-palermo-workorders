@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
@@ -83,6 +84,42 @@ public class LoginPageTests
 
         var jdoeOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "jdoe");
         jdoeOption.TextContent.ShouldBe("Mary Jane Simpson");
+    }
+
+    [Test]
+    public void ShouldDisplaySameTitleCasedLoginLabels_WhenCurrentCultureIsTurkish()
+    {
+        var savedCulture = CultureInfo.CurrentCulture;
+        var savedUiCulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            var turkish = CultureInfo.GetCultureInfo("tr-TR");
+            CultureInfo.CurrentCulture = turkish;
+            CultureInfo.CurrentUICulture = turkish;
+
+            using var ctx = new TestContext();
+
+            var provider = new CustomAuthenticationStateProvider();
+            ctx.Services.AddSingleton(provider);
+            ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+            ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+            ctx.Services.AddSingleton<IBus>(new StubBus());
+
+            var component = ctx.RenderComponent<Login>();
+
+            var hsimpsonOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "hsimpson");
+            hsimpsonOption.GetAttribute("value").ShouldBe("hsimpson");
+            hsimpsonOption.TextContent.ShouldBe("Homer Simpson");
+
+            var jdoeOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "jdoe");
+            jdoeOption.GetAttribute("value").ShouldBe("jdoe");
+            jdoeOption.TextContent.ShouldBe("Mary Jane Simpson");
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = savedCulture;
+            CultureInfo.CurrentUICulture = savedUiCulture;
+        }
     }
 
     [Test]
