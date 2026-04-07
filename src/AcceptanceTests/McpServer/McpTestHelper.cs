@@ -1,3 +1,4 @@
+using System.Net;
 using ClearMeasure.Bootcamp.AcceptanceTests;
 using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
+using NUnit.Framework.Internal;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
@@ -14,6 +16,8 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 /// </summary>
 public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
 {
+    private const string ClientResultExceptionFullName = "System.ClientModel.ClientResultException";
+
     private McpClient? _client;
     private IList<McpClientTool>? _tools;
 
@@ -64,10 +68,50 @@ public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
             new(ChatRole.User, prompt)
         };
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
-        return await chatClient.GetResponseAsync(messages,
-            new ChatOptions { Tools = [.. _tools!] },
-            cts.Token);
+        var delaysSeconds = new[] { 0, 3, 8, 20 };
+        Exception? last = null;
+        for (var attempt = 0; attempt < delaysSeconds.Length; attempt++)
+        {
+            if (delaysSeconds[attempt] > 0)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(delaysSeconds[attempt]));
+            }
+
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+                return await chatClient.GetResponseAsync(messages,
+                    new ChatOptions { Tools = [.. _tools!] },
+                    cts.Token);
+            }
+            catch (Exception ex) when (IsAzureOpenAiRateLimited(ex))
+            {
+                last = ex;
+                TestContext.Out.WriteLine(
+                    $"McpTestHelper: Azure OpenAI rate limited (attempt {attempt + 1}/{delaysSeconds.Length}), retrying...");
+            }
+        }
+
+        throw new IgnoreException($"Skipped: Azure OpenAI rate limited after retries. {last?.Message}");
+    }
+
+    private static bool IsAzureOpenAiRateLimited(Exception ex)
+    {
+        for (var e = ex; e != null; e = e.InnerException)
+        {
+            if (e is HttpRequestException http && http.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                return true;
+            }
+
+            if (string.Equals(e.GetType().FullName, ClientResultExceptionFullName, StringComparison.Ordinal)
+                && e.Message.Contains("429", StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static string ExtractJsonValue(string json, string propertyName)
