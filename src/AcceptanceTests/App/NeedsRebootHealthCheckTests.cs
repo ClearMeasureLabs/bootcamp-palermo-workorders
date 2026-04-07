@@ -1,8 +1,14 @@
 using System.Net;
+using NUnit.Framework;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
+/// <summary>
+/// Serial execution: <see cref="NeedsRebootHealthCheck.NeedsReboot"/> is process-wide; parallel tests
+/// in this fixture race with each other’s <see cref="TearDown"/> resetting the flag.
+/// </summary>
 [TestFixture]
+[NonParallelizable]
 public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 {
     protected override bool RequiresBrowser => false;
