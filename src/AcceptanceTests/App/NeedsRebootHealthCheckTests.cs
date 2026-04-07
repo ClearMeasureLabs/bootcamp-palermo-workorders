@@ -3,6 +3,7 @@ using System.Net;
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
 [TestFixture]
+[NonParallelizable]
 public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 {
     protected override bool RequiresBrowser => false;
