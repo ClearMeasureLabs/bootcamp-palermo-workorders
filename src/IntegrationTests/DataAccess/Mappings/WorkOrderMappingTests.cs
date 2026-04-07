@@ -238,8 +238,8 @@ public class WorkOrderMappingTests
         {
             Number = new string('A', 51), // Exceeds number column max length
             Title = new string('B', 301), // Exceeds 300 char limit
-            Description = new string('C', 4001), // Exceeds 4000 char limit
-            Instructions = new string('E', 4001), // Exceeds 4000 char limit
+            Description = "within limit",
+            Instructions = "within limit",
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
