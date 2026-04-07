@@ -51,8 +51,7 @@ public class EnvironmentStatusEndpointIntegrationTests
     [Test]
     public async Task Should_AllowAnonymousAccess_When_ApiKeyEnabled()
     {
-        using var factory = new DetailedHealthWebApplicationFactory();
-        factory.WithWebHostBuilder(b =>
+        await using var factory = new DetailedHealthWebApplicationFactory().WithWebHostBuilder(b =>
         {
             b.ConfigureAppConfiguration((_, config) =>
             {

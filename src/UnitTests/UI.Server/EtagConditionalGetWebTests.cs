@@ -41,4 +41,20 @@ public class EtagConditionalGetWebTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         response.Headers.ETag.ShouldNotBeNull();
     }
+
+    [Test]
+    public async Task Should_Return304NotModified_When_EnvironmentStatusIfNoneMatchMatchesEtag()
+    {
+        using var client = _factory!.CreateClient();
+        var first = await client.GetAsync("/api/status/environment");
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var etag = first.Headers.ETag;
+        etag.ShouldNotBeNull();
+
+        using var second = new HttpRequestMessage(HttpMethod.Get, "/api/status/environment");
+        second.Headers.IfNoneMatch.Add(etag!);
+        var notModified = await client.SendAsync(second);
+        notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
+        (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
+    }
 }
