@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
-/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version and time endpoints.
+/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public diagnostics (version, time, environment status).
 /// </summary>
 public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 {
@@ -57,7 +57,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return false;
         }
 
-        if (IsPublicVersionOrTimePath(value))
+        if (IsPublicDiagnosticsPath(value))
         {
             return false;
         }
@@ -65,7 +65,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         return true;
     }
 
-    internal static bool IsPublicVersionOrTimePath(string pathValue)
+    internal static bool IsPublicDiagnosticsPath(string pathValue)
     {
         var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length < 2 || !segments[0].Equals("api", StringComparison.OrdinalIgnoreCase))
@@ -80,9 +80,25 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);
         }
 
+        if (segments.Length == 3)
+        {
+            if (segments[1].Equals("status", StringComparison.OrdinalIgnoreCase)
+                && segments[2].Equals("environment", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
         if (segments.Length >= 3
             && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
         {
+            if (segments.Length == 4
+                && segments[2].Equals("status", StringComparison.OrdinalIgnoreCase)
+                && segments[3].Equals("environment", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
             var leaf = segments[2];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase);
