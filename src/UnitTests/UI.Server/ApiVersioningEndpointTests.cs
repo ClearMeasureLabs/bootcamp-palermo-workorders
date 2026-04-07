@@ -49,14 +49,27 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
-    public async Task Should_Return200_When_GetVersion_V1Path()
+    public async Task Should_Return200_When_GetVersion_LegacyAndV1Paths()
     {
-        var response = await _client!.GetAsync("/api/v1.0/version");
+        var legacy = await _client!.GetAsync("/api/version");
+        var v1 = await _client.GetAsync("/api/v1.0/version");
 
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/json");
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        foreach (var response in new[] { legacy, v1 })
+        {
+            var mediaType = response.Content.Headers.ContentType?.MediaType;
+            mediaType.ShouldNotBeNull();
+            mediaType!.ShouldContain("application/json");
+        }
+
+        using var legacyDoc = JsonDocument.Parse(await legacy.Content.ReadAsStringAsync());
+        using var v1Doc = JsonDocument.Parse(await v1.Content.ReadAsStringAsync());
+        legacyDoc.RootElement.GetProperty("assemblyVersion").GetString()
+            .ShouldBe(v1Doc.RootElement.GetProperty("assemblyVersion").GetString());
+        legacyDoc.RootElement.GetProperty("buildConfiguration").GetString()
+            .ShouldBe(v1Doc.RootElement.GetProperty("buildConfiguration").GetString());
     }
 
     [Test]

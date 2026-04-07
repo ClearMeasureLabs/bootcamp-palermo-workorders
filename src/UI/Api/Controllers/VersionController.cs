@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Asp.Versioning;
@@ -31,9 +32,13 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
         var assembly = Assembly.GetExecutingAssembly();
         var assemblyVersion = assembly.GetName().Version?.ToString();
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var buildConfiguration = assembly
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(a => a.Key == "BuildConfiguration")?.Value;
         var payload = new VersionMetadataResponse(
             AssemblyVersion: assemblyVersion,
             InformationalVersion: informationalVersion,
+            BuildConfiguration: buildConfiguration,
             Environment: hostEnvironment.EnvironmentName,
             MachineName: Environment.MachineName,
             FrameworkDescription: RuntimeInformation.FrameworkDescription);
@@ -47,10 +52,12 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
 
 /// <summary>
 /// JSON payload for <c>GET /api/version</c> and <c>GET /api/v1.0/version</c>.
+/// <para><see cref="BuildConfiguration"/> is emitted at compile time from MSBuild <c>$(Configuration)</c> (Debug, Release, etc.).</para>
 /// </summary>
 public record VersionMetadataResponse(
     string? AssemblyVersion,
     string? InformationalVersion,
+    string? BuildConfiguration,
     string? Environment,
     string MachineName,
     string FrameworkDescription);
