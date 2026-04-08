@@ -16,6 +16,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
         Assert.That(workOrder.Assignee, Is.EqualTo(null));
+        Assert.That(workOrder.Instructions, Is.EqualTo(null));
     }
 
     [Test]
@@ -70,6 +71,23 @@ public class WorkOrderTests
         var order = new WorkOrder();
         order.Description = longText;
         Assert.That(order.Description.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void ShouldTruncateInstructionsTo4000_When_ValueExceedsMax()
+    {
+        var longText = new string('y', 4001);
+        var order = new WorkOrder();
+        order.Instructions = longText;
+        Assert.That(order.Instructions!.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void ShouldSetInstructionsToNull_When_AssignedNull()
+    {
+        var order = new WorkOrder { Instructions = "steps" };
+        order.Instructions = null;
+        Assert.That(order.Instructions, Is.EqualTo(null));
     }
 
     [Test]
