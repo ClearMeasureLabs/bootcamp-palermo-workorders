@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
 /// <summary>
-/// UI.Server test host with API key validation enabled for <c>/api/*</c> (except public version/time).
+/// UI.Server test host with API key validation enabled for <c>/api/*</c> (except public version, time, and tools/random).
 /// </summary>
 public sealed class ApiKeyProtectedWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
 {

@@ -45,6 +45,7 @@ builder.Services.AddApiVersioning(options =>
 builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IRandomToolPayloadGenerator, RandomToolPayloadGenerator>();
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddMemoryCache();
 builder.Services.Configure<IdempotencyOptions>(
