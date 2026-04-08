@@ -49,6 +49,15 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_ReturnNotSuccess_When_GetMetricsSummary_UnsupportedVersion()
+    {
+        var response = await _client!.GetAsync("/api/v2.0/metrics/summary");
+
+        response.IsSuccessStatusCode.ShouldBeFalse();
+        response.StatusCode.ShouldBeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
+    }
+
+    [Test]
     public async Task Should_Return200_When_GetVersion_V1Path()
     {
         var response = await _client!.GetAsync("/api/v1.0/version");
