@@ -153,6 +153,7 @@ else
 app.UseHttpsRedirection();
 
 app.UseRequestDecompression();
+app.UseMiddleware<InvalidCompressedRequestBodyMiddleware>();
 app.UseResponseCompression();
 
 app.UseBlazorFrameworkFiles();
