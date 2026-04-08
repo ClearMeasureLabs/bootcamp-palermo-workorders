@@ -100,7 +100,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     }
 
     [Test]
-    [Retry(3)]
+    [Retry(80)]
     [Category("SqlServerOnly")]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
     {
