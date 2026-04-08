@@ -17,4 +17,16 @@ public class LoginDisplayNameFormatterTests
     {
         LoginDisplayNameFormatter.FormatForLoginDropdown("HOMER SIMPSON").ShouldBe("HOMER SIMPSON");
     }
+
+    [Test]
+    public void FormatForLoginDropdown_Null_ReturnsEmpty()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown(null).ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void FormatForLoginDropdown_Empty_ReturnsEmpty()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown(string.Empty).ShouldBe(string.Empty);
+    }
 }
