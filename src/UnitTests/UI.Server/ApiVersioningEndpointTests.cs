@@ -40,6 +40,40 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_Return200AndEquivalentComponentReport_When_GetDetailedHealth_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var v1 = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using var legacyDoc = JsonDocument.Parse(await legacy.Content.ReadAsStringAsync());
+        using var v1Doc = JsonDocument.Parse(await v1.Content.ReadAsStringAsync());
+
+        legacyDoc.RootElement.GetProperty("overallStatus").GetString()
+            .ShouldBe(v1Doc.RootElement.GetProperty("overallStatus").GetString());
+
+        var legacyComponents = ReadComponentStatuses(legacyDoc.RootElement.GetProperty("components"));
+        var v1Components = ReadComponentStatuses(v1Doc.RootElement.GetProperty("components"));
+        legacyComponents.Count.ShouldBe(v1Components.Count);
+        legacyComponents.ShouldBeEquivalentTo(v1Components);
+    }
+
+    private static Dictionary<string, string> ReadComponentStatuses(JsonElement componentsArray)
+    {
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var item in componentsArray.EnumerateArray())
+        {
+            var name = item.GetProperty("name").GetString() ?? "";
+            var status = item.GetProperty("status").GetString() ?? "";
+            map[name] = status;
+        }
+
+        return map;
+    }
+
+    [Test]
     public async Task Should_ReturnNotSuccess_When_GetSimpleHealth_UnsupportedVersion()
     {
         var response = await _client!.GetAsync("/api/v2.0/health");
