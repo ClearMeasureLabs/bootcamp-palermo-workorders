@@ -38,6 +38,10 @@ public abstract class AcceptanceTestBase
     protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
     public IBus Bus => TestHost.GetRequiredService<IBus>();
 
+    /// <summary>
+    /// Skips when LLM credentials are missing. Use for tests that call <c>SendPrompt</c> or other model-orchestrated flows.
+    /// MCP tool-only acceptance tests should not call this method.
+    /// </summary>
     protected static async Task SkipIfNoChatClient()
     {
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
@@ -48,6 +52,11 @@ public abstract class AcceptanceTestBase
             Assert.Ignore(availability.Message);
         }
     }
+
+    /// <summary>
+    /// Same as <see cref="SkipIfNoChatClient"/>; prefer this name in tests that require LLM orchestration (not direct MCP tools only).
+    /// </summary>
+    protected static Task SkipIfLlmOrchestrationUnavailable() => SkipIfNoChatClient();
 
     private string TestId => TestContext.CurrentContext.Test.ID;
     

@@ -1,6 +1,6 @@
+using ClearMeasure.Bootcamp.AcceptanceTests.WorkItemTracking;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.IntegrationTests;
-using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Shouldly;
 
@@ -16,7 +16,7 @@ public class McpHttpServerAcceptanceTests : AcceptanceTestBase
     [OneTimeSetUp]
     public async Task McpSetUp()
     {
-        _helper = new McpTestHelper(TestHost.GetRequiredService<ChatClientFactory>());
+        _helper = new McpTestHelper();
         await _helper.ConnectAsync();
     }
 
@@ -51,8 +51,8 @@ public class McpHttpServerAcceptanceTests : AcceptanceTestBase
     [Test]
     public async Task ShouldListWorkOrdersViaHttp()
     {
-        var text = await _helper!.CallToolDirectly("list-work-orders",
-            new Dictionary<string, object?>());
+        var tracking = new McpWorkItemTrackingService(_helper!);
+        var text = await tracking.ListWorkOrdersAsync();
 
         text.ShouldNotBeNullOrEmpty();
         text.ShouldContain("Number");
@@ -65,13 +65,11 @@ public class McpHttpServerAcceptanceTests : AcceptanceTestBase
         var employees = await bus.Send(new EmployeeGetAllQuery());
         var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
 
-        var text = await _helper!.CallToolDirectly("create-work-order",
-            new Dictionary<string, object?>
-            {
-                ["title"] = "HTTP transport test",
-                ["description"] = "Created via HTTP MCP transport",
-                ["creatorUsername"] = creator.UserName!
-            });
+        var tracking = new McpWorkItemTrackingService(_helper!);
+        var text = await tracking.CreateDraftWorkOrderAsync(
+            "HTTP transport test",
+            "Created via HTTP MCP transport",
+            creator.UserName!);
 
         text.ShouldContain("HTTP transport test");
         text.ShouldContain("Draft");
@@ -84,11 +82,8 @@ public class McpHttpServerAcceptanceTests : AcceptanceTestBase
         var employees = await bus.Send(new EmployeeGetAllQuery());
         var known = employees.First();
 
-        var text = await _helper!.CallToolDirectly("get-employee",
-            new Dictionary<string, object?>
-            {
-                ["username"] = known.UserName!
-            });
+        var tracking = new McpWorkItemTrackingService(_helper!);
+        var text = await tracking.GetEmployeeAsync(known.UserName!);
 
         text.ShouldNotBeNullOrEmpty();
         text.ShouldContain(known.UserName!);
