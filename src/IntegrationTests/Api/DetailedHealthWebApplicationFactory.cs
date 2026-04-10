@@ -26,8 +26,8 @@ public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<
                 ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
                 ["ApiKeyAuthentication:Enabled"] = "false",
                 ["ApiKeyAuthentication:ValidationKey"] = "",
-                ["FeatureFlags:EnableExperimentalReporting"] = "false",
-                ["FeatureFlags:EnableOperatorDiagnosticsSample"] = "false"
+                ["FeatureFlags:SampleFeatureA"] = "false",
+                ["FeatureFlags:SampleFeatureB"] = "false"
             });
         });
     }
