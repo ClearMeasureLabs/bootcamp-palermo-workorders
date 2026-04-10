@@ -136,10 +136,16 @@ app.UseCorrelationId();
 
 app.UseWhen(
     context => ProblemDetailsPaths.IsMachineOriented(context.Request.Path),
-    branch => branch.UseExceptionHandler(new ExceptionHandlerOptions
+    branch =>
     {
-        ExceptionHandler = context => ProblemDetailsExceptionHandler.HandleAsync(context, app.Environment)
-    }));
+        // UseExceptionHandler is outer (registered first): inbound order ExceptionHandler -> GlobalExceptionLoggingMiddleware -> main.
+        // Exceptions from the endpoint unwind to GlobalExceptionLoggingMiddleware first (log + rethrow), then ExceptionHandler catches.
+        branch.UseExceptionHandler(new ExceptionHandlerOptions
+        {
+            ExceptionHandler = context => ProblemDetailsExceptionHandler.HandleAsync(context, app.Environment)
+        });
+        branch.UseMiddleware<GlobalExceptionLoggingMiddleware>();
+    });
 
 if (app.Environment.IsDevelopment())
 {
@@ -147,7 +153,12 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Error");
+    // Do not register the HTML /Error handler for /api or /mcp; those paths use the machine-oriented
+    // exception handler above. A blanket UseExceptionHandler("/Error") here would sit inside that
+    // branch's continuation and catch API exceptions first (returning HTML).
+    app.UseWhen(
+        context => !ProblemDetailsPaths.IsMachineOriented(context.Request.Path),
+        branch => branch.UseExceptionHandler("/Error"));
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -210,6 +221,9 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
                 return Results.Ok();
             })
         .WithRequestTimeout(TimeSpan.FromMilliseconds(500));
+    app.MapGet(
+        "/api/_test/exception-probe",
+        (HttpContext _) => throw new InvalidOperationException("GlobalExceptionLoggingMiddleware test probe"));
 }
 
 app.UseRequestBodyBuffering();
