@@ -65,4 +65,29 @@ public class ApiKeyAuthenticationWebTests
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Test]
+    public async Task Should_Return401_When_ApiDiagnosticsCalledWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/diagnostics");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Test]
+    public async Task Should_Return200_When_ApiDiagnosticsCalledWithValidKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add(
+            ApiKeyConstants.HeaderName,
+            ApiKeyProtectedWebApplicationFactory.TestApiKey);
+
+        var response = await client.GetAsync("/api/v1.0/diagnostics");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }
