@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.UI.Server;
+using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -6,13 +7,12 @@ using Microsoft.Extensions.Configuration;
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 
 /// <summary>
-/// Hosts UI.Server in-process with SQLite in-memory so CI can exercise <c>/api/*</c> without LocalDB.
+/// Same as <see cref="ApiKeyProtectedWebApplicationFactory"/> with feature flags for diagnostics tests.
 /// </summary>
-public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
+public sealed class DiagnosticsApiKeyProtectedWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Avoid appsettings.Development.json (LocalDB) overriding SQLite on Linux CI.
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:SqlConnectionString", "Data Source=:memory:");
         builder.ConfigureAppConfiguration((_, config) =>
@@ -24,9 +24,9 @@ public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
                 ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
-                ["ApiKeyAuthentication:Enabled"] = "false",
-                ["ApiKeyAuthentication:ValidationKey"] = "",
-                ["FeatureFlags:SampleFeatureA"] = "false",
+                ["ApiKeyAuthentication:Enabled"] = "true",
+                ["ApiKeyAuthentication:ValidationKey"] = ApiKeyProtectedWebApplicationFactory.TestApiKey,
+                ["FeatureFlags:SampleFeatureA"] = "true",
                 ["FeatureFlags:SampleFeatureB"] = "false"
             });
         });

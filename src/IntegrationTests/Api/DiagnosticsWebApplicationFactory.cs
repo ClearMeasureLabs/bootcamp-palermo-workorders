@@ -6,13 +6,12 @@ using Microsoft.Extensions.Configuration;
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 
 /// <summary>
-/// Hosts UI.Server in-process with SQLite in-memory so CI can exercise <c>/api/*</c> without LocalDB.
+/// Hosts UI.Server for <c>/api/diagnostics</c> integration tests with explicit feature-flag configuration.
 /// </summary>
-public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
+public sealed class DiagnosticsWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Avoid appsettings.Development.json (LocalDB) overriding SQLite on Linux CI.
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:SqlConnectionString", "Data Source=:memory:");
         builder.ConfigureAppConfiguration((_, config) =>
@@ -26,7 +25,7 @@ public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<
                 ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
                 ["ApiKeyAuthentication:Enabled"] = "false",
                 ["ApiKeyAuthentication:ValidationKey"] = "",
-                ["FeatureFlags:SampleFeatureA"] = "false",
+                ["FeatureFlags:SampleFeatureA"] = "true",
                 ["FeatureFlags:SampleFeatureB"] = "false"
             });
         });
