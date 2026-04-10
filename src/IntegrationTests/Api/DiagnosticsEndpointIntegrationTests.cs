@@ -2,8 +2,11 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -106,10 +109,39 @@ public class DiagnosticsEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_ExposeFeatureFlags_FromOverriddenConfiguration_When_GetDiagnostics()
+    {
+        await using var factory = new DiagnosticsWebApplicationFactory().WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["FeatureFlags:SampleFeatureA"] = "false",
+                    ["FeatureFlags:SampleFeatureB"] = "true"
+                });
+            });
+        });
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/diagnostics");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var payload = await response.Content.ReadFromJsonAsync<DiagnosticsResponse>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        payload.ShouldNotBeNull();
+        payload!.FeatureFlags.SampleFeatureA.ShouldBeFalse();
+        payload.FeatureFlags.SampleFeatureB.ShouldBeTrue();
+    }
+
+    [Test]
     public async Task Should_NotConflictWithLegacyDiagnostics_When_RoutesRegistered()
     {
         var response = await _client!.GetAsync("/api/diagnostics");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var legacyResponse = await _client.PostAsync("/_diagnostics/reset-db-connections", null);
+        legacyResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Test]

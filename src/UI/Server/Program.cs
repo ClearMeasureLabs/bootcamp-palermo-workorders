@@ -54,10 +54,10 @@ builder.Services.AddApiRateLimiting(builder.Configuration);
 builder.Services.AddApiRequestTimeouts(builder.Configuration);
 builder.Services.Configure<ApiKeyAuthenticationOptions>(
     builder.Configuration.GetSection(ApiKeyAuthenticationOptions.SectionName));
-builder.Services.PostConfigure<ApiKeyAuthenticationOptions>(o =>
-    o.ValidationKey = string.IsNullOrWhiteSpace(o.ValidationKey) ? null : o.ValidationKey.Trim());
 builder.Services.Configure<DiagnosticsFeatureFlagsOptions>(
     builder.Configuration.GetSection(DiagnosticsFeatureFlagsOptions.SectionName));
+builder.Services.PostConfigure<ApiKeyAuthenticationOptions>(o =>
+    o.ValidationKey = string.IsNullOrWhiteSpace(o.ValidationKey) ? null : o.ValidationKey.Trim());
 builder.Services.AddRequestDecompression();
 builder.Services.Configure<RequestBodyBufferingOptions>(
     builder.Configuration.GetSection(RequestBodyBufferingOptions.SectionName));
