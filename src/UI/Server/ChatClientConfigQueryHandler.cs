@@ -1,5 +1,4 @@
 ﻿using ClearMeasure.Bootcamp.LlmGateway;
-using ClearMeasure.Bootcamp.UI.Client;
 using MediatR;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -11,16 +10,20 @@ public class ChatClientConfigQueryHandler(IConfiguration configuration, ILogger<
     public Task<ChatClientConfig> Handle(ChatClientConfigQuery request, CancellationToken cancellationToken)
     {
         var apiKey = configuration.GetValue<string>("AI_OpenAI_ApiKey");
-        logger?.LogDebug($"AI_OpenAI_ApiKey found as {apiKey}");
         var openAiUrl = configuration.GetValue<string>("AI_OpenAI_Url");
-        logger?.LogDebug($"AI_OpenAI_Url found as {apiKey}");
         var openAiModel = configuration.GetValue<string>("AI_OpenAI_Model");
-        logger?.LogDebug($"AI_OpenAI_Model found as {apiKey}");
+        var provider = configuration.GetValue<string>("AI_OpenAI_Provider");
+        logger.LogDebug("AI_OpenAI_Provider: {Provider}, AI_OpenAI_Url configured: {HasUrl}, AI_OpenAI_Model configured: {HasModel}, AI_OpenAI_ApiKey configured: {HasKey}",
+            string.IsNullOrEmpty(provider) ? "(default Azure)" : provider,
+            !string.IsNullOrEmpty(openAiUrl),
+            !string.IsNullOrEmpty(openAiModel),
+            !string.IsNullOrEmpty(apiKey));
 
         return Task.FromResult(new ChatClientConfig
         {
-            AiOpenAiApiKey = apiKey, 
-            AiOpenAiUrl = openAiUrl, 
+            AiOpenAiProvider = provider,
+            AiOpenAiApiKey = apiKey,
+            AiOpenAiUrl = openAiUrl,
             AiOpenAiModel = openAiModel
         });
     }

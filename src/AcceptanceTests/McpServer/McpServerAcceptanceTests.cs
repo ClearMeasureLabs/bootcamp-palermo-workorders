@@ -1,7 +1,7 @@
+using ClearMeasure.Bootcamp.AcceptanceTests.WorkItemTracking;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.IntegrationTests;
-using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Shouldly;
 
@@ -17,7 +17,7 @@ public class McpServerAcceptanceTests : AcceptanceTestBase
     [OneTimeSetUp]
     public async Task McpSetUp()
     {
-        _helper = new McpTestHelper(TestHost.GetRequiredService<ChatClientFactory>());
+        _helper = new McpTestHelper();
         await _helper.ConnectAsync();
     }
 
@@ -55,13 +55,11 @@ public class McpServerAcceptanceTests : AcceptanceTestBase
         var employees = await bus.Send(new EmployeeGetAllQuery());
         var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
 
-        var result = await _helper!.CallToolDirectly("create-work-order",
-            new Dictionary<string, object?>
-            {
-                ["title"] = "Direct MCP tool test",
-                ["description"] = "Created via direct tool call",
-                ["creatorUsername"] = creator.UserName!
-            });
+        var tracking = new McpWorkItemTrackingService(_helper!);
+        var result = await tracking.CreateDraftWorkOrderAsync(
+            "Direct MCP tool test",
+            "Created via direct tool call",
+            creator.UserName!);
 
         result.ShouldContain("Direct MCP tool test");
         result.ShouldContain("Draft");

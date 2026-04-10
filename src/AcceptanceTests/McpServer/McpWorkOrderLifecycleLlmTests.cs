@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.AcceptanceTests.WorkItemTracking;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.IntegrationTests;
@@ -32,7 +33,7 @@ public class McpWorkOrderLifecycleLlmTests : AcceptanceTestBase
     {
         if (!_helper!.Connected)
             Assert.Inconclusive("MCP server is not available");
-        await SkipIfNoChatClient();
+        await SkipIfLlmOrchestrationUnavailable();
     }
 
     [Test, Retry(2)]
@@ -45,23 +46,18 @@ public class McpWorkOrderLifecycleLlmTests : AcceptanceTestBase
             e.Roles.Any(r => r.CanFulfillWorkOrder) && e.UserName != creator.UserName);
 
         // Create and assign via direct tool calls for reliability
-        var createResult = await _helper!.CallToolDirectly("create-work-order",
-            new Dictionary<string, object?>
-            {
-                ["title"] = "LLM lifecycle test",
-                ["description"] = "Testing full lifecycle via LLM",
-                ["creatorUsername"] = creator.UserName!
-            });
+        var tracking = new McpWorkItemTrackingService(_helper!);
+        var createResult = await tracking.CreateDraftWorkOrderAsync(
+            "LLM lifecycle test",
+            "Testing full lifecycle via LLM",
+            creator.UserName!);
         var workOrderNumber = McpTestHelper.ExtractJsonValue(createResult, "Number");
 
-        await _helper!.CallToolDirectly("execute-work-order-command",
-            new Dictionary<string, object?>
-            {
-                ["workOrderNumber"] = workOrderNumber,
-                ["commandName"] = "DraftToAssignedCommand",
-                ["executingUsername"] = creator.UserName!,
-                ["assigneeUsername"] = assignee.UserName!
-            });
+        await tracking.ExecuteWorkOrderCommandAsync(
+            workOrderNumber,
+            "DraftToAssignedCommand",
+            creator.UserName!,
+            assignee.UserName!);
 
         // Ask the LLM to begin and complete the work order
         var response = await _helper!.SendPrompt(

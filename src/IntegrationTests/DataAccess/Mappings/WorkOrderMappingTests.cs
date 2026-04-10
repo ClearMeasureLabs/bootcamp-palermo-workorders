@@ -6,7 +6,7 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Mappings;
 
 [TestFixture]
-public class WorkOrderMappingTests
+public class WorkOrderMappingTests : IntegratedTestBase
 {
     [Test]
     public void ShouldMapWorkOrderBasicProperties()
@@ -226,6 +226,7 @@ public class WorkOrderMappingTests
     [Category("SqlServerOnly")]
     public void ShouldRespectMaxLengthConstraints()
     {
+        SkipWhenSqliteEngine();
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
@@ -252,6 +253,7 @@ public class WorkOrderMappingTests
     [Category("SqlServerOnly")]
     public void ShouldSupportMaxLengthTitle()
     {
+        SkipWhenSqliteEngine();
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");

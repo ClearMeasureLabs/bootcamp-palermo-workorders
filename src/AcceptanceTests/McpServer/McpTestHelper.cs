@@ -12,7 +12,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 /// Provides MCP tool invocation and LLM chat helpers for acceptance tests.
 /// Connects to the MCP HTTP endpoint hosted by UI.Server at /mcp.
 /// </summary>
-public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
+public class McpTestHelper(ChatClientFactory? factory = null) : IAsyncDisposable
 {
     private McpClient? _client;
     private IList<McpClientTool>? _tools;
@@ -55,6 +55,12 @@ public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
 
     public async Task<ChatResponse> SendPrompt(string prompt)
     {
+        if (factory is null)
+        {
+            throw new InvalidOperationException(
+                "McpTestHelper was constructed without ChatClientFactory; SendPrompt requires LLM configuration.");
+        }
+
         var chatClient = await factory.GetChatClient();
         var messages = new List<ChatMessage>
         {

@@ -32,7 +32,7 @@ public class McpServerLlmAcceptanceTests : AcceptanceTestBase
     {
         if (!_helper!.Connected)
             Assert.Inconclusive("MCP server is not available");
-        await SkipIfNoChatClient();
+        await SkipIfLlmOrchestrationUnavailable();
     }
 
     [Test, Retry(2)]
