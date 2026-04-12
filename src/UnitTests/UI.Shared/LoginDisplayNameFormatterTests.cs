@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;
 
@@ -28,5 +29,21 @@ public class LoginDisplayNameFormatterTests
     public void FormatForLoginDropdown_Empty_ReturnsEmpty()
     {
         LoginDisplayNameFormatter.FormatForLoginDropdown(string.Empty).ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void ShouldFormatForLoginDropdown_WhenEmployeeFullNameIsMixedCase_ReturnsAllCaps()
+    {
+        var employee = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com");
+
+        LoginDisplayNameFormatter.FormatForLoginDropdown(employee.GetFullName()).ShouldBe("HOMER SIMPSON");
+    }
+
+    [Test]
+    public void ShouldFormatForLoginDropdown_WhenEmployeeFullNameIsAlreadyAllCaps_ReturnsUnchanged()
+    {
+        var employee = new Employee("jdoe", "MARY JANE", "SIMPSON", "mj@example.com");
+
+        LoginDisplayNameFormatter.FormatForLoginDropdown(employee.GetFullName()).ShouldBe("MARY JANE SIMPSON");
     }
 }
