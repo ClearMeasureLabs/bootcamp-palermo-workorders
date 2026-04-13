@@ -419,11 +419,32 @@ public abstract class AcceptanceTestBase
         await InputIfChanged(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
 
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        return await WaitForPersistedWorkOrderStatusAsync(order.Number!, WorkOrderStatus.Assigned);
+    }
 
-        return rehyratedOrder;
+    /// <summary>
+    /// Polls the server until the work order reaches the expected status. Submit handlers navigate away first;
+    /// reading the database immediately can still return the previous row on slow hosts (for example ARM CI).
+    /// </summary>
+    protected async Task<WorkOrder> WaitForPersistedWorkOrderStatusAsync(string workOrderNumber, WorkOrderStatus expectedStatus, int maxAttempts = 120)
+    {
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            var wo = await Bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
+            if (wo != null && wo.Status == expectedStatus)
+            {
+                return wo;
+            }
+
+            await Task.Delay(250);
+        }
+
+        var final = await Bus.Send(new WorkOrderByNumberQuery(workOrderNumber)) ?? throw new InvalidOperationException();
+        final.Status.ShouldBe(expectedStatus);
+        return final;
     }
 
     protected async Task<WorkOrder> BeginExistingWorkOrder(WorkOrder order)
@@ -455,11 +476,10 @@ public abstract class AcceptanceTestBase
         await InputIfChanged(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
         await InputIfChanged(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-
-        return rehyratedOrder;
+        return await WaitForPersistedWorkOrderStatusAsync(order.Number!, WorkOrderStatus.InProgress);
     }
 
     protected async Task<WorkOrder> CompleteExistingWorkOrder(WorkOrder order)
@@ -491,9 +511,9 @@ public abstract class AcceptanceTestBase
         await InputIfChanged(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
         await InputIfChanged(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs()); // Give time for the save operation to complete on Azure
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-        return rehyratedOrder;
+        return await WaitForPersistedWorkOrderStatusAsync(order.Number!, WorkOrderStatus.Complete);
     }
 }

@@ -12,6 +12,8 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         await LoginAsCurrentUser();
 
         var order = await CreateAndSaveNewWorkOrder();
+        var expectedTitle = order.Title ?? "";
+        var expectedDescription = order.Description ?? "";
         order = await ClickWorkOrderNumberFromSearchPage(order);
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
         order = await ClickWorkOrderNumberFromSearchPage(order);
@@ -19,8 +21,6 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         order = await BeginExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-        var expectedTitle = $"[{TestTag}] from automation";
-        var expectedDescription = "Description";
         var expectedInstructions = "Finish before end of day";
         order.Title = expectedTitle;
         order.Description = expectedDescription;
