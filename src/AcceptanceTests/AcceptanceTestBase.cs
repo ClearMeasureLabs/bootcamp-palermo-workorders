@@ -1,3 +1,4 @@
+using System;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
@@ -304,12 +305,13 @@ public abstract class AcceptanceTestBase
         await locator.SelectOptionAsync(value ?? "");
     }
 
-    protected async Task<WorkOrder> CreateAndSaveNewWorkOrder()
+    protected async Task<WorkOrder> CreateAndSaveNewWorkOrder(Action<WorkOrder>? configure = null)
     {
         var order = Faker<WorkOrder>();
         order.Title = $"[{TestTag}] from automation";
         order.Number = null;
-        order.Instructions = "";
+        configure?.Invoke(order);
+        order.Instructions ??= string.Empty;
         var testTitle = order.Title;
         var testDescription = order.Description;
         var testInstructions = order.Instructions;

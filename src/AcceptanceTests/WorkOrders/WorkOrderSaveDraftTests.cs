@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
@@ -109,5 +110,80 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
         rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldCreateWorkOrderWithMaxLengthInstructions()
+    {
+        await LoginAsCurrentUser();
+
+        var instructions = new string('z', 4000);
+        var order = await CreateAndSaveNewWorkOrder(o => o.Instructions = instructions);
+
+        order.Instructions!.Length.ShouldBe(4000);
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync(instructions);
+
+        var fromDb = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        fromDb.Instructions!.Length.ShouldBe(4000);
+        fromDb.Instructions.ShouldBe(instructions);
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldCreateWorkOrderWithEmptyInstructions()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder(o => o.Instructions = "");
+
+        order.Instructions.ShouldBe("");
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync("");
+
+        var fromDb = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        fromDb.Instructions.ShouldBe("");
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldPersistInstructionsAfterSaveDraftAssignAndReturn()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder(o => o.Instructions = "");
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), "later added");
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        order = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        order.Instructions.ShouldBe("later added");
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+        await AssignExistingWorkOrder(order, CurrentUser.UserName);
+
+        order = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        order.Instructions.ShouldBe("later added");
+        order.Status.ShouldBe(WorkOrderStatus.Assigned);
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync("later added");
     }
 }
