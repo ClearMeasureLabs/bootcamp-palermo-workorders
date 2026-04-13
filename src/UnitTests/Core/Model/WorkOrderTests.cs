@@ -76,6 +76,14 @@ public class WorkOrderTests
     }
 
     [Test]
+    public void ShouldCoalesceNullInstructionsToEmptyString()
+    {
+        var order = new WorkOrder();
+        order.Instructions = null;
+        Assert.That(order.Instructions, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
     public void ShouldTruncateTo4000CharactersOnInstructions()
     {
         var longText = new string('y', 4001);

@@ -254,6 +254,8 @@ public class WorkOrderMappingTests
             Number = new string('A', 8), // Exceeds 7 char limit (WorkOrderMap)
             Title = new string('B', 301), // Exceeds 300 char limit
             Description = "valid",
+            // Instructions setter truncates to 4000 before EF (same as Description)
+            Instructions = new string('E', 4001),
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft

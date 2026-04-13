@@ -210,6 +210,37 @@ public class WorkOrderQueryHandlerTests
         orders.Any(o => o.Id == order2.Id).ShouldBeTrue();
     }
 
+    [Test]
+    public async Task ShouldPersistAndRetrieveInstructions()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("1", "1", "1", "1");
+        var instructions = new string('i', 4000);
+        var order = new WorkOrder
+        {
+            Creator = creator,
+            Number = "WO-INST",
+            Title = "T",
+            Description = "D",
+            Instructions = instructions,
+            RoomNumber = "1",
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderQueryHandler(dataContext);
+        var reloaded = (await repository.GetWorkOrderAsync("WO-INST"))!;
+
+        reloaded.Instructions.ShouldBe(instructions);
+    }
 
     [Test]
     public void SearchShouldReturnHydratedEmployeesWithWorkOrders()

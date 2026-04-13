@@ -3,6 +3,7 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 public class WorkOrder : EntityBase<WorkOrder>
 {
     private const int MaxPlainTextFieldLength = 4000;
+
     private string? _description = "";
     private string? _instructions = "";
 
