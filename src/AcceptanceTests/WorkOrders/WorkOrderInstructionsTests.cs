@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Microsoft.Playwright;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
