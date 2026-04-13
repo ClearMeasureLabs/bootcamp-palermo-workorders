@@ -368,25 +368,10 @@ public abstract class AcceptanceTestBase
 
         var latest = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
 
-        var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
-        await instructionsLocator.WaitForAsync();
-        var instructionsOnForm = await instructionsLocator.InputValueAsync();
-        var instructionsToSubmit = instructionsOnForm;
-        if (string.IsNullOrEmpty(instructionsToSubmit))
-        {
-            instructionsToSubmit = latest.Instructions ?? "";
-        }
-
-        if (string.IsNullOrEmpty(instructionsToSubmit) && !string.IsNullOrEmpty(order.Instructions))
-        {
-            instructionsToSubmit = order.Instructions;
-        }
-
         await Select(nameof(WorkOrderManage.Elements.Assignee), username);
         await Task.Delay(GetInputDelayMs());
         await Input(nameof(WorkOrderManage.Elements.Title), latest.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), latest.Description);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -404,20 +389,8 @@ public abstract class AcceptanceTestBase
 
         var latest = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
 
-        var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
-        await instructionsLocator.WaitForAsync();
-        var instructionsOnForm = await instructionsLocator.InputValueAsync();
-        var instructionsToSubmit = string.IsNullOrEmpty(instructionsOnForm)
-            ? (latest.Instructions ?? "")
-            : instructionsOnForm;
-        if (string.IsNullOrEmpty(instructionsToSubmit) && !string.IsNullOrEmpty(order.Instructions))
-        {
-            instructionsToSubmit = order.Instructions;
-        }
-
         await Input(nameof(WorkOrderManage.Elements.Title), latest.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), latest.Description);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
@@ -434,20 +407,8 @@ public abstract class AcceptanceTestBase
 
         var latest = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
 
-        var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
-        await instructionsLocator.WaitForAsync();
-        var instructionsOnForm = await instructionsLocator.InputValueAsync();
-        var instructionsToSubmit = string.IsNullOrEmpty(instructionsOnForm)
-            ? (latest.Instructions ?? "")
-            : instructionsOnForm;
-        if (string.IsNullOrEmpty(instructionsToSubmit) && !string.IsNullOrEmpty(order.Instructions))
-        {
-            instructionsToSubmit = order.Instructions;
-        }
-
         await Input(nameof(WorkOrderManage.Elements.Title), latest.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), latest.Description);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs()); // Give time for the save operation to complete on Azure
