@@ -96,6 +96,8 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
 
         const string addedInstructions = "Added after first save: use ladder, check ceiling height.";
         await Input(nameof(WorkOrderManage.Elements.Instructions), addedInstructions);
+        order.Title = $"[{TestTag}] edit instructions";
+        order.Description = "Short description for assign flow.";
         order.Instructions = addedInstructions;
 
         var updated = await AssignExistingWorkOrder(order, CurrentUser.UserName);
