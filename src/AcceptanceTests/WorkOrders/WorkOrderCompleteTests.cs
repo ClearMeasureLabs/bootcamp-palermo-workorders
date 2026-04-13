@@ -21,8 +21,10 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
 
         var expectedTitle = "Title from automation";
         var expectedDescription = "Description";
+        var expectedInstructions = "Finish before end of day";
         order.Title = expectedTitle;
         order.Description = expectedDescription;
+        order.Instructions = expectedInstructions;
         order = await CompleteExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
@@ -36,6 +38,9 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
             .ToHaveValueAsync(expectedDescription);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeDisabledAsync();
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions)))
+            .ToHaveValueAsync(expectedInstructions);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToBeDisabledAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
 
