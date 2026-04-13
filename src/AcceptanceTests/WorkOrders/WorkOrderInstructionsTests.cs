@@ -42,7 +42,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         }
 
         rehydrated.ShouldNotBeNull();
-        rehydrated.Instructions!.Length.ShouldBe(4000);
+        rehydrated!.Instructions!.Length.ShouldBe(4000);
         rehydrated.Instructions.ShouldBe(instructions);
     }
 
@@ -77,7 +77,14 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
         }
 
         rehydrated.ShouldNotBeNull();
-        rehydrated.Instructions.ShouldBe(string.Empty);
+        string.IsNullOrEmpty(rehydrated!.Instructions).ShouldBeTrue();
+
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + number);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await ClickWorkOrderNumberFromSearchPage(rehydrated!);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync("");
     }
 
     [Test, Retry(2)]
@@ -110,5 +117,8 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
 
         var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
         await Expect(instructionsField).ToHaveValueAsync(addedInstructions);
+
+        var fromDb = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        fromDb.Instructions.ShouldBe(addedInstructions);
     }
 }
