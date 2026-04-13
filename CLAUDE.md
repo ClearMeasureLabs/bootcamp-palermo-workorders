@@ -63,7 +63,7 @@ Work order state transitions: Draft → Assigned → InProgress → Complete (al
 ## Domain Model
 
 - **WorkOrder**: Number, Title, Description, RoomNumber, Status (WorkOrderStatus), Creator/Assignee (Employee), AssignedDate, CreatedDate, CompletedDate. Methods: `ChangeStatus()`, `CanReassign()`
-- **Employee**: UserName, FirstName, LastName, EmailAddress, Roles. Methods: `CanCreateWorkOrder()`, `CanFulfilWorkOrder()`
+- **Employee**: UserName, FirstName, LastName, EmailAddress, Roles. Methods: `CanCreateWorkOrder()`, `CanFulfillWorkOrder()`
 - **WorkOrderStatus**: Smart enum — Draft, Assigned, InProgress, Complete, Cancelled. Factory methods: `FromCode()`, `FromKey()`
 - **Role**: Name, CanCreateWorkOrder, CanFulfillWorkOrder
 
