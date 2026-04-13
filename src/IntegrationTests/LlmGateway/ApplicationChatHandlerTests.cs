@@ -156,14 +156,29 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         async Task CheckStatusAsync(WorkOrderStatus status)
         {
-            var db = TestHost.GetRequiredService<DataContext>();
-            var workOrder = await db.Set<WorkOrder>()
-                .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+            var deadline = DateTime.UtcNow.AddMinutes(2);
+            WorkOrder? workOrder = null;
+            while (DateTime.UtcNow < deadline)
+            {
+                await using var db = TestHost.NewDbContext();
+                workOrder = await db.Set<WorkOrder>()
+                    .AsNoTracking()
+                    .Include(wo => wo.Assignee)
+                    .Include(wo => wo.Creator)
+                    .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+
+                if (workOrder is not null && workOrder.Status == status)
+                {
+                    break;
+                }
+
+                await Task.Delay(TimeSpan.FromMilliseconds(500));
+            }
 
             workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
             workOrder.Status.ShouldBe(status);
-            workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
-            workOrder?.Creator?.FirstName.ShouldBe("Timothy");
+            workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+            workOrder.Creator?.FirstName.ShouldBe("Timothy");
         }
     }
 }
