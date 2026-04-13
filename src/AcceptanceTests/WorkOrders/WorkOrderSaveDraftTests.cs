@@ -60,6 +60,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
         rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+        rehydratedOrder.Instructions.ShouldBe(order.Instructions);
     }
 
     [Test, Retry(2)]

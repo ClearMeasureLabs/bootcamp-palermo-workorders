@@ -392,6 +392,7 @@ public abstract class AcceptanceTestBase
             await Task.Delay(1000);
         }
         rehyratedOrder.ShouldNotBeNull();
+        order.Instructions = rehyratedOrder.Instructions;
 
         return rehyratedOrder;
     }
