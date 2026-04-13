@@ -29,4 +29,10 @@ public class LoginDisplayNameFormatterTests
     {
         LoginDisplayNameFormatter.FormatForLoginDropdown(string.Empty).ShouldBe(string.Empty);
     }
+
+    [Test]
+    public void FormatForLoginDropdown_WithDiacritics_ReturnsUppercase()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown("José O'Connor").ShouldBe("JOSÉ O'CONNOR");
+    }
 }
