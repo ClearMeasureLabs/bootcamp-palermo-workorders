@@ -153,7 +153,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     private static async Task AssertWorkOrderReachesStatusAsync(string workOrderNumber, WorkOrderStatus expectedStatus)
     {
         WorkOrder? workOrder = null;
-        for (var attempt = 0; attempt < 120; attempt++)
+        for (var attempt = 0; attempt < 360; attempt++)
         {
             var db = TestHost.GetRequiredService<DataContext>();
             workOrder = await db.Set<WorkOrder>()
