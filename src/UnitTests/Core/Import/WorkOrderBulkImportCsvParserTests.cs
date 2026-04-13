@@ -48,8 +48,6 @@ public class WorkOrderBulkImportCsvParserTests
         result.Rows[1].CreatorUsername.ShouldBe("u2");
         result.Rows[1].Instructions.ShouldBeNull();
         result.Rows[1].RoomNumber.ShouldBeNull();
-        result.Rows[0].Instructions.ShouldBeNull();
-        result.Rows[1].Instructions.ShouldBeNull();
     }
 
     [Test]
