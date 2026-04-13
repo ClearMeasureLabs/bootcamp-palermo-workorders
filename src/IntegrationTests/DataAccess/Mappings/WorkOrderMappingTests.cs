@@ -1,6 +1,8 @@
 ﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
+using ClearMeasure.Bootcamp.IntegrationTests;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Mappings;
@@ -64,6 +66,7 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
+            Instructions = "persist me",
             RoomNumber = "123 a"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
@@ -229,6 +232,12 @@ public class WorkOrderMappingTests
     [Category("SqlServerOnly")]
     public void ShouldRespectMaxLengthConstraints()
     {
+        var connectionString = TestHost.GetRequiredService<IConfiguration>().GetConnectionString("SqlConnectionString") ?? "";
+        if (connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.Ignore("SQLite integration host does not enforce the same VARCHAR max lengths as SQL Server.");
+        }
+
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
@@ -255,6 +264,12 @@ public class WorkOrderMappingTests
     [Category("SqlServerOnly")]
     public void ShouldSupportMaxLengthTitle()
     {
+        var connectionString = TestHost.GetRequiredService<IConfiguration>().GetConnectionString("SqlConnectionString") ?? "";
+        if (connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.Ignore("SQLite integration host does not enforce the same VARCHAR max lengths as SQL Server.");
+        }
+
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");

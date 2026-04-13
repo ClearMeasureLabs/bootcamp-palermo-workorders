@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
@@ -102,6 +103,7 @@ public class WorkOrderInstructionsTests : AcceptanceTestBase
 
         var updated = await AssignExistingWorkOrder(order, CurrentUser.UserName);
         updated.Instructions.ShouldBe(addedInstructions);
+        updated.Status.ShouldBe(WorkOrderStatus.Assigned);
 
         await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await ClickWorkOrderNumberFromSearchPage(order);
