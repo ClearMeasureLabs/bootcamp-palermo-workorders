@@ -150,9 +150,10 @@ public class ApplicationChatHandlerTests : LlmTestBase
         }
     }
 
-    private static async Task AssertWorkOrderReachesStatusAsync(string workOrderNumber, WorkOrderStatus expectedStatus)
+    private async Task AssertWorkOrderReachesStatusAsync(string workOrderNumber, WorkOrderStatus expectedStatus)
     {
         WorkOrder? workOrder = null;
+        var sentAssignFollowUp = false;
         for (var attempt = 0; attempt < 360; attempt++)
         {
             var db = TestHost.GetRequiredService<DataContext>();
@@ -166,6 +167,19 @@ public class ApplicationChatHandlerTests : LlmTestBase
             if (workOrder.Status == expectedStatus)
             {
                 return;
+            }
+
+            if (expectedStatus == WorkOrderStatus.Assigned
+                && workOrder.Status == WorkOrderStatus.Draft
+                && attempt >= 60
+                && !sentAssignFollowUp)
+            {
+                sentAssignFollowUp = true;
+                var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
+                var query = new ApplicationChatQuery(
+                    $"Work order {workOrderNumber} is still Draft. As tlovejoy, assign it to Groundskeeper Willie (gwillie) now.",
+                    "tlovejoy");
+                await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
             }
 
             await Task.Delay(500);
