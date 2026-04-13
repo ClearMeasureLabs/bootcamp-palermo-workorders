@@ -317,6 +317,25 @@ public abstract class AcceptanceTestBase
         return 100; // Default to 100ms for local performance
     }
 
+    /// <summary>
+    /// Resolves text to submit on state transitions: prefer an explicit non-empty value from the in-memory
+    /// <paramref name="orderValue"/> (tests often set these after navigation), then the form, then the database.
+    /// </summary>
+    private static string ResolveWorkOrderTextForSubmit(string? orderValue, string formValue, string? latestValue)
+    {
+        if (!string.IsNullOrEmpty(orderValue))
+        {
+            return orderValue!;
+        }
+
+        if (!string.IsNullOrEmpty(formValue))
+        {
+            return formValue;
+        }
+
+        return latestValue ?? "";
+    }
+
     protected async Task Select(string elementTestId, string? value)
     {
         var locator = Page.GetByTestId(elementTestId);
@@ -406,11 +425,9 @@ public abstract class AcceptanceTestBase
         var descriptionOnForm = await descriptionLocator.InputValueAsync();
         var instructionsOnForm = await instructionsLocator.InputValueAsync();
 
-        var titleToSubmit = string.IsNullOrEmpty(titleOnForm) ? latest.Title : titleOnForm;
-        var descriptionToSubmit = string.IsNullOrEmpty(descriptionOnForm) ? latest.Description : descriptionOnForm;
-        var instructionsToSubmit = string.IsNullOrEmpty(instructionsOnForm)
-            ? (order.Instructions ?? latest.Instructions ?? string.Empty)
-            : instructionsOnForm;
+        var titleToSubmit = ResolveWorkOrderTextForSubmit(order.Title, titleOnForm, latest.Title);
+        var descriptionToSubmit = ResolveWorkOrderTextForSubmit(order.Description, descriptionOnForm, latest.Description);
+        var instructionsToSubmit = ResolveWorkOrderTextForSubmit(order.Instructions, instructionsOnForm, latest.Instructions);
 
         await Select(nameof(WorkOrderManage.Elements.Assignee), username);
         await Task.Delay(GetInputDelayMs());
@@ -466,11 +483,9 @@ public abstract class AcceptanceTestBase
         var descriptionOnForm = await descriptionLocator.InputValueAsync();
         var instructionsOnForm = await instructionsLocator.InputValueAsync();
 
-        var titleToSubmit = string.IsNullOrEmpty(titleOnForm) ? latest.Title : titleOnForm;
-        var descriptionToSubmit = string.IsNullOrEmpty(descriptionOnForm) ? latest.Description : descriptionOnForm;
-        var instructionsToSubmit = string.IsNullOrEmpty(instructionsOnForm)
-            ? (order.Instructions ?? latest.Instructions ?? string.Empty)
-            : instructionsOnForm;
+        var titleToSubmit = ResolveWorkOrderTextForSubmit(order.Title, titleOnForm, latest.Title);
+        var descriptionToSubmit = ResolveWorkOrderTextForSubmit(order.Description, descriptionOnForm, latest.Description);
+        var instructionsToSubmit = ResolveWorkOrderTextForSubmit(order.Instructions, instructionsOnForm, latest.Instructions);
 
         await InputIfChanged(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
         await InputIfChanged(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
@@ -501,11 +516,9 @@ public abstract class AcceptanceTestBase
         var descriptionOnForm = await descriptionLocator.InputValueAsync();
         var instructionsOnForm = await instructionsLocator.InputValueAsync();
 
-        var titleToSubmit = string.IsNullOrEmpty(titleOnForm) ? latest.Title : titleOnForm;
-        var descriptionToSubmit = string.IsNullOrEmpty(descriptionOnForm) ? latest.Description : descriptionOnForm;
-        var instructionsToSubmit = string.IsNullOrEmpty(instructionsOnForm)
-            ? (order.Instructions ?? latest.Instructions ?? string.Empty)
-            : instructionsOnForm;
+        var titleToSubmit = ResolveWorkOrderTextForSubmit(order.Title, titleOnForm, latest.Title);
+        var descriptionToSubmit = ResolveWorkOrderTextForSubmit(order.Description, descriptionOnForm, latest.Description);
+        var instructionsToSubmit = ResolveWorkOrderTextForSubmit(order.Instructions, instructionsOnForm, latest.Instructions);
 
         await InputIfChanged(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
         await InputIfChanged(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
