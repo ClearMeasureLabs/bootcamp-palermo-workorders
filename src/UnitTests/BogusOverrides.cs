@@ -23,7 +23,7 @@ internal class BogusOverrides : AutoGeneratorOverride
                 order.Description = order.Description.ClampLength(1, 4000); // HasMaxLength(4000)
                 order.Instructions = string.IsNullOrEmpty(order.Instructions)
                     ? ""
-                    : order.Instructions.ClampLength(1, 4000);
+                    : order.Instructions!.ClampLength(1, 4000);
                 order.RoomNumber = order.RoomNumber.ClampLength(1, 50);     // HasMaxLength(50)
                 break;
             case WorkOrderStatus:
