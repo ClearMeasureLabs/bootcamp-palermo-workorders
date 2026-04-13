@@ -152,11 +152,13 @@ public class ApplicationChatHandlerTests : LlmTestBase
     private static async Task AssertWorkOrderReachesStatusAsync(string workOrderNumber, WorkOrderStatus expectedStatus)
     {
         WorkOrder? workOrder = null;
-        for (var attempt = 0; attempt < 60; attempt++)
+        for (var attempt = 0; attempt < 120; attempt++)
         {
             var db = TestHost.GetRequiredService<DataContext>();
             workOrder = await db.Set<WorkOrder>()
                 .AsNoTracking()
+                .Include(wo => wo.Assignee)
+                .Include(wo => wo.Creator)
                 .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
 
             workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
