@@ -66,7 +66,7 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
         return false;
     }
 
-    public bool CanFulfilWorkOrder()
+    public bool CanFulfillWorkOrder()
     {
         foreach (var role in Roles)
         {
