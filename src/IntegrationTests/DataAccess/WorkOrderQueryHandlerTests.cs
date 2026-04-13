@@ -40,7 +40,6 @@ public class WorkOrderQueryHandlerTests
         order456.Id.ShouldBe(order2.Id);
     }
 
-
     [Test]
     public async Task ShouldSearchBySpecificationWithAssignee()
     {
