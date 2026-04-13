@@ -19,6 +19,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
+            Instructions = "Turn off breaker before replacing bulbs.",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
@@ -43,6 +44,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
+        rehydratedWorkOrder.Instructions.ShouldBe("Turn off breaker before replacing bulbs.");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
@@ -89,6 +91,7 @@ public class WorkOrderMappingTests
             rehydratedWorkOrder.Assignee!.Id.ShouldBe(order.Assignee.Id);
             rehydratedWorkOrder.Title.ShouldBe(order.Title);
             rehydratedWorkOrder.Description.ShouldBe(order.Description);
+            rehydratedWorkOrder.Instructions.ShouldBe(order.Instructions);
             rehydratedWorkOrder.Status.ShouldBe(order.Status);
             rehydratedWorkOrder.RoomNumber.ShouldBe(order.RoomNumber);
             rehydratedWorkOrder.Number.ShouldBe(order.Number);
