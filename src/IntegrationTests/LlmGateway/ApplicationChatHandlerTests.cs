@@ -94,9 +94,13 @@ public class ApplicationChatHandlerTests : LlmTestBase
             .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
 
         workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
-        workOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
-        workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
-        workOrder?.Creator?.FirstName.ShouldBe("Timothy");
+        await AssertWorkOrderReachesStatusAsync(workOrderNumber, WorkOrderStatus.Assigned);
+        workOrder = await db.Set<WorkOrder>()
+            .Include(wo => wo.Assignee)
+            .Include(wo => wo.Creator)
+            .SingleAsync(wo => wo.Number == workOrderNumber);
+        workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+        workOrder.Creator?.FirstName.ShouldBe("Timothy");
     }
 
     [Test]
@@ -132,14 +136,38 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         async Task CheckStatusAsync(WorkOrderStatus status)
         {
+            await AssertWorkOrderReachesStatusAsync(workOrderNumber, status);
+
             var db = TestHost.GetRequiredService<DataContext>();
             var workOrder = await db.Set<WorkOrder>()
+                .Include(wo => wo.Assignee)
+                .Include(wo => wo.Creator)
+                .SingleAsync(wo => wo.Number == workOrderNumber);
+
+            workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+            workOrder.Creator?.FirstName.ShouldBe("Timothy");
+        }
+    }
+
+    private static async Task AssertWorkOrderReachesStatusAsync(string workOrderNumber, WorkOrderStatus expectedStatus)
+    {
+        WorkOrder? workOrder = null;
+        for (var attempt = 0; attempt < 60; attempt++)
+        {
+            var db = TestHost.GetRequiredService<DataContext>();
+            workOrder = await db.Set<WorkOrder>()
+                .AsNoTracking()
                 .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
 
             workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
-            workOrder.Status.ShouldBe(status);
-            workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
-            workOrder?.Creator?.FirstName.ShouldBe("Timothy");
+            if (workOrder.Status == expectedStatus)
+            {
+                return;
+            }
+
+            await Task.Delay(500);
         }
+
+        workOrder!.Status.ShouldBe(expectedStatus);
     }
 }
