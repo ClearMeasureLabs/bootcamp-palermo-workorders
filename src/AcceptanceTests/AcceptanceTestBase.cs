@@ -365,11 +365,15 @@ public abstract class AcceptanceTestBase
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
-        
+
+        var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await instructionsLocator.WaitForAsync();
+        var instructionsOnForm = await instructionsLocator.InputValueAsync();
+
         await Select(nameof(WorkOrderManage.Elements.Assignee), username);
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions ?? "");
+        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsOnForm);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -385,9 +389,13 @@ public abstract class AcceptanceTestBase
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
 
+        var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await instructionsLocator.WaitForAsync();
+        var instructionsOnForm = await instructionsLocator.InputValueAsync();
+
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions ?? "");
+        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsOnForm);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
@@ -402,9 +410,13 @@ public abstract class AcceptanceTestBase
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
 
+        var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await instructionsLocator.WaitForAsync();
+        var instructionsOnForm = await instructionsLocator.InputValueAsync();
+
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions ?? "");
+        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsOnForm);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs()); // Give time for the save operation to complete on Azure
