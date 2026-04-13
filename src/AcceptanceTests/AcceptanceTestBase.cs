@@ -318,22 +318,23 @@ public abstract class AcceptanceTestBase
     }
 
     /// <summary>
-    /// Resolves text to submit on state transitions: prefer an explicit non-empty value from the in-memory
-    /// <paramref name="orderValue"/> (tests often set these after navigation), then the form, then the database.
+    /// Resolves text to submit on state transitions: when the form differs from the persisted value, use the form
+    /// (user edits); otherwise prefer an explicit non-empty <paramref name="orderValue"/>, then the database.
     /// </summary>
     private static string ResolveWorkOrderTextForSubmit(string? orderValue, string formValue, string? latestValue)
     {
+        var latest = latestValue ?? "";
+        if (!string.Equals(formValue, latest, StringComparison.Ordinal))
+        {
+            return string.IsNullOrEmpty(formValue) ? latest : formValue;
+        }
+
         if (!string.IsNullOrEmpty(orderValue))
         {
             return orderValue!;
         }
 
-        if (!string.IsNullOrEmpty(formValue))
-        {
-            return formValue;
-        }
-
-        return latestValue ?? "";
+        return latest;
     }
 
     protected async Task Select(string elementTestId, string? value)
