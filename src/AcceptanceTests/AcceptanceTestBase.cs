@@ -280,6 +280,33 @@ public abstract class AcceptanceTestBase
         await Expect(locator).ToHaveValueAsync(value ?? "");
     }
 
+    /// <summary>
+    /// Fills a field only when its value differs from the desired value. Avoids redundant clear/fill cycles
+    /// that can race with Blazor WASM binding on slower runners (for example ARM CI).
+    /// </summary>
+    protected async Task InputIfChanged(string elementTestId, string? desiredValue)
+    {
+        var desired = desiredValue ?? "";
+        var locator = Page.GetByTestId(elementTestId);
+        if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
+        await Expect(locator).ToBeVisibleAsync();
+
+        if (!await locator.IsEditableAsync())
+        {
+            await Page.ReloadAsync();
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
+        await Expect(locator).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
+        var current = await locator.InputValueAsync();
+        if (string.Equals(current, desired, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        await Input(elementTestId, desiredValue);
+    }
+
     protected int GetInputDelayMs()
     {
         var envValue = Environment.GetEnvironmentVariable("TEST_INPUT_DELAY_MS");
@@ -387,9 +414,9 @@ public abstract class AcceptanceTestBase
 
         await Select(nameof(WorkOrderManage.Elements.Assignee), username);
         await Task.Delay(GetInputDelayMs());
-        await Input(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
-        await Input(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
+        await InputIfChanged(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
+        await InputIfChanged(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
+        await InputIfChanged(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -424,9 +451,9 @@ public abstract class AcceptanceTestBase
             ? (order.Instructions ?? latest.Instructions ?? string.Empty)
             : instructionsOnForm;
 
-        await Input(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
-        await Input(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
+        await InputIfChanged(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
+        await InputIfChanged(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
+        await InputIfChanged(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
@@ -460,9 +487,9 @@ public abstract class AcceptanceTestBase
             ? (order.Instructions ?? latest.Instructions ?? string.Empty)
             : instructionsOnForm;
 
-        await Input(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
-        await Input(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
+        await InputIfChanged(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
+        await InputIfChanged(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
+        await InputIfChanged(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs()); // Give time for the save operation to complete on Azure
