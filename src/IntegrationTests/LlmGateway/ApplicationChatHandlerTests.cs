@@ -69,7 +69,8 @@ public class ApplicationChatHandlerTests : LlmTestBase
         new ZDataLoader().LoadData();
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
         var query = new ApplicationChatQuery(
-            "have groundskeeper willie mow the grass. Yes, assign the new work order. confirmed",
+            "Create a new work order to 'mow the grass', assign it to Groundskeeper Willie, " +
+            "only return the work order number",
             "tlovejoy");
 
         ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
