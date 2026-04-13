@@ -238,6 +238,12 @@ public class WorkOrderMappingTests
             Assert.Ignore("SQLite integration host does not enforce the same VARCHAR max lengths as SQL Server.");
         }
 
+        if (string.Equals(Environment.GetEnvironmentVariable("DATABASE_ENGINE"), "SQLite",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.Ignore("SQLite does not surface the same max-length violations as SQL Server for this scenario.");
+        }
+
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
