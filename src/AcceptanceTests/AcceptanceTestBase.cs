@@ -368,19 +368,27 @@ public abstract class AcceptanceTestBase
 
         var latest = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
 
+        var titleLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        var descriptionLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await titleLocator.WaitForAsync();
+        await descriptionLocator.WaitForAsync();
         await instructionsLocator.WaitForAsync();
+
+        var titleOnForm = await titleLocator.InputValueAsync();
+        var descriptionOnForm = await descriptionLocator.InputValueAsync();
         var instructionsOnForm = await instructionsLocator.InputValueAsync();
-        var instructionsToSubmit = !string.IsNullOrEmpty(order.Instructions)
-            ? order.Instructions
-            : (!string.IsNullOrEmpty(instructionsOnForm)
-                ? instructionsOnForm
-                : (latest.Instructions ?? ""));
+
+        var titleToSubmit = string.IsNullOrEmpty(titleOnForm) ? latest.Title : titleOnForm;
+        var descriptionToSubmit = string.IsNullOrEmpty(descriptionOnForm) ? latest.Description : descriptionOnForm;
+        var instructionsToSubmit = string.IsNullOrEmpty(instructionsOnForm)
+            ? (order.Instructions ?? latest.Instructions ?? string.Empty)
+            : instructionsOnForm;
 
         await Select(nameof(WorkOrderManage.Elements.Assignee), username);
         await Task.Delay(GetInputDelayMs());
-        await Input(nameof(WorkOrderManage.Elements.Title), latest.Title);
-        await Input(nameof(WorkOrderManage.Elements.Description), latest.Description);
+        await Input(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
+        await Input(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
         await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
 
@@ -399,17 +407,25 @@ public abstract class AcceptanceTestBase
 
         var latest = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
 
+        var titleLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        var descriptionLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await titleLocator.WaitForAsync();
+        await descriptionLocator.WaitForAsync();
         await instructionsLocator.WaitForAsync();
-        var instructionsOnForm = await instructionsLocator.InputValueAsync();
-        var instructionsToSubmit = !string.IsNullOrEmpty(order.Instructions)
-            ? order.Instructions
-            : (!string.IsNullOrEmpty(instructionsOnForm)
-                ? instructionsOnForm
-                : (latest.Instructions ?? ""));
 
-        await Input(nameof(WorkOrderManage.Elements.Title), latest.Title);
-        await Input(nameof(WorkOrderManage.Elements.Description), latest.Description);
+        var titleOnForm = await titleLocator.InputValueAsync();
+        var descriptionOnForm = await descriptionLocator.InputValueAsync();
+        var instructionsOnForm = await instructionsLocator.InputValueAsync();
+
+        var titleToSubmit = string.IsNullOrEmpty(titleOnForm) ? latest.Title : titleOnForm;
+        var descriptionToSubmit = string.IsNullOrEmpty(descriptionOnForm) ? latest.Description : descriptionOnForm;
+        var instructionsToSubmit = string.IsNullOrEmpty(instructionsOnForm)
+            ? (order.Instructions ?? latest.Instructions ?? string.Empty)
+            : instructionsOnForm;
+
+        await Input(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
+        await Input(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
         await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -427,17 +443,25 @@ public abstract class AcceptanceTestBase
 
         var latest = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
 
+        var titleLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        var descriptionLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await titleLocator.WaitForAsync();
+        await descriptionLocator.WaitForAsync();
         await instructionsLocator.WaitForAsync();
-        var instructionsOnForm = await instructionsLocator.InputValueAsync();
-        var instructionsToSubmit = !string.IsNullOrEmpty(order.Instructions)
-            ? order.Instructions
-            : (!string.IsNullOrEmpty(instructionsOnForm)
-                ? instructionsOnForm
-                : (latest.Instructions ?? ""));
 
-        await Input(nameof(WorkOrderManage.Elements.Title), latest.Title);
-        await Input(nameof(WorkOrderManage.Elements.Description), latest.Description);
+        var titleOnForm = await titleLocator.InputValueAsync();
+        var descriptionOnForm = await descriptionLocator.InputValueAsync();
+        var instructionsOnForm = await instructionsLocator.InputValueAsync();
+
+        var titleToSubmit = string.IsNullOrEmpty(titleOnForm) ? latest.Title : titleOnForm;
+        var descriptionToSubmit = string.IsNullOrEmpty(descriptionOnForm) ? latest.Description : descriptionOnForm;
+        var instructionsToSubmit = string.IsNullOrEmpty(instructionsOnForm)
+            ? (order.Instructions ?? latest.Instructions ?? string.Empty)
+            : instructionsOnForm;
+
+        await Input(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
+        await Input(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
         await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
