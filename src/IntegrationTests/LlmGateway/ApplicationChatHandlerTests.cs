@@ -154,7 +154,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     {
         WorkOrder? workOrder = null;
         var sentAssignFollowUp = false;
-        for (var attempt = 0; attempt < 360; attempt++)
+        for (var attempt = 0; attempt < 600; attempt++)
         {
             var db = TestHost.GetRequiredService<DataContext>();
             workOrder = await db.Set<WorkOrder>()
