@@ -48,6 +48,20 @@ public class WorkOrderBulkImportCsvParserTests
         result.Rows[1].CreatorUsername.ShouldBe("u2");
         result.Rows[1].Instructions.ShouldBeNull();
         result.Rows[1].RoomNumber.ShouldBeNull();
+        result.Rows[0].Instructions.ShouldBeNull();
+        result.Rows[1].Instructions.ShouldBeNull();
+    }
+
+    [Test]
+    public void ShouldParseOptionalInstructionsColumn_WhenPresent()
+    {
+        var csv = "Title,Description,CreatorUsername,Instructions\nT,D,u,Step one\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeTrue();
+        result.Rows.Count.ShouldBe(1);
+        result.Rows[0].Instructions.ShouldBe("Step one");
     }
 
     [Test]
