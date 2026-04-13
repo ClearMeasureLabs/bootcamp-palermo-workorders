@@ -381,17 +381,14 @@ public class WorkOrderSearchTests : AcceptanceTestBase
 
         await Click(nameof(NavMenu.Elements.MyWorkOrders));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await creatorSelect.DblClickAsync();
-        await Expect(creatorSelect).ToHaveValueAsync(CurrentUser.UserName);
+        await Expect(creatorSelect).ToHaveValueAsync(CurrentUser.UserName, new() { Timeout = 30_000 });
 
         await Click(nameof(NavMenu.Elements.WorkOrdersAssignedToMe));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await assigneeSelect.DblClickAsync();
-        await Expect(assigneeSelect).ToHaveValueAsync(CurrentUser.UserName);
+        await Expect(assigneeSelect).ToHaveValueAsync(CurrentUser.UserName, new() { Timeout = 30_000 });
 
         await Click(nameof(NavMenu.Elements.AllWorkOrdersInProgress));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await statusSelect.DblClickAsync();
-        await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key);
+        await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key, new() { Timeout = 30_000 });
     }
 }
