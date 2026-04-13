@@ -369,11 +369,14 @@ public abstract class AcceptanceTestBase
         var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
         await instructionsLocator.WaitForAsync();
         var instructionsOnForm = await instructionsLocator.InputValueAsync();
+        var instructionsToSubmit = string.IsNullOrEmpty(instructionsOnForm)
+            ? (order.Instructions ?? "")
+            : instructionsOnForm;
 
         await Select(nameof(WorkOrderManage.Elements.Assignee), username);
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsOnForm);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
