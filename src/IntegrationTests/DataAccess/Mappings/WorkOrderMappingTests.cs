@@ -269,6 +269,38 @@ public class WorkOrderMappingTests
     }
 
     [Test]
+    public void ShouldPersistInstructionsAtMaxLength()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var instructions = new string('i', 4000);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-MAX",
+            Title = "With instructions",
+            Description = "desc",
+            Instructions = instructions,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+            rehydrated.Instructions.ShouldBe(instructions);
+            rehydrated.Instructions!.Length.ShouldBe(4000);
+        }
+    }
+
+    [Test]
     [Category("SqlServerOnly")]
     public void ShouldSupportMaxLengthTitle()
     {
