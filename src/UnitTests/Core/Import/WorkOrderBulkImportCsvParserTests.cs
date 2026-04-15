@@ -63,6 +63,20 @@ public class WorkOrderBulkImportCsvParserTests
     }
 
     [Test]
+    public void ShouldParseInstructionsColumn_WhenBetweenDescriptionAndCreator()
+    {
+        var csv = "Title,Description,Instructions,CreatorUsername,RoomNumber\n"
+                  + "T1,D1,Bring tools,u1,201\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeTrue();
+        result.Rows.Count.ShouldBe(1);
+        result.Rows[0].Instructions.ShouldBe("Bring tools");
+        result.Rows[0].RoomNumber.ShouldBe("201");
+    }
+
+    [Test]
     public void ShouldUnescapeDoubledQuotes_WhenInsideQuotedField()
     {
         var csv = "Title,Description,CreatorUsername\n"
