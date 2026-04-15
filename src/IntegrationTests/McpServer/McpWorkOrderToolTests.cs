@@ -68,7 +68,7 @@ public class McpWorkOrderToolTests
     public async Task ShouldGetWorkOrderByNumber()
     {
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
-        var order = new WorkOrder { Creator = employee, Number = "WO-100", Title = "Test order", Description = "A description", RoomNumber = "101" };
+        var order = new WorkOrder { Creator = employee, Number = "WO-100", Title = "Test order", Description = "A description", Instructions = "Wear gloves", RoomNumber = "101" };
 
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
@@ -83,6 +83,7 @@ public class McpWorkOrderToolTests
         result.ShouldContain("WO-100");
         result.ShouldContain("Test order");
         result.ShouldContain("A description");
+        result.ShouldContain("Wear gloves");
         result.ShouldContain("101");
     }
 
