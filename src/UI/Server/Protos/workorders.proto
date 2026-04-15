@@ -29,6 +29,7 @@ message WorkOrder {
   string number = 1;
   string title = 2;
   string description = 3;
+  string instructions = 11;
   string room_number = 4;
   string status_key = 5;
   string creator_username = 6;
@@ -36,5 +37,4 @@ message WorkOrder {
   optional google.protobuf.Timestamp assigned_date_utc = 8;
   optional google.protobuf.Timestamp created_date_utc = 9;
   optional google.protobuf.Timestamp completed_date_utc = 10;
-  string instructions = 11;
 }
