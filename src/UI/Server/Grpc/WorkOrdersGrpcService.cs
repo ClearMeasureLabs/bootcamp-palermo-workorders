@@ -42,8 +42,8 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
             Number = source.Number ?? "",
             Title = source.Title ?? "",
             Description = source.Description ?? "",
-            Instructions = source.Instructions ?? "",
             RoomNumber = source.RoomNumber ?? "",
+            Instructions = source.Instructions ?? "",
             StatusKey = source.Status.Key,
             CreatorUsername = source.Creator?.UserName ?? "",
             AssigneeUsername = source.Assignee?.UserName ?? ""

@@ -163,7 +163,6 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await LoginAsCurrentUser();
 
         var order = await CreateAndSaveNewWorkOrder(o => o.Instructions = "");
-
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
