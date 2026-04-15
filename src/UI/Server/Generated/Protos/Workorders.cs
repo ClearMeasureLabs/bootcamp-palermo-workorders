@@ -30,14 +30,14 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             "dWVzdBIOCgZudW1iZXIYASABKAkiRgoZR2V0V29ya09yZGVyQnlOdW1iZXJS",
             "ZXBseRIpCgp3b3JrX29yZGVyGAEgASgLMhUud29ya29yZGVycy5Xb3JrT3Jk",
             "ZXIiqQMKCVdvcmtPcmRlchIOCgZudW1iZXIYASABKAkSDQoFdGl0bGUYAiAB",
-            "KAkSEwoLZGVzY3JpcHRpb24YAyABKAkSFAoMaW5zdHJ1Y3Rpb25zGAsgASgJ",
-            "EhMKC3Jvb21fbnVtYmVyGAQgASgJEhIKCnN0YXR1c19rZXkYBSABKAkSGAoQ",
-            "Y3JlYXRvcl91c2VybmFtZRgGIAEoCRIZChFhc3NpZ25lZV91c2VybmFtZRgH",
-            "IAEoCRI6ChFhc3NpZ25lZF9kYXRlX3V0YxgIIAEoCzIaLmdvb2dsZS5wcm90",
-            "b2J1Zi5UaW1lc3RhbXBIAIgBARI5ChBjcmVhdGVkX2RhdGVfdXRjGAkgASgL",
-            "MhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgBiAEBEjsKEmNvbXBsZXRl",
-            "ZF9kYXRlX3V0YxgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBI",
-            "AogBAUIUChJfYXNzaWduZWRfZGF0ZV91dGNCEwoRX2NyZWF0ZWRfZGF0ZV91",
+            "KAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEwoLcm9vbV9udW1iZXIYBCABKAkS",
+            "EgoKc3RhdHVzX2tleRgFIAEoCRIYChBjcmVhdG9yX3VzZXJuYW1lGAYgASgJ",
+            "EhkKEWFzc2lnbmVlX3VzZXJuYW1lGAcgASgJEjoKEWFzc2lnbmVkX2RhdGVf",
+            "dXRjGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgAiAEBEjkK",
+            "EGNyZWF0ZWRfZGF0ZV91dGMYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGlt",
+            "ZXN0YW1wSAGIAQESOwoSY29tcGxldGVkX2RhdGVfdXRjGAogASgLMhouZ29v",
+            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcEgCiAEBEhQKDGluc3RydWN0aW9ucxgL",
+            "IAEoCUIUChJfYXNzaWduZWRfZGF0ZV91dGNCEwoRX2NyZWF0ZWRfZGF0ZV91",
             "dGNCFQoTX2NvbXBsZXRlZF9kYXRlX3V0YzKsAQoKV29ya09yZGVycxI2CgRQ",
             "aW5nEhcud29ya29yZGVycy5QaW5nUmVxdWVzdBoVLndvcmtvcmRlcnMuUGlu",
             "Z1JlcGx5EmYKFEdldFdvcmtPcmRlckJ5TnVtYmVyEicud29ya29yZGVycy5H",
@@ -51,7 +51,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply.Parser, new[]{ "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest.Parser, new[]{ "Number" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply.Parser, new[]{ "WorkOrder" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "Instructions", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "Instructions" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc" }, null, null, null)
           }));
     }
     #endregion
@@ -823,7 +823,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       number_ = other.number_;
       title_ = other.title_;
       description_ = other.description_;
-      instructions_ = other.instructions_;
       roomNumber_ = other.roomNumber_;
       statusKey_ = other.statusKey_;
       creatorUsername_ = other.creatorUsername_;
@@ -831,6 +830,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       assignedDateUtc_ = other.assignedDateUtc_ != null ? other.assignedDateUtc_.Clone() : null;
       createdDateUtc_ = other.createdDateUtc_ != null ? other.createdDateUtc_.Clone() : null;
       completedDateUtc_ = other.completedDateUtc_ != null ? other.completedDateUtc_.Clone() : null;
+      instructions_ = other.instructions_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -873,18 +873,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       get { return description_; }
       set {
         description_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "instructions" field.</summary>
-    public const int InstructionsFieldNumber = 11;
-    private string instructions_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Instructions {
-      get { return instructions_; }
-      set {
-        instructions_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
     }
 
@@ -972,6 +960,18 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       }
     }
 
+    /// <summary>Field number for the "instructions" field.</summary>
+    public const int InstructionsFieldNumber = 11;
+    private string instructions_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Instructions {
+      get { return instructions_; }
+      set {
+        instructions_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -990,7 +990,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (Number != other.Number) return false;
       if (Title != other.Title) return false;
       if (Description != other.Description) return false;
-      if (Instructions != other.Instructions) return false;
       if (RoomNumber != other.RoomNumber) return false;
       if (StatusKey != other.StatusKey) return false;
       if (CreatorUsername != other.CreatorUsername) return false;
@@ -998,6 +997,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (!object.Equals(AssignedDateUtc, other.AssignedDateUtc)) return false;
       if (!object.Equals(CreatedDateUtc, other.CreatedDateUtc)) return false;
       if (!object.Equals(CompletedDateUtc, other.CompletedDateUtc)) return false;
+      if (Instructions != other.Instructions) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1008,7 +1008,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (Number.Length != 0) hash ^= Number.GetHashCode();
       if (Title.Length != 0) hash ^= Title.GetHashCode();
       if (Description.Length != 0) hash ^= Description.GetHashCode();
-      if (Instructions.Length != 0) hash ^= Instructions.GetHashCode();
       if (RoomNumber.Length != 0) hash ^= RoomNumber.GetHashCode();
       if (StatusKey.Length != 0) hash ^= StatusKey.GetHashCode();
       if (CreatorUsername.Length != 0) hash ^= CreatorUsername.GetHashCode();
@@ -1016,6 +1015,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (assignedDateUtc_ != null) hash ^= AssignedDateUtc.GetHashCode();
       if (createdDateUtc_ != null) hash ^= CreatedDateUtc.GetHashCode();
       if (completedDateUtc_ != null) hash ^= CompletedDateUtc.GetHashCode();
+      if (Instructions.Length != 0) hash ^= Instructions.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1151,9 +1151,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (Description.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Description);
       }
-      if (Instructions.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Instructions);
-      }
       if (RoomNumber.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(RoomNumber);
       }
@@ -1175,6 +1172,9 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (completedDateUtc_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(CompletedDateUtc);
       }
+      if (Instructions.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Instructions);
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -1195,9 +1195,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       }
       if (other.Description.Length != 0) {
         Description = other.Description;
-      }
-      if (other.Instructions.Length != 0) {
-        Instructions = other.Instructions;
       }
       if (other.RoomNumber.Length != 0) {
         RoomNumber = other.RoomNumber;
@@ -1228,6 +1225,9 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
           CompletedDateUtc = new global::Google.Protobuf.WellKnownTypes.Timestamp();
         }
         CompletedDateUtc.MergeFrom(other.CompletedDateUtc);
+      }
+      if (other.Instructions.Length != 0) {
+        Instructions = other.Instructions;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
