@@ -104,6 +104,8 @@ public class ApplicationChatHandlerTests : LlmTestBase
     [Category("SqlServerOnly")]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
     {
+        SqlServerTestAssumptions.RequireSqlServer();
+
         new ZDataLoader().LoadData();
 
         var workOrderNumber = await ExecuteAsync(
