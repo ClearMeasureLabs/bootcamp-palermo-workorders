@@ -11,7 +11,6 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 public class ApplicationChatHandlerTests : LlmTestBase
 {
     private static async Task<WorkOrder?> WaitForWorkOrderAsync(
-        DataContext db,
         string workOrderNumber,
         Func<WorkOrder, bool> predicate,
         TimeSpan timeout,
@@ -20,6 +19,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
         var deadline = DateTime.UtcNow + timeout;
         while (DateTime.UtcNow < deadline)
         {
+            var db = TestHost.GetRequiredService<DataContext>();
             var workOrder = await db.Set<WorkOrder>()
                 .AsNoTracking()
                 .Include(wo => wo.Assignee)
@@ -34,7 +34,8 @@ public class ApplicationChatHandlerTests : LlmTestBase
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
         }
 
-        return await db.Set<WorkOrder>()
+        var finalDb = TestHost.GetRequiredService<DataContext>();
+        return await finalDb.Set<WorkOrder>()
             .AsNoTracking()
             .Include(wo => wo.Assignee)
             .Include(wo => wo.Creator)
@@ -120,9 +121,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
         var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
-        var db = TestHost.GetRequiredService<DataContext>();
         var workOrder = await WaitForWorkOrderAsync(
-            db,
             workOrderNumber,
             wo => wo.Status == WorkOrderStatus.Assigned,
             TimeSpan.FromMinutes(2));
