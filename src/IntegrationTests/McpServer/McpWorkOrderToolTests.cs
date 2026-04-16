@@ -118,6 +118,26 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
+    public async Task ShouldCreateDraftWorkOrderWithInstructions()
+    {
+        var employee = new Employee("creator2", "Pat", "Lee", "pat@test.com");
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var numberGenerator = new WorkOrderNumberGenerator();
+        var result = await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, "Order with instructions", "Desc", "creator2",
+            instructions: "Bring tools");
+
+        result.ShouldContain("Bring tools");
+        result.ShouldContain("Order with instructions");
+    }
+
+    [Test]
     public async Task ShouldReturnErrorForMissingCreator()
     {
         var bus = TestHost.GetRequiredService<IBus>();
