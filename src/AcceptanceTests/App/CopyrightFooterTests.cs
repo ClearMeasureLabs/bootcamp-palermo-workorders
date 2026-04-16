@@ -50,6 +50,8 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Task.Delay(GetInputDelayMs());
 
         var footer = Page.GetByTestId(nameof(MainLayout.Elements.CopyrightFooter));
+        await footer.WaitForAsync();
+        await footer.ScrollIntoViewIfNeededAsync();
         await Expect(footer).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Alert)).ToContainTextAsync("Sorry, there's nothing at this address.");
     }
