@@ -27,7 +27,7 @@ public sealed class WorkOrdersBulkImportController(
 {
     /// <summary>
     /// Imports work orders from a CSV file. Form field name: <c>file</c>.
-    /// Header row required: Title, Description, CreatorUsername, RoomNumber (optional).
+    /// Header row required: Title, Description, CreatorUsername; optional columns: Instructions, RoomNumber.
     /// </summary>
     [HttpPost]
     [RequestSizeLimit(10 * 1024 * 1024)]
@@ -104,6 +104,7 @@ public sealed class WorkOrdersBulkImportController(
             {
                 Title = row.Title,
                 Description = row.Description,
+                Instructions = row.Instructions,
                 Creator = creator,
                 Status = WorkOrderStatus.Draft,
                 Number = numberGenerator.GenerateNumber(),

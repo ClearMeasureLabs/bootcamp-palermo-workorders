@@ -71,7 +71,7 @@ public class GrpcWorkOrderIntegrationTests
                 Number = "GRPC-001",
                 Title = "Test title",
                 Description = "Test description",
-                Instructions = "Bring extension cord",
+                Instructions = "Do the thing carefully",
                 RoomNumber = "101",
                 Status = WorkOrderStatus.Draft,
                 Creator = creator,
@@ -88,7 +88,7 @@ public class GrpcWorkOrderIntegrationTests
         reply.WorkOrder.Number.ShouldBe("GRPC-001");
         reply.WorkOrder.Title.ShouldBe("Test title");
         reply.WorkOrder.Description.ShouldBe("Test description");
-        reply.WorkOrder.Instructions.ShouldBe("Bring extension cord");
+        reply.WorkOrder.Instructions.ShouldBe("Do the thing carefully");
         reply.WorkOrder.RoomNumber.ShouldBe("101");
         reply.WorkOrder.StatusKey.ShouldBe(WorkOrderStatus.Draft.Key);
         reply.WorkOrder.CreatorUsername.ShouldBe("grpc-creator");

@@ -46,9 +46,9 @@ public class WorkOrdersBulkImportIntegrationTests
             db.SaveChanges();
         }
 
-        var csv = "Title,Description,CreatorUsername,RoomNumber\n"
-                  + "First,Desc one,bulk-user,1A\n"
-                  + "Second,Desc two,bulk-user,\n";
+        var csv = "Title,Description,CreatorUsername,Instructions,RoomNumber\n"
+                  + "First,Desc one,bulk-user,Note A,1A\n"
+                  + "Second,Desc two,bulk-user,,\n";
 
         using var content = new MultipartFormDataContent();
         var filePart = new StringContent(csv, Encoding.UTF8, "text/csv");
@@ -66,6 +66,10 @@ public class WorkOrdersBulkImportIntegrationTests
         var db2 = scope2.ServiceProvider.GetRequiredService<DataContext>();
         var count = await db2.Set<WorkOrder>().CountAsync(w => w.Creator!.UserName == "bulk-user");
         count.ShouldBe(2);
+        var first = await db2.Set<WorkOrder>().SingleAsync(w => w.Title == "First");
+        first.Instructions.ShouldBe("Note A");
+        var second = await db2.Set<WorkOrder>().SingleAsync(w => w.Title == "Second");
+        second.Instructions.ShouldBe(string.Empty);
     }
 
     [Test]

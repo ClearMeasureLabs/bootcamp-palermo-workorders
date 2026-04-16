@@ -138,7 +138,9 @@ Function IntegrationTest {
 
 	try {
 		exec {
-				if ($script:useSqlite) {
+				# Skip SqlServerOnly tests whenever the build uses SQLite, not only when $script:useSqlite
+				# is true (Resolve-DatabaseEngine can diverge from -UseSqlite in some CI paths).
+				if ($script:databaseEngine -eq "SQLite") {
 				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
 					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 					--no-restore --configuration $projectConfig `

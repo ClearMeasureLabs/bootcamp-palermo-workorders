@@ -18,7 +18,9 @@ public class WorkOrderManageModel
 
     [Required] public string? Title { get; set; }
 
-    [Required] public string? Description { get; set; }
+    [Required] [MaxLength(4000)] public string? Description { get; set; }
+
+    [MaxLength(4000)] public string? Instructions { get; set; }
 
     public string? Instructions { get; set; }
 

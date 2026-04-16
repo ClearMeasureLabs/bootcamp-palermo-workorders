@@ -1,5 +1,6 @@
 ﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
+using ClearMeasure.Bootcamp.IntegrationTests;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 
@@ -19,7 +20,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
-            Instructions = "Turn off breaker 12 first",
+            Instructions = "Turn off breaker before replacing bulbs.",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
@@ -44,7 +45,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
-        rehydratedWorkOrder.Instructions.ShouldBe("Turn off breaker 12 first");
+        rehydratedWorkOrder.Instructions.ShouldBe("Turn off breaker before replacing bulbs.");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
@@ -64,7 +65,7 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
-            Instructions = "use ladder",
+            Instructions = "persist me",
             RoomNumber = "123 a"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
@@ -242,7 +243,8 @@ public class WorkOrderMappingTests
             Number = new string('A', 8), // Exceeds 7 char limit (WorkOrderMap)
             Title = new string('B', 301), // Exceeds 300 char limit
             Description = "valid",
-            Instructions = new string('C', 4001), // Setter truncates to 4000; DB allows 4000
+            // Instructions setter truncates to 4000 before EF (same as Description)
+            Instructions = new string('E', 4001),
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
@@ -253,6 +255,38 @@ public class WorkOrderMappingTests
         context.Add(workOrder);
 
         Should.Throw<DbUpdateException>(() => context.SaveChanges());
+    }
+
+    [Test]
+    public void ShouldPersistInstructionsAtMaxLength()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var instructions = new string('i', 4000);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-MAX",
+            Title = "With instructions",
+            Description = "desc",
+            Instructions = instructions,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+            rehydrated.Instructions.ShouldBe(instructions);
+            rehydrated.Instructions!.Length.ShouldBe(4000);
+        }
     }
 
     [Test]

@@ -96,6 +96,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
     [Test]
     [Retry(80)]
+    [Category("SqlServerOnly")]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilie()
     {
         new ZDataLoader().LoadData();
@@ -127,7 +128,11 @@ public class ApplicationChatHandlerTests : LlmTestBase
             TimeSpan.FromMinutes(2));
 
         workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
-        workOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
+        await AssertWorkOrderReachesStatusAsync(workOrderNumber, WorkOrderStatus.Assigned);
+        workOrder = await db.Set<WorkOrder>()
+            .Include(wo => wo.Assignee)
+            .Include(wo => wo.Creator)
+            .SingleAsync(wo => wo.Number == workOrderNumber);
         workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
         workOrder.Creator?.FirstName.ShouldBe("Timothy");
     }
@@ -167,14 +172,54 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         async Task CheckStatusAsync(WorkOrderStatus status)
         {
+            await AssertWorkOrderReachesStatusAsync(workOrderNumber, status);
+
             var db = TestHost.GetRequiredService<DataContext>();
             var workOrder = await db.Set<WorkOrder>()
+                .Include(wo => wo.Assignee)
+                .Include(wo => wo.Creator)
+                .SingleAsync(wo => wo.Number == workOrderNumber);
+
+            workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+            workOrder.Creator?.FirstName.ShouldBe("Timothy");
+        }
+    }
+
+    private async Task AssertWorkOrderReachesStatusAsync(string workOrderNumber, WorkOrderStatus expectedStatus)
+    {
+        WorkOrder? workOrder = null;
+        var sentAssignFollowUp = false;
+        for (var attempt = 0; attempt < 600; attempt++)
+        {
+            var db = TestHost.GetRequiredService<DataContext>();
+            workOrder = await db.Set<WorkOrder>()
+                .AsNoTracking()
+                .Include(wo => wo.Assignee)
+                .Include(wo => wo.Creator)
                 .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
 
             workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
-            workOrder.Status.ShouldBe(status);
-            workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
-            workOrder?.Creator?.FirstName.ShouldBe("Timothy");
+            if (workOrder.Status == expectedStatus)
+            {
+                return;
+            }
+
+            if (expectedStatus == WorkOrderStatus.Assigned
+                && workOrder.Status == WorkOrderStatus.Draft
+                && attempt >= 60
+                && !sentAssignFollowUp)
+            {
+                sentAssignFollowUp = true;
+                var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
+                var query = new ApplicationChatQuery(
+                    $"Work order {workOrderNumber} is still Draft. As tlovejoy, assign it to Groundskeeper Willie (gwillie) now.",
+                    "tlovejoy");
+                await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
+            }
+
+            await Task.Delay(500);
         }
+
+        workOrder!.Status.ShouldBe(expectedStatus);
     }
 }

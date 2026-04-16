@@ -41,7 +41,7 @@ public class WorkOrderTests
         workOrder.Id = guid;
         workOrder.Title = "Title";
         workOrder.Description = "Description";
-        workOrder.Instructions = "Do step A then B";
+        workOrder.Instructions = "Step one";
         workOrder.Status = WorkOrderStatus.Complete;
         workOrder.Number = "Number";
         workOrder.Creator = creator;
@@ -50,7 +50,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Id, Is.EqualTo(guid));
         Assert.That(workOrder.Title, Is.EqualTo("Title"));
         Assert.That(workOrder.Description, Is.EqualTo("Description"));
-        Assert.That(workOrder.Instructions, Is.EqualTo("Do step A then B"));
+        Assert.That(workOrder.Instructions, Is.EqualTo("Step one"));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
         Assert.That(workOrder.Number, Is.EqualTo("Number"));
         Assert.That(workOrder.Creator, Is.EqualTo(creator));
@@ -76,12 +76,20 @@ public class WorkOrderTests
     }
 
     [Test]
+    public void ShouldCoalesceNullInstructionsToEmptyString()
+    {
+        var order = new WorkOrder();
+        order.Instructions = null;
+        Assert.That(order.Instructions, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
     public void ShouldTruncateTo4000CharactersOnInstructions()
     {
         var longText = new string('y', 4001);
         var order = new WorkOrder();
         order.Instructions = longText;
-        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
+        Assert.That(order.Instructions!.Length, Is.EqualTo(4000));
     }
 
     [Test]
