@@ -226,6 +226,8 @@ public class WorkOrderMappingTests
     [Category("SqlServerOnly")]
     public void ShouldRespectMaxLengthConstraints()
     {
+        SqlServerTestAssumptions.RequireSqlServer();
+
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
@@ -252,6 +254,8 @@ public class WorkOrderMappingTests
     [Category("SqlServerOnly")]
     public void ShouldSupportMaxLengthTitle()
     {
+        SqlServerTestAssumptions.RequireSqlServer();
+
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
