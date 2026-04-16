@@ -25,7 +25,7 @@ public class WorkOrderAssignTests : AcceptanceTestBase
         await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
         await Input(nameof(WorkOrderManage.Elements.Title), "newtitle");
         await Input(nameof(WorkOrderManage.Elements.Description), "newdesc");
-        await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions ?? "");
+        await Input(nameof(WorkOrderManage.Elements.Instructions), "newinst");
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -42,7 +42,7 @@ public class WorkOrderAssignTests : AcceptanceTestBase
         await Expect(descriptionField).ToHaveValueAsync("newdesc");
 
         var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
-        await Expect(instructionsField).ToHaveValueAsync(order.Instructions ?? "");
+        await Expect(instructionsField).ToHaveValueAsync("newinst");
         
         var assigneeField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee));
         await Expect(assigneeField).ToBeDisabledAsync();
