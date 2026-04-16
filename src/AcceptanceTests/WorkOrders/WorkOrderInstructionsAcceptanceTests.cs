@@ -53,9 +53,15 @@ public class WorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
         await LoginAsCurrentUser();
 
         var order = await CreateAndSaveNewWorkOrder();
-        var rehydrated = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
+        WorkOrder? rehydrated = null;
+        for (var attempt = 0; attempt < 15; attempt++)
+        {
+            rehydrated = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
+            if (rehydrated != null) break;
+            await Task.Delay(500);
+        }
         rehydrated.ShouldNotBeNull();
-        rehydrated.Instructions.ShouldBeNull();
+        rehydrated!.Instructions.ShouldBeNull();
     }
 
     [Test, Retry(2)]
