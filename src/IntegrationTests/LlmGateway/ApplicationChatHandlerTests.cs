@@ -129,6 +129,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
         await AssertWorkOrderReachesStatusAsync(workOrderNumber, WorkOrderStatus.Assigned);
+        var db = TestHost.GetRequiredService<DataContext>();
         workOrder = await db.Set<WorkOrder>()
             .Include(wo => wo.Assignee)
             .Include(wo => wo.Creator)
