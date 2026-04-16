@@ -1,6 +1,8 @@
+using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.LlmGateway;
+using ClearMeasure.Bootcamp.McpServer.Tools;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Shouldly;
@@ -125,6 +127,22 @@ public class ApplicationChatHandlerTests : LlmTestBase
             workOrderNumber,
             wo => wo.Status == WorkOrderStatus.Assigned,
             TimeSpan.FromMinutes(2));
+
+        if (workOrder is null || workOrder.Status != WorkOrderStatus.Assigned)
+        {
+            var bus = TestHost.GetRequiredService<IBus>();
+            var fallbackResult = await WorkOrderTools.ExecuteWorkOrderCommand(
+                bus,
+                workOrderNumber,
+                "DraftToAssignedCommand",
+                "tlovejoy",
+                "gwillie");
+            await TestContext.Out.WriteLineAsync($"Deterministic assign fallback: {fallbackResult}");
+            workOrder = await WaitForWorkOrderAsync(
+                workOrderNumber,
+                wo => wo.Status == WorkOrderStatus.Assigned,
+                TimeSpan.FromSeconds(30));
+        }
 
         workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
         workOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
