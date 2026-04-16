@@ -357,7 +357,7 @@ public abstract class AcceptanceTestBase
         var order = Faker<WorkOrder>();
         order.Title = $"[{TestTag}] from automation";
         order.Number = null;
-        order.Instructions = string.Empty;
+        order.Instructions = null;
         configure?.Invoke(order);
         var testTitle = order.Title;
         var testDescription = order.Description;
