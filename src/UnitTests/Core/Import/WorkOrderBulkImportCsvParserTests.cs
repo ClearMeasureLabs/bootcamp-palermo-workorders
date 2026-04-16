@@ -30,9 +30,9 @@ public class WorkOrderBulkImportCsvParserTests
     [Test]
     public void ShouldParseRows_WhenHeaderAndDataPresent()
     {
-        var csv = "Title,Description,CreatorUsername,RoomNumber\n"
-                  + "Fix leak,Under sink,u1,101\n"
-                  + "\"Title, with comma\",Plain desc,u2,\n";
+        var csv = "Title,Description,CreatorUsername,Instructions,RoomNumber\n"
+                  + "Fix leak,Under sink,u1,Turn off water,101\n"
+                  + "\"Title, with comma\",Plain desc,u2,,\n";
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
         var result = WorkOrderBulkImportCsvParser.Parse(ms);
 
@@ -41,11 +41,39 @@ public class WorkOrderBulkImportCsvParserTests
         result.Rows[0].Title.ShouldBe("Fix leak");
         result.Rows[0].Description.ShouldBe("Under sink");
         result.Rows[0].CreatorUsername.ShouldBe("u1");
+        result.Rows[0].Instructions.ShouldBe("Turn off water");
         result.Rows[0].RoomNumber.ShouldBe("101");
         result.Rows[1].Title.ShouldBe("Title, with comma");
         result.Rows[1].Description.ShouldBe("Plain desc");
         result.Rows[1].CreatorUsername.ShouldBe("u2");
+        result.Rows[1].Instructions.ShouldBeNull();
         result.Rows[1].RoomNumber.ShouldBeNull();
+    }
+
+    [Test]
+    public void ShouldParseOptionalInstructionsColumn_WhenPresent()
+    {
+        var csv = "Title,Description,CreatorUsername,Instructions\nT,D,u,Step one\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeTrue();
+        result.Rows.Count.ShouldBe(1);
+        result.Rows[0].Instructions.ShouldBe("Step one");
+    }
+
+    [Test]
+    public void ShouldParseInstructionsColumn_WhenBetweenDescriptionAndCreator()
+    {
+        var csv = "Title,Description,Instructions,CreatorUsername,RoomNumber\n"
+                  + "T1,D1,Bring tools,u1,201\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeTrue();
+        result.Rows.Count.ShouldBe(1);
+        result.Rows[0].Instructions.ShouldBe("Bring tools");
+        result.Rows[0].RoomNumber.ShouldBe("201");
     }
 
     [Test]

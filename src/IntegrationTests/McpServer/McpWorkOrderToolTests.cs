@@ -68,7 +68,7 @@ public class McpWorkOrderToolTests
     public async Task ShouldGetWorkOrderByNumber()
     {
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
-        var order = new WorkOrder { Creator = employee, Number = "WO-100", Title = "Test order", Description = "A description", RoomNumber = "101" };
+        var order = new WorkOrder { Creator = employee, Number = "WO-100", Title = "Test order", Description = "A description", Instructions = "Wear gloves", RoomNumber = "101" };
 
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
@@ -83,6 +83,7 @@ public class McpWorkOrderToolTests
         result.ShouldContain("WO-100");
         result.ShouldContain("Test order");
         result.ShouldContain("A description");
+        result.ShouldContain("Wear gloves");
         result.ShouldContain("101");
     }
 
@@ -108,11 +109,32 @@ public class McpWorkOrderToolTests
 
         var bus = TestHost.GetRequiredService<IBus>();
         var numberGenerator = new WorkOrderNumberGenerator();
-        var result = await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, "New Work Order", "Fix the broken window", "creator1");
+        var result = await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, "New Work Order", "Fix the broken window", "creator1", "Use safety glasses");
 
         result.ShouldContain("New Work Order");
         result.ShouldContain("Fix the broken window");
+        result.ShouldContain("Use safety glasses");
         result.ShouldContain("Draft");
+    }
+
+    [Test]
+    public async Task ShouldCreateDraftWorkOrderWithInstructions()
+    {
+        var employee = new Employee("creator2", "Pat", "Lee", "pat@test.com");
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var numberGenerator = new WorkOrderNumberGenerator();
+        var result = await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, "Order with instructions", "Desc", "creator2",
+            instructions: "Bring tools");
+
+        result.ShouldContain("Bring tools");
+        result.ShouldContain("Order with instructions");
     }
 
     [Test]

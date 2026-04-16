@@ -1,8 +1,11 @@
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Middleware;
@@ -53,21 +56,35 @@ public sealed class WebServiceMessageValidationMiddleware
         context.Request.Body.Position = 0;
 
         WebServiceMessage? message;
-        try
+        if (IsApplicationXWwwFormUrlEncoded(context.Request.ContentType))
         {
-            message = JsonSerializer.Deserialize<WebServiceMessage>(body, JsonOptions);
+            message = TryParseWebServiceMessageFromFormUrlEncoded(body);
+            if (message is null)
+            {
+                await WriteBadRequestAsync(
+                    context,
+                    "Invalid form body. Expected application/x-www-form-urlencoded fields \"typeName\" and \"body\".");
+                return;
+            }
         }
-        catch (JsonException ex)
+        else
         {
-            _logger.LogDebug(ex, "Invalid WebServiceMessage JSON");
-            await WriteBadRequestAsync(context, "Invalid request body.");
-            return;
-        }
+            try
+            {
+                message = JsonSerializer.Deserialize<WebServiceMessage>(body, JsonOptions);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogDebug(ex, "Invalid WebServiceMessage JSON");
+                await WriteBadRequestAsync(context, "Invalid request body.");
+                return;
+            }
 
-        if (message is null)
-        {
-            await WriteBadRequestAsync(context, "Invalid request body.");
-            return;
+            if (message is null)
+            {
+                await WriteBadRequestAsync(context, "Invalid request body.");
+                return;
+            }
         }
 
         var envelopeResult = await envelopeValidator.ValidateAsync(message, context.RequestAborted);
@@ -124,7 +141,57 @@ public sealed class WebServiceMessageValidationMiddleware
             return;
         }
 
+        ReplaceRequestBodyWithNormalizedJson(context.Request, message);
+
         await _next(context);
+    }
+
+    /// <summary>
+    /// Rewrites the request to JSON so controller model binding matches the JSON path
+    /// (for example Azure DevOps service hooks posting <c>application/x-www-form-urlencoded</c>).
+    /// </summary>
+    private static void ReplaceRequestBodyWithNormalizedJson(HttpRequest request, WebServiceMessage message)
+    {
+        var normalized = JsonSerializer.Serialize(message, typeof(WebServiceMessage), JsonOptions);
+        var buffer = Encoding.UTF8.GetBytes(normalized);
+        var stream = new MemoryStream(buffer, writable: false);
+        request.Body = stream;
+        request.ContentType = "application/json; charset=utf-8";
+        request.Headers.ContentLength = buffer.Length;
+        stream.Position = 0;
+    }
+
+    private static bool IsApplicationXWwwFormUrlEncoded(string? contentType)
+    {
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            return false;
+        }
+
+        return MediaTypeHeaderValue.TryParse(contentType, out var parsed)
+               && string.Equals(
+                   parsed.MediaType,
+                   "application/x-www-form-urlencoded",
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static WebServiceMessage? TryParseWebServiceMessageFromFormUrlEncoded(string rawBody)
+    {
+        var form = QueryHelpers.ParseQuery(rawBody);
+        if (!form.TryGetValue("typeName", out var typeNameValues)
+            || !form.TryGetValue("body", out var bodyValues))
+        {
+            return null;
+        }
+
+        var typeName = typeNameValues.ToString();
+        var body = bodyValues.ToString();
+        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(body))
+        {
+            return null;
+        }
+
+        return new WebServiceMessage { TypeName = typeName, Body = body };
     }
 
     private static bool IsBlazorWasmSingleApiPost(HttpRequest request)

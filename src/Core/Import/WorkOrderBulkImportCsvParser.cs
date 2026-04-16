@@ -44,13 +44,14 @@ public static class WorkOrderBulkImportCsvParser
             if (!columnIndex.ContainsKey(required))
             {
                 return WorkOrderBulkImportParseResult.Fail(
-                    $"Missing required column \"{required}\". Expected header: Title, Description, CreatorUsername, RoomNumber (optional).");
+                    $"Missing required column \"{required}\". Expected header: Title, Description, CreatorUsername, Instructions (optional), RoomNumber (optional).");
             }
         }
 
         var titleIx = columnIndex["Title"];
         var descIx = columnIndex["Description"];
         var creatorIx = columnIndex["CreatorUsername"];
+        var instructionsIx = columnIndex.TryGetValue("Instructions", out var ins) ? ins : -1;
         var roomIx = columnIndex.TryGetValue("RoomNumber", out var r) ? r : -1;
 
         var rows = new List<WorkOrderBulkImportRow>();
@@ -76,6 +77,7 @@ public static class WorkOrderBulkImportCsvParser
                 Cell(titleIx),
                 Cell(descIx),
                 Cell(creatorIx),
+                instructionsIx >= 0 ? Cell(instructionsIx) : null,
                 roomIx >= 0 ? Cell(roomIx) : null));
         }
 

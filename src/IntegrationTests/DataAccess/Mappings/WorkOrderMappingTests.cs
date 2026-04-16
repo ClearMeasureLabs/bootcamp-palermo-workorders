@@ -1,5 +1,6 @@
 ﻿using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
+using ClearMeasure.Bootcamp.IntegrationTests;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 
@@ -267,13 +268,15 @@ public class WorkOrderMappingTests
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
-        // WorkOrder.Description setter truncates to 4000 before EF sees the value, so length violations
-        // for Description are not observable through the domain model here.
+        // WorkOrder.Description and Instructions setters truncate to 4000 before EF sees the value, so length violations
+        // for those fields are not observable through the domain model here.
         var workOrder = new WorkOrder
         {
             Number = new string('A', 8), // Exceeds 7 char limit (WorkOrderMap)
             Title = new string('B', 301), // Exceeds 300 char limit
             Description = "valid",
+            // Instructions setter truncates to 4000 before EF (same as Description)
+            Instructions = new string('E', 4001),
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
@@ -284,6 +287,38 @@ public class WorkOrderMappingTests
         context.Add(workOrder);
 
         Should.Throw<DbUpdateException>(() => context.SaveChanges());
+    }
+
+    [Test]
+    public void ShouldPersistInstructionsAtMaxLength()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var instructions = new string('i', 4000);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-MAX",
+            Title = "With instructions",
+            Description = "desc",
+            Instructions = instructions,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+            rehydrated.Instructions.ShouldBe(instructions);
+            rehydrated.Instructions!.Length.ShouldBe(4000);
+        }
     }
 
     [Test]
