@@ -103,7 +103,12 @@ public class ApplicationChatHandlerTests : LlmTestBase
         new ZDataLoader().LoadData();
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
         var query = new ApplicationChatQuery(
-            "have groundskeeper willie mow the grass. Yes, assign the new work order. confirmed",
+            "I am Timothy Lovejoy (username tlovejoy). " +
+            "Create a work order for Groundskeeper Willie (username gwillie) to mow the grass. " +
+            "Use 'tlovejoy' as the creatorUsername. " +
+            "After creating it, assign it to gwillie using the DraftToAssignedCommand " +
+            "with executingUsername='tlovejoy' and assigneeUsername='gwillie'. " +
+            "Confirm the assignment in your response.",
             "tlovejoy");
 
         ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
