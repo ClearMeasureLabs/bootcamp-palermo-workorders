@@ -10,6 +10,38 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 [TestFixture]
 public class ApplicationChatHandlerTests : LlmTestBase
 {
+    private static async Task<WorkOrder?> WaitForWorkOrderAsync(
+        string workOrderNumber,
+        Func<WorkOrder, bool> predicate,
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            var db = TestHost.GetRequiredService<DataContext>();
+            var workOrder = await db.Set<WorkOrder>()
+                .AsNoTracking()
+                .Include(wo => wo.Assignee)
+                .Include(wo => wo.Creator)
+                .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber, cancellationToken);
+
+            if (workOrder is not null && predicate(workOrder))
+            {
+                return workOrder;
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+        }
+
+        var finalDb = TestHost.GetRequiredService<DataContext>();
+        return await finalDb.Set<WorkOrder>()
+            .AsNoTracking()
+            .Include(wo => wo.Assignee)
+            .Include(wo => wo.Creator)
+            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber, cancellationToken);
+    }
+
     [Test]
     [Retry(3)]
     public async Task Handle_AskForWorkOrdersICreated_ReturnsWorkOrderData()
@@ -89,14 +121,15 @@ public class ApplicationChatHandlerTests : LlmTestBase
         var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
-        var db = TestHost.GetRequiredService<DataContext>();
-        var workOrder = await db.Set<WorkOrder>()
-            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+        var workOrder = await WaitForWorkOrderAsync(
+            workOrderNumber,
+            wo => wo.Status == WorkOrderStatus.Assigned,
+            TimeSpan.FromMinutes(2));
 
         workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
         workOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
-        workOrder?.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
-        workOrder?.Creator?.FirstName.ShouldBe("Timothy");
+        workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+        workOrder.Creator?.FirstName.ShouldBe("Timothy");
     }
 
     [Test]
@@ -104,6 +137,8 @@ public class ApplicationChatHandlerTests : LlmTestBase
     [Category("SqlServerOnly")]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
     {
+        SqlServerTestAssumptions.RequireSqlServer();
+
         new ZDataLoader().LoadData();
 
         var workOrderNumber = await ExecuteAsync(
