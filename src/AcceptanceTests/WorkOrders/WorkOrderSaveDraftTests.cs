@@ -217,7 +217,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         var order = await CreateAndSaveNewWorkOrder(o => o.Instructions = "");
 
-        order.Instructions.ShouldBe("");
+        order.Instructions.ShouldBeNull();
 
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -228,7 +228,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Expect(instructionsField).ToHaveValueAsync("");
 
         var fromDb = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-        fromDb.Instructions.ShouldBe("");
+        fromDb.Instructions.ShouldBeNull();
     }
 
     [Test, Retry(2)]

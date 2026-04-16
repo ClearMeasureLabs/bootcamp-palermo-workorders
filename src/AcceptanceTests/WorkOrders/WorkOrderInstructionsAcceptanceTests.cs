@@ -55,7 +55,7 @@ public class WorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
         var order = await CreateAndSaveNewWorkOrder();
         var rehydrated = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
         rehydrated.ShouldNotBeNull();
-        rehydrated.Instructions.ShouldBe(string.Empty);
+        rehydrated.Instructions.ShouldBeNull();
     }
 
     [Test, Retry(2)]
