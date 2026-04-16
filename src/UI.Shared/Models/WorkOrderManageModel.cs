@@ -22,8 +22,6 @@ public class WorkOrderManageModel
 
     [MaxLength(4000)] public string? Instructions { get; set; }
 
-    [MaxLength(4000)] public string? Instructions { get; set; }
-
     public bool IsReadOnly { get; set; }
 
     public string? AssignedDate { get; set; }
