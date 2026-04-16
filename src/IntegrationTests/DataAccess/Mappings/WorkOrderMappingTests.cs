@@ -19,6 +19,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
+            Instructions = "Turn off breaker 12 first",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
@@ -43,6 +44,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
+        rehydratedWorkOrder.Instructions.ShouldBe("Turn off breaker 12 first");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
@@ -62,6 +64,7 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
+            Instructions = "use ladder",
             RoomNumber = "123 a"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
@@ -89,6 +92,7 @@ public class WorkOrderMappingTests
             rehydratedWorkOrder.Assignee!.Id.ShouldBe(order.Assignee.Id);
             rehydratedWorkOrder.Title.ShouldBe(order.Title);
             rehydratedWorkOrder.Description.ShouldBe(order.Description);
+            rehydratedWorkOrder.Instructions.ShouldBe(order.Instructions);
             rehydratedWorkOrder.Status.ShouldBe(order.Status);
             rehydratedWorkOrder.RoomNumber.ShouldBe(order.RoomNumber);
             rehydratedWorkOrder.Number.ShouldBe(order.Number);
@@ -231,13 +235,14 @@ public class WorkOrderMappingTests
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
-        // WorkOrder.Description setter truncates to 4000 before EF sees the value, so length violations
-        // for Description are not observable through the domain model here.
+        // WorkOrder.Description and Instructions setters truncate to 4000 before EF sees the value, so length violations
+        // for those fields are not observable through the domain model here.
         var workOrder = new WorkOrder
         {
             Number = new string('A', 8), // Exceeds 7 char limit (WorkOrderMap)
             Title = new string('B', 301), // Exceeds 300 char limit
             Description = "valid",
+            Instructions = new string('C', 4001), // Setter truncates to 4000; DB allows 4000
             RoomNumber = new string('D', 51), // Exceeds 50 char limit
             Creator = creator,
             Status = WorkOrderStatus.Draft
