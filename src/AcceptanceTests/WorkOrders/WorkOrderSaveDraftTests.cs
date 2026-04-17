@@ -5,6 +5,7 @@ using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Microsoft.Playwright;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
@@ -135,6 +136,90 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         var reloaded = await Bus.Send(new WorkOrderByNumberQuery(number)) ?? throw new InvalidOperationException();
         reloaded.Instructions.ShouldBe("Added after first save");
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldCreateWorkOrderWith4000CharacterInstructions()
+    {
+        await LoginAsCurrentUser();
+
+        var instructions = new string('i', 4000);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        var newWorkOrderNumber = await woNumberLocator.InnerTextAsync();
+
+        await Input(nameof(WorkOrderManage.Elements.Title), $"[{TestTag}] long instructions");
+        await Input(nameof(WorkOrderManage.Elements.Description), "desc");
+        await Input(nameof(WorkOrderManage.Elements.Instructions), instructions);
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var rehydrated = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber)) ?? throw new InvalidOperationException();
+        rehydrated.Instructions!.Length.ShouldBe(4000);
+        rehydrated.Instructions.ShouldBe(instructions);
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldCreateWorkOrderWithEmptyInstructions()
+    {
+        await LoginAsCurrentUser();
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        var newWorkOrderNumber = await woNumberLocator.InnerTextAsync();
+
+        await Input(nameof(WorkOrderManage.Elements.Title), $"[{TestTag}] no instructions");
+        await Input(nameof(WorkOrderManage.Elements.Description), "only description");
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "202");
+
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var rehydrated = await Bus.Send(new WorkOrderByNumberQuery(newWorkOrderNumber)) ?? throw new InvalidOperationException();
+        rehydrated.Instructions.ShouldBeNull();
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldPersistInstructionsAfterEditAssign()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+
+        const string addedInstructions = "Added after first save";
+        await Input(nameof(WorkOrderManage.Elements.Instructions), addedInstructions);
+        await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await ClickWorkOrderNumberFromSearchPage(order);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync(addedInstructions);
+
+        var rehydrated = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        rehydrated.Instructions.ShouldBe(addedInstructions);
     }
 
     [Test, Retry(2)]
