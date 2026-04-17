@@ -2,8 +2,9 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 
 public class WorkOrder : EntityBase<WorkOrder>
 {
+    private const int MaxPlainTextFieldLength = 4000;
     private string? _description = "";
-    private string? _instructions = "";
+    private string? _instructions;
 
     public string? Title { get; set; } = "";
 
@@ -13,10 +14,13 @@ public class WorkOrder : EntityBase<WorkOrder>
         set => _description = getTruncatedString(value);
     }
 
+    /// <summary>
+    /// Optional execution instructions; plain text, max 4000 characters (truncated in setter).
+    /// </summary>
     public string? Instructions
     {
         get => _instructions;
-        set => _instructions = getTruncatedString(value);
+        set => _instructions = string.IsNullOrWhiteSpace(value) ? null : getTruncatedString(value);
     }
 
     public string? RoomNumber { get; set; } = null;
@@ -45,7 +49,7 @@ public class WorkOrder : EntityBase<WorkOrder>
             return string.Empty;
         }
 
-        var maxLength = Math.Min(4000, value.Length);
+        var maxLength = Math.Min(MaxPlainTextFieldLength, value.Length);
         return value.Substring(0, maxLength);
     }
 

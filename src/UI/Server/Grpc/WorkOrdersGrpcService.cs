@@ -2,6 +2,7 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using Grpc.Core;
+using GrpcWorkOrder = ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Grpc;
 
@@ -35,9 +36,9 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
         return new GetWorkOrderByNumberReply { WorkOrder = MapWorkOrder(workOrder) };
     }
 
-    private static WorkOrder MapWorkOrder(Core.Model.WorkOrder source)
+    private static GrpcWorkOrder MapWorkOrder(Core.Model.WorkOrder source)
     {
-        var message = new WorkOrder
+        var message = new GrpcWorkOrder
         {
             Number = source.Number ?? "",
             Title = source.Title ?? "",
