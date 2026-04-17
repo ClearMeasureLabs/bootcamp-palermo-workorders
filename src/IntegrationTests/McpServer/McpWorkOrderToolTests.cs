@@ -1,6 +1,5 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
-using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
 using ClearMeasure.Bootcamp.McpServer.Tools;
@@ -205,5 +204,118 @@ public class McpWorkOrderToolTests
 
         wo.Status.ShouldBe(WorkOrderStatus.Assigned);
         result.ShouldContain("Assigned");
+    }
+
+    [Test]
+    public async Task ShouldReturnErrorWhenDraftToAssignedMissingAssignee()
+    {
+        var creator = new Employee("creator1", "Jane", "Creator", "creator@test.com");
+        creator.AddRole(new Role("Manager", true, false));
+        var draftOrder = new WorkOrder
+        {
+            Creator = creator,
+            Number = "WO-400",
+            Title = "Needs assignee",
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(draftOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-400", "DraftToAssignedCommand", "creator1");
+
+        result.ShouldContain("requires an assigneeUsername");
+    }
+
+    [Test]
+    public async Task ShouldExecuteShelveAliasCommand()
+    {
+        var creator = new Employee("creator1", "Timothy", "Lovejoy", "timothy@test.com");
+        var assignee = new Employee("gwillie", "Groundskeeper Willie", "MacDougal", "willie@test.com");
+        assignee.AddRole(new Role("Worker", false, true));
+        var inProgressOrder = new WorkOrder
+        {
+            Creator = creator,
+            Assignee = assignee,
+            Number = "WO-779",
+            Title = "Shelve alias",
+            Status = WorkOrderStatus.InProgress
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(assignee);
+            context.Add(inProgressOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-779", "Shelve", "gwillie");
+
+        WorkOrder? wo;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            wo = await context.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-779");
+        }
+
+        wo.Status.ShouldBe(WorkOrderStatus.Assigned);
+        result.ShouldContain("Assigned");
+    }
+
+    [Test]
+    public async Task ShouldExecuteDraftToAssignedThenBeginStatusChanges()
+    {
+        var creator = new Employee("creator1", "Jane", "Creator", "creator@test.com");
+        creator.AddRole(new Role("Manager", true, false));
+        var assignee = new Employee("worker1", "Sam", "Worker", "worker@test.com");
+        assignee.AddRole(new Role("Worker", false, true));
+        var draftOrder = new WorkOrder
+        {
+            Creator = creator,
+            Number = "WO-402",
+            Title = "Status flow",
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(assignee);
+            context.Add(draftOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var assignResult = await WorkOrderTools.ExecuteWorkOrderCommand(
+            bus,
+            "WO-402",
+            "DraftToAssignedCommand",
+            "creator1",
+            "worker1");
+
+        assignResult.ShouldContain("Assigned");
+
+        var beginResult = await WorkOrderTools.ExecuteWorkOrderCommand(
+            bus,
+            "WO-402",
+            "AssignedToInProgressCommand",
+            "worker1");
+
+        beginResult.ShouldContain("In Progress");
+
+        WorkOrder? wo;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            wo = await context.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-402");
+        }
+
+        wo.Status.ShouldBe(WorkOrderStatus.InProgress);
+        wo.Assignee!.UserName.ShouldBe("worker1");
     }
 }

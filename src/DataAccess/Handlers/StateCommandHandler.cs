@@ -22,6 +22,8 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, IDistri
             order.Assignee = order.Creator; //EFCore reference checking
         }
 
+        dbContext.ChangeTracker.Clear();
+
         if (order.Id == Guid.Empty)
         {
             dbContext.Attach(order);
