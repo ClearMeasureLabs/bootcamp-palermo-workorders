@@ -66,6 +66,9 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
         return false;
     }
 
+    /// <summary>
+    /// Returns whether this employee has at least one role with permission to fulfill work orders.
+    /// </summary>
     public bool CanFulfillWorkOrder()
     {
         foreach (var role in Roles)
