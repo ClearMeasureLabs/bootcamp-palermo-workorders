@@ -44,7 +44,7 @@ public static class WorkOrderBulkImportCsvParser
             if (!columnIndex.ContainsKey(required))
             {
                 return WorkOrderBulkImportParseResult.Fail(
-                    $"Missing required column \"{required}\". Expected header: Title, Description, CreatorUsername, Instructions (optional), RoomNumber (optional).");
+                    $"Missing required column \"{required}\". Expected header: Title, Description, CreatorUsername; optional columns: Instructions, RoomNumber.");
             }
         }
 
