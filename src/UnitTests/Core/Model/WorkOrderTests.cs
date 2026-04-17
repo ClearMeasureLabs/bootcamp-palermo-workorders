@@ -12,7 +12,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
         Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
-        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
+        Assert.That(workOrder.Instructions, Is.EqualTo(null));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
@@ -41,7 +41,7 @@ public class WorkOrderTests
         workOrder.Id = guid;
         workOrder.Title = "Title";
         workOrder.Description = "Description";
-        workOrder.Instructions = "Instructions";
+        workOrder.Instructions = "Turn off breaker first";
         workOrder.Status = WorkOrderStatus.Complete;
         workOrder.Number = "Number";
         workOrder.Creator = creator;
@@ -50,7 +50,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Id, Is.EqualTo(guid));
         Assert.That(workOrder.Title, Is.EqualTo("Title"));
         Assert.That(workOrder.Description, Is.EqualTo("Description"));
-        Assert.That(workOrder.Instructions, Is.EqualTo("Instructions"));
+        Assert.That(workOrder.Instructions, Is.EqualTo("Turn off breaker first"));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
         Assert.That(workOrder.Number, Is.EqualTo("Number"));
         Assert.That(workOrder.Creator, Is.EqualTo(creator));
@@ -82,6 +82,19 @@ public class WorkOrderTests
         var order = new WorkOrder();
         order.Instructions = longText;
         Assert.That(order.Instructions!.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void ShouldStoreNullInstructions_When_SetToEmptyOrWhitespace()
+    {
+        var order = new WorkOrder { Instructions = "  notes  " };
+        Assert.That(order.Instructions, Is.EqualTo("  notes  "));
+
+        order.Instructions = "";
+        Assert.That(order.Instructions, Is.EqualTo(null));
+
+        order.Instructions = "   ";
+        Assert.That(order.Instructions, Is.EqualTo(null));
     }
 
     [Test]
