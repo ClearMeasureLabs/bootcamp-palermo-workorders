@@ -47,7 +47,8 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
             RoomNumber = source.RoomNumber ?? "",
             StatusKey = source.Status.Key,
             CreatorUsername = source.Creator?.UserName ?? "",
-            AssigneeUsername = source.Assignee?.UserName ?? ""
+            AssigneeUsername = source.Assignee?.UserName ?? "",
+            Instructions = source.Instructions ?? ""
         };
 
         if (source.AssignedDate.HasValue)
