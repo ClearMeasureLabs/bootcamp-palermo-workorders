@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Model;
@@ -46,9 +47,9 @@ public class WorkOrdersBulkImportIntegrationTests
             db.SaveChanges();
         }
 
-        var csv = "Title,Description,CreatorUsername,RoomNumber\n"
-                  + "First,Desc one,bulk-user,1A\n"
-                  + "Second,Desc two,bulk-user,\n";
+        var csv = "Title,Description,CreatorUsername,Instructions,RoomNumber\n"
+                  + "First,Desc one,bulk-user,Note A,1A\n"
+                  + "Second,Desc two,bulk-user,,\n";
 
         using var content = new MultipartFormDataContent();
         var filePart = new StringContent(csv, Encoding.UTF8, "text/csv");
@@ -66,6 +67,43 @@ public class WorkOrdersBulkImportIntegrationTests
         var db2 = scope2.ServiceProvider.GetRequiredService<DataContext>();
         var count = await db2.Set<WorkOrder>().CountAsync(w => w.Creator!.UserName == "bulk-user");
         count.ShouldBe(2);
+        var first = await db2.Set<WorkOrder>().SingleAsync(w => w.Title == "First");
+        first.Instructions.ShouldBe("Note A");
+        var second = await db2.Set<WorkOrder>().SingleAsync(w => w.Title == "Second");
+        second.Instructions.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task ShouldCreateDrafts_WhenCsvPostedAsUrlEncodedForm()
+    {
+        using (var scope = _factory!.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+            db.Database.EnsureCreated();
+            var creator = new Employee("bulk-user-form", "Bulk", "Form", "bulkform@t.test");
+            db.Add(creator);
+            db.SaveChanges();
+        }
+
+        var csv = "Title,Description,CreatorUsername,Instructions\n"
+                  + "Form row,Desc,bulk-user-form,Line A\n";
+
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["csv"] = csv
+        });
+        content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/x-www-form-urlencoded");
+
+        var response = await _httpClient!.PostAsync(new Uri(_httpClient.BaseAddress!, "api/v1.0/work-orders/bulk-import"), content);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.GetProperty("createdCount").GetInt32().ShouldBe(1);
+
+        using var scope2 = _factory.Services.CreateScope();
+        var db2 = scope2.ServiceProvider.GetRequiredService<DataContext>();
+        var wo = await db2.Set<WorkOrder>().SingleAsync(w => w.Creator!.UserName == "bulk-user-form");
+        wo.Instructions.ShouldBe("Line A");
     }
 
     [Test]
