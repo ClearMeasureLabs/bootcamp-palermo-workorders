@@ -19,6 +19,7 @@ public class StateCommandList
         var commands = new List<IStateCommand>();
         commands.Add(new SaveDraftCommand(workOrder, currentUser));
         commands.Add(new DraftToAssignedCommand(workOrder, currentUser));
+        commands.Add(new AssignedToDraftCommand(workOrder, currentUser));
         commands.Add(new AssignedToInProgressCommand(workOrder, currentUser));
         commands.Add(new InProgressToAssignedCommand(workOrder, currentUser));
         commands.Add(new InProgressToCompleteCommand(workOrder, currentUser));
