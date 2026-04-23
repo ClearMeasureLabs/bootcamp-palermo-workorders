@@ -7,6 +7,8 @@
 		<AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
 		<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 		<Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+		<Deterministic>true</Deterministic>
+		<IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
 	</PropertyGroup>
 
 	<ItemGroup>

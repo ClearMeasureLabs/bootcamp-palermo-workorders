@@ -31,9 +31,11 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
         var assembly = Assembly.GetExecutingAssembly();
         var assemblyVersion = assembly.GetName().Version?.ToString();
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var configuration = assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()?.Configuration;
         var payload = new VersionMetadataResponse(
             AssemblyVersion: assemblyVersion,
             InformationalVersion: informationalVersion,
+            Configuration: configuration,
             Environment: hostEnvironment.EnvironmentName,
             MachineName: Environment.MachineName,
             FrameworkDescription: RuntimeInformation.FrameworkDescription);
@@ -47,10 +49,12 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
 
 /// <summary>
 /// JSON payload for <c>GET /api/version</c> and <c>GET /api/v1.0/version</c>.
+/// Includes <see cref="Configuration"/> (Debug/Release) from <see cref="AssemblyConfigurationAttribute"/> when emitted by the build.
 /// </summary>
 public record VersionMetadataResponse(
     string? AssemblyVersion,
     string? InformationalVersion,
+    string? Configuration,
     string? Environment,
     string MachineName,
     string FrameworkDescription);
