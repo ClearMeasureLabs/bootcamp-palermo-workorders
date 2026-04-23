@@ -28,8 +28,14 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         await Input(nameof(WorkOrderManage.Elements.Title), "Title for validation test");
         await Input(nameof(WorkOrderManage.Elements.Description), "Description");
-        await Input(nameof(WorkOrderManage.Elements.Instructions), new string('z', 4001));
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToBeVisibleAsync();
+        var tooLong = new string('z', 4001);
+        await instructionsField.EvaluateAsync(
+            "(el, v) => { el.removeAttribute('maxlength'); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); }",
+            tooLong);
 
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
 
