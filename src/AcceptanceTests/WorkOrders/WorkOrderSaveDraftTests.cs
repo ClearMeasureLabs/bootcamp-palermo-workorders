@@ -34,7 +34,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Expect(instructionsField).ToBeVisibleAsync();
         var tooLong = new string('z', 4001);
         await instructionsField.EvaluateAsync(
-            "(el, v) => { el.removeAttribute('maxlength'); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); }",
+            "(el, v) => { el.removeAttribute('maxlength'); el.value = v; el.dispatchEvent(new Event('change', { bubbles: true })); }",
             tooLong);
 
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
