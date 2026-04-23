@@ -32,6 +32,7 @@ public class VersionControllerTests
         payload.ShouldNotBeNull();
         payload!.AssemblyVersion.ShouldNotBeNullOrEmpty();
         payload.InformationalVersion.ShouldNotBeNullOrEmpty();
+        payload.Configuration.ShouldNotBeNullOrEmpty();
         payload.Environment.ShouldBe("TestEnvironment");
         payload.MachineName.ShouldBe(Environment.MachineName);
         payload.FrameworkDescription.ShouldBe(System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);

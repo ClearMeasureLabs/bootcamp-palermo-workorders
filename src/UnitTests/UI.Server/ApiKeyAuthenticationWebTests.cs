@@ -77,9 +77,11 @@ public class ApiKeyAuthenticationWebTests
         await using var factory = new ApiKeyProtectedWebApplicationFactory();
         using var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/api/v1.0/version");
+        var unversioned = await client.GetAsync("/api/version");
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var versioned = await client.GetAsync("/api/v1.0/version");
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Test]
