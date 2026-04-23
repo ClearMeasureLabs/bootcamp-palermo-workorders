@@ -173,11 +173,17 @@ public static class TestHost
                     "GetWorkOrder",
                     "Retrieves a single work order by its number."),
                 AIFunctionFactory.Create(
-                    ([System.ComponentModel.Description("Title")] string title,
+                    async ([System.ComponentModel.Description("Title")] string title,
                      [System.ComponentModel.Description("Description")] string description,
                      [System.ComponentModel.Description("Creator username")] string creatorUsername,
-                     [System.ComponentModel.Description("Optional room number")] string? roomNumber = null)
-                        => WorkOrderTools.CreateWorkOrder(CreateScopedBus(), CreateScopedNumberGenerator(), title, description, creatorUsername, roomNumber),
+                     [System.ComponentModel.Description("Optional room number")] string? roomNumber = null,
+                     [System.ComponentModel.Description("Optional procedural instructions for fulfilling the work order")] string? instructions = null) =>
+                    {
+                        await using var scope = serviceProvider.CreateAsyncScope();
+                        var bus = scope.ServiceProvider.GetRequiredService<IBus>();
+                        var numberGenerator = scope.ServiceProvider.GetRequiredService<IWorkOrderNumberGenerator>();
+                        return await WorkOrderTools.CreateWorkOrder(bus, numberGenerator, title, description, creatorUsername, roomNumber, instructions);
+                    },
                     "CreateWorkOrder",
                     "Creates a new draft work order."),
                 AIFunctionFactory.Create(

@@ -23,7 +23,8 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
 
-        WorkOrder order = await CreateAndSaveNewWorkOrder();
+        const string testInstructions = "Follow lockout/tagout before servicing.";
+        WorkOrder order = await CreateAndSaveNewWorkOrder(testInstructions);
 
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -49,10 +50,14 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync(order.Description!);
 
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync(testInstructions);
+
         var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
+        rehydratedOrder.Instructions.ShouldBe(testInstructions);
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
         rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
