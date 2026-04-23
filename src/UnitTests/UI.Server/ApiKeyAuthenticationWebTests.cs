@@ -92,4 +92,15 @@ public class ApiKeyAuthenticationWebTests
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Test]
+    public async Task Should_Return200_When_PingWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/ping");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }
