@@ -10,6 +10,7 @@ stateDiagram-v2
     Draft --> Assigned : DraftToAssignedCommand
 
     Assigned --> InProgress : AssignedToInProgressCommand
+    Assigned --> Draft : AssignedToDraftCommand
 
     InProgress --> Complete : InProgressToCompleteCommand
 
