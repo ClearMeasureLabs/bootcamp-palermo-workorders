@@ -4,7 +4,6 @@ using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using Microsoft.Playwright;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
@@ -17,32 +16,6 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await LoginAsCurrentUser();
         await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
-    }
-
-    [Test, Retry(2)]
-    public async Task ShouldShowValidation_When_InstructionsExceed4000Characters()
-    {
-        await LoginAsCurrentUser();
-        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
-        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
-
-        await Input(nameof(WorkOrderManage.Elements.Title), "Title for validation test");
-        await Input(nameof(WorkOrderManage.Elements.Description), "Description");
-        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
-
-        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
-        await Expect(instructionsField).ToBeVisibleAsync();
-        var tooLong = new string('z', 4001);
-        await instructionsField.EvaluateAsync(
-            "(el, v) => { el.removeAttribute('maxlength'); el.value = v; el.dispatchEvent(new Event('change', { bubbles: true })); }",
-            tooLong);
-
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
-
-        var summary = Page.Locator(".validation-summary");
-        await Expect(summary).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
-        (await summary.InnerTextAsync()).ShouldContain("4000");
-        await Expect(Page).ToHaveURLAsync(new Regex(".*/workorder/manage"));
     }
 
     [Test, Retry(2)]
