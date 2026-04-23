@@ -33,7 +33,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
 
-        var summary = Page.Locator(".validation-summary-errors");
+        var summary = Page.Locator(".validation-summary");
         await Expect(summary).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         (await summary.InnerTextAsync()).ShouldContain("4000");
         await Expect(Page).ToHaveURLAsync(new Regex(".*/workorder/manage"));
