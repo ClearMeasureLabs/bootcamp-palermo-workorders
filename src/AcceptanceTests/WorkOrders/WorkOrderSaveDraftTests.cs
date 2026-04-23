@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using Microsoft.Playwright;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
@@ -19,11 +20,32 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldShowValidation_When_InstructionsExceed4000Characters()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), "Title for validation test");
+        await Input(nameof(WorkOrderManage.Elements.Description), "Description");
+        await Input(nameof(WorkOrderManage.Elements.Instructions), new string('z', 4001));
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+
+        var summary = Page.Locator(".validation-summary-errors");
+        await Expect(summary).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        (await summary.InnerTextAsync()).ShouldContain("4000");
+        await Expect(Page).ToHaveURLAsync(new Regex(".*/workorder/manage"));
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldCreateNewWorkOrderAndVerifyOnSearchScreen()
     {
         await LoginAsCurrentUser();
 
-        WorkOrder order = await CreateAndSaveNewWorkOrder();
+        const string testInstructions = "Follow lockout/tagout before servicing.";
+        WorkOrder order = await CreateAndSaveNewWorkOrder(testInstructions);
 
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -49,10 +71,14 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync(order.Description!);
 
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync(testInstructions);
+
         var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
+        rehydratedOrder.Instructions.ShouldBe(testInstructions);
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
         rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
