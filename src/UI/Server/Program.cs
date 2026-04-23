@@ -162,6 +162,8 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseMiddleware<HttpRequestMetricsMiddleware>();
+
 app.UseWhen(
     context => ApiRateLimitingExtensions.ShouldApplyToPath(context.Request.Path),
     branch => branch.UseRequestTimeouts());
