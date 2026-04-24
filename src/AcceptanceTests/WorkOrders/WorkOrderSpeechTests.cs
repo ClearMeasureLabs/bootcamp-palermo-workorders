@@ -58,6 +58,20 @@ public class WorkOrderSpeechTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldClickSpeakInstructionsButtonWithoutError()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        await Input(nameof(WorkOrderManage.Elements.Instructions), "Test speech instructions");
+        await Click(nameof(WorkOrderManage.Elements.SpeakInstructions));
+
+        await Expect(Page).ToHaveURLAsync(new Regex("/workorder/manage/"));
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldShowSpeakButtonsOnReadOnlyWorkOrder()
     {
         await LoginAsCurrentUser();
@@ -77,5 +91,6 @@ public class WorkOrderSpeechTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.SpeakTitle))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.SpeakDescription))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.SpeakInstructions))).ToBeVisibleAsync();
     }
 }
