@@ -17,6 +17,8 @@ public class ApiKeyAuthenticationMiddlewareTests
     [TestCase("/api/ping", true)]
     [TestCase("/api/v1.0/ping", true)]
     [TestCase("/api/WeatherForecast", false)]
+    [TestCase("/api/tools/hash", false)]
+    [TestCase("/api/v1.0/tools/hash", false)]
     public void ShouldValidate_ReturnsExpected_When_PathAndOptions(string path, bool expectPublicSkip)
     {
         var options = new ApiKeyAuthenticationOptions { Enabled = true, ValidationKey = "secret" };
