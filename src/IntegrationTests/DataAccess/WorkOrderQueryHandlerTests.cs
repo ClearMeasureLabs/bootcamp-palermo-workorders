@@ -19,6 +19,7 @@ public class WorkOrderQueryHandlerTests
         var order1 = new WorkOrder();
         order1.Creator = creator;
         order1.Number = "123";
+        order1.Instructions = "By-number query instructions";
         var order2 = new WorkOrder();
         order2.Creator = creator;
         order2.Number = "456";
@@ -37,6 +38,7 @@ public class WorkOrderQueryHandlerTests
         var order456 = (await repository.GetWorkOrderAsync("456"))!;
 
         order123.Id.ShouldBe(order1.Id);
+        order123.Instructions.ShouldBe("By-number query instructions");
         order456.Id.ShouldBe(order2.Id);
     }
 
