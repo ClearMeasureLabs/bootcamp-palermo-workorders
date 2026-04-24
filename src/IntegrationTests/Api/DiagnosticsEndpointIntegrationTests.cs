@@ -134,6 +134,54 @@ public class DiagnosticsEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_Return200AndJson_When_GetFeatureFlagsUnversioned()
+    {
+        var response = await _client!.GetAsync("/api/features/flags");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("application/json");
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("featureFlags", out _).ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task Should_Return200AndJson_When_GetFeatureFlagsVersioned()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/features/flags");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("application/json");
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("featureFlags", out _).ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task Should_ExposeSameFeatureFlags_AsDiagnostics_When_GetFeatureFlags()
+    {
+        var diag = await _client!.GetAsync("/api/diagnostics");
+        var flags = await _client.GetAsync("/api/features/flags");
+        diag.StatusCode.ShouldBe(HttpStatusCode.OK);
+        flags.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var diagPayload = await diag.Content.ReadFromJsonAsync<DiagnosticsResponse>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var flagsPayload = await flags.Content.ReadFromJsonAsync<RuntimeFeatureFlagsResponse>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        diagPayload.ShouldNotBeNull();
+        flagsPayload.ShouldNotBeNull();
+        flagsPayload!.FeatureFlags.SampleFeatureA.ShouldBe(diagPayload!.FeatureFlags.SampleFeatureA);
+        flagsPayload.FeatureFlags.SampleFeatureB.ShouldBe(diagPayload.FeatureFlags.SampleFeatureB);
+    }
+
+    [Test]
     public async Task Should_NotConflictWithLegacyDiagnostics_When_RoutesRegistered()
     {
         var response = await _client!.GetAsync("/api/diagnostics");
@@ -154,6 +202,11 @@ public class DiagnosticsEndpointIntegrationTests
 
         var unauthVersioned = await client.GetAsync("/api/v1.0/diagnostics");
         unauthVersioned.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        var flagsUnauth = await client.GetAsync("/api/features/flags");
+        flagsUnauth.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var flagsVersionedUnauth = await client.GetAsync("/api/v1.0/features/flags");
+        flagsVersionedUnauth.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         using var withKey = factory.CreateClient();
         withKey.DefaultRequestHeaders.Add(
