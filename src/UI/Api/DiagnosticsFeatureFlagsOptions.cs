@@ -1,7 +1,7 @@
 namespace ClearMeasure.Bootcamp.UI.Api;
 
 /// <summary>
-/// Configuration-bound feature flags exposed on <c>GET /api/diagnostics</c> for deployment verification.
+/// Configuration-bound feature flags exposed on <c>GET /api/diagnostics</c> and <c>GET /api/features/flags</c> for deployment verification.
 /// </summary>
 public sealed class DiagnosticsFeatureFlagsOptions
 {
