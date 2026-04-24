@@ -23,7 +23,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
 
-        WorkOrder order = await CreateAndSaveNewWorkOrder();
+        WorkOrder order = await CreateAndSaveNewWorkOrder("Bring ladder from storage B.");
 
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -49,6 +49,9 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync(order.Description!);
 
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync(order.Instructions ?? "");
+
         var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
@@ -56,6 +59,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
         rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+        rehydratedOrder.Instructions.ShouldBe(order.Instructions);
     }
 
     [Test, Retry(2)]
