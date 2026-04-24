@@ -24,6 +24,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Id = Guid.Empty;
         workOrder.CreatedDate = null; // Ensure CreatedDate is null to test setting it;
         workOrder.Creator = currentUser;
+        workOrder.Instructions = "Save draft instructions";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
@@ -39,6 +40,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
         order.Title.ShouldBe(workOrder.Title);
+        order.Instructions.ShouldBe("Save draft instructions");
     }
 
     [Test]
@@ -64,6 +66,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
 
         workOrder.Creator = currentUser;
         workOrder.Assignee = assignee;
+        workOrder.Instructions = "Initial instructions";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
 
@@ -74,6 +77,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(workOrder.Title);
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe("Initial instructions");
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -103,6 +107,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Creator = currentUser;
         workOrder.Assignee = assignee;
         workOrder.Title = "newtitle";
+        workOrder.Instructions = "Updated instructions text";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
 
@@ -113,6 +118,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe("Updated instructions text");
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }

@@ -49,6 +49,9 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync(order.Description!);
 
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync(order.Instructions ?? "");
+
         var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
@@ -56,6 +59,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
         rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+        rehydratedOrder.Instructions.ShouldBe(order.Instructions);
     }
 
     [Test, Retry(2)]
@@ -78,6 +82,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
         await Input(nameof(WorkOrderManage.Elements.Title), "newtitle");
         await Input(nameof(WorkOrderManage.Elements.Description), "newdesc");
+        await Input(nameof(WorkOrderManage.Elements.Instructions), "new instructions");
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
 
         await Page.WaitForURLAsync("**/workorder/search");
@@ -95,6 +100,9 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync("newdesc");
 
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync("new instructions");
+
         var assigneeField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee));
         await Expect(assigneeField).ToHaveValueAsync(CurrentUser.UserName);
 
@@ -102,5 +110,6 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
         rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+        rehydratedOrder.Instructions.ShouldBe("new instructions");
     }
 }
