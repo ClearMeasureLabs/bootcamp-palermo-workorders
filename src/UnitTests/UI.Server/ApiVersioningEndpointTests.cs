@@ -60,6 +60,27 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_ReturnSameVersionPayload_When_GetVersion_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/version");
+        var v1 = await _client.GetAsync("/api/v1.0/version");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using var legacyDoc = JsonDocument.Parse(await legacy.Content.ReadAsStringAsync());
+        using var v1Doc = JsonDocument.Parse(await v1.Content.ReadAsStringAsync());
+        foreach (var name in new[]
+                 {
+                     "assemblyVersion", "informationalVersion", "configuration", "environment", "machineName",
+                     "frameworkDescription"
+                 })
+        {
+            legacyDoc.RootElement.GetProperty(name).GetRawText().ShouldBe(v1Doc.RootElement.GetProperty(name).GetRawText());
+        }
+    }
+
+    [Test]
     public async Task Should_Return200_When_GetTime_V1Path()
     {
         var response = await _client!.GetAsync("/api/v1.0/time");
