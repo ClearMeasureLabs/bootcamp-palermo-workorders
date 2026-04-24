@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
-/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, and ping endpoints.
+/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, ping, and feature-flags endpoints.
 /// </summary>
 public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 {
@@ -57,12 +57,36 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return false;
         }
 
-        if (IsPublicVersionOrTimePath(value))
+        if (IsPublicVersionOrTimePath(value) || IsPublicFeaturesFlagsPath(value))
         {
             return false;
         }
 
         return true;
+    }
+
+    internal static bool IsPublicFeaturesFlagsPath(string pathValue)
+    {
+        var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length < 3 || !segments[0].Equals("api", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (segments.Length == 3)
+        {
+            return segments[1].Equals("features", StringComparison.OrdinalIgnoreCase)
+                   && segments[2].Equals("flags", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (segments.Length >= 4
+            && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
+        {
+            return segments[2].Equals("features", StringComparison.OrdinalIgnoreCase)
+                   && segments[3].Equals("flags", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
     }
 
     internal static bool IsPublicVersionOrTimePath(string pathValue)
