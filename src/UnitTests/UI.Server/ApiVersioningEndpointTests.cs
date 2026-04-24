@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
@@ -68,16 +70,15 @@ public class ApiVersioningEndpointTests
         legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
         v1.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        using var legacyDoc = JsonDocument.Parse(await legacy.Content.ReadAsStringAsync());
-        using var v1Doc = JsonDocument.Parse(await v1.Content.ReadAsStringAsync());
-        foreach (var name in new[]
-                 {
-                     "assemblyVersion", "informationalVersion", "configuration", "environment", "machineName",
-                     "frameworkDescription"
-                 })
-        {
-            legacyDoc.RootElement.GetProperty(name).GetRawText().ShouldBe(v1Doc.RootElement.GetProperty(name).GetRawText());
-        }
+        var legacyPayload = JsonSerializer.Deserialize<VersionMetadataResponse>(
+            await legacy.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
+        var v1Payload = JsonSerializer.Deserialize<VersionMetadataResponse>(
+            await v1.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
+        legacyPayload.ShouldNotBeNull();
+        v1Payload.ShouldNotBeNull();
+        legacyPayload.ShouldBe(v1Payload);
     }
 
     [Test]
