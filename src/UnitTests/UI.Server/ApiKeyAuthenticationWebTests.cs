@@ -19,6 +19,19 @@ public class ApiKeyAuthenticationWebTests
     }
 
     [Test]
+    public async Task Should_Return200_When_ApiHealthDetailedCalledWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unversioned = await client.GetAsync("/api/health/detailed");
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var versioned = await client.GetAsync("/api/v1.0/health/detailed");
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
     public async Task Should_Return200_When_ApiHealthCalledWithValidKey()
     {
         await using var factory = new ApiKeyProtectedWebApplicationFactory();
