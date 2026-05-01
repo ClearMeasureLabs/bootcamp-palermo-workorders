@@ -1,0 +1,46 @@
+{
+  "agents": {
+    "danny": {
+      "created_at": "2026-05-01T02:54:54.402Z",
+      "persistent_name": "Danny",
+      "universe": "Ocean's Eleven",
+      "status": "active"
+    },
+    "rusty": {
+      "created_at": "2026-05-01T02:54:54.402Z",
+      "persistent_name": "Rusty",
+      "universe": "Ocean's Eleven",
+      "status": "active"
+    },
+    "linus": {
+      "created_at": "2026-05-01T02:54:54.402Z",
+      "persistent_name": "Linus",
+      "universe": "Ocean's Eleven",
+      "status": "active"
+    },
+    "livingston": {
+      "created_at": "2026-05-01T02:54:54.402Z",
+      "persistent_name": "Livingston",
+      "universe": "Ocean's Eleven",
+      "status": "active"
+    },
+    "basher": {
+      "created_at": "2026-05-01T02:54:54.402Z",
+      "persistent_name": "Basher",
+      "universe": "Ocean's Eleven",
+      "status": "active"
+    },
+    "scribe": {
+      "created_at": "2026-05-01T02:54:54.402Z",
+      "persistent_name": "Scribe",
+      "universe": "Ocean's Eleven",
+      "status": "active"
+    },
+    "ralph": {
+      "created_at": "2026-05-01T02:54:54.402Z",
+      "persistent_name": "Ralph",
+      "universe": "Ocean's Eleven",
+      "status": "active"
+    }
+  }
+}
