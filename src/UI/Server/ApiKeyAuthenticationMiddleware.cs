@@ -8,6 +8,7 @@ namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
 /// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, and ping endpoints.
+/// <c>/api/echo</c> and versioned <c>/api/v{version}/echo</c> require the key when validation is enabled (same as diagnostics and health), not the public skip list.
 /// </summary>
 public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 {
