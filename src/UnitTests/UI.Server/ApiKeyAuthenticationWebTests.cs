@@ -92,4 +92,17 @@ public class ApiKeyAuthenticationWebTests
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Test]
+    public async Task Should_Return200_When_FeatureFlagsWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unversioned = await client.GetAsync("/api/features/flags");
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var versioned = await client.GetAsync("/api/v1.0/features/flags");
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }

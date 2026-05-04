@@ -166,4 +166,17 @@ public class DiagnosticsEndpointIntegrationTests
         var okVersioned = await withKey.GetAsync("/api/v1.0/diagnostics");
         okVersioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Test]
+    public async Task Should_AllowFeatureFlagsWithoutApiKey_When_MiddlewareEnabled()
+    {
+        await using var factory = new DiagnosticsApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unauth = await client.GetAsync("/api/features/flags");
+        unauth.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var unauthVersioned = await client.GetAsync("/api/v1.0/features/flags");
+        unauthVersioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }
