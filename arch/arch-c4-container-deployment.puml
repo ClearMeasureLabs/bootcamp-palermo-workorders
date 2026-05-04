@@ -23,6 +23,8 @@ System_Boundary(system, "Church Bulletin") {
 
 System_Ext(azureOpenAI, "Azure OpenAI", "LLM for AI agent features")
 System_Ext(acr, "Azure Container Registry", "Docker image repository")
+System_Ext(telemetry, "Application Insights / OpenTelemetry", "Tracing, metrics, and logs")
+System_Ext(octopus, "Octopus Deploy", "Release / deployment orchestration (or CI pipeline)")
 
 Rel(user, ui, "Uses", "HTTPS")
 Rel(ui, server, "Calls API", "HTTPS")
@@ -33,7 +35,11 @@ Rel(worker, db, "Reads/writes", "EF Core / TCP")
 Rel(server, mcpServer, "Hosts at /mcp", "HTTP")
 Rel(server, azureOpenAI, "LLM calls", "HTTPS")
 Rel(worker, azureOpenAI, "LLM calls", "HTTPS")
+Rel(server, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+Rel(worker, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+Rel(mcpServer, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
 Rel(acr, server, "Deploys image", "Docker")
+Rel(octopus, acr, "Publishes / manages artifacts", "AZ CLI / Octopus")
 
 center footer
     C4 Architecture: Container Diagram Footer $(Version)

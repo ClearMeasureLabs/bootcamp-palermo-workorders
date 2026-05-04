@@ -22,6 +22,9 @@ System(churchbulletin, "Church Bulletin", "Digital signage and printed bulletin"
 
 System_Ext(printer, "Printer")
 System_Ext(projector, "Projector")
+System_Ext(azureOpenAI, "Azure OpenAI", "LLM for AI agent features")
+System_Ext(acr, "Azure Container Registry", "Docker image repository")
+System_Ext(appInsights, "Application Insights", "Telemetry and logging")
 
 Rel(pastor, churchbulletin, "Add sermons")
 Rel(biblestudyleader, churchbulletin, "Add classes")
@@ -31,6 +34,9 @@ Rel(volunteer, churchbulletin, "Operates system on Sunday morning")
 
 Rel(churchbulletin, printer, "Send PDF to print", "Network printer")
 Rel(churchbulletin, projector, "Projects digital signage", "Auto-animated")
+Rel(churchbulletin, azureOpenAI, "Calls LLM for bot features", "HTTPS")
+Rel(churchbulletin, acr, "Push/pull container images", "Docker / ACR")
+Rel(churchbulletin, appInsights, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
 
 center footer
     Diagram Footer $(Version)
