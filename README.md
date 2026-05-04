@@ -64,14 +64,84 @@ pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
 dotnet test src/AcceptanceTests --configuration Debug
 ```
 
-## Run Locally
+## Quick start — Run locally
 
-```bash
-cd src/UI/Server
-dotnet run
-```
+The repository supports three common local development workflows. Pick the one that matches your environment.
 
-The application starts at `https://localhost:7174`. Health check endpoint: `https://localhost:7174/_healthcheck`.
+- Windows (Visual Studio / LocalDB)
+
+  1. Open the solution in Visual Studio (ChurchBulletin.sln).
+  2. Ensure LocalDB is available and your launch profile is configured.
+  3. Run UI.Server from Visual Studio or:
+     ```powershell
+     cd src/UI/Server
+     dotnet run
+     ```
+  Note: Visual Studio launch profiles may override ConnectionStrings in launchSettings.json. Use the Environment configuration below if you need to override.
+
+- Linux / macOS (recommended with Docker)
+
+  1. Start a SQL Server container:
+     ```bash
+     docker run --name churchbulletin-mssql \
+       -e 'MSSQL_SA_PASSWORD=churchbulletin-mssql#1A' \
+       -e 'ACCEPT_EULA=Y' \
+       -p 1433:1433 \
+       -d mcr.microsoft.com/mssql/server:2022-latest
+     ```
+  2. Set environment variables and run the server:
+     ```bash
+     export ConnectionStrings__SqlConnectionString="server=localhost,1433;database=ChurchBulletin;User ID=sa;Password=churchbulletin-mssql#1A;TrustServerCertificate=true;"
+     export ASPNETCORE_ENVIRONMENT=Development
+     # Must set APPLICATIONINSIGHTS_CONNECTION_STRING or set to an empty string to avoid the Azure Monitor exporter crashing:
+     export APPLICATIONINSIGHTS_CONNECTION_STRING=""
+     # Prevent the app from attempting to contact Azure OpenAI (leave empty if not used)
+     export AI_OpenAI_ApiKey=""
+     export AI_OpenAI_Url=""
+     export AI_OpenAI_Model=""
+     cd src/UI/Server
+     dotnet run --no-launch-profile --urls "https://localhost:7174;http://localhost:5174"
+     ```
+  Important: use `--no-launch-profile` on Linux/macOS to avoid the Windows LocalDB connection string from launchSettings.json overriding your env vars.
+
+- SQLite fallback (no Docker)
+
+  1. Set the database engine and run the build scripts:
+     ```bash
+     export DATABASE_ENGINE=SQLite
+     cd src
+     pwsh -NoProfile -ExecutionPolicy Bypass -File ./PrivateBuild.ps1
+     ```
+  The build scripts will use SQLite when Docker is not available.
+
+Health and URLs
+- The application starts at https://localhost:7174 by default.
+- Health check endpoint: https://localhost:7174/_healthcheck
+
+Architecture diagrams
+- See the arch/ folder for PlantUML sources and rendered images. The architecture docs (arch/README.md) explain rendering and icon configuration.
+- To regenerate PlantUML images locally: use the helper scripts:
+  - PowerShell: pwsh arch/render-diagrams.ps1
+  - Bash: ./arch/render-diagrams.sh
+- A CI job (.github/workflows/render-diagrams.yml) validates that diagram images are kept in sync on pull requests.
+- To install the optional pre-commit hook that re-renders diagrams when .puml files are staged, run the repository setup script.
+  - Bash (Linux/macOS/Git Bash): ./scripts/setup-dev-env.sh
+  - PowerShell (Windows): pwsh ./scripts/setup-dev-env.ps1
+
+Playwright (acceptance tests)
+- Install browsers (PowerShell):
+  ```powershell
+  pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
+  ```
+- Run acceptance tests:
+  ```bash
+  dotnet test src/AcceptanceTests --configuration Debug
+  ```
+
+gRPC (work orders)
+- Protobuf contract: src/UI/Server/Protos/workorders.proto
+- Generated C# (checked in): src/UI/Server/Generated/Protos/
+- To regenerate the C# files after editing .proto, run the Grpc.Tools generation on an x64 machine and replace the checked-in generated files (Grpc.Tools can be unstable on ARM).
 
 ---
 

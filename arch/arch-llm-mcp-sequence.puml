@@ -1,7 +1,7 @@
 @startuml
 !include templates/plantuml-theme.puml
 
-title DraftToAssignedCommand Sequence Diagram
+title LLM / MCP End-to-End Sequence (Assign-to-Bot)
 
 actor "User" as user
 participant "Blazor WASM Client" as ui
@@ -15,10 +15,13 @@ participant "WorkOrder" as order
 database "DataContext\n(EF Core)" as db
 participant "DistributedBus\n: IDistributedBus" as dBus
 participant "NServiceBus" as nsb
+participant "Worker Service" as worker
+participant "LlmGateway" as llm
+participant "Azure OpenAI" as azure
 
 autonumber
 
-user -> ui : Assign work order
+user -> ui : Assign work order to assignee (UI)
 ui -> api : POST WebServiceMessage\n(DraftToAssignedCommand)
 api -> api : Deserialize\nWebServiceMessage.GetBodyObject()
 api -> sBus : Send(DraftToAssignedCommand)
@@ -41,6 +44,16 @@ cmdHandler -> dBus : PublishAsync(StateTransitionEvent)
 
 alt WorkOrderAssignedToBotEvent exists
     dBus -> nsb : Publish(WorkOrderAssignedToBotEvent)
+    nsb -> worker : Deliver(WorkOrderAssignedToBotEvent)
+    worker -> worker : Handle(WorkOrderAssignedToBotEvent)
+    worker -> llm : Prepare prompt / context (WorkOrder details)
+    llm -> azure : Call LLM API (model, prompt)
+    azure --> llm : LLM response (text, metadata)
+    worker -> db : Attach / update WorkOrder with LLM output
+    worker -> db : SaveChangesAsync()
+    db --> worker : persisted
+    worker -> dBus : PublishAsync(AiBotCompletedWorkOrderEvent)
+    note right of worker : Optionally notify UI or send email
 end
 
 cmdHandler --> mediator : StateCommandResult\n(order, "Assign", debugMessage)
@@ -48,6 +61,6 @@ mediator --> sBus : StateCommandResult
 sBus --> api : StateCommandResult
 api --> ui : WebServiceMessage\n(serialized result)
 
-LEGEND("Legend","Bus: IBus (local mediator bus)\nDistributedBus: IDistributedBus publishes domain events\nNServiceBus: external transport for long-running processing\nNote: WorkOrderAssignedToBotEvent published when assignee has Bot role")
+LEGEND("Legend","Bus: IBus (local mediator bus)\nDistributedBus: IDistributedBus publishes domain events\nNServiceBus: external transport for long-running processing\nLLM: Azure OpenAI calls\nWorker: background service that handles bot events")
 FOOTER()
 @enduml

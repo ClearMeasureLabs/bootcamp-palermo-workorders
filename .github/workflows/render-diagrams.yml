@@ -1,0 +1,54 @@
+name: Render diagrams (check)
+
+on:
+  pull_request:
+
+jobs:
+  render-diagrams:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Render PlantUML diagrams (bash)
+        env:
+          PLANTUML_IMAGE: plantuml/plantuml:1.2026.2
+        run: |
+          set -euo pipefail
+          echo "Using PlantUML image: $PLANTUML_IMAGE"
+          ROOT="$GITHUB_WORKSPACE"
+          while IFS= read -r -d $'\0' file; do
+            echo "Rendering $file"
+            docker run --rm -v "$ROOT":/workspace -w /workspace "$PLANTUML_IMAGE" -tpng "/workspace/$file"
+            docker run --rm -v "$ROOT":/workspace -w /workspace "$PLANTUML_IMAGE" -tsvg "/workspace/$file"
+            # Also render a temporary normalized comparison of the SVGs
+            python3 .github/scripts/normalize_svg.py "${file%.puml}.svg" "${file%.puml}.committed.norm"
+            python3 .github/scripts/normalize_svg.py "${file%.puml}.svg" "${file%.puml}.rendered.norm" || true
+          done < <(find arch -type f -name '*.puml' -not -path 'arch/templates/*' -print0)
+
+      - name: Check for changes (normalized SVG compare)
+        run: |
+          set -euo pipefail
+          echo "Checking normalized SVG diffs..."
+          DIFF_FOUND=0
+          while read -r puml; do
+            svg_committed="${puml%.puml}.svg"
+            svg_rendered="${puml%.puml}.svg"
+            norm_committed="${puml%.puml}.committed.norm"
+            norm_rendered="${puml%.puml}.rendered.norm"
+
+            # Normalize committed and rendered
+            python3 .github/scripts/normalize_svg.py "$svg_committed" "$norm_committed"
+            python3 .github/scripts/normalize_svg.py "$svg_rendered" "$norm_rendered"
+
+            if ! diff -u "$norm_committed" "$norm_rendered" >/dev/null; then
+              echo "DIFF for $svg_committed"
+              DIFF_FOUND=1
+            fi
+          done < <(find arch -type f -name '*.puml' -not -path 'arch/templates/*')
+
+          if [ "$DIFF_FOUND" -eq 1 ]; then
+            echo "Diagrams are not up-to-date (normalized SVGs differ). Re-run arch/render-diagrams.ps1 or arch/render-diagrams.sh and commit generated images." 
+            exit 1
+          fi
+

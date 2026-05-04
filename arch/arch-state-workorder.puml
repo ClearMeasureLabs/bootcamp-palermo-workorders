@@ -1,4 +1,6 @@
 @startuml
+!include templates/plantuml-theme.puml
+
 title Work Order State Transitions
 
 left to right direction
@@ -14,4 +16,6 @@ InProgress --> Complete : InProgressToCompleteCommand
 
 Complete --> [*]
 
+LEGEND("Legend","Draft -> Assigned -> InProgress -> Complete\nCommands: SaveDraftCommand, DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand")
+FOOTER()
 @enduml
