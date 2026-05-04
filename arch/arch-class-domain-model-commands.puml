@@ -1,0 +1,60 @@
+@startuml
+
+scale 2/3
+center header
+    C4 Architecture: Work Order System — State / Commands
+endheader
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
+
+title Work Order System state commands (command objects)
+
+abstract class StateCommandBase <<record>> {
+  +WorkOrder : WorkOrder
+  +CurrentUser : Employee
+  +StateTransitionEvent : IStateTransitionEvent?
+  +TransitionVerbPresentTense : string
+  +TransitionVerbPastTense : string
+  +GetBeginStatus() : WorkOrderStatus
+  +GetEndStatus() : WorkOrderStatus
+  +IsValid() : bool
+  +Matches(commandName : string) : bool
+  +Execute(context : StateCommandContext) : void
+}
+
+class SaveDraftCommand <<record>> {
+  +Execute(context : StateCommandContext) : void
+}
+
+class DraftToAssignedCommand <<record>> {
+  +Execute(context : StateCommandContext) : void
+}
+
+class AssignedToInProgressCommand <<record>> {
+}
+
+class InProgressToCompleteCommand <<record>> {
+  +Execute(context : StateCommandContext) : void
+}
+
+class StateCommandResult <<record>> {
+  +WorkOrder : WorkOrder
+  +TransitionVerbPresentTense : string
+  +DebugMessage : string
+}
+
+' State command inheritance
+SaveDraftCommand --|> StateCommandBase
+DraftToAssignedCommand --|> StateCommandBase
+AssignedToInProgressCommand --|> StateCommandBase
+InProgressToCompleteCommand --|> StateCommandBase
+
+' Associations
+StateCommandBase --> WorkOrder : operates on
+StateCommandBase --> Employee : CurrentUser
+StateCommandResult --> WorkOrder : contains
+
+center footer
+    C4 Architecture: Class Diagram — Commands
+endfooter
+@enduml
