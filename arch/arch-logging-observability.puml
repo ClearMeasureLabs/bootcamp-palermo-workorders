@@ -1,0 +1,39 @@
+@startuml
+
+scale 2/3
+left to right direction
+center header
+    Architecture: Logging & Observability
+endheader
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+title Logging & Observability
+
+Person(ops, "Operator / SRE", "Monitors system health and telemetry")
+
+System_Boundary(system, "Church Bulletin (deployed)") {
+    Container(ui, "Blazor WASM Client", "Browser", "Client-side app")
+    Container(server, "UI Server", "ASP.NET", "Application host")
+    Container(worker, "Worker", ".NET Worker", "Background processors")
+    Container(mcp, "MCP Server", "ASP.NET", "AI agent host")
+}
+
+Container(otelCollector, "OpenTelemetry Collector", "OTel", "Receives traces/metrics/logs; exports to backends")
+System_Ext(appInsights, "Application Insights / Log Analytics", "Telemetry backend")
+System_Ext(splunk, "Splunk / SIEM", "Optional log sink")
+
+Rel(server, otelCollector, "Sends traces & metrics", "OTLP / HTTPS")
+Rel(worker, otelCollector, "Sends traces & metrics", "OTLP / HTTPS")
+Rel(mcp, otelCollector, "Sends traces & metrics", "OTLP / HTTPS")
+Rel(ui, server, "Calls API / propagates trace context", "HTTPS")
+
+Rel(otelCollector, appInsights, "Export to App Insights / Log Analytics", "OTLP / HTTP")
+Rel(otelCollector, splunk, "Optional export", "HTTP / Splunk HEC")
+
+Rel(ops, appInsights, "View dashboards / alerts")
+
+center footer
+    Observability Diagram
+endfooter
+@enduml
