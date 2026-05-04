@@ -6,7 +6,7 @@ center header
     C4 Architecture: Component Diagram Header
 endheader
 
-!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
 
 title Church Bulletin Component diagram 
 

@@ -6,7 +6,7 @@ center header
     C4 Architecture: Container Diagram Header
 endheader
 
-!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
 
 title Container diagram 
 
