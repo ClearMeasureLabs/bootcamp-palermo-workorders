@@ -16,10 +16,11 @@ jobs:
         run: |
           set -euo pipefail
           echo "Using PlantUML image: $PLANTUML_IMAGE"
+          ROOT="$GITHUB_WORKSPACE"
           find arch -type f -name '*.puml' -not -path 'arch/templates/*' -print0 | while IFS= read -r -d $'\0' file; do
             echo "Rendering $file"
-            docker run --rm -i "$PLANTUML_IMAGE" -tpng -pipe < "$file" > "${file%.puml}.png"
-            docker run --rm -i "$PLANTUML_IMAGE" -tsvg -pipe < "$file" > "${file%.puml}.svg"
+            docker run --rm -v "$ROOT":/workspace -w /workspace "$PLANTUML_IMAGE" -tpng "/workspace/$file"
+            docker run --rm -v "$ROOT":/workspace -w /workspace "$PLANTUML_IMAGE" -tsvg "/workspace/$file"
             # Also render a temporary normalized comparison of the SVGs
             python3 .github/scripts/normalize_svg.py "${file%.puml}.svg" "${file%.puml}.committed.norm"
             python3 .github/scripts/normalize_svg.py "${file%.puml}.svg" "${file%.puml}.rendered.norm" || true

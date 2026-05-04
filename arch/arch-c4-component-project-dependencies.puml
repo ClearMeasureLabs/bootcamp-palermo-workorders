@@ -1,5 +1,5 @@
 @startuml
-!includeurl https://raw.githubusercontent.com/ClearMeasureLabs/bootcamp-palermo-workorders/docs/architecture-enhancements/arch/templates/plantuml-theme.puml
+!include templates/plantuml-theme.puml
 
 scale 2/3
 'left to right direction

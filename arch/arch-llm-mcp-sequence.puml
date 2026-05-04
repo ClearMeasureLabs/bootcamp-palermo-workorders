@@ -1,5 +1,5 @@
 @startuml
-!includeurl https://raw.githubusercontent.com/ClearMeasureLabs/bootcamp-palermo-workorders/docs/architecture-enhancements/arch/templates/plantuml-theme.puml
+!include templates/plantuml-theme.puml
 
 title LLM / MCP End-to-End Sequence (Assign-to-Bot)
 
