@@ -1,5 +1,5 @@
 @startuml
-!include templates/plantuml-theme.puml
+!includeurl https://raw.githubusercontent.com/ClearMeasureLabs/bootcamp-palermo-workorders/docs/architecture-enhancements/arch/templates/plantuml-theme.puml
 
 scale 2/3
 'left to right direction
@@ -39,7 +39,6 @@ Rel(churchbulletin, azureOpenAI, "Calls LLM for bot features", "HTTPS")
 Rel(churchbulletin, acr, "Push/pull container images", "Docker / ACR")
 Rel(churchbulletin, appInsights, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
 
-center footer
-    Diagram Footer $(Version)
-endfooter
+LEGEND("Legend","UI: Blazor WASM Client\nServer: UI Server\nWorker: .NET Worker\nMCP Server: MCP Server\nDB: Azure SQL / SQL Server\nNSB: NServiceBus Transport\nACR: Azure Container Registry\nOTEL: Application Insights / OpenTelemetry\nLLM: Azure OpenAI")
+FOOTER()
 @enduml

@@ -123,7 +123,10 @@ Architecture diagrams
 - To regenerate PlantUML images locally: use the helper scripts:
   - PowerShell: pwsh arch/render-diagrams.ps1
   - Bash: ./arch/render-diagrams.sh
-- The repository includes a GitHub Actions job (.github/workflows/render-diagrams.yml) that verifies diagram images are up-to-date for each pull request.
+- A CI job (.github/workflows/render-diagrams.yml) validates that diagram images are kept in sync on pull requests.
+- To install the optional pre-commit hook that re-renders diagrams when .puml files are staged, run the repository setup script.
+  - Bash (Linux/macOS/Git Bash): ./scripts/setup-dev-env.sh
+  - PowerShell (Windows): pwsh ./scripts/setup-dev-env.ps1
 
 Playwright (acceptance tests)
 - Install browsers (PowerShell):

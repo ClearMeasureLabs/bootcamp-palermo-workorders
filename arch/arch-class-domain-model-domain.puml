@@ -1,5 +1,5 @@
 @startuml
-!include templates/plantuml-theme.puml
+!includeurl https://raw.githubusercontent.com/ClearMeasureLabs/bootcamp-palermo-workorders/docs/architecture-enhancements/arch/templates/plantuml-theme.puml
 
 scale 2/3
 center header
@@ -87,7 +87,6 @@ WorkOrder "1" --> "0..1" Employee : creator
 WorkOrder "1" --> "0..1" Employee : assignee
 Employee "1" *-- "0..*" Role : roles
 
-center footer
-    C4 Architecture: Class Diagram — Domain
-endfooter
+LEGEND("Legend","WorkOrder: aggregate root\nEmployee: actor\nRole: permissions\nWorkOrderStatus: enumeration class")
+FOOTER()
 @enduml

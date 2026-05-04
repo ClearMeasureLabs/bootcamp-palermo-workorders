@@ -1,5 +1,5 @@
 @startuml
-!include templates/plantuml-theme.puml
+!includeurl https://raw.githubusercontent.com/ClearMeasureLabs/bootcamp-palermo-workorders/docs/architecture-enhancements/arch/templates/plantuml-theme.puml
 
 scale 2/3
 left to right direction
@@ -42,7 +42,6 @@ Rel(mcpServer, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
 Rel(acr, server, "Deploys image", "Docker")
 Rel(octopus, acr, "Publishes / manages artifacts", "AZ CLI / Octopus")
 
-center footer
-    C4 Architecture: Container Diagram Footer $(Version)
-endfooter
+LEGEND("Legend","UI: Blazor WASM Client\nServer: UI Server (Azure Container App)\nWorker: .NET Worker\nMCP Server: MCP Server\nDB: Azure SQL / SQL Server\nNSB: NServiceBus Transport\nACR: Azure Container Registry\nOTEL: Application Insights / OpenTelemetry\nLLM: Azure OpenAI")
+FOOTER()
 @enduml

@@ -1,5 +1,5 @@
 @startuml
-!include templates/plantuml-theme.puml
+!includeurl https://raw.githubusercontent.com/ClearMeasureLabs/bootcamp-palermo-workorders/docs/architecture-enhancements/arch/templates/plantuml-theme.puml
 
 scale 2/3
 left to right direction
@@ -34,7 +34,6 @@ Rel(otelCollector, splunk, "Optional export", "HTTP / Splunk HEC")
 
 Rel(ops, appInsights, "View dashboards / alerts")
 
-center footer
-    Observability Diagram
-endfooter
+LEGEND("Legend","OTel: OpenTelemetry Collector\nAppInsights: Application Insights / Log Analytics\nTraces and metrics propagated from UI -> Server -> Worker -> MCP\nAlerting and dashboards exposed to SRE")
+FOOTER()
 @enduml

@@ -5,7 +5,7 @@ center header
     C4 Architecture: Work Order System — State / Commands
 endheader
 
-!include templates/plantuml-theme.puml
+!includeurl https://raw.githubusercontent.com/ClearMeasureLabs/bootcamp-palermo-workorders/docs/architecture-enhancements/arch/templates/plantuml-theme.puml
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
 
 title Work Order System state commands (command objects)
@@ -74,7 +74,6 @@ StateCommandBase --> WorkOrder : operates on
 StateCommandBase --> Employee : CurrentUser
 StateCommandResult --> WorkOrder : contains
 
-center footer
-    C4 Architecture: Class Diagram — Commands
-endfooter
+LEGEND("Legend","StateCommandBase: validates and executes guarded state transitions\nSaveDraftCommand: creates/updates draft\nDraftToAssignedCommand: assigns to an employee; may produce WorkOrderAssignedToBotEvent\nAssignedToInProgressCommand: assignee begins work\nInProgressToCompleteCommand: assignee completes work")
+FOOTER()
 @enduml

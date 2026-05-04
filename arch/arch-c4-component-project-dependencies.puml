@@ -1,5 +1,5 @@
 @startuml
-!include templates/plantuml-theme.puml
+!includeurl https://raw.githubusercontent.com/ClearMeasureLabs/bootcamp-palermo-workorders/docs/architecture-enhancements/arch/templates/plantuml-theme.puml
 
 scale 2/3
 'left to right direction
@@ -68,7 +68,6 @@ Rel(acceptanceTests, core, "Project Reference")
 Rel(acceptanceTests, integrationTests, "Project Reference")
 Rel(acceptanceTests, mcpServer, "Project Reference")
 
-center footer
-    C4 Architecture: Component Diagram Footer $(Version)
-endfooter
+LEGEND("Legend","Core: Domain model\nDataAccess: EF Core + MediatR handlers\nUI.Server: API + Server host\nUI.Client: Blazor WASM\nWorker: Background processors\nMcpServer: Model Context Protocol host\nLlmGateway: Azure OpenAI adapter")
+FOOTER()
 @enduml
