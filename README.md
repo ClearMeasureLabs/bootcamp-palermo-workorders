@@ -118,6 +118,13 @@ Health and URLs
 - The application starts at https://localhost:7174 by default.
 - Health check endpoint: https://localhost:7174/_healthcheck
 
+Architecture diagrams
+- See the arch/ folder for PlantUML sources and rendered images. The architecture docs (arch/README.md) explain rendering and icon configuration.
+- To regenerate PlantUML images locally: use the helper scripts:
+  - PowerShell: pwsh arch/render-diagrams.ps1
+  - Bash: ./arch/render-diagrams.sh
+- The repository includes a GitHub Actions job (.github/workflows/render-diagrams.yml) that verifies diagram images are up-to-date for each pull request.
+
 Playwright (acceptance tests)
 - Install browsers (PowerShell):
   ```powershell
