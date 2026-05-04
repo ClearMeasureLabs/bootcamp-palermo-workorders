@@ -1,4 +1,6 @@
 @startuml
+!include templates/plantuml-theme.puml
+
 title Work Order State Transitions
 
 left to right direction

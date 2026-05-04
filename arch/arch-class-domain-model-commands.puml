@@ -5,6 +5,7 @@ center header
     C4 Architecture: Work Order System — State / Commands
 endheader
 
+!include templates/plantuml-theme.puml
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
 
 title Work Order System state commands (command objects)
@@ -26,16 +27,35 @@ class SaveDraftCommand <<record>> {
   +Execute(context : StateCommandContext) : void
 }
 
+note right of SaveDraftCommand
+  Guard: only creator
+  Side-effect: sets CreatedDate when missing
+end note
+
 class DraftToAssignedCommand <<record>> {
   +Execute(context : StateCommandContext) : void
 }
 
+note right of DraftToAssignedCommand
+  Guard: only creator can assign
+  Side-effect: may create WorkOrderAssignedToBotEvent when assignee has Bot role
+end note
+
 class AssignedToInProgressCommand <<record>> {
 }
+
+note right of AssignedToInProgressCommand
+  Guard: only assignee
+end note
 
 class InProgressToCompleteCommand <<record>> {
   +Execute(context : StateCommandContext) : void
 }
+
+note right of InProgressToCompleteCommand
+  Guard: only assignee
+  Side-effect: sets CompletedDate
+end note
 
 class StateCommandResult <<record>> {
   +WorkOrder : WorkOrder
