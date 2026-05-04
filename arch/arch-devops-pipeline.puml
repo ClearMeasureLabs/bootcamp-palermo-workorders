@@ -32,10 +32,11 @@ System_Boundary(github, "GitHub") {
     }
 
     System_Boundary(build_wf, "Build Workflow (.github/workflows/build.yml)") {
-        Component(build_linux, "Integration Build", "SQL Container", "Linux")
-        Component(build_sqlite, "Integration Build", "SQLite", "Linux")
-        Component(build_arm, "Integration Build", "ARM SQLite", "")
-        Component(build_win, "Integration Build", "Windows LocalDB", "")
+        Component(build_matrix, "Platform Matrix", "GitHub Actions matrix", "linux/x86, linux/arm, windows")
+        Component(build_linux, "Integration Build (Linux)", "SQL Container", "x86 image")
+        Component(build_sqlite, "Integration Build (SQLite)", "SQLite", "Linux")
+        Component(build_arm, "Integration Build (ARM)", "ARM SQLite", "arm64")
+        Component(build_win, "Integration Build (Windows)", "Windows LocalDB", "windows")
         Component(code_analysis, "Code Analysis", "Tool", "format + analyzers")
         Component(security_scan, "Security Scan", "Tool", "vulnerabilities + Gitleaks")
         Component(at_x86, "Acceptance Tests", "x86 SQLite", "")
@@ -43,7 +44,7 @@ System_Boundary(github, "GitHub") {
     }
 
     System_Boundary(publish, "Publish (needs: build-linux)") {
-        Component(docker_push, "Docker Build", "ACR", "")
+        Component(docker_push, "Docker Build", "ACR", "container images / manifests")
         Component(gh_packages, "Publish to GitHub Packages", "Nuget", "")
         Component(octo_push, "Publish to Octopus Deploy", "Octopus CLI", "")
     }
