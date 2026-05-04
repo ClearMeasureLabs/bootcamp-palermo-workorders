@@ -52,7 +52,7 @@ alt WorkOrderAssignedToBotEvent exists
     worker -> db : Attach / update WorkOrder with LLM output
     worker -> db : SaveChangesAsync()
     db --> worker : persisted
-    worker -> dBus : PublishAsync(WorkOrderBotCompletedEvent)
+    worker -> dBus : PublishAsync(AiBotCompletedWorkOrderEvent)
     note right of worker : Optionally notify UI or send email
 end
 
