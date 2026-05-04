@@ -2,8 +2,6 @@
 !includeurl https://raw.githubusercontent.com/ClearMeasureLabs/bootcamp-palermo-workorders/docs/architecture-enhancements/arch/templates/plantuml-theme.puml
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
 
-LAYOUT_LEFT_RIGHT()
-
 title Church Bulletin DevOps Pipeline
 
 Person(dev, "Developer", "Initiates code changes")
