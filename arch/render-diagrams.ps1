@@ -19,7 +19,7 @@ if (-not $files) {
 }
 
 $hasDocker = (Get-Command docker -ErrorAction SilentlyContinue) -ne $null
-$hasJar = Test-Path "..\..\.tools\plantuml.jar" -PathType Leaf -or Test-Path ".\.tools\plantuml.jar" -PathType Leaf
+$hasJar = (Test-Path "..\..\.tools\plantuml.jar" -PathType Leaf) -or (Test-Path ".\.tools\plantuml.jar" -PathType Leaf)
 
 foreach ($f in $files) {
     $inPath = $f.FullName
@@ -29,7 +29,8 @@ foreach ($f in $files) {
         if ($hasDocker) {
             # Use Docker and pipe file contents into plantuml to avoid volume mount issues on some platforms
             $plantumlImage = "plantuml/plantuml:1.2026.2"
-            Get-Content -Raw -Path $inPath | docker run --rm -i $plantumlImage -t$fmt -pipe > $outPath
+            $repoRoot = Split-Path -Path $root -Parent
+            docker run --rm -v "$repoRoot":/workspace -w /workspace/arch $plantumlImage -t$fmt "$($f.Name)"
             if ($LASTEXITCODE -ne 0) {
                 Write-Host "Docker-based rendering failed for $inPath ($fmt)" -ForegroundColor Red
                 exit 1
