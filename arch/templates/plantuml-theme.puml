@@ -1,0 +1,35 @@
+' PlantUML theme and helpers for architecture diagrams
+' Usage: include with: !include templates/plantuml-theme.puml
+
+' Diagram version, update as needed by maintainers
+!define DIAGRAM_VERSION "v1.0"
+
+' Basic visual settings
+skinparam defaultFontName "Arial"
+skinparam shadowing false
+skinparam dpi 150
+
+' Class / component colors
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #2B7A78
+skinparam componentBackgroundColor #F0FBF9
+skinparam componentBorderColor #145A57
+skinparam sequenceBackgroundColor #FFFFFF
+skinparam sequenceLifeLineBorderColor #2B7A78
+
+' Small helper to show a consistent footer
+!definelong FOOTER()
+center footer
+    Diagram version: %DIAGRAM_VERSION%
+endfooter
+!enddefinelong
+
+' Helper to render a legend box
+!definelong LEGEND(title, content)
+legend
+|= title |= description |
+| Legend | {note: content} |
+endlegend
+!enddefinelong
+
+' Note: when included in a PlantUML file the macros FOOTER() and LEGEND() can be invoked where appropriate.
