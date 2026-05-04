@@ -28,7 +28,8 @@ foreach ($f in $files) {
         Write-Host "Rendering $inPath -> $outPath"
         if ($hasDocker) {
             # Use Docker and pipe file contents into plantuml to avoid volume mount issues on some platforms
-            Get-Content -Raw -Path $inPath | docker run --rm -i plantuml/plantuml -t$fmt -pipe > $outPath
+            $plantumlImage = "plantuml/plantuml:1.2026.2"
+            Get-Content -Raw -Path $inPath | docker run --rm -i $plantumlImage -t$fmt -pipe > $outPath
             if ($LASTEXITCODE -ne 0) {
                 Write-Host "Docker-based rendering failed for $inPath ($fmt)" -ForegroundColor Red
                 exit 1

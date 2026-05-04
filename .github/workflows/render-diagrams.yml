@@ -11,12 +11,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Render PlantUML diagrams (bash)
+        env:
+          PLANTUML_IMAGE: plantuml/plantuml:1.2026.2
         run: |
           set -euo pipefail
+          echo "Using PlantUML image: $PLANTUML_IMAGE"
           find arch -type f -name '*.puml' -not -path 'arch/templates/*' -print0 | while IFS= read -r -d $'\0' file; do
             echo "Rendering $file"
-            docker run --rm -i plantuml/plantuml -tpng -pipe < "$file" > "${file%.puml}.png"
-            docker run --rm -i plantuml/plantuml -tsvg -pipe < "$file" > "${file%.puml}.svg"
+            docker run --rm -i "$PLANTUML_IMAGE" -tpng -pipe < "$file" > "${file%.puml}.png"
+            docker run --rm -i "$PLANTUML_IMAGE" -tsvg -pipe < "$file" > "${file%.puml}.svg"
           done
 
       - name: Check for changes

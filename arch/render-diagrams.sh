@@ -4,11 +4,7 @@ set -euo pipefail
 # Render all PlantUML files under arch/ (excluding templates) into PNG and SVG using Docker
 # Usage: ./arch/render-diagrams.sh
 
-if pwd -W >/dev/null 2>&1; then
-  ROOT_DIR=$(pwd -W)
-else
-  ROOT_DIR=$(pwd)
-fi
+PLANTUML_IMAGE="plantuml/plantuml:1.2026.2"
 
 FILES=$(find arch -type f -name '*.puml' -not -path './arch/templates/*' -print)
 if [ -z "$FILES" ]; then
@@ -18,8 +14,9 @@ fi
 
 for f in $FILES; do
   echo "Rendering $f -> ${f%.puml}.png, ${f%.puml}.svg"
-  docker run --rm -v "$ROOT_DIR":/workspace -w /workspace plantuml/plantuml -tpng "/workspace/$f"
-  docker run --rm -v "$ROOT_DIR":/workspace -w /workspace plantuml/plantuml -tsvg "/workspace/$f"
+  # Use pipe mode to avoid Docker volume mount path issues on some platforms
+  docker run --rm -i "$PLANTUML_IMAGE" -tpng -pipe < "$f" > "${f%.puml}.png"
+  docker run --rm -i "$PLANTUML_IMAGE" -tsvg -pipe < "$f" > "${f%.puml}.svg"
 done
 
 echo "Done"
