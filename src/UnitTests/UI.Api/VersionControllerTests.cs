@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
@@ -32,6 +33,9 @@ public class VersionControllerTests
         payload.ShouldNotBeNull();
         payload!.AssemblyVersion.ShouldNotBeNullOrEmpty();
         payload.InformationalVersion.ShouldNotBeNullOrEmpty();
+        var expectedConfiguration = typeof(VersionController).Assembly
+            .GetCustomAttribute<AssemblyConfigurationAttribute>()?.Configuration;
+        payload.Configuration.ShouldBe(expectedConfiguration);
         payload.Environment.ShouldBe("TestEnvironment");
         payload.MachineName.ShouldBe(Environment.MachineName);
         payload.FrameworkDescription.ShouldBe(System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);

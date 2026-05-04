@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
@@ -57,6 +59,26 @@ public class ApiVersioningEndpointTests
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("application/json");
+    }
+
+    [Test]
+    public async Task Should_ReturnSameVersionPayload_When_GetVersion_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/version");
+        var v1 = await _client.GetAsync("/api/v1.0/version");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var legacyPayload = JsonSerializer.Deserialize<VersionMetadataResponse>(
+            await legacy.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
+        var v1Payload = JsonSerializer.Deserialize<VersionMetadataResponse>(
+            await v1.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
+        legacyPayload.ShouldNotBeNull();
+        v1Payload.ShouldNotBeNull();
+        legacyPayload.ShouldBe(v1Payload);
     }
 
     [Test]
