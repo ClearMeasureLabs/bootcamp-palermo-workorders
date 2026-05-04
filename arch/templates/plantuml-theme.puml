@@ -1,8 +1,8 @@
 ' PlantUML theme and helpers for architecture diagrams
-' Usage: include with: !include templates/plantuml-theme.puml
+' Usage: include with: !include templates/plantuml-theme.puml (or use the raw GitHub URL when rendering in CI)
 
 ' Diagram version, update as needed by maintainers
-!define DIAGRAM_VERSION "v1.0"
+!define DIAGRAM_VERSION v1.0
 
 ' Basic visual settings
 skinparam defaultFontName "Arial"
@@ -17,10 +17,16 @@ skinparam componentBorderColor #145A57
 skinparam sequenceBackgroundColor #FFFFFF
 skinparam sequenceLifeLineBorderColor #2B7A78
 
+' Notes & legend styling
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #145A57
+skinparam legendBackgroundColor #FFFFFF
+skinparam legendBorderColor #145A57
+
 ' Small helper to show a consistent footer
 !definelong FOOTER()
 center footer
-    Diagram version: %DIAGRAM_VERSION%
+    Diagram version: DIAGRAM_VERSION
 endfooter
 !enddefinelong
 

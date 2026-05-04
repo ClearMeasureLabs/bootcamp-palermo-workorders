@@ -1,5 +1,5 @@
 @startuml
-!include templates/plantuml-theme.puml
+!includeurl https://raw.githubusercontent.com/ClearMeasureLabs/bootcamp-palermo-workorders/docs/architecture-enhancements/arch/templates/plantuml-theme.puml
 
 title Work Order State Transitions
 
@@ -16,4 +16,6 @@ InProgress --> Complete : InProgressToCompleteCommand
 
 Complete --> [*]
 
+LEGEND("Legend","Draft -> Assigned -> InProgress -> Complete\nCommands: SaveDraftCommand, DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand")
+FOOTER()
 @enduml

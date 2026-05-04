@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pre-commit hook: if any .puml files are staged, re-render diagram images and auto-stage them.
+# Note: to enable hooks in this repository run:
+#   git config core.hooksPath .githooks
+
+STAGED_PUML=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.puml$' || true)
+if [ -z "$STAGED_PUML" ]; then
+  exit 0
+fi
+
+echo "Detected staged .puml files:"
+echo "$STAGED_PUML"
+
+echo "Rendering diagrams (this may require Docker or plantuml.jar)..."
+./arch/render-diagrams.sh
+
+# Stage any changed images so they are included in the commit
+git add arch/*.png arch/*.svg || true
+
+echo "Diagrams rendered and images staged (if any changed). Proceeding with commit."
+exit 0

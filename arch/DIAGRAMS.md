@@ -18,3 +18,16 @@ Troubleshooting
 
 Contact
 - If you need help updating diagrams, open an issue or a PR and add a note for reviewers to help render images if you cannot run Docker locally.
+
+Enabling local pre-commit hook (optional)
+- To enable a pre-commit hook that automatically re-renders diagrams when .puml files are staged, run:
+
+  git config core.hooksPath .githooks
+
+  This sets the repository-local hooks directory to .githooks/. The repository includes a sample pre-commit hook (.githooks/pre-commit) that renders diagrams and auto-stages generated images. This is optional but recommended for developers who can run Docker locally.
+
+PR checklist for diagram changes
+- Modify arch/*.puml sources only.
+- Re-render diagrams locally (arch/render-diagrams.sh or pwsh arch/render-diagrams.ps1).
+- Commit both the .puml files and the generated arch/*.png and arch/*.svg files.
+- Ensure the CI check (.github/workflows/render-diagrams.yml) passes on your PR.
