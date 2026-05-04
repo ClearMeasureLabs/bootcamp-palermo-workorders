@@ -5,23 +5,43 @@
 !define DIAGRAM_VERSION v1.0
 
 ' Basic visual settings
-skinparam defaultFontName "Arial"
+' Choose fonts (fallback order)
+skinparam defaultFontName "Segoe UI, Arial, DejaVu Sans, sans-serif"
+skinparam titleFontName "Segoe UI, Arial, DejaVu Sans, sans-serif"
 skinparam shadowing false
 skinparam dpi 150
 
+' Title and header sizing
+skinparam titleFontSize 18
+skinparam headerFontSize 14
+
+' Palette (brand-friendly, friendly teal / indigo accents)
+!define COLOR_BG #FFFFFF
+!define COLOR_PRIMARY #0F766E
+!define COLOR_ACCENT #2C3E50
+!define COLOR_MUTED #6B7280
+!define COLOR_NOTE_BG #FFFBEB
+!define COLOR_NOTE_BORDER #F59E0B
+
 ' Class / component colors
-skinparam classBackgroundColor #FFFFFF
-skinparam classBorderColor #2B7A78
-skinparam componentBackgroundColor #F0FBF9
-skinparam componentBorderColor #145A57
-skinparam sequenceBackgroundColor #FFFFFF
-skinparam sequenceLifeLineBorderColor #2B7A78
+skinparam classBackgroundColor COLOR_BG
+skinparam classBorderColor COLOR_PRIMARY
+skinparam componentBackgroundColor #F7FEFD
+skinparam componentBorderColor COLOR_PRIMARY
+skinparam sequenceBackgroundColor COLOR_BG
+skinparam sequenceLifeLineBorderColor COLOR_PRIMARY
 
 ' Notes & legend styling
-skinparam noteBackgroundColor #FFF8E1
-skinparam noteBorderColor #145A57
-skinparam legendBackgroundColor #FFFFFF
-skinparam legendBorderColor #145A57
+skinparam noteBackgroundColor COLOR_NOTE_BG
+skinparam noteBorderColor COLOR_NOTE_BORDER
+skinparam legendBackgroundColor COLOR_BG
+skinparam legendBorderColor COLOR_PRIMARY
+
+' Box styling for containers and components
+skinparam rectangle {
+  BackgroundColor COLOR_BG
+  BorderColor COLOR_PRIMARY
+}
 
 ' Small helper to show a consistent footer
 !definelong FOOTER()
@@ -36,6 +56,13 @@ legend
 |= title |= description |
 | Legend | {note: content} |
 endlegend
+!enddefinelong
+
+' Helper: render a callout note style
+!definelong CALLOUT(text)
+note right
+  text
+end note
 !enddefinelong
 
 ' Note: when included in a PlantUML file the macros FOOTER() and LEGEND() can be invoked where appropriate.
