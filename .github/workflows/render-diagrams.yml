@@ -1,0 +1,25 @@
+name: Render diagrams (check)
+
+on:
+  pull_request:
+
+jobs:
+  render-diagrams:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Render PlantUML diagrams (bash)
+        run: |
+          set -euo pipefail
+          find arch -type f -name '*.puml' -not -path 'arch/templates/*' -print0 | while IFS= read -r -d $'\0' file; do
+            echo "Rendering $file"
+            docker run --rm -i plantuml/plantuml -tpng -pipe < "$file" > "${file%.puml}.png"
+            docker run --rm -i plantuml/plantuml -tsvg -pipe < "$file" > "${file%.puml}.svg"
+          done
+
+      - name: Check for changes
+        run: |
+          git status --porcelain
+          git diff --no-ext-diff --exit-code || (echo "Diagrams are not up-to-date. Re-run arch/render-diagrams.ps1 or arch/render-diagrams.sh and commit generated images." && exit 1)
