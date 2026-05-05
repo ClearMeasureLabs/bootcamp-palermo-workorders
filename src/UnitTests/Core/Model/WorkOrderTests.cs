@@ -12,6 +12,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
         Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
+        Assert.That(workOrder.Instructions, Is.EqualTo(null));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
@@ -44,10 +45,12 @@ public class WorkOrderTests
         workOrder.Number = "Number";
         workOrder.Creator = creator;
         workOrder.Assignee = assignee;
+        workOrder.Instructions = "Step one";
 
         Assert.That(workOrder.Id, Is.EqualTo(guid));
         Assert.That(workOrder.Title, Is.EqualTo("Title"));
         Assert.That(workOrder.Description, Is.EqualTo("Description"));
+        Assert.That(workOrder.Instructions, Is.EqualTo("Step one"));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
         Assert.That(workOrder.Number, Is.EqualTo("Number"));
         Assert.That(workOrder.Creator, Is.EqualTo(creator));
@@ -70,6 +73,26 @@ public class WorkOrderTests
         var order = new WorkOrder();
         order.Description = longText;
         Assert.That(order.Description.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void ShouldTruncateTo4000CharactersOnInstructions()
+    {
+        var longText = new string('x', 4001);
+        var order = new WorkOrder();
+        order.Instructions = longText;
+        Assert.That(order.Instructions!.Length, Is.EqualTo(4000));
+    }
+
+    [Test]
+    public void ShouldNormalizeWhitespaceOnlyInstructionsToNull()
+    {
+        var order = new WorkOrder();
+        order.Instructions = "";
+        Assert.That(order.Instructions, Is.Null);
+
+        order.Instructions = "   ";
+        Assert.That(order.Instructions, Is.Null);
     }
 
     [Test]
