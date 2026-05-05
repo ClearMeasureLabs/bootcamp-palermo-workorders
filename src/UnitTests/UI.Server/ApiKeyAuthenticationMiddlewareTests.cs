@@ -8,6 +8,8 @@ public class ApiKeyAuthenticationMiddlewareTests
 {
     [TestCase("/api/health", false)]
     [TestCase("/api/v1.0/health", false)]
+    [TestCase("/api/health/detailed", false)]
+    [TestCase("/api/v1.0/health/detailed", false)]
     [TestCase("/api/diagnostics", false)]
     [TestCase("/api/v1.0/diagnostics", false)]
     [TestCase("/api/version", true)]
