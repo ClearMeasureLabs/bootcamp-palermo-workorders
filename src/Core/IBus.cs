@@ -2,6 +2,7 @@
 
 namespace ClearMeasure.Bootcamp.Core;
 
+// howdy
 public interface IBus
 {
     Task<TResponse> Send<TResponse>(IRequest<TResponse> request);
