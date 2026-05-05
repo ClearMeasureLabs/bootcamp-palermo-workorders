@@ -92,4 +92,29 @@ public class ApiKeyAuthenticationWebTests
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Test]
+    public async Task Should_Return401_When_GuidGeneratorCalledWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/api/tools/guid-generator", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Test]
+    public async Task Should_Return200_When_GuidGeneratorCalledWithValidKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add(
+            ApiKeyConstants.HeaderName,
+            ApiKeyProtectedWebApplicationFactory.TestApiKey);
+
+        var response = await client.PostAsync("/api/tools/guid-generator", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }
