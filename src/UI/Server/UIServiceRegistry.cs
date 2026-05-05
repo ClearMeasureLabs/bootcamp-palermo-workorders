@@ -73,5 +73,8 @@ public class UiServiceRegistry : ServiceRegistry
             .AddCheck<NeedsRebootHealthCheck>("NeedsReboot");
 
         this.AddSingleton<IDetailedHealthReportProvider, DetailedHealthReportProvider>();
+
+        this.AddSingleton<IRequestCounters, RequestCounters>();
+        this.AddSingleton<IProcessRuntimeMetrics, ProcessRuntimeMetrics>();
     }
 }
