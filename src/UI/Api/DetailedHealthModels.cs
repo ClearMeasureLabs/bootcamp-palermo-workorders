@@ -74,3 +74,55 @@ public static class ComponentHealthStatus
     public const string Degraded = nameof(Degraded);
     public const string Unhealthy = nameof(Unhealthy);
 }
+
+/// <summary>
+/// Per-component fingerprint for conditional GET (<see cref="ComponentHealthEntry.ExceptionDetail"/> excluded).
+/// </summary>
+internal sealed record DetailedHealthComponentEtagFingerprint(
+    string Name,
+    string Status,
+    string? Description,
+    string? ExceptionMessage,
+    IReadOnlyList<KeyValuePair<string, string>>? Data);
+
+/// <summary>
+/// Fingerprint payload for conditional GET over <see cref="DetailedHealthReport"/>.
+/// </summary>
+/// <remarks>
+/// Omits <see cref="DetailedHealthReport.CheckedAtUtc"/> and per-component durations. Exception stack traces
+/// (<see cref="ComponentHealthEntry.ExceptionDetail"/>) are omitted so probes can reuse ETags across polls.
+/// </remarks>
+internal sealed record DetailedHealthEtagFingerprint(
+    string OverallStatus,
+    IReadOnlyList<DetailedHealthComponentEtagFingerprint> Components)
+{
+    /// <summary>
+    /// Builds a fingerprint from <paramref name="report"/> omitting volatile fields so repeated polls can yield 304.
+    /// </summary>
+    internal static DetailedHealthEtagFingerprint FromReport(DetailedHealthReport report)
+    {
+        var components = report.Components
+            .OrderBy(c => c.Name, StringComparer.Ordinal)
+            .Select(c => new DetailedHealthComponentEtagFingerprint(
+                c.Name,
+                c.Status,
+                c.Description,
+                c.ExceptionMessage,
+                StableDataEntries(c.Data)))
+            .ToList();
+
+        return new DetailedHealthEtagFingerprint(report.OverallStatus, components);
+    }
+
+    private static IReadOnlyList<KeyValuePair<string, string>>? StableDataEntries(
+        IReadOnlyDictionary<string, object>? data)
+    {
+        if (data is null || data.Count == 0)
+            return null;
+
+        return data
+            .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+            .Select(kv => KeyValuePair.Create(kv.Key, kv.Value?.ToString() ?? ""))
+            .ToList();
+    }
+}

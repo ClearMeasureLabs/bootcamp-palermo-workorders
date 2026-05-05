@@ -33,11 +33,37 @@ public class EtagConditionalGetWebTests
         (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
     }
 
+    [TestCase("/api/health/detailed")]
+    [TestCase("/api/v1.0/health/detailed")]
+    public async Task Should_Return304NotModified_When_IfNoneMatchMatchesEtag_DetailedHealth(string path)
+    {
+        using var client = _factory!.CreateClient();
+        var first = await client.GetAsync(path);
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        first.Headers.ETag.ShouldNotBeNull();
+
+        using var second = new HttpRequestMessage(HttpMethod.Get, path);
+        second.Headers.IfNoneMatch.Add(first.Headers.ETag!);
+        var notModified = await client.SendAsync(second);
+        notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
+        (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
+    }
+
     [Test]
     public async Task Should_IncludeEtagHeader_When_GetSimpleHealth()
     {
         using var client = _factory!.CreateClient();
         var response = await client.GetAsync("/api/health");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.ETag.ShouldNotBeNull();
+    }
+
+    [TestCase("/api/health/detailed")]
+    [TestCase("/api/v1.0/health/detailed")]
+    public async Task Should_IncludeEtagHeader_When_GetDetailedHealth(string path)
+    {
+        using var client = _factory!.CreateClient();
+        var response = await client.GetAsync(path);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         response.Headers.ETag.ShouldNotBeNull();
     }
