@@ -60,6 +60,17 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_Return200AndJson_When_GetVersion_UnversionedPath()
+    {
+        var response = await _client!.GetAsync("/api/version");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("application/json");
+    }
+
+    [Test]
     public async Task Should_Return200_When_GetTime_V1Path()
     {
         var response = await _client!.GetAsync("/api/v1.0/time");
