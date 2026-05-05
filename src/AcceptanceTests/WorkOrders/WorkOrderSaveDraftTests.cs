@@ -66,7 +66,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
 
-        var instructionsText = "Step A\r\nStep B";
+        var instructionsText = "Step A\nStep B";
         WorkOrder order = await CreateAndSaveNewWorkOrder(instructionsText);
 
         await Page.WaitForURLAsync("**/workorder/search");
@@ -122,7 +122,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         await Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name).ClickAsync();
 
-        await Expect(Page.Locator(".validation-summary")).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        await Expect(Page.Locator(".validation-summary, .validation-message").First).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         await Expect(Page).Not.ToHaveURLAsync(new Regex(".*/workorder/search.*"));
     }
 

@@ -62,7 +62,8 @@
                     <div>
                         @if (!Model.IsReadOnly)
                         {
-                            <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea"/>
+                            <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" @bind-Value:event="oninput" class="form-control input-textarea"/>
+                            <ValidationMessage For="@(() => Model.Instructions)" class="instructions-validation-message"/>
                         }
                         else
                         {
