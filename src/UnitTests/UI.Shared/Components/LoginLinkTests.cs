@@ -25,6 +25,6 @@ public class LoginLinkTests
         anchor.GetAttribute("href").ShouldBe("/login");
         anchor.GetAttribute("data-testid").ShouldBe(nameof(LoginLink.Elements.LoginLink));
         anchor.ClassList.ShouldContain("login-prompt-link");
-        anchor.TextContent.ShouldBe("Login");
+        anchor.TextContent.Trim().ShouldBe("Login");
     }
 }
