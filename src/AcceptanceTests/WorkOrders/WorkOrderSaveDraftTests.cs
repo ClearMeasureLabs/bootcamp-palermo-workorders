@@ -122,8 +122,14 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         await Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name).ClickAsync();
 
-        await Expect(Page.Locator(".validation-summary, .validation-message").First).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         await Expect(Page).Not.ToHaveURLAsync(new Regex(".*/workorder/search.*"));
+
+        var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsLocator).ToHaveJSPropertyAsync("value.length", 4001);
+
+        var fieldMessage = Page.Locator(".instructions-validation-message");
+        var summaryErrors = Page.Locator(".validation-summary.validation-errors");
+        await Expect(fieldMessage.Or(summaryErrors).First).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
     }
 
     [Test, Retry(2)]

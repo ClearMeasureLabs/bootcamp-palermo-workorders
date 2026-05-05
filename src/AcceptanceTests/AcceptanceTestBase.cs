@@ -299,7 +299,7 @@ public abstract class AcceptanceTestBase
         await Expect(locator).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
         await locator.EvaluateAsync(
-            """(el, v) => { el.removeAttribute('maxlength'); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }""",
+            "(el, v) => { el.removeAttribute('maxlength'); el.value = v; el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertFromPaste' })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
             value);
 
         await locator.BlurAsync();
