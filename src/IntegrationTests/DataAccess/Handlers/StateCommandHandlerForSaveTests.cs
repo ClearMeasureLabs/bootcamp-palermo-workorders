@@ -32,6 +32,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         result.TransitionVerbPresentTense.ShouldBe(command.TransitionVerbPresentTense);
         result.WorkOrder.Creator.ShouldBe(currentUser);
         result.WorkOrder.Title.ShouldBe(workOrder.Title);
+        result.WorkOrder.Instructions.ShouldBe(workOrder.Instructions);
         result.WorkOrder.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
@@ -39,6 +40,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
         order.Title.ShouldBe(workOrder.Title);
+        order.Instructions.ShouldBe(workOrder.Instructions);
     }
 
     [Test]
@@ -74,6 +76,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(workOrder.Title);
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe(workOrder.Instructions);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -113,8 +116,65 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe(workOrder.Instructions);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
+    }
+
+    [Test]
+    public async Task ShouldUpdateInstructionsOnExistingWorkOrder()
+    {
+        new DatabaseTests().Clean();
+
+        var workOrder = Faker<WorkOrder>();
+        var currentUser = Faker<Employee>();
+        workOrder.Creator = currentUser;
+        workOrder.Instructions = "initial instructions";
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(currentUser);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+        }
+
+        workOrder.Instructions = "updated instructions";
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        await handler.Handle(command);
+
+        var context3 = TestHost.GetRequiredService<DbContext>();
+        var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
+        order.Instructions.ShouldBe("updated instructions");
+    }
+
+    [Test]
+    public async Task ShouldClearInstructionsOnExistingWorkOrder()
+    {
+        new DatabaseTests().Clean();
+
+        var workOrder = Faker<WorkOrder>();
+        var currentUser = Faker<Employee>();
+        workOrder.Creator = currentUser;
+        workOrder.Instructions = "will clear";
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(currentUser);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+        }
+
+        workOrder.Instructions = "";
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        await handler.Handle(command);
+
+        var context3 = TestHost.GetRequiredService<DbContext>();
+        var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
+        order.Instructions.ShouldBe("");
     }
 
     [Test]
@@ -153,6 +213,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
+        order.Instructions.ShouldBe(workOrder.Instructions);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
