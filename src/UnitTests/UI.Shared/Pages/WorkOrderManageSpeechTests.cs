@@ -78,6 +78,35 @@ public class WorkOrderManageSpeechTests
     }
 
     [Test]
+    public void ShouldRenderSpeakInstructionsButton()
+    {
+        using var ctx = new TestContext();
+
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
+        user.Id = Guid.NewGuid();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.RenderComponent<WorkOrderManage>();
+
+        component.WaitForAssertion(() =>
+        {
+            var element = component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakInstructions}']");
+            element.ShouldNotBeNull();
+            element.TagName.ShouldBe("BUTTON", StringCompareShould.IgnoreCase);
+            element.GetAttribute("type").ShouldBe("button");
+        });
+    }
+
+    [Test]
     public void SpeakTitleButtonShouldInvokeTranslationService()
     {
         using var ctx = new TestContext();
