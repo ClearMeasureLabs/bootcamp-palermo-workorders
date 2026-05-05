@@ -30,10 +30,13 @@ public class MainLayoutTests
         var layout = component.FindComponent<MainLayout>();
 
         var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        var headerLeading = layout.Find(".header-leading");
+        headerLeading.Children[0].GetAttribute("data-testid").ShouldBe(nameof(MainLayout.Elements.NavRailToggle));
+
         toggle.GetAttribute("aria-expanded").ShouldBe("true");
         toggle.GetAttribute("aria-controls").ShouldBe("app-navigation-rail");
-        toggle.GetAttribute("title")!.ShouldContain("Hide");
-        toggle.GetAttribute("aria-label")!.ShouldContain("Hide");
+        toggle.GetAttribute("title").ShouldBe("Hide navigation panel");
+        toggle.GetAttribute("aria-label").ShouldBe("Hide navigation panel");
         layout.Find("#app-navigation-rail").ClassList.ShouldContain("modern-sidebar");
         layout.Find(".modern-app").ClassList.ShouldNotContain("rail-collapsed");
     }
@@ -56,7 +59,8 @@ public class MainLayoutTests
         toggle.Click();
 
         toggle.GetAttribute("aria-expanded").ShouldBe("false");
-        toggle.GetAttribute("title")!.ShouldContain("Show");
+        toggle.GetAttribute("title").ShouldBe("Show navigation panel");
+        toggle.GetAttribute("aria-label").ShouldBe("Show navigation panel");
         layout.Find(".modern-app").ClassList.ShouldContain("rail-collapsed");
         layout.Find("#app-navigation-rail").ClassList.ShouldContain("rail-hidden");
     }
@@ -89,6 +93,68 @@ public class MainLayoutTests
     public void ShouldUseDocumentedNavRailBreakpointMediaQuery()
     {
         MainLayout.NavRailBreakpointMediaQuery.ShouldBe("(max-width: 768px)");
+    }
+
+    [Test]
+    public void ShouldUseCollapseAffordanceIconWhenRailVisibleOnWideViewport()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        component.WaitForAssertion(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        component.InvokeAsync(() => layout.Instance.OnViewportChanged(false)).GetAwaiter().GetResult();
+
+        var icon = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}'] i");
+        icon.ClassList.ShouldContain("bi-chevron-double-left");
+        icon.GetAttribute("aria-hidden").ShouldBe("true");
+    }
+
+    [Test]
+    public void ShouldUseMenuAffordanceIconWhenRailHiddenOnWideViewport()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        component.WaitForAssertion(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        component.InvokeAsync(() => layout.Instance.OnViewportChanged(false)).GetAwaiter().GetResult();
+
+        var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        toggle.Click();
+
+        var icon = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}'] i");
+        icon.ClassList.ShouldContain("bi-list");
+        icon.GetAttribute("aria-hidden").ShouldBe("true");
+    }
+
+    [Test]
+    public void ShouldUseMenuAffordanceWhenRailClosedOnNarrowViewport_AndCollapseWhenOpen()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        component.WaitForAssertion(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        component.InvokeAsync(() => layout.Instance.OnViewportChanged(true)).GetAwaiter().GetResult();
+
+        var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}'] i").ClassList.ShouldContain("bi-list");
+
+        toggle.Click();
+        layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}'] i").ClassList.ShouldContain("bi-chevron-double-left");
     }
 
     [Test]
