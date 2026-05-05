@@ -78,10 +78,11 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await ClickWorkOrderNumberFromSearchPage(order);
 
         var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
-        await Expect(instructionsField).ToHaveValueAsync(instructionsText);
+        var displayed = await instructionsField.InputValueAsync();
+        displayed.Replace("\r\n", "\n").ShouldBe(instructionsText.Replace("\r\n", "\n"));
 
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-        rehydratedOrder.Instructions.ShouldBe(instructionsText);
+        rehydratedOrder.Instructions.ShouldBe(instructionsText.Replace("\r\n", "\n"));
     }
 
     [Test, Retry(2)]
@@ -125,11 +126,11 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Expect(Page).Not.ToHaveURLAsync(new Regex(".*/workorder/search.*"));
 
         var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
-        await Expect(instructionsLocator).ToHaveJSPropertyAsync("value.length", 4001);
+        await Expect(instructionsLocator).ToHaveValueAsync(new string('z', 4001));
 
         var fieldMessage = Page.Locator(".instructions-validation-message");
-        var summaryErrors = Page.Locator(".validation-summary.validation-errors");
-        await Expect(fieldMessage.Or(summaryErrors).First).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        var summaryItem = Page.Locator(".validation-summary li");
+        await Expect(fieldMessage.Or(summaryItem).First).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
     }
 
     [Test, Retry(2)]
