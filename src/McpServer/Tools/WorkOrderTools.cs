@@ -51,8 +51,8 @@ public class WorkOrderTools
         [Description("Title of the work order")] string title,
         [Description("Description of the work order")] string description,
         [Description("Username of the employee creating the work order")] string creatorUsername,
-        [Description("Optional execution instructions (how to perform the work)")] string? instructions = null,
-        [Description("Optional room number or location for the work order")] string? roomNumber = null)
+        [Description("Optional room number or location for the work order")] string? roomNumber = null,
+        [Description("Optional execution instructions (how to perform the work)")] string? instructions = null)
     {
         try
         {

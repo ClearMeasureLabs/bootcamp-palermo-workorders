@@ -86,6 +86,35 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
+    public async Task ShouldGetWorkOrderIncludingInstructionsWhenPresent()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var order = new WorkOrder
+        {
+            Creator = employee,
+            Number = "WO-101",
+            Title = "With instructions",
+            Description = "Desc",
+            Instructions = "Line one\nLine two",
+            RoomNumber = "202"
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.GetWorkOrder(bus, "WO-101");
+
+        result.ShouldContain("Line one");
+        result.ShouldContain("Line two");
+        result.ShouldContain("202");
+    }
+
+    [Test]
     public async Task ShouldReturnNotFoundForMissingWorkOrder()
     {
         var bus = TestHost.GetRequiredService<IBus>();
@@ -111,6 +140,33 @@ public class McpWorkOrderToolTests
 
         result.ShouldContain("New Work Order");
         result.ShouldContain("Fix the broken window");
+        result.ShouldContain("Draft");
+    }
+
+    [Test]
+    public async Task ShouldCreateDraftWorkOrderWithRoomAndInstructions()
+    {
+        var employee = new Employee("creator1", "Jane", "Smith", "jane@test.com");
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var numberGenerator = new WorkOrderNumberGenerator();
+        var result = await WorkOrderTools.CreateWorkOrder(
+            bus,
+            numberGenerator,
+            "Room work",
+            "Fix leak",
+            "creator1",
+            roomNumber: "B12",
+            instructions: "Shut water main first.");
+
+        result.ShouldContain("\"RoomNumber\": \"B12\"");
+        result.ShouldContain("Shut water main first.");
         result.ShouldContain("Draft");
     }
 
