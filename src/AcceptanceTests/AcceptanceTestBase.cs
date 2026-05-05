@@ -279,6 +279,35 @@ public abstract class AcceptanceTestBase
         await Expect(locator).ToHaveValueAsync(value ?? "");
     }
 
+    /// <summary>
+    /// Sets input value while bypassing HTML attributes such as <c>maxlength</c>.
+    /// Blazor maps <see cref="System.ComponentModel.DataAnnotations.StringLengthAttribute"/> to <c>maxlength</c>,
+    /// which prevents typing past the limit and blocks DataAnnotations validation from running on submit.
+    /// </summary>
+    protected async Task InputBypassingHtmlConstraints(string elementTestId, string value)
+    {
+        var locator = Page.GetByTestId(elementTestId);
+        if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
+        await Expect(locator).ToBeVisibleAsync();
+
+        if (!await locator.IsEditableAsync())
+        {
+            await Page.ReloadAsync();
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
+        await Expect(locator).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
+
+        await locator.EvaluateAsync(
+            """(el, v) => { el.removeAttribute('maxlength'); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }""",
+            value);
+
+        await locator.BlurAsync();
+
+        var delayMs = GetInputDelayMs();
+        await Task.Delay(delayMs);
+    }
+
     protected int GetInputDelayMs()
     {
         var envValue = Environment.GetEnvironmentVariable("TEST_INPUT_DELAY_MS");

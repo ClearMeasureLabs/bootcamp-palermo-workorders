@@ -117,7 +117,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         await Input(nameof(WorkOrderManage.Elements.Title), $"[{TestTag}] validation test");
         await Input(nameof(WorkOrderManage.Elements.Description), "desc");
-        await Input(nameof(WorkOrderManage.Elements.Instructions), new string('z', 4001));
+        await InputBypassingHtmlConstraints(nameof(WorkOrderManage.Elements.Instructions), new string('z', 4001));
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
 
         await Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name).ClickAsync();
