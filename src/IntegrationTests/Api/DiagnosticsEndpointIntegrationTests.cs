@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -165,5 +166,32 @@ public class DiagnosticsEndpointIntegrationTests
 
         var okVersioned = await withKey.GetAsync("/api/v1.0/diagnostics");
         okVersioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_EnforceApiKey_When_HashEndpointProtectedSameAsDiagnostics()
+    {
+        await using var factory = new DiagnosticsApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unauthLegacy = await client.PostAsJsonAsync("/api/tools/hash", new HashTextRequest { Text = "x" });
+        unauthLegacy.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        var unauthV1 = await client.PostAsJsonAsync("/api/v1.0/tools/hash", new HashTextRequest { Text = "x" });
+        unauthV1.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        using var withKey = factory.CreateClient();
+        withKey.DefaultRequestHeaders.Add(
+            ApiKeyConstants.HeaderName,
+            ApiKeyProtectedWebApplicationFactory.TestApiKey);
+
+        var okLegacy = await withKey.PostAsJsonAsync("/api/tools/hash", new HashTextRequest { Text = "hello" });
+        okLegacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var payload = await okLegacy.Content.ReadFromJsonAsync<HashTextResponse>();
+        payload.ShouldNotBeNull();
+        payload!.Sha256.ShouldBe("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
+
+        var okV1 = await withKey.PostAsJsonAsync("/api/v1.0/tools/hash", new HashTextRequest { Text = "hello" });
+        okV1.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 }

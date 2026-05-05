@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Json;
+using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;
 
@@ -91,5 +93,34 @@ public class ApiKeyAuthenticationWebTests
         var response = await client.GetAsync("/api/time");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_Return401_When_ToolsHashPostWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unversioned = await client.PostAsJsonAsync("/api/tools/hash", new HashTextRequest { Text = "x" });
+        var versioned = await client.PostAsJsonAsync("/api/v1.0/tools/hash", new HashTextRequest { Text = "x" });
+
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        versioned.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Test]
+    public async Task Should_Return200_When_ToolsHashPostWithValidKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add(
+            ApiKeyConstants.HeaderName,
+            ApiKeyProtectedWebApplicationFactory.TestApiKey);
+
+        var unversioned = await client.PostAsJsonAsync("/api/tools/hash", new HashTextRequest { Text = "hello" });
+        var versioned = await client.PostAsJsonAsync("/api/v1.0/tools/hash", new HashTextRequest { Text = "hello" });
+
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 }
