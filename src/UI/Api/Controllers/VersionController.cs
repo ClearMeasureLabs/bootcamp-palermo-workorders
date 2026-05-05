@@ -34,6 +34,7 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
         var payload = new VersionMetadataResponse(
             AssemblyVersion: assemblyVersion,
             InformationalVersion: informationalVersion,
+            BuildConfiguration: BuildConfiguration.Current,
             Environment: hostEnvironment.EnvironmentName,
             MachineName: Environment.MachineName,
             FrameworkDescription: RuntimeInformation.FrameworkDescription);
@@ -51,6 +52,16 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
 public record VersionMetadataResponse(
     string? AssemblyVersion,
     string? InformationalVersion,
+    string BuildConfiguration,
     string? Environment,
     string MachineName,
     string FrameworkDescription);
+
+internal static class BuildConfiguration
+{
+#if DEBUG
+    internal const string Current = "Debug";
+#else
+    internal const string Current = "Release";
+#endif
+}
