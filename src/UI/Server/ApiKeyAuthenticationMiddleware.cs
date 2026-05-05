@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
-/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, and ping endpoints.
+/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, ping, and tools random endpoints.
 /// </summary>
 public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 {
@@ -84,13 +84,34 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         if (segments.Length >= 3
             && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
         {
+            if (IsToolsRandomPath(segments))
+                return true;
+
             var leaf = segments[2];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
         }
 
+        if (IsToolsRandomPath(segments))
+            return true;
+
         return false;
+    }
+
+    private static bool IsToolsRandomPath(string[] segments)
+    {
+        if (segments.Length < 3)
+            return false;
+
+        if (segments[1].Equals("tools", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("random", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return segments.Length >= 4
+               && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase)
+               && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
+               && segments[3].Equals("random", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool FixedTimeEqualsUtf8(string expected, string provided)
