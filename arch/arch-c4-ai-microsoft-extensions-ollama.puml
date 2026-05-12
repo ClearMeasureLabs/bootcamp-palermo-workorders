@@ -1,0 +1,35 @@
+@startuml
+!include templates/plantuml-theme.puml
+
+scale 2/3
+left to right direction
+center header
+    C4 Architecture: Microsoft.Extensions.AI with Ollama
+endheader
+
+!include templates/c4/C4_Container.puml
+
+title AI Scenario 3: Microsoft.Extensions.AI integrated with Ollama on local network
+
+Person(user, "Church Staff", "Uses assistant backed by LAN model server")
+
+System_Boundary(system, "Church Bulletin") {
+    Container(chatClient, "Chat Client", "Blazor WebAssembly", "Conversational assistant UI")
+    Container(api, "UI Server API", "ASP.NET", "Mediates AI calls and applies domain rules")
+    Container(llmGateway, "LlmGateway", "Microsoft.Extensions.AI", "OllamaChatClient integration")
+}
+
+System_Ext(ollamaServer, "Ollama Server", "Local network host running local LLM models")
+System_Ext(localModel, "Local LLM Model", "e.g., phi4/llama served by Ollama")
+System_Ext(dataStore, "Work Order Database", "SQL Server")
+
+Rel(user, chatClient, "Chats with assistant", "HTTPS")
+Rel(chatClient, api, "Sends prompts", "HTTPS")
+Rel(api, llmGateway, "Uses Microsoft.Extensions.AI abstractions", "In-process")
+Rel(llmGateway, ollamaServer, "Calls Ollama API", "HTTP")
+Rel(ollamaServer, localModel, "Loads model", "Local filesystem / GPU")
+Rel(api, dataStore, "Reads work orders for context", "EF Core / TCP")
+
+LEGEND("Legend","Chat Client: Blazor WASM UI\nUI Server API: ASP.NET endpoints\nLlmGateway: Microsoft.Extensions.AI facade\nOllama Server: LAN model runtime\nLocal LLM Model: Ollama-hosted model")
+FOOTER()
+@enduml

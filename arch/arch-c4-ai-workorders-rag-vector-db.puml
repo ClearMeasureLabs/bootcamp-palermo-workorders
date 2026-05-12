@@ -1,0 +1,41 @@
+@startuml
+!include templates/plantuml-theme.puml
+
+scale 2/3
+left to right direction
+center header
+    C4 Architecture: Work Order RAG with Vector Database
+endheader
+
+!include templates/c4/C4_Container.puml
+
+title AI Scenario 4: Vectorized work orders with RAG search and reporting
+
+Person(user, "Church Staff", "Asks semantic search and reporting questions")
+
+System_Boundary(system, "Church Bulletin") {
+    Container(chatClient, "Chat Client", "Blazor WebAssembly", "Conversational assistant UI")
+    Container(api, "UI Server API", "ASP.NET", "Orchestrates RAG query flow")
+    Container(ragService, "RAG Service", "Application service", "Retrieves relevant work-order chunks")
+    Container(embeddingWorker, "Embedding Pipeline", ".NET Worker", "Creates embeddings from work-order data")
+    Container(llmGateway, "LlmGateway", "Microsoft.Extensions.AI", "Generates final report response")
+    ContainerDb(vectorDb, "Vector Database", "Vector store", "Embeddings and metadata for similarity search")
+    ContainerDb(workOrderDb, "Work Order Database", "SQL Server", "Canonical work-order records")
+}
+
+System_Ext(modelEndpoint, "LLM/Embedding Model Endpoint", "Azure OpenAI, Foundry, or local model")
+
+Rel(user, chatClient, "Asks questions", "HTTPS")
+Rel(chatClient, api, "Sends query", "HTTPS")
+Rel(api, ragService, "Runs retrieval", "In-process")
+Rel(ragService, vectorDb, "Similarity search", "Vector query API")
+Rel(ragService, workOrderDb, "Loads source details", "EF Core / TCP")
+Rel(api, llmGateway, "Builds grounded prompt", "In-process")
+Rel(llmGateway, modelEndpoint, "Calls chat completion", "HTTPS")
+Rel(embeddingWorker, workOrderDb, "Reads changed work orders", "EF Core / TCP")
+Rel(embeddingWorker, modelEndpoint, "Generates embeddings", "HTTPS")
+Rel(embeddingWorker, vectorDb, "Upserts vectors", "Vector query API")
+
+LEGEND("Legend","RAG Service: retrieval/orchestration layer\nEmbedding Pipeline: vector indexing worker\nVector Database: semantic index\nWork Order Database: source of truth\nModel Endpoint: chat + embedding model")
+FOOTER()
+@enduml
