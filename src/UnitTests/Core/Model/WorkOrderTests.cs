@@ -16,6 +16,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
         Assert.That(workOrder.Assignee, Is.EqualTo(null));
+        Assert.That(workOrder.Instructions, Is.EqualTo(null));
     }
 
     [Test]
@@ -44,6 +45,7 @@ public class WorkOrderTests
         workOrder.Number = "Number";
         workOrder.Creator = creator;
         workOrder.Assignee = assignee;
+        workOrder.Instructions = "Instructions";
 
         Assert.That(workOrder.Id, Is.EqualTo(guid));
         Assert.That(workOrder.Title, Is.EqualTo("Title"));
@@ -52,6 +54,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Number, Is.EqualTo("Number"));
         Assert.That(workOrder.Creator, Is.EqualTo(creator));
         Assert.That(workOrder.Assignee, Is.EqualTo(assignee));
+        Assert.That(workOrder.Instructions, Is.EqualTo("Instructions"));
     }
 
     [Test]
@@ -79,5 +82,29 @@ public class WorkOrderTests
         order.Status = WorkOrderStatus.Draft;
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void InstructionsShouldDefaultToNull()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.Instructions, Is.EqualTo(null));
+    }
+
+    [Test]
+    public void InstructionsShouldGetAndSetProperly()
+    {
+        var workOrder = new WorkOrder();
+        workOrder.Instructions = "Step 1: Turn off the water main. Step 2: Replace the gasket.";
+        Assert.That(workOrder.Instructions, Is.EqualTo("Step 1: Turn off the water main. Step 2: Replace the gasket."));
+    }
+
+    [Test]
+    public void ShouldTruncateTo4000CharactersOnInstructions()
+    {
+        var longText = new string('x', 4001);
+        var order = new WorkOrder();
+        order.Instructions = longText;
+        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
     }
 }

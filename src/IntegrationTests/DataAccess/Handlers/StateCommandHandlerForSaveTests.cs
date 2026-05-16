@@ -65,6 +65,8 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Creator = currentUser;
         workOrder.Assignee = assignee;
 
+        workOrder.Description = "mixed Case Description";
+
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
@@ -73,7 +75,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(workOrder.Title);
-        order.Description.ShouldBe(workOrder.Description);
+        order.Description.ShouldBe("MIXED CASE DESCRIPTION");
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -103,6 +105,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Creator = currentUser;
         workOrder.Assignee = assignee;
         workOrder.Title = "newtitle";
+        workOrder.Description = "newdescription";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
 
@@ -112,7 +115,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
-        order.Description.ShouldBe(workOrder.Description);
+        order.Description.ShouldBe("NEWDESCRIPTION");
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -142,6 +145,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Creator = currentUser;
         workOrder.Assignee = assignee;
         workOrder.Title = "newtitle";
+        workOrder.Description = "newdescription";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
         var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
@@ -152,7 +156,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
-        order.Description.ShouldBe(workOrder.Description);
+        order.Description.ShouldBe("NEWDESCRIPTION");
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
