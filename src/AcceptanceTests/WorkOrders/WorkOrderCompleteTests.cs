@@ -21,8 +21,10 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
 
         var expectedTitle = "Title from automation";
         var expectedDescription = "Description";
+        var expectedInstructions = "Bring ladder from storage.";
         order.Title = expectedTitle;
         order.Description = expectedDescription;
+        order.Instructions = expectedInstructions;
         order = await CompleteExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
@@ -36,6 +38,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
             .ToHaveValueAsync(expectedDescription);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeDisabledAsync();
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToHaveTextAsync(expectedInstructions);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
 
@@ -61,6 +64,9 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         order = await BeginExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
+        order.Title = "Title from automation";
+        order.Description = "Description";
+        order.Instructions = "Bring ladder.";
         order = await CompleteExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
@@ -70,5 +76,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage)))
             .ToHaveTextAsync("This work order is read-only for you at this time.");
+
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToHaveTextAsync("Bring ladder.");
     }
 }

@@ -29,21 +29,21 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             "aW5nUmVwbHkSDwoHbWVzc2FnZRgBIAEoCSItChtHZXRXb3JrT3JkZXJCeU51",
             "bWJlclJlcXVlc3QSDgoGbnVtYmVyGAEgASgJIkYKGUdldFdvcmtPcmRlckJ5",
             "TnVtYmVyUmVwbHkSKQoKd29ya19vcmRlchgBIAEoCzIVLndvcmtvcmRlcnMu",
-            "V29ya09yZGVyIpMDCglXb3JrT3JkZXISDgoGbnVtYmVyGAEgASgJEg0KBXRp",
+            "V29ya09yZGVyIqkDCglXb3JrT3JkZXISDgoGbnVtYmVyGAEgASgJEg0KBXRp",
             "dGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhMKC3Jvb21fbnVtYmVy",
             "GAQgASgJEhIKCnN0YXR1c19rZXkYBSABKAkSGAoQY3JlYXRvcl91c2VybmFt",
             "ZRgGIAEoCRIZChFhc3NpZ25lZV91c2VybmFtZRgHIAEoCRI6ChFhc3NpZ25l",
             "ZF9kYXRlX3V0YxgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBI",
             "AIgBARI5ChBjcmVhdGVkX2RhdGVfdXRjGAkgASgLMhouZ29vZ2xlLnByb3Rv",
             "YnVmLlRpbWVzdGFtcEgBiAEBEjsKEmNvbXBsZXRlZF9kYXRlX3V0YxgKIAEo",
-            "CzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAogBAUIUChJfYXNzaWdu",
-            "ZWRfZGF0ZV91dGNCEwoRX2NyZWF0ZWRfZGF0ZV91dGNCFQoTX2NvbXBsZXRl",
-            "ZF9kYXRlX3V0YzKsAQoKV29ya09yZGVycxI2CgRQaW5nEhcud29ya29yZGVy",
-            "cy5QaW5nUmVxdWVzdBoVLndvcmtvcmRlcnMuUGluZ1JlcGx5EmYKFEdldFdv",
-            "cmtPcmRlckJ5TnVtYmVyEicud29ya29yZGVycy5HZXRXb3JrT3JkZXJCeU51",
-            "bWJlclJlcXVlc3QaJS53b3Jrb3JkZXJzLkdldFdvcmtPcmRlckJ5TnVtYmVy",
-            "UmVwbHlCJ6oCJENsZWFyTWVhc3VyZS5Cb290Y2FtcC5VSS5TZXJ2ZXIuR3Jw",
-            "Y2IGcHJvdG8z"));
+            "CzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAogBARIUCgxpbnN0cnVj",
+            "dGlvbnMYCyABKAlCFAoSX2Fzc2lnbmVkX2RhdGVfdXRjQhMKEV9jcmVhdGVk",
+            "X2RhdGVfdXRjQhUKE19jb21wbGV0ZWRfZGF0ZV91dGMyrAEKCldvcmtPcmRl",
+            "cnMSNgoEUGluZxIXLndvcmtvcmRlcnMuUGluZ1JlcXVlc3QaFS53b3Jrb3Jk",
+            "ZXJzLlBpbmdSZXBseRJmChRHZXRXb3JrT3JkZXJCeU51bWJlchInLndvcmtv",
+            "cmRlcnMuR2V0V29ya09yZGVyQnlOdW1iZXJSZXF1ZXN0GiUud29ya29yZGVy",
+            "cy5HZXRXb3JrT3JkZXJCeU51bWJlclJlcGx5QieqAiRDbGVhck1lYXN1cmUu",
+            "Qm9vdGNhbXAuVUkuU2VydmVyLkdycGNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.TimestampReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -51,14 +51,13 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply.Parser, new[]{ "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest.Parser, new[]{ "Number" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply.Parser, new[]{ "WorkOrder" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "Instructions" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc" }, null, null, null)
           }));
     }
     #endregion
 
   }
   #region Messages
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PingRequest : pb::IMessage<PingRequest>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -185,11 +184,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -204,11 +199,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -219,7 +210,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PingReply : pb::IMessage<PingReply>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -375,11 +365,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -398,11 +384,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -417,7 +399,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class GetWorkOrderByNumberRequest : pb::IMessage<GetWorkOrderByNumberRequest>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -573,11 +554,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -596,11 +573,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -615,7 +588,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class GetWorkOrderByNumberReply : pb::IMessage<GetWorkOrderByNumberReply>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -774,11 +746,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -800,11 +768,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -822,7 +786,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class WorkOrder : pb::IMessage<WorkOrder>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -867,6 +830,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       assignedDateUtc_ = other.assignedDateUtc_ != null ? other.assignedDateUtc_.Clone() : null;
       createdDateUtc_ = other.createdDateUtc_ != null ? other.createdDateUtc_.Clone() : null;
       completedDateUtc_ = other.completedDateUtc_ != null ? other.completedDateUtc_.Clone() : null;
+      instructions_ = other.instructions_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -996,6 +960,18 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       }
     }
 
+    /// <summary>Field number for the "instructions" field.</summary>
+    public const int InstructionsFieldNumber = 11;
+    private string instructions_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Instructions {
+      get { return instructions_; }
+      set {
+        instructions_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1021,6 +997,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (!object.Equals(AssignedDateUtc, other.AssignedDateUtc)) return false;
       if (!object.Equals(CreatedDateUtc, other.CreatedDateUtc)) return false;
       if (!object.Equals(CompletedDateUtc, other.CompletedDateUtc)) return false;
+      if (Instructions != other.Instructions) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1038,6 +1015,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (assignedDateUtc_ != null) hash ^= AssignedDateUtc.GetHashCode();
       if (createdDateUtc_ != null) hash ^= CreatedDateUtc.GetHashCode();
       if (completedDateUtc_ != null) hash ^= CompletedDateUtc.GetHashCode();
+      if (Instructions.Length != 0) hash ^= Instructions.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1096,6 +1074,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         output.WriteRawTag(82);
         output.WriteMessage(CompletedDateUtc);
       }
+      if (Instructions.Length != 0) {
+        output.WriteRawTag(90);
+        output.WriteString(Instructions);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1146,6 +1128,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         output.WriteRawTag(82);
         output.WriteMessage(CompletedDateUtc);
       }
+      if (Instructions.Length != 0) {
+        output.WriteRawTag(90);
+        output.WriteString(Instructions);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1185,6 +1171,9 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       }
       if (completedDateUtc_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(CompletedDateUtc);
+      }
+      if (Instructions.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Instructions);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1237,6 +1226,9 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         }
         CompletedDateUtc.MergeFrom(other.CompletedDateUtc);
       }
+      if (other.Instructions.Length != 0) {
+        Instructions = other.Instructions;
+      }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -1248,11 +1240,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -1305,6 +1293,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             input.ReadMessage(CompletedDateUtc);
             break;
           }
+          case 90: {
+            Instructions = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -1316,11 +1308,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -1371,6 +1359,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
               CompletedDateUtc = new global::Google.Protobuf.WellKnownTypes.Timestamp();
             }
             input.ReadMessage(CompletedDateUtc);
+            break;
+          }
+          case 90: {
+            Instructions = input.ReadString();
             break;
           }
         }

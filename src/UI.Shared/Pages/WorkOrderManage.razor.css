@@ -107,6 +107,11 @@
     border: 2px solid #e2e8f0;
 }
 
+.instructions-readonly {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 .readonly-info {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

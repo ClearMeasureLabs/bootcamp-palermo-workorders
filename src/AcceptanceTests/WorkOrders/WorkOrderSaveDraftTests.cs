@@ -49,6 +49,9 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToHaveValueAsync(order.Description!);
 
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync(order.Instructions ?? "");
+
         var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
         await Expect(roomNumberField).ToHaveValueAsync(order.RoomNumber!);
 
@@ -56,6 +59,78 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
         rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldRetainInstructionsAfterSaveDraftAndReopen()
+    {
+        await LoginAsCurrentUser();
+
+        var instructionsText = "Step A\nStep B";
+        WorkOrder order = await CreateAndSaveNewWorkOrder(instructionsText);
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        var displayed = await instructionsField.InputValueAsync();
+        displayed.Replace("\r\n", "\n").ShouldBe(instructionsText.Replace("\r\n", "\n"));
+
+        WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        rehydratedOrder.Instructions.ShouldBe(instructionsText.Replace("\r\n", "\n"));
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldAllowBlankInstructionsOnSaveDraft()
+    {
+        await LoginAsCurrentUser();
+
+        WorkOrder order = await CreateAndSaveNewWorkOrder();
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveValueAsync("");
+
+        WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        rehydratedOrder.Instructions.ShouldBeNull();
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldSurfaceMaxLengthValidationWhenInstructionsExceed4000()
+    {
+        await LoginAsCurrentUser();
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), $"[{TestTag}] validation test");
+        await Input(nameof(WorkOrderManage.Elements.Description), "desc");
+        await InputBypassingHtmlConstraints(nameof(WorkOrderManage.Elements.Instructions), new string('z', 4001));
+        await Input(nameof(WorkOrderManage.Elements.RoomNumber), "101");
+
+        await Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name).ClickAsync();
+
+        await Expect(Page).Not.ToHaveURLAsync(new Regex(".*/workorder/search.*"));
+
+        var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsLocator).ToHaveValueAsync(new string('z', 4001));
+
+        var fieldMessage = Page.Locator(".instructions-validation-message");
+        var summaryItem = Page.Locator(".validation-summary li");
+        await Expect(fieldMessage.Or(summaryItem).First).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
     }
 
     [Test, Retry(2)]
