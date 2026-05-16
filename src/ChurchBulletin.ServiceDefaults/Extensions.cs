@@ -79,7 +79,6 @@ public static class Extensions
                     })
                     .AddSqlClientInstrumentation(options =>
                     {
-                        options.SetDbStatementForText = true;
                         options.RecordException = true;
                     })
                     .AddEntityFrameworkCoreInstrumentation(options =>
