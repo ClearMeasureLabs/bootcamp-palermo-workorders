@@ -21,6 +21,7 @@ public class WorkOrderShelvedTests : AcceptanceTestBase
         order.Description = "Description";
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
+        await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions ?? "");
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToAssignedCommand.Name);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 

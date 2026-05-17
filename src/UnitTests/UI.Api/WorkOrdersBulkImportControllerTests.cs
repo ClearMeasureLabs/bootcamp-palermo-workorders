@@ -9,6 +9,7 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shouldly;
+using System.Text;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 
@@ -19,7 +20,8 @@ public class WorkOrdersBulkImportControllerTests
     public async Task ShouldReturnBadRequest_WhenFileMissing()
     {
         var controller = new WorkOrdersBulkImportController(new StubBus(), new StubNumberGenerator());
-        var result = await controller.Post(null!, CancellationToken.None);
+        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
+        var result = await controller.Post(null, CancellationToken.None);
 
         var objectResult = result.ShouldBeOfType<ObjectResult>();
         objectResult.StatusCode.ShouldBe(400);
@@ -43,6 +45,30 @@ public class WorkOrdersBulkImportControllerTests
         payload.Results[0].Success.ShouldBeTrue();
         payload.Results[0].WorkOrderNumber.ShouldBe("WO-001");
         bus.SaveDraftCalls.ShouldBe(1);
+    }
+
+    [Test]
+    public async Task ShouldReturnOk_WhenCsvPostedAsUrlEncodedForm()
+    {
+        var creator = new Employee("u1", "A", "B", "a@b.c");
+        var bus = new StubBus { Employee = creator };
+        var controller = new WorkOrdersBulkImportController(bus, new StubNumberGenerator { Next = "WO-002" });
+
+        var csv = "Title,Description,CreatorUsername,Instructions\nT1,D1,u1,Bring ladder\n";
+        var body = "csv=" + Uri.EscapeDataString(csv);
+        var context = new DefaultHttpContext();
+        context.Request.Method = "POST";
+        context.Request.ContentType = "application/x-www-form-urlencoded; charset=utf-8";
+        context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
+        controller.ControllerContext = new ControllerContext { HttpContext = context };
+
+        var result = await controller.Post(null, CancellationToken.None);
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<WorkOrderBulkImportResponse>();
+        payload.CreatedCount.ShouldBe(1);
+        bus.SaveDraftCalls.ShouldBe(1);
+        bus.LastSavedInstructions.ShouldBe("Bring ladder");
     }
 
     private static IFormFile CreateFormFile(string csvContent)
@@ -69,6 +95,8 @@ public class WorkOrdersBulkImportControllerTests
 
         public int SaveDraftCalls { get; private set; }
 
+        public string? LastSavedInstructions { get; private set; }
+
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
         {
             if (request is EmployeeByUserNameQuery)
@@ -84,6 +112,7 @@ public class WorkOrdersBulkImportControllerTests
             if (request is SaveDraftCommand cmd)
             {
                 SaveDraftCalls++;
+                LastSavedInstructions = cmd.WorkOrder.Instructions;
                 return Task.FromResult((TResponse)(object)new StateCommandResult(cmd.WorkOrder, "Save", "ok"));
             }
 

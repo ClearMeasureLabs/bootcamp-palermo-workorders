@@ -50,6 +50,44 @@ public class WebServiceMessageValidationMiddlewareWebTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
+    [Test]
+    public async Task Should_Return200_When_PostedAsApplicationXWwwFormUrlEncoded_WithTypeNameAndBodyFields()
+    {
+        await using var factory = new WebServiceMessageValidationWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var message = new WebServiceMessage(new UserLoggedInEvent("testuser"));
+        var form =
+            "typeName=" + Uri.EscapeDataString(message.TypeName)
+            + "&body=" + Uri.EscapeDataString(message.Body);
+        using var content = new StringContent(
+            form,
+            Encoding.UTF8,
+            "application/x-www-form-urlencoded");
+
+        var response = await client.PostAsync(PublisherGateway.ApiRelativeUrlV1, content);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_Return400_When_FormUrlEncoded_MissingBodyField()
+    {
+        await using var factory = new WebServiceMessageValidationWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var message = new WebServiceMessage(new UserLoggedInEvent("testuser"));
+        var form = "typeName=" + Uri.EscapeDataString(message.TypeName);
+        using var content = new StringContent(
+            form,
+            Encoding.UTF8,
+            "application/x-www-form-urlencoded");
+
+        var response = await client.PostAsync(PublisherGateway.ApiRelativeUrlV1, content);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
     private static async Task<HttpResponseMessage> PostSingleApiAsync(
         HttpClient client,
         WebServiceMessage message)
