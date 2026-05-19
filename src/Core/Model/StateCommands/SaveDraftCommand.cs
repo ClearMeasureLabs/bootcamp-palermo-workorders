@@ -33,6 +33,11 @@ StateCommandBase(WorkOrder, CurrentUser)
             WorkOrder.CreatedDate = context.CurrentDateTime;
         }
 
+        if (WorkOrder.Title != null)
+        {
+            WorkOrder.Title = WorkOrder.Title.ToUpperInvariant();
+        }
+
         base.Execute(context);
     }
 }
