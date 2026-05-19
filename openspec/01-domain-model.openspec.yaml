@@ -1,0 +1,126 @@
+title: Domain Model Specification
+version: "1.0"
+date: 2026-05-19
+
+entities:
+
+  - name: WorkOrder
+    namespace: ClearMeasure.Bootcamp.Core.Model
+    base: EntityBase<WorkOrder>
+    properties:
+      - { name: Id, type: Guid }
+      - { name: Number, type: string }
+      - { name: Title, type: string }
+      - { name: Description, type: "string (max 4000)" }
+      - { name: RoomNumber, type: string }
+      - { name: Status, type: WorkOrderStatus }
+      - { name: Creator, type: Employee }
+      - { name: Assignee, type: "Employee?" }
+      - { name: CreatedDate, type: "DateTime?" }
+      - { name: AssignedDate, type: "DateTime?" }
+      - { name: CompletedDate, type: "DateTime?" }
+      - { name: Attachments, type: "ICollection<WorkOrderAttachment>" }
+      - { name: FriendlyStatus, type: string, computed: true }
+    methods:
+      - ChangeStatus(WorkOrderStatus)
+      - ChangeStatus(Employee, DateTime, WorkOrderStatus)
+      - GetMessage()
+      - "CanReassign() → true only when Status == Draft"
+
+  - name: Employee
+    namespace: ClearMeasure.Bootcamp.Core.Model
+    base: EntityBase<Employee>
+    implements: [IComparable<Employee>, IEquatable<Employee>]
+    properties:
+      - { name: Id, type: Guid }
+      - { name: UserName, type: "string (not null)" }
+      - { name: FirstName, type: "string (not null)" }
+      - { name: LastName, type: "string (not null)" }
+      - { name: EmailAddress, type: "string (not null)" }
+      - { name: PreferredLanguage, type: "string (default en-US)" }
+      - { name: Roles, type: "ISet<Role>" }
+    methods:
+      - "GetFullName() → string"
+      - "CanCreateWorkOrder() → bool"
+      - "CanFulfillWorkOrder() → bool"
+      - "CompareTo(Employee) — compares by LastName then FirstName"
+
+  - name: WorkOrderStatus
+    namespace: ClearMeasure.Bootcamp.Core.Model
+    type: smart_enum
+    instances:
+      - { name: Draft, code: DRT }
+      - { name: Assigned, code: ASD }
+      - { name: InProgress, code: IPG }
+      - { name: Complete, code: CMP }
+      - { name: Cancelled, code: CNL }
+      - { name: None, code: "" }
+    properties:
+      - { name: Code, type: string }
+      - { name: Key, type: string }
+      - { name: FriendlyName, type: string }
+      - { name: SortBy, type: byte }
+    factory_methods:
+      - "FromCode(string) → WorkOrderStatus"
+      - "FromKey(string) → WorkOrderStatus"
+      - "GetAllItems() → IEnumerable<WorkOrderStatus>"
+
+  - name: Role
+    namespace: ClearMeasure.Bootcamp.Core.Model
+    type: record
+    properties:
+      - { name: Id, type: Guid }
+      - { name: Name, type: string }
+      - { name: CanCreateWorkOrder, type: bool }
+      - { name: CanFulfillWorkOrder, type: bool }
+
+  - name: WorkOrderAttachment
+    namespace: ClearMeasure.Bootcamp.Core.Model
+    properties:
+      - { name: Id, type: Guid }
+      - { name: WorkOrderId, type: Guid }
+      - { name: FileName, type: string }
+      - { name: ContentType, type: string }
+      - { name: FileSize, type: long }
+      - { name: UploadedById, type: Guid }
+      - { name: UploadedDate, type: DateTime }
+      - { name: "UploadedBy", type: "Employee?" }
+
+state_machine:
+  entity: WorkOrder
+  states: [Draft, Assigned, InProgress, Complete, Cancelled]
+  transitions:
+    - { from: Draft, to: Draft, command: SaveDraftCommand, verb: Save, permission: Creator }
+    - { from: Draft, to: Assigned, command: DraftToAssignedCommand, verb: Assign, permission: Creator }
+    - { from: Assigned, to: InProgress, command: AssignedToInProgressCommand, verb: Begin, permission: Assignee }
+    - { from: InProgress, to: Complete, command: InProgressToCompleteCommand, verb: Complete, permission: Assignee }
+    - { from: InProgress, to: Assigned, command: InProgressToAssignedCommand, verb: Shelve, permission: Assignee }
+    - { from: Assigned, to: Cancelled, command: AssignedToCancelledCommand, verb: Cancel, permission: Creator }
+
+state_commands:
+  - name: SaveDraftCommand
+    transition: "Draft → Draft"
+    permission: Creator
+    side_effects: Sets CreatedDate if null
+  - name: DraftToAssignedCommand
+    transition: "Draft → Assigned"
+    permission: Creator
+    side_effects: Sets AssignedDate; publishes WorkOrderAssignedToBotEvent if assignee has Bot role
+  - name: AssignedToInProgressCommand
+    transition: "Assigned → InProgress"
+    permission: Assignee
+  - name: InProgressToCompleteCommand
+    transition: "InProgress → Complete"
+    permission: Assignee
+    side_effects: Sets CompletedDate
+  - name: InProgressToAssignedCommand
+    transition: "InProgress → Assigned"
+    permission: Assignee
+    verb_alias: Shelve
+  - name: AssignedToCancelledCommand
+    transition: "Assigned → Cancelled"
+    permission: Creator
+    side_effects: Clears AssignedDate and Assignee
+  - name: AddAttachmentMetadataCommand
+    type: "IRequest<WorkOrderAttachment>"
+    purpose: Creates attachment metadata record for a work order

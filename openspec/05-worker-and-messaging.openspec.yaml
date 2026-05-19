@@ -1,0 +1,75 @@
+title: Worker and Messaging Specification
+version: "1.0"
+date: 2026-05-19
+
+worker_service:
+  project: src/Worker
+  endpoint_name: WorkOrderProcessing
+  transport: SQL Server (NServiceBus)
+  schema: nServiceBus
+  persistence: SQL (outbox enabled, saga persistence enabled)
+  concurrency: "ProcessorCount × 2"
+  retry_policy:
+    immediate: 3
+    delayed: 3
+  telemetry: OpenTelemetry enabled
+  callbacks: RemotableBus HTTP client to UI.Server API
+
+message_handlers:
+  - name: EventHandler
+    handles: WorkOrderAssignedToBotEvent
+    behavior: Sends StartAiBotWorkOrderSagaCommand to initiate AI processing
+
+  - name: AiBotHandler
+    handles: WorkOrderAssignedToBotEvent
+    behavior: Placeholder for AI bot saga trigger
+
+  - name: TracerBulletHandler
+    handles: TracerBulletCommand
+    behavior: Replies with TracerBulletReplyMessage (proves NServiceBus pipeline connectivity)
+
+sagas:
+  - name: AiBotWorkerOrder
+    location: src/Worker/AiBotWorkerOrder/
+    purpose: AI bot saga for automated work order processing
+
+messaging_conventions:
+  class: MessagingConventions
+  command_suffix: Command
+  event_suffix: Event
+  message_suffix: Message
+
+nservicebus_endpoints:
+  - name: UI.Server
+    role: publisher
+    transport: "Learning (dev) or SQL Server (prod)"
+    publishes: [WorkOrderAssignedToBotEvent, TracerBulletCommand]
+  - name: WorkOrderProcessing (Worker)
+    role: consumer
+    transport: SQL Server
+    handles: [WorkOrderAssignedToBotEvent, TracerBulletCommand]
+    replies: [TracerBulletReplyMessage]
+
+messages:
+  - name: WorkOrderAssignedToBotEvent
+    type: event
+    implements: IStateTransitionEvent
+    published_when: Work order assigned to an employee with Bot role
+    
+  - name: TracerBulletCommand
+    type: command
+    purpose: End-to-end NServiceBus connectivity test
+
+  - name: TracerBulletReplyMessage
+    type: message
+    purpose: Reply confirming NServiceBus pipeline works
+
+  - name: StartAiBotWorkOrderSagaCommand
+    type: command
+    purpose: Initiates AI bot processing saga
+
+distributed_bus:
+  interface: IDistributedBus
+  implementation: DistributedBus
+  wraps: IMessageSession (NServiceBus)
+  method: "PublishAsync<TEvent>(TEvent, CancellationToken)"

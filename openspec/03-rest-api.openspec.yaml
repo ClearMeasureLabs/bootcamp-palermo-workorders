@@ -1,0 +1,150 @@
+title: REST API Specification
+version: "1.0"
+date: 2026-05-19
+
+api_versioning:
+  default: "v1.0"
+  reader: UrlSegmentApiVersionReader
+  format: "'v'majorVersion.minorVersion"
+
+rate_limiting:
+  policy: sliding_window
+  scope: "/api/*"
+  excludes: [/api/ping, /api/time, /api/version, /_healthcheck]
+
+authentication:
+  api_key:
+    scope: "/api/*"
+    excludes: [/api/ping, /api/time, /api/version]
+    comparison: fixed-time UTF-8
+    response_on_fail: 401 Unauthorized
+
+controllers:
+
+  - name: SingleApiController
+    routes: [api/, "api/v1.0/"]
+    methods:
+      - verb: POST
+        action: Post
+        request: WebServiceMessage (JSON)
+        response: serialized result string
+        behavior: |
+          Deserializes IRemotableRequest or IRemotableEvent from WebServiceMessage JSON.
+          Sends via IBus, returns serialized result.
+          This is the primary API endpoint for all CQRS operations.
+
+  - name: PingController
+    routes: [api/ping, "api/v1.0/ping"]
+    methods:
+      - verb: GET
+        action: Get
+        response: "text/plain: pong"
+        auth: anonymous
+        rate_limited: true
+
+  - name: VersionController
+    routes: [api/version, "api/v1.0/version"]
+    methods:
+      - verb: GET
+        action: Get
+        response: "VersionMetadataResponse (assembly version, info version, environment, machine, framework)"
+        auth: anonymous
+        rate_limited: true
+        cached: 10 minutes
+
+  - name: TimeController
+    routes: [api/time, "api/v1.0/time"]
+    methods:
+      - verb: GET
+        action: Get
+        response: "text/plain: UTC ISO 8601 timestamp"
+        auth: anonymous
+        rate_limited: true
+        cached: true
+
+  - name: DiagnosticsController
+    routes: [api/diagnostics, "api/v1.0/diagnostics"]
+    methods:
+      - verb: GET
+        action: Get
+        response: "DiagnosticsResponse (environment, uptime, feature flags)"
+        rate_limited: true
+
+  - name: DiagnosticController
+    routes: [_diagnostics]
+    methods:
+      - verb: POST
+        action: ResetDbConnections
+        response: OK
+        behavior: Clears SQL connection pools
+
+  - name: DetailedHealthController
+    routes: [api/health, "api/v1.0/health"]
+    methods:
+      - verb: GET
+        action: Get
+        response: SimpleHealthResponse (uptime)
+        rate_limited: true
+      - verb: GET
+        action: GetDetailed
+        route_suffix: /detailed
+        response: DetailedHealthReport (all check results)
+        rate_limited: true
+
+  - name: WeatherForecastController
+    routes: [WeatherForecast]
+    methods:
+      - verb: GET
+        action: Get
+        response: "WeatherForecast[] (5-day sample)"
+        cached: 30 seconds
+        rate_limited: true
+
+  - name: WorkOrdersBulkImportController
+    routes: [api/work-orders/bulk-import]
+    methods:
+      - verb: POST
+        action: Post
+        request: "multipart/form-data (IFormFile, field: file)"
+        response: WorkOrderBulkImportResponse
+        constraints:
+          max_file_size: 10MB
+          format: CSV
+          csv_headers: [Title, Description, CreatorUsername, "RoomNumber (optional)"]
+        auth: anonymous
+        rate_limited: true
+        behavior: |
+          Parses CSV, creates draft WorkOrder per row via SaveDraftCommand.
+          Returns created count and per-row results.
+
+  - name: WhatDoIHaveController
+    routes: [/_lamar/services, /_lamar/scanning]
+    methods:
+      - verb: GET
+        action: services / scanning
+        response: Lamar container diagnostics
+        purpose: DI debugging
+
+health_check_endpoints:
+  - route: /_healthcheck
+    type: simple
+    response: standard ASP.NET Core health response
+  - route: /_healthcheck/detailed
+    type: detailed
+    response: DetailedHealthCheckResponseWriter JSON
+  - route: "/_demo/setneedsreboot/{bool}"
+    type: test_toggle
+    purpose: Toggle NeedsRebootHealthCheck for demo
+
+health_checks:
+  - CanConnectToDatabaseHealthCheck
+  - CanConnectToLlmServerHealthCheck
+  - Is64BitProcessHealthCheck
+  - NeedsRebootHealthCheck
+  - FunJeffreyCustomEventHealthCheck
+
+test_endpoints:
+  condition: "ASPNETCORE_ENVIRONMENT == Testing"
+  routes:
+    - { method: "POST/PUT", route: "/api/_test/idempotency-probe" }
+    - { method: GET, route: "/api/_test/request-timeout-probe", timeout: 500ms }

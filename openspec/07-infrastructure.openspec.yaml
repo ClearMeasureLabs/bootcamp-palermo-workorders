@@ -1,0 +1,143 @@
+title: Infrastructure and Cross-Cutting Concerns Specification
+version: "1.0"
+date: 2026-05-19
+
+deployment:
+  platform: Azure Container Apps
+  orchestration: .NET Aspire (AppHost)
+  registry: Azure Container Registry
+  services:
+    - name: ui-server
+      type: Container App
+      runtime: "Linux / .NET 10"
+      hosts: [Blazor Server, REST APIs, gRPC, MCP endpoint, NServiceBus publisher]
+    - name: worker
+      type: Container App
+      runtime: "Linux / .NET 10"
+      hosts: [NServiceBus consumer, AI bot sagas]
+  database:
+    type: Azure SQL Database
+    dual_purpose: Application state + NServiceBus transport
+
+dependency_injection:
+  container: Lamar
+  registry: UIServiceRegistry (src/UI/Server/UIServiceRegistry.cs)
+  auto_scanning: MediatR handlers, validators (assembly scanning)
+  key_registrations:
+    - { interface: IBus, impl: ServerRealtimeBus }
+    - { interface: IDistributedBus, impl: DistributedBus }
+    - { interface: IWorkOrderNumberGenerator, impl: WorkOrderNumberGenerator }
+    - { interface: IDetailedHealthReportProvider, impl: DetailedHealthReportProvider }
+    - { interface: IRealtimeNotificationHub, impl: RealtimeNotificationHub, lifetime: singleton }
+
+middleware:
+  - name: IdempotencyMiddleware
+    purpose: Request deduplication via idempotency keys
+    configurable: IdempotencyOptions
+
+  - name: WebServiceMessageValidationMiddleware
+    purpose: Validates WebServiceMessage payload structure (FluentValidation)
+
+  - name: ApiKeyAuthenticationMiddleware
+    purpose: Optional shared API key on /api/* routes
+    excludes: [/api/ping, /api/time, /api/version]
+    response_on_fail: 401
+    configurable: ApiKeyAuthenticationOptions
+
+  - name: ProblemDetailsExceptionHandler
+    purpose: Converts unhandled exceptions to RFC 7807 ProblemDetails
+    behavior: JSON for API clients, HTML for browsers
+
+  - name: RequestBodyBuffering
+    purpose: Allows request body re-reading for logging/validation
+
+  - name: RateLimiting
+    policy: sliding_window
+    scope: "/api/*"
+    configurable: RateLimitingOptions
+
+  - name: ResponseCompression
+    algorithms: [Brotli, Gzip]
+    https_compression: enabled
+
+  - name: OutputCaching
+    policies:
+      - { name: VersionMetadata, duration: 10min }
+      - { name: WeatherSample, duration: 30sec }
+
+  - name: ServerCors
+    purpose: CORS policy registration
+
+monitoring:
+  application_insights:
+    connection: APPLICATIONINSIGHTS_CONNECTION_STRING (env var)
+    packages: [Azure.Monitor.OpenTelemetry.AspNetCore, Microsoft.ApplicationInsights.AspNetCore]
+  opentelemetry:
+    enabled: true
+    scopes: [NServiceBus endpoints, gRPC services, HTTP requests]
+    exporter: Application Insights (via Azure Monitor)
+  logging:
+    framework: Serilog
+    format: Rendered Compact JSON (console)
+    configuration: appsettings.json Serilog section
+  metrics:
+    meter: "ChurchBulletin.Application v1.0.0"
+    counters: ["app.user.logins"]
+
+external_integrations:
+  azure_openai:
+    config_vars: [AI_OpenAI_ApiKey, AI_OpenAI_Url, AI_OpenAI_Model]
+    package: Azure.AI.OpenAI 2.1.0
+    gateway: LlmGateway project
+    health_check: CanConnectToLlmServerHealthCheck
+    degradation: Graceful — empty vars disable AI features without crash
+
+  nservicebus:
+    license: Trial mode (warning logged, not production-supported)
+    transport: SQL Server or Learning (development)
+    persistence: SQL (outbox + saga store)
+    schema: nServiceBus
+
+  aspire:
+    sdk: Aspire.AppHost.Sdk 13.1.2
+    service_discovery: Microsoft.Extensions.ServiceDiscovery 9.5.0
+    resilience: Microsoft.Extensions.Http.Resilience 9.9.0
+
+validation:
+  framework: FluentValidation
+  validators_for:
+    - SaveDraftCommand
+    - DraftToAssignedCommand
+    - AssignedToInProgressCommand
+    - InProgressToAssignedCommand
+    - InProgressToCompleteCommand
+    - AssignedToCancelledCommand
+    - WorkOrderByNumberQuery
+    - WorkOrderSpecificationQuery
+    - WorkOrderAttachmentsQuery
+    - EmployeeByUserNameQuery
+    - EmployeeGetAllQuery
+    - ForecastQuery
+    - UserLoggedInEvent
+    - WebServiceMessage
+    - HealthCheckRemotableRequest
+
+bulk_import:
+  endpoint: "POST /api/work-orders/bulk-import"
+  format: CSV
+  max_size: 10MB
+  headers: [Title, Description, CreatorUsername, "RoomNumber (optional)"]
+  parser: WorkOrderBulkImportCsvParser
+  response: WorkOrderBulkImportResponse (created count, per-row results)
+
+build_and_test:
+  build_commands:
+    - "dotnet build src/ChurchBulletin.sln --configuration Release"
+    - "pwsh PrivateBuild.ps1 (full: compile + unit tests + DB migration + integration tests)"
+  test_projects:
+    - { name: UnitTests, framework: "NUnit 4.x + Shouldly", assertions: Shouldly }
+    - { name: IntegrationTests, framework: "NUnit 4.x + Shouldly", requires: SQL Server }
+    - { name: AcceptanceTests, framework: "NUnit + Playwright", requires: running application }
+  quality_gates:
+    - { when: "Before commit", command: "PrivateBuild.ps1" }
+    - { when: "Before PR", command: "acceptancetests.ps1" }

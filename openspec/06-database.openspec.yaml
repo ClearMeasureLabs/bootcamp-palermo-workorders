@@ -1,0 +1,56 @@
+title: Database and Migrations Specification
+version: "1.0"
+date: 2026-05-19
+
+database:
+  engine: SQL Server
+  development: LocalDB (Windows) or Docker container (Linux) or SQLite fallback
+  production: Azure SQL Database
+  orm: Entity Framework Core 10
+  migration_tool: DbUp
+  scripts_location: src/Database/scripts/Update/
+  naming_convention: "###_Description.sql"
+  indentation: TABS
+
+entity_mappings:
+  location: src/DataAccess/Mappings/
+  entities: [WorkOrder, Employee, Role, WorkOrderAttachment, WeatherForecast]
+
+migrations:
+  - { number: "001", description: "Schema setup" }
+  - { number: "003", description: "Create Employee, WorkOrder, Role, EmployeeRole tables" }
+  - { number: "004", description: "Rename constraints to standard names" }
+  - { number: "005", description: "Add Number column to WorkOrder" }
+  - { number: "006", description: "Make Assignee nullable" }
+  - { number: "007", description: "Change Status column to CHAR type" }
+  - { number: "008", description: "Seed employee records" }
+  - { number: "009", description: "Add audit entry table" }
+  - { number: "010", description: "Extend Role table" }
+  - { number: "011", description: "EmployeeRole junction table" }
+  - { number: "012", description: "Manager/Secretary role seed data" }
+  - { number: "013", description: "Secretary column addition" }
+  - { number: "014", description: "Employee data consolidation" }
+  - { number: "015", description: "Remove audit entries, secretary, and manager columns" }
+  - { number: "016", description: "Add RoomNumber to WorkOrder" }
+  - { number: "017a", description: "Re-add audit entry table" }
+  - { number: "017b", description: "Add CreatedDate and CompletedDate to WorkOrder" }
+  - { number: "018", description: "Add AssignedDate to WorkOrder" }
+  - { number: "020", description: "Drop audit entry table" }
+  - { number: "021", description: "Extend WorkOrder Number field length" }
+  - { number: "022", description: "Create NServiceBus schema" }
+  - { number: "023", description: "Migrate existing cancelled work orders" }
+  - { number: "024", description: "Extend WorkOrder Title length" }
+  - { number: "025", description: "Add WorkOrderAttachment table (FK cascade to WorkOrder, FK to Employee)" }
+  - { number: "026", description: "Add PreferredLanguage to Employee" }
+  - { number: "027", description: "Update WorkOrder default status code DFT→DRT" }
+
+schemas:
+  - name: dbo
+    purpose: Application tables (WorkOrder, Employee, Role, WorkOrderAttachment)
+  - name: nServiceBus
+    purpose: NServiceBus transport tables (queues, sagas, outbox)
+
+data_context:
+  class: DataContext
+  namespace: ClearMeasure.Bootcamp.DataAccess
+  entities: [WorkOrder, Employee, Role, WorkOrderAttachment, WeatherForecast]

@@ -1,0 +1,137 @@
+title: User Interface Specification
+version: "1.0"
+date: 2026-05-19
+
+ui_technology:
+  framework: Blazor
+  hosting_models: [WebAssembly, Server]
+  layout: MainLayout.razor with NavMenu.razor
+  styling: Component-scoped CSS
+
+pages:
+  - route: "/"
+    component: Index.razor
+    location: UI.Shared/Pages
+    purpose: Welcome page — greeting banner, church info cards
+
+  - route: "/counter"
+    component: Counter.razor
+    location: UI.Shared/Pages
+    purpose: Activity counter with increment/reset buttons
+    test_ids: [counter-value, increment-button, reset-button]
+
+  - route: "/ai-agent"
+    component: ApplicationChat.razor
+    location: UI.Shared/Pages
+    purpose: AI chat interface — sends prompts, displays conversation history
+
+  - component: FetchData.razor
+    location: UI.Shared/Pages
+    purpose: Weather forecast table (sample data, church planning integration)
+
+  - component: WorkOrderSearch.razor
+    location: UI.Shared/Pages
+    purpose: |
+      Search/filter work orders by Creator, Assignee, Status.
+      Displays results grid with links to edit each work order.
+
+  - component: WorkOrderManage.razor
+    location: UI.Shared/Pages
+    purpose: |
+      CRUD form for work orders.
+      Fields: Title, Description, RoomNumber, Assignee, dates.
+      Modes: Create, Edit, View.
+      Executes state commands (Save, Assign, Begin, Complete, Shelve, Cancel).
+
+  - component: Settings.razor
+    location: UI.Shared/Pages
+    purpose: Dark mode toggle
+
+  - route: "/_clienthealthcheck"
+    component: ClientHealthCheck.razor
+    location: UI.Client
+    purpose: Basic client-side health check
+
+  - route: "/_clienthealthcheck/detailed"
+    component: DetailedClientHealthCheck.razor
+    location: UI.Client
+    purpose: Detailed client-side health check
+
+shared_components:
+  - name: LoginLink.razor
+    purpose: Link to login
+  - name: Logout.razor
+    purpose: Logout action
+  - name: LastWorkOrder.razor
+    purpose: Displays most recent work order
+  - name: MyWorkOrders.razor
+    purpose: Reactive list of current user's work orders
+    implements: "IListener<WorkOrderChangedEvent>"
+  - name: WorkOrderChat.razor
+    purpose: Chat UI for selected work order — sends queries to AI, displays responses
+    implements: "IListener<WorkOrderSelectedEvent>"
+  - name: HealthCheckLink.razor
+    purpose: Navigation link to health check page
+
+layout:
+  - name: MainLayout.razor
+    purpose: Outer page container, nav menu, main content area
+  - name: NavMenu.razor
+    purpose: Navigation links — Home, Counter, Work Orders, AI Agent, Settings
+
+grpc_service:
+  proto_file: src/UI/Server/Protos/workorders.proto
+  service_name: WorkOrders
+  transport: HTTP/2
+  auth: anonymous
+  rpcs:
+    - name: Ping
+      request: PingRequest (empty)
+      response: "PingReply { message: string }"
+      purpose: Smoke test
+    - name: GetWorkOrderByNumber
+      request: "GetWorkOrderByNumberRequest { number: string }"
+      response: "GetWorkOrderByNumberReply { work_order: WorkOrder }"
+      purpose: Fetch work order by number
+  proto_work_order_message:
+    fields: [number, title, description, room_number, status_key, creator_username, assignee_username, assigned_date_utc, created_date_utc, completed_date_utc]
+
+mcp_server:
+  transport: HTTP
+  endpoint: /mcp
+  server_info: "ChurchBulletin v1.0.0"
+  tools:
+    - name: list-work-orders
+      params: "{ status?: string }"
+      returns: "WorkOrder[] as JSON"
+      behavior: List all work orders, optionally filtered by status
+
+    - name: get-work-order
+      params: "{ workOrderNumber: string }"
+      returns: "WorkOrder as JSON"
+
+    - name: create-work-order
+      params: "{ title, description, creatorUsername, roomNumber? }"
+      returns: "WorkOrder as JSON"
+      behavior: Creates a draft work order
+
+    - name: execute-work-order-command
+      params: "{ workOrderNumber, commandName, executingUsername, assigneeUsername? }"
+      returns: "StateCommandResult as JSON"
+      supported_commands: [DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand, InProgressToCompleteCommand, AssignedToCancelledCommand]
+
+    - name: list-work-order-attachments
+      params: "{ workOrderNumber: string }"
+      returns: "WorkOrderAttachment[] as JSON"
+
+    - name: list-employees
+      params: "{}"
+      returns: "Employee[] as JSON"
+
+    - name: get-employee
+      params: "{ username: string }"
+      returns: "Employee as JSON"
+
+  resources:
+    provider: ReferenceResources
+    purpose: Provides resource definitions accessible to MCP clients

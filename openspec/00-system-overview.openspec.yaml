@@ -1,0 +1,67 @@
+title: ChurchBulletin Work Order System — Overview
+version: "1.0"
+date: 2026-05-19
+status: current
+
+summary: |
+  Work Order management system for church facilities. Staff create, assign, track,
+  and complete maintenance work orders. Built on .NET 10.0, Blazor (WASM + Server),
+  EF Core 10, SQL Server, MediatR CQRS, NServiceBus messaging, and Lamar DI.
+  Deployed to Azure Container Apps with Azure SQL, Azure OpenAI, and Application Insights.
+
+architecture:
+  pattern: Onion Architecture
+  layers:
+    - name: Core
+      purpose: Domain models, interfaces, queries, commands, validation rules
+      dependencies: none
+    - name: DataAccess
+      purpose: EF Core context, MediatR handlers, entity mappings
+      dependencies: [Core]
+    - name: UI.Server
+      purpose: ASP.NET Core host — Blazor Server, REST APIs, gRPC, MCP, NServiceBus endpoint
+      dependencies: [Core, DataAccess, LlmGateway, UI.Shared]
+    - name: UI.Client
+      purpose: Blazor WebAssembly client
+      dependencies: [Core, UI.Shared]
+    - name: UI.Api
+      purpose: API controllers (versioned, rate-limited)
+      dependencies: [Core]
+    - name: UI.Shared
+      purpose: Shared Blazor pages, components, layouts
+      dependencies: [Core]
+    - name: Worker
+      purpose: NServiceBus background message processor
+      dependencies: [Core, DataAccess, LlmGateway]
+    - name: LlmGateway
+      purpose: Azure OpenAI integration
+      dependencies: [Core]
+    - name: McpServer
+      purpose: Model Context Protocol tools and resources
+      dependencies: [Core, DataAccess]
+    - name: Database
+      purpose: DbUp migration runner
+      dependencies: none
+    - name: AppHost
+      purpose: Aspire orchestration
+      dependencies: [UI.Server, Worker]
+    - name: ServiceDefaults
+      purpose: Shared configuration — health checks, logging, OpenTelemetry, service discovery
+      dependencies: none
+
+request_flow: |
+  User → Blazor UI → API Controller → IBus.Send(query/command)
+    → MediatR → Handler (DataAccess) → DataContext (EF Core) → SQL Server
+
+technology_stack:
+  framework: .NET 10.0 (Preview)
+  ui: Blazor WebAssembly + Server
+  orm: Entity Framework Core 10
+  database: SQL Server (Azure SQL in production, LocalDB in development)
+  messaging: NServiceBus (SQL Server transport)
+  di_container: Lamar
+  cqrs: MediatR 12.4.1
+  ai: Azure OpenAI (via Microsoft.Extensions.AI)
+  hosting: Azure Container Apps
+  monitoring: Application Insights + OpenTelemetry
+  orchestration: .NET Aspire

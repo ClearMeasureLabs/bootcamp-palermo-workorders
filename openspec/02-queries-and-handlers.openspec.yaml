@@ -1,0 +1,86 @@
+title: Queries and Handlers Specification
+version: "1.0"
+date: 2026-05-19
+
+queries:
+  - name: WorkOrderByNumberQuery
+    request: "{ Number: string }"
+    response: "WorkOrder?"
+    remotable: true
+    handler: WorkOrderQueryHandler
+    behavior: Finds work order by Number field (AsNoTracking)
+
+  - name: WorkOrderSpecificationQuery
+    request: "{ StatusKey: string?, Assignee: Employee?, Creator: Employee? }"
+    response: "WorkOrder[]"
+    remotable: true
+    handler: WorkOrderSearchHandler
+    behavior: Filters work orders by assignee, creator, and/or status
+
+  - name: EmployeeByUserNameQuery
+    request: "{ Username: string }"
+    response: Employee
+    remotable: true
+    handler: EmployeeQueryHandler
+    behavior: Loads employee with Roles included
+
+  - name: EmployeeGetAllQuery
+    request: "{}"
+    response: "Employee[]"
+    remotable: true
+    handler: EmployeeQueryHandler
+    behavior: Returns all employees sorted by LastName, FirstName; optionally filters by CanFulfill
+
+  - name: WorkOrderAttachmentsQuery
+    request: "{ WorkOrderId: Guid }"
+    response: "WorkOrderAttachment[]"
+    remotable: true
+    handler: AddAttachmentMetadataCommandHandler
+    behavior: Returns attachments for a given work order
+
+  - name: ForecastQuery
+    request: "{}"
+    response: "WeatherForecast[]"
+    remotable: true
+    handler: ForecastQueryHandler
+    behavior: Returns hardcoded 5-day forecast (sample data)
+
+handlers:
+  - name: StateCommandHandler
+    handles: "StateCommandBase → StateCommandResult"
+    behavior: |
+      Executes state command on work order.
+      Inserts if WorkOrder.Id == Guid.Empty, else updates.
+      Clears EF ChangeTracker to prevent stale references.
+      Publishes StateTransitionEvent via IDistributedBus if present.
+
+  - name: WorkOrderQueryHandler
+    handles: [WorkOrderByNumberQuery, WorkOrderSpecificationQuery]
+    behavior: Reads from DataContext with AsNoTracking
+
+  - name: EmployeeQueryHandler
+    handles: [EmployeeByUserNameQuery, EmployeeGetAllQuery]
+    behavior: Loads employees with Roles; sorts results
+
+  - name: ForecastQueryHandler
+    handles: [ForecastQuery]
+    behavior: Returns sample weather data
+
+  - name: AddAttachmentMetadataCommandHandler
+    handles: [AddAttachmentMetadataCommand]
+    behavior: Creates WorkOrderAttachment entity, persists to DB
+
+  - name: TelemetryHandler
+    handles: "UserLoggedInEvent (INotificationHandler)"
+    behavior: |
+      Increments login counter metric (app.user.logins).
+      Meter: ChurchBulletin.Application v1.0.0.
+      Logs username.
+
+bus_abstraction:
+  interface: IBus
+  implementation: ServerRealtimeBus
+  wraps: "IMediator + IRealtimeNotificationHub"
+  distributed_interface: IDistributedBus
+  distributed_implementation: DistributedBus
+  wraps_distributed: IMessageSession (NServiceBus)
