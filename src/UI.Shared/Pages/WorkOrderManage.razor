@@ -58,6 +58,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="Instructions" class="form-label">Instructions:</label>
+                    <div>
+                        <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" disabled="@Model.IsReadOnly" aria-describedby="InstructionsHelp"/>
+                        <span id="InstructionsHelp" class="visually-hidden">Execution guidance for the assignee.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="RoomNumber" class="form-label">Room:</label>
                     <div>
                         <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
@@ -146,6 +154,7 @@
         AssigneeFullName,
         RoomNumber,
         Description,
+        Instructions,
         AssignedDate,
         CompletedDate,
         CreatedDate,
