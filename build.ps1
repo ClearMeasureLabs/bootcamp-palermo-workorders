@@ -97,7 +97,7 @@ Function Compile {
 			/p:TreatWarningsAsErrors="true" `
 			/p:MSBuildTreatAllWarningsAsErrors="true" `
 			/p:SuppressNETCoreSdkPreviewMessage=true `
-			/p:Version=$version /p:Authors="Programming with Palermo" `
+			/p:Version=$version /p:Authors="Programming with Palermo" /p:WarningsAsError=NU1902 `
 			/p:Product="Church Bulletin"
 	}
 }

@@ -85,8 +85,16 @@ builder.Services.AddResponseCompression(options =>
     options.Providers.Add<GzipCompressionProvider>();
 });
 
-// Add Application Insights
-builder.Services.AddApplicationInsightsTelemetry();
+// Add Application Insights if a connection string is present
+var aiConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
+                         ?? builder.Configuration["ApplicationInsights:ConnectionString"];
+if (!string.IsNullOrWhiteSpace(aiConnectionString))
+{
+    builder.Services.AddApplicationInsightsTelemetry(options =>
+    {
+        options.ConnectionString = aiConnectionString;
+    });
+}
 
 // Add MCP server (HTTP transport at /mcp)
 builder.Services

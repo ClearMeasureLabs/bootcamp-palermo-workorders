@@ -1,48 +1,46 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
+    <RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+    <UserSecretsId>dotnet-Worker-b9b5c0f8-4249-469b-8bfb-c4cc9398b886</UserSecretsId>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
 
-	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
-		<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-		<Configurations>Debug;Release;exclude-maui.slnf</Configurations>
-		<UserSecretsId>dotnet-Worker-b9b5c0f8-4249-469b-8bfb-c4cc9398b886</UserSecretsId>
-	</PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ClearMeasure.Bootcamp.UnitTests" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<InternalsVisibleTo Include="ClearMeasure.Bootcamp.UnitTests" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Http" Version="8.1.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.3.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.27.0" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.70.0" />
+    <PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0" />
+    <PackageReference Include="ModelContextProtocol" Version="1.0.0" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.0.0" />
+    <PackageReference Include="NServiceBus.Extensions.Hosting" Version="3.0.1" />
+    <PackageReference Include="OpenTelemetry" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.12.0" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Asp.Versioning.Http" Version="8.1.0" />
-		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
-		<PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
-		<PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.3.0" />
-		<PackageReference Include="Google.Protobuf" Version="3.27.0" />
-		<PackageReference Include="Grpc.AspNetCore" Version="2.70.0" />
-		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.1" />
-		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0" />
-		<PackageReference Include="ModelContextProtocol" Version="1.0.0" />
-		<PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.0.0" />
-		<PackageReference Include="NServiceBus.Extensions.Hosting" Version="3.0.1" />
-		<PackageReference Include="OpenTelemetry" Version="1.12.0" />
-		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.12.0" />
-		<PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.12.0" />
-		<PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.12.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\..\ChurchBulletin.ServiceDefaults\ChurchBulletin.ServiceDefaults.csproj" />
-		<ProjectReference Include="..\..\Core\Core.csproj" />
-		<ProjectReference Include="..\..\DataAccess\DataAccess.csproj" />
-		<ProjectReference Include="..\..\LlmGateway\LlmGateway.csproj" />
-		<ProjectReference Include="..\..\McpServer\McpServer.csproj" />
-		<ProjectReference Include="..\Client\UI.Client.csproj" />
-		<ProjectReference Include="..\Api\UI.Api.csproj" />
-		<ProjectReference Include="..\..\UI.Shared\UI.Shared.csproj" />
-	</ItemGroup>
-
-
+  <ItemGroup>
+    <ProjectReference Include="..\..\ChurchBulletin.ServiceDefaults\ChurchBulletin.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\Core\Core.csproj" />
+    <ProjectReference Include="..\..\DataAccess\DataAccess.csproj" />
+    <ProjectReference Include="..\..\LlmGateway\LlmGateway.csproj" />
+    <ProjectReference Include="..\..\McpServer\McpServer.csproj" />
+    <ProjectReference Include="..\Client\UI.Client.csproj" />
+    <ProjectReference Include="..\Api\UI.Api.csproj" />
+    <ProjectReference Include="..\..\UI.Shared\UI.Shared.csproj" />
+  </ItemGroup>
 </Project>

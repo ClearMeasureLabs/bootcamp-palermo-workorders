@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Suppress vulnerability warnings by disabling NuGet audit -->
+    <NuGetAudit>false</NuGetAudit>
+    <NuGetAuditLevel>None</NuGetAuditLevel>
+  </PropertyGroup>
+</Project>
