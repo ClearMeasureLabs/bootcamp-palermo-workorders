@@ -62,3 +62,7 @@ Several PlantUML files include remote C4 library snippets via `!includeurl`. To 
 | `arch-c4-component-project-dependencies.md` | C4Component | Solution/project structure |
 | `arch-c4-class-domain-model.md` | C4Component | Work order domain model |
 | `WorflowFor*.md` | Sequence | Command workflow sequence diagrams |
+| `arch-c4-container-ai-azure-ai-foundry-chat.puml` | C4Container | Reference: Azure AI Foundry for a chat-style client (managed inference) |
+| `arch-c4-container-ai-foundry-local-phi4.puml` | C4Container | Reference: Foundry Local with Phi-4 on an edge host (no cloud LLM) |
+| `arch-c4-container-ai-ollama-microsoft-extensions-ai.puml` | C4Container | Reference: `Microsoft.Extensions.AI` / LlmGateway with Ollama on the LAN |
+| `arch-c4-container-ai-rag-workorders.puml` | C4Container | Reference: RAG pipeline—vectorize work orders, similarity search, LLM answers |

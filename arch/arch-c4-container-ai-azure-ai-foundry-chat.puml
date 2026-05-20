@@ -1,0 +1,48 @@
+@startuml
+!include templates/plantuml-theme.puml
+
+scale 2/3
+left to right direction
+center header
+    C4 Architecture: Container Diagram Header
+endheader
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+title Reference / target — Church Bulletin with Azure AI Foundry (chat-style client)
+
+Person(user, "Church Staff", "Pastor, volunteer, or leader")
+
+System_Boundary(system, "Church Bulletin") {
+    Container(ui, "Blazor WASM Client", "Blazor WebAssembly", "Interactive browser app (example chat-style AI surface)")
+    Container(server, "UI Server", "ASP.NET / Azure Container App", "Hosts API, Blazor Server, MCP; calls LLM stack in-process (LlmGateway)")
+    Container(worker, "Worker", ".NET Worker Service", "NServiceBus endpoint for async processing")
+    Container(mcpServer, "MCP Server", "ASP.NET", "Model Context Protocol tools for AI agents")
+    ContainerDb(db, "Database", "Azure SQL Server", "Work orders, employees, roles")
+    ContainerDb(nsbTransport, "NServiceBus Transport", "SQL Server", "Message queues and saga persistence")
+}
+
+System_Ext(azureAIFoundry, "Azure AI Foundry", "Managed models and endpoints; chat completion APIs (HTTPS)")
+System_Ext(telemetry, "Application Insights / OpenTelemetry", "Tracing, metrics, and logs")
+
+Rel(user, ui, "Uses (chat UI)", "HTTPS")
+Rel(ui, server, "Calls API", "HTTPS")
+Rel(server, db, "Reads/writes", "EF Core / TCP")
+Rel(server, nsbTransport, "Sends messages", "NServiceBus")
+Rel(worker, nsbTransport, "Processes messages", "NServiceBus")
+Rel(worker, db, "Reads/writes", "EF Core / TCP")
+Rel(server, mcpServer, "Hosts at /mcp", "HTTP")
+Rel(server, azureAIFoundry, "Chat completions (via Microsoft.Extensions.AI / LlmGateway)", "HTTPS")
+Rel(worker, azureAIFoundry, "Optional LLM calls", "HTTPS")
+Rel(server, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+Rel(worker, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+Rel(mcpServer, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+
+note right of azureAIFoundry
+  Shipped product today is closer to Azure OpenAI;
+  this diagram illustrates an Azure AI Foundry–backed chat path.
+end note
+
+LEGEND("Legend","UI: Blazor WASM (example chat client)\nServer: UI Server + in-process LlmGateway\nWorker: background processors\nFoundry: Azure AI Foundry (managed inference)\nDB: transactional SQL\nVector / RAG: not shown — see RAG diagram")
+FOOTER()
+@enduml

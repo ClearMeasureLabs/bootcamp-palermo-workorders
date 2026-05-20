@@ -1,0 +1,46 @@
+@startuml
+!include templates/plantuml-theme.puml
+
+scale 2/3
+left to right direction
+center header
+    C4 Architecture: Container Diagram Header
+endheader
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+title Reference / target — RAG over work orders (vector store + LLM)
+
+Person(user, "Church Staff", "Pastor, volunteer, or leader")
+
+System_Boundary(system, "Church Bulletin") {
+    Container(ui, "Blazor WASM Client", "Blazor WebAssembly", "Search and reporting UI")
+    Container(server, "UI Server", "ASP.NET / Azure Container App", "Retriever orchestration, API, Blazor Server")
+    Container(worker, "Worker", ".NET Worker Service", "Indexing / embedding jobs; NServiceBus endpoint")
+    Container(mcpServer, "MCP Server", "ASP.NET", "Optional agent tools over work-order knowledge")
+    ContainerDb(db, "Database", "Azure SQL Server", "Source work orders, employees, roles")
+    ContainerDb(vectorDb, "Vector store", "Azure AI Search or pgvector (example)", "Chunked work-order embeddings for semantic search")
+    ContainerDb(nsbTransport, "NServiceBus Transport", "SQL Server", "Message queues and saga persistence")
+}
+
+System_Ext(llm, "LLM and embedding endpoint", "Azure OpenAI, Foundry, or Ollama (example); embeddings and chat for RAG")
+System_Ext(telemetry, "Application Insights / OpenTelemetry", "Tracing, metrics, and logs")
+
+Rel(user, ui, "Semantic search / reports", "HTTPS")
+Rel(ui, server, "RAG query", "HTTPS")
+Rel(server, vectorDb, "similarity search", "HTTPS / TCP")
+Rel(server, llm, "RAG completion (retrieved context)", "HTTPS")
+Rel(server, db, "Authoritative reads (optional)", "EF Core / TCP")
+Rel(server, nsbTransport, "Sends messages", "NServiceBus")
+Rel(worker, nsbTransport, "Processes messages", "NServiceBus")
+Rel(worker, db, "Read work orders for indexing", "EF Core / TCP")
+Rel(worker, llm, "chunk and embed", "HTTPS")
+Rel(worker, vectorDb, "vector upsert", "HTTPS / TCP")
+Rel(server, mcpServer, "Hosts at /mcp", "HTTP")
+Rel(server, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+Rel(worker, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+Rel(mcpServer, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+
+LEGEND("Legend","Ingest: Worker reads SQL → embed → upsert vectors.\nQuery: UI → Server → vector similarity → LLM with citations.\nIllustrative only; not implemented in the product today.")
+FOOTER()
+@enduml

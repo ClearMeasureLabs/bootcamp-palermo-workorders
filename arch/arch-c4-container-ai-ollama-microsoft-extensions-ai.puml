@@ -1,0 +1,48 @@
+@startuml
+!include templates/plantuml-theme.puml
+
+scale 2/3
+left to right direction
+center header
+    C4 Architecture: Container Diagram Header
+endheader
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+title Reference / target — Church Bulletin with Microsoft.Extensions.AI and Ollama (LAN)
+
+Person(user, "Church Staff", "Pastor, volunteer, or leader")
+
+System_Boundary(system, "Church Bulletin") {
+    Container(ui, "Blazor WASM Client", "Blazor WebAssembly", "Interactive browser application")
+    Container(server, "UI Server", "ASP.NET / Azure Container App", "Hosts API, Blazor Server; references LlmGateway (Microsoft.Extensions.AI)")
+    Container(worker, "Worker", ".NET Worker Service", "NServiceBus endpoint; may use LlmGateway")
+    Container(mcpServer, "MCP Server", "ASP.NET", "Model Context Protocol tools for AI agents")
+    ContainerDb(db, "Database", "Azure SQL Server", "Work orders, employees, roles")
+    ContainerDb(nsbTransport, "NServiceBus Transport", "SQL Server", "Message queues and saga persistence")
+}
+
+System_Ext(ollama, "Ollama", "LLM runtime on LAN; HTTP(S) inference reachable from app network")
+System_Ext(telemetry, "Application Insights / OpenTelemetry", "Tracing, metrics, and logs")
+
+Rel(user, ui, "Uses", "HTTPS")
+Rel(ui, server, "Calls API", "HTTPS")
+Rel(server, db, "Reads/writes", "EF Core / TCP")
+Rel(server, nsbTransport, "Sends messages", "NServiceBus")
+Rel(worker, nsbTransport, "Processes messages", "NServiceBus")
+Rel(worker, db, "Reads/writes", "EF Core / TCP")
+Rel(server, mcpServer, "Hosts at /mcp", "HTTP")
+Rel(server, ollama, "Inference (primary caller; LlmGateway + M.E.AI)", "HTTP / HTTPS (local network)")
+Rel(worker, ollama, "Optional inference", "HTTP / HTTPS (local network)")
+Rel(server, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+Rel(worker, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+Rel(mcpServer, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+
+note right of ollama
+  Matches solution structure: UI.Server and Worker reference LlmGateway;
+  Ollama is an off-box System_Ext on the LAN, not a shipped container.
+end note
+
+LEGEND("Legend","Primary LLM traffic: UI Server → Ollama via LlmGateway (Microsoft.Extensions.AI).\nWorker may also call Ollama for async scenarios.")
+FOOTER()
+@enduml
