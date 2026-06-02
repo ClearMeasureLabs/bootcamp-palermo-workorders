@@ -25,7 +25,7 @@ The key insight: **the quality of the specification determines the quality of th
 ### Step 1: Study the Existing Architecture Specs
 
 Review the architecture documentation that already serves as specifications:
-- `arch/WorflowForDraftToAssignedCommand.md` — sequence diagram as spec
+- `arch/WorkflowForDraftToAssignedCommand.md` — sequence diagram as spec
 - `arch/arch-c4-component-project-dependencies.md` — dependency rules as spec
 - `CLAUDE.md` — coding standards as spec
 

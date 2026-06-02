@@ -30,6 +30,7 @@ class WorkOrder {
   +AssignedDate : DateTime?
   +CreatedDate : DateTime?
   +CompletedDate : DateTime?
+  +Attachments : ICollection<WorkOrderAttachment>
   +ChangeStatus(status : WorkOrderStatus) : void
   +ChangeStatus(employee : Employee, date : DateTime, status : WorkOrderStatus) : void
   +GetMessage() : string
@@ -41,6 +42,7 @@ class Employee {
   +FirstName : string
   +LastName : string
   +EmailAddress : string
+  +PreferredLanguage : string
   +Roles : ISet<Role>
   +CompareTo(other : Employee) : int
   +GetFullName() : string
@@ -60,6 +62,7 @@ class WorkOrderStatus {
   {static} +Assigned : WorkOrderStatus
   {static} +InProgress : WorkOrderStatus
   {static} +Complete : WorkOrderStatus
+  {static} +Cancelled : WorkOrderStatus
   {static} +GetAllItems() : WorkOrderStatus[]
   +Equals(obj : object) : bool
   +ToString() : string
@@ -76,6 +79,17 @@ class Role {
   +CanFulfillWorkOrder : bool
 }
 
+class WorkOrderAttachment {
+  +Id : Guid
+  +WorkOrderId : Guid
+  +FileName : string
+  +ContentType : string
+  +FileSize : long
+  +UploadedById : Guid
+  +UploadedDate : DateTime
+  +UploadedBy : Employee?
+}
+
 ' Inheritance relationships
 WorkOrder --|> EntityBase
 Employee --|> EntityBase
@@ -86,7 +100,9 @@ WorkOrder "1" *-- "1" WorkOrderStatus : status
 WorkOrder "1" --> "0..1" Employee : creator
 WorkOrder "1" --> "0..1" Employee : assignee
 Employee "1" *-- "0..*" Role : roles
+WorkOrder "1" *-- "0..*" WorkOrderAttachment : attachments
+WorkOrderAttachment "0..*" --> "0..1" Employee : uploadedBy
 
-LEGEND("Legend","WorkOrder: aggregate root\nEmployee: actor\nRole: permissions\nWorkOrderStatus: enumeration class")
+LEGEND("Legend","WorkOrder: aggregate root\nEmployee: actor with PreferredLanguage\nRole: permissions\nWorkOrderStatus: includes Cancelled\nWorkOrderAttachment: child entity on WorkOrder")
 FOOTER()
 @enduml

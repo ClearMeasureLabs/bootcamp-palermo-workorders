@@ -1,66 +1,99 @@
 @startuml
 !include templates/plantuml-theme.puml
 
-title LLM / MCP End-to-End Sequence (Assign-to-Bot)
+title WorkOrder Assigned-to-Bot: UI + Worker Saga + MCP
 
 actor "User" as user
 participant "Blazor WASM Client" as ui
 participant "SingleApiController\n(UI.Server)" as api
-participant "Bus : IBus" as sBus
+participant "Bus : IBus\n(UI.Server local)" as serverBus
 participant "IMediator" as mediator
 participant "StateCommandHandler" as cmdHandler
-participant "DraftToAssignedCommand" as cmd
-participant "StateCommandBase" as cmdBase
-participant "WorkOrder" as order
-database "DataContext\n(EF Core)" as db
-participant "DistributedBus\n: IDistributedBus" as dBus
-participant "NServiceBus" as nsb
-participant "Worker Service" as worker
-participant "LlmGateway" as llm
+participant "DraftToAssignedCommand" as assignCmd
+database "DataContext\n(UI.Server EF Core)" as db
+participant "IDistributedBus" as distributedBus
+participant "NServiceBus Transport" as nsb
+participant "Worker.EventHandler" as workerEventHandler
+participant "StartAiBotWorkOrderSagaCommand" as startSagaCmd
+participant "AiBotWorkOrderSaga" as saga
+participant "Worker RemotableBus" as remoteBus
+participant "LlmGateway.ChatClientFactory" as llmFactory
 participant "Azure OpenAI" as azure
+participant "MCP Endpoint (/mcp)\n(UI.Server in-process)" as mcpEndpoint
+participant "WorkOrderTools" as mcpTools
 
 autonumber
 
-user -> ui : Assign work order to assignee (UI)
-ui -> api : POST WebServiceMessage\n(DraftToAssignedCommand)
-api -> api : Deserialize\nWebServiceMessage.GetBodyObject()
-api -> sBus : Send(DraftToAssignedCommand)
-sBus -> mediator : Send(DraftToAssignedCommand)
-mediator -> cmdHandler : Handle(DraftToAssignedCommand,\nCancellationToken)
-cmdHandler -> cmd : Execute(StateCommandContext\n{ CurrentDateTime = UtcNow })
-cmd -> order : AssignedDate = CurrentDateTime
-cmd -> cmdBase : base.Execute(context)
-cmdBase -> order : ChangeStatus(CurrentUser,\nCurrentDateTime, Assigned)
-
-alt Assignee has Bot role
-    cmd -> cmd : Create WorkOrderAssignedToBotEvent
-end
-
-cmdHandler -> db : Attach/Add or Update(order)
+== Primary assign-to-bot flow ==
+user -> ui : Assign work order to AI Bot
+ui -> api : POST WebServiceMessage(DraftToAssignedCommand)
+api -> serverBus : Send(DraftToAssignedCommand)
+serverBus -> mediator : Send(command)
+mediator -> cmdHandler : Handle(command)
+cmdHandler -> assignCmd : Execute(context)
+assignCmd -> assignCmd : Set WorkOrderAssignedToBotEvent when assignee has Bot role
 cmdHandler -> db : SaveChangesAsync()
-db --> cmdHandler : persisted
-cmdHandler -> cmdHandler : Build debug message
-cmdHandler -> dBus : PublishAsync(StateTransitionEvent)
+cmdHandler -> distributedBus : PublishAsync(WorkOrderAssignedToBotEvent)
+distributedBus -> nsb : Publish(WorkOrderAssignedToBotEvent)
+cmdHandler --> api : StateCommandResult
+api --> ui : WebServiceMessage(result)
 
-alt WorkOrderAssignedToBotEvent exists
-    dBus -> nsb : Publish(WorkOrderAssignedToBotEvent)
-    nsb -> worker : Deliver(WorkOrderAssignedToBotEvent)
-    worker -> worker : Handle(WorkOrderAssignedToBotEvent)
-    worker -> llm : Prepare prompt / context (WorkOrder details)
-    llm -> azure : Call LLM API (model, prompt)
-    azure --> llm : LLM response (text, metadata)
-    worker -> db : Attach / update WorkOrder with LLM output
-    worker -> db : SaveChangesAsync()
-    db --> worker : persisted
-    worker -> dBus : PublishAsync(AiBotCompletedWorkOrderEvent)
-    note right of worker : Optionally notify UI or send email
+== Worker event-handler and saga flow ==
+nsb -> workerEventHandler : Handle(WorkOrderAssignedToBotEvent)
+workerEventHandler -> startSagaCmd : Create(SagaId, WorkOrderNumber)
+workerEventHandler -> nsb : SendLocal(StartAiBotWorkOrderSagaCommand)
+nsb -> saga : Handle(StartAiBotWorkOrderSagaCommand)
+
+saga -> remoteBus : Send(WorkOrderByNumberQuery)
+remoteBus -> api : POST WebServiceMessage(IRemotableRequest)
+api -> serverBus : Send(query)
+serverBus -> mediator : Send(query)
+mediator -> db : Query work order
+api --> remoteBus : WebServiceMessage(work order)
+remoteBus --> saga : WorkOrder payload
+
+saga -> remoteBus : Send(AssignedToInProgressCommand)
+remoteBus -> api : POST WebServiceMessage(command)
+api -> serverBus : Send(command)
+serverBus -> mediator : Send(command)
+mediator -> cmdHandler : Handle(command)
+cmdHandler -> db : SaveChangesAsync()
+api --> remoteBus : WebServiceMessage(StateCommandResult)
+remoteBus --> saga : InProgress state persisted
+
+saga -> nsb : Publish(AiBotStartedWorkOrderEvent)
+nsb -> saga : Handle(AiBotStartedWorkOrderEvent)
+saga -> llmFactory : GetChatClient()
+llmFactory -> azure : Chat completion request
+azure --> llmFactory : Chat response
+saga -> saga : Append AI response to WorkOrder description
+
+saga -> nsb : Publish(AiBotUpdatedWorkerOrderEvent)
+nsb -> saga : Handle(AiBotUpdatedWorkerOrderEvent)
+saga -> remoteBus : Send(InProgressToCompleteCommand)
+remoteBus -> api : POST WebServiceMessage(command)
+api -> serverBus : Send(command)
+serverBus -> mediator : Send(command)
+mediator -> cmdHandler : Handle(command)
+cmdHandler -> db : SaveChangesAsync()
+api --> remoteBus : WebServiceMessage(StateCommandResult)
+remoteBus --> saga : Completed state persisted
+
+saga -> nsb : Publish(AiBotCompletedWorkOrderEvent)
+nsb -> saga : Handle(AiBotCompletedWorkOrderEvent)
+saga -> saga : MarkAsComplete()
+
+== Optional MCP tool branch ==
+alt AI tool call through MCP endpoint
+    ui -> mcpEndpoint : MCP request (tool invocation)
+    mcpEndpoint -> mcpTools : Invoke tool (e.g., get work order)
+    mcpTools -> serverBus : Send(WorkOrderByNumberQuery / other request)
+    serverBus -> mediator : Send(request)
+    mediator -> db : Query/update domain data
+    mcpTools --> mcpEndpoint : Tool result
+    mcpEndpoint --> ui : MCP response
 end
 
-cmdHandler --> mediator : StateCommandResult\n(order, "Assign", debugMessage)
-mediator --> sBus : StateCommandResult
-sBus --> api : StateCommandResult
-api --> ui : WebServiceMessage\n(serialized result)
-
-LEGEND("Legend","Bus: IBus (local mediator bus)\nDistributedBus: IDistributedBus publishes domain events\nNServiceBus: external transport for long-running processing\nLLM: Azure OpenAI calls\nWorker: background service that handles bot events")
+LEGEND("Legend","UI.Server persists commands/queries through MediatR + EF Core\nWorker handles WorkOrderAssignedToBotEvent via EventHandler, then orchestrates AiBotWorkOrderSaga\nWorker uses RemotableBus for IRemotableRequest commands/queries back through UI.Server API\nSaga events: AiBotStartedWorkOrderEvent, AiBotUpdatedWorkerOrderEvent, AiBotCompletedWorkOrderEvent\nMCP endpoint is in-process in UI.Server by default; tools use the same IBus request path")
 FOOTER()
 @enduml

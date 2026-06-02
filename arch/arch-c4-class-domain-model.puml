@@ -31,6 +31,7 @@ class WorkOrder {
   +AssignedDate : DateTime?
   +CreatedDate : DateTime?
   +CompletedDate : DateTime?
+  +Attachments : ICollection<WorkOrderAttachment>
   +ChangeStatus(status : WorkOrderStatus) : void
   +ChangeStatus(employee : Employee, date : DateTime, status : WorkOrderStatus) : void
   +GetMessage() : string
@@ -42,6 +43,7 @@ class Employee {
   +FirstName : string
   +LastName : string
   +EmailAddress : string
+  +PreferredLanguage : string
   +Roles : ISet<Role>
   +CompareTo(other : Employee) : int
   +GetFullName() : string
@@ -61,6 +63,7 @@ class WorkOrderStatus {
   {static} +Assigned : WorkOrderStatus
   {static} +InProgress : WorkOrderStatus
   {static} +Complete : WorkOrderStatus
+  {static} +Cancelled : WorkOrderStatus
   {static} +GetAllItems() : WorkOrderStatus[]
   +Equals(obj : object) : bool
   +ToString() : string
@@ -75,6 +78,17 @@ class Role {
   +Name : string
   +CanCreateWorkOrder : bool
   +CanFulfillWorkOrder : bool
+}
+
+class WorkOrderAttachment {
+  +Id : Guid
+  +WorkOrderId : Guid
+  +FileName : string
+  +ContentType : string
+  +FileSize : long
+  +UploadedById : Guid
+  +UploadedDate : DateTime
+  +UploadedBy : Employee?
 }
 
 abstract class StateCommandBase <<record>> {
@@ -105,6 +119,13 @@ class InProgressToCompleteCommand <<record>> {
   +Execute(context : StateCommandContext) : void
 }
 
+class InProgressToAssignedCommand <<record>> {
+}
+
+class AssignedToCancelledCommand <<record>> {
+  +Execute(context : StateCommandContext) : void
+}
+
 class StateCommandResult <<record>> {
   +WorkOrder : WorkOrder
   +TransitionVerbPresentTense : string
@@ -121,18 +142,22 @@ SaveDraftCommand --|> StateCommandBase
 DraftToAssignedCommand --|> StateCommandBase
 AssignedToInProgressCommand --|> StateCommandBase
 InProgressToCompleteCommand --|> StateCommandBase
+InProgressToAssignedCommand --|> StateCommandBase
+AssignedToCancelledCommand --|> StateCommandBase
 
 ' Associations
 WorkOrder "1" *-- "1" WorkOrderStatus : status
 WorkOrder "1" --> "0..1" Employee : creator
 WorkOrder "1" --> "0..1" Employee : assignee
 Employee "1" *-- "0..*" Role : roles
+WorkOrder "1" *-- "0..*" WorkOrderAttachment : attachments
+WorkOrderAttachment "0..*" --> "0..1" Employee : uploadedBy
 
 ' State command associations
 StateCommandBase --> WorkOrder : operates on
 StateCommandBase --> Employee : CurrentUser
 StateCommandResult --> WorkOrder : contains
 
-LEGEND("Legend","WorkOrder: domain aggregate\nEmployee: user / actor\nRole: permission scope\nStateCommand: command object implementing guarded transitions\nEvent: published events for side-effects (e.g., WorkOrderAssignedToBotEvent)")
+LEGEND("Legend","WorkOrder: domain aggregate (includes attachments)\nEmployee: user/actor with PreferredLanguage\nWorkOrderStatus: includes Cancelled\nStateCommand: guarded state transitions including shelve/cancel\nEvent: published side-effects (e.g., WorkOrderAssignedToBotEvent)")
 FOOTER()
 @enduml

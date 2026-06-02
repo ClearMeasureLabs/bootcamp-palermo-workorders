@@ -128,6 +128,12 @@ Architecture diagrams
   - Bash (Linux/macOS/Git Bash): ./scripts/setup-dev-env.sh
   - PowerShell (Windows): pwsh ./scripts/setup-dev-env.ps1
 
+Key diagram previews
+
+![System context diagram](arch/arch-c4-system.png)
+![Container deployment diagram](arch/arch-c4-container-deployment.png)
+![Work order state transitions](arch/arch-state-workorder.png)
+
 Playwright (acceptance tests)
 - Install browsers (PowerShell):
   ```powershell

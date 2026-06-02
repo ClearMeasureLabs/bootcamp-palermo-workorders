@@ -13,32 +13,26 @@ title Church Bulletin System Diagram <&circle-check>
 
 'LAYOUT_WITH_LEGEND
 
-Person(pastor, "Senior Pastor", "Any clergy leader")
-Person(biblestudyleader, "Bible study leader", "leads classes")
-Person(worshipleader, "Worship Pastor", "music/choir")
-Person(childrenspastor, "Childrens' Pastor", "Kids ministry")
-Person(volunteer, "Volunteer", "Prepares bulletins and projects announcements")
+Person(requestor, "Requestor", "Church staff who create work orders")
+Person(supervisor, "Supervisor", "Assigns, reassigns, and cancels work orders")
+Person(assignee, "Assignee", "Facilities team member fulfilling work orders")
 
-System(churchbulletin, "Church Bulletin", "Digital signage and printed bulletin")
+System(churchbulletin, "Church Bulletin Work Order System", "Creates, assigns, tracks, and completes work orders")
 
-System_Ext(printer, "Printer")
-System_Ext(projector, "Projector")
 System_Ext(azureOpenAI, "Azure OpenAI", "LLM for AI agent features")
-System_Ext(acr, "Azure Container Registry", "Docker image repository")
-System_Ext(appInsights, "Application Insights", "Telemetry and logging")
+System_Ext(sqlServer, "SQL Server / Azure SQL", "Primary relational database")
+System_Ext(nsb, "NServiceBus SQL Transport", "Asynchronous message transport and saga persistence")
+System_Ext(appInsights, "Application Insights", "Optional telemetry backend")
 
-Rel(pastor, churchbulletin, "Add sermons")
-Rel(biblestudyleader, churchbulletin, "Add classes")
-Rel(worshipleader, churchbulletin, "Add services")
-Rel(childrenspastor, churchbulletin, "Add sunday school classes")
-Rel(volunteer, churchbulletin, "Operates system on Sunday morning")
+Rel(requestor, churchbulletin, "Create and track work orders")
+Rel(supervisor, churchbulletin, "Assign, reassign, or cancel work orders")
+Rel(assignee, churchbulletin, "Start, shelve, and complete work orders")
 
-Rel(churchbulletin, printer, "Send PDF to print", "Network printer")
-Rel(churchbulletin, projector, "Projects digital signage", "Auto-animated")
-Rel(churchbulletin, azureOpenAI, "Calls LLM for bot features", "HTTPS")
-Rel(churchbulletin, acr, "Push/pull container images", "Docker / ACR")
-Rel(churchbulletin, appInsights, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
+Rel(churchbulletin, sqlServer, "Reads/writes domain data", "EF Core / TCP")
+Rel(churchbulletin, nsb, "Publishes and handles async events", "NServiceBus")
+Rel(churchbulletin, azureOpenAI, "Calls LLM for AI-assisted features", "HTTPS")
+Rel(churchbulletin, appInsights, "Exports traces/metrics/logs", "OpenTelemetry / HTTPS")
 
-LEGEND("Legend","UI: Blazor WASM Client\nServer: UI Server\nWorker: .NET Worker\nMCP Server: MCP Server\nDB: Azure SQL / SQL Server\nNSB: NServiceBus Transport\nACR: Azure Container Registry\nOTEL: Application Insights / OpenTelemetry\nLLM: Azure OpenAI")
+LEGEND("Legend","Actors: Requestor, Supervisor, Assignee\nSystem: Work order lifecycle management\nDB: SQL Server / Azure SQL\nNSB: NServiceBus SQL transport\nOTEL: OpenTelemetry to optional Application Insights\nLLM: Azure OpenAI")
 FOOTER()
 @enduml

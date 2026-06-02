@@ -4,107 +4,52 @@
 
 title Church Bulletin DevOps Pipeline
 
-Person(dev, "Developer", "Initiates code changes")
+Person(dev, "Developer", "Pushes feature branches and opens pull requests")
 
-System_Boundary(privatebuild, "Private Build (Developer Workstation)") {
-    Component(pb_init, "Init", "Powershell", "clean + restore")
-    Component(pb_compile, "Compile", ".NET CLI", "warnings-as-errors")
-    Component(pb_unit, "Unit Tests", "NUnit", "NUnit + Shouldly")
-    Component(pb_db, "DB Setup", "Script", "LocalDB / SQLite / Docker")
-    Component(pb_int, "Integration Tests", "NUnit", "")
-    Component(pb_accept, "Acceptance Tests", "Playwright", "")
-
-    Rel_R(pb_init, pb_compile, " ")
-    Rel_R(pb_compile, pb_unit, " ")
-    Rel(pb_unit, pb_db, " ")
-    Rel_R(pb_db, pb_int, " ")
-    Rel_R(pb_int, pb_accept, " ")
+System_Boundary(local, "Local validation") {
+    Component(privateBuild, "privatebuild.ps1", "PowerShell", "Compile + unit/integration tests")
+    Component(localAcceptance, "acceptancetests.ps1", "PowerShell + Playwright", "Runs acceptance suite separately")
 }
 
-System_Boundary(github, "GitHub") {
-    Component(feature_push, "Feature Branch", "Git", "push trigger")
-
-    System_Boundary(pr, "Pull Request") {
-        Component(branch_checks, "Branch Protection", "GitHub Actions", "Checks")
-        Component(copilot_review, "Copilot Code Review", "GitHub Copilot", "")
-        Component(human_review, "Human Reviewer", "Team Member", "")
-    }
-
-    System_Boundary(build_wf, "Build Workflow (.github/workflows/build.yml)") {
-        Component(build_matrix, "Platform Matrix", "GitHub Actions matrix", "linux/x86, linux/arm, windows")
-        Component(ci_cache, "CI Cache", "GitHub Actions Cache", "Restores build & dependency cache")
-        Component(build_linux, "Integration Build (Linux)", "SQL Container", "x86 image")
-        Component(build_sqlite, "Integration Build (SQLite)", "SQLite", "Linux")
-        Component(build_arm, "Integration Build (ARM)", "ARM SQLite", "arm64")
-        Component(build_win, "Integration Build (Windows)", "Windows LocalDB", "windows")
-        Component(code_analysis, "Code Analysis", "Tool", "format + analyzers")
-        Component(security_scan, "Security Scan", "Tool", "vulnerabilities + Gitleaks")
-        Component(at_x86, "Acceptance Tests", "x86 SQLite", "")
-        Component(at_arm, "Acceptance Tests", "ARM SQLite", "")
-    }
-
-    System_Boundary(publish, "Publish (needs: build-linux)") {
-        Component(docker_push, "Docker Build", "ACR Build", "Build and push container images (multi-arch)")
-        Component(artifact_store, "Immutable Artifacts", "ACR / GitHub Packages", "Images and packages: semver tags + digest (content-addressed)")
-        Component(gh_packages, "Publish to GitHub Packages", "NuGet", "Push NuGet packages")
-        Component(octo_push, "Publish to Octopus Deploy", "Octopus CLI", "Push release to Octopus")
-    }
-
-    Rel(docker_push, artifact_store, "Push images", "ACR / HTTPS")
-    Rel(gh_packages, artifact_store, "Push packages", "NuGet")
-    Rel(octo_push, artifact_store, "Link artifacts", "Release references images by digest")
-
-    Component(merge, "Merge to master", "Git", "")
-    Component(master_build, "Build Workflow", "GitHub Actions", "master push")
+System_Boundary(buildWorkflow, "GitHub Actions: Build (build.yml)") {
+    Component(buildLinux, "build-linux", "Integration Build (SQL container)", "Primary CI build + package artifacts")
+    Component(buildSqlite, "build-sqlite", "Integration Build (SQLite)", "Parallel CI validation")
+    Component(buildArm, "integration-build-arm", "Integration Build (ARM SQLite)", "Parallel ARM validation")
+    Component(buildWindows, "build-windows", "Integration Build (Windows LocalDB)", "Parallel Windows validation")
+    Component(codeAnalysis, "code-analysis", "dotnet format + build", "Style/analyzer gate")
+    Component(acceptanceX64, "acceptance-tests", "Playwright", "Separate job from private build")
+    Component(acceptanceArm, "acceptance-tests-arm", "Playwright (ARM SQLite)", "Separate ARM acceptance job")
+    Component(securityScan, "security-scan", "Disabled job", "Defined but disabled via if: false")
+    Component(dockerPublish, "docker-build-image-for-churchbulletin-ui", "Docker + ACR", "Build/push churchbulletin.ui:{version}, latest")
+    Component(githubPackages, "publish-github-packages", "NuGet", "Publishes nupkg artifacts")
+    Component(octopusPackages, "publish-octopus", "Octopus CLI", "Publishes packages to Octopus feed")
 }
 
-System_Boundary(deploy_wf, "Deploy Workflow (.github/workflows/deploy.yml)") {
-    System_Boundary(tdd, "Deploy to TDD") {
-        Component(tdd_release, "Create Octopus Release", "Octo CLI", "")
-        Component(tdd_deploy, "Deploy via Octopus", "Octopus", "")
-        Component(tdd_health, "Health Check Polling", "HTTP", "/_healthcheck")
-        Component(tdd_accept, "Run Acceptance Tests", "Playwright", "vs TDD")
-        Component(tdd_status, "Report Status", "GitHub API", "to Commit SHA")
-
-        Rel_R(tdd_release, tdd_deploy, " ")
-        Rel_R(tdd_deploy, tdd_health, " ")
-        Rel_R(tdd_health, tdd_accept, " ")
-        Rel_R(tdd_accept, tdd_status, " ")
-    }
-
-    Component(uat, "Deploy to UAT", "Pipeline", "manual approval")
-    Component(prod, "Deploy to Prod", "Pipeline", "manual approval")
+System_Boundary(deployWorkflow, "GitHub Actions: Deploy (deploy.yml)") {
+    Component(tdd, "deploy-to-tdd", "Octopus + health + Playwright", "Create release, deploy TDD, run post-deploy acceptance tests")
+    Component(uat, "deploy-to-uat", "Octopus", "Manual/environment-gated promotion")
+    Component(prod, "deploy-to-prod", "Octopus", "Manual/environment-gated promotion")
 }
 
-System_Boundary(octopus, "Octopus Deploy (per environment)") {
-    Component(octo_dotnet, "Ensure .NET 10 Installed", "Tool", "")
-    Component(octo_db, "Run DB Migrations", "DbUp", "")
-    Component(octo_app, "Update Container App", "AZ CLI", "az containerapp update")
+System_Ext(acr, "churchbulletingithubacr", "Azure Container Registry")
+System_Ext(octopus, "Octopus Deploy", "Release orchestration")
 
-    Rel_R(octo_dotnet, octo_db, " ")
-    Rel_R(octo_db, octo_app, " ")
-}
+Rel(dev, privateBuild, "Runs before push")
+Rel(dev, localAcceptance, "Runs separately before PR readiness")
+Rel(dev, buildWorkflow, "git push / pull request")
 
-' Flow
-Rel(dev, privatebuild, "privatebuild.ps1 / acceptancetests.ps1")
-Rel(dev, feature_push, "git push")
+Rel(buildLinux, dockerPublish, "needs: build-linux")
+Rel(buildLinux, githubPackages, "needs: build-linux")
+Rel(buildLinux, octopusPackages, "needs: build-linux")
 
-Rel(feature_push, build_wf, "on: push (all branches)")
-Rel(build_linux, publish, "artifacts")
+Rel(dockerPublish, acr, "Push churchbulletin.ui:{BUILD_BUILDNUMBER} and :latest")
+Rel(octopusPackages, octopus, "Push nupkg artifacts")
 
-Rel(build_wf, branch_checks, "status checks")
-Rel(branch_checks, copilot_review, " ")
-Rel(copilot_review, human_review, " ")
-Rel(human_review, merge, "approve")
+Rel(buildWorkflow, deployWorkflow, "workflow_run on Build success (master)")
+Rel(tdd, octopus, "Create/deploy release")
+Rel(tdd, uat, "needs success (or manual release dispatch)")
+Rel(uat, prod, "needs success")
 
-Rel(merge, master_build, "on: push (master)")
-Rel(master_build, deploy_wf, "workflow_run (completed + master)")
-
-Rel(tdd, uat, "needs + master only")
-Rel(uat, prod, "needs + success")
-
-Rel(deploy_wf, octopus, "each environment executes")
-
-LEGEND("Legend","Platform matrix: GitHub Actions (linux/x86, linux/arm, windows)\nCI Cache: restore node / dotnet caches for faster builds\nArtifacts: images published to ACR (semver + digest) and NuGet packages published to GitHub Packages\nDeployment: Octopus Deploy applies releases per environment")
+LEGEND("Legend","Build workflow fans out into parallel integration/analysis/acceptance jobs\nSecurity Scan job exists but is currently disabled (if: false)\nAcceptance tests are separate jobs, not part of private build jobs\nDocker publish job name: docker-build-image-for-churchbulletin-ui\nImage naming: churchbulletingithubacr.azurecr.io/churchbulletin.ui:{version} and :latest")
 FOOTER()
 @enduml

@@ -57,6 +57,23 @@ note right of InProgressToCompleteCommand
   Side-effect: sets CompletedDate
 end note
 
+class InProgressToAssignedCommand <<record>> {
+}
+
+note right of InProgressToAssignedCommand
+  Guard: only assignee
+  Side-effect: transitions InProgress -> Assigned ("Shelve")
+end note
+
+class AssignedToCancelledCommand <<record>> {
+  +Execute(context : StateCommandContext) : void
+}
+
+note right of AssignedToCancelledCommand
+  Guard: only creator
+  Side-effect: clears Assignee and AssignedDate
+end note
+
 class StateCommandResult <<record>> {
   +WorkOrder : WorkOrder
   +TransitionVerbPresentTense : string
@@ -68,12 +85,14 @@ SaveDraftCommand --|> StateCommandBase
 DraftToAssignedCommand --|> StateCommandBase
 AssignedToInProgressCommand --|> StateCommandBase
 InProgressToCompleteCommand --|> StateCommandBase
+InProgressToAssignedCommand --|> StateCommandBase
+AssignedToCancelledCommand --|> StateCommandBase
 
 ' Associations
 StateCommandBase --> WorkOrder : operates on
 StateCommandBase --> Employee : CurrentUser
 StateCommandResult --> WorkOrder : contains
 
-LEGEND("Legend","StateCommandBase: validates and executes guarded state transitions\nSaveDraftCommand: creates/updates draft\nDraftToAssignedCommand: assigns to an employee; may produce WorkOrderAssignedToBotEvent\nAssignedToInProgressCommand: assignee begins work\nInProgressToCompleteCommand: assignee completes work")
+LEGEND("Legend","StateCommandBase: validates and executes guarded transitions\nSaveDraftCommand: creates/updates draft\nDraftToAssignedCommand: assigns to employee; may emit WorkOrderAssignedToBotEvent\nAssignedToInProgressCommand: assignee begins work\nInProgressToAssignedCommand: assignee shelves work (back to Assigned)\nInProgressToCompleteCommand: assignee completes work\nAssignedToCancelledCommand: creator cancels assigned work order")
 FOOTER()
 @enduml

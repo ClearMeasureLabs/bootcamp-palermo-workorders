@@ -58,7 +58,7 @@ User → Blazor UI → API Controller → IBus.Send(query/command)
 
 **State Commands:** Defined in `src/Core/Model/StateCommands/`. Each command implements `IStateCommand` and mutates the domain model. Flow: `StateCommandHandler` → `command.Execute(workOrder)` → `DataContext.SaveChangesAsync()`.
 
-Work order state transitions: Draft → Assigned → InProgress → Complete (also Cancelled from any state). See `arch/WorflowFor*.md` for sequence diagrams.
+Work order state transitions: Draft → Assigned → InProgress → Complete (also Cancelled from any state). See `arch/WorkflowFor*.md` for sequence diagrams.
 
 ## Domain Model
 

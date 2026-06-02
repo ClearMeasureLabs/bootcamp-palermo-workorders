@@ -1,4 +1,11 @@
+# Basher — History
+
+## Core Context
+
+- **Project:** A .NET 10 work-order management platform with Blazor UI, MediatR CQRS, and SQL-backed data access.
+- **Role:** DevOps Engineer
+- **Joined:** 2026-06-02T15:44:37.294Z
+
 ## Learnings
 
-- Prefer Docker rendering to match CI; fall back to .tools/plantuml.jar when Docker unavailable.
-- 2026-05-04: Rendered diagrams and committed generated SVGs to origin/docs/architecture-enhancements (commit af194d4ba474a0eb88d08a67ce6727c5de92ec7c). Recommended enabling CI auto-commit step for non-fork PRs to keep rendered assets in sync.
+<!-- Append learnings below -->

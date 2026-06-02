@@ -11,29 +11,38 @@ endheader
 
 title Logging & Observability
 
-Person(ops, "Operator / SRE", "Monitors system health and telemetry")
+Person(ops, "Operator / SRE", "Monitors health, traces, and logs")
 
 System_Boundary(system, "Church Bulletin (deployed)") {
-    Container(ui, "Blazor WASM Client", "Browser", "Client-side app")
-    Container(server, "UI Server", "ASP.NET", "Application host")
-    Container(worker, "Worker", ".NET Worker", "Background processors")
-    Container(mcp, "MCP Server", "ASP.NET", "AI agent host")
+    Container(ui, "Blazor WASM Client", "Browser", "Calls API endpoints")
+    Container(server, "UI.Server", "ASP.NET", "Structured JSON logs + OpenTelemetry exporters")
+    Container(worker, "Worker", ".NET Worker", "Structured JSON logs + OpenTelemetry exporters")
+    Container(mcp, "McpServer (standalone optional)", "ASP.NET", "Structured JSON logs by default")
 }
 
-Container(otelCollector, "OpenTelemetry Collector", "OTel", "Receives traces/metrics/logs; exports to backends")
-System_Ext(appInsights, "Application Insights / Log Analytics", "Telemetry backend")
-System_Ext(splunk, "Splunk / SIEM", "Optional log sink")
+System_Ext(appInsights, "Azure Monitor / Application Insights", "Optional telemetry backend")
+System_Ext(otlpBackend, "OTLP backend (optional)", "Optional collector/gateway/backend")
+System_Ext(logSink, "Container/App platform logs", "JSON log aggregation sink")
 
-Rel(server, otelCollector, "Sends traces & metrics", "OTLP / HTTPS")
-Rel(worker, otelCollector, "Sends traces & metrics", "OTLP / HTTPS")
-Rel(mcp, otelCollector, "Sends traces & metrics", "OTLP / HTTPS")
-Rel(ui, server, "Calls API / propagates trace context", "HTTPS")
+Rel(ui, server, "API calls (trace context propagation)", "HTTPS")
 
-Rel(otelCollector, appInsights, "Export to App Insights / Log Analytics", "OTLP / HTTP")
-Rel(otelCollector, splunk, "Optional export", "HTTP / Splunk HEC")
+Rel(server, appInsights, "Direct export (optional)", "Azure Monitor exporter / HTTPS")
+Rel(worker, appInsights, "Direct export (optional)", "Azure Monitor exporter / HTTPS")
+Rel(server, otlpBackend, "Direct export (optional)", "OTLP")
+Rel(worker, otlpBackend, "Direct export (optional)", "OTLP")
+Rel(mcp, logSink, "Writes structured JSON logs", "stdout/stderr")
+Rel(server, logSink, "Writes structured JSON logs", "stdout/stderr")
+Rel(worker, logSink, "Writes structured JSON logs", "stdout/stderr")
 
-Rel(ops, appInsights, "View dashboards / alerts")
+Rel(ops, appInsights, "Dashboards, traces, metrics, alerts")
+Rel(ops, logSink, "Container log search")
 
-LEGEND("Legend","OTel: OpenTelemetry Collector\nAppInsights: Application Insights / Log Analytics\nTraces and metrics propagated from UI -> Server -> Worker -> MCP\nAlerting and dashboards exposed to SRE")
+note right of mcp
+Standalone McpServer is logs-first.
+Telemetry export is optional and only present
+when OpenTelemetry/exporters are configured.
+end note
+
+LEGEND("Legend","No mandatory OpenTelemetry Collector is assumed\nServer/Worker use direct exporters to Azure Monitor and/or OTLP backends when configured\nMcpServer always emits structured JSON logs; exporter wiring is optional\nSplunk is not part of default architecture")
 FOOTER()
 @enduml

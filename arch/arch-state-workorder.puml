@@ -12,10 +12,14 @@ Draft --> Assigned : DraftToAssignedCommand
 
 Assigned --> InProgress : AssignedToInProgressCommand
 
+Assigned --> Cancelled : AssignedToCancelledCommand
+
 InProgress --> Complete : InProgressToCompleteCommand
+InProgress --> Assigned : InProgressToAssignedCommand
 
 Complete --> [*]
+Cancelled --> [*]
 
-LEGEND("Legend","Draft -> Assigned -> InProgress -> Complete\nCommands: SaveDraftCommand, DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand")
+LEGEND("Legend","Draft -> Assigned -> InProgress -> Complete\nAdditional transitions: Assigned -> Cancelled, InProgress -> Assigned\nCommands: SaveDraftCommand, DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand, InProgressToCompleteCommand, AssignedToCancelledCommand")
 FOOTER()
 @enduml
