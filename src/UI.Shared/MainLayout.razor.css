@@ -80,6 +80,10 @@
     padding: 1rem 0;
 }
 
+.sidebar-nav ::deep .top-row {
+    display: none;
+}
+
 /* Sidebar Footer */
 .sidebar-footer {
     padding: 1rem 1.5rem;

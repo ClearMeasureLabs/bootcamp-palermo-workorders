@@ -92,6 +92,53 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRestoreNavRailWhenToggleClickedTwiceOnWideLayout()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        component.WaitForAssertion(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        component.InvokeAsync(() => layout.Instance.OnViewportChanged(false)).GetAwaiter().GetResult();
+
+        var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        toggle.Click();
+        toggle.Click();
+
+        toggle.GetAttribute("aria-expanded").ShouldBe("true");
+        toggle.GetAttribute("title")!.ShouldContain("Hide");
+        layout.Find(".modern-app").ClassList.ShouldNotContain("rail-collapsed");
+        layout.Find("#app-navigation-rail").ClassList.ShouldNotContain("rail-hidden");
+    }
+
+    [Test]
+    public void ShouldRenderCollapseIconWhenVisibleAndHamburgerWhenHidden()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        component.WaitForAssertion(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        component.InvokeAsync(() => layout.Instance.OnViewportChanged(false)).GetAwaiter().GetResult();
+
+        var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        toggle.InnerHtml.ShouldContain("bi-chevron-double-left");
+
+        toggle.Click();
+
+        toggle.InnerHtml.ShouldContain("bi-list");
+        toggle.InnerHtml.ShouldNotContain("bi-chevron-double-left");
+    }
+
+    [Test]
     public void MainLayout_AfterFirstRender_ShouldCallThemeInitialize_WhenImplemented()
     {
         using var ctx = CreateContext();
