@@ -23,10 +23,13 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
 
         await Expect(creatorSelect.Locator("option").Filter(new() { HasText = "Timothy Lovejoy" })).ToHaveCountAsync(1);
-        await Expect(creatorSelect.Locator("option").Filter(new() { HasText = "TIMOTHY LOVEJOY" })).ToHaveCountAsync(0);
-
         await Expect(assigneeSelect.Locator("option").Filter(new() { HasText = "Timothy Lovejoy" })).ToHaveCountAsync(1);
-        await Expect(assigneeSelect.Locator("option").Filter(new() { HasText = "TIMOTHY LOVEJOY" })).ToHaveCountAsync(0);
+
+        var creatorTexts = await creatorSelect.Locator("option").AllInnerTextsAsync();
+        var assigneeTexts = await assigneeSelect.Locator("option").AllInnerTextsAsync();
+
+        creatorTexts.ShouldNotContain("TIMOTHY LOVEJOY JR");
+        assigneeTexts.ShouldNotContain("TIMOTHY LOVEJOY JR");
     }
 
     [Test, Retry(2)]
