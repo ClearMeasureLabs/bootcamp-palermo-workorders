@@ -83,6 +83,50 @@ public class LoginLinkVisualTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task LoginLink_AnimationActive_InDarkTheme()
+    {
+        await EnsureLoggedOutAsync();
+
+        await Page.EvaluateAsync("() => document.documentElement.setAttribute('data-theme', 'dark')");
+
+        var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await Expect(loginLink).ToBeVisibleAsync();
+
+        var animationName = await loginLink.EvaluateAsync<string>(
+            "el => getComputedStyle(el).animationName");
+        animationName.ShouldContain("login-prompt-emphasis-dark");
+
+        var minOpacity = 1.0;
+        for (var i = 0; i < 50; i++)
+        {
+            var opacity = await loginLink.EvaluateAsync<double>(
+                "el => parseFloat(getComputedStyle(el).opacity)");
+            if (opacity < minOpacity)
+            {
+                minOpacity = opacity;
+            }
+
+            if (minOpacity <= 0.2)
+            {
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        minOpacity.ShouldBeLessThanOrEqualTo(0.2);
+    }
+
+    [Test, Retry(2)]
+    public async Task LoginLink_NotPresent_WhenAuthenticated()
+    {
+        await LoginAsCurrentUser();
+
+        var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        (await loginLink.CountAsync()).ShouldBe(0);
+    }
+
+    [Test, Retry(2)]
     public async Task LoginLink_LayoutOk_OnNarrowViewport()
     {
         await Page.SetViewportSizeAsync(375, 667);
