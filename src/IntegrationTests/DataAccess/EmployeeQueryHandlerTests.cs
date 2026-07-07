@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
@@ -96,6 +97,54 @@ public class EmployeeQueryHandlerTests
         {
             var rehydratedEmployee = context.Set<Employee>().First(e => e.Id == employee.Id);
             rehydratedEmployee.PreferredLanguage.ShouldBe("en-US");
+        }
+    }
+
+    [Test]
+    public async Task Should_ReturnStoredEmployeeNames_Unchanged_When_EmployeeGetAllQueryHandled()
+    {
+        new DatabaseTests().Clean();
+
+        var one = new Employee("1", "first1", "last1", "email1");
+        var two = new Employee("2", "First2", "Last2", "email2");
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(one);
+            context.Add(two);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new EmployeeQueryHandler(dataContext);
+        var employees = await handler.Handle(new EmployeeGetAllQuery());
+
+        employees.Length.ShouldBe(2);
+        employees[0].FirstName.ShouldBe("first1");
+        employees[0].LastName.ShouldBe("last1");
+        employees[1].FirstName.ShouldBe("First2");
+        employees[1].LastName.ShouldBe("Last2");
+    }
+
+    [Test]
+    public async Task Should_NotMutateEmployeeRecords_When_LoginPageLoadsEmployees()
+    {
+        new DatabaseTests().Clean();
+
+        var homer = new Employee("hsimpson", "Homer", "Simpson", "homer@test.com");
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(homer);
+            context.SaveChanges();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        _ = await bus.Send(new EmployeeGetAllQuery());
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.UserName == "hsimpson");
+            rehydrated.FirstName.ShouldBe("Homer");
+            rehydrated.LastName.ShouldBe("Simpson");
         }
     }
 }
