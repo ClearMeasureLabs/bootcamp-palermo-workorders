@@ -22,14 +22,14 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Task.Delay(GetInputDelayMs());
 
         var rail = Page.Locator("#app-navigation-rail");
-        await Expect(rail).ToHaveClassAsync(new Regex("rail-hidden"));
-        await Expect(Page.Locator(".modern-app")).ToHaveClassAsync(new Regex("rail-collapsed"));
+        await Expect(rail).ToHaveClassAsync("rail-hidden");
+        await Expect(Page.Locator(".modern-app")).ToHaveClassAsync("rail-collapsed");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
 
-        await Expect(rail).Not.ToHaveClassAsync(new Regex("rail-hidden"));
-        await Expect(Page.Locator(".modern-app")).Not.ToHaveClassAsync(new Regex("rail-collapsed"));
+        await Expect(rail).Not.ToHaveClassAsync("rail-hidden");
+        await Expect(Page.Locator(".modern-app")).Not.ToHaveClassAsync("rail-collapsed");
         Page.Url.ShouldBe(urlBefore);
     }
 
@@ -71,7 +71,7 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
 
-        await Expect(Page.Locator(".modern-app")).ToHaveClassAsync(new Regex("rail-collapsed"));
+        await Expect(Page.Locator(".modern-app")).ToHaveClassAsync("rail-collapsed");
         await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.SearchButton))).ToBeVisibleAsync();
         Page.Url.ShouldBe(urlBefore);
     }
@@ -90,11 +90,11 @@ public class NavRailToggleTests : AcceptanceTestBase
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
-        await Expect(rail).ToHaveClassAsync(new Regex("open"));
+        await Expect(rail).ToHaveClassAsync("open");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
-        await Expect(rail).Not.ToHaveClassAsync(new Regex("open"));
+        await Expect(rail).Not.ToHaveClassAsync("open");
         await Expect(toggle).ToBeFocusedAsync();
     }
 
@@ -109,10 +109,10 @@ public class NavRailToggleTests : AcceptanceTestBase
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
-        await Expect(Page.Locator("#app-navigation-rail")).ToHaveClassAsync(new Regex("rail-hidden"));
+        await Expect(Page.Locator("#app-navigation-rail")).ToHaveClassAsync("rail-hidden");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
-        await Expect(Page.Locator("#app-navigation-rail")).Not.ToHaveClassAsync(new Regex("rail-hidden"));
+        await Expect(Page.Locator("#app-navigation-rail")).Not.ToHaveClassAsync("rail-hidden");
     }
 }
