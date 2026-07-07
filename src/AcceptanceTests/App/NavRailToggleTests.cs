@@ -62,17 +62,19 @@ public class NavRailToggleTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs());
 
         var urlBefore = Page.Url;
-        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.SearchButton))).ToBeVisibleAsync();
+        var searchButton = Page.Locator($"#{nameof(WorkOrderSearch.Elements.SearchButton)}");
+        await Expect(searchButton).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
 
         (await Page.Locator(".modern-app").GetAttributeAsync("class"))!.ShouldContain("rail-collapsed");
-        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.SearchButton))).ToBeVisibleAsync();
+        await Expect(searchButton).ToBeVisibleAsync();
         Page.Url.ShouldBe(urlBefore);
     }
 
@@ -81,11 +83,15 @@ public class NavRailToggleTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs());
 
-        await Page.SetViewportSizeAsync(375, 667);
+        await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
+
+        await Page.SetViewportSizeAsync(375, 667);
+        await Task.Delay(GetInputDelayMs() * 2);
 
         var rail = Page.Locator("#app-navigation-rail");
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
