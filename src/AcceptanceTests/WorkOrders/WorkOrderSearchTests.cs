@@ -23,10 +23,10 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
 
         await Expect(creatorSelect.Locator("option").Filter(new() { HasText = "Timothy Lovejoy" })).ToHaveCountAsync(1);
-        await Expect(creatorSelect.Locator("option").Filter(new() { HasText = "TIMOTHY LOVEJOY" })).ToHaveCountAsync(0);
+        await Expect(creatorSelect.Locator("option").Filter(new() { HasTextRegex = new Regex("^TIMOTHY LOVEJOY$") })).ToHaveCountAsync(0);
 
         await Expect(assigneeSelect.Locator("option").Filter(new() { HasText = "Timothy Lovejoy" })).ToHaveCountAsync(1);
-        await Expect(assigneeSelect.Locator("option").Filter(new() { HasText = "TIMOTHY LOVEJOY" })).ToHaveCountAsync(0);
+        await Expect(assigneeSelect.Locator("option").Filter(new() { HasTextRegex = new Regex("^TIMOTHY LOVEJOY$") })).ToHaveCountAsync(0);
     }
 
     [Test, Retry(2)]
