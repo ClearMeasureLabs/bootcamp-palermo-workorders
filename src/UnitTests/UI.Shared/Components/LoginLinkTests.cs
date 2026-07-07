@@ -27,4 +27,18 @@ public class LoginLinkTests
         anchor.ClassList.ShouldContain("login-prompt-link");
         anchor.TextContent.ShouldBe("Login");
     }
+
+    [Test]
+    public void ShouldRenderLoginAnchor_WithAccessibleAriaLabel()
+    {
+        using var ctx = new TestContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.RenderComponent<LoginLink>();
+
+        var ariaLabel = component.Find("a").GetAttribute("aria-label");
+        ariaLabel.ShouldNotBeNullOrWhiteSpace();
+        ariaLabel.ShouldContain("Sign in");
+    }
 }

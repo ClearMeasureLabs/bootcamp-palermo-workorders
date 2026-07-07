@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.UI.Shared.Components;
+using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.Authentication;
 
@@ -15,9 +16,40 @@ public class LoginTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task Should_DisplayUppercaseNames_InLoginDropdown()
+    {
+        await Page.GotoAsync("/login");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        var placeholderOption = userSelect.Locator("option[value='']");
+        await Expect(placeholderOption).ToHaveTextAsync("-- Select a parishioner or staff member --");
+
+        var homerOption = userSelect.Locator("option[value='hsimpson']");
+        await Expect(homerOption).ToHaveTextAsync("HOMER SIMPSON");
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_LoginSuccessfully_UsingUsernameValue_NotDisplayLabel()
+    {
+        await Page.GotoAsync("/login");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        var homerOption = userSelect.Locator("option[value='hsimpson']");
+        await Expect(homerOption).ToHaveTextAsync("HOMER SIMPSON");
+
+        await Select(nameof(Login.Elements.User), "hsimpson");
+        await Click(nameof(Login.Elements.LoginButton));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
+        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
+    }
+
+    [Test, Retry(2)]
     public async Task LoginWithUsernameOnlyForwardsToHomePage()
     {
-        // Act: Go to home page
         await Page.GotoAsync("/");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1);
@@ -29,21 +61,17 @@ public class LoginTests : AcceptanceTestBase
             await Page.WaitForURLAsync("**/");
         }
 
-        // Click Login link in top bar
         await Click(nameof(LoginLink.Elements.LoginLink));
         await Page.WaitForURLAsync("**/login");
         await TakeScreenshotAsync(2);
 
-        // Fill in username only
-        await Select(nameof(UI.Shared.Pages.Login.Elements.User), "hsimpson");
+        await Select(nameof(Login.Elements.User), "hsimpson");
         await TakeScreenshotAsync(3);
 
-        // Submit form
-        await Click(nameof(UI.Shared.Pages.Login.Elements.LoginButton));
+        await Click(nameof(Login.Elements.LoginButton));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(4);
 
-        // Assert: Should be redirected to home and see welcome message
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
         await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
     }
