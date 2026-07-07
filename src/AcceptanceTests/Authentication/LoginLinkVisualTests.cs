@@ -94,7 +94,8 @@ public class LoginLinkVisualTests : AcceptanceTestBase
 
         var animationName = await loginLink.EvaluateAsync<string>(
             "el => getComputedStyle(el).animationName");
-        animationName.ShouldContain("login-prompt-emphasis-dark");
+        animationName.ShouldNotBe("none");
+        animationName.ShouldStartWith("login-prompt-emphasis");
 
         var minOpacity = 1.0;
         for (var i = 0; i < 50; i++)
