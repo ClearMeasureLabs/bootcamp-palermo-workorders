@@ -59,6 +59,35 @@ public class MainLayoutTests
         toggle.GetAttribute("title")!.ShouldContain("Show");
         layout.Find(".modern-app").ClassList.ShouldContain("rail-collapsed");
         layout.Find("#app-navigation-rail").ClassList.ShouldContain("rail-hidden");
+
+        toggle.Click();
+
+        toggle.GetAttribute("aria-expanded").ShouldBe("true");
+        toggle.GetAttribute("title")!.ShouldContain("Hide");
+        layout.Find(".modern-app").ClassList.ShouldNotContain("rail-collapsed");
+        layout.Find("#app-navigation-rail").ClassList.ShouldNotContain("rail-hidden");
+    }
+
+    [Test]
+    public void ShouldRenderCorrectIconForNavVisibility()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        component.WaitForAssertion(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        component.InvokeAsync(() => layout.Instance.OnViewportChanged(false)).GetAwaiter().GetResult();
+
+        var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        toggle.InnerHtml.ShouldContain("bi-chevron-double-left");
+
+        toggle.Click();
+
+        toggle.InnerHtml.ShouldContain("bi-list");
     }
 
     [Test]
