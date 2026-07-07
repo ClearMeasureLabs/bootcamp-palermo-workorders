@@ -22,14 +22,14 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Task.Delay(GetInputDelayMs());
 
         var rail = Page.Locator("#app-navigation-rail");
-        await Expect(rail).ToHaveClassAsync("rail-hidden");
-        await Expect(Page.Locator(".modern-app")).ToHaveClassAsync("rail-collapsed");
+        (await rail.GetAttributeAsync("class"))!.ShouldContain("rail-hidden");
+        (await Page.Locator(".modern-app").GetAttributeAsync("class"))!.ShouldContain("rail-collapsed");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
 
-        await Expect(rail).Not.ToHaveClassAsync("rail-hidden");
-        await Expect(Page.Locator(".modern-app")).Not.ToHaveClassAsync("rail-collapsed");
+        (await rail.GetAttributeAsync("class"))!.ShouldNotContain("rail-hidden");
+        (await Page.Locator(".modern-app").GetAttributeAsync("class"))!.ShouldNotContain("rail-collapsed");
         Page.Url.ShouldBe(urlBefore);
     }
 
@@ -71,7 +71,7 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
 
-        await Expect(Page.Locator(".modern-app")).ToHaveClassAsync("rail-collapsed");
+        (await Page.Locator(".modern-app").GetAttributeAsync("class"))!.ShouldContain("rail-collapsed");
         await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.SearchButton))).ToBeVisibleAsync();
         Page.Url.ShouldBe(urlBefore);
     }
@@ -79,10 +79,12 @@ public class NavRailToggleTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task ShouldOpenAndCloseMobileOverlay_WhenNarrowViewport()
     {
-        await Page.SetViewportSizeAsync(375, 667);
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        await Page.SetViewportSizeAsync(375, 667);
         await Task.Delay(GetInputDelayMs());
 
         var rail = Page.Locator("#app-navigation-rail");
@@ -90,11 +92,11 @@ public class NavRailToggleTests : AcceptanceTestBase
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
-        await Expect(rail).ToHaveClassAsync("open");
+        (await rail.GetAttributeAsync("class"))!.ShouldContain("open");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
-        await Expect(rail).Not.ToHaveClassAsync("open");
+        (await rail.GetAttributeAsync("class"))!.ShouldNotContain("open");
         await Expect(toggle).ToBeFocusedAsync();
     }
 
@@ -109,10 +111,10 @@ public class NavRailToggleTests : AcceptanceTestBase
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
-        await Expect(Page.Locator("#app-navigation-rail")).ToHaveClassAsync("rail-hidden");
+        (await Page.Locator("#app-navigation-rail").GetAttributeAsync("class"))!.ShouldContain("rail-hidden");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
-        await Expect(Page.Locator("#app-navigation-rail")).Not.ToHaveClassAsync("rail-hidden");
+        (await Page.Locator("#app-navigation-rail").GetAttributeAsync("class"))!.ShouldNotContain("rail-hidden");
     }
 }
