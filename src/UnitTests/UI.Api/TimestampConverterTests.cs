@@ -80,7 +80,7 @@ public class TimestampConverterTests
     public void Should_ParseIso8601_When_RoundTripFormatProvided()
     {
         var success = TimestampConverter.TryFromIso8601(
-            "2024-06-12T12:00:00.0000000+00:00",
+            "2024-06-12T16:00:00.0000000+00:00",
             out var instant,
             out var error);
 
@@ -92,7 +92,7 @@ public class TimestampConverterTests
     [Test]
     public void Should_ParseIso8601_When_UtcZSuffixProvided()
     {
-        var success = TimestampConverter.TryFromIso8601("2024-06-12T12:00:00Z", out var instant, out var error);
+        var success = TimestampConverter.TryFromIso8601("2024-06-12T16:00:00Z", out var instant, out var error);
 
         success.ShouldBeTrue();
         error.ShouldBeNull();
@@ -151,7 +151,7 @@ public class TimestampConverterTests
     [Test]
     public void Should_BuildResponse_WithBothEpochAndIso_When_FromIsoInput()
     {
-        TimestampConverter.TryFromIso8601("2024-06-12T12:00:00Z", out var instant, out _).ShouldBeTrue();
+        TimestampConverter.TryFromIso8601("2024-06-12T16:00:00Z", out var instant, out _).ShouldBeTrue();
 
         var response = TimestampConverter.ToResponse(instant, "iso");
 

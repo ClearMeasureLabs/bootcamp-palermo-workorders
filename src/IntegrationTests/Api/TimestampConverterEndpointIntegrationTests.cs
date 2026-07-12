@@ -49,7 +49,7 @@ public class TimestampConverterEndpointIntegrationTests
     [Test]
     public async Task Should_Return200AndJson_When_IsoQueryVersioned()
     {
-        var response = await _client!.GetAsync("/api/v1.0/tools/timestamp-converter?iso=2024-06-12T12:00:00Z");
+        var response = await _client!.GetAsync("/api/v1.0/tools/timestamp-converter?iso=2024-06-12T16:00:00Z");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;

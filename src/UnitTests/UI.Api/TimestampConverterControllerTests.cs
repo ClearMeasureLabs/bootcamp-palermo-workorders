@@ -72,7 +72,7 @@ public class TimestampConverterControllerTests
     [Test]
     public void Should_ReturnJson200_When_ValidIsoProvided()
     {
-        var result = CreateController().Get(epoch: null, iso: "2024-06-12T12:00:00Z");
+        var result = CreateController().Get(epoch: null, iso: "2024-06-12T16:00:00Z");
 
         var content = result.ShouldBeOfType<ContentResult>();
         content.StatusCode.ShouldBe(200);
