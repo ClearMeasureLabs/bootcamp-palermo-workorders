@@ -19,6 +19,7 @@
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.1" />
 	</ItemGroup>
 	<ItemGroup>
+		<ProjectReference Include="..\..\ChurchBulletin.ServiceDefaults\ChurchBulletin.ServiceDefaults.csproj" />
 		<ProjectReference Include="..\..\Core\Core.csproj" />
 	</ItemGroup>
 
