@@ -12,7 +12,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 [TestFixture]
 public class HashEndpointIntegrationTests
 {
-    private const string HelloSha256 = "2cf24dba5cf692ac421b552c308d25d9f161afcc3388f3c1fa4febf5bcbadbdb";
+    private const string HelloSha256 = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
     private const string HelloMd5 = "5d41402abc4badb7605b357e99571da9";
     private const string HelloSha1 = "aaf4c61ddcc5e8a2dabede0f4b3ac12fa6cebc15";
 
