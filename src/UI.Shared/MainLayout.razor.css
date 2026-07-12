@@ -359,6 +359,14 @@
     .modern-sidebar.rail-hidden {
         transform: translateX(-100%);
     }
+
+    .sidebar-nav ::deep .navbar-toggler {
+        display: none;
+    }
+
+    .sidebar-nav ::deep .nav-scrollable {
+        display: block !important;
+    }
     
     .main-container {
         margin-left: 0;

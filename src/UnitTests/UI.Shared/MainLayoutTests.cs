@@ -134,6 +134,24 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldInitializeNavToggleJsModule_OnFirstRender()
+    {
+        using var ctx = CreateContext();
+        const string navJsModulePath = "./_content/ClearMeasure.Bootcamp.UI.Shared/js/mainLayoutNav.js";
+        var themeModule = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
+        themeModule.Setup<string>("getTheme").SetResult("light");
+        themeModule.SetupVoid("syncDomFromTheme", _ => true);
+
+        var navModule = ctx.JSInterop.SetupModule(navJsModulePath);
+        var navHelperModule = navModule.SetupModule("initNavToggle");
+        navHelperModule.SetupVoid("dispose");
+
+        ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+
+        navModule.VerifyInvoke("initNavToggle");
+    }
+
+    [Test]
     public void ShouldRenderLoginLink_InHeader_WhenUserIsNotAuthenticated()
     {
         using var ctx = CreateContext();
