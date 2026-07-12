@@ -131,7 +131,8 @@ public class GuidGeneratorControllerTests
         var objectResult = result.ShouldBeOfType<ObjectResult>();
         objectResult.StatusCode.ShouldBe(400);
         var problem = objectResult.Value.ShouldBeOfType<ProblemDetails>();
-        problem.Detail.ShouldContain("count must be between 1 and 100");
+        problem.Detail.ShouldNotBeNull();
+        problem.Detail!.ShouldContain("count must be between 1 and 100");
     }
 
     private static void AssertValidCanonicalGuid(string guid)
