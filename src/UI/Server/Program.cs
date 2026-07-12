@@ -133,6 +133,7 @@ app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
 app.UseCorrelationId();
+app.UseMiddleware<RequestMetricsMiddleware>();
 
 app.UseWhen(
     context => ProblemDetailsPaths.IsMachineOriented(context.Request.Path),
