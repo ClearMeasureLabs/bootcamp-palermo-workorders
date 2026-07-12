@@ -28,10 +28,18 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [SetUp]
-    public void SetUp() => NeedsRebootHealthCheck.NeedsReboot = false;
+    public async Task SetUp()
+    {
+        NeedsRebootHealthCheck.NeedsReboot = false;
+        await _client!.GetAsync("/_demo/setneedsreboot/false");
+    }
 
     [TearDown]
-    public void TearDown() => NeedsRebootHealthCheck.NeedsReboot = false;
+    public async Task TearDown()
+    {
+        NeedsRebootHealthCheck.NeedsReboot = false;
+        await _client!.GetAsync("/_demo/setneedsreboot/false");
+    }
 
     [Test]
     public async Task Should_Return200AndJson_When_GetSimpleHealth()
@@ -210,16 +218,19 @@ public class DetailedHealthEndpointIntegrationTests
 
         var json = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
-        doc.RootElement.TryGetProperty("overallStatus", out _).ShouldBeTrue();
-        doc.RootElement.TryGetProperty("checkedAtUtc", out _).ShouldBeTrue();
-        doc.RootElement.TryGetProperty("components", out var components).ShouldBeTrue();
-        doc.RootElement.TryGetProperty("OverallStatus", out _).ShouldBeFalse();
-        doc.RootElement.TryGetProperty("CheckedAtUtc", out _).ShouldBeFalse();
+        var root = doc.RootElement;
+
+        root.TryGetProperty("overallStatus", out _).ShouldBeTrue();
+        root.TryGetProperty("checkedAtUtc", out _).ShouldBeTrue();
+        root.TryGetProperty("components", out var components).ShouldBeTrue();
+        root.TryGetProperty("OverallStatus", out _).ShouldBeFalse();
+        root.TryGetProperty("CheckedAtUtc", out _).ShouldBeFalse();
 
         var first = components.EnumerateArray().First();
         first.TryGetProperty("name", out _).ShouldBeTrue();
         first.TryGetProperty("status", out _).ShouldBeTrue();
         first.TryGetProperty("durationMs", out _).ShouldBeTrue();
+        first.TryGetProperty("exceptionMessage", out _).ShouldBeFalse();
         first.TryGetProperty("Name", out _).ShouldBeFalse();
     }
 }
