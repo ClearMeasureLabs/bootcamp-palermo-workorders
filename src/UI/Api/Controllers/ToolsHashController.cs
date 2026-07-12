@@ -22,7 +22,6 @@ public class ToolsHashController : ControllerBase
     [HttpPost]
     [RequestSizeLimit(1 * 1024 * 1024)]
     [Consumes("application/json")]
-    [Produces("application/json")]
     [ProducesResponseType(typeof(HashTextResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public IActionResult Post([FromBody] HashTextRequest? request)
