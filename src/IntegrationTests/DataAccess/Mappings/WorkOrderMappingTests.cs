@@ -19,6 +19,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
+            Instructions = "Lock out panel before work.",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
@@ -43,6 +44,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
+        rehydratedWorkOrder.Instructions.ShouldBe("Lock out panel before work.");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
@@ -62,6 +64,7 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
+            Instructions = "Use 10ft ladder",
             RoomNumber = "123 a"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
@@ -89,6 +92,7 @@ public class WorkOrderMappingTests
             rehydratedWorkOrder.Assignee!.Id.ShouldBe(order.Assignee.Id);
             rehydratedWorkOrder.Title.ShouldBe(order.Title);
             rehydratedWorkOrder.Description.ShouldBe(order.Description);
+            rehydratedWorkOrder.Instructions.ShouldBe(order.Instructions);
             rehydratedWorkOrder.Status.ShouldBe(order.Status);
             rehydratedWorkOrder.RoomNumber.ShouldBe(order.RoomNumber);
             rehydratedWorkOrder.Number.ShouldBe(order.Number);
@@ -108,6 +112,7 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
+            Instructions = "Use 10ft ladder",
             RoomNumber = "123 a"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
@@ -320,5 +325,71 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee!.Id.ShouldBe(assignee.Id);
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
+    }
+
+    [Test]
+    public void ShouldPersistNullInstructionsForLegacyWorkOrder()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-07",
+            Title = "Legacy work order",
+            Description = "No instructions provided",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void ShouldPersistInstructionsAtMaxLength()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var longInstructions = new string('I', 4001);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-08",
+            Title = "Max length instructions",
+            Description = "Testing truncation",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+        workOrder.Instructions = longInstructions;
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
     }
 }
