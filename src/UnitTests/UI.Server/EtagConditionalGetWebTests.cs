@@ -54,7 +54,8 @@ public class EtagConditionalGetWebTests
     [Test]
     public async Task Should_Return304NotModified_When_DetailedHealthIfNoneMatchMatchesEtag()
     {
-        using var client = _factory!.CreateClient();
+        await using var factory = new FixedDetailedHealthWebApplicationFactory();
+        using var client = factory.CreateClient();
         var first = await client.GetAsync("/api/health/detailed");
         first.StatusCode.ShouldBe(HttpStatusCode.OK);
         var etag = first.Headers.ETag;
