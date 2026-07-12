@@ -1,4 +1,6 @@
 using System.Net;
+using ClearMeasure.Bootcamp.UI.Api;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
@@ -54,7 +56,17 @@ public class EtagConditionalGetWebTests
     [Test]
     public async Task Should_Return304NotModified_When_DetailedHealthIfNoneMatchMatchesEtag()
     {
-        using var client = _factory!.CreateClient();
+        await using var factory = new ApiVersioningRoutingWebApplicationFactory().WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDetailedHealthReportProvider));
+                if (descriptor is not null)
+                    services.Remove(descriptor);
+                services.AddSingleton<IDetailedHealthReportProvider, StubFixedDetailedHealthReportProvider>();
+            });
+        });
+        using var client = factory.CreateClient();
         var first = await client.GetAsync("/api/health/detailed");
         first.StatusCode.ShouldBe(HttpStatusCode.OK);
         var etag = first.Headers.ETag;
