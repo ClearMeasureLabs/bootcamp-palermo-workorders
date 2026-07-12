@@ -24,7 +24,8 @@ public class TimestampConverterControllerTests
         var problem = result.ShouldBeOfType<ObjectResult>();
         problem.StatusCode.ShouldBe(400);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldContain("epoch or iso");
+        details.Detail.ShouldNotBeNull();
+        details.Detail!.ShouldContain("epoch or iso");
     }
 
     [Test]
@@ -35,7 +36,8 @@ public class TimestampConverterControllerTests
         var problem = result.ShouldBeOfType<ObjectResult>();
         problem.StatusCode.ShouldBe(400);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldContain("only one");
+        details.Detail.ShouldNotBeNull();
+        details.Detail!.ShouldContain("only one");
     }
 
     [Test]
@@ -46,7 +48,8 @@ public class TimestampConverterControllerTests
         var problem = result.ShouldBeOfType<ObjectResult>();
         problem.StatusCode.ShouldBe(400);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldContain("epoch or iso");
+        details.Detail.ShouldNotBeNull();
+        details.Detail!.ShouldContain("epoch or iso");
     }
 
     [Test]
