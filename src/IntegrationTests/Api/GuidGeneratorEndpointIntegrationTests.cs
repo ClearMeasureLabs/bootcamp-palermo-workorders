@@ -88,7 +88,7 @@ public class GuidGeneratorEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        mediaType!.ShouldContain("application/json");
 
         using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
         document.RootElement.GetProperty("status").GetInt32().ShouldBe(400);
