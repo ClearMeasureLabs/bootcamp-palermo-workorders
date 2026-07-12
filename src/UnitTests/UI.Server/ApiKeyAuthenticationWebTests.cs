@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;
 
@@ -106,5 +107,22 @@ public class ApiKeyAuthenticationWebTests
         var versioned = await client.GetAsync("/api/v1.0/ping");
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await versioned.Content.ReadAsStringAsync()).ShouldBe("pong");
+    }
+
+    [Test]
+    public async Task Should_Return200_When_GuidGeneratorPostedWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unversioned = await client.PostAsync(
+            "/api/tools/guid-generator",
+            System.Net.Http.Json.JsonContent.Create(new { }));
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var versioned = await client.PostAsync(
+            "/api/v1.0/tools/guid-generator",
+            System.Net.Http.Json.JsonContent.Create(new { }));
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 }
