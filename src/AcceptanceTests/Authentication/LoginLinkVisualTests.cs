@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.UI.Shared.Components;
+using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Microsoft.Playwright;
 using Shouldly;
 
@@ -145,6 +146,34 @@ public class LoginLinkVisualTests : AcceptanceTestBase
         titleBox.ShouldNotBeNull();
 
         loginBox!.Y.ShouldBeGreaterThanOrEqualTo(titleBox!.Y + titleBox.Height - 2);
+    }
+
+    [Test, Retry(2)]
+    public async Task LoginLink_NavigatesToLoginPage_WhenClicked()
+    {
+        await EnsureLoggedOutAsync();
+
+        var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await Expect(loginLink).ToBeVisibleAsync();
+
+        await Click(nameof(LoginLink.Elements.LoginLink));
+        await Page.WaitForURLAsync("**/login");
+
+        await Expect(Page.GetByTestId(nameof(Login.Elements.User))).ToBeVisibleAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task LoginPage_SubmitButton_DoesNotUseHeaderBlinkKeyframes()
+    {
+        await Page.GotoAsync("/login");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var submitButton = Page.GetByTestId(nameof(Login.Elements.LoginButton));
+        await Expect(submitButton).ToBeVisibleAsync();
+
+        var animationName = await submitButton.EvaluateAsync<string>(
+            "el => getComputedStyle(el).animationName");
+        animationName.ShouldNotContain("login-prompt-emphasis");
     }
 
     private async Task EnsureLoggedOutAsync()
