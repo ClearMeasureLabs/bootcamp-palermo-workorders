@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Server;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -139,5 +140,114 @@ public class DetailedHealthEndpointIntegrationTests
                 || c.Status == ComponentHealthStatus.Degraded
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
         }
+    }
+
+    [Test]
+    public async Task Should_Return200AndEquivalentPayload_When_GetDetailedHealth_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var v1 = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var legacyReport = await legacy.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var v1Report = await v1.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        legacyReport.ShouldNotBeNull();
+        v1Report.ShouldNotBeNull();
+
+        legacyReport!.OverallStatus.ShouldBe(v1Report!.OverallStatus);
+        var legacyNames = legacyReport.Components.Select(c => c.Name).Order().ToList();
+        var v1Names = v1Report.Components.Select(c => c.Name).Order().ToList();
+        legacyNames.ShouldBe(v1Names);
+        foreach (var name in legacyNames)
+        {
+            var legacyStatus = legacyReport.Components.First(c => c.Name == name).Status;
+            var v1Status = v1Report.Components.First(c => c.Name == name).Status;
+            legacyStatus.ShouldBe(v1Status);
+        }
+    }
+
+    [Test]
+    public async Task Should_IncludeApiSupportedVersionsHeader_When_GetDetailedHealthVersioned()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/health/detailed");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.TryGetValues("api-supported-versions", out var values).ShouldBeTrue();
+        values.ShouldNotBeNull();
+        string.Join(", ", values!).ShouldContain("1.0");
+    }
+
+    [Test]
+    public async Task Should_ReturnNotSuccess_When_GetDetailedHealth_UnsupportedVersion()
+    {
+        var response = await _client!.GetAsync("/api/v2.0/health/detailed");
+
+        response.IsSuccessStatusCode.ShouldBeFalse();
+        response.StatusCode.ShouldBeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task Should_Return200WithJsonBody_When_OverallStatusUnhealthy()
+    {
+        try
+        {
+            var setResponse = await _client!.GetAsync("/_demo/setneedsreboot/true");
+            setResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+            var response = await _client.GetAsync("/api/health/detailed");
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+            var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            report.ShouldNotBeNull();
+            report!.OverallStatus.ShouldBe(ComponentHealthStatus.Unhealthy);
+            report.Components.ShouldContain(c =>
+                c.Name == "NeedsReboot" && c.Status == ComponentHealthStatus.Unhealthy);
+        }
+        finally
+        {
+            NeedsRebootHealthCheck.NeedsReboot = false;
+            await _client!.GetAsync("/_demo/setneedsreboot/false");
+        }
+    }
+
+    [Test]
+    public async Task Should_IncludePerComponentSchemaFields_When_DetailedHealthReturned()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        var components = doc.RootElement.GetProperty("components");
+        components.GetArrayLength().ShouldBeGreaterThan(0);
+
+        foreach (var element in components.EnumerateArray())
+        {
+            element.GetProperty("name").GetString().ShouldNotBeNullOrWhiteSpace();
+            var status = element.GetProperty("status").GetString();
+            status.ShouldBeOneOf(
+                ComponentHealthStatus.Healthy,
+                ComponentHealthStatus.Degraded,
+                ComponentHealthStatus.Unhealthy);
+            element.GetProperty("durationMs").GetDouble().ShouldBeGreaterThanOrEqualTo(0);
+        }
+    }
+
+    [Test]
+    public async Task Should_OrderComponentsAlphabeticallyByName_When_DetailedHealthReturned()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        var names = report!.Components.Select(c => c.Name).ToList();
+        names.ShouldBe(names.Order(StringComparer.Ordinal).ToList());
     }
 }
