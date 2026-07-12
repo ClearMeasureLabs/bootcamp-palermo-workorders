@@ -117,12 +117,12 @@ public class ApiKeyAuthenticationWebTests
 
         var unversioned = await client.PostAsync(
             "/api/tools/guid-generator",
-            System.Net.Http.Json.JsonContent.Create(new { }));
+            JsonContent.Create(new { }));
         unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var versioned = await client.PostAsync(
             "/api/v1.0/tools/guid-generator",
-            System.Net.Http.Json.JsonContent.Create(new { }));
+            JsonContent.Create(new { }));
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 }
