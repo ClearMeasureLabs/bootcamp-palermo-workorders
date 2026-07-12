@@ -150,6 +150,15 @@ public class ApiRateLimitingWebTests
     }
 
     [Test]
+    public async Task RateLimiting_EchoRoute_EnforcesLimit()
+    {
+        await using var factory = new TunableApiRateLimitWebApplicationFactory(StrictLimitSettings(1));
+        using var client = factory.CreateClient();
+        (await client.GetAsync("/api/echo")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.GetAsync("/api/echo")).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Test]
     public async Task RateLimiting_WhenDisabled_AllowsUnlimitedApiCalls()
     {
         var settings = new Dictionary<string, string?>(StrictLimitSettings(1))

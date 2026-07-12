@@ -10,6 +10,8 @@ public class ApiKeyAuthenticationMiddlewareTests
     [TestCase("/api/v1.0/health", false)]
     [TestCase("/api/diagnostics", false)]
     [TestCase("/api/v1.0/diagnostics", false)]
+    [TestCase("/api/echo", false)]
+    [TestCase("/api/v1.0/echo", false)]
     [TestCase("/api/version", true)]
     [TestCase("/api/v1.0/version", true)]
     [TestCase("/api/time", true)]
