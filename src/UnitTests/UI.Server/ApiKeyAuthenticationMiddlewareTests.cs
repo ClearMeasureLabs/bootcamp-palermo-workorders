@@ -16,6 +16,10 @@ public class ApiKeyAuthenticationMiddlewareTests
     [TestCase("/api/v1.0/time", true)]
     [TestCase("/api/ping", true)]
     [TestCase("/api/v1.0/ping", true)]
+    [TestCase("/api/tools/guid-generator", true)]
+    [TestCase("/api/v1.0/tools/guid-generator", true)]
+    [TestCase("/api/tools/other-tool", false)]
+    [TestCase("/api/guid-generator", false)]
     [TestCase("/api/WeatherForecast", false)]
     public void ShouldValidate_ReturnsExpected_When_PathAndOptions(string path, bool expectPublicSkip)
     {
