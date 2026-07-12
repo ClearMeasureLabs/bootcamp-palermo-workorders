@@ -132,7 +132,10 @@ public abstract class AcceptanceTestBase
             {
                 await page.GotoAsync("/");
                 await page.WaitForURLAsync("/");
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                // Wait for the DOM to be ready rather than NetworkIdle: this app keeps a
+                // persistent realtime-notification WebSocket open, so the network never goes
+                // idle and NetworkIdle would spuriously time out (worse under parallel load).
+                await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
                 break;
             }
             catch (PlaywrightException) when (attempt < maxRetries)

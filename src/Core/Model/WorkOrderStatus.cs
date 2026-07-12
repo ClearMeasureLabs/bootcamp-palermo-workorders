@@ -86,8 +86,13 @@ public class WorkOrderStatus
     public static WorkOrderStatus FromCode(string code)
     {
         var items = GetAllItems();
-        var match =
-            Array.Find(items, instance => instance.Code == code)!;
+        var match = Array.Find(items, instance => instance.Code == code);
+
+        if (match == null)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(code), $"Code '{code}' is not a valid code for {nameof(WorkOrderStatus)}");
+        }
 
         return match;
     }

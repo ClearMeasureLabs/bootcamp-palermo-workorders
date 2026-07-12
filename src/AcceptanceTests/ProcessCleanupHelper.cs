@@ -8,6 +8,15 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests;
 public static class ProcessCleanupHelper
 {
     /// <summary>
+    /// Frees the application's port before a new server is started, killing any process
+    /// left listening on it by a previous run whose teardown did not complete (for example
+    /// after a test-host crash). Without this, the freshly spawned server hits Kestrel
+    /// "address already in use" and crashes, which cascades into the whole run aborting.
+    /// </summary>
+    public static void EnsurePortFree(string applicationBaseUrl) =>
+        KillOrphanedServerProcesses(applicationBaseUrl);
+
+    /// <summary>
     /// Stops a non-HTTP process (e.g. Worker) by killing its process tree and waiting for exit.
     /// Unlike <see cref="StopServerProcessAsync"/>, no port-based orphan cleanup is performed
     /// because the process does not listen on a network port.

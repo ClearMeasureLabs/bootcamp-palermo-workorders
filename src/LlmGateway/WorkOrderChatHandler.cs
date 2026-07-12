@@ -4,7 +4,7 @@ using Microsoft.Extensions.AI;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workOrderTool) : IRequestHandler<WorkOrderChatQuery, ChatResponse>
+public class WorkOrderChatHandler(IChatClientFactory factory, WorkOrderTool workOrderTool) : IRequestHandler<WorkOrderChatQuery, ChatResponse>
 {
     private readonly ChatOptions _chatOptions = new()
     {

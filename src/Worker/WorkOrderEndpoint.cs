@@ -75,5 +75,6 @@ public class WorkOrderEndpoint : ClearHostedEndpoint
                 apiUrl));
 
         services.AddSingleton<ChatClientFactory>();
+        services.AddSingleton<IChatClientFactory>(sp => sp.GetRequiredService<ChatClientFactory>());
     }
 }

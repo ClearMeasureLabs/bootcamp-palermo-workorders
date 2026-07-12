@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <NUnit>
-    <NumberOfTestWorkers>8</NumberOfTestWorkers>
+    <!-- 4 workers (was 8): all workers share a single spawned UI.Server, and 8 concurrent
+         Playwright browsers overloaded it, causing page-navigation timeouts in test setup.
+         4 gives the server headroom while retaining parallel speed. -->
+    <NumberOfTestWorkers>4</NumberOfTestWorkers>
   </NUnit>
   <LoggerRunSettings>
     <Loggers>

@@ -202,6 +202,12 @@ public class ServerFixture
             ? $"run --no-build --configuration {config} --no-launch-profile --urls={ApplicationBaseUrl}"
             : $"run --no-build --configuration {config} --urls={ApplicationBaseUrl}";
 
+        // Free the port before launching. A previous run whose OneTimeTearDown was skipped
+        // (e.g. after a test-host crash) can leave an orphaned server still holding this
+        // port; the new server would then fail to bind ("address already in use") and crash,
+        // cascading into the entire run aborting. Clearing it here makes startup deterministic.
+        ProcessCleanupHelper.EnsurePortFree(ApplicationBaseUrl);
+
         _serverProcess = new Process
         {
             StartInfo = new ProcessStartInfo

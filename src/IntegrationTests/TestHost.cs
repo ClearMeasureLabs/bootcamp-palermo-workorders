@@ -88,6 +88,21 @@ public static class TestHost
                 }
 
                 config.AddEnvironmentVariables();
+
+                // Default integration tests to the deterministic offline chat fake ONLY when
+                // no real Azure OpenAI key is resolvable from any source (env, appsettings, or
+                // user-secrets). This lets the text-only LLM paths run with no live external
+                // calls in keyless environments (e.g. CI), while a developer/CI with a real key
+                // still exercises the live model. LiveLlm-tagged tests skip under the fake.
+                var resolved = config.Build();
+                var hasRealKey = !string.IsNullOrEmpty(resolved["AI_OpenAI_ApiKey"]);
+                if (!hasRealKey)
+                {
+                    config.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["AI_OpenAI_UseFake"] = "true"
+                    });
+                }
             })
             .ConfigureServices(s =>
             {

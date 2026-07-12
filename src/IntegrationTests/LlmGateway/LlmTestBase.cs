@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http;
 using ClearMeasure.Bootcamp.LlmGateway;
+using Microsoft.Extensions.Configuration;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
@@ -8,10 +9,31 @@ public abstract class LlmTestBase : IntegratedTestBase
 {
     private const string ClientResultExceptionFullName = "System.ClientModel.ClientResultException";
 
+    /// <summary>
+    /// Category for tests that require a real LLM (natural-language reasoning / tool-calling)
+    /// and therefore cannot run against the deterministic offline fake. They run only when a
+    /// real Azure OpenAI key is configured. Used for CI filtering; the runtime skip is driven
+    /// by <see cref="RequiresRealLlm"/> (class-level categories are not visible in [SetUp]).
+    /// </summary>
+    protected const string LiveLlmCategory = "LiveLlm";
+
+    /// <summary>
+    /// Override to true in fixtures whose assertions depend on genuine model reasoning or
+    /// tool-calling. Such tests are skipped when the deterministic offline fake is active.
+    /// </summary>
+    protected virtual bool RequiresRealLlm => false;
+
     [SetUp]
     public async Task SkipWhenChatClientUnavailable()
     {
-        var factory = TestHost.GetRequiredService<ChatClientFactory>();
+        var usingFake = TestHost.GetRequiredService<IConfiguration>().GetValue<bool>("AI_OpenAI_UseFake");
+
+        if (usingFake && RequiresRealLlm)
+        {
+            Assert.Ignore("Requires a real LLM (LiveLlm); the deterministic offline fake cannot reason or call tools.");
+        }
+
+        var factory = TestHost.GetRequiredService<IChatClientFactory>();
         var availability = await factory.IsChatClientAvailable();
 
         if (!availability.IsAvailable)

@@ -8,7 +8,7 @@ using Worker.Sagas.AiBotWorkerOrder.Events;
 
 namespace Worker.Sagas.AiBotWorkerOrder;
 
-public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
+public class AiBotWorkOrderSaga(IBus bus, IChatClientFactory chatClientFactory) :
     Saga<AiBotWorkOrderSagaState>,
     IAmStartedByMessages<StartAiBotWorkOrderSagaCommand>,
     IHandleMessages<AiBotStartedWorkOrderEvent>,

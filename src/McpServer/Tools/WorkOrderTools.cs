@@ -5,6 +5,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
+using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ModelContextProtocol.Server;
 
@@ -103,7 +104,23 @@ public class WorkOrderTools
             return $"Employee with username '{executingUsername}' not found.";
         }
 
-        if (commandName == "DraftToAssignedCommand")
+        // Resolve the command polymorphically from the single registry rather than a
+        // hand-maintained switch. A command is matched either by its type name
+        // (e.g. "DraftToAssignedCommand") or by its transition verb (e.g. "Shelve").
+        var stateCommandList = new StateCommandList();
+        var allCommands = stateCommandList.GetAllStateCommands(workOrder, user).OfType<StateCommandBase>().ToArray();
+
+        var command = allCommands.FirstOrDefault(c =>
+            string.Equals(c.GetType().Name, commandName, StringComparison.OrdinalIgnoreCase)
+            || c.Matches(commandName));
+
+        if (command == null)
+        {
+            var available = string.Join(", ", allCommands.Select(c => c.GetType().Name));
+            return $"Unknown command '{commandName}'. Available commands: {available}.";
+        }
+
+        if (command is DraftToAssignedCommand)
         {
             if (string.IsNullOrEmpty(assigneeUsername))
             {
@@ -117,22 +134,6 @@ public class WorkOrderTools
             }
 
             workOrder.Assignee = assignee;
-        }
-
-        StateCommandBase? command = commandName switch
-        {
-            "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
-            "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
-            "InProgressToAssignedCommand" => new InProgressToAssignedCommand(workOrder, user),
-            "Shelve" => new InProgressToAssignedCommand(workOrder, user),
-            "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
-            "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
-            _ => null
-        };
-
-        if (command == null)
-        {
-            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand, Shelve, InProgressToCompleteCommand, AssignedToCancelledCommand.";
         }
 
         if (!command.IsValid())

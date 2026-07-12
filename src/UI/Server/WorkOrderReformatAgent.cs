@@ -8,7 +8,7 @@ namespace ClearMeasure.Bootcamp.UI.Server;
 ///     AI agent responsible for reformatting work order title and description fields
 /// </summary>
 public class WorkOrderReformatAgent(
-    ChatClientFactory chatClientFactory,
+    IChatClientFactory chatClientFactory,
     ILogger<WorkOrderReformatAgent> logger)
 {
     /// <summary>

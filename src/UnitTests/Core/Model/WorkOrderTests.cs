@@ -80,4 +80,35 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void CanReassignShouldBeTrueOnlyWhileDraft()
+    {
+        var order = new WorkOrder();
+
+        order.ChangeStatus(WorkOrderStatus.Draft);
+        Assert.That(order.CanReassign(), Is.True);
+
+        foreach (var status in new[]
+                 {
+                     WorkOrderStatus.Assigned,
+                     WorkOrderStatus.InProgress,
+                     WorkOrderStatus.Complete,
+                     WorkOrderStatus.Cancelled
+                 })
+        {
+            order.ChangeStatus(status);
+            Assert.That(order.CanReassign(), Is.False, $"CanReassign should be false when {status}");
+        }
+    }
+
+    [Test]
+    public void GetMessageShouldDescribeCurrentStatus()
+    {
+        var order = new WorkOrder { Number = "WO-42" };
+        order.ChangeStatus(WorkOrderStatus.InProgress);
+
+        Assert.That(order.GetMessage(),
+            Is.EqualTo($"Work Order WO-42 is now in Status {WorkOrderStatus.InProgress}"));
+    }
 }

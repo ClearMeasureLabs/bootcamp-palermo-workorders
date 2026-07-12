@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
 public class CanConnectToLlmServerHealthCheck(
-    ChatClientFactory chatClientFactory,
+    IChatClientFactory chatClientFactory,
     ILogger<CanConnectToLlmServerHealthCheck> logger) : IHealthCheck
 {
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,

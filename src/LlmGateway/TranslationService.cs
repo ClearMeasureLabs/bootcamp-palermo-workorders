@@ -4,7 +4,7 @@ using Microsoft.Extensions.AI;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public partial class TranslationService(ChatClientFactory chatClientFactory) : ITranslationService
+public partial class TranslationService(IChatClientFactory chatClientFactory) : ITranslationService
 {
     [GeneratedRegex(@"^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{1,8})*$")]
     private static partial Regex Bcp47Regex();

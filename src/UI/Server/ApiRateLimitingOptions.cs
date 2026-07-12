@@ -1,3 +1,5 @@
+using ClearMeasure.Bootcamp.UI.Shared;
+
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
@@ -35,5 +37,5 @@ public sealed class ApiRateLimitingOptions
     /// <summary>
     /// Optional header for per-client key; when absent, user name or connection remote IP is used.
     /// </summary>
-    public string ApiKeyHeaderName { get; set; } = "X-API-Key";
+    public string ApiKeyHeaderName { get; set; } = ApiKeyConstants.HeaderName;
 }

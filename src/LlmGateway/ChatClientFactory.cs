@@ -6,11 +6,17 @@ using OpenAI.Chat;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class ChatClientFactory(IBus bus)
+public class ChatClientFactory(IBus bus) : IChatClientFactory
 {
     public async Task<ChatClientAvailabilityResult> IsChatClientAvailable()
     {
         var config = await bus.Send(new ChatClientConfigQuery());
+
+        if (config.UseFake)
+        {
+            return new ChatClientAvailabilityResult(true, "Chat client is using the deterministic offline fake");
+        }
+
         var missing = new List<string>();
 
         if (string.IsNullOrEmpty(config.AiOpenAiApiKey)) missing.Add("AI_OpenAI_ApiKey");
@@ -29,6 +35,12 @@ public class ChatClientFactory(IBus bus)
     public async Task<IChatClient> GetChatClient()
     {
         var config = await bus.Send(new ChatClientConfigQuery());
+
+        if (config.UseFake)
+        {
+            return new FakeChatClient();
+        }
+
         var apiKey = config.AiOpenAiApiKey
             ?? throw new InvalidOperationException("AI_OpenAI_ApiKey is not configured.");
 

@@ -54,12 +54,13 @@ public class WorkOrder : EntityBase<WorkOrder>
         return "Work Order " + Number;
     }
 
+    /// <summary>
+    /// Transitions this work order to the given status. This is the single mutation point
+    /// for <see cref="Status"/>; transition-specific side effects (assigned/completed dates,
+    /// clearing the assignee) are applied by the corresponding state command before calling
+    /// this method.
+    /// </summary>
     public void ChangeStatus(WorkOrderStatus status)
-    {
-        Status = status;
-    }
-
-    public void ChangeStatus(Employee employee, DateTime date, WorkOrderStatus status)
     {
         Status = status;
     }

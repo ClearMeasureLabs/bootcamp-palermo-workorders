@@ -10,8 +10,11 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
 [TestFixture]
+[Category(LiveLlmCategory)]
 public class ApplicationChatHandlerTests : LlmTestBase
 {
+    protected override bool RequiresRealLlm => true;
+
     private static async Task<WorkOrder?> WaitForWorkOrderAsync(
         string workOrderNumber,
         Func<WorkOrder, bool> predicate,

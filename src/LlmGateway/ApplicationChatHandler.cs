@@ -3,7 +3,7 @@ using Microsoft.Extensions.AI;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider toolProvider) : IRequestHandler<ApplicationChatQuery, ChatResponse>
+public class ApplicationChatHandler(IChatClientFactory factory, IToolProvider toolProvider) : IRequestHandler<ApplicationChatQuery, ChatResponse>
 {
     public async Task<ChatResponse> Handle(ApplicationChatQuery request, CancellationToken cancellationToken)
     {

@@ -16,12 +16,14 @@ public class ChatClientConfigQueryHandler(IConfiguration configuration, ILogger<
         logger?.LogDebug($"AI_OpenAI_Url found as {apiKey}");
         var openAiModel = configuration.GetValue<string>("AI_OpenAI_Model");
         logger?.LogDebug($"AI_OpenAI_Model found as {apiKey}");
+        var useFake = configuration.GetValue<bool>("AI_OpenAI_UseFake");
 
         return Task.FromResult(new ChatClientConfig
         {
-            AiOpenAiApiKey = apiKey, 
-            AiOpenAiUrl = openAiUrl, 
-            AiOpenAiModel = openAiModel
+            AiOpenAiApiKey = apiKey,
+            AiOpenAiUrl = openAiUrl,
+            AiOpenAiModel = openAiModel,
+            UseFake = useFake
         });
     }
 }

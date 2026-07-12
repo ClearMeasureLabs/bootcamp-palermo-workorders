@@ -37,6 +37,7 @@ public class UIClientServiceRegistry : ServiceRegistry
         
         
         this.AddSingleton<ChatClientFactory>();
+        this.AddSingleton<IChatClientFactory>(sp => sp.GetRequiredService<ChatClientFactory>());
         this.AddTransient<WorkOrderTool>();
         this.AddSingleton<ThemePreferenceService>();
 
