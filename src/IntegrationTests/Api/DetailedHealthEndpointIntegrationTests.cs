@@ -230,7 +230,16 @@ public class DetailedHealthEndpointIntegrationTests
         first.TryGetProperty("name", out _).ShouldBeTrue();
         first.TryGetProperty("status", out _).ShouldBeTrue();
         first.TryGetProperty("durationMs", out _).ShouldBeTrue();
-        first.TryGetProperty("exceptionMessage", out _).ShouldBeFalse();
         first.TryGetProperty("Name", out _).ShouldBeFalse();
+        first.TryGetProperty("DurationMs", out _).ShouldBeFalse();
+
+        foreach (var component in components.EnumerateArray())
+        {
+            foreach (var property in component.EnumerateObject())
+            {
+                char.IsUpper(property.Name[0]).ShouldBeFalse(
+                    $"Property '{property.Name}' should be camelCase");
+            }
+        }
     }
 }
