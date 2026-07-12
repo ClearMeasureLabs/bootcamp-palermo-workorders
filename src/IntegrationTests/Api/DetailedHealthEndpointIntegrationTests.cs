@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Server;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -25,6 +26,12 @@ public class DetailedHealthEndpointIntegrationTests
         _client?.Dispose();
         _factory?.Dispose();
     }
+
+    [SetUp]
+    public void SetUp() => NeedsRebootHealthCheck.NeedsReboot = false;
+
+    [TearDown]
+    public void TearDown() => NeedsRebootHealthCheck.NeedsReboot = false;
 
     [Test]
     public async Task Should_Return200AndJson_When_GetSimpleHealth()
@@ -139,5 +146,80 @@ public class DetailedHealthEndpointIntegrationTests
                 || c.Status == ComponentHealthStatus.Degraded
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
         }
+    }
+
+    [Test]
+    public async Task Should_Return200AndSamePayloadShape_When_LegacyAndV1DetailedPaths()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var v1 = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.Headers.TryGetValues("api-supported-versions", out var versions).ShouldBeTrue();
+        versions.ShouldNotBeNull();
+        string.Join(", ", versions!).ShouldContain("1.0");
+
+        var legacyReport = await legacy.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var v1Report = await v1.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        legacyReport.ShouldNotBeNull();
+        v1Report.ShouldNotBeNull();
+        legacyReport!.OverallStatus.ShouldBe(v1Report!.OverallStatus);
+        legacyReport.Components.Select(c => c.Name).ToHashSet()
+            .ShouldBe(v1Report.Components.Select(c => c.Name).ToHashSet());
+    }
+
+    [Test]
+    public async Task Should_Return200WithUnhealthyOverallStatus_When_ComponentFails()
+    {
+        var setResponse = await _client!.GetAsync("/_demo/setneedsreboot/true");
+        setResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var response = await _client.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.OverallStatus.ShouldBe(ComponentHealthStatus.Unhealthy);
+        var needsReboot = report.Components.Single(c => c.Name == "NeedsReboot");
+        needsReboot.Status.ShouldBe(ComponentHealthStatus.Unhealthy);
+    }
+
+    [Test]
+    public async Task Should_ExcludeLiveTaggedChecks_When_BuildingDetailedReport()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        var names = report!.Components.Select(c => c.Name).ToHashSet();
+        names.ShouldNotContain("self");
+        names.ShouldContain("NeedsReboot");
+    }
+
+    [Test]
+    public async Task Should_SerializeCamelCaseProperties_When_DetailedHealthReturned()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.TryGetProperty("overallStatus", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("checkedAtUtc", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("components", out var components).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("OverallStatus", out _).ShouldBeFalse();
+        doc.RootElement.TryGetProperty("CheckedAtUtc", out _).ShouldBeFalse();
+
+        var first = components.EnumerateArray().First();
+        first.TryGetProperty("name", out _).ShouldBeTrue();
+        first.TryGetProperty("status", out _).ShouldBeTrue();
+        first.TryGetProperty("durationMs", out _).ShouldBeTrue();
+        first.TryGetProperty("Name", out _).ShouldBeFalse();
     }
 }

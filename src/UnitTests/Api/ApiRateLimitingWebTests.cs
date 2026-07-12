@@ -20,6 +20,21 @@ public class ApiRateLimitingWebTests
         };
 
     [Test]
+    public async Task Should_Return429WithRetryAfter_When_DetailedHealthExceedsSlidingWindowPermitLimit()
+    {
+        await using var factory = new TunableApiRateLimitWebApplicationFactory(StrictLimitSettings(2));
+        using var client = factory.CreateClient();
+
+        (await client.GetAsync("/api/health/detailed")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.GetAsync("/api/health/detailed")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var limited = await client.GetAsync("/api/health/detailed");
+        limited.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        limited.Headers.TryGetValues("Retry-After", out var retryValues).ShouldBeTrue();
+        retryValues!.First().ShouldBe("2");
+    }
+
+    [Test]
     public async Task Should_Return429WithRetryAfter_When_ApiRequestsExceedSlidingWindowPermitLimit()
     {
         await using var factory = new RateLimitedApiWebApplicationFactory();
