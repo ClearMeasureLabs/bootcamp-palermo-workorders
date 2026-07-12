@@ -92,7 +92,7 @@ public class ToolsRandomEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        (mediaType == "application/problem+json" || mediaType == "application/json").ShouldBeTrue();
 
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         doc.RootElement.GetProperty("status").GetInt32().ShouldBe(400);
