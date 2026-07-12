@@ -15,8 +15,7 @@ public class MetricsSummaryResponseBuilderTests
     public void Build_Should_ReuseUptimeSemantics_When_Called()
     {
         var clock = new FixedUtcTimeProvider(new DateTimeOffset(2026, 4, 10, 15, 0, 0, TimeSpan.Zero));
-        var start = new DateTimeOffset(2026, 4, 10, 14, 0, 0, TimeSpan.Zero);
-        var expectedUptime = SimpleHealthResponseBuilder.Build(clock, start).Uptime;
+        var expectedUptime = SimpleHealthResponseBuilder.Build(clock).Uptime;
 
         var response = MetricsSummaryResponseBuilder.Build(clock, 0);
 
