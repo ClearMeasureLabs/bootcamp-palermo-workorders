@@ -57,7 +57,7 @@ public static class EchoRequestReflectionBuilder
         {
             var values = SensitiveHeaderNames.Contains(pair.Key)
                 ? [RedactedHeaderValue]
-                : pair.Value.ToArray();
+                : pair.Value.Select(static v => v ?? string.Empty).ToArray();
             result[pair.Key] = values;
         }
 
