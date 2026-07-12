@@ -13,8 +13,8 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 public class HashEndpointIntegrationTests
 {
     private const string HelloSha256 = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
-    private const string HelloMd5 = "5d41402abc4badb7605b357e99571da9";
-    private const string HelloSha1 = "aaf4c61ddcc5e8a2dabede0f4b3ac12fa6cebc15";
+    private const string HelloMd5 = "5d41402abc4b2a76b9719d911017c592";
+    private const string HelloSha1 = "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d";
 
     private const string WhitespaceSha256 = "0aad7da77d2ed59c396c99a74e49f3a4524dcdbcb5163251b1433d640247aeb4";
     private const string WhitespaceMd5 = "628631f07321b22d8c176c200c855e1b";
