@@ -58,7 +58,7 @@ public class TimestampConverterControllerTests
         var problem = result.ShouldBeOfType<ObjectResult>();
         problem.StatusCode.ShouldBe(400);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldNotBeNull();
+        details.Detail.ShouldNotBeNullOrWhiteSpace();
         details.Detail!.ShouldContain("exactly one");
     }
 
@@ -72,7 +72,11 @@ public class TimestampConverterControllerTests
         var problem = result.ShouldBeOfType<ObjectResult>();
         problem.StatusCode.ShouldBe(400);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
+<<<<<<< HEAD
         details.Detail.ShouldNotBeNull();
+=======
+        details.Detail.ShouldNotBeNullOrWhiteSpace();
+>>>>>>> 7e403d64 (fix: resolve nullable warnings in timestamp converter tests (#6746) [AB#6746])
         details.Detail!.ShouldContain("mutually exclusive");
     }
 
@@ -99,7 +103,11 @@ public class TimestampConverterControllerTests
         var problem = result.ShouldBeOfType<ObjectResult>();
         problem.StatusCode.ShouldBe(400);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
+<<<<<<< HEAD
         details.Detail.ShouldNotBeNull();
+=======
+        details.Detail.ShouldNotBeNullOrWhiteSpace();
+>>>>>>> 7e403d64 (fix: resolve nullable warnings in timestamp converter tests (#6746) [AB#6746])
         details.Detail!.ShouldContain("ISO-8601");
     }
 

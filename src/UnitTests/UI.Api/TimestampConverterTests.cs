@@ -81,7 +81,7 @@ public class TimestampConverterTests
         var result = TimestampConverter.TryConvertFromIso("not-a-date");
 
         result.Success.ShouldBeFalse();
-        result.ErrorDetail.ShouldNotBeNull();
+        result.ErrorDetail.ShouldNotBeNullOrWhiteSpace();
         result.ErrorDetail!.ShouldContain("ISO-8601");
     }
 
