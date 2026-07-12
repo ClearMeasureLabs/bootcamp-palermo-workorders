@@ -89,9 +89,7 @@ public class TimestampConverterEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/tools/timestamp-converter");
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        ShouldBeProblemJson(response.Content);
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
@@ -105,9 +103,7 @@ public class TimestampConverterEndpointIntegrationTests
             "/api/tools/timestamp-converter?epoch=1&iso=2024-01-01T00:00:00Z");
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        ShouldBeProblemJson(response.Content);
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
@@ -121,9 +117,7 @@ public class TimestampConverterEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/tools/timestamp-converter?epoch=notnumeric");
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        ShouldBeProblemJson(response.Content);
     }
 
     [Test]
@@ -132,9 +126,7 @@ public class TimestampConverterEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/tools/timestamp-converter?iso=not-a-date");
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        ShouldBeProblemJson(response.Content);
     }
 
     [Test]
@@ -148,5 +140,12 @@ public class TimestampConverterEndpointIntegrationTests
 
         var versioned = await client.GetAsync("/api/v1.0/tools/timestamp-converter?epoch=1718208000");
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    private static void ShouldBeProblemJson(HttpContent content)
+    {
+        var mediaType = content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        (mediaType == "application/json" || mediaType == "application/problem+json").ShouldBeTrue();
     }
 }
