@@ -41,7 +41,7 @@ public sealed class ToolsRandomController : ControllerBase
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public IActionResult Get([FromQuery] string type)
+    public IActionResult Get([FromQuery] string? type)
     {
         if (string.IsNullOrWhiteSpace(type))
         {
