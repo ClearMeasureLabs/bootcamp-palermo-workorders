@@ -44,7 +44,7 @@ public static class EchoRequestReflectionBuilder
         var result = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
         foreach (var pair in query)
         {
-            result[pair.Key] = pair.Value.ToArray();
+            result[pair.Key] = pair.Value.Select(static v => v ?? string.Empty).ToArray();
         }
 
         return result;
