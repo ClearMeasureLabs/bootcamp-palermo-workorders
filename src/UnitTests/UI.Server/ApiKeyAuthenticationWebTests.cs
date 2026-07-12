@@ -107,4 +107,17 @@ public class ApiKeyAuthenticationWebTests
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await versioned.Content.ReadAsStringAsync()).ShouldBe("pong");
     }
+
+    [Test]
+    public async Task Should_Return200_When_TimestampConverterWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unversioned = await client.GetAsync("/api/tools/timestamp-converter?epoch=1711792800");
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var versioned = await client.GetAsync("/api/v1.0/tools/timestamp-converter?epoch=1711792800");
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }
