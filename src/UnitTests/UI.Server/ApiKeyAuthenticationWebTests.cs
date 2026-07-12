@@ -107,4 +107,15 @@ public class ApiKeyAuthenticationWebTests
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await versioned.Content.ReadAsStringAsync()).ShouldBe("pong");
     }
+
+    [Test]
+    public async Task Should_Return200_When_ToolsRandomWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/tools/random?type=number");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }
