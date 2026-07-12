@@ -58,7 +58,8 @@ public class TimestampConverterControllerTests
         var problem = result.ShouldBeOfType<ObjectResult>();
         problem.StatusCode.ShouldBe(400);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldContain("exactly one");
+        details.Detail.ShouldNotBeNull();
+        details.Detail!.ShouldContain("exactly one");
     }
 
     [Test]
@@ -71,7 +72,8 @@ public class TimestampConverterControllerTests
         var problem = result.ShouldBeOfType<ObjectResult>();
         problem.StatusCode.ShouldBe(400);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldContain("mutually exclusive");
+        details.Detail.ShouldNotBeNull();
+        details.Detail!.ShouldContain("mutually exclusive");
     }
 
     [Test]
@@ -97,7 +99,8 @@ public class TimestampConverterControllerTests
         var problem = result.ShouldBeOfType<ObjectResult>();
         problem.StatusCode.ShouldBe(400);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldContain("ISO-8601");
+        details.Detail.ShouldNotBeNull();
+        details.Detail!.ShouldContain("ISO-8601");
     }
 
     private static TimestampConverterController CreateController() =>
