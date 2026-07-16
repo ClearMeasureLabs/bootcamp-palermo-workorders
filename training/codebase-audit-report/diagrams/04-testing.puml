@@ -1,0 +1,28 @@
+@startuml testing
+!include <C4/C4_Component>
+LAYOUT_TOP_DOWN()
+skinparam dpi 140
+title Test Pyramid - 473 tests across 3 suites (DevOps/Test 13,848 LOC)
+
+AddElementTag("unit", $bgColor="#ABEBC6", $legendText="unit (fast, isolated)")
+AddElementTag("int",  $bgColor="#F9E79F", $legendText="integration (DB/host)")
+AddElementTag("e2e",  $bgColor="#F5B7B1", $legendText="acceptance (browser)")
+
+System_Boundary(t, "Test suites") {
+  Component(atest, "AcceptanceTests", "Playwright", "88 tests - drives real Blazor UI + MCP + LLM", $tags="e2e")
+  Component(itest, "IntegrationTests", "NUnit + SQLite/host", "119 tests - EF handlers, gRPC, WebSocket, health, MCP, LLM", $tags="int")
+  Component(utest, "UnitTests", "NUnit + bUnit", "266 tests - domain, middleware, components", $tags="unit")
+}
+
+Component(sys, "SYSTEM under test", "11,521 LOC", "domain, handlers, UI, middleware")
+
+Rel(utest, sys, "isolates")
+Rel(itest, sys, "integrates")
+Rel(atest, sys, "end-to-end")
+note right of utest
+  Pyramid shape is healthy (wide base).
+  Gaps: WorkOrderSearchHandler, ForecastQueryHandler,
+  Worker message handlers, SQL Server concurrency.
+end note
+SHOW_LEGEND()
+@enduml

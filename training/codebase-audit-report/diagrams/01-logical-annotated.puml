@@ -1,0 +1,38 @@
+@startuml logical-annotated
+!include <C4/C4_Component>
+LAYOUT_TOP_DOWN()
+skinparam dpi 140
+skinparam wrapWidth 200
+title Logical Architecture - annotated with LOC and Complexity (scc branch-count proxy for McCabe)
+
+AddElementTag("hot",  $bgColor="#F5B7B1", $legendText="high complexity")
+AddElementTag("warm", $bgColor="#F9E79F", $legendText="medium complexity")
+AddElementTag("cool", $bgColor="#ABEBC6", $legendText="low complexity")
+AddElementTag("devops",$bgColor="#D5D8DC", $legendText="DevOps/Test asset")
+
+System_Boundary(sys, "SYSTEM code - 11,521 LOC (45%)") {
+  Component(uiserver, "UI.Server/Client/Api", "ASP.NET/Blazor", "LOC 3,313 / CC 174", $tags="hot")
+  Component(uishared, "UI.Shared", "Blazor", "LOC 4,502 / CC 86", $tags="warm")
+  Component(core, "Core (Domain)", "C#", "LOC 1,352 / CC 70", $tags="warm")
+  Component(sd, "ServiceDefaults", "OTEL", "LOC 594 / CC 36", $tags="cool")
+  Component(data, "DataAccess", "EF Core", "LOC 533 / CC 31", $tags="cool")
+  Component(mcp, "McpServer", "MCP", "LOC 529 / CC 28", $tags="cool")
+  Component(llm, "LlmGateway", "OpenAI", "LOC 371 / CC 15", $tags="cool")
+  Component(worker, "Worker", "NServiceBus", "LOC 327 / CC 4", $tags="cool")
+}
+System_Boundary(dev, "DEVOPS/TEST code - 13,848 LOC (55%)") {
+  Component(utest, "UnitTests", "NUnit/bUnit", "LOC 5,138 / 266 tests", $tags="devops")
+  Component(itest, "IntegrationTests", "NUnit", "LOC 3,876 / 119 tests", $tags="devops")
+  Component(atest, "AcceptanceTests", "Playwright", "LOC 3,145 / 88 tests", $tags="devops")
+  Component(db, "Database (migrations)", "DbUp/SQL", "LOC 630 / CC 34", $tags="devops")
+  Component(apphost, "AppHost", "Aspire", "LOC 96 / CC 0", $tags="devops")
+}
+
+Rel(data, core, "depends on")
+Rel(uiserver, data, "uses")
+Rel(worker, data, "uses")
+Rel(utest, core, "tests")
+Rel(itest, data, "tests")
+Rel(atest, uiserver, "drives")
+SHOW_LEGEND()
+@enduml

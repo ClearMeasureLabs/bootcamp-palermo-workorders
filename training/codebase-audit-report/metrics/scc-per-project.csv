@@ -1,0 +1,15 @@
+project,files,lines,code,complexity
+UI,4718,460,222871,91
+UnitTests,11348,74,425216,82
+Core,1352,27,47216,68
+UI.Shared,4502,83,147087,52
+IntegrationTests,12464,99,449816,51
+AcceptanceTests,14497,307,522760,43
+Database,630,49,27080,23
+DataAccess,533,7,23179,22
+Worker,327,17,14775,16
+LlmGateway,371,8,17009,14
+ChurchBulletin.ServiceDefaults,594,203,32876,13
+McpServer,529,11,22965,11
+ChurchBulletin.AppHost,96,1,3715,5
+DatabaseFlyway,0,0,0,0

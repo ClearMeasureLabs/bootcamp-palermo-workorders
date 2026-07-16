@@ -1,0 +1,32 @@
+@startuml runtime
+!include <C4/C4_Container>
+LAYOUT_LEFT_RIGHT()
+skinparam dpi 140
+title Runtime Containers - Work Order System
+
+Person(user, "User", "Facilities staff")
+System_Ext(openai, "Azure OpenAI", "LLM service")
+Person_Ext(agent, "External AI agent", "Claude via MCP")
+
+System_Boundary(sys, "Work Order System") {
+  Container(client, "UI.Client", "Blazor WASM", "Browser SPA")
+  Container(server, "UI.Server", "ASP.NET Core", "API + gRPC + WebSocket hub + embedded MCP")
+  Container(worker, "Worker", "NServiceBus endpoint", "Async event/saga processing")
+  Container(mcp, "McpServer", "MCP HTTP/stdio", "Tools for external agents")
+  ContainerDb(db, "SQL Server", "EF Core 10", "Work orders, employees, sagas, outbox")
+  ContainerQueue(queue, "NServiceBus SQL transport", "SQL tables", "Command/event messages")
+}
+
+Rel(user, client, "uses", "HTTPS")
+Rel(client, server, "requests", "HTTP POST JSON")
+Rel(server, client, "pushes updates", "WebSocket")
+Rel(server, db, "reads/writes", "EF Core")
+Rel(server, queue, "publishes", "NServiceBus")
+Rel(queue, worker, "delivers", "NServiceBus")
+Rel(worker, db, "reads/writes", "EF Core")
+Rel(server, openai, "chat/translate", "HTTPS")
+Rel(worker, openai, "chat", "HTTPS")
+Rel(agent, mcp, "tool calls", "MCP/HTTP")
+Rel(mcp, db, "reads", "EF Core")
+SHOW_LEGEND()
+@enduml

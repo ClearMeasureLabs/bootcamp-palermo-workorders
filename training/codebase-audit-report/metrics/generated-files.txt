@@ -1,0 +1,2 @@
+src/UI/Server/Generated/Protos/Workorders.cs
+src/UI/Server/Generated/Protos/WorkordersGrpc.cs

@@ -1,0 +1,44 @@
+@startuml dependencies
+!include <C4/C4_Component>
+LAYOUT_LEFT_RIGHT()
+skinparam dpi 140
+title Project Dependency Graph (build-time) - arrows point to dependency
+
+AddElementTag("core", $bgColor="#ABEBC6")
+AddElementTag("bad", $bgColor="#F5B7B1", $legendText="onion violation")
+
+Component(core, "Core", "domain", "no refs", $tags="core")
+Component(data, "DataAccess", "")
+Component(llm, "LlmGateway", "")
+Component(mcp, "McpServer", "")
+Component(worker, "Worker", "")
+Component(sd, "ServiceDefaults", "")
+Component(uishared, "UI.Shared", "", "", $tags="bad")
+Component(uiclient, "UI.Client", "")
+Component(uiapi, "UI.Api", "")
+Component(uiserver, "UI.Server", "")
+Component(apphost, "AppHost", "")
+
+Rel(data, core, "->")
+Rel(llm, core, "->")
+Rel(mcp, core, "->")
+Rel(mcp, data, "->")
+Rel(mcp, llm, "->")
+Rel(worker, data, "->")
+Rel(worker, llm, "->")
+Rel(worker, sd, "->")
+Rel(uishared, core, "->")
+Rel(uishared, llm, "-> VIOLATION")
+Rel(uiclient, core, "->")
+Rel(uiclient, uishared, "->")
+Rel(uiapi, core, "->")
+Rel(uiserver, data, "->")
+Rel(uiserver, llm, "->")
+Rel(uiserver, mcp, "->")
+Rel(uiserver, uishared, "->")
+Rel(uiserver, uiclient, "->")
+Rel(uiserver, sd, "->")
+Rel(apphost, uiserver, "->")
+Rel(apphost, worker, "->")
+SHOW_LEGEND()
+@enduml

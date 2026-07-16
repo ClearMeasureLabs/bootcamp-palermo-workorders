@@ -1,0 +1,35 @@
+@startuml deploy
+!include <C4/C4_Deployment>
+LAYOUT_TOP_DOWN()
+skinparam dpi 140
+title Build / DevOps / Deploy - source to Azure Container Apps
+
+Deployment_Node(dev, "Developer / CI", "Windows/Linux") {
+  Deployment_Node(build, "build.ps1 / privatebuild.ps1", "PowerShell") {
+    Container(compile, "dotnet build", "ChurchBulletin.sln")
+    Container(tests, "dotnet test", "Unit + Integration + Acceptance")
+    Container(migrate, "Database (DbUp)", "SQL migration runner")
+  }
+}
+Deployment_Node(reg, "Container Registry", "OCI") {
+  Container(image, "Docker image", "Dockerfile")
+}
+Deployment_Node(azure, "Azure Container Apps", "cloud") {
+  Container(serverd, "UI.Server", "container")
+  Container(workerd, "Worker", "container")
+  ContainerDb(sqld, "Azure SQL", "managed")
+}
+Deployment_Node(octo, "Octopus Deploy", ".octopus") {
+  Container(release, "Release pipeline", "")
+}
+
+Rel(compile, tests, "then")
+Rel(tests, image, "packs")
+Rel(image, release, "deployed by")
+Rel(release, serverd, "deploys")
+Rel(release, workerd, "deploys")
+Rel(migrate, sqld, "schema")
+Rel(serverd, sqld, "uses")
+Rel(workerd, sqld, "uses")
+SHOW_LEGEND()
+@enduml

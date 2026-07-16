@@ -1,0 +1,20 @@
+───────────────────────────────────────────────────────────────────────────────
+Language                 Files     Lines   Blanks  Comments     Code Complexity
+───────────────────────────────────────────────────────────────────────────────
+C#                         224     10263     1467       756     8040        676
+───────────────────────────────────────────────────────────────────────────────
+~enerated\Protos\Workorders.cs      1387      110        29     1248        280
+~rkOrderBulkImportCsvParser.cs       190       26         6      158         32
+~eyAuthenticationMiddleware.cs       113       18         3       92         22
+~s\LocalTelemetryFileWriter.cs       271       43        13      215         21
+~ages\WorkOrderManage.razor.cs       193       29         1      163         20
+~erver\Tools\WorkOrderTools.cs       208       23         0      185         19
+~ware\IdempotencyMiddleware.cs       247       34         4      209         17
+~OrdersBulkImportController.cs       127       13         7      107         14
+~ver\WorkOrderReformatAgent.cs       114       17         8       89         12
+src\UI\Server\Program.cs             281       40         8      233         11
+~Core\Model\WorkOrderStatus.cs       134       25         0      109         10
+~lers\WorkOrderQueryHandler.cs        47        8         0       39         10
+~ers\WorkOrderSearchHandler.cs        34        5         0       29          9
+~estBodyBufferingExtensions.cs        74        8        19       47          9
+~UI.Shared\MainLayout.razor.cs       140       22         7      111          9

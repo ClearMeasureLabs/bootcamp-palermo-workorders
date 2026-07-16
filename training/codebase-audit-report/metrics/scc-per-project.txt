@@ -1,0 +1,15 @@
+project                           files    lines comments     code   cplx
+Core                                 68     1669       27     1352     70
+DataAccess                           22      634        7      533     31
+Database                             23      767       49      630     34
+DatabaseFlyway                        0        0        0        0      0
+LlmGateway                           14      453        8      371     15
+McpServer                            11      613       11      529     28
+Worker                               16      403       17      327      4
+UI                                   91     5845      460     4718    454
+UI.Shared                            52     5350       83     4502     86
+ChurchBulletin.AppHost                5      105        1       96      0
+ChurchBulletin.ServiceDefaults       13      943      203      594     36
+UnitTests                            82    12479       74    11348     63
+IntegrationTests                     51    13274       99    12464    110
+AcceptanceTests                      43    15510      307    14497    174

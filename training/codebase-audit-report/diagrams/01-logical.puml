@@ -1,0 +1,33 @@
+@startuml logical
+!include <C4/C4_Component>
+LAYOUT_TOP_DOWN()
+skinparam dpi 140
+skinparam wrapWidth 200
+title Logical Architecture (Onion) - Work Order System
+
+AddElementTag("core", $bgColor="#ABEBC6", $legendText="Domain core")
+AddElementTag("app", $bgColor="#AED6F1", $legendText="Application/Infra")
+AddElementTag("ui", $bgColor="#F9E79F", $legendText="Presentation")
+
+System_Boundary(sys, "SYSTEM code - 11,521 LOC") {
+  Component(core, "Core (Domain)", "C#", "Models, StateCommands, Queries, IBus", $tags="core")
+  Component(data, "DataAccess", "EF Core 10", "DbContext, MediatR handlers", $tags="app")
+  Component(llm, "LlmGateway", "Azure OpenAI", "Chat/translation handlers", $tags="app")
+  Component(mcp, "McpServer", "MCP", "WorkOrder/Employee tools", $tags="app")
+  Component(worker, "Worker", "NServiceBus", "Event handlers, sagas", $tags="app")
+  Component(uiserver, "UI.Server", "ASP.NET", "SingleApiController, gRPC, WS hub", $tags="ui")
+  Component(uishared, "UI.Shared", "Blazor", "Razor components, Bus", $tags="ui")
+  Component(sd, "ServiceDefaults", "OTEL", "Telemetry, logging", $tags="app")
+}
+
+Rel(data, core, "depends on")
+Rel(llm, core, "depends on")
+Rel(mcp, core, "depends on")
+Rel(worker, data, "uses")
+Rel(uiserver, data, "sends via IBus")
+Rel(uiserver, uishared, "hosts")
+Rel(uishared, llm, "VIOLATION: presentation->infra")
+Rel(uishared, core, "depends on")
+Rel(mcp, data, "reads")
+SHOW_LEGEND()
+@enduml

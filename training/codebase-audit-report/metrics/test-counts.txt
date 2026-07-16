@@ -1,0 +1,3 @@
+UnitTests        [Test]=255 [TestCase]=11 files=67
+IntegrationTests [Test]=119 [TestCase]=0 files=30
+AcceptanceTests  [Test]=88 [TestCase]=0 files=32
