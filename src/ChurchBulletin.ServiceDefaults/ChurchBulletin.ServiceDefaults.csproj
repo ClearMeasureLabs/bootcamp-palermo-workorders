@@ -13,6 +13,9 @@
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="9.9.0" />
     <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="9.5.0" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.3.0" />
+    <!-- Pin OpenTelemetry.Api to patched version: CVE-2026-40894 (GHSA-g94r-2vxg-569j) fixed in 1.15.3.
+         OpenTelemetry.Instrumentation.EntityFrameworkCore 1.0.0-beta.12 otherwise floors it at a vulnerable version. -->
+    <PackageReference Include="OpenTelemetry.Api" Version="1.15.3" />
     <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
