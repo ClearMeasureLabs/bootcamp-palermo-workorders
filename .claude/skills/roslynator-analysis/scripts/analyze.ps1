@@ -99,9 +99,14 @@ function Repair-BundledMSBuild {
         Get-ChildItem -Path $root -Recurse -Filter 'Microsoft.Build.Framework.dll' -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -match 'roslynator\.dotnet\.cli' } |
             ForEach-Object {
-                Rename-Item $_.FullName "$($_.FullName).bak" -Force
-                Write-Host "  neutralized $($_.FullName)"
-                $renamed++
+                try {
+                    Rename-Item $_.FullName "$($_.FullName).bak" -Force
+                    Write-Host "  neutralized $($_.FullName)"
+                    $renamed++
+                }
+                catch {
+                    Write-Host "  failed to neutralize $($_.FullName): $($_.Exception.Message)"
+                }
             }
     }
     return $renamed
@@ -153,10 +158,10 @@ if ($total -gt 0) {
     $compilerTotal = ($compiler | Measure-Object Count -Sum).Sum
     $analyzerTotal = ($analyzer | Measure-Object Count -Sum).Sum
 
-Write-Host ''
-Write-Host ("Compiler (CS*): {0} across {1} rules  <- usually workspace-resolution noise, not defects." -f ([int]$compilerTotal), $compiler.Count)
-Write-Host '   If a normal build is green, ignore these. `dotnet restore` first reduces them.'
-Write-Host ("Analyzer:       {0} across {1} rules  <- the actionable findings." -f ([int]$analyzerTotal), $analyzer.Count)
+    Write-Host ''
+    Write-Host ("Compiler (CS*): {0} across {1} rules  <- usually workspace-resolution noise, not defects." -f ([int]$compilerTotal), $compiler.Count)
+    Write-Host '   If a normal build is green, ignore these. `dotnet restore` first reduces them.'
+    Write-Host ("Analyzer:       {0} across {1} rules  <- the actionable findings." -f ([int]$analyzerTotal), $analyzer.Count)
 
     if ($analyzer.Count -gt 0) {
         Write-Section ("Top analyzer rules (max {0})" -f $TopRules)
