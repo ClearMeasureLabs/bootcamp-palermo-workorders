@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OWASP Dependency-Check suppression file.
+  See references/suppression.md. Copy this to the repo root and pass:
+      --suppression dependency-check-suppression.xml
+  Prefer generating suppression blocks from the "suppress" button in the HTML report,
+  and always include a <notes> line explaining why and when it was reviewed.
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+  <!-- Example (disabled): remove the comment wrapper and edit to activate.
+  <suppress>
+    <notes>False positive: CPE collision with an unrelated product. Reviewed YYYY-MM-DD.</notes>
+    <packageUrl regex="true">^pkg:nuget/Example\.Package@.*$</packageUrl>
+    <cve>CVE-0000-00000</cve>
+  </suppress>
+  -->
+
+</suppressions>
