@@ -14,8 +14,9 @@
 // Status:
 //   pass          — all discovered projects audited clean of threshold breaches.
 //   fail          — at least one project breaches the threshold, OR its audit
-//                   could not be run (missing lockfile, etc.) — fail safe.
-//   notapplicable — no npm project found, or npm is not installed.
+//                   could not be run (missing lockfile, or node/npm not
+//                   installed while a package.json is present) — fail safe.
+//   notapplicable — no npm project (package.json) found under the root.
 //
 // Default threshold is `high` (any high or critical fails).
 // Exit code: 0 = pass, 1 = fail, 2 = notapplicable.
@@ -96,13 +97,19 @@ function installedVersions(dir) {
   return map;
 }
 
-async function npmAvailable() {
-  try {
-    await run("npm", ["--version"]);
-    return true;
-  } catch {
-    return false;
+// Verify both Node.js and npm can be invoked. The audit engine already runs
+// under Node, but check explicitly so a broken/absent `node` on PATH is caught
+// too; `npm audit` needs both. Returns the name of the first missing tool, or
+// null if both are runnable.
+async function missingToolchain() {
+  for (const tool of ["node", "npm"]) {
+    try {
+      await run(tool, ["--version"]);
+    } catch {
+      return tool;
+    }
   }
+  return null;
 }
 
 // Returns {report} on success or {error} (human-readable string) on failure.
@@ -312,17 +319,17 @@ if (!projectDirs.length) {
   });
 }
 
-// A project exists but npm/node can't be invoked -> we can't verify security,
+// A project exists but node or npm can't be invoked -> we can't verify security,
 // so fail safe (not "notapplicable"). Each project reports the run failure.
-const npmOk = await npmAvailable();
+const missing = await missingToolchain();
 const projects = [];
 for (const dir of projectDirs) {
-  if (!npmOk) {
+  if (missing) {
     projects.push({
       dir,
       status: "fail",
       ran: false,
-      message: "npm/node could not be run — audit not performed; failing safe since security is unverified.",
+      message: `${missing} could not be run — audit not performed; failing safe since security is unverified.`,
       vulnerabilities: { ...ZERO },
       total: 0,
       packages: [],

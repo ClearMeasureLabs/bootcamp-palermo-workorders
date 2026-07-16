@@ -44,21 +44,21 @@ Moderate and low are reported but don't fail by default. Tighten with
 
 ## How to run
 
-### Step 1 — Preflight: is Node.js available?
+### Step 1 — Preflight: are Node.js and npm available?
 
 The audit engine (`audit.mjs`) requires Node.js, and running audits requires `npm`. Before
-running, verify both commands are available (works on macOS, Linux, and Windows):
+running, verify **both** commands are available (works on macOS, Linux, and Windows):
 
     node --version
     npm --version
 
-- **Node and npm are available** → proceed to Step 2 (run the engine).
-- **Node or npm is NOT available** (command not found / non-zero exit) → do **not** try to
-  run `audit.mjs`. Instead determine whether the target is even an npm project and
-  write the report yourself (Step 3). Do this check by hand because the engine can't
-  run without Node.
+- **Node and npm are both available** → proceed to Step 2 (run the engine).
+- **Either Node or npm is NOT available** (command not found / non-zero exit) → do
+  **not** try to run `audit.mjs`. Instead determine whether the target is even an npm
+  project and write the report yourself (Step 3). Do this check by hand because the
+  engine needs both Node and npm to run.
 
-### Step 2 — Run the audit engine (Node available)
+### Step 2 — Run the audit engine (Node and npm available)
 
 The logic lives in `audit.mjs` in this skill's directory. Run it against the target
 root (defaults to the current working directory):
@@ -78,18 +78,20 @@ Options:
 
 Exit codes: `0` = pass, `1` = fail, `2` = notapplicable.
 
-### Step 3 — No Node.js installed
+### Step 3 — Node.js or npm not available
 
-If Step 1 found no Node, the audit cannot run. Look for a `package.json` anywhere
-under the target root (ignoring `node_modules`), then produce the report yourself
-and still write both files to the output dir
-(`<root>/codebase-audit-report/metrics/npm-audit/`):
+If Step 1 found that either Node.js or npm is missing (or can't be run), the audit
+cannot run. Look for a `package.json` anywhere under the target root (ignoring
+`node_modules`), then produce the report yourself and still write both files to the
+output dir (`<root>/codebase-audit-report/metrics/npm-audit/`):
 
 - **A `package.json` exists → `status: "fail"`.** It's a real npm project whose
-  security can't be verified, so fail safe. Use a `message` such as:
-  `"Node.js is not installed — npm audit could not be run; failing safe since security is unverified."`
+  security can't be verified, so fail safe. Use a `message` naming which tool is
+  missing, such as:
+  `"npm is not installed — npm audit could not be run; failing safe since security is unverified."`
+  or `"Node.js is not installed — npm audit could not be run; failing safe since security is unverified."`
 - **No `package.json` anywhere → `status: "notapplicable"`.** Nothing to audit. Use
-  a `message` like: `"No npm project found and Node.js is not installed — npm audit not applicable."`
+  a `message` like: `"No npm project found and Node.js/npm is not available — npm audit not applicable."`
 
 Write `npm-audit-result.json` in the same shape as Step 2 (below) — set `status`,
 `message`, `threshold`, `auditedRoot`, `projectCount`, zeroed `vulnerabilities`, and
