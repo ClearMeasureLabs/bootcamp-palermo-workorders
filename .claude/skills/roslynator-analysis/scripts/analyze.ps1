@@ -152,10 +152,10 @@ if ($total -gt 0) {
     $compilerTotal = ($compiler | Measure-Object Count -Sum).Sum
     $analyzerTotal = ($analyzer | Measure-Object Count -Sum).Sum
 
-    Write-Host ''
-    Write-Host ("Compiler (CS*): {0} across {1} rules  <- usually workspace-resolution noise, not defects." -f ([int]$compilerTotal), $compiler.Count)
-    Write-Host ("   If a normal build is green, ignore these. `dotnet restore` first reduces them.")
-    Write-Host ("Analyzer:       {0} across {1} rules  <- the actionable findings." -f ([int]$analyzerTotal), $analyzer.Count)
+Write-Host ''
+Write-Host ("Compiler (CS*): {0} across {1} rules  <- usually workspace-resolution noise, not defects." -f ([int]$compilerTotal), $compiler.Count)
+Write-Host '   If a normal build is green, ignore these. `dotnet restore` first reduces them.'
+Write-Host ("Analyzer:       {0} across {1} rules  <- the actionable findings." -f ([int]$analyzerTotal), $analyzer.Count)
 
     if ($analyzer.Count -gt 0) {
         Write-Section ("Top analyzer rules (max {0})" -f $TopRules)
