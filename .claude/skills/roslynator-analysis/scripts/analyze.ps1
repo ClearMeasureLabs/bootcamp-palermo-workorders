@@ -59,7 +59,10 @@ Write-Host "Roslynator $version"
 
 # --- 2. Resolve the solution ---------------------------------------------------
 if (-not $Solution) {
-    $found = Get-ChildItem -Path (Get-Location) -Recurse -Include *.sln, *.slnx -File -ErrorAction SilentlyContinue
+    $found = @(
+        Get-ChildItem -Path (Get-Location) -Recurse -File -Filter '*.sln' -ErrorAction SilentlyContinue
+        Get-ChildItem -Path (Get-Location) -Recurse -File -Filter '*.slnx' -ErrorAction SilentlyContinue
+    )
     if (@($found).Count -eq 0) {
         Fail "No .sln/.slnx found under $(Get-Location). Pass -Solution explicitly." 3
     }
