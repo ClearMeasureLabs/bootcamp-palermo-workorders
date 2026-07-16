@@ -9,7 +9,7 @@
       * self-healing: detects the SDK-10 MSBuild `FileUtilities` TypeLoadException and
         neutralizes the bundled Microsoft.Build.Framework.dll, then retries once
         (see resources/TROUBLESHOOTING.md for the underlying cause)
-      * running `analyze` to a timestamped XML report under the repo's roslynator-results/
+      * running `analyze` to a timestamped XML report under the repo's .roslynator-results/
       * parsing the report: severity breakdown, compiler (CS*) vs analyzer split, top rules
 
     Non-interactive by design. If -Solution is omitted it uses the sole discovered
@@ -22,7 +22,7 @@
     Minimum severity to report: hidden | info | warning | error. Default: info.
 
 .PARAMETER Output
-    Directory for the XML report. Default: <repo-root>/roslynator-results (falls back to the
+    Directory for the XML report. Default: <repo-root>/.roslynator-results (falls back to the
     current directory if not in a git repo). Each run writes a timestamped file.
 
 .PARAMETER TopRules
@@ -82,7 +82,7 @@ Write-Host "Solution: $Solution"
 if (-not $Output) {
     $repoRoot = (& git rev-parse --show-toplevel 2>$null)
     if (-not $repoRoot) { $repoRoot = (Get-Location).Path }
-    $Output = Join-Path $repoRoot 'roslynator-results'
+    $Output = Join-Path $repoRoot '.roslynator-results'
 }
 New-Item -ItemType Directory -Force -Path $Output | Out-Null
 $report = Join-Path $Output ("analysis-{0}.xml" -f (Get-Date -Format 'yyyyMMdd-HHmmssfff'))
