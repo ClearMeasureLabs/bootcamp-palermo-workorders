@@ -27,10 +27,16 @@ The overall `status` (and each project's `status`) is one of:
 
 - **pass** — audited clean of any vulnerability at/above the threshold.
 - **fail** — a threshold-breaking vulnerability was found, **OR** the audit could
-  not be run for a real npm project (e.g. missing lockfile). Fail safe: unverified
-  security does not pass. The per-project `message` says why it couldn't run.
+  not be run for a real npm project — e.g. a missing lockfile, **or npm/node itself
+  can't be invoked** even though a `package.json` is present. Fail safe: if a
+  project exists but its security can't be verified, it does not pass. The
+  per-project `message` says why it couldn't run.
 - **notapplicable** — nothing to test: no `package.json` found anywhere under the
-  root, or `npm` isn't installed. A top-level `message` explains why.
+  root. (If npm/node can't run *and* there's no project, this is what you get — the
+  metric simply doesn't apply.) A top-level `message` explains why.
+
+Note the boundary: **package.json present + npm can't run → `fail`** (unverifiable
+real project); **no package.json at all → `notapplicable`** (nothing to audit).
 
 **Default threshold is `high`** — any **high or critical** vulnerability fails.
 Moderate and low are reported but don't fail by default. Tighten with

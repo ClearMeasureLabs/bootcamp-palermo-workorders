@@ -300,10 +300,8 @@ function statusFootnote(status) {
 // ---- Main ----
 const { dirs, failOn, out, depth, root } = parseArgs(process.argv.slice(2));
 
-if (!(await npmAvailable())) {
-  finish({ status: "notapplicable", message: "npm is not installed — nothing to audit.", projects: [], failOn, root, out });
-}
-
+// Discover first: whether the metric applies depends on there being a project,
+// not on whether npm happens to be runnable.
 const projectDirs = discoverProjects(dirs, depth);
 if (!projectDirs.length) {
   finish({
@@ -314,8 +312,25 @@ if (!projectDirs.length) {
   });
 }
 
+// A project exists but npm/node can't be invoked -> we can't verify security,
+// so fail safe (not "notapplicable"). Each project reports the run failure.
+const npmOk = await npmAvailable();
 const projects = [];
-for (const dir of projectDirs) projects.push(await auditProject(dir, failOn));
+for (const dir of projectDirs) {
+  if (!npmOk) {
+    projects.push({
+      dir,
+      status: "fail",
+      ran: false,
+      message: "npm/node could not be run — audit not performed; failing safe since security is unverified.",
+      vulnerabilities: { ...ZERO },
+      total: 0,
+      packages: [],
+    });
+  } else {
+    projects.push(await auditProject(dir, failOn));
+  }
+}
 
 const overall = projects.some((p) => p.status === "fail") ? "fail" : "pass";
 finish({ status: overall, projects, failOn, root, out });
