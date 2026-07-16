@@ -12,7 +12,7 @@ from assembly 'Microsoft.Build.Framework, Version=15.1.0.0, ...'
 
 Roslynator typically exits 2 for this failure; `scripts/analyze.ps1` detects the signature, applies the workaround, and retries. If the workaround does not resolve it, `analyze.ps1` exits 4 (analysis failed).
 
-**Cause.** Roslynator 0.12.0 (the latest release) ships its own `Microsoft.Build.Framework.dll`
+**Cause.** Roslynator 0.12.0 (a known-affected version) ships its own `Microsoft.Build.Framework.dll`
 inside the tool store. Against the .NET 10 SDK, that bundled copy shadows the SDK's MSBuild and
 mismatches `Microsoft.Build.dll` — 0.12.0 was built for MSBuild 17.7, the SDK 10 MSBuild is 17.14,
 and the `FileUtilities` type moved between them. The `15.1.0.0` in the message is MSBuild's
