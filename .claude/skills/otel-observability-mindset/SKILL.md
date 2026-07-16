@@ -84,7 +84,13 @@ that someone debugging production would actually want to see.
    `.AddMeter("...")`) in the same change. An unregistered source compiles
    fine and silently produces spans that never reach any exporter — this is
    the single most common way new instrumentation goes missing. Treat adding
-   a source/meter without touching `Extensions.cs` as incomplete work.
+   a source/meter without touching `Extensions.cs` as incomplete work. The
+   same rule applies one level up and to libraries: a **host** that never
+   calls `AddServiceDefaults()`/`ConfigureOpenTelemetry()` drops every span
+   and metric produced inside it no matter how well-instrumented the shared
+   code is (check `Program.cs` when adding or touching a host), and turning
+   on a library's metrics (e.g. NServiceBus `EnableMetrics`) does nothing
+   until that library's meter name is also in `.AddMeter(...)`.
 3. **Name it `ChurchBulletin.<Component>`** (dot-separated sub-boundaries for
    more specific scopes), version `"1.0.0"`, matching the existing sources.
 4. **Follow the span pattern from `Bus.cs`**: continue the current trace
@@ -119,11 +125,16 @@ that someone debugging production would actually want to see.
    registered in step 2) rather than deriving rates from log/trace volume
    after the fact.
 7. **Don't over-tag.** Skip PII (employee email, names) and anything
-   unbounded (full request/response bodies, large collections) — `Bus.cs`
-   deliberately skips `IEnumerable` properties for exactly this reason. Tag
+   unbounded (full request/response bodies, large collections). Tag
    identifiers and small scalars; if you need the full payload for
    debugging, that's a log message with a scope, not a span tag that gets
-   held in an exporter's backend indefinitely.
+   held in an exporter's backend indefinitely. Note: `Bus.cs`'s
+   `AddPropertyTags` skips `IEnumerable` properties but otherwise
+   reflection-tags every message property via `ToString()` — which today
+   puts employee full names (`CurrentUser`) and full chat prompts on spans.
+   Like `TracingChatClient`'s payload tags, that blanket tagging is known
+   tech debt, not a pattern to copy; prefer explicitly tagging the few
+   identifiers that matter.
 8. **Keep logs correlated, not parallel.** Use `ILogger`/`LogContext`
    scopes so log lines pick up the ambient `Activity`'s trace/span IDs
    automatically; don't add `Console.WriteLine`, a second logging
@@ -138,7 +149,10 @@ that someone debugging production would actually want to see.
    automatically at `/_healthcheck` and `/_healthcheck/detailed`. Something
    already covered by DB/SQL client instrumentation usually doesn't need
    one. (`AddDefaultHealthChecks()` in ServiceDefaults only registers the
-   trivial `"self"` check — real dependency checks don't go there.)
+   trivial `"self"` check — real dependency checks don't go there.) For
+   hosts other than UI.Server (Worker, McpServer in HTTP mode), ask the
+   same question — a host with no mapped health endpoint has no liveness
+   story for its orchestrator at all.
 
 ## What "good" looks like vs. what to flag
 
