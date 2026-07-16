@@ -27,16 +27,17 @@ The overall `status` (and each project's `status`) is one of:
 
 - **pass** — audited clean of any vulnerability at/above the threshold.
 - **fail** — a threshold-breaking vulnerability was found, **OR** the audit could
-  not be run for a real npm project — e.g. a missing lockfile, **or npm/node itself
-  can't be invoked** even though a `package.json` is present. Fail safe: if a
-  project exists but its security can't be verified, it does not pass. The
-  per-project `message` says why it couldn't run.
+  not be run for a real npm project — e.g. a missing lockfile, **or no usable
+  toolchain (neither Docker nor local Node/npm) is available** even though a
+  `package.json` is present. Fail safe: if a project exists but its security can't
+  be verified, it does not pass. The per-project `message` says why it couldn't run.
 - **notapplicable** — nothing to test: no `package.json` found anywhere under the
-  root. (If npm/node can't run *and* there's no project, this is what you get — the
+  root. (If no toolchain can run *and* there's no project, this is what you get — the
   metric simply doesn't apply.) A top-level `message` explains why.
 
-Note the boundary: **package.json present + npm can't run → `fail`** (unverifiable
-real project); **no package.json at all → `notapplicable`** (nothing to audit).
+Note the boundary: **package.json present + no usable toolchain → `fail`**
+(unverifiable real project); **no package.json at all → `notapplicable`** (nothing
+to audit).
 
 **Default threshold is `high`** — any **high or critical** vulnerability fails.
 Moderate and low are reported but don't fail by default. Tighten with
@@ -44,21 +45,60 @@ Moderate and low are reported but don't fail by default. Tighten with
 
 ## How to run
 
-### Step 1 — Preflight: are Node.js and npm available?
+Pick an execution environment in this order: **Docker (preferred) → local Node/npm
+→ neither**. Docker is preferred because it needs no local Node install and runs the
+audit in a clean, known-good toolchain. The engine (`audit.mjs`) is the same either
+way — only *where* Node runs it differs.
 
-The audit engine (`audit.mjs`) requires Node.js, and running audits requires `npm`. Before
-running, verify **both** commands are available (works on macOS, Linux, and Windows):
+### Step 1 — Preflight: choose an execution environment
 
-    node --version
-    npm --version
+**First, check Docker.** If the Docker CLI is installed *and* its daemon is running,
+use container mode and **skip the local Node/npm check entirely**:
 
-- **Node and npm are both available** → proceed to Step 2 (run the engine).
-- **Either Node or npm is NOT available** (command not found / non-zero exit) → do
-  **not** try to run `audit.mjs`. Instead determine whether the target is even an npm
-  project and write the report yourself (Step 3). Do this check by hand because the
-  engine needs both Node and npm to run.
+    docker info
 
-### Step 2 — Run the audit engine (Node and npm available)
+- **Succeeds (exit 0)** → Docker is usable → **container mode** (Step 2A).
+- **Fails** (not installed / daemon not running) → fall back to checking local Node
+  and npm (works on macOS, Linux, and Windows):
+
+      node --version
+      npm --version
+
+  - **Both succeed** → **local mode** (Step 2B).
+  - **Either fails** (command not found / non-zero exit) → no usable toolchain →
+    **Step 3**. Do not try to run `audit.mjs`; decide fail vs. notapplicable by hand
+    from whether any `package.json` exists.
+
+### Step 2A — Container mode (Docker available, preferred)
+
+Run the engine inside an official Node image. Mount both the skill directory
+(read-only, so `audit.mjs` is reachable) and the target root at their **same
+absolute paths** inside the container — this makes the reported paths real host
+paths and writes the report back to the host:
+
+```bash
+docker run --rm \
+  -v "<skill-dir>":"<skill-dir>":ro \
+  -v "<root-path>":"<root-path>" \
+  -w "<root-path>" \
+  node:lts \
+  node "<skill-dir>/audit.mjs" --dir "<root-path>"
+```
+
+- Replace `<skill-dir>` with this skill's directory and `<root-path>` with the
+  target root (defaults to the current working directory).
+- `npm audit` inside the container needs network access to fetch advisories; the
+  default Docker bridge network provides it.
+- Every option from Step 2B (`--fail-on`, `--depth`, `--out`, additional `--dir`)
+  works identically — append them after the script path. For multiple roots, add a
+  `-v "<other-root>":"<other-root>"` mount **and** a matching `--dir "<other-root>"`
+  per root.
+- The container's exit code is the verdict: `0` = pass, `1` = fail, `2` =
+  notapplicable. `audit.mjs` still writes the report only when a `package.json` is
+  found, so an empty target inside the container yields `notapplicable`, never a
+  false fail.
+
+### Step 2B — Local mode (Node + npm available)
 
 The logic lives in `audit.mjs` in this skill's directory. Run it against the target
 root (defaults to the current working directory):
@@ -78,26 +118,25 @@ Options:
 
 Exit codes: `0` = pass, `1` = fail, `2` = notapplicable.
 
-### Step 3 — Node.js or npm not available
+### Step 3 — Neither Docker nor local Node/npm available
 
-If Step 1 found that either Node.js or npm is missing (or can't be run), the audit
-cannot run. Look for a `package.json` anywhere under the target root (ignoring
+If Step 1 found no usable Docker **and** local Node/npm can't be run, the engine
+cannot run at all. Look for a `package.json` anywhere under the target root (ignoring
 `node_modules`), then produce the report yourself and still write both files to the
 output dir (`<root>/codebase-audit-report/metrics/npm-audit/`):
 
 - **A `package.json` exists → `status: "fail"`.** It's a real npm project whose
-  security can't be verified, so fail safe. Use a `message` naming which tool is
-  missing, such as:
-  `"npm is not installed — npm audit could not be run; failing safe since security is unverified."`
-  or `"Node.js is not installed — npm audit could not be run; failing safe since security is unverified."`
+  security can't be verified, so fail safe. Use a `message` such as:
+  `"No usable toolchain — Docker is unavailable and Node.js/npm is not installed; npm audit could not be run, failing safe since security is unverified."`
 - **No `package.json` anywhere → `status: "notapplicable"`.** Nothing to audit. Use
-  a `message` like: `"No npm project found and Node.js/npm is not available — npm audit not applicable."`
+  a `message` like: `"No npm project found and no usable toolchain (Docker or Node.js/npm) is available — npm audit not applicable."`
 
-Write `npm-audit-result.json` in the same shape as Step 2 (below) — set `status`,
+Write `npm-audit-result.json` in the same shape as Step 2B (below) — set `status`,
 `message`, `threshold`, `auditedRoot`, `projectCount`, zeroed `vulnerabilities`, and
 a `projects[]` entry per discovered `package.json` (each `status: "fail"` with the
 message). Write a matching `npm-audit-result.md`. Report the status to the user and
-note that installing Node.js/npm is required to actually verify the dependencies.
+note that installing Docker or Node.js/npm is required to actually verify the
+dependencies.
 
 ## Output files
 
