@@ -135,7 +135,12 @@ if (-not (Test-Path $report) -or $result.ExitCode -ge 2) {
 }
 
 # --- 5. Parse and summarize ----------------------------------------------------
-[xml]$xml = Get-Content -Raw $report
+try {
+    [xml]$xml = Get-Content -Raw $report
+}
+catch {
+    Fail "Failed to read/parse Roslynator report XML: $report. $($_.Exception.Message)" 4
+}
 $summary = @($xml.Roslynator.CodeAnalysis.Summary.Diagnostic)
 $total = ($summary | Measure-Object -Property Count -Sum).Sum
 if (-not $total) { $total = 0 }
