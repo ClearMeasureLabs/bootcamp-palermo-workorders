@@ -46,15 +46,14 @@ Moderate and low are reported but don't fail by default. Tighten with
 
 ### Step 1 — Preflight: is Node.js available?
 
-The audit engine (`audit.mjs`) and `npm audit` itself both require Node.js. Before
-running, check whether Node is installed (works on macOS, Linux, and Windows):
+The audit engine (`audit.mjs`) requires Node.js, and running audits requires `npm`. Before
+running, verify both commands are available (works on macOS, Linux, and Windows):
 
-```bash
-node --version
-```
+    node --version
+    npm --version
 
-- **Node is available** → proceed to Step 2 (run the engine).
-- **Node is NOT available** (command not found / non-zero exit) → do **not** try to
+- **Node and npm are available** → proceed to Step 2 (run the engine).
+- **Node or npm is NOT available** (command not found / non-zero exit) → do **not** try to
   run `audit.mjs`. Instead determine whether the target is even an npm project and
   write the report yourself (Step 3). Do this check by hand because the engine can't
   run without Node.
