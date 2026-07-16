@@ -176,7 +176,8 @@ if ($total -gt 0) {
 }
 
 Write-Section "Report"
-$uri = ([System.Uri]$report).AbsoluteUri
-Write-Host "  $report"
+$fullReportPath = [System.IO.Path]::GetFullPath($report)
+$uri = ([System.Uri]$fullReportPath).AbsoluteUri
+Write-Host "  $fullReportPath"
 Write-Host "  $uri"
 exit 0
