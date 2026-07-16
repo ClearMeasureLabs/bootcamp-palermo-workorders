@@ -97,6 +97,9 @@ docker run --rm \
   notapplicable. `audit.mjs` still writes the report only when a `package.json` is
   found, so an empty target inside the container yields `notapplicable`, never a
   false fail.
+- On Linux, container-written report files may be owned by `root` (Docker Desktop on
+  macOS/Windows maps them to the host user automatically). If that's a problem, add
+  `--user "$(id -u):$(id -g)"` to the `docker run` command.
 
 ### Step 2B — Local mode (Node + npm available)
 
