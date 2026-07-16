@@ -128,13 +128,15 @@ that someone debugging production would actually want to see.
    unbounded (full request/response bodies, large collections). Tag
    identifiers and small scalars; if you need the full payload for
    debugging, that's a log message with a scope, not a span tag that gets
-   held in an exporter's backend indefinitely. Note: `Bus.cs`'s
-   `AddPropertyTags` skips `IEnumerable` properties but otherwise
-   reflection-tags every message property via `ToString()` — which today
-   puts employee full names (`CurrentUser`) and full chat prompts on spans.
-   Like `TracingChatClient`'s payload tags, that blanket tagging is known
-   tech debt, not a pattern to copy; prefer explicitly tagging the few
-   identifiers that matter.
+   held in an exporter's backend indefinitely. `Bus.cs` enforces this at
+   the MediatR boundary: `AddPropertyTags` only tags message properties
+   explicitly opted in with `[TelemetryTag]` (defined in
+   `src/Core/TelemetryTagAttribute.cs`) and truncates values to 128
+   characters. A new message type produces no property tags until opted
+   in — that safe default is intentional. Annotate identifiers and small
+   scalars (e.g. `WorkOrderByNumberQuery.Number`,
+   `ApplicationChatQuery.CurrentUsername`); never annotate PII
+   (`Employee`-typed properties) or unbounded payloads (chat prompts).
 8. **Keep logs correlated, not parallel.** Use `ILogger`/`LogContext`
    scopes so log lines pick up the ambient `Activity`'s trace/span IDs
    automatically; don't add `Console.WriteLine`, a second logging
