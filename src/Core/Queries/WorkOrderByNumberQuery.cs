@@ -3,4 +3,4 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.Core.Queries;
 
-public record WorkOrderByNumberQuery(string Number) : IRequest<WorkOrder?>, IRemotableRequest;
+public record WorkOrderByNumberQuery([property: TelemetryTag] string Number) : IRequest<WorkOrder?>, IRemotableRequest;

@@ -1,4 +1,7 @@
-﻿using ClearMeasure.Bootcamp.UI.Shared;
+﻿using System.Diagnostics;
+using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.UI.Shared;
 using MediatR;
 using Shouldly;
 
@@ -62,6 +65,89 @@ public class BusTests
 
         stubMediator.LastNotification.ShouldBe(notification);
     }
+
+    [Test]
+    public void Should_SendRequest_WithTelemetryTaggedProperty_AddsTagToActivity()
+    {
+        var capturedActivities = new List<Activity>();
+        using var listener = CreateBusActivityListener(capturedActivities);
+        var stubMediator = new StubMediator();
+        stubMediator.SetResponse("response");
+        var bus = new Bus(stubMediator);
+        var request = new TaggedTestQuery("WO-123", "sensitive prompt text", new Employee("jdoe", "Jane", "Doe", "jane@example.com"));
+
+        bus.Send(request).Wait();
+
+        var activity = capturedActivities.ShouldHaveSingleItem();
+        activity.GetTagItem("bus.message.WorkOrderNumber").ShouldBe("WO-123");
+    }
+
+    [Test]
+    public void Should_SendRequest_WithUnmarkedProperties_DoesNotAddTagsToActivity()
+    {
+        var capturedActivities = new List<Activity>();
+        using var listener = CreateBusActivityListener(capturedActivities);
+        var stubMediator = new StubMediator();
+        stubMediator.SetResponse("response");
+        var bus = new Bus(stubMediator);
+        var request = new TaggedTestQuery("WO-123", "sensitive prompt text", new Employee("jdoe", "Jane", "Doe", "jane@example.com"));
+
+        bus.Send(request).Wait();
+
+        var activity = capturedActivities.ShouldHaveSingleItem();
+        activity.GetTagItem("bus.message.Prompt").ShouldBeNull();
+        activity.GetTagItem("bus.message.CurrentUser").ShouldBeNull();
+    }
+
+    [Test]
+    public void Should_SendRequest_WithLongTaggedValue_TruncatesTagTo128Characters()
+    {
+        var capturedActivities = new List<Activity>();
+        using var listener = CreateBusActivityListener(capturedActivities);
+        var stubMediator = new StubMediator();
+        stubMediator.SetResponse("response");
+        var bus = new Bus(stubMediator);
+        var longValue = new string('x', 500);
+        var request = new TaggedTestQuery(longValue, "prompt", null);
+
+        bus.Send(request).Wait();
+
+        var activity = capturedActivities.ShouldHaveSingleItem();
+        activity.GetTagItem("bus.message.WorkOrderNumber").ShouldBe(new string('x', 128));
+    }
+
+    [Test]
+    public void Should_SendRequest_WithNullTaggedValue_AddsEmptyStringTag()
+    {
+        var capturedActivities = new List<Activity>();
+        using var listener = CreateBusActivityListener(capturedActivities);
+        var stubMediator = new StubMediator();
+        stubMediator.SetResponse("response");
+        var bus = new Bus(stubMediator);
+        var request = new TaggedTestQuery(null, "prompt", null);
+
+        bus.Send(request).Wait();
+
+        var activity = capturedActivities.ShouldHaveSingleItem();
+        activity.GetTagItem("bus.message.WorkOrderNumber").ShouldBe(string.Empty);
+    }
+
+    private static ActivityListener CreateBusActivityListener(List<Activity> capturedActivities)
+    {
+        var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == "ChurchBulletin.Application.Bus",
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ActivityStopped = capturedActivities.Add
+        };
+        ActivitySource.AddActivityListener(listener);
+        return listener;
+    }
+
+    private record TaggedTestQuery(
+        [property: TelemetryTag] string? WorkOrderNumber,
+        string Prompt,
+        Employee? CurrentUser) : IRequest<string>;
 
     private class StubMediator : IMediator
     {

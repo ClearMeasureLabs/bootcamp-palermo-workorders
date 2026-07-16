@@ -3,4 +3,4 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.Core.Queries;
 
-public record EmployeeByUserNameQuery(string Username) : IRequest<Employee>, IRemotableRequest;
+public record EmployeeByUserNameQuery([property: TelemetryTag] string Username) : IRequest<Employee>, IRemotableRequest;

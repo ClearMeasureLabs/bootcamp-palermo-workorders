@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System.Reflection;
 using ClearMeasure.Bootcamp.Core;
 using MediatR;
 
@@ -94,17 +94,26 @@ public class Bus : IBus
         activity.SetTag("exception.stacktrace", ex.ToString());
     }
 
+    private const int MaxTagValueLength = 128;
+
     private static void AddPropertyTags(object message, Activity activity)
     {
         var properties = message.GetType().GetProperties();
 
         foreach (var property in properties)
         {
-            if (!typeof(IEnumerable).IsAssignableFrom(property.PropertyType) || property.PropertyType == typeof(string))
+            if (property.GetCustomAttribute<TelemetryTagAttribute>(inherit: true) is null)
             {
-                var propertyValue = property.GetValue(message);
-                activity.SetTag($"bus.message.{property.Name}", propertyValue?.ToString() ?? string.Empty);
+                continue;
             }
+
+            var propertyValue = property.GetValue(message)?.ToString() ?? string.Empty;
+            if (propertyValue.Length > MaxTagValueLength)
+            {
+                propertyValue = propertyValue[..MaxTagValueLength];
+            }
+
+            activity.SetTag($"bus.message.{property.Name}", propertyValue);
         }
     }
 }

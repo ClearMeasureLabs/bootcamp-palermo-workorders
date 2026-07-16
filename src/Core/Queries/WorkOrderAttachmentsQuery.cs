@@ -3,4 +3,4 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.Core.Queries;
 
-public record WorkOrderAttachmentsQuery(Guid WorkOrderId) : IRequest<WorkOrderAttachment[]>, IRemotableRequest;
+public record WorkOrderAttachmentsQuery([property: TelemetryTag] Guid WorkOrderId) : IRequest<WorkOrderAttachment[]>, IRemotableRequest;

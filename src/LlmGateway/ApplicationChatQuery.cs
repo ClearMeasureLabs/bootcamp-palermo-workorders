@@ -5,7 +5,7 @@ using Microsoft.Extensions.AI;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public record ApplicationChatQuery(string Prompt, string CurrentUsername) : IRequest<ChatResponse>, IRemotableRequest
+public record ApplicationChatQuery(string Prompt, [property: TelemetryTag] string CurrentUsername) : IRequest<ChatResponse>, IRemotableRequest
 {
     public List<ChatHistoryMessage> ChatHistory { get; set; } = [];
 }

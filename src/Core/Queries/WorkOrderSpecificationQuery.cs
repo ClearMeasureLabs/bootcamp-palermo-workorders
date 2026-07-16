@@ -20,6 +20,7 @@ public record WorkOrderSpecificationQuery : IRequest<WorkOrder[]>, IRemotableReq
         Creator = creator;
     }
 
+    [TelemetryTag]
     public string? StatusKey { get; set; }
 
     public Employee? Assignee { get; set; }
