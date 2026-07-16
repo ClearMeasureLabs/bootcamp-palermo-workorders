@@ -359,3 +359,6 @@ coverage.cobertura.xml
 /build
 /.claude/settings.local.json
 nul
+
+# Roslynator analysis reports (roslynator-analysis skill)
+/roslynator-results/

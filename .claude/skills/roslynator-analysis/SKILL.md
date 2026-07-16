@@ -43,7 +43,7 @@ Then relay its printed summary to the user.
 ## What the script handles for you
 
 - Verifies the Roslynator CLI is installed (exit 2 if not).
-- Writes the XML report to an OS-agnostic temp folder (`<temp>/roslynator-results/analysis.xml`).
+- Writes a timestamped XML report under the repo (`<repo-root>/roslynator-results/analysis-<timestamp>.xml`), so repeated runs never collide.
 - **Self-heals** the known .NET 10 SDK MSBuild conflict (a `FileUtilities` `TypeLoadException`)
   by neutralizing the bundled `Microsoft.Build.Framework.dll` and retrying once. Details and the
   manual fallback are in [resources/TROUBLESHOOTING.md](resources/TROUBLESHOOTING.md).
@@ -52,5 +52,5 @@ Then relay its printed summary to the user.
 ## Notes
 
 - Prefer the CLI over the `Roslynator.Analyzers` NuGet package — the CLI needs no `.csproj`/package changes.
-- The report lives in the OS temp folder, so it is not tracked by git and may be cleared by the OS.
+- Reports land in `roslynator-results/` at the repo root (git-ignored). Each run is timestamped, so old reports accumulate — clear the folder periodically.
 - Large/multi-targeted solutions can take a while; let the run finish.

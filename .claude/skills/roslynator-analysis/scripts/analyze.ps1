@@ -9,7 +9,7 @@
       * self-healing: detects the SDK-10 MSBuild `FileUtilities` TypeLoadException and
         neutralizes the bundled Microsoft.Build.Framework.dll, then retries once
         (see resources/TROUBLESHOOTING.md for the underlying cause)
-      * running `analyze` to an XML report in an OS-agnostic temp folder
+      * running `analyze` to a timestamped XML report under the repo's roslynator-results/
       * parsing the report: severity breakdown, compiler (CS*) vs analyzer split, top rules
 
     Non-interactive by design. If -Solution is omitted it uses the sole discovered
@@ -22,7 +22,8 @@
     Minimum severity to report: hidden | info | warning | error. Default: info.
 
 .PARAMETER Output
-    Directory for the XML report. Default: <temp>/roslynator-results.
+    Directory for the XML report. Default: <repo-root>/roslynator-results (falls back to the
+    current directory if not in a git repo). Each run writes a timestamped file.
 
 .PARAMETER TopRules
     How many analyzer rules to list in the summary. Default: 20.
@@ -77,11 +78,14 @@ if (-not (Test-Path $Solution)) {
 $Solution = (Resolve-Path $Solution).Path
 Write-Host "Solution: $Solution"
 
-# --- 3. Output path (OS-agnostic temp) -----------------------------------------
-if (-not $Output) { $Output = Join-Path ([System.IO.Path]::GetTempPath()) 'roslynator-results' }
+# --- 3. Output path (repo-relative, timestamped filename) ----------------------
+if (-not $Output) {
+    $repoRoot = (& git rev-parse --show-toplevel 2>$null)
+    if (-not $repoRoot) { $repoRoot = (Get-Location).Path }
+    $Output = Join-Path $repoRoot 'roslynator-results'
+}
 New-Item -ItemType Directory -Force -Path $Output | Out-Null
-$report = Join-Path $Output 'analysis.xml'
-if (Test-Path $report) { Remove-Item $report -Force }
+$report = Join-Path $Output ("analysis-{0}.xml" -f (Get-Date -Format 'yyyyMMdd-HHmmssfff'))
 
 # --- Helper: neutralize the bundled MSBuild framework DLL (SDK-10 workaround) ---
 function Repair-BundledMSBuild {
