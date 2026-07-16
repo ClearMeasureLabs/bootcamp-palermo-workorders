@@ -10,7 +10,7 @@ from assembly 'Microsoft.Build.Framework, Version=15.1.0.0, ...'
    at Microsoft.Build.Construction.SolutionFile.Parse(String solutionFile)
 ```
 
-Exit code 2; the solution never loads.
+Roslynator typically exits 2 for this failure; `scripts/analyze.ps1` detects the signature, applies the workaround, and retries. If the workaround does not resolve it, `analyze.ps1` exits 4 (analysis failed).
 
 **Cause.** Roslynator 0.12.0 (the latest release) ships its own `Microsoft.Build.Framework.dll`
 inside the tool store. Against the .NET 10 SDK, that bundled copy shadows the SDK's MSBuild and
