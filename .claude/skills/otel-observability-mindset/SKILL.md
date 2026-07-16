@@ -120,23 +120,31 @@ that someone debugging production would actually want to see.
    spelunking. Follow `TelemetryHandler.cs`: the domain raises an event,
    `IBus.Publish` fans it out, and a notification handler owns the
    `Meter`/`Counter<T>` (named like `app.user.logins`, with unit and
-   description) — this keeps metric code out of business handlers. Use the
+   description) — this keeps metric code out of business handlers. Copy
+   its event→handler structure, **not** its `user.name` metric attribute —
+   that's existing PII tech debt (see rule 7), not license to put
+   usernames on new metrics. Use the
    shared `"ChurchBulletin.Application"` `Meter` name (or a new one you
    registered in step 2) rather than deriving rates from log/trace volume
    after the fact.
-7. **Don't over-tag.** Skip PII (employee email, names) and anything
+7. **Don't over-tag.** Avoid PII (employee email, names) and anything
    unbounded (full request/response bodies, large collections). Tag
    identifiers and small scalars; if you need the full payload for
    debugging, that's a log message with a scope, not a span tag that gets
-   held in an exporter's backend indefinitely. `Bus.cs` enforces this at
-   the MediatR boundary: `AddPropertyTags` only tags message properties
-   explicitly opted in with `[TelemetryTag]` (defined in
-   `src/Core/TelemetryTagAttribute.cs`) and truncates values to 128
-   characters. A new message type produces no property tags until opted
-   in — that safe default is intentional. Annotate identifiers and small
-   scalars (e.g. `WorkOrderByNumberQuery.Number`,
-   `ApplicationChatQuery.CurrentUsername`); never annotate PII
-   (`Employee`-typed properties) or unbounded payloads (chat prompts).
+   held in an exporter's backend indefinitely. When an identifier is
+   needed for correlation, prefer a stable non-PII identifier (a work
+   order number, an entity ID, a hashed user ID) over a name or email —
+   `TelemetryHandler.cs`'s `user.name` attribute predates this guidance
+   and is tech debt, not a pattern to repeat. Know what `Bus.cs` does at
+   the MediatR boundary: `AddPropertyTags` auto-tags **every**
+   non-collection property of every message sent through `IBus` as
+   `bus.message.<PropertyName>`, with no opt-in and no truncation. That
+   means any PII or large payload carried on a message type (an
+   `Employee`-typed property's `ToString()`, a chat prompt string) lands
+   on the span automatically. Until that boundary gains an opt-in or
+   truncation mechanism, keep PII and unbounded payloads off message
+   properties, and flag message types that already carry them as
+   telemetry risks during review.
 8. **Keep logs correlated, not parallel.** Use `ILogger`/`LogContext`
    scopes so log lines pick up the ambient `Activity`'s trace/span IDs
    automatically; don't add `Console.WriteLine`, a second logging
