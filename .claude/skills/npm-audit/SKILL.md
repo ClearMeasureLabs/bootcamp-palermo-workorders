@@ -44,6 +44,23 @@ Moderate and low are reported but don't fail by default. Tighten with
 
 ## How to run
 
+### Step 1 — Preflight: is Node.js available?
+
+The audit engine (`audit.mjs`) and `npm audit` itself both require Node.js. Before
+running, check whether Node is installed (works on macOS, Linux, and Windows):
+
+```bash
+node --version
+```
+
+- **Node is available** → proceed to Step 2 (run the engine).
+- **Node is NOT available** (command not found / non-zero exit) → do **not** try to
+  run `audit.mjs`. Instead determine whether the target is even an npm project and
+  write the report yourself (Step 3). Do this check by hand because the engine can't
+  run without Node.
+
+### Step 2 — Run the audit engine (Node available)
+
 The logic lives in `audit.mjs` in this skill's directory. Run it against the target
 root (defaults to the current working directory):
 
@@ -61,6 +78,25 @@ Options:
   (default: `<first-root>/codebase-audit-report/metrics/npm-audit`).
 
 Exit codes: `0` = pass, `1` = fail, `2` = notapplicable.
+
+### Step 3 — No Node.js installed
+
+If Step 1 found no Node, the audit cannot run. Look for a `package.json` anywhere
+under the target root (ignoring `node_modules`), then produce the report yourself
+and still write both files to the output dir
+(`<root>/codebase-audit-report/metrics/npm-audit/`):
+
+- **A `package.json` exists → `status: "fail"`.** It's a real npm project whose
+  security can't be verified, so fail safe. Use a `message` such as:
+  `"Node.js is not installed — npm audit could not be run; failing safe since security is unverified."`
+- **No `package.json` anywhere → `status: "notapplicable"`.** Nothing to audit. Use
+  a `message` like: `"No npm project found and Node.js is not installed — npm audit not applicable."`
+
+Write `npm-audit-result.json` in the same shape as Step 2 (below) — set `status`,
+`message`, `threshold`, `auditedRoot`, `projectCount`, zeroed `vulnerabilities`, and
+a `projects[]` entry per discovered `package.json` (each `status: "fail"` with the
+message). Write a matching `npm-audit-result.md`. Report the status to the user and
+note that installing Node.js/npm is required to actually verify the dependencies.
 
 ## Output files
 
