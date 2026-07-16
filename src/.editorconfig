@@ -78,3 +78,53 @@ dotnet_style_prefer_auto_properties = true:silent
 dotnet_style_object_initializer = true:suggestion
 dotnet_style_collection_initializer = true:suggestion
 dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
+
+# ============================================================================
+# StyleCop.Analyzers (SA####) - pragmatic clean-architecture profile
+# ----------------------------------------------------------------------------
+# The full StyleCop ruleset runs at its default 'warning' severity and is
+# surfaced in the build log. StyleCop findings never break the build: every
+# SA#### code is listed in <WarningsNotAsErrors> in src/Directory.Build.props,
+# so projects with TreatWarningsAsErrors=true still compile.
+# Rule behavior (documentation scope, using placement) lives in stylecop.json.
+# The overrides below encode the common clean-code conventions.
+# ============================================================================
+
+# -- Disabled: conflict with modern C# / clean-code conventions --
+dotnet_diagnostic.SA1101.severity = none   # Do not require 'this.' prefix on local members
+dotnet_diagnostic.SA1309.severity = none   # Allow _camelCase private field names
+dotnet_diagnostic.SA1633.severity = none   # No file header comment required
+dotnet_diagnostic.SA1642.severity = none   # Constructor summary need not start with boilerplate
+dotnet_diagnostic.SA1643.severity = none   # Destructor summary need not start with boilerplate
+dotnet_diagnostic.SA1413.severity = none   # Do not force trailing commas in multi-line initializers
+
+# -- Documentation: encourage on public API, reported softly (suggestion) --
+dotnet_diagnostic.SA1600.severity = suggestion  # Elements should be documented
+dotnet_diagnostic.SA1601.severity = suggestion  # Partial elements should be documented
+dotnet_diagnostic.SA1602.severity = suggestion  # Enumeration items should be documented
+
+# -- Ordering / structure: enforced as warnings --
+dotnet_diagnostic.SA1200.severity = warning  # Using directives placed per stylecop.json (outside namespace)
+dotnet_diagnostic.SA1208.severity = warning  # System usings before other usings
+dotnet_diagnostic.SA1210.severity = warning  # Usings ordered alphabetically
+dotnet_diagnostic.SA1201.severity = warning  # Members appear in canonical order
+dotnet_diagnostic.SA1202.severity = warning  # Public members before less-accessible members
+dotnet_diagnostic.SA1203.severity = warning  # Constants before fields
+dotnet_diagnostic.SA1204.severity = warning  # Static members before instance members
+
+# -- Readability / maintainability: enforced as warnings --
+dotnet_diagnostic.SA1028.severity = warning  # No trailing whitespace
+dotnet_diagnostic.SA1122.severity = warning  # Use string.Empty instead of ""
+dotnet_diagnostic.SA1400.severity = warning  # Access modifier must be explicit
+dotnet_diagnostic.SA1401.severity = warning  # Fields must be private
+dotnet_diagnostic.SA1503.severity = warning  # Braces must not be omitted
+dotnet_diagnostic.SA1516.severity = warning  # Elements separated by a blank line
+
+# ----------------------------------------------------------------------------
+# Treat generated code as generated so StyleCop skips it.
+# ----------------------------------------------------------------------------
+[*.{g,g.i,Designer}.cs]
+generated_code = true
+
+[**/{Migrations,Generated}/*.cs]
+generated_code = true
