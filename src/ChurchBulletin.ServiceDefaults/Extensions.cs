@@ -25,11 +25,16 @@ public static class Extensions
     /// <summary>
     /// Adds a set of default services and configurations including OpenTelemetry instrumentation, health checks, and service discovery.
     /// </summary>
-    public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    /// <param name="builder">The host application builder to configure.</param>
+    /// <param name="logToStandardError">
+    /// When true, Serilog console output is routed to standard error instead of standard output.
+    /// Required for hosts whose stdout carries a wire protocol (for example MCP stdio transport).
+    /// </param>
+    public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder, bool logToStandardError = false) where TBuilder : IHostApplicationBuilder
     {
         builder.ConfigureOpenTelemetry();
 
-        builder.AddSerilogJsonConsole();
+        builder.AddSerilogJsonConsole(logToStandardError);
 
         builder.AddDefaultHealthChecks();
 
