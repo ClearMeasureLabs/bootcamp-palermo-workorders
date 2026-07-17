@@ -10,12 +10,15 @@ public class EmployeeTests
     public void PropertiesShouldInitializeProperly()
     {
         var employee = new Employee();
-        Assert.That(employee.Id, Is.EqualTo(Guid.Empty));
-        Assert.That(employee.UserName, Is.Null);
-        Assert.That(employee.FirstName, Is.Null);
-        Assert.That(employee.LastName, Is.Null);
-        Assert.That(employee.EmailAddress, Is.Null);
-        Assert.That(employee.PreferredLanguage, Is.EqualTo("en-US"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(employee.Id, Is.EqualTo(Guid.Empty));
+            Assert.That(employee.UserName, Is.Null);
+            Assert.That(employee.FirstName, Is.Null);
+            Assert.That(employee.LastName, Is.Null);
+            Assert.That(employee.EmailAddress, Is.Null);
+            Assert.That(employee.PreferredLanguage, Is.EqualTo("en-US"));
+        });
     }
 
     [Test]
@@ -38,12 +41,15 @@ public class EmployeeTests
         employee.UserName = "bobjoe";
         employee.PreferredLanguage = "fr-FR";
 
-        Assert.That(employee.EmailAddress, Is.EqualTo("Test"));
-        Assert.That(employee.FirstName, Is.EqualTo("Bob"));
-        Assert.That(employee.Id, Is.EqualTo(guid));
-        Assert.That(employee.LastName, Is.EqualTo("Joe"));
-        Assert.That(employee.UserName, Is.EqualTo("bobjoe"));
-        Assert.That(employee.PreferredLanguage, Is.EqualTo("fr-FR"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(employee.EmailAddress, Is.EqualTo("Test"));
+            Assert.That(employee.FirstName, Is.EqualTo("Bob"));
+            Assert.That(employee.Id, Is.EqualTo(guid));
+            Assert.That(employee.LastName, Is.EqualTo("Joe"));
+            Assert.That(employee.UserName, Is.EqualTo("bobjoe"));
+            Assert.That(employee.PreferredLanguage, Is.EqualTo("fr-FR"));
+        });
     }
 
     [Test]
@@ -51,10 +57,13 @@ public class EmployeeTests
     {
         var employee = new Employee("bobjoe", "Bob", "Joe", "Test");
 
-        Assert.That(employee.EmailAddress, Is.EqualTo("Test"));
-        Assert.That(employee.FirstName, Is.EqualTo("Bob"));
-        Assert.That(employee.LastName, Is.EqualTo("Joe"));
-        Assert.That(employee.UserName, Is.EqualTo("bobjoe"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(employee.EmailAddress, Is.EqualTo("Test"));
+            Assert.That(employee.FirstName, Is.EqualTo("Bob"));
+            Assert.That(employee.LastName, Is.EqualTo("Joe"));
+            Assert.That(employee.UserName, Is.EqualTo("bobjoe"));
+        });
     }
 
     [Test]
@@ -74,9 +83,12 @@ public class EmployeeTests
         var employee1 = new Employee("", "1", "1", "");
         var employee2 = new Employee("", "1", "2", "");
 
-        Assert.That(employee1.CompareTo(employee2), Is.EqualTo(-1));
-        Assert.That(employee1.CompareTo(employee1), Is.Zero);
-        Assert.That(employee2.CompareTo(employee1), Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(employee1.CompareTo(employee2), Is.EqualTo(-1));
+            Assert.That(employee1.CompareTo(employee1), Is.Zero);
+            Assert.That(employee2.CompareTo(employee1), Is.EqualTo(1));
+        });
     }
 
 
@@ -86,9 +98,12 @@ public class EmployeeTests
         var employee1 = new Employee("", "1", "1", "");
         var employee2 = new Employee("", "2", "1", "");
 
-        Assert.That(employee1.CompareTo(employee2), Is.EqualTo(-1));
-        Assert.That(employee1.CompareTo(employee1), Is.Zero);
-        Assert.That(employee2.CompareTo(employee1), Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(employee1.CompareTo(employee2), Is.EqualTo(-1));
+            Assert.That(employee1.CompareTo(employee1), Is.Zero);
+            Assert.That(employee2.CompareTo(employee1), Is.EqualTo(1));
+        });
     }
 
     [Test]

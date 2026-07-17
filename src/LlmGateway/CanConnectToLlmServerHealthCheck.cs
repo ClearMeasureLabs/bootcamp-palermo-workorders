@@ -14,7 +14,7 @@ public class CanConnectToLlmServerHealthCheck(
         var availability = await chatClientFactory.IsChatClientAvailable();
         if (!availability.IsAvailable)
         {
-            logger.LogWarning(availability.Message);
+            logger.LogWarning("{Message}", availability.Message);
             return HealthCheckResult.Degraded(availability.Message);
         }
 
@@ -37,7 +37,7 @@ public class CanConnectToLlmServerHealthCheck(
         catch (Exception ex)
         {
             var message = $"Chat client connection failed: {ex.Message}";
-            logger.LogWarning(message);
+            logger.LogWarning("Chat client connection failed: {ExceptionMessage}", ex.Message);
             return HealthCheckResult.Unhealthy(message, ex);
         }
     }

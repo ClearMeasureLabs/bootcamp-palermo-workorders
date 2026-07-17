@@ -16,13 +16,16 @@ public class WorkOrderBuilderTests
         var creator = new Employee();
         var workOrder = builder.CreateNewWorkOrder(creator);
 
-        Assert.That(workOrder.Creator, Is.EqualTo(creator));
-        Assert.That(workOrder.Number, Is.EqualTo("124"));
-        Assert.That(workOrder.Assignee, Is.Null);
-        Assert.That(workOrder.Title, Is.Empty);
-        Assert.That(workOrder.Description, Is.Empty);
-        Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
-        Assert.That(workOrder.RoomNumber, Is.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(workOrder.Creator, Is.EqualTo(creator));
+            Assert.That(workOrder.Number, Is.EqualTo("124"));
+            Assert.That(workOrder.Assignee, Is.Null);
+            Assert.That(workOrder.Title, Is.Empty);
+            Assert.That(workOrder.Description, Is.Empty);
+            Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
+            Assert.That(workOrder.RoomNumber, Is.Null);
+        });
     }
 }
 

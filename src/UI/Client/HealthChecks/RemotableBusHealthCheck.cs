@@ -13,7 +13,7 @@ public class RemotableBusHealthCheck(IBus bus, ILogger<RemotableBusHealthCheck> 
         {
             IRequest<HealthStatus> remotableRequest = new HealthCheckRemotableRequest();
             var result = await bus.Send(remotableRequest);
-            logger.LogInformation(result.ToString());
+            logger.LogInformation("RemotableBus health check result: {Result}", result);
             return result == HealthStatus.Healthy
                 ? new HealthCheckResult(result, "RemotableBus is healthy")
                 : new HealthCheckResult(result, $"RemotableBus returned {result}");

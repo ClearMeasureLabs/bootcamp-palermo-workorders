@@ -12,12 +12,15 @@ public class WorkOrderStatusTests
     {
         var statuses = WorkOrderStatus.GetAllItems();
 
-        Assert.That(statuses, Has.Length.EqualTo(5));
-        Assert.That(statuses[0], Is.EqualTo(WorkOrderStatus.Draft));
-        Assert.That(statuses[1], Is.EqualTo(WorkOrderStatus.Assigned));
-        Assert.That(statuses[2], Is.EqualTo(WorkOrderStatus.InProgress));
-        Assert.That(statuses[3], Is.EqualTo(WorkOrderStatus.Complete));
-        Assert.That(statuses[4], Is.EqualTo(WorkOrderStatus.Cancelled));
+        Assert.Multiple(() =>
+        {
+            Assert.That(statuses, Has.Length.EqualTo(5));
+            Assert.That(statuses[0], Is.EqualTo(WorkOrderStatus.Draft));
+            Assert.That(statuses[1], Is.EqualTo(WorkOrderStatus.Assigned));
+            Assert.That(statuses[2], Is.EqualTo(WorkOrderStatus.InProgress));
+            Assert.That(statuses[3], Is.EqualTo(WorkOrderStatus.Complete));
+            Assert.That(statuses[4], Is.EqualTo(WorkOrderStatus.Cancelled));
+        });
     }
 
     [Test]
@@ -49,8 +52,11 @@ public class WorkOrderStatusTests
         var json = JsonSerializer.Serialize(original);
         var deserialized = JsonSerializer.Deserialize<WorkOrderStatus>(json);
 
-        Assert.That(deserialized, Is.EqualTo(original));
-        Assert.That(json, Does.Contain(original.Key));
+        Assert.Multiple(() =>
+        {
+            Assert.That(deserialized, Is.EqualTo(original));
+            Assert.That(json, Does.Contain(original.Key));
+        });
     }
 
     [Test]

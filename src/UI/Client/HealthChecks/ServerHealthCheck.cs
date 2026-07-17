@@ -11,7 +11,7 @@ public class ServerHealthCheck(IBus bus, ILogger<ServerHealthCheck> logger) : IH
         try
         {
             var status = await bus.Send(new ServerHealthCheckQuery());
-            logger.LogInformation(status.ToString());
+            logger.LogInformation("Server health check status: {Status}", status);
             return status == HealthStatus.Healthy
                 ? new HealthCheckResult(status, "Server health checks passed")
                 : new HealthCheckResult(status, $"Server health checks returned {status}");

@@ -55,8 +55,11 @@ public class InProgressToCompleteCommandTests : StateCommandBaseTests
         var command = new InProgressToCompleteCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Complete));
-        Assert.That(order.CompletedDate, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Complete));
+            Assert.That(order.CompletedDate, Is.Not.Null);
+        });
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)

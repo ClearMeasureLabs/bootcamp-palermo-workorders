@@ -55,8 +55,11 @@ public class SaveDraftCommandTests : StateCommandBaseTests
         var command = new SaveDraftCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Draft));
-        Assert.That(order.CreatedDate, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Draft));
+            Assert.That(order.CreatedDate, Is.Not.Null);
+        });
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)

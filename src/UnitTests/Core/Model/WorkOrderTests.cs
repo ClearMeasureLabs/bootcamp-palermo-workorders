@@ -9,14 +9,17 @@ public class WorkOrderTests
     public void PropertiesShouldInitializeToProperDefaults()
     {
         var workOrder = new WorkOrder();
-        Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
-        Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
-        Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
-        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
-        Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
-        Assert.That(workOrder.Number, Is.Null);
-        Assert.That(workOrder.Creator, Is.Null);
-        Assert.That(workOrder.Assignee, Is.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
+            Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
+            Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
+            Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
+            Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
+            Assert.That(workOrder.Number, Is.Null);
+            Assert.That(workOrder.Creator, Is.Null);
+            Assert.That(workOrder.Assignee, Is.Null);
+        });
     }
 
     [Test]
@@ -47,14 +50,17 @@ public class WorkOrderTests
         workOrder.Creator = creator;
         workOrder.Assignee = assignee;
 
-        Assert.That(workOrder.Id, Is.EqualTo(guid));
-        Assert.That(workOrder.Title, Is.EqualTo("Title"));
-        Assert.That(workOrder.Description, Is.EqualTo("Description"));
-        Assert.That(workOrder.Instructions, Is.EqualTo("Bring ladder and safety gear"));
-        Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
-        Assert.That(workOrder.Number, Is.EqualTo("Number"));
-        Assert.That(workOrder.Creator, Is.EqualTo(creator));
-        Assert.That(workOrder.Assignee, Is.EqualTo(assignee));
+        Assert.Multiple(() =>
+        {
+            Assert.That(workOrder.Id, Is.EqualTo(guid));
+            Assert.That(workOrder.Title, Is.EqualTo("Title"));
+            Assert.That(workOrder.Description, Is.EqualTo("Description"));
+            Assert.That(workOrder.Instructions, Is.EqualTo("Bring ladder and safety gear"));
+            Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
+            Assert.That(workOrder.Number, Is.EqualTo("Number"));
+            Assert.That(workOrder.Creator, Is.EqualTo(creator));
+            Assert.That(workOrder.Assignee, Is.EqualTo(assignee));
+        });
     }
 
     [Test]

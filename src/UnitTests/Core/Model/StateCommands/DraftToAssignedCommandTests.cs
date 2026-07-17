@@ -56,8 +56,11 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
         var command = new DraftToAssignedCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
-        Assert.That(order.AssignedDate, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+            Assert.That(order.AssignedDate, Is.Not.Null);
+        });
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)

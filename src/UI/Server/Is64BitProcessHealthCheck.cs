@@ -10,7 +10,9 @@ public class Is64BitProcessHealthCheck(ILogger<Is64BitProcessHealthCheck> logger
             var description = "Process is running as 32-bit. " +
                               "Expected 64-bit for optimal performance and memory utilization. " +
                               $"OS: {Environment.OSVersion}, ProcessorCount: {Environment.ProcessorCount}";
-            logger.LogWarning(description);
+            logger.LogWarning(
+                "Process is running as 32-bit. Expected 64-bit for optimal performance and memory utilization. OS: {OsVersion}, ProcessorCount: {ProcessorCount}",
+                Environment.OSVersion, Environment.ProcessorCount);
             return Task.FromResult(HealthCheckResult.Degraded(description));
         }
 
