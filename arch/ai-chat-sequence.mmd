@@ -1,0 +1,51 @@
+sequenceDiagram
+    autonumber
+    actor User
+    participant UI as ApplicationChat.razor<br/>(Browser / WASM)
+    participant RBus as RemotableBus
+    participant GW as PublisherGateway
+    participant API as SingleApiController<br/>(UI.Server)
+    participant SBus as ServerRealtimeBus<br/>(MediatR)
+    participant H as ApplicationChatHandler
+    participant TP as ToolProvider<br/>(loopback MCP client)
+    participant MCP as /mcp endpoint<br/>(WorkOrderTools/EmployeeTools)
+    participant DB as IBus -> EF Core -> SQL
+    participant CF as ChatClientFactory
+    participant AOAI as Azure OpenAI
+
+    User->>UI: type message + Send
+    UI->>RBus: Bus.Send(ApplicationChatQuery)
+    Note over RBus: implements IRemotableRequest<br/>-> send over the wire
+    RBus->>GW: Publish(request)
+    GW->>API: HTTP POST /api/... (X-API-Key)
+    API->>SBus: bus.Send(remotableRequest)
+    SBus->>H: ApplicationChatQuery
+
+    H->>TP: GetToolsAsync()
+    TP->>MCP: connect + ListToolsAsync()
+    MCP-->>TP: tool definitions
+    TP-->>H: IList<AITool>
+
+    H->>CF: GetChatClient()
+    CF->>SBus: ChatClientConfigQuery (AI_OpenAI_*)
+    SBus-->>CF: endpoint / model / key
+    CF-->>H: IChatClient (UseFunctionInvocation)
+
+    H->>AOAI: GetResponseAsync(systemPrompt + history + tools)
+
+    loop tool-calling loop (automatic)
+        AOAI-->>H: tool call request (e.g. get-work-order)
+        H->>MCP: invoke tool
+        MCP->>DB: IBus.Send(WorkOrderByNumberQuery)
+        DB-->>MCP: WorkOrder data
+        MCP-->>H: tool result
+        H->>AOAI: tool result
+    end
+
+    AOAI-->>H: final ChatResponse.Text
+    H-->>SBus: ChatResponse
+    SBus-->>API: result
+    API-->>GW: WebServiceMessage (JSON)
+    GW-->>RBus: response
+    RBus-->>UI: ChatResponse
+    UI-->>User: render assistant message
