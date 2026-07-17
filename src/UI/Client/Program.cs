@@ -24,6 +24,7 @@ builder.Services.AddBlazorApplicationInsights(x =>
 // Add authentication services
 builder.Services.AddAuthorizationCore();
 builder.Services.AddSpeechSynthesis();
+builder.Services.AddSpeechRecognition();
 builder.ConfigureContainer<ServiceRegistry>(
     new LamarServiceProviderFactory(), registry =>
         registry.IncludeRegistry<UIClientServiceRegistry>());
