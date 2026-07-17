@@ -22,7 +22,7 @@ public class LocalTelemetryLoggerProvider : ILoggerProvider, ISupportExternalSco
 
     public ILogger CreateLogger(string categoryName) => new LocalTelemetryLogger(_fileWriter, categoryName, _scopeProvider);
 
-    public void Dispose() { }
+    public void Dispose() => GC.SuppressFinalize(this);
 
     private class LocalTelemetryLogger : ILogger
     {

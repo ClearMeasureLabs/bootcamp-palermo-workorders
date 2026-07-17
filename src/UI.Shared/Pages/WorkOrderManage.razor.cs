@@ -70,7 +70,7 @@ public partial class WorkOrderManage : AppComponentBase
 
         Model = CreateViewModel(CurrentMode, workOrder);
         var commandList = new StateCommandList();
-        Model.IsReadOnly = !commandList!.GetValidStateCommands(workOrder, currentUser).Any();
+        Model.IsReadOnly = commandList!.GetValidStateCommands(workOrder, currentUser).Length == 0;
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
         _workOrder = workOrder;
 
@@ -80,7 +80,7 @@ public partial class WorkOrderManage : AppComponentBase
         }
     }
 
-    private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)
+    private static WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)
     {
         return new WorkOrderManageModel
         {

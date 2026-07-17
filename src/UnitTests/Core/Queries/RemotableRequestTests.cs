@@ -51,7 +51,7 @@ public class RemotableRequestTests
         AssertRemotable(command);
     }
 
-    public static object AssertRemotable(object theObject)
+    internal static object AssertRemotable(object theObject)
     {
         var rehydratedQuery = SimulateRemoteObject(theObject);
 

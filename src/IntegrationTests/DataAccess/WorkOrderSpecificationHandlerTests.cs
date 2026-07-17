@@ -13,7 +13,7 @@ public class WorkOrderSpecificationHandlerTests
     [Test]
     public void ShouldHandleRemotedQuery()
     {
-        new WorkOrderSpecificationQuery();
+        _ = new WorkOrderSpecificationQuery();
     }
 
     [Test]

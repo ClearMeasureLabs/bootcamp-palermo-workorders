@@ -29,7 +29,7 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
         chatMessages.Add(new ChatMessage(ChatRole.User, prompt));
 
         IChatClient client = await factory.GetChatClient();
-        ChatResponse response = await client.GetResponseAsync(chatMessages, chatOptions);
+        ChatResponse response = await client.GetResponseAsync(chatMessages, chatOptions, cancellationToken);
         return response;
     }
 }

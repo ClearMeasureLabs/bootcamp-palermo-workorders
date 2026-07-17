@@ -21,7 +21,7 @@ public partial class MainLayout : IAsyncDisposable
     /// <summary>
     /// Calendar year shown in the site copyright line (UTC, matches acceptance tests).
     /// </summary>
-    protected int CopyrightYear => DateTime.UtcNow.Year;
+    protected static int CopyrightYear => DateTime.UtcNow.Year;
 
     [Inject]
     private IJSRuntime Js { get; set; } = default!;
@@ -136,5 +136,6 @@ public partial class MainLayout : IAsyncDisposable
             await _jsModule.DisposeAsync();
 
         _dotNetRef?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

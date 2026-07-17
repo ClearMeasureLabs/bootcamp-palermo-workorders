@@ -4,7 +4,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests;
 
 public class IntegratedTestBase
 {
-    protected TK Faker<TK>()
+    protected static TK Faker<TK>()
     {
         return TestHost.Faker<TK>();
     }

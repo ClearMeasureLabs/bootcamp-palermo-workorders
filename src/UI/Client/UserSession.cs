@@ -32,7 +32,7 @@ public class UserSession(
         navigationManager.NavigateTo("/login");
     }
 
-    private void BlowUpIfEmployeeCannotLogin(Employee? employee)
+    private static void BlowUpIfEmployeeCannotLogin(Employee? employee)
     {
         if (employee == null)
         {

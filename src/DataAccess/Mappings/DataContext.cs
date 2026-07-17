@@ -12,7 +12,7 @@ public class DataContext : DbContext
     public DataContext(IDatabaseConfiguration config, ILogger<DataContext>? logger = null)
     {
         _config = config;
-        logger?.LogDebug(ToString());
+        logger?.LogDebug("DataContext created: {DataContext}", ToString());
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

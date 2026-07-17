@@ -14,7 +14,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.AIAgents;
 ///     to create and assign a work order, then verifies the database reflects the changes.
 /// </summary>
 [TestFixture]
-public class ApplicationChatAgentTests : AcceptanceTestBase
+public partial class ApplicationChatAgentTests : AcceptanceTestBase
 {
     [SetUp]
     public async Task EnsureLlmAvailable()
@@ -58,7 +58,7 @@ public class ApplicationChatAgentTests : AcceptanceTestBase
         chatText.ShouldNotBeNullOrEmpty();
 
         // Extract the work order number from the AI response
-        var match = Regex.Match(chatText, @"WorkOrderNumber:\s*[`*]*([A-Za-z0-9\-]+)[`*]*");
+        var match = MyRegex().Match(chatText);
         match.Success.ShouldBeTrue(
             $"Expected AI response to contain 'WorkOrderNumber: <number>'. Response was: {chatText}");
         var workOrderNumber = match.Groups[1].Value.Trim('`', '*', ' ');
@@ -89,4 +89,7 @@ public class ApplicationChatAgentTests : AcceptanceTestBase
             .ShouldBeTrue(
                 $"Expected description to mention edging or prayer garden: {createdWo.Description}");
     }
+
+    [GeneratedRegex(@"WorkOrderNumber:\s*[`*]*([A-Za-z0-9\-]+)[`*]*")]
+    private static partial Regex MyRegex();
 }

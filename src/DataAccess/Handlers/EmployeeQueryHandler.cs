@@ -17,7 +17,7 @@ public class EmployeeQueryHandler(DataContext context)
     {
         var employee = await context.Set<Employee>()
             .Include("Roles")
-            .SingleAsync(emp => emp.UserName == request.Username);
+            .SingleAsync(emp => emp.UserName == request.Username, cancellationToken: cancellationToken);
         return employee;
     }
 
@@ -25,7 +25,7 @@ public class EmployeeQueryHandler(DataContext context)
     {
         var query = context.Set<Employee>()
             .Include("Roles");
-        var employees = await query.ToListAsync();
+        var employees = await query.ToListAsync(cancellationToken: cancellationToken);
         if (EmployeeSpecification.All.CanFulfill)
         {
             employees = employees.Where(e => e.CanFulfillWorkOrder()).ToList();

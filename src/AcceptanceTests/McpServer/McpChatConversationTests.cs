@@ -9,7 +9,7 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
 [TestFixture]
-public class McpChatConversationTests : AcceptanceTestBase
+public partial class McpChatConversationTests : AcceptanceTestBase
 {
 	protected override bool RequiresBrowser => false;
 
@@ -54,7 +54,7 @@ public class McpChatConversationTests : AcceptanceTestBase
 
 		response.Text.ShouldNotBeNullOrEmpty();
 
-		var match = Regex.Match(response.Text, @"WorkOrderNumber:\s*(\S+)");
+		var match = MyRegex().Match(response.Text);
 		match.Success.ShouldBeTrue(
 			$"Expected response to contain 'WorkOrderNumber: <number>'. Response was: {response.Text}");
 		var workOrderNumber = match.Groups[1].Value;
@@ -77,4 +77,7 @@ public class McpChatConversationTests : AcceptanceTestBase
 		lawnWorkOrder.RoomNumber.ShouldNotBeNullOrEmpty(
 			"Room number should be set to a value representing the outdoor lawn");
 	}
+
+    [GeneratedRegex(@"WorkOrderNumber:\s*(\S+)")]
+    private static partial Regex MyRegex();
 }

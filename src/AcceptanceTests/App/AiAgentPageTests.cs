@@ -55,7 +55,7 @@ public class AiAgentPageTests : AcceptanceTestBase
         canScrollHistory.ShouldBeTrue();
     }
 
-    private async Task AssertPromptControlsAreInViewport(ILocator chatInput, ILocator sendButton)
+    private static async Task AssertPromptControlsAreInViewport(ILocator chatInput, ILocator sendButton)
     {
         await Expect(chatInput).ToBeVisibleAsync();
         await Expect(sendButton).ToBeVisibleAsync();

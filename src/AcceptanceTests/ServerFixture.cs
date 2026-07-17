@@ -412,7 +412,7 @@ public class ServerFixture
         response.EnsureSuccessStatusCode();
     }
 
-    internal static void InitializeDatabaseOnce()
+    private static void InitializeDatabaseOnce()
     {
         if (DatabaseInitialized) return;
 

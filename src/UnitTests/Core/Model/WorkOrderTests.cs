@@ -14,9 +14,9 @@ public class WorkOrderTests
         Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
-        Assert.That(workOrder.Number, Is.EqualTo(null));
-        Assert.That(workOrder.Creator, Is.EqualTo(null));
-        Assert.That(workOrder.Assignee, Is.EqualTo(null));
+        Assert.That(workOrder.Number, Is.Null);
+        Assert.That(workOrder.Creator, Is.Null);
+        Assert.That(workOrder.Assignee, Is.Null);
     }
 
     [Test]
@@ -72,7 +72,7 @@ public class WorkOrderTests
         var longText = new string('x', 4001);
         var order = new WorkOrder();
         order.Description = longText;
-        Assert.That(order.Description.Length, Is.EqualTo(4000));
+        Assert.That(order.Description, Has.Length.EqualTo(4000));
     }
 
     [Test]
@@ -81,7 +81,7 @@ public class WorkOrderTests
         var longText = new string('x', 4001);
         var order = new WorkOrder();
         order.Instructions = longText;
-        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
+        Assert.That(order.Instructions, Has.Length.EqualTo(4000));
     }
 
     [Test]

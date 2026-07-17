@@ -16,7 +16,7 @@ public class StateCommandListTests
         var employee = new Employee();
         var commands = facilitator.GetValidStateCommands(workOrder, employee);
 
-        Assert.That(commands.Length, Is.EqualTo(0));
+        Assert.That(commands, Is.Empty);
     }
 
     [Test]
@@ -25,14 +25,14 @@ public class StateCommandListTests
         var facilitator = new StateCommandList();
         var commands = facilitator.GetAllStateCommands(new WorkOrder(), new Employee());
 
-        Assert.That(commands.Length, Is.EqualTo(6));
+        Assert.That(commands, Has.Length.EqualTo(6));
 
-        Assert.That(commands[0], Is.InstanceOf(typeof(SaveDraftCommand)));
-        Assert.That(commands[1], Is.InstanceOf(typeof(DraftToAssignedCommand)));
-        Assert.That(commands[2], Is.InstanceOf(typeof(AssignedToInProgressCommand)));
-        Assert.That(commands[3], Is.InstanceOf(typeof(InProgressToAssignedCommand)));
-        Assert.That(commands[4], Is.InstanceOf(typeof(InProgressToCompleteCommand)));
-        Assert.That(commands[5], Is.InstanceOf(typeof(AssignedToCancelledCommand)));
+        Assert.That(commands[0], Is.InstanceOf<SaveDraftCommand>());
+        Assert.That(commands[1], Is.InstanceOf<DraftToAssignedCommand>());
+        Assert.That(commands[2], Is.InstanceOf<AssignedToInProgressCommand>());
+        Assert.That(commands[3], Is.InstanceOf<InProgressToAssignedCommand>());
+        Assert.That(commands[4], Is.InstanceOf<InProgressToCompleteCommand>());
+        Assert.That(commands[5], Is.InstanceOf<AssignedToCancelledCommand>());
     }
 
     [Test]
@@ -50,7 +50,7 @@ public class StateCommandListTests
 
         var commands = stubFacilitator.GetValidStateCommands(null!, null!);
 
-        Assert.That(commands.Length, Is.EqualTo(2));
+        Assert.That(commands, Has.Length.EqualTo(2));
     }
 
     [Test]

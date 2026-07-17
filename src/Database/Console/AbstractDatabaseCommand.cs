@@ -122,7 +122,7 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         return code;
     }
 
-    private void ShowOptionsOnConsole(DatabaseOptions options)
+    private static void ShowOptionsOnConsole(DatabaseOptions options)
     {
         // Suppressed for clean build output; details available at DEBUG log level
     }

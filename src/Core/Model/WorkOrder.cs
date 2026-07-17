@@ -38,7 +38,7 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public DateTime? CompletedDate { get; set; }
 
-    private string? getTruncatedString(string? value)
+    private static string? getTruncatedString(string? value)
     {
         if (value == null)
         {

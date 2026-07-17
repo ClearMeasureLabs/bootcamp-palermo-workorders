@@ -8,7 +8,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.Api;
 [TestFixture]
 public class ApiRateLimitingWebTests
 {
-    private static IReadOnlyDictionary<string, string?> StrictLimitSettings(int permitLimit, int windowSeconds = 2) =>
+    private static Dictionary<string, string?> StrictLimitSettings(int permitLimit, int windowSeconds = 2) =>
         new Dictionary<string, string?>
         {
             ["ApiRateLimiting:Enabled"] = "true",

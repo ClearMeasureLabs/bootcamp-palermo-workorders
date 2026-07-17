@@ -113,7 +113,7 @@ public class ZDataLoader
         LoadSimpsonsChurchData();
     }
 
-    private void LoadSimpsonsChurchData()
+    private static void LoadSimpsonsChurchData()
     {
         var db = TestHost.GetRequiredService<DbContext>();
 
@@ -294,7 +294,7 @@ public class ZDataLoader
         db.SaveChanges();
     }
 
-    public Employee CreateUser()
+    private static Employee CreateUser()
     {
         using var context = TestHost.GetRequiredService<DbContext>();
         var employee = TestHost.Faker<Employee>();

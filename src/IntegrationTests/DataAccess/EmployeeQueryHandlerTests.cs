@@ -54,7 +54,7 @@ public class EmployeeQueryHandlerTests
         var handler = new EmployeeQueryHandler(dataContext);
         var employees = await handler.Handle(new EmployeeGetAllQuery());
 
-        Assert.That(employees.Length, Is.EqualTo(3));
+        Assert.That(employees, Has.Length.EqualTo(3));
         Assert.That(employees[0].UserName, Is.EqualTo("1"));
         Assert.That(employees[0].FirstName, Is.EqualTo("first1"));
         Assert.That(employees[0].LastName, Is.EqualTo("last1"));

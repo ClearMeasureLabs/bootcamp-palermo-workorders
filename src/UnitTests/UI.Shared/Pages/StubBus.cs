@@ -17,7 +17,7 @@ public class StubBus() : Bus(null!)
     {
         if (request is EmployeeGetAllQuery)
         {
-            return (Task<TResponse>)EmployeeGetAllQueryResponse<TResponse>();
+            return EmployeeGetAllQueryResponse<TResponse>();
         }
 
         if (request is EmployeeByUserNameQuery)
@@ -51,7 +51,7 @@ public class StubBus() : Bus(null!)
         throw new NotImplementedException();
     }
 
-    public Func<WorkOrder[]> WorkOrderSpecificationQueryResponse => () =>
+    public static Func<WorkOrder[]> WorkOrderSpecificationQueryResponse => () =>
     [
         new WorkOrder
         {
@@ -77,7 +77,7 @@ public class StubBus() : Bus(null!)
         return Task.FromResult<TResponse>((TResponse)(object)employee);
     }
 
-    private Task EmployeeGetAllQueryResponse<TResponse>()
+    private static Task<TResponse> EmployeeGetAllQueryResponse<TResponse>()
     {
         var employees = new[]
         {

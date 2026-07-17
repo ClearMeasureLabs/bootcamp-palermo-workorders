@@ -76,7 +76,7 @@ public sealed class DatabaseEmptier
     {
         var tablesToDelete = new List<string>();
 
-        while (allTables.Any())
+        while (allTables.Count != 0)
         {
             var leafTables = allTables.Except(allRelationships.Select(rel => rel.PrimaryKeyTable)).ToArray();
 
@@ -103,7 +103,7 @@ public sealed class DatabaseEmptier
         return tablesToDelete.ToArray();
     }
 
-    private IList<Relationship> GetRelationships()
+    private List<Relationship> GetRelationships()
     {
         var relationships = new List<Relationship>();
         new SqlExecuter(_database).ExecuteSql(
@@ -131,7 +131,7 @@ order by
         return relationships;
     }
 
-    private IList<string> GetAllTables()
+    private List<string> GetAllTables()
     {
         var tables = new List<string>();
 

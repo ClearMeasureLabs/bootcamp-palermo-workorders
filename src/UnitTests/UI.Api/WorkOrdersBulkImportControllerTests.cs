@@ -45,7 +45,7 @@ public class WorkOrdersBulkImportControllerTests
         bus.SaveDraftCalls.ShouldBe(1);
     }
 
-    private static IFormFile CreateFormFile(string csvContent)
+    private static FormFile CreateFormFile(string csvContent)
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent);
         var stream = new MemoryStream(bytes);

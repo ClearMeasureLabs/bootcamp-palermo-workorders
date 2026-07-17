@@ -5,7 +5,7 @@ using Microsoft.Playwright;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.Extensions
 {
-    public static class DateTimeTestExtensions
+    public static partial class DateTimeTestExtensions
     {
         /// <summary>
         /// Converts a string representation of a date/time to a nullable DateTime, truncated to the minute.
@@ -89,7 +89,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.Extensions
                 return TruncateToMinute(dt);
             
             // Regex fallback for ISO-style format (yyyy-MM-dd)
-            var isoMatch = Regex.Match(normalized, @"^(\d{4})-(\d{2})-(\d{2}) (\d{1,2}):(\d{2}):(\d{2})");
+            var isoMatch = MyRegex().Match(normalized);
             if (isoMatch.Success)
             {
                 int year = int.Parse(isoMatch.Groups[1].Value);
@@ -113,7 +113,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.Extensions
             }
             
             // Regex fallback for en-US style format (M/d/yyyy or MM/dd/yyyy)
-            var usMatch = Regex.Match(normalized, @"^(\d{1,2})/(\d{1,2})/(\d{4}) (\d{1,2}):(\d{2}):(\d{2})");
+            var usMatch = MyRegex1().Match(normalized);
             if (usMatch.Success)
             {
                 int month = int.Parse(usMatch.Groups[1].Value);
@@ -176,5 +176,10 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.Extensions
         {
             return dateTime?.TruncateToMinute();
         }
+
+        [GeneratedRegex(@"^(\d{4})-(\d{2})-(\d{2}) (\d{1,2}):(\d{2}):(\d{2})")]
+        private static partial Regex MyRegex();
+        [GeneratedRegex(@"^(\d{1,2})/(\d{1,2})/(\d{4}) (\d{1,2}):(\d{2}):(\d{2})")]
+        private static partial Regex MyRegex1();
     }
 }

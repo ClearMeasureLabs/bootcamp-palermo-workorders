@@ -23,7 +23,7 @@ public class CanConnectToDatabaseHealthCheck(DbContext dbContext, ILogger<CanCon
             }
 
             var description = $"Cannot connect to database (Provider: {providerName})";
-            logger.LogWarning(description);
+            logger.LogWarning("Cannot connect to database (Provider: {ProviderName})", providerName);
             return new HealthCheckResult(HealthStatus.Unhealthy, description: description);
         }
         catch (Exception ex)

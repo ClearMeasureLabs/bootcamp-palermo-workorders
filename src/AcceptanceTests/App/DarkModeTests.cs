@@ -4,7 +4,7 @@ using ClearMeasure.Bootcamp.UI.Shared.Pages;
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
 [TestFixture]
-public class DarkModeTests : AcceptanceTestBase
+public partial class DarkModeTests : AcceptanceTestBase
 {
     [Test, Retry(2)]
     public async Task DarkMode_ShouldToggleHtmlDataTheme_WhenSwitchChangedOnSettings()
@@ -77,6 +77,9 @@ public class DarkModeTests : AcceptanceTestBase
     {
         await Page.GotoAsync("/settings");
         await Page.WaitForURLAsync("**/login");
-        await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex(".*/login.*"));
+        await Expect(Page).ToHaveURLAsync(MyRegex());
     }
+
+    [System.Text.RegularExpressions.GeneratedRegex(".*/login.*")]
+    private static partial System.Text.RegularExpressions.Regex MyRegex();
 }

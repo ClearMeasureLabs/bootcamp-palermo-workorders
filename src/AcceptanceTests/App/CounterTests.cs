@@ -4,7 +4,7 @@ using ClearMeasure.Bootcamp.UI.Shared.Pages;
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
 [TestFixture]
-public class CounterTests : AcceptanceTestBase
+public partial class CounterTests : AcceptanceTestBase
 {
     [Test, Retry(2)]
     public async Task Should_DisplayCounterPage_WhenNavigatingFromNav()
@@ -71,6 +71,9 @@ public class CounterTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Page.GetByTestId(nameof(Counter.Elements.CounterValue)).WaitForAsync();
 
-        await Expect(Page).ToHaveTitleAsync(new System.Text.RegularExpressions.Regex("Counter.*Church Activity Tracker"));
+        await Expect(Page).ToHaveTitleAsync(MyRegex());
     }
+
+    [System.Text.RegularExpressions.GeneratedRegex("Counter.*Church Activity Tracker")]
+    private static partial System.Text.RegularExpressions.Regex MyRegex();
 }

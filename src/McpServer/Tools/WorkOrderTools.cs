@@ -13,6 +13,8 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class WorkOrderTools
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new() { WriteIndented = true };
+
     [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status. Valid statuses: Draft, Assigned, InProgress, Complete.")]
     public static async Task<string> ListWorkOrders(
         IBus bus,
@@ -26,7 +28,7 @@ public class WorkOrderTools
 
         var workOrders = await bus.Send(query);
         return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),
-            new JsonSerializerOptions { WriteIndented = true });
+            SerializerOptions);
     }
 
     [McpServerTool(Name = "get-work-order"), Description("Retrieves a single work order by its number, including full details.")]
@@ -41,7 +43,7 @@ public class WorkOrderTools
         }
 
         return JsonSerializer.Serialize(FormatWorkOrderDetail(workOrder),
-            new JsonSerializerOptions { WriteIndented = true });
+            SerializerOptions);
     }
 
     [McpServerTool(Name = "create-work-order"), Description("Creates a new draft work order. Requires a title, description, and the username of the creator. Optionally accepts a room number for the location.")]
@@ -75,7 +77,7 @@ public class WorkOrderTools
             var result = await bus.Send(command);
 
             return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
-                new JsonSerializerOptions { WriteIndented = true });
+                SerializerOptions);
         }
         catch (Exception ex)
         {
@@ -142,7 +144,7 @@ public class WorkOrderTools
 
         var result = await bus.Send(command);
         return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
-            new JsonSerializerOptions { WriteIndented = true });
+            SerializerOptions);
     }
 
     [McpServerTool(Name = "list-work-order-attachments"), Description("Lists all attachment metadata for a given work order by its number.")]
@@ -166,7 +168,7 @@ public class WorkOrderTools
             UploadedBy = a.UploadedBy?.GetFullName(),
             UploadedByUsername = a.UploadedBy?.UserName,
             a.UploadedDate
-        }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
+        }).ToArray(), SerializerOptions);
     }
 
     private static async Task<Employee?> FindEmployeeByUsername(IBus bus, string username)

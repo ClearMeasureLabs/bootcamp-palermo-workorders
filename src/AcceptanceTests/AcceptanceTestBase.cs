@@ -36,7 +36,7 @@ public abstract class AcceptanceTestBase
     
     protected virtual bool? Headless { get; set; } = ServerFixture.HeadlessTestBrowser;
     protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
-    public IBus Bus => TestHost.GetRequiredService<IBus>();
+    public static IBus Bus => TestHost.GetRequiredService<IBus>();
 
     protected static async Task SkipIfNoChatClient()
     {
@@ -49,22 +49,22 @@ public abstract class AcceptanceTestBase
         }
     }
 
-    private string TestId => TestContext.CurrentContext.Test.ID;
+    private static string TestId => TestContext.CurrentContext.Test.ID;
     
     /// <summary>
     /// Gets the current test's state container.
     /// </summary>
-    private TestState State => TestStates[TestId];
+    private static TestState State => TestStates[TestId];
     
     /// <summary>
     /// Gets the browser page for the current test.
     /// </summary>
-    protected IPage Page => State.Page;
+    protected static IPage Page => State.Page;
     
     /// <summary>
     /// Gets or sets the current user for the current test.
     /// </summary>
-    public Employee CurrentUser
+    public static Employee CurrentUser
     {
         get => State.CurrentUser;
         set => State.CurrentUser = value;
@@ -73,7 +73,7 @@ public abstract class AcceptanceTestBase
     /// <summary>
     /// Unique tag for this test instance to isolate test data in parallel execution.
     /// </summary>
-    protected string TestTag => State.TestTag;
+    protected static string TestTag => State.TestTag;
 
     private static readonly Random RandomPosition = new();
 
@@ -169,12 +169,12 @@ public abstract class AcceptanceTestBase
     /// <summary>
     /// Playwright assertion helper - wraps Assertions.Expect for the current page context.
     /// </summary>
-    protected ILocatorAssertions Expect(ILocator locator) => Assertions.Expect(locator);
+    protected static ILocatorAssertions Expect(ILocator locator) => Assertions.Expect(locator);
     
     /// <summary>
     /// Playwright assertion helper - wraps Assertions.Expect for the current page.
     /// </summary>
-    protected IPageAssertions Expect(IPage page) => Assertions.Expect(page);
+    protected static IPageAssertions Expect(IPage page) => Assertions.Expect(page);
 
     protected async Task TakeScreenshotAsync(int stepNumber=0, string? stepName = null)
     {
@@ -190,7 +190,7 @@ public abstract class AcceptanceTestBase
         TestContext.AddTestAttachment(Path.GetFullPath(fileName));
     }
 
-    protected TK Faker<TK>()
+    protected static TK Faker<TK>()
     {
         return TestHost.Faker<TK>();
     }
@@ -251,7 +251,7 @@ public abstract class AcceptanceTestBase
             await locator.EvaluateAsync("el => el.click()");
     }
 
-    protected async Task Input(string elementTestId, string? value)
+    protected static async Task Input(string elementTestId, string? value)
     {
         var locator = Page.GetByTestId(elementTestId);
         if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
@@ -279,7 +279,7 @@ public abstract class AcceptanceTestBase
         await Expect(locator).ToHaveValueAsync(value ?? "");
     }
 
-    protected int GetInputDelayMs()
+    protected static int GetInputDelayMs()
     {
         var envValue = Environment.GetEnvironmentVariable("TEST_INPUT_DELAY_MS");
         if (int.TryParse(envValue, out var delay))
@@ -289,7 +289,7 @@ public abstract class AcceptanceTestBase
         return 100; // Default to 100ms for local performance
     }
 
-    protected async Task Select(string elementTestId, string? value)
+    protected static async Task Select(string elementTestId, string? value)
     {
         var locator = Page.GetByTestId(elementTestId);
         await Expect(locator).ToBeVisibleAsync();

@@ -11,10 +11,10 @@ public class EmployeeTests
     {
         var employee = new Employee();
         Assert.That(employee.Id, Is.EqualTo(Guid.Empty));
-        Assert.That(employee.UserName, Is.EqualTo(null));
-        Assert.That(employee.FirstName, Is.EqualTo(null));
-        Assert.That(employee.LastName, Is.EqualTo(null));
-        Assert.That(employee.EmailAddress, Is.EqualTo(null));
+        Assert.That(employee.UserName, Is.Null);
+        Assert.That(employee.FirstName, Is.Null);
+        Assert.That(employee.LastName, Is.Null);
+        Assert.That(employee.EmailAddress, Is.Null);
         Assert.That(employee.PreferredLanguage, Is.EqualTo("en-US"));
     }
 
@@ -75,7 +75,7 @@ public class EmployeeTests
         var employee2 = new Employee("", "1", "2", "");
 
         Assert.That(employee1.CompareTo(employee2), Is.EqualTo(-1));
-        Assert.That(employee1.CompareTo(employee1), Is.EqualTo(0));
+        Assert.That(employee1.CompareTo(employee1), Is.Zero);
         Assert.That(employee2.CompareTo(employee1), Is.EqualTo(1));
     }
 
@@ -87,7 +87,7 @@ public class EmployeeTests
         var employee2 = new Employee("", "2", "1", "");
 
         Assert.That(employee1.CompareTo(employee2), Is.EqualTo(-1));
-        Assert.That(employee1.CompareTo(employee1), Is.EqualTo(0));
+        Assert.That(employee1.CompareTo(employee1), Is.Zero);
         Assert.That(employee2.CompareTo(employee1), Is.EqualTo(1));
     }
 
@@ -111,7 +111,7 @@ public class EmployeeTests
     {
         var employee1 = new Employee("", "1", "1", "");
         employee1.AddRole(new Role("", true, false));
-        Assert.That(employee1.CanCreateWorkOrder(), Is.EqualTo(true));
+        Assert.That(employee1.CanCreateWorkOrder(), Is.True);
     }
 
     [Test]
@@ -119,7 +119,7 @@ public class EmployeeTests
     {
         var employee1 = new Employee("", "1", "1", "");
         employee1.AddRole(new Role("", false, true));
-        Assert.That(employee1.CanFulfillWorkOrder(), Is.EqualTo(true));
+        Assert.That(employee1.CanFulfillWorkOrder(), Is.True);
     }
 
     [Test]
@@ -129,7 +129,7 @@ public class EmployeeTests
         employee.AddRole(new Role("test role", true, false));
 
         var roles = employee.Roles;
-        Assert.That(roles.Count, Is.EqualTo(1));
+        Assert.That(roles, Has.Count.EqualTo(1));
     }
 
     [Test]

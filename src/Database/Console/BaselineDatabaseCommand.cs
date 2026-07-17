@@ -39,7 +39,7 @@ public class BaselineDatabaseCommand() : AbstractDatabaseCommand("baseline")
         return 0;
     }
 
-    private int MarkScriptsAsExecuted(string connectionString, string scriptPath, string scriptType)
+    private static int MarkScriptsAsExecuted(string connectionString, string scriptPath, string scriptType)
     {
         if (!Directory.Exists(scriptPath))
         {

@@ -30,7 +30,7 @@ public class EmployeeMappingTests
                 .Include("Roles")
                 .Single(e => e.Id == emp1.Id);
 
-            Assert.That(rehydratedEmployee.Roles.Count, Is.EqualTo(2));
+            Assert.That(rehydratedEmployee.Roles, Has.Count.EqualTo(2));
         }
     }
 }

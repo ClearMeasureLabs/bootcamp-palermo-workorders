@@ -11,7 +11,7 @@ public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 {
     protected override bool RequiresBrowser => false;
 
-    private HttpClient CreateHttpClient()
+    private static HttpClient CreateHttpClient()
     {
         var handler = new HttpClientHandler
         {

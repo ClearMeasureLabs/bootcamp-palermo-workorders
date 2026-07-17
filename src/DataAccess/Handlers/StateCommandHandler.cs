@@ -42,7 +42,7 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, IDistri
         var fullName = request.CurrentUser.GetFullName();
 
         var debugMessage = string.Format("{0} has {1} work order {2}", fullName, loweredTransitionVerb, workOrderNumber);
-        logger.LogDebug(debugMessage);
+        logger.LogDebug("{FullName} has {TransitionVerb} work order {WorkOrderNumber}", fullName, loweredTransitionVerb, workOrderNumber);
         logger.LogInformation("Executed");
 
         var result = new StateCommandResult(order, request.TransitionVerbPresentTense, debugMessage);

@@ -88,5 +88,6 @@ public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
             await _client.DisposeAsync();
             _client = null;
         }
+        GC.SuppressFinalize(this);
     }
 }

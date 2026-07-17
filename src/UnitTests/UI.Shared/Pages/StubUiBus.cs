@@ -4,7 +4,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class StubUiBus : IUiBus
 {
-    public void Notify(object eventObject)
+    public static void Notify(object eventObject)
     {
         // Mock implementation - do nothing
     }

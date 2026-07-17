@@ -3,7 +3,7 @@ using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
-public class WorkOrderSpeechTests : AcceptanceTestBase
+public partial class WorkOrderSpeechTests : AcceptanceTestBase
 {
     [Test, Retry(2)]
     public async Task ShouldRenderSpeakTitleButtonOnWorkOrderManagePage()
@@ -40,7 +40,7 @@ public class WorkOrderSpeechTests : AcceptanceTestBase
         await Input(nameof(WorkOrderManage.Elements.Title), "Test speech title");
         await Click(nameof(WorkOrderManage.Elements.SpeakTitle));
 
-        await Expect(Page).ToHaveURLAsync(new Regex("/workorder/manage/"));
+        await Expect(Page).ToHaveURLAsync(MyRegex());
     }
 
     [Test, Retry(2)]
@@ -54,7 +54,7 @@ public class WorkOrderSpeechTests : AcceptanceTestBase
         await Input(nameof(WorkOrderManage.Elements.Description), "Test speech description");
         await Click(nameof(WorkOrderManage.Elements.SpeakDescription));
 
-        await Expect(Page).ToHaveURLAsync(new Regex("/workorder/manage/"));
+        await Expect(Page).ToHaveURLAsync(MyRegex());
     }
 
     [Test, Retry(2)]
@@ -78,4 +78,7 @@ public class WorkOrderSpeechTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.SpeakTitle))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.SpeakDescription))).ToBeVisibleAsync();
     }
+
+    [GeneratedRegex("/workorder/manage/")]
+    private static partial Regex MyRegex();
 }

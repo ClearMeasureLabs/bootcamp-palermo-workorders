@@ -11,12 +11,14 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class EmployeeTools
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new() { WriteIndented = true };
+
     [McpServerTool(Name = "list-employees"), Description("Lists all employees in the system with their username, name, email, and roles.")]
     public static async Task<string> ListEmployees(IBus bus)
     {
         var employees = await bus.Send(new EmployeeGetAllQuery());
         return JsonSerializer.Serialize(employees.Select(FormatEmployee).ToArray(),
-            new JsonSerializerOptions { WriteIndented = true });
+            SerializerOptions);
     }
 
     [McpServerTool(Name = "get-employee"), Description("Retrieves a single employee by username.")]
@@ -28,7 +30,7 @@ public class EmployeeTools
         {
             var employee = await bus.Send(new EmployeeByUserNameQuery(username));
             return JsonSerializer.Serialize(FormatEmployee(employee),
-                new JsonSerializerOptions { WriteIndented = true });
+                SerializerOptions);
         }
         catch (InvalidOperationException)
         {

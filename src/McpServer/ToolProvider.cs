@@ -18,7 +18,7 @@ public class ToolProvider(
 {
     private readonly SemaphoreSlim _lock = new(1, 1);
     private McpClient? _client;
-    private IList<AITool>? _tools;
+    private List<AITool>? _tools;
 
     public async Task<IList<AITool>> GetToolsAsync()
     {
@@ -79,5 +79,6 @@ public class ToolProvider(
             _client = null;
         }
         _lock.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

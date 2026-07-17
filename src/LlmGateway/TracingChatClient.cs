@@ -100,7 +100,7 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         activity?.SetTag("chat.response", responseText.ToString());
     }
 
-    private Activity? StartActivity(string operationName)
+    private static Activity? StartActivity(string operationName)
     {
         var parentContext = Activity.Current?.Context;
 
@@ -113,7 +113,7 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         return activity;
     }
 
-    private string? GetLastUserMessage(IEnumerable<ChatMessage> messages)
+    private static string? GetLastUserMessage(IEnumerable<ChatMessage> messages)
     {
         return messages.LastOrDefault(m => m.Role == ChatRole.User)?.Text;
     }

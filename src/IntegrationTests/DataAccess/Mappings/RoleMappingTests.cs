@@ -37,7 +37,7 @@ public class RoleMappingTests
         rehydratedRole.CanFulfillWorkOrder.ShouldBeTrue();
     }
 
-    private void EmptyDatabase()
+    private static void EmptyDatabase()
     {
         new DatabaseEmptier(TestHost.GetRequiredService<DbContext>().Database).DeleteAllData();
     }
