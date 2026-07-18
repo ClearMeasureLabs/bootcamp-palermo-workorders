@@ -132,7 +132,17 @@ try {
     }
     
     Write-Success "Branch created: $branchName"
-    
+
+    # Force normal build verbosity so PrivateBuild/AcceptanceTests stream full
+    # console output to docker logs. build.ps1 hardcodes `$verbosity = "quiet"`;
+    # the container clones master, so patch the working copy at runtime. (The
+    # repo file is also updated to "normal" for when this reaches master.)
+    if (Test-Path "./build.ps1") {
+        (Get-Content "./build.ps1") -replace '\$verbosity = "quiet"', '$verbosity = "normal"' |
+            Set-Content "./build.ps1"
+        Write-Info "Build verbosity set to normal"
+    }
+
     # 6. Build the task prompt for Bob CLI
     $task = @"
 Implement GitHub issue #${issueNumber}: $issueTitle
@@ -263,13 +273,28 @@ Do this only once, after the implementation is complete.
 "@
             Set-Content -Path $promptFile -Value $claudePrompt -NoNewline
 
-            # Launch in a detached tmux session (provides the pty Remote Control
-            # needs and registers the session in the Claude app).
-            $claudeCmd = "cd /workspace && claude --remote-control `"$rcName`" --dangerously-skip-permissions `"`$(cat $promptFile)`" 2>&1 | tee $agentLog"
+            # Launch claude DIRECTLY in a detached tmux session so its stdout is
+            # the tmux pty. Remote Control needs an interactive pty; piping the
+            # output (e.g. | tee) makes stdout a pipe and RC never registers.
+            # Capture output for docker logs via `tmux pipe-pane` instead.
+            $claudeCmd = "cd /workspace && claude --remote-control `"$rcName`" --dangerously-skip-permissions `"`$(cat $promptFile)`""
             tmux kill-session -t agent 2>$null
             tmux new-session -d -s agent -x 220 -y 50 $claudeCmd
-            Write-Success "Claude Remote Control session '$rcName' started - visible in the Claude mobile app"
+            tmux pipe-pane -o -t agent "cat >> $agentLog"
+            Write-Success "Claude Remote Control session '$rcName' started"
             Write-StructuredLog -Level "INFO" -Message "Remote Control session started" -Data @{ session = $rcName }
+
+            # Give RC a few seconds to register, then surface the session link so
+            # it can be opened/verified in the Claude mobile app.
+            Start-Sleep -Seconds 8
+            $paneNow = (tmux capture-pane -t agent -p -S -80 2>$null) -join "`n"
+            $rcUrl = [regex]::Match($paneNow, 'https://claude\.ai/code/session_\w+').Value
+            if ($rcUrl) {
+                Write-Success "Remote Control ACTIVE - open in the Claude app: $rcUrl"
+                Write-StructuredLog -Level "INFO" -Message "Remote Control session link" -Data @{ url = $rcUrl }
+            } else {
+                Write-Info "Remote Control link not detected yet; session '$rcName' should appear in the Claude app."
+            }
 
             # Poll for the completion sentinel (or session death / timeout).
             $agentTimeoutMin = 25
@@ -287,14 +312,17 @@ Do this only once, after the implementation is complete.
                 Start-Sleep -Seconds 5
             }
 
-            # Surface the agent transcript into container logs, then stop the session.
+            # Surface the agent transcript into container logs. Leave the Remote
+            # Control session ALIVE so it stays visible/controllable in the app
+            # while the build/PR pipeline runs; it is torn down when the container
+            # exits. Changes are snapshotted (committed) from the current tree.
             if (Test-Path $agentLog) {
-                Write-Info "--- Claude agent output ---"
-                Get-Content $agentLog -Tail 60 | ForEach-Object { Write-Host $_ }
+                Write-Info "--- Claude agent output (tail) ---"
+                Get-Content $agentLog -Tail 40 | ForEach-Object { Write-Host $_ }
                 Write-Info "--- end agent output ---"
             }
-            tmux kill-session -t agent 2>$null
-            Remove-Item $sentinel, $promptFile -Force -ErrorAction SilentlyContinue
+            Write-Info "Remote Control session '$rcName' left running for the app; continuing pipeline."
+            Remove-Item $promptFile -Force -ErrorAction SilentlyContinue
         }
         default {
             throw "Unknown AI_AGENT '$aiAgent'. Supported values: claude, bob."
