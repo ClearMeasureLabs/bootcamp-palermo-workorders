@@ -17,27 +17,15 @@ public class LoginLinkVisualTests : AcceptanceTestBase
 
         var animationName = await loginLink.EvaluateAsync<string>(
             "el => getComputedStyle(el).animationName");
-        animationName.ShouldNotBe("none");
+        animationName.ShouldBe("none");
 
-        var minOpacity = 1.0;
-        for (var i = 0; i < 50; i++)
-        {
-            var opacity = await loginLink.EvaluateAsync<double>(
-                "el => parseFloat(getComputedStyle(el).opacity)");
-            if (opacity < minOpacity)
-            {
-                minOpacity = opacity;
-            }
+        var boxShadow = await loginLink.EvaluateAsync<string>(
+            "el => getComputedStyle(el).boxShadow");
+        boxShadow.ShouldNotBe("none");
 
-            if (minOpacity <= 0.2)
-            {
-                break;
-            }
-
-            await Task.Delay(100);
-        }
-
-        minOpacity.ShouldBeLessThanOrEqualTo(0.2);
+        var opacity = await loginLink.EvaluateAsync<double>(
+            "el => parseFloat(getComputedStyle(el).opacity)");
+        opacity.ShouldBe(1.0);
     }
 
     [Test, Retry(2)]
@@ -83,7 +71,7 @@ public class LoginLinkVisualTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task LoginLink_AnimationActive_InDarkTheme()
+    public async Task LoginLink_StaticEmphasis_InDarkTheme()
     {
         await EnsureLoggedOutAsync();
 
@@ -94,28 +82,15 @@ public class LoginLinkVisualTests : AcceptanceTestBase
 
         var animationName = await loginLink.EvaluateAsync<string>(
             "el => getComputedStyle(el).animationName");
-        animationName.ShouldNotBe("none");
-        animationName.ShouldStartWith("login-prompt-emphasis");
+        animationName.ShouldBe("none");
 
-        var minOpacity = 1.0;
-        for (var i = 0; i < 50; i++)
-        {
-            var opacity = await loginLink.EvaluateAsync<double>(
-                "el => parseFloat(getComputedStyle(el).opacity)");
-            if (opacity < minOpacity)
-            {
-                minOpacity = opacity;
-            }
+        var boxShadow = await loginLink.EvaluateAsync<string>(
+            "el => getComputedStyle(el).boxShadow");
+        boxShadow.ShouldNotBe("none");
 
-            if (minOpacity <= 0.2)
-            {
-                break;
-            }
-
-            await Task.Delay(100);
-        }
-
-        minOpacity.ShouldBeLessThanOrEqualTo(0.2);
+        var opacity = await loginLink.EvaluateAsync<double>(
+            "el => parseFloat(getComputedStyle(el).opacity)");
+        opacity.ShouldBe(1.0);
     }
 
     [Test, Retry(2)]
