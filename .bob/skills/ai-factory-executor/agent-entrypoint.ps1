@@ -40,9 +40,10 @@ try {
     Write-StructuredLog -Level "INFO" -Message "AI Factory Agent starting..."
 
     # Ensure the (possibly root-owned) persistent NuGet cache volume is writable
-    # by bobagent. Safe no-op when no volume is mounted.
-    if (Test-Path "/home/bobagent/.nuget/packages") {
-        sudo chown -R bobagent:bobagent /home/bobagent/.nuget/packages 2>$null
+    # by bobagent. Mounted at /tmp/nuget-packages to match build.ps1, which sets
+    # NUGET_PACKAGES=/tmp/nuget-packages. Safe no-op when no volume is mounted.
+    if (Test-Path "/tmp/nuget-packages") {
+        sudo chown -R bobagent:bobagent /tmp/nuget-packages 2>$null
     }
 
     # Start Docker-in-Docker if requested (no-op unless ENABLE_DIND=true).
@@ -329,8 +330,10 @@ Do this only once, after the implementation is complete.
         }
     }
 
-    # Verify the agent actually changed something
-    $changes = git status --porcelain
+    # Verify the agent actually changed something. Exclude build.ps1, which the
+    # entrypoint patched at runtime for verbose logging - that is not the agent's
+    # work and is reverted before committing.
+    $changes = git status --porcelain | Where-Object { $_ -notmatch 'build\.ps1' }
     if (-not $changes) {
         throw "AI agent ($aiAgent) produced no file changes for issue #$issueNumber"
     }
@@ -373,7 +376,11 @@ Do this only once, after the implementation is complete.
 
     # 9. Commit changes
     Write-Progress "Committing changes..."
-    
+
+    # Revert the runtime verbosity patch so build.ps1 is not part of the PR.
+    # (No-op once this change reaches master, where build.ps1 is already normal.)
+    git checkout -- build.ps1 2>$null
+
     git add -A
     git commit -m "feat: $issueTitle (#$issueNumber)" 2>&1 | Out-Null
     

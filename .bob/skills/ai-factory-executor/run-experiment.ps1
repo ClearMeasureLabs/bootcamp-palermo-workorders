@@ -66,7 +66,7 @@ $dockerArgs += @(
     "-e", "ENABLE_DIND=$($EnableDocker.ToString().ToLower())",
     "-v", "${tokenFile}:/run/secrets/gh_token:ro",
     "-v", "$($agentSecret.HostPath):$($agentSecret.ContainerPath):ro",
-    "-v", "ai-factory-nuget:/home/bobagent/.nuget/packages",
+    "-v", "ai-factory-nuget:/tmp/nuget-packages",
     $script:ImageName, "/usr/local/bin/experiment-entrypoint.ps1"
 )
 

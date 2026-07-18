@@ -33,9 +33,9 @@ try {
     Write-Info "AI agent: $aiAgent"
     Write-Info "Timeout: $timeoutMin min"
 
-    # NuGet cache volume perms (if mounted)
-    if (Test-Path "/home/bobagent/.nuget/packages") {
-        sudo chown -R bobagent:bobagent /home/bobagent/.nuget/packages 2>$null
+    # NuGet cache volume perms (mounted at /tmp/nuget-packages to match build.ps1)
+    if (Test-Path "/tmp/nuget-packages") {
+        sudo chown -R bobagent:bobagent /tmp/nuget-packages 2>$null
     }
 
     # Start Docker-in-Docker if requested (no-op unless ENABLE_DIND=true).
