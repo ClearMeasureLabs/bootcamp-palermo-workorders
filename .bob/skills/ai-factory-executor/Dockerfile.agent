@@ -161,6 +161,25 @@ USER bobagent
 ENV PATH="${PATH}:/home/bobagent/.dotnet/tools"
 ENV NUGET_PACKAGES=/home/bobagent/.nuget/packages
 ENV DOTNET_SKIP_WORKLOAD_INTEGRITY_CHECK=true
+# Disable MSBuild's animated Terminal Logger. With a TTY (docker run -t) it would
+# otherwise batch/redraw output; off => the plain console logger streams line by
+# line to `docker logs`. en-US forces stable UTF-8 console output.
+ENV MSBUILDTERMINALLOGGER=off
+ENV DOTNET_CLI_UI_LANGUAGE=en-US
+
+# Bake a default Claude Code config so every interactive session in the
+# container starts with Remote Control enabled (remoteControlAtStartup) and with
+# onboarding/trust/bypass pre-accepted for headless start. This makes all
+# interactive container sessions visible/controllable from the Claude app by
+# default, without needing to pass --remote-control explicitly.
+COPY --chown=bobagent:bobagent claude-defaults.json /home/bobagent/.claude.json
+
+# Generate the ASP.NET Core HTTPS development certificate for bobagent. Without
+# it, Kestrel cannot bind https://localhost:7174 and every acceptance test fails
+# in OneTimeSetUp with "connection refused". Generate only (no OS trust): the
+# test HttpClient uses DangerousAcceptAnyServerCertificateValidator and Playwright
+# ignores HTTPS errors, so Kestrel just needs a cert to present.
+RUN dotnet dev-certs https && dotnet dev-certs https --check
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

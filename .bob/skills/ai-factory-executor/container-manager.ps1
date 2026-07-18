@@ -209,9 +209,11 @@ function Start-AgentContainer {
         
         Write-Progress "Starting container: $containerName"
         
-        # Build docker run arguments (array so --privileged can be conditional)
+        # Build docker run arguments (array so --privileged can be conditional).
+        # -t allocates a TTY so build/test stdout is line-buffered and streams to
+        # `docker logs` live instead of appearing only when a process exits.
         $dockerArgs = @(
-            "run", "-d",
+            "run", "-d", "-t",
             "--name", $containerName,
             "--network", $script:NetworkName,
             "--cpus", $CpuLimit,

@@ -239,14 +239,62 @@ Instructions:
                 throw "No Claude credentials found (need ANTHROPIC_API_KEY or mounted OAuth credentials)."
             }
 
-            Write-Progress "Running Claude Code agent to implement the issue..."
+            Write-Progress "Running Claude Code agent (Remote Control) to implement the issue..."
             Write-StructuredLog -Level "INFO" -Message "Invoking Claude Code agent"
 
-            $agentPrompt | claude -p --dangerously-skip-permissions 2>&1 | Write-Host
+            # Run the agent as a Remote Control session so it is visible and
+            # controllable in the Claude mobile app. Remote Control sessions are
+            # interactive and do NOT exit at stdin EOF, so we cannot block on them
+            # like print mode. Instead the agent creates a sentinel file when done
+            # and we poll for it, then stop the session and continue the pipeline.
+            $rcName = "ai-factory-issue-$issueNumber"
+            $sentinel = "/tmp/agent-complete"          # in /tmp so it never touches the git tree
+            $promptFile = "/tmp/issue-prompt.txt"
+            $agentLog = "/tmp/agent-output.log"
+            Remove-Item $sentinel, $agentLog -Force -ErrorAction SilentlyContinue
 
-            if ($LASTEXITCODE -ne 0) {
-                throw "Claude Code agent failed with exit code $LASTEXITCODE"
+            $claudePrompt = $agentPrompt + @"
+
+
+IMPORTANT - completion signal: after you have finished ALL changes for this
+issue, run this exact command as your final action to signal completion:
+  touch $sentinel
+Do this only once, after the implementation is complete.
+"@
+            Set-Content -Path $promptFile -Value $claudePrompt -NoNewline
+
+            # Launch in a detached tmux session (provides the pty Remote Control
+            # needs and registers the session in the Claude app).
+            $claudeCmd = "cd /workspace && claude --remote-control `"$rcName`" --dangerously-skip-permissions `"`$(cat $promptFile)`" 2>&1 | tee $agentLog"
+            tmux kill-session -t agent 2>$null
+            tmux new-session -d -s agent -x 220 -y 50 $claudeCmd
+            Write-Success "Claude Remote Control session '$rcName' started - visible in the Claude mobile app"
+            Write-StructuredLog -Level "INFO" -Message "Remote Control session started" -Data @{ session = $rcName }
+
+            # Poll for the completion sentinel (or session death / timeout).
+            $agentTimeoutMin = 25
+            $deadline = (Get-Date).AddMinutes($agentTimeoutMin)
+            while (-not (Test-Path $sentinel)) {
+                tmux has-session -t agent 2>$null
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Info "Agent tmux session ended before signaling completion"
+                    break
+                }
+                if ((Get-Date) -gt $deadline) {
+                    tmux kill-session -t agent 2>$null
+                    throw "Claude agent did not signal completion within $agentTimeoutMin minutes"
+                }
+                Start-Sleep -Seconds 5
             }
+
+            # Surface the agent transcript into container logs, then stop the session.
+            if (Test-Path $agentLog) {
+                Write-Info "--- Claude agent output ---"
+                Get-Content $agentLog -Tail 60 | ForEach-Object { Write-Host $_ }
+                Write-Info "--- end agent output ---"
+            }
+            tmux kill-session -t agent 2>$null
+            Remove-Item $sentinel, $promptFile -Force -ErrorAction SilentlyContinue
         }
         default {
             throw "Unknown AI_AGENT '$aiAgent'. Supported values: claude, bob."
@@ -272,6 +320,8 @@ Instructions:
         Write-StructuredLog -Level "INFO" -Message "Skipping quality gates"
     } else {
         # PrivateBuild.ps1: compile + unit tests + DB migration + integration tests (SQLite mode)
+        # Output streams live to `docker logs` because the container is started
+        # with a TTY (-t), which makes stdout line-buffered end-to-end.
         Write-Progress "Quality gate 1/2: Running PrivateBuild.ps1..."
         Write-StructuredLog -Level "INFO" -Message "Running PrivateBuild"
         & pwsh -File ./PrivateBuild.ps1
