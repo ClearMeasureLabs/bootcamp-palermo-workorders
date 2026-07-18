@@ -44,11 +44,17 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     apt-get update && \
     apt-get install -y gh
 
-# Install Docker CLI (for nested container scenarios like SQL-Container mode)
+# Install the full Docker engine (daemon + CLI + containerd) so the container
+# can run Docker-in-Docker. This lets docker-dependent steps run inside the
+# agent container - e.g. build.ps1's SQL-Server container mode for integration
+# tests, where the DB container and the app share the in-container daemon's
+# localhost. Requires the container to be started with --privileged and the
+# dockerd started at entrypoint (see start-dind.ps1). fuse-overlayfs/iptables
+# support the daemon's storage and networking.
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
     apt-get update && \
-    apt-get install -y docker-ce-cli
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin fuse-overlayfs iptables
 
 # Install SQLite
 RUN apt-get install -y sqlite3 libsqlite3-dev
@@ -134,13 +140,19 @@ RUN groupadd -f docker && usermod -aG docker bobagent
 RUN echo "bobagent ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/bobagent && \
     chmod 0440 /etc/sudoers.d/bobagent
 
+# Give bobagent ownership of the pre-installed Playwright browsers directory.
+# `playwright install` writes a __dirlock there (even when browsers already
+# exist), so a read-only root-owned dir causes EACCES at runtime.
+RUN chown -R bobagent:bobagent /ms-playwright
+
 # Set working directory
 WORKDIR /workspace
 
 # Copy entrypoint scripts
 COPY agent-entrypoint.ps1 /usr/local/bin/agent-entrypoint.ps1
 COPY experiment-entrypoint.ps1 /usr/local/bin/experiment-entrypoint.ps1
-RUN chmod +x /usr/local/bin/agent-entrypoint.ps1 /usr/local/bin/experiment-entrypoint.ps1
+COPY start-dind.ps1 /usr/local/bin/start-dind.ps1
+RUN chmod +x /usr/local/bin/agent-entrypoint.ps1 /usr/local/bin/experiment-entrypoint.ps1 /usr/local/bin/start-dind.ps1
 
 # Switch to non-root user
 USER bobagent

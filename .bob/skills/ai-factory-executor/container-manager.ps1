@@ -184,6 +184,11 @@ function Start-AgentContainer {
 
         [bool]$RunQualityGates = $true,
 
+        # Enable Docker-in-Docker: runs the container --privileged and starts an
+        # in-container dockerd so docker-dependent steps (e.g. SQL-Server
+        # container mode for integration tests) can run.
+        [bool]$EnableDocker = $false,
+
         [int]$CpuLimit = 16,
 
         [string]$MemoryLimit = "24g"
@@ -204,27 +209,39 @@ function Start-AgentContainer {
         
         Write-Progress "Starting container: $containerName"
         
+        # Build docker run arguments (array so --privileged can be conditional)
+        $dockerArgs = @(
+            "run", "-d",
+            "--name", $containerName,
+            "--network", $script:NetworkName,
+            "--cpus", $CpuLimit,
+            "--memory", $MemoryLimit
+        )
+        if ($EnableDocker) {
+            # --privileged is required to run an in-container Docker daemon.
+            $dockerArgs += "--privileged"
+        }
+        $dockerArgs += @(
+            "-e", "ISSUE_NUMBER=$IssueNumber",
+            "-e", "ISSUE_TITLE=$IssueTitle",
+            "-e", "ISSUE_BODY=$IssueBody",
+            "-e", "ISSUE_URL=$IssueUrl",
+            "-e", "BRANCH_NAME=$BranchName",
+            "-e", "REPO_ORG=$RepoOrg",
+            "-e", "REPO_NAME=$RepoName",
+            "-e", "AI_AGENT=$AiAgent",
+            "-e", "MONITOR_CHECKS=$($MonitorChecks.ToString().ToLower())",
+            "-e", "RUN_QUALITY_GATES=$($RunQualityGates.ToString().ToLower())",
+            "-e", "ENABLE_DIND=$($EnableDocker.ToString().ToLower())",
+            "-v", "${tokenFile}:/run/secrets/gh_token:ro",
+            "-v", "$($agentSecret.HostPath):$($agentSecret.ContainerPath):ro",
+            "-v", "ai-factory-nuget:/home/bobagent/.nuget/packages",
+            $script:ImageName
+        )
+
         # Start container
-        $containerId = docker run -d `
-            --name $containerName `
-            --network $script:NetworkName `
-            --cpus $CpuLimit `
-            --memory $MemoryLimit `
-            -e "ISSUE_NUMBER=$IssueNumber" `
-            -e "ISSUE_TITLE=$IssueTitle" `
-            -e "ISSUE_BODY=$IssueBody" `
-            -e "ISSUE_URL=$IssueUrl" `
-            -e "BRANCH_NAME=$BranchName" `
-            -e "REPO_ORG=$RepoOrg" `
-            -e "REPO_NAME=$RepoName" `
-            -e "AI_AGENT=$AiAgent" `
-            -e "MONITOR_CHECKS=$($MonitorChecks.ToString().ToLower())" `
-            -e "RUN_QUALITY_GATES=$($RunQualityGates.ToString().ToLower())" `
-            -v "${tokenFile}:/run/secrets/gh_token:ro" `
-            -v "$($agentSecret.HostPath):$($agentSecret.ContainerPath):ro" `
-            -v "ai-factory-nuget:/home/bobagent/.nuget/packages" `
-            $script:ImageName 2>&1
-        
+        $containerId = docker @dockerArgs 2>&1
+
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to start container: $containerId"
         }

@@ -24,6 +24,8 @@ param(
 
     [bool]$RunQualityGates = $true,
 
+    [bool]$EnableDocker = $false,
+
     [int]$TimeoutMinutes = 60
 )
 
@@ -59,7 +61,8 @@ $container = Start-AgentContainer `
     -RepoName $RepoName `
     -AiAgent $AiAgent `
     -MonitorChecks $MonitorChecks `
-    -RunQualityGates $RunQualityGates
+    -RunQualityGates $RunQualityGates `
+    -EnableDocker $EnableDocker
 
 try {
     $result = Wait-ContainerCompletion -Container $container -TimeoutMinutes $TimeoutMinutes

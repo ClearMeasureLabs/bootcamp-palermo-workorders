@@ -33,6 +33,8 @@ param(
 
     [bool]$RunQualityGates = $true,
 
+    [bool]$EnableDocker = $false,
+
     [int]$TimeoutMinutes = 60
 )
 
@@ -112,7 +114,8 @@ foreach ($item in $queue) {
             -RepoName $RepoName `
             -AiAgent $AiAgent `
             -MonitorChecks $MonitorChecks `
-            -RunQualityGates $RunQualityGates
+            -RunQualityGates $RunQualityGates `
+            -EnableDocker $EnableDocker
 
         $result = Wait-ContainerCompletion -Container $container -TimeoutMinutes $TimeoutMinutes
     } catch {

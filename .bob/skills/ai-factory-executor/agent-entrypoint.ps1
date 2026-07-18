@@ -44,6 +44,9 @@ try {
     if (Test-Path "/home/bobagent/.nuget/packages") {
         sudo chown -R bobagent:bobagent /home/bobagent/.nuget/packages 2>$null
     }
+
+    # Start Docker-in-Docker if requested (no-op unless ENABLE_DIND=true).
+    & /usr/local/bin/start-dind.ps1
     
     # 1. Validate required environment variables
     $requiredVars = @(
@@ -167,9 +170,14 @@ $issueBody
     Write-Progress "Executing implementation..."
     Write-StructuredLog -Level "INFO" -Message "Starting implementation"
     
-    # Set environment for SQLite mode (no Docker-in-Docker for SQL Server)
-    $env:DATABASE_ENGINE = "SQLite"
-    $env:ConnectionStrings__SqlConnectionString = "Data Source=ChurchBulletin.db"
+    # Database engine: with Docker-in-Docker available, let build.ps1 auto-detect
+    # and use its SQL-Server container mode. Otherwise force SQLite (no daemon).
+    if ($env:ENABLE_DIND -eq "true") {
+        Write-Info "Docker-in-Docker enabled - build will auto-detect SQL Server container mode"
+    } else {
+        $env:DATABASE_ENGINE = "SQLite"
+        $env:ConnectionStrings__SqlConnectionString = "Data Source=ChurchBulletin.db"
+    }
 
     # Select which AI agent to run. Default: claude. Swap to bob by setting AI_AGENT=bob.
     $aiAgent = if ($env:AI_AGENT) { $env:AI_AGENT.ToLower() } else { "claude" }

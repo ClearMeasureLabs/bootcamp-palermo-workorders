@@ -38,6 +38,9 @@ try {
         sudo chown -R bobagent:bobagent /home/bobagent/.nuget/packages 2>$null
     }
 
+    # Start Docker-in-Docker if requested (no-op unless ENABLE_DIND=true).
+    & /usr/local/bin/start-dind.ps1
+
     # 1. GitHub auth
     Write-Step "Configuring GitHub CLI + git..."
     if (Test-Path "/run/secrets/gh_token") {

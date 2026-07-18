@@ -28,6 +28,8 @@ param(
 
     [string]$RepoName = "bootcamp-palermo-workorders",
 
+    [bool]$EnableDocker = $false,
+
     [int]$CpuLimit = 16,
 
     [string]$MemoryLimit = "24g"
@@ -45,22 +47,30 @@ $containerName = "ai-factory-experiment-$(Get-Random -Maximum 9999)"
 
 Write-Progress "Launching experiment container: $containerName"
 
-$containerId = docker run -d `
-    --name $containerName `
-    --network $script:NetworkName `
-    --cpus $CpuLimit `
-    --memory $MemoryLimit `
-    --entrypoint pwsh `
-    -e "AI_AGENT=$AiAgent" `
-    -e "INIT_PROMPT=$InitPrompt" `
-    -e "REMOTE_CONTROL_NAME=$RemoteControlName" `
-    -e "REPO_ORG=$RepoOrg" `
-    -e "REPO_NAME=$RepoName" `
-    -e "EXPERIMENT_TIMEOUT_MINUTES=$TimeoutMinutes" `
-    -v "${tokenFile}:/run/secrets/gh_token:ro" `
-    -v "$($agentSecret.HostPath):$($agentSecret.ContainerPath):ro" `
-    -v "ai-factory-nuget:/home/bobagent/.nuget/packages" `
-    $script:ImageName /usr/local/bin/experiment-entrypoint.ps1 2>&1
+$dockerArgs = @(
+    "run", "-d",
+    "--name", $containerName,
+    "--network", $script:NetworkName,
+    "--cpus", $CpuLimit,
+    "--memory", $MemoryLimit
+)
+if ($EnableDocker) { $dockerArgs += "--privileged" }
+$dockerArgs += @(
+    "--entrypoint", "pwsh",
+    "-e", "AI_AGENT=$AiAgent",
+    "-e", "INIT_PROMPT=$InitPrompt",
+    "-e", "REMOTE_CONTROL_NAME=$RemoteControlName",
+    "-e", "REPO_ORG=$RepoOrg",
+    "-e", "REPO_NAME=$RepoName",
+    "-e", "EXPERIMENT_TIMEOUT_MINUTES=$TimeoutMinutes",
+    "-e", "ENABLE_DIND=$($EnableDocker.ToString().ToLower())",
+    "-v", "${tokenFile}:/run/secrets/gh_token:ro",
+    "-v", "$($agentSecret.HostPath):$($agentSecret.ContainerPath):ro",
+    "-v", "ai-factory-nuget:/home/bobagent/.nuget/packages",
+    $script:ImageName, "/usr/local/bin/experiment-entrypoint.ps1"
+)
+
+$containerId = docker @dockerArgs 2>&1
 
 if ($LASTEXITCODE -ne 0) {
     if ($agentSecret.Temp -and (Test-Path $agentSecret.HostPath)) { Remove-Item $agentSecret.HostPath -Force }
