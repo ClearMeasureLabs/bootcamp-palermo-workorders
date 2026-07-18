@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>AiFactoryExecutor</RootNamespace>
+    <AssemblyName>ai-factory-executor</AssemblyName>
+    
+    <!-- Single-file publish settings -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+    <PublishTrimmed>false</PublishTrimmed>
+    
+    <!-- Version info -->
+    <Version>1.0.0</Version>
+    <Authors>ClearMeasure Labs</Authors>
+    <Description>AI Factory Executor - Autonomous GitHub Issue Implementation</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Exclude test-discovery.cs from this project -->
+    <Compile Remove="test-discovery.cs" />
+  </ItemGroup>
+
+</Project>
