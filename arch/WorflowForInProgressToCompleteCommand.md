@@ -12,11 +12,11 @@ participant mediator as "IMediator"
 participant cmdHandler as "StateCommandHandler"
 participant cmd as "InProgressToCompleteCommand"
 participant cmdBase as "StateCommandBase"
-participant order as "WorkRequest"
+participant order as "WorkOrder"
 participant db as "DataContext (EF Core)"
 participant dBus as "DistributedBus : IDistributedBus"
 
-user->>ui: Complete work request
+user->>ui: Complete work order
 ui->>api: POST WebServiceMessage (InProgressToCompleteCommand)
 api->>api: Deserialize WebServiceMessage.GetBodyObject()
 api->>sBus: Send(InProgressToCompleteCommand)

@@ -1,0 +1,23 @@
+﻿@implements Palermo.BlazorMvc.IListener<WorkOrderChangedEvent>
+@using ClearMeasure.Bootcamp.UI.Shared.Pages
+@inherits AppComponentBase
+
+@if (WorkOrderLastChanged != null)
+{
+    <a href="/workorder/manage/@(WorkOrderLastChanged?.Number)?mode=Edit">
+        @WorkOrderLastChanged?.Number
+    </a>
+}
+
+@code {
+
+    public WorkOrder? WorkOrderLastChanged { get; set; }
+
+    public void Handle(WorkOrderChangedEvent theEvent)
+    {
+        var order = theEvent.Result.WorkOrder;
+        WorkOrderLastChanged = order;
+        InvokeAsync(StateHasChanged);
+    }
+
+}

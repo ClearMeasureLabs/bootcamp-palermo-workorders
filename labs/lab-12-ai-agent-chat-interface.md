@@ -8,13 +8,13 @@
 
 ## Objective
 
-Explore how an AI agent can control the entire application through conversational prompts — creating work requests, assigning them, and managing the full lifecycle — using the MCP server and Application Chat interface.
+Explore how an AI agent can control the entire application through conversational prompts — creating work orders, assigning them, and managing the full lifecycle — using the MCP server and Application Chat interface.
 
 ---
 
 ## Context
 
-While Lab 11 covers AI chat scoped to a single work request, this lab explores the **Application Chat** — a general-purpose AI assistant that can execute any operation. Combined with the MCP server, an external AI agent can manage the full work request lifecycle through natural language.
+While Lab 11 covers AI chat scoped to a single work order, this lab explores the **Application Chat** — a general-purpose AI assistant that can execute any operation. Combined with the MCP server, an external AI agent can manage the full work order lifecycle through natural language.
 
 ---
 
@@ -29,21 +29,21 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
     : IRequestHandler<ApplicationChatQuery, ChatResponse>
 ```
 
-Key differences from `WorkRequestChatHandler`:
+Key differences from `WorkOrderChatHandler`:
 - Uses `IToolProvider.GetTools()` — **all** MCP tools, not just two
 - Maintains chat history across the conversation
 - Knows the currently logged-in user
-- System prompt is general-purpose: "helpful AI assistant for a work request management application"
+- System prompt is general-purpose: "helpful AI assistant for a work order management application"
 
 ### Step 2: Study the Tool Provider
 
 Open `src/McpServer/ToolProvider.cs`. This wraps all MCP tools as `AITool` instances:
 
-- `ListWorkRequests(status?)` — filter by status
-- `GetWorkRequest(workRequestNumber)` — full details
-- `CreateWorkRequest(title, description, creatorUsername, roomNumber?)` — create draft
-- `ExecuteWorkRequestCommand(workRequestNumber, commandName, executingUsername, assigneeUsername?)` — state transitions
-- `UpdateWorkRequestDescription(workRequestNumber, newDescription, updatingUsername)` — edit
+- `ListWorkOrders(status?)` — filter by status
+- `GetWorkOrder(workOrderNumber)` — full details
+- `CreateWorkOrder(title, description, creatorUsername, roomNumber?)` — create draft
+- `ExecuteWorkOrderCommand(workOrderNumber, commandName, executingUsername, assigneeUsername?)` — state transitions
+- `UpdateWorkOrderDescription(workOrderNumber, newDescription, updatingUsername)` — edit
 - `ListEmployees()` — all staff
 - `GetEmployee(username)` — single employee
 
@@ -61,26 +61,26 @@ Open `src/AcceptanceTests/McpServer/McpChatConversationTests.cs`. This test prov
 ```csharp
 var response = await _helper!.SendPrompt(
     "I am Timothy Lovejoy (my username is tlovejoy). " +
-    "Create a new work request assigned to Groundskeeper Willie (username gwillie) " +
+    "Create a new work order assigned to Groundskeeper Willie (username gwillie) " +
     "to cut the grass...");
 ```
 
-The test then verifies the work request was actually created and assigned in the database. The AI agent:
+The test then verifies the work order was actually created and assigned in the database. The AI agent:
 1. Parsed the natural language request
-2. Called `create-work-request` with extracted parameters
-3. Took the returned work request number
-4. Called `execute-work-request-command` with `DraftToAssignedCommand`
+2. Called `create-work-order` with extracted parameters
+3. Took the returned work order number
+4. Called `execute-work-order-command` with `DraftToAssignedCommand`
 5. Reported the results
 
 ### Step 5: Study the MCP Lifecycle Test
 
-Open `src/AcceptanceTests/McpServer/McpWorkRequestLifecycleTests.cs`. This test exercises the full lifecycle via direct MCP tool calls (without LLM):
+Open `src/AcceptanceTests/McpServer/McpWorkOrderLifecycleTests.cs`. This test exercises the full lifecycle via direct MCP tool calls (without LLM):
 
 ```csharp
-var createResult = await _helper!.CallToolDirectly("create-work-request", ...);
-var assignResult = await _helper!.CallToolDirectly("execute-work-request-command", ...);
-var beginResult = await _helper!.CallToolDirectly("execute-work-request-command", ...);
-var completeResult = await _helper!.CallToolDirectly("execute-work-request-command", ...);
+var createResult = await _helper!.CallToolDirectly("create-work-order", ...);
+var assignResult = await _helper!.CallToolDirectly("execute-work-order-command", ...);
+var beginResult = await _helper!.CallToolDirectly("execute-work-order-command", ...);
+var completeResult = await _helper!.CallToolDirectly("execute-work-order-command", ...);
 ```
 
 Compare this to the Playwright acceptance test from Lab 08 — same workflow, different entry point.
@@ -99,8 +99,8 @@ The same Draft → Assigned → InProgress → Complete workflow can be driven t
 
 | Entry Point | Test File | Uses Browser? | Uses LLM? |
 |-------------|-----------|---------------|-----------|
-| Blazor UI | `WorkRequestFullLifecycleTests.cs` | Yes | No |
-| MCP Direct | `McpWorkRequestLifecycleTests.cs` | No | No |
+| Blazor UI | `WorkOrderFullLifecycleTests.cs` | Yes | No |
+| MCP Direct | `McpWorkOrderLifecycleTests.cs` | No | No |
 | MCP + LLM | `McpChatConversationTests.cs` | No | Yes |
 
 All three exercise the **same** `IBus.Send()` → MediatR → Handler → Database pipeline.

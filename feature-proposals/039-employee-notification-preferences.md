@@ -1,8 +1,8 @@
 ## Why
-Different employees have different communication preferences for receiving updates about work requests. Storing notification preferences per employee enables future notification features to deliver alerts through the right channels, reducing noise and ensuring important updates are not missed.
+Different employees have different communication preferences for receiving updates about work orders. Storing notification preferences per employee enables future notification features to deliver alerts through the right channels, reducing noise and ensuring important updates are not missed.
 
 ## What Changes
-- Create a `NotificationPreference` entity in `src/Core/Model/` with properties: Id, EmployeeId, EventType (string enum: WorkRequestAssigned, WorkRequestCompleted, WorkRequestCancelled, StatusChanged), Channel (string enum: Email, InApp, None), IsEnabled (boolean)
+- Create a `NotificationPreference` entity in `src/Core/Model/` with properties: Id, EmployeeId, EventType (string enum: WorkOrderAssigned, WorkOrderCompleted, WorkOrderCancelled, StatusChanged), Channel (string enum: Email, InApp, None), IsEnabled (boolean)
 - Create database migration scripts in `src/Database/scripts/Update/` to add the NotificationPreference table
 - Add EF Core entity configuration in `src/DataAccess/` for the NotificationPreference entity
 - Add a `NotificationPreferencesByEmployeeQuery` in `src/Core/Queries/`
@@ -16,7 +16,7 @@ Different employees have different communication preferences for receiving updat
 - NotificationPreference entity storing per-employee, per-event-type, per-channel settings
 - Notification preferences UI section on employee profile page
 - Toggle switches for each combination of event type and notification channel
-- Support for event types: WorkRequestAssigned, WorkRequestCompleted, WorkRequestCancelled, StatusChanged
+- Support for event types: WorkOrderAssigned, WorkOrderCompleted, WorkOrderCancelled, StatusChanged
 - Support for channels: Email, InApp, None
 
 ### Modified Capabilities

@@ -3,12 +3,12 @@
 
 scale 2/3
 center header
-    C4 Architecture: Work Request System — Domain Model
+    C4 Architecture: Work Order System — Domain Model
 endheader
 
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
 
-title Work Request System domain model — core domain
+title Work Order System domain model — core domain
 
 abstract class EntityBase<T> {
   +Id : Guid
@@ -18,11 +18,11 @@ abstract class EntityBase<T> {
   +GetHashCode() : int
 }
 
-class WorkRequest {
+class WorkOrder {
   +Title : string
   +Description : string
   +RoomNumber : string
-  +Status : WorkRequestStatus
+  +Status : WorkOrderStatus
   +Creator : Employee
   +Assignee : Employee
   +Number : string
@@ -30,8 +30,8 @@ class WorkRequest {
   +AssignedDate : DateTime?
   +CreatedDate : DateTime?
   +CompletedDate : DateTime?
-  +ChangeStatus(status : WorkRequestStatus) : void
-  +ChangeStatus(employee : Employee, date : DateTime, status : WorkRequestStatus) : void
+  +ChangeStatus(status : WorkOrderStatus) : void
+  +ChangeStatus(employee : Employee, date : DateTime, status : WorkOrderStatus) : void
   +GetMessage() : string
   +CanReassign() : bool
 }
@@ -44,49 +44,49 @@ class Employee {
   +Roles : ISet<Role>
   +CompareTo(other : Employee) : int
   +GetFullName() : string
-  +CanCreateWorkRequest() : bool
-  +CanFulfillWorkRequest() : bool
+  +CanCreateWorkOrder() : bool
+  +CanFulfillWorkOrder() : bool
   +AddRole(role : Role) : void
   +GetNotificationEmail(day : DayOfWeek) : string
 }
 
-class WorkRequestStatus {
+class WorkOrderStatus {
   +Code : string
   +Key : string
   +FriendlyName : string
   +SortBy : byte
-  {static} +None : WorkRequestStatus
-  {static} +Draft : WorkRequestStatus
-  {static} +Assigned : WorkRequestStatus
-  {static} +InProgress : WorkRequestStatus
-  {static} +Complete : WorkRequestStatus
-  {static} +GetAllItems() : WorkRequestStatus[]
+  {static} +None : WorkOrderStatus
+  {static} +Draft : WorkOrderStatus
+  {static} +Assigned : WorkOrderStatus
+  {static} +InProgress : WorkOrderStatus
+  {static} +Complete : WorkOrderStatus
+  {static} +GetAllItems() : WorkOrderStatus[]
   +Equals(obj : object) : bool
   +ToString() : string
   +GetHashCode() : int
   +IsEmpty() : bool
-  {static} +FromCode(code : string) : WorkRequestStatus
-  {static} +FromKey(key : string) : WorkRequestStatus
-  {static} +Parse(name : string) : WorkRequestStatus
+  {static} +FromCode(code : string) : WorkOrderStatus
+  {static} +FromKey(key : string) : WorkOrderStatus
+  {static} +Parse(name : string) : WorkOrderStatus
 }
 
 class Role {
   +Name : string
-  +CanCreateWorkRequest : bool
-  +CanFulfillWorkRequest : bool
+  +CanCreateWorkOrder : bool
+  +CanFulfillWorkOrder : bool
 }
 
 ' Inheritance relationships
-WorkRequest --|> EntityBase
+WorkOrder --|> EntityBase
 Employee --|> EntityBase
 Role --|> EntityBase
 
 ' Associations
-WorkRequest "1" *-- "1" WorkRequestStatus : status
-WorkRequest "1" --> "0..1" Employee : creator
-WorkRequest "1" --> "0..1" Employee : assignee
+WorkOrder "1" *-- "1" WorkOrderStatus : status
+WorkOrder "1" --> "0..1" Employee : creator
+WorkOrder "1" --> "0..1" Employee : assignee
 Employee "1" *-- "0..*" Role : roles
 
-LEGEND("Legend","WorkRequest: aggregate root\nEmployee: actor\nRole: permissions\nWorkRequestStatus: enumeration class")
+LEGEND("Legend","WorkOrder: aggregate root\nEmployee: actor\nRole: permissions\nWorkOrderStatus: enumeration class")
 FOOTER()
 @enduml

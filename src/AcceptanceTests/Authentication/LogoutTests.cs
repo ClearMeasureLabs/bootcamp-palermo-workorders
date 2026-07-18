@@ -14,7 +14,7 @@ public class LogoutTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task ShouldLogout()
     {
-        var newLink = Page.GetByTestId(nameof(NavMenu.Elements.NewWorkRequest));
+        var newLink = Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder));
         await newLink.WaitForAsync();
         await Expect(newLink).ToBeVisibleAsync();
 
@@ -24,7 +24,7 @@ public class LogoutTests : AcceptanceTestBase
         var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
         await Expect(loginLink).ToBeVisibleAsync();
         
-        var newWorkRequestLink = Page.GetByTestId(nameof(NavMenu.Elements.NewWorkRequest));
-        await Expect(newWorkRequestLink).ToBeHiddenAsync();
+        var newWorkOrderLink = Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder));
+        await Expect(newWorkOrderLink).ToBeHiddenAsync();
     }
 }

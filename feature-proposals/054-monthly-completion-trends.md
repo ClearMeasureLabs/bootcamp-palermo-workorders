@@ -1,16 +1,16 @@
 ## Why
-Monthly completion trends reveal long-term patterns in work request throughput, helping leadership assess whether process improvements are taking effect and forecast future capacity needs. A 12-month view provides enough history to identify seasonal patterns.
+Monthly completion trends reveal long-term patterns in work order throughput, helping leadership assess whether process improvements are taking effect and forecast future capacity needs. A 12-month view provides enough history to identify seasonal patterns.
 
 ## What Changes
 - Add `MonthlyTrendQuery` to `src/Core/Queries/` returning a list of `(int Year, int Month, int CompletedCount)` for the last 12 months
-- Add `MonthlyTrendHandler` in `src/DataAccess/Handlers/` grouping completed work requests by year and month of `CompletedDate`
+- Add `MonthlyTrendHandler` in `src/DataAccess/Handlers/` grouping completed work orders by year and month of `CompletedDate`
 - Add `MonthlyCompletionTrend.razor` component in `src/UI/Client/` rendering a line chart with month labels on the x-axis and completed counts on the y-axis
 - Add API endpoint in `src/UI/Api/`
 - Display the chart on the dashboard page
 
 ## Capabilities
 ### New Capabilities
-- Line chart showing completed work request counts per month for the last 12 months
+- Line chart showing completed work order counts per month for the last 12 months
 - X-axis labeled with month/year, y-axis with count
 - Data point tooltips showing exact month and count
 - Optional trend line overlay showing direction

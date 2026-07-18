@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
-///     Background service that periodically evaluates work requests and reformats
+///     Background service that periodically evaluates work orders and reformats
 ///     their title and description fields using an AI agent.
 ///     Title is corrected to start with a capital letter.
 ///     Description is corrected for grammar and punctuation.
@@ -45,7 +45,7 @@ public class AutoReformatAgentService : BackgroundService
         {
             try
             {
-                await ReformatWorkRequestsAsync();
+                await ReformatWorkOrdersAsync();
                 await Task.Delay(TimeSpan.FromSeconds(5), _timeProvider, stoppingToken);
             }
             catch (OperationCanceledException)
@@ -62,65 +62,65 @@ public class AutoReformatAgentService : BackgroundService
         _logger.LogInformation("AutoReformatAgentService stopped");
     }
 
-    private async Task ReformatWorkRequestsAsync()
+    private async Task ReformatWorkOrdersAsync()
     {
         var bus = _serviceScope.ServiceProvider.GetRequiredService<IBus>();
-        var agent = _serviceScope.ServiceProvider.GetRequiredService<WorkRequestReformatAgent>();
+        var agent = _serviceScope.ServiceProvider.GetRequiredService<WorkOrderReformatAgent>();
 
         try
         {
-            var specification = new WorkRequestSpecificationQuery();
-            specification.MatchStatus(WorkRequestStatus.Draft);
+            var specification = new WorkOrderSpecificationQuery();
+            specification.MatchStatus(WorkOrderStatus.Draft);
 
-            var draftWorkRequests = await bus.Send(specification);
+            var draftWorkOrders = await bus.Send(specification);
 
-            _logger.LogDebug("Found {Count} draft work requests to evaluate for reformatting", draftWorkRequests.Length);
+            _logger.LogDebug("Found {Count} draft work orders to evaluate for reformatting", draftWorkOrders.Length);
 
-            foreach (var workRequest in draftWorkRequests)
+            foreach (var workOrder in draftWorkOrders)
             {
                 try
                 {
-                    var result = await agent.ReformatWorkRequestAsync(workRequest);
+                    var result = await agent.ReformatWorkOrderAsync(workOrder);
 
                     if (result != null)
                     {
-                        await ApplyReformatAsync(workRequest, result);
+                        await ApplyReformatAsync(workOrder, result);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error reformatting WorkRequest {WorkRequestNumber}",
-                        workRequest.Number);
+                    _logger.LogError(ex, "Error reformatting WorkOrder {WorkOrderNumber}",
+                        workOrder.Number);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving draft work requests for reformatting");
+            _logger.LogError(ex, "Error retrieving draft work orders for reformatting");
         }
     }
 
-    private async Task ApplyReformatAsync(WorkRequest workRequest, ReformatResult result)
+    private async Task ApplyReformatAsync(WorkOrder workOrder, ReformatResult result)
     {
         using var scope = _serviceScope.ServiceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<DbContext>();
 
         try
         {
-            workRequest.Title = result.Title;
-            workRequest.Description = result.Description;
+            workOrder.Title = result.Title;
+            workOrder.Description = result.Description;
 
-            dbContext.Attach(workRequest);
-            dbContext.Update(workRequest);
+            dbContext.Attach(workOrder);
+            dbContext.Update(workOrder);
             await dbContext.SaveChangesAsync();
 
-            _logger.LogInformation("Successfully reformatted WorkRequest {WorkRequestNumber}",
-                workRequest.Number);
+            _logger.LogInformation("Successfully reformatted WorkOrder {WorkOrderNumber}",
+                workOrder.Number);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving reformatted WorkRequest {WorkRequestNumber}",
-                workRequest.Number);
+            _logger.LogError(ex, "Error saving reformatted WorkOrder {WorkOrderNumber}",
+                workOrder.Number);
         }
     }
 }

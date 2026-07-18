@@ -38,12 +38,12 @@
             </div>
         }
 
-        @if (CurrentUser != null && CurrentUser.CanCreateWorkRequest())
+        @if (CurrentUser != null && CurrentUser.CanCreateWorkOrder())
         {
             <div class="nav-item px-3">
-                <NavLink data-testid="@Elements.NewWorkRequest" class="nav-link" href="workrequest/manage?mode=New">
+                <NavLink data-testid="@Elements.NewWorkOrder" class="nav-link" href="workorder/manage?mode=New">
                     <i class="bi bi-file-earmark-plus-fill nav-icon" aria-hidden="true"></i>
-                    <span class="nav-text">New Work Request</span>
+                    <span class="nav-text">New Work Order</span>
                 </NavLink>
             </div>
         }
@@ -51,7 +51,7 @@
         @if (CurrentUser != null)
         {
             <div class="nav-item px-3">
-                <NavLink data-testid="@Elements.Search" class="nav-link" href="workrequest/search">
+                <NavLink data-testid="@Elements.Search" class="nav-link" href="workorder/search">
                     <i class="bi bi-search nav-icon" aria-hidden="true"></i>
                     <span class="nav-text">Search</span>
                 </NavLink>
@@ -63,31 +63,31 @@
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink data-testid="@Elements.MyWorkRequests" class="nav-link" href="@($"workrequest/search?Creator={CurrentUser?.UserName}")">
+                <NavLink data-testid="@Elements.MyWorkOrders" class="nav-link" href="@($"workorder/search?Creator={CurrentUser?.UserName}")">
                     <i class="bi bi-person-badge-fill nav-icon" aria-hidden="true"></i>
-                    <span class="nav-text"><MyWorkRequests/></span>
+                    <span class="nav-text"><MyWorkOrders/></span>
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink data-testid="@Elements.WorkRequestsAssignedToMe" class="nav-link" href="@($"workrequest/search?Assignee={CurrentUser?.UserName}")">
+                <NavLink data-testid="@Elements.WorkOrdersAssignedToMe" class="nav-link" href="@($"workorder/search?Assignee={CurrentUser?.UserName}")">
                     <i class="bi bi-person-check-fill nav-icon" aria-hidden="true"></i>
                     <span class="nav-text">Assigned To Me</span>
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink data-testid="@Elements.AllAssignedWorkRequests" class="nav-link" href="@($"workrequest/search?Status={WorkRequestStatus.Assigned.Key}")">
+                <NavLink data-testid="@Elements.AllAssignedWorkOrders" class="nav-link" href="@($"workorder/search?Status={WorkOrderStatus.Assigned.Key}")">
                     <i class="bi bi-clipboard2-check-fill nav-icon" aria-hidden="true"></i>
                     <span class="nav-text">All Assigned</span>
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink data-testid="@Elements.AllWorkRequestsInProgress" class="nav-link" href="@($"workrequest/search?Status={WorkRequestStatus.InProgress.Key}")">
+                <NavLink data-testid="@Elements.AllWorkOrdersInProgress" class="nav-link" href="@($"workorder/search?Status={WorkOrderStatus.InProgress.Key}")">
                     <i class="bi bi-gear-fill nav-icon" aria-hidden="true"></i>
                     <span class="nav-text">In Progress</span>
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <span class="nav-text"><LastWorkRequest/></span>
+                <span class="nav-text"><LastWorkOrder/></span>
             </div>
         }
     </nav>
@@ -98,13 +98,13 @@
     {
         Counter,
         AiAgent,
-        MyWorkRequests,
-        WorkRequestsAssignedToMe,
-        AllAssignedWorkRequests,
-        AllWorkRequestsInProgress,
+        MyWorkOrders,
+        WorkOrdersAssignedToMe,
+        AllAssignedWorkOrders,
+        AllWorkOrdersInProgress,
         Search,
         Settings,
-        NewWorkRequest,
-        LastWorkRequest
+        NewWorkOrder,
+        LastWorkOrder
     }
 }

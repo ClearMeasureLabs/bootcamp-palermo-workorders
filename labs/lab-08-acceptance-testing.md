@@ -8,7 +8,7 @@
 
 ## Objective
 
-Write an end-to-end acceptance test that exercises the full work request lifecycle through the browser UI using Playwright.
+Write an end-to-end acceptance test that exercises the full work order lifecycle through the browser UI using Playwright.
 
 ---
 
@@ -16,46 +16,46 @@ Write an end-to-end acceptance test that exercises the full work request lifecyc
 
 ### Step 1: Study the Test Base
 
-Open `src/AcceptanceTests/AcceptanceTestBase.cs`. Understand helpers: `LoginAsCurrentUser()`, `Click()`, `Input()`, `Select()`, `Expect()`, `CreateAndSaveNewWorkRequest()`, `AssignExistingWorkRequest()`, `BeginExistingWorkRequest()`, `CompleteExistingWorkRequest()`.
+Open `src/AcceptanceTests/AcceptanceTestBase.cs`. Understand helpers: `LoginAsCurrentUser()`, `Click()`, `Input()`, `Select()`, `Expect()`, `CreateAndSaveNewWorkOrder()`, `AssignExistingWorkOrder()`, `BeginExistingWorkOrder()`, `CompleteExistingWorkOrder()`.
 
 ### Step 2: Study Existing Tests
 
-Open `src/AcceptanceTests/WorkRequests/WorkRequestSaveDraftTests.cs` and `WorkRequestAssignTests.cs`.
+Open `src/AcceptanceTests/WorkOrders/WorkOrderSaveDraftTests.cs` and `WorkOrderAssignTests.cs`.
 
 ### Step 3: Write a Full Lifecycle Test
 
-Create `src/AcceptanceTests/WorkRequests/WorkRequestFullLifecycleTests.cs`:
+Create `src/AcceptanceTests/WorkOrders/WorkOrderFullLifecycleTests.cs`:
 
 ```csharp
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using Shouldly;
 
-namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkRequests;
+namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
-public class WorkRequestFullLifecycleTests : AcceptanceTestBase
+public class WorkOrderFullLifecycleTests : AcceptanceTestBase
 {
     [Test, Retry(2)]
-    public async Task ShouldCompleteFullWorkRequestLifecycle()
+    public async Task ShouldCompleteFullWorkOrderLifecycle()
     {
         await LoginAsCurrentUser();
 
-        WorkRequest order = await CreateAndSaveNewWorkRequest();
-        await ClickWorkRequestNumberFromSearchPage(order);
-        order = await AssignExistingWorkRequest(order, CurrentUser.UserName);
-        order.Status.ShouldBe(WorkRequestStatus.Assigned);
+        WorkOrder order = await CreateAndSaveNewWorkOrder();
+        await ClickWorkOrderNumberFromSearchPage(order);
+        order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
+        order.Status.ShouldBe(WorkOrderStatus.Assigned);
 
-        await Page.WaitForURLAsync("**/workrequest/search");
-        await ClickWorkRequestNumberFromSearchPage(order);
-        order = await BeginExistingWorkRequest(order);
-        order.Status.ShouldBe(WorkRequestStatus.InProgress);
+        await Page.WaitForURLAsync("**/workorder/search");
+        await ClickWorkOrderNumberFromSearchPage(order);
+        order = await BeginExistingWorkOrder(order);
+        order.Status.ShouldBe(WorkOrderStatus.InProgress);
 
-        await Page.WaitForURLAsync("**/workrequest/search");
-        await ClickWorkRequestNumberFromSearchPage(order);
-        order = await CompleteExistingWorkRequest(order);
-        order.Status.ShouldBe(WorkRequestStatus.Complete);
+        await Page.WaitForURLAsync("**/workorder/search");
+        await ClickWorkOrderNumberFromSearchPage(order);
+        order = await CompleteExistingWorkOrder(order);
+        order.Status.ShouldBe(WorkOrderStatus.Complete);
 
-        var finalOrder = await Bus.Send(new WorkRequestByNumberQuery(order.Number!));
+        var finalOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
         finalOrder.ShouldNotBeNull();
         finalOrder!.CompletedDate.ShouldNotBeNull();
     }
@@ -67,7 +67,7 @@ public class WorkRequestFullLifecycleTests : AcceptanceTestBase
 ```powershell
 dotnet build src/AcceptanceTests --configuration Debug
 pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
-dotnet test src/AcceptanceTests --configuration Debug --filter "FullyQualifiedName~WorkRequestFullLifecycleTests"
+dotnet test src/AcceptanceTests --configuration Debug --filter "FullyQualifiedName~WorkOrderFullLifecycleTests"
 ```
 
 ---

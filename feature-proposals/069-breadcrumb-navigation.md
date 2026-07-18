@@ -7,8 +7,8 @@ Breadcrumb navigation helps users understand their current location within the a
 - Add `BreadcrumbService` in `src/UI/Client/` that builds the breadcrumb trail based on the current route and page metadata
 - Modify `MainLayout.razor` in `src/UI/Client/` to include the `Breadcrumb` component below the header and above the page content
 - Add `[Breadcrumb]` attribute or parameter to each page component specifying its display name and parent route
-- Update `WorkRequestSearch.razor` breadcrumb: Home > Work Requests > Search
-- Update `WorkRequestManage.razor` breadcrumb: Home > Work Requests > {WorkRequestNumber} (or "New Work Request")
+- Update `WorkOrderSearch.razor` breadcrumb: Home > Work Orders > Search
+- Update `WorkOrderManage.razor` breadcrumb: Home > Work Orders > {WorkOrderNumber} (or "New Work Order")
 - Add CSS styles for breadcrumb separator characters and active/inactive link states
 - Add ARIA `nav` landmark with `aria-label="breadcrumb"` for accessibility
 
@@ -16,7 +16,7 @@ Breadcrumb navigation helps users understand their current location within the a
 ### New Capabilities
 - Breadcrumb trail displayed on all pages below the header
 - Clickable breadcrumb links for quick navigation to parent pages
-- Dynamic breadcrumb for work request detail pages showing the work request number
+- Dynamic breadcrumb for work order detail pages showing the work order number
 - Accessible breadcrumb with proper ARIA attributes
 - Automatic breadcrumb generation based on page route hierarchy
 
@@ -34,14 +34,14 @@ Breadcrumb navigation helps users understand their current location within the a
 ### Unit Tests
 - `Breadcrumb_RendersAllItems_InOrder` - bUnit test confirming breadcrumb items render in correct hierarchical order
 - `Breadcrumb_LastItem_IsNotClickable` - bUnit test confirming the current page breadcrumb item is not a link
-- `BreadcrumbService_ForSearchPage_ReturnsCorrectTrail` - service returns Home > Work Requests > Search
-- `BreadcrumbService_ForManagePage_IncludesWorkRequestNumber` - service returns trail with dynamic work request number
+- `BreadcrumbService_ForSearchPage_ReturnsCorrectTrail` - service returns Home > Work Orders > Search
+- `BreadcrumbService_ForManagePage_IncludesWorkOrderNumber` - service returns trail with dynamic work order number
 
 ### Integration Tests
 - None (client-side rendering feature with no server/database interaction)
 
 ### Acceptance Tests
-- Navigate to WorkRequestSearch page and verify breadcrumb displays "Home > Work Requests > Search" with `data-testid="breadcrumb"`
+- Navigate to WorkOrderSearch page and verify breadcrumb displays "Home > Work Orders > Search" with `data-testid="breadcrumb"`
 - Click the "Home" breadcrumb link and verify navigation to the home page
-- Navigate to a specific work request and verify breadcrumb shows "Home > Work Requests > {number}" with the correct work request number
+- Navigate to a specific work order and verify breadcrumb shows "Home > Work Orders > {number}" with the correct work order number
 - Verify the last breadcrumb item (current page) is displayed as text, not a clickable link

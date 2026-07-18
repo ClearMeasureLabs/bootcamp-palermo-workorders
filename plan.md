@@ -21,7 +21,7 @@ Host the MCP HTTP transport inside the existing UI.Server process at route `/mcp
           options.ServerInfo = new() { Name = "ChurchBulletin", Version = "1.0.0" };
       })
       .WithHttpTransport()
-      .WithTools<WorkRequestTools>()
+      .WithTools<WorkOrderTools>()
       .WithTools<EmployeeTools>()
       .WithResources<ReferenceResources>();
   ```

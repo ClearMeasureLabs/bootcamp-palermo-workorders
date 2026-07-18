@@ -1,7 +1,7 @@
-# Cursor Rules for ChurchBulletin Work Request Management System
+# Cursor Rules for ChurchBulletin Work Order Management System
 
 ## Project Overview
-Work Request management system built with .NET 9.0, implementing Onion Architecture with Blazor WebAssembly UI, Entity Framework Core for data access, and deployed to Azure Container Apps.
+Work Order management system built with .NET 9.0, implementing Onion Architecture with Blazor WebAssembly UI, Entity Framework Core for data access, and deployed to Azure Container Apps.
 
 ## Core Architecture Principles
 
@@ -10,7 +10,7 @@ The solution follows strict Onion Architecture with dependency flow inward. **NE
 
 - **Core** (`src/Core/`): Inner layer - NO DEPENDENCIES on any other project
   - Contains: Domain models, domain service interfaces, query objects (MediatR)
-  - Key types: `WorkRequest`, `Employee`, `WorkRequestStatus`, `Role`
+  - Key types: `WorkOrder`, `Employee`, `WorkOrderStatus`, `Role`
   - Uses MediatR for CQRS queries
   - **Rule**: Core must NEVER reference any other project
 

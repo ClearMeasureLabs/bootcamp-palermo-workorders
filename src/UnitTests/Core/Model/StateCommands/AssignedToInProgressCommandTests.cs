@@ -10,8 +10,8 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidInWrongStatus()
     {
-        var order = new WorkRequest();
-        order.Status = WorkRequestStatus.Draft;
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
         order.Assignee = employee;
 
@@ -22,8 +22,8 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidWithWrongEmployee()
     {
-        var order = new WorkRequest();
-        order.Status = WorkRequestStatus.Assigned;
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
         order.Assignee = employee;
 
@@ -34,8 +34,8 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldBeValid()
     {
-        var order = new WorkRequest();
-        order.Status = WorkRequestStatus.Assigned;
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
         order.Assignee = employee;
 
@@ -46,19 +46,19 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldTransitionStateProperly()
     {
-        var order = new WorkRequest();
+        var order = new WorkOrder();
         order.Number = "123";
-        order.Status = WorkRequestStatus.Assigned;
+        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
         order.Assignee = employee;
 
         var command = new AssignedToInProgressCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkRequestStatus.InProgress));
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.InProgress));
     }
 
-    protected override StateCommandBase GetStateCommand(WorkRequest order, Employee employee)
+    protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
         return new AssignedToInProgressCommand(order, employee);
     }

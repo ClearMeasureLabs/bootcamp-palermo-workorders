@@ -1,10 +1,10 @@
 ## Why
-Destructive actions like cancelling a work request or applying bulk status updates cannot be undone. A confirmation dialog prevents accidental clicks from causing unintended state changes, protecting data integrity and reducing user errors.
+Destructive actions like cancelling a work order or applying bulk status updates cannot be undone. A confirmation dialog prevents accidental clicks from causing unintended state changes, protecting data integrity and reducing user errors.
 
 ## What Changes
 - Add `ConfirmDialog.razor` component in `src/UI.Shared/Components/` rendering a modal dialog with title, message, confirm button, and cancel button
 - Add `ConfirmDialogService` in `src/UI/Client/` that provides an async `Confirm(title, message, confirmButtonText)` method returning a `Task<bool>`
-- Modify `WorkRequestManage.razor` in `src/UI/Client/Pages/` to show confirmation dialog before executing the Cancel work request action
+- Modify `WorkOrderManage.razor` in `src/UI/Client/Pages/` to show confirmation dialog before executing the Cancel work order action
 - Add confirmation dialog support for any future bulk status update operations
 - Add CSS styles for the modal overlay (semi-transparent backdrop), dialog box (centered, white background), and button styles (red for destructive confirm, gray for cancel)
 - Add keyboard support: Enter to confirm, Escape to cancel
@@ -21,11 +21,11 @@ Destructive actions like cancelling a work request or applying bulk status updat
 - Customizable title, message, and confirm button text
 
 ### Modified Capabilities
-- Cancel work request action on WorkRequestManage page requires explicit confirmation
+- Cancel work order action on WorkOrderManage page requires explicit confirmation
 
 ## Impact
 - **UI.Shared**: New `ConfirmDialog.razor` component
-- **UI.Client**: New `ConfirmDialogService`, modified `WorkRequestManage.razor`
+- **UI.Client**: New `ConfirmDialogService`, modified `WorkOrderManage.razor`
 - **Database**: No schema changes required
 - **Dependencies**: No new NuGet packages required
 
@@ -41,7 +41,7 @@ Destructive actions like cancelling a work request or applying bulk status updat
 - None (client-side UI component with no server/database interaction)
 
 ### Acceptance Tests
-- Navigate to WorkRequestManage for an InProgress work request, click Cancel, and verify the confirmation dialog appears with `data-testid="confirm-dialog"`
-- Click the cancel button in the confirmation dialog with `data-testid="confirm-dialog-cancel"` and verify the work request status remains unchanged
-- Click Cancel again, then click the confirm button with `data-testid="confirm-dialog-confirm"` and verify the work request status changes to Cancelled
+- Navigate to WorkOrderManage for an InProgress work order, click Cancel, and verify the confirmation dialog appears with `data-testid="confirm-dialog"`
+- Click the cancel button in the confirmation dialog with `data-testid="confirm-dialog-cancel"` and verify the work order status remains unchanged
+- Click Cancel again, then click the confirm button with `data-testid="confirm-dialog-confirm"` and verify the work order status changes to Cancelled
 - Verify the dialog has a semi-transparent backdrop with `data-testid="confirm-dialog-overlay"` that prevents clicking background elements

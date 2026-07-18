@@ -8,7 +8,7 @@ Many users prefer dark mode for reduced eye strain, especially during extended u
 - Modify `MainLayout.razor` in `src/UI/Client/` to include the `ThemeToggle` component in the header area
 - Modify `app.css` in `src/UI/Client/wwwroot/css/` to use CSS custom properties instead of hardcoded colors for all themeable elements
 - Add JavaScript interop function in `src/UI/Client/wwwroot/js/` to detect `prefers-color-scheme: dark` system preference and apply on initial load before Blazor hydrates
-- Update NavMenu, WorkRequestSearch, and WorkRequestManage components to use CSS variable-based theming
+- Update NavMenu, WorkOrderSearch, and WorkOrderManage components to use CSS variable-based theming
 
 ## Capabilities
 ### New Capabilities
@@ -40,4 +40,4 @@ Many users prefer dark mode for reduced eye strain, especially during extended u
 - Click the theme toggle button with `data-testid="theme-toggle"` and verify the page body has the `dark-theme` CSS class
 - Click the toggle again and verify the page returns to light mode without the `dark-theme` class
 - Set dark mode, refresh the page, and verify dark mode persists via `localStorage`
-- Verify all key pages (WorkRequestSearch, WorkRequestManage, NavMenu) render correctly in dark mode without text or contrast issues
+- Verify all key pages (WorkOrderSearch, WorkOrderManage, NavMenu) render correctly in dark mode without text or contrast issues

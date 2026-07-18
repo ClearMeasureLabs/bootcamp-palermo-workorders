@@ -1,16 +1,16 @@
 ## Why
-Uneven distribution of work requests across assignees leads to burnout and missed deadlines. A workload chart gives managers instant visibility into each assignee's active load, enabling balanced reassignment and more equitable work distribution.
+Uneven distribution of work orders across assignees leads to burnout and missed deadlines. A workload chart gives managers instant visibility into each assignee's active load, enabling balanced reassignment and more equitable work distribution.
 
 ## What Changes
 - Add `WorkloadByAssigneeQuery` to `src/Core/Queries/` returning a list of `(Employee Assignee, int ActiveCount)` where active means status is Assigned or InProgress
-- Add `WorkloadByAssigneeHandler` in `src/DataAccess/Handlers/` grouping active work requests by `Assignee` and counting
+- Add `WorkloadByAssigneeHandler` in `src/DataAccess/Handlers/` grouping active work orders by `Assignee` and counting
 - Add `AssigneeWorkloadChart.razor` component in `src/UI/Client/` rendering a horizontal bar chart
 - Add API endpoint in `src/UI/Api/`
 - Display the chart on the dashboard page
 
 ## Capabilities
 ### New Capabilities
-- Horizontal bar chart showing number of active work requests (Assigned + InProgress) per assignee
+- Horizontal bar chart showing number of active work orders (Assigned + InProgress) per assignee
 - Bars labeled with employee name and count
 - Color coding to highlight overloaded assignees exceeding a configurable threshold
 
@@ -28,8 +28,8 @@ Uneven distribution of work requests across assignees leads to burnout and misse
 ## Acceptance Criteria
 ### Unit Tests
 - `WorkloadByAssigneeHandler` returns correct counts per assignee for a known dataset
-- `WorkloadByAssigneeHandler` excludes completed and cancelled work requests from counts
-- `WorkloadByAssigneeHandler` includes assignees with zero active work requests if they have historical assignments
+- `WorkloadByAssigneeHandler` excludes completed and cancelled work orders from counts
+- `WorkloadByAssigneeHandler` includes assignees with zero active work orders if they have historical assignments
 - `AssigneeWorkloadChart` component renders bar elements for each assignee using bUnit
 
 ### Integration Tests
@@ -38,5 +38,5 @@ Uneven distribution of work requests across assignees leads to burnout and misse
 
 ### Acceptance Tests
 - Navigate to the dashboard and verify the workload chart is visible
-- Assign a work request to an employee and verify the chart updates on refresh
-- Complete a work request and verify the assignee's count decreases on refresh
+- Assign a work order to an employee and verify the chart updates on refresh
+- Complete a work order and verify the assignee's count decreases on refresh

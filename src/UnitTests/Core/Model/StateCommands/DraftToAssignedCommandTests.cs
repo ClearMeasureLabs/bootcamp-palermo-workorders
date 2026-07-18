@@ -10,8 +10,8 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidInWrongStatus()
     {
-        var order = new WorkRequest();
-        order.Status = WorkRequestStatus.Complete;
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Complete;
         var employee = new Employee();
         order.Creator = employee;
 
@@ -22,8 +22,8 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidWithWrongEmployee()
     {
-        var order = new WorkRequest();
-        order.Status = WorkRequestStatus.Draft;
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
         var differentEmployee = new Employee();
         order.Assignee = employee;
@@ -35,8 +35,8 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldBeValid()
     {
-        var order = new WorkRequest();
-        order.Status = WorkRequestStatus.Draft;
+        var order = new WorkOrder();
+        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
         order.Creator = employee;
 
@@ -47,20 +47,20 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldTransitionStateProperly()
     {
-        var order = new WorkRequest();
+        var order = new WorkOrder();
         order.Number = "123";
-        order.Status = WorkRequestStatus.Draft;
+        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
         order.Creator = employee;
 
         var command = new DraftToAssignedCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkRequestStatus.Assigned));
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
         Assert.That(order.AssignedDate, Is.Not.Null);
     }
 
-    protected override StateCommandBase GetStateCommand(WorkRequest order, Employee employee)
+    protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
         return new DraftToAssignedCommand(order, employee);
     }

@@ -213,12 +213,12 @@ public class ZDataLoader
 
         db.SaveChanges();
 
-        // Create Christmas Concert Work Requests
-        var christmasOrder1 = new WorkRequest();
+        // Create Christmas Concert Work Orders
+        var christmasOrder1 = new WorkOrder();
         christmasOrder1.Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
         christmasOrder1.Creator = revLovejoy;
         christmasOrder1.Assignee = maudeFlanders;
-        christmasOrder1.Status = WorkRequestStatus.Draft;
+        christmasOrder1.Status = WorkOrderStatus.Draft;
         christmasOrder1.Title = "Organize Christmas Concert Choir Practice Schedule";
         christmasOrder1.Description =
             "Coordinate weekly choir rehearsals for the Christmas concert. Schedule practice sessions for November and December leading up to the Christmas Eve service.";
@@ -226,11 +226,11 @@ public class ZDataLoader
         christmasOrder1.RoomNumber = "Sanctuary";
         db.Add(christmasOrder1);
 
-        var christmasOrder2 = new WorkRequest();
+        var christmasOrder2 = new WorkOrder();
         christmasOrder2.Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
         christmasOrder2.Creator = revLovejoy;
         christmasOrder2.Assignee = groundskeeperWillie;
-        christmasOrder2.Status = WorkRequestStatus.Assigned;
+        christmasOrder2.Status = WorkOrderStatus.Assigned;
         christmasOrder2.Title = "Prepare Church Grounds for Christmas Decorations";
         christmasOrder2.Description =
             "Clean and prepare the church exterior and landscaping for Christmas decorations. Ensure proper lighting infrastructure and safe walkways for concert attendees.";
@@ -239,11 +239,11 @@ public class ZDataLoader
         christmasOrder2.RoomNumber = "Exterior Grounds";
         db.Add(christmasOrder2);
 
-        var christmasOrder3 = new WorkRequest();
+        var christmasOrder3 = new WorkOrder();
         christmasOrder3.Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
         christmasOrder3.Creator = nedFlanders;
         christmasOrder3.Assignee = organistEmployee;
-        christmasOrder3.Status = WorkRequestStatus.InProgress;
+        christmasOrder3.Status = WorkOrderStatus.InProgress;
         christmasOrder3.Title = "Tune and Maintain Church Organ for Christmas Concert";
         christmasOrder3.Description =
             "Perform complete maintenance and tuning of the church organ in preparation for Christmas concert performances. Test all stops and ensure optimal sound quality.";
@@ -252,11 +252,11 @@ public class ZDataLoader
         christmasOrder3.RoomNumber = "Sanctuary Organ Loft";
         db.Add(christmasOrder3);
 
-        var christmasOrder4 = new WorkRequest();
+        var christmasOrder4 = new WorkOrder();
         christmasOrder4.Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
         christmasOrder4.Creator = revLovejoy;
         christmasOrder4.Assignee = nedFlanders;
-        christmasOrder4.Status = WorkRequestStatus.Draft;
+        christmasOrder4.Status = WorkOrderStatus.Draft;
         christmasOrder4.Title = "Setup Audio System for Christmas Concert";
         christmasOrder4.Description =
             "Configure and test the sanctuary sound system for the Christmas concert. Ensure microphones, speakers, and recording equipment are functioning properly.";
@@ -264,11 +264,11 @@ public class ZDataLoader
         christmasOrder4.RoomNumber = "Sanctuary";
         db.Add(christmasOrder4);
 
-        var christmasOrder5 = new WorkRequest();
+        var christmasOrder5 = new WorkOrder();
         christmasOrder5.Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
         christmasOrder5.Creator = nedFlanders;
         christmasOrder5.Assignee = groundskeeperWillie;
-        christmasOrder5.Status = WorkRequestStatus.Complete;
+        christmasOrder5.Status = WorkOrderStatus.Complete;
         christmasOrder5.Title = "Install Christmas Tree in Sanctuary";
         christmasOrder5.Description =
             "Select, transport, and install the Christmas tree in the sanctuary. Ensure proper placement and safety for the Christmas concert and services.";
@@ -278,11 +278,11 @@ public class ZDataLoader
         christmasOrder5.RoomNumber = "Sanctuary";
         db.Add(christmasOrder5);
 
-        var christmasOrder6 = new WorkRequest();
+        var christmasOrder6 = new WorkOrder();
         christmasOrder6.Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
         christmasOrder6.Creator = revLovejoy;
         christmasOrder6.Assignee = maudeFlanders;
-        christmasOrder6.Status = WorkRequestStatus.Assigned;
+        christmasOrder6.Status = WorkOrderStatus.Assigned;
         christmasOrder6.Title = "Coordinate Christmas Concert Program Design";
         christmasOrder6.Description =
             "Design and prepare printed programs for the Christmas concert including song listings, performer credits, and special acknowledgments.";

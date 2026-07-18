@@ -1,7 +1,7 @@
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
 public record StateCommandResult(
-    WorkRequest WorkRequest,
+    WorkOrder WorkOrder,
     string TransitionVerbPresentTense = "Save",
     string DebugMessage = "")
 {

@@ -5,29 +5,29 @@ namespace ClearMeasure.Bootcamp.Core.Services.Impl;
 
 public class StateCommandList
 {
-    public IStateCommand[] GetValidStateCommands(WorkRequest workRequest, Employee currentUser)
+    public IStateCommand[] GetValidStateCommands(WorkOrder workOrder, Employee currentUser)
     {
         var commands = new List<IStateCommand>(
-            GetAllStateCommands(workRequest, currentUser));
+            GetAllStateCommands(workOrder, currentUser));
         commands.RemoveAll(obj => !obj.IsValid());
 
         return commands.ToArray();
     }
 
-    public virtual IStateCommand[] GetAllStateCommands(WorkRequest workRequest, Employee currentUser)
+    public virtual IStateCommand[] GetAllStateCommands(WorkOrder workOrder, Employee currentUser)
     {
         var commands = new List<IStateCommand>();
-        commands.Add(new SaveDraftCommand(workRequest, currentUser));
-        commands.Add(new DraftToAssignedCommand(workRequest, currentUser));
-        commands.Add(new AssignedToInProgressCommand(workRequest, currentUser));
-        commands.Add(new InProgressToAssignedCommand(workRequest, currentUser));
-        commands.Add(new InProgressToCompleteCommand(workRequest, currentUser));
-        commands.Add(new AssignedToCancelledCommand(workRequest, currentUser));
+        commands.Add(new SaveDraftCommand(workOrder, currentUser));
+        commands.Add(new DraftToAssignedCommand(workOrder, currentUser));
+        commands.Add(new AssignedToInProgressCommand(workOrder, currentUser));
+        commands.Add(new InProgressToAssignedCommand(workOrder, currentUser));
+        commands.Add(new InProgressToCompleteCommand(workOrder, currentUser));
+        commands.Add(new AssignedToCancelledCommand(workOrder, currentUser));
 
         return commands.ToArray();
     }
 
-    public IStateCommand GetMatchingCommand(WorkRequest order, Employee currentUser, string name)
+    public IStateCommand GetMatchingCommand(WorkOrder order, Employee currentUser, string name)
     {
         var stateCommand = GetValidStateCommands(order, currentUser)
         .Single(command => command.Matches(name));

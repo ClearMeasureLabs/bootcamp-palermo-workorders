@@ -1,31 +1,31 @@
 ## Why
-Different organizations and departments use distinct work request prefixes to identify request types and origins (e.g., "WO-" for general work requests, "MNT-" for maintenance, "EMR-" for emergencies). A configurable prefix enables each deployment to match its organizational naming convention without code changes.
+Different organizations and departments use distinct work order prefixes to identify request types and origins (e.g., "WO-" for general work orders, "MNT-" for maintenance, "EMR-" for emergencies). A configurable prefix enables each deployment to match its organizational naming convention without code changes.
 
 ## What Changes
-- Add `WorkRequestPrefix` setting in `appsettings.json` under a `WorkRequestSettings` section (default value: "WO-")
-- Add `WorkRequestSettings` configuration class in `src/Core/` with `Prefix` property
-- Update `WorkRequestNumberGenerator` in `src/Core/Services/Impl/` (currently generates 7-character uppercase GUID substring via `GenerateNumber()`) to prepend the configured prefix when generating new work request numbers
-- Register `WorkRequestSettings` in `UIServiceRegistry.cs` via `IOptions<WorkRequestSettings>` pattern
-- Ensure existing work requests without prefix remain valid and displayable
-- Update work request search to handle prefix in search queries (strip prefix for comparison when needed)
+- Add `WorkOrderPrefix` setting in `appsettings.json` under a `WorkOrderSettings` section (default value: "WO-")
+- Add `WorkOrderSettings` configuration class in `src/Core/` with `Prefix` property
+- Update `WorkOrderNumberGenerator` in `src/Core/Services/Impl/` (currently generates 7-character uppercase GUID substring via `GenerateNumber()`) to prepend the configured prefix when generating new work order numbers
+- Register `WorkOrderSettings` in `UIServiceRegistry.cs` via `IOptions<WorkOrderSettings>` pattern
+- Ensure existing work orders without prefix remain valid and displayable
+- Update work order search to handle prefix in search queries (strip prefix for comparison when needed)
 - Add configuration validation: prefix must be 0-10 characters, alphanumeric and hyphens only
 
 ## Capabilities
 ### New Capabilities
-- Configurable work request number prefix via application settings
-- Prefix applied automatically to all newly generated work request numbers
+- Configurable work order number prefix via application settings
+- Prefix applied automatically to all newly generated work order numbers
 - Prefix validation enforcing 0-10 character limit with alphanumeric and hyphen characters only
-- Backward compatibility with existing work requests that lack a prefix
+- Backward compatibility with existing work orders that lack a prefix
 
 ### Modified Capabilities
-- Work request number generation updated to prepend configured prefix
-- Work request search updated to handle prefixed numbers correctly
+- Work order number generation updated to prepend configured prefix
+- Work order search updated to handle prefixed numbers correctly
 
 ## Impact
-- **src/Core/** - New `WorkRequestSettings` configuration class
-- **src/Core/Services/Impl/WorkRequestNumberGenerator.cs** - Updated to prepend configured prefix to the 7-char GUID substring
-- **src/UI/Server/appsettings.json** - New `WorkRequestSettings` section with `Prefix` property
-- **src/UI/Server/UIServiceRegistry.cs** - Registration of `IOptions<WorkRequestSettings>`
+- **src/Core/** - New `WorkOrderSettings` configuration class
+- **src/Core/Services/Impl/WorkOrderNumberGenerator.cs** - Updated to prepend configured prefix to the 7-char GUID substring
+- **src/UI/Server/appsettings.json** - New `WorkOrderSettings` section with `Prefix` property
+- **src/UI/Server/UIServiceRegistry.cs** - Registration of `IOptions<WorkOrderSettings>`
 - **src/DataAccess/Handlers/** - Search handler updated for prefix-aware querying
 - **Dependencies** - No new NuGet packages required
 - **Database** - No schema changes required; prefix is part of the generated number string (note: DB column length may need review since current Number is 7 chars and prefix adds length)
@@ -38,14 +38,14 @@ Different organizations and departments use distinct work request prefixes to id
 - `NumberGenerator_PrefixValidation_RejectsSpecialCharacters` - Prefix "WO@#" throws configuration validation error
 - `NumberGenerator_PrefixValidation_RejectsOverLength` - Prefix longer than 10 characters throws validation error
 - `NumberGenerator_TwoCalls_ProducesDifferentNumbers` - Two consecutive generations produce unique GUID-based numbers with prefix
-- `WorkRequestSearch_PrefixedNumber_FindsWorkRequest` - Search for "WO-A1B2C3D" returns the correct work request
+- `WorkOrderSearch_PrefixedNumber_FindsWorkOrder` - Search for "WO-A1B2C3D" returns the correct work order
 
 ### Integration Tests
-- `NumberPrefix_ConfiguredInSettings_AppliedToNewWorkRequests` - Configure prefix in settings, create work request, verify persisted number contains prefix
-- `NumberPrefix_ExistingWorkRequests_StillAccessible` - Work requests created before prefix configuration remain queryable and displayable
-- `NumberPrefix_ChangePrefix_NextWorkRequestUsesNewPrefix` - Change prefix in settings, create new work request, verify new prefix applied while old work requests retain original numbers
+- `NumberPrefix_ConfiguredInSettings_AppliedToNewWorkOrders` - Configure prefix in settings, create work order, verify persisted number contains prefix
+- `NumberPrefix_ExistingWorkOrders_StillAccessible` - Work orders created before prefix configuration remain queryable and displayable
+- `NumberPrefix_ChangePrefix_NextWorkOrderUsesNewPrefix` - Change prefix in settings, create new work order, verify new prefix applied while old work orders retain original numbers
 
 ### Acceptance Tests
-- `CreateWorkRequest_WithConfiguredPrefix_NumberShowsPrefix` - Create work request through UI, verify displayed work request number starts with configured prefix
-- `SearchWorkRequest_ByPrefixedNumber_FindsResult` - Create work request, search by full prefixed number in UI, verify work request found
-- `WorkRequestList_AllNumbers_DisplayWithPrefix` - Navigate to work request list, verify all newly created work request numbers display with the configured prefix
+- `CreateWorkOrder_WithConfiguredPrefix_NumberShowsPrefix` - Create work order through UI, verify displayed work order number starts with configured prefix
+- `SearchWorkOrder_ByPrefixedNumber_FindsResult` - Create work order, search by full prefixed number in UI, verify work order found
+- `WorkOrderList_AllNumbers_DisplayWithPrefix` - Navigate to work order list, verify all newly created work order numbers display with the configured prefix

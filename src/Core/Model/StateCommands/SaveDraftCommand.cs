@@ -2,24 +2,24 @@ using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public record SaveDraftCommand(WorkRequest WorkRequest, Employee CurrentUser) :
-StateCommandBase(WorkRequest, CurrentUser)
+public record SaveDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) :
+StateCommandBase(WorkOrder, CurrentUser)
 {
     public const string Name = "Save";
 
-    public override WorkRequestStatus GetBeginStatus()
+    public override WorkOrderStatus GetBeginStatus()
     {
-        return WorkRequestStatus.Draft;
+        return WorkOrderStatus.Draft;
     }
 
-    public override WorkRequestStatus GetEndStatus()
+    public override WorkOrderStatus GetEndStatus()
     {
-        return WorkRequestStatus.Draft;
+        return WorkOrderStatus.Draft;
     }
 
     protected override bool UserCanExecute(Employee currentUser)
     {
-        return currentUser == WorkRequest.Creator;
+        return currentUser == WorkOrder.Creator;
     }
 
     public override string TransitionVerbPresentTense => Name;
@@ -28,9 +28,9 @@ StateCommandBase(WorkRequest, CurrentUser)
 
     public override void Execute(StateCommandContext context)
     {
-        if (WorkRequest.CreatedDate.Equals(null))
+        if (WorkOrder.CreatedDate.Equals(null))
         {
-            WorkRequest.CreatedDate = context.CurrentDateTime;
+            WorkOrder.CreatedDate = context.CurrentDateTime;
         }
 
         base.Execute(context);

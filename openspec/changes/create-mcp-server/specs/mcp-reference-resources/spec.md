@@ -1,10 +1,10 @@
 ## ADDED Requirements
 
-### Requirement: Work request statuses resource
-The system SHALL expose an MCP resource at URI `churchbulletin://reference/work-request-statuses` that returns all valid work request statuses.
+### Requirement: Work order statuses resource
+The system SHALL expose an MCP resource at URI `churchbulletin://reference/work-order-statuses` that returns all valid work order statuses.
 
-#### Scenario: Read work request statuses
-- **WHEN** an MCP client reads the `churchbulletin://reference/work-request-statuses` resource
+#### Scenario: Read work order statuses
+- **WHEN** an MCP client reads the `churchbulletin://reference/work-order-statuses` resource
 - **THEN** all statuses are returned including their code, key, and friendly name (Draft, Assigned, InProgress, Complete)
 
 ### Requirement: Roles resource
@@ -12,10 +12,10 @@ The system SHALL expose an MCP resource at URI `churchbulletin://reference/roles
 
 #### Scenario: Read roles
 - **WHEN** an MCP client reads the `churchbulletin://reference/roles` resource
-- **THEN** all roles are returned including their name and permissions (canCreateWorkRequest, canFulfillWorkRequest)
+- **THEN** all roles are returned including their name and permissions (canCreateWorkOrder, canFulfillWorkOrder)
 
 ### Requirement: Valid status transitions resource
-The system SHALL expose an MCP resource at URI `churchbulletin://reference/status-transitions` that returns the valid state transitions for work requests.
+The system SHALL expose an MCP resource at URI `churchbulletin://reference/status-transitions` that returns the valid state transitions for work orders.
 
 #### Scenario: Read valid transitions
 - **WHEN** an MCP client reads the `churchbulletin://reference/status-transitions` resource

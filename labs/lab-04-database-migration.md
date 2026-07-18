@@ -8,7 +8,7 @@
 
 ## Objective
 
-Add a new `Instructions` column to the `WorkRequest` table using a DbUp migration script, update the domain model and EF Core mapping, and verify with the private build.
+Add a new `Instructions` column to the `WorkOrder` table using a DbUp migration script, update the domain model and EF Core mapping, and verify with the private build.
 
 ---
 
@@ -24,17 +24,17 @@ Note the numbering convention (`###_Description.sql`). Find the highest number; 
 
 ### Step 2: Create the Migration Script
 
-Create `src/Database/scripts/Update/024_AddInstructionsToWorkRequest.sql`:
+Create `src/Database/scripts/Update/024_AddInstructionsToWorkOrder.sql`:
 
 ```sql
-ALTER TABLE dbo.WorkRequest ADD Instructions NVARCHAR(4000) NULL
+ALTER TABLE dbo.WorkOrder ADD Instructions NVARCHAR(4000) NULL
 ```
 
 Use TABS for indentation per project convention.
 
 ### Step 3: Update the Domain Model
 
-Add to `src/Core/Model/WorkRequest.cs`:
+Add to `src/Core/Model/WorkOrder.cs`:
 
 ```csharp
 public string? Instructions { get; set; }
@@ -42,7 +42,7 @@ public string? Instructions { get; set; }
 
 ### Step 4: Update the EF Core Mapping
 
-Add to `src/DataAccess/Mappings/WorkRequestMap.cs` inside the `Map` method, after the existing `RoomNumber` mapping:
+Add to `src/DataAccess/Mappings/WorkOrderMap.cs` inside the `Map` method, after the existing `RoomNumber` mapping:
 
 ```csharp
 entity.Property(e => e.Instructions).HasMaxLength(4000);
@@ -58,13 +58,13 @@ The private build will run the migration against the database, compile with the 
 
 ### Step 6: Verify the Migration
 
-After a successful build, confirm the column exists by checking that the integration tests pass — the `WorkRequestMappingTests` round-trip test proves EF Core can read and write all mapped columns.
+After a successful build, confirm the column exists by checking that the integration tests pass — the `WorkOrderMappingTests` round-trip test proves EF Core can read and write all mapped columns.
 
 ---
 
 ## Expected Outcome
 
-- New migration script `024_AddInstructionsToWorkRequest.sql` in place
-- `WorkRequest` domain model has an `Instructions` property
+- New migration script `024_AddInstructionsToWorkOrder.sql` in place
+- `WorkOrder` domain model has an `Instructions` property
 - EF Core mapping updated with `HasMaxLength(4000)`
 - Private build passes with all tests green

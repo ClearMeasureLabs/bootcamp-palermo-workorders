@@ -31,7 +31,7 @@ Before engaging the AI agent, review what it will read:
 
 Give the AI agent this specification:
 
-> Add a `RoomNumber` validation rule to the `WorkRequest` domain model. Room numbers must be non-empty when transitioning from Draft to Assigned (the `DraftToAssignedCommand`). If a work request has no room number, the assign command should be invalid.
+> Add a `RoomNumber` validation rule to the `WorkOrder` domain model. Room numbers must be non-empty when transitioning from Draft to Assigned (the `DraftToAssignedCommand`). If a work order has no room number, the assign command should be invalid.
 >
 > Requirements:
 > - Add the room number validation to `DraftToAssignedCommand.UserCanExecute()` (do not modify `IsValid()` on `StateCommandBase` — it is not virtual)

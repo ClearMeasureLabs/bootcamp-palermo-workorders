@@ -8,7 +8,7 @@ Users who frequently search with the same filter combinations waste time re-ente
 - Create a database migration script to add the `SavedSearchFilter` table
 - Add EF Core entity configuration in `src/DataAccess/`
 - Add MediatR handlers in `src/DataAccess/Handlers/` for saving, deleting, and retrieving saved filters
-- Add a "Save Filter" button and a saved filter dropdown to the `WorkRequestSearch` page in `src/UI/Client/`
+- Add a "Save Filter" button and a saved filter dropdown to the `WorkOrderSearch` page in `src/UI/Client/`
 - Add API endpoints in `src/UI/Api/` for CRUD operations on saved filters
 
 ## Capabilities
@@ -19,7 +19,7 @@ Users who frequently search with the same filter combinations waste time re-ente
 - Each user maintains their own set of saved filters
 
 ### Modified Capabilities
-- WorkRequestSearch page includes a "Save Filter" button and a saved filter dropdown selector
+- WorkOrderSearch page includes a "Save Filter" button and a saved filter dropdown selector
 
 ## Impact
 - `src/Core/Model/SavedSearchFilter.cs` — new domain entity
@@ -28,7 +28,7 @@ Users who frequently search with the same filter combinations waste time re-ente
 - `src/DataAccess/` — new EF Core entity configuration and DbSet
 - `src/DataAccess/Handlers/` — new MediatR handlers
 - `src/Database/scripts/Update/` — new migration script to create SavedSearchFilter table
-- `src/UI/Client/` — updated WorkRequestSearch page with save/load UI
+- `src/UI/Client/` — updated WorkOrderSearch page with save/load UI
 - `src/UI/Api/` — new API endpoints for saved filter CRUD
 
 ## Acceptance Criteria

@@ -10,16 +10,16 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 public class StateCommandHandlerForBeginTests : IntegratedTestBase
 {
     [Test]
-    public async Task ShouldBeginWorkRequest()
+    public async Task ShouldBeginWorkOrder()
     {
         new DatabaseTests().Clean();
 
-        var o = Faker<WorkRequest>();
+        var o = Faker<WorkOrder>();
         o.Id = Guid.Empty;
         var currentUser = Faker<Employee>();
         o.Creator = currentUser;
         o.Assignee = currentUser;
-        o.Status = WorkRequestStatus.Assigned;
+        o.Status = WorkOrderStatus.Assigned;
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(currentUser);
@@ -37,11 +37,11 @@ public class StateCommandHandlerForBeginTests : IntegratedTestBase
         var result = await handler.Handle(remotedCommand);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
-        var order = context3.Find<WorkRequest>(result.WorkRequest.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(order.Title);
         order.Description.ShouldBe(order.Description);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(currentUser);
-        order.Status.ShouldBe(WorkRequestStatus.InProgress);
+        order.Status.ShouldBe(WorkOrderStatus.InProgress);
     }
 }

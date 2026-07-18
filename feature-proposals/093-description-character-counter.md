@@ -3,7 +3,7 @@ Users entering long descriptions have no visibility into how much space remains 
 
 ## What Changes
 - Add `CharacterCounter.razor` component in `src/UI/Client/Shared/` that displays current and maximum character count
-- Integrate `CharacterCounter` into the work request description textarea on the create and edit forms in `src/UI/Client/Pages/`
+- Integrate `CharacterCounter` into the work order description textarea on the create and edit forms in `src/UI/Client/Pages/`
 - Display format: "123 / 4000" below the description field, updating on each keystroke
 - Show warning styling (yellow text) when count exceeds 3600 characters (90% threshold)
 - Show error styling (red text) when count reaches 4000 characters
@@ -19,11 +19,11 @@ Users entering long descriptions have no visibility into how much space remains 
 - Server-side validation rejecting descriptions over 4000 characters
 
 ### Modified Capabilities
-- Work request create and edit forms updated to include character counter component
+- Work order create and edit forms updated to include character counter component
 
 ## Impact
 - **src/UI/Client/Shared/** - New `CharacterCounter.razor` component
-- **src/UI/Client/Pages/** - Work request create and edit forms updated to include counter
+- **src/UI/Client/Pages/** - Work order create and edit forms updated to include counter
 - **src/Core/Model/StateCommands/** - `SaveDraftCommand` updated with description length validation
 - **Dependencies** - No new NuGet packages required
 - **Database** - No schema changes required
@@ -38,7 +38,7 @@ Users entering long descriptions have no visibility into how much space remains 
 - `SaveDraft_DescriptionExactly4000_Succeeds` - Description at exactly 4000 characters saves successfully
 
 ### Integration Tests
-- `SaveDraft_LongDescription_Persisted` - Save work request with 3999-character description, verify it persists correctly
+- `SaveDraft_LongDescription_Persisted` - Save work order with 3999-character description, verify it persists correctly
 - `SaveDraft_OverLimitDescription_Rejected` - Attempt to save with 4001-character description, verify rejection
 
 ### Acceptance Tests

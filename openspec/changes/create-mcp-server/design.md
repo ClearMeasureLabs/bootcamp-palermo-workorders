@@ -1,13 +1,13 @@
 ## Context
 
-The ChurchBulletin system follows Onion Architecture with a CQRS pattern via MediatR. Domain operations flow through an `IBus` abstraction that wraps MediatR. Queries (`IRemotableRequest`) and state commands (`IStateCommand`) handle all domain interactions. The `LlmGateway` project already defines a `WorkRequestTool` class with `[Description]`-annotated methods that wrap `IBus` queries — this establishes a precedent for tool-style interfaces over domain operations.
+The ChurchBulletin system follows Onion Architecture with a CQRS pattern via MediatR. Domain operations flow through an `IBus` abstraction that wraps MediatR. Queries (`IRemotableRequest`) and state commands (`IStateCommand`) handle all domain interactions. The `LlmGateway` project already defines a `WorkOrderTool` class with `[Description]`-annotated methods that wrap `IBus` queries — this establishes a precedent for tool-style interfaces over domain operations.
 
 The Web API uses a single-endpoint pattern (`SingleApiController`) that deserializes `WebServiceMessage` objects by fully-qualified type name and routes them through `IBus`. The existing architecture cleanly supports adding new outer-layer projects that depend inward on Core and DataAccess.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Expose ChurchBulletin domain operations via the Model Context Protocol, enabling AI agents to query and manage work requests and employees
+- Expose ChurchBulletin domain operations via the Model Context Protocol, enabling AI agents to query and manage work orders and employees
 - Reuse existing MediatR queries and state commands through `IBus` — no duplication of business logic
 - Follow Onion Architecture: MCP server sits in the outer layer alongside UI
 - Support stdio transport for local AI agent usage (e.g., Claude Code, Cursor)
@@ -42,13 +42,13 @@ The Web API uses a single-endpoint pattern (`SingleApiController`) that deserial
 
 **Rationale:** The MCP server needs access to the same MediatR handlers and `IBus` to execute domain operations. Reusing the registration pattern from `UIServiceRegistry` ensures consistency and avoids handler duplication.
 
-### Decision 4: One tool class per domain area, mirroring `WorkRequestTool` in LlmGateway
+### Decision 4: One tool class per domain area, mirroring `WorkOrderTool` in LlmGateway
 
-**Rationale:** The existing `WorkRequestTool` pattern (methods with `[Description]` attributes calling `IBus`) is a clean precedent. The MCP server will define similar tool classes registered as MCP tools. This keeps tool definitions cohesive and testable.
+**Rationale:** The existing `WorkOrderTool` pattern (methods with `[Description]` attributes calling `IBus`) is a clean precedent. The MCP server will define similar tool classes registered as MCP tools. This keeps tool definitions cohesive and testable.
 
 ### Decision 5: MCP resources for static reference data (statuses, roles)
 
-**Rationale:** Work request statuses and roles are static value objects. Exposing them as MCP resources (read-only) rather than tools is semantically correct per the MCP spec — resources represent data the client can read, while tools represent actions.
+**Rationale:** Work order statuses and roles are static value objects. Exposing them as MCP resources (read-only) rather than tools is semantically correct per the MCP spec — resources represent data the client can read, while tools represent actions.
 
 ### Decision 6: Full system acceptance tests using MCP client SDK + IChatClient + LLM
 
@@ -87,7 +87,7 @@ The Web API uses a single-endpoint pattern (`SingleApiController`) that deserial
    // Per-test
    var chatClient = azureOpenAiClient.AsBuilder().UseFunctionInvocation().Build();
    var response = await chatClient.GetResponseAsync(
-       [new ChatMessage(ChatRole.User, "List all work requests")],
+       [new ChatMessage(ChatRole.User, "List all work orders")],
        new ChatOptions { Tools = [.. tools] });
    // Assert response contains expected data
    ```
@@ -107,7 +107,7 @@ The Web API uses a single-endpoint pattern (`SingleApiController`) that deserial
 - **[Process lifecycle]** Stdio MCP servers are started/stopped by the AI client. → Mitigation: Standard .NET generic host handles graceful shutdown. No long-running background tasks needed.
 - **[State command complexity]** State commands have preconditions (valid transitions, authorization). → Mitigation: Reuse existing `IStateCommand.IsValid()` and status validation. Return clear error messages in MCP tool responses when preconditions fail.
 
-- **[LLM non-determinism]** LLM responses vary between runs; the same prompt may produce different tool call sequences. → Mitigation: Assert on data presence in the response (e.g., "response contains work request number X") rather than exact text. Use simple, directive prompts.
+- **[LLM non-determinism]** LLM responses vary between runs; the same prompt may produce different tool call sequences. → Mitigation: Assert on data presence in the response (e.g., "response contains work order number X") rather than exact text. Use simple, directive prompts.
 - **[LLM availability]** Acceptance tests require Azure OpenAI access. → Mitigation: Mark tests `[Explicit]` and use `Assert.Inconclusive` when the LLM is unreachable. Tests only run on demand or in environments with LLM access.
 - **[MCP SDK client package]** The `ModelContextProtocol` NuGet package must be added to the AcceptanceTests project for `McpClient` and `StdioClientTransport`. → Mitigation: Same package already used by the McpServer project. Approval required per project rules.
 

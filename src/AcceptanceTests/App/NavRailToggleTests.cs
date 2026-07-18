@@ -58,16 +58,16 @@ public class NavRailToggleTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task ShouldExpandContentArea_WhenNavHidden_OnWorkRequestPage()
+    public async Task ShouldExpandContentArea_WhenNavHidden_OnWorkOrderPage()
     {
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForURLAsync("**/workrequest/search");
+        await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs());
 
         var urlBefore = Page.Url;
-        var searchButton = Page.Locator($"#{nameof(WorkRequestSearch.Elements.SearchButton)}");
+        var searchButton = Page.Locator($"#{nameof(WorkOrderSearch.Elements.SearchButton)}");
         await Expect(searchButton).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
@@ -83,7 +83,7 @@ public class NavRailToggleTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForURLAsync("**/workrequest/search");
+        await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs());
 

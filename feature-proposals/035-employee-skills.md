@@ -1,15 +1,15 @@
 ## Why
-Matching employees to work requests based on their skills and specialties improves first-time fix rates and reduces reassignment. Tracking skills enables smarter assignment decisions and provides data for workforce planning and training initiatives.
+Matching employees to work orders based on their skills and specialties improves first-time fix rates and reduces reassignment. Tracking skills enables smarter assignment decisions and provides data for workforce planning and training initiatives.
 
 ## What Changes
 - Create a `Skill` entity in `src/Core/Model/` with properties: Id, Name, Description
 - Create an `EmployeeSkill` join entity in `src/Core/Model/` linking Employee to Skill (many-to-many)
-- Optionally create a `WorkRequestCategory` entity in `src/Core/Model/` with properties: Id, Name, and a collection of associated Skills
-- Create database migration scripts in `src/Database/scripts/Update/` for the Skill, EmployeeSkill, and optionally WorkRequestCategory tables
+- Optionally create a `WorkOrderCategory` entity in `src/Core/Model/` with properties: Id, Name, and a collection of associated Skills
+- Create database migration scripts in `src/Database/scripts/Update/` for the Skill, EmployeeSkill, and optionally WorkOrderCategory tables
 - Add EF Core entity configurations in `src/DataAccess/` for the new entities
 - Add queries in `src/Core/Queries/` to retrieve employees by skill and to list all skills
 - Add MediatR handlers in `src/DataAccess/Handlers/` for skill-related queries and commands
-- Update the work request assignment UI in `src/UI/Client/` to suggest employees based on matching skills
+- Update the work order assignment UI in `src/UI/Client/` to suggest employees based on matching skills
 - Add a skill management section to the employee profile page
 - Add API endpoints in `src/UI/Api/` for skill CRUD and employee-skill assignment
 
@@ -17,12 +17,12 @@ Matching employees to work requests based on their skills and specialties improv
 ### New Capabilities
 - Skill entity with name and description
 - Many-to-many relationship between Employee and Skill via EmployeeSkill
-- Skill-based employee suggestions when assigning work requests
+- Skill-based employee suggestions when assigning work orders
 - Skill management on employee profile (add/remove skills)
 - List of all available skills for selection
 
 ### Modified Capabilities
-- Work request assignment dropdown enhanced with skill-based suggestions
+- Work order assignment dropdown enhanced with skill-based suggestions
 - Employee profile page includes a skills section
 
 ## Impact
@@ -53,4 +53,4 @@ Matching employees to work requests based on their skills and specialties improv
 - User views an employee profile and sees their listed skills
 - User adds a skill to an employee and it appears in the skills section
 - User removes a skill from an employee and it is no longer displayed
-- During work request assignment, employees with matching skills are suggested first
+- During work order assignment, employees with matching skills are suggested first

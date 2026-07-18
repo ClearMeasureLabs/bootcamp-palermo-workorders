@@ -53,11 +53,11 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
         return GetFullName();
     }
 
-    public bool CanCreateWorkRequest()
+    public bool CanCreateWorkOrder()
     {
         foreach (var role in Roles)
         {
-            if (role.CanCreateWorkRequest)
+            if (role.CanCreateWorkOrder)
             {
                 return true;
             }
@@ -67,13 +67,13 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     }
 
     /// <summary>
-    /// Returns whether this employee has at least one role with permission to fulfill work requests.
+    /// Returns whether this employee has at least one role with permission to fulfill work orders.
     /// </summary>
-    public bool CanFulfillWorkRequest()
+    public bool CanFulfillWorkOrder()
     {
         foreach (var role in Roles)
         {
-            if (role.CanFulfillWorkRequest)
+            if (role.CanFulfillWorkOrder)
             {
                 return true;
             }

@@ -38,8 +38,8 @@ public class ObjectMother
         AutoFaker.Configure(builder =>
         {
             builder.WithConventions()
-                .WithSkip<WorkRequest>(wo => wo.Creator)
-                .WithSkip<WorkRequest>(wo => wo.Assignee)
+                .WithSkip<WorkOrder>(wo => wo.Creator)
+                .WithSkip<WorkOrder>(wo => wo.Assignee)
                 .WithSkip<Employee>(wo => wo.Roles)
                 .WithOverride(new BogusOverrides());
         });

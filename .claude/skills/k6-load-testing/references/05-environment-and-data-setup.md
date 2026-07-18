@@ -13,7 +13,7 @@ module pins the target so runs are reproducible and never touch real data.
 | Load-testing against a real/shared DB | `bulk-import` and single-api commands write rows; you pollute or corrupt shared data | connection string pointing at a shared SQL Server |
 | Measuring the first (cold) iterations | .NET JIT + EF model build + first-connection cost skews p99 badly | no warm-up; p99 wildly above p95 on the first run only |
 | Not stating the environment/DB/limiter state | Numbers can't be compared run-to-run or trusted | report with no "environment" section |
-| Leaving the auto-reformat agent on | The background AI agent mutates Draft work requests and makes LLM calls mid-test, adding noise and cost | `DISABLE_AUTO_REFORMAT_AGENT` unset |
+| Leaving the auto-reformat agent on | The background AI agent mutates Draft work orders and makes LLM calls mid-test, adding noise and cost | `DISABLE_AUTO_REFORMAT_AGENT` unset |
 | Running smoke against a not-yet-ready app | Startup/migration still in progress → spurious 500s | no `/_healthcheck` gate before load |
 
 ## What "good" looks like

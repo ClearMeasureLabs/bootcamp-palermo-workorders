@@ -8,8 +8,8 @@ public class Role(string name, bool canCreate, bool canFulfill) : EntityBase<Rol
 
     public string Name { get; set; } = name;
 
-    public bool CanCreateWorkRequest { get; set; } = canCreate;
+    public bool CanCreateWorkOrder { get; set; } = canCreate;
 
-    public bool CanFulfillWorkRequest { get; set; } = canFulfill;
+    public bool CanFulfillWorkOrder { get; set; } = canFulfill;
     public override Guid Id { get; set; }
 }

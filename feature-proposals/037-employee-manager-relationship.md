@@ -1,5 +1,5 @@
 ## Why
-Establishing a manager-employee hierarchy enables supervisors to view their direct reports' work requests, supports approval workflows, and provides organizational context for work request management. This relationship is foundational for future features like escalation chains and management dashboards.
+Establishing a manager-employee hierarchy enables supervisors to view their direct reports' work orders, supports approval workflows, and provides organizational context for work order management. This relationship is foundational for future features like escalation chains and management dashboards.
 
 ## What Changes
 - Add a nullable `ManagerId` self-referencing foreign key and `Manager` navigation property to the `Employee` entity in `src/Core/Model/`
@@ -10,7 +10,7 @@ Establishing a manager-employee hierarchy enables supervisors to view their dire
 - Create a `ManagerChainQuery` in `src/Core/Queries/` to retrieve the reporting chain upward
 - Add MediatR handlers in `src/DataAccess/Handlers/` for both queries
 - Display the reporting chain on the employee profile page in `src/UI/Client/`
-- Allow managers to view all direct reports' work requests from the profile page
+- Allow managers to view all direct reports' work orders from the profile page
 - Add API endpoints in `src/UI/Api/` for the new queries
 
 ## Capabilities
@@ -18,7 +18,7 @@ Establishing a manager-employee hierarchy enables supervisors to view their dire
 - Manager-employee self-referencing relationship on the Employee entity
 - Reporting chain display on employee profile page (employee's manager, manager's manager, etc.)
 - Direct reports list on employee profile page for managers
-- Managers can navigate to view direct reports' work requests
+- Managers can navigate to view direct reports' work orders
 
 ### Modified Capabilities
 - Employee profile page enhanced with reporting chain and direct reports sections
@@ -51,4 +51,4 @@ Establishing a manager-employee hierarchy enables supervisors to view their dire
 - User views an employee profile and sees the reporting chain (manager, manager's manager)
 - User views a manager's profile and sees a list of direct reports
 - User clicks a direct report name and navigates to that employee's profile
-- User can view work requests for a direct report from the manager's profile page
+- User can view work orders for a direct report from the manager's profile page

@@ -12,9 +12,9 @@ public class StateCommandListTests
     public void ShouldGetNoValidStateCommandsForWrongUser()
     {
         var facilitator = new StateCommandList();
-        var workRequest = new WorkRequest();
+        var workOrder = new WorkOrder();
         var employee = new Employee();
-        var commands = facilitator.GetValidStateCommands(workRequest, employee);
+        var commands = facilitator.GetValidStateCommands(workOrder, employee);
 
         Assert.That(commands.Length, Is.EqualTo(0));
     }
@@ -23,7 +23,7 @@ public class StateCommandListTests
     public void ShouldReturnAllStateCommandsInCorrectOrder()
     {
         var facilitator = new StateCommandList();
-        var commands = facilitator.GetAllStateCommands(new WorkRequest(), new Employee());
+        var commands = facilitator.GetAllStateCommands(new WorkOrder(), new Employee());
 
         Assert.That(commands.Length, Is.EqualTo(6));
 
@@ -56,9 +56,9 @@ public class StateCommandListTests
     [Test]
     public void ShouldGetValidMatchingCommands()
     {
-        var workRequest = new WorkRequest();
+        var workOrder = new WorkOrder();
         var employee = new Employee();
-        workRequest.Creator = employee;
+        workOrder.Creator = employee;
         var stubFacilitator = new StubStateCommandList();
         var expected = new StubbedStateCommand(true)
         {
@@ -74,7 +74,7 @@ public class StateCommandListTests
 
         stubFacilitator.CommandsToReturn = commandsToReturn;
 
-        var commands = stubFacilitator.GetMatchingCommand(workRequest, employee, "Save");
+        var commands = stubFacilitator.GetMatchingCommand(workOrder, employee, "Save");
 
         Assert.That(commands, Is.SameAs(expected));
         }
@@ -83,7 +83,7 @@ public class StateCommandListTests
     {
         public IStateCommand[] CommandsToReturn { get; set; } = null!;
 
-        public override IStateCommand[] GetAllStateCommands(WorkRequest workRequest, Employee employee)
+        public override IStateCommand[] GetAllStateCommands(WorkOrder workOrder, Employee employee)
         {
             return CommandsToReturn;
         }
@@ -103,7 +103,7 @@ public class StateCommandListTests
             return TransitionVerbPresentTense == commandName;
 		}
 
-        public WorkRequestStatus GetBeginStatus()
+        public WorkOrderStatus GetBeginStatus()
         {
             throw new NotImplementedException();
         }

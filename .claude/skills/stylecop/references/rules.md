@@ -36,7 +36,7 @@ Applies to **public / exposed** members only. Do **not** flag missing docs on
 Non-compliant (public, undocumented):
 
 ```csharp
-public sealed class WorkRequest
+public sealed class WorkOrder
 {
     public string Number { get; set; }   // SA1600 (suggestion): public, no XML doc
 }
@@ -46,9 +46,9 @@ Compliant:
 
 ```csharp
 /// <summary>Represents a unit of maintenance work.</summary>
-public sealed class WorkRequest
+public sealed class WorkOrder
 {
-    /// <summary>Gets or sets the work request number.</summary>
+    /// <summary>Gets or sets the work order number.</summary>
     public string Number { get; set; }
 }
 ```

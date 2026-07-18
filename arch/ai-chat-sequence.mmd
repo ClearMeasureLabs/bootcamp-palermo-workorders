@@ -8,7 +8,7 @@ sequenceDiagram
     participant SBus as ServerRealtimeBus<br/>(MediatR)
     participant H as ApplicationChatHandler
     participant TP as ToolProvider<br/>(loopback MCP client)
-    participant MCP as /mcp endpoint<br/>(WorkRequestTools/EmployeeTools)
+    participant MCP as /mcp endpoint<br/>(WorkOrderTools/EmployeeTools)
     participant DB as IBus -> EF Core -> SQL
     participant CF as ChatClientFactory
     participant AOAI as Azure OpenAI
@@ -34,10 +34,10 @@ sequenceDiagram
     H->>AOAI: GetResponseAsync(systemPrompt + history + tools)
 
     loop tool-calling loop (automatic)
-        AOAI-->>H: tool call request (e.g. get-work-request)
+        AOAI-->>H: tool call request (e.g. get-work-order)
         H->>MCP: invoke tool
-        MCP->>DB: IBus.Send(WorkRequestByNumberQuery)
-        DB-->>MCP: WorkRequest data
+        MCP->>DB: IBus.Send(WorkOrderByNumberQuery)
+        DB-->>MCP: WorkOrder data
         MCP-->>H: tool result
         H->>AOAI: tool result
     end

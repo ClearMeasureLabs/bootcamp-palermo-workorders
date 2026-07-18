@@ -1,19 +1,19 @@
 ## Why
-Integration partners often need to create or update multiple work requests in a single transaction, such as importing from an external maintenance system or bulk-reassigning during shift changes. A batch API endpoint reduces HTTP overhead, simplifies client code, and enables atomic multi-operation requests.
+Integration partners often need to create or update multiple work orders in a single transaction, such as importing from an external maintenance system or bulk-reassigning during shift changes. A batch API endpoint reduces HTTP overhead, simplifies client code, and enables atomic multi-operation requests.
 
 ## What Changes
-- Add `BatchOperationRequest` record in `src/UI/Api/Models/` containing an array of `BatchOperationItem` (each with OperationType, WorkRequestNumber, and payload)
-- Add `BatchOperationResult` record with per-item results: Index, Success, StatusCode, ErrorMessage, WorkRequestNumber
+- Add `BatchOperationRequest` record in `src/UI/Api/Models/` containing an array of `BatchOperationItem` (each with OperationType, WorkOrderNumber, and payload)
+- Add `BatchOperationResult` record with per-item results: Index, Success, StatusCode, ErrorMessage, WorkOrderNumber
 - Add `BatchController` in `src/UI/Api/` with endpoint `POST /api/batch` accepting `BatchOperationRequest`
-- Support operation types: `Create` (creates draft work requests) and `UpdateStatus` (transitions work request status)
+- Support operation types: `Create` (creates draft work orders) and `UpdateStatus` (transitions work order status)
 - Execute each operation via `IBus` using existing commands; collect individual results
 - Return 200 with array of per-item results even if some operations fail (partial success model)
 - Add validation for maximum batch size (configurable, default 50 operations per request)
 
 ## Capabilities
 ### New Capabilities
-- Batch create multiple draft work requests in a single API call
-- Batch update statuses of multiple work requests in a single API call
+- Batch create multiple draft work orders in a single API call
+- Batch update statuses of multiple work orders in a single API call
 - Per-item success/failure reporting with individual HTTP status codes and error messages
 - Configurable maximum batch size to prevent abuse
 
@@ -38,10 +38,10 @@ Integration partners often need to create or update multiple work requests in a 
 - `BatchOperationResult_ContainsCorrectIndex` - Each result item's Index matches its position in the request array
 
 ### Integration Tests
-- `Batch_CreateWorkRequests_AllPersistedInDatabase` - Send batch create, query database, verify all work requests exist
-- `Batch_UpdateStatuses_AllTransitionsPersisted` - Send batch status updates, verify each work request has correct new status
+- `Batch_CreateWorkOrders_AllPersistedInDatabase` - Send batch create, query database, verify all work orders exist
+- `Batch_UpdateStatuses_AllTransitionsPersisted` - Send batch status updates, verify each work order has correct new status
 - `Batch_PartialFailure_SuccessfulItemsStillPersisted` - Batch with mix of valid and invalid items persists valid items
 
 ### Acceptance Tests
-- `BatchApi_CreateMultipleWorkRequests_AllVisibleInUI` - Send batch create via Playwright API context, navigate to work request list, verify all created work requests appear
-- `BatchApi_UpdateStatuses_ReflectedInUI` - Batch update work request statuses, navigate to each work request, verify new statuses displayed
+- `BatchApi_CreateMultipleWorkOrders_AllVisibleInUI` - Send batch create via Playwright API context, navigate to work order list, verify all created work orders appear
+- `BatchApi_UpdateStatuses_ReflectedInUI` - Batch update work order statuses, navigate to each work order, verify new statuses displayed

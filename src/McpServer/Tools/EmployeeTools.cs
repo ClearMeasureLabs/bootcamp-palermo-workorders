@@ -45,8 +45,8 @@ public class EmployeeTools
         Roles = emp.Roles.Select(r => new
         {
             r.Name,
-            r.CanCreateWorkRequest,
-            r.CanFulfillWorkRequest
+            r.CanCreateWorkOrder,
+            r.CanFulfillWorkOrder
         }).ToArray()
     };
 }

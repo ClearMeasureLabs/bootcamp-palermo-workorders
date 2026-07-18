@@ -35,24 +35,24 @@ These documents constrain what the AI agent can do. A good spec narrows the solu
 
 Write a spec for this feature:
 
-> **Feature: Work Request Instructions Field**
+> **Feature: Work Order Instructions Field**
 >
 > **Domain Change:**
-> - Add an `Instructions` property to `WorkRequest` (type: `string?`, nullable, no default value)
+> - Add an `Instructions` property to `WorkOrder` (type: `string?`, nullable, no default value)
 >
 > **Database:**
-> - Add migration: `ALTER TABLE dbo.WorkRequest ADD Instructions NVARCHAR(4000) NULL`
+> - Add migration: `ALTER TABLE dbo.WorkOrder ADD Instructions NVARCHAR(4000) NULL`
 > - Use next sequential migration number after existing scripts in `src/Database/scripts/Update/`
 >
 > **EF Core Mapping:**
-> - Map `Instructions` in `WorkRequestMap.cs` with `HasMaxLength(4000)`
+> - Map `Instructions` in `WorkOrderMap.cs` with `HasMaxLength(4000)`
 >
 > **Unit Tests (src/UnitTests):**
 > - `Instructions_WhenNotSet_ShouldBeNull`
 > - `Instructions_WhenSet_ShouldRetainValue`
 >
 > **Integration Test (src/IntegrationTests):**
-> - Save a work request with Instructions text, read it back, verify persistence
+> - Save a work order with Instructions text, read it back, verify persistence
 >
 > **Constraints:**
 > - No new NuGet packages
@@ -77,7 +77,7 @@ Review the generated code against the specification:
 
 | Spec Requirement | Implemented? | Correct? |
 |------------------|-------------|----------|
-| Property added to `WorkRequest.cs` in Core | | |
+| Property added to `WorkOrder.cs` in Core | | |
 | Property is `string?` with no default | | |
 | Migration script with correct number | | |
 | EF mapping with `HasMaxLength(4000)` | | |
@@ -100,7 +100,7 @@ If the output was incorrect, identify which specification was ambiguous or missi
 ### Step 7: Compare Spec Quality to Output Quality
 
 Run the experiment twice:
-1. **Vague spec:** "Add an Instructions field to work requests with tests"
+1. **Vague spec:** "Add an Instructions field to work orders with tests"
 2. **Precise spec:** The full specification from Step 2
 
 Compare the outputs. The precise spec should produce significantly better results.

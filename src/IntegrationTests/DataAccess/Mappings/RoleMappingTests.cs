@@ -33,8 +33,8 @@ public class RoleMappingTests
         // Assert
         rehydratedRole.Id.ShouldBe(role.Id);
         rehydratedRole.Name.ShouldBe("foo");
-        rehydratedRole.CanCreateWorkRequest.ShouldBeTrue();
-        rehydratedRole.CanFulfillWorkRequest.ShouldBeTrue();
+        rehydratedRole.CanCreateWorkOrder.ShouldBeTrue();
+        rehydratedRole.CanFulfillWorkOrder.ShouldBeTrue();
     }
 
     private void EmptyDatabase()

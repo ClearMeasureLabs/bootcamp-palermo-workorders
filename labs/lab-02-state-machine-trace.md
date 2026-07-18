@@ -8,7 +8,7 @@
 
 ## Objective
 
-Understand the State Command pattern and work request lifecycle by tracing every transition and its validation rules.
+Understand the State Command pattern and work order lifecycle by tracing every transition and its validation rules.
 
 ---
 
@@ -16,11 +16,11 @@ Understand the State Command pattern and work request lifecycle by tracing every
 
 ### Step 1: Map the Status Values
 
-Open `src/Core/Model/WorkRequestStatus.cs`. Document all statuses with their Code, Key, and FriendlyName.
+Open `src/Core/Model/WorkOrderStatus.cs`. Document all statuses with their Code, Key, and FriendlyName.
 
 ### Step 2: Read the State Command Base
 
-Open `src/Core/Model/StateCommands/StateCommandBase.cs`. Study `IsValid()` — it checks both `WorkRequest.Status == GetBeginStatus()` AND `UserCanExecute(CurrentUser)`.
+Open `src/Core/Model/StateCommands/StateCommandBase.cs`. Study `IsValid()` — it checks both `WorkOrder.Status == GetBeginStatus()` AND `UserCanExecute(CurrentUser)`.
 
 ### Step 3: Document Each State Command
 

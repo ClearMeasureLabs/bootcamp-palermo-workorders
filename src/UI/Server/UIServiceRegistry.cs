@@ -45,10 +45,10 @@ public class UiServiceRegistry : ServiceRegistry
             return new ServerRealtimeBus(mediator, hub);
         });
 
-        this.AddTransient<IWorkRequestNumberGenerator, WorkRequestNumberGenerator>();
+        this.AddTransient<IWorkOrderNumberGenerator, WorkOrderNumberGenerator>();
 
         // Register AI agent and background service
-        this.AddTransient<WorkRequestReformatAgent>();
+        this.AddTransient<WorkOrderReformatAgent>();
         this.AddHostedService<AutoReformatAgentService>();
 
         Scan(scanner =>

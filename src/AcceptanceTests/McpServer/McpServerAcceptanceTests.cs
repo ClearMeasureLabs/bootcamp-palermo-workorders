@@ -40,22 +40,22 @@ public class McpServerAcceptanceTests : AcceptanceTestBase
         _helper!.Tools.Count.ShouldBeGreaterThanOrEqualTo(6);
 
         var toolNames = _helper.Tools.Select(t => t.Name).ToList();
-        toolNames.ShouldContain("list-work-requests");
-        toolNames.ShouldContain("get-work-request");
-        toolNames.ShouldContain("create-work-request");
-        toolNames.ShouldContain("execute-work-request-command");
+        toolNames.ShouldContain("list-work-orders");
+        toolNames.ShouldContain("get-work-order");
+        toolNames.ShouldContain("create-work-order");
+        toolNames.ShouldContain("execute-work-order-command");
         toolNames.ShouldContain("list-employees");
         toolNames.ShouldContain("get-employee");
     }
 
     [Test]
-    public async Task ShouldCreateWorkRequestViaDirectToolCall()
+    public async Task ShouldCreateWorkOrderViaDirectToolCall()
     {
         var bus = TestHost.GetRequiredService<IBus>();
         var employees = await bus.Send(new EmployeeGetAllQuery());
-        var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkRequest));
+        var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
 
-        var result = await _helper!.CallToolDirectly("create-work-request",
+        var result = await _helper!.CallToolDirectly("create-work-order",
             new Dictionary<string, object?>
             {
                 ["title"] = "Direct MCP tool test",

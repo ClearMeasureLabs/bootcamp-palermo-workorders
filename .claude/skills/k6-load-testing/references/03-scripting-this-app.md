@@ -15,7 +15,7 @@ in `SKILL.md`).
 | GET | `/api/health`, `/api/health/detailed` | Yes | Yes | 200 JSON / 304 | |
 | GET | `/api/diagnostics` | Yes | Yes | 200 JSON / 304 | |
 | GET | `/api/v1.0/WeatherForecast` | Yes | Yes | 200 JSON / 304 | 5-item array |
-| POST | `/api/work-requests/bulk-import` | Yes | Yes | 200 JSON | multipart `file` (CSV); realistic write load |
+| POST | `/api/work-orders/bulk-import` | Yes | Yes | 200 JSON | multipart `file` (CSV); realistic write load |
 | POST | `/api/blazor-wasm-single-api` | Yes | **No** (no attribute) | 200 JSON-string | MediatR envelope; realistic DB read/write, un-throttled |
 
 Baseline latency/throughput → the open GETs (`/api/ping`, `/api/time`,
@@ -101,7 +101,7 @@ const API_KEY = __ENV.API_KEY || '';
 // Assembly-qualified names (verify against src/Core/Queries before running):
 const T = {
   employeeGetAll: 'ClearMeasure.Bootcamp.Core.Queries.EmployeeGetAllQuery, Core',
-  workRequestByNumber: 'ClearMeasure.Bootcamp.Core.Queries.WorkRequestByNumberQuery, Core',
+  workOrderByNumber: 'ClearMeasure.Bootcamp.Core.Queries.WorkOrderByNumberQuery, Core',
 };
 
 export const options = {
@@ -156,7 +156,7 @@ export const options = {
 export default function () {
   const headers = {};
   if (API_KEY) headers['X-Api-Key'] = API_KEY;
-  const res = http.post(`${BASE}/api/work-requests/bulk-import`,
+  const res = http.post(`${BASE}/api/work-orders/bulk-import`,
     { file: http.file(csv, 'load.csv', 'text/csv') }, { headers });
   check(res, {
     'status is 200': (r) => r.status === 200,

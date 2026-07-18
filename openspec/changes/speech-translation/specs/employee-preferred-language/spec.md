@@ -63,7 +63,7 @@ Unit tests SHALL be added to the existing `EmployeeTests` class in `src/UnitTest
 - **THEN** the test SHALL include `Assert.That(employee.PreferredLanguage, Is.EqualTo("en-US"))`
 
 ### Requirement: Integration test for PreferredLanguage persistence
-Integration tests SHALL be added in `src/IntegrationTests/DataAccess/` that verify `PreferredLanguage` survives a database round-trip. Tests SHALL follow the existing patterns in `EmployeeQueryHandlerTests.cs` and `WorkRequestMappingTests.cs`: clean the database first with `new DatabaseTests().Clean()`, use `TestHost.GetRequiredService<DbContext>()` for data setup, and use Shouldly assertions.
+Integration tests SHALL be added in `src/IntegrationTests/DataAccess/` that verify `PreferredLanguage` survives a database round-trip. Tests SHALL follow the existing patterns in `EmployeeQueryHandlerTests.cs` and `WorkOrderMappingTests.cs`: clean the database first with `new DatabaseTests().Clean()`, use `TestHost.GetRequiredService<DbContext>()` for data setup, and use Shouldly assertions.
 
 #### Scenario: ShouldPersistPreferredLanguage
 - **GIVEN** test method `ShouldPersistPreferredLanguage` exists in `src/IntegrationTests/DataAccess/EmployeeQueryHandlerTests.cs`

@@ -76,7 +76,7 @@ Unit tests SHALL be added in a new file `src/UnitTests/LlmGateway/TranslationSer
 - **THEN** the result SHALL be `null` or `""` (without calling LLM, no exception thrown)
 
 ### Requirement: Integration tests for TranslationService
-Integration tests SHALL be added in a new file `src/IntegrationTests/LlmGateway/TranslationServiceTests.cs`. These tests SHALL follow the same pattern as `WorkRequestChatHandlerTests.cs`: extend `LlmTestBase` (which skips tests when AI is unavailable via `[SetUp]`) and use `TestHost.GetRequiredService<ChatClientFactory>()` to obtain a real `ChatClientFactory`.
+Integration tests SHALL be added in a new file `src/IntegrationTests/LlmGateway/TranslationServiceTests.cs`. These tests SHALL follow the same pattern as `WorkOrderChatHandlerTests.cs`: extend `LlmTestBase` (which skips tests when AI is unavailable via `[SetUp]`) and use `TestHost.GetRequiredService<ChatClientFactory>()` to obtain a real `ChatClientFactory`.
 
 #### Scenario: ShouldTranslateTextToSpanish
 - **GIVEN** test method `ShouldTranslateTextToSpanish` exists in `src/IntegrationTests/LlmGateway/TranslationServiceTests.cs`
@@ -100,7 +100,7 @@ Integration tests SHALL be added in a new file `src/IntegrationTests/LlmGateway/
 ### Constraints
 - The `ITranslationService` interface SHALL be defined in `src/Core/Services/` (Core project, no new project references)
 - The `TranslationService` implementation SHALL be in `src/LlmGateway/` (LlmGateway project, which already references Core)
-- Follow the same `IChatClient` usage pattern as `WorkRequestReformatAgent` in `src/UI/Server/WorkRequestReformatAgent.cs`: system prompt + user content, call `GetResponseAsync`, parse the text response
+- Follow the same `IChatClient` usage pattern as `WorkOrderReformatAgent` in `src/UI/Server/WorkOrderReformatAgent.cs`: system prompt + user content, call `GetResponseAsync`, parse the text response
 - No new NuGet packages required for translation (uses existing `Microsoft.Extensions.AI` abstractions)
 - No tools/function-calling needed for translation — use a simple `GetResponseAsync` call without `ChatOptions.Tools`
 - Unit tests SHALL be in a new file `src/UnitTests/LlmGateway/TranslationServiceTests.cs`

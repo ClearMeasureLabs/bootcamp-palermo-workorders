@@ -36,24 +36,24 @@ public class McpServerLlmAcceptanceTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task ShouldListWorkRequestsViaLlm()
+    public async Task ShouldListWorkOrdersViaLlm()
     {
         var response = await _helper!.SendPrompt(
-            "Use the list-work-requests tool to list all work requests in the system. " +
-            "Return the work request numbers you find.");
+            "Use the list-work-orders tool to list all work orders in the system. " +
+            "Return the work order numbers you find.");
 
         response.Text.ShouldNotBeNullOrEmpty();
     }
 
     [Test, Retry(2)]
-    public async Task ShouldGetWorkRequestByNumberViaLlm()
+    public async Task ShouldGetWorkOrderByNumberViaLlm()
     {
         var bus = TestHost.GetRequiredService<IBus>();
-        var workRequests = await bus.Send(new WorkRequestSpecificationQuery());
-        var knownOrder = workRequests.First();
+        var workOrders = await bus.Send(new WorkOrderSpecificationQuery());
+        var knownOrder = workOrders.First();
 
         var response = await _helper!.SendPrompt(
-            $"Use the get-work-request tool to get the details of work request number '{knownOrder.Number}'. " +
+            $"Use the get-work-order tool to get the details of work order number '{knownOrder.Number}'. " +
             "Return the title and status.");
 
         response.Text.ShouldNotBeNullOrEmpty();
@@ -61,14 +61,14 @@ public class McpServerLlmAcceptanceTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task ShouldCreateWorkRequestViaLlm()
+    public async Task ShouldCreateWorkOrderViaLlm()
     {
         var bus = TestHost.GetRequiredService<IBus>();
         var employees = await bus.Send(new EmployeeGetAllQuery());
-        var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkRequest));
+        var creator = employees.First(e => e.Roles.Any(r => r.CanCreateWorkOrder));
 
         var response = await _helper!.SendPrompt(
-            $"Call the create-work-request tool with these exact parameters: " +
+            $"Call the create-work-order tool with these exact parameters: " +
             $"title='Repair sanctuary roof', description='Roof tiles need replacement', " +
             $"creatorUsername='{creator.UserName}'.");
 

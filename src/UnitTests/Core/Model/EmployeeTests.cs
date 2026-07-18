@@ -107,19 +107,19 @@ public class EmployeeTests
     }
 
     [Test]
-    public void ShouldBeAbleToCreateWorkRequest()
+    public void ShouldBeAbleToCreateWorkOrder()
     {
         var employee1 = new Employee("", "1", "1", "");
         employee1.AddRole(new Role("", true, false));
-        Assert.That(employee1.CanCreateWorkRequest(), Is.EqualTo(true));
+        Assert.That(employee1.CanCreateWorkOrder(), Is.EqualTo(true));
     }
 
     [Test]
-    public void ShouldBeAbleToFulfillWorkRequest()
+    public void ShouldBeAbleToFulfillWorkOrder()
     {
         var employee1 = new Employee("", "1", "1", "");
         employee1.AddRole(new Role("", false, true));
-        Assert.That(employee1.CanFulfillWorkRequest(), Is.EqualTo(true));
+        Assert.That(employee1.CanFulfillWorkOrder(), Is.EqualTo(true));
     }
 
     [Test]

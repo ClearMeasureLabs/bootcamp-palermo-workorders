@@ -1,5 +1,5 @@
 ## Why
-Assigning work requests to employees who are out of office or on leave causes delays and confusion. Displaying employee availability status during assignment helps supervisors make better decisions and reduces the need to reassign work requests.
+Assigning work orders to employees who are out of office or on leave causes delays and confusion. Displaying employee availability status during assignment helps supervisors make better decisions and reduces the need to reassign work orders.
 
 ## What Changes
 - Create an `AvailabilityStatus` smart enum in `src/Core/Model/` with values: Available, Busy, OutOfOffice, OnLeave
@@ -8,7 +8,7 @@ Assigning work requests to employees who are out of office or on leave causes de
 - Create a database migration script in `src/Database/scripts/Update/` to add the AvailabilityStatusId column to the Employee table
 - Update the EF Core entity configuration in `src/DataAccess/` for the new property
 - Add a MediatR handler in `src/DataAccess/Handlers/` for the availability command
-- Update the work request assignment dropdown in `src/UI/Client/` to display availability status next to each employee name
+- Update the work order assignment dropdown in `src/UI/Client/` to display availability status next to each employee name
 - Show a warning dialog when assigning to an employee with a non-Available status
 - Add an API endpoint in `src/UI/Api/` for updating employee availability
 
@@ -16,11 +16,11 @@ Assigning work requests to employees who are out of office or on leave causes de
 ### New Capabilities
 - AvailabilityStatus smart enum with Available, Busy, OutOfOffice, and OnLeave values
 - Availability status displayed next to employee names in assignment dropdowns
-- Warning dialog when attempting to assign a work request to a non-available employee
+- Warning dialog when attempting to assign a work order to a non-available employee
 - Ability for employees or administrators to update availability status
 
 ### Modified Capabilities
-- Work request assignment dropdown enhanced with availability indicators
+- Work order assignment dropdown enhanced with availability indicators
 - Employee profile page shows current availability status
 
 ## Impact
@@ -47,6 +47,6 @@ Assigning work requests to employees who are out of office or on leave causes de
 
 ### Acceptance Tests
 - User sees availability status indicators next to employee names in the assignment dropdown
-- User assigns a work request to an unavailable employee and sees a warning dialog
+- User assigns a work order to an unavailable employee and sees a warning dialog
 - User can confirm or cancel the assignment after seeing the warning
 - User updates their own availability status from their profile page

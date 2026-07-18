@@ -9,7 +9,7 @@ This file provides standards for GitHub Copilot to follow when generating code f
 **Solution:** `src/ChurchBulletin.sln` — Core, DataAccess, Database, UI.Server, UI.Client, UI.Api, UI.Shared, LlmGateway, ChurchBulletin.AppHost, ChurchBulletin.ServiceDefaults, Worker, UnitTests, IntegrationTests, AcceptanceTests.
 
 **Key Paths:**
-- Domain models: `src/Core/` (WorkRequest, Employee, WorkRequestStatus, Role)
+- Domain models: `src/Core/` (WorkOrder, Employee, WorkOrderStatus, Role)
 - Queries/state commands: `src/Core/Queries/`, `src/Core/Model/StateCommands/`
 - Data access: `src/DataAccess/` (EF Core, MediatR handlers in `Handlers/`, `Mappings/`)
 - UI Server: `src/UI/Server/` (Blazor host, DI via Lamar)
@@ -19,10 +19,10 @@ This file provides standards for GitHub Copilot to follow when generating code f
 - Tests: `src/UnitTests/`, `src/IntegrationTests/`, `src/AcceptanceTests/`
 
 **Domain Model:**
-- `WorkRequest`: Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate
+- `WorkOrder`: Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate
 - `Employee`: UserName, FirstName, LastName, EmailAddress, Roles
-- `WorkRequestStatus`: Draft, Assigned, InProgress, Complete, Cancelled
-- `Role`: Name, CanCreateWorkRequest, CanFulfillWorkRequest
+- `WorkOrderStatus`: Draft, Assigned, InProgress, Complete, Cancelled
+- `Role`: Name, CanCreateWorkOrder, CanFulfillWorkOrder
 
 **Architecture Rules (Strict):**
 - Core → no dependencies (domain models, interfaces, queries)
@@ -46,7 +46,7 @@ This file provides standards for GitHub Copilot to follow when generating code f
 
 ## Project Overview
 
-This is a Work Request management application built with:
+This is a Work Order management application built with:
 - **.NET 10.0** - Primary framework
 - **Blazor** - UI framework (WebAssembly + Server)
 - **Entity Framework Core 10** - Data access
@@ -126,7 +126,7 @@ If either script fails:
 
 All branches must be created inside a folder matching the username of the account creating the branch. The format is `{username}/{branch-description}`.
 
-- For user `jeffreypalermo`, branches go under `jeffreypalermo/` (e.g., `jeffreypalermo/fix-work-request-status`)
+- For user `jeffreypalermo`, branches go under `jeffreypalermo/` (e.g., `jeffreypalermo/fix-work-order-status`)
 - For user `johnsmith`, branches go under `johnsmith/` (e.g., `johnsmith/add-employee-search`)
 - For AI agents (Copilot, Claude, Cursor), use the username of the account that initiated the session
 
@@ -217,7 +217,7 @@ All branches must be created inside a folder matching the username of the accoun
 ### Test Naming Convention
 - `[MethodName]_[Scenario]_[ExpectedResult]`
 - Examples:
-  - `GetWorkRequest_WithValidId_ReturnsWorkRequest`
+  - `GetWorkOrder_WithValidId_ReturnsWorkOrder`
   - `SaveChurchBulletin_WithMissingTitle_ThrowsValidationException`
 
 ### Acceptance Tests from Issues (IMPORTANT for Copilot SWE Agent)
@@ -225,7 +225,7 @@ All branches must be created inside a folder matching the username of the accoun
 When implementing a feature from a GitHub issue:
 
 1. **Check for "Acceptance Test Scenarios" section** in the issue body
-2. **Implement each specified test** in the fixture file indicated (e.g., `WorkRequestManageTests.cs`)
+2. **Implement each specified test** in the fixture file indicated (e.g., `WorkOrderManageTests.cs`)
 3. **Follow the steps provided** for each test scenario
 4. **Run acceptance tests** after implementation to verify the feature works
 
@@ -249,7 +249,7 @@ dotnet test --filter "FullyQualifiedName~TestClassName"
 
 **Key Helper Methods (from AcceptanceTestBase):**
 - `LoginAsCurrentUser()` - Authenticate test user
-- `CreateAndSaveNewWorkRequest()` - Create test work request
+- `CreateAndSaveNewWorkOrder()` - Create test work order
 - `Click(testId)` - Click element by data-testid
 - `Input(testId, value)` - Fill input field
 - `Select(testId, value)` - Select dropdown option

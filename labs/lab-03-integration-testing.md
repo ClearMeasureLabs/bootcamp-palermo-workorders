@@ -38,28 +38,28 @@ public async Task ShouldPersistAssignedDateWhenAssigning()
     context.Add(assignee);
     await context.SaveChangesAsync();
 
-    var workRequest = Faker<WorkRequest>();
-    workRequest.Id = Guid.Empty;
-    workRequest.Creator = creator;
-    workRequest.Assignee = assignee;
-    workRequest.CreatedDate = null;
+    var workOrder = Faker<WorkOrder>();
+    workOrder.Id = Guid.Empty;
+    workOrder.Creator = creator;
+    workOrder.Assignee = assignee;
+    workOrder.CreatedDate = null;
 
     var saveCommand = RemotableRequestTests.SimulateRemoteObject(
-        new SaveDraftCommand(workRequest, creator));
+        new SaveDraftCommand(workOrder, creator));
     var handler = TestHost.GetRequiredService<StateCommandHandler>();
     var saveResult = await handler.Handle(saveCommand);
 
     var assignCommand = RemotableRequestTests.SimulateRemoteObject(
-        new DraftToAssignedCommand(saveResult.WorkRequest, creator));
+        new DraftToAssignedCommand(saveResult.WorkOrder, creator));
     var assignResult = await handler.Handle(assignCommand);
 
-    assignResult.WorkRequest.Status.ShouldBe(WorkRequestStatus.Assigned);
-    assignResult.WorkRequest.AssignedDate.ShouldNotBeNull();
+    assignResult.WorkOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
+    assignResult.WorkOrder.AssignedDate.ShouldNotBeNull();
 
     var verifyContext = TestHost.GetRequiredService<DbContext>();
-    var persisted = verifyContext.Find<WorkRequest>(assignResult.WorkRequest.Id);
+    var persisted = verifyContext.Find<WorkOrder>(assignResult.WorkOrder.Id);
     persisted.ShouldNotBeNull();
-    persisted!.Status.ShouldBe(WorkRequestStatus.Assigned);
+    persisted!.Status.ShouldBe(WorkOrderStatus.Assigned);
 }
 ```
 

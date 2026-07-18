@@ -60,5 +60,5 @@ Several PlantUML files include remote C4 library snippets via `!includeurl`. To 
 | `arch-c4-system.md` | C4Context | Church Bulletin system context |
 | `arch-c4-container-deployment.md` | C4Container | Containers (DB, app, UI) |
 | `arch-c4-component-project-dependencies.md` | C4Component | Solution/project structure |
-| `arch-c4-class-domain-model.md` | C4Component | Work request domain model |
+| `arch-c4-class-domain-model.md` | C4Component | Work order domain model |
 | `WorflowFor*.md` | Sequence | Command workflow sequence diagrams |

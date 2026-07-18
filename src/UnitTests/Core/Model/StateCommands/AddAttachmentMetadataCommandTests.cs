@@ -10,20 +10,20 @@ public class AddAttachmentMetadataCommandTests
     [Test]
     public void AddAttachmentMetadataCommand_ShouldAddAttachment()
     {
-        var workRequest = new WorkRequest { Id = Guid.NewGuid() };
+        var workOrder = new WorkOrder { Id = Guid.NewGuid() };
         var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
         uploader.Id = Guid.NewGuid();
         var uploadDate = new DateTime(2025, 3, 1, 8, 0, 0);
 
         var command = new AddAttachmentMetadataCommand(
-            workRequest, uploader, "damage-photo.jpg", "image/jpeg", 4096);
+            workOrder, uploader, "damage-photo.jpg", "image/jpeg", 4096);
 
         var attachment = command.CreateAttachment(uploadDate);
 
         attachment.FileName.ShouldBe("damage-photo.jpg");
         attachment.ContentType.ShouldBe("image/jpeg");
         attachment.FileSize.ShouldBe(4096L);
-        attachment.WorkRequestId.ShouldBe(workRequest.Id);
+        attachment.WorkOrderId.ShouldBe(workOrder.Id);
         attachment.UploadedById.ShouldBe(uploader.Id);
         attachment.UploadedDate.ShouldBe(uploadDate);
     }
