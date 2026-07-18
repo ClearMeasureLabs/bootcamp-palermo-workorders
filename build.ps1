@@ -20,7 +20,7 @@ $projectConfig = $env:BuildConfiguration
 $framework = "net10.0"
 $version = $env:BUILD_BUILDNUMBER
 
-$verbosity = "quiet"
+$verbosity = "normal"
 
 $build_dir = Join-Path $base_dir "build"
 $test_dir = Join-Path $build_dir "test"
