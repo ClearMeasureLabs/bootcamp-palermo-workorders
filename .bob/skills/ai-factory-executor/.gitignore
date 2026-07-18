@@ -1,0 +1,9 @@
+# Vendored private IBM Bob Shell package - NOT redistributable in the repo.
+# Regenerate on a machine with bobshell installed:
+#   npm pack --pack-destination . $(npm root -g)/bobshell
+bobshell-*.tgz
+
+# Build artifacts / runtime output
+bin/
+obj/
+logs/

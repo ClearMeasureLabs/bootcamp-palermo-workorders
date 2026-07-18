@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  ai-factory-executor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-factory-executor:latest
+    container_name: ai-factory-executor
+    
+    # Mount GitHub CLI config and workspace
+    volumes:
+      # GitHub CLI credentials (read-only)
+      - ~/.config/gh:/root/.config/gh:ro
+      # Repository workspace
+      - ../../..:/workspace
+    
+    # Set working directory to repository root
+    working_dir: /workspace
+    
+    # Environment variables
+    environment:
+      # GitHub token (alternative to mounted config)
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      # Git configuration
+      - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-AI Factory}
+      - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-ai-factory@example.com}
+      - GIT_COMMITTER_NAME=${GIT_COMMITTER_NAME:-AI Factory}
+      - GIT_COMMITTER_EMAIL=${GIT_COMMITTER_EMAIL:-ai-factory@example.com}
+    
+    # Override default command
+    command: ["--dry-run"]
+    
+    # Network mode for GitHub API access
+    network_mode: bridge
+
+  # Test discovery service
+  test-discovery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build
+    image: ai-factory-executor:build
+    container_name: ai-factory-test-discovery
+    
+    volumes:
+      - ~/.config/gh:/root/.config/gh:ro
+      - ../../..:/workspace
+    
+    working_dir: /workspace
+    
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    
+    # Run test discovery
+    command: ["dotnet", "run", "--project", ".bob/skills/ai-factory-executor/test-discovery.csproj"]
+    
+    network_mode: bridge

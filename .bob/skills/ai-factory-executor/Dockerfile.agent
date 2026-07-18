@@ -1,0 +1,158 @@
+# AI Factory Agent Container
+# Single-stage build for the IBM Bob Shell (bobshell) agent with a full
+# .NET development environment. The agent runs `bob` non-interactively to
+# implement a GitHub issue, then the entrypoint commits, pushes, and opens a PR.
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ENV DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+ENV DOTNET_NOLOGO=1
+ENV NUGET_PACKAGES=/tmp/nuget-packages
+
+# Install base dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    wget \
+    apt-transport-https \
+    software-properties-common \
+    curl \
+    jq \
+    vim \
+    less \
+    tmux \
+    gnupg \
+    lsb-release \
+    ca-certificates
+
+# Install PowerShell 7+
+RUN wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" && \
+    dpkg -i packages-microsoft-prod.deb && \
+    apt-get update && \
+    apt-get install -y powershell && \
+    rm packages-microsoft-prod.deb
+
+# Install git
+RUN apt-get install -y git
+
+# Install GitHub CLI
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y gh
+
+# Install Docker CLI (for nested container scenarios like SQL-Container mode)
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y docker-ce-cli
+
+# Install SQLite
+RUN apt-get install -y sqlite3 libsqlite3-dev
+
+# Install Playwright dependencies for browser automation (AcceptanceTests)
+# Note: libasound2 replaced with libasound2t64 in Ubuntu 24.04
+RUN apt-get install -y \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libasound2t64 \
+    libatspi2.0-0 \
+    libxshmfence1
+
+# Install additional build tools
+RUN apt-get install -y \
+    build-essential \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20 LTS (required by the IBM Bob Shell CLI)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    node --version && npm --version
+
+# Install the IBM Bob Shell CLI (bobshell) globally.
+# bobshell is a private IBM package (not on the public npm registry), so it is
+# vendored as a tarball (produced on the host via `npm pack`). Its only runtime
+# dependency, pdf-parse, is public and resolved from npm during install.
+COPY bobshell-1.0.6.tgz /tmp/bobshell-1.0.6.tgz
+RUN npm install -g /tmp/bobshell-1.0.6.tgz && \
+    rm /tmp/bobshell-1.0.6.tgz && \
+    bob --version
+
+# Install the Claude Code CLI (public package). The container can run either
+# agent, selected at runtime via the AI_AGENT environment variable.
+RUN npm install -g @anthropic-ai/claude-code && \
+    claude --version
+
+# Install SQL Server PowerShell module
+RUN pwsh -Command "Install-Module -Name SqlServer -Force -AllowClobber -Scope AllUsers"
+
+# Update .NET workloads to prevent verification issues during build
+RUN dotnet workload update --skip-sign-check || true
+
+# Install Playwright browsers + OS deps for the AcceptanceTests quality gate.
+# The repo's build.ps1 runs `playwright.ps1 install chromium --with-deps`; the
+# browsers are pre-installed here into a shared, world-readable location so that
+# runtime call is a fast no-op. Version matches Microsoft.Playwright (1.54.0).
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN apt-get update && apt-get install -y \
+    fonts-liberation \
+    libappindicator3-1 \
+    xdg-utils \
+    sudo && \
+    npm install -g playwright@1.54.0 && \
+    npx --yes playwright@1.54.0 install --with-deps chromium && \
+    chmod -R a+rX /ms-playwright && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security (use UID 1001 to avoid conflict with base image)
+RUN useradd -m -s /bin/bash -u 1001 bobagent && \
+    mkdir -p /workspace /home/bobagent/.bob /home/bobagent/.config/gh /home/bobagent/.nuget && \
+    chown -R bobagent:bobagent /workspace /home/bobagent
+
+# Add bobagent to docker group (for Docker CLI access)
+RUN groupadd -f docker && usermod -aG docker bobagent
+
+# Allow bobagent passwordless sudo so the acceptance-test gate's
+# `playwright install --with-deps` (which apt-installs) succeeds as non-root.
+RUN echo "bobagent ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/bobagent && \
+    chmod 0440 /etc/sudoers.d/bobagent
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy entrypoint scripts
+COPY agent-entrypoint.ps1 /usr/local/bin/agent-entrypoint.ps1
+COPY experiment-entrypoint.ps1 /usr/local/bin/experiment-entrypoint.ps1
+RUN chmod +x /usr/local/bin/agent-entrypoint.ps1 /usr/local/bin/experiment-entrypoint.ps1
+
+# Switch to non-root user
+USER bobagent
+
+# Set environment variables for bobagent user
+ENV PATH="${PATH}:/home/bobagent/.dotnet/tools"
+ENV NUGET_PACKAGES=/home/bobagent/.nuget/packages
+ENV DOTNET_SKIP_WORKLOAD_INTEGRITY_CHECK=true
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pwsh -Command "exit 0"
+
+# Entrypoint
+ENTRYPOINT ["pwsh", "/usr/local/bin/agent-entrypoint.ps1"]
