@@ -1,7 +1,9 @@
-# AI Factory Agent Container
-# Single-stage build for the IBM Bob Shell (bobshell) agent with a full
-# .NET development environment. The agent runs `bob` non-interactively to
-# implement a GitHub issue, then the entrypoint commits, pushes, and opens a PR.
+# AI Factory Agent Container - Claude-only variant
+# Single-stage build for the Claude Code agent with a full .NET development
+# environment. This variant intentionally OMITS the private IBM Bob Shell
+# (bobshell) tarball, so it builds on hosts that do not have the gitignored
+# bobshell-1.0.6.tgz. The agent runs Claude Code non-interactively to implement
+# a GitHub issue, then the entrypoint commits, pushes, and opens a PR.
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0
 
@@ -87,18 +89,18 @@ RUN apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20 LTS (required by the IBM Bob Shell CLI)
+# Install Node.js 20 LTS (required by the Claude Code CLI, installed via npm)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     node --version && npm --version
 
-# Install the IBM Bob Shell CLI (bobshell) globally.
-# bobshell is a private IBM package (not on the public npm registry), so it is
-# vendored as a tarball (produced on the host via `npm pack`). Its only runtime
-# dependency, pdf-parse, is public and resolved from npm during install.
+# NOTE: The private IBM Bob Shell CLI (bobshell) is intentionally NOT installed
+# in this Claude-only variant. bobshell is a private IBM package vendored as a
+# gitignored tarball that is absent on general build hosts; omitting it lets this
+# image build without that tarball.
 
-# Install the Claude Code CLI (public package). The container can run either
-# agent, selected at runtime via the AI_AGENT environment variable.
+# Install the Claude Code CLI (public package). This variant runs only the
+# Claude Code agent.
 RUN npm install -g @anthropic-ai/claude-code && \
     claude --version
 
