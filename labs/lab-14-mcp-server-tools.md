@@ -14,17 +14,17 @@ Explore the Model Context Protocol server and understand how the CQRS architectu
 
 ## Steps
 
-### Step 1: Explore Work Order Tools
+### Step 1: Explore Work Request Tools
 
-Open `src/McpServer/Tools/WorkOrderTools.cs`. Map each tool to its underlying CQRS operation:
+Open `src/McpServer/Tools/WorkRequestTools.cs`. Map each tool to its underlying CQRS operation:
 
 | MCP Tool | CQRS Operation |
 |----------|---------------|
-| `list-work-orders` | `WorkOrderSpecificationQuery` |
-| `get-work-order` | `WorkOrderByNumberQuery` |
-| `create-work-order` | `SaveDraftCommand` |
-| `execute-work-order-command` | State commands (`DraftToAssignedCommand`, `AssignedToInProgressCommand`, `InProgressToCompleteCommand`) |
-| `update-work-order-description` | `UpdateDescriptionCommand` |
+| `list-work-requests` | `WorkRequestSpecificationQuery` |
+| `get-work-request` | `WorkRequestByNumberQuery` |
+| `create-work-request` | `SaveDraftCommand` |
+| `execute-work-request-command` | State commands (`DraftToAssignedCommand`, `AssignedToInProgressCommand`, `InProgressToCompleteCommand`) |
+| `update-work-request-description` | `UpdateDescriptionCommand` |
 
 ### Step 2: Explore Employee Tools
 
@@ -36,15 +36,15 @@ Open `src/McpServer/Resources/ReferenceResources.cs` — static reference data f
 
 ### Step 4: Study Integration Tests
 
-Open `src/IntegrationTests/McpServer/McpWorkOrderToolTests.cs` — how tools are tested.
+Open `src/IntegrationTests/McpServer/McpWorkRequestToolTests.cs` — how tools are tested.
 
 ### Step 5: Study the Lifecycle Test
 
-Open `src/AcceptanceTests/McpServer/McpWorkOrderLifecycleTests.cs` — full lifecycle through MCP.
+Open `src/AcceptanceTests/McpServer/McpWorkRequestLifecycleTests.cs` — full lifecycle through MCP.
 
 ### Step 6: Write a New MCP Test
 
-Add a test that creates a work order via MCP `create-work-order`, retrieves it via `get-work-order`, and verifies fields match.
+Add a test that creates a work request via MCP `create-work-request`, retrieves it via `get-work-request`, and verifies fields match.
 
 ### Step 7: Trace the Architecture
 

@@ -1,21 +1,21 @@
 ## Why
-Power users and keyboard-centric workflows benefit significantly from keyboard shortcuts. Common actions like creating a new work order, saving, and searching can be performed faster without reaching for the mouse, improving productivity for high-volume users.
+Power users and keyboard-centric workflows benefit significantly from keyboard shortcuts. Common actions like creating a new work request, saving, and searching can be performed faster without reaching for the mouse, improving productivity for high-volume users.
 
 ## What Changes
 - Add `KeyboardShortcutService` in `src/UI/Client/` that registers global keyboard event listeners via JavaScript interop and maps key combinations to actions
 - Add JavaScript interop file `src/UI/Client/wwwroot/js/keyboard-shortcuts.js` handling keydown events, modifier key detection, and preventing default browser behavior for captured shortcuts
 - Add `ShortcutHelpOverlay.razor` component in `src/UI.Shared/Components/` displaying a modal with all available shortcuts, triggered by pressing `?`
 - Modify `MainLayout.razor` in `src/UI/Client/` to initialize the `KeyboardShortcutService` and include the `ShortcutHelpOverlay`
-- Register shortcuts: Ctrl+N (navigate to new work order page), Ctrl+S (save current work order form), Ctrl+F (focus the search input on WorkOrderSearch page), Escape (close modals/overlays), ? (toggle shortcut help overlay)
+- Register shortcuts: Ctrl+N (navigate to new work request page), Ctrl+S (save current work request form), Ctrl+F (focus the search input on WorkRequestSearch page), Escape (close modals/overlays), ? (toggle shortcut help overlay)
 - Add `ShortcutRegistration` record in `src/UI.Shared/` with properties: KeyCombination, Description, Action
 - Ensure shortcuts are suppressed when focus is inside text input fields (except Ctrl+S and Escape)
 
 ## Capabilities
 ### New Capabilities
 - Global keyboard shortcuts for common application actions
-- Ctrl+N navigates to the new work order creation page
-- Ctrl+S saves the current work order form (on WorkOrderManage page)
-- Ctrl+F focuses the search input field (on WorkOrderSearch page)
+- Ctrl+N navigates to the new work request creation page
+- Ctrl+S saves the current work request form (on WorkRequestManage page)
+- Ctrl+F focuses the search input field (on WorkRequestSearch page)
 - Escape closes any open modal or overlay
 - ? key toggles a help overlay listing all available shortcuts
 - Shortcuts suppressed when typing in input fields (to avoid conflicts)
@@ -41,6 +41,6 @@ Power users and keyboard-centric workflows benefit significantly from keyboard s
 ### Acceptance Tests
 - Press `?` key and verify the shortcut help overlay appears with `data-testid="shortcut-help-overlay"`
 - Press `Escape` and verify the shortcut help overlay closes
-- Press `Ctrl+N` and verify navigation to the new work order page
-- Navigate to WorkOrderSearch, press `Ctrl+F`, and verify the search input with `data-testid="search-input"` receives focus
-- Navigate to WorkOrderManage with a draft work order, modify a field, press `Ctrl+S`, and verify the form saves (confirmation indicator appears)
+- Press `Ctrl+N` and verify navigation to the new work request page
+- Navigate to WorkRequestSearch, press `Ctrl+F`, and verify the search input with `data-testid="search-input"` receives focus
+- Navigate to WorkRequestManage with a draft work request, modify a field, press `Ctrl+S`, and verify the form saves (confirmation indicator appears)

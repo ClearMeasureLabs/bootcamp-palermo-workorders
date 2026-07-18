@@ -1,17 +1,17 @@
 ## Why
-Rooms that generate a disproportionate number of work orders may have underlying maintenance issues requiring capital investment rather than repeated repairs. A room utilization report highlights these problem areas so facility managers can make informed budget and planning decisions.
+Rooms that generate a disproportionate number of work requests may have underlying maintenance issues requiring capital investment rather than repeated repairs. A room utilization report highlights these problem areas so facility managers can make informed budget and planning decisions.
 
 ## What Changes
-- Add `RoomUtilizationQuery` to `src/Core/Queries/` returning a list of `(string RoomNumber, int WorkOrderCount, int OpenCount, int CompletedCount)` sorted by total count descending
-- Add `RoomUtilizationHandler` in `src/DataAccess/Handlers/` grouping work orders by `RoomNumber` and computing counts
+- Add `RoomUtilizationQuery` to `src/Core/Queries/` returning a list of `(string RoomNumber, int WorkRequestCount, int OpenCount, int CompletedCount)` sorted by total count descending
+- Add `RoomUtilizationHandler` in `src/DataAccess/Handlers/` grouping work requests by `RoomNumber` and computing counts
 - Add `RoomUtilizationReport.razor` page in `src/UI/Client/` displaying a sortable table and optional bar chart
 - Add API endpoint in `src/UI/Api/`
 - Add navigation link in NavMenu under Reports
 
 ## Capabilities
 ### New Capabilities
-- Report page showing work order counts per room number in a sortable table
-- Columns: Room Number, Total Work Orders, Open (non-terminal), Completed, Cancelled
+- Report page showing work request counts per room number in a sortable table
+- Columns: Room Number, Total Work Requests, Open (non-terminal), Completed, Cancelled
 - Optional bar chart visualization of top rooms by volume
 - Date range filter to scope the analysis
 
@@ -30,7 +30,7 @@ Rooms that generate a disproportionate number of work orders may have underlying
 ### Unit Tests
 - `RoomUtilizationHandler` returns correct counts per room number
 - `RoomUtilizationHandler` sorts results by total count descending
-- `RoomUtilizationHandler` handles rooms with only completed or only open work orders
+- `RoomUtilizationHandler` handles rooms with only completed or only open work requests
 - `RoomUtilizationReport` component renders table rows for each room using bUnit
 
 ### Integration Tests
@@ -40,4 +40,4 @@ Rooms that generate a disproportionate number of work orders may have underlying
 ### Acceptance Tests
 - Navigate to the room utilization report and verify the table displays room data
 - Verify sorting by clicking column headers
-- Create a work order for a specific room and verify the count increases on refresh
+- Create a work request for a specific room and verify the count increases on refresh

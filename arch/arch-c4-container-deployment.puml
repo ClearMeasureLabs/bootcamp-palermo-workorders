@@ -18,7 +18,7 @@ System_Boundary(system, "Church Bulletin") {
     Container(server, "UI Server", "ASP.NET / Azure Container App", "Hosts API, Blazor Server, MCP endpoint")
     Container(worker, "Worker", ".NET Worker Service", "NServiceBus endpoint for async processing")
     Container(mcpServer, "MCP Server", "ASP.NET", "Model Context Protocol tools for AI agents")
-    ContainerDb(db, "Database", "Azure SQL Server", "Work orders, employees, roles")
+    ContainerDb(db, "Database", "Azure SQL Server", "Work requests, employees, roles")
     ContainerDb(nsbTransport, "NServiceBus Transport", "SQL Server", "Message queues and saga persistence")
 }
 

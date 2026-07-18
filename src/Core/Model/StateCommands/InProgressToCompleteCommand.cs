@@ -2,7 +2,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public record InProgressToCompleteCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder,
+public record InProgressToCompleteCommand(WorkRequest WorkRequest, Employee CurrentUser) : StateCommandBase(WorkRequest,
 CurrentUser)
 {
     public const string Name = "Complete";
@@ -10,24 +10,24 @@ CurrentUser)
 
     public override string TransitionVerbPastTense => "Completed";
 
-    public override WorkOrderStatus GetBeginStatus()
+    public override WorkRequestStatus GetBeginStatus()
     {
-        return WorkOrderStatus.InProgress;
+        return WorkRequestStatus.InProgress;
     }
 
-    public override WorkOrderStatus GetEndStatus()
+    public override WorkRequestStatus GetEndStatus()
     {
-        return WorkOrderStatus.Complete;
+        return WorkRequestStatus.Complete;
     }
 
     protected override bool UserCanExecute(Employee currentUser)
     {
-        return currentUser == WorkOrder.Assignee;
+        return currentUser == WorkRequest.Assignee;
     }
 
     public override void Execute(StateCommandContext context)
     {
-        WorkOrder.CompletedDate = context.CurrentDateTime;
+        WorkRequest.CompletedDate = context.CurrentDateTime;
         base.Execute(context);
     }
 }

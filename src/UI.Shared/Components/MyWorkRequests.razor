@@ -1,0 +1,32 @@
+﻿@implements Palermo.BlazorMvc.IListener<WorkRequestChangedEvent>
+@using ClearMeasure.Bootcamp.Core.Queries
+@using ClearMeasure.Bootcamp.UI.Shared.Pages
+@inherits AppComponentBase
+@inject IUserSession UserSession
+
+My Work Requests (@Count)
+
+@code {
+    private Employee? _currentUser;
+    private readonly HashSet<WorkRequest> _myWorkRequests = new();
+    public int Count => _myWorkRequests.Count;
+
+    public void Handle(WorkRequestChangedEvent theEvent)
+    {
+        var order = theEvent.Result.WorkRequest;
+        _myWorkRequests.Add(order);
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SetCurrentUser();
+        _myWorkRequests.UnionWith(await Bus.Send(new WorkRequestSpecificationQuery { Creator = _currentUser }));
+    }
+
+    private async Task SetCurrentUser()
+    {
+        _currentUser = await UserSession!.GetCurrentUserAsync();
+    }
+
+}

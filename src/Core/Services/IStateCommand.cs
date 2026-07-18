@@ -9,6 +9,6 @@ public interface IStateCommand : IRequest<StateCommandResult>, IRemotableRequest
     bool IsValid();
     string TransitionVerbPresentTense { get; }
     bool Matches(string commandName);
-    WorkOrderStatus GetBeginStatus();
+    WorkRequestStatus GetBeginStatus();
     void Execute(StateCommandContext context);
 }

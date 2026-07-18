@@ -1,5 +1,5 @@
 ## Why
-Organizing employees by department enables departmental filtering during work order assignment, supports departmental reporting, and reflects the organizational structure of the facility management team. This grouping improves assignment accuracy and administrative oversight.
+Organizing employees by department enables departmental filtering during work request assignment, supports departmental reporting, and reflects the organizational structure of the facility management team. This grouping improves assignment accuracy and administrative oversight.
 
 ## What Changes
 - Create a `Department` entity in `src/Core/Model/` with properties: Id, Name, Description
@@ -9,14 +9,14 @@ Organizing employees by department enables departmental filtering during work or
 - Add a `DepartmentsQuery` in `src/Core/Queries/` to list all departments
 - Add MediatR handlers in `src/DataAccess/Handlers/` for department queries
 - Update the employee profile page in `src/UI/Client/` to display the department
-- Add a department filter to the work order assignment dropdown in `src/UI/Client/`
+- Add a department filter to the work request assignment dropdown in `src/UI/Client/`
 - Add API endpoints in `src/UI/Api/` for department retrieval
 
 ## Capabilities
 ### New Capabilities
 - Department entity with name and description
 - Department displayed on employee profile page
-- Department filter on work order assignment dropdown to narrow employee list by department
+- Department filter on work request assignment dropdown to narrow employee list by department
 - Department list query for populating dropdowns
 
 ### Modified Capabilities

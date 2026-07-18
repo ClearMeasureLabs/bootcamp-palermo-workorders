@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "ClearMeasure.Bootcamp.UI.Server.Grpc";
+
+package workrequests;
+
+service WorkRequests {
+  rpc Ping (PingRequest) returns (PingReply);
+  rpc GetWorkRequestByNumber (GetWorkRequestByNumberRequest) returns (GetWorkRequestByNumberReply);
+}
+
+message PingRequest {}
+
+message PingReply {
+  string message = 1;
+}
+
+message GetWorkRequestByNumberRequest {
+  string number = 1;
+}
+
+message GetWorkRequestByNumberReply {
+  WorkRequest work_request = 1;
+}
+
+message WorkRequest {
+  string number = 1;
+  string title = 2;
+  string description = 3;
+  string room_number = 4;
+  string status_key = 5;
+  string creator_username = 6;
+  string assignee_username = 7;
+  optional google.protobuf.Timestamp assigned_date_utc = 8;
+  optional google.protobuf.Timestamp created_date_utc = 9;
+  optional google.protobuf.Timestamp completed_date_utc = 10;
+}

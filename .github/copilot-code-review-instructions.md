@@ -85,10 +85,10 @@ If there are merge conflicts, request that the PR author resolve them before the
 ## Domain Model Reference
 
 When reviewing changes to domain entities, verify consistency with:
-- `WorkOrder`: Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate
+- `WorkRequest`: Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate
 - `Employee`: UserName, FirstName, LastName, EmailAddress, Roles
-- `WorkOrderStatus`: Draft, Assigned, InProgress, Complete, Cancelled
-- `Role`: Name, CanCreateWorkOrder, CanFulfillWorkOrder
+- `WorkRequestStatus`: Draft, Assigned, InProgress, Complete, Cancelled
+- `Role`: Name, CanCreateWorkRequest, CanFulfillWorkRequest
 
 ## Key Paths Reference
 

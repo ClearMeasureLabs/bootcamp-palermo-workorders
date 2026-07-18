@@ -1,13 +1,13 @@
 ## Why
-Users currently have no immediate visual feedback after performing actions like saving a work order or changing its status. Toast notifications provide clear, non-blocking confirmation that actions succeeded or failed, improving the user experience and reducing uncertainty.
+Users currently have no immediate visual feedback after performing actions like saving a work request or changing its status. Toast notifications provide clear, non-blocking confirmation that actions succeeded or failed, improving the user experience and reducing uncertainty.
 
 ## What Changes
 - Add `ToastService` in `src/UI/Client/` as a singleton service that exposes methods: `ShowSuccess(message)`, `ShowError(message)`, `ShowWarning(message)`, and `ShowInfo(message)`
 - Add `ToastContainer.razor` component in `src/UI.Shared/Components/` that renders a fixed-position container in the top-right corner holding active toast notifications
 - Add `Toast.razor` component in `src/UI.Shared/Components/` rendering a single toast with icon, message, close button, and auto-dismiss countdown bar
 - Modify `MainLayout.razor` in `src/UI/Client/` to include the `ToastContainer` component
-- Modify `WorkOrderManage.razor` in `src/UI/Client/Pages/` to show success toast on save, assign, begin, and complete actions
-- Modify `WorkOrderSearch.razor` in `src/UI/Client/Pages/` to show error toast on failed search or data load
+- Modify `WorkRequestManage.razor` in `src/UI/Client/Pages/` to show success toast on save, assign, begin, and complete actions
+- Modify `WorkRequestSearch.razor` in `src/UI/Client/Pages/` to show error toast on failed search or data load
 - Add CSS styles for toast appearance, slide-in animation, severity colors (green=success, red=error, yellow=warning, blue=info), and dismiss animation
 - Auto-dismiss toasts after 5 seconds with a visual countdown progress bar
 - Support stacking multiple toasts vertically
@@ -22,12 +22,12 @@ Users currently have no immediate visual feedback after performing actions like 
 - Color-coded severity levels with appropriate icons
 
 ### Modified Capabilities
-- WorkOrderManage page shows toast on successful save, assign, begin work, and complete actions
-- WorkOrderSearch page shows toast on data load errors
+- WorkRequestManage page shows toast on successful save, assign, begin work, and complete actions
+- WorkRequestSearch page shows toast on data load errors
 
 ## Impact
 - **UI.Shared**: New `ToastContainer.razor` and `Toast.razor` components
-- **UI.Client**: New `ToastService`, modified `MainLayout.razor`, `WorkOrderManage.razor`, `WorkOrderSearch.razor`
+- **UI.Client**: New `ToastService`, modified `MainLayout.razor`, `WorkRequestManage.razor`, `WorkRequestSearch.razor`
 - **Database**: No schema changes required
 - **Dependencies**: No new NuGet packages required
 
@@ -43,7 +43,7 @@ Users currently have no immediate visual feedback after performing actions like 
 - None (client-side UI component with no server/database interaction)
 
 ### Acceptance Tests
-- Navigate to WorkOrderManage, save a Draft work order, and verify a success toast appears with `data-testid="toast-success"`
+- Navigate to WorkRequestManage, save a Draft work request, and verify a success toast appears with `data-testid="toast-success"`
 - Verify the toast auto-dismisses after approximately 5 seconds
 - Click the close button on a toast with `data-testid="toast-close"` and verify it is removed immediately
 - Trigger an error condition (e.g., save with missing required fields) and verify an error toast appears with `data-testid="toast-error"`

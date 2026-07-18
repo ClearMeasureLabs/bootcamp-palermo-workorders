@@ -6,7 +6,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.NServiceBus;
 
 /// <summary>
 /// Tracer bullet acceptance test that proves the full NServiceBus Send/Reply pipeline
-/// between the test endpoint ("IntegrationTests") and the Worker endpoint ("WorkOrderProcessing").
+/// between the test endpoint ("IntegrationTests") and the Worker endpoint ("WorkRequestProcessing").
 ///
 /// Flow:
 ///   Test  --Send(TracerBulletCommand)--> SqlServerTransport --> Worker
@@ -32,7 +32,7 @@ public class TracerBulletTests : AcceptanceTestBase
         // Register the signal before sending so the handler can complete it
         var replyTask = TracerBulletSignal.WaitForReply(correlationId, TimeSpan.FromSeconds(60));
 
-        // Send the command — routed to "WorkOrderProcessing" endpoint via TestHost routing config
+        // Send the command — routed to "WorkRequestProcessing" endpoint via TestHost routing config
         await messageSession.Send(new TracerBulletCommand(correlationId));
         TestContext.Out.WriteLine($"TracerBulletCommand sent with CorrelationId={correlationId}");
 

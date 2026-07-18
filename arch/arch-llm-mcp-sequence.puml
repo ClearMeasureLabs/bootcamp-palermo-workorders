@@ -11,7 +11,7 @@ participant "IMediator" as mediator
 participant "StateCommandHandler" as cmdHandler
 participant "DraftToAssignedCommand" as cmd
 participant "StateCommandBase" as cmdBase
-participant "WorkOrder" as order
+participant "WorkRequest" as order
 database "DataContext\n(EF Core)" as db
 participant "DistributedBus\n: IDistributedBus" as dBus
 participant "NServiceBus" as nsb
@@ -21,7 +21,7 @@ participant "Azure OpenAI" as azure
 
 autonumber
 
-user -> ui : Assign work order to assignee (UI)
+user -> ui : Assign work request to assignee (UI)
 ui -> api : POST WebServiceMessage\n(DraftToAssignedCommand)
 api -> api : Deserialize\nWebServiceMessage.GetBodyObject()
 api -> sBus : Send(DraftToAssignedCommand)
@@ -33,7 +33,7 @@ cmd -> cmdBase : base.Execute(context)
 cmdBase -> order : ChangeStatus(CurrentUser,\nCurrentDateTime, Assigned)
 
 alt Assignee has Bot role
-    cmd -> cmd : Create WorkOrderAssignedToBotEvent
+    cmd -> cmd : Create WorkRequestAssignedToBotEvent
 end
 
 cmdHandler -> db : Attach/Add or Update(order)
@@ -42,17 +42,17 @@ db --> cmdHandler : persisted
 cmdHandler -> cmdHandler : Build debug message
 cmdHandler -> dBus : PublishAsync(StateTransitionEvent)
 
-alt WorkOrderAssignedToBotEvent exists
-    dBus -> nsb : Publish(WorkOrderAssignedToBotEvent)
-    nsb -> worker : Deliver(WorkOrderAssignedToBotEvent)
-    worker -> worker : Handle(WorkOrderAssignedToBotEvent)
-    worker -> llm : Prepare prompt / context (WorkOrder details)
+alt WorkRequestAssignedToBotEvent exists
+    dBus -> nsb : Publish(WorkRequestAssignedToBotEvent)
+    nsb -> worker : Deliver(WorkRequestAssignedToBotEvent)
+    worker -> worker : Handle(WorkRequestAssignedToBotEvent)
+    worker -> llm : Prepare prompt / context (WorkRequest details)
     llm -> azure : Call LLM API (model, prompt)
     azure --> llm : LLM response (text, metadata)
-    worker -> db : Attach / update WorkOrder with LLM output
+    worker -> db : Attach / update WorkRequest with LLM output
     worker -> db : SaveChangesAsync()
     db --> worker : persisted
-    worker -> dBus : PublishAsync(AiBotCompletedWorkOrderEvent)
+    worker -> dBus : PublishAsync(AiBotCompletedWorkRequestEvent)
     note right of worker : Optionally notify UI or send email
 end
 

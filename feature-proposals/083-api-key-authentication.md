@@ -1,5 +1,5 @@
 ## Why
-External systems integrating with the Work Order API need a secure, manageable authentication mechanism that does not require interactive login. API key authentication provides a simple, revocable credential model suitable for server-to-server communication and third-party integrations.
+External systems integrating with the Work Request API need a secure, manageable authentication mechanism that does not require interactive login. API key authentication provides a simple, revocable credential model suitable for server-to-server communication and third-party integrations.
 
 ## What Changes
 - Add `ApiKey` entity in `src/Core/Model/` with properties: Id, Key (hashed), ClientName, CreatedDate, ExpirationDate, IsActive

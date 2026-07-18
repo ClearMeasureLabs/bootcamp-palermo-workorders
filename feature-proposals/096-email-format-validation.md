@@ -1,5 +1,5 @@
 ## Why
-Malformed email addresses stored in Employee records cause notification delivery failures and integration errors with external systems. Validating email format at the point of entry prevents bad data from entering the system and ensures reliable communication channels for work order notifications.
+Malformed email addresses stored in Employee records cause notification delivery failures and integration errors with external systems. Validating email format at the point of entry prevents bad data from entering the system and ensures reliable communication channels for work request notifications.
 
 ## What Changes
 - Add `EmailValidator` static class in `src/Core/Validation/` with `IsValidEmail(string email)` method using standard email format rules (RFC 5322 simplified)

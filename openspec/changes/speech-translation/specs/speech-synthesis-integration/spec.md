@@ -16,15 +16,15 @@ The `SpeechSynthesis` service SHALL be registered in the application's DI contai
 - **AND** Blazor components can inject it via `@inject SpeechSynthesis SpeechSynthesis`
 
 ### Requirement: Megaphone button next to Title field
-The work order manage page (`src/UI.Shared/Pages/WorkOrderManage.razor`) SHALL display a megaphone/speaker icon button adjacent to the Title input field. The button SHALL be visible regardless of read-only state.
+The work request manage page (`src/UI.Shared/Pages/WorkRequestManage.razor`) SHALL display a megaphone/speaker icon button adjacent to the Title input field. The button SHALL be visible regardless of read-only state.
 
 #### Scenario: Megaphone button is rendered next to Title
-- **WHEN** the work order manage page is rendered
+- **WHEN** the work request manage page is rendered
 - **THEN** a button with a speaker/megaphone icon SHALL appear next to the Title field
 - **AND** the button SHALL have a `data-testid` attribute of `SpeakTitle` for test automation
 
 #### Scenario: Title megaphone button click triggers translation and speech
-- **GIVEN** the work order Title field contains text (e.g., `"Fix the broken pipe"`)
+- **GIVEN** the work request Title field contains text (e.g., `"Fix the broken pipe"`)
 - **AND** the logged-in user's `PreferredLanguage` is `"es-ES"`
 - **WHEN** the user clicks the megaphone button next to the Title field
 - **THEN** the system SHALL invoke the `ITranslationService` to translate the Title text into `"es-ES"`
@@ -32,15 +32,15 @@ The work order manage page (`src/UI.Shared/Pages/WorkOrderManage.razor`) SHALL d
 - **AND** the `SpeechSynthesisUtterance.Lang` SHALL be set to the user's `PreferredLanguage` (e.g., `"es-ES"`)
 
 ### Requirement: Megaphone button next to Description field
-The work order manage page SHALL display a megaphone/speaker icon button adjacent to the Description textarea field, with the same behavior as the Title megaphone button but operating on the Description text.
+The work request manage page SHALL display a megaphone/speaker icon button adjacent to the Description textarea field, with the same behavior as the Title megaphone button but operating on the Description text.
 
 #### Scenario: Megaphone button is rendered next to Description
-- **WHEN** the work order manage page is rendered
+- **WHEN** the work request manage page is rendered
 - **THEN** a button with a speaker/megaphone icon SHALL appear next to the Description field
 - **AND** the button SHALL have a `data-testid` attribute of `SpeakDescription` for test automation
 
 #### Scenario: Description megaphone button click triggers translation and speech
-- **GIVEN** the work order Description field contains text (e.g., `"The sanctuary organ needs full maintenance"`)
+- **GIVEN** the work request Description field contains text (e.g., `"The sanctuary organ needs full maintenance"`)
 - **AND** the logged-in user's `PreferredLanguage` is `"de-DE"`
 - **WHEN** the user clicks the megaphone button next to the Description field
 - **THEN** the system SHALL invoke the `ITranslationService` to translate the Description text into `"de-DE"`
@@ -65,10 +65,10 @@ When speaking translated text, the system SHALL attempt to select a `SpeechSynth
 - **AND** the browser SHALL use its default voice selection for that language
 
 ### Requirement: User's preferred language is available in the component
-The `WorkOrderManage` component SHALL retrieve the current user's `PreferredLanguage` from the `Employee` record obtained via `IUserSession.GetCurrentUserAsync()` and make it available for the speech/translation feature.
+The `WorkRequestManage` component SHALL retrieve the current user's `PreferredLanguage` from the `Employee` record obtained via `IUserSession.GetCurrentUserAsync()` and make it available for the speech/translation feature.
 
 #### Scenario: Preferred language is loaded on page initialization
-- **WHEN** the work order manage page initializes via `OnInitializedAsync`
+- **WHEN** the work request manage page initializes via `OnInitializedAsync`
 - **THEN** the current user's `PreferredLanguage` SHALL be stored in a component field for use by the megaphone buttons
 
 ### Requirement: Graceful degradation when translation is unavailable
@@ -88,8 +88,8 @@ If the `ITranslationService` returns the original text (because the LLM is unava
 ### Constraints
 - The `Toolbelt.Blazor.SpeechSynthesis` package version 11.0.0 SHALL be added to `src/UI.Shared/UI.Shared.csproj` only
 - The megaphone buttons SHALL use a Unicode speaker character (e.g., `\U0001F4E2` or `\U0001F50A`) or an HTML entity as the icon — no additional icon library packages
-- The `ITranslationService` SHALL be injected into the `WorkOrderManage` component via `[Inject]`
-- The `SpeechSynthesis` service SHALL be injected into the `WorkOrderManage` component via `@inject` or `[Inject]`
+- The `ITranslationService` SHALL be injected into the `WorkRequestManage` component via `[Inject]`
+- The `SpeechSynthesis` service SHALL be injected into the `WorkRequestManage` component via `@inject` or `[Inject]`
 - The megaphone button click handler SHALL be an `async Task` method to properly `await` translation and speech
 - The component SHALL NOT block the UI thread during translation or speech
-- Follow the existing code-behind pattern in `WorkOrderManage.razor.cs` for new methods
+- Follow the existing code-behind pattern in `WorkRequestManage.razor.cs` for new methods

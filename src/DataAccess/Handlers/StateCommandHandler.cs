@@ -16,7 +16,7 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, IDistri
         logger.LogInformation("Executing");
         request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
 
-        var order = request.WorkOrder;
+        var order = request.WorkRequest;
         if (order.Assignee == order.Creator)
         {
             order.Assignee = order.Creator; //EFCore reference checking
@@ -38,10 +38,10 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, IDistri
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var loweredTransitionVerb = request.TransitionVerbPastTense.ToLower();
-        var workOrderNumber = order.Number;
+        var workRequestNumber = order.Number;
         var fullName = request.CurrentUser.GetFullName();
 
-        var debugMessage = string.Format("{0} has {1} work order {2}", fullName, loweredTransitionVerb, workOrderNumber);
+        var debugMessage = string.Format("{0} has {1} work request {2}", fullName, loweredTransitionVerb, workRequestNumber);
         logger.LogDebug(debugMessage);
         logger.LogInformation("Executed");
 

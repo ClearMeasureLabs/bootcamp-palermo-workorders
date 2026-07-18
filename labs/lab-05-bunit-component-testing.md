@@ -16,40 +16,40 @@ Write bUnit tests for Blazor components using the project's stub pattern. Unders
 
 ### Step 1: Study Existing bUnit Tests
 
-Open `src/UnitTests/UI.Shared/Pages/WorkOrderSearchTests.cs`. Study the pattern: `TestContext` → stub injection via `ctx.Services.AddSingleton` → `ctx.RenderComponent<WorkOrderSearch>()` → find HTML elements → assert on rendered output.
+Open `src/UnitTests/UI.Shared/Pages/WorkRequestSearchTests.cs`. Study the pattern: `TestContext` → stub injection via `ctx.Services.AddSingleton` → `ctx.RenderComponent<WorkRequestSearch>()` → find HTML elements → assert on rendered output.
 
 ### Step 2: Study the Stub Implementations
 
-Open `src/UnitTests/UI.Shared/Pages/StubBus.cs`. Note the `Stub` prefix convention and how `StubBus` extends `Bus(null!)` to override `Send<TResponse>`. It handles `EmployeeGetAllQuery`, `EmployeeByUserNameQuery`, and `WorkOrderSpecificationQuery` with canned test data.
+Open `src/UnitTests/UI.Shared/Pages/StubBus.cs`. Note the `Stub` prefix convention and how `StubBus` extends `Bus(null!)` to override `Send<TResponse>`. It handles `EmployeeGetAllQuery`, `EmployeeByUserNameQuery`, and `WorkRequestSpecificationQuery` with canned test data.
 
 Open `src/UnitTests/UI.Shared/Pages/StubUiBus.cs`. This is a no-op implementation of `IUiBus` for test isolation.
 
 ### Step 3: Study the Component Under Test
 
-Open `src/UI.Shared/Pages/WorkOrderSearch.razor` and its code-behind `WorkOrderSearch.razor.cs`. Understand:
-- The `Elements` enum that provides stable test IDs for `CreatorSelect`, `AssigneeSelect`, `StatusSelect`, `SearchButton`, and `WorkOrderLink`
+Open `src/UI.Shared/Pages/WorkRequestSearch.razor` and its code-behind `WorkRequestSearch.razor.cs`. Understand:
+- The `Elements` enum that provides stable test IDs for `CreatorSelect`, `AssigneeSelect`, `StatusSelect`, `SearchButton`, and `WorkRequestLink`
 - How the component loads dropdown options from `EmployeeGetAllQuery`
-- How `SearchWorkOrders()` builds a `WorkOrderSpecificationQuery` from the filter model
+- How `SearchWorkRequests()` builds a `WorkRequestSpecificationQuery` from the filter model
 - How query string parameters (`Creator`, `Assignee`, `Status`) are applied on initialization
 
 ### Step 4: Study the Existing Tests
 
-Read through the six tests in `WorkOrderSearchTests.cs`:
+Read through the six tests in `WorkRequestSearchTests.cs`:
 - `ShouldLoadDropDownsInitiallyOnLoad` — verifies dropdowns render with correct options
-- `ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad` — verifies the results table renders
+- `ShouldLoadWorkRequestTableWithAllFiltersSetToAllOnInitialLoad` — verifies the results table renders
 - Three tests for individual query string filters (`Creator`, `Assignee`, `Status`)
-- `AfterInitialLoadSelectingAllThreeOptionsShouldLoadWorkOrders` — simulates user interaction (selecting filters and clicking Search)
+- `AfterInitialLoadSelectingAllThreeOptionsShouldLoadWorkRequests` — simulates user interaction (selecting filters and clicking Search)
 
 Notice how `component.Find()` uses the `Elements` enum for stable selectors, and how `creatorSelect.Change("jpalermo")` simulates user input.
 
 ### Step 5: Write a New bUnit Test
 
-Add a new test to `WorkOrderSearchTests.cs` that verifies the search results table displays the correct work order data. For example, assert that the rendered table rows contain the expected work order numbers (`WO-001`, `WO-002`) from the `StubBus` test data.
+Add a new test to `WorkRequestSearchTests.cs` that verifies the search results table displays the correct work request data. For example, assert that the rendered table rows contain the expected work request numbers (`WO-001`, `WO-002`) from the `StubBus` test data.
 
 ### Step 6: Run Tests
 
 ```powershell
-dotnet test src/UnitTests --configuration Release --filter "FullyQualifiedName~WorkOrderSearchTests"
+dotnet test src/UnitTests --configuration Release --filter "FullyQualifiedName~WorkRequestSearchTests"
 ```
 
 ---

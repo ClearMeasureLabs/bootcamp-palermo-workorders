@@ -2,22 +2,22 @@
 
 scale 2/3
 center header
-    C4 Architecture: Work Order System — State / Commands
+    C4 Architecture: Work Request System — State / Commands
 endheader
 
 !include templates/plantuml-theme.puml
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
 
-title Work Order System state commands (command objects)
+title Work Request System state commands (command objects)
 
 abstract class StateCommandBase <<record>> {
-  +WorkOrder : WorkOrder
+  +WorkRequest : WorkRequest
   +CurrentUser : Employee
   +StateTransitionEvent : IStateTransitionEvent?
   +TransitionVerbPresentTense : string
   +TransitionVerbPastTense : string
-  +GetBeginStatus() : WorkOrderStatus
-  +GetEndStatus() : WorkOrderStatus
+  +GetBeginStatus() : WorkRequestStatus
+  +GetEndStatus() : WorkRequestStatus
   +IsValid() : bool
   +Matches(commandName : string) : bool
   +Execute(context : StateCommandContext) : void
@@ -38,7 +38,7 @@ class DraftToAssignedCommand <<record>> {
 
 note right of DraftToAssignedCommand
   Guard: only creator can assign
-  Side-effect: may create WorkOrderAssignedToBotEvent when assignee has Bot role
+  Side-effect: may create WorkRequestAssignedToBotEvent when assignee has Bot role
 end note
 
 class AssignedToInProgressCommand <<record>> {
@@ -58,7 +58,7 @@ note right of InProgressToCompleteCommand
 end note
 
 class StateCommandResult <<record>> {
-  +WorkOrder : WorkOrder
+  +WorkRequest : WorkRequest
   +TransitionVerbPresentTense : string
   +DebugMessage : string
 }
@@ -70,10 +70,10 @@ AssignedToInProgressCommand --|> StateCommandBase
 InProgressToCompleteCommand --|> StateCommandBase
 
 ' Associations
-StateCommandBase --> WorkOrder : operates on
+StateCommandBase --> WorkRequest : operates on
 StateCommandBase --> Employee : CurrentUser
-StateCommandResult --> WorkOrder : contains
+StateCommandResult --> WorkRequest : contains
 
-LEGEND("Legend","StateCommandBase: validates and executes guarded state transitions\nSaveDraftCommand: creates/updates draft\nDraftToAssignedCommand: assigns to an employee; may produce WorkOrderAssignedToBotEvent\nAssignedToInProgressCommand: assignee begins work\nInProgressToCompleteCommand: assignee completes work")
+LEGEND("Legend","StateCommandBase: validates and executes guarded state transitions\nSaveDraftCommand: creates/updates draft\nDraftToAssignedCommand: assigns to an employee; may produce WorkRequestAssignedToBotEvent\nAssignedToInProgressCommand: assignee begins work\nInProgressToCompleteCommand: assignee completes work")
 FOOTER()
 @enduml

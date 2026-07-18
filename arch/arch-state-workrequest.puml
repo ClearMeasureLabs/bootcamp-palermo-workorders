@@ -1,0 +1,21 @@
+@startuml
+!include templates/plantuml-theme.puml
+
+title Work Request State Transitions
+
+left to right direction
+
+[*] --> Draft : Create
+
+Draft --> Draft : SaveDraftCommand
+Draft --> Assigned : DraftToAssignedCommand
+
+Assigned --> InProgress : AssignedToInProgressCommand
+
+InProgress --> Complete : InProgressToCompleteCommand
+
+Complete --> [*]
+
+LEGEND("Legend","Draft -> Assigned -> InProgress -> Complete\nCommands: SaveDraftCommand, DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToCompleteCommand")
+FOOTER()
+@enduml

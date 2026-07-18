@@ -25,47 +25,47 @@ public class StubBus() : Bus(null!)
             return (Task<TResponse>)EmployeeByUserNameQueryResponse<TResponse>();
         }
 
-        if (request is WorkOrderSpecificationQuery query)
+        if (request is WorkRequestSpecificationQuery query)
         {
-            return Task.FromResult<TResponse>((TResponse)(object)WorkOrderSpecificationQueryResponse());
+            return Task.FromResult<TResponse>((TResponse)(object)WorkRequestSpecificationQueryResponse());
         }
 
-        if (request is WorkOrderAttachmentsQuery)
+        if (request is WorkRequestAttachmentsQuery)
         {
-            return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderAttachment>());
+            return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkRequestAttachment>());
         }
 
-        if (request is WorkOrderByNumberQuery)
+        if (request is WorkRequestByNumberQuery)
         {
-            var workOrder = new WorkOrder
+            var workRequest = new WorkRequest
             {
                 Id = Guid.NewGuid(),
                 Number = "WO-001",
                 Title = "Fix broken door",
-                Status = WorkOrderStatus.Draft,
+                Status = WorkRequestStatus.Draft,
                 Creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com")
             };
-            return Task.FromResult<TResponse>((TResponse)(object)workOrder);
+            return Task.FromResult<TResponse>((TResponse)(object)workRequest);
         }
 
         throw new NotImplementedException();
     }
 
-    public Func<WorkOrder[]> WorkOrderSpecificationQueryResponse => () =>
+    public Func<WorkRequest[]> WorkRequestSpecificationQueryResponse => () =>
     [
-        new WorkOrder
+        new WorkRequest
         {
             Number = "WO-001",
             Title = "Fix broken door",
-            Status = WorkOrderStatus.Draft,
+            Status = WorkRequestStatus.Draft,
             Creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com"),
             Assignee = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com")
         },
-        new WorkOrder
+        new WorkRequest
         {
             Number = "WO-002",
             Title = "Replace light bulb",
-            Status = WorkOrderStatus.Assigned,
+            Status = WorkRequestStatus.Assigned,
             Creator = new Employee("mburns", "Montgomery", "Burns", "burns@example.com"),
             Assignee = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com")
         }

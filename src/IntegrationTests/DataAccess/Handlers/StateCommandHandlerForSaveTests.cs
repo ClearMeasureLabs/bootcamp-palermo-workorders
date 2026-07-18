@@ -10,7 +10,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 public class StateCommandHandlerForSaveTests : IntegratedTestBase
 {
     [Test]
-    public async Task ShouldSaveWorkOrderBySavingDraft()
+    public async Task ShouldSaveWorkRequestBySavingDraft()
     {
         new DatabaseTests().Clean();
 
@@ -20,41 +20,41 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         context.Add(currentUser);
         await context.SaveChangesAsync();
 
-        var workOrder = Faker<WorkOrder>();
-        workOrder.Id = Guid.Empty;
-        workOrder.CreatedDate = null; // Ensure CreatedDate is null to test setting it;
-        workOrder.Creator = currentUser;
-        workOrder.Instructions = "Turn off water main first";
+        var workRequest = Faker<WorkRequest>();
+        workRequest.Id = Guid.Empty;
+        workRequest.CreatedDate = null; // Ensure CreatedDate is null to test setting it;
+        workRequest.Creator = currentUser;
+        workRequest.Instructions = "Turn off water main first";
 
-        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workRequest, currentUser));
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
         var result = await handler.Handle(command);
 
         result.TransitionVerbPresentTense.ShouldBe(command.TransitionVerbPresentTense);
-        result.WorkOrder.Creator.ShouldBe(currentUser);
-        result.WorkOrder.Title.ShouldBe(workOrder.Title);
-        result.WorkOrder.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
+        result.WorkRequest.Creator.ShouldBe(currentUser);
+        result.WorkRequest.Title.ShouldBe(workRequest.Title);
+        result.WorkRequest.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
-        result.WorkOrder.Id.ShouldNotBe(Guid.Empty);
-        var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        result.WorkRequest.Id.ShouldNotBe(Guid.Empty);
+        var order = context3.Find<WorkRequest>(result.WorkRequest.Id) ?? throw new InvalidOperationException();
         order.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
-        order.Title.ShouldBe(workOrder.Title);
+        order.Title.ShouldBe(workRequest.Title);
         order.Instructions.ShouldBe("Turn off water main first");
     }
 
     [Test]
-    public async Task ShouldSaveWorkOrderWithAssigneeAndCreator()
+    public async Task ShouldSaveWorkRequestWithAssigneeAndCreator()
     {
         new DatabaseTests().Clean();
 
-        var workOrder = Faker<WorkOrder>();
+        var workRequest = Faker<WorkRequest>();
         var currentUser = Faker<Employee>();
-        workOrder.Creator = currentUser;
+        workRequest.Creator = currentUser;
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(currentUser);
-            context.Add(workOrder);
+            context.Add(workRequest);
             await context.SaveChangesAsync();
         }
 
@@ -64,35 +64,35 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
             assignee = context2.Find<Employee>(currentUser.Id);
         }
 
-        workOrder.Creator = currentUser;
-        workOrder.Assignee = assignee;
+        workRequest.Creator = currentUser;
+        workRequest.Assignee = assignee;
 
-        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workRequest, currentUser));
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
-        var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
-        order.Title.ShouldBe(workOrder.Title);
-        order.Description.ShouldBe(workOrder.Description);
+        var order = context3.Find<WorkRequest>(workRequest.Id) ?? throw new InvalidOperationException();
+        order.Title.ShouldBe(workRequest.Title);
+        order.Description.ShouldBe(workRequest.Description);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
 
     [Test]
-    public async Task ShouldUpdateWorkOrderWithAssigneeAndCreator()
+    public async Task ShouldUpdateWorkRequestWithAssigneeAndCreator()
     {
         new DatabaseTests().Clean();
 
-        var workOrder = Faker<WorkOrder>();
+        var workRequest = Faker<WorkRequest>();
         var currentUser = Faker<Employee>();
-        workOrder.Creator = currentUser;
+        workRequest.Creator = currentUser;
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(currentUser);
-            context.Add(workOrder);
+            context.Add(workRequest);
             await context.SaveChangesAsync();
         }
 
@@ -102,38 +102,38 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
             assignee = context2.Find<Employee>(currentUser.Id);
         }
 
-        workOrder.Creator = currentUser;
-        workOrder.Assignee = assignee;
-        workOrder.Title = "newtitle";
-        workOrder.Instructions = "Updated guidance after inspection.";
+        workRequest.Creator = currentUser;
+        workRequest.Assignee = assignee;
+        workRequest.Title = "newtitle";
+        workRequest.Instructions = "Updated guidance after inspection.";
 
-        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workRequest, currentUser));
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
-        var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkRequest>(workRequest.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
-        order.Description.ShouldBe(workOrder.Description);
+        order.Description.ShouldBe(workRequest.Description);
         order.Instructions.ShouldBe("Updated guidance after inspection.");
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
 
     [Test]
-    public async Task ShouldUpdateWorkOrderWithAssigneeAndCreatorWithRemotedOrder()
+    public async Task ShouldUpdateWorkRequestWithAssigneeAndCreatorWithRemotedOrder()
     {
         new DatabaseTests().Clean();
 
-        var workOrder = Faker<WorkOrder>();
+        var workRequest = Faker<WorkRequest>();
         var currentUser = Faker<Employee>();
-        workOrder.Creator = currentUser;
+        workRequest.Creator = currentUser;
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(currentUser);
-            context.Add(workOrder);
+            context.Add(workRequest);
             await context.SaveChangesAsync();
         }
 
@@ -143,20 +143,20 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
             assignee = context2.Find<Employee>(currentUser.Id);
         }
 
-        workOrder.Creator = currentUser;
-        workOrder.Assignee = assignee;
-        workOrder.Title = "newtitle";
+        workRequest.Creator = currentUser;
+        workRequest.Assignee = assignee;
+        workRequest.Title = "newtitle";
 
-        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workRequest, currentUser));
         var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
         var result = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
-        var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkRequest>(workRequest.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
-        order.Description.ShouldBe(workOrder.Description);
+        order.Description.ShouldBe(workRequest.Description);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }

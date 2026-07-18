@@ -7,9 +7,9 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.McpServer;
 public class McpReferenceResourceTests
 {
     [Test]
-    public void ShouldReturnAllWorkOrderStatuses()
+    public void ShouldReturnAllWorkRequestStatuses()
     {
-        var result = ReferenceResources.GetWorkOrderStatuses();
+        var result = ReferenceResources.GetWorkRequestStatuses();
 
         result.ShouldContain("Draft");
         result.ShouldContain("Assigned");
@@ -29,8 +29,8 @@ public class McpReferenceResourceTests
         result.ShouldContain("Manager");
         result.ShouldContain("Worker");
         result.ShouldContain("Admin");
-        result.ShouldContain("CanCreateWorkOrder");
-        result.ShouldContain("CanFulfillWorkOrder");
+        result.ShouldContain("CanCreateWorkRequest");
+        result.ShouldContain("CanFulfillWorkRequest");
     }
 
     [Test]

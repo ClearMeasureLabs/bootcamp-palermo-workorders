@@ -5,5 +5,5 @@ namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
 public abstract class StateCommandBaseTests
 {
-    protected abstract StateCommandBase GetStateCommand(WorkOrder order, Employee employee);
+    protected abstract StateCommandBase GetStateCommand(WorkRequest order, Employee employee);
 }

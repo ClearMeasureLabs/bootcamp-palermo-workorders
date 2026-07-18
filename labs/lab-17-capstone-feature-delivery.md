@@ -12,9 +12,9 @@ Deliver a complete feature from design through pull request, exercising every pr
 
 ---
 
-## The Feature: "Cancelled" Work Order Status
+## The Feature: "Cancelled" Work Request Status
 
-A work order can be cancelled from **Draft** or **Assigned** status, but only by the **Creator**.
+A work request can be cancelled from **Draft** or **Assigned** status, but only by the **Creator**.
 
 ```
     [Draft] --------→ [Cancelled]
@@ -29,53 +29,53 @@ A work order can be cancelled from **Draft** or **Assigned** status, but only by
 
 ### Step 1: Add the Status (Core)
 
-In `src/Core/Model/WorkOrderStatus.cs`, add:
+In `src/Core/Model/WorkRequestStatus.cs`, add:
 
 ```csharp
-public static readonly WorkOrderStatus Cancelled = new("CNL", "Cancelled", "Cancelled", 5);
+public static readonly WorkRequestStatus Cancelled = new("CNL", "Cancelled", "Cancelled", 5);
 ```
 
 Update `GetAllItems()` to include it.
 
 ### Step 2: Create the State Commands (Core)
 
-Since `StateCommandBase.IsValid()` is not virtual, cancellation from two different statuses requires two concrete commands with a shared abstract base. Create `src/Core/Model/StateCommands/CancelWorkOrderCommand.cs`:
+Since `StateCommandBase.IsValid()` is not virtual, cancellation from two different statuses requires two concrete commands with a shared abstract base. Create `src/Core/Model/StateCommands/CancelWorkRequestCommand.cs`:
 
 ```csharp
-public abstract record CancelWorkOrderCommand(WorkOrder WorkOrder, Employee CurrentUser)
-    : StateCommandBase(WorkOrder, CurrentUser)
+public abstract record CancelWorkRequestCommand(WorkRequest WorkRequest, Employee CurrentUser)
+    : StateCommandBase(WorkRequest, CurrentUser)
 {
     public const string Name = "Cancel";
-    public override WorkOrderStatus GetEndStatus() => WorkOrderStatus.Cancelled;
+    public override WorkRequestStatus GetEndStatus() => WorkRequestStatus.Cancelled;
     public override string TransitionVerbPresentTense => Name;
     public override string TransitionVerbPastTense => "Cancelled";
 
     protected override bool UserCanExecute(Employee currentUser)
-        => currentUser == WorkOrder.Creator;
+        => currentUser == WorkRequest.Creator;
 }
 
-public sealed record CancelDraftWorkOrderCommand(WorkOrder WorkOrder, Employee CurrentUser)
-    : CancelWorkOrderCommand(WorkOrder, CurrentUser)
+public sealed record CancelDraftWorkRequestCommand(WorkRequest WorkRequest, Employee CurrentUser)
+    : CancelWorkRequestCommand(WorkRequest, CurrentUser)
 {
-    public override WorkOrderStatus GetBeginStatus() => WorkOrderStatus.Draft;
+    public override WorkRequestStatus GetBeginStatus() => WorkRequestStatus.Draft;
 }
 
-public sealed record CancelAssignedWorkOrderCommand(WorkOrder WorkOrder, Employee CurrentUser)
-    : CancelWorkOrderCommand(WorkOrder, CurrentUser)
+public sealed record CancelAssignedWorkRequestCommand(WorkRequest WorkRequest, Employee CurrentUser)
+    : CancelWorkRequestCommand(WorkRequest, CurrentUser)
 {
-    public override WorkOrderStatus GetBeginStatus() => WorkOrderStatus.Assigned;
+    public override WorkRequestStatus GetBeginStatus() => WorkRequestStatus.Assigned;
 }
 ```
 
-Note: `StateCommandBase.IsValid()` checks `WorkOrder.Status == GetBeginStatus()`, so each concrete command handles one transition. The base `IsValid()` logic works without modification.
+Note: `StateCommandBase.IsValid()` checks `WorkRequest.Status == GetBeginStatus()`, so each concrete command handles one transition. The base `IsValid()` logic works without modification.
 
 ### Step 3: Unit Tests
 
-Create `src/UnitTests/Core/Model/StateCommands/CancelWorkOrderCommandTests.cs` with tests:
-- `CancelDraftWorkOrderCommand` valid when Creator
-- `CancelAssignedWorkOrderCommand` valid when Creator
-- `CancelDraftWorkOrderCommand` invalid when not Creator
-- `CancelAssignedWorkOrderCommand` invalid when not Creator
+Create `src/UnitTests/Core/Model/StateCommands/CancelWorkRequestCommandTests.cs` with tests:
+- `CancelDraftWorkRequestCommand` valid when Creator
+- `CancelAssignedWorkRequestCommand` valid when Creator
+- `CancelDraftWorkRequestCommand` invalid when not Creator
+- `CancelAssignedWorkRequestCommand` invalid when not Creator
 - Invalid from InProgress (neither cancel command's `IsValid()` returns true)
 - Invalid from Complete
 - Both commands transition to Cancelled status
@@ -89,19 +89,19 @@ Add a test that saves a Draft, cancels it via the handler, and verifies the pers
 Open `src/Core/Services/Impl/StateCommandList.cs`. Add both cancel commands to `GetAllStateCommands()`:
 
 ```csharp
-commands.Add(new CancelDraftWorkOrderCommand(workOrder, currentUser));
-commands.Add(new CancelAssignedWorkOrderCommand(workOrder, currentUser));
+commands.Add(new CancelDraftWorkRequestCommand(workRequest, currentUser));
+commands.Add(new CancelAssignedWorkRequestCommand(workRequest, currentUser));
 ```
 
 This makes the cancel commands discoverable by the UI dropdown and `GetValidStateCommands()`.
 
 ### Step 6: Register in MCP Tools
 
-Open `src/McpServer/Tools/WorkOrderTools.cs`. In the `ExecuteWorkOrderCommand` method, add the new command names to the `switch` expression:
+Open `src/McpServer/Tools/WorkRequestTools.cs`. In the `ExecuteWorkRequestCommand` method, add the new command names to the `switch` expression:
 
 ```csharp
-"CancelDraftWorkOrderCommand" => new CancelDraftWorkOrderCommand(workOrder, user),
-"CancelAssignedWorkOrderCommand" => new CancelAssignedWorkOrderCommand(workOrder, user),
+"CancelDraftWorkRequestCommand" => new CancelDraftWorkRequestCommand(workRequest, user),
+"CancelAssignedWorkRequestCommand" => new CancelAssignedWorkRequestCommand(workRequest, user),
 ```
 
 Update the method's `[Description]` attribute to list the new commands. Without this step, the cancel feature would exist in the domain but be unreachable via MCP or AI agents.

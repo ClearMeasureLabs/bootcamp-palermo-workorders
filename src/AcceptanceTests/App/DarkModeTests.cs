@@ -33,7 +33,7 @@ public class DarkModeTests : AcceptanceTestBase
         bsTheme.ShouldBe(afterToggle);
 
         await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForURLAsync("**/workrequest/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var onSearch = await Page.EvaluateAsync<string>(

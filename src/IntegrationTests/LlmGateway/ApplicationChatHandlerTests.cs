@@ -12,9 +12,9 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 [TestFixture]
 public class ApplicationChatHandlerTests : LlmTestBase
 {
-    private static async Task<WorkOrder?> WaitForWorkOrderAsync(
-        string workOrderNumber,
-        Func<WorkOrder, bool> predicate,
+    private static async Task<WorkRequest?> WaitForWorkRequestAsync(
+        string workRequestNumber,
+        Func<WorkRequest, bool> predicate,
         TimeSpan timeout,
         CancellationToken cancellationToken = default)
     {
@@ -22,36 +22,36 @@ public class ApplicationChatHandlerTests : LlmTestBase
         while (DateTime.UtcNow < deadline)
         {
             var db = TestHost.GetRequiredService<DataContext>();
-            var workOrder = await db.Set<WorkOrder>()
+            var workRequest = await db.Set<WorkRequest>()
                 .AsNoTracking()
                 .Include(wo => wo.Assignee)
                 .Include(wo => wo.Creator)
-                .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber, cancellationToken);
+                .SingleOrDefaultAsync(wo => wo.Number == workRequestNumber, cancellationToken);
 
-            if (workOrder is not null && predicate(workOrder))
+            if (workRequest is not null && predicate(workRequest))
             {
-                return workOrder;
+                return workRequest;
             }
 
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
         }
 
         var finalDb = TestHost.GetRequiredService<DataContext>();
-        return await finalDb.Set<WorkOrder>()
+        return await finalDb.Set<WorkRequest>()
             .AsNoTracking()
             .Include(wo => wo.Assignee)
             .Include(wo => wo.Creator)
-            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber, cancellationToken);
+            .SingleOrDefaultAsync(wo => wo.Number == workRequestNumber, cancellationToken);
     }
 
     [Test]
     [Retry(3)]
-    public async Task Handle_AskForWorkOrdersICreated_ReturnsWorkOrderData()
+    public async Task Handle_AskForWorkRequestsICreated_ReturnsWorkRequestData()
     {
         new ZDataLoader().LoadData();
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
         var currentUser = "tlovejoy";
-        var query = new ApplicationChatQuery("Show me all the work orders that I created", currentUser);
+        var query = new ApplicationChatQuery("Show me all the work requests that I created", currentUser);
 
         ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
 
@@ -63,12 +63,12 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
     [Test]
     [Retry(3)]
-    public async Task Handle_CreateAndAssignWorkOrder_CreatesAssignedWorkOrderForGwillie()
+    public async Task Handle_CreateAndAssignWorkRequest_CreatesAssignedWorkRequestForGwillie()
     {
         new ZDataLoader().LoadData();
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
         var query = new ApplicationChatQuery(
-            "As tlovejoy, create a work order for mowing grass ",
+            "As tlovejoy, create a work request for mowing grass ",
             "tlovejoy");
 
         ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
@@ -81,30 +81,30 @@ public class ApplicationChatHandlerTests : LlmTestBase
         ChatResponse parseResponse = await ExecuteLlmAsync(() => parseClient.GetResponseAsync(
         [
             new(ChatRole.System,
-                "Extract only the work order number from the following text. " +
-                "Return nothing but the work order number itself, with no extra text."),
+                "Extract only the work request number from the following text. " +
+                "Return nothing but the work request number itself, with no extra text."),
             new(ChatRole.User, responseText)
         ]));
-        var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
-        await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
+        var workRequestNumber = parseResponse.Messages.Last().Text!.Trim();
+        await TestContext.Out.WriteLineAsync($"Parsed work request number: {workRequestNumber}");
 
         var db = TestHost.GetRequiredService<DataContext>();
-        var workOrder = await db.Set<WorkOrder>()
-            .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber);
+        var workRequest = await db.Set<WorkRequest>()
+            .SingleOrDefaultAsync(wo => wo.Number == workRequestNumber);
 
-        workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
-        workOrder.Status.ShouldBe(WorkOrderStatus.Draft);
+        workRequest.ShouldNotBeNull($"No work request found with number '{workRequestNumber}'");
+        workRequest.Status.ShouldBe(WorkRequestStatus.Draft);
     }
 
     [Test]
     [Retry(80)]
-    public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilie()
+    public async Task Handle_CreateAndAssignWorkRequest_AssignsWorkRequestForWilie()
     {
         new ZDataLoader().LoadData();
         var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
         var query = new ApplicationChatQuery(
             "I am Timothy Lovejoy (username tlovejoy). " +
-            "Create a work order for Groundskeeper Willie (username gwillie) to mow the grass. " +
+            "Create a work request for Groundskeeper Willie (username gwillie) to mow the grass. " +
             "Use 'tlovejoy' as the creatorUsername. " +
             "After creating it, assign it to gwillie using the DraftToAssignedCommand " +
             "with executingUsername='tlovejoy' and assigneeUsername='gwillie'. " +
@@ -121,44 +121,44 @@ public class ApplicationChatHandlerTests : LlmTestBase
         ChatResponse parseResponse = await ExecuteLlmAsync(() => parseClient.GetResponseAsync(
         [
             new(ChatRole.System,
-                "Extract only the work order number from the following text. " +
-                "Return nothing but the work order number itself, with no extra text."),
+                "Extract only the work request number from the following text. " +
+                "Return nothing but the work request number itself, with no extra text."),
             new(ChatRole.User, responseText)
         ]));
-        var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
-        await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
+        var workRequestNumber = parseResponse.Messages.Last().Text!.Trim();
+        await TestContext.Out.WriteLineAsync($"Parsed work request number: {workRequestNumber}");
 
-        var workOrder = await WaitForWorkOrderAsync(
-            workOrderNumber,
-            wo => wo.Status == WorkOrderStatus.Assigned,
+        var workRequest = await WaitForWorkRequestAsync(
+            workRequestNumber,
+            wo => wo.Status == WorkRequestStatus.Assigned,
             TimeSpan.FromMinutes(2));
 
-        if (workOrder is null || workOrder.Status != WorkOrderStatus.Assigned)
+        if (workRequest is null || workRequest.Status != WorkRequestStatus.Assigned)
         {
             var bus = TestHost.GetRequiredService<IBus>();
-            var fallbackResult = await WorkOrderTools.ExecuteWorkOrderCommand(
+            var fallbackResult = await WorkRequestTools.ExecuteWorkRequestCommand(
                 bus,
-                workOrderNumber,
+                workRequestNumber,
                 "DraftToAssignedCommand",
                 "tlovejoy",
                 "gwillie");
             await TestContext.Out.WriteLineAsync($"Deterministic assign fallback: {fallbackResult}");
-            workOrder = await WaitForWorkOrderAsync(
-                workOrderNumber,
-                wo => wo.Status == WorkOrderStatus.Assigned,
+            workRequest = await WaitForWorkRequestAsync(
+                workRequestNumber,
+                wo => wo.Status == WorkRequestStatus.Assigned,
                 TimeSpan.FromSeconds(30));
         }
 
-        workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
-        workOrder.Status.ShouldBe(WorkOrderStatus.Assigned);
-        workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
-        workOrder.Creator?.FirstName.ShouldBe("Timothy");
+        workRequest.ShouldNotBeNull($"No work request found with number '{workRequestNumber}'");
+        workRequest.Status.ShouldBe(WorkRequestStatus.Assigned);
+        workRequest.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+        workRequest.Creator?.FirstName.ShouldBe("Timothy");
     }
 
     [Test]
     [Retry(80)]
     [Category("SqlServerOnly")]
-    public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
+    public async Task Handle_CreateAndAssignWorkRequest_AssignsWorkRequestForWilieAndThenShelvesIt()
     {
         SqlServerTestAssumptions.RequireSqlServer();
 
@@ -166,20 +166,20 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         var bus = TestHost.GetRequiredService<IBus>();
         var responseText = await ExecuteAsync(
-            "Create a new work order to 'mow the grass', assign it to Groundskeeper Willie, " +
-            "only return the work order number");
+            "Create a new work request to 'mow the grass', assign it to Groundskeeper Willie, " +
+            "only return the work request number");
         await TestContext.Out.WriteLineAsync($"LLM response: {responseText}");
 
-        var workOrderNumber = await ParseWorkOrderNumberAsync(responseText);
-        await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
+        var workRequestNumber = await ParseWorkRequestNumberAsync(responseText);
+        await TestContext.Out.WriteLineAsync($"Parsed work request number: {workRequestNumber}");
 
         await EnsureAssignedAsync();
 
-        await ExecuteAsync($"make work order {workOrderNumber} in progress", "gwillie");
+        await ExecuteAsync($"make work request {workRequestNumber} in progress", "gwillie");
 
         await EnsureInProgressAsync();
 
-        await ExecuteAsync($"Shelve work order {workOrderNumber}", "gwillie");
+        await ExecuteAsync($"Shelve work request {workRequestNumber}", "gwillie");
 
         await EnsureAssignedAfterShelveAsync();
 
@@ -193,15 +193,15 @@ public class ApplicationChatHandlerTests : LlmTestBase
             return response.Messages.LastOrDefault()?.Text!;
         }
 
-        async Task<string> ParseWorkOrderNumberAsync(string text)
+        async Task<string> ParseWorkRequestNumberAsync(string text)
         {
             var factory = TestHost.GetRequiredService<ChatClientFactory>();
             IChatClient parseClient = await factory.GetChatClient();
             ChatResponse parseResponse = await ExecuteLlmAsync(() => parseClient.GetResponseAsync(
             [
                 new(ChatRole.System,
-                    "Extract only the work order number from the following text. " +
-                    "Return nothing but the work order number itself, with no extra text."),
+                    "Extract only the work request number from the following text. " +
+                    "Return nothing but the work request number itself, with no extra text."),
                 new(ChatRole.User, text)
             ]));
 
@@ -210,83 +210,83 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
         async Task EnsureAssignedAsync()
         {
-            var workOrder = await WaitForWorkOrderAsync(
-                workOrderNumber,
-                wo => wo.Status == WorkOrderStatus.Assigned,
+            var workRequest = await WaitForWorkRequestAsync(
+                workRequestNumber,
+                wo => wo.Status == WorkRequestStatus.Assigned,
                 TimeSpan.FromMinutes(2));
 
-            if (workOrder is null || workOrder.Status != WorkOrderStatus.Assigned)
+            if (workRequest is null || workRequest.Status != WorkRequestStatus.Assigned)
             {
-                var fallbackResult = await WorkOrderTools.ExecuteWorkOrderCommand(
+                var fallbackResult = await WorkRequestTools.ExecuteWorkRequestCommand(
                     bus,
-                    workOrderNumber,
+                    workRequestNumber,
                     "DraftToAssignedCommand",
                     "tlovejoy",
                     "gwillie");
                 await TestContext.Out.WriteLineAsync($"Deterministic assign fallback: {fallbackResult}");
-                workOrder = await WaitForWorkOrderAsync(
-                    workOrderNumber,
-                    wo => wo.Status == WorkOrderStatus.Assigned,
+                workRequest = await WaitForWorkRequestAsync(
+                    workRequestNumber,
+                    wo => wo.Status == WorkRequestStatus.Assigned,
                     TimeSpan.FromSeconds(30));
             }
 
-            await AssertWorkOrderStateAsync(workOrder, WorkOrderStatus.Assigned);
+            await AssertWorkRequestStateAsync(workRequest, WorkRequestStatus.Assigned);
         }
 
         async Task EnsureInProgressAsync()
         {
-            var workOrder = await WaitForWorkOrderAsync(
-                workOrderNumber,
-                wo => wo.Status == WorkOrderStatus.InProgress,
+            var workRequest = await WaitForWorkRequestAsync(
+                workRequestNumber,
+                wo => wo.Status == WorkRequestStatus.InProgress,
                 TimeSpan.FromMinutes(2));
 
-            if (workOrder is null || workOrder.Status != WorkOrderStatus.InProgress)
+            if (workRequest is null || workRequest.Status != WorkRequestStatus.InProgress)
             {
-                var fallbackResult = await WorkOrderTools.ExecuteWorkOrderCommand(
+                var fallbackResult = await WorkRequestTools.ExecuteWorkRequestCommand(
                     bus,
-                    workOrderNumber,
+                    workRequestNumber,
                     "AssignedToInProgressCommand",
                     "gwillie");
                 await TestContext.Out.WriteLineAsync($"Deterministic in-progress fallback: {fallbackResult}");
-                workOrder = await WaitForWorkOrderAsync(
-                    workOrderNumber,
-                    wo => wo.Status == WorkOrderStatus.InProgress,
+                workRequest = await WaitForWorkRequestAsync(
+                    workRequestNumber,
+                    wo => wo.Status == WorkRequestStatus.InProgress,
                     TimeSpan.FromSeconds(30));
             }
 
-            await AssertWorkOrderStateAsync(workOrder, WorkOrderStatus.InProgress);
+            await AssertWorkRequestStateAsync(workRequest, WorkRequestStatus.InProgress);
         }
 
         async Task EnsureAssignedAfterShelveAsync()
         {
-            var workOrder = await WaitForWorkOrderAsync(
-                workOrderNumber,
-                wo => wo.Status == WorkOrderStatus.Assigned,
+            var workRequest = await WaitForWorkRequestAsync(
+                workRequestNumber,
+                wo => wo.Status == WorkRequestStatus.Assigned,
                 TimeSpan.FromMinutes(2));
 
-            if (workOrder is null || workOrder.Status != WorkOrderStatus.Assigned)
+            if (workRequest is null || workRequest.Status != WorkRequestStatus.Assigned)
             {
-                var fallbackResult = await WorkOrderTools.ExecuteWorkOrderCommand(
+                var fallbackResult = await WorkRequestTools.ExecuteWorkRequestCommand(
                     bus,
-                    workOrderNumber,
+                    workRequestNumber,
                     "Shelve",
                     "gwillie");
                 await TestContext.Out.WriteLineAsync($"Deterministic shelve fallback: {fallbackResult}");
-                workOrder = await WaitForWorkOrderAsync(
-                    workOrderNumber,
-                    wo => wo.Status == WorkOrderStatus.Assigned,
+                workRequest = await WaitForWorkRequestAsync(
+                    workRequestNumber,
+                    wo => wo.Status == WorkRequestStatus.Assigned,
                     TimeSpan.FromSeconds(30));
             }
 
-            await AssertWorkOrderStateAsync(workOrder, WorkOrderStatus.Assigned);
+            await AssertWorkRequestStateAsync(workRequest, WorkRequestStatus.Assigned);
         }
 
-        async Task AssertWorkOrderStateAsync(WorkOrder? workOrder, WorkOrderStatus status)
+        async Task AssertWorkRequestStateAsync(WorkRequest? workRequest, WorkRequestStatus status)
         {
-            workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
-            workOrder.Status.ShouldBe(status);
-            workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
-            workOrder.Creator?.FirstName.ShouldBe("Timothy");
+            workRequest.ShouldNotBeNull($"No work request found with number '{workRequestNumber}'");
+            workRequest.Status.ShouldBe(status);
+            workRequest.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
+            workRequest.Creator?.FirstName.ShouldBe("Timothy");
         }
     }
 }

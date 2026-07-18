@@ -12,11 +12,11 @@ participant mediator as "IMediator"
 participant cmdHandler as "StateCommandHandler"
 participant cmd as "SaveDraftCommand"
 participant cmdBase as "StateCommandBase"
-participant order as "WorkOrder"
+participant order as "WorkRequest"
 participant db as "DataContext (EF Core)"
 participant dBus as "DistributedBus : IDistributedBus"
 
-user->>ui: Submit work order form
+user->>ui: Submit work request form
 ui->>api: POST WebServiceMessage (SaveDraftCommand)
 api->>api: Deserialize WebServiceMessage.GetBodyObject()
 api->>sBus: Send(SaveDraftCommand)

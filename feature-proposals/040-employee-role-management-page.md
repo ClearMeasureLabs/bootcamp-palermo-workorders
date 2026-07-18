@@ -4,7 +4,7 @@ Administrators currently have no UI for managing roles and role assignments. A d
 ## What Changes
 - Create a `RolesQuery` in `src/Core/Queries/` to retrieve all roles with their permission flags
 - Create a `CreateRoleCommand` in `src/Core/Model/StateCommands/` for adding new roles
-- Create an `UpdateRoleCommand` in `src/Core/Model/StateCommands/` for editing role properties (Name, CanCreateWorkOrder, CanFulfillWorkOrder)
+- Create an `UpdateRoleCommand` in `src/Core/Model/StateCommands/` for editing role properties (Name, CanCreateWorkRequest, CanFulfillWorkRequest)
 - Create an `AssignRoleToEmployeeCommand` and `RemoveRoleFromEmployeeCommand` in `src/Core/Model/StateCommands/`
 - Add MediatR handlers in `src/DataAccess/Handlers/` for all new commands and queries
 - Create a `RoleManagement` page component in `src/UI/Client/` with sections for listing roles, creating/editing roles, and assigning roles to employees
@@ -15,7 +15,7 @@ Administrators currently have no UI for managing roles and role assignments. A d
 ## Capabilities
 ### New Capabilities
 - Role management admin page listing all roles with their permission flags
-- Create new role with Name, CanCreateWorkOrder, and CanFulfillWorkOrder flags
+- Create new role with Name, CanCreateWorkRequest, and CanFulfillWorkRequest flags
 - Edit existing role properties
 - Assign a role to an employee from the role management page
 - Remove a role from an employee
@@ -35,7 +35,7 @@ Administrators currently have no UI for managing roles and role assignments. A d
 
 ## Acceptance Criteria
 ### Unit Tests
-- RolesQuery handler returns all roles with correct CanCreateWorkOrder and CanFulfillWorkOrder flags
+- RolesQuery handler returns all roles with correct CanCreateWorkRequest and CanFulfillWorkRequest flags
 - CreateRoleCommand validates that Name is not empty and not a duplicate
 - UpdateRoleCommand updates the specified role's properties
 - AssignRoleToEmployeeCommand adds the role to the employee's role collection
@@ -52,7 +52,7 @@ Administrators currently have no UI for managing roles and role assignments. A d
 ### Acceptance Tests
 - Administrator navigates to the Role Management page and sees all existing roles
 - Administrator creates a new role with specified permissions and it appears in the list
-- Administrator edits a role's CanCreateWorkOrder flag and the change is saved
+- Administrator edits a role's CanCreateWorkRequest flag and the change is saved
 - Administrator assigns a role to an employee and the employee appears in the role's member list
 - Administrator removes a role from an employee and the employee no longer appears in the member list
 - Non-administrator users cannot access the Role Management page

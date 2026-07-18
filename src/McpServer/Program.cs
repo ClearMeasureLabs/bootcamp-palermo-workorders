@@ -20,7 +20,7 @@ var mcpBuilder = builder.Services
             Version = "1.0.0"
         };
     })
-    .WithTools<WorkOrderTools>()
+    .WithTools<WorkRequestTools>()
     .WithTools<EmployeeTools>()
     .WithResources<ReferenceResources>();
 

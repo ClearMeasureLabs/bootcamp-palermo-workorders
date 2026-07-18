@@ -12,12 +12,12 @@ participant mediator as "IMediator"
 participant cmdHandler as "StateCommandHandler"
 participant cmd as "DraftToAssignedCommand"
 participant cmdBase as "StateCommandBase"
-participant order as "WorkOrder"
+participant order as "WorkRequest"
 participant db as "DataContext (EF Core)"
 participant dBus as "DistributedBus : IDistributedBus"
 participant nsb as "NServiceBus"
 
-user->>ui: Assign work order
+user->>ui: Assign work request
 ui->>api: POST WebServiceMessage (DraftToAssignedCommand)
 api->>api: Deserialize WebServiceMessage.GetBodyObject()
 api->>sBus: Send(DraftToAssignedCommand)
@@ -28,15 +28,15 @@ cmd->>order: AssignedDate = CurrentDateTime
 cmd->>cmdBase: base.Execute(context)
 cmdBase->>order: ChangeStatus(CurrentUser, CurrentDateTime, Assigned)
 alt Assignee has Bot role
-    cmd->>cmd: Create WorkOrderAssignedToBotEvent
+    cmd->>cmd: Create WorkRequestAssignedToBotEvent
 end
 cmdHandler->>db: Attach/Add or Update(order)
 cmdHandler->>db: SaveChangesAsync()
 db-->>cmdHandler: persisted
 cmdHandler->>cmdHandler: Build debug message
 cmdHandler->>dBus: PublishAsync(StateTransitionEvent)
-alt WorkOrderAssignedToBotEvent exists
-    dBus->>nsb: Publish(WorkOrderAssignedToBotEvent)
+alt WorkRequestAssignedToBotEvent exists
+    dBus->>nsb: Publish(WorkRequestAssignedToBotEvent)
 end
 cmdHandler-->>mediator: StateCommandResult(order, "Assign", debugMessage)
 mediator-->>sBus: StateCommandResult

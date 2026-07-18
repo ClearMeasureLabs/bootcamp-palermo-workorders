@@ -59,7 +59,7 @@ public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
         var messages = new List<ChatMessage>
         {
             new(ChatRole.System,
-                "You are a helpful assistant with access to tools for managing work orders and employees. " +
+                "You are a helpful assistant with access to tools for managing work requests and employees. " +
                 "Always use the provided tools to answer questions. Return the raw data from tool results."),
             new(ChatRole.User, prompt)
         };

@@ -13,9 +13,9 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
         string prompt = request.Prompt;
         var chatMessages = new List<ChatMessage>()
         {
-            new(ChatRole.System, "You are a helpful AI assistant for a work order management application. " +
-                                 "You can help with general questions, look up work orders, find employees, " +
-                                 "and assist with any tasks related to managing work orders."),
+            new(ChatRole.System, "You are a helpful AI assistant for a work request management application. " +
+                                 "You can help with general questions, look up work requests, find employees, " +
+                                 "and assist with any tasks related to managing work requests."),
             new(ChatRole.System, "Limit answer to 3 sentences. Be brief"),
             new(ChatRole.System, $"Currently logged in user is {request.CurrentUsername}"),
         };

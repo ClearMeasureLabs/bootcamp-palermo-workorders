@@ -304,9 +304,9 @@ public abstract class AcceptanceTestBase
         await locator.SelectOptionAsync(value ?? "");
     }
 
-    protected async Task<WorkOrder> CreateAndSaveNewWorkOrder()
+    protected async Task<WorkRequest> CreateAndSaveNewWorkRequest()
     {
-        var order = Faker<WorkOrder>();
+        var order = Faker<WorkRequest>();
         order.Title = $"[{TestTag}] from automation";
         order.Number = null;
         var testTitle = order.Title;
@@ -315,32 +315,32 @@ public abstract class AcceptanceTestBase
         var testRoomNumber = order.RoomNumber;
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Click(nameof(NavMenu.Elements.NewWorkOrder));
-        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
-        await TakeScreenshotAsync(1, "NewWorkOrderPage");
+        await Click(nameof(NavMenu.Elements.NewWorkRequest));
+        await Page.WaitForURLAsync("**/workrequest/manage?mode=New");
+        await TakeScreenshotAsync(1, "NewWorkRequestPage");
 
-        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        ILocator woNumberLocator = Page.GetByTestId(nameof(WorkRequestManage.Elements.WorkRequestNumber));
         await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
-        var newWorkOrderNumber = await woNumberLocator.InnerTextAsync();
-        order.Number = newWorkOrderNumber;
-        await Input(nameof(WorkOrderManage.Elements.Title), testTitle);
-        await Input(nameof(WorkOrderManage.Elements.Description), testDescription);
+        var newWorkRequestNumber = await woNumberLocator.InnerTextAsync();
+        order.Number = newWorkRequestNumber;
+        await Input(nameof(WorkRequestManage.Elements.Title), testTitle);
+        await Input(nameof(WorkRequestManage.Elements.Description), testDescription);
         if (!string.IsNullOrEmpty(testInstructions))
         {
-            await Input(nameof(WorkOrderManage.Elements.Instructions), testInstructions);
+            await Input(nameof(WorkRequestManage.Elements.Instructions), testInstructions);
         }
-        await Input(nameof(WorkOrderManage.Elements.RoomNumber), testRoomNumber);
+        await Input(nameof(WorkRequestManage.Elements.RoomNumber), testRoomNumber);
         await TakeScreenshotAsync(2, "FormFilled");
 
-        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        var saveButtonTestId = nameof(WorkRequestManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
-        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        await Page.WaitForURLAsync("**/workrequest/search", new PageWaitForURLOptions { Timeout = 90_000 });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder? rehyratedOrder = null;
+        WorkRequest? rehyratedOrder = null;
         for (var attempt = 0; attempt < 10; attempt++)
         {
-            rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
+            rehyratedOrder = await Bus.Send(new WorkRequestByNumberQuery(order.Number));
             if (rehyratedOrder != null) break;
             await Task.Delay(1000);
         }
@@ -349,67 +349,67 @@ public abstract class AcceptanceTestBase
         return rehyratedOrder;
     }
 
-    protected async Task<WorkOrder> ClickWorkOrderNumberFromSearchPage(WorkOrder order)
+    protected async Task<WorkRequest> ClickWorkRequestNumberFromSearchPage(WorkRequest order)
     {
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await Click(nameof(WorkRequestSearch.Elements.WorkRequestLink) + order.Number);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        var woNumberLocator = Page.GetByTestId(nameof(WorkRequestManage.Elements.WorkRequestNumber));
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         return order;
     }
 
-    protected async Task<WorkOrder> AssignExistingWorkOrder(WorkOrder order, string username)
+    protected async Task<WorkRequest> AssignExistingWorkRequest(WorkRequest order, string username)
     {
-        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        var woNumberLocator = Page.GetByTestId(nameof(WorkRequestManage.Elements.WorkRequestNumber));
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
         
-        await Select(nameof(WorkOrderManage.Elements.Assignee), username);
-        await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
-        await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
+        await Select(nameof(WorkRequestManage.Elements.Assignee), username);
+        await Input(nameof(WorkRequestManage.Elements.Title), order.Title);
+        await Input(nameof(WorkRequestManage.Elements.Description), order.Description);
+        await Click(nameof(WorkRequestManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        WorkRequest rehyratedOrder = await Bus.Send(new WorkRequestByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
 
         return rehyratedOrder;
     }
 
-    protected async Task<WorkOrder> BeginExistingWorkOrder(WorkOrder order)
+    protected async Task<WorkRequest> BeginExistingWorkRequest(WorkRequest order)
     {
-        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        var woNumberLocator = Page.GetByTestId(nameof(WorkRequestManage.Elements.WorkRequestNumber));
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
 
-        await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
-        await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
+        await Input(nameof(WorkRequestManage.Elements.Title), order.Title);
+        await Input(nameof(WorkRequestManage.Elements.Description), order.Description);
+        await Click(nameof(WorkRequestManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        WorkRequest rehyratedOrder = await Bus.Send(new WorkRequestByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
 
         return rehyratedOrder;
     }
 
-    protected async Task<WorkOrder> CompleteExistingWorkOrder(WorkOrder order)
+    protected async Task<WorkRequest> CompleteExistingWorkRequest(WorkRequest order)
     {
-        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        var woNumberLocator = Page.GetByTestId(nameof(WorkRequestManage.Elements.WorkRequestNumber));
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
 
-        await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
-        await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
+        await Input(nameof(WorkRequestManage.Elements.Title), order.Title);
+        await Input(nameof(WorkRequestManage.Elements.Description), order.Description);
         if (!string.IsNullOrEmpty(order.Instructions))
         {
-            await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions);
+            await Input(nameof(WorkRequestManage.Elements.Instructions), order.Instructions);
         }
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
+        await Click(nameof(WorkRequestManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs()); // Give time for the save operation to complete on Azure
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        WorkRequest rehyratedOrder = await Bus.Send(new WorkRequestByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         return rehyratedOrder;
     }
 }

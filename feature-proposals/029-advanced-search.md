@@ -1,9 +1,9 @@
 ## Why
-Power users need to construct complex queries combining multiple field conditions with AND/OR logic to find specific subsets of work orders. An advanced search panel enables precise filtering that goes beyond simple single-field filters, supporting audit, compliance, and detailed analysis workflows.
+Power users need to construct complex queries combining multiple field conditions with AND/OR logic to find specific subsets of work requests. An advanced search panel enables precise filtering that goes beyond simple single-field filters, supporting audit, compliance, and detailed analysis workflows.
 
 ## What Changes
 - Create an `AdvancedSearchCriteria` model in `src/Core/Queries/` with properties: Field, Operator (Equals, Contains, GreaterThan, LessThan), Value, and LogicalOperator (AND, OR)
-- Add an `AdvancedSearchCriteriaList` property to `WorkOrderSpecificationQuery` in `src/Core/Queries/`
+- Add an `AdvancedSearchCriteriaList` property to `WorkRequestSpecificationQuery` in `src/Core/Queries/`
 - Update the query handler in `src/DataAccess/Handlers/` to build dynamic WHERE clauses from the criteria list
 - Create a collapsible advanced search panel component in `src/UI/Client/` with field selector, operator selector, value input, and AND/OR toggle
 - Allow users to add and remove condition rows dynamically
@@ -12,21 +12,21 @@ Power users need to construct complex queries combining multiple field condition
 
 ## Capabilities
 ### New Capabilities
-- Collapsible advanced search panel on the WorkOrderSearch page
+- Collapsible advanced search panel on the WorkRequestSearch page
 - Dynamic condition builder with field, operator, and value selectors
 - AND/OR logic toggles between conditions
 - Support for text, date, and status field comparisons
 - Add and remove condition rows dynamically
 
 ### Modified Capabilities
-- WorkOrderSearch page includes a toggleable "Advanced Search" section below existing filters
-- WorkOrderSpecificationQuery supports a list of advanced search criteria
+- WorkRequestSearch page includes a toggleable "Advanced Search" section below existing filters
+- WorkRequestSpecificationQuery supports a list of advanced search criteria
 
 ## Impact
-- `src/Core/Queries/WorkOrderSpecificationQuery.cs` — new AdvancedSearchCriteriaList property
+- `src/Core/Queries/WorkRequestSpecificationQuery.cs` — new AdvancedSearchCriteriaList property
 - `src/Core/Queries/AdvancedSearchCriteria.cs` — new model for criteria definition
 - `src/DataAccess/Handlers/` — updated query handler with dynamic WHERE clause builder
-- `src/UI/Client/` — new advanced search panel component, updated WorkOrderSearch page
+- `src/UI/Client/` — new advanced search panel component, updated WorkRequestSearch page
 - `src/UI/Api/` — updated API controller to accept advanced criteria
 - No database migration required
 - No new NuGet packages required

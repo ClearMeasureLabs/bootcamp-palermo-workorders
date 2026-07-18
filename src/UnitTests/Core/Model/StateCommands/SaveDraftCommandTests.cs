@@ -10,8 +10,8 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidInWrongStatus()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Complete;
+        var order = new WorkRequest();
+        order.Status = WorkRequestStatus.Complete;
         var employee = new Employee();
         order.Creator = employee;
 
@@ -22,8 +22,8 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidWithWrongEmployee()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
+        var order = new WorkRequest();
+        order.Status = WorkRequestStatus.Draft;
         var employee = new Employee();
         order.Creator = employee;
 
@@ -34,8 +34,8 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldBeValid()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
+        var order = new WorkRequest();
+        order.Status = WorkRequestStatus.Draft;
         var employee = new Employee();
         order.Creator = employee;
 
@@ -46,20 +46,20 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldTransitionStateProperly()
     {
-        var order = new WorkOrder();
+        var order = new WorkRequest();
         order.Number = "123";
-        order.Status = WorkOrderStatus.Draft;
+        order.Status = WorkRequestStatus.Draft;
         var employee = new Employee();
         order.Creator = employee;
 
         var command = new SaveDraftCommand(order, employee);
         command.Execute(new StateCommandContext());
 
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Draft));
+        Assert.That(order.Status, Is.EqualTo(WorkRequestStatus.Draft));
         Assert.That(order.CreatedDate, Is.Not.Null);
     }
 
-    protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
+    protected override StateCommandBase GetStateCommand(WorkRequest order, Employee employee)
     {
         return new SaveDraftCommand(order, employee);
     }

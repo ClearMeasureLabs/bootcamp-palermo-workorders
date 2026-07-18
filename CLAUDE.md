@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Work Order management system. .NET 10.0, Onion Architecture, Blazor WebAssembly + Server UI, EF Core 10, SQL Server, MediatR for CQRS, Lamar DI, deployed to Azure Container Apps.
+Work Request management system. .NET 10.0, Onion Architecture, Blazor WebAssembly + Server UI, EF Core 10, SQL Server, MediatR for CQRS, Lamar DI, deployed to Azure Container Apps.
 
 **Solution:** `src/ChurchBulletin.sln`
 
@@ -54,18 +54,18 @@ User → Blazor UI → API Controller → IBus.Send(query/command)
   → MediatR → Handler (in DataAccess/) → DataContext (EF Core) → SQL Server
 ```
 
-**Queries:** Defined in `src/Core/Queries/` (e.g., `WorkOrderByNumberQuery`). Handlers in `src/DataAccess/Handlers/`.
+**Queries:** Defined in `src/Core/Queries/` (e.g., `WorkRequestByNumberQuery`). Handlers in `src/DataAccess/Handlers/`.
 
-**State Commands:** Defined in `src/Core/Model/StateCommands/`. Each command implements `IStateCommand` and mutates the domain model. Flow: `StateCommandHandler` → `command.Execute(workOrder)` → `DataContext.SaveChangesAsync()`.
+**State Commands:** Defined in `src/Core/Model/StateCommands/`. Each command implements `IStateCommand` and mutates the domain model. Flow: `StateCommandHandler` → `command.Execute(workRequest)` → `DataContext.SaveChangesAsync()`.
 
-Work order state transitions: Draft → Assigned → InProgress → Complete (also Cancelled from any state). See `arch/WorflowFor*.md` for sequence diagrams.
+Work request state transitions: Draft → Assigned → InProgress → Complete (also Cancelled from any state). See `arch/WorflowFor*.md` for sequence diagrams.
 
 ## Domain Model
 
-- **WorkOrder**: Number, Title, Description, RoomNumber, Status (WorkOrderStatus), Creator/Assignee (Employee), AssignedDate, CreatedDate, CompletedDate. Methods: `ChangeStatus()`, `CanReassign()`
-- **Employee**: UserName, FirstName, LastName, EmailAddress, Roles. Methods: `CanCreateWorkOrder()`, `CanFulfillWorkOrder()`
-- **WorkOrderStatus**: Smart enum — Draft, Assigned, InProgress, Complete, Cancelled. Factory methods: `FromCode()`, `FromKey()`
-- **Role**: Name, CanCreateWorkOrder, CanFulfillWorkOrder
+- **WorkRequest**: Number, Title, Description, RoomNumber, Status (WorkRequestStatus), Creator/Assignee (Employee), AssignedDate, CreatedDate, CompletedDate. Methods: `ChangeStatus()`, `CanReassign()`
+- **Employee**: UserName, FirstName, LastName, EmailAddress, Roles. Methods: `CanCreateWorkRequest()`, `CanFulfillWorkRequest()`
+- **WorkRequestStatus**: Smart enum — Draft, Assigned, InProgress, Complete, Cancelled. Factory methods: `FromCode()`, `FromKey()`
+- **Role**: Name, CanCreateWorkRequest, CanFulfillWorkRequest
 
 ## Database Migrations
 

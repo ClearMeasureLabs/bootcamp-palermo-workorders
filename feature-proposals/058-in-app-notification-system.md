@@ -1,5 +1,5 @@
 ## Why
-Not all users check email promptly, and some notifications are too minor for email. An in-app notification system provides a lightweight, always-visible channel for communicating work order events, improving responsiveness and user engagement within the application itself.
+Not all users check email promptly, and some notifications are too minor for email. An in-app notification system provides a lightweight, always-visible channel for communicating work request events, improving responsiveness and user engagement within the application itself.
 
 ## What Changes
 - Add `Notification` entity to `src/Core/Model/` with properties: `Id` (Guid), `RecipientId` (Employee reference), `Message` (string), `IsRead` (bool), `CreatedDate` (DateTime), `LinkUrl` (optional string)
@@ -18,7 +18,7 @@ Not all users check email promptly, and some notifications are too minor for ema
 - `Notification` entity and database table for persisting in-app notifications
 - Bell icon in the application header with unread count badge
 - Dropdown list showing recent notifications with message, timestamp, and read/unread styling
-- Click a notification to navigate to the related work order and mark it as read
+- Click a notification to navigate to the related work request and mark it as read
 - "Mark all as read" button in the dropdown
 - API endpoints for listing unread notifications and marking individual or all notifications as read
 
@@ -48,7 +48,7 @@ Not all users check email promptly, and some notifications are too minor for ema
 
 ### Acceptance Tests
 - Verify the notification bell icon is visible in the application header
-- Trigger a notification (e.g., assign a work order) and verify the unread count badge appears
+- Trigger a notification (e.g., assign a work request) and verify the unread count badge appears
 - Click the bell and verify the dropdown shows the notification message
-- Click a notification and verify navigation to the related work order
+- Click a notification and verify navigation to the related work request
 - Click "Mark all as read" and verify the badge disappears

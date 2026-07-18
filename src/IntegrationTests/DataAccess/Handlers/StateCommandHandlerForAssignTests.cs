@@ -10,11 +10,11 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 public class StateCommandHandlerForAssignTests : IntegratedTestBase
 {
     [Test]
-    public async Task ShouldSaveWorkOrderWithAssigneeAndCreator()
+    public async Task ShouldSaveWorkRequestWithAssigneeAndCreator()
     {
         new DatabaseTests().Clean();
 
-        var o = Faker<WorkOrder>();
+        var o = Faker<WorkRequest>();
         o.Id = Guid.Empty;
         var currentUser = Faker<Employee>();
         var assignee = Faker<Employee>();
@@ -34,7 +34,7 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
         var result = await handler.Handle(command);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
-        var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkRequest>(result.WorkRequest.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(order.Title);
         order.Description.ShouldBe(order.Description);
         order.Creator.ShouldBe(currentUser);
@@ -43,11 +43,11 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
     }
 
     [Test]
-    public async Task ShouldSaveWorkOrderWithOnlyCreatorRemotingCommand()
+    public async Task ShouldSaveWorkRequestWithOnlyCreatorRemotingCommand()
     {
         new DatabaseTests().Clean();
 
-        var o = Faker<WorkOrder>();
+        var o = Faker<WorkRequest>();
         o.Id = Guid.Empty;
         var currentUser = Faker<Employee>();
         o.Creator = currentUser;
@@ -65,18 +65,18 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
         var result = await handler.Handle(remotedCommand);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
-        var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkRequest>(result.WorkRequest.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(order.Title);
         order.Description.ShouldBe(order.Description);
         order.Creator.ShouldBe(currentUser);
     }
 
     [Test]
-    public async Task ShouldSaveWorkOrderWithOnlyCreatorRemotingWorkOrder()
+    public async Task ShouldSaveWorkRequestWithOnlyCreatorRemotingWorkRequest()
     {
         new DatabaseTests().Clean();
 
-        var o = Faker<WorkOrder>();
+        var o = Faker<WorkRequest>();
         o.Id = Guid.Empty;
         var currentUser = Faker<Employee>();
         o.Creator = currentUser;
@@ -94,7 +94,7 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
         var result = await handler.Handle(command);
 
         var context3 = TestHost.GetRequiredService<DbContext>();
-        var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        var order = context3.Find<WorkRequest>(result.WorkRequest.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(order.Title);
         order.Description.ShouldBe(order.Description);
         order.Creator.ShouldBe(currentUser);

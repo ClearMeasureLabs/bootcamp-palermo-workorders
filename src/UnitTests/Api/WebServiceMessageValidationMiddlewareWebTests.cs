@@ -13,12 +13,12 @@ namespace ClearMeasure.Bootcamp.UnitTests.Api;
 public class WebServiceMessageValidationMiddlewareWebTests
 {
     [Test]
-    public async Task Should_Return400_When_WorkOrderByNumberQueryHasEmptyNumber()
+    public async Task Should_Return400_When_WorkRequestByNumberQueryHasEmptyNumber()
     {
         await using var factory = new WebServiceMessageValidationWebApplicationFactory();
         using var client = factory.CreateClient();
 
-        var message = new WebServiceMessage(new WorkOrderByNumberQuery(""));
+        var message = new WebServiceMessage(new WorkRequestByNumberQuery(""));
         var response = await PostSingleApiAsync(client, message);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);

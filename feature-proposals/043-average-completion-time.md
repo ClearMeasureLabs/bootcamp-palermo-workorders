@@ -3,14 +3,14 @@ Tracking average completion time gives operations teams a key performance indica
 
 ## What Changes
 - Add `AverageCompletionTimeQuery` to `src/Core/Queries/` returning a `TimeSpan` or nullable double representing average hours/days
-- Add `AverageCompletionTimeHandler` in `src/DataAccess/Handlers/` calculating the average difference between `CompletedDate` and `CreatedDate` for completed work orders
+- Add `AverageCompletionTimeHandler` in `src/DataAccess/Handlers/` calculating the average difference between `CompletedDate` and `CreatedDate` for completed work requests
 - Add `AverageCompletionTime.razor` component in `src/UI/Client/` displaying the metric as a formatted card (e.g., "Avg. Completion: 3.2 days")
 - Add API endpoint in `src/UI/Api/` to expose the metric
 - Display the component on the dashboard page
 
 ## Capabilities
 ### New Capabilities
-- Dashboard metric card showing average time from creation to completion for all completed work orders
+- Dashboard metric card showing average time from creation to completion for all completed work requests
 - Option to filter by time period (last 7 days, 30 days, 90 days)
 
 ### Modified Capabilities
@@ -26,16 +26,16 @@ Tracking average completion time gives operations teams a key performance indica
 
 ## Acceptance Criteria
 ### Unit Tests
-- `AverageCompletionTimeHandler` returns correct average when multiple completed work orders exist
-- `AverageCompletionTimeHandler` returns null or zero when no completed work orders exist
-- `AverageCompletionTimeHandler` excludes non-completed work orders from the calculation
+- `AverageCompletionTimeHandler` returns correct average when multiple completed work requests exist
+- `AverageCompletionTimeHandler` returns null or zero when no completed work requests exist
+- `AverageCompletionTimeHandler` excludes non-completed work requests from the calculation
 - `AverageCompletionTime` component renders the formatted time value using bUnit
 
 ### Integration Tests
-- `AverageCompletionTimeHandler` computes accurate average from seeded completed work orders with known dates
-- Handler correctly ignores cancelled and in-progress work orders
+- `AverageCompletionTimeHandler` computes accurate average from seeded completed work requests with known dates
+- Handler correctly ignores cancelled and in-progress work requests
 
 ### Acceptance Tests
 - Navigate to the dashboard and verify the average completion time metric is displayed
-- Complete a work order and verify the metric updates on page refresh
+- Complete a work request and verify the metric updates on page refresh
 - Verify the displayed value matches the expected average based on known test data

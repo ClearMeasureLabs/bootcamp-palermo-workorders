@@ -1,6 +1,6 @@
-# Work Order Management System
+# Work Request Management System
 
-A work order management application built with .NET 10.0 implementing Onion Architecture. The system uses Blazor WebAssembly for the UI, Entity Framework Core for data access, MediatR for CQRS, and deploys to Azure Container Apps.
+A work request management application built with .NET 10.0 implementing Onion Architecture. The system uses Blazor WebAssembly for the UI, Entity Framework Core for data access, MediatR for CQRS, and deploys to Azure Container Apps.
 
 This codebase serves as both a working application and a teaching reference for software architecture. The 51 architectural patterns cataloged below are all demonstrated in the source code.
 
@@ -138,8 +138,8 @@ Playwright (acceptance tests)
   dotnet test src/AcceptanceTests --configuration Debug
   ```
 
-gRPC (work orders)
-- Protobuf contract: src/UI/Server/Protos/workorders.proto
+gRPC (work requests)
+- Protobuf contract: src/UI/Server/Protos/workrequests.proto
 - Generated C# (checked in): src/UI/Server/Generated/Protos/
 - To regenerate the C# files after editing .proto, run the Grpc.Tools generation on an x64 machine and replace the checked-in generated files (Grpc.Tools can be unstable on ARM).
 

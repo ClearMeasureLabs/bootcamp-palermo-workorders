@@ -13,7 +13,7 @@ C4Container
     Container(server, "UI Server", "ASP.NET / Azure Container App", "Hosts API, Blazor Server, MCP endpoint", "tabler:server")
     Container(worker, "Worker", ".NET Worker Service", "NServiceBus endpoint for async processing", "tabler:settings-automation")
     Container(mcpServer, "MCP Server", "ASP.NET", "Model Context Protocol tools for AI agents", "tabler:robot")
-    ContainerDb(db, "Database", "Azure SQL Server", "Work orders, employees, roles", "tabler:database")
+    ContainerDb(db, "Database", "Azure SQL Server", "Work requests, employees, roles", "tabler:database")
     ContainerDb(nsbTransport, "NServiceBus Transport", "SQL Server", "Message queues and saga persistence", "tabler:mail-forward")
   }
 

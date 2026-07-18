@@ -3,7 +3,7 @@ API consumers need accurate, interactive documentation to understand available e
 
 ## What Changes
 - Add Swagger generation services in `src/UI/Server/Program.cs` using `Swashbuckle.AspNetCore` or built-in OpenAPI support in .NET 10
-- Configure OpenAPI document generation with title "Work Order Management API", version info, and server URLs
+- Configure OpenAPI document generation with title "Work Request Management API", version info, and server URLs
 - Add Swagger UI middleware serving interactive documentation at `/swagger`
 - Annotate API controllers with XML documentation comments for endpoint descriptions
 - Add `[ProducesResponseType]` attributes to controller actions for accurate response documentation

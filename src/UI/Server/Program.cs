@@ -95,7 +95,7 @@ builder.Services
         options.ServerInfo = new() { Name = "ChurchBulletin", Version = "1.0.0" };
     })
     .WithHttpTransport()
-    .WithTools<WorkOrderTools>()
+    .WithTools<WorkRequestTools>()
     .WithTools<EmployeeTools>()
     .WithResources<ReferenceResources>();
 
@@ -242,7 +242,7 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
     app.MapPut("/api/_test/idempotency-probe", Probe);
 }
 
-app.MapGrpcService<WorkOrdersGrpcService>();
+app.MapGrpcService<WorkRequestsGrpcService>();
 app.MapMcp("/mcp");
 app.MapFallback(async context =>
 {

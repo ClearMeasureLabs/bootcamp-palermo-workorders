@@ -1,5 +1,5 @@
 ---
-description: Codebase structure, solution layout, and key paths for ChurchBulletin/Work Order app
+description: Codebase structure, solution layout, and key paths for ChurchBulletin/Work Request app
 alwaysApply: true
 ---
 
@@ -36,8 +36,8 @@ alwaysApply: true
 
 | Concern | Location |
 |--------|----------|
-| Domain models | `src/Core/Model/` (WorkOrder, Employee, WorkOrderStatus, Role, etc.) |
-| Queries (CQRS) | `src/Core/Queries/` (e.g. WorkOrderByNumberQuery, EmployeeByUserNameQuery) |
+| Domain models | `src/Core/Model/` (WorkRequest, Employee, WorkRequestStatus, Role, etc.) |
+| Queries (CQRS) | `src/Core/Queries/` (e.g. WorkRequestByNumberQuery, EmployeeByUserNameQuery) |
 | State commands | `src/Core/Model/StateCommands/`, `src/Core/Services/IStateCommand.cs` |
 | Bus/MediatR | `src/Core/IBus.cs`; handlers in DataAccess and UI |
 | EF context & mappings | `src/DataAccess/Mappings/` (DataContext, *Map.cs) |
@@ -45,7 +45,7 @@ alwaysApply: true
 | DB migrations (DbUp) | `src/Database/scripts/Update/` (###_Description.sql, TABS) |
 | Blazor Server entry | `src/UI/Server/Program.cs`, `UIServiceRegistry.cs` |
 | Blazor Client entry | `src/UI/Client/Program.cs`, `App.razor` |
-| Worker entry | `src/Worker/Program.cs`, `WorkOrderEndpoint.cs` |
+| Worker entry | `src/Worker/Program.cs`, `WorkRequestEndpoint.cs` |
 | API controllers | `src/UI/Api/Controllers/`, `src/UI/Server/Controllers/` |
 | Health checks | DataAccess: `CanConnectToDatabaseHealthCheck`; LlmGateway: LLM; Server: aggregation |
 | Build/test scripts | Repo root: `build.ps1`, `PrivateBuild.ps1`, `AcceptanceTests.ps1` |
@@ -53,10 +53,10 @@ alwaysApply: true
 
 ## Domain Snapshot
 
-- **WorkOrder:** Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate.
+- **WorkRequest:** Number, Title, Description, RoomNumber, Assignee (Employee), Status, Creator (Employee), AssignedDate, CreatedDate, CompletedDate.
 - **Employee:** UserName, FirstName, LastName, EmailAddress, Roles.
-- **WorkOrderStatus:** Draft, Assigned, InProgress, Complete, Cancelled.
-- **Role:** Name, CanCreateWorkOrder, CanFulfillWorkOrder.
+- **WorkRequestStatus:** Draft, Assigned, InProgress, Complete, Cancelled.
+- **Role:** Name, CanCreateWorkRequest, CanFulfillWorkRequest.
 
 ## Dependencies
 

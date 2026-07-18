@@ -1,0 +1,23 @@
+﻿@implements Palermo.BlazorMvc.IListener<WorkRequestChangedEvent>
+@using ClearMeasure.Bootcamp.UI.Shared.Pages
+@inherits AppComponentBase
+
+@if (WorkRequestLastChanged != null)
+{
+    <a href="/workrequest/manage/@(WorkRequestLastChanged?.Number)?mode=Edit">
+        @WorkRequestLastChanged?.Number
+    </a>
+}
+
+@code {
+
+    public WorkRequest? WorkRequestLastChanged { get; set; }
+
+    public void Handle(WorkRequestChangedEvent theEvent)
+    {
+        var order = theEvent.Result.WorkRequest;
+        WorkRequestLastChanged = order;
+        InvokeAsync(StateHasChanged);
+    }
+
+}

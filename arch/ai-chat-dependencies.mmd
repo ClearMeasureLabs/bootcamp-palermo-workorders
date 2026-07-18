@@ -15,7 +15,7 @@ flowchart TB
 
     subgraph UIShared["UI.Shared"]
         AppChat["ApplicationChat.razor"]:::shared
-        WoChat["WorkOrderChat.razor"]:::shared
+        WoChat["WorkRequestChat.razor"]:::shared
         Bus["Bus"]:::shared
     end
 
@@ -28,32 +28,32 @@ flowchart TB
 
     subgraph LlmGateway["LlmGateway"]
         AppQ["ApplicationChatQuery"]:::llm
-        WoQ["WorkOrderChatQuery"]:::llm
+        WoQ["WorkRequestChatQuery"]:::llm
         CfgQ["ChatClientConfigQuery"]:::llm
         AppH["ApplicationChatHandler"]:::llm
-        WoH["WorkOrderChatHandler"]:::llm
+        WoH["WorkRequestChatHandler"]:::llm
         CF["ChatClientFactory"]:::llm
         Trace["TracingChatClient"]:::llm
         ITool["IToolProvider"]:::llm
-        WoTool["WorkOrderTool<br/>(2 local methods)"]:::llm
+        WoTool["WorkRequestTool<br/>(2 local methods)"]:::llm
     end
 
     subgraph McpServer["McpServer"]
         ToolProv["ToolProvider<br/>(loopback MCP client)"]:::mcp
-        WoTools["WorkOrderTools"]:::mcp
+        WoTools["WorkRequestTools"]:::mcp
         EmpTools["EmployeeTools"]:::mcp
         RefRes["ReferenceResources"]:::mcp
     end
 
     subgraph Core["Core"]
         IRem["IRemotableRequest"]:::core
-        WoByNum["WorkOrderByNumberQuery"]:::core
+        WoByNum["WorkRequestByNumberQuery"]:::core
         EmpAll["EmployeeGetAllQuery"]:::core
-        Domain["WorkOrder / Employee"]:::core
+        Domain["WorkRequest / Employee"]:::core
     end
 
     subgraph DataAccess["DataAccess"]
-        WoQH["WorkOrderQueryHandler"]:::data
+        WoQH["WorkRequestQueryHandler"]:::data
         EmpQH["EmployeeQueryHandler"]:::data
         Ctx["DataContext (EF Core)"]:::data
     end

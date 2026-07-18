@@ -1,5 +1,5 @@
 ## Why
-External systems such as ticketing platforms, dashboards, and notification services need real-time awareness of work order events. A configurable webhook system enables push-based integration without requiring external systems to poll for changes, reducing latency and coupling.
+External systems such as ticketing platforms, dashboards, and notification services need real-time awareness of work request events. A configurable webhook system enables push-based integration without requiring external systems to poll for changes, reducing latency and coupling.
 
 ## What Changes
 - Add `WebhookSubscription` entity in `src/Core/Model/` with properties: Id, Url, Secret, EventTypes (comma-separated), IsActive, CreatedDate
@@ -14,7 +14,7 @@ External systems such as ticketing platforms, dashboards, and notification servi
 ## Capabilities
 ### New Capabilities
 - Register webhook subscriptions with target URL, shared secret, and event type filters
-- Dispatch JSON payloads via HTTP POST when work orders are created, assigned, completed, or cancelled
+- Dispatch JSON payloads via HTTP POST when work requests are created, assigned, completed, or cancelled
 - Include HMAC-SHA256 signature in `X-Webhook-Signature` header for payload verification
 - Asynchronous webhook delivery via NServiceBus to avoid blocking the main request pipeline
 
@@ -34,14 +34,14 @@ External systems such as ticketing platforms, dashboards, and notification servi
 - `WebhookDispatcher_ActiveSubscription_SendsPostRequest` - Dispatcher sends HTTP POST to subscribed URL
 - `WebhookDispatcher_InactiveSubscription_SkipsDispatch` - Inactive subscriptions are not called
 - `WebhookDispatcher_EventTypeFilter_OnlySendsMatchingEvents` - Subscription for "Completed" does not receive "Assigned" events
-- `WebhookPayload_Serialization_ContainsExpectedFields` - Payload JSON contains work order number, status, and timestamp
+- `WebhookPayload_Serialization_ContainsExpectedFields` - Payload JSON contains work request number, status, and timestamp
 - `WebhookDispatcher_SignatureHeader_MatchesHmacOfBody` - X-Webhook-Signature header matches HMAC-SHA256 of request body using shared secret
 
 ### Integration Tests
-- `Webhook_WorkOrderCreated_DispatchesPayload` - Create a work order, verify webhook dispatch message is published
-- `Webhook_StatusTransition_DispatchesCorrectEventType` - Transition work order to Complete, verify payload event type is "Completed"
+- `Webhook_WorkRequestCreated_DispatchesPayload` - Create a work request, verify webhook dispatch message is published
+- `Webhook_StatusTransition_DispatchesCorrectEventType` - Transition work request to Complete, verify payload event type is "Completed"
 - `Webhook_MultipleSubscribers_AllReceivePayload` - Register two active subscriptions, verify both receive dispatched payloads
 
 ### Acceptance Tests
-- `Webhook_CreateWorkOrder_ExternalEndpointReceivesPayload` - Create work order via UI, verify mock webhook endpoint receives POST with correct JSON structure
-- `Webhook_CompleteWorkOrder_TriggersCompletedEvent` - Complete a work order through the UI workflow, verify webhook payload contains "Completed" event type
+- `Webhook_CreateWorkRequest_ExternalEndpointReceivesPayload` - Create work request via UI, verify mock webhook endpoint receives POST with correct JSON structure
+- `Webhook_CompleteWorkRequest_TriggersCompletedEvent` - Complete a work request through the UI workflow, verify webhook payload contains "Completed" event type

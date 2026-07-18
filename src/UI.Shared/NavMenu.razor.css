@@ -138,11 +138,11 @@
     color: #3182ce;
 }
 
-.nav-item .nav-link[href*="workorder/manage"] .nav-icon {
+.nav-item .nav-link[href*="workrequest/manage"] .nav-icon {
     color: #805ad5;
 }
 
-.nav-item .nav-link[href*="workorder/search"]:not([href*="Creator"]):not([href*="Assignee"]):not([href*="Status"]) .nav-icon {
+.nav-item .nav-link[href*="workrequest/search"]:not([href*="Creator"]):not([href*="Assignee"]):not([href*="Status"]) .nav-icon {
     color: #e53e3e;
 }
 

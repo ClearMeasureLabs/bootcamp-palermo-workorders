@@ -12,13 +12,13 @@ public class RoleTests
 
         Assert.That(role.Name, Is.Null);
         Assert.That(role.Id, Is.EqualTo(Guid.Empty));
-        Assert.That(role.CanCreateWorkOrder, Is.False);
-        Assert.That(role.CanFulfillWorkOrder, Is.False);
+        Assert.That(role.CanCreateWorkRequest, Is.False);
+        Assert.That(role.CanFulfillWorkRequest, Is.False);
 
         var role2 = new Role("roleName", true, true);
 
         Assert.That(role2.Name, Is.EqualTo("roleName"));
-        Assert.That(role2.CanCreateWorkOrder, Is.True);
-        Assert.That(role2.CanFulfillWorkOrder, Is.True);
+        Assert.That(role2.CanCreateWorkRequest, Is.True);
+        Assert.That(role2.CanFulfillWorkRequest, Is.True);
     }
 }

@@ -1,5 +1,5 @@
 ## Why
-When employees leave the organization or go on extended leave, they should not appear in assignment dropdowns to prevent accidental assignment. An active/inactive status flag enables clean deactivation without deleting employee records or losing historical work order associations.
+When employees leave the organization or go on extended leave, they should not appear in assignment dropdowns to prevent accidental assignment. An active/inactive status flag enables clean deactivation without deleting employee records or losing historical work request associations.
 
 ## What Changes
 - Add an `IsActive` boolean property to the `Employee` entity in `src/Core/Model/`, defaulting to true
@@ -16,7 +16,7 @@ When employees leave the organization or go on extended leave, they should not a
 - IsActive boolean flag on the Employee entity
 - DeactivateEmployeeCommand to mark an employee as inactive
 - ReactivateEmployeeCommand to restore an inactive employee
-- Inactive employees are excluded from work order assignment dropdowns
+- Inactive employees are excluded from work request assignment dropdowns
 - Visual indicator on employee profiles and lists showing active/inactive status
 
 ### Modified Capabilities
@@ -48,7 +48,7 @@ When employees leave the organization or go on extended leave, they should not a
 - Migration script adds IsActive column with default value of true for existing records
 
 ### Acceptance Tests
-- Inactive employees do not appear in work order assignment dropdowns
+- Inactive employees do not appear in work request assignment dropdowns
 - User views an inactive employee's profile and sees an "Inactive" visual indicator
 - Administrator deactivates an employee and they disappear from assignment options
 - Administrator reactivates an employee and they reappear in assignment options

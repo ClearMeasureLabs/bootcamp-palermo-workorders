@@ -1,19 +1,19 @@
 ## ADDED Requirements
 
-### Requirement: Megaphone button renders next to Title on Work Order screen
-The `WorkOrderManage.razor` component SHALL display a clickable megaphone/speaker button immediately adjacent to the Title `InputText` field. The button SHALL be inside the same `<div class="form-group">` as the Title field.
+### Requirement: Megaphone button renders next to Title on Work Request screen
+The `WorkRequestManage.razor` component SHALL display a clickable megaphone/speaker button immediately adjacent to the Title `InputText` field. The button SHALL be inside the same `<div class="form-group">` as the Title field.
 
 #### Scenario: Button placement in markup
-- **WHEN** the work order manage page markup is examined
+- **WHEN** the work request manage page markup is examined
 - **THEN** the Title form group SHALL contain the `InputText` for Title followed by a `<button>` element with `data-testid="SpeakTitle"`
 - **AND** the button SHALL display a speaker icon (Unicode character)
 - **AND** the button SHALL have `type="button"` to prevent form submission
 
-### Requirement: Megaphone button renders next to Description on Work Order screen
-The `WorkOrderManage.razor` component SHALL display a clickable megaphone/speaker button immediately adjacent to the Description `InputTextArea` field.
+### Requirement: Megaphone button renders next to Description on Work Request screen
+The `WorkRequestManage.razor` component SHALL display a clickable megaphone/speaker button immediately adjacent to the Description `InputTextArea` field.
 
 #### Scenario: Button placement in markup
-- **WHEN** the work order manage page markup is examined
+- **WHEN** the work request manage page markup is examined
 - **THEN** the Description form group SHALL contain the `InputTextArea` for Description followed by a `<button>` element with `data-testid="SpeakDescription"`
 - **AND** the button SHALL display a speaker icon (Unicode character)
 - **AND** the button SHALL have `type="button"` to prevent form submission
@@ -49,49 +49,49 @@ The click handler for each megaphone button SHALL:
 - **THEN** no translation or speech SHALL occur
 
 ### Requirement: Component injects required services
-The `WorkOrderManage` component (`.razor.cs` code-behind) SHALL inject the following services:
+The `WorkRequestManage` component (`.razor.cs` code-behind) SHALL inject the following services:
 
 #### Scenario: Required injections
-- **WHEN** the `WorkOrderManage` component class is examined
+- **WHEN** the `WorkRequestManage` component class is examined
 - **THEN** it SHALL have `[Inject] public ITranslationService? TranslationService { get; set; }` 
 - **AND** it SHALL have `[Inject] public SpeechSynthesis? SpeechSynthesis { get; set; }`
 
 ### Requirement: Current user preferred language is stored
-The `WorkOrderManage` component SHALL store the current user's `PreferredLanguage` in a private field during `LoadWorkOrder()`.
+The `WorkRequestManage` component SHALL store the current user's `PreferredLanguage` in a private field during `LoadWorkRequest()`.
 
 #### Scenario: PreferredLanguage captured during load
-- **WHEN** `LoadWorkOrder()` retrieves the current user via `UserSession.GetCurrentUserAsync()`
+- **WHEN** `LoadWorkRequest()` retrieves the current user via `UserSession.GetCurrentUserAsync()`
 - **THEN** the user's `PreferredLanguage` SHALL be stored in a private field (e.g., `_preferredLanguage`)
 
 ### Requirement: Elements enum updated for test automation
-The `Elements` enum in `WorkOrderManage.razor` SHALL include entries for the new megaphone buttons.
+The `Elements` enum in `WorkRequestManage.razor` SHALL include entries for the new megaphone buttons.
 
 #### Scenario: Elements enum has speech button entries
 - **WHEN** the `Elements` enum is examined
 - **THEN** it SHALL include `SpeakTitle` and `SpeakDescription` entries
 
 ### Requirement: bUnit tests for megaphone button rendering
-bUnit tests SHALL be added in a new file `src/UnitTests/UI.Shared/Pages/WorkOrderManageSpeechTests.cs`. Tests SHALL follow the existing bUnit pattern in `WorkOrderManageAttachmentsTests.cs`: use `Bunit.TestContext`, register stub services via DI (`StubBus` or a local stub `IBus`, `StubUiBus`, stub `IUserSession`, stub `IWorkOrderBuilder`, stub `ITranslationService`, and stub `SpeechSynthesis`), render `WorkOrderManage`, and locate elements by `data-testid`.
+bUnit tests SHALL be added in a new file `src/UnitTests/UI.Shared/Pages/WorkRequestManageSpeechTests.cs`. Tests SHALL follow the existing bUnit pattern in `WorkRequestManageAttachmentsTests.cs`: use `Bunit.TestContext`, register stub services via DI (`StubBus` or a local stub `IBus`, `StubUiBus`, stub `IUserSession`, stub `IWorkRequestBuilder`, stub `ITranslationService`, and stub `SpeechSynthesis`), render `WorkRequestManage`, and locate elements by `data-testid`.
 
 #### Scenario: ShouldRenderSpeakTitleButton
-- **GIVEN** test method `ShouldRenderSpeakTitleButton` exists in `src/UnitTests/UI.Shared/Pages/WorkOrderManageSpeechTests.cs`
-- **AND** the test creates a `Bunit.TestContext`, registers all required stubs (IBus, IUiBus, IWorkOrderBuilder, IUserSession, ITranslationService, SpeechSynthesis), and renders `WorkOrderManage`
-- **WHEN** `component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakTitle}']")` is called
+- **GIVEN** test method `ShouldRenderSpeakTitleButton` exists in `src/UnitTests/UI.Shared/Pages/WorkRequestManageSpeechTests.cs`
+- **AND** the test creates a `Bunit.TestContext`, registers all required stubs (IBus, IUiBus, IWorkRequestBuilder, IUserSession, ITranslationService, SpeechSynthesis), and renders `WorkRequestManage`
+- **WHEN** `component.Find($"[data-testid='{WorkRequestManage.Elements.SpeakTitle}']")` is called
 - **THEN** the element SHALL be found (not null)
 - **AND** the element SHALL be a `<button>` with `type="button"`
 
 #### Scenario: ShouldRenderSpeakDescriptionButton
-- **GIVEN** test method `ShouldRenderSpeakDescriptionButton` exists in `src/UnitTests/UI.Shared/Pages/WorkOrderManageSpeechTests.cs`
-- **AND** the test creates a `Bunit.TestContext`, registers all required stubs, and renders `WorkOrderManage`
-- **WHEN** `component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']")` is called
+- **GIVEN** test method `ShouldRenderSpeakDescriptionButton` exists in `src/UnitTests/UI.Shared/Pages/WorkRequestManageSpeechTests.cs`
+- **AND** the test creates a `Bunit.TestContext`, registers all required stubs, and renders `WorkRequestManage`
+- **WHEN** `component.Find($"[data-testid='{WorkRequestManage.Elements.SpeakDescription}']")` is called
 - **THEN** the element SHALL be found (not null)
 - **AND** the element SHALL be a `<button>` with `type="button"`
 
 #### Scenario: SpeakTitleButtonShouldInvokeTranslationService
-- **GIVEN** test method `SpeakTitleButtonShouldInvokeTranslationService` exists in `src/UnitTests/UI.Shared/Pages/WorkOrderManageSpeechTests.cs`
+- **GIVEN** test method `SpeakTitleButtonShouldInvokeTranslationService` exists in `src/UnitTests/UI.Shared/Pages/WorkRequestManageSpeechTests.cs`
 - **AND** the stub `IUserSession` returns an `Employee` with `PreferredLanguage = "es-ES"`
 - **AND** the stub `ITranslationService` records calls and returns translated text
-- **AND** the rendered work order has `Title = "Test title"`
+- **AND** the rendered work request has `Title = "Test title"`
 - **WHEN** the `SpeakTitle` button's `@onclick` is triggered via `component.Find(...).ClickAsync()`
 - **THEN** the stub `ITranslationService.TranslateAsync("Test title", "es-ES")` SHALL have been called
 
@@ -101,7 +101,7 @@ bUnit tests SHALL be added in a new file `src/UnitTests/UI.Shared/Pages/WorkOrde
 - The component SHALL use `@using Toolbelt.Blazor.SpeechSynthesis` in the `.razor` file or via `_Imports.razor`
 - Voice matching SHALL use `StartsWith` on the language code prefix (e.g., `voice.Lang.StartsWith("es")` for `"es-ES"`) to handle regional variants
 - The megaphone buttons SHALL be visually styled as small inline buttons that do not disrupt the existing form layout
-- bUnit tests SHALL be in a new file `src/UnitTests/UI.Shared/Pages/WorkOrderManageSpeechTests.cs`
-- bUnit tests SHALL follow the same stub patterns as `WorkOrderManageAttachmentsTests.cs` (private stub classes implementing interfaces, registered via `ctx.Services.AddSingleton<T>()`)
+- bUnit tests SHALL be in a new file `src/UnitTests/UI.Shared/Pages/WorkRequestManageSpeechTests.cs`
+- bUnit tests SHALL follow the same stub patterns as `WorkRequestManageAttachmentsTests.cs` (private stub classes implementing interfaces, registered via `ctx.Services.AddSingleton<T>()`)
 - bUnit tests SHALL use `using TestContext = Bunit.TestContext;` to avoid conflicts with NUnit's `TestContext`
 - bUnit tests SHALL use Shouldly assertions (e.g., `element.ShouldNotBeNull()`)

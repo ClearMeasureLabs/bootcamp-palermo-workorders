@@ -20,14 +20,14 @@ public class RemotableRequestTests
         AssertRemotable(new WeatherForecast[1] { ObjectMother.Faker<WeatherForecast>() });
         AssertRemotable(new HealthCheckRemotableRequest());
         AssertRemotable(HealthStatus.Degraded);
-        AssertRemotable(ObjectMother.Faker<WorkOrderSpecificationQuery>());
-        AssertRemotable(WorkOrderStatus.Draft);
+        AssertRemotable(ObjectMother.Faker<WorkRequestSpecificationQuery>());
+        AssertRemotable(WorkRequestStatus.Draft);
     }
 
     [Test]
     public void ShouldBeRemotableCompatible()
     {
-        var order = ObjectMother.Faker<WorkOrder>();
+        var order = ObjectMother.Faker<WorkRequest>();
         AssertRemotable(order);
         AssertRemotable(new ServerHealthCheckQuery());
         AssertRemotable(ObjectMother.Faker<Role>());
@@ -45,7 +45,7 @@ public class RemotableRequestTests
     [Test]
     public void ShouldSerializeStateCommand()
     {
-        var order = ObjectMother.Faker<WorkOrder>();
+        var order = ObjectMother.Faker<WorkRequest>();
         var employee = ObjectMother.Faker<Employee>();
         IStateCommand command = new SaveDraftCommand(order, employee);
         AssertRemotable(command);

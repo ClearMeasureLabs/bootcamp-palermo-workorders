@@ -4,21 +4,21 @@ using MediatR;
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
 public record AddAttachmentMetadataCommand(
-    WorkOrder WorkOrder,
+    WorkRequest WorkRequest,
     Employee UploadedBy,
     string FileName,
     string ContentType,
-    long FileSize) : IRequest<WorkOrderAttachment>
+    long FileSize) : IRequest<WorkRequestAttachment>
 {
-    public WorkOrderAttachment CreateAttachment(DateTime uploadedDate)
+    public WorkRequestAttachment CreateAttachment(DateTime uploadedDate)
     {
         if (string.IsNullOrWhiteSpace(FileName))
             throw new ArgumentException("FileName is required.", nameof(FileName));
 
-        return new WorkOrderAttachment
+        return new WorkRequestAttachment
         {
             Id = Guid.NewGuid(),
-            WorkOrderId = WorkOrder.Id,
+            WorkRequestId = WorkRequest.Id,
             FileName = FileName,
             ContentType = ContentType,
             FileSize = FileSize,

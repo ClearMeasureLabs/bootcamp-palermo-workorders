@@ -3,10 +3,10 @@ using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUser) : IStateCommand
+public abstract record StateCommandBase(WorkRequest WorkRequest, Employee CurrentUser) : IStateCommand
 {
-    public abstract WorkOrderStatus GetBeginStatus();
-    public abstract WorkOrderStatus GetEndStatus();
+    public abstract WorkRequestStatus GetBeginStatus();
+    public abstract WorkRequestStatus GetEndStatus();
     protected abstract bool UserCanExecute(Employee currentUser);
     public abstract string TransitionVerbPresentTense { get; }
     public abstract string TransitionVerbPastTense { get; }
@@ -15,7 +15,7 @@ public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUse
 
     public bool IsValid()
     {
-        var beginStatusMatches = WorkOrder.Status == GetBeginStatus();
+        var beginStatusMatches = WorkRequest.Status == GetBeginStatus();
         var currentUserIsCorrectRole = UserCanExecute(CurrentUser);
         return beginStatusMatches && currentUserIsCorrectRole;
     }
@@ -28,6 +28,6 @@ public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUse
     public virtual void Execute(StateCommandContext context)
     {
         var currentUserFullName = CurrentUser.GetFullName();
-        WorkOrder.ChangeStatus(CurrentUser, context.CurrentDateTime, GetEndStatus());
+        WorkRequest.ChangeStatus(CurrentUser, context.CurrentDateTime, GetEndStatus());
     }
 }

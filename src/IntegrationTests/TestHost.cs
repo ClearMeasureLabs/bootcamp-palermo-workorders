@@ -108,7 +108,7 @@ public static class TestHost
                 {
                     var learningTransport = endpointConfiguration.UseTransport<LearningTransport>();
                     learningTransport.Routing()
-                        .RouteToEndpoint(typeof(TracerBulletCommand), "WorkOrderProcessing");
+                        .RouteToEndpoint(typeof(TracerBulletCommand), "WorkRequestProcessing");
                     endpointConfiguration.DisableFeature<Sagas>();
                 }
                 else
@@ -118,7 +118,7 @@ public static class TestHost
                     transport.DefaultSchema("nServiceBus");
                     transport.Transactions(TransportTransactionMode.TransactionScope);
                     transport.Routing()
-                        .RouteToEndpoint(typeof(TracerBulletCommand), "WorkOrderProcessing");
+                        .RouteToEndpoint(typeof(TracerBulletCommand), "WorkRequestProcessing");
                 }
 
                 var conventions = new MessagingConventions();
@@ -152,10 +152,10 @@ public static class TestHost
             return scope.ServiceProvider.GetRequiredService<IBus>();
         }
 
-        private IWorkOrderNumberGenerator CreateScopedNumberGenerator()
+        private IWorkRequestNumberGenerator CreateScopedNumberGenerator()
         {
             var scope = serviceProvider.CreateScope();
-            return scope.ServiceProvider.GetRequiredService<IWorkOrderNumberGenerator>();
+            return scope.ServiceProvider.GetRequiredService<IWorkRequestNumberGenerator>();
         }
 
         public Task<IList<AITool>> GetToolsAsync()
@@ -164,30 +164,30 @@ public static class TestHost
             [
                 AIFunctionFactory.Create(
                     ([System.ComponentModel.Description("Optional status filter")] string? status = null)
-                        => WorkOrderTools.ListWorkOrders(CreateScopedBus(), status),
-                    "ListWorkOrders",
-                    "Lists all work orders, optionally filtered by status."),
+                        => WorkRequestTools.ListWorkRequests(CreateScopedBus(), status),
+                    "ListWorkRequests",
+                    "Lists all work requests, optionally filtered by status."),
                 AIFunctionFactory.Create(
-                    ([System.ComponentModel.Description("The work order number")] string workOrderNumber)
-                        => WorkOrderTools.GetWorkOrder(CreateScopedBus(), workOrderNumber),
-                    "GetWorkOrder",
-                    "Retrieves a single work order by its number."),
+                    ([System.ComponentModel.Description("The work request number")] string workRequestNumber)
+                        => WorkRequestTools.GetWorkRequest(CreateScopedBus(), workRequestNumber),
+                    "GetWorkRequest",
+                    "Retrieves a single work request by its number."),
                 AIFunctionFactory.Create(
                     ([System.ComponentModel.Description("Title")] string title,
                      [System.ComponentModel.Description("Description")] string description,
                      [System.ComponentModel.Description("Creator username")] string creatorUsername,
                      [System.ComponentModel.Description("Optional room number")] string? roomNumber = null)
-                        => WorkOrderTools.CreateWorkOrder(CreateScopedBus(), CreateScopedNumberGenerator(), title, description, creatorUsername, roomNumber),
-                    "CreateWorkOrder",
-                    "Creates a new draft work order."),
+                        => WorkRequestTools.CreateWorkRequest(CreateScopedBus(), CreateScopedNumberGenerator(), title, description, creatorUsername, roomNumber),
+                    "CreateWorkRequest",
+                    "Creates a new draft work request."),
                 AIFunctionFactory.Create(
-                    ([System.ComponentModel.Description("Work order number")] string workOrderNumber,
+                    ([System.ComponentModel.Description("Work request number")] string workRequestNumber,
                      [System.ComponentModel.Description("Command name")] string commandName ,
                      [System.ComponentModel.Description("Executing username")] string executingUsername,
                      [System.ComponentModel.Description("Assignee username")] string? assigneeUsername = null)
-                        => WorkOrderTools.ExecuteWorkOrderCommand(CreateScopedBus(), workOrderNumber, commandName, executingUsername, assigneeUsername),
-                    "ExecuteWorkOrderCommand",
-                    "Executes a state command on a work order."),
+                        => WorkRequestTools.ExecuteWorkRequestCommand(CreateScopedBus(), workRequestNumber, commandName, executingUsername, assigneeUsername),
+                    "ExecuteWorkRequestCommand",
+                    "Executes a state command on a work request."),
                 AIFunctionFactory.Create(
                     () => EmployeeTools.ListEmployees(CreateScopedBus()),
                     "ListEmployees",

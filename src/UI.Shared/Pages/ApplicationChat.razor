@@ -8,13 +8,13 @@
 @inject CustomAuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JS
 
-<PageTitle>AI Agent - Work Order Assistant</PageTitle>
+<PageTitle>AI Agent - Work Request Assistant</PageTitle>
 
 <div class="ai-agent-page">
     <div data-testid="@Elements.ChatShell" class="ai-agent-container">
         <div class="ai-agent-header">
             <h2>🤖 AI Agent</h2>
-            <div class="ai-agent-subtitle">Ask questions about work orders, employees, or general assistance</div>
+            <div class="ai-agent-subtitle">Ask questions about work requests, employees, or general assistance</div>
         </div>
 
         <div data-testid="@Elements.ChatContainer" class="chat-container">
@@ -36,7 +36,7 @@
             else
             {
                 <div class="chat-placeholder">
-                    <p>Start a conversation with the AI Agent. Ask about work orders, employees, or anything else.</p>
+                    <p>Start a conversation with the AI Agent. Ask about work requests, employees, or anything else.</p>
                 </div>
             }
 

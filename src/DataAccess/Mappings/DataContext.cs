@@ -34,10 +34,10 @@ public class DataContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        new WorkOrderMap().Map(modelBuilder);
+        new WorkRequestMap().Map(modelBuilder);
         new EmployeeMap().Map(modelBuilder);
         new RoleMap().Map(modelBuilder);
-        new WorkOrderAttachmentMap().Map(modelBuilder);
+        new WorkRequestAttachmentMap().Map(modelBuilder);
     }
 
     public sealed override string ToString()

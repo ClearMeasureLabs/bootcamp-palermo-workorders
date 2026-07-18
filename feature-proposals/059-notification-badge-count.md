@@ -1,5 +1,5 @@
 ## Why
-Users need real-time awareness of new notifications without manually refreshing the page. A live-updating badge count in the NavMenu ensures users promptly notice new events, reducing response times to work order assignments and status changes.
+Users need real-time awareness of new notifications without manually refreshing the page. A live-updating badge count in the NavMenu ensures users promptly notice new events, reducing response times to work request assignments and status changes.
 
 ## What Changes
 - Add `UnreadNotificationCountQuery` to `src/Core/Queries/` returning the integer count of unread notifications for the current user

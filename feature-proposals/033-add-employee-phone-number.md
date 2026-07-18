@@ -1,5 +1,5 @@
 ## Why
-Maintenance coordinators need to reach employees by phone for urgent work order updates. Storing phone numbers in the system eliminates the need for separate contact lists and ensures contact information is readily available alongside work order assignments.
+Maintenance coordinators need to reach employees by phone for urgent work request updates. Storing phone numbers in the system eliminates the need for separate contact lists and ensures contact information is readily available alongside work request assignments.
 
 ## What Changes
 - Add a `PhoneNumber` property (nullable string) to the `Employee` entity in `src/Core/Model/`

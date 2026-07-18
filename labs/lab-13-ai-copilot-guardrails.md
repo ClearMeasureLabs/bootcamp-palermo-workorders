@@ -24,7 +24,7 @@ Use your AI tool to generate a unit test for `InProgressToCompleteCommand`. Eval
 
 ### Step 3: AI-Assisted Feature Development
 
-Ask AI to add a `Notes` property to `WorkOrder`. Evaluate against architecture rules: correct Core placement? Migration created? Tests included? No forbidden packages?
+Ask AI to add a `Notes` property to `WorkRequest`. Evaluate against architecture rules: correct Core placement? Migration created? Tests included? No forbidden packages?
 
 ### Step 4: AI Guardrail Violation Detection
 

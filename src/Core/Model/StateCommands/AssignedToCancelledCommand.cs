@@ -2,7 +2,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public record AssignedToCancelledCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder,
+public record AssignedToCancelledCommand(WorkRequest WorkRequest, Employee CurrentUser) : StateCommandBase(WorkRequest,
     CurrentUser)
 {
     public const string Name = "Cancel";
@@ -10,25 +10,25 @@ public record AssignedToCancelledCommand(WorkOrder WorkOrder, Employee CurrentUs
 
     public override string TransitionVerbPastTense => "Cancelled";
 
-    public override WorkOrderStatus GetBeginStatus()
+    public override WorkRequestStatus GetBeginStatus()
     {
-        return WorkOrderStatus.Assigned;
+        return WorkRequestStatus.Assigned;
     }
 
-    public override WorkOrderStatus GetEndStatus()
+    public override WorkRequestStatus GetEndStatus()
     {
-        return WorkOrderStatus.Cancelled;
+        return WorkRequestStatus.Cancelled;
     }
 
     protected override bool UserCanExecute(Employee currentUser)
     {
-        return currentUser == WorkOrder.Creator;
+        return currentUser == WorkRequest.Creator;
     }
 
     public override void Execute(StateCommandContext context)
     {
-        WorkOrder.AssignedDate = null;
-        WorkOrder.Assignee = null;
+        WorkRequest.AssignedDate = null;
+        WorkRequest.Assignee = null;
         base.Execute(context);
     }
 }

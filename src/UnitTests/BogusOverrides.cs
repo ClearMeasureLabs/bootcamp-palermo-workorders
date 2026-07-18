@@ -17,17 +17,17 @@ internal class BogusOverrides : AutoGeneratorOverride
     {
         switch (context.Instance)
         {
-            case WorkOrder order:
-                order.Number = new WorkOrderNumberGenerator().GenerateNumber();
+            case WorkRequest order:
+                order.Number = new WorkRequestNumberGenerator().GenerateNumber();
                 order.Title = order.Title.ClampLength(1, 200);        // HasMaxLength(200)
                 order.Description = order.Description.ClampLength(1, 4000); // HasMaxLength(4000)
                 order.RoomNumber = order.RoomNumber.ClampLength(1, 50);     // HasMaxLength(50)
                 break;
-            case WorkOrderStatus:
-                context.Instance = context.Faker.PickRandom<WorkOrderStatus>(WorkOrderStatus.GetAllItems());
+            case WorkRequestStatus:
+                context.Instance = context.Faker.PickRandom<WorkRequestStatus>(WorkRequestStatus.GetAllItems());
                 break;
-            case WorkOrderSpecificationQuery query:
-                query.StatusKey = context.Faker.PickRandom<WorkOrderStatus>(WorkOrderStatus.GetAllItems()).Key;
+            case WorkRequestSpecificationQuery query:
+                query.StatusKey = context.Faker.PickRandom<WorkRequestStatus>(WorkRequestStatus.GetAllItems()).Key;
                 break;
             case Employee employee:
                 employee.PreferredLanguage = context.Faker.PickRandom("en-US", "es-ES", "fr-FR", "de-DE", "pt-BR");

@@ -114,7 +114,7 @@ that someone debugging production would actually want to see.
    text on spans, which rule 7 below says to avoid; they predate this
    guidance and are known tech debt, not a pattern to repeat.
 6. **Add a metric, not just a trace, for anything business-relevant** —
-   a work order created, a status transition, a failed fulfillment attempt.
+   a work request created, a status transition, a failed fulfillment attempt.
    Traces answer "what happened in this one request"; metrics answer "how
    often, and is the rate changing" without anyone needing to go trace
    spelunking. Follow `TelemetryHandler.cs`: the domain raises an event,
@@ -166,11 +166,11 @@ that someone debugging production would actually want to see.
 
 ## What "good" looks like vs. what to flag
 
-- Good: a new `WorkOrderNotificationClient` wraps its `HttpClient` calls in
+- Good: a new `WorkRequestNotificationClient` wraps its `HttpClient` calls in
   its own `ActivitySource("ChurchBulletin.Notifications", "1.0.0")`,
   registers it in `Extensions.cs`, tags `notification.channel` and
-  `notification.workOrderNumber`, increments a
-  `workorders.notifications.sent` counter, and rethrows on failure with
+  `notification.workRequestNumber`, increments a
+  `workrequests.notifications.sent` counter, and rethrows on failure with
   `ActivityStatusCode.Error` set.
 - Flag for follow-up if you see: a raw `new HttpClient()`/`SqlConnection`
   call with no instrumentation at a genuinely new boundary; an `ActivitySource`
@@ -182,7 +182,7 @@ that someone debugging production would actually want to see.
 ## When this doesn't apply
 
 Pure in-memory domain logic with no I/O, no cross-process call, and no
-failure path worth surfacing (e.g. `WorkOrderStatus` smart-enum comparisons,
+failure path worth surfacing (e.g. `WorkRequestStatus` smart-enum comparisons,
 `CanReassign()`) doesn't need tracing or metrics. Instrumentation earns its
 keep at boundaries someone would actually want visibility into during an
 incident — don't sprinkle spans on every method for their own sake.
