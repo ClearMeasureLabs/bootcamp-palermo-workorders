@@ -30,32 +30,64 @@ function Write-Info { param([string]$Message) Write-Host "[INFO] $Message" -Fore
 
 <#
 .SYNOPSIS
-    Ensures the Docker image is built and ready
+    Ensures the Docker image is built and ready for the selected agent.
+.DESCRIPTION
+    Selects the Dockerfile and image tag per agent and builds it if absent:
+      - claude: Dockerfile.agent.claude -> ai-factory-agent-claude:latest
+                (omits the private bobshell tarball, so it builds on hosts
+                 without that gitignored package)
+      - bob:    Dockerfile.agent        -> ai-factory-agent:latest
+    Sets $script:ImageName to the selected tag so callers reference the right
+    image, and returns that tag. If the claude variant Dockerfile is missing,
+    falls back to the full Dockerfile.agent.
 #>
 function Initialize-AgentImage {
-    Write-Progress "Checking Docker image: $script:ImageName"
-    
-    $imageExists = docker images -q $script:ImageName 2>$null
-    
-    if (-not $imageExists) {
-        Write-Progress "Building Docker image..."
-        
-        $dockerfilePath = Join-Path $PSScriptRoot "Dockerfile.agent"
-        
-        if (-not (Test-Path $dockerfilePath)) {
-            throw "Dockerfile.agent not found at $dockerfilePath"
+    [CmdletBinding()]
+    param(
+        [ValidateSet("claude", "bob")]
+        [string]$AiAgent = "bob"
+    )
+
+    if ($AiAgent.ToLower() -eq "claude") {
+        $dockerfileName = "Dockerfile.agent.claude"
+        $imageName = "ai-factory-agent-claude:latest"
+        # Fall back to the full Dockerfile if the claude variant is absent.
+        if (-not (Test-Path (Join-Path $PSScriptRoot $dockerfileName))) {
+            Write-Info "$dockerfileName not found; falling back to Dockerfile.agent"
+            $dockerfileName = "Dockerfile.agent"
+            $imageName = "ai-factory-agent:latest"
         }
-        
+    } else {
+        $dockerfileName = "Dockerfile.agent"
+        $imageName = "ai-factory-agent:latest"
+    }
+    $script:ImageName = $imageName
+
+    Write-Progress "Checking Docker image: $script:ImageName"
+
+    $imageExists = docker images -q $script:ImageName 2>$null
+
+    if (-not $imageExists) {
+        Write-Progress "Building Docker image from $dockerfileName..."
+
+        $dockerfilePath = Join-Path $PSScriptRoot $dockerfileName
+
+        if (-not (Test-Path $dockerfilePath)) {
+            throw "$dockerfileName not found at $dockerfilePath"
+        }
+
         docker build -t $script:ImageName -f $dockerfilePath $PSScriptRoot
-        
+
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to build Docker image"
         }
-        
+
         Write-Success "Docker image built"
     } else {
         Write-Success "Docker image ready"
     }
+
+    return $script:ImageName
 }
 
 <#
@@ -195,7 +227,7 @@ function Start-AgentContainer {
     )
 
     # Initialize infrastructure
-    Initialize-AgentImage
+    Initialize-AgentImage -AiAgent $AiAgent
     Initialize-AgentNetwork
     $tokenFile = Initialize-GitHubSecret
     $agentSecret = Initialize-AgentSecret -AiAgent $AiAgent

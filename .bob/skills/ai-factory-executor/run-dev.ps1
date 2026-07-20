@@ -40,17 +40,23 @@ function Get-FreePort {
 }
 
 if ($HttpsPort -eq 0) { $HttpsPort = Get-FreePort }
-if ($HttpPort  -eq 0) { $HttpPort  = Get-FreePort }
+if ($HttpPort  -eq 0) {
+    # Ensure a distinct port: each listener is closed before the next opens, so
+    # two independent Get-FreePort calls can otherwise return the same port.
+    do { $HttpPort = Get-FreePort } while ($HttpPort -eq $HttpsPort)
+}
 
 # Resolve the host repo path (default: three levels up from this skill dir -> repo root)
 if (-not $HostRepo) {
-    $HostRepo = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
+    # Join-Path with separate ".." segments is portable (avoids a literal
+    # backslash path, which is not a separator on non-Windows PowerShell).
+    $HostRepo = (Resolve-Path (Join-Path $PSScriptRoot ".." ".." "..")).Path
 }
 if (-not (Test-Path (Join-Path $HostRepo "build.ps1"))) {
     throw "HostRepo '$HostRepo' does not look like the repo root (no build.ps1)."
 }
 
-Initialize-AgentImage
+Initialize-AgentImage -AiAgent $AiAgent
 Initialize-AgentNetwork
 $tokenFile = Initialize-GitHubSecret
 $agentSecret = Initialize-AgentSecret -AiAgent $AiAgent
