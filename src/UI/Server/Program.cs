@@ -270,7 +270,10 @@ app.MapGet("/_demo/setneedsreboot/{value:bool}", (bool value) =>
     return Results.Text($"NeedsReboot set to {value}");
 });
 
-app.MapHealthChecks("_healthcheck");
+app.MapHealthChecks("_healthcheck", new HealthCheckOptions
+{
+    ResponseWriter = HealthCheckResponseWriter.WriteAsync
+});
 app.MapHealthChecks("_healthcheck/detailed", new HealthCheckOptions
 {
     ResponseWriter = DetailedHealthCheckResponseWriter.WriteAsync
