@@ -15,7 +15,8 @@ public partial class MainLayout : IAsyncDisposable
     public enum Elements
     {
         NavRailToggle,
-        CopyrightFooter
+        CopyrightFooter,
+        FooterVersion
     }
 
     /// <summary>
@@ -28,6 +29,14 @@ public partial class MainLayout : IAsyncDisposable
 
     [Inject]
     private ThemePreferenceService Theme { get; set; } = default!;
+
+    [Inject]
+    private AssemblyBuildDateService BuildDateService { get; set; } = default!;
+
+    protected string? BuildDateTooltip => BuildDateService.BuildDate;
+
+    protected string AssemblyVersion =>
+        typeof(MainLayout).Assembly.GetName().Version?.ToString() ?? string.Empty;
 
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
