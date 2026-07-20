@@ -1,0 +1,72 @@
+@startuml logical-view
+' 4+1 — LOGICAL VIEW: the functional building blocks and their relationships.
+title 4+1 Logical View — AI Dev Factory capabilities
+
+skinparam packageStyle rectangle
+left to right direction
+
+package "Intake" {
+  class IssueSelector <<CLI>> {
+    resolveIssue(id)
+    buildBranch(title)
+    isDuplicate(branch)
+  }
+}
+
+package "Isolation" {
+  class RunSecret {
+    ghToken
+    agentKey
+    saPassword
+  }
+  class Workspace <<emptyDir>> {
+    perPodClone
+  }
+  class EphemeralDb <<mssql>> {
+    localhostOnly
+  }
+  class NetworkBoundary <<NetworkPolicy>> {
+    egressAllowList
+  }
+}
+
+package "Concurrency" {
+  class Semaphore {
+    slots = 3
+  }
+  class WorkflowRun {
+    status
+    params
+  }
+}
+
+package "Execution" {
+  class Agent {
+    implement(issue)
+  }
+  class QualityGates {
+    build
+    unit
+    integration
+    acceptance
+  }
+  class PrPublisher {
+    commit
+    push
+    openPr
+  }
+}
+
+IssueSelector --> WorkflowRun : submits
+WorkflowRun --> Semaphore : acquires slot
+WorkflowRun *-- RunSecret
+WorkflowRun *-- Workspace
+WorkflowRun *-- EphemeralDb
+WorkflowRun *-- NetworkBoundary
+WorkflowRun --> Agent : runs
+Agent --> QualityGates
+QualityGates --> PrPublisher : on pass
+Agent ..> Workspace : edits
+QualityGates ..> EphemeralDb : tests
+
+@enduml

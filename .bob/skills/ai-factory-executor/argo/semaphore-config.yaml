@@ -1,0 +1,8 @@
+# Global concurrency gate: at most 3 AI Dev Workflows run at once.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-factory-semaphores
+  namespace: ai-factory
+data:
+  agent-slots: "3"

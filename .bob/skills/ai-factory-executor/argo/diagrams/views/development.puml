@@ -1,0 +1,53 @@
+@startuml development-view
+' 4+1 — DEVELOPMENT VIEW: source module organization and reuse.
+title 4+1 Development View — .bob/skills/ai-factory-executor
+
+skinparam packageStyle folder
+left to right direction
+
+package "ai-factory-executor (existing)" as EXE {
+  [Dockerfile.agent] as DF
+  [agent-entrypoint.ps1] as ENTRY
+  [experiment-entrypoint.ps1]
+  [pr-monitor.ps1]
+  [run-factory.ps1] <<retired by Argo>>
+  [container-manager.ps1] <<local fallback>>
+}
+
+package "argo/ (new)" as ARGO {
+  [implement-issue.ps1] <<entry point>> as CLI
+  [install.ps1] as INSTALL
+  package "manifests" {
+    [workflowtemplate-agent.yaml] as WT
+    [semaphore-config.yaml] as SEM
+    [networkpolicy.yaml]
+    [rbac.yaml]
+  }
+  package "deferred trigger" as DEF {
+    [workflowtemplate-dispatcher.yaml]
+    [eventsource.yaml]
+    [sensor.yaml]
+    [scripts/dispatch.ps1]
+  }
+  package "diagrams" {
+    [c4/*]
+    [views/*]
+  }
+}
+
+CLI ..> WT : argo submit --from
+INSTALL ..> WT : kubectl apply
+INSTALL ..> DF : docker build + import
+WT ..> DF : image: ai-factory-agent
+WT ..> ENTRY : container command
+WT ..> SEM : semaphore ref
+DEF ..> WT : (optional) submits
+
+note bottom of EXE
+Reused as-is. The Dockerfile image and
+agent-entrypoint.ps1 need no changes —
+their env + /run/secrets contract maps
+straight onto the k8s pod spec.
+end note
+
+@enduml

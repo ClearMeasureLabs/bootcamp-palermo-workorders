@@ -87,6 +87,15 @@ RUN apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
+# Install cloudflared for KEEP_ALIVE serve mode. After a green PR the entrypoint
+# can launch the built app and expose it via a Cloudflare "quick tunnel"
+# (trycloudflare.com) so the running app with the issue implemented is reachable
+# from a public URL printed to the container logs. No Cloudflare account needed.
+RUN curl -fsSL -o /usr/local/bin/cloudflared \
+        https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 && \
+    chmod +x /usr/local/bin/cloudflared && \
+    cloudflared --version
+
 # Install Node.js 20 LTS (required by the IBM Bob Shell CLI)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \

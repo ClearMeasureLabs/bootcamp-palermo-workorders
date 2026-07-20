@@ -1,0 +1,62 @@
+@startuml c4-code
+' C4 Level 4 — Code: structure of the CLI entry point + the submission it emits.
+' Class-level view of implement-issue.ps1's logic and the WorkflowTemplate it targets.
+title Code View — implement-issue.ps1 submission path
+
+skinparam classAttributeIconSize 0
+
+class "implement-issue.ps1" as CLI {
+  +[int] IssueId
+  +[string] AiAgent = "claude"
+  +[string] RepoOrg
+  +[string] RepoName
+  +[switch] NoWatch
+  --
+  ParseGnuStyleArgs(args)
+  FetchIssue() : Issue
+  BuildBranchName(title) : string
+  CheckExistingPr(branch) : bool
+  CreateRunSecret(issueId) : Secret
+  SubmitWorkflow(issue, branch)
+}
+
+class Issue <<gh json>> {
+  +int number
+  +string title
+  +string body
+  +string url
+}
+
+class "agent-secret-<issue>" as Secret <<k8s Secret>> {
+  +gh_token
+  +anthropic_api_key
+  +sa-password  ' random per run
+}
+
+class "ai-dev-agent" as WT <<WorkflowTemplate>> {
+  +activeDeadlineSeconds = 3600
+  +synchronization: semaphore(agent-slots=3)
+  +podGC: OnWorkflowSuccess
+  --
+  initContainer: clone
+  container: main (agent-entrypoint.ps1)
+  sidecar: mssql
+}
+
+class "ai-factory-semaphores" as Sem <<ConfigMap>> {
+  +agent-slots = "3"
+}
+
+CLI ..> Issue        : gh issue view
+CLI --> Secret       : kubectl create (per run)
+CLI ..> WT           : argo submit --from
+WT   --> Secret      : projects (0400)
+WT   ..> Sem         : acquires 1 slot
+WT   --> Issue       : params (number/title/body/url)
+
+note bottom of WT
+  The 4th concurrent submit blocks here
+  until a slot frees (gate = 3).
+end note
+
+@enduml

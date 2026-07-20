@@ -1,0 +1,129 @@
+# WorkflowTemplate — one AI Dev run per GitHub issue.
+# Each Workflow = one isolated pod: init(git clone) + agent + ephemeral SQL sidecar.
+# Concurrency across issues is capped to 3 by the ConfigMap in install (parallelism: 3)
+# and by the semaphore below.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ai-dev-agent
+  namespace: ai-factory
+spec:
+  serviceAccountName: ai-factory-workflow
+  entrypoint: run
+  # Hard time budget — mirrors the old 60-min TimeoutMinutes.
+  activeDeadlineSeconds: 3600
+  ttlStrategy:
+    secondsAfterCompletion: 86400   # keep finished Workflows 1 day for log review
+  podGC:
+    strategy: OnWorkflowSuccess     # keep pods on failure for debugging
+  # Global 3-at-a-time gate (see semaphore-config.yaml). Redundant with the
+  # controller parallelism but makes the cap explicit and per-template.
+  synchronization:
+    semaphores:
+      - configMapKeyRef:
+          name: ai-factory-semaphores
+          key: agent-slots
+  arguments:
+    parameters:
+      - { name: issueNumber }
+      - { name: issueTitle }
+      - { name: issueBody }
+      - { name: issueUrl }
+      - { name: branchName }
+      - { name: repoOrg,        value: "ClearMeasureLabs" }
+      - { name: repoName,       value: "bootcamp-palermo-workorders" }
+      - { name: aiAgent,        value: "claude" }
+      - { name: runQualityGates, value: "true" }
+      # KEEP_ALIVE serve mode: after the PR, run the app + Cloudflare quick tunnel
+      # and hold the pod open so the running app can be viewed at a public URL.
+      - { name: keepAlive,      value: "false" }
+      - { name: servePort,      value: "8080" }
+  templates:
+    - name: run
+      inputs:
+        parameters:
+          - { name: issueNumber }
+          - { name: issueTitle }
+          - { name: issueBody }
+          - { name: issueUrl }
+          - { name: branchName }
+          - { name: repoOrg }
+          - { name: repoName }
+          - { name: aiAgent }
+          - { name: runQualityGates }
+          - { name: keepAlive }
+          - { name: servePort }
+      # Fair-share sizing so 3 fit on one box (was 16 CPU / 24 GB each, sequential).
+      podSpecPatch: |
+        containers:
+          - name: main
+            resources:
+              requests: { cpu: "3", memory: "6Gi" }
+              limits:   { cpu: "4", memory: "8Gi" }
+      metadata:
+        labels:
+          app: ai-dev
+          issue: "{{inputs.parameters.issueNumber}}"
+      volumes:
+        - name: workspace
+          emptyDir: {}
+        - name: nuget
+          emptyDir: {}
+        - name: agent-secrets
+          secret:
+            secretName: "agent-secret-{{inputs.parameters.issueNumber}}"
+            defaultMode: 0400
+      # ---- init: isolated per-pod clone (replaces host bind-mount) ----
+      initContainers:
+        - name: clone
+          image: ai-factory-agent:latest
+          workingDir: /workspace
+          command: ["pwsh", "-c"]
+          args:
+            - >
+              $t = Get-Content /run/secrets/gh_token -Raw;
+              git clone "https://x-access-token:$t@github.com/{{inputs.parameters.repoOrg}}/{{inputs.parameters.repoName}}.git" .;
+              git checkout -B {{inputs.parameters.branchName}}
+          volumeMounts:
+            - { name: workspace, mountPath: /workspace }
+            - { name: agent-secrets, mountPath: /run/secrets, readOnly: true }
+          mirrorVolumeMounts: false
+      # ---- ephemeral DB, pod-local localhost:1433 (per-task isolation) ----
+      sidecars:
+        - name: mssql
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          env:
+            - { name: ACCEPT_EULA, value: "Y" }
+            - name: MSSQL_SA_PASSWORD
+              valueFrom: { secretKeyRef: { name: "agent-secret-{{inputs.parameters.issueNumber}}", key: sa-password } }
+          # sidecar is killed when main exits -> DB never outlives the task
+      container:
+        name: main
+        image: ai-factory-agent:latest
+        workingDir: /workspace
+        env:
+          - { name: ISSUE_NUMBER,      value: "{{inputs.parameters.issueNumber}}" }
+          - { name: ISSUE_TITLE,       value: "{{inputs.parameters.issueTitle}}" }
+          - { name: ISSUE_BODY,        value: "{{inputs.parameters.issueBody}}" }
+          - { name: ISSUE_URL,         value: "{{inputs.parameters.issueUrl}}" }
+          - { name: BRANCH_NAME,       value: "{{inputs.parameters.branchName}}" }
+          - { name: REPO_ORG,          value: "{{inputs.parameters.repoOrg}}" }
+          - { name: REPO_NAME,         value: "{{inputs.parameters.repoName}}" }
+          - { name: AI_AGENT,          value: "{{inputs.parameters.aiAgent}}" }
+          - { name: MONITOR_CHECKS,    value: "false" }
+          - { name: RUN_QUALITY_GATES, value: "{{inputs.parameters.runQualityGates}}" }
+          - { name: ENABLE_DIND,       value: "false" }   # real SQL sidecar => no privileged DinD
+          # Integration tests point at the pod-local sidecar.
+          - { name: SQL_SERVER,        value: "localhost,1433" }
+          # Serve mode: hold the pod open with the app + Cloudflare tunnel.
+          - { name: KEEP_ALIVE,        value: "{{inputs.parameters.keepAlive}}" }
+          - { name: SERVE_PORT,        value: "{{inputs.parameters.servePort}}" }
+        volumeMounts:
+          - { name: workspace, mountPath: /workspace }
+          - { name: nuget, mountPath: /home/bobagent/.nuget/packages }
+          - { name: agent-secrets, mountPath: /run/secrets, readOnly: true }
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+          capabilities: { drop: ["ALL"] }

@@ -448,7 +448,72 @@ Do this only once, after the implementation is complete.
     Write-StructuredLog -Level "INFO" -Message "Pull request created" -Data @{
         pr_number = $prNumber
     }
-    
+
+    # 11b. KEEP_ALIVE serve mode - run the app with the issue implemented and
+    #      expose it via a Cloudflare quick tunnel so it can be viewed live.
+    #      Enabled with KEEP_ALIVE=true. Runs after the PR so the served build is
+    #      the exact code that passed the quality gates.
+    if ($env:KEEP_ALIVE -eq "true") {
+        Write-Progress "KEEP_ALIVE=true - starting app + Cloudflare tunnel..."
+        Write-StructuredLog -Level "INFO" -Message "Entering serve mode" -Data @{ issue_number = $issueNumber; pr_number = $prNumber }
+
+        $servePort = if ($env:SERVE_PORT) { $env:SERVE_PORT } else { "8080" }
+        $env:ASPNETCORE_URLS = "http://0.0.0.0:$servePort"
+        $env:ASPNETCORE_ENVIRONMENT = "Development"
+        # DATABASE_ENGINE/SQLite connection string were set earlier (non-DIND);
+        # PrivateBuild already created the SQLite DB in /workspace.
+
+        # Launch the server detached so we can tunnel and keep the container alive.
+        $appLog = "/tmp/app.log"
+        tmux kill-session -t app 2>$null
+        tmux new-session -d -s app "cd /workspace && dotnet run --project src/UI/Server -c Release *>> $appLog"
+        Write-Info "App starting on :$servePort (logs -> $appLog)"
+
+        # Wait for the app to answer its health check (up to 5 min for first JIT).
+        $healthy = $false
+        for ($i = 0; $i -lt 60; $i++) {
+            Start-Sleep -Seconds 5
+            try {
+                $r = Invoke-WebRequest -UseBasicParsing "http://localhost:$servePort/_healthcheck" -TimeoutSec 4
+                if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { $healthy = $true; break }
+            } catch { }
+        }
+        if ($healthy) {
+            Write-Success "App is serving on :$servePort"
+            Write-StructuredLog -Level "INFO" -Message "App healthy" -Data @{ issue_number = $issueNumber; port = $servePort }
+        } else {
+            Write-Info "App health check not confirmed; starting tunnel anyway"
+        }
+
+        # Start a Cloudflare quick tunnel and capture the public trycloudflare URL.
+        $tunnelLog = "/tmp/cloudflared.log"
+        tmux kill-session -t tunnel 2>$null
+        tmux new-session -d -s tunnel "cloudflared tunnel --no-autoupdate --url http://localhost:$servePort > $tunnelLog 2>&1"
+        $publicUrl = $null
+        for ($i = 0; $i -lt 45; $i++) {
+            Start-Sleep -Seconds 2
+            if (Test-Path $tunnelLog) {
+                $m = [regex]::Match((Get-Content $tunnelLog -Raw), 'https://[a-z0-9-]+\.trycloudflare\.com')
+                if ($m.Success) { $publicUrl = $m.Value; break }
+            }
+        }
+        if ($publicUrl) {
+            Write-Success "LIVE APP URL: $publicUrl  (issue #$issueNumber implemented, PR #$prNumber)"
+            # Distinctive, easily-greppable marker for orchestrators/tests.
+            Write-Host "AI_FACTORY_LIVE_URL issue=$issueNumber pr=$prNumber url=$publicUrl"
+            Write-StructuredLog -Level "SUCCESS" -Message "App live via Cloudflare tunnel" -Data @{
+                issue_number = $issueNumber; pr_number = $prNumber; public_url = $publicUrl; port = $servePort
+            }
+        } else {
+            Write-Failure "Could not obtain Cloudflare tunnel URL (see $tunnelLog)"
+            Write-StructuredLog -Level "ERROR" -Message "Tunnel URL not obtained" -Data @{ issue_number = $issueNumber }
+        }
+
+        # Hold the container open so the app + tunnel stay reachable for inspection.
+        Write-Info "Container held open for inspection (KEEP_ALIVE). Stop it to tear down the app + tunnel."
+        while ($true) { Start-Sleep -Seconds 3600 }
+    }
+
     # 12. Monitor PR checks until all green (optional; set MONITOR_CHECKS=false to skip)
     if ($env:MONITOR_CHECKS -eq "false") {
         Write-Info "MONITOR_CHECKS=false - skipping PR check monitoring (checks run async on GitHub)"
