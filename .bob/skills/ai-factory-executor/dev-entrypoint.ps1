@@ -42,7 +42,8 @@ try {
     # 2. Credentials: gh + git, Claude, Bob
     if (Test-Path "/run/secrets/gh_token") {
         Get-Content "/run/secrets/gh_token" | gh auth login --with-token
-        $ghToken = Get-Content "/run/secrets/gh_token" -Raw
+        # Trim: a trailing newline in the token file corrupts the credential URL.
+        $ghToken = (Get-Content "/run/secrets/gh_token" -Raw).Trim()
         git config --global user.name "AI Factory Bot"
         git config --global user.email "ai-factory-bot@users.noreply.github.com"
         git config --global credential.helper store

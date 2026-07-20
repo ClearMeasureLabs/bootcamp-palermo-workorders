@@ -38,7 +38,7 @@ param(
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "container-manager.ps1")
 
-Initialize-AgentImage
+Initialize-AgentImage -AiAgent $AiAgent
 Initialize-AgentNetwork
 $tokenFile = Initialize-GitHubSecret
 $agentSecret = Initialize-AgentSecret -AiAgent $AiAgent
