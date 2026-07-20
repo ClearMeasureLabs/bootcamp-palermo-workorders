@@ -1,3 +1,4 @@
+using System.Reflection;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -15,13 +16,33 @@ public partial class MainLayout : IAsyncDisposable
     public enum Elements
     {
         NavRailToggle,
-        CopyrightFooter
+        CopyrightFooter,
+        AppVersion
     }
 
     /// <summary>
     /// Calendar year shown in the site copyright line (UTC, matches acceptance tests).
     /// </summary>
     protected int CopyrightYear => DateTime.UtcNow.Year;
+
+    /// <summary>
+    /// Application version (assembly informational version) shown in the site footer.
+    /// Any build-metadata suffix (after <c>+</c>) is trimmed for display.
+    /// </summary>
+    protected string AppVersion
+    {
+        get
+        {
+            var assembly = typeof(MainLayout).Assembly;
+            var informational = assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                .InformationalVersion;
+            var version = string.IsNullOrWhiteSpace(informational)
+                ? assembly.GetName().Version?.ToString()
+                : informational.Split('+')[0];
+            return string.IsNullOrWhiteSpace(version) ? "unknown" : version;
+        }
+    }
 
     [Inject]
     private IJSRuntime Js { get; set; } = default!;

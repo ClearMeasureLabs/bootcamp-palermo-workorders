@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
@@ -203,6 +204,30 @@ public class MainLayoutTests
         footer.TextContent.ShouldContain(yearText);
         footer.TextContent.ShouldContain("ClearMeasure Labs");
         layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}'] .site-footer-link").GetAttribute("href")!.TrimEnd('/').ShouldBe("https://clearmeasure.com");
+    }
+
+    [Test]
+    public void ShouldRenderAppVersion_InFooter()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        var version = layout.Find($"[data-testid='{nameof(MainLayout.Elements.AppVersion)}']");
+
+        footer.TextContent.ShouldContain(version.TextContent.Trim());
+
+        var expectedVersion = typeof(MainLayout).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion?.Split('+')[0];
+        if (!string.IsNullOrWhiteSpace(expectedVersion))
+        {
+            version.TextContent.ShouldContain(expectedVersion);
+        }
+
+        version.TextContent.Trim().ShouldStartWith("v");
     }
 
     [Test]
