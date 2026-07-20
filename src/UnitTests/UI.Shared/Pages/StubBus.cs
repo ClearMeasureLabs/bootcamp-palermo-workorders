@@ -8,6 +8,8 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class StubBus() : Bus(null!)
 {
+    public int WorkRequestCount { get; set; } = 7;
+
     public override Task Publish(INotification notification)
     {
         return Task.CompletedTask;
@@ -33,6 +35,11 @@ public class StubBus() : Bus(null!)
         if (request is WorkOrderAttachmentsQuery)
         {
             return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderAttachment>());
+        }
+
+        if (request is WorkOrderCountQuery)
+        {
+            return Task.FromResult<TResponse>((TResponse)(object)WorkRequestCount);
         }
 
         if (request is WorkOrderByNumberQuery)
