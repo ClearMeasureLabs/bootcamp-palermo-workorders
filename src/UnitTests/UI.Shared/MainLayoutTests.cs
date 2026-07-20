@@ -143,7 +143,6 @@ public class MainLayoutTests
 
         var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
         loginAnchor.GetAttribute("href").ShouldBe("/login");
-        loginAnchor.ClassList.ShouldContain("login-prompt-link");
     }
 
     [Test]

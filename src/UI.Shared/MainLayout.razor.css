@@ -248,7 +248,7 @@
 }
 
 .user-section ::deep a,
-.auth-section ::deep a:not(.login-prompt-link) {
+.auth-section ::deep a {
     color: #4a5568;
     text-decoration: none;
     font-weight: 500;
@@ -258,7 +258,7 @@
 }
 
 .user-section ::deep a:hover,
-.auth-section ::deep a:not(.login-prompt-link):hover {
+.auth-section ::deep a:hover {
     background: #e2e8f0;
     color: #2d3748;
     text-decoration: none;
@@ -418,15 +418,15 @@
     }
 }
 
-/* Focus states for accessibility (login CTA uses .login-prompt-link:focus-visible) */
+/* Focus states for accessibility */
 .user-section ::deep a:focus,
-.auth-section ::deep a:not(.login-prompt-link):focus {
+.auth-section ::deep a:focus {
     outline: 2px solid #4a5568;
     outline-offset: 2px;
 }
 
-/* Animation for smooth transitions (exclude header login CTA — it uses its own keyframes) */
-.modern-app *:not(.login-prompt-link) {
+/* Animation for smooth transitions */
+.modern-app * {
     transition: all 0.2s ease;
 }
 
@@ -538,12 +538,12 @@
 
 :global(html[data-theme="dark"]) .user-section ::deep span,
 :global(html[data-theme="dark"]) .user-section ::deep a,
-:global(html[data-theme="dark"]) .auth-section ::deep a:not(.login-prompt-link) {
+:global(html[data-theme="dark"]) .auth-section ::deep a {
     color: #e2e8f0;
 }
 
 :global(html[data-theme="dark"]) .user-section ::deep a:hover,
-:global(html[data-theme="dark"]) .auth-section ::deep a:not(.login-prompt-link):hover {
+:global(html[data-theme="dark"]) .auth-section ::deep a:hover {
     background: #4a5568;
     color: #f7fafc;
 }
@@ -574,6 +574,6 @@
 }
 
 :global(html[data-theme="dark"]) .user-section ::deep a:focus,
-:global(html[data-theme="dark"]) .auth-section ::deep a:not(.login-prompt-link):focus {
+:global(html[data-theme="dark"]) .auth-section ::deep a:focus {
     outline-color: #90cdf4;
 }
