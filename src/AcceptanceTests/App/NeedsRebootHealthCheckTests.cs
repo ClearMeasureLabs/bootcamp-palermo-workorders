@@ -79,6 +79,19 @@ public class NeedsRebootHealthCheckTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task HealthCheck_WhenHealthy_ReturnsOkText()
+    {
+        using var client = CreateHttpClient();
+
+        await client.GetAsync("/_demo/setneedsreboot/false");
+
+        var healthResponse = await client.GetAsync("/_healthcheck");
+        healthResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var healthBody = await healthResponse.Content.ReadAsStringAsync();
+        healthBody.ShouldContain("ok", Case.Insensitive);
+    }
+
+    [Test, Retry(2)]
     public async Task SetNeedsRebootTrue_DetailedHealthCheckShowsCorruptionMessage()
     {
         using var client = CreateHttpClient();
