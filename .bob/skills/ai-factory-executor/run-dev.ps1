@@ -45,6 +45,11 @@ if ($HttpPort  -eq 0) {
     # two independent Get-FreePort calls can otherwise return the same port.
     do { $HttpPort = Get-FreePort } while ($HttpPort -eq $HttpsPort)
 }
+# Fail fast on a duplicate host port mapping (e.g. both ports supplied equal),
+# rather than surfacing a cryptic docker run error later.
+if ($HttpPort -eq $HttpsPort) {
+    throw "HttpPort and HttpsPort must differ (both are $HttpPort)."
+}
 
 # Resolve the host repo path (default: three levels up from this skill dir -> repo root)
 if (-not $HostRepo) {
