@@ -26,6 +26,34 @@
     margin: 0;
 }
 
+.work-request-count {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.25rem 2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.work-request-count-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #2c3e50;
+}
+
+.work-request-count-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #7f8c8d;
+}
+
 .church-hero {
     background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 50%, #87ceeb 100%);
     min-height: 80vh;
