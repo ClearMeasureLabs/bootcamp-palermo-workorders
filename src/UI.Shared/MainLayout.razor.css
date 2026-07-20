@@ -299,6 +299,14 @@
     word-wrap: break-word;
 }
 
+.site-footer-version {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    font-style: normal;
+    color: #a0aec0;
+}
+
 .site-footer-link {
     margin-left: 0.35rem;
     color: #4a5568;
@@ -559,6 +567,10 @@
 
 :global(html[data-theme="dark"]) .site-footer-line {
     color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .site-footer-version {
+    color: #718096;
 }
 
 :global(html[data-theme="dark"]) .site-footer-link {
