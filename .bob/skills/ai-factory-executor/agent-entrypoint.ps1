@@ -117,27 +117,74 @@ function Start-Tunnel {
 # Release --no-launch-profile --urls=...`. A plain `dotnet run` (with build)
 # does NOT emit the WASM _framework, so blazor.webassembly.js 404s. Requires the
 # solution to have been compiled first; call this AFTER the agent's gates.
+# Reconstruct the in-DinD SQL Server connection string the gates used (build.ps1
+# SQL-Container mode). BuildFunctions.ps1 derives the container name + password
+# deterministically from the DB name, so we can reach the exact DB whose schema
+# the migration function created during the gates. Returns $null if unavailable.
+function Get-ServeConnectionString {
+    if (-not (Test-Path "/workspace/BuildFunctions.ps1")) { return $null }
+    try {
+        . /workspace/BuildFunctions.ps1
+        # Derive the DB name exactly as build.ps1's acceptance path does, so we
+        # reconnect to the same container the gates created (name + password are
+        # deterministic from the DB name).
+        $dbName    = Get-ResolvedDatabaseName -explicitName "" -baseName "ChurchBulletin" -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
+        $server    = Get-DefaultDatabaseServer -engine "SQL-Container"   # localhost
+        $container = Get-ContainerName -DatabaseName $dbName             # <dbname>-mssql
+        $pw        = Get-SqlServerPassword -ContainerName $container
+        return (New-SqlServerConnectionString -server $server -database $dbName -password $pw)
+    } catch {
+        Write-Info "Could not reconstruct SQL Server connection string: $_"
+        return $null
+    }
+}
+
 function Start-ServeApp {
     param([string]$Issue)
-    # Serve from a SEPARATE SQLite DB so the long-running app never contends with
-    # the gate runs; seed it from the gate-built DB.
-    if (Test-Path "/workspace/ChurchBulletin.db") {
-        Copy-Item "/workspace/ChurchBulletin.db" "/workspace/serve.db" -Force -ErrorAction SilentlyContinue
+    # DB: the gates ran build.ps1 SQL-Container mode (in-DinD SQL Server), whose
+    # migration function created the schema. Reconnect to that same DB and reload
+    # a CLEAN canonical sample dataset for manual testing: the integration +
+    # Playwright gates leave the DB mutated, so re-run ZDataLoader.LoadData
+    # (Clean() + load). The app then serves against the same SQL Server DB. The
+    # provider is chosen by connection-string prefix (server=... -> SQL Server).
+    $conn = Get-ServeConnectionString
+    if (-not $conn) {
+        Write-Failure "No SQL Server connection string - cannot serve with sample data (is DinD/SQL-Container mode active?)."
+        return
     }
+
+    Write-Progress "Reloading canonical sample data (ZDataLoader) into the SQL Server DB for manual testing..."
+    $loadScript = "/tmp/load-sample-data.ps1"
+    Set-Content -Path $loadScript -Value @"
+`$env:DATABASE_ENGINE = 'SQL-Container'
+`$env:ConnectionStrings__SqlConnectionString = '$conn'
+Set-Location /workspace
+dotnet test src/IntegrationTests --configuration Release --no-build --no-restore ``
+    --filter "FullyQualifiedName~ClearMeasure.Bootcamp.IntegrationTests.ZDataLoader.LoadData"
+"@
+    & pwsh -NoProfile -File $loadScript *>> $script:AppLog
+    if ($LASTEXITCODE -eq 0) {
+        Write-Success "Sample data reloaded (ZDataLoader)"
+        Write-StructuredLog -Level "INFO" -Message "Serve DB reloaded with sample data" -Data @{ issue_number = $Issue }
+    } else {
+        Write-Info "ZDataLoader reload exit=$LASTEXITCODE - serving with current DB state (see $script:AppLog)"
+        Write-StructuredLog -Level "WARNING" -Message "Serve DB reload failed" -Data @{ issue_number = $Issue; exit_code = $LASTEXITCODE }
+    }
+
     # tmux's default shell is bash, so set env inside a pwsh SCRIPT (inline
     # $env: syntax in a bash command line would be silently dropped -> the app
     # would boot in Production and not serve the WASM static assets).
     $serveScript = "/tmp/serve-app.ps1"
     Set-Content -Path $serveScript -Value @"
 `$env:ASPNETCORE_ENVIRONMENT = 'Development'
-`$env:DATABASE_ENGINE = 'SQLite'
-`$env:ConnectionStrings__SqlConnectionString = 'Data Source=/workspace/serve.db'
+`$env:DATABASE_ENGINE = 'SQL-Container'
+`$env:ConnectionStrings__SqlConnectionString = '$conn'
 Set-Location /workspace
 dotnet run --project src/UI/Server --no-build --configuration Release --no-launch-profile --urls http://0.0.0.0:$script:ServePort *>> $script:AppLog
 "@
     tmux kill-session -t app 2>$null
     tmux new-session -d -s app "pwsh -NoProfile -File $serveScript"
-    Write-Info "App starting on 0.0.0.0:$script:ServePort (Release --no-build, Development, serve.db)"
+    Write-Info "App starting on 0.0.0.0:$script:ServePort (Release --no-build, Development, SQL Server)"
 
     # Surface app startup to stdout (kubectl exec is unreliable on Docker Desktop).
     $healthy = $false
