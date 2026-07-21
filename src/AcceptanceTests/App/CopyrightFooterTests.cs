@@ -19,6 +19,7 @@ public class CopyrightFooterTests : AcceptanceTestBase
         var yearText = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
         await Expect(footer).ToContainTextAsync(yearText);
         await Expect(footer).ToContainTextAsync("ClearMeasure Labs");
+        await Expect(footer).ToContainTextAsync("Showcase v2 note 9");
 
         var link = footer.Locator("a[href*='clearmeasure.com']").First;
         await Expect(link).ToBeVisibleAsync();

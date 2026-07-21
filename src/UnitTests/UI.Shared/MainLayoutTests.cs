@@ -184,6 +184,7 @@ public class MainLayoutTests
         var yearText = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
         footer.TextContent.ShouldContain(yearText);
         footer.TextContent.ShouldContain("ClearMeasure Labs");
+        footer.TextContent.ShouldContain("Showcase v2 note 9");
 
         var link = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}'] .site-footer-link");
         link.GetAttribute("href")!.TrimEnd('/').ShouldBe("https://clearmeasure.com");
