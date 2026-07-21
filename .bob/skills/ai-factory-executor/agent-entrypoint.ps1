@@ -801,10 +801,23 @@ Run it exactly once, and only when both gates are green.
     # entrypoint patched at runtime for verbose logging - that is not the agent's
     # work and is reverted before committing.
     $changes = git status --porcelain | Where-Object { $_ -notmatch 'build\.ps1' }
+    $skipPr = $false
     if (-not $changes) {
-        throw "AI agent ($aiAgent) produced no file changes for issue #$issueNumber"
+        if ($env:KEEP_ALIVE -eq "true") {
+            # Keep-alive instances may be launched from EMPTY/placeholder issues
+            # whose only purpose is to run the app for interactive use. In that
+            # case the agent correctly makes no change - which must NOT be fatal:
+            # skip the commit/push/PR pipeline and go straight to serving + holding
+            # the app open. (For non-keep-alive runs, no changes is still an error.)
+            Write-Info "No file changes and KEEP_ALIVE=true - interactive instance; skipping PR, will serve the app and hold open."
+            Write-StructuredLog -Level "INFO" -Message "No changes; keep-alive interactive instance" -Data @{ issue_number = $issueNumber }
+            $skipPr = $true
+        } else {
+            throw "AI agent ($aiAgent) produced no file changes for issue #$issueNumber"
+        }
     }
 
+    if (-not $skipPr) {
     Write-Success "AI agent ($aiAgent) implemented the issue"
     Write-StructuredLog -Level "INFO" -Message "Agent implementation complete" -Data @{
         agent = $aiAgent
@@ -925,6 +938,8 @@ Run it exactly once, and only when both gates are green.
     Write-StructuredLog -Level "INFO" -Message "Pull request created" -Data @{
         pr_number = $prNumber
     }
+    } # end if (-not $skipPr)
+    if ($skipPr) { $prNumber = "none" }
 
     # 11b. SHOWCASE: after the gates are green and the PR exists, serve the FINAL
     #      implemented build behind the stable tunnel URL, open a browser IN THE
