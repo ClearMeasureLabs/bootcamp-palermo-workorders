@@ -73,12 +73,9 @@ function Publish-LiveUrlAnnotation {
 }
 
 function Publish-TerminalAnnotation {
-    param([string]$Url, [string]$User, [string]$Pass, [string]$Issue)
-    Set-PodAnnotations -Annotations @{
-        'ai-factory/terminal-url'  = $Url
-        'ai-factory/terminal-user' = "$User"
-        'ai-factory/terminal-pass' = "$Pass"
-    }
+    param([string]$Url, [string]$Issue)
+    # The URL embeds the secret base-path token; no separate credentials.
+    Set-PodAnnotations -Annotations @{ 'ai-factory/terminal-url' = $Url }
     Write-StructuredLog -Level "INFO" -Message "Terminal URL annotation published" -Data @{ url = $Url }
 }
 
@@ -229,8 +226,13 @@ function Start-Terminal {
     param([string]$Pr = "pending", [string]$Issue)
     if ($env:TERMINAL_ENABLED -eq "false") { Write-Info "TERMINAL_ENABLED=false - skipping browser terminal."; return }
 
-    $user = "aidev"
-    $pass = -join ((48..57)+(65..90)+(97..122) | Get-Random -Count 24 | ForEach-Object { [char]$_ })
+    # Auth via an unguessable base-path token (capability URL), NOT HTTP basic
+    # auth: ttyd's --credential guards the WebSocket upgrade with basic auth, and
+    # Safari (incl. iOS) does not send basic-auth on WS upgrades, so the terminal
+    # fails to connect there ("Press ENTER to reconnect"). A secret base path
+    # needs no auth header, works in every browser, and is the same secret-URL
+    # model as the app tunnel (plus the tunnel host is itself unguessable).
+    $pathToken = -join ((48..57)+(97..122) | Get-Random -Count 28 | ForEach-Object { [char]$_ })
     $ttydLog = "/tmp/ttyd.log"
     $termTunnelLog = "/tmp/cloudflared-term.log"
 
@@ -238,9 +240,9 @@ function Start-Terminal {
     # shares the live Claude session with the Remote Control app. ttyd itself is
     # backgrounded in a tmux session, so its child inherits $TMUX and a plain
     # `tmux attach` would refuse to nest - `env -u TMUX` clears it so the attach
-    # to the 'agent' session works.
+    # to the 'agent' session works. -b /<token> serves under the secret path.
     tmux kill-session -t ttyd 2>$null
-    tmux new-session -d -s ttyd "ttyd -p $script:TermPort -W --credential ${user}:${pass} env -u TMUX tmux attach -t agent >> $ttydLog 2>&1"
+    tmux new-session -d -s ttyd "ttyd -p $script:TermPort -W -b /$pathToken env -u TMUX tmux attach -t agent >> $ttydLog 2>&1"
     Write-Info "ttyd terminal starting on :$script:TermPort (attaches to the live 'agent' Claude session)"
 
     # Second Cloudflare quick tunnel for the terminal port (separate from the app tunnel).
@@ -259,14 +261,16 @@ function Start-Terminal {
         Start-Sleep -Seconds 2
     }
     if ($termUrl) {
-        Write-Success "LIVE TERMINAL URL: $termUrl  (user: $user  pass: $pass)"
-        Write-Host "AI_FACTORY_TERMINAL_URL issue=$Issue pr=$Pr url=$termUrl user=$user pass=$pass"
+        # Full capability URL includes the secret base path (trailing slash matters).
+        $fullUrl = "$termUrl/$pathToken/"
+        Write-Success "LIVE TERMINAL URL: $fullUrl  (no login needed; the secret path IS the credential - keep it private)"
+        Write-Host "AI_FACTORY_TERMINAL_URL issue=$Issue pr=$Pr url=$fullUrl"
         Write-StructuredLog -Level "SUCCESS" -Message "Browser terminal live via Cloudflare tunnel" -Data @{
-            issue_number = $Issue; pr_number = $Pr; terminal_url = $termUrl; user = $user; port = $script:TermPort
+            issue_number = $Issue; pr_number = $Pr; terminal_url = $fullUrl; port = $script:TermPort
         }
         # For the agent to report it in-session (see the prompt).
-        Set-Content -Path "/tmp/terminal-url.txt" -Value "$termUrl`nuser: $user`npass: $pass" -NoNewline -ErrorAction SilentlyContinue
-        Publish-TerminalAnnotation -Url $termUrl -User $user -Pass $pass -Issue $Issue
+        Set-Content -Path "/tmp/terminal-url.txt" -Value $fullUrl -NoNewline -ErrorAction SilentlyContinue
+        Publish-TerminalAnnotation -Url $fullUrl -Issue $Issue
     } else {
         Write-Failure "Could not obtain Cloudflare terminal tunnel URL (see $termTunnelLog)"
     }
@@ -562,12 +566,13 @@ LIVE PREVIEW URL - tell the user where to view the running app:
 
 BROWSER TERMINAL - tell the user how to open a terminal into this session:
   A second Cloudflare tunnel exposes a browser terminal attached to THIS live
-  session. The automation writes its URL + credentials to /tmp/terminal-url.txt
-  (usually within a minute or two of the app going live). Once available, run:
+  session. The automation writes its URL to /tmp/terminal-url.txt shortly after
+  startup. Once available, run:
     cat /tmp/terminal-url.txt
   and report it to the user, e.g.:
-    "Browser terminal (this session): <url>  (user / password shown)"
-  Note it opens a real terminal in the container; treat the URL + password as a
+    "Browser terminal (this session): <url>"
+  The URL contains a secret path token (no login prompt) - opening it drops the
+  user into a real terminal in this container, so treat the full URL as a
   secret. Include it in your final summary alongside the app URL.
 
 ENDING THE SESSION - the app stays live for inspection after your work is done.
