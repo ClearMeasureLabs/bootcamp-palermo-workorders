@@ -263,13 +263,33 @@ function Start-Terminal {
     $ttydLog = "/tmp/ttyd.log"
     $termTunnelLog = "/tmp/cloudflared-term.log"
 
+    # Ensure mouse mode + a large scrollback are on the 'agent' session even if
+    # Start-Terminal is (re)invoked after the session was created, so the browser
+    # scroll wheel scrolls tmux history/copy-mode. history-limit re-applied here
+    # only affects windows created afterward (per-window buffer limitation).
+    tmux set -g mouse on 2>$null
+    tmux set -g history-limit 200000 2>$null
+    tmux set -t agent -g mouse on 2>$null
+    tmux set -t agent -g history-limit 200000 2>$null
+
     # ttyd runs `tmux attach -t agent` (-W = writable) so the browser terminal
     # shares the live Claude session with the Remote Control app. ttyd itself is
     # backgrounded in a tmux session, so its child inherits $TMUX and a plain
     # `tmux attach` would refuse to nest - `env -u TMUX` clears it so the attach
     # to the 'agent' session works. -b /<token> serves under the secret path.
+    #
+    # xterm.js client options (-t): scrollback=200000 keeps the browser terminal's
+    # own buffer as deep as the tmux history so scrolling up reaches the whole
+    # session; fontSize=14 for readability. Vertical scroll (up/down) works via
+    # the wheel (tmux mouse mode) and the xterm.js scrollbar. Horizontal panning:
+    # xterm.js has NO horizontal scrollbar, so wide output is seen by WRAPPING
+    # (lines fold to the next row) rather than side-scrolling; aggressive-resize
+    # (set at agent-session creation) prevents tmux from hard-truncating columns.
+    # To physically widen the pane instead of wrapping, one could resize the
+    # attaching client window (larger browser / smaller font) or run
+    # `tmux resize-window -t agent -x <cols>`; wrapping is the reliable default.
     tmux kill-session -t ttyd 2>$null
-    tmux new-session -d -s ttyd "ttyd -p $script:TermPort -W -b /$pathToken env -u TMUX tmux attach -t agent >> $ttydLog 2>&1"
+    tmux new-session -d -s ttyd "ttyd -p $script:TermPort -W -b /$pathToken -t 'scrollback=200000' -t 'fontSize=14' env -u TMUX tmux attach -t agent >> $ttydLog 2>&1"
     Write-Info "ttyd terminal starting on :$script:TermPort (attaches to the live 'agent' Claude session)"
 
     # Second Cloudflare quick tunnel for the terminal port (separate from the app tunnel).
@@ -615,7 +635,24 @@ Run it exactly once, and only when both gates are green.
             # Capture output for docker logs via `tmux pipe-pane` instead.
             $claudeCmd = "cd /workspace && claude --model `"$aiModel`" --remote-control `"$rcName`" --dangerously-skip-permissions `"`$(cat $promptFile)`""
             tmux kill-session -t agent 2>$null
+            # Set these globally BEFORE creating the 'agent' session so they are
+            # active from the start. history-limit only applies to windows created
+            # AFTER it is set, so it must precede new-session to retain the WHOLE
+            # session scrollback (200k lines). `mouse on` lets the browser scroll
+            # wheel drive tmux copy-mode / history in the ttyd terminal.
+            tmux set -g history-limit 200000 2>$null
+            tmux set -g mouse on 2>$null
+            # aggressive-resize keeps the pane sized to the smallest attached
+            # client so wide output wraps rather than being hard-truncated; the
+            # browser terminal (xterm.js) has no horizontal scrollbar, so all
+            # columns are seen via wrapping (see Start-Terminal for detail).
+            tmux set -w -g aggressive-resize on 2>$null
             tmux new-session -d -s agent -x 220 -y 50 $claudeCmd
+            # Re-apply per-session in case the session already existed / global was
+            # set late; mouse is per-session-safe, history-limit here only affects
+            # windows created after this point (documented limitation).
+            tmux set -t agent -g mouse on 2>$null
+            tmux set -t agent -g history-limit 200000 2>$null
             tmux pipe-pane -o -t agent "cat >> $agentLog"
             Write-Success "Claude Remote Control session '$rcName' started"
             Write-StructuredLog -Level "INFO" -Message "Remote Control session started" -Data @{ session = $rcName }
