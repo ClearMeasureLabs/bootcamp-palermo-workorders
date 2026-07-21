@@ -446,11 +446,10 @@ $issueBody
     Write-Info "AI agent: $aiAgent"
     Write-StructuredLog -Level "INFO" -Message "Selected AI agent" -Data @{ agent = $aiAgent }
 
-    # Configurable model + reasoning effort for the claude agent. Default for
-    # simple development: the latest Sonnet (claude-sonnet-4-6 - there is no
-    # "Sonnet 5"; Sonnet 4.6 is the current Sonnet) at low effort. Override with
-    # AI_MODEL / AI_MODEL_EFFORT (plumbed from implement-issue.ps1 --model/--effort).
-    $aiModel  = if ($env:AI_MODEL)        { $env:AI_MODEL }        else { "claude-sonnet-4-6" }
+    # Configurable model + reasoning effort for the claude agent. Default:
+    # Claude Sonnet 5 at low effort. Override with AI_MODEL / AI_MODEL_EFFORT
+    # (plumbed from implement-issue.ps1 --model/--effort).
+    $aiModel  = if ($env:AI_MODEL)        { $env:AI_MODEL }        else { "claude-sonnet-5" }
     $aiEffort = if ($env:AI_MODEL_EFFORT) { $env:AI_MODEL_EFFORT.ToLower() } else { "low" }
     Write-Info "AI model: $aiModel (effort: $aiEffort)"
     Write-StructuredLog -Level "INFO" -Message "Selected AI model" -Data @{ model = $aiModel; effort = $aiEffort }

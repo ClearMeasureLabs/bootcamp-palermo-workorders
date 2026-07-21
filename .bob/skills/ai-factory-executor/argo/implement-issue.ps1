@@ -21,7 +21,7 @@ param(
     [Alias('agent')]    [ValidateSet('claude','bob')][string]$AiAgent = 'claude',
     # Model + reasoning effort for the claude agent. Default (simple development):
     # latest Sonnet (claude-sonnet-4-6) at low effort.
-    [Alias('model')]    [string]$AiModel = 'claude-sonnet-4-6',
+    [Alias('model')]    [string]$AiModel = 'claude-sonnet-5',
     [Alias('effort')]   [ValidateSet('low','medium','high','xhigh','max')][string]$AiModelEffort = 'low',
     # Browser terminal (ttyd) into the live Claude session. Defaults ON; disable with --no-terminal or --terminal false.
     [ValidateSet('true','false')][string]$Terminal = 'true',
