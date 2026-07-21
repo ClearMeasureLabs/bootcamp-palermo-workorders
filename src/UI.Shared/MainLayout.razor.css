@@ -307,6 +307,11 @@
     text-underline-offset: 2px;
 }
 
+.site-footer-version {
+    font-size: 0.75rem;
+    opacity: 0.75;
+}
+
 .site-footer-link:hover {
     color: #2d3748;
 }
