@@ -736,6 +736,32 @@ Run it exactly once, and only when both gates are green.
             # works, not only after the gates. Independent of KEEP_ALIVE.
             Start-Terminal -Pr "pending" -Issue $issueNumber
 
+            # Publish the app preview URL EARLY - as soon as the app-tunnel sidecar
+            # has written its quick-tunnel URL to the shared volume (seconds after
+            # pod start), NOT only in the post-gates showcase (~18 min later). This
+            # mirrors the terminal URL being available from the start: the app
+            # tunnel host is live immediately (it 502s until the gates compile +
+            # serve the app on :8080, then serves 200). The showcase re-publishes
+            # the same URL. No in-container fallback here to avoid tunnel churn -
+            # if the sidecar file is not present yet, the showcase will handle it.
+            $earlyAppUrl = $null
+            for ($ea = 0; $ea -lt 15; $ea++) {
+                if (Test-Path "/shared/app-url.txt") {
+                    $eu = (Get-Content "/shared/app-url.txt" -Raw -ErrorAction SilentlyContinue)
+                    if ($eu) { $eu = $eu.Trim() }
+                    if ($eu) { $earlyAppUrl = $eu; break }
+                }
+                Start-Sleep -Seconds 2
+            }
+            if ($earlyAppUrl) {
+                Write-Success "LIVE APP URL (sidecar, published early; serves once gates finish): $earlyAppUrl"
+                Write-Host "AI_FACTORY_LIVE_URL issue=$issueNumber pr=pending url=$earlyAppUrl"
+                Publish-LiveUrlAnnotation -Url $earlyAppUrl -Pr "pending" -Issue $issueNumber
+                Set-Content -Path "/tmp/live-url.txt" -Value $earlyAppUrl -NoNewline -ErrorAction SilentlyContinue
+            } else {
+                Write-Info "Sidecar app URL not yet available for early publish; will publish in the showcase."
+            }
+
             # Poll for the completion sentinel (or session death / timeout). The
             # agent now also runs both quality gates and fixes failures in-session,
             # so allow more time than a bare implementation.
