@@ -235,9 +235,12 @@ function Start-Terminal {
     $termTunnelLog = "/tmp/cloudflared-term.log"
 
     # ttyd runs `tmux attach -t agent` (-W = writable) so the browser terminal
-    # shares the live Claude session with the Remote Control app.
+    # shares the live Claude session with the Remote Control app. ttyd itself is
+    # backgrounded in a tmux session, so its child inherits $TMUX and a plain
+    # `tmux attach` would refuse to nest - `env -u TMUX` clears it so the attach
+    # to the 'agent' session works.
     tmux kill-session -t ttyd 2>$null
-    tmux new-session -d -s ttyd "ttyd -p $script:TermPort -W --credential ${user}:${pass} tmux attach -t agent >> $ttydLog 2>&1"
+    tmux new-session -d -s ttyd "ttyd -p $script:TermPort -W --credential ${user}:${pass} env -u TMUX tmux attach -t agent >> $ttydLog 2>&1"
     Write-Info "ttyd terminal starting on :$script:TermPort (attaches to the live 'agent' Claude session)"
 
     # Second Cloudflare quick tunnel for the terminal port (separate from the app tunnel).
