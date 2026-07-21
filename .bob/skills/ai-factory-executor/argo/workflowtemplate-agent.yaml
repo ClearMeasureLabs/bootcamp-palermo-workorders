@@ -88,6 +88,34 @@ spec:
           emptyDir: {}
         - name: nuget
           emptyDir: {}
+        # Shared with the app-tunnel sidecar: the sidecar writes its quick-tunnel
+        # URL here (/shared/app-url.txt); the entrypoint reads + publishes it.
+        - name: tunnel-share
+          emptyDir: {}
+      # Dedicated app-tunnel SIDECAR: runs the app's cloudflared as the ONLY
+      # tunnel in its own container. Pod containers share the network namespace,
+      # so it reaches the app the main container serves on 127.0.0.1:8080.
+      # Isolating it from the main container's churn (build + DinD + terminal
+      # tunnel) keeps the app tunnel's connection stable, so the published
+      # live-url does not deregister (NXDOMAIN) mid-session. Argo terminates
+      # sidecars when the main container completes.
+      sidecars:
+        - name: app-tunnel
+          image: ai-factory-agent:latest
+          imagePullPolicy: Never
+          command: ["bash", "-c"]
+          args:
+            - |
+              cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8080 > /shared/cf-app.log 2>&1 &
+              CF=$!
+              for i in $(seq 1 120); do
+                u=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /shared/cf-app.log | head -1)
+                if [ -n "$u" ]; then echo "$u" > /shared/app-url.txt; echo "app tunnel URL: $u"; break; fi
+                sleep 2
+              done
+              wait $CF
+          volumeMounts:
+            - { name: tunnel-share, mountPath: /shared }
         - name: agent-secrets
           secret:
             secretName: "agent-secret-{{inputs.parameters.issueNumber}}"
@@ -141,6 +169,7 @@ spec:
         volumeMounts:
           - { name: workspace, mountPath: /workspace }
           - { name: nuget, mountPath: /home/bobagent/.nuget/packages }
+          - { name: tunnel-share, mountPath: /shared }
           # See init container note: avoid /run/secrets (collides with SA token).
           - { name: agent-secrets, mountPath: /var/agent-secrets, readOnly: true }
         securityContext:

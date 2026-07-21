@@ -234,6 +234,39 @@ dotnet run --project src/UI/Server --no-build --configuration Release --no-launc
     }
 }
 
+# Publish the app's public URL. Prefer the DEDICATED app-tunnel SIDECAR
+# container's URL: running the app's cloudflared as the sole tunnel in its own
+# container isolates it from the agent container's heavy churn (build + DinD +
+# terminal tunnel), which is what caused the in-container app tunnel's cloudflared
+# to drop and the hostname to deregister (NXDOMAIN) mid-session. The sidecar
+# writes its quick-tunnel URL to the shared volume at /shared/app-url.txt. Falls
+# back to an in-container tunnel (Start-Tunnel) if the sidecar file is absent.
+function Publish-AppUrl {
+    param([string]$Pr = "pending", [string]$Issue)
+    $shared = "/shared/app-url.txt"
+    $url = $null
+    for ($i = 0; $i -lt 60; $i++) {
+        if (Test-Path $shared) {
+            $u = (Get-Content $shared -Raw -ErrorAction SilentlyContinue)
+            if ($u) { $u = $u.Trim() }
+            if ($u) { $url = $u; break }
+        }
+        Start-Sleep -Seconds 2
+    }
+    if ($url) {
+        Write-Success "LIVE APP URL (dedicated sidecar tunnel): $url  (issue #$Issue, PR #$Pr)"
+        Write-Host "AI_FACTORY_LIVE_URL issue=$Issue pr=$Pr url=$url"
+        Write-StructuredLog -Level "SUCCESS" -Message "App live via dedicated sidecar tunnel" -Data @{
+            issue_number = $Issue; pr_number = $Pr; public_url = $url; port = $script:ServePort
+        }
+        Publish-LiveUrlAnnotation -Url $url -Pr $Pr -Issue $Issue
+        Set-Content -Path "/tmp/live-url.txt" -Value $url -NoNewline -ErrorAction SilentlyContinue
+        return $url
+    }
+    Write-Info "No dedicated sidecar app URL at $shared - falling back to an in-container app tunnel."
+    return (Start-Tunnel -Pr $Pr -Issue $Issue)
+}
+
 # Open a browser IN THE CONTAINER to the hosted app so the app's load is
 # exercised end-to-end after the gates, then screenshotted (proof it renders).
 # Uses the Chromium that the Playwright AcceptanceTests already installed. Best
@@ -876,7 +909,7 @@ Run it exactly once, and only when both gates are green.
     Write-Progress "Serving final build (Release --no-build) behind the tunnel for showcase..."
     Write-StructuredLog -Level "INFO" -Message "Serving final build" -Data @{ issue_number = $issueNumber; pr_number = $prNumber }
     Start-ServeApp -Issue $issueNumber
-    $liveUrl = Start-Tunnel -Pr $prNumber -Issue $issueNumber
+    $liveUrl = Publish-AppUrl -Pr $prNumber -Issue $issueNumber
     # Requirement: each session opens a browser to its hosted app to show the app
     # load after the AcceptanceTests gate, before ending.
     Show-AppInBrowser -Url $liveUrl -Issue $issueNumber
