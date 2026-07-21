@@ -31,7 +31,9 @@ BeforeDiscovery {
 
     function Test-Prereqs {
         $missing = @()
-        foreach ($t in 'kubectl','argo','gh','cloudflared') {
+        # cloudflared is a CONTAINER-only dependency (baked into the agent image
+        # for serve mode); it is intentionally NOT required on the host.
+        foreach ($t in 'kubectl','argo','gh') {
             if (-not (Get-Command $t -ErrorAction SilentlyContinue)) { $missing += "cli:$t" }
         }
         if ($missing) { return $missing }
@@ -113,10 +115,12 @@ Describe 'AI Dev Factory - 3 concurrent isolated issues, monitored, served' -Ski
         ($wf | Where-Object { $_ -like 'issue-*' }).Count | Should -BeGreaterOrEqual 1
     }
 
-    It 'works issue #<_.Number> through the full SDLC and opens a PR' -ForEach $script:Issues {
-        $issue = $_
-        $wf = & argo list -n $Ns -o name 2>$null | Where-Object { $_ -like "issue-$($issue.Number)-*" } | Select-Object -First 1
-        $wf | Should -Not -BeNullOrEmpty -Because "a workflow should exist for issue #$($issue.Number)"
+    # NOTE: these iterate over $script:Issues INSIDE the test (run time). Pester
+    # evaluates -ForEach at DISCOVERY time, when $script:Issues is still empty
+    # (it is populated by the 'creates 3 issues' test above), so a data-driven
+    # -ForEach here would expand to zero cases and silently never run.
+    It 'works every issue through the full SDLC and opens a PR' {
+        $script:Issues.Count | Should -Be 3 -Because "the 3 issues must have been created first"
 
         # The ordered SDLC phases the container emits (structured JSON + progress).
         $phases = @(
@@ -132,58 +136,64 @@ Describe 'AI Dev Factory - 3 concurrent isolated issues, monitored, served' -Ski
             'Pull request created'
         )
 
-        # Poll pod logs until PR created / failed / timeout. Generous budget: the
-        # agent makes real LLM calls and runs PrivateBuild + AcceptanceTests.
-        $deadline = (Get-Date).AddMinutes([int]($env:AIDEV_TIMEOUT_MIN ?? 40))
-        $logs = ''
-        $done = $false
-        while ((Get-Date) -lt $deadline) {
-            $logs  = & argo logs $wf -n $Ns --no-color 2>$null | Out-String
-            $status = & argo get $wf -n $Ns -o json 2>$null | ConvertFrom-Json
-            if ($logs -match 'Pull request created') { $done = $true; break }
-            if ($status.status.phase -in @('Failed','Error')) { break }
-            Start-Sleep -Seconds 20
+        foreach ($issue in $script:Issues) {
+            $wf = & argo list -n $Ns -o name 2>$null | Where-Object { $_ -like "issue-$($issue.Number)-*" } | Select-Object -First 1
+            $wf | Should -Not -BeNullOrEmpty -Because "a workflow should exist for issue #$($issue.Number)"
+
+            # Poll pod logs until PR created / failed / timeout. Generous budget:
+            # the agent makes real LLM calls and runs PrivateBuild + AcceptanceTests.
+            $deadline = (Get-Date).AddMinutes([int]($env:AIDEV_TIMEOUT_MIN ?? 40))
+            $logs = ''
+            $done = $false
+            while ((Get-Date) -lt $deadline) {
+                $logs  = & argo logs $wf -n $Ns --no-color 2>$null | Out-String
+                $status = & argo get $wf -n $Ns -o json 2>$null | ConvertFrom-Json
+                if ($logs -match 'Pull request created') { $done = $true; break }
+                if ($status.status.phase -in @('Failed','Error')) { break }
+                Start-Sleep -Seconds 20
+            }
+
+            $done | Should -BeTrue -Because "issue #$($issue.Number) should reach 'Pull request created'. Last log tail:`n$([string]::Join("`n", ($logs -split "`n" | Select-Object -Last 25)))"
+
+            # Assert the SDLC phases appear IN ORDER.
+            $lastIdx = -1
+            foreach ($p in $phases) {
+                $idx = $logs.IndexOf($p)
+                $idx | Should -BeGreaterThan -1 -Because "SDLC phase '$p' should appear in issue #$($issue.Number) logs"
+                $idx | Should -BeGreaterThan $lastIdx -Because "SDLC phase '$p' should occur after the previous phase"
+                $lastIdx = $idx
+            }
+
+            # A real PR should now exist for the branch.
+            $pr = & gh pr list --repo $Repo --head $issue.Branch --state open --json number,url | ConvertFrom-Json
+            $pr.Count | Should -BeGreaterThan 0 -Because "a PR should be open for $($issue.Branch)"
+            $issue.Pr = $pr[0].number
+            Write-Host "  issue #$($issue.Number) -> PR #$($issue.Pr)" -ForegroundColor Green
         }
-
-        $done | Should -BeTrue -Because "issue #$($issue.Number) should reach 'Pull request created'. Last log tail:`n$([string]::Join("`n", ($logs -split "`n" | Select-Object -Last 25)))"
-
-        # Assert the SDLC phases appear IN ORDER.
-        $lastIdx = -1
-        foreach ($p in $phases) {
-            $idx = $logs.IndexOf($p)
-            $idx | Should -BeGreaterThan -1 -Because "SDLC phase '$p' should appear in issue #$($issue.Number) logs"
-            $idx | Should -BeGreaterThan $lastIdx -Because "SDLC phase '$p' should occur after the previous phase"
-            $lastIdx = $idx
-        }
-
-        # A real PR should now exist for the branch.
-        $pr = & gh pr list --repo $Repo --head $issue.Branch --state open --json number,url | ConvertFrom-Json
-        $pr.Count | Should -BeGreaterThan 0 -Because "a PR should be open for $($issue.Branch)"
-        $issue.Pr = $pr[0].number
-        Write-Host "  issue #$($issue.Number) -> PR #$($issue.Pr)" -ForegroundColor Green
     }
 
-    It 'keeps issue #<_.Number> serving the live app behind a Cloudflare tunnel' -ForEach $script:Issues {
-        $issue = $_
-        $wf = & argo list -n $Ns -o name 2>$null | Where-Object { $_ -like "issue-$($issue.Number)-*" } | Select-Object -First 1
-        $wf | Should -Not -BeNullOrEmpty
+    It 'keeps every issue serving the live app behind a Cloudflare tunnel' {
+        foreach ($issue in $script:Issues) {
+            $wf = & argo list -n $Ns -o name 2>$null | Where-Object { $_ -like "issue-$($issue.Number)-*" } | Select-Object -First 1
+            $wf | Should -Not -BeNullOrEmpty
 
-        # Wait for serve mode to publish the tunnel URL marker.
-        $deadline = (Get-Date).AddMinutes(10)
-        $url = $null
-        while ((Get-Date) -lt $deadline -and -not $url) {
-            $logs = & argo logs $wf -n $Ns --no-color 2>$null | Out-String
-            $m = [regex]::Match($logs, 'AI_FACTORY_LIVE_URL[^\n]*url=(https://[a-z0-9-]+\.trycloudflare\.com)')
-            if ($m.Success) { $url = $m.Groups[1].Value; break }
-            Start-Sleep -Seconds 15
+            # Wait for serve mode to publish the tunnel URL marker.
+            $deadline = (Get-Date).AddMinutes(10)
+            $url = $null
+            while ((Get-Date) -lt $deadline -and -not $url) {
+                $logs = & argo logs $wf -n $Ns --no-color 2>$null | Out-String
+                $m = [regex]::Match($logs, 'AI_FACTORY_LIVE_URL[^\n]*url=(https://[a-z0-9-]+\.trycloudflare\.com)')
+                if ($m.Success) { $url = $m.Groups[1].Value; break }
+                Start-Sleep -Seconds 15
+            }
+            $url | Should -Match '^https://[a-z0-9-]+\.trycloudflare\.com$' -Because "serve mode should publish a live URL for issue #$($issue.Number)"
+
+            # The pod must still be running (held open by KEEP_ALIVE).
+            $phase = (& argo get $wf -n $Ns -o json 2>$null | ConvertFrom-Json).status.phase
+            $phase | Should -Be 'Running' -Because "KEEP_ALIVE should hold the workflow/pod open"
+
+            Write-Host "  LIVE  issue #$($issue.Number)  PR #$($issue.Pr)  ->  $url" -ForegroundColor Magenta
         }
-        $url | Should -Match '^https://[a-z0-9-]+\.trycloudflare\.com$' -Because "serve mode should publish a live URL for issue #$($issue.Number)"
-
-        # The pod must still be running (held open by KEEP_ALIVE).
-        $phase = (& argo get $wf -n $Ns -o json 2>$null | ConvertFrom-Json).status.phase
-        $phase | Should -Be 'Running' -Because "KEEP_ALIVE should hold the workflow/pod open"
-
-        Write-Host "  LIVE  issue #$($issue.Number)  PR #$($issue.Pr)  ->  $url" -ForegroundColor Magenta
     }
 
     AfterAll {

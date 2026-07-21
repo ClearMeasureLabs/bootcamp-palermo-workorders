@@ -36,6 +36,127 @@ function Write-StructuredLog {
     Write-Host ($logEntry | ConvertTo-Json -Compress)
 }
 
+# Task 4: annotate this pod with the live tunnel URL via the k8s API, so the URL
+# is a queryable output of the (long-running) KEEP_ALIVE workflow:
+#   kubectl get pod $POD_NAME -o jsonpath='{.metadata.annotations.ai-factory/live-url}'
+function Publish-LiveUrlAnnotation {
+    param([string]$Url, [string]$Pr, [string]$Issue)
+    $podName = $env:POD_NAME
+    $ns      = if ($env:POD_NAMESPACE) { $env:POD_NAMESPACE } else { 'ai-factory' }
+    $tokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+    if (-not $podName -or -not (Test-Path $tokenPath)) {
+        Write-Info "POD_NAME or SA token unavailable; skipping pod annotation (log marker still emitted)."
+        return
+    }
+    try {
+        $token = (Get-Content $tokenPath -Raw).Trim()
+        $ca    = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+        $api   = "https://kubernetes.default.svc/api/v1/namespaces/$ns/pods/$podName"
+        # JSON-merge-patch the annotations. '/' in the key must be escaped? No -
+        # merge patch uses the literal key; annotations allow slashes in the name.
+        $patch = @{ metadata = @{ annotations = @{
+            'ai-factory/live-url'  = $Url
+            'ai-factory/pr-number' = "$Pr"
+            'ai-factory/issue'     = "$Issue"
+        } } } | ConvertTo-Json -Depth 5 -Compress
+        $headers = @{ Authorization = "Bearer $token" }
+        Invoke-RestMethod -Method Patch -Uri $api -Headers $headers -Body $patch `
+            -ContentType 'application/merge-patch+json' -SkipCertificateCheck | Out-Null
+        Write-Success "Published live URL to pod annotation ai-factory/live-url"
+        Write-StructuredLog -Level "INFO" -Message "Live URL annotation published" -Data @{ pod = $podName; url = $Url }
+    } catch {
+        Write-Info "Could not annotate pod with live URL: $_ (log marker still emitted)."
+    }
+}
+
+$script:ServePort = if ($env:SERVE_PORT) { $env:SERVE_PORT } else { "8080" }
+$script:TunnelLog = "/tmp/cloudflared.log"
+$script:AppLog    = "/tmp/app.log"
+
+# Start the Cloudflare quick tunnel (once) pointing at the serve port and return
+# the public URL. Called EARLY, in parallel with the agent, so the URL exists
+# before the app is up (cloudflared just 502s at the origin until the app binds).
+# Idempotent: re-uses the running tunnel so the URL stays stable.
+function Start-Tunnel {
+    param([string]$Pr = "pending", [string]$Issue)
+    tmux has-session -t tunnel 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        tmux new-session -d -s tunnel "cloudflared tunnel --no-autoupdate --url http://localhost:$script:ServePort > $script:TunnelLog 2>&1"
+        Write-Info "Cloudflare tunnel starting -> :$script:ServePort"
+    }
+    $publicUrl = $null
+    for ($i = 0; $i -lt 60; $i++) {
+        $raw = Get-Content $script:TunnelLog -Raw -ErrorAction SilentlyContinue
+        if ($raw) {
+            $m = [regex]::Match($raw, 'https://[a-z0-9-]+\.trycloudflare\.com')
+            if ($m.Success) { $publicUrl = $m.Value; break }
+        }
+        Start-Sleep -Seconds 2
+    }
+    if ($publicUrl) {
+        Write-Success "LIVE APP URL: $publicUrl  (issue #$Issue, PR #$Pr)"
+        Write-Host "AI_FACTORY_LIVE_URL issue=$Issue pr=$Pr url=$publicUrl"
+        Write-StructuredLog -Level "SUCCESS" -Message "App live via Cloudflare tunnel" -Data @{
+            issue_number = $Issue; pr_number = $Pr; public_url = $publicUrl; port = $script:ServePort
+        }
+        Publish-LiveUrlAnnotation -Url $publicUrl -Pr $Pr -Issue $Issue
+        # Expose the URL to the in-container claude agent session so it can report
+        # the live-preview URL to the person driving that session (see the prompt).
+        Set-Content -Path "/tmp/live-url.txt" -Value $publicUrl -NoNewline -ErrorAction SilentlyContinue
+    } else {
+        Write-Failure "Could not obtain Cloudflare tunnel URL (see $script:TunnelLog)"
+        Write-StructuredLog -Level "ERROR" -Message "Tunnel URL not obtained" -Data @{ issue_number = $Issue }
+    }
+    return $publicUrl
+}
+
+# Start the app on the serve port using the ALREADY-COMPILED Release output
+# (the agent's AcceptanceTests gate runs a full `Compile`, which builds the
+# Blazor WASM client's _framework assets). This mirrors the known-good launch
+# in AcceptanceTests' ServerFixture: `dotnet run --no-build --configuration
+# Release --no-launch-profile --urls=...`. A plain `dotnet run` (with build)
+# does NOT emit the WASM _framework, so blazor.webassembly.js 404s. Requires the
+# solution to have been compiled first; call this AFTER the agent's gates.
+function Start-ServeApp {
+    param([string]$Issue)
+    # Serve from a SEPARATE SQLite DB so the long-running app never contends with
+    # the gate runs; seed it from the gate-built DB.
+    if (Test-Path "/workspace/ChurchBulletin.db") {
+        Copy-Item "/workspace/ChurchBulletin.db" "/workspace/serve.db" -Force -ErrorAction SilentlyContinue
+    }
+    # tmux's default shell is bash, so set env inside a pwsh SCRIPT (inline
+    # $env: syntax in a bash command line would be silently dropped -> the app
+    # would boot in Production and not serve the WASM static assets).
+    $serveScript = "/tmp/serve-app.ps1"
+    Set-Content -Path $serveScript -Value @"
+`$env:ASPNETCORE_ENVIRONMENT = 'Development'
+`$env:DATABASE_ENGINE = 'SQLite'
+`$env:ConnectionStrings__SqlConnectionString = 'Data Source=/workspace/serve.db'
+Set-Location /workspace
+dotnet run --project src/UI/Server --no-build --configuration Release --no-launch-profile --urls http://0.0.0.0:$script:ServePort *>> $script:AppLog
+"@
+    tmux kill-session -t app 2>$null
+    tmux new-session -d -s app "pwsh -NoProfile -File $serveScript"
+    Write-Info "App starting on 0.0.0.0:$script:ServePort (Release --no-build, Development, serve.db)"
+
+    # Surface app startup to stdout (kubectl exec is unreliable on Docker Desktop).
+    $healthy = $false
+    for ($i = 0; $i -lt 36; $i++) {
+        try {
+            $r = Invoke-WebRequest -UseBasicParsing "http://localhost:$script:ServePort/" -TimeoutSec 4
+            if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { $healthy = $true; break }
+        } catch { }
+        Start-Sleep -Seconds 5
+    }
+    if ($healthy) {
+        Write-Success "App answered on :$script:ServePort"
+        Write-StructuredLog -Level "INFO" -Message "Serve app up" -Data @{ port = $script:ServePort; issue_number = $Issue }
+    } else {
+        Write-Info "App not yet answering on :$script:ServePort - recent app.log:"
+        Get-Content $script:AppLog -Tail 25 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  [app] $_" }
+    }
+}
+
 try {
     Write-StructuredLog -Level "INFO" -Message "AI Factory Agent starting..."
 
@@ -83,8 +204,8 @@ try {
     # 2. Configure GitHub CLI authentication
     Write-Progress "Configuring GitHub CLI authentication..."
     
-    if (Test-Path "/run/secrets/gh_token") {
-        Get-Content "/run/secrets/gh_token" | gh auth login --with-token
+    if (Test-Path "/var/agent-secrets/gh_token") {
+        Get-Content "/var/agent-secrets/gh_token" | gh auth login --with-token
         Write-Success "GitHub CLI authenticated"
     } else {
         throw "GitHub token secret not found at /run/secrets/gh_token"
@@ -95,9 +216,13 @@ try {
     git config --global user.name "AI Factory Bot"
     git config --global user.email "ai-factory-bot@users.noreply.github.com"
     git config --global init.defaultBranch master
+    # The clone lands in an emptyDir owned by root (fsGroup makes it writable by
+    # the non-root user, but the dir owner is still root); tell git the workspace
+    # is trusted so it does not abort with "detected dubious ownership".
+    git config --global --add safe.directory '*'
     
     # Configure git to use GitHub token for HTTPS authentication
-    $ghToken = Get-Content "/run/secrets/gh_token" -Raw
+    $ghToken = Get-Content "/var/agent-secrets/gh_token" -Raw
     git config --global credential.helper store
     $credentialContent = "https://x-access-token:$ghToken@github.com"
     Set-Content -Path "/home/bobagent/.git-credentials" -Value $credentialContent -NoNewline
@@ -138,10 +263,17 @@ try {
     # console output to docker logs. build.ps1 hardcodes `$verbosity = "quiet"`;
     # the container clones master, so patch the working copy at runtime. (The
     # repo file is also updated to "normal" for when this reaches master.)
+    # Also drop Playwright's `--with-deps` from the acceptance-test browser
+    # install: the OS deps + chromium are already baked into the image, and
+    # `--with-deps` shells out to sudo/apt which the pod's securityContext
+    # (allowPrivilegeEscalation=false / no-new-privileges) blocks. Without the
+    # flag, `playwright install chromium` sees the pre-baked browser and no-ops.
     if (Test-Path "./build.ps1") {
-        (Get-Content "./build.ps1") -replace '\$verbosity = "quiet"', '$verbosity = "normal"' |
+        (Get-Content "./build.ps1") `
+            -replace '\$verbosity = "quiet"', '$verbosity = "normal"' `
+            -replace 'install chromium --with-deps', 'install chromium' |
             Set-Content "./build.ps1"
-        Write-Info "Build verbosity set to normal"
+        Write-Info "Build verbosity set to normal; Playwright --with-deps removed (browsers pre-baked)"
     }
 
     # 6. Build the task prompt for Bob CLI
@@ -195,6 +327,15 @@ $issueBody
     Write-Info "AI agent: $aiAgent"
     Write-StructuredLog -Level "INFO" -Message "Selected AI agent" -Data @{ agent = $aiAgent }
 
+    # Configurable model + reasoning effort for the claude agent. Default for
+    # simple development: the latest Sonnet (claude-sonnet-4-6 - there is no
+    # "Sonnet 5"; Sonnet 4.6 is the current Sonnet) at low effort. Override with
+    # AI_MODEL / AI_MODEL_EFFORT (plumbed from implement-issue.ps1 --model/--effort).
+    $aiModel  = if ($env:AI_MODEL)        { $env:AI_MODEL }        else { "claude-sonnet-4-6" }
+    $aiEffort = if ($env:AI_MODEL_EFFORT) { $env:AI_MODEL_EFFORT.ToLower() } else { "low" }
+    Write-Info "AI model: $aiModel (effort: $aiEffort)"
+    Write-StructuredLog -Level "INFO" -Message "Selected AI model" -Data @{ model = $aiModel; effort = $aiEffort }
+
     # Build the implementation prompt (shared by all agents).
     # The agent only edits code; the surrounding script handles branch/commit/push/PR.
     $agentPrompt = @"
@@ -214,8 +355,9 @@ Instructions:
     switch ($aiAgent) {
         "bob" {
             # Bob Shell headless auth requires BOBSHELL_API_KEY
-            if (-not $env:BOBSHELL_API_KEY -and (Test-Path "/run/secrets/bobshell_api_key")) {
-                $env:BOBSHELL_API_KEY = (Get-Content "/run/secrets/bobshell_api_key" -Raw).Trim()
+            if (-not $env:BOBSHELL_API_KEY -and (Test-Path "/var/agent-secrets/bobshell_api_key")) {
+                $bobKey = Get-Content "/var/agent-secrets/bobshell_api_key" -Raw
+                if ($bobKey) { $env:BOBSHELL_API_KEY = $bobKey.Trim() }
             }
             if (-not $env:BOBSHELL_API_KEY) {
                 throw "BOBSHELL_API_KEY is not set. Bob Shell cannot authenticate without it."
@@ -238,12 +380,15 @@ Instructions:
         }
         "claude" {
             # Claude Code headless auth: mounted OAuth credentials (or ANTHROPIC_API_KEY)
-            if (-not $env:ANTHROPIC_API_KEY -and (Test-Path "/run/secrets/anthropic_api_key")) {
-                $env:ANTHROPIC_API_KEY = (Get-Content "/run/secrets/anthropic_api_key" -Raw).Trim()
+            if (-not $env:ANTHROPIC_API_KEY -and (Test-Path "/var/agent-secrets/anthropic_api_key")) {
+                # The key file is present but may be empty (OAuth-creds path):
+                # Get-Content -Raw returns $null for an empty file, so guard the Trim.
+                $apiKey = Get-Content "/var/agent-secrets/anthropic_api_key" -Raw
+                if ($apiKey) { $env:ANTHROPIC_API_KEY = $apiKey.Trim() }
             }
-            if (Test-Path "/run/secrets/claude_credentials") {
+            if (Test-Path "/var/agent-secrets/claude_credentials") {
                 New-Item -ItemType Directory -Force -Path "/home/bobagent/.claude" | Out-Null
-                Copy-Item "/run/secrets/claude_credentials" "/home/bobagent/.claude/.credentials.json" -Force
+                Copy-Item "/var/agent-secrets/claude_credentials" "/home/bobagent/.claude/.credentials.json" -Force
                 Write-Info "Claude OAuth credentials installed"
             }
             if (-not $env:ANTHROPIC_API_KEY -and -not (Test-Path "/home/bobagent/.claude/.credentials.json")) {
@@ -264,13 +409,46 @@ Instructions:
             $agentLog = "/tmp/agent-output.log"
             Remove-Item $sentinel, $agentLog -Force -ErrorAction SilentlyContinue
 
-            $claudePrompt = $agentPrompt + @"
+            # Claude owns the implement -> build -> test -> fix loop: it runs the
+            # SAME quality gates the pipeline enforces and fixes any failures in
+            # this session, rather than the entrypoint running them afterwards
+            # (where a failure could only abort, not be repaired).
+            $claudePrompt = @"
+Implement GitHub issue #${issueNumber}: $issueTitle
 
+Description:
+$issueBody
 
-IMPORTANT - completion signal: after you have finished ALL changes for this
-issue, run this exact command as your final action to signal completion:
+Instructions:
+- Analyze the requirements and implement the change in this repository (/workspace).
+- Follow existing code patterns and architecture (read CLAUDE.md and AGENTS.md if present).
+- Make only the code/file changes needed to satisfy the issue. Keep it focused.
+- VERIFY your work by running BOTH quality gates from the repo root:
+    pwsh ./PrivateBuild.ps1
+    pwsh ./AcceptanceTests.ps1
+  These are the same gates CI enforces (compile, unit + integration tests, then
+  Playwright acceptance tests, in SQLite mode). If EITHER fails, read the
+  output, fix the code, and re-run that gate until it passes. Do not stop until
+  BOTH gates pass.
+- Do NOT run any git commands (no commit, push, branch, or PR), and do NOT edit
+  build.ps1 / PrivateBuild.ps1 / AcceptanceTests.ps1 - the surrounding
+  automation owns git and the build scripts.
+
+LIVE PREVIEW URL - tell the user where to view the running app:
+  A public Cloudflare tunnel serves a live preview of this app. The surrounding
+  automation writes its URL to /tmp/live-url.txt once the tunnel is up (usually
+  within the first minute or two). As one of your FIRST actions, run:
+    cat /tmp/live-url.txt
+  If it is empty, wait briefly and retry a couple of times. Once it returns a
+  URL, report it to the user clearly, e.g.:
+    "Live preview of the app: <url>  (fully loads after the quality gates pass)"
+  Repeat this URL in your final summary so whoever is watching this session
+  knows exactly where to view the running app.
+
+IMPORTANT - completion signal: ONLY after BOTH PrivateBuild.ps1 and
+AcceptanceTests.ps1 have passed, run this exact command as your final action:
   touch $sentinel
-Do this only once, after the implementation is complete.
+Run it exactly once, and only when both gates are green.
 "@
             Set-Content -Path $promptFile -Value $claudePrompt -NoNewline
 
@@ -278,7 +456,7 @@ Do this only once, after the implementation is complete.
             # the tmux pty. Remote Control needs an interactive pty; piping the
             # output (e.g. | tee) makes stdout a pipe and RC never registers.
             # Capture output for docker logs via `tmux pipe-pane` instead.
-            $claudeCmd = "cd /workspace && claude --remote-control `"$rcName`" --dangerously-skip-permissions `"`$(cat $promptFile)`""
+            $claudeCmd = "cd /workspace && claude --model `"$aiModel`" --remote-control `"$rcName`" --dangerously-skip-permissions `"`$(cat $promptFile)`""
             tmux kill-session -t agent 2>$null
             tmux new-session -d -s agent -x 220 -y 50 $claudeCmd
             tmux pipe-pane -o -t agent "cat >> $agentLog"
@@ -297,8 +475,19 @@ Do this only once, after the implementation is complete.
                 Write-Info "Remote Control link not detected yet; session '$rcName' should appear in the Claude app."
             }
 
-            # Poll for the completion sentinel (or session death / timeout).
-            $agentTimeoutMin = 25
+            # Per design: bring the app + dev tunnel up NOW, in parallel with the
+            # agent's implement/build/test loop, so the live URL is available
+            # before the agent runs AcceptanceTests.ps1 (not only after the PR).
+            # The app is restarted on the final code once the agent completes.
+            if ($env:KEEP_ALIVE -eq "true") {
+                Write-Progress "KEEP_ALIVE=true - opening Cloudflare tunnel in parallel with the agent (app serves after gates compile it)..."
+                Start-Tunnel -Pr "pending" -Issue $issueNumber | Out-Null
+            }
+
+            # Poll for the completion sentinel (or session death / timeout). The
+            # agent now also runs both quality gates and fixes failures in-session,
+            # so allow more time than a bare implementation.
+            $agentTimeoutMin = 45
             $deadline = (Get-Date).AddMinutes($agentTimeoutMin)
             while (-not (Test-Path $sentinel)) {
                 tmux has-session -t agent 2>$null
@@ -344,9 +533,15 @@ Do this only once, after the implementation is complete.
         changed_files = (($changes -split "`n") | Measure-Object).Count
     }
 
-    # 8b. Quality gates - run PrivateBuild and AcceptanceTests BEFORE pushing.
-    #     Set RUN_QUALITY_GATES=false to skip (e.g. for fast smoke tests).
-    if ($env:RUN_QUALITY_GATES -eq "false") {
+    # 8b. Quality gates. For the claude agent these were run IN-SESSION by the
+    #     agent (implement -> PrivateBuild -> AcceptanceTests -> fix until green),
+    #     so the entrypoint does not re-run them. Other agents (e.g. bob) still
+    #     have the entrypoint enforce the gates here before pushing.
+    if ($aiAgent -eq "claude") {
+        Write-Info "Quality gates were run in-session by the claude agent; entrypoint skips re-running them."
+        Write-StructuredLog -Level "INFO" -Message "All quality gates passed" -Data @{ runner = "agent" }
+    }
+    elseif ($env:RUN_QUALITY_GATES -eq "false") {
         Write-Info "RUN_QUALITY_GATES=false - skipping PrivateBuild and AcceptanceTests"
         Write-StructuredLog -Level "INFO" -Message "Skipping quality gates"
     } else {
@@ -380,6 +575,10 @@ Do this only once, after the implementation is complete.
     # Revert the runtime verbosity patch so build.ps1 is not part of the PR.
     # (No-op once this change reaches master, where build.ps1 is already normal.)
     git checkout -- build.ps1 2>$null
+
+    # Keep transient SQLite DBs (created by the gate runs and serve mode) out of
+    # the PR - they are not covered by .gitignore.
+    Add-Content -Path "/workspace/.git/info/exclude" -Value "`n*.db`nserve.db`nChurchBulletin.db" -ErrorAction SilentlyContinue
 
     git add -A
     git commit -m "feat: $issueTitle (#$issueNumber)" 2>&1 | Out-Null
@@ -449,67 +648,16 @@ Do this only once, after the implementation is complete.
         pr_number = $prNumber
     }
 
-    # 11b. KEEP_ALIVE serve mode - run the app with the issue implemented and
-    #      expose it via a Cloudflare quick tunnel so it can be viewed live.
-    #      Enabled with KEEP_ALIVE=true. Runs after the PR so the served build is
-    #      the exact code that passed the quality gates.
+    # 11b. KEEP_ALIVE serve mode. The app + Cloudflare tunnel were already brought
+    #      up in parallel with the agent (before AcceptanceTests). Now that the
+    #      gates are green and the PR exists, restart the app so the stable tunnel
+    #      URL serves the FINAL implemented code, then hold the container open.
     if ($env:KEEP_ALIVE -eq "true") {
-        Write-Progress "KEEP_ALIVE=true - starting app + Cloudflare tunnel..."
-        Write-StructuredLog -Level "INFO" -Message "Entering serve mode" -Data @{ issue_number = $issueNumber; pr_number = $prNumber }
+        Write-Progress "KEEP_ALIVE=true - serving final build (Release --no-build) behind the tunnel..."
+        Write-StructuredLog -Level "INFO" -Message "Serving final build" -Data @{ issue_number = $issueNumber; pr_number = $prNumber }
+        Start-ServeApp -Issue $issueNumber
+        Start-Tunnel -Pr $prNumber -Issue $issueNumber | Out-Null
 
-        $servePort = if ($env:SERVE_PORT) { $env:SERVE_PORT } else { "8080" }
-        $env:ASPNETCORE_URLS = "http://0.0.0.0:$servePort"
-        $env:ASPNETCORE_ENVIRONMENT = "Development"
-        # DATABASE_ENGINE/SQLite connection string were set earlier (non-DIND);
-        # PrivateBuild already created the SQLite DB in /workspace.
-
-        # Launch the server detached so we can tunnel and keep the container alive.
-        $appLog = "/tmp/app.log"
-        tmux kill-session -t app 2>$null
-        tmux new-session -d -s app "cd /workspace && dotnet run --project src/UI/Server -c Release *>> $appLog"
-        Write-Info "App starting on :$servePort (logs -> $appLog)"
-
-        # Wait for the app to answer its health check (up to 5 min for first JIT).
-        $healthy = $false
-        for ($i = 0; $i -lt 60; $i++) {
-            Start-Sleep -Seconds 5
-            try {
-                $r = Invoke-WebRequest -UseBasicParsing "http://localhost:$servePort/_healthcheck" -TimeoutSec 4
-                if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { $healthy = $true; break }
-            } catch { }
-        }
-        if ($healthy) {
-            Write-Success "App is serving on :$servePort"
-            Write-StructuredLog -Level "INFO" -Message "App healthy" -Data @{ issue_number = $issueNumber; port = $servePort }
-        } else {
-            Write-Info "App health check not confirmed; starting tunnel anyway"
-        }
-
-        # Start a Cloudflare quick tunnel and capture the public trycloudflare URL.
-        $tunnelLog = "/tmp/cloudflared.log"
-        tmux kill-session -t tunnel 2>$null
-        tmux new-session -d -s tunnel "cloudflared tunnel --no-autoupdate --url http://localhost:$servePort > $tunnelLog 2>&1"
-        $publicUrl = $null
-        for ($i = 0; $i -lt 45; $i++) {
-            Start-Sleep -Seconds 2
-            if (Test-Path $tunnelLog) {
-                $m = [regex]::Match((Get-Content $tunnelLog -Raw), 'https://[a-z0-9-]+\.trycloudflare\.com')
-                if ($m.Success) { $publicUrl = $m.Value; break }
-            }
-        }
-        if ($publicUrl) {
-            Write-Success "LIVE APP URL: $publicUrl  (issue #$issueNumber implemented, PR #$prNumber)"
-            # Distinctive, easily-greppable marker for orchestrators/tests.
-            Write-Host "AI_FACTORY_LIVE_URL issue=$issueNumber pr=$prNumber url=$publicUrl"
-            Write-StructuredLog -Level "SUCCESS" -Message "App live via Cloudflare tunnel" -Data @{
-                issue_number = $issueNumber; pr_number = $prNumber; public_url = $publicUrl; port = $servePort
-            }
-        } else {
-            Write-Failure "Could not obtain Cloudflare tunnel URL (see $tunnelLog)"
-            Write-StructuredLog -Level "ERROR" -Message "Tunnel URL not obtained" -Data @{ issue_number = $issueNumber }
-        }
-
-        # Hold the container open so the app + tunnel stay reachable for inspection.
         Write-Info "Container held open for inspection (KEEP_ALIVE). Stop it to tear down the app + tunnel."
         while ($true) { Start-Sleep -Seconds 3600 }
     }

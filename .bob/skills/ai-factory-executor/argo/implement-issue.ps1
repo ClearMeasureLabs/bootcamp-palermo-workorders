@@ -17,8 +17,12 @@
 #>
 [CmdletBinding()]
 param(
-    [Alias('issueid')]  [int]$IssueId,
+    [int]$IssueId,
     [Alias('agent')]    [ValidateSet('claude','bob')][string]$AiAgent = 'claude',
+    # Model + reasoning effort for the claude agent. Default (simple development):
+    # latest Sonnet (claude-sonnet-4-6) at low effort.
+    [Alias('model')]    [string]$AiModel = 'claude-sonnet-4-6',
+    [Alias('effort')]   [ValidateSet('low','medium','high','xhigh','max')][string]$AiModelEffort = 'low',
     [Alias('repo-org')] [string]$RepoOrg  = 'ClearMeasureLabs',
     [Alias('repo-name')][string]$RepoName = 'bootcamp-palermo-workorders',
     [Alias('no-watch')] [switch]$NoWatch,
@@ -34,6 +38,8 @@ if ($args) {
         switch -Regex ($args[$i]) {
             '^--issueid$'   { $IssueId  = [int]$args[++$i] }
             '^--agent$'     { $AiAgent  = $args[++$i] }
+            '^--model$'     { $AiModel  = $args[++$i] }
+            '^--effort$'    { $AiModelEffort = $args[++$i] }
             '^--repo-org$'  { $RepoOrg  = $args[++$i] }
             '^--repo-name$' { $RepoName = $args[++$i] }
             '^--no-watch$'  { $NoWatch  = $true }
@@ -44,7 +50,9 @@ if ($args) {
 }
 if (-not $IssueId) { throw "Missing --issueid. Usage: ./implement-issue.ps1 --issueid 6970 [--agent claude|bob] [--no-watch]" }
 
-$env:KUBECONFIG = '/etc/rancher/k3s/k3s.yaml'
+# Use the k3s kubeconfig only when present; otherwise the current context
+# (e.g. docker-desktop) is used as-is.
+if (Test-Path '/etc/rancher/k3s/k3s.yaml') { $env:KUBECONFIG = '/etc/rancher/k3s/k3s.yaml' }
 $repo = "$RepoOrg/$RepoName"
 
 # 1. Fetch issue + build branch name (same slug rule as run-factory.ps1).
@@ -58,13 +66,26 @@ $branch = "feature/issue-$($issue.number)-$slug"
 $pr = gh pr list --repo $repo --head $branch --state open --json number | ConvertFrom-Json
 if ($pr.Count -gt 0) { Write-Host "[INFO] #$IssueId already has open PR #$($pr[0].number). Nothing to do."; return }
 
-# 3. Per-run Secret: gh token + agent key + random SA password for this pod's DB.
+# 3. Per-run Secret: gh token + agent creds + random SA password for this pod's DB.
 $sa = (-join ((48..57)+(65..90)+(97..122) | Get-Random -Count 24 | ForEach-Object {[char]$_})) + 'aA1!'
-kubectl create secret generic "agent-secret-$IssueId" -n ai-factory `
-    --from-literal=gh_token=$(gh auth token) `
-    --from-literal=anthropic_api_key=$env:ANTHROPIC_API_KEY `
-    --from-literal=sa-password=$sa `
-    --dry-run=client -o yaml | kubectl apply -f -
+$secretArgs = @(
+    'create','secret','generic',"agent-secret-$IssueId",'-n','ai-factory',
+    "--from-literal=gh_token=$(gh auth token)",
+    "--from-literal=anthropic_api_key=$env:ANTHROPIC_API_KEY",
+    "--from-literal=sa-password=$sa"
+)
+# For the claude agent, mount the local OAuth credentials so pods authenticate
+# without an API key (entrypoint copies /run/secrets/claude_credentials into
+# ~/.claude/.credentials.json). Requires `claude` to be logged in on this host.
+$claudeCreds = Join-Path $HOME '.claude/.credentials.json'
+if ($AiAgent -eq 'claude') {
+    if (-not (Test-Path $claudeCreds)) {
+        throw "Claude OAuth credentials not found at $claudeCreds. Run 'claude' and log in, or set ANTHROPIC_API_KEY and pass creds another way."
+    }
+    $secretArgs += "--from-file=claude_credentials=$claudeCreds"
+}
+$secretArgs += @('--dry-run=client','-o','yaml')
+kubectl @secretArgs | kubectl apply -f -
 
 # 4. Submit the isolated Workflow.
 $submit = @(
@@ -78,6 +99,8 @@ $submit = @(
     '-p', "repoOrg=$RepoOrg",
     '-p', "repoName=$RepoName",
     '-p', "aiAgent=$AiAgent",
+    '-p', "aiModel=$AiModel",
+    '-p', "aiModelEffort=$AiModelEffort",
     '-p', "keepAlive=$($KeepAlive.IsPresent.ToString().ToLower())"
 )
 if (-not $NoWatch) { $submit += '--watch' }

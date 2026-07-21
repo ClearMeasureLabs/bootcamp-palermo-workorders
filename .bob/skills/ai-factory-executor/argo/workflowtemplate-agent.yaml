@@ -10,8 +10,10 @@ metadata:
 spec:
   serviceAccountName: ai-factory-workflow
   entrypoint: run
-  # Hard time budget — mirrors the old 60-min TimeoutMinutes.
-  activeDeadlineSeconds: 3600
+  # Hard time budget. The claude agent implements AND runs both quality gates
+  # (PrivateBuild + Playwright AcceptanceTests) with a fix loop, plus serve mode,
+  # so allow up to 2h.
+  activeDeadlineSeconds: 7200
   ttlStrategy:
     secondsAfterCompletion: 86400   # keep finished Workflows 1 day for log review
   podGC:
@@ -19,10 +21,12 @@ spec:
   # Global 3-at-a-time gate (see semaphore-config.yaml). Redundant with the
   # controller parallelism but makes the cap explicit and per-template.
   synchronization:
-    semaphores:
-      - configMapKeyRef:
-          name: ai-factory-semaphores
-          key: agent-slots
+    # Argo v3.5 uses the singular `semaphore` object (the plural `semaphores`
+    # list form is v3.6+). Keep in sync with the installed controller version.
+    semaphore:
+      configMapKeyRef:
+        name: ai-factory-semaphores
+        key: agent-slots
   arguments:
     parameters:
       - { name: issueNumber }
@@ -33,6 +37,10 @@ spec:
       - { name: repoOrg,        value: "ClearMeasureLabs" }
       - { name: repoName,       value: "bootcamp-palermo-workorders" }
       - { name: aiAgent,        value: "claude" }
+      # Model + reasoning effort for the claude agent. Default for simple
+      # development: latest Sonnet (claude-sonnet-4-6) at low effort.
+      - { name: aiModel,        value: "claude-sonnet-4-6" }
+      - { name: aiModelEffort,  value: "low" }
       - { name: runQualityGates, value: "true" }
       # KEEP_ALIVE serve mode: after the PR, run the app + Cloudflare quick tunnel
       # and hold the pod open so the running app can be viewed at a public URL.
@@ -50,11 +58,17 @@ spec:
           - { name: repoOrg }
           - { name: repoName }
           - { name: aiAgent }
+          - { name: aiModel }
+          - { name: aiModelEffort }
           - { name: runQualityGates }
           - { name: keepAlive }
           - { name: servePort }
       # Fair-share sizing so 3 fit on one box (was 16 CPU / 24 GB each, sequential).
       podSpecPatch: |
+        securityContext:
+          # emptyDir volumes (workspace, nuget) and secret files are group-owned
+          # by fsGroup, so the non-root user (1001) can read/write them.
+          fsGroup: 1001
         containers:
           - name: main
             resources:
@@ -72,22 +86,13 @@ spec:
         - name: agent-secrets
           secret:
             secretName: "agent-secret-{{inputs.parameters.issueNumber}}"
-            defaultMode: 0400
-      # ---- init: isolated per-pod clone (replaces host bind-mount) ----
-      initContainers:
-        - name: clone
-          image: ai-factory-agent:latest
-          workingDir: /workspace
-          command: ["pwsh", "-c"]
-          args:
-            - >
-              $t = Get-Content /run/secrets/gh_token -Raw;
-              git clone "https://x-access-token:$t@github.com/{{inputs.parameters.repoOrg}}/{{inputs.parameters.repoName}}.git" .;
-              git checkout -B {{inputs.parameters.branchName}}
-          volumeMounts:
-            - { name: workspace, mountPath: /workspace }
-            - { name: agent-secrets, mountPath: /run/secrets, readOnly: true }
-          mirrorVolumeMounts: false
+            # 0440: owner(root)+group(fsGroup 1001) read. Readable by the non-root
+            # user via fsGroup, not world-readable.
+            defaultMode: 0440
+      # The clone/branch is handled by the container entrypoint (agent-entrypoint.ps1),
+      # which does gh auth + git config + clone into the /workspace emptyDir +
+      # branch. A separate init clone container is redundant with that and is
+      # intentionally omitted.
       # ---- ephemeral DB, pod-local localhost:1433 (per-task isolation) ----
       sidecars:
         - name: mssql
@@ -100,8 +105,19 @@ spec:
       container:
         name: main
         image: ai-factory-agent:latest
+        imagePullPolicy: Never   # image lives in the local shared containerd store
+        # Explicit command == the image ENTRYPOINT. Required because the emissary
+        # executor otherwise resolves the entrypoint by querying the registry,
+        # which fails for a local-only image (no docker.io manifest).
+        command: ["pwsh", "/usr/local/bin/agent-entrypoint.ps1"]
         workingDir: /workspace
         env:
+          # Downward API: pod name so serve mode can publish the live URL back
+          # onto this pod's annotations (see Task 4 in agent-entrypoint.ps1).
+          - name: POD_NAME
+            valueFrom: { fieldRef: { fieldPath: metadata.name } }
+          - name: POD_NAMESPACE
+            valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
           - { name: ISSUE_NUMBER,      value: "{{inputs.parameters.issueNumber}}" }
           - { name: ISSUE_TITLE,       value: "{{inputs.parameters.issueTitle}}" }
           - { name: ISSUE_BODY,        value: "{{inputs.parameters.issueBody}}" }
@@ -110,6 +126,8 @@ spec:
           - { name: REPO_ORG,          value: "{{inputs.parameters.repoOrg}}" }
           - { name: REPO_NAME,         value: "{{inputs.parameters.repoName}}" }
           - { name: AI_AGENT,          value: "{{inputs.parameters.aiAgent}}" }
+          - { name: AI_MODEL,          value: "{{inputs.parameters.aiModel}}" }
+          - { name: AI_MODEL_EFFORT,   value: "{{inputs.parameters.aiModelEffort}}" }
           - { name: MONITOR_CHECKS,    value: "false" }
           - { name: RUN_QUALITY_GATES, value: "{{inputs.parameters.runQualityGates}}" }
           - { name: ENABLE_DIND,       value: "false" }   # real SQL sidecar => no privileged DinD
@@ -121,7 +139,8 @@ spec:
         volumeMounts:
           - { name: workspace, mountPath: /workspace }
           - { name: nuget, mountPath: /home/bobagent/.nuget/packages }
-          - { name: agent-secrets, mountPath: /run/secrets, readOnly: true }
+          # See init container note: avoid /run/secrets (collides with SA token).
+          - { name: agent-secrets, mountPath: /var/agent-secrets, readOnly: true }
         securityContext:
           runAsNonRoot: true
           runAsUser: 1001
