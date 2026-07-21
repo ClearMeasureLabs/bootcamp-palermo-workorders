@@ -223,6 +223,18 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderTerminalV2Note_InFooter()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var note = layout.Find($"[data-testid='{nameof(MainLayout.Elements.TerminalV2Note)}']");
+        note.TextContent.Trim().ShouldBe("Terminal v2");
+    }
+
+    [Test]
     public async Task ShouldInvokeFocusOnNavRailToggleWhenClosingOverlayOnNarrowViewport()
     {
         using var ctx = CreateContext();
