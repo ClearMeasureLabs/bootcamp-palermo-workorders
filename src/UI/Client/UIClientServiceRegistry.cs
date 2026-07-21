@@ -39,6 +39,7 @@ public class UIClientServiceRegistry : ServiceRegistry
         this.AddSingleton<ChatClientFactory>();
         this.AddTransient<WorkOrderTool>();
         this.AddSingleton<ThemePreferenceService>();
+        this.AddSingleton<AssemblyBuildDateService>();
 
         Scan(scanner =>
         {

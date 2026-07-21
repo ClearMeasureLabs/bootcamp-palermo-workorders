@@ -223,6 +223,22 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderFooterVersionSpan_WithBuildDateTooltip()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var versionSpan = layout.Find($"[data-testid='{nameof(MainLayout.Elements.FooterVersion)}']");
+        versionSpan.ShouldNotBeNull();
+        var tooltip = versionSpan.GetAttribute("title");
+        tooltip.ShouldNotBeNullOrEmpty();
+        DateTime.TryParseExact(tooltip, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out _).ShouldBeTrue();
+    }
+
+    [Test]
     public async Task ShouldInvokeFocusOnNavRailToggleWhenClosingOverlayOnNarrowViewport()
     {
         using var ctx = CreateContext();
@@ -258,6 +274,7 @@ public class MainLayoutTests
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession());
         ctx.Services.AddSingleton<IJSRuntime>(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
+        ctx.Services.AddSingleton<AssemblyBuildDateService>();
         var customAuth = new CustomAuthenticationStateProvider();
         if (authenticateAsUser != null)
         {
