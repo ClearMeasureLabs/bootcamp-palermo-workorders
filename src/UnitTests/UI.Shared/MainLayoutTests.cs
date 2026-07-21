@@ -206,6 +206,18 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderBatchNote4_InFooter()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var batchNote = layout.Find($"[data-testid='{nameof(MainLayout.Elements.BatchNote4)}']");
+        batchNote.TextContent.Trim().ShouldBe("Batch note 4");
+    }
+
+    [Test]
     public void ShouldRenderCompanyLink_WithAccessibleAttributes_WhenExternalLinkUsesNewTab()
     {
         using var ctx = CreateContext();
