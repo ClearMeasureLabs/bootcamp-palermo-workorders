@@ -223,6 +223,18 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderBatchNote7_InFooter()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var batchNote = layout.Find($"[data-testid='{nameof(MainLayout.Elements.BatchNote7)}']");
+        batchNote.TextContent.ShouldContain("Batch note 7");
+    }
+
+    [Test]
     public async Task ShouldInvokeFocusOnNavRailToggleWhenClosingOverlayOnNarrowViewport()
     {
         using var ctx = CreateContext();

@@ -321,6 +321,12 @@
     border-radius: 2px;
 }
 
+.site-footer-batch-note {
+    display: block;
+    font-size: 0.75rem;
+    color: #a0aec0;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .modern-sidebar {
