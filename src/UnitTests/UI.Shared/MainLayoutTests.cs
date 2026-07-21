@@ -206,6 +206,18 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderFooterNote_WithReadyContainerVersion()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var footerNote = layout.Find($"[data-testid='{nameof(MainLayout.Elements.FooterNote)}']");
+        footerNote.TextContent.Trim().ShouldBe("Ready container v2-2");
+    }
+
+    [Test]
     public void ShouldRenderCompanyLink_WithAccessibleAttributes_WhenExternalLinkUsesNewTab()
     {
         using var ctx = CreateContext();
