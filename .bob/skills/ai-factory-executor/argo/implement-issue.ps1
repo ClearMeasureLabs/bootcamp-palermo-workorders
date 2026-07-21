@@ -24,7 +24,7 @@ param(
     [Alias('model')]    [string]$AiModel = 'claude-sonnet-4-6',
     [Alias('effort')]   [ValidateSet('low','medium','high','xhigh','max')][string]$AiModelEffort = 'low',
     # Browser terminal (ttyd) into the live Claude session. Defaults ON; disable with --no-terminal or --terminal false.
-    [Alias('terminal')] [ValidateSet('true','false')][string]$Terminal = 'true',
+    [ValidateSet('true','false')][string]$Terminal = 'true',
     [Alias('repo-org')] [string]$RepoOrg  = 'ClearMeasureLabs',
     [Alias('repo-name')][string]$RepoName = 'bootcamp-palermo-workorders',
     [Alias('no-watch')] [switch]$NoWatch,
