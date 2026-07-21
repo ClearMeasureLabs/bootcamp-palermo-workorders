@@ -29,7 +29,7 @@ param(
     [ValidateSet('auto','k3s','docker-desktop')][string]$Provider = 'auto',
     [string]$ArgoWorkflowsVersion = "v3.5.11",
     [string]$ArgoEventsVersion    = "v1.9.3",
-    [int]$Parallelism = 3,
+    [int]$Parallelism = 7,
     [switch]$WithEvents,
     [switch]$SkipImageBuild
 )
