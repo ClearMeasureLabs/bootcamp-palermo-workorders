@@ -214,6 +214,33 @@ dotnet run --project src/UI/Server --no-build --configuration Release --no-launc
     }
 }
 
+# Open a browser IN THE CONTAINER to the hosted app so the app's load is
+# exercised end-to-end after the gates, then screenshotted (proof it renders).
+# Uses the Chromium that the Playwright AcceptanceTests already installed. Best
+# effort: if no browser is found it just logs and returns (the app is still live
+# at $Url for the recorder to show).
+function Show-AppInBrowser {
+    param([string]$Url, [string]$Issue)
+    if (-not $Url) { Write-Info "No live URL - skipping in-container browser open."; return }
+    Write-Progress "Opening a browser in-container to the hosted app: $Url"
+    $chrome = Get-ChildItem -Path "$HOME/.cache/ms-playwright", "/ms-playwright" -Filter chrome -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -match 'chrome-linux/chrome$' } | Select-Object -First 1
+    if (-not $chrome) {
+        Write-Info "No in-container Chromium found - skipping browser open; app is live at $Url"
+        return
+    }
+    $shot = "/tmp/app-loaded-$Issue.png"
+    & $chrome.FullName --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage `
+        --ignore-certificate-errors --virtual-time-budget=15000 --screenshot="$shot" `
+        --window-size=1366,900 "$Url" *>> $script:AppLog
+    if (Test-Path $shot) {
+        Write-Success "App loaded in browser; screenshot -> $shot"
+        Write-StructuredLog -Level "INFO" -Message "App opened in browser" -Data @{ issue_number = $Issue; url = $Url; screenshot = $shot }
+    } else {
+        Write-Info "Browser open finished (no screenshot); app is live at $Url"
+    }
+}
+
 $script:TermPort = 7682
 
 # Start a browser terminal (ttyd) attached to the LIVE 'agent' tmux session (the
@@ -783,18 +810,26 @@ Run it exactly once, and only when both gates are green.
         pr_number = $prNumber
     }
 
-    # 11b. KEEP_ALIVE serve mode. The app + Cloudflare tunnel were already brought
-    #      up in parallel with the agent (before AcceptanceTests). Now that the
-    #      gates are green and the PR exists, restart the app so the stable tunnel
-    #      URL serves the FINAL implemented code, then hold the container open.
-    if ($env:KEEP_ALIVE -eq "true") {
-        Write-Progress "KEEP_ALIVE=true - serving final build (Release --no-build) behind the tunnel..."
-        Write-StructuredLog -Level "INFO" -Message "Serving final build" -Data @{ issue_number = $issueNumber; pr_number = $prNumber }
-        Start-ServeApp -Issue $issueNumber
-        Start-Tunnel -Pr $prNumber -Issue $issueNumber | Out-Null
-        # (The browser terminal was already started early, when the agent
-        # session launched, and persists through the gates/serve.)
+    # 11b. SHOWCASE: after the gates are green and the PR exists, serve the FINAL
+    #      implemented build behind the stable tunnel URL, open a browser IN THE
+    #      CONTAINER to the hosted app to show it load (screenshot proof), and
+    #      hold a short window so the live app is viewable/recordable. Runs for
+    #      BOTH keep_alive modes: keep_alive=false ends right after the showcase;
+    #      keep_alive=true then holds the pod open for remote inspection.
+    Write-Progress "Serving final build (Release --no-build) behind the tunnel for showcase..."
+    Write-StructuredLog -Level "INFO" -Message "Serving final build" -Data @{ issue_number = $issueNumber; pr_number = $prNumber }
+    Start-ServeApp -Issue $issueNumber
+    $liveUrl = Start-Tunnel -Pr $prNumber -Issue $issueNumber
+    # Requirement: each session opens a browser to its hosted app to show the app
+    # load after the AcceptanceTests gate, before ending.
+    Show-AppInBrowser -Url $liveUrl -Issue $issueNumber
+    $showcaseSecs = if ($env:SHOWCASE_SECONDS) { [int]$env:SHOWCASE_SECONDS } else { 150 }
+    Write-Info "Showcase: holding the live app ${showcaseSecs}s so it can be viewed at $liveUrl"
+    Write-StructuredLog -Level "INFO" -Message "Showcase window open" -Data @{ issue_number = $issueNumber; pr_number = $prNumber; live_url = $liveUrl; seconds = $showcaseSecs }
+    Start-Sleep -Seconds $showcaseSecs
 
+    # 11c. KEEP_ALIVE hold. The app + tunnel are already up from the showcase.
+    if ($env:KEEP_ALIVE -eq "true") {
         # Hold the container open for inspection, but let the REMOTE USER end it.
         # Exit (tearing down app + tunnel) when ANY of:
         #   1. the user asks the agent to end -> agent runs `touch /tmp/session-done`
