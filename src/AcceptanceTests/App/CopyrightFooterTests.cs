@@ -20,6 +20,10 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footer).ToContainTextAsync(yearText);
         await Expect(footer).ToContainTextAsync("ClearMeasure Labs");
 
+        var footerNote = Page.GetByTestId(nameof(MainLayout.Elements.FooterNote));
+        await Expect(footerNote).ToBeVisibleAsync();
+        await Expect(footerNote).ToContainTextAsync("Ready container v2-2");
+
         var link = footer.Locator("a[href*='clearmeasure.com']").First;
         await Expect(link).ToBeVisibleAsync();
         var href = (await link.GetAttributeAsync("href"))!.ToLowerInvariant();
