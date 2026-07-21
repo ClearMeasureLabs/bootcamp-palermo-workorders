@@ -537,7 +537,19 @@ Implement GitHub issue #${issueNumber}: $issueTitle
 Description:
 $issueBody
 
-Instructions:
+STEP 1 - FIRST, before writing any code, report the live URLs to the user.
+  A browser terminal attached to THIS session is exposed at a Cloudflare URL,
+  written to /tmp/terminal-url.txt shortly after startup (the tunnel takes ~30-90s
+  to come up). Your VERY FIRST action must be to wait for and print it:
+    for i in 1 2 3 4 5 6 7 8; do [ -s /tmp/terminal-url.txt ] && break; sleep 15; done; cat /tmp/terminal-url.txt
+  Then tell the user, on its own line, exactly:
+    Browser terminal (this session): <url>
+  If /tmp/live-url.txt also exists, print it too:
+    Live preview of the app: <url>
+  Do NOT start implementing until you have reported the terminal URL. Repeat both
+  URLs in your final summary.
+
+STEP 2 - implement the issue:
 - Analyze the requirements and implement the change in this repository (/workspace).
 - Follow existing code patterns and architecture (read CLAUDE.md and AGENTS.md if present).
 - Make only the code/file changes needed to satisfy the issue. Keep it focused.
@@ -551,28 +563,8 @@ Instructions:
 - Do NOT run any git commands (no commit, push, branch, or PR), and do NOT edit
   build.ps1 / PrivateBuild.ps1 / AcceptanceTests.ps1 - the surrounding
   automation owns git and the build scripts.
-
-LIVE PREVIEW URL - tell the user where to view the running app:
-  A public Cloudflare tunnel serves a live preview of this app. The surrounding
-  automation writes its URL to /tmp/live-url.txt once the tunnel is up (usually
-  within the first minute or two). As one of your FIRST actions, run:
-    cat /tmp/live-url.txt
-  If it is empty, wait briefly and retry a couple of times. Once it returns a
-  URL, report it to the user clearly, e.g.:
-    "Live preview of the app: <url>  (fully loads after the quality gates pass)"
-  Repeat this URL in your final summary so whoever is watching this session
-  knows exactly where to view the running app.
-
-BROWSER TERMINAL - tell the user how to open a terminal into this session:
-  A second Cloudflare tunnel exposes a browser terminal attached to THIS live
-  session. The automation writes its URL to /tmp/terminal-url.txt shortly after
-  startup. Once available, run:
-    cat /tmp/terminal-url.txt
-  and report it to the user, e.g.:
-    "Browser terminal (this session): <url>"
-  The URL contains a secret path token (no login prompt) - opening it drops the
-  user into a real terminal in this container, so treat the full URL as a
-  secret. Include it in your final summary alongside the app URL.
+  The terminal URL contains a secret path token (no login prompt) - treat the
+  full URL as a secret.
 
 ENDING THE SESSION - the app stays live for inspection after your work is done.
   When (and only when) the user explicitly says they are finished and want to
