@@ -615,6 +615,11 @@ Run it exactly once, and only when both gates are green.
                 Start-Tunnel -Pr "pending" -Issue $issueNumber | Out-Null
             }
 
+            # Bring the browser terminal up NOW - as soon as the live 'agent'
+            # tmux/Claude session exists - so a human can attach while the agent
+            # works, not only after the gates. Independent of KEEP_ALIVE.
+            Start-Terminal -Pr "pending" -Issue $issueNumber
+
             # Poll for the completion sentinel (or session death / timeout). The
             # agent now also runs both quality gates and fixes failures in-session,
             # so allow more time than a bare implementation.
@@ -788,8 +793,8 @@ Run it exactly once, and only when both gates are green.
         Write-StructuredLog -Level "INFO" -Message "Serving final build" -Data @{ issue_number = $issueNumber; pr_number = $prNumber }
         Start-ServeApp -Issue $issueNumber
         Start-Tunnel -Pr $prNumber -Issue $issueNumber | Out-Null
-        # Browser terminal into the live Claude session (2nd tunnel, basic auth).
-        Start-Terminal -Pr $prNumber -Issue $issueNumber
+        # (The browser terminal was already started early, when the agent
+        # session launched, and persists through the gates/serve.)
 
         # Hold the container open for inspection, but let the REMOTE USER end it.
         # Exit (tearing down app + tunnel) when ANY of:
