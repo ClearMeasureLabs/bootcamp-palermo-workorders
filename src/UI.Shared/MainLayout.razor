@@ -80,6 +80,12 @@
                        target="_blank"
                        rel="noopener noreferrer">ClearMeasure Labs</a>
                 </span>
+                @if (!string.IsNullOrEmpty(BuildVersion))
+                {
+                    <span class="site-footer-line site-footer-version" data-testid="@nameof(Elements.FooterBuildVersion)">
+                        Build @BuildVersion
+                    </span>
+                }
             </div>
         </footer>
     </div>

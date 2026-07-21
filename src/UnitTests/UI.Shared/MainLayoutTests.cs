@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Net;
+using System.Net.Http.Json;
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
@@ -206,6 +208,36 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderBuildVersionNote_InFooter_WhenVersionEndpointReturnsData()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        component.WaitForAssertion(() =>
+        {
+            var versionNote = layout.Find($"[data-testid='{nameof(MainLayout.Elements.FooterBuildVersion)}']");
+            versionNote.TextContent.ShouldContain("1.2.3-stub");
+        });
+    }
+
+    [Test]
+    public void ShouldNotRenderBuildVersionNote_InFooter_WhenVersionEndpointFails()
+    {
+        using var ctx = CreateContext(versionEndpointFails: true);
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        component.WaitForAssertion(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']").ShouldNotBeNull();
+        });
+        layout.FindAll($"[data-testid='{nameof(MainLayout.Elements.FooterBuildVersion)}']").Count.ShouldBe(0);
+    }
+
+    [Test]
     public void ShouldRenderCompanyLink_WithAccessibleAttributes_WhenExternalLinkUsesNewTab()
     {
         using var ctx = CreateContext();
@@ -243,7 +275,7 @@ public class MainLayoutTests
         ctx.JSInterop.VerifyFocusAsyncInvoke();
     }
 
-    private static TestContext CreateContext(string? authenticateAsUser = null)
+    private static TestContext CreateContext(string? authenticateAsUser = null, bool versionEndpointFails = false)
     {
         var ctx = new TestContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
@@ -258,6 +290,10 @@ public class MainLayoutTests
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession());
         ctx.Services.AddSingleton<IJSRuntime>(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
+        ctx.Services.AddSingleton(new HttpClient(new StubVersionHttpMessageHandler(versionEndpointFails))
+        {
+            BaseAddress = new Uri("http://localhost/")
+        });
         var customAuth = new CustomAuthenticationStateProvider();
         if (authenticateAsUser != null)
         {
@@ -271,5 +307,23 @@ public class MainLayoutTests
     private sealed class StubUserSession : IUserSession
     {
         public Task<Employee?> GetCurrentUserAsync() => Task.FromResult<Employee?>(null);
+    }
+
+    private sealed class StubVersionHttpMessageHandler(bool shouldFail) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            if (shouldFail)
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+            }
+
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new { assemblyVersion = "1.2.3.0", informationalVersion = "1.2.3-stub" })
+            };
+            return Task.FromResult(response);
+        }
     }
 }

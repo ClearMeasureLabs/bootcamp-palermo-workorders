@@ -28,6 +28,24 @@ public class CopyrightFooterTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldShowBuildVersionNote_InFooter_OnLandingPage()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        var footer = Page.GetByTestId(nameof(MainLayout.Elements.CopyrightFooter));
+        await footer.WaitForAsync();
+
+        var versionNote = Page.GetByTestId(nameof(MainLayout.Elements.FooterBuildVersion));
+        await versionNote.WaitForAsync();
+        await Expect(versionNote).ToBeVisibleAsync();
+        await Expect(versionNote).ToContainTextAsync("Build");
+
+        var versionText = (await versionNote.InnerTextAsync()).Trim();
+        versionText.ShouldNotBeNullOrEmpty();
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldShowCopyrightFooter_OnAuthenticatedRoute_AfterLogin()
     {
         await LoginAsCurrentUser();

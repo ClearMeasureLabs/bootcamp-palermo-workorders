@@ -1,3 +1,5 @@
+using System.Net.Http.Json;
+using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -15,7 +17,8 @@ public partial class MainLayout : IAsyncDisposable
     public enum Elements
     {
         NavRailToggle,
-        CopyrightFooter
+        CopyrightFooter,
+        FooterBuildVersion
     }
 
     /// <summary>
@@ -23,11 +26,19 @@ public partial class MainLayout : IAsyncDisposable
     /// </summary>
     protected int CopyrightYear => DateTime.UtcNow.Year;
 
+    /// <summary>
+    /// Build/version stamp shown in the site footer, sourced from <c>GET /api/version</c>.
+    /// </summary>
+    protected string? BuildVersion { get; private set; }
+
     [Inject]
     private IJSRuntime Js { get; set; } = default!;
 
     [Inject]
     private ThemePreferenceService Theme { get; set; } = default!;
+
+    [Inject]
+    private HttpClient HttpClient { get; set; } = default!;
 
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
@@ -69,6 +80,18 @@ public partial class MainLayout : IAsyncDisposable
         _isNarrowViewport = isNarrow;
         StateHasChanged();
         return Task.CompletedTask;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var version = await HttpClient.GetFromJsonAsync<FooterVersionResponse>("api/version");
+            BuildVersion = version?.InformationalVersion ?? version?.AssemblyVersion;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or NotSupportedException or JsonException)
+        {
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -137,4 +160,9 @@ public partial class MainLayout : IAsyncDisposable
 
         _dotNetRef?.Dispose();
     }
+
+    /// <summary>
+    /// Minimal shape of <c>GET /api/version</c> needed for the footer build stamp.
+    /// </summary>
+    private sealed record FooterVersionResponse(string? AssemblyVersion, string? InformationalVersion);
 }
