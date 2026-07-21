@@ -2,6 +2,10 @@
 
 <PageTitle>Clear Measure - .NET Bootcamp - Work Order Application</PageTitle>
 
+<div class="sample-data-note" data-testid="@nameof(Elements.SampleDataNote)">
+    Sample data loaded
+</div>
+
 <div class="greeting-banner" data-testid="@nameof(Elements.GreetingBanner)">
     <span class="greeting-banner-emoji" aria-hidden="true" data-testid="@nameof(Elements.GreetingBannerEmoji)">⛪</span>
     <p>Welcome to the AI Software Factory!</p>
@@ -59,6 +63,7 @@
 @code {
     public enum Elements
     {
+        SampleDataNote,
         GreetingBanner,
         GreetingBannerEmoji
     }
