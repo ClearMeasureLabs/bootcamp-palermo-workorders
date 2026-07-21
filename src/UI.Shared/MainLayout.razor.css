@@ -299,6 +299,15 @@
     word-wrap: break-word;
 }
 
+.site-footer-note {
+    display: block;
+    font-size: 0.75rem;
+    color: #a0aec0;
+    font-style: italic;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
 .site-footer-link {
     margin-left: 0.35rem;
     color: #4a5568;
@@ -559,6 +568,10 @@
 
 :global(html[data-theme="dark"]) .site-footer-line {
     color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .site-footer-note {
+    color: #718096;
 }
 
 :global(html[data-theme="dark"]) .site-footer-link {

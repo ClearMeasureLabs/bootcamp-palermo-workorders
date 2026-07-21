@@ -25,6 +25,10 @@ public class CopyrightFooterTests : AcceptanceTestBase
         var href = (await link.GetAttributeAsync("href"))!.ToLowerInvariant();
         href.ShouldStartWith("http");
         href.ShouldContain("clearmeasure.com");
+
+        var note = Page.GetByTestId(nameof(MainLayout.Elements.FooterNote));
+        await Expect(note).ToBeVisibleAsync();
+        await Expect(note).ToContainTextAsync("For internal use only");
     }
 
     [Test, Retry(2)]
