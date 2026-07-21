@@ -15,7 +15,8 @@ public partial class MainLayout : IAsyncDisposable
     public enum Elements
     {
         NavRailToggle,
-        CopyrightFooter
+        CopyrightFooter,
+        BatchNote5
     }
 
     /// <summary>
