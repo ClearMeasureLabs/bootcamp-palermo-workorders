@@ -89,19 +89,37 @@ $script:AppLog    = "/tmp/app.log"
 # Idempotent: re-uses the running tunnel so the URL stays stable.
 function Start-Tunnel {
     param([string]$Pr = "pending", [string]$Issue)
-    tmux has-session -t tunnel 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        tmux new-session -d -s tunnel "cloudflared tunnel --no-autoupdate --url http://localhost:$script:ServePort > $script:TunnelLog 2>&1"
-        Write-Info "Cloudflare tunnel starting -> :$script:ServePort"
-    }
+    # Two Cloudflare quick tunnels run per pod: this app tunnel AND the terminal
+    # tunnel. Each cloudflared must get its OWN metrics address - without an
+    # explicit --metrics the second to start fails to bind cloudflared's default
+    # metrics port, and (crucially) never completes edge REGISTRATION even though
+    # it still prints a quick-tunnel URL. That left the published app URL pointing
+    # at a hostname with no DNS ("No such host"). Fix: --metrics 127.0.0.1:0 (a
+    # random free port per process) AND wait for a real "Registered tunnel
+    # connection" before treating the URL as usable, retrying if it never
+    # registers so the URL we publish is guaranteed routable.
+    $maxAttempts = 3
     $publicUrl = $null
-    for ($i = 0; $i -lt 60; $i++) {
-        $raw = Get-Content $script:TunnelLog -Raw -ErrorAction SilentlyContinue
-        if ($raw) {
-            $m = [regex]::Match($raw, 'https://[a-z0-9-]+\.trycloudflare\.com')
-            if ($m.Success) { $publicUrl = $m.Value; break }
+    for ($attempt = 1; $attempt -le $maxAttempts -and -not $publicUrl; $attempt++) {
+        tmux kill-session -t tunnel 2>$null
+        Set-Content -Path $script:TunnelLog -Value "" -ErrorAction SilentlyContinue
+        tmux new-session -d -s tunnel "cloudflared tunnel --no-autoupdate --metrics 127.0.0.1:0 --url http://localhost:$script:ServePort > $script:TunnelLog 2>&1"
+        Write-Info "Cloudflare app tunnel starting -> :$script:ServePort (attempt $attempt/$maxAttempts)"
+        $url = $null; $registered = $false
+        for ($i = 0; $i -lt 45; $i++) {
+            $raw = Get-Content $script:TunnelLog -Raw -ErrorAction SilentlyContinue
+            if ($raw) {
+                if (-not $url) { $m = [regex]::Match($raw, 'https://[a-z0-9-]+\.trycloudflare\.com'); if ($m.Success) { $url = $m.Value } }
+                if ($url -and $raw -match 'Registered tunnel connection|Connection .* registered|registered connIndex') { $registered = $true; break }
+            }
+            Start-Sleep -Seconds 2
         }
-        Start-Sleep -Seconds 2
+        if ($url -and $registered) {
+            $publicUrl = $url
+        } else {
+            Write-Info "App tunnel attempt $attempt did not register (url=$url) - retrying. cloudflared log tail:"
+            Get-Content $script:TunnelLog -Tail 12 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  [cf] $_" }
+        }
     }
     if ($publicUrl) {
         Write-Success "LIVE APP URL: $publicUrl  (issue #$Issue, PR #$Pr)"
@@ -114,8 +132,8 @@ function Start-Tunnel {
         # the live-preview URL to the person driving that session (see the prompt).
         Set-Content -Path "/tmp/live-url.txt" -Value $publicUrl -NoNewline -ErrorAction SilentlyContinue
     } else {
-        Write-Failure "Could not obtain Cloudflare tunnel URL (see $script:TunnelLog)"
-        Write-StructuredLog -Level "ERROR" -Message "Tunnel URL not obtained" -Data @{ issue_number = $Issue }
+        Write-Failure "Could not establish a REGISTERED Cloudflare app tunnel after $maxAttempts attempts (see $script:TunnelLog)"
+        Write-StructuredLog -Level "ERROR" -Message "App tunnel not registered" -Data @{ issue_number = $Issue; attempts = $maxAttempts }
     }
     return $publicUrl
 }
@@ -295,7 +313,7 @@ function Start-Terminal {
     # Second Cloudflare quick tunnel for the terminal port (separate from the app tunnel).
     tmux has-session -t termtunnel 2>$null
     if ($LASTEXITCODE -ne 0) {
-        tmux new-session -d -s termtunnel "cloudflared tunnel --no-autoupdate --url http://localhost:$script:TermPort > $termTunnelLog 2>&1"
+        tmux new-session -d -s termtunnel "cloudflared tunnel --no-autoupdate --metrics 127.0.0.1:0 --url http://localhost:$script:TermPort > $termTunnelLog 2>&1"
         Write-Info "Cloudflare terminal tunnel starting -> :$script:TermPort"
     }
     $termUrl = $null
