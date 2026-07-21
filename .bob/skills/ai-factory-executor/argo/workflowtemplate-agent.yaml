@@ -10,10 +10,11 @@ metadata:
 spec:
   serviceAccountName: ai-factory-workflow
   entrypoint: run
-  # Hard time budget. The claude agent implements AND runs both quality gates
-  # (PrivateBuild + Playwright AcceptanceTests) with a fix loop, plus serve mode,
-  # so allow up to 2h.
-  activeDeadlineSeconds: 7200
+  # Hard time budget. Covers the work phase (implement + PrivateBuild +
+  # Playwright AcceptanceTests with a fix loop) AND the KEEP_ALIVE inspection
+  # hold (default up to 4h, KEEP_ALIVE_MAX_HOURS), so allow up to 6h. The hold
+  # normally ends earlier when the remote user signals done.
+  activeDeadlineSeconds: 21600
   ttlStrategy:
     secondsAfterCompletion: 86400   # keep finished Workflows 1 day for log review
   podGC:

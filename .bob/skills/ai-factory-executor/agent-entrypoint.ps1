@@ -445,6 +445,15 @@ LIVE PREVIEW URL - tell the user where to view the running app:
   Repeat this URL in your final summary so whoever is watching this session
   knows exactly where to view the running app.
 
+ENDING THE SESSION - the app stays live for inspection after your work is done.
+  When (and only when) the user explicitly says they are finished and want to
+  end the session, run exactly:
+    touch /tmp/session-done
+  That tells the automation to shut down the app + tunnel and end the session.
+  Do NOT run it on your own - wait for the user to ask. Mention this option to
+  the user when you report the live preview URL (e.g. "tell me when you're done
+  and I'll end the session").
+
 IMPORTANT - completion signal: ONLY after BOTH PrivateBuild.ps1 and
 AcceptanceTests.ps1 have passed, run this exact command as your final action:
   touch $sentinel
@@ -658,8 +667,33 @@ Run it exactly once, and only when both gates are green.
         Start-ServeApp -Issue $issueNumber
         Start-Tunnel -Pr $prNumber -Issue $issueNumber | Out-Null
 
-        Write-Info "Container held open for inspection (KEEP_ALIVE). Stop it to tear down the app + tunnel."
-        while ($true) { Start-Sleep -Seconds 3600 }
+        # Hold the container open for inspection, but let the REMOTE USER end it.
+        # Exit (tearing down app + tunnel) when ANY of:
+        #   1. the user asks the agent to end -> agent runs `touch /tmp/session-done`
+        #   2. the Remote Control 'agent' tmux session has died (user closed it)
+        #   3. a max hold time elapses (safety net; KEEP_ALIVE_MAX_HOURS, default 4)
+        $endSignal = "/tmp/session-done"
+        Remove-Item $endSignal -Force -ErrorAction SilentlyContinue   # clear any stale signal
+        $maxHours = if ($env:KEEP_ALIVE_MAX_HOURS) { [double]$env:KEEP_ALIVE_MAX_HOURS } else { 4 }
+        $holdDeadline = (Get-Date).AddHours($maxHours)
+        Write-Info "Container held open (KEEP_ALIVE). Tell the agent to end the session, close the Remote Control session, or wait up to $maxHours h."
+        Write-StructuredLog -Level "INFO" -Message "Entering KEEP_ALIVE hold" -Data @{ issue_number = $issueNumber; pr_number = $prNumber; max_hours = $maxHours }
+
+        $endReason = $null
+        while (-not $endReason) {
+            if (Test-Path $endSignal)          { $endReason = "user-requested (session-done signal)" ; break }
+            tmux has-session -t agent 2>$null
+            if ($LASTEXITCODE -ne 0)           { $endReason = "remote-control session closed" ; break }
+            if ((Get-Date) -gt $holdDeadline)  { $endReason = "max hold time ($maxHours h) reached" ; break }
+            Start-Sleep -Seconds 10
+        }
+
+        Write-Success "KEEP_ALIVE ending: $endReason - tearing down app + tunnel."
+        Write-StructuredLog -Level "INFO" -Message "KEEP_ALIVE ended" -Data @{ issue_number = $issueNumber; pr_number = $prNumber; reason = $endReason }
+        tmux kill-session -t app    2>$null
+        tmux kill-session -t tunnel 2>$null
+        tmux kill-session -t agent  2>$null
+        exit 0
     }
 
     # 12. Monitor PR checks until all green (optional; set MONITOR_CHECKS=false to skip)
