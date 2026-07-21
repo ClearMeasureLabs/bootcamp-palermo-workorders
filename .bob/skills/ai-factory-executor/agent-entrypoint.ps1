@@ -103,7 +103,9 @@ function Start-Tunnel {
     for ($attempt = 1; $attempt -le $maxAttempts -and -not $publicUrl; $attempt++) {
         tmux kill-session -t tunnel 2>$null
         Set-Content -Path $script:TunnelLog -Value "" -ErrorAction SilentlyContinue
-        tmux new-session -d -s tunnel "cloudflared tunnel --no-autoupdate --metrics 127.0.0.1:0 --url http://localhost:$script:ServePort > $script:TunnelLog 2>&1"
+        # Dial the origin over 127.0.0.1 (not "localhost"): the app listens on
+        # IPv4 0.0.0.0:$ServePort, so forcing IPv4 avoids cloudflared trying ::1.
+        tmux new-session -d -s tunnel "cloudflared tunnel --no-autoupdate --metrics 127.0.0.1:0 --url http://127.0.0.1:$script:ServePort > $script:TunnelLog 2>&1"
         Write-Info "Cloudflare app tunnel starting -> :$script:ServePort (attempt $attempt/$maxAttempts)"
         $url = $null; $registered = $false
         for ($i = 0; $i -lt 45; $i++) {
@@ -687,14 +689,14 @@ Run it exactly once, and only when both gates are green.
                 Write-Info "Remote Control link not detected yet; session '$rcName' should appear in the Claude app."
             }
 
-            # Per design: bring the app + dev tunnel up NOW, in parallel with the
-            # agent's implement/build/test loop, so the live URL is available
-            # before the agent runs AcceptanceTests.ps1 (not only after the PR).
-            # The app is restarted on the final code once the agent completes.
-            if ($env:KEEP_ALIVE -eq "true") {
-                Write-Progress "KEEP_ALIVE=true - opening Cloudflare tunnel in parallel with the agent (app serves after gates compile it)..."
-                Start-Tunnel -Pr "pending" -Issue $issueNumber | Out-Null
-            }
+            # NOTE: the app tunnel is intentionally NOT opened here (pre-gates).
+            # Before the gates compile + serve the app there is nothing on the
+            # serve port, so an early tunnel only 502s; worse, opening it here and
+            # re-opening it in the showcase churns trycloudflare quick tunnels
+            # (terminal + app + retries across concurrent pods) and hits rate
+            # limits, which left the published app URL pointing at a torn-down
+            # tunnel (530). The app tunnel is opened ONCE in the showcase (11b),
+            # after Start-ServeApp confirms the app answers - same as keep_alive=false.
 
             # Bring the browser terminal up NOW - as soon as the live 'agent'
             # tmux/Claude session exists - so a human can attach while the agent
