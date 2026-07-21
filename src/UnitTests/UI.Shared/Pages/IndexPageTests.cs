@@ -12,6 +12,20 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class IndexPageTests
 {
     [Test]
+    public void ShouldDisplaySampleDataNote()
+    {
+        using var ctx = new TestContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.RenderComponent<IndexPage>();
+
+        var note = component.Find($"[data-testid='{nameof(IndexPage.Elements.SampleDataNote)}']");
+        note.ShouldNotBeNull();
+        note.TextContent.Trim().ShouldBe("Sample data loaded");
+    }
+
+    [Test]
     public void ShouldDisplayGreetingBanner()
     {
         using var ctx = new TestContext();
