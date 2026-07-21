@@ -28,6 +28,18 @@ public class CopyrightFooterTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldShowShowcaseNote_InFooter_OnLandingPage()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        var showcaseNote = Page.GetByTestId(nameof(MainLayout.Elements.ShowcaseNote));
+        await showcaseNote.WaitForAsync();
+        await Expect(showcaseNote).ToBeVisibleAsync();
+        await Expect(showcaseNote).ToContainTextAsync("Showcase note 5");
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldShowCopyrightFooter_OnAuthenticatedRoute_AfterLogin()
     {
         await LoginAsCurrentUser();

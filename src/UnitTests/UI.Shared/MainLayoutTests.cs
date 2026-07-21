@@ -206,6 +206,18 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderShowcaseNote_InFooter_OnEveryPage()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var showcaseNote = layout.Find($"[data-testid='{nameof(MainLayout.Elements.ShowcaseNote)}']");
+        showcaseNote.TextContent.Trim().ShouldBe("Showcase note 5");
+    }
+
+    [Test]
     public void ShouldRenderCompanyLink_WithAccessibleAttributes_WhenExternalLinkUsesNewTab()
     {
         using var ctx = CreateContext();
