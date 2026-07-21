@@ -92,6 +92,12 @@ spec:
         # URL here (/shared/app-url.txt); the entrypoint reads + publishes it.
         - name: tunnel-share
           emptyDir: {}
+        - name: agent-secrets
+          secret:
+            secretName: "agent-secret-{{inputs.parameters.issueNumber}}"
+            # 0440: owner(root)+group(fsGroup 1001) read. Readable by the non-root
+            # user via fsGroup, not world-readable.
+            defaultMode: 0440
       # Dedicated app-tunnel SIDECAR: runs the app's cloudflared as the ONLY
       # tunnel in its own container. Pod containers share the network namespace,
       # so it reaches the app the main container serves on 127.0.0.1:8080.
@@ -116,12 +122,6 @@ spec:
               wait $CF
           volumeMounts:
             - { name: tunnel-share, mountPath: /shared }
-        - name: agent-secrets
-          secret:
-            secretName: "agent-secret-{{inputs.parameters.issueNumber}}"
-            # 0440: owner(root)+group(fsGroup 1001) read. Readable by the non-root
-            # user via fsGroup, not world-readable.
-            defaultMode: 0440
       # The clone/branch is handled by the container entrypoint (agent-entrypoint.ps1),
       # which does gh auth + git config + clone into the /workspace emptyDir +
       # branch. A separate init clone container is redundant with that and is
