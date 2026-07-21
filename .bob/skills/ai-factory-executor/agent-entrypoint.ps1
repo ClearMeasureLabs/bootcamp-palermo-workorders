@@ -39,8 +39,10 @@ function Write-StructuredLog {
 # Task 4: annotate this pod with the live tunnel URL via the k8s API, so the URL
 # is a queryable output of the (long-running) KEEP_ALIVE workflow:
 #   kubectl get pod $POD_NAME -o jsonpath='{.metadata.annotations.ai-factory/live-url}'
-function Publish-LiveUrlAnnotation {
-    param([string]$Url, [string]$Pr, [string]$Issue)
+# Merge-patch a set of annotations onto this pod via the k8s API using the
+# mounted service-account token (RBAC: ai-factory-workflow-podpatch). Non-fatal.
+function Set-PodAnnotations {
+    param([hashtable]$Annotations)
     $podName = $env:POD_NAME
     $ns      = if ($env:POD_NAMESPACE) { $env:POD_NAMESPACE } else { 'ai-factory' }
     $tokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
@@ -50,23 +52,34 @@ function Publish-LiveUrlAnnotation {
     }
     try {
         $token = (Get-Content $tokenPath -Raw).Trim()
-        $ca    = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
         $api   = "https://kubernetes.default.svc/api/v1/namespaces/$ns/pods/$podName"
-        # JSON-merge-patch the annotations. '/' in the key must be escaped? No -
-        # merge patch uses the literal key; annotations allow slashes in the name.
-        $patch = @{ metadata = @{ annotations = @{
-            'ai-factory/live-url'  = $Url
-            'ai-factory/pr-number' = "$Pr"
-            'ai-factory/issue'     = "$Issue"
-        } } } | ConvertTo-Json -Depth 5 -Compress
-        $headers = @{ Authorization = "Bearer $token" }
-        Invoke-RestMethod -Method Patch -Uri $api -Headers $headers -Body $patch `
-            -ContentType 'application/merge-patch+json' -SkipCertificateCheck | Out-Null
-        Write-Success "Published live URL to pod annotation ai-factory/live-url"
-        Write-StructuredLog -Level "INFO" -Message "Live URL annotation published" -Data @{ pod = $podName; url = $Url }
+        $patch = @{ metadata = @{ annotations = $Annotations } } | ConvertTo-Json -Depth 5 -Compress
+        Invoke-RestMethod -Method Patch -Uri $api -Headers @{ Authorization = "Bearer $token" } `
+            -Body $patch -ContentType 'application/merge-patch+json' -SkipCertificateCheck | Out-Null
+        Write-Success "Published pod annotations: $($Annotations.Keys -join ', ')"
     } catch {
-        Write-Info "Could not annotate pod with live URL: $_ (log marker still emitted)."
+        Write-Info "Could not annotate pod: $_ (log marker still emitted)."
     }
+}
+
+function Publish-LiveUrlAnnotation {
+    param([string]$Url, [string]$Pr, [string]$Issue)
+    Set-PodAnnotations -Annotations @{
+        'ai-factory/live-url'  = $Url
+        'ai-factory/pr-number' = "$Pr"
+        'ai-factory/issue'     = "$Issue"
+    }
+    Write-StructuredLog -Level "INFO" -Message "Live URL annotation published" -Data @{ url = $Url }
+}
+
+function Publish-TerminalAnnotation {
+    param([string]$Url, [string]$User, [string]$Pass, [string]$Issue)
+    Set-PodAnnotations -Annotations @{
+        'ai-factory/terminal-url'  = $Url
+        'ai-factory/terminal-user' = "$User"
+        'ai-factory/terminal-pass' = "$Pass"
+    }
+    Write-StructuredLog -Level "INFO" -Message "Terminal URL annotation published" -Data @{ url = $Url }
 }
 
 $script:ServePort = if ($env:SERVE_PORT) { $env:SERVE_PORT } else { "8080" }
@@ -201,6 +214,58 @@ dotnet run --project src/UI/Server --no-build --configuration Release --no-launc
     } else {
         Write-Info "App not yet answering on :$script:ServePort - recent app.log:"
         Get-Content $script:AppLog -Tail 25 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  [app] $_" }
+    }
+}
+
+$script:TermPort = 7682
+
+# Start a browser terminal (ttyd) attached to the LIVE 'agent' tmux session (the
+# running Claude Code instance) and expose it via a SECOND Cloudflare quick
+# tunnel, so a human can open a real terminal to the active session. Protected
+# by per-run HTTP basic auth (the tunnel URL is unguessable but not secret, and
+# this is a full shell in a privileged container holding credentials). Enabled
+# unless TERMINAL_ENABLED=false.
+function Start-Terminal {
+    param([string]$Pr = "pending", [string]$Issue)
+    if ($env:TERMINAL_ENABLED -eq "false") { Write-Info "TERMINAL_ENABLED=false - skipping browser terminal."; return }
+
+    $user = "aidev"
+    $pass = -join ((48..57)+(65..90)+(97..122) | Get-Random -Count 24 | ForEach-Object { [char]$_ })
+    $ttydLog = "/tmp/ttyd.log"
+    $termTunnelLog = "/tmp/cloudflared-term.log"
+
+    # ttyd runs `tmux attach -t agent` (-W = writable) so the browser terminal
+    # shares the live Claude session with the Remote Control app.
+    tmux kill-session -t ttyd 2>$null
+    tmux new-session -d -s ttyd "ttyd -p $script:TermPort -W --credential ${user}:${pass} tmux attach -t agent >> $ttydLog 2>&1"
+    Write-Info "ttyd terminal starting on :$script:TermPort (attaches to the live 'agent' Claude session)"
+
+    # Second Cloudflare quick tunnel for the terminal port (separate from the app tunnel).
+    tmux has-session -t termtunnel 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        tmux new-session -d -s termtunnel "cloudflared tunnel --no-autoupdate --url http://localhost:$script:TermPort > $termTunnelLog 2>&1"
+        Write-Info "Cloudflare terminal tunnel starting -> :$script:TermPort"
+    }
+    $termUrl = $null
+    for ($i = 0; $i -lt 60; $i++) {
+        $raw = Get-Content $termTunnelLog -Raw -ErrorAction SilentlyContinue
+        if ($raw) {
+            $m = [regex]::Match($raw, 'https://[a-z0-9-]+\.trycloudflare\.com')
+            if ($m.Success) { $termUrl = $m.Value; break }
+        }
+        Start-Sleep -Seconds 2
+    }
+    if ($termUrl) {
+        Write-Success "LIVE TERMINAL URL: $termUrl  (user: $user  pass: $pass)"
+        Write-Host "AI_FACTORY_TERMINAL_URL issue=$Issue pr=$Pr url=$termUrl user=$user pass=$pass"
+        Write-StructuredLog -Level "SUCCESS" -Message "Browser terminal live via Cloudflare tunnel" -Data @{
+            issue_number = $Issue; pr_number = $Pr; terminal_url = $termUrl; user = $user; port = $script:TermPort
+        }
+        # For the agent to report it in-session (see the prompt).
+        Set-Content -Path "/tmp/terminal-url.txt" -Value "$termUrl`nuser: $user`npass: $pass" -NoNewline -ErrorAction SilentlyContinue
+        Publish-TerminalAnnotation -Url $termUrl -User $user -Pass $pass -Issue $Issue
+    } else {
+        Write-Failure "Could not obtain Cloudflare terminal tunnel URL (see $termTunnelLog)"
     }
 }
 
@@ -492,6 +557,16 @@ LIVE PREVIEW URL - tell the user where to view the running app:
   Repeat this URL in your final summary so whoever is watching this session
   knows exactly where to view the running app.
 
+BROWSER TERMINAL - tell the user how to open a terminal into this session:
+  A second Cloudflare tunnel exposes a browser terminal attached to THIS live
+  session. The automation writes its URL + credentials to /tmp/terminal-url.txt
+  (usually within a minute or two of the app going live). Once available, run:
+    cat /tmp/terminal-url.txt
+  and report it to the user, e.g.:
+    "Browser terminal (this session): <url>  (user / password shown)"
+  Note it opens a real terminal in the container; treat the URL + password as a
+  secret. Include it in your final summary alongside the app URL.
+
 ENDING THE SESSION - the app stays live for inspection after your work is done.
   When (and only when) the user explicitly says they are finished and want to
   end the session, run exactly:
@@ -713,6 +788,8 @@ Run it exactly once, and only when both gates are green.
         Write-StructuredLog -Level "INFO" -Message "Serving final build" -Data @{ issue_number = $issueNumber; pr_number = $prNumber }
         Start-ServeApp -Issue $issueNumber
         Start-Tunnel -Pr $prNumber -Issue $issueNumber | Out-Null
+        # Browser terminal into the live Claude session (2nd tunnel, basic auth).
+        Start-Terminal -Pr $prNumber -Issue $issueNumber
 
         # Hold the container open for inspection, but let the REMOTE USER end it.
         # Exit (tearing down app + tunnel) when ANY of:
@@ -737,9 +814,11 @@ Run it exactly once, and only when both gates are green.
 
         Write-Success "KEEP_ALIVE ending: $endReason - tearing down app + tunnel."
         Write-StructuredLog -Level "INFO" -Message "KEEP_ALIVE ended" -Data @{ issue_number = $issueNumber; pr_number = $prNumber; reason = $endReason }
-        tmux kill-session -t app    2>$null
-        tmux kill-session -t tunnel 2>$null
-        tmux kill-session -t agent  2>$null
+        tmux kill-session -t app        2>$null
+        tmux kill-session -t tunnel     2>$null
+        tmux kill-session -t ttyd       2>$null
+        tmux kill-session -t termtunnel 2>$null
+        tmux kill-session -t agent      2>$null
         exit 0
     }
 

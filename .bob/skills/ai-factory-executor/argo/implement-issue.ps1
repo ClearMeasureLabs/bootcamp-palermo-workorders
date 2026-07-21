@@ -23,6 +23,8 @@ param(
     # latest Sonnet (claude-sonnet-4-6) at low effort.
     [Alias('model')]    [string]$AiModel = 'claude-sonnet-4-6',
     [Alias('effort')]   [ValidateSet('low','medium','high','xhigh','max')][string]$AiModelEffort = 'low',
+    # Browser terminal (ttyd) into the live Claude session. Defaults ON; disable with --no-terminal or --terminal false.
+    [Alias('terminal')] [ValidateSet('true','false')][string]$Terminal = 'true',
     [Alias('repo-org')] [string]$RepoOrg  = 'ClearMeasureLabs',
     [Alias('repo-name')][string]$RepoName = 'bootcamp-palermo-workorders',
     [Alias('no-watch')] [switch]$NoWatch,
@@ -40,6 +42,8 @@ if ($args) {
             '^--agent$'     { $AiAgent  = $args[++$i] }
             '^--model$'     { $AiModel  = $args[++$i] }
             '^--effort$'    { $AiModelEffort = $args[++$i] }
+            '^--terminal$'  { $Terminal = $args[++$i] }
+            '^--no-terminal$' { $Terminal = 'false' }
             '^--repo-org$'  { $RepoOrg  = $args[++$i] }
             '^--repo-name$' { $RepoName = $args[++$i] }
             '^--no-watch$'  { $NoWatch  = $true }
@@ -101,6 +105,7 @@ $submit = @(
     '-p', "aiAgent=$AiAgent",
     '-p', "aiModel=$AiModel",
     '-p', "aiModelEffort=$AiModelEffort",
+    '-p', "terminalEnabled=$Terminal",
     '-p', "keepAlive=$($KeepAlive.IsPresent.ToString().ToLower())"
 )
 if (-not $NoWatch) { $submit += '--watch' }

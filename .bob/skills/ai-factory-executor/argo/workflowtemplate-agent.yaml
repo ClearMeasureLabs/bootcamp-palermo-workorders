@@ -42,6 +42,8 @@ spec:
       # development: latest Sonnet (claude-sonnet-4-6) at low effort.
       - { name: aiModel,        value: "claude-sonnet-4-6" }
       - { name: aiModelEffort,  value: "low" }
+      # Browser terminal (ttyd) into the live Claude session, on a 2nd tunnel. Default on.
+      - { name: terminalEnabled, value: "true" }
       - { name: runQualityGates, value: "true" }
       # KEEP_ALIVE serve mode: after the PR, run the app + Cloudflare quick tunnel
       # and hold the pod open so the running app can be viewed at a public URL.
@@ -61,6 +63,7 @@ spec:
           - { name: aiAgent }
           - { name: aiModel }
           - { name: aiModelEffort }
+          - { name: terminalEnabled }
           - { name: runQualityGates }
           - { name: keepAlive }
           - { name: servePort }
@@ -128,6 +131,7 @@ spec:
           - { name: AI_AGENT,          value: "{{inputs.parameters.aiAgent}}" }
           - { name: AI_MODEL,          value: "{{inputs.parameters.aiModel}}" }
           - { name: AI_MODEL_EFFORT,   value: "{{inputs.parameters.aiModelEffort}}" }
+          - { name: TERMINAL_ENABLED,  value: "{{inputs.parameters.terminalEnabled}}" }
           - { name: MONITOR_CHECKS,    value: "false" }
           - { name: RUN_QUALITY_GATES, value: "{{inputs.parameters.runQualityGates}}" }
           - { name: ENABLE_DIND,       value: "true" }    # start in-container dockerd; build.ps1 uses SQL-Container mode

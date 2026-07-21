@@ -129,6 +129,16 @@ RUN apt-get update && apt-get install -y \
     chmod -R a+rX /ms-playwright && \
     rm -rf /var/lib/apt/lists/*
 
+# Install ttyd - a browser-based terminal. In KEEP_ALIVE serve mode the
+# entrypoint runs `ttyd tmux attach -t agent` behind a second Cloudflare quick
+# tunnel so a human can open a terminal (in the browser) attached to the live
+# Claude Code session in the container. Static amd64 binary. (Placed late so it
+# doesn't invalidate the expensive Node/Playwright layers above.)
+RUN curl -fsSL -o /usr/local/bin/ttyd \
+        https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.x86_64 && \
+    chmod +x /usr/local/bin/ttyd && \
+    ttyd --version
+
 # Create non-root user for security (use UID 1001 to avoid conflict with base image)
 RUN useradd -m -s /bin/bash -u 1001 bobagent && \
     mkdir -p /workspace /home/bobagent/.bob /home/bobagent/.config/gh /home/bobagent/.nuget && \
