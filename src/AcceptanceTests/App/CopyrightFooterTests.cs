@@ -55,4 +55,16 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footer).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Alert)).ToContainTextAsync("Sorry, there's nothing at this address.");
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowShowcaseNote_OnLandingPage_WhenAnonymous()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        var note = Page.GetByTestId(nameof(MainLayout.Elements.ShowcaseNote));
+        await note.WaitForAsync();
+        await Expect(note).ToBeVisibleAsync();
+        await Expect(note).ToContainTextAsync("Showcase v2 note 7");
+    }
 }
