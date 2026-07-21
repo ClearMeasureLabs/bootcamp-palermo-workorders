@@ -223,6 +223,21 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderFooterNote_WithinCopyrightFooter()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var note = layout.Find($"[data-testid='{nameof(MainLayout.Elements.FooterNote)}']");
+        note.TextContent.ShouldContain("For internal use only");
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        footer.QuerySelector($"[data-testid='{nameof(MainLayout.Elements.FooterNote)}']").ShouldNotBeNull();
+    }
+
+    [Test]
     public async Task ShouldInvokeFocusOnNavRailToggleWhenClosingOverlayOnNarrowViewport()
     {
         using var ctx = CreateContext();
