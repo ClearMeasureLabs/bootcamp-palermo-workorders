@@ -55,4 +55,16 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footer).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Alert)).ToContainTextAsync("Sorry, there's nothing at this address.");
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowFooterNote_OnLandingPage_WhenAnonymous()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        var footerNote = Page.GetByTestId(nameof(MainLayout.Elements.FooterNote));
+        await footerNote.WaitForAsync();
+        await Expect(footerNote).ToBeVisibleAsync();
+        await Expect(footerNote).ToContainTextAsync("For technical support, contact your church office.");
+    }
 }

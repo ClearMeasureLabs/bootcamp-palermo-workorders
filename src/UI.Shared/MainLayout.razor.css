@@ -321,6 +321,15 @@
     border-radius: 2px;
 }
 
+.site-footer-note {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    color: #a0aec0;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .modern-sidebar {
@@ -571,6 +580,10 @@
 
 :global(html[data-theme="dark"]) .site-footer-link:focus-visible {
     outline-color: #cbd5e0;
+}
+
+:global(html[data-theme="dark"]) .site-footer-note {
+    color: #718096;
 }
 
 :global(html[data-theme="dark"]) .user-section ::deep a:focus,
