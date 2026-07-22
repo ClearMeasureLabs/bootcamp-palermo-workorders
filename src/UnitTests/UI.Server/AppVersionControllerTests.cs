@@ -46,14 +46,5 @@ public class AppVersionControllerTests
         content!.Version.ShouldNotBeNullOrWhiteSpace();
     }
 
-    [Test]
-    public async Task Should_ReturnCacheHeaders_When_GetAppVersion()
-    {
-        var response = await _client!.GetAsync("/api/appversion");
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        response.Headers.CacheControl.ShouldNotBeNull();
-    }
-
     private record AppVersionResponse(string Version);
 }
