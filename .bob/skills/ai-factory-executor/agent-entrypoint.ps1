@@ -200,6 +200,12 @@ function Start-ServeApp {
             if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
                 try { Invoke-Sqlcmd -ServerInstance $srv -Username sa -Password $pw -Query "SELECT 1" -Encrypt Optional -TrustServerCertificate -ErrorAction Stop | Out-Null; break }
                 catch { Start-Sleep -Seconds 3 }
+            } elseif (Get-Command sqlcmd -ErrorAction SilentlyContinue) {
+                $env:SQLCMDPASSWORD = $pw
+                & sqlcmd -S $srv -U sa -C -Q "SELECT 1" *> $null
+                Remove-Item Env:\SQLCMDPASSWORD -ErrorAction SilentlyContinue
+                if ($LASTEXITCODE -eq 0) { break }
+                Start-Sleep -Seconds 3
             } else { break }
         }
         Write-Progress "Creating + migrating serve database '$dbNm' on '$srv'..."
@@ -1048,9 +1054,15 @@ Run it exactly once, and only when both gates are green.
                 $dSrv = Get-DefaultDatabaseServer -engine "SQL-Container"
                 $dDb  = Get-ResolvedDatabaseName -explicitName "" -baseName "ChurchBulletin" -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
                 $dPw  = Get-SqlServerPassword -ContainerName (Get-ContainerName -DatabaseName $dDb)
+                $dropSql = "IF DB_ID('$dDb') IS NOT NULL BEGIN ALTER DATABASE [$dDb] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$dDb]; END"
                 if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
-                    Invoke-Sqlcmd -ServerInstance $dSrv -Username sa -Password $dPw -Encrypt Optional -TrustServerCertificate -Query "IF DB_ID('$dDb') IS NOT NULL BEGIN ALTER DATABASE [$dDb] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$dDb]; END" -ErrorAction Stop
+                    Invoke-Sqlcmd -ServerInstance $dSrv -Username sa -Password $dPw -Encrypt Optional -TrustServerCertificate -Query $dropSql -ErrorAction Stop
                     Write-Info "Dropped shared-server database '$dDb' on teardown."
+                } elseif (Get-Command sqlcmd -ErrorAction SilentlyContinue) {
+                    $env:SQLCMDPASSWORD = $dPw
+                    & sqlcmd -S $dSrv -U sa -d master -C -Q $dropSql *> $null
+                    Remove-Item Env:\SQLCMDPASSWORD -ErrorAction SilentlyContinue
+                    Write-Info "Dropped shared-server database '$dDb' on teardown (sqlcmd)."
                 }
             } catch { Write-Info "Teardown DB drop skipped: $_" }
         }

@@ -77,9 +77,10 @@ RUN apt-get install -y \
     libatspi2.0-0 \
     libxshmfence1
 
-# Install additional build tools
+# unzip for archive extraction. build-essential (gcc/make, ~230MB) was removed:
+# the agent compiles .NET (no native toolchain needed) and the global npm packages
+# (claude-code, playwright) ship prebuilt - verified no native .node modules.
 RUN apt-get install -y \
-    build-essential \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
@@ -102,8 +103,18 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
 RUN npm install -g @anthropic-ai/claude-code && \
     claude --version
 
-# Install SQL Server PowerShell module
-RUN pwsh -Command "Install-Module -Name SqlServer -Force -AllowClobber -Scope AllUsers"
+# SQL tooling: go-sqlcmd (~23MB) instead of the SqlServer PowerShell module
+# (~219MB). build.ps1's New-SqlServerDatabase uses `sqlcmd` when the PS module is
+# absent (and skips Install-Module when sqlcmd is present), so the drop/create +
+# readiness SQL all work against the external/shared server without the heavy
+# module. (Local dev/CI with the module installed still use Invoke-Sqlcmd.)
+RUN apt-get update && apt-get install -y bzip2 && \
+    curl -fsSL -o /tmp/sqlcmd.tar.bz2 \
+        https://github.com/microsoft/go-sqlcmd/releases/latest/download/sqlcmd-linux-amd64.tar.bz2 && \
+    tar xjf /tmp/sqlcmd.tar.bz2 -C /usr/local/bin sqlcmd && \
+    chmod +x /usr/local/bin/sqlcmd && rm /tmp/sqlcmd.tar.bz2 && \
+    rm -rf /var/lib/apt/lists/* && \
+    sqlcmd --version
 
 # Update .NET workloads to prevent verification issues during build
 RUN dotnet workload update --skip-sign-check || true
