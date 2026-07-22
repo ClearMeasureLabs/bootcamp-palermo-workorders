@@ -157,11 +157,17 @@ RUN chown -R bobagent:bobagent /ms-playwright
 # Set working directory
 WORKDIR /workspace
 
-# Copy entrypoint scripts
+# Copy entrypoint + helper scripts
 COPY agent-entrypoint.ps1 /usr/local/bin/agent-entrypoint.ps1
 COPY experiment-entrypoint.ps1 /usr/local/bin/experiment-entrypoint.ps1
+COPY dev-entrypoint.ps1 /usr/local/bin/dev-entrypoint.ps1
+COPY serve-app.ps1 /usr/local/bin/serve-app.ps1
 COPY start-dind.ps1 /usr/local/bin/start-dind.ps1
-RUN chmod +x /usr/local/bin/agent-entrypoint.ps1 /usr/local/bin/experiment-entrypoint.ps1 /usr/local/bin/start-dind.ps1
+RUN chmod +x /usr/local/bin/agent-entrypoint.ps1 /usr/local/bin/experiment-entrypoint.ps1 \
+    /usr/local/bin/dev-entrypoint.ps1 /usr/local/bin/serve-app.ps1 /usr/local/bin/start-dind.ps1
+
+# App ports (documentation; actual host mapping is set by run-dev.ps1 -p flags)
+EXPOSE 7174 5174
 
 # Switch to non-root user
 USER bobagent
