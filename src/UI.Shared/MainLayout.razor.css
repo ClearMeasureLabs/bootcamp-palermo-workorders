@@ -330,6 +330,14 @@
     word-wrap: break-word;
 }
 
+.site-footer-tag {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: #cbd5e0;
+    line-height: 1.5;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .modern-sidebar {
@@ -583,6 +591,10 @@
 }
 
 :global(html[data-theme="dark"]) .site-footer-note {
+    color: #718096;
+}
+
+:global(html[data-theme="dark"]) .site-footer-tag {
     color: #718096;
 }
 
