@@ -67,4 +67,16 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footerNote).ToBeVisibleAsync();
         await Expect(footerNote).ToContainTextAsync("Submit a new work order any time");
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowFooterIsolationTag_OnLandingPage_WhenAnonymous()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        var isolationTag = Page.GetByTestId(nameof(MainLayout.Elements.FooterIsolationTag));
+        await isolationTag.WaitForAsync();
+        await Expect(isolationTag).ToBeVisibleAsync();
+        await Expect(isolationTag).ToContainTextAsync("SHARED-B");
+    }
 }
