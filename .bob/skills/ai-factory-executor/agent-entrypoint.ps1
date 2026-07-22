@@ -184,6 +184,30 @@ function Start-ServeApp {
         return
     }
 
+    # Ensure the serve database EXISTS and is migrated before loading sample data.
+    # The in-session agent gates are a black box (the agent may run them against
+    # SQLite), so do NOT assume they created the SQL database. Create+migrate it
+    # here from the built Database migrator, keyed to the per-issue DB name.
+    try {
+        . /workspace/BuildFunctions.ps1
+        $srv   = Get-DefaultDatabaseServer -engine "SQL-Container"
+        $dbNm  = Get-ResolvedDatabaseName -explicitName "" -baseName "ChurchBulletin" -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
+        $pw    = Get-SqlServerPassword -ContainerName (Get-ContainerName -DatabaseName $dbNm)
+        Write-Progress "Creating + migrating serve database '$dbNm' on '$srv'..."
+        New-SqlServerDatabase -serverName $srv -databaseName $dbNm *>> $script:AppLog
+        $migrator = Get-ChildItem "/workspace/src/Database/bin" -Recurse -Filter "ClearMeasure.Bootcamp.Database.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+        $scripts  = "/workspace/src/Database/scripts"
+        if ($migrator) {
+            & dotnet $migrator.FullName update $srv $dbNm $scripts sa $pw *>> $script:AppLog
+            if ($LASTEXITCODE -eq 0) { Write-Success "Serve database created + migrated ($dbNm)" }
+            else { Write-Info "Migrator exit=$LASTEXITCODE (see $script:AppLog)" }
+        } else {
+            Write-Info "Database migrator dll not found under /workspace/src/Database/bin - skipping explicit migrate."
+        }
+    } catch {
+        Write-Info "Serve DB create/migrate step error: $_"
+    }
+
     Write-Progress "Reloading canonical sample data (ZDataLoader) into the SQL Server DB for manual testing..."
     $loadScript = "/tmp/load-sample-data.ps1"
     Set-Content -Path $loadScript -Value @"
