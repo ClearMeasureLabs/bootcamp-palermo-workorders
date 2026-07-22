@@ -460,7 +460,16 @@ Function Get-SqlServerPassword {
         [Parameter(Mandatory = $true)]
         [string]$ContainerName
     )
-    
+
+    # When connecting to an EXTERNAL/shared SQL Server (not a per-build Docker
+    # container), the SA password is fixed for that server and supplied via
+    # SQL_SA_PASSWORD. Use it for every password lookup so New-SqlServerDatabase,
+    # the connection string, and migrations all authenticate against the shared
+    # server. Falls back to the per-container derived password for local/CI.
+    if ($env:SQL_SA_PASSWORD) {
+        return $env:SQL_SA_PASSWORD
+    }
+
     return "${ContainerName}#1A"
 }
 
@@ -570,7 +579,13 @@ Function Get-DefaultDatabaseServer {
 
     switch ($engine) {
         "LocalDB"       { return "(LocalDb)\MSSQLLocalDB" }
-        "SQL-Container" { return "localhost" }
+        "SQL-Container" {
+            # For an external/shared SQL Server, the host (and optional ,port) is
+            # supplied via SQL_SERVER_HOST (e.g. "sql-shared,1433"). Otherwise the
+            # server is a local Docker container on localhost.
+            if ($env:SQL_SERVER_HOST) { return $env:SQL_SERVER_HOST }
+            return "localhost"
+        }
         default         { return "" }
     }
 }
@@ -603,6 +618,14 @@ Function Get-ResolvedDatabaseName {
 
     if (-not [string]::IsNullOrEmpty($explicitName)) {
         return $explicitName
+    }
+
+    # Allow the database name to be parameterized via DATABASE_NAME. Used when many
+    # builds share ONE SQL Server and each needs its own isolated database (e.g.
+    # ChurchBulletin_7123), so per-build drop/recreate does not collide. An explicit
+    # -explicitName argument still takes precedence.
+    if ($env:DATABASE_NAME) {
+        return $env:DATABASE_NAME
     }
 
     if ($onLinux -or $localBuild) {
