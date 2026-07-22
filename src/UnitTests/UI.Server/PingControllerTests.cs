@@ -1,20 +1,19 @@
 using ClearMeasure.Bootcamp.UI.Server.Controllers;
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
 public class PingControllerTests
 {
-    [Fact]
+    [Test]
     public void Get_ShouldReturnOkWithPong()
     {
         var controller = new PingController();
 
         var result = controller.Get();
 
-        result.Should().BeOfType<OkObjectResult>();
+        Assert.That(result, Is.TypeOf<OkObjectResult>());
         var okResult = (OkObjectResult)result;
-        okResult.Value.Should().Be("pong");
+        Assert.That(okResult.Value, Is.EqualTo("pong"));
     }
 }
