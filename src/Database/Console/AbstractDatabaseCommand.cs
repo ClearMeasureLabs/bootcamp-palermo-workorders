@@ -39,15 +39,14 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
     protected static string GetConnectionString(DatabaseOptions options)
     {
-        // Determine if this is a local server (localhost, 127.0.0.1, or LocalDB)
+        // Determine if this is Azure SQL Database (the only target with a CA-issued
+        // certificate that should be strictly validated). Every other target - localhost,
+        // LocalDB, a local Docker container, or a shared dev/CI SQL Server container -
+        // uses a self-signed certificate and must trust it, matching the behavior of
+        // New-SqlServerConnectionString in BuildFunctions.ps1.
         var serverName = (options.DatabaseServer ?? string.Empty).Trim();
-        var isLocalServer = serverName.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
+        var isAzureSql = serverName.Contains(".database.windows.net", StringComparison.OrdinalIgnoreCase);
+        var isLocalServer = !isAzureSql;
 
 
 
@@ -80,14 +79,14 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         // These must be explicitly set to ensure DbUp preserves them when creating master connections
         if (isLocalServer)
         {
-            // Local servers: don't encrypt, trust certificate
+            // Self-signed certificate (local, LocalDB, Docker, or shared dev/CI SQL Server): don't encrypt, trust certificate
             builder.Encrypt = false;
             builder.TrustServerCertificate = true;
             // Diagnostic logging suppressed for clean build output
         }
         else
         {
-            // Remote servers or Azure SQL Database: encrypt, don't trust certificate (require proper validation)
+            // Azure SQL Database: encrypt, don't trust certificate (require proper validation)
             builder.Encrypt = true;
             builder.TrustServerCertificate = false;
             // Diagnostic logging suppressed for clean build output
