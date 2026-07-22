@@ -1,0 +1,41 @@
+@startuml scenarios-view
+' 4+1 — SCENARIOS (+1): the key use case that ties the other four views together.
+title 4+1 Scenarios — "implement issue N" end-to-end (gate = 3 concurrent)
+
+actor Maintainer as dev
+participant "implement-issue.ps1\n(CLI entry point)" as cli
+participant "GitHub" as gh
+box "k3s node : ai-factory" #F7F7F7
+participant "Workflows\ncontroller" as wfc
+participant "AI Dev pod\n(init + agent)" as pod
+participant "SQL sidecar" as db
+end box
+participant "Anthropic /\nBob API" as llm
+
+dev -> cli : ./implement-issue.ps1 --issueid N
+cli -> gh : fetch issue + open PR for this branch?
+alt already has open PR
+  cli --> dev : skip (dedup) — nothing to do
+else eligible
+  cli -> wfc : create Secret + argo submit Workflow(issue params)
+  wfc -> wfc : running < 3 ?
+  note right of wfc : if 3 already running,\nthis Workflow queues on the semaphore
+  wfc -> pod : create pod (own emptyDir, netpol, secret)
+  activate pod
+  pod -> gh : git clone @ branch (init container)
+  wfc -> db : start ephemeral SQL sidecar (localhost:1433)
+  activate db
+  pod -> llm : run Claude/Bob to implement issue
+  pod -> db : migrate + integration tests
+  pod -> pod : quality gates (build / unit / acceptance)
+  pod -> gh : commit, push branch, open PR
+  pod -> wfc : exit 0 -> Workflow Succeeded
+  deactivate db
+  destroy pod
+  note over pod, db : pod + DB + secret torn down;\nnothing persists between tasks
+  wfc --> cli : --watch streams status until done
+  cli --> dev : PR link + result
+end
+dev -> gh : review PR
+
+@enduml

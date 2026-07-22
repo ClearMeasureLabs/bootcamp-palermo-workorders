@@ -1,0 +1,27 @@
+# Default-deny + egress allow-list. AI Dev pods cannot talk to each other;
+# only DNS + outbound HTTPS (GitHub / Anthropic / package feeds) is allowed.
+# NOTE: k3s default flannel CNI does NOT enforce NetworkPolicy. Install with
+# --flannel-backend + a policy controller, or use k3s built-in with kube-router,
+# or Calico. See install.ps1.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-dev-default-deny
+  namespace: ai-factory
+spec:
+  podSelector:
+    matchLabels: { app: ai-dev }
+  policyTypes: [Ingress, Egress]
+  ingress: []            # no inbound to agent pods
+  egress:
+    # DNS
+    - to: []
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    # Outbound HTTPS (GitHub, Anthropic, NuGet, npm, Playwright CDNs).
+    # Tighten to specific CIDRs/FQDNs once a policy engine that supports FQDN
+    # egress (e.g. Cilium) is in place.
+    - to: []
+      ports:
+        - { protocol: TCP, port: 443 }

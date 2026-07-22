@@ -1,0 +1,46 @@
+# Dispatcher — ports the discovery + dedup from run-factory.ps1. Lists open
+# issues labeled "AI Factory" with no open PR, creates a per-run Secret for each,
+# and submits an ai-dev-agent Workflow. The 3-slot semaphore on ai-dev-agent
+# gates how many actually run at once; the rest queue.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ai-dev-dispatcher
+  namespace: ai-factory
+spec:
+  serviceAccountName: ai-factory-sensor
+  entrypoint: dispatch
+  arguments:
+    parameters:
+      - { name: label,    value: "AI Factory" }
+      - { name: repoOrg,  value: "ClearMeasureLabs" }
+      - { name: repoName, value: "bootcamp-palermo-workorders" }
+      - { name: aiAgent,  value: "claude" }
+  templates:
+    - name: dispatch
+      inputs:
+        parameters:
+          - { name: label }
+          - { name: repoOrg }
+          - { name: repoName }
+          - { name: aiAgent }
+      container:
+        image: ai-factory-agent:latest    # has gh + pwsh + kubectl-free argo submit via API
+        command: ["pwsh", "/scripts/dispatch.ps1"]
+        env:
+          - { name: LABEL,     value: "{{inputs.parameters.label}}" }
+          - { name: REPO_ORG,  value: "{{inputs.parameters.repoOrg}}" }
+          - { name: REPO_NAME, value: "{{inputs.parameters.repoName}}" }
+          - { name: AI_AGENT,  value: "{{inputs.parameters.aiAgent}}" }
+        volumeMounts:
+          - { name: gh, mountPath: /run/secrets, readOnly: true }
+          - { name: scripts, mountPath: /scripts, readOnly: true }
+      volumes:
+        - name: gh
+          secret: { secretName: ai-factory-gh, defaultMode: 0400 }
+        - name: scripts
+          configMap: { name: ai-factory-dispatch-script, defaultMode: 0555 }
+# The dispatch.ps1 body is delivered via ConfigMap `ai-factory-dispatch-script`
+# (created by install.ps1 from scripts/dispatch.ps1). It performs, per eligible
+# issue: create Secret agent-secret-<n> (gh token + random SA password), then
+# `argo submit --from workflowtemplate/ai-dev-agent -p issueNumber=... ...`.

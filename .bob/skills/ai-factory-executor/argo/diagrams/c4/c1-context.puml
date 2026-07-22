@@ -1,0 +1,21 @@
+@startuml c1-context
+' C4 Level 1 — System Context: AI Factory on Argo
+!include <C4/C4_Context>
+
+title System Context — AI Factory (Argo-orchestrated AI Dev)
+
+Person(dev, "Maintainer", "Labels issues, reviews PRs, drives manual runs")
+
+System_Boundary(box, "One machine running k3s") {
+  System(factory, "AI Factory", "Argo Events + Workflows spins up isolated AI Dev containers, one per issue, up to 3 concurrently")
+}
+
+System_Ext(github, "GitHub", "Issues (label = 'AI Factory'), branches, pull requests")
+System_Ext(anthropic, "Anthropic / Bob API", "LLM backend for the coding agent")
+
+Rel(dev, github, "Labels issues, reviews PRs", "HTTPS")
+Rel(factory, github, "Discovers labeled issues, clones repo, pushes branch, opens PR", "HTTPS")
+Rel(factory, anthropic, "Runs the coding agent", "HTTPS")
+Rel(github, factory, "Issue events (webhook or poll)", "HTTPS")
+
+@enduml

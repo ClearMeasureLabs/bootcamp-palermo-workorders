@@ -1,0 +1,53 @@
+@startuml physical-view
+' 4+1 — PHYSICAL / DEPLOYMENT VIEW: mapping onto the one machine.
+' Native UML deployment (this PlantUML build lacks the C4_Deployment stdlib).
+title 4+1 Physical View — deployment on one k3s machine
+
+skinparam nodeStyle uml2
+skinparam shadowing false
+
+node "Developer / CI machine\n(Linux + Docker)" as host {
+
+  artifact "implement-issue.ps1\n(pwsh + argo + gh)" as cli
+
+  node "k3s (single node)\nKubernetes + policy-capable CNI" as k3s {
+
+    node "system control plane" as sys {
+      component "workflow-controller\n(parallelism = 3)" as ctrl
+      component "argo-server\n(UI/API :2746)" as server
+    }
+
+    node "namespace: ai-factory" as ns {
+      artifact "WorkflowTemplate\nai-dev-agent" as wt
+      artifact "Semaphore\nagent-slots = 3" as sem
+
+      node "Pod issue-A" as p1 {
+        component "main\nai-factory-agent\n3-4 CPU / 6-8 GB" as a1
+        database "mssql sidecar\nlocalhost:1433" as d1
+      }
+      node "Pod issue-B" as p2 {
+        component "main\nai-factory-agent" as a2
+        database "mssql sidecar" as d2
+      }
+      note bottom of ns : up to 3 pods concurrently\n(3rd pod omitted for space)
+    }
+  }
+}
+
+cloud "External SaaS" as ext {
+  component "GitHub" as gh
+  component "Anthropic / Bob API" as llm
+}
+
+cli --> ctrl : argo submit (k8s API)
+ctrl --> p1 : schedules
+ctrl --> p2 : schedules
+wt ..> sem : acquires slot
+a1 --> gh : clone/push/PR (HTTPS)
+a2 --> gh : clone/push/PR (HTTPS)
+a1 --> llm : LLM (HTTPS)
+a2 --> llm : LLM (HTTPS)
+a1 ..> d1 : TDS localhost
+a2 ..> d2 : TDS localhost
+
+@enduml
