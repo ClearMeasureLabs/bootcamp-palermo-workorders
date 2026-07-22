@@ -193,6 +193,15 @@ function Start-ServeApp {
         $srv   = Get-DefaultDatabaseServer -engine "SQL-Container"
         $dbNm  = Get-ResolvedDatabaseName -explicitName "" -baseName "ChurchBulletin" -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
         $pw    = Get-SqlServerPassword -ContainerName (Get-ContainerName -DatabaseName $dbNm)
+        # Bounded readiness wait: the shared/sidecar SQL Server accepts TCP a bit
+        # before it can service logins (esp. right after its own (re)start), and
+        # the external path skipped New-DockerContainerForSqlServer's wait loop.
+        for ($rw = 0; $rw -lt 40; $rw++) {
+            if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
+                try { Invoke-Sqlcmd -ServerInstance $srv -Username sa -Password $pw -Query "SELECT 1" -Encrypt Optional -TrustServerCertificate -ErrorAction Stop | Out-Null; break }
+                catch { Start-Sleep -Seconds 3 }
+            } else { break }
+        }
         Write-Progress "Creating + migrating serve database '$dbNm' on '$srv'..."
         New-SqlServerDatabase -serverName $srv -databaseName $dbNm *>> $script:AppLog
         $migrator = Get-ChildItem "/workspace/src/Database/bin" -Recurse -Filter "ClearMeasure.Bootcamp.Database.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -301,8 +310,11 @@ function Show-AppInBrowser {
     param([string]$Url, [string]$Issue)
     if (-not $Url) { Write-Info "No live URL - skipping in-container browser open."; return }
     Write-Progress "Opening a browser in-container to the hosted app: $Url"
-    $chrome = Get-ChildItem -Path "$HOME/.cache/ms-playwright", "/ms-playwright" -Filter chrome -Recurse -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -match 'chrome-linux/chrome$' } | Select-Object -First 1
+    # The image now ships only the Playwright headless-shell (full Chromium was
+    # dropped to save ~590MB), so match either the full 'chrome' binary or
+    # 'headless_shell'. headless_shell honors the same --headless/--screenshot flags.
+    $chrome = Get-ChildItem -Path "$HOME/.cache/ms-playwright", "/ms-playwright" -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -match 'chrome-linux/(chrome|headless_shell)$' } | Select-Object -First 1
     if (-not $chrome) {
         Write-Info "No in-container Chromium found - skipping browser open; app is live at $Url"
         return
@@ -700,7 +712,7 @@ STEP 2 - implement the issue:
     pwsh ./PrivateBuild.ps1
     pwsh ./AcceptanceTests.ps1
   These are the same gates CI enforces (compile, unit + integration tests, then
-  Playwright acceptance tests, in SQLite mode). If EITHER fails, read the
+  Playwright acceptance tests). If EITHER fails, read the
   output, fix the code, and re-run that gate until it passes. Do not stop until
   BOTH gates pass.
 - Do NOT run any git commands (no commit, push, branch, or PR), and do NOT edit
@@ -1027,6 +1039,21 @@ Run it exactly once, and only when both gates are green.
 
         Write-Success "KEEP_ALIVE ending: $endReason - tearing down app + tunnel."
         Write-StructuredLog -Level "INFO" -Message "KEEP_ALIVE ended" -Data @{ issue_number = $issueNumber; pr_number = $prNumber; reason = $endReason }
+        # On a SHARED SQL Server this pod's per-issue database would otherwise
+        # linger; drop it so databases don't accumulate. (No-op for the local
+        # sidecar case, whose DB dies with the pod.) Best effort.
+        if ($env:SQL_SERVER_HOST -and (Test-Path "/workspace/BuildFunctions.ps1")) {
+            try {
+                . /workspace/BuildFunctions.ps1
+                $dSrv = Get-DefaultDatabaseServer -engine "SQL-Container"
+                $dDb  = Get-ResolvedDatabaseName -explicitName "" -baseName "ChurchBulletin" -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
+                $dPw  = Get-SqlServerPassword -ContainerName (Get-ContainerName -DatabaseName $dDb)
+                if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
+                    Invoke-Sqlcmd -ServerInstance $dSrv -Username sa -Password $dPw -Encrypt Optional -TrustServerCertificate -Query "IF DB_ID('$dDb') IS NOT NULL BEGIN ALTER DATABASE [$dDb] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$dDb]; END" -ErrorAction Stop
+                    Write-Info "Dropped shared-server database '$dDb' on teardown."
+                }
+            } catch { Write-Info "Teardown DB drop skipped: $_" }
+        }
         tmux kill-session -t app        2>$null
         tmux kill-session -t tunnel     2>$null
         tmux kill-session -t ttyd       2>$null

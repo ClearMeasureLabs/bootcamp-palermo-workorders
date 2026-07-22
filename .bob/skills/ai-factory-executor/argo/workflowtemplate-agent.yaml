@@ -1,6 +1,8 @@
 # WorkflowTemplate — one AI Dev run per GitHub issue.
-# Each Workflow = one isolated pod: init(git clone) + agent + ephemeral SQL sidecar.
-# Concurrency across issues is capped to 3 by the ConfigMap in install (parallelism: 3)
+# Each Workflow = one pod: agent (git clone + implement) + app-tunnel sidecar. The
+# database is a per-issue database on the SHARED sql-shared SQL Server (no DinD,
+# no per-pod SQL sidecar). Concurrency across issues is capped by the ConfigMap
+# in install (parallelism) and the semaphore below.
 # and by the semaphore below.
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
@@ -164,7 +166,8 @@ spec:
           - { name: RUN_QUALITY_GATES, value: "{{inputs.parameters.runQualityGates}}" }
           # External SHARED SQL Server (sql-shared Service). No DinD, no sidecar.
           - { name: SQL_SERVER_HOST,   value: "sql-shared,1433" }
-          - { name: SQL_SA_PASSWORD,   value: "AiFactory#Sql1" }
+          - name: SQL_SA_PASSWORD
+            valueFrom: { secretKeyRef: { name: sql-shared-sa, key: sa-password } }
           # Serve mode: hold the pod open with the app + Cloudflare tunnel.
           - { name: KEEP_ALIVE,        value: "{{inputs.parameters.keepAlive}}" }
           - { name: SERVE_PORT,        value: "{{inputs.parameters.servePort}}" }
