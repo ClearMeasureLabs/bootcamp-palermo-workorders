@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using ClearMeasure.Bootcamp.UI.Server;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
@@ -15,7 +17,22 @@ public class AppVersionControllerTests
     [OneTimeSetUp]
     public void OneTimeSetUp()
     {
-        _factory = new WebApplicationFactory<UiServerWebApplicationMarker>();
+        _factory = new WebApplicationFactory<UiServerWebApplicationMarker>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Testing");
+                builder.ConfigureAppConfiguration((_, config) =>
+                {
+                    config.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["ConnectionStrings:SqlConnectionString"] = "Data Source=:memory:",
+                        ["AI_OpenAI_ApiKey"] = "",
+                        ["AI_OpenAI_Url"] = "",
+                        ["AI_OpenAI_Model"] = "",
+                        ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = ""
+                    });
+                });
+            });
         _client = _factory.CreateClient();
     }
 
