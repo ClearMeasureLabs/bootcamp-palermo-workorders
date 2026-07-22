@@ -67,4 +67,16 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footerNote).ToBeVisibleAsync();
         await Expect(footerNote).ToContainTextAsync("Submit a new work order any time");
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowSidecarStatus_OnLandingPage_WhenAnonymous()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        var sidecarStatus = Page.GetByTestId(nameof(MainLayout.Elements.SidecarStatus));
+        await sidecarStatus.WaitForAsync();
+        await Expect(sidecarStatus).ToBeVisibleAsync();
+        await Expect(sidecarStatus).ToContainTextAsync("SIDECAR-OK");
+    }
 }
