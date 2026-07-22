@@ -37,9 +37,12 @@ public class UptimeControllerTests
 
         var result = controller.Get();
         var okResult = result.ShouldBeOfType<OkObjectResult>();
+        okResult.Value.ShouldNotBeNull();
         
-        var uptimeData = okResult.Value.ShouldBeAssignableTo<dynamic>();
-        long uptimeSeconds = uptimeData.uptimeSeconds;
+        var uptimeData = okResult.Value!;
+        var uptimeProperty = uptimeData.GetType().GetProperty("uptimeSeconds");
+        uptimeProperty.ShouldNotBeNull();
+        var uptimeSeconds = (long)uptimeProperty!.GetValue(uptimeData)!;
         uptimeSeconds.ShouldBeGreaterThan(0);
     }
 }
