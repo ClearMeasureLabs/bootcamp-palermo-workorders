@@ -123,22 +123,12 @@ spec:
               wait $CF
           volumeMounts:
             - { name: tunnel-share, mountPath: /shared }
-        # DB SIDECAR: SQL Server 2022 in its OWN container (no Docker-in-Docker,
-        # no --privileged). Pod containers share the network namespace, so the
-        # main container reaches it at 127.0.0.1:1433. Memory-capped
-        # (MSSQL_MEMORY_LIMIT_MB) so it cannot balloon (Step A). build.ps1 runs in
-        # external mode (SQL_EXTERNAL=true): it skips container creation but still
-        # drops+recreates this build's database (ChurchBulletin_<issue>) each run.
-        - name: sqlserver
-          image: mcr.microsoft.com/mssql/server:2022-latest
-          imagePullPolicy: IfNotPresent
-          env:
-            - { name: ACCEPT_EULA,          value: "Y" }
-            - { name: MSSQL_SA_PASSWORD,    value: "AiFactory#Sql1" }
-            - { name: MSSQL_MEMORY_LIMIT_MB, value: "1500" }
-          resources:
-            requests: { cpu: "500m", memory: "2Gi" }
-            limits:   { cpu: "2",    memory: "2560Mi" }
+      # Step B: DB is provided by the ONE shared SQL Server (sql-shared Service),
+      # NOT a per-pod sidecar. Each pod uses its own database (ChurchBulletin_<issue>,
+      # via DATABASE_NAME) on that shared server and drops+recreates only its own DB
+      # each build, so pods are isolated without each running a ~1.5GB SQL Server.
+      # Reachability is granted by the ai-dev-egress-sqlshared NetworkPolicy.
+      # (See argo/shared-sqlserver.yaml.)
       # The clone/branch is handled by the container entrypoint (agent-entrypoint.ps1),
       # which does gh auth + git config + clone into the /workspace emptyDir +
       # branch. A separate init clone container is redundant with that and is
@@ -172,8 +162,8 @@ spec:
           - { name: TERMINAL_ENABLED,  value: "{{inputs.parameters.terminalEnabled}}" }
           - { name: MONITOR_CHECKS,    value: "false" }
           - { name: RUN_QUALITY_GATES, value: "{{inputs.parameters.runQualityGates}}" }
-          # External SQL Server (the sqlserver sidecar, shared network ns). No DinD.
-          - { name: SQL_SERVER_HOST,   value: "127.0.0.1,1433" }
+          # External SHARED SQL Server (sql-shared Service). No DinD, no sidecar.
+          - { name: SQL_SERVER_HOST,   value: "sql-shared,1433" }
           - { name: SQL_SA_PASSWORD,   value: "AiFactory#Sql1" }
           # Serve mode: hold the pod open with the app + Cloudflare tunnel.
           - { name: KEEP_ALIVE,        value: "{{inputs.parameters.keepAlive}}" }
