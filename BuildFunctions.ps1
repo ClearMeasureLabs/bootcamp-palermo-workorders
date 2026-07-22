@@ -8,6 +8,13 @@ Function Initialize-SqlServerModule {
         Ensures the SqlServer module is installed from PSGallery and imported.
         Called explicitly during Init rather than at dot-source time.
     #>
+    # If the go-sqlcmd CLI is available, skip the heavy SqlServer PowerShell module
+    # entirely - New-SqlServerDatabase falls back to `sqlcmd` for its SQL. This lets
+    # slim environments (e.g. the AI-dev agent image) omit the ~219MB module.
+    if (Get-Command sqlcmd -ErrorAction SilentlyContinue) {
+        return
+    }
+
     if (-not (Get-Module -ListAvailable -Name SqlServer)) {
         Write-Host "Installing SqlServer module..." -ForegroundColor DarkCyan
         try {
@@ -251,8 +258,15 @@ END
         if (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue) {
             Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $dropDbCmd -Encrypt Optional -TrustServerCertificate
             Invoke-Sqlcmd -ServerInstance $serverName -Database master -Credential $saCred -Query $createDbCmd -Encrypt Optional -TrustServerCertificate
+        } elseif (Get-Command sqlcmd -ErrorAction SilentlyContinue) {
+            # go-sqlcmd against the (external/shared) server directly - no PS module,
+            # no docker. -C trusts the self-signed cert; password via env, not argv.
+            $env:SQLCMDPASSWORD = $sqlPassword
+            & sqlcmd -S $serverName -U sa -d master -C -Q $dropDbCmd 2>&1 | Out-Null
+            & sqlcmd -S $serverName -U sa -d master -C -Q $createDbCmd 2>&1 | Out-Null
+            Remove-Item Env:\SQLCMDPASSWORD -ErrorAction SilentlyContinue
         } else {
-            # Fallback to docker exec if Invoke-Sqlcmd is not available
+            # Fallback to docker exec if neither Invoke-Sqlcmd nor sqlcmd is available
             # Using -i for interactive mode to avoid password in command line
             $dropDbCmdEscaped = $dropDbCmd -replace '"', '\"' -replace "`r`n", " " -replace "`n", " "
             $createDbCmdEscaped = $createDbCmd -replace '"', '\"' -replace "`r`n", " " -replace "`n", " "
