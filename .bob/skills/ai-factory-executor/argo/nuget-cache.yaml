@@ -1,0 +1,17 @@
+# Shared, persistent NuGet package cache for AI-dev pods. Warmed once, then every
+# pod's `dotnet restore` only fetches deltas (near-instant) instead of downloading
+# the full package graph each run. Replaces the per-pod `nuget` emptyDir (which was
+# wiped every pod). NOT baked into the image: the restored graph is ~2.5GB+ (Blazor
+# WASM runtime packs), which would balloon the image ~5GB. RWO is fine here because
+# Docker Desktop is single-node, so all pods mount it from the same node; NuGet's
+# global-packages folder is safe for concurrent restore (per-package locks).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nuget-cache
+  namespace: ai-factory
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 8Gi

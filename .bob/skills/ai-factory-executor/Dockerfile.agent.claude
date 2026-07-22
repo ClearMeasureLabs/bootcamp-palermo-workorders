@@ -205,6 +205,12 @@ COPY --chown=bobagent:bobagent claude-defaults.json /home/bobagent/.claude.json
 # ignores HTTPS errors, so Kestrel just needs a cert to present.
 RUN dotnet dev-certs https && dotnet dev-certs https --check
 
+# NOTE: NuGet is pre-warmed via a SHARED persistent cache volume (see
+# argo/nuget-cache.yaml + the `nuget` volume in workflowtemplate-agent.yaml), NOT
+# baked into the image. Baking the restored packages here inflated the image by
+# ~5.4GB (the .NET/Blazor-WASM runtime packs are huge), defeating the size goal;
+# a shared PVC warmed once gives the same fast in-pod restore with zero image bloat.
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pwsh -Command "exit 0"

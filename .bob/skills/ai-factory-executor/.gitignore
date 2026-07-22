@@ -7,3 +7,4 @@ bobshell-*.tgz
 bin/
 obj/
 logs/
+nuget-warm/

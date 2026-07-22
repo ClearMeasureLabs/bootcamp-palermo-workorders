@@ -89,8 +89,11 @@ spec:
       volumes:
         - name: workspace
           emptyDir: {}
+        # Shared, persistent NuGet cache (warmed once) so `dotnet restore` fetches
+        # only deltas instead of the full graph each run. See argo/nuget-cache.yaml.
         - name: nuget
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: nuget-cache
         # Shared with the app-tunnel sidecar: the sidecar writes its quick-tunnel
         # URL here (/shared/app-url.txt); the entrypoint reads + publishes it.
         - name: tunnel-share
