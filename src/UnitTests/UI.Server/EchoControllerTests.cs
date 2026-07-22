@@ -1,41 +1,40 @@
 using ClearMeasure.Bootcamp.UI.Server.Controllers;
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
 public class EchoControllerTests
 {
-    [Fact]
+    [Test]
     public void Get_WithMessage_ReturnsMessage()
     {
         var controller = new EchoController();
         var result = controller.Get("hello") as ContentResult;
 
-        result.Should().NotBeNull();
-        result!.Content.Should().Be("hello");
-        result.ContentType.Should().Be("text/plain");
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Content, Is.EqualTo("hello"));
+        Assert.That(result.ContentType, Is.EqualTo("text/plain"));
     }
 
-    [Fact]
+    [Test]
     public void Get_WithoutMessage_ReturnsEmptyString()
     {
         var controller = new EchoController();
         var result = controller.Get(null) as ContentResult;
 
-        result.Should().NotBeNull();
-        result!.Content.Should().Be(string.Empty);
-        result.ContentType.Should().Be("text/plain");
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Content, Is.EqualTo(string.Empty));
+        Assert.That(result.ContentType, Is.EqualTo("text/plain"));
     }
 
-    [Fact]
+    [Test]
     public void Get_WithEmptyMessage_ReturnsEmptyString()
     {
         var controller = new EchoController();
         var result = controller.Get(string.Empty) as ContentResult;
 
-        result.Should().NotBeNull();
-        result!.Content.Should().Be(string.Empty);
-        result.ContentType.Should().Be("text/plain");
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Content, Is.EqualTo(string.Empty));
+        Assert.That(result.ContentType, Is.EqualTo("text/plain"));
     }
 }
