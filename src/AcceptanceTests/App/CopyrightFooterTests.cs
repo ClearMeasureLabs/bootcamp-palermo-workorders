@@ -67,4 +67,18 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footerNote).ToBeVisibleAsync();
         await Expect(footerNote).ToContainTextAsync("Submit a new work order any time");
     }
+
+
+    [Test, Retry(2)]
+    public async Task ShouldShowPoweredByNote_OnLandingPage_WhenAnonymous()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        var poweredBy = Page.GetByTestId(nameof(MainLayout.Elements.PoweredBy));
+        await poweredBy.WaitForAsync();
+        await Expect(poweredBy).ToBeVisibleAsync();
+        await Expect(poweredBy).ToContainTextAsync("Powered by Church Bulletin");
+    }
+
 }

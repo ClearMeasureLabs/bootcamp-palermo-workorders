@@ -330,6 +330,16 @@
     word-wrap: break-word;
 }
 
+.site-footer-powered-by {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #cbd5e0;
+    font-style: italic;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .modern-sidebar {
@@ -584,6 +594,10 @@
 
 :global(html[data-theme="dark"]) .site-footer-note {
     color: #718096;
+}
+
+:global(html[data-theme="dark"]) .site-footer-powered-by {
+    color: #a0aec0;
 }
 
 :global(html[data-theme="dark"]) .user-section ::deep a:focus,
