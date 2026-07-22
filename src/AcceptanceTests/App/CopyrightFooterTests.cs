@@ -18,6 +18,7 @@ public class CopyrightFooterTests : AcceptanceTestBase
 
         var yearText = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
         await Expect(footer).ToContainTextAsync(yearText);
+        await Expect(footer).ToContainTextAsync("Church Bulletin");
         await Expect(footer).ToContainTextAsync("ClearMeasure Labs");
 
         var link = footer.Locator("a[href*='clearmeasure.com']").First;
@@ -39,6 +40,7 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footer).ToBeVisibleAsync();
         var yearText = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
         await Expect(footer).ToContainTextAsync(yearText);
+        await Expect(footer).ToContainTextAsync("Church Bulletin");
         await Expect(footer).ToContainTextAsync("ClearMeasure Labs");
     }
 
