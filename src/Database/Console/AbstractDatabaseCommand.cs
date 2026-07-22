@@ -76,11 +76,17 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             ConnectTimeout = 60 
         };
 
+        // An external/shared SQL Server (SQL_EXTERNAL=true, e.g. a k8s sidecar/shared
+        // test pod) uses a self-signed certificate like a local server, even though its
+        // hostname isn't localhost - trust it the same way.
+        var isExternalSharedServer = string.Equals(
+            Environment.GetEnvironmentVariable("SQL_EXTERNAL"), "true", StringComparison.OrdinalIgnoreCase);
+
         // Configure encryption and certificate trust based on server location
         // These must be explicitly set to ensure DbUp preserves them when creating master connections
-        if (isLocalServer)
+        if (isLocalServer || isExternalSharedServer)
         {
-            // Local servers: don't encrypt, trust certificate
+            // Local/shared dev servers: don't encrypt, trust certificate
             builder.Encrypt = false;
             builder.TrustServerCertificate = true;
             // Diagnostic logging suppressed for clean build output
