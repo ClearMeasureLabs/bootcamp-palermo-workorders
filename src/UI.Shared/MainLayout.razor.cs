@@ -16,7 +16,8 @@ public partial class MainLayout : IAsyncDisposable
     {
         NavRailToggle,
         CopyrightFooter,
-        FooterNote
+        FooterNote,
+        ParallelSpeedMarker
     }
 
     /// <summary>
