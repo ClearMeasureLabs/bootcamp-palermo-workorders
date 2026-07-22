@@ -76,11 +76,18 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
             ConnectTimeout = 60 
         };
 
+        // SQL_EXTERNAL=true marks an already-running SQL Server the build connects to instead of
+        // a local Docker container (e.g. a shared build-cluster SQL container with a self-signed
+        // cert) - see build.ps1's Setup-DatabaseForBuild. It is never set for Octopus/Azure SQL
+        // deploys, so this does not weaken cert validation for real remote servers.
+        var isTrustedExternalServer = string.Equals(
+            Environment.GetEnvironmentVariable("SQL_EXTERNAL"), "true", StringComparison.OrdinalIgnoreCase);
+
         // Configure encryption and certificate trust based on server location
         // These must be explicitly set to ensure DbUp preserves them when creating master connections
-        if (isLocalServer)
+        if (isLocalServer || isTrustedExternalServer)
         {
-            // Local servers: don't encrypt, trust certificate
+            // Local or trusted shared build servers: don't encrypt, trust certificate
             builder.Encrypt = false;
             builder.TrustServerCertificate = true;
             // Diagnostic logging suppressed for clean build output

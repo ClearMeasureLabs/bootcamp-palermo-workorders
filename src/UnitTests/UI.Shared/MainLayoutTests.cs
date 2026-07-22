@@ -221,6 +221,21 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderParallelSpeedMarker_WithinSiteFooter()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var marker = layout.Find($"[data-testid='{nameof(MainLayout.Elements.ParallelSpeedMarker)}']");
+        marker.TextContent.Trim().ShouldBe("PAR-C");
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        footer.QuerySelector($"[data-testid='{nameof(MainLayout.Elements.ParallelSpeedMarker)}']").ShouldNotBeNull();
+    }
+
+    [Test]
     public void ShouldRenderCompanyLink_WithAccessibleAttributes_WhenExternalLinkUsesNewTab()
     {
         using var ctx = CreateContext();
