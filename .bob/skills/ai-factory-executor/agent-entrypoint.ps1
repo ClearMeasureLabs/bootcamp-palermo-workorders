@@ -482,17 +482,20 @@ try {
     # console output to docker logs. build.ps1 hardcodes `$verbosity = "quiet"`;
     # the container clones master, so patch the working copy at runtime. (The
     # repo file is also updated to "normal" for when this reaches master.)
-    # Also drop Playwright's `--with-deps` from the acceptance-test browser
-    # install: the OS deps + chromium are already baked into the image, and
-    # `--with-deps` shells out to sudo/apt which the pod's securityContext
-    # (allowPrivilegeEscalation=false / no-new-privileges) blocks. Without the
-    # flag, `playwright install chromium` sees the pre-baked browser and no-ops.
+    # Also rewrite the acceptance-test browser install `install chromium
+    # --with-deps` -> `install chromium-headless-shell`:
+    #   * `--with-deps` shells out to sudo/apt which the pod's securityContext
+    #     blocks, and the OS deps are already baked into the image.
+    #   * the image ships ONLY the Playwright chromium_headless_shell build (the
+    #     full ~590MB Chromium is intentionally omitted - headless tests use the
+    #     headless shell, verified empirically). Targeting `chromium-headless-shell`
+    #     makes the runtime install a no-op instead of re-downloading full Chromium.
     if (Test-Path "./build.ps1") {
         (Get-Content "./build.ps1") `
             -replace '\$verbosity = "quiet"', '$verbosity = "normal"' `
-            -replace 'install chromium --with-deps', 'install chromium' |
+            -replace 'install chromium --with-deps', 'install chromium-headless-shell' |
             Set-Content "./build.ps1"
-        Write-Info "Build verbosity set to normal; Playwright --with-deps removed (browsers pre-baked)"
+        Write-Info "Build verbosity set to normal; Playwright install -> chromium-headless-shell (headless-shell pre-baked, full Chromium omitted)"
     }
 
     # 6. Build the task prompt for Bob CLI

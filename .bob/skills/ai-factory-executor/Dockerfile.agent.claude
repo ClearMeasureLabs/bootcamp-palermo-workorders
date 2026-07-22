@@ -19,7 +19,6 @@ RUN apt-get update && \
     apt-get install -y \
     wget \
     apt-transport-https \
-    software-properties-common \
     curl \
     jq \
     vim \
@@ -119,6 +118,12 @@ RUN dotnet workload update --skip-sign-check || true
 # browsers are pre-installed here into a shared, world-readable location so that
 # runtime call is a fast no-op. Version matches Microsoft.Playwright (1.54.0).
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# Install the OS deps (via --with-deps chromium) but keep only the headless-shell
+# browser build. The acceptance tests launch Chromium with Headless=true, which
+# Playwright 1.54 serves from chromium_headless_shell (~323MB), NOT the full
+# Chromium (~590MB) - verified empirically. Removing the full build saves ~590MB;
+# the entrypoint rewrites build.ps1's runtime `install chromium` to
+# `install chromium-headless-shell` so it stays a no-op (no re-download).
 RUN apt-get update && apt-get install -y \
     fonts-liberation \
     libappindicator3-1 \
@@ -126,6 +131,8 @@ RUN apt-get update && apt-get install -y \
     sudo && \
     npm install -g playwright@1.54.0 && \
     npx --yes playwright@1.54.0 install --with-deps chromium && \
+    rm -rf /ms-playwright/chromium-[0-9]* && \
+    chown -R 1001:1001 /ms-playwright && \
     chmod -R a+rX /ms-playwright && \
     rm -rf /var/lib/apt/lists/*
 
@@ -152,10 +159,9 @@ RUN groupadd -f docker && usermod -aG docker bobagent
 RUN echo "bobagent ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/bobagent && \
     chmod 0440 /etc/sudoers.d/bobagent
 
-# Give bobagent ownership of the pre-installed Playwright browsers directory.
-# `playwright install` writes a __dirlock there (even when browsers already
-# exist), so a read-only root-owned dir causes EACCES at runtime.
-RUN chown -R bobagent:bobagent /ms-playwright
+# Ownership of /ms-playwright (UID 1001 = bobagent) is applied INSIDE the
+# playwright install RUN above. A separate `RUN chown -R ...` here would copy the
+# entire ~917MB browser directory into a second image layer (measured: +1.26GB).
 
 # Set working directory
 WORKDIR /workspace
