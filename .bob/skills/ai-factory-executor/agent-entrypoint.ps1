@@ -155,13 +155,14 @@ function Get-ServeConnectionString {
     if (-not (Test-Path "/workspace/BuildFunctions.ps1")) { return $null }
     try {
         . /workspace/BuildFunctions.ps1
-        # Derive the DB name exactly as build.ps1's acceptance path does, so we
-        # reconnect to the same container the gates created (name + password are
-        # deterministic from the DB name).
+        # Reconnect to the SAME database the gates used. In external mode
+        # (SQL_SERVER_HOST set), the server/name/password come from the env the
+        # entrypoint configured; Get-* honor those env vars. Locally they fall back
+        # to the deterministic Docker-container derivation.
         $dbName    = Get-ResolvedDatabaseName -explicitName "" -baseName "ChurchBulletin" -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
-        $server    = Get-DefaultDatabaseServer -engine "SQL-Container"   # localhost
-        $container = Get-ContainerName -DatabaseName $dbName             # <dbname>-mssql
-        $pw        = Get-SqlServerPassword -ContainerName $container
+        $server    = Get-DefaultDatabaseServer -engine "SQL-Container"   # $SQL_SERVER_HOST or localhost
+        $container = Get-ContainerName -DatabaseName $dbName             # only used for the local password derivation
+        $pw        = Get-SqlServerPassword -ContainerName $container     # $SQL_SA_PASSWORD when set
         return (New-SqlServerConnectionString -server $server -database $dbName -password $pw)
     } catch {
         Write-Info "Could not reconstruct SQL Server connection string: $_"
@@ -386,9 +387,15 @@ try {
         sudo chown -R bobagent:bobagent /tmp/nuget-packages 2>$null
     }
 
-    # Start Docker-in-Docker if requested (no-op unless ENABLE_DIND=true).
-    & /usr/local/bin/start-dind.ps1
-    
+    # Start Docker-in-Docker only if explicitly requested (ENABLE_DIND=true). The
+    # default DB path now uses an external SQL Server (sidecar/shared) over the
+    # network, so no in-pod Docker daemon - or --privileged - is needed. Kept as an
+    # opt-in for legacy/local flows. start-dind.ps1 is also absent from the slim
+    # image, so guard the call.
+    if ($env:ENABLE_DIND -eq "true" -and (Test-Path "/usr/local/bin/start-dind.ps1")) {
+        & /usr/local/bin/start-dind.ps1
+    }
+
     # 1. Validate required environment variables
     $requiredVars = @(
         "ISSUE_NUMBER",
@@ -535,13 +542,22 @@ $issueBody
     Write-Progress "Executing implementation..."
     Write-StructuredLog -Level "INFO" -Message "Starting implementation"
     
-    # Database engine: with Docker-in-Docker available, let build.ps1 auto-detect
-    # and use its SQL-Server container mode. Otherwise force SQLite (no daemon).
-    if ($env:ENABLE_DIND -eq "true") {
-        Write-Info "Docker-in-Docker enabled - build will auto-detect SQL Server container mode"
+    # Database: connect to an EXTERNAL SQL Server (a pod sidecar, or a shared
+    # server) over the network instead of running SQL in-pod via Docker-in-Docker.
+    # This removes the Docker engine (and --privileged) from the agent. build.ps1
+    # runs its SQL-Container path in external mode (SQL_EXTERNAL=true): it skips
+    # container creation but STILL drops+recreates this build's database, so every
+    # PrivateBuild starts clean. The database name is parameterized per issue
+    # (DATABASE_NAME) so many pods can share one server without colliding.
+    if ($env:SQL_SERVER_HOST) {
+        $env:DATABASE_ENGINE = "SQL-Container"
+        $env:SQL_EXTERNAL     = "true"
+        if (-not $env:DATABASE_NAME) { $env:DATABASE_NAME = "ChurchBulletin_$issueNumber" }
+        Write-Info "DB: external SQL Server at $env:SQL_SERVER_HOST, database $env:DATABASE_NAME (drop+recreate each PrivateBuild)"
     } else {
         $env:DATABASE_ENGINE = "SQLite"
         $env:ConnectionStrings__SqlConnectionString = "Data Source=ChurchBulletin.db"
+        Write-Info "DB: SQLite (no SQL_SERVER_HOST configured)"
     }
 
     # Select which AI agent to run. Default: claude. Swap to bob by setting AI_AGENT=bob.

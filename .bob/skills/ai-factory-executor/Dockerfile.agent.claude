@@ -45,17 +45,12 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     apt-get update && \
     apt-get install -y gh
 
-# Install the full Docker engine (daemon + CLI + containerd) so the container
-# can run Docker-in-Docker. This lets docker-dependent steps run inside the
-# agent container - e.g. build.ps1's SQL-Server container mode for integration
-# tests, where the DB container and the app share the in-container daemon's
-# localhost. Requires the container to be started with --privileged and the
-# dockerd started at entrypoint (see start-dind.ps1). fuse-overlayfs/iptables
-# support the daemon's storage and networking.
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
-    apt-get update && \
-    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin fuse-overlayfs iptables
+# NOTE: the full Docker engine (docker-ce/containerd/buildx, ~340MB) is NO LONGER
+# installed. The DB for integration tests + serve mode is provided by an EXTERNAL
+# SQL Server reachable over the pod network (a sidecar or a shared server), so the
+# agent no longer runs Docker-in-Docker and does not need --privileged. build.ps1
+# runs its SQL path in external mode (SQL_EXTERNAL=true). To restore local DinD,
+# reinstate this layer and set ENABLE_DIND=true.
 
 # Install SQLite
 RUN apt-get install -y sqlite3 libsqlite3-dev

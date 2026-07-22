@@ -66,7 +66,10 @@ spec:
           - { name: runQualityGates }
           - { name: keepAlive }
           - { name: servePort }
-      # Fair-share sizing so 3 fit on one box (was 16 CPU / 24 GB each, sequential).
+      # Right-sized after removing Docker-in-Docker + the in-DinD SQL Server. The
+      # main container now only runs the .NET build/test/serve + Claude agent;
+      # SQL runs in its own memory-capped sidecar. (Step A: requests lowered from
+      # 8Gi/3cpu, limits from 12Gi/4cpu.)
       podSpecPatch: |
         securityContext:
           # emptyDir volumes (workspace, nuget) and secret files are group-owned
@@ -75,10 +78,8 @@ spec:
         containers:
           - name: main
             resources:
-              # Higher memory: this pod now runs Docker-in-Docker + an in-DinD
-              # SQL Server 2022 container + the .NET build/test/serve, all at once.
-              requests: { cpu: "3", memory: "8Gi" }
-              limits:   { cpu: "4", memory: "12Gi" }
+              requests: { cpu: "2", memory: "4Gi" }
+              limits:   { cpu: "3", memory: "6Gi" }
       metadata:
         labels:
           app: ai-dev
@@ -122,16 +123,26 @@ spec:
               wait $CF
           volumeMounts:
             - { name: tunnel-share, mountPath: /shared }
+        # DB SIDECAR: SQL Server 2022 in its OWN container (no Docker-in-Docker,
+        # no --privileged). Pod containers share the network namespace, so the
+        # main container reaches it at 127.0.0.1:1433. Memory-capped
+        # (MSSQL_MEMORY_LIMIT_MB) so it cannot balloon (Step A). build.ps1 runs in
+        # external mode (SQL_EXTERNAL=true): it skips container creation but still
+        # drops+recreates this build's database (ChurchBulletin_<issue>) each run.
+        - name: sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: ACCEPT_EULA,          value: "Y" }
+            - { name: MSSQL_SA_PASSWORD,    value: "AiFactory#Sql1" }
+            - { name: MSSQL_MEMORY_LIMIT_MB, value: "1500" }
+          resources:
+            requests: { cpu: "500m", memory: "2Gi" }
+            limits:   { cpu: "2",    memory: "2560Mi" }
       # The clone/branch is handled by the container entrypoint (agent-entrypoint.ps1),
       # which does gh auth + git config + clone into the /workspace emptyDir +
       # branch. A separate init clone container is redundant with that and is
       # intentionally omitted.
-      # DB: no sidecar. build.ps1's SQL-Container mode (enabled by ENABLE_DIND
-      # below) starts its own SQL Server 2022 inside the in-container dockerd and
-      # publishes it on localhost:1433 - which would collide with a pod-level
-      # sidecar on the same port - and build.ps1's migration function creates the
-      # schema there. The agent's gates, the ZDataLoader sample-data reload, and
-      # the served app all use that in-DinD SQL Server.
       container:
         name: main
         image: ai-factory-agent:latest
@@ -161,8 +172,9 @@ spec:
           - { name: TERMINAL_ENABLED,  value: "{{inputs.parameters.terminalEnabled}}" }
           - { name: MONITOR_CHECKS,    value: "false" }
           - { name: RUN_QUALITY_GATES, value: "{{inputs.parameters.runQualityGates}}" }
-          - { name: ENABLE_DIND,       value: "true" }    # start in-container dockerd; build.ps1 uses SQL-Container mode
-          - { name: SQL_SERVER,        value: "localhost,1433" }
+          # External SQL Server (the sqlserver sidecar, shared network ns). No DinD.
+          - { name: SQL_SERVER_HOST,   value: "127.0.0.1,1433" }
+          - { name: SQL_SA_PASSWORD,   value: "AiFactory#Sql1" }
           # Serve mode: hold the pod open with the app + Cloudflare tunnel.
           - { name: KEEP_ALIVE,        value: "{{inputs.parameters.keepAlive}}" }
           - { name: SERVE_PORT,        value: "{{inputs.parameters.servePort}}" }
@@ -173,10 +185,9 @@ spec:
           # See init container note: avoid /run/secrets (collides with SA token).
           - { name: agent-secrets, mountPath: /var/agent-secrets, readOnly: true }
         securityContext:
-          # Docker-in-Docker: start-dind.ps1 runs `sudo dockerd`, which needs a
-          # privileged container (this intentionally drops the earlier non-root /
-          # no-privilege-escalation / drop-ALL-caps hardening). Runs as bobagent
-          # (1001) with passwordless sudo, as the image is built.
-          privileged: true
+          # No Docker-in-Docker anymore, so NOT privileged. Runs as the non-root
+          # bobagent (1001). allowPrivilegeEscalation stays true only so the
+          # acceptance gate's occasional `sudo` (apt for any missing lib) works;
+          # the dangerous privileged flag is gone.
           runAsUser: 1001
           allowPrivilegeEscalation: true
