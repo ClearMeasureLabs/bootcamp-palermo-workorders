@@ -1,64 +1,60 @@
 using System.Net;
 using System.Net.Http.Json;
 using ClearMeasure.Bootcamp.UI.Server;
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
-public class AppVersionControllerTests : IClassFixture<WebApplicationFactory<UiServerWebApplicationMarker>>
+[TestFixture]
+public class AppVersionControllerTests
 {
-    private readonly WebApplicationFactory<UiServerWebApplicationMarker> _factory;
+    private WebApplicationFactory<UiServerWebApplicationMarker>? _factory;
+    private HttpClient? _client;
 
-    public AppVersionControllerTests(WebApplicationFactory<UiServerWebApplicationMarker> factory)
+    [OneTimeSetUp]
+    public void OneTimeSetUp()
     {
-        _factory = factory;
+        _factory = new WebApplicationFactory<UiServerWebApplicationMarker>();
+        _client = _factory.CreateClient();
     }
 
-    [Fact]
-    public async Task GetAppVersion_ReturnsVersionJson()
+    [OneTimeTearDown]
+    public void OneTimeTearDown()
     {
-        // Arrange
-        var client = _factory.CreateClient();
+        _client?.Dispose();
+        _factory?.Dispose();
+    }
 
-        // Act
-        var response = await client.GetAsync("/api/appversion");
+    [Test]
+    public async Task Should_ReturnVersionJson_When_GetAppVersion()
+    {
+        var response = await _client!.GetAsync("/api/appversion");
 
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var content = await response.Content.ReadFromJsonAsync<AppVersionResponse>();
-        content.Should().NotBeNull();
-        content!.Version.Should().NotBeNullOrWhiteSpace();
+        content.ShouldNotBeNull();
+        content!.Version.ShouldNotBeNullOrWhiteSpace();
     }
 
-    [Fact]
-    public async Task GetAppVersion_VersionedRoute_ReturnsVersionJson()
+    [Test]
+    public async Task Should_ReturnVersionJson_When_GetAppVersion_VersionedRoute()
     {
-        // Arrange
-        var client = _factory.CreateClient();
+        var response = await _client!.GetAsync("/api/v1.0/appversion");
 
-        // Act
-        var response = await client.GetAsync("/api/v1.0/appversion");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var content = await response.Content.ReadFromJsonAsync<AppVersionResponse>();
-        content.Should().NotBeNull();
-        content!.Version.Should().NotBeNullOrWhiteSpace();
+        content.ShouldNotBeNull();
+        content!.Version.ShouldNotBeNullOrWhiteSpace();
     }
 
-    [Fact]
-    public async Task GetAppVersion_ReturnsOutputCacheHeaders()
+    [Test]
+    public async Task Should_ReturnCacheHeaders_When_GetAppVersion()
     {
-        // Arrange
-        var client = _factory.CreateClient();
+        var response = await _client!.GetAsync("/api/appversion");
 
-        // Act
-        var response = await client.GetAsync("/api/appversion");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        response.Headers.CacheControl.Should().NotBeNull();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.CacheControl.ShouldNotBeNull();
     }
 
     private record AppVersionResponse(string Version);
