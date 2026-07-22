@@ -221,6 +221,21 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderSidecarStatus_WithinSiteFooter()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var sidecarStatus = layout.Find($"[data-testid='{nameof(MainLayout.Elements.SidecarStatus)}']");
+        sidecarStatus.TextContent.Trim().ShouldBe("SIDECAR-OK");
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        footer.QuerySelector($"[data-testid='{nameof(MainLayout.Elements.SidecarStatus)}']").ShouldNotBeNull();
+    }
+
+    [Test]
     public void ShouldRenderCompanyLink_WithAccessibleAttributes_WhenExternalLinkUsesNewTab()
     {
         using var ctx = CreateContext();
