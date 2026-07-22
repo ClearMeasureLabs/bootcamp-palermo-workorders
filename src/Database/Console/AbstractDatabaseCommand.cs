@@ -39,15 +39,20 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
     protected static string GetConnectionString(DatabaseOptions options)
     {
-        // Determine if this is a local server (localhost, 127.0.0.1, or LocalDB)
+        // Determine if this is a local/internal server (localhost, 127.0.0.1, LocalDB, or an
+        // unqualified internal hostname such as a shared test SQL container). Publicly
+        // addressable servers (e.g. Azure SQL) are always fully-qualified domain names, so an
+        // unqualified single-label host is treated as internal/self-signed-cert-trusted.
         var serverName = (options.DatabaseServer ?? string.Empty).Trim();
+        var serverHost = serverName.Split(',', ':', '\\')[0];
         var isLocalServer = serverName.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase) ||
                            serverName.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
+                           serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) ||
+                           !serverHost.Contains('.');
 
 
 

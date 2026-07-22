@@ -67,4 +67,16 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footerNote).ToBeVisibleAsync();
         await Expect(footerNote).ToContainTextAsync("Submit a new work order any time");
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowParallelSpeedTag_OnLandingPage_WhenAnonymous()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        var tag = Page.GetByTestId(nameof(MainLayout.Elements.ParallelSpeedTag));
+        await tag.WaitForAsync();
+        await Expect(tag).ToBeVisibleAsync();
+        await Expect(tag).ToContainTextAsync("PAR-B");
+    }
 }
