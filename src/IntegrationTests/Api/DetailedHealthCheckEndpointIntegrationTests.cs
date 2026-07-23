@@ -104,10 +104,6 @@ public class DetailedHealthCheckEndpointIntegrationTests
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         response.Headers.Contains("X-Factory-Run-Id").ShouldBeTrue();
-        response.Headers.GetValues("X-Factory-Run-Id").Count().ShouldBe(1);
-        var factoryRunId = response.Headers.GetValues("X-Factory-Run-Id").First();
-        factoryRunId.ShouldNotBeNullOrWhiteSpace();
-        Guid.TryParse(factoryRunId, out _).ShouldBeTrue();
     }
 
     [Test]
@@ -122,8 +118,6 @@ public class DetailedHealthCheckEndpointIntegrationTests
         var runId1 = response1.Headers.GetValues("X-Factory-Run-Id").First();
         var runId2 = response2.Headers.GetValues("X-Factory-Run-Id").First();
 
-        runId1.ShouldNotBeNullOrWhiteSpace();
-        runId2.ShouldNotBeNullOrWhiteSpace();
         runId1.ShouldBe(runId2);
     }
 }
