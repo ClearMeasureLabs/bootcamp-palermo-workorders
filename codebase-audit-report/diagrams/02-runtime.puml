@@ -1,0 +1,50 @@
+@startuml runtime
+title Runtime View - CQRS request flow through IBus/MediatR\nTop: read path (query). Bottom: write path (state command).
+caption Every operation crosses the same spine: UI -> API -> IBus -> MediatR -> Handler (DataAccess) -> SQL Server.
+
+skinparam defaultFontName Segoe UI
+skinparam sequence {
+  ArrowColor #34495E
+  LifeLineBorderColor #95A5A6
+  GroupBorderColor #7F8C8D
+  ParticipantBorderColor #34495E
+}
+skinparam BoxPadding 12
+autonumber "<b>0."
+
+actor User #White
+box "Browser" #FDF3E7
+  participant "Blazor UI\n(UI.Client/Shared)" as UI
+end box
+box "Web host (UI.Server)" #EAF2F8
+  participant "API Controller\n(UI.Api)" as API
+  participant "IBus\n(Core)" as BUS
+  participant "MediatR" as MED
+  participant "Handler\n(DataAccess)" as H
+end box
+box "Infrastructure" #E8F6EF
+  database "SQL Server\n(EF Core DataContext)" as DB
+  participant "NServiceBus\n(Worker)" as NSB
+end box
+
+== Query (read): WorkOrderByNumber ==
+User -> UI : open work order
+UI -> API : HTTP POST WebServiceMessage
+API -> BUS : Send(WorkOrderByNumberQuery)
+BUS -> MED : IMediator.Send
+MED -> H : WorkOrderQueryHandler.Handle
+H -> DB : AsNoTracking().SingleOrDefaultAsync
+DB --> H : WorkOrder
+H --> UI : WorkOrder (via response)
+
+== State command (write): DraftToAssigned ==
+User -> UI : click Assign
+UI -> API : HTTP POST
+API -> BUS : Send(IStateCommand)
+BUS -> MED : IMediator.Send
+MED -> H : StateCommandHandler.Handle
+H -> H : command.Execute(context)\n(ChangeTracker.Clear + Attach/Add)
+H -> DB : SaveChangesAsync
+H -> NSB : PublishAsync(StateTransitionEvent)\n(null for most commands)
+H --> UI : StateCommandResult
+@enduml

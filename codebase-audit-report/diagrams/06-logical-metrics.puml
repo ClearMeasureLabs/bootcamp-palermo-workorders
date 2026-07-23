@@ -1,0 +1,65 @@
+@startuml logical-metrics
+title Logical View annotated with LOC and cyclomatic complexity\n(authored C# + Razor; generated protos excluded from totals)
+caption Heat color = maintenance risk by LOC x CC concentration. Numbers are tool-measured; avg CC/class ~2.1 (System).
+
+skinparam defaultFontName Segoe UI
+skinparam componentStyle rectangle
+skinparam rectangle {
+  BorderColor #566573
+  BackgroundColor<<hot>> #F7C6C6
+  BackgroundColor<<warm>> #F7E3C6
+  BackgroundColor<<cool>> #CFE8CF
+  BackgroundColor<<excl>> #EAECEE
+}
+
+rectangle "SYSTEM (authored)  -  10,011 LOC / CC 478" as SYS {
+  rectangle "UI / Presentation (outer)" as UIL {
+    rectangle "UI.Client\nLOC 486  CC 12" <<cool>> as client
+    rectangle "UI.Shared\nLOC 2045  CC 104\n(WorkOrderManage.razor.cs cc38)" <<warm>> as shared
+    rectangle "UI.Api\nLOC 590  CC 24" <<cool>> as api
+    rectangle "UI.Server\nLOC 1870  CC 130\n(Idempotency+ApiKey middleware)" <<hot>> as server
+  }
+  rectangle "Application / Infrastructure" as APPL {
+    rectangle "DataAccess\nLOC 496  CC 31\n(StateCommandHandler)" <<warm>> as data
+    rectangle "LlmGateway\nLOC 349  CC 15" <<cool>> as llm
+    rectangle "McpServer\nLOC 462  CC 28\n(WorkOrderTools switch-on-string)" <<warm>> as mcp
+    rectangle "Worker\nLOC 232  CC 4" <<cool>> as worker
+    rectangle "ServiceDefaults\nLOC 570  CC 36\n(LocalTelemetryFileWriter)" <<warm>> as sd
+  }
+  rectangle "Domain Core (innermost)" as COREL {
+    rectangle "Core\nLOC 1087  CC 70\n(domain + 14 validators)" <<cool>> as core
+    rectangle "Database\nLOC 309 C# + 1505 SQL  CC 24" <<cool>> as db
+  }
+  rectangle "Generated Protos EXCLUDED\nLOC 1405  CC 284" <<excl>> as gen
+}
+
+rectangle "DEVOPS / TEST  -  13,130 LOC" as DT {
+  rectangle "UnitTests\nLOC 5369 / 273 tests" <<cool>> as ut
+  rectangle "IntegrationTests\nLOC 3876 / 119 tests" <<cool>> as it
+  rectangle "AcceptanceTests\nLOC 3085 / 88 tests" <<cool>> as at
+  rectangle "Build/DevOps\nLOC ~800 (PowerShell)" <<cool>> as build
+}
+
+' layout hints: stack rings top-down, keep DEVOPS/TEST beside SYSTEM
+UIL -[hidden]down- APPL
+APPL -[hidden]down- COREL
+COREL -[hidden]down- gen
+ut -[hidden]down- it
+it -[hidden]down- at
+at -[hidden]down- build
+SYS -[hidden]right- DT
+
+note bottom of SYS
+  Red = highest LOCxCC hotspots (fix first).
+  Complexity is low overall but concentrated
+  in UI.Server and UI.Shared.
+end note
+
+legend right
+|= Color |= Heat (LOC x CC risk) |
+|<#F7C6C6> | Hot - highest concentration, fix first |
+|<#F7E3C6> | Warm - watch, refactor opportunistically |
+|<#CFE8CF> | Cool - low risk |
+|<#EAECEE> | Generated code, excluded from totals |
+endlegend
+@enduml

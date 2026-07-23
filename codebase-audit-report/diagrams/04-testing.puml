@@ -1,0 +1,45 @@
+@startuml testing
+title Testing View - automation pyramid (480 tests total)
+caption Wider base = more, faster, cheaper tests. Counts and % are measured; 273 + 119 + 88 = 480.
+
+skinparam defaultFontName Segoe UI
+skinparam rectangle {
+  BorderColor #566573
+  BackgroundColor<<a>> #F7D6D6
+  BackgroundColor<<i>> #F7E9C6
+  BackgroundColor<<u>> #CFE8CF
+}
+
+rectangle "AcceptanceTests (full-system, Playwright)\n88 tests - 18%\ndrives running Blazor app + MCP-over-HTTP + rate limiting" <<a>> as A
+rectangle "IntegrationTests (real EF Core + SQL Server)\n119 tests - 25%\nMediatR handlers, StateCommandHandler, mappings, gRPC, WebSocket\n" <<i>> as I
+rectangle "UnitTests (NUnit/Shouldly/AutoBogus + bUnit)\n273 tests - 57%\n(~34 are in-memory WebApplicationFactory/bUnit - really integration)\n\n" <<u>> as U
+
+A -[hidden]down- I
+I -[hidden]down- U
+
+note right of A
+  Slowest, most expensive per test.
+  Runs before every PR
+  (acceptancetests.ps1).
+end note
+note right of I
+  Coverage GAPS (no test):
+  Forecast/Attachment query handlers,
+  12 Core validators (direct),
+  RealtimeNotificationHub, gRPC service,
+  several controllers + health checks.
+end note
+note right of U
+  Shape: broadly healthy pyramid.
+  Caveat: unit base softened by
+  ~34 web/component tests filed as unit.
+  Coverlet wired; no coverage gate.
+end note
+
+legend bottom
+|= Color |= Pyramid level |= Speed / cost |
+|<#F7D6D6> | Acceptance (top) | minutes each - costly |
+|<#F7E9C6> | Integration (middle) | seconds each |
+|<#CFE8CF> | Unit (base) | milliseconds each - cheap |
+endlegend
+@enduml
