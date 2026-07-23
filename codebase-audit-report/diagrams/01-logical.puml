@@ -1,0 +1,58 @@
+@startuml logical
+!include <C4/C4_Component>
+title Logical View - WorkOrders (Onion Architecture)\nOuter boxes split authored SYSTEM code from DEVOPS/TEST code
+caption Arrows show the primary logical flow; dependencies always point inward toward Domain Core.
+LAYOUT_TOP_DOWN()
+
+skinparam defaultFontName Segoe UI
+skinparam linetype polyline
+
+AddElementTag("test", $bgColor="#B85450", $fontColor="#ffffff", $legendText="Test project")
+AddElementTag("devops", $bgColor="#8A6D3B", $fontColor="#ffffff", $legendText="Build / DevOps scripts")
+AddElementTag("core", $bgColor="#2E7D32", $fontColor="#ffffff", $legendText="Domain Core (innermost)")
+AddElementTag("infra", $bgColor="#1A5276", $fontColor="#ffffff", $legendText="Application / Infrastructure")
+AddElementTag("ui", $bgColor="#7D6608", $fontColor="#ffffff", $legendText="UI / Presentation (outer)")
+
+System_Boundary(sys, "SYSTEM (authored, 10,011 LOC)") {
+  Container_Boundary(ui, "UI / Presentation (outer ring)") {
+    Component(client, "UI.Client", "Blazor WASM", "Browser SPA", $tags="ui")
+    Component(shared, "UI.Shared", "Blazor components", "Pages incl WorkOrderManage", $tags="ui")
+    Component(api, "UI.Api", "Controllers", "HTTP boundary -> IBus", $tags="ui")
+    Component(server, "UI.Server", "ASP.NET host", "Composition root, middleware, gRPC, SignalR", $tags="ui")
+  }
+  Container_Boundary(app, "Application / Infrastructure ring") {
+    Component(data, "DataAccess", "MediatR handlers + EF Core", "Handlers AND DataContext (blended)", $tags="infra")
+    Component(llm, "LlmGateway", "Azure OpenAI adapter", "Chat/translate/reformat", $tags="infra")
+    Component(mcp, "McpServer", "MCP tools", "WorkOrderTools", $tags="infra")
+    Component(worker, "Worker", "NServiceBus endpoint", "Async messages", $tags="infra")
+    Component(defaults, "ServiceDefaults", "OTel/Serilog/resilience", "Cross-cutting", $tags="infra")
+  }
+  Container_Boundary(core, "Domain Core (innermost ring)") {
+    Component(corec, "Core", "Domain model + Queries + StateCommands", "WorkOrder, Employee, WorkOrderStatus; couples MediatR + FluentValidation", $tags="core")
+    Component(db, "Database", "DbUp migrations", "28 SQL scripts", $tags="core")
+  }
+}
+
+System_Boundary(dt, "DEVOPS / TEST (13,130 LOC)") {
+  Component(unit, "UnitTests", "NUnit/bUnit", "273 tests", $tags="test")
+  Component(integ, "IntegrationTests", "NUnit + real DB", "119 tests", $tags="test")
+  Component(accept, "AcceptanceTests", "Playwright", "88 tests", $tags="test")
+  Component(build, "Build/DevOps", "PowerShell + Octopus", "build.ps1, pipeline", $tags="devops")
+}
+
+Rel(client, shared, "renders")
+Rel(shared, api, "HTTP")
+Rel(api, corec, "IBus.Send")
+Rel(server, data, "hosts handlers")
+Rel(data, corec, "references")
+Rel(data, db, "schema (runtime)")
+Rel(llm, corec, "references")
+Rel(mcp, data, "references")
+Rel(worker, data, "references")
+Rel(unit, corec, "verifies")
+Rel(integ, data, "verifies + DB")
+Rel(accept, server, "drives app")
+Rel(build, sys, "compiles/deploys")
+
+SHOW_LEGEND()
+@enduml
