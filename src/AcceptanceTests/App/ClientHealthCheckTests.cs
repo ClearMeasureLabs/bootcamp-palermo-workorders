@@ -18,8 +18,8 @@ public class ClientHealthCheckTests : AcceptanceTestBase
     public async Task FirstStartShouldValidateClientHealthChecks()
     {
         await Page.GotoAsync("/_clienthealthcheck");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         var statusSpan = Page.GetByTestId(nameof(ClientHealthCheck.Elements.Status));
+        await statusSpan.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         var innerTextAsync = await statusSpan.InnerTextAsync();
         innerTextAsync.ShouldBeOneOf(AcceptableHealthStatuses);
         AcceptableHealthStatuses.ShouldContain(innerTextAsync);
@@ -36,8 +36,8 @@ public class ClientHealthCheckTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/_clienthealthcheck");
         Page.Url.ShouldContain("/_clienthealthcheck");
 
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         var statusSpan = Page.GetByTestId(nameof(ClientHealthCheck.Elements.Status));
+        await statusSpan.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         var innerTextAsync = await statusSpan.InnerTextAsync();
         AcceptableHealthStatuses.ShouldContain(innerTextAsync);
     }
