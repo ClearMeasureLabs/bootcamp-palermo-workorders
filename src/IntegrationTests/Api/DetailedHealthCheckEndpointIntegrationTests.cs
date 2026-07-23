@@ -103,8 +103,9 @@ public class DetailedHealthCheckEndpointIntegrationTests
         var response = await _client!.GetAsync("/_healthcheck/detailed");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        response.Headers.TryGetValues("X-Factory-Run-Id", out var headerValues).ShouldBeTrue();
-        var factoryRunId = headerValues?.FirstOrDefault();
+        response.Headers.Contains("X-Factory-Run-Id").ShouldBeTrue();
+        response.Headers.GetValues("X-Factory-Run-Id").Count().ShouldBe(1);
+        var factoryRunId = response.Headers.GetValues("X-Factory-Run-Id").First();
         factoryRunId.ShouldNotBeNullOrWhiteSpace();
         Guid.TryParse(factoryRunId, out _).ShouldBeTrue();
     }
@@ -115,11 +116,11 @@ public class DetailedHealthCheckEndpointIntegrationTests
         var response1 = await _client!.GetAsync("/_healthcheck/detailed");
         var response2 = await _client!.GetAsync("/_healthcheck/detailed");
 
-        response1.Headers.TryGetValues("X-Factory-Run-Id", out var values1).ShouldBeTrue();
-        response2.Headers.TryGetValues("X-Factory-Run-Id", out var values2).ShouldBeTrue();
+        response1.Headers.Contains("X-Factory-Run-Id").ShouldBeTrue();
+        response2.Headers.Contains("X-Factory-Run-Id").ShouldBeTrue();
 
-        var runId1 = values1!.FirstOrDefault();
-        var runId2 = values2!.FirstOrDefault();
+        var runId1 = response1.Headers.GetValues("X-Factory-Run-Id").First();
+        var runId2 = response2.Headers.GetValues("X-Factory-Run-Id").First();
 
         runId1.ShouldNotBeNullOrWhiteSpace();
         runId2.ShouldNotBeNullOrWhiteSpace();
