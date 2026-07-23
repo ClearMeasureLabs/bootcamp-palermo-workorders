@@ -112,8 +112,11 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(GetInputDelayMs());
 
+        // First interactive element after a cold anonymous WASM boot: allow generous warmup.
+        // browserContext.SetDefaultTimeout does not apply to web-first assertions (they default to
+        // 5s), so this must be explicit - matching the pattern used elsewhere in this suite.
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
-        await Expect(toggle).ToBeVisibleAsync();
+        await Expect(toggle).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         await Task.Delay(GetInputDelayMs());
