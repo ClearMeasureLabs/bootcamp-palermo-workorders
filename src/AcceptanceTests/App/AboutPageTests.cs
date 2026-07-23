@@ -8,7 +8,7 @@ public class AboutPageTests : AcceptanceTestBase
     [Test]
     public async Task Should_DisplayAboutPageWithBuiltWithDotNetBadge()
     {
-        await Page.GotoAsync(ServerUrl + "/about");
+        await Page.GotoAsync("/about");
         
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         
@@ -24,7 +24,7 @@ public class AboutPageTests : AcceptanceTestBase
     [Test]
     public async Task Should_NavigateToAboutPageFromMenu()
     {
-        await Page.GotoAsync(ServerUrl);
+        await Page.GotoAsync("/");
         
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         
