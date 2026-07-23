@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;
 
@@ -106,5 +107,21 @@ public class ApiKeyAuthenticationWebTests
         var versioned = await client.GetAsync("/api/v1.0/ping");
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await versioned.Content.ReadAsStringAsync()).ShouldBe("pong");
+    }
+
+    [Test]
+    public async Task Should_Return200_When_ColorWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var hexColorPattern = new Regex(@"^#[0-9A-F]{6}$", RegexOptions.CultureInvariant);
+
+        var unversioned = await client.GetAsync("/api/color");
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+        hexColorPattern.IsMatch(await unversioned.Content.ReadAsStringAsync()).ShouldBeTrue();
+
+        var versioned = await client.GetAsync("/api/v1.0/color");
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+        hexColorPattern.IsMatch(await versioned.Content.ReadAsStringAsync()).ShouldBeTrue();
     }
 }
