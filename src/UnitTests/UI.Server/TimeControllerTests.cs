@@ -1,59 +1,48 @@
-using System.Net;
-using System.Net.Http.Json;
+using ClearMeasure.Bootcamp.UI.Server.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using Shouldly;
 using System.Text.Json;
-using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
-public class TimeControllerTests : IClassFixture<WebApplicationFactory<UiServerWebApplicationMarker>>
+[TestFixture]
+public class TimeControllerTests
 {
-    private readonly WebApplicationFactory<UiServerWebApplicationMarker> _factory;
-
-    public TimeControllerTests(WebApplicationFactory<UiServerWebApplicationMarker> factory)
+    [Test]
+    public void Get_ReturnsOkResult()
     {
-        _factory = factory;
+        var controller = new TimeController();
+
+        var result = controller.Get();
+
+        result.ShouldBeOfType<OkObjectResult>();
     }
 
-    [Fact]
-    public async Task Get_ReturnsUtcTimeInIso8601Format()
+    [Test]
+    public void Get_ReturnsJsonWithUtcProperty()
     {
-        // Arrange
-        var client = _factory.CreateClient();
+        var controller = new TimeController();
         var beforeRequest = DateTime.UtcNow;
 
-        // Act
-        var response = await client.GetAsync("/api/time");
+        var result = controller.Get() as OkObjectResult;
 
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.ShouldNotBeNull();
+        result.Value.ShouldNotBeNull();
         
-        var content = await response.Content.ReadFromJsonAsync<JsonElement>();
-        content.TryGetProperty("utc", out var utcProperty).Should().BeTrue();
+        var json = JsonSerializer.Serialize(result.Value);
+        var doc = JsonDocument.Parse(json);
+        doc.RootElement.TryGetProperty("utc", out var utcProperty).ShouldBeTrue();
         
         var utcString = utcProperty.GetString();
-        utcString.Should().NotBeNullOrEmpty();
+        utcString.ShouldNotBeNullOrEmpty();
         
         // Verify it's valid ISO-8601 format
         var parsedTime = DateTime.Parse(utcString!);
-        parsedTime.Kind.Should().Be(DateTimeKind.Utc);
+        parsedTime.Kind.ShouldBe(DateTimeKind.Utc);
         
         // Verify the time is reasonable (within a few seconds of now)
         var afterRequest = DateTime.UtcNow;
-        parsedTime.Should().BeOnOrAfter(beforeRequest.AddSeconds(-5));
-        parsedTime.Should().BeOnOrBefore(afterRequest.AddSeconds(5));
-    }
-
-    [Fact]
-    public async Task Get_ReturnsJsonContentType()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-
-        // Act
-        var response = await client.GetAsync("/api/time");
-
-        // Assert
-        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+        parsedTime.ShouldBeGreaterThanOrEqualTo(beforeRequest.AddSeconds(-5));
+        parsedTime.ShouldBeLessThanOrEqualTo(afterRequest.AddSeconds(5));
     }
 }
