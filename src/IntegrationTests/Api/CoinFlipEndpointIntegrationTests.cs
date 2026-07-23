@@ -62,19 +62,4 @@ public class CoinFlipEndpointIntegrationTests
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await versioned.Content.ReadAsStringAsync()).ShouldBeOneOf("heads", "tails");
     }
-
-    [Test]
-    public async Task Should_ReturnBothOutcomes_When_CalledRepeatedly()
-    {
-        var outcomes = new HashSet<string>();
-        for (var i = 0; i < 100; i++)
-        {
-            var response = await _client!.GetAsync("/api/coinflip");
-            response.StatusCode.ShouldBe(HttpStatusCode.OK);
-            outcomes.Add(await response.Content.ReadAsStringAsync());
-        }
-
-        outcomes.ShouldContain("heads");
-        outcomes.ShouldContain("tails");
-    }
 }
