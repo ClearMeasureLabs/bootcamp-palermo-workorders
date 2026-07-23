@@ -33,6 +33,8 @@ public class UiServiceRegistry : ServiceRegistry
         this.AddSingleton<RealtimeNotificationHub>();
         this.AddSingleton<IRealtimeNotificationHub>(sp => sp.GetRequiredService<RealtimeNotificationHub>());
 
+        this.AddSingleton<IFactoryRunIdProvider, FactoryRunIdProvider>();
+
         this.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblyContaining<UiServiceRegistry>();

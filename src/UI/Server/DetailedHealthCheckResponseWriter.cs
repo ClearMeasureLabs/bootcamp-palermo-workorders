@@ -19,10 +19,13 @@ public static class DetailedHealthCheckResponseWriter
     };
 
     /// <summary>
-    /// Writes the <paramref name="report"/> as a detailed JSON payload to the HTTP response.
+    /// Writes the <paramref name="report"/> as a detailed JSON payload to the HTTP response,
+    /// including the X-Factory-Run-Id header for deployment pipeline correlation.
     /// </summary>
     public static async Task WriteAsync(HttpContext context, HealthReport report)
     {
+        var factoryRunIdProvider = context.RequestServices.GetRequiredService<IFactoryRunIdProvider>();
+        context.Response.Headers["X-Factory-Run-Id"] = factoryRunIdProvider.RunId;
         context.Response.ContentType = "application/json; charset=utf-8";
 
         var response = new DetailedHealthCheckResponse

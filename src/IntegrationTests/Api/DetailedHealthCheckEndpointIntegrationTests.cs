@@ -95,4 +95,31 @@ public class DetailedHealthCheckEndpointIntegrationTests
         names.ShouldContain("Jeffrey");
         names.ShouldContain("NeedsReboot");
     }
+
+    [Test]
+    public async Task Should_IncludeXFactoryRunIdHeader_When_DetailedHealthCheckReturns()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.TryGetValues("X-Factory-Run-Id", out var headerValues).ShouldBeTrue();
+        var factoryRunId = headerValues?.FirstOrDefault();
+        factoryRunId.ShouldNotBeNullOrWhiteSpace();
+        Guid.TryParse(factoryRunId, out _).ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task Should_UseSameRunIdAcrossRequests_When_DetailedHealthCheckIsCalled()
+    {
+        var response1 = await _client!.GetAsync("/_healthcheck/detailed");
+        var response2 = await _client!.GetAsync("/_healthcheck/detailed");
+
+        response1.Headers.TryGetValues("X-Factory-Run-Id", out var values1).ShouldBeTrue();
+        response2.Headers.TryGetValues("X-Factory-Run-Id", out var values2).ShouldBeTrue();
+
+        var runId1 = values1?.FirstOrDefault();
+        var runId2 = values2?.FirstOrDefault();
+
+        runId1.ShouldBe(runId2);
+    }
 }
