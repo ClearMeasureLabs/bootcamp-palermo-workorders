@@ -1,12 +1,11 @@
 using ClearMeasure.Bootcamp.UI.Server.Controllers;
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
 public class GreetingControllerTests
 {
-    [Fact]
+    [Test]
     public void Get_ShouldReturnOkResultWithGreetingMessage()
     {
         // Arrange
@@ -16,12 +15,17 @@ public class GreetingControllerTests
         var result = controller.Get();
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
         var okResult = (OkObjectResult)result;
-        okResult.Value.Should().BeEquivalentTo(new { message = "Hello from Church Bulletin" });
+        Assert.That(okResult.Value, Is.Not.Null);
+        
+        var value = okResult.Value;
+        var messageProperty = value!.GetType().GetProperty("message");
+        Assert.That(messageProperty, Is.Not.Null);
+        Assert.That(messageProperty!.GetValue(value), Is.EqualTo("Hello from Church Bulletin"));
     }
 
-    [Fact]
+    [Test]
     public void Get_ShouldReturnJsonWithMessageProperty()
     {
         // Arrange
@@ -31,12 +35,13 @@ public class GreetingControllerTests
         var result = controller.Get();
 
         // Assert
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var okResult = (OkObjectResult)result;
         var value = okResult.Value;
-        value.Should().NotBeNull();
+        Assert.That(value, Is.Not.Null);
         
         var messageProperty = value!.GetType().GetProperty("message");
-        messageProperty.Should().NotBeNull();
-        messageProperty!.GetValue(value).Should().Be("Hello from Church Bulletin");
+        Assert.That(messageProperty, Is.Not.Null);
+        Assert.That(messageProperty!.GetValue(value), Is.EqualTo("Hello from Church Bulletin"));
     }
 }
