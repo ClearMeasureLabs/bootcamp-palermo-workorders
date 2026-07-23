@@ -1,15 +1,12 @@
-using System.Threading.Tasks;
-using FluentAssertions;
 using Microsoft.Playwright;
-using Xunit;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
-[Collection("Playwright")]
+[TestFixture]
 public class AboutPageTests : AcceptanceTestBase
 {
-    [Fact]
-    public async Task ShouldDisplayAboutPageWithBuiltWithDotNetBadge()
+    [Test]
+    public async Task Should_DisplayAboutPageWithBuiltWithDotNetBadge()
     {
         await Page.GotoAsync(ServerUrl + "/about");
         
@@ -17,15 +14,15 @@ public class AboutPageTests : AcceptanceTestBase
         
         var heading = Page.Locator("h1");
         await heading.WaitForAsync();
-        (await heading.TextContentAsync()).Should().Be("About");
+        await Expect(heading).ToHaveTextAsync("About");
         
         var badge = Page.Locator(".built-with-badge");
         await badge.WaitForAsync();
-        (await badge.TextContentAsync()).Should().Be("Built with .NET");
+        await Expect(badge).ToHaveTextAsync("Built with .NET");
     }
     
-    [Fact]
-    public async Task ShouldNavigateToAboutPageFromMenu()
+    [Test]
+    public async Task Should_NavigateToAboutPageFromMenu()
     {
         await Page.GotoAsync(ServerUrl);
         
@@ -39,9 +36,9 @@ public class AboutPageTests : AcceptanceTestBase
         
         var heading = Page.Locator("h1");
         await heading.WaitForAsync();
-        (await heading.TextContentAsync()).Should().Be("About");
+        await Expect(heading).ToHaveTextAsync("About");
         
         var badge = Page.Locator(".built-with-badge");
-        (await badge.TextContentAsync()).Should().Be("Built with .NET");
+        await Expect(badge).ToHaveTextAsync("Built with .NET");
     }
 }
