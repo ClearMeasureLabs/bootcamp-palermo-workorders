@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.UI.Server.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Shouldly;
+using System.Globalization;
 using System.Text.Json;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
@@ -36,8 +37,8 @@ public class TimeControllerTests
         var utcString = utcProperty.GetString();
         utcString.ShouldNotBeNullOrEmpty();
         
-        // Verify it's valid ISO-8601 format
-        var parsedTime = DateTime.Parse(utcString!);
+        // Verify it's valid ISO-8601 format and parse with RoundtripKind to preserve UTC
+        var parsedTime = DateTime.Parse(utcString!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
         parsedTime.Kind.ShouldBe(DateTimeKind.Utc);
         
         // Verify the time is reasonable (within a few seconds of now)
