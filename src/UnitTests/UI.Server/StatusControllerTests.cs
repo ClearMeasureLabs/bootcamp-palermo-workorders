@@ -1,23 +1,25 @@
 using ClearMeasure.Bootcamp.UI.Server.Controllers;
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
+[TestFixture]
 public class StatusControllerTests
 {
-    [Fact]
-    public void Get_ShouldReturnOkWithStatusOk()
+    [Test]
+    public void Should_Get_ReturnOkWithStatusOk()
     {
-        // Arrange
         var controller = new StatusController();
 
-        // Act
         var result = controller.Get();
 
-        // Assert
-        result.Should().BeOfType<OkObjectResult>();
+        result.ShouldBeOfType<OkObjectResult>();
         var okResult = (OkObjectResult)result;
-        okResult.Value.Should().BeEquivalentTo(new { status = "ok" });
+        var value = okResult.Value;
+        value.ShouldNotBeNull();
+        var statusProperty = value.GetType().GetProperty("status");
+        statusProperty.ShouldNotBeNull();
+        statusProperty.GetValue(value).ShouldBe("ok");
     }
 }
