@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
+using ClearMeasure.Bootcamp.UnitTests.UI.Shared;
 using ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,6 +69,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton(AuthHttpClientTestSupport.CreateClient());
 
         var component = ctx.RenderComponent<Logout>();
         var logoutLink = component.Find("a");
@@ -89,6 +91,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton(AuthHttpClientTestSupport.CreateClient());
 
         var component = ctx.RenderComponent<Logout>();
         var logoutLink = component.Find("a");
@@ -109,6 +112,7 @@ public class LogoutTests
         ctx.Services.AddSingleton<CustomAuthenticationStateProvider>();
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton(AuthHttpClientTestSupport.CreateClient());
 
         var component = ctx.RenderComponent<Logout>();
         var logoutLink = component.Find("a");
