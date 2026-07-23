@@ -118,9 +118,11 @@ public class DetailedHealthCheckEndpointIntegrationTests
         response1.Headers.TryGetValues("X-Factory-Run-Id", out var values1).ShouldBeTrue();
         response2.Headers.TryGetValues("X-Factory-Run-Id", out var values2).ShouldBeTrue();
 
-        var runId1 = values1?.FirstOrDefault();
-        var runId2 = values2?.FirstOrDefault();
+        var runId1 = values1!.FirstOrDefault();
+        var runId2 = values2!.FirstOrDefault();
 
+        runId1.ShouldNotBeNullOrWhiteSpace();
+        runId2.ShouldNotBeNullOrWhiteSpace();
         runId1.ShouldBe(runId2);
     }
 }
