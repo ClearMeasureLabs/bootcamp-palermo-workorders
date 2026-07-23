@@ -165,4 +165,65 @@ public class DetailedHealthReportProviderTests
         component.Data.ShouldNotBeNull();
         component.Data!["endpoint"].ShouldBe("https://api.example.com");
     }
+
+    [Test]
+    public void GetAssemblyInformationalVersion_Should_ReturnNonNullVersion()
+    {
+        var version = DetailedHealthReportProvider.GetAssemblyInformationalVersion();
+
+        version.ShouldNotBeNullOrEmpty();
+    }
+
+    [Test]
+    public void FromHealthReport_Should_PopulateVersion_WhenBuilding()
+    {
+        var fixedTime = new DateTime(2026, 4, 1, 12, 0, 0, DateTimeKind.Utc);
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(
+                HealthStatus.Healthy,
+                "All systems operational",
+                TimeSpan.FromMilliseconds(10),
+                null,
+                new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.FromMilliseconds(10));
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(
+            report, new FixedUtcTimeProvider(fixedTime));
+
+        detailed.Version.ShouldNotBeNullOrEmpty();
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_PopulateVersion_WhenBuilding()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.Version.ShouldNotBeNullOrEmpty();
+    }
+
+    [Test]
+    public void DetailedHealthReport_Should_AllowNullVersion_ForOptionalProperty()
+    {
+        var fixedTime = new DateTime(2026, 4, 1, 12, 0, 0, DateTimeKind.Utc);
+        
+        var detailed = new DetailedHealthReport
+        {
+            CheckedAtUtc = fixedTime,
+            Components = new List<ComponentHealthEntry>(),
+            OverallStatus = ComponentHealthStatus.Healthy,
+            Version = null
+        };
+
+        detailed.Version.ShouldBeNull();
+    }
 }

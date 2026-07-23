@@ -1,3 +1,4 @@
+using System.Reflection;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -31,7 +32,8 @@ public sealed class DetailedHealthReportProvider(
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             Components = components,
-            OverallStatus = MapOverallStatus(report.Status)
+            OverallStatus = MapOverallStatus(report.Status),
+            Version = GetAssemblyInformationalVersion()
         };
     }
 
@@ -53,8 +55,19 @@ public sealed class DetailedHealthReportProvider(
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             Components = components,
-            OverallStatus = MapOverallStatus(aggregateStatus)
+            OverallStatus = MapOverallStatus(aggregateStatus),
+            Version = GetAssemblyInformationalVersion()
         };
+    }
+
+    /// <summary>
+    /// Retrieves the executing assembly's informational version.
+    /// </summary>
+    /// <returns>The informational version string, or null if not found.</returns>
+    internal static string? GetAssemblyInformationalVersion()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        return assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
     }
 
     private static string MapOverallStatus(HealthStatus status) => status switch

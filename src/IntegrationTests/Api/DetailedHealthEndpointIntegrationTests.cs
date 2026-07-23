@@ -140,4 +140,45 @@ public class DetailedHealthEndpointIntegrationTests
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
         }
     }
+
+    [Test]
+    public async Task Should_IncludeVersion_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.Version.ShouldNotBeNullOrEmpty();
+    }
+
+    [Test]
+    public async Task Should_HaveConsistentVersion_AcrossMultipleRequests()
+    {
+        var response1 = await _client!.GetAsync("/api/health/detailed");
+        var report1 = await response1.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        var response2 = await _client!.GetAsync("/api/health/detailed");
+        var report2 = await response2.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        report1.ShouldNotBeNull();
+        report2.ShouldNotBeNull();
+        report1!.Version.ShouldBe(report2!.Version);
+    }
+
+    [Test]
+    public async Task Should_SerializeVersionToJson_WithCorrectPropertyName()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("version", out var version).ShouldBeTrue();
+        version.ValueKind.ShouldBe(JsonValueKind.String);
+        version.GetString().ShouldNotBeNullOrEmpty();
+    }
 }

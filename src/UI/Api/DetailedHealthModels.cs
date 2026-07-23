@@ -36,6 +36,9 @@ public sealed class DetailedHealthReport
 
     /// <summary>Per-logical-component entries (mock or probe-derived).</summary>
     public required IReadOnlyList<ComponentHealthEntry> Components { get; init; }
+
+    /// <summary>Informational version of the executing assembly (optional).</summary>
+    public string? Version { get; init; }
 }
 
 /// <summary>
