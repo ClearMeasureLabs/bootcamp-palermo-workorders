@@ -80,4 +80,15 @@ public class ApiVersioningEndpointTests
         values.ShouldNotBeNull();
         string.Join(", ", values!).ShouldContain("1.0");
     }
+
+    [Test]
+    public async Task Should_Return200_When_GetHealthz_V1Path()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/healthz");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.TryGetValues("api-supported-versions", out var values).ShouldBeTrue();
+        values.ShouldNotBeNull();
+        string.Join(", ", values!).ShouldContain("1.0");
+    }
 }
