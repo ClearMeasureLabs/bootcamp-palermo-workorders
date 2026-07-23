@@ -107,4 +107,16 @@ public class ApiKeyAuthenticationWebTests
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await versioned.Content.ReadAsStringAsync()).ShouldBe("pong");
     }
+
+    [Test]
+    public async Task Should_Return200_When_StatusWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/status");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await response.Content.ReadAsStringAsync()).ShouldContain("\"status\":\"ok\"");
+    }
 }
