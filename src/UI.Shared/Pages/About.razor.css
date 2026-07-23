@@ -1,0 +1,26 @@
+.about-page {
+    padding: 2rem;
+}
+
+.about-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.badge-container {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.built-with-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #512bd4;
+    color: white;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}

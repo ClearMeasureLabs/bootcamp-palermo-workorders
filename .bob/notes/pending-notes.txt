@@ -1,0 +1,3 @@
+{"id":"628c8e4c-c66f-4f49-a42a-b29e9f406545","ts":"2026-07-23T00:44:17.283Z","path":"/workspace/src/UI.Shared/Pages/About.razor","version":"1.0.0","taskID":"f94834e4-b796-42bf-8df7-c066235fa00d"}
+{"id":"e9898706-8d04-439d-b295-2b410d154d50","ts":"2026-07-23T00:44:23.221Z","path":"/workspace/src/UI.Shared/Pages/About.razor.css","version":"1.0.0","taskID":"f94834e4-b796-42bf-8df7-c066235fa00d"}
+{"id":"8c34b18f-6ccc-48bf-84fe-61b001c77738","ts":"2026-07-23T00:44:29.596Z","path":"/workspace/src/UI.Shared/NavMenu.razor","version":"1.0.0","taskID":"f94834e4-b796-42bf-8df7-c066235fa00d"}
