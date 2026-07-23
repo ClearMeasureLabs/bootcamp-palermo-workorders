@@ -24,6 +24,7 @@ public static class DetailedHealthCheckResponseWriter
     public static async Task WriteAsync(HttpContext context, HealthReport report)
     {
         context.Response.ContentType = "application/json; charset=utf-8";
+        context.Response.Headers["X-Factory-Worker"] = "claude";
 
         var response = new DetailedHealthCheckResponse
         {
