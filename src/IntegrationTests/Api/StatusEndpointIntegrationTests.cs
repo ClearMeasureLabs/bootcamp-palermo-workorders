@@ -59,7 +59,9 @@ public class StatusEndpointIntegrationTests
         document.RootElement.EnumerateObject().Count().ShouldBe(1);
         document.RootElement.GetProperty("status").GetString().ShouldBe("ok");
 
-        var payload = JsonSerializer.Deserialize<StatusResponse>(json);
+        var payload = JsonSerializer.Deserialize<StatusResponse>(
+            json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         payload.ShouldNotBeNull();
         payload!.Status.ShouldBe("ok");
     }
