@@ -21,6 +21,7 @@ public static class HealthReportBuilder
             ProcessId = Environment.ProcessId,
             OsDescription = RuntimeInformation.OSDescription,
             GcMemoryMb = (int)Math.Round(GC.GetTotalMemory(false) / 1_048_576.0),
+            ProcessorCount = Environment.ProcessorCount,
             Components = components,
             OverallStatus = AggregateWorst(components)
         };

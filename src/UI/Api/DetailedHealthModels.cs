@@ -43,6 +43,9 @@ public sealed class DetailedHealthReport
     /// <summary>Managed heap size from <see cref="GC.GetTotalMemory(bool)"/>, expressed in megabytes and rounded.</summary>
     public required int GcMemoryMb { get; init; }
 
+    /// <summary>Logical processor count from <see cref="Environment.ProcessorCount"/> for load-balancing hints.</summary>
+    public required int ProcessorCount { get; init; }
+
     /// <summary>Per-logical-component entries (mock or probe-derived).</summary>
     public required IReadOnlyList<ComponentHealthEntry> Components { get; init; }
 }
