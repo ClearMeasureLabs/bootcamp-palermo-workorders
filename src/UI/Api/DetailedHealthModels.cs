@@ -37,6 +37,9 @@ public sealed class DetailedHealthReport
     /// <summary>Host OS process identifier for observability correlation across instances.</summary>
     public required int ProcessId { get; init; }
 
+    /// <summary>Operating system description from <see cref="System.Runtime.InteropServices.RuntimeInformation.OSDescription"/>.</summary>
+    public required string OsDescription { get; init; }
+
     /// <summary>Per-logical-component entries (mock or probe-derived).</summary>
     public required IReadOnlyList<ComponentHealthEntry> Components { get; init; }
 }

@@ -145,6 +145,33 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_IncludeOsDescription_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("osDescription", out var osDescription).ShouldBeTrue();
+        var value = osDescription.GetString();
+        value.ShouldNotBeNull();
+        value!.ShouldNotBeEmpty();
+    }
+
+    [Test]
+    public async Task Should_DeserializeOsDescription_ToDetailedHealthReport_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.OsDescription.ShouldNotBeNull();
+        report.OsDescription.ShouldNotBeEmpty();
+    }
+
+    [Test]
     public async Task Should_ListExpectedComponentEntries_When_AggregatedFromRegisteredChecks()
     {
         var response = await _client!.GetAsync("/api/health/detailed");

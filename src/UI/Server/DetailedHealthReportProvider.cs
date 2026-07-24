@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -31,6 +32,7 @@ public sealed class DetailedHealthReportProvider(
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             ProcessId = Environment.ProcessId,
+            OsDescription = RuntimeInformation.OSDescription,
             Components = components,
             OverallStatus = MapOverallStatus(report.Status)
         };
@@ -54,6 +56,7 @@ public sealed class DetailedHealthReportProvider(
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             ProcessId = Environment.ProcessId,
+            OsDescription = RuntimeInformation.OSDescription,
             Components = components,
             OverallStatus = MapOverallStatus(aggregateStatus)
         };
