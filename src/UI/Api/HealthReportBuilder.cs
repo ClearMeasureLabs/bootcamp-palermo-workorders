@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace ClearMeasure.Bootcamp.UI.Api;
 
 /// <summary>
@@ -13,11 +15,14 @@ public static class HealthReportBuilder
         IReadOnlyList<ComponentHealthEntry> components)
     {
         var clock = timeProvider;
+        var uptimeSeconds = CalculateUptimeSeconds(clock);
+        
         return new DetailedHealthReport
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             Components = components,
-            OverallStatus = AggregateWorst(components)
+            OverallStatus = AggregateWorst(components),
+            UptimeSeconds = uptimeSeconds
         };
     }
 
@@ -44,4 +49,12 @@ public static class HealthReportBuilder
         ComponentHealthStatus.Degraded => 1,
         _ => 0
     };
+
+    private static long CalculateUptimeSeconds(TimeProvider clock)
+    {
+        var processStartUtc = new DateTimeOffset(Process.GetCurrentProcess().StartTime).ToUniversalTime();
+        var now = clock.GetUtcNow();
+        var elapsed = now - processStartUtc;
+        return (long)elapsed.TotalSeconds;
+    }
 }
