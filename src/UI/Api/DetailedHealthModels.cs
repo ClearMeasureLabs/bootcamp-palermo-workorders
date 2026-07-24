@@ -46,6 +46,9 @@ public sealed class DetailedHealthReport
     /// <summary>Logical processor count from <see cref="Environment.ProcessorCount"/> for load-balancing hints.</summary>
     public required int ProcessorCount { get; init; }
 
+    /// <summary>Whether the host process runs as 64-bit (from <see cref="Environment.Is64BitProcess"/>).</summary>
+    public required bool Is64BitProcess { get; init; }
+
     /// <summary>Per-logical-component entries (mock or probe-derived).</summary>
     public required IReadOnlyList<ComponentHealthEntry> Components { get; init; }
 }

@@ -35,6 +35,7 @@ public sealed class DetailedHealthReportProvider(
             OsDescription = RuntimeInformation.OSDescription,
             GcMemoryMb = GetGcMemoryMb(),
             ProcessorCount = Environment.ProcessorCount,
+            Is64BitProcess = Environment.Is64BitProcess,
             Components = components,
             OverallStatus = MapOverallStatus(report.Status)
         };
@@ -61,6 +62,7 @@ public sealed class DetailedHealthReportProvider(
             OsDescription = RuntimeInformation.OSDescription,
             GcMemoryMb = GetGcMemoryMb(),
             ProcessorCount = Environment.ProcessorCount,
+            Is64BitProcess = Environment.Is64BitProcess,
             Components = components,
             OverallStatus = MapOverallStatus(aggregateStatus)
         };

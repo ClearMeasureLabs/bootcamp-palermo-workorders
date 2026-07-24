@@ -166,4 +166,16 @@ public class DetailedHealthCheckEndpointIntegrationTests
         serverUtc.Offset.ShouldBe(TimeSpan.Zero);
         (DateTimeOffset.UtcNow - serverUtc).Duration().ShouldBeLessThan(TimeSpan.FromMinutes(5));
     }
+
+    [Test]
+    public async Task Should_IncludeIs64BitProcess_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("is64BitProcess", out var is64BitProcess).ShouldBeTrue();
+        is64BitProcess.GetBoolean().ShouldBe(Environment.Is64BitProcess);
+    }
 }
