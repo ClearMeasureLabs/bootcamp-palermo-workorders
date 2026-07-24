@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -38,6 +39,7 @@ public sealed class DetailedHealthReportProvider(
             ProcessorCount = Environment.ProcessorCount,
             Is64BitProcess = Environment.Is64BitProcess,
             TimeZoneId = TimeZoneInfo.Local.Id,
+            ProcessPriority = GetProcessPriority(),
             Components = components,
             OverallStatus = MapOverallStatus(report.Status)
         };
@@ -67,6 +69,7 @@ public sealed class DetailedHealthReportProvider(
             ProcessorCount = Environment.ProcessorCount,
             Is64BitProcess = Environment.Is64BitProcess,
             TimeZoneId = TimeZoneInfo.Local.Id,
+            ProcessPriority = GetProcessPriority(),
             Components = components,
             OverallStatus = MapOverallStatus(aggregateStatus)
         };
@@ -77,6 +80,9 @@ public sealed class DetailedHealthReportProvider(
 
     internal static int GetWorkingSetMb() =>
         (int)Math.Round(Environment.WorkingSet / 1_048_576.0);
+
+    internal static string GetProcessPriority() =>
+        Process.GetCurrentProcess().PriorityClass.ToString();
 
     private static string MapOverallStatus(HealthStatus status) => status switch
     {

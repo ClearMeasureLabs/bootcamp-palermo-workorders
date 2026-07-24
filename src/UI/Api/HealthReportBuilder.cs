@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace ClearMeasure.Bootcamp.UI.Api;
@@ -25,6 +26,7 @@ public static class HealthReportBuilder
             ProcessorCount = Environment.ProcessorCount,
             Is64BitProcess = Environment.Is64BitProcess,
             TimeZoneId = TimeZoneInfo.Local.Id,
+            ProcessPriority = Process.GetCurrentProcess().PriorityClass.ToString(),
             Components = components,
             OverallStatus = AggregateWorst(components)
         };

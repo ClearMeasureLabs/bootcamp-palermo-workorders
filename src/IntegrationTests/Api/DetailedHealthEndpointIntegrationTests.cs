@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -282,6 +283,36 @@ public class DetailedHealthEndpointIntegrationTests
         using var doc = await JsonDocument.ParseAsync(stream);
         doc.RootElement.TryGetProperty("timeZoneId", out var timeZoneId).ShouldBeTrue();
         timeZoneId.GetString().ShouldBe(TimeZoneInfo.Local.Id);
+    }
+
+    [Test]
+    public async Task Should_IncludeProcessPriority_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("processPriority", out var processPriority).ShouldBeTrue();
+        processPriority.ValueKind.ShouldBe(JsonValueKind.String);
+        var value = processPriority.GetString();
+        value.ShouldNotBeNull();
+        value!.ShouldNotBeEmpty();
+        value.ShouldBe(Process.GetCurrentProcess().PriorityClass.ToString());
+    }
+
+    [Test]
+    public async Task Should_DeserializeProcessPriority_ToDetailedHealthReport_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.ProcessPriority.ShouldNotBeNull();
+        report.ProcessPriority.ShouldNotBeEmpty();
+        report.ProcessPriority.ShouldBe(Process.GetCurrentProcess().PriorityClass.ToString());
     }
 
     [Test]
