@@ -31,9 +31,13 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
         var assembly = Assembly.GetExecutingAssembly();
         var assemblyVersion = assembly.GetName().Version?.ToString();
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var buildVersion = VersionMetadataReader.ReadBuildVersion(assembly);
+        var commitHash = VersionMetadataReader.ReadCommitHash(informationalVersion);
         var payload = new VersionMetadataResponse(
             AssemblyVersion: assemblyVersion,
             InformationalVersion: informationalVersion,
+            BuildVersion: buildVersion,
+            CommitHash: commitHash,
             Environment: hostEnvironment.EnvironmentName,
             MachineName: Environment.MachineName,
             FrameworkDescription: RuntimeInformation.FrameworkDescription);
@@ -51,6 +55,8 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
 public record VersionMetadataResponse(
     string? AssemblyVersion,
     string? InformationalVersion,
+    string? BuildVersion,
+    string? CommitHash,
     string? Environment,
     string MachineName,
     string FrameworkDescription);
