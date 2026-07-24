@@ -25,8 +25,11 @@ public static class DetailedHealthCheckResponseWriter
     {
         context.Response.ContentType = "application/json; charset=utf-8";
 
+        var timeProvider = context.RequestServices?.GetService<TimeProvider>() ?? TimeProvider.System;
+
         var response = new DetailedHealthCheckResponse
         {
+            ServerUtc = timeProvider.GetUtcNow(),
             OverallStatus = report.Status.ToString(),
             TotalDurationMs = report.TotalDuration.TotalMilliseconds,
             Entries = report.Entries
@@ -54,6 +57,9 @@ public static class DetailedHealthCheckResponseWriter
 
     internal sealed class DetailedHealthCheckResponse
     {
+        /// <summary>UTC timestamp when the health report was written.</summary>
+        public DateTimeOffset ServerUtc { get; init; }
+
         /// <summary>Overall aggregated status of all health checks.</summary>
         public required string OverallStatus { get; init; }
 

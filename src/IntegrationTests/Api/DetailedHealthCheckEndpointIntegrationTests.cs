@@ -95,4 +95,31 @@ public class DetailedHealthCheckEndpointIntegrationTests
         names.ShouldContain("Jeffrey");
         names.ShouldContain("NeedsReboot");
     }
+
+    [Test]
+    public async Task Should_IncludeServerUtc_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+
+        doc.RootElement.TryGetProperty("serverUtc", out var serverUtc).ShouldBeTrue();
+        serverUtc.GetDateTimeOffset().ShouldNotBe(default);
+    }
+
+    [Test]
+    public async Task Should_ReturnRecentUtcServerUtc_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+
+        var serverUtc = doc.RootElement.GetProperty("serverUtc").GetDateTimeOffset();
+        serverUtc.Offset.ShouldBe(TimeSpan.Zero);
+        (DateTimeOffset.UtcNow - serverUtc).Duration().ShouldBeLessThan(TimeSpan.FromMinutes(5));
+    }
 }
