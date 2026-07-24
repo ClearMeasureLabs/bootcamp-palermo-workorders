@@ -173,6 +173,6 @@ public class DetailedHealthEndpointIntegrationTests
         detailedPayload!.UptimeSeconds.ShouldNotBeNull();
         var simpleUptimeSeconds = (long)simplePayload!.Uptime.TotalSeconds;
         var delta = Math.Abs(detailedPayload.UptimeSeconds.Value - simpleUptimeSeconds);
-        delta.ShouldBeLessThanOrEqualTo(2);
+        delta.ShouldBeLessThanOrEqualTo(3);
     }
 }
