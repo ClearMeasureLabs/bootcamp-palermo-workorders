@@ -40,6 +40,9 @@ public sealed class DetailedHealthReport
     /// <summary>Operating system description from <see cref="System.Runtime.InteropServices.RuntimeInformation.OSDescription"/>.</summary>
     public required string OsDescription { get; init; }
 
+    /// <summary>Runtime framework description from <see cref="System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription"/>.</summary>
+    public required string FrameworkDescription { get; init; }
+
     /// <summary>Managed heap size from <see cref="GC.GetTotalMemory(bool)"/>, expressed in megabytes and rounded.</summary>
     public required int GcMemoryMb { get; init; }
 

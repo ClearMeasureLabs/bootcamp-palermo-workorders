@@ -87,6 +87,18 @@ public class HealthReportBuilderTests
     }
 
     [Test]
+    public void HealthReportBuilder_FromEntries_Should_SetFrameworkDescription()
+    {
+        var report = HealthReportBuilder.FromEntries(
+            TimeProvider.System,
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
+
+        report.FrameworkDescription.ShouldNotBeNull();
+        report.FrameworkDescription.ShouldNotBeEmpty();
+        report.FrameworkDescription.ShouldBe(RuntimeInformation.FrameworkDescription);
+    }
+
+    [Test]
     public void HealthReportBuilder_FromEntries_Should_SetGcMemoryMb()
     {
         var report = HealthReportBuilder.FromEntries(
