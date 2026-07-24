@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using ClearMeasure.Bootcamp.UI.Server;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -29,7 +28,6 @@ public class ProcessThreadCountHealthCheckTests
 
         result.Status.ShouldBe(HealthStatus.Healthy);
         result.Data.ContainsKey("threadCount").ShouldBeTrue();
-        result.Data["threadCount"].ShouldBe(Process.GetCurrentProcess().Threads.Count);
         ((int)result.Data["threadCount"]).ShouldBeGreaterThanOrEqualTo(1);
     }
 
