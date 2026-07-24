@@ -178,4 +178,16 @@ public class DetailedHealthCheckEndpointIntegrationTests
         doc.RootElement.TryGetProperty("is64BitProcess", out var is64BitProcess).ShouldBeTrue();
         is64BitProcess.GetBoolean().ShouldBe(Environment.Is64BitProcess);
     }
+
+    [Test]
+    public async Task GetHealthCheckDetailedReturnsTimeZoneId()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("timeZoneId", out var timeZoneId).ShouldBeTrue();
+        timeZoneId.GetString().ShouldBe(TimeZoneInfo.Local.Id);
+    }
 }

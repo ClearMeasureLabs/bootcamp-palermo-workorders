@@ -37,6 +37,7 @@ public sealed class DetailedHealthReportProvider(
             WorkingSetMb = GetWorkingSetMb(),
             ProcessorCount = Environment.ProcessorCount,
             Is64BitProcess = Environment.Is64BitProcess,
+            TimeZoneId = TimeZoneInfo.Local.Id,
             Components = components,
             OverallStatus = MapOverallStatus(report.Status)
         };
@@ -65,6 +66,7 @@ public sealed class DetailedHealthReportProvider(
             WorkingSetMb = GetWorkingSetMb(),
             ProcessorCount = Environment.ProcessorCount,
             Is64BitProcess = Environment.Is64BitProcess,
+            TimeZoneId = TimeZoneInfo.Local.Id,
             Components = components,
             OverallStatus = MapOverallStatus(aggregateStatus)
         };

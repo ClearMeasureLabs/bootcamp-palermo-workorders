@@ -203,4 +203,16 @@ public class DetailedHealthCheckResponseWriterTests
         doc.RootElement.TryGetProperty("is64BitProcess", out var is64BitProcess).ShouldBeTrue();
         is64BitProcess.GetBoolean().ShouldBe(Environment.Is64BitProcess);
     }
+
+    [Test]
+    public async Task TimeZoneIdSerializedAsCamelCase()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        doc.RootElement.TryGetProperty("timeZoneId", out var timeZoneId).ShouldBeTrue();
+        timeZoneId.GetString().ShouldBe(TimeZoneInfo.Local.Id);
+    }
 }

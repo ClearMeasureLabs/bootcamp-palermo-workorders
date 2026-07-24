@@ -24,6 +24,7 @@ public static class HealthReportBuilder
             WorkingSetMb = (int)Math.Round(Environment.WorkingSet / 1_048_576.0),
             ProcessorCount = Environment.ProcessorCount,
             Is64BitProcess = Environment.Is64BitProcess,
+            TimeZoneId = TimeZoneInfo.Local.Id,
             Components = components,
             OverallStatus = AggregateWorst(components)
         };

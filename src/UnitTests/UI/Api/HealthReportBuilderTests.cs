@@ -127,6 +127,16 @@ public class HealthReportBuilderTests
     }
 
     [Test]
+    public void TimeZoneIdAddedToDetailedHealthReport()
+    {
+        var report = HealthReportBuilder.FromEntries(
+            TimeProvider.System,
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
+
+        report.TimeZoneId.ShouldBe(TimeZoneInfo.Local.Id);
+    }
+
+    [Test]
     public void HealthReportBuilder_FromEntries_Should_AggregateWorstAcrossComponents()
     {
         var components = new[]
