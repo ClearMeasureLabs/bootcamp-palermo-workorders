@@ -52,6 +52,9 @@ public sealed class DetailedHealthReport
     /// <summary>Whether the host process runs as 64-bit (from <see cref="Environment.Is64BitProcess"/>).</summary>
     public required bool Is64BitProcess { get; init; }
 
+    /// <summary>Host local time zone identifier from <see cref="TimeZoneInfo.Local"/>.</summary>
+    public required string TimeZoneId { get; init; }
+
     /// <summary>Per-logical-component entries (mock or probe-derived).</summary>
     public required IReadOnlyList<ComponentHealthEntry> Components { get; init; }
 }
