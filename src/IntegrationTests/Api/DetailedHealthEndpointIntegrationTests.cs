@@ -232,7 +232,6 @@ public class DetailedHealthEndpointIntegrationTests
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
         doc.RootElement.TryGetProperty("is64BitProcess", out var is64BitProcess).ShouldBeTrue();
-        is64BitProcess.ValueKind.ShouldBe(JsonValueKind.True or JsonValueKind.False);
         is64BitProcess.GetBoolean().ShouldBe(Environment.Is64BitProcess);
     }
 
