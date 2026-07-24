@@ -80,6 +80,7 @@ public class DetailedHealthEndpointIntegrationTests
         using var doc = await JsonDocument.ParseAsync(stream);
         doc.RootElement.TryGetProperty("overallStatus", out _).ShouldBeTrue();
         doc.RootElement.TryGetProperty("checkedAtUtc", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("uptimeSeconds", out _).ShouldBeTrue();
         doc.RootElement.TryGetProperty("components", out var components).ShouldBeTrue();
         components.ValueKind.ShouldBe(JsonValueKind.Array);
         components.GetArrayLength().ShouldBeGreaterThan(0);
@@ -139,5 +140,39 @@ public class DetailedHealthEndpointIntegrationTests
                 || c.Status == ComponentHealthStatus.Degraded
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
         }
+    }
+
+    [Test]
+    public async Task Should_IncludeUptimeSeconds_AsNonNegativeLong_When_ResponseReturned()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.UptimeSeconds.ShouldNotBeNull();
+        report.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
+    public async Task Should_ProvideConsistentUptimeWithSimpleHealthEndpoint_When_RequestsMadeSequentially()
+    {
+        var simpleResponse = await _client!.GetAsync("/api/health");
+        simpleResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var simplePayload = await simpleResponse.Content.ReadFromJsonAsync<SimpleHealthResponse>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        simplePayload.ShouldNotBeNull();
+
+        var detailedResponse = await _client!.GetAsync("/api/health/detailed");
+        detailedResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var detailedPayload = await detailedResponse.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        detailedPayload.ShouldNotBeNull();
+
+        detailedPayload!.UptimeSeconds.ShouldNotBeNull();
+        var simpleUptimeSeconds = (long)simplePayload!.Uptime.TotalSeconds;
+        var delta = Math.Abs(detailedPayload.UptimeSeconds.Value - simpleUptimeSeconds);
+        delta.ShouldBeLessThanOrEqualTo(2);
     }
 }

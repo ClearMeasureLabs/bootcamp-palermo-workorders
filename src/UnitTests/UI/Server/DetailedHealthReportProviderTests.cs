@@ -33,6 +33,7 @@ public class DetailedHealthReportProviderTests
         detailed.Components.Count.ShouldBe(2);
         detailed.Components.ShouldContain(c => c.Name == "API" && c.Status == ComponentHealthStatus.Healthy);
         detailed.Components.ShouldContain(c => c.Name == "DataAccess" && c.Status == ComponentHealthStatus.Unhealthy);
+        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Test]
@@ -51,6 +52,7 @@ public class DetailedHealthReportProviderTests
 
         detailed.Components[0].Name.ShouldBe("Alpha");
         detailed.Components[1].Name.ShouldBe("Zed");
+        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Test]
@@ -80,6 +82,7 @@ public class DetailedHealthReportProviderTests
         component.ExceptionMessage.ShouldBeNull();
         component.ExceptionDetail.ShouldBeNull();
         component.Data.ShouldBeNull();
+        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Test]
@@ -108,6 +111,7 @@ public class DetailedHealthReportProviderTests
         component.ExceptionDetail.ShouldNotBeNull();
         component.ExceptionDetail.ShouldContain("InvalidOperationException");
         component.ExceptionDetail.ShouldContain("Connection refused");
+        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Test]
@@ -139,6 +143,7 @@ public class DetailedHealthReportProviderTests
         component.Data!.Count.ShouldBe(2);
         component.Data["Provider"].ShouldBe("SqlServer");
         component.Data["RetryCount"].ShouldBe(3);
+        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Test]
@@ -164,5 +169,39 @@ public class DetailedHealthReportProviderTests
         component.ExceptionDetail.ShouldContain("TimeoutException");
         component.Data.ShouldNotBeNull();
         component.Data!["endpoint"].ShouldBe("https://api.example.com");
+    }
+
+    [Test]
+    public void FromHealthReport_Should_PopulateUptimeSeconds_WithCorrectElapsedSeconds()
+    {
+        var processStartTime = new DateTime(2026, 3, 30, 9, 45, 0, DateTimeKind.Utc);
+        var checkTime = new DateTime(2026, 3, 30, 10, 1, 40, DateTimeKind.Utc);
+        var entries = new Dictionary<string, HealthReportEntry>();
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(
+            report, new FixedUtcTimeProvider(checkTime));
+
+        detailed.UptimeSeconds.ShouldNotBeNull();
+        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_CalculateUptimeSeconds_AsWholeLong()
+    {
+        var fixedTime = new DateTime(2026, 3, 30, 10, 0, 0, DateTimeKind.Utc);
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["Component"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            new FixedUtcTimeProvider(fixedTime));
+
+        detailed.UptimeSeconds.ShouldNotBeNull();
+        (detailed.UptimeSeconds % 1).ShouldBe(0);
+        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
     }
 }

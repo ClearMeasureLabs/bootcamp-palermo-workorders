@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -27,11 +28,14 @@ public sealed class DetailedHealthReportProvider(
             .OrderBy(c => c.Name, StringComparer.Ordinal)
             .ToList();
 
+        var uptimeSeconds = CalculateUptimeSeconds(clock);
+
         return new DetailedHealthReport
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             Components = components,
-            OverallStatus = MapOverallStatus(report.Status)
+            OverallStatus = MapOverallStatus(report.Status),
+            UptimeSeconds = uptimeSeconds
         };
     }
 
@@ -49,11 +53,14 @@ public sealed class DetailedHealthReportProvider(
             .OrderBy(c => c.Name, StringComparer.Ordinal)
             .ToList();
 
+        var uptimeSeconds = CalculateUptimeSeconds(clock);
+
         return new DetailedHealthReport
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             Components = components,
-            OverallStatus = MapOverallStatus(aggregateStatus)
+            OverallStatus = MapOverallStatus(aggregateStatus),
+            UptimeSeconds = uptimeSeconds
         };
     }
 
@@ -85,5 +92,13 @@ public sealed class DetailedHealthReportProvider(
                 ? entry.Data.ToDictionary(d => d.Key, d => d.Value)
                 : null
         };
+    }
+
+    private static long CalculateUptimeSeconds(TimeProvider clock)
+    {
+        var processStartUtc = new DateTimeOffset(Process.GetCurrentProcess().StartTime).ToUniversalTime();
+        var now = clock.GetUtcNow();
+        var elapsed = now - processStartUtc;
+        return (long)elapsed.TotalSeconds;
     }
 }
