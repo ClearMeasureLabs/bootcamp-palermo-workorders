@@ -33,7 +33,8 @@ public class DetailedHealthReportProviderTests
         detailed.Components.Count.ShouldBe(2);
         detailed.Components.ShouldContain(c => c.Name == "API" && c.Status == ComponentHealthStatus.Healthy);
         detailed.Components.ShouldContain(c => c.Name == "DataAccess" && c.Status == ComponentHealthStatus.Unhealthy);
-        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
+        detailed.UptimeSeconds.ShouldNotBeNull();
+        detailed.UptimeSeconds.Value.ShouldBeGreaterThanOrEqualTo(0L);
     }
 
     [Test]
@@ -52,7 +53,8 @@ public class DetailedHealthReportProviderTests
 
         detailed.Components[0].Name.ShouldBe("Alpha");
         detailed.Components[1].Name.ShouldBe("Zed");
-        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
+        detailed.UptimeSeconds.ShouldNotBeNull();
+        detailed.UptimeSeconds.Value.ShouldBeGreaterThanOrEqualTo(0L);
     }
 
     [Test]
@@ -82,7 +84,8 @@ public class DetailedHealthReportProviderTests
         component.ExceptionMessage.ShouldBeNull();
         component.ExceptionDetail.ShouldBeNull();
         component.Data.ShouldBeNull();
-        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
+        detailed.UptimeSeconds.ShouldNotBeNull();
+        detailed.UptimeSeconds.Value.ShouldBeGreaterThanOrEqualTo(0L);
     }
 
     [Test]
@@ -111,7 +114,8 @@ public class DetailedHealthReportProviderTests
         component.ExceptionDetail.ShouldNotBeNull();
         component.ExceptionDetail.ShouldContain("InvalidOperationException");
         component.ExceptionDetail.ShouldContain("Connection refused");
-        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
+        detailed.UptimeSeconds.ShouldNotBeNull();
+        detailed.UptimeSeconds.Value.ShouldBeGreaterThanOrEqualTo(0L);
     }
 
     [Test]
@@ -143,7 +147,8 @@ public class DetailedHealthReportProviderTests
         component.Data!.Count.ShouldBe(2);
         component.Data["Provider"].ShouldBe("SqlServer");
         component.Data["RetryCount"].ShouldBe(3);
-        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
+        detailed.UptimeSeconds.ShouldNotBeNull();
+        detailed.UptimeSeconds.Value.ShouldBeGreaterThanOrEqualTo(0L);
     }
 
     [Test]
@@ -183,7 +188,7 @@ public class DetailedHealthReportProviderTests
             report, new FixedUtcTimeProvider(checkTime));
 
         detailed.UptimeSeconds.ShouldNotBeNull();
-        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
+        detailed.UptimeSeconds.Value.ShouldBeGreaterThanOrEqualTo(0L);
     }
 
     [Test]
@@ -201,6 +206,6 @@ public class DetailedHealthReportProviderTests
             new FixedUtcTimeProvider(fixedTime));
 
         detailed.UptimeSeconds.ShouldNotBeNull();
-        detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
+        detailed.UptimeSeconds.Value.ShouldBeGreaterThanOrEqualTo(0L);
     }
 }
