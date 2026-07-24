@@ -398,3 +398,7 @@ Maintaining architecture diagrams (PlantUML, Mermaid) as source files checked in
 - **Reference:** [The C4 Model — Tooling](https://c4model.com/#Tooling)
 
 🕐 Last updated: 2026-03-25T21:50:00Z
+
+## Deployment Verification
+
+Deployments are verified in the UAT environment before release.
