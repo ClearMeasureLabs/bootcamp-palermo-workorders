@@ -107,6 +107,16 @@ public class HealthReportBuilderTests
     }
 
     [Test]
+    public void HealthReportBuilder_FromEntries_Should_SetIs64BitProcess()
+    {
+        var report = HealthReportBuilder.FromEntries(
+            TimeProvider.System,
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
+
+        report.Is64BitProcess.ShouldBe(Environment.Is64BitProcess);
+    }
+
+    [Test]
     public void HealthReportBuilder_FromEntries_Should_AggregateWorstAcrossComponents()
     {
         var components = new[]

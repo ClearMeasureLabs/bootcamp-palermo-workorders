@@ -30,6 +30,7 @@ public static class DetailedHealthCheckResponseWriter
         var response = new DetailedHealthCheckResponse
         {
             ServerUtc = timeProvider.GetUtcNow(),
+            Is64BitProcess = Environment.Is64BitProcess,
             OverallStatus = report.Status.ToString(),
             TotalDurationMs = report.TotalDuration.TotalMilliseconds,
             Entries = report.Entries
@@ -59,6 +60,9 @@ public static class DetailedHealthCheckResponseWriter
     {
         /// <summary>UTC timestamp when the health report was written.</summary>
         public DateTimeOffset ServerUtc { get; init; }
+
+        /// <summary>Whether the host process runs as 64-bit (from <see cref="Environment.Is64BitProcess"/>).</summary>
+        public bool Is64BitProcess { get; init; }
 
         /// <summary>Overall aggregated status of all health checks.</summary>
         public required string OverallStatus { get; init; }

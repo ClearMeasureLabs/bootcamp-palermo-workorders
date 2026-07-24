@@ -191,4 +191,17 @@ public class DetailedHealthCheckResponseWriterTests
         serverUtc.ShouldBeGreaterThanOrEqualTo(before);
         serverUtc.ShouldBeLessThanOrEqualTo(after);
     }
+
+    [Test]
+    public async Task WriteAsync_Should_IncludeIs64BitProcessInRootJson_When_ResponseWritten()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        doc.RootElement.TryGetProperty("is64BitProcess", out var is64BitProcess).ShouldBeTrue();
+        is64BitProcess.ValueKind.ShouldBe(JsonValueKind.True or JsonValueKind.False);
+        is64BitProcess.GetBoolean().ShouldBe(Environment.Is64BitProcess);
+    }
 }
