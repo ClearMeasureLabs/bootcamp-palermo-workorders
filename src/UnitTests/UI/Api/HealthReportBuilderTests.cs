@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Server;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
@@ -134,6 +136,17 @@ public class HealthReportBuilderTests
             [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
 
         report.TimeZoneId.ShouldBe(TimeZoneInfo.Local.Id);
+    }
+
+    [Test]
+    public void HealthReportBuilder_FromEntries_Should_SetProcessPriority()
+    {
+        var report = HealthReportBuilder.FromEntries(
+            TimeProvider.System,
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
+
+        report.ProcessPriority.ShouldBe(DetailedHealthReportProvider.GetProcessPriority());
+        report.ProcessPriority.ShouldBe(Process.GetCurrentProcess().PriorityClass.ToString());
     }
 
     [Test]

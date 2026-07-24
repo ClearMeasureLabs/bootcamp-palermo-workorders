@@ -55,6 +55,9 @@ public sealed class DetailedHealthReport
     /// <summary>Host local time zone identifier from <see cref="TimeZoneInfo.Local"/>.</summary>
     public required string TimeZoneId { get; init; }
 
+    /// <summary>Process scheduling priority from <see cref="System.Diagnostics.Process.PriorityClass"/>.</summary>
+    public required string ProcessPriority { get; init; }
+
     /// <summary>Per-logical-component entries (mock or probe-derived).</summary>
     public required IReadOnlyList<ComponentHealthEntry> Components { get; init; }
 }
