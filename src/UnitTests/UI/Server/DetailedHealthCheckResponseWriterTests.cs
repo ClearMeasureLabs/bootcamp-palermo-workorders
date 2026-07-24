@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Server;
 using Microsoft.AspNetCore.Http;
@@ -190,5 +191,29 @@ public class DetailedHealthCheckResponseWriterTests
         serverUtc.Offset.ShouldBe(TimeSpan.Zero);
         serverUtc.ShouldBeGreaterThanOrEqualTo(before);
         serverUtc.ShouldBeLessThanOrEqualTo(after);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_IncludeCultureNameInRootJson_When_ResponseWritten()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        doc.RootElement.GetProperty("cultureName").GetString()
+            .ShouldBe(CultureInfo.CurrentCulture.Name);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_EmitNonEmptyCultureName_When_ResponseWritten()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        var cultureName = doc.RootElement.GetProperty("cultureName").GetString();
+        cultureName.ShouldNotBeNullOrEmpty();
     }
 }

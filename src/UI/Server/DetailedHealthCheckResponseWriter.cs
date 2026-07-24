@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -30,6 +31,7 @@ public static class DetailedHealthCheckResponseWriter
         var response = new DetailedHealthCheckResponse
         {
             ServerUtc = timeProvider.GetUtcNow(),
+            CultureName = CultureInfo.CurrentCulture.Name,
             OverallStatus = report.Status.ToString(),
             TotalDurationMs = report.TotalDuration.TotalMilliseconds,
             Entries = report.Entries
@@ -59,6 +61,9 @@ public static class DetailedHealthCheckResponseWriter
     {
         /// <summary>UTC timestamp when the health report was written.</summary>
         public DateTimeOffset ServerUtc { get; init; }
+
+        /// <summary>Current thread culture name (for example en-US) at probe time.</summary>
+        public string CultureName { get; init; } = string.Empty;
 
         /// <summary>Overall aggregated status of all health checks.</summary>
         public required string OverallStatus { get; init; }

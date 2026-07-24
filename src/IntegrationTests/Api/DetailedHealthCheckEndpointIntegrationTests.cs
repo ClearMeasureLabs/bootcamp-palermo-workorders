@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using Shouldly;
@@ -165,5 +166,31 @@ public class DetailedHealthCheckEndpointIntegrationTests
         var serverUtc = doc.RootElement.GetProperty("serverUtc").GetDateTimeOffset();
         serverUtc.Offset.ShouldBe(TimeSpan.Zero);
         (DateTimeOffset.UtcNow - serverUtc).Duration().ShouldBeLessThan(TimeSpan.FromMinutes(5));
+    }
+
+    [Test]
+    public async Task Should_IncludeCultureName_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+
+        doc.RootElement.GetProperty("cultureName").GetString()
+            .ShouldBe(CultureInfo.CurrentCulture.Name);
+    }
+
+    [Test]
+    public async Task Should_EmitNonEmptyCultureName_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+
+        var cultureName = doc.RootElement.GetProperty("cultureName").GetString();
+        cultureName.ShouldNotBeNullOrEmpty();
     }
 }
