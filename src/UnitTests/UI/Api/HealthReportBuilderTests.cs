@@ -64,6 +64,16 @@ public class HealthReportBuilderTests
     }
 
     [Test]
+    public void HealthReportBuilder_FromEntries_Should_SetProcessId()
+    {
+        var report = HealthReportBuilder.FromEntries(
+            TimeProvider.System,
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
+
+        report.ProcessId.ShouldBe(Environment.ProcessId);
+    }
+
+    [Test]
     public void HealthReportBuilder_FromEntries_Should_AggregateWorstAcrossComponents()
     {
         var components = new[]

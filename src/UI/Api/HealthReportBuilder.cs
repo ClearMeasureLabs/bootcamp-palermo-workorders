@@ -16,6 +16,7 @@ public static class HealthReportBuilder
         return new DetailedHealthReport
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
+            ProcessId = Environment.ProcessId,
             Components = components,
             OverallStatus = AggregateWorst(components)
         };

@@ -34,6 +34,9 @@ public sealed class DetailedHealthReport
     /// <summary>UTC instant when the report was built (ISO-8601 when serialized).</summary>
     public required DateTime CheckedAtUtc { get; init; }
 
+    /// <summary>Host OS process identifier for observability correlation across instances.</summary>
+    public required int ProcessId { get; init; }
+
     /// <summary>Per-logical-component entries (mock or probe-derived).</summary>
     public required IReadOnlyList<ComponentHealthEntry> Components { get; init; }
 }

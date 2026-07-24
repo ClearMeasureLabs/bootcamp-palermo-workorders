@@ -30,6 +30,7 @@ public sealed class DetailedHealthReportProvider(
         return new DetailedHealthReport
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
+            ProcessId = Environment.ProcessId,
             Components = components,
             OverallStatus = MapOverallStatus(report.Status)
         };
@@ -52,6 +53,7 @@ public sealed class DetailedHealthReportProvider(
         return new DetailedHealthReport
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
+            ProcessId = Environment.ProcessId,
             Components = components,
             OverallStatus = MapOverallStatus(aggregateStatus)
         };
