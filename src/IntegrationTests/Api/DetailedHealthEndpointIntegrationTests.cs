@@ -172,6 +172,31 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_IncludeGcMemoryMb_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("gcMemoryMb", out var gcMemoryMb).ShouldBeTrue();
+        gcMemoryMb.ValueKind.ShouldBe(JsonValueKind.Number);
+        gcMemoryMb.GetInt32().ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
+    public async Task Should_DeserializeGcMemoryMb_ToDetailedHealthReport_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
     public async Task Should_ListExpectedComponentEntries_When_AggregatedFromRegisteredChecks()
     {
         var response = await _client!.GetAsync("/api/health/detailed");

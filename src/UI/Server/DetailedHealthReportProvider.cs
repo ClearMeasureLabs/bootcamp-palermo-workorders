@@ -33,6 +33,7 @@ public sealed class DetailedHealthReportProvider(
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             ProcessId = Environment.ProcessId,
             OsDescription = RuntimeInformation.OSDescription,
+            GcMemoryMb = GetGcMemoryMb(),
             Components = components,
             OverallStatus = MapOverallStatus(report.Status)
         };
@@ -57,10 +58,14 @@ public sealed class DetailedHealthReportProvider(
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             ProcessId = Environment.ProcessId,
             OsDescription = RuntimeInformation.OSDescription,
+            GcMemoryMb = GetGcMemoryMb(),
             Components = components,
             OverallStatus = MapOverallStatus(aggregateStatus)
         };
     }
+
+    internal static int GetGcMemoryMb() =>
+        (int)Math.Round(GC.GetTotalMemory(false) / 1_048_576.0);
 
     private static string MapOverallStatus(HealthStatus status) => status switch
     {

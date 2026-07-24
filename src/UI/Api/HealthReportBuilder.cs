@@ -20,6 +20,7 @@ public static class HealthReportBuilder
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             ProcessId = Environment.ProcessId,
             OsDescription = RuntimeInformation.OSDescription,
+            GcMemoryMb = (int)Math.Round(GC.GetTotalMemory(false) / 1_048_576.0),
             Components = components,
             OverallStatus = AggregateWorst(components)
         };
