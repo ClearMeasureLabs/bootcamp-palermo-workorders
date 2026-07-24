@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
-/// Exposes a minimal JSON greeting for operators and integrations.
+/// Exposes a minimal JSON greeting probe for operators and integrations.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -17,11 +17,12 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 public class HelloController : ControllerBase
 {
     /// <summary>
-    /// Returns a JSON greeting message.
+    /// Returns a static JSON greeting for reachability checks.
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult Get() => ConditionalGetEtag.JsonContent(new HelloResponse("Hello, World!"));
+    public IActionResult Get() =>
+        ConditionalGetEtag.JsonContent(new HelloResponse("Hello, World!"));
 }
 
 /// <summary>
