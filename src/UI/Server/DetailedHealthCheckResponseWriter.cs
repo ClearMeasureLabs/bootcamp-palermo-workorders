@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -30,6 +31,7 @@ public static class DetailedHealthCheckResponseWriter
         var response = new DetailedHealthCheckResponse
         {
             ServerUtc = timeProvider.GetUtcNow(),
+            ProcessStartUtc = new DateTimeOffset(Process.GetCurrentProcess().StartTime).ToUniversalTime(),
             Is64BitProcess = Environment.Is64BitProcess,
             TimeZoneId = TimeZoneInfo.Local.Id,
             OverallStatus = report.Status.ToString(),
@@ -61,6 +63,9 @@ public static class DetailedHealthCheckResponseWriter
     {
         /// <summary>UTC timestamp when the health report was written.</summary>
         public DateTimeOffset ServerUtc { get; init; }
+
+        /// <summary>UTC timestamp when the host process started (from <see cref="Process.StartTime"/>).</summary>
+        public DateTimeOffset ProcessStartUtc { get; init; }
 
         /// <summary>Whether the host process runs as 64-bit (from <see cref="Environment.Is64BitProcess"/>).</summary>
         public bool Is64BitProcess { get; init; }
