@@ -1,4 +1,4 @@
-using System.Globalization;
+using System.Reflection;
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
@@ -170,7 +170,19 @@ public class MainLayoutTests
     }
 
     [Test]
-    public void ShouldRenderCopyrightFooter_WithCurrentYear_OrganizationAndLink_WhenNotAuthenticated()
+    public void CopyrightYear_ShouldReturn2027_InMainLayout()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.Instance.GetType().GetProperty("CopyrightYear", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(layout.Instance).ShouldBe(2027);
+    }
+
+    [Test]
+    public void ShouldRenderCopyrightFooter_With2027Year_OrganizationAndLink_WhenNotAuthenticated()
     {
         using var ctx = CreateContext();
 
@@ -181,8 +193,7 @@ public class MainLayoutTests
         footer.TagName.ShouldBe("FOOTER");
         layout.FindAll("#app-navigation-rail footer").Count.ShouldBe(0);
 
-        var yearText = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
-        footer.TextContent.ShouldContain(yearText);
+        footer.TextContent.ShouldContain("2027");
         footer.TextContent.ShouldContain("ClearMeasure Labs");
 
         var link = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}'] .site-footer-link");
@@ -191,7 +202,7 @@ public class MainLayoutTests
     }
 
     [Test]
-    public void ShouldRenderCopyrightFooter_WhenAuthenticated()
+    public void ShouldRenderCopyrightFooter_With2027Year_WhenAuthenticated()
     {
         using var ctx = CreateContext(authenticateAsUser: "hsimpson");
 
@@ -199,8 +210,7 @@ public class MainLayoutTests
         var layout = component.FindComponent<MainLayout>();
 
         var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
-        var yearText = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
-        footer.TextContent.ShouldContain(yearText);
+        footer.TextContent.ShouldContain("2027");
         footer.TextContent.ShouldContain("ClearMeasure Labs");
         layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}'] .site-footer-link").GetAttribute("href")!.TrimEnd('/').ShouldBe("https://clearmeasure.com");
     }

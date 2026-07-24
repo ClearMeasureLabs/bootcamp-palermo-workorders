@@ -20,9 +20,9 @@ public partial class MainLayout : IAsyncDisposable
     }
 
     /// <summary>
-    /// Calendar year shown in the site copyright line (UTC, matches acceptance tests).
+    /// Calendar year shown in the site copyright line.
     /// </summary>
-    protected int CopyrightYear => DateTime.UtcNow.Year;
+    protected int CopyrightYear => 2027;
 
     [Inject]
     private IJSRuntime Js { get; set; } = default!;

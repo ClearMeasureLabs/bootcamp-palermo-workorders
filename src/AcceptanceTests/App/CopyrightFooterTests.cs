@@ -1,4 +1,3 @@
-using System.Globalization;
 using ClearMeasure.Bootcamp.UI.Shared;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
@@ -16,8 +15,7 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await footer.WaitForAsync();
         await Expect(footer).ToBeVisibleAsync();
 
-        var yearText = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
-        await Expect(footer).ToContainTextAsync(yearText);
+        await Expect(footer).ToContainTextAsync("© 2027");
         await Expect(footer).ToContainTextAsync("ClearMeasure Labs");
 
         var link = footer.Locator("a[href*='clearmeasure.com']").First;
@@ -37,8 +35,7 @@ public class CopyrightFooterTests : AcceptanceTestBase
 
         var footer = Page.GetByTestId(nameof(MainLayout.Elements.CopyrightFooter));
         await Expect(footer).ToBeVisibleAsync();
-        var yearText = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
-        await Expect(footer).ToContainTextAsync(yearText);
+        await Expect(footer).ToContainTextAsync("© 2027");
         await Expect(footer).ToContainTextAsync("ClearMeasure Labs");
     }
 
