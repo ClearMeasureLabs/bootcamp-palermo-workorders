@@ -25,7 +25,7 @@ public static class DetailedHealthCheckResponseWriter
     {
         context.Response.ContentType = "application/json; charset=utf-8";
 
-        var timeProvider = context.RequestServices.GetService<TimeProvider>() ?? TimeProvider.System;
+        var timeProvider = context.RequestServices?.GetService<TimeProvider>() ?? TimeProvider.System;
 
         var response = new DetailedHealthCheckResponse
         {
