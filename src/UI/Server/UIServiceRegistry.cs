@@ -70,7 +70,8 @@ public class UiServiceRegistry : ServiceRegistry
             .AddCheck<Is64BitProcessHealthCheck>("Server")
             .AddCheck<HealthCheck>("API")
             .AddCheck<FunJeffreyCustomEventHealthCheck>("Jeffrey")
-            .AddCheck<NeedsRebootHealthCheck>("NeedsReboot");
+            .AddCheck<NeedsRebootHealthCheck>("NeedsReboot")
+            .AddCheck<ProcessThreadCountHealthCheck>("ProcessThreadCount");
 
         this.AddSingleton<IDetailedHealthReportProvider, DetailedHealthReportProvider>();
     }

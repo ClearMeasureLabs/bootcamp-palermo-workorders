@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using Shouldly;
@@ -94,5 +95,48 @@ public class DetailedHealthCheckEndpointIntegrationTests
         names.ShouldContain("API");
         names.ShouldContain("Jeffrey");
         names.ShouldContain("NeedsReboot");
+        names.ShouldContain("ProcessThreadCount");
+    }
+
+    [Test]
+    public async Task Should_IncludeThreadCountInDetailedHealthCheckJson_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        var entries = doc.RootElement.GetProperty("entries");
+
+        var processThreadEntry = entries.EnumerateArray()
+            .First(e => e.GetProperty("name").GetString() == "ProcessThreadCount");
+
+        processThreadEntry.TryGetProperty("data", out var data).ShouldBeTrue();
+        data.TryGetProperty("threadCount", out var threadCount).ShouldBeTrue();
+        var threadCountValue = threadCount.ValueKind == JsonValueKind.Number
+            ? threadCount.GetInt32()
+            : int.Parse(threadCount.GetString()!);
+        threadCountValue.ShouldBeGreaterThan(0);
+    }
+
+    [Test]
+    public async Task Should_ReportThreadCountMatchingCurrentProcess_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        var entries = doc.RootElement.GetProperty("entries");
+
+        var processThreadEntry = entries.EnumerateArray()
+            .First(e => e.GetProperty("name").GetString() == "ProcessThreadCount");
+
+        var threadCount = processThreadEntry.GetProperty("data").GetProperty("threadCount");
+        var threadCountValue = threadCount.ValueKind == JsonValueKind.Number
+            ? threadCount.GetInt32()
+            : int.Parse(threadCount.GetString()!);
+
+        threadCountValue.ShouldBe(Process.GetCurrentProcess().Threads.Count);
     }
 }
