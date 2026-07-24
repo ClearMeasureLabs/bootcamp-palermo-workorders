@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Server;
 using Microsoft.AspNetCore.Http;
@@ -214,5 +215,44 @@ public class DetailedHealthCheckResponseWriterTests
 
         doc.RootElement.TryGetProperty("timeZoneId", out var timeZoneId).ShouldBeTrue();
         timeZoneId.GetString().ShouldBe(TimeZoneInfo.Local.Id);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_IncludeProcessStartUtc_When_ResponseWritten()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        doc.RootElement.TryGetProperty("processStartUtc", out var processStartUtc).ShouldBeTrue();
+        var parsed = processStartUtc.GetDateTimeOffset();
+        parsed.Offset.ShouldBe(TimeSpan.Zero);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_SetProcessStartUtcFromCurrentProcess_When_ResponseWritten()
+    {
+        var expected = new DateTimeOffset(Process.GetCurrentProcess().StartTime).ToUniversalTime();
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        var processStartUtc = doc.RootElement.GetProperty("processStartUtc").GetDateTimeOffset();
+        processStartUtc.ShouldBe(expected);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_EnforceProcessStartUtcLessThanOrEqualServerUtc()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        var processStartUtc = doc.RootElement.GetProperty("processStartUtc").GetDateTimeOffset();
+        var serverUtc = doc.RootElement.GetProperty("serverUtc").GetDateTimeOffset();
+        processStartUtc.ShouldBeLessThanOrEqualTo(serverUtc);
     }
 }
