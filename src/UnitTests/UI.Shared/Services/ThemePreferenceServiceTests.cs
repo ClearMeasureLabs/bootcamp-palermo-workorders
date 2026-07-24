@@ -34,6 +34,31 @@ public class ThemePreferenceServiceTests
     }
 
     [Test]
+    public async Task InitializeAsync_WithNoStoredValue_ShouldFallbackToSystemPreference()
+    {
+        var js = new StubThemeJsRuntime { InitialTheme = "light" };
+        var sut = new ThemePreferenceService(js);
+
+        await sut.InitializeAsync();
+
+        sut.IsDarkMode.ShouldBeFalse();
+        js.SyncDomFromThemeCalls.ShouldBe(1);
+    }
+
+    [Test]
+    public async Task SetDarkModeAsync_ShouldCallSyncDomFromTheme()
+    {
+        var js = new StubThemeJsRuntime { InitialTheme = "light" };
+        var sut = new ThemePreferenceService(js);
+        await sut.InitializeAsync();
+        js.SyncDomFromThemeCalls = 0;
+
+        await sut.SetDarkModeAsync(true);
+
+        js.SetThemeCalls.ShouldBe(1);
+    }
+
+    [Test]
     public async Task WhenJsInteropThrowsDisconnected_ShouldNotCrashOnInitialize()
     {
         var js = new StubDisconnectedJsRuntime();
@@ -58,6 +83,7 @@ public class ThemePreferenceServiceTests
     {
         public string InitialTheme { get; init; } = "light";
         public int SetThemeCalls { get; private set; }
+        public int SyncDomFromThemeCalls { get; set; }
         public bool? LastSetThemeArg { get; private set; }
 
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
@@ -93,6 +119,7 @@ public class ThemePreferenceServiceTests
 
                 if (identifier == "syncDomFromTheme")
                 {
+                    _parent.SyncDomFromThemeCalls++;
                     _theme = (string)args![0]!;
                     return ValueTask.FromResult(default(TValue)!);
                 }
@@ -117,6 +144,7 @@ public class ThemePreferenceServiceTests
                 switch (identifier)
                 {
                     case "syncDomFromTheme":
+                        _parent.SyncDomFromThemeCalls++;
                         _theme = (string)args![0]!;
                         return ValueTask.CompletedTask;
                     case "setTheme":

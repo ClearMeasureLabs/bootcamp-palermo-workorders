@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
@@ -31,6 +32,13 @@ public class SettingsTests
         sw.GetAttribute("role").ShouldBe("switch");
         component.Markup.ShouldContain("Dark mode");
         component.Markup.ShouldContain("whole app");
+    }
+
+    [Test]
+    public void Settings_ShouldRequireAuthorization()
+    {
+        typeof(Settings).GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .ShouldNotBeEmpty();
     }
 
     [Test]

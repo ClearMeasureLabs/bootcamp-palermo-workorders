@@ -42,6 +42,30 @@ public class DarkModeTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task DarkMode_ShouldToggleLightModeFromDark()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.Settings));
+        await Page.WaitForURLAsync("**/settings");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        var darkSwitch = Page.GetByTestId(nameof(Settings.Elements.DarkModeSwitch));
+        await darkSwitch.WaitForAsync();
+
+        if (!await darkSwitch.IsCheckedAsync())
+            await Click(nameof(Settings.Elements.DarkModeSwitch));
+        await Page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-theme') === 'dark'");
+
+        await Click(nameof(Settings.Elements.DarkModeSwitch));
+        await Page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-theme') === 'light'");
+
+        var bsTheme = await Page.EvaluateAsync<string>(
+            "() => document.documentElement.getAttribute('data-bs-theme')");
+        bsTheme.ShouldBe("light");
+    }
+
+    [Test, Retry(2)]
     public async Task DarkMode_ShouldPersistAcrossReload()
     {
         await LoginAsCurrentUser();
