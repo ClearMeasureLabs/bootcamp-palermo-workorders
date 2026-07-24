@@ -173,6 +173,33 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_IncludeFrameworkDescription_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("frameworkDescription", out var frameworkDescription).ShouldBeTrue();
+        var value = frameworkDescription.GetString();
+        value.ShouldNotBeNull();
+        value!.ShouldNotBeEmpty();
+    }
+
+    [Test]
+    public async Task Should_DeserializeFrameworkDescription_ToDetailedHealthReport_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.FrameworkDescription.ShouldNotBeNull();
+        report.FrameworkDescription.ShouldNotBeEmpty();
+    }
+
+    [Test]
     public async Task Should_IncludeGcMemoryMb_When_GetDetailedHealth()
     {
         var response = await _client!.GetAsync("/api/health/detailed");

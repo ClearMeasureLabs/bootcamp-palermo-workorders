@@ -21,6 +21,7 @@ public static class HealthReportBuilder
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             ProcessId = Environment.ProcessId,
             OsDescription = RuntimeInformation.OSDescription,
+            FrameworkDescription = RuntimeInformation.FrameworkDescription,
             GcMemoryMb = (int)Math.Round(GC.GetTotalMemory(false) / 1_048_576.0),
             WorkingSetMb = (int)Math.Round(Environment.WorkingSet / 1_048_576.0),
             ProcessorCount = Environment.ProcessorCount,
