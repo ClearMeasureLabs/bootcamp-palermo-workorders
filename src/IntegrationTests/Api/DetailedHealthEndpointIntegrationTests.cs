@@ -197,6 +197,35 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_IncludeAppBasePath_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("appBasePath", out var appBasePath).ShouldBeTrue();
+        var value = appBasePath.GetString();
+        value.ShouldNotBeNull();
+        value!.ShouldNotBeEmpty();
+        value.ShouldBe(AppContext.BaseDirectory);
+    }
+
+    [Test]
+    public async Task Should_DeserializeAppBasePath_ToDetailedHealthReport_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.AppBasePath.ShouldNotBeNull();
+        report.AppBasePath.ShouldNotBeEmpty();
+        report.AppBasePath.ShouldBe(AppContext.BaseDirectory);
+    }
+
+    [Test]
     public async Task Should_ListExpectedComponentEntries_When_AggregatedFromRegisteredChecks()
     {
         var response = await _client!.GetAsync("/api/health/detailed");
