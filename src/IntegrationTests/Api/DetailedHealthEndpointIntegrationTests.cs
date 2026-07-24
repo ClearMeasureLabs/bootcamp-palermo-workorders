@@ -197,6 +197,33 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_IncludeProcessorCount_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("processorCount", out var processorCount).ShouldBeTrue();
+        processorCount.ValueKind.ShouldBe(JsonValueKind.Number);
+        processorCount.GetInt32().ShouldBeGreaterThanOrEqualTo(1);
+        processorCount.GetInt32().ShouldBe(Environment.ProcessorCount);
+    }
+
+    [Test]
+    public async Task Should_DeserializeProcessorCount_ToDetailedHealthReport_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.ProcessorCount.ShouldBeGreaterThanOrEqualTo(1);
+        report.ProcessorCount.ShouldBe(Environment.ProcessorCount);
+    }
+
+    [Test]
     public async Task Should_ListExpectedComponentEntries_When_AggregatedFromRegisteredChecks()
     {
         var response = await _client!.GetAsync("/api/health/detailed");

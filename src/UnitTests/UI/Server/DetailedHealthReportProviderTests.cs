@@ -53,6 +53,22 @@ public class DetailedHealthReportProviderTests
     }
 
     [Test]
+    public void FromComponentStatuses_Should_SetProcessorCount()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.ProcessorCount.ShouldBe(Environment.ProcessorCount);
+    }
+
+    [Test]
     public void FromHealthReport_Should_SetProcessId()
     {
         var entries = new Dictionary<string, HealthReportEntry>
@@ -64,6 +80,20 @@ public class DetailedHealthReportProviderTests
         var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
 
         detailed.ProcessId.ShouldBe(Environment.ProcessId);
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetProcessorCount()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.ProcessorCount.ShouldBe(Environment.ProcessorCount);
     }
 
     [Test]
