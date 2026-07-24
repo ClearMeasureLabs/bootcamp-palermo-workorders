@@ -152,7 +152,7 @@ public class DetailedHealthEndpointIntegrationTests
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
         report!.UptimeSeconds.ShouldNotBeNull();
-        report.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
+        report.UptimeSeconds.Value.ShouldBeGreaterThanOrEqualTo(0L);
     }
 
     [Test]
