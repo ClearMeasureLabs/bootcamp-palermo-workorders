@@ -36,6 +36,9 @@ public sealed class DetailedHealthReport
 
     /// <summary>Per-logical-component entries (mock or probe-derived).</summary>
     public required IReadOnlyList<ComponentHealthEntry> Components { get; init; }
+
+    /// <summary>Elapsed time in whole seconds since the host process started, or null if not determined.</summary>
+    public long? UptimeSeconds { get; init; }
 }
 
 /// <summary>

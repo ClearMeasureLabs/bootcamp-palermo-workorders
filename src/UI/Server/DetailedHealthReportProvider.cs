@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -20,7 +21,10 @@ public sealed class DetailedHealthReportProvider(
         return FromHealthReport(report, timeProvider);
     }
 
-    internal static DetailedHealthReport FromHealthReport(HealthReport report, TimeProvider clock)
+    internal static DetailedHealthReport FromHealthReport(
+        HealthReport report,
+        TimeProvider clock,
+        DateTimeOffset? processStartUtc = null)
     {
         var components = report.Entries
             .Select(pair => BuildComponentEntry(pair.Key, pair.Value))
@@ -31,14 +35,16 @@ public sealed class DetailedHealthReportProvider(
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             Components = components,
-            OverallStatus = MapOverallStatus(report.Status)
+            OverallStatus = MapOverallStatus(report.Status),
+            UptimeSeconds = CalculateUptimeSeconds(clock, processStartUtc)
         };
     }
 
     internal static DetailedHealthReport FromComponentStatuses(
         IEnumerable<KeyValuePair<string, HealthStatus>> entries,
         HealthStatus aggregateStatus,
-        TimeProvider clock)
+        TimeProvider clock,
+        DateTimeOffset? processStartUtc = null)
     {
         var components = entries
             .Select(pair => new ComponentHealthEntry
@@ -53,8 +59,17 @@ public sealed class DetailedHealthReportProvider(
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             Components = components,
-            OverallStatus = MapOverallStatus(aggregateStatus)
+            OverallStatus = MapOverallStatus(aggregateStatus),
+            UptimeSeconds = CalculateUptimeSeconds(clock, processStartUtc)
         };
+    }
+
+    internal static long CalculateUptimeSeconds(TimeProvider clock, DateTimeOffset? processStartUtc = null)
+    {
+        var startUtc = processStartUtc
+            ?? new DateTimeOffset(Process.GetCurrentProcess().StartTime).ToUniversalTime();
+        var elapsed = clock.GetUtcNow() - startUtc.ToUniversalTime();
+        return (long)elapsed.TotalSeconds;
     }
 
     private static string MapOverallStatus(HealthStatus status) => status switch

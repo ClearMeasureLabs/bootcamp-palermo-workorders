@@ -80,6 +80,9 @@ public class DetailedHealthEndpointIntegrationTests
         using var doc = await JsonDocument.ParseAsync(stream);
         doc.RootElement.TryGetProperty("overallStatus", out _).ShouldBeTrue();
         doc.RootElement.TryGetProperty("checkedAtUtc", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("uptimeSeconds", out var uptimeSeconds).ShouldBeTrue();
+        uptimeSeconds.ValueKind.ShouldBe(JsonValueKind.Number);
+        uptimeSeconds.GetInt64().ShouldBeGreaterThanOrEqualTo(0);
         doc.RootElement.TryGetProperty("components", out var components).ShouldBeTrue();
         components.ValueKind.ShouldBe(JsonValueKind.Array);
         components.GetArrayLength().ShouldBeGreaterThan(0);
@@ -139,5 +142,54 @@ public class DetailedHealthEndpointIntegrationTests
                 || c.Status == ComponentHealthStatus.Degraded
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
         }
+    }
+
+    [Test]
+    public async Task Should_IncludeUptimeSeconds_InJsonResponse_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("uptimeSeconds", out var uptimeSeconds).ShouldBeTrue();
+        uptimeSeconds.ValueKind.ShouldBe(JsonValueKind.Number);
+        uptimeSeconds.TryGetInt64(out var value).ShouldBeTrue();
+        value.ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
+    public async Task Should_ProvideConsistentUptimeWithSimpleHealthEndpoint_When_RequestsMadeSequentially()
+    {
+        var simpleResponse = await _client!.GetAsync("/api/health");
+        simpleResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var simple = await simpleResponse.Content.ReadFromJsonAsync<SimpleHealthResponse>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        simple.ShouldNotBeNull();
+
+        var detailedResponse = await _client.GetAsync("/api/health/detailed");
+        detailedResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var detailed = await detailedResponse.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        detailed.ShouldNotBeNull();
+
+        var simpleSeconds = (long)simple!.Uptime.TotalSeconds;
+        detailed!.UptimeSeconds.ShouldNotBeNull();
+        Math.Abs(detailed.UptimeSeconds!.Value - simpleSeconds).ShouldBeLessThanOrEqualTo(1);
+    }
+
+    [Test]
+    public async Task Should_IncludeComponentsAlongWithUptimeSeconds_When_HealthCheckComponentsPresent()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("uptimeSeconds", out var uptimeSeconds).ShouldBeTrue();
+        uptimeSeconds.ValueKind.ShouldBe(JsonValueKind.Number);
+        doc.RootElement.TryGetProperty("components", out var components).ShouldBeTrue();
+        components.ValueKind.ShouldBe(JsonValueKind.Array);
+        components.GetArrayLength().ShouldBeGreaterThan(0);
     }
 }

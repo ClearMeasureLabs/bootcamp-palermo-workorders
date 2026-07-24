@@ -17,6 +17,7 @@ public class DetailedHealthReportProviderTests
     public void FromComponentStatuses_Should_MapStatusesAndOverall()
     {
         var fixedTime = new DateTime(2026, 3, 30, 10, 0, 0, DateTimeKind.Utc);
+        var processStart = new DateTimeOffset(2026, 3, 30, 9, 45, 0, TimeSpan.Zero);
         var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
         {
             ["API"] = HealthStatus.Healthy,
@@ -26,18 +27,22 @@ public class DetailedHealthReportProviderTests
         var detailed = DetailedHealthReportProvider.FromComponentStatuses(
             entries,
             HealthStatus.Unhealthy,
-            new FixedUtcTimeProvider(fixedTime));
+            new FixedUtcTimeProvider(fixedTime),
+            processStart);
 
         detailed.CheckedAtUtc.ShouldBe(fixedTime);
         detailed.OverallStatus.ShouldBe(ComponentHealthStatus.Unhealthy);
         detailed.Components.Count.ShouldBe(2);
         detailed.Components.ShouldContain(c => c.Name == "API" && c.Status == ComponentHealthStatus.Healthy);
         detailed.Components.ShouldContain(c => c.Name == "DataAccess" && c.Status == ComponentHealthStatus.Unhealthy);
+        detailed.UptimeSeconds.ShouldBe(900);
     }
 
     [Test]
     public void FromComponentStatuses_Should_OrderComponentsByName()
     {
+        var fixedTime = new DateTime(2026, 3, 30, 10, 0, 0, DateTimeKind.Utc);
+        var processStart = new DateTimeOffset(2026, 3, 30, 9, 59, 30, TimeSpan.Zero);
         var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
         {
             ["Zed"] = HealthStatus.Healthy,
@@ -47,16 +52,19 @@ public class DetailedHealthReportProviderTests
         var detailed = DetailedHealthReportProvider.FromComponentStatuses(
             entries,
             HealthStatus.Degraded,
-            TimeProvider.System);
+            new FixedUtcTimeProvider(fixedTime),
+            processStart);
 
         detailed.Components[0].Name.ShouldBe("Alpha");
         detailed.Components[1].Name.ShouldBe("Zed");
+        detailed.UptimeSeconds.ShouldBe(30);
     }
 
     [Test]
     public void FromHealthReport_Should_IncludeDescriptionAndDuration()
     {
         var fixedTime = new DateTime(2026, 4, 1, 12, 0, 0, DateTimeKind.Utc);
+        var processStart = new DateTimeOffset(2026, 4, 1, 11, 58, 20, TimeSpan.Zero);
         var entries = new Dictionary<string, HealthReportEntry>
         {
             ["DataAccess"] = new(
@@ -69,7 +77,7 @@ public class DetailedHealthReportProviderTests
         var report = new HealthReport(entries, TimeSpan.FromMilliseconds(42));
 
         var detailed = DetailedHealthReportProvider.FromHealthReport(
-            report, new FixedUtcTimeProvider(fixedTime));
+            report, new FixedUtcTimeProvider(fixedTime), processStart);
 
         detailed.Components.Count.ShouldBe(1);
         var component = detailed.Components[0];
@@ -80,12 +88,14 @@ public class DetailedHealthReportProviderTests
         component.ExceptionMessage.ShouldBeNull();
         component.ExceptionDetail.ShouldBeNull();
         component.Data.ShouldBeNull();
+        detailed.UptimeSeconds.ShouldBe(100);
     }
 
     [Test]
     public void FromHealthReport_Should_IncludeExceptionDetailsWhenUnhealthy()
     {
         var fixedTime = new DateTime(2026, 4, 1, 12, 0, 0, DateTimeKind.Utc);
+        var processStart = new DateTimeOffset(2026, 4, 1, 11, 58, 20, TimeSpan.Zero);
         var exception = new InvalidOperationException("Connection refused");
         var entries = new Dictionary<string, HealthReportEntry>
         {
@@ -99,7 +109,7 @@ public class DetailedHealthReportProviderTests
         var report = new HealthReport(entries, TimeSpan.FromMilliseconds(150));
 
         var detailed = DetailedHealthReportProvider.FromHealthReport(
-            report, new FixedUtcTimeProvider(fixedTime));
+            report, new FixedUtcTimeProvider(fixedTime), processStart);
 
         var component = detailed.Components[0];
         component.Status.ShouldBe(ComponentHealthStatus.Unhealthy);
@@ -108,12 +118,14 @@ public class DetailedHealthReportProviderTests
         component.ExceptionDetail.ShouldNotBeNull();
         component.ExceptionDetail.ShouldContain("InvalidOperationException");
         component.ExceptionDetail.ShouldContain("Connection refused");
+        detailed.UptimeSeconds.ShouldBe(100);
     }
 
     [Test]
     public void FromHealthReport_Should_IncludeDataDictionaryWhenPresent()
     {
         var fixedTime = new DateTime(2026, 4, 1, 12, 0, 0, DateTimeKind.Utc);
+        var processStart = new DateTimeOffset(2026, 4, 1, 11, 58, 20, TimeSpan.Zero);
         var data = new Dictionary<string, object>
         {
             ["Provider"] = "SqlServer",
@@ -131,7 +143,7 @@ public class DetailedHealthReportProviderTests
         var report = new HealthReport(entries, TimeSpan.FromMilliseconds(5000));
 
         var detailed = DetailedHealthReportProvider.FromHealthReport(
-            report, new FixedUtcTimeProvider(fixedTime));
+            report, new FixedUtcTimeProvider(fixedTime), processStart);
 
         var component = detailed.Components[0];
         component.Status.ShouldBe(ComponentHealthStatus.Degraded);
@@ -139,6 +151,7 @@ public class DetailedHealthReportProviderTests
         component.Data!.Count.ShouldBe(2);
         component.Data["Provider"].ShouldBe("SqlServer");
         component.Data["RetryCount"].ShouldBe(3);
+        detailed.UptimeSeconds.ShouldBe(100);
     }
 
     [Test]
@@ -164,5 +177,52 @@ public class DetailedHealthReportProviderTests
         component.ExceptionDetail.ShouldContain("TimeoutException");
         component.Data.ShouldNotBeNull();
         component.Data!["endpoint"].ShouldBe("https://api.example.com");
+    }
+
+    [Test]
+    public void FromHealthReport_Should_PopulateUptimeSeconds_WithCorrectElapsedSeconds()
+    {
+        var checkTime = new DateTime(2026, 3, 30, 10, 1, 40, DateTimeKind.Utc);
+        var processStart = new DateTimeOffset(2026, 3, 30, 10, 0, 0, TimeSpan.Zero);
+        var report = new HealthReport(
+            new Dictionary<string, HealthReportEntry>(),
+            TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(
+            report,
+            new FixedUtcTimeProvider(checkTime),
+            processStart);
+
+        detailed.UptimeSeconds.ShouldBe(100);
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_CalculateUptimeSeconds_AsWholeLong()
+    {
+        var checkTime = new DateTime(2026, 3, 30, 10, 0, 5, 900, DateTimeKind.Utc);
+        var processStart = new DateTimeOffset(2026, 3, 30, 10, 0, 0, 500, TimeSpan.Zero);
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            new FixedUtcTimeProvider(checkTime),
+            processStart);
+
+        detailed.UptimeSeconds.ShouldBe(5);
+    }
+
+    [Test]
+    public void CalculateUptimeSeconds_Should_ReturnZero_When_CheckAtProcessStart()
+    {
+        var instant = new DateTimeOffset(2026, 3, 30, 10, 0, 0, TimeSpan.Zero);
+        var clock = new FixedUtcTimeProvider(instant.UtcDateTime);
+
+        var uptimeSeconds = DetailedHealthReportProvider.CalculateUptimeSeconds(clock, instant);
+
+        uptimeSeconds.ShouldBe(0);
     }
 }
