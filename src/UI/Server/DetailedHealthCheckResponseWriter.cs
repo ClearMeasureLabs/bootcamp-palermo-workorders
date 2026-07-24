@@ -31,7 +31,7 @@ public static class DetailedHealthCheckResponseWriter
         var response = new DetailedHealthCheckResponse
         {
             ServerUtc = timeProvider.GetUtcNow(),
-            CultureName = CultureInfo.CurrentCulture.Name,
+            CultureName = ResolveCultureName(),
             OverallStatus = report.Status.ToString(),
             TotalDurationMs = report.TotalDuration.TotalMilliseconds,
             Entries = report.Entries
@@ -57,12 +57,24 @@ public static class DetailedHealthCheckResponseWriter
         await context.Response.WriteAsJsonAsync(response, JsonOptions);
     }
 
+    internal static string ResolveCultureName()
+    {
+        var name = CultureInfo.CurrentCulture.Name;
+        return string.IsNullOrEmpty(name)
+            ? CultureInfo.CurrentCulture.TwoLetterISOLanguageName
+            : name;
+    }
+
     internal sealed class DetailedHealthCheckResponse
     {
         /// <summary>UTC timestamp when the health report was written.</summary>
         public DateTimeOffset ServerUtc { get; init; }
 
-        /// <summary>Current thread culture name (for example en-US) at probe time.</summary>
+        /// <summary>
+        /// Current thread culture name (for example en-US) at probe time.
+        /// Uses <see cref="CultureInfo.CurrentCulture"/>.<see cref="CultureInfo.Name"/> when set;
+        /// otherwise falls back to <see cref="CultureInfo.TwoLetterISOLanguageName"/> (for example iv on invariant culture).
+        /// </summary>
         public string CultureName { get; init; } = string.Empty;
 
         /// <summary>Overall aggregated status of all health checks.</summary>

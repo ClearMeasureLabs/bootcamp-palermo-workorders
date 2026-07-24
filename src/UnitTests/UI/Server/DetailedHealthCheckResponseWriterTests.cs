@@ -202,7 +202,7 @@ public class DetailedHealthCheckResponseWriterTests
         using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
 
         doc.RootElement.GetProperty("cultureName").GetString()
-            .ShouldBe(CultureInfo.CurrentCulture.Name);
+            .ShouldBe(DetailedHealthCheckResponseWriter.ResolveCultureName());
     }
 
     [Test]

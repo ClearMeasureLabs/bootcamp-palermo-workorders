@@ -12,6 +12,11 @@ public class DetailedHealthCheckEndpointIntegrationTests
     private DetailedHealthWebApplicationFactory? _factory;
     private HttpClient? _client;
 
+    private static string ExpectedCultureName =>
+        string.IsNullOrEmpty(CultureInfo.CurrentCulture.Name)
+            ? CultureInfo.CurrentCulture.TwoLetterISOLanguageName
+            : CultureInfo.CurrentCulture.Name;
+
     [OneTimeSetUp]
     public void OneTimeSetUp()
     {
@@ -178,7 +183,7 @@ public class DetailedHealthCheckEndpointIntegrationTests
         using var doc = await JsonDocument.ParseAsync(stream);
 
         doc.RootElement.GetProperty("cultureName").GetString()
-            .ShouldBe(CultureInfo.CurrentCulture.Name);
+            .ShouldBe(ExpectedCultureName);
     }
 
     [Test]
