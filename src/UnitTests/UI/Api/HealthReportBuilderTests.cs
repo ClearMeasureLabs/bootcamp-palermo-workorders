@@ -97,6 +97,16 @@ public class HealthReportBuilderTests
     }
 
     [Test]
+    public void HealthReportBuilder_FromEntries_Should_SetWorkingSetMb()
+    {
+        var report = HealthReportBuilder.FromEntries(
+            TimeProvider.System,
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
+
+        report.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
     public void HealthReportBuilder_FromEntries_Should_SetProcessorCount()
     {
         var report = HealthReportBuilder.FromEntries(

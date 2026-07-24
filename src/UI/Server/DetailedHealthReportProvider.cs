@@ -34,6 +34,7 @@ public sealed class DetailedHealthReportProvider(
             ProcessId = Environment.ProcessId,
             OsDescription = RuntimeInformation.OSDescription,
             GcMemoryMb = GetGcMemoryMb(),
+            WorkingSetMb = GetWorkingSetMb(),
             ProcessorCount = Environment.ProcessorCount,
             Is64BitProcess = Environment.Is64BitProcess,
             Components = components,
@@ -61,6 +62,7 @@ public sealed class DetailedHealthReportProvider(
             ProcessId = Environment.ProcessId,
             OsDescription = RuntimeInformation.OSDescription,
             GcMemoryMb = GetGcMemoryMb(),
+            WorkingSetMb = GetWorkingSetMb(),
             ProcessorCount = Environment.ProcessorCount,
             Is64BitProcess = Environment.Is64BitProcess,
             Components = components,
@@ -70,6 +72,9 @@ public sealed class DetailedHealthReportProvider(
 
     internal static int GetGcMemoryMb() =>
         (int)Math.Round(GC.GetTotalMemory(false) / 1_048_576.0);
+
+    internal static int GetWorkingSetMb() =>
+        (int)Math.Round(Environment.WorkingSet / 1_048_576.0);
 
     private static string MapOverallStatus(HealthStatus status) => status switch
     {

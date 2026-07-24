@@ -197,6 +197,31 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_IncludeWorkingSetMb_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("workingSetMb", out var workingSetMb).ShouldBeTrue();
+        workingSetMb.ValueKind.ShouldBe(JsonValueKind.Number);
+        workingSetMb.GetInt32().ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
+    public async Task Should_DeserializeWorkingSetMb_ToDetailedHealthReport_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
     public async Task Should_IncludeProcessorCount_When_GetDetailedHealth()
     {
         var response = await _client!.GetAsync("/api/health/detailed");
