@@ -85,6 +85,23 @@ public class DetailedHealthReportProviderTests
     }
 
     [Test]
+    public void FromComponentStatuses_Should_SetGcMemoryMb()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
+        detailed.GcMemoryMb.ShouldBe(DetailedHealthReportProvider.GetGcMemoryMb());
+    }
+
+    [Test]
     public void FromHealthReport_Should_SetOsDescription()
     {
         var entries = new Dictionary<string, HealthReportEntry>
@@ -98,6 +115,21 @@ public class DetailedHealthReportProviderTests
         detailed.OsDescription.ShouldNotBeNull();
         detailed.OsDescription.ShouldNotBeEmpty();
         detailed.OsDescription.ShouldBe(RuntimeInformation.OSDescription);
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetGcMemoryMb()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
+        detailed.GcMemoryMb.ShouldBe(DetailedHealthReportProvider.GetGcMemoryMb());
     }
 
     [Test]

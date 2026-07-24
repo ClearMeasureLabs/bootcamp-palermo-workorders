@@ -87,6 +87,16 @@ public class HealthReportBuilderTests
     }
 
     [Test]
+    public void HealthReportBuilder_FromEntries_Should_SetGcMemoryMb()
+    {
+        var report = HealthReportBuilder.FromEntries(
+            TimeProvider.System,
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
+
+        report.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
     public void HealthReportBuilder_FromEntries_Should_AggregateWorstAcrossComponents()
     {
         var components = new[]
