@@ -172,6 +172,35 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_IncludeCurrentDirectory_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("currentDirectory", out var currentDirectory).ShouldBeTrue();
+        var value = currentDirectory.GetString();
+        value.ShouldNotBeNull();
+        value!.ShouldNotBeEmpty();
+        value.ShouldBe(Environment.CurrentDirectory);
+    }
+
+    [Test]
+    public async Task Should_DeserializeCurrentDirectory_ToDetailedHealthReport_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.CurrentDirectory.ShouldNotBeNull();
+        report.CurrentDirectory.ShouldNotBeEmpty();
+        report.CurrentDirectory.ShouldBe(Environment.CurrentDirectory);
+    }
+
+    [Test]
     public async Task Should_IncludeGcMemoryMb_When_GetDetailedHealth()
     {
         var response = await _client!.GetAsync("/api/health/detailed");

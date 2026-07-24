@@ -31,6 +31,7 @@ public static class DetailedHealthCheckResponseWriter
         {
             ServerUtc = timeProvider.GetUtcNow(),
             Is64BitProcess = Environment.Is64BitProcess,
+            CurrentDirectory = Environment.CurrentDirectory,
             TimeZoneId = TimeZoneInfo.Local.Id,
             OverallStatus = report.Status.ToString(),
             TotalDurationMs = report.TotalDuration.TotalMilliseconds,
@@ -64,6 +65,9 @@ public static class DetailedHealthCheckResponseWriter
 
         /// <summary>Whether the host process runs as 64-bit (from <see cref="Environment.Is64BitProcess"/>).</summary>
         public bool Is64BitProcess { get; init; }
+
+        /// <summary>Host process working directory from <see cref="Environment.CurrentDirectory"/>.</summary>
+        public string CurrentDirectory { get; init; } = string.Empty;
 
         /// <summary>Host local time zone identifier from <see cref="TimeZoneInfo.Local"/>.</summary>
         public string TimeZoneId { get; init; } = string.Empty;

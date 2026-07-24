@@ -87,6 +87,18 @@ public class HealthReportBuilderTests
     }
 
     [Test]
+    public void HealthReportBuilder_FromEntries_Should_SetCurrentDirectory()
+    {
+        var report = HealthReportBuilder.FromEntries(
+            TimeProvider.System,
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
+
+        report.CurrentDirectory.ShouldNotBeNull();
+        report.CurrentDirectory.ShouldNotBeEmpty();
+        report.CurrentDirectory.ShouldBe(Environment.CurrentDirectory);
+    }
+
+    [Test]
     public void HealthReportBuilder_FromEntries_Should_SetGcMemoryMb()
     {
         var report = HealthReportBuilder.FromEntries(

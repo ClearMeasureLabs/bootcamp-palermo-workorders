@@ -215,4 +215,26 @@ public class DetailedHealthCheckResponseWriterTests
         doc.RootElement.TryGetProperty("timeZoneId", out var timeZoneId).ShouldBeTrue();
         timeZoneId.GetString().ShouldBe(TimeZoneInfo.Local.Id);
     }
+
+    [Test]
+    public async Task WriteAsync_Should_IncludeCurrentDirectoryInRootJson()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        doc.RootElement.TryGetProperty("currentDirectory", out _).ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_SetCurrentDirectory_MatchingEnvironmentCurrentDirectory()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        doc.RootElement.GetProperty("currentDirectory").GetString().ShouldBe(Environment.CurrentDirectory);
+    }
 }

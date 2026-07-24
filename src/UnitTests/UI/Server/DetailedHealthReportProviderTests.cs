@@ -175,6 +175,24 @@ public class DetailedHealthReportProviderTests
     }
 
     [Test]
+    public void FromComponentStatuses_Should_SetCurrentDirectory()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.CurrentDirectory.ShouldNotBeNull();
+        detailed.CurrentDirectory.ShouldNotBeEmpty();
+        detailed.CurrentDirectory.ShouldBe(Environment.CurrentDirectory);
+    }
+
+    [Test]
     public void FromComponentStatuses_Should_SetGcMemoryMb()
     {
         var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
@@ -222,6 +240,22 @@ public class DetailedHealthReportProviderTests
         detailed.OsDescription.ShouldNotBeNull();
         detailed.OsDescription.ShouldNotBeEmpty();
         detailed.OsDescription.ShouldBe(RuntimeInformation.OSDescription);
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetCurrentDirectory()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.CurrentDirectory.ShouldNotBeNull();
+        detailed.CurrentDirectory.ShouldNotBeEmpty();
+        detailed.CurrentDirectory.ShouldBe(Environment.CurrentDirectory);
     }
 
     [Test]

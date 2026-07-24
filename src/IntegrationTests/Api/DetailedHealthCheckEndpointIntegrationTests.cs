@@ -190,4 +190,19 @@ public class DetailedHealthCheckEndpointIntegrationTests
         doc.RootElement.TryGetProperty("timeZoneId", out var timeZoneId).ShouldBeTrue();
         timeZoneId.GetString().ShouldBe(TimeZoneInfo.Local.Id);
     }
+
+    [Test]
+    public async Task Should_IncludeCurrentDirectory_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("currentDirectory", out var currentDirectory).ShouldBeTrue();
+        var value = currentDirectory.GetString();
+        value.ShouldNotBeNull();
+        value!.ShouldNotBeEmpty();
+        value.ShouldBe(Environment.CurrentDirectory);
+    }
 }
