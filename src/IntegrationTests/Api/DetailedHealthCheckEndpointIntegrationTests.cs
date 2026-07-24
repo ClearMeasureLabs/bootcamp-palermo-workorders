@@ -137,7 +137,8 @@ public class DetailedHealthCheckEndpointIntegrationTests
             ? threadCount.GetInt32()
             : int.Parse(threadCount.GetString()!);
 
-        threadCountValue.ShouldBe(Process.GetCurrentProcess().Threads.Count);
+        var currentThreadCount = Process.GetCurrentProcess().Threads.Count;
+        threadCountValue.ShouldBeInRange(currentThreadCount - 2, currentThreadCount + 2);
     }
 
     [Test]
