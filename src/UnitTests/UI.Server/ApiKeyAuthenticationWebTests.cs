@@ -101,10 +101,12 @@ public class ApiKeyAuthenticationWebTests
 
         var unversioned = await client.GetAsync("/api/ping");
         unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await unversioned.Content.ReadAsStringAsync()).ShouldBe("pong");
+        unversioned.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
+        (await unversioned.Content.ReadAsStringAsync()).ShouldContain("\"pong\":\"pong\"");
 
         var versioned = await client.GetAsync("/api/v1.0/ping");
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await versioned.Content.ReadAsStringAsync()).ShouldBe("pong");
+        versioned.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
+        (await versioned.Content.ReadAsStringAsync()).ShouldContain("\"pong\":\"pong\"");
     }
 }

@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Net;
+using System.Text.Json;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
@@ -25,27 +27,47 @@ public class PingEndpointIntegrationTests
     }
 
     [Test]
-    public async Task Should_Return200AndPlainTextPong_When_GetUnversioned()
+    public async Task Should_Return200AndJson_When_GetUnversioned()
     {
         var response = await _client!.GetAsync("/api/ping");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("text/plain");
-        (await response.Content.ReadAsStringAsync()).ShouldBe("pong");
+        mediaType!.ShouldBe("application/json");
+        await AssertValidPingJson(await response.Content.ReadAsStringAsync());
     }
 
     [Test]
-    public async Task Should_Return200AndPlainTextPong_When_GetVersioned()
+    public async Task Should_Return200AndJson_When_GetVersioned()
     {
         var response = await _client!.GetAsync("/api/v1.0/ping");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("text/plain");
-        (await response.Content.ReadAsStringAsync()).ShouldBe("pong");
+        mediaType!.ShouldBe("application/json");
+        await AssertValidPingJson(await response.Content.ReadAsStringAsync());
+    }
+
+    [Test]
+    public async Task Should_ValidateJsonSchema_When_GetUnversioned()
+    {
+        var response = await _client!.GetAsync("/api/ping");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        AssertValidIso8601Timestamp(body);
+    }
+
+    [Test]
+    public async Task Should_ValidateJsonSchema_When_GetVersioned()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/ping");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        AssertValidIso8601Timestamp(body);
     }
 
     [Test]
@@ -56,10 +78,27 @@ public class PingEndpointIntegrationTests
 
         var unversioned = await client.GetAsync("/api/ping");
         unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await unversioned.Content.ReadAsStringAsync()).ShouldBe("pong");
+        await AssertValidPingJson(await unversioned.Content.ReadAsStringAsync());
 
         var versioned = await client.GetAsync("/api/v1.0/ping");
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await versioned.Content.ReadAsStringAsync()).ShouldBe("pong");
+        await AssertValidPingJson(await versioned.Content.ReadAsStringAsync());
+    }
+
+    private static Task AssertValidPingJson(string body)
+    {
+        using var document = JsonDocument.Parse(body);
+        var root = document.RootElement;
+        root.GetProperty("pong").GetString().ShouldBe("pong");
+        AssertValidIso8601Timestamp(body);
+        return Task.CompletedTask;
+    }
+
+    private static void AssertValidIso8601Timestamp(string body)
+    {
+        using var document = JsonDocument.Parse(body);
+        var timestamp = document.RootElement.GetProperty("timestamp").GetString();
+        timestamp.ShouldNotBeNullOrEmpty();
+        DateTimeOffset.TryParse(timestamp, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out _).ShouldBeTrue();
     }
 }
