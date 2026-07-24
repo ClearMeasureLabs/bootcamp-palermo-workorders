@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using ClearMeasure.Bootcamp.UI.Api;
 using Shouldly;
 
@@ -71,6 +72,18 @@ public class HealthReportBuilderTests
             [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
 
         report.ProcessId.ShouldBe(Environment.ProcessId);
+    }
+
+    [Test]
+    public void HealthReportBuilder_FromEntries_Should_SetOsDescription()
+    {
+        var report = HealthReportBuilder.FromEntries(
+            TimeProvider.System,
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
+
+        report.OsDescription.ShouldNotBeNull();
+        report.OsDescription.ShouldNotBeEmpty();
+        report.OsDescription.ShouldBe(RuntimeInformation.OSDescription);
     }
 
     [Test]

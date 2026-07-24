@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace ClearMeasure.Bootcamp.UI.Api;
 
 /// <summary>
@@ -17,6 +19,7 @@ public static class HealthReportBuilder
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
             ProcessId = Environment.ProcessId,
+            OsDescription = RuntimeInformation.OSDescription,
             Components = components,
             OverallStatus = AggregateWorst(components)
         };
