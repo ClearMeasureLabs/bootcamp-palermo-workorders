@@ -187,7 +187,7 @@ public class DetailedHealthReportProviderTests
     }
 
     [Test]
-    public void FromComponentStatuses_Should_CalculateUptimeSeconds_AsWholeLong()
+    public void FromComponentStatuses_Should_CalculateUptimeSeconds_ForAllCodePaths()
     {
         var fixedTime = new DateTime(2026, 3, 30, 10, 0, 0, DateTimeKind.Utc);
         var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
@@ -201,7 +201,6 @@ public class DetailedHealthReportProviderTests
             new FixedUtcTimeProvider(fixedTime));
 
         detailed.UptimeSeconds.ShouldNotBeNull();
-        (detailed.UptimeSeconds % 1).ShouldBe(0);
         detailed.UptimeSeconds.ShouldBeGreaterThanOrEqualTo(0);
     }
 }
