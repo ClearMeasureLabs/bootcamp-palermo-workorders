@@ -1,7 +1,7 @@
 .ai-agent-page {
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    height: calc(100vh - 14rem);
-    height: calc(100dvh - 14rem);
+    height: calc(100vh - 17rem);
+    height: calc(100dvh - 17rem);
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -156,8 +156,8 @@
 
 @media (max-width: 768px) {
     .ai-agent-page {
-        height: calc(100vh - 11rem);
-        height: calc(100dvh - 11rem);
+        height: calc(100vh - 14rem);
+        height: calc(100dvh - 14rem);
         min-height: 0;
     }
 
