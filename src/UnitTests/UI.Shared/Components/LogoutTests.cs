@@ -1,5 +1,7 @@
 ﻿using Bunit;
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
@@ -16,6 +18,17 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Components;
 [TestFixture]
 public class LogoutTests
 {
+    private static TestContext CreateContext(CustomAuthenticationStateProvider authProvider)
+    {
+        var ctx = new TestContext();
+        ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(
+            new Employee("hsimpson", "Homer", "Simpson", "homer@test.com")));
+        return ctx;
+    }
+
     [Test]
     public void ShouldDisplayWelcomeMessageWithUsername()
     {
@@ -27,10 +40,12 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(
+            new Employee("hsimpson", "Homer", "Simpson", "homer@test.com")));
 
         var component = ctx.RenderComponent<Logout>();
 
-        var welcomeSpan = component.Find("span");
+        var welcomeSpan = component.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']");
         welcomeSpan.TextContent.ShouldContain("Welcome");
         welcomeSpan.TextContent.ShouldContain("hsimpson");
     }
@@ -38,14 +53,9 @@ public class LogoutTests
     [Test]
     public void ShouldDisplayLogoutLink()
     {
-        using var ctx = new TestContext();
-
         var authProvider = new CustomAuthenticationStateProvider();
         authProvider.Login("hsimpson");
-
-        ctx.Services.AddSingleton(authProvider);
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        using var ctx = CreateContext(authProvider);
 
         var component = ctx.RenderComponent<Logout>();
 
@@ -59,15 +69,11 @@ public class LogoutTests
     [Test]
     public void ShouldNotifyEventBusWithUserLoggedOutEventOnClick()
     {
-        using var ctx = new TestContext();
-
         var authProvider = new CustomAuthenticationStateProvider();
         authProvider.Login("hsimpson");
+        using var ctx = CreateContext(authProvider);
         var spyEventBus = new SpyUiBus();
-
-        ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
         var component = ctx.RenderComponent<Logout>();
         var logoutLink = component.Find("a");
@@ -81,14 +87,9 @@ public class LogoutTests
     [Test]
     public void ShouldNavigateToLoginPageOnClick()
     {
-        using var ctx = new TestContext();
-
         var authProvider = new CustomAuthenticationStateProvider();
         authProvider.Login("hsimpson");
-
-        ctx.Services.AddSingleton(authProvider);
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        using var ctx = CreateContext(authProvider);
 
         var component = ctx.RenderComponent<Logout>();
         var logoutLink = component.Find("a");
@@ -109,6 +110,7 @@ public class LogoutTests
         ctx.Services.AddSingleton<CustomAuthenticationStateProvider>();
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
 
         var component = ctx.RenderComponent<Logout>();
         var logoutLink = component.Find("a");
@@ -117,10 +119,14 @@ public class LogoutTests
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
 
-        // Verify all actions occurred
         spyEventBus.NotifyWasCalled.ShouldBeTrue();
         spyEventBus.LastNotifiedEvent.ShouldBeOfType<UserLoggedOutEvent>();
         navigationManager.Uri.ShouldEndWith("/login");
+    }
+
+    private sealed class StubUserSession(Employee? employee) : IUserSession
+    {
+        public Task<Employee?> GetCurrentUserAsync() => Task.FromResult(employee);
     }
 }
 

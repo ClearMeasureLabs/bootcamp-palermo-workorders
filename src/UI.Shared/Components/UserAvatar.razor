@@ -1,0 +1,37 @@
+@inject CustomAuthenticationStateProvider AuthStateProvider
+@inject IUserSession UserSession
+
+@if (_isAuthenticated && !string.IsNullOrEmpty(_initials))
+{
+    <span class="user-avatar"
+          data-testid="@Elements.UserAvatar"
+          aria-label="@_ariaLabel"
+          style="background-color: @_backgroundColor">
+        @_initials
+    </span>
+}
+
+@code {
+    private string _initials = string.Empty;
+    private string _ariaLabel = string.Empty;
+    private string _backgroundColor = string.Empty;
+    private bool _isAuthenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isAuthenticated = AuthStateProvider.IsAuthenticated();
+        if (!_isAuthenticated)
+            return;
+
+        var username = AuthStateProvider.GetUsername();
+        var employee = await UserSession.GetCurrentUserAsync();
+        _initials = UserAvatarInitialsHelper.GetInitials(employee, username);
+        _ariaLabel = UserAvatarInitialsHelper.GetDisplayName(employee, username);
+        _backgroundColor = UserAvatarInitialsHelper.GetBackgroundColor(username ?? string.Empty);
+    }
+
+    public enum Elements
+    {
+        UserAvatar
+    }
+}

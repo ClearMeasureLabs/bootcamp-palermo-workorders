@@ -242,6 +242,22 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+.user-section ::deep .user-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: #ffffff;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1;
+}
+
 .user-section ::deep span {
     font-weight: 600;
     color: #4a5568;
@@ -549,6 +565,11 @@
 :global(html[data-theme="dark"]) .user-section ::deep a,
 :global(html[data-theme="dark"]) .auth-section ::deep a {
     color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .user-section ::deep .user-avatar {
+    color: #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 :global(html[data-theme="dark"]) .user-section ::deep a:hover,

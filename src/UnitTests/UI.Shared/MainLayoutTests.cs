@@ -158,6 +158,43 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderUserAvatarInHeader_WhenAuthenticated()
+    {
+        using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.Find($"[data-testid='{nameof(UserAvatar.Elements.UserAvatar)}']").ShouldNotBeNull();
+    }
+
+    [Test]
+    public void ShouldNotRenderUserAvatarInHeader_WhenUnauthenticated()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.FindAll($"[data-testid='{nameof(UserAvatar.Elements.UserAvatar)}']").Count.ShouldBe(0);
+    }
+
+    [Test]
+    public void ShouldPlaceAvatarLeftOfWelcomeText()
+    {
+        using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var userSection = layout.Find(".user-section");
+        var children = userSection.Children;
+        children[0].GetAttribute("data-testid").ShouldBe(nameof(UserAvatar.Elements.UserAvatar));
+        children[1].GetAttribute("data-testid").ShouldBe(nameof(Logout.Elements.WelcomeText));
+        children[2].GetAttribute("data-testid").ShouldBe(nameof(Logout.Elements.LogoutLink));
+    }
+
+    [Test]
     public void ShouldPreserveLoginLinkInteraction_Unchanged()
     {
         using var ctx = CreateContext();
@@ -270,7 +307,7 @@ public class MainLayoutTests
 
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
-        ctx.Services.AddSingleton<IUserSession>(new StubUserSession());
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(authenticateAsUser));
         ctx.Services.AddSingleton<IJSRuntime>(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
         var customAuth = new CustomAuthenticationStateProvider();
@@ -283,8 +320,17 @@ public class MainLayoutTests
         return ctx;
     }
 
-    private sealed class StubUserSession : IUserSession
+    private sealed class StubUserSession(string? username = null) : IUserSession
     {
-        public Task<Employee?> GetCurrentUserAsync() => Task.FromResult<Employee?>(null);
+        public Task<Employee?> GetCurrentUserAsync()
+        {
+            if (username == "hsimpson")
+            {
+                return Task.FromResult<Employee?>(
+                    new Employee("hsimpson", "Homer", "Simpson", "homer@test.com"));
+            }
+
+            return Task.FromResult<Employee?>(null);
+        }
     }
 }
