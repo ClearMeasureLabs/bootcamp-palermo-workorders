@@ -32,7 +32,8 @@ public class PingControllerTests
             ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
         payload!.Pong.ShouldBe("pong");
-        payload.Timestamp.ShouldBe("2026-03-30T12:00:00.0000000Z");
+        var expected = new DateTimeOffset(fixedUtc, TimeSpan.Zero).ToString("O", CultureInfo.InvariantCulture);
+        payload.Timestamp.ShouldBe(expected);
     }
 
     [Test]
