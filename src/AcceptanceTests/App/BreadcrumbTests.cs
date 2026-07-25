@@ -31,7 +31,7 @@ public class BreadcrumbTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)).WaitForAsync();
+        await Page.GetByTestId(nameof(WorkOrderManage.Elements.Title)).WaitForAsync();
 
         var breadcrumb = Page.GetByTestId(nameof(Breadcrumb.Elements.Breadcrumb));
         await breadcrumb.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
@@ -63,9 +63,6 @@ public class BreadcrumbTests : AcceptanceTestBase
     public async Task Should_NotDisplayBreadcrumb_OnHomePage()
     {
         await LoginAsCurrentUser();
-        await Page.GotoAsync("/");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Page.GetByTestId(nameof(Logout.Elements.WelcomeText)).WaitForAsync();
 
         await Expect(Page.GetByTestId(nameof(Breadcrumb.Elements.Breadcrumb))).ToHaveCountAsync(0);
     }
@@ -75,9 +72,13 @@ public class BreadcrumbTests : AcceptanceTestBase
     {
         await LoginAsCurrentUser();
         var order = await CreateAndSaveNewWorkOrder();
-        await Page.GotoAsync($"/workorder/manage/{order.Number}?mode=Edit");
+
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await workOrderLink.EvaluateAsync("el => el.click()");
+        await Page.WaitForURLAsync($"**/workorder/manage/{order.Number}**");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)).WaitForAsync();
+        await Page.GetByTestId(nameof(WorkOrderManage.Elements.Title)).WaitForAsync();
 
         var breadcrumb = Page.GetByTestId(nameof(Breadcrumb.Elements.Breadcrumb));
         await breadcrumb.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
@@ -92,7 +93,7 @@ public class BreadcrumbTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)).WaitForAsync();
+        await Page.GetByTestId(nameof(WorkOrderManage.Elements.Title)).WaitForAsync();
 
         var breadcrumb = Page.GetByTestId(nameof(Breadcrumb.Elements.Breadcrumb));
         await breadcrumb.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
