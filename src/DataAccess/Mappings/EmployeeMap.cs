@@ -21,7 +21,12 @@ public class EmployeeMap : IEntityFrameworkMapping
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.EmailAddress).IsRequired().HasMaxLength(255);
             entity.Property(e => e.PreferredLanguage).IsRequired().HasMaxLength(10).HasDefaultValue("en-US");
-            entity.Property(e => e.LastLoginUtc);
+            entity.Property(e => e.LastLoginUtc)
+                .HasConversion(
+                    v => v.HasValue ? v.Value.UtcDateTime : (DateTime?)null,
+                    v => v.HasValue
+                        ? new DateTimeOffset(DateTime.SpecifyKind(v.Value, DateTimeKind.Utc))
+                        : null);
 
             // Configure Roles collection
             entity.HasMany(e => e.Roles)

@@ -2,8 +2,11 @@ using Bunit;
 using Bunit.TestDoubles;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
@@ -89,9 +92,9 @@ public class ProfileTests
 
     private sealed class ProfileStubBus(DateTimeOffset? lastLoginUtc) : StubBus
     {
-        public override Task<TResponse> Send<TResponse>(MediatR.IRequest<TResponse> request)
+        public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
         {
-            if (request is Core.Queries.EmployeeByUserNameQuery)
+            if (request is EmployeeByUserNameQuery)
             {
                 var employee = new Employee("hsimpson", "Homer", "Simpson", "homer@springfield.com")
                 {

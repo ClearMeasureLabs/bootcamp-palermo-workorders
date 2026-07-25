@@ -1,6 +1,4 @@
 using ClearMeasure.Bootcamp.Core.Model;
-using ClearMeasure.Bootcamp.Core.Model.Events;
-using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -87,6 +85,14 @@ public class ProfileTests : AcceptanceTestBase
     public async Task Should_DisplayFirstLogin_OnInitialLogin()
     {
         await LoginAsCurrentUser();
+
+        using (var context = TestHost.NewDbContext())
+        {
+            var employee = context.Set<Employee>().Single(e => e.UserName == CurrentUser.UserName);
+            employee.LastLoginUtc = null;
+            context.SaveChanges();
+        }
+
         await Click(nameof(NavMenu.Elements.Profile));
         await Page.WaitForURLAsync("**/profile");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
