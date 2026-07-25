@@ -28,14 +28,10 @@ public class BreadcrumbTests : AcceptanceTestBase
     public async Task Should_ClickParentLink_NavigateToWorkOrders()
     {
         await LoginAsCurrentUser();
-        await Page.GotoAsync("/counter");
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Page.GetByTestId(nameof(Counter.Elements.CounterValue)).WaitForAsync();
-
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForURLAsync("**/workorder/search");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}").WaitForAsync();
+        await Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)).WaitForAsync();
 
         var breadcrumb = Page.GetByTestId(nameof(Breadcrumb.Elements.Breadcrumb));
         await breadcrumb.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
@@ -43,6 +39,7 @@ public class BreadcrumbTests : AcceptanceTestBase
         await workOrdersLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await workOrdersLink.EvaluateAsync("el => el.click()");
         await Page.WaitForURLAsync("**/workorder/search");
+        await Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}").WaitForAsync();
         await Expect(Page).ToHaveURLAsync(new Regex("/workorder/search"));
     }
 
