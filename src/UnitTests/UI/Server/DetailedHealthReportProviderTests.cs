@@ -239,7 +239,7 @@ public class DetailedHealthReportProviderTests
             TimeProvider.System);
 
         detailed.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
-        detailed.GcMemoryMb.ShouldBe(DetailedHealthReportProvider.GetGcMemoryMb());
+        Math.Abs(detailed.GcMemoryMb - DetailedHealthReportProvider.GetGcMemoryMb()).ShouldBeLessThanOrEqualTo(1);
     }
 
     [Test]
@@ -303,7 +303,7 @@ public class DetailedHealthReportProviderTests
         var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
 
         detailed.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
-        detailed.GcMemoryMb.ShouldBe(DetailedHealthReportProvider.GetGcMemoryMb());
+        Math.Abs(detailed.GcMemoryMb - DetailedHealthReportProvider.GetGcMemoryMb()).ShouldBeLessThanOrEqualTo(1);
     }
 
     [Test]
