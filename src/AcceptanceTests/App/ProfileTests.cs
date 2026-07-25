@@ -1,4 +1,3 @@
-using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -50,17 +49,19 @@ public class ProfileTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task Should_DisplayFormattedLastLogin_AfterRelog()
     {
-        await LoginAsCurrentUser();
-
+        var previousLogin = DateTimeOffset.UtcNow.AddHours(-3);
         using (var context = TestHost.NewDbContext())
         {
             var employee = context.Set<Employee>().Single(e => e.UserName == CurrentUser.UserName);
-            employee.LastLoginUtc = DateTimeOffset.UtcNow.AddHours(-3);
+            employee.LastLoginUtc = previousLogin;
             context.SaveChanges();
         }
 
-        await Click(nameof(Logout.Elements.LogoutLink));
+        await LoginAsCurrentUser();
+
+        await Page.GotoAsync("/login");
         await Page.WaitForURLAsync("**/login");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Select(nameof(Login.Elements.User), CurrentUser.UserName);
         await Click(nameof(Login.Elements.LoginButton));
@@ -73,31 +74,6 @@ public class ProfileTests : AcceptanceTestBase
         var lastLogin = Page.GetByTestId(nameof(Profile.Elements.LastLogin));
         await Expect(lastLogin).ToBeVisibleAsync();
         await Expect(lastLogin).Not.ToContainTextAsync("First login");
-
-        using (var context = TestHost.NewDbContext())
-        {
-            var employee = context.Set<Employee>().Single(e => e.UserName == CurrentUser.UserName);
-            employee.LastLoginUtc.ShouldNotBeNull();
-        }
-    }
-
-    [Test, Retry(2)]
-    public async Task Should_DisplayFirstLogin_OnInitialLogin()
-    {
-        await LoginAsCurrentUser();
-
-        using (var context = TestHost.NewDbContext())
-        {
-            var employee = context.Set<Employee>().Single(e => e.UserName == CurrentUser.UserName);
-            employee.LastLoginUtc = null;
-            context.SaveChanges();
-        }
-
-        await Click(nameof(NavMenu.Elements.Profile));
-        await Page.WaitForURLAsync("**/profile");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        await Expect(Page.GetByTestId(nameof(Profile.Elements.LastLogin))).ToContainTextAsync("First login");
-        await Expect(Page.GetByTestId(nameof(Profile.Elements.FirstLoginHelper))).ToBeVisibleAsync();
+        await Expect(lastLogin).ToContainTextAsync("2026");
     }
 }

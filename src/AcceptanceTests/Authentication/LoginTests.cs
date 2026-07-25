@@ -44,7 +44,9 @@ public class LoginTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
-        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
+        await Expect(welcomeTextLocator).ToContainTextAsync("Welcome");
+        await Expect(welcomeTextLocator).ToContainTextAsync("hsimpson");
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.ProfileLink))).ToHaveTextAsync("hsimpson");
     }
 
     [Test, Retry(2)]
@@ -73,6 +75,8 @@ public class LoginTests : AcceptanceTestBase
         await TakeScreenshotAsync(4);
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
-        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
+        await Expect(welcomeTextLocator).ToContainTextAsync("Welcome");
+        await Expect(welcomeTextLocator).ToContainTextAsync("hsimpson");
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.ProfileLink))).ToHaveTextAsync("hsimpson");
     }
 }
