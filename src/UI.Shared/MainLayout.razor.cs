@@ -78,6 +78,7 @@ public partial class MainLayout : IAsyncDisposable
     protected override void OnInitialized()
     {
         BreadcrumbService.OnChange += HandleBreadcrumbChanged;
+        _ = InvokeAsync(StateHasChanged);
     }
 
     private void HandleBreadcrumbChanged() => InvokeAsync(StateHasChanged);
