@@ -9,6 +9,7 @@ using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 using Bunit.TestDoubles;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
@@ -238,6 +239,36 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void MainLayout_HidesBreadcrumb_OnHomePage()
+    {
+        using var ctx = CreateContext();
+
+        var navigation = ctx.Services.GetRequiredService<NavigationManager>();
+        navigation.NavigateTo("/");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.FindAll($"[data-testid='{nameof(Breadcrumb.Elements.Breadcrumb)}']").Count.ShouldBe(0);
+    }
+
+    [Test]
+    public void MainLayout_ShowsBreadcrumb_OnCounterPage()
+    {
+        using var ctx = CreateContext();
+
+        var navigation = ctx.Services.GetRequiredService<NavigationManager>();
+        navigation.NavigateTo("/counter");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var breadcrumb = layout.Find($"[data-testid='{nameof(Breadcrumb.Elements.Breadcrumb)}']");
+        breadcrumb.TextContent.ShouldContain("Home");
+        breadcrumb.TextContent.ShouldContain("Counter");
+    }
+
+    [Test]
     public async Task ShouldInvokeFocusOnNavRailToggleWhenClosingOverlayOnNarrowViewport()
     {
         using var ctx = CreateContext();
@@ -273,6 +304,7 @@ public class MainLayoutTests
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession());
         ctx.Services.AddSingleton<IJSRuntime>(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
+        ctx.Services.AddScoped<BreadcrumbService>();
         var customAuth = new CustomAuthenticationStateProvider();
         if (authenticateAsUser != null)
         {

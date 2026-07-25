@@ -65,6 +65,11 @@
             </div>
         </header>
 
+        @if (BreadcrumbService.ShouldShow)
+        {
+            <Breadcrumb Items="@BreadcrumbService.Items"/>
+        }
+
         <main class="modern-main">
             <div class="content-wrapper">
                 @Body

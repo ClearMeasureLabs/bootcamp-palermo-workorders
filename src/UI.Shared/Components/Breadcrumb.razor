@@ -1,0 +1,31 @@
+@using ClearMeasure.Bootcamp.UI.Shared.Models
+
+<nav aria-label="breadcrumb" data-testid="@Elements.Breadcrumb" class="breadcrumb-nav">
+    @for (var i = 0; i < Items.Count; i++)
+    {
+        var item = Items[i];
+        if (i > 0)
+        {
+            <span class="breadcrumb-separator" aria-hidden="true">&gt;</span>
+        }
+
+        if (item.IsActive)
+        {
+            <span class="breadcrumb-active" aria-current="page">@item.Label</span>
+        }
+        else
+        {
+            <a class="breadcrumb-link" href="@item.Url">@item.Label</a>
+        }
+    }
+</nav>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<BreadcrumbItem> Items { get; set; } = Array.Empty<BreadcrumbItem>();
+
+    public enum Elements
+    {
+        Breadcrumb
+    }
+}

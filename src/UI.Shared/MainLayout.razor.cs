@@ -30,6 +30,9 @@ public partial class MainLayout : IAsyncDisposable
     [Inject]
     private ThemePreferenceService Theme { get; set; } = default!;
 
+    [Inject]
+    private BreadcrumbService BreadcrumbService { get; set; } = default!;
+
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
     private IJSObjectReference? _jsModule;
@@ -71,6 +74,13 @@ public partial class MainLayout : IAsyncDisposable
         StateHasChanged();
         return Task.CompletedTask;
     }
+
+    protected override void OnInitialized()
+    {
+        BreadcrumbService.OnChange += HandleBreadcrumbChanged;
+    }
+
+    private void HandleBreadcrumbChanged() => InvokeAsync(StateHasChanged);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -120,6 +130,8 @@ public partial class MainLayout : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        BreadcrumbService.OnChange -= HandleBreadcrumbChanged;
+
         if (_navToggleHelper is not null)
         {
             try

@@ -1,0 +1,66 @@
+.breadcrumb-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2rem;
+    background: rgba(255, 255, 255, 0.85);
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.breadcrumb-link {
+    color: #6c757d;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+    color: #4a5568;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.breadcrumb-link:focus-visible {
+    outline: 2px solid #4a5568;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.breadcrumb-separator {
+    color: #adb5bd;
+    user-select: none;
+}
+
+.breadcrumb-active {
+    color: #4a5568;
+    font-weight: 600;
+}
+
+:global(html[data-theme="dark"]) .breadcrumb-nav {
+    background: rgba(45, 55, 72, 0.9);
+    border-bottom-color: #4a5568;
+}
+
+:global(html[data-theme="dark"]) .breadcrumb-link {
+    color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .breadcrumb-link:hover {
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .breadcrumb-separator {
+    color: #718096;
+}
+
+:global(html[data-theme="dark"]) .breadcrumb-active {
+    color: #f7fafc;
+}
+
+@media (max-width: 768px) {
+    .breadcrumb-nav {
+        padding: 0.625rem 1rem;
+    }
+}
