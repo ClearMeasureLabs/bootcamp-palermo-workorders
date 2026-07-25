@@ -3,10 +3,9 @@
 
 <span data-testid="@Elements.WelcomeText">
     Welcome
-    @{
-        var userIdentity = AuthStateProvider.GetUsername();
-    }
-    @userIdentity!
+    <NavLink data-testid="@Elements.ProfileLink" href="profile" class="profile-username-link">
+        @AuthStateProvider.GetUsername()!
+    </NavLink>
 </span>
 <a data-testid="@Elements.LogoutLink" href="#" @onclick="HandleLogout" class="ms-3">Logout</a>
 
@@ -22,7 +21,8 @@
     public enum Elements
     {
         LogoutLink,
-        WelcomeText
+        WelcomeText,
+        ProfileLink
     }
 
 }

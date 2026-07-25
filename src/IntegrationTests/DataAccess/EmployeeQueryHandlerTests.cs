@@ -147,4 +147,47 @@ public class EmployeeQueryHandlerTests
             rehydrated.LastName.ShouldBe("Simpson");
         }
     }
+
+    [Test]
+    public async Task Should_ReadLastLoginUtc_FromDatabase_AfterLogin()
+    {
+        new DatabaseTests().Clean();
+
+        var loginTime = DateTimeOffset.UtcNow.AddHours(-2);
+        var employee = new Employee("loginread", "Login", "Read", "read@test.com")
+        {
+            LastLoginUtc = loginTime
+        };
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new EmployeeQueryHandler(dataContext);
+        var result = await handler.Handle(new EmployeeByUserNameQuery("loginread"));
+
+        result.LastLoginUtc.ShouldNotBeNull();
+        result.LastLoginUtc!.Value.ShouldBe(loginTime, TimeSpan.FromSeconds(1));
+    }
+
+    [Test]
+    public async Task Should_ReturnNullLastLoginUtc_ForNewEmployee_WithoutPriorLogin()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("newuser", "New", "User", "new@test.com");
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.SaveChanges();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new EmployeeQueryHandler(dataContext);
+        var result = await handler.Handle(new EmployeeByUserNameQuery("newuser"));
+
+        result.LastLoginUtc.ShouldBeNull();
+    }
 }

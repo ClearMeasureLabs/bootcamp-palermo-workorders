@@ -1,0 +1,11 @@
+BEGIN TRANSACTION
+GO
+PRINT N'Adding [LastLoginUtc] to [dbo].[Employee]'
+GO
+ALTER TABLE [dbo].[Employee] ADD [LastLoginUtc] DATETIME2 NULL
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO

@@ -30,6 +30,8 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string PreferredLanguage { get; set; } = "en-US";
 
+    public DateTimeOffset? LastLoginUtc { get; set; }
+
     public ISet<Role> Roles { get; init; } = new HashSet<Role>();
 
     public int CompareTo(Employee? other)

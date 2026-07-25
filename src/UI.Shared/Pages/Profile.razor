@@ -1,0 +1,47 @@
+<PageTitle>Profile</PageTitle>
+
+<div class="settings-page">
+    <div class="settings-container">
+        <header class="settings-header">
+            <h1>Profile</h1>
+            <p class="settings-subtitle">View account information for the signed-in user.</p>
+        </header>
+
+        @if (_employee != null)
+        {
+            <section class="settings-section" aria-labelledby="account-heading">
+                <h2 id="account-heading" class="settings-section-title">Account</h2>
+                <div class="settings-card">
+                    <dl class="profile-field-list">
+                        <div class="profile-field">
+                            <dt>Full name</dt>
+                            <dd data-testid="@nameof(Elements.FullName)">@_employee.GetFullName()</dd>
+                        </div>
+                        <div class="profile-field">
+                            <dt>Username</dt>
+                            <dd data-testid="@nameof(Elements.Username)">@_employee.UserName</dd>
+                        </div>
+                        <div class="profile-field">
+                            <dt>Email</dt>
+                            <dd data-testid="@nameof(Elements.Email)">@_employee.EmailAddress</dd>
+                        </div>
+                        <div class="profile-field">
+                            <dt>Last login</dt>
+                            @if (_employee.LastLoginUtc.HasValue)
+                            {
+                                <dd data-testid="@nameof(Elements.LastLogin)">@FormatLastLogin(_employee)</dd>
+                            }
+                            else
+                            {
+                                <dd data-testid="@nameof(Elements.LastLogin)">First login</dd>
+                                <p class="settings-helper profile-first-login-helper" data-testid="@nameof(Elements.FirstLoginHelper)">
+                                    No prior sign-in is recorded. This timestamp updates each time you sign in.
+                                </p>
+                            }
+                        </div>
+                    </dl>
+                </div>
+            </section>
+        }
+    </div>
+</div>

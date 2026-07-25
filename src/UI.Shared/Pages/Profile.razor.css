@@ -1,0 +1,39 @@
+.profile-field-list {
+    margin: 0;
+}
+
+.profile-field {
+    margin-bottom: 1.25rem;
+}
+
+.profile-field:last-child {
+    margin-bottom: 0;
+}
+
+.profile-field dt {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #718096;
+    margin: 0 0 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.profile-field dd {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.profile-first-login-helper {
+    margin-top: 0.5rem;
+}
+
+:global(html[data-theme="dark"]) .profile-field dt {
+    color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .profile-field dd {
+    color: #f7fafc;
+}

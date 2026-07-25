@@ -49,7 +49,7 @@ public class LogoutTests
 
         var component = ctx.RenderComponent<Logout>();
 
-        var logoutLink = component.Find("a");
+        var logoutLink = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
         logoutLink.ShouldNotBeNull();
         logoutLink.TextContent.ShouldBe("Logout");
         logoutLink.GetAttribute("href").ShouldBe("#");
@@ -70,7 +70,7 @@ public class LogoutTests
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
         var component = ctx.RenderComponent<Logout>();
-        var logoutLink = component.Find("a");
+        var logoutLink = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
 
         logoutLink.Click();
 
@@ -91,7 +91,7 @@ public class LogoutTests
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
         var component = ctx.RenderComponent<Logout>();
-        var logoutLink = component.Find("a");
+        var logoutLink = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
 
         logoutLink.Click();
 
@@ -111,7 +111,7 @@ public class LogoutTests
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
         var component = ctx.RenderComponent<Logout>();
-        var logoutLink = component.Find("a");
+        var logoutLink = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
 
         logoutLink.Click();
 
