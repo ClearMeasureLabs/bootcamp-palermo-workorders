@@ -50,6 +50,36 @@ public class WorkOrderManageSpeechTests
     }
 
     [Test]
+    public void ShouldAssertSpeakTitleButtonHasMatchingTitleAndAriaLabel()
+    {
+        using var ctx = new TestContext();
+
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
+        user.Id = Guid.NewGuid();
+        user.PreferredLanguage = "es-ES";
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.RenderComponent<WorkOrderManage>();
+
+        component.WaitForAssertion(() =>
+        {
+            var element = component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakTitle}']");
+            element.GetAttribute("title").ShouldBe("Speak title");
+            element.GetAttribute("aria-label").ShouldBe("Speak title");
+        });
+    }
+
+    [Test]
     public void ShouldRenderSpeakDescriptionButton()
     {
         using var ctx = new TestContext();
@@ -76,6 +106,35 @@ public class WorkOrderManageSpeechTests
             element.ShouldNotBeNull();
             element.TagName.ShouldBe("BUTTON", StringCompareShould.IgnoreCase);
             element.GetAttribute("type").ShouldBe("button");
+        });
+    }
+
+    [Test]
+    public void ShouldAssertSpeakDescriptionButtonHasMatchingTitleAndAriaLabel()
+    {
+        using var ctx = new TestContext();
+
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
+        user.Id = Guid.NewGuid();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.RenderComponent<WorkOrderManage>();
+
+        component.WaitForAssertion(() =>
+        {
+            var element = component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']");
+            element.GetAttribute("title").ShouldBe("Speak description");
+            element.GetAttribute("aria-label").ShouldBe("Speak description");
         });
     }
 

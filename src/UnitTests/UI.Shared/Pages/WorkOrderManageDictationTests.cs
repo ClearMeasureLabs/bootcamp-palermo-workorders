@@ -37,6 +37,21 @@ public class WorkOrderManageDictationTests
     }
 
     [Test]
+    public void ShouldAssertDictateTitleButtonHasMatchingTitleAndAriaLabel()
+    {
+        using var ctx = CreateTestContext(out _);
+
+        var component = ctx.RenderComponent<WorkOrderManage>();
+
+        component.WaitForAssertion(() =>
+        {
+            var element = component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']");
+            element.GetAttribute("title").ShouldBe("Dictate title");
+            element.GetAttribute("aria-label").ShouldBe("Dictate title");
+        });
+    }
+
+    [Test]
     public void ShouldRenderDictateDescriptionButton()
     {
         using var ctx = CreateTestContext(out _);
@@ -50,6 +65,21 @@ public class WorkOrderManageDictationTests
             element.TagName.ShouldBe("BUTTON", StringCompareShould.IgnoreCase);
             element.GetAttribute("type").ShouldBe("button");
             element.GetAttribute("aria-pressed").ShouldBe("false");
+        });
+    }
+
+    [Test]
+    public void ShouldAssertDictateDescriptionButtonHasMatchingTitleAndAriaLabel()
+    {
+        using var ctx = CreateTestContext(out _);
+
+        var component = ctx.RenderComponent<WorkOrderManage>();
+
+        component.WaitForAssertion(() =>
+        {
+            var element = component.Find($"[data-testid='{WorkOrderManage.Elements.DictateDescription}']");
+            element.GetAttribute("title").ShouldBe("Dictate description");
+            element.GetAttribute("aria-label").ShouldBe("Dictate description");
         });
     }
 
