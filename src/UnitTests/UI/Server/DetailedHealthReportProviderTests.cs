@@ -239,7 +239,7 @@ public class DetailedHealthReportProviderTests
             TimeProvider.System);
 
         detailed.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
-        detailed.GcMemoryMb.ShouldBe(DetailedHealthReportProvider.GetGcMemoryMb());
+        ShouldBeWithinOneMb(detailed.GcMemoryMb, DetailedHealthReportProvider.GetGcMemoryMb());
     }
 
     [Test]
@@ -256,7 +256,7 @@ public class DetailedHealthReportProviderTests
             TimeProvider.System);
 
         detailed.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
-        detailed.WorkingSetMb.ShouldBe(DetailedHealthReportProvider.GetWorkingSetMb());
+        ShouldBeWithinOneMb(detailed.WorkingSetMb, DetailedHealthReportProvider.GetWorkingSetMb());
     }
 
     [Test]
@@ -303,7 +303,7 @@ public class DetailedHealthReportProviderTests
         var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
 
         detailed.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
-        detailed.GcMemoryMb.ShouldBe(DetailedHealthReportProvider.GetGcMemoryMb());
+        ShouldBeWithinOneMb(detailed.GcMemoryMb, DetailedHealthReportProvider.GetGcMemoryMb());
     }
 
     [Test]
@@ -318,7 +318,7 @@ public class DetailedHealthReportProviderTests
         var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
 
         detailed.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
-        detailed.WorkingSetMb.ShouldBe(DetailedHealthReportProvider.GetWorkingSetMb());
+        ShouldBeWithinOneMb(detailed.WorkingSetMb, DetailedHealthReportProvider.GetWorkingSetMb());
     }
 
     [Test]
@@ -451,4 +451,7 @@ public class DetailedHealthReportProviderTests
         component.Data.ShouldNotBeNull();
         component.Data!["endpoint"].ShouldBe("https://api.example.com");
     }
+
+    private static void ShouldBeWithinOneMb(int actual, int expectedAtAssertTime) =>
+        Math.Abs(actual - expectedAtAssertTime).ShouldBeLessThanOrEqualTo(1);
 }
