@@ -35,7 +35,10 @@ public class HelloControllerTests
 
         var result = controller.Get();
         var ok = result.ShouldBeOfType<OkObjectResult>();
-        var json = JsonSerializer.Serialize(ok.Value);
+        var json = JsonSerializer.Serialize(ok.Value, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
 
         json.ShouldBe("{\"message\":\"Hello, World!\"}");
     }
