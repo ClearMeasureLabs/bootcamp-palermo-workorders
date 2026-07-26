@@ -1,3 +1,5 @@
+using System.Text.Json;
+using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,5 +24,7 @@ public class HelloControllerTests
         ok.StatusCode.ShouldBe(200);
         var payload = ok.Value.ShouldBeOfType<HelloResponse>();
         payload.Message.ShouldBe("Hello, World!");
+        var json = JsonSerializer.Serialize(payload, ConditionalGetEtag.JsonSerializerOptions);
+        json.ShouldBe("{\"message\":\"Hello, World!\"}");
     }
 }
