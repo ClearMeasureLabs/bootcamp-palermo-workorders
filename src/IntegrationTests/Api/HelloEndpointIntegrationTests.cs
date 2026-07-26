@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
