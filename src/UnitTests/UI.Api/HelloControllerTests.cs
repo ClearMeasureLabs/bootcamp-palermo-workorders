@@ -2,6 +2,7 @@ using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shouldly;
+using System.Text.Json;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 
@@ -34,7 +35,9 @@ public class HelloControllerTests
 
         var okResult = result.ShouldBeOfType<OkObjectResult>();
         var value = okResult.Value.ShouldNotBeNull();
-        var message = ((dynamic)value).message;
+        
+        var jsonElement = JsonSerializer.SerializeToElement(value);
+        var message = jsonElement.GetProperty("message").GetString();
         message.ShouldBe("Hello, World!");
     }
 
