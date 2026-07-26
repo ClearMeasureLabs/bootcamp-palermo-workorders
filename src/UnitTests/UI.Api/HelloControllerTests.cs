@@ -19,14 +19,11 @@ public class HelloControllerTests
 
         var result = controller.Get();
 
-        var content = result.ShouldBeOfType<OkObjectResult>();
-        content.StatusCode.ShouldBe(StatusCodes.Status200OK);
+        var okResult = result.ShouldBeOfType<OkObjectResult>();
+        okResult.StatusCode.ShouldBe(StatusCodes.Status200OK);
 
-        var payload = JsonSerializer.Deserialize<HelloGreeting>(
-            JsonSerializer.Serialize(content.Value));
-        payload.ShouldNotBeNull();
-        payload!.Message.ShouldBe("Hello, World!");
+        var payload = JsonDocument.Parse(JsonSerializer.Serialize(okResult.Value)).RootElement;
+        payload.TryGetProperty("message", out var messageElement).ShouldBeTrue();
+        messageElement.GetString().ShouldBe("Hello, World!");
     }
-
-    private record HelloGreeting(string Message);
 }
