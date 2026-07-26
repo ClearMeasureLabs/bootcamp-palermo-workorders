@@ -22,7 +22,7 @@ public class HelloControllerTests
         okResult.StatusCode.ShouldBe(200);
         okResult.Value.ShouldNotBeNull();
 
-        var response = okResult.Value.ShouldBeOfType<dynamic>();
-        response.message.ShouldBe("Hello, World!");
+        dynamic response = okResult.Value;
+        ((string)response.message).ShouldBe("Hello, World!");
     }
 }
