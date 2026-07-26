@@ -20,8 +20,9 @@ public class HelloControllerTests
 
         var okResult = result.ShouldBeOfType<OkObjectResult>();
         okResult.StatusCode.ShouldBe(200);
+        okResult.Value.ShouldNotBeNull();
         
-        var responseValue = okResult.Value.ShouldBeOfType<dynamic>();
-        responseValue.message.ShouldBe("Hello, World!");
+        var message = okResult.Value.GetType().GetProperty("message")?.GetValue(okResult.Value);
+        message.ShouldBe("Hello, World!");
     }
 }
