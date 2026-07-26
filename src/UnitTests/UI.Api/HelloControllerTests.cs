@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -35,9 +36,10 @@ public class HelloControllerTests
 
         var result = controller.Get();
         var ok = result.ShouldBeOfType<OkObjectResult>();
-        var json = JsonSerializer.Serialize(ok.Value);
-
-        json.ShouldContain("\"message\"");
-        json.ShouldNotContain("\"Message\"");
+        var json = JsonSerializer.Serialize(ok.Value, ConditionalGetEtag.JsonSerializerOptions);
+        using var document = JsonDocument.Parse(json);
+        document.RootElement.TryGetProperty("message", out var messageProperty).ShouldBeTrue();
+        messageProperty.GetString().ShouldBe("Hello, World!");
+        document.RootElement.EnumerateObject().Select(p => p.Name).ShouldBe(["message"]);
     }
 }
