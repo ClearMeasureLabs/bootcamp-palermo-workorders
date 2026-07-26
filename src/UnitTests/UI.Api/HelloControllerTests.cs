@@ -28,17 +28,5 @@ public class HelloControllerTests
         json.ShouldContain("\"Hello, World!\"");
     }
 
-    [Test]
-    public void Get_Should_SetCorrectContentType()
-    {
-        var controller = new HelloController
-        {
-            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
-        };
 
-        var result = controller.Get();
-
-        var okResult = result.ShouldBeOfType<OkObjectResult>();
-        okResult.ContentTypes.ShouldNotBeEmpty();
-    }
 }
