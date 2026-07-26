@@ -22,8 +22,7 @@ public class HelloControllerTests
         content.StatusCode.ShouldBe(200);
         content.Value.ShouldNotBeNull();
 
-        var obj = content.Value as dynamic;
-        obj.ShouldNotBeNull();
+        dynamic obj = content.Value;
         ((string)obj.message).ShouldBe("Hello, World!");
     }
 }
