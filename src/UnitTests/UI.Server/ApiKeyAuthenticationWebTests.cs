@@ -116,10 +116,14 @@ public class ApiKeyAuthenticationWebTests
 
         var unversioned = await client.GetAsync("/api/hello");
         unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        unversioned.Content.Headers.ContentType!.MediaType.ShouldContain("application/json");
+        var unversionedMediaType = unversioned.Content.Headers.ContentType?.MediaType;
+        unversionedMediaType.ShouldNotBeNull();
+        unversionedMediaType!.ShouldContain("application/json");
 
         var versioned = await client.GetAsync("/api/v1.0/hello");
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        versioned.Content.Headers.ContentType!.MediaType.ShouldContain("application/json");
+        var versionedMediaType = versioned.Content.Headers.ContentType?.MediaType;
+        versionedMediaType.ShouldNotBeNull();
+        versionedMediaType!.ShouldContain("application/json");
     }
 }
