@@ -1,5 +1,6 @@
 @inject CustomAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
+@inject HttpClient Http
 
 <span data-testid="@Elements.WelcomeText">
     Welcome
@@ -12,8 +13,9 @@
 
 @code {
 
-    private void HandleLogout()
+    private async Task HandleLogout()
     {
+        await Http.PostAsync("/api/auth/logout", null);
         AuthStateProvider.Logout();
         EventBus.Notify(new UserLoggedOutEvent(AuthStateProvider.GetUsername()));
         NavigationManager.NavigateTo("/login");

@@ -13,6 +13,7 @@ using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using ClearMeasure.Bootcamp.UI.Server.Authentication;
 using ClearMeasure.Bootcamp.UI.Server.Grpc;
 using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
@@ -52,6 +53,25 @@ builder.Services.Configure<IdempotencyOptions>(
 builder.Services.AddSingleton<IdempotencyProbeState>();
 builder.Services.AddApiRateLimiting(builder.Configuration);
 builder.Services.AddApiRequestTimeouts(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthentication(EmployeeAuthenticationDefaults.Scheme)
+    .AddCookie(EmployeeAuthenticationDefaults.Scheme, options =>
+    {
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.Path = "/";
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
+    });
+builder.Services.AddAuthorization();
 builder.Services.Configure<ApiKeyAuthenticationOptions>(
     builder.Configuration.GetSection(ApiKeyAuthenticationOptions.SectionName));
 builder.Services.Configure<DiagnosticsFeatureFlagsOptions>(
@@ -161,6 +181,9 @@ app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseWhen(
     context => ApiRateLimitingExtensions.ShouldApplyToPath(context.Request.Path),

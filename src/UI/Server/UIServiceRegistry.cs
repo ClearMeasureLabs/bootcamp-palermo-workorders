@@ -9,6 +9,7 @@ using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.McpServer;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Server.Authentication;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using ClearMeasure.Bootcamp.UI.Shared;
 using FluentValidation;
@@ -74,5 +75,8 @@ public class UiServiceRegistry : ServiceRegistry
             .AddCheck<ProcessThreadCountHealthCheck>("ProcessThreadCount");
 
         this.AddSingleton<IDetailedHealthReportProvider, DetailedHealthReportProvider>();
+
+        this.AddScoped<IUserSession, ServerUserSession>();
+        this.AddScoped<IEmployeeSignInService, EmployeeSignInService>();
     }
 }

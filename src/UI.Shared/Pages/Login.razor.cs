@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
@@ -12,6 +14,7 @@ public partial class Login : AppComponentBase
 {
     [Inject] public CustomAuthenticationStateProvider? AuthStateProvider { get; set; }
     [Inject] public NavigationManager? NavigationManager { get; set; }
+    [Inject] public HttpClient? Http { get; set; }
 
     public readonly LoginModel loginModel = new();
     public string? errorMessage;
@@ -54,8 +57,10 @@ public partial class Login : AppComponentBase
         var selectedEmployee = employees.FirstOrDefault(e => e.UserName == loginModel.Username);
         if (selectedEmployee != null)
         {
-            // Successful login
             AuthStateProvider!.Login(loginModel.Username);
+            var loginBody = JsonSerializer.Serialize(new { userName = loginModel.Username });
+            using var content = new StringContent(loginBody, Encoding.UTF8, "application/json");
+            await Http!.PostAsync("/api/auth/login", content);
             EventBus.Notify(new UserLoggedInEvent(loginModel.Username));
             await Bus.Publish(new Core.Model.Events.UserLoggedInEvent(loginModel.Username));
             NavigationManager!.NavigateTo("/");
