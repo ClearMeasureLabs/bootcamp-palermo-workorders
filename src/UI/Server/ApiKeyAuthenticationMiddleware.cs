@@ -57,12 +57,36 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return false;
         }
 
-        if (IsPublicVersionOrTimePath(value))
+        if (IsPublicVersionOrTimePath(value) || IsPublicHealthPath(value))
         {
             return false;
         }
 
         return true;
+    }
+
+    internal static bool IsPublicHealthPath(string pathValue)
+    {
+        var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length < 2 || !segments[0].Equals("api", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (segments.Length >= 2
+            && segments[1].Equals("health", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (segments.Length >= 3
+            && segments[1].StartsWith('v')
+            && segments[2].Equals("health", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     internal static bool IsPublicVersionOrTimePath(string pathValue)

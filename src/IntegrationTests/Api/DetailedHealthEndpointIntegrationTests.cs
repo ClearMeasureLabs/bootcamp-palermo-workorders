@@ -357,6 +357,8 @@ public class DetailedHealthEndpointIntegrationTests
         names.ShouldContain("Server");
         names.ShouldContain("API");
         names.ShouldContain("Jeffrey");
+        names.ShouldContain("NeedsReboot");
+        names.ShouldContain("ProcessThreadCount");
         foreach (var c in report.Components)
         {
             (c.Status == ComponentHealthStatus.Healthy

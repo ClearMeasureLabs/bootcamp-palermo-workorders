@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Server;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Shouldly;
 
@@ -450,5 +451,43 @@ public class DetailedHealthReportProviderTests
         component.ExceptionDetail.ShouldContain("TimeoutException");
         component.Data.ShouldNotBeNull();
         component.Data!["endpoint"].ShouldBe("https://api.example.com");
+    }
+
+    [Test]
+    public async Task Should_CallHealthCheckServiceAndReturnReport_When_GetReportAsync()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddHealthChecks()
+            .AddCheck("API", () => HealthCheckResult.Healthy("ok"))
+            .AddCheck("DataAccess", () => HealthCheckResult.Degraded("slow"));
+        await using var provider = services.BuildServiceProvider();
+        var healthCheckService = provider.GetRequiredService<HealthCheckService>();
+        var reportProvider = new DetailedHealthReportProvider(healthCheckService, TimeProvider.System);
+
+        var report = await reportProvider.GetReportAsync();
+
+        report.Components.Count.ShouldBe(2);
+        report.OverallStatus.ShouldBe(ComponentHealthStatus.Degraded);
+        report.Components.ShouldContain(c => c.Name == "API" && c.Status == ComponentHealthStatus.Healthy);
+        report.Components.ShouldContain(c => c.Name == "DataAccess" && c.Status == ComponentHealthStatus.Degraded);
+    }
+
+    [Test]
+    public async Task Should_ExcludeLiveTaggedChecks_When_GetReportAsync()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddHealthChecks()
+            .AddCheck("API", () => HealthCheckResult.Healthy())
+            .AddCheck("LiveProbe", () => HealthCheckResult.Unhealthy("live only"), tags: ["live"]);
+        await using var provider = services.BuildServiceProvider();
+        var healthCheckService = provider.GetRequiredService<HealthCheckService>();
+        var reportProvider = new DetailedHealthReportProvider(healthCheckService, TimeProvider.System);
+
+        var report = await reportProvider.GetReportAsync();
+
+        report.Components.Select(c => c.Name).ShouldContain("API");
+        report.Components.Select(c => c.Name).ShouldNotContain("LiveProbe");
     }
 }
