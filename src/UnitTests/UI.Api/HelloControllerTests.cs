@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,8 +21,8 @@ public class HelloControllerTests
 
         var ok = result.ShouldBeOfType<OkObjectResult>();
         ok.StatusCode.ShouldBe(200);
-        var response = ok.Value.ShouldBeOfType<HelloResponse>();
-        response.Message.ShouldBe("Hello, World!");
+        var payload = ok.Value.ShouldBeOfType<HelloResponse>();
+        payload.Message.ShouldBe("Hello, World!");
     }
 
     [Test]
@@ -34,6 +35,9 @@ public class HelloControllerTests
 
         var result = controller.Get();
 
-        result.ShouldBeOfType<OkObjectResult>().StatusCode.ShouldBe(200);
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        ok.StatusCode.ShouldBe(200);
+        var json = JsonSerializer.Serialize(ok.Value);
+        json.ShouldContain("Hello, World!");
     }
 }

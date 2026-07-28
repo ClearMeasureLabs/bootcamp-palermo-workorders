@@ -1,5 +1,5 @@
 using System.Net;
-using System.Text.Json;
+using System.Net.Http.Json;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
@@ -9,8 +9,6 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 [TestFixture]
 public class HelloEndpointIntegrationTests
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-
     private DiagnosticsWebApplicationFactory? _factory;
     private HttpClient? _client;
 
@@ -37,8 +35,7 @@ public class HelloEndpointIntegrationTests
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("application/json");
-        var body = await response.Content.ReadAsStringAsync();
-        var payload = JsonSerializer.Deserialize<HelloResponse>(body, JsonOptions);
+        var payload = await response.Content.ReadFromJsonAsync<HelloResponse>();
         payload.ShouldNotBeNull();
         payload!.Message.ShouldBe("Hello, World!");
     }
@@ -52,8 +49,7 @@ public class HelloEndpointIntegrationTests
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("application/json");
-        var body = await response.Content.ReadAsStringAsync();
-        var payload = JsonSerializer.Deserialize<HelloResponse>(body, JsonOptions);
+        var payload = await response.Content.ReadFromJsonAsync<HelloResponse>();
         payload.ShouldNotBeNull();
         payload!.Message.ShouldBe("Hello, World!");
     }
@@ -66,14 +62,10 @@ public class HelloEndpointIntegrationTests
 
         var unversioned = await client.GetAsync("/api/hello");
         unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var unversionedBody = JsonSerializer.Deserialize<HelloResponse>(
-            await unversioned.Content.ReadAsStringAsync(), JsonOptions);
-        unversionedBody!.Message.ShouldBe("Hello, World!");
+        (await unversioned.Content.ReadFromJsonAsync<HelloResponse>())!.Message.ShouldBe("Hello, World!");
 
         var versioned = await client.GetAsync("/api/v1.0/hello");
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var versionedBody = JsonSerializer.Deserialize<HelloResponse>(
-            await versioned.Content.ReadAsStringAsync(), JsonOptions);
-        versionedBody!.Message.ShouldBe("Hello, World!");
+        (await versioned.Content.ReadFromJsonAsync<HelloResponse>())!.Message.ShouldBe("Hello, World!");
     }
 }
