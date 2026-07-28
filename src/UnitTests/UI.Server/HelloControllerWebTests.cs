@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;
@@ -43,7 +44,7 @@ public class HelloControllerWebTests
     {
         response.Content.Headers.ContentType!.MediaType.ShouldBe("application/json");
         var body = await response.Content.ReadAsStringAsync();
-        var payload = JsonSerializer.Deserialize<HelloResponse>(body);
+        var payload = JsonSerializer.Deserialize<HelloResponse>(body, ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
         payload!.Message.ShouldBe("Hello, World!");
     }
