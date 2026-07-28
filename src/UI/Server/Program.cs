@@ -45,6 +45,8 @@ builder.Services.AddApiVersioning(options =>
 builder.Services.AddRazorPages();
 builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<RequestMetricsCollector>();
+builder.Services.AddSingleton<IRequestMetricsSnapshot>(sp => sp.GetRequiredService<RequestMetricsCollector>());
 builder.Services.AddScoped<IDistributedBus, DistributedBus>();
 builder.Services.AddMemoryCache();
 builder.Services.Configure<IdempotencyOptions>(
@@ -161,6 +163,8 @@ app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseMiddleware<RequestMetricsMiddleware>();
 
 app.UseWhen(
     context => ApiRateLimitingExtensions.ShouldApplyToPath(context.Request.Path),
