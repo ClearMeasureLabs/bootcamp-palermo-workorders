@@ -32,9 +32,29 @@ public class VersionControllerTests
         payload.ShouldNotBeNull();
         payload!.AssemblyVersion.ShouldNotBeNullOrEmpty();
         payload.InformationalVersion.ShouldNotBeNullOrEmpty();
+        payload.BuildConfiguration.ShouldNotBeNullOrWhiteSpace();
         payload.Environment.ShouldBe("TestEnvironment");
         payload.MachineName.ShouldBe(Environment.MachineName);
         payload.FrameworkDescription.ShouldBe(System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
+    }
+
+    [Test]
+    public void VersionController_Get_Should_IncludeBuildConfiguration()
+    {
+        var stubHostEnvironment = new StubHostEnvironment("TestEnvironment");
+        var controller = new VersionController(stubHostEnvironment)
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
+
+        var result = controller.Get();
+
+        var content = result.ShouldBeOfType<ContentResult>();
+        var payload = JsonSerializer.Deserialize<VersionMetadataResponse>(
+            content.Content!,
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        payload!.BuildConfiguration.ShouldNotBeNullOrWhiteSpace();
     }
 
     private sealed class StubHostEnvironment(string environmentName) : IHostEnvironment
