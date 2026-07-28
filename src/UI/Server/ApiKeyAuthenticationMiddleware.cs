@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>
-/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, and ping endpoints.
+/// Enforces an optional shared API key on <c>/api/*</c> routes, excluding public version, time, ping, and tools/random endpoints.
 /// </summary>
 public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 {
@@ -57,7 +57,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return false;
         }
 
-        if (IsPublicVersionOrTimePath(value))
+        if (IsPublicUtilityApiPath(value))
         {
             return false;
         }
@@ -65,7 +65,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         return true;
     }
 
-    internal static bool IsPublicVersionOrTimePath(string pathValue)
+    internal static bool IsPublicUtilityApiPath(string pathValue)
     {
         var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length < 2 || !segments[0].Equals("api", StringComparison.OrdinalIgnoreCase))
@@ -75,23 +75,36 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 
         if (segments.Length == 2)
         {
-            var leaf = segments[1];
-            return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+            return IsPublicUtilityLeaf(segments[1]);
+        }
+
+        if (segments.Length == 3
+            && segments[1].Equals("tools", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("random", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
         }
 
         if (segments.Length >= 3
             && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
         {
-            var leaf = segments[2];
-            return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+            if (IsPublicUtilityLeaf(segments[2]))
+            {
+                return true;
+            }
+
+            return segments.Length >= 4
+                   && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
+                   && segments[3].Equals("random", StringComparison.OrdinalIgnoreCase);
         }
 
         return false;
     }
+
+    private static bool IsPublicUtilityLeaf(string segment) =>
+        segment.Equals("version", StringComparison.OrdinalIgnoreCase)
+        || segment.Equals("time", StringComparison.OrdinalIgnoreCase)
+        || segment.Equals("ping", StringComparison.OrdinalIgnoreCase);
 
     private static bool FixedTimeEqualsUtf8(string expected, string provided)
     {
