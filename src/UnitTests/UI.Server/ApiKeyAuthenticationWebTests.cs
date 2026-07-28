@@ -107,4 +107,19 @@ public class ApiKeyAuthenticationWebTests
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await versioned.Content.ReadAsStringAsync()).ShouldBe("pong");
     }
+
+    [Test]
+    public async Task Should_Return200_When_HelloWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unversioned = await client.GetAsync("/api/hello");
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await unversioned.Content.ReadAsStringAsync()).ShouldContain("\"message\":\"Hello, World!\"");
+
+        var versioned = await client.GetAsync("/api/v1.0/hello");
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await versioned.Content.ReadAsStringAsync()).ShouldContain("\"message\":\"Hello, World!\"");
+    }
 }
