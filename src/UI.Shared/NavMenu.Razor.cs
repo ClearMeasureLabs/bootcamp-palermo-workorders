@@ -11,15 +11,6 @@ public partial class NavMenu : AppComponentBase,
 {
     [Inject] public IUserSession? UserSession { get; set; }
 
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-
     private Employee? CurrentUser { get; set; }
 
     protected override async Task OnInitializedAsync()
