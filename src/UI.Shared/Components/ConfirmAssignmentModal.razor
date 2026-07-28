@@ -1,0 +1,36 @@
+@if (Visible && InProgressWorkOrder != null && Assignee != null)
+{
+    <div class="modal-overlay" role="dialog" aria-labelledby="confirmAssignmentTitle" aria-modal="true">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 id="confirmAssignmentTitle">Confirm Assignment</h2>
+            </div>
+            <div class="modal-body">
+                <p role="alert">
+                    <strong>@Assignee.GetFullName()</strong> is currently working on <strong>@InProgressWorkOrder.Number: @InProgressWorkOrder.Title</strong>, please confirm to assign a new work order.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" aria-label="Cancel assignment" @onclick="OnCancel">Cancel</button>
+                <button type="button" class="btn btn-primary" aria-label="Confirm assignment" @onclick="OnConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public WorkOrder? InProgressWorkOrder { get; set; }
+
+    [Parameter]
+    public Employee? Assignee { get; set; }
+
+    [Parameter]
+    public EventCallback OnConfirm { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+}
