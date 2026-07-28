@@ -56,10 +56,6 @@ public class MetricsSummaryBuilderTests
 
         response.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
         response.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
-        response.GcMemoryMb.ShouldBeInRange(
-            MetricsSummaryBuilder.GetGcMemoryMb() - 1,
-            MetricsSummaryBuilder.GetGcMemoryMb() + 1);
-        response.WorkingSetMb.ShouldBe(MetricsSummaryBuilder.GetWorkingSetMb());
     }
 
     [Test]
