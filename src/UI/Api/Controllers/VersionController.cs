@@ -31,9 +31,11 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
         var assembly = Assembly.GetExecutingAssembly();
         var assemblyVersion = assembly.GetName().Version?.ToString();
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var buildConfiguration = VersionMetadataReader.GetBuildConfiguration(assembly);
         var payload = new VersionMetadataResponse(
             AssemblyVersion: assemblyVersion,
             InformationalVersion: informationalVersion,
+            BuildConfiguration: buildConfiguration,
             Environment: hostEnvironment.EnvironmentName,
             MachineName: Environment.MachineName,
             FrameworkDescription: RuntimeInformation.FrameworkDescription);
@@ -51,6 +53,16 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
 public record VersionMetadataResponse(
     string? AssemblyVersion,
     string? InformationalVersion,
+    string? BuildConfiguration,
     string? Environment,
     string MachineName,
     string FrameworkDescription);
+
+/// <summary>
+/// Reads build metadata from assembly attributes.
+/// </summary>
+internal static class VersionMetadataReader
+{
+    internal static string? GetBuildConfiguration(Assembly assembly) =>
+        assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()?.Configuration;
+}
