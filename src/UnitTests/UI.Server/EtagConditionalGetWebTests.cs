@@ -41,4 +41,13 @@ public class EtagConditionalGetWebTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         response.Headers.ETag.ShouldNotBeNull();
     }
+
+    [Test]
+    public async Task Should_IncludeEtagHeader_When_GetDetailedHealth()
+    {
+        using var client = _factory!.CreateClient();
+        var response = await client.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.ETag.ShouldNotBeNull();
+    }
 }

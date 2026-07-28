@@ -301,7 +301,7 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
-    public async Task GetApiHealthDetailedReturnsTimeZoneId()
+    public async Task Should_IncludeTimeZoneId_When_GetDetailedHealth()
     {
         var response = await _client!.GetAsync("/api/health/detailed");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -340,6 +340,26 @@ public class DetailedHealthEndpointIntegrationTests
         report!.ProcessPriority.ShouldNotBeNull();
         report.ProcessPriority.ShouldNotBeEmpty();
         report.ProcessPriority.ShouldBe(Process.GetCurrentProcess().PriorityClass.ToString());
+    }
+
+    [Test]
+    public async Task Should_Return200AndSamePayload_When_GetDetailedHealth_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var v1 = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var legacyReport = await legacy.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var v1Report = await v1.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        legacyReport.ShouldNotBeNull();
+        v1Report.ShouldNotBeNull();
+        v1Report!.OverallStatus.ShouldBe(legacyReport!.OverallStatus);
+        v1Report.Components.Count.ShouldBe(legacyReport.Components.Count);
     }
 
     [Test]
