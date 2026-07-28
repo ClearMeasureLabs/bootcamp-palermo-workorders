@@ -40,6 +40,33 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_Return200AndSamePayload_When_GetDetailedHealth_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var v1 = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var legacyPayload = JsonSerializer.Deserialize<JsonElement>(await legacy.Content.ReadAsStringAsync());
+        var v1Payload = JsonSerializer.Deserialize<JsonElement>(await v1.Content.ReadAsStringAsync());
+
+        legacyPayload.GetProperty("overallStatus").GetString().ShouldBe(
+            v1Payload.GetProperty("overallStatus").GetString());
+
+        var legacyComponents = legacyPayload.GetProperty("components").EnumerateArray()
+            .Select(e => (e.GetProperty("name").GetString(), e.GetProperty("status").GetString()))
+            .OrderBy(x => x.Item1)
+            .ToList();
+        var v1Components = v1Payload.GetProperty("components").EnumerateArray()
+            .Select(e => (e.GetProperty("name").GetString(), e.GetProperty("status").GetString()))
+            .OrderBy(x => x.Item1)
+            .ToList();
+
+        legacyComponents.ShouldBeEquivalentTo(v1Components);
+    }
+
+    [Test]
     public async Task Should_ReturnNotSuccess_When_GetSimpleHealth_UnsupportedVersion()
     {
         var response = await _client!.GetAsync("/api/v2.0/health");
