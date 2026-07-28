@@ -20,8 +20,13 @@ public class HelloControllerTests
 
         var ok = result.ShouldBeOfType<OkObjectResult>();
         ok.StatusCode.ShouldBe(200);
+<<<<<<< HEAD
         var payload = ok.Value.ShouldBeOfType<HelloResponse>();
         payload.Message.ShouldBe("Hello, World!");
+=======
+        var response = ok.Value.ShouldBeOfType<HelloResponse>();
+        response.Message.ShouldBe("Hello, World!");
+>>>>>>> ec02aa23e3a0d12b1cca7c707c277167edab6c05
     }
 
     [Test]

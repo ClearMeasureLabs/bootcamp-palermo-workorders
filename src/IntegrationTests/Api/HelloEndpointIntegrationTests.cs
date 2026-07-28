@@ -35,9 +35,15 @@ public class HelloEndpointIntegrationTests
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("application/json");
+<<<<<<< HEAD
         var payload = await response.Content.ReadFromJsonAsync<HelloResponse>();
         payload.ShouldNotBeNull();
         payload!.Message.ShouldBe("Hello, World!");
+=======
+        var body = await response.Content.ReadFromJsonAsync<HelloResponse>();
+        body.ShouldNotBeNull();
+        body!.Message.ShouldBe("Hello, World!");
+>>>>>>> ec02aa23e3a0d12b1cca7c707c277167edab6c05
     }
 
     [Test]
@@ -49,9 +55,15 @@ public class HelloEndpointIntegrationTests
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("application/json");
+<<<<<<< HEAD
         var payload = await response.Content.ReadFromJsonAsync<HelloResponse>();
         payload.ShouldNotBeNull();
         payload!.Message.ShouldBe("Hello, World!");
+=======
+        var body = await response.Content.ReadFromJsonAsync<HelloResponse>();
+        body.ShouldNotBeNull();
+        body!.Message.ShouldBe("Hello, World!");
+>>>>>>> ec02aa23e3a0d12b1cca7c707c277167edab6c05
     }
 
     [Test]
