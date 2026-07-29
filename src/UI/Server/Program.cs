@@ -242,6 +242,12 @@ if (string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.O
     app.MapPut("/api/_test/idempotency-probe", Probe);
 }
 
+app.MapGet("/api/ping", () => Results.Text("pong", "text/plain; charset=utf-8"));
+app.MapGet("/api/v{version:apiVersion}/ping", () => Results.Text("pong", "text/plain; charset=utf-8"));
+
+app.MapGet("/api/hello", () => Results.Json(new { message = "Hello, World!" }));
+app.MapGet("/api/v{version:apiVersion}/hello", () => Results.Json(new { message = "Hello, World!" }));
+
 app.MapGrpcService<WorkOrdersGrpcService>();
 app.MapMcp("/mcp");
 app.MapFallback(async context =>
