@@ -25,6 +25,7 @@ public class HelloController : ControllerBase
     public JsonResult Get() =>
         new JsonResult(new { message = "Hello, World!" })
         {
-            StatusCode = StatusCodes.Status200OK
+            StatusCode = StatusCodes.Status200OK,
+            ContentType = "application/json"
         };
 }
