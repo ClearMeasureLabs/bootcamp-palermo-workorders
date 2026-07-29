@@ -1,0 +1,40 @@
+@startuml
+!pragma layout smetana
+!include templates/plantuml-theme.puml
+
+scale 2/3
+left to right direction
+center header
+    C4 Architecture: Argo CD + Codefresh + Octopus — System Context (Level 1)
+endheader
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Context.puml
+
+title System Context — how Octopus, Codefresh (hosted Argo CD) and the throwaway cluster relate
+
+Person(dev, "Developer / Release Manager", "Triggers releases and approves promotions. Never runs kubectl by hand — all changes flow through Octopus and Git.")
+
+System(octopus, "Octopus Deploy (SaaS)", "System of record for RELEASES. Owns lifecycle (Dev/Test/Prod), approvals, variables, audit, and DB migrations. Decides WHEN and WHETHER to deploy; commits the new image tag to Git rather than touching the cluster directly.")
+
+System(codefresh, "Codefresh GitOps (SaaS)", "Hosted Argo CD CONTROL PLANE. Provides the Argo CD UI, application health dashboards, multi-cluster view and promotion flows. Hosts the brain; the reconciling agent lives in your cluster.")
+
+System(git, "Git Manifests Repo", "SINGLE SOURCE OF TRUTH for desired cluster state (deploy/ kustomize base + dev overlay). Every deploy is a commit here; history = deploy history.")
+
+System(cluster, "Throwaway AKS Cluster", "RUNS THE APP plus the in-cluster Argo CD runtime. Disposable Spot cluster used only for this exploration; deleted with one command when done.")
+
+System_Ext(acr, "Container Registry (ACR/GHCR)", "Stores the built application container images that the cluster pulls at sync time.")
+
+System(sql, "Azure SQL Database", "[Database] Persists work orders, employees, roles. Schema owned by DbUp migrations run from Octopus — NOT by Argo CD.")
+
+Rel(dev, octopus, "Creates release / approves", "HTTPS")
+Rel(octopus, sql, "Runs DbUp schema migrations", "SqlClient / TCP")
+Rel(octopus, git, "Commits new image tag / manifests", "Git over HTTPS")
+Rel(codefresh, git, "Watches desired state", "Git over HTTPS")
+Rel(codefresh, cluster, "Reconciles Git -> cluster (via in-cluster runtime)", "gRPC, outbound from cluster")
+Rel(cluster, acr, "Pulls application image", "HTTPS / Docker")
+Rel(cluster, sql, "App reads/writes at runtime", "EF Core / TCP")
+Rel(octopus, codefresh, "Reads Argo app health / gates release", "HTTPS API")
+
+LEGEND("Legend","Octopus: governance + migrations + WHEN to deploy\nCodefresh: hosted Argo CD control plane (dashboards, promotion)\nGit: desired-state source of truth\nAKS: runs app + Argo runtime (throwaway)\nACR: image store\nAzure SQL: app data + DbUp schema")
+FOOTER()
+@enduml

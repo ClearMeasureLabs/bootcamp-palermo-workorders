@@ -1,0 +1,54 @@
+@startuml
+!include templates/plantuml-theme.puml
+
+scale 2/3
+center header
+    C4 Architecture: Argo CD + Codefresh + Octopus — Release Flow (Dynamic / Level 4)
+endheader
+
+title Dynamic view — one release, end to end (who does what, in order)
+
+actor "Developer /\nRelease Manager" as dev
+participant "Octopus Deploy\n(orchestration + gates)" as oct
+database "Azure SQL\n(app data + schema)" as sql
+participant "Git Repo\n(desired state)" as git
+participant "Argo CD Runtime\n(in AKS, reconciler)" as argo
+participant "Codefresh\n(hosted Argo UI/health)" as cf
+participant "AKS Cluster\n(runs the app)" as aks
+participant "Container Registry\n(image store)" as acr
+
+note over dev,acr
+  Responsibilities: Octopus decides WHEN/WHETHER + runs migrations.
+  Git is the source of truth. Argo does the actual cluster sync.
+  Codefresh shows health. Nothing bypasses Git to touch the cluster.
+end note
+
+dev -> oct : 1. Create release, approve target environment
+activate oct
+
+oct -> sql : 2. Run DbUp migrations (schema first)
+note right of sql : Schema owned by Octopus,\nNOT by Argo CD
+sql --> oct : migrations applied
+
+oct -> git : 3. Commit new image tag into deploy/overlays/dev
+note right of git : This commit IS the deployment\n(history = deploy history)
+git --> oct : commit pushed
+
+argo -> git : 4. Detect changed desired state (poll/webhook)
+activate argo
+argo -> acr : 5. Resolve + pull the new image
+acr --> argo : image ready
+argo -> aks : 6. Apply Deployment; roll pods (respect probes)
+aks --> argo : pods Ready on /_healthcheck
+argo -> cf : 7. Report Synced + Healthy
+deactivate argo
+
+oct -> cf : 8. "Wait for Argo Application" polls status
+cf --> oct : Synced + Healthy
+note left of oct : Release GATE clears only\non real cluster health
+
+oct --> dev : 9. Release succeeded (or promote to next env)
+deactivate oct
+
+FOOTER()
+@enduml

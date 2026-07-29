@@ -359,3 +359,6 @@ coverage.cobertura.xml
 /build
 /.claude/settings.local.json
 nul
+
+# Local PlantUML rendering tool (see arch/DIAGRAMS.md)
+.tools/

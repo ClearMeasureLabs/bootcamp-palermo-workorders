@@ -1,0 +1,64 @@
+@startuml
+!pragma layout smetana
+!include templates/plantuml-theme.puml
+
+scale 2/3
+left to right direction
+center header
+    C4 Architecture: Argo CD + Codefresh + Octopus — Container / Building Blocks (Level 2)
+endheader
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+title Container diagram — the moving parts and what each one is responsible for
+
+Person(dev, "Developer / Release Manager", "Starts releases, approves promotion to the next environment.")
+
+System_Boundary(octopusB, "Octopus Deploy (SaaS) — release process") {
+    Container(stepDotnet, "Ensure .NET 10 step", "Octopus.Script", "Guarantees the worker has the .NET 10 runtime before packaging/migrations. (UNCHANGED from today.)")
+    Container(stepMig, "Run DB Migrations step", "DbUp / ChurchBulletin.Database", "Applies numbered SQL scripts to Azure SQL. STAYS IN OCTOPUS — Argo never touches the database. (UNCHANGED.)")
+    Container(stepTag, "Update Argo Image Tag step", "Octopus Argo CD step", "REPLACES the old 'az containerapp update'. Rewrites newTag in the dev overlay and commits to Git.")
+    Container(stepWait, "Wait for Argo Application step", "Octopus Argo CD step", "Blocks the release until Argo reports the app Synced + Healthy, so approvals gate on real cluster state.")
+}
+
+System_Boundary(gitB, "Git Manifests Repo — desired state") {
+    Container(base, "deploy/base", "kustomize", "Environment-agnostic manifests: Deployment (port 8080, /_healthcheck probes), Service, Ingress, namespace.")
+    Container(overlay, "deploy/overlays/dev", "kustomize", "Per-env overlay. Its images[].newTag is the ONE line Octopus rewrites and Argo reconciles.")
+}
+
+System_Boundary(cfB, "Codefresh GitOps (SaaS) — hosted control plane") {
+    Container(cfUi, "GitOps Dashboards & Promotion", "Codefresh hosted Argo CD", "Argo CD UI, app health, sync status, multi-cluster view and promotion flows. No install to maintain.")
+}
+
+System_Boundary(aksB, "Throwaway AKS Cluster") {
+    Container(argoRt, "Argo CD Runtime", "Argo CD agent (Helm-installed)", "In-cluster reconciler. Pulls desired state from Git, diffs vs live, applies changes, reports health back to Codefresh. Outbound-only.")
+    Container(gw, "Octopus K8s Gateway", "Octopus agent", "Outbound-only tunnel so Octopus can query Argo apps without opening inbound ports.")
+    Container(server, "workorders-server", "ASP.NET 10 container", "The application workload. Serves HTTP on 8080; liveness/readiness on /_healthcheck.")
+    Container(svc, "Service + Ingress", "K8s Service / Ingress", "Cluster networking: routes external/in-cluster traffic to the server pods.")
+    ContainerDb(secret, "workorders-secrets", "K8s Secret", "Holds SqlConnectionString. Created out-of-band (kubectl), never committed to Git.")
+}
+
+System_Ext(acr, "Container Registry", "Stores built app images pulled by the cluster.")
+ContainerDb(sql, "Azure SQL Database", "Work orders, employees, roles. Schema owned by DbUp.")
+
+Rel(dev, stepTag, "Release drives the process", "HTTPS")
+Rel(stepDotnet, stepMig, "then", "")
+Rel(stepMig, sql, "Applies schema", "SqlClient / TCP")
+Rel(stepMig, stepTag, "then", "")
+Rel(stepTag, overlay, "Commits new image tag", "Git")
+Rel(stepTag, stepWait, "then", "")
+Rel(overlay, base, "References", "kustomize")
+Rel(cfUi, overlay, "Watches desired state", "Git over HTTPS")
+Rel(argoRt, cfUi, "Registers / reports health", "gRPC outbound")
+Rel(argoRt, overlay, "Pulls desired state", "Git over HTTPS")
+Rel(argoRt, server, "Creates/updates Deployment", "K8s API")
+Rel(argoRt, acr, "Triggers image pull", "HTTPS")
+Rel(server, secret, "Reads connection string", "env var")
+Rel(server, sql, "Reads/writes at runtime", "EF Core / TCP")
+Rel(svc, server, "Routes traffic to", "HTTP")
+Rel(stepWait, gw, "Queries app status via", "HTTPS")
+Rel(gw, argoRt, "Reads Argo app health", "in-cluster")
+
+LEGEND("Legend","Octopus steps: migrations stay; rollout step becomes Git commit + wait\nGit overlay newTag: the single reconciled value\nCodefresh: hosted Argo UI/health\nArgo runtime: in-cluster reconciler (outbound only)\nSecret: created via kubectl, not Git")
+FOOTER()
+@enduml

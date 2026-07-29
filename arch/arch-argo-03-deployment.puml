@@ -1,0 +1,54 @@
+@startuml
+!pragma layout smetana
+!include templates/plantuml-theme.puml
+
+scale 2/3
+center header
+    C4 Architecture: Argo CD + Codefresh + Octopus — Deployment / Hosting Topology (Level 3)
+endheader
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+title Deployment topology — WHERE each part runs, and the "hosted control plane vs in-cluster runtime" split
+
+System_Boundary(saas, "Vendor SaaS (nothing to host)") {
+    Container(octopus, "Octopus Deploy", "SaaS: clearmeasure.octopus.app", "Runs the release process, approvals, audit. Reaches your world only via OUTBOUND agents + Git.")
+    Container(codefresh, "Codefresh GitOps Control Plane", "SaaS", "Hosts the Argo CD UI, dashboards and promotion. Holds NO cluster credentials inbound — the cluster calls it.")
+    Container(gitHost, "Git Host (this repo)", "GitHub/Azure Repos", "Stores deploy/ manifests = desired state.")
+}
+
+System_Boundary(azure, "Your Azure Subscription (throwaway resource group)") {
+
+    System_Boundary(aks, "AKS Cluster — 1x Spot node (disposable)") {
+        Container(argoRt, "Argo CD Runtime (pods)", "namespace: argo/codefresh", "Reconciles Git -> cluster. Phones OUT to Codefresh + Git; nothing inbound needed.")
+        Container(gw, "Octopus Gateway (pod)", "namespace: octopus", "Outbound tunnel; lets Octopus read Argo app health with no open ports.")
+        Container(server, "workorders-server Deployment", "namespace: workorders", "App pods: ASP.NET 10 on :8080, /_healthcheck probes. Sized for one small node.")
+        Container(ingress, "Ingress + Service", "namespace: workorders", "In-cluster routing / external entry to the app pods.")
+        ContainerDb(secret, "workorders-secrets", "K8s Secret", "SqlConnectionString injected as env var; created via kubectl.")
+    }
+
+    Container(acr, "Container Registry", "ACR (or external GHCR)", "Holds app images the node pulls on sync.")
+    ContainerDb(sql, "Azure SQL Database", "PaaS", "App data at runtime; schema migrated from Octopus.")
+}
+
+Rel(octopus, gitHost, "Commits image tag", "Git / HTTPS (outbound)")
+Rel(octopus, sql, "Runs DbUp migrations", "TCP (worker opens firewall briefly)")
+Rel(gw, octopus, "Outbound tunnel", "HTTPS")
+Rel(argoRt, codefresh, "Registers + reports health", "gRPC (outbound)")
+Rel(argoRt, gitHost, "Pulls desired state", "HTTPS (outbound)")
+Rel(argoRt, server, "Applies manifests", "K8s API (in-cluster)")
+Rel(server, acr, "Pulls image", "HTTPS")
+Rel(server, secret, "Reads", "env var")
+Rel(server, sql, "Reads/writes", "EF Core / TCP")
+Rel(ingress, server, "Routes to", "HTTP")
+
+note right of aks
+  Everything from your side is OUTBOUND.
+  No inbound ports opened to the cluster for
+  either Octopus or Codefresh. Delete the whole
+  resource group to tear the experiment down.
+end note
+
+LEGEND("Legend","SaaS zone: you host nothing (Octopus, Codefresh, Git)\nAzure zone: throwaway AKS + ACR + Azure SQL\nIn-cluster: Argo runtime + Octopus gateway + app\nAll cluster comms outbound-only")
+FOOTER()
+@enduml
