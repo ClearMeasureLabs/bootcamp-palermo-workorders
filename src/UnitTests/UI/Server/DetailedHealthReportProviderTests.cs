@@ -15,6 +15,21 @@ public class DetailedHealthReportProviderTests
         public override DateTimeOffset GetUtcNow() => new(utcNow, TimeSpan.Zero);
     }
 
+    /// <summary>
+    /// Live process memory is sampled once inside the provider and again by the test
+    /// microseconds later. Any allocation — or a background GC — between the two samples
+    /// shifts the value, and because both are rounded to whole megabytes, crossing a single
+    /// 1 MiB boundary is enough to break exact equality (observed in CI: "should be 148 but
+    /// was 147"). These assertions verify the property is wired to the corresponding reader,
+    /// so compare against a fresh sample within a tolerance rather than demanding equality.
+    /// </summary>
+    private const int MemorySampleToleranceMb = 64;
+
+    private static void ShouldTrackLiveSample(int reported, int freshSample) =>
+        reported.ShouldBeInRange(
+            freshSample - MemorySampleToleranceMb,
+            freshSample + MemorySampleToleranceMb);
+
     [Test]
     public void FromComponentStatuses_Should_MapStatusesAndOverall()
     {
@@ -239,7 +254,7 @@ public class DetailedHealthReportProviderTests
             TimeProvider.System);
 
         detailed.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
-        detailed.GcMemoryMb.ShouldBe(DetailedHealthReportProvider.GetGcMemoryMb());
+        ShouldTrackLiveSample(detailed.GcMemoryMb, DetailedHealthReportProvider.GetGcMemoryMb());
     }
 
     [Test]
@@ -256,7 +271,7 @@ public class DetailedHealthReportProviderTests
             TimeProvider.System);
 
         detailed.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
-        detailed.WorkingSetMb.ShouldBe(DetailedHealthReportProvider.GetWorkingSetMb());
+        ShouldTrackLiveSample(detailed.WorkingSetMb, DetailedHealthReportProvider.GetWorkingSetMb());
     }
 
     [Test]
@@ -303,7 +318,7 @@ public class DetailedHealthReportProviderTests
         var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
 
         detailed.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
-        detailed.GcMemoryMb.ShouldBe(DetailedHealthReportProvider.GetGcMemoryMb());
+        ShouldTrackLiveSample(detailed.GcMemoryMb, DetailedHealthReportProvider.GetGcMemoryMb());
     }
 
     [Test]
@@ -318,7 +333,7 @@ public class DetailedHealthReportProviderTests
         var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
 
         detailed.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
-        detailed.WorkingSetMb.ShouldBe(DetailedHealthReportProvider.GetWorkingSetMb());
+        ShouldTrackLiveSample(detailed.WorkingSetMb, DetailedHealthReportProvider.GetWorkingSetMb());
     }
 
     [Test]

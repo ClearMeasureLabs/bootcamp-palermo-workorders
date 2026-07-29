@@ -6,6 +6,20 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.Authentication;
 [TestFixture]
 public class LoginTests : AcceptanceTestBase
 {
+    /// <summary>
+    /// The employee &lt;option&gt; elements are rendered only after the Blazor WASM app
+    /// boots interactively and the employee list loads. WaitForLoadStateAsync(NetworkIdle)
+    /// does not guarantee that render has happened, so wait for the option itself.
+    /// Options live inside a closed &lt;select&gt; and therefore have no bounding box —
+    /// they are never "visible" to Playwright, so wait for Attached, not Visible.
+    /// </summary>
+    private static Task WaitForEmployeeOptionsRenderedAsync(ILocator employeeOption) =>
+        employeeOption.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Attached,
+            Timeout = 90_000
+        });
+
     [Test, Retry(2)]
     public void VerifySetup()
     {
@@ -19,13 +33,13 @@ public class LoginTests : AcceptanceTestBase
     public async Task Should_DisplayUppercaseNames_InLoginDropdown()
     {
         await Page.GotoAsync("/login");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        var homerOption = userSelect.Locator("option[value='hsimpson']");
+        await WaitForEmployeeOptionsRenderedAsync(homerOption);
+
         var placeholderOption = userSelect.Locator("option[value='']");
         await Expect(placeholderOption).ToHaveTextAsync("-- Select a parishioner or staff member --");
-
-        var homerOption = userSelect.Locator("option[value='hsimpson']");
         await Expect(homerOption).ToHaveTextAsync("HOMER SIMPSON");
     }
 
@@ -33,10 +47,10 @@ public class LoginTests : AcceptanceTestBase
     public async Task Should_LoginSuccessfully_UsingUsernameValue_NotDisplayLabel()
     {
         await Page.GotoAsync("/login");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
         var homerOption = userSelect.Locator("option[value='hsimpson']");
+        await WaitForEmployeeOptionsRenderedAsync(homerOption);
         await Expect(homerOption).ToHaveTextAsync("HOMER SIMPSON");
 
         await Select(nameof(Login.Elements.User), "hsimpson");
