@@ -9,7 +9,7 @@ endheader
 
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
 
-title Deployment topology — WHERE each part runs, and the "hosted control plane vs in-cluster runtime" split
+title Deployment topology, CLOUD OPTION (AKS Spot) — see arch-argo-05 for the local k3s-in-WSL option
 
 System_Boundary(saas, "Vendor SaaS (nothing to host)") {
     Container(octopus, "Octopus Deploy", "SaaS: clearmeasure.octopus.app", "Runs the release process, approvals, audit. Reaches your world only via OUTBOUND agents + Git.")

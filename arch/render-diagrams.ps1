@@ -2,7 +2,10 @@
 Render PlantUML diagrams in this repository.
 
 This script renders all .puml files under the arch/ folder (excluding templates/) into PNG and SVG.
-It prefers Docker (uses plantuml/plantuml image, pinned) and falls back to a local plantuml.jar if present.
+Renderer preference order:
+  1. Docker (plantuml/plantuml image, pinned)
+  2. WSL Containers / wslc (same pinned image; no Docker Desktop required — WSL 2.9.3+ preview)
+  3. Local plantuml.jar (.tools/plantuml.jar)
 The script attempts to mount the repository into the container so local includes (templates/plantuml-theme.puml) resolve.
 #>
 param(
@@ -23,6 +26,16 @@ if (-not $files) {
 }
 
 $hasDocker = (Get-Command docker -ErrorAction SilentlyContinue) -ne $null
+# Verify the docker daemon actually responds (docker CLI may exist while Docker Desktop is stopped)
+if ($hasDocker) {
+    docker info *> $null
+    if ($LASTEXITCODE -ne 0) { $hasDocker = $false }
+}
+
+# WSL Containers (wslc) — native Linux containers without Docker Desktop (WSL 2.9.3+ preview).
+# Ships in the WSL install dir; not usually on PATH.
+$wslcPath = Join-Path $env:ProgramFiles 'WSL\wslc.exe'
+$hasWslc = Test-Path $wslcPath -PathType Leaf
 
 # check for plantuml.jar in repo root or arch/.tools
 $jarAtRepo = Join-Path $repoRoot '.tools\plantuml.jar'
@@ -56,6 +69,17 @@ foreach ($f in $files) {
                 }
             }
         }
+        elseif ($hasWslc) {
+            # Same pinned image and mount layout as the Docker path, via WSL Containers.
+            $absIn = (Resolve-Path $inPath).Path
+            $relative = $absIn.Substring($repoRoot.Length+1).Replace('\', '/')
+            Write-Host "Rendering via wslc (image: $plantumlImage) for /workspace/$relative"
+            & $wslcPath run --rm -v "${repoRoot}:/workspace" -w /workspace $plantumlImage "-t$fmt" "/workspace/$relative"
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "wslc rendering failed for $inPath ($fmt)" -ForegroundColor Red
+                exit 1
+            }
+        }
         elseif ($hasJar) {
             Write-Host "Using local plantuml.jar at $jarPath"
             & java -jar $jarPath -t$fmt -charset UTF-8 $inPath
@@ -65,8 +89,8 @@ foreach ($f in $files) {
             }
         }
         else {
-            Write-Host "No renderer found (docker or .tools/plantuml.jar)." -ForegroundColor Yellow
-            Write-Host "Install Docker or place plantuml.jar at $repoRoot\\.tools\\plantuml.jar" -ForegroundColor Yellow
+            Write-Host "No renderer found (docker, wslc, or .tools/plantuml.jar)." -ForegroundColor Yellow
+            Write-Host "Options: start Docker; or 'wsl --update --pre-release' for WSL Containers; or place plantuml.jar at $repoRoot\\.tools\\plantuml.jar" -ForegroundColor Yellow
             exit 1
         }
     }

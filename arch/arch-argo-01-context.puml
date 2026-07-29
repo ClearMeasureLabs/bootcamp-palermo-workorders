@@ -20,7 +20,7 @@ System(codefresh, "Codefresh GitOps (SaaS)", "Hosted Argo CD CONTROL PLANE. Prov
 
 System(git, "Git Manifests Repo", "SINGLE SOURCE OF TRUTH for desired cluster state (deploy/ kustomize base + dev overlay). Every deploy is a commit here; history = deploy history.")
 
-System(cluster, "Throwaway AKS Cluster", "RUNS THE APP plus the in-cluster Argo CD runtime. Disposable Spot cluster used only for this exploration; deleted with one command when done.")
+System(cluster, "Throwaway K8s Cluster", "RUNS THE APP plus the in-cluster Argo CD runtime. Primary: k3s inside WSL2 on the dev workstation (zero cloud cost). Alternative: AKS Spot. Disposable either way.")
 
 System_Ext(acr, "Container Registry (ACR/GHCR)", "Stores the built application container images that the cluster pulls at sync time.")
 
@@ -35,6 +35,6 @@ Rel(cluster, acr, "Pulls application image", "HTTPS / Docker")
 Rel(cluster, sql, "App reads/writes at runtime", "EF Core / TCP")
 Rel(octopus, codefresh, "Reads Argo app health / gates release", "HTTPS API")
 
-LEGEND("Legend","Octopus: governance + migrations + WHEN to deploy\nCodefresh: hosted Argo CD control plane (dashboards, promotion)\nGit: desired-state source of truth\nAKS: runs app + Argo runtime (throwaway)\nACR: image store\nAzure SQL: app data + DbUp schema")
+LEGEND("Legend","Octopus: governance + migrations + WHEN to deploy\nCodefresh: hosted Argo CD control plane (dashboards, promotion)\nGit: desired-state source of truth\nK8s: runs app + Argo runtime (k3s-in-WSL or AKS Spot, throwaway)\nACR: image store\nAzure SQL: app data + DbUp schema")
 FOOTER()
 @enduml

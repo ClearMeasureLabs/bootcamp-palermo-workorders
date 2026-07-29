@@ -2,7 +2,8 @@
 
 Diagrams for the exploration of running this app under **GitOps (Argo CD)** with a
 **Codefresh-hosted Argo CD control plane**, orchestrated by the existing **Octopus Deploy**
-release process, on a **throwaway AKS cluster**. These describe the *exploration target* only —
+release process, on a **throwaway Kubernetes cluster** (k3s in WSL2 locally — the chosen pilot
+path — or AKS Spot in the cloud). These describe the *exploration target* only —
 production stays on Azure Container Apps (`.octopus/deployment_process.ocl`) until proven.
 
 Sources are `arch/arch-argo-0*.puml`; PNG/SVG are rendered from them (see `arch/DIAGRAMS.md`).
@@ -28,12 +29,18 @@ the Codefresh control plane, and the in-cluster Argo runtime / gateway / app / s
 ### 3. Deployment / Hosting Topology (Level 3) — `arch-argo-03-deployment.puml`
 *Where* everything runs — the SaaS zone (you host nothing) vs your Azure throwaway
 resource group — and the outbound-only "hosted control plane vs in-cluster runtime" split.
+This is the CLOUD (AKS Spot) alternative.
 ![Deployment](arch-argo-03-deployment.png)
 
 ### 4. Release Flow (Dynamic / Level 4) — `arch-argo-04-release-flow.puml`
 One release, step by step, showing the hand-offs between Octopus, Git, Argo, Codefresh,
 the cluster, the registry and the database.
 ![Release flow](arch-argo-04-release-flow.png)
+
+### 5. Local Topology — k3s in WSL2 (chosen pilot path) — `arch-argo-05-local-k3s-topology.puml`
+Local hosting: a k3s cluster in the Ubuntu WSL distro, WSLC for one-off containers/builds,
+all traffic outbound-only, no Docker Desktop.
+![Local k3s topology](arch-argo-05-local-k3s-topology.png)
 
 ## What stays vs what changes (vs today's ACA process)
 

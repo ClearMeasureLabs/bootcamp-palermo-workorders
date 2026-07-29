@@ -1,0 +1,64 @@
+@startuml
+!pragma layout smetana
+!include templates/plantuml-theme.puml
+
+scale 2/3
+center header
+    C4 Architecture: Argo CD + Codefresh + Octopus — Local Topology: k3s in WSL2 (chosen pilot path)
+endheader
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+title Local hosting topology — k3s inside WSL2, WSLC for container tasks, NO Docker Desktop
+
+System_Boundary(saas, "Vendor SaaS (nothing to host)") {
+    Container(octopus, "Octopus Deploy", "SaaS: clearmeasure.octopus.app", "Runs the release process, approvals, audit, DbUp migrations. Reaches the cluster only via outbound agents + Git.")
+    Container(codefresh, "Codefresh GitOps Control Plane", "SaaS", "Hosts the Argo CD UI, dashboards, promotion flows. The in-cluster runtime dials OUT to it — works fine from behind a workstation NAT.")
+    Container(gitHost, "Git Host (this repo)", "GitHub", "Stores deploy/ manifests = desired state. Also receives image pushes' matching tags.")
+    Container(registry, "Container Registry", "GHCR / ACR", "Cloud-reachable image store. REQUIRED even for a local cluster: Argo-managed pods pull from a registry, not from a local image cache.")
+}
+
+System_Boundary(ws, "Dev Workstation (Windows 11)") {
+
+    Container(wslc, "WSLC (wslc.exe / container.exe)", "WSL Containers, WSL 2.9.3+ preview", "Runs one-off Linux containers WITHOUT Docker Desktop: PlantUML rendering (verified), image build/push tasks. Replaces 'docker run' in local scripts.")
+
+    System_Boundary(wsl, "WSL2 Ubuntu distro (systemd enabled — verified)") {
+        Container(k3s, "k3s", "Lightweight Kubernetes, single binary", "THE throwaway cluster. Runs as a systemd service inside WSL; containerd built in — no Docker daemon at all. Reset = uninstall script or unregister the distro.")
+        Container(argoRt, "Argo CD Runtime (pods)", "on k3s", "Reconciles Git -> cluster. Outbound-only to Codefresh + Git; NAT is not a problem.")
+        Container(gw, "Octopus Gateway (pod)", "on k3s", "Outbound tunnel so Octopus can read Argo app health on this workstation cluster.")
+        Container(server, "workorders-server (pods)", "on k3s, namespace: workorders", "The app: ASP.NET 10 on :8080 with /_healthcheck probes. Reached from Windows via localhost (WSL port forwarding) or Traefik ingress bundled with k3s.")
+        ContainerDb(secret, "workorders-secrets", "K8s Secret", "SqlConnectionString created via kubectl inside WSL; never in Git.")
+    }
+}
+
+ContainerDb(sql, "Azure SQL Database", "PaaS (or LocalDB/SQL container for fully-local)", "App data. Cluster pods connect OUTBOUND over TCP 1433 — allowed from a workstation.")
+
+Rel(octopus, gitHost, "Commits image tag", "Git / HTTPS")
+Rel(octopus, sql, "Runs DbUp migrations", "TCP")
+Rel(gw, octopus, "Outbound tunnel", "HTTPS")
+Rel(argoRt, codefresh, "Registers + reports health", "gRPC (outbound)")
+Rel(argoRt, gitHost, "Pulls desired state", "HTTPS (outbound)")
+Rel(argoRt, server, "Applies manifests", "K8s API (in-cluster)")
+Rel(server, registry, "Pulls image", "HTTPS (outbound)")
+Rel(wslc, registry, "Builds + pushes app image", "HTTPS")
+Rel(server, secret, "Reads", "env var")
+Rel(server, sql, "Reads/writes", "EF Core / TCP 1433 outbound")
+Rel(k3s, argoRt, "Schedules", "containerd")
+
+note right of wsl
+  Why this works locally: every arrow leaving the
+  workstation is OUTBOUND (Codefresh, Git, registry,
+  SQL, Octopus tunnel). Nothing needs to dial IN,
+  so no port forwarding or public IP is required.
+end note
+
+note right of wslc
+  WSLC cannot host k3s/kind (no Docker daemon
+  socket). Division of labor:
+  WSLC = run/build single containers;
+  k3s = the Kubernetes cluster Argo targets.
+end note
+
+LEGEND("Legend","WSLC: one-off containers, builds, PlantUML (no Docker Desktop)\nk3s in WSL Ubuntu: the throwaway cluster (containerd, systemd service)\nRegistry: cloud-reachable, required for Argo pulls\nAll workstation traffic outbound-only")
+FOOTER()
+@enduml

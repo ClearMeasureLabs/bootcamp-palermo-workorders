@@ -30,7 +30,7 @@ System_Boundary(cfB, "Codefresh GitOps (SaaS) — hosted control plane") {
     Container(cfUi, "GitOps Dashboards & Promotion", "Codefresh hosted Argo CD", "Argo CD UI, app health, sync status, multi-cluster view and promotion flows. No install to maintain.")
 }
 
-System_Boundary(aksB, "Throwaway AKS Cluster") {
+System_Boundary(aksB, "Throwaway K8s Cluster (k3s-in-WSL or AKS Spot)") {
     Container(argoRt, "Argo CD Runtime", "Argo CD agent (Helm-installed)", "In-cluster reconciler. Pulls desired state from Git, diffs vs live, applies changes, reports health back to Codefresh. Outbound-only.")
     Container(gw, "Octopus K8s Gateway", "Octopus agent", "Outbound-only tunnel so Octopus can query Argo apps without opening inbound ports.")
     Container(server, "workorders-server", "ASP.NET 10 container", "The application workload. Serves HTTP on 8080; liveness/readiness on /_healthcheck.")

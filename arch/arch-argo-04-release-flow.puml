@@ -12,9 +12,9 @@ actor "Developer /\nRelease Manager" as dev
 participant "Octopus Deploy\n(orchestration + gates)" as oct
 database "Azure SQL\n(app data + schema)" as sql
 participant "Git Repo\n(desired state)" as git
-participant "Argo CD Runtime\n(in AKS, reconciler)" as argo
+participant "Argo CD Runtime\n(in-cluster reconciler)" as argo
 participant "Codefresh\n(hosted Argo UI/health)" as cf
-participant "AKS Cluster\n(runs the app)" as aks
+participant "K8s Cluster: k3s-in-WSL / AKS\n(runs the app)" as aks
 participant "Container Registry\n(image store)" as acr
 
 note over dev,acr

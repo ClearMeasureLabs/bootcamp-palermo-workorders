@@ -1,7 +1,7 @@
 # deploy/ — Kubernetes manifests for the Argo CD / Codefresh exploration
 
 GitOps source of truth for running the Work Order app on a **throwaway** Kubernetes
-cluster (AKS Spot or local kind/k3d). This is exploration scaffolding — it does **not**
+cluster (AKS Spot or local k3s inside WSL2). This is exploration scaffolding — it does **not**
 touch the production Azure Container Apps deployment, which stays driven by
 `.octopus/deployment_process.ocl`.
 
