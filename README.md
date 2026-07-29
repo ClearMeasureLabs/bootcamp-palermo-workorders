@@ -468,7 +468,6 @@ Deployment run 20260728-220129 is verified in the UAT environment before release
 
 Deployment run 20260729-012310 is verified in the UAT environment before release.
 
-
 ## Deployment Verification 20260729-043003
 
 Deployment run 20260729-043003 is verified in the UAT environment before release.
