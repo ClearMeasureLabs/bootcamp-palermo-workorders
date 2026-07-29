@@ -2,6 +2,7 @@ using ClearMeasure.Bootcamp.UI.Server.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 using Shouldly;
+using System.Reflection;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
@@ -34,10 +35,11 @@ public class HelloControllerTests
         result.ShouldNotBeNull();
         result.Value.ShouldNotBeNull();
         
-        var response = result.Value as dynamic;
-        response.ShouldNotBeNull();
+        var valueType = result.Value.GetType();
+        var messageProperty = valueType.GetProperty("message");
+        messageProperty.ShouldNotBeNull();
         
-        string message = response.message;
+        var message = messageProperty.GetValue(result.Value) as string;
         message.ShouldBe("Hello, World!");
     }
 }
