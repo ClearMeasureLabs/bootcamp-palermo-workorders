@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using ClearMeasure.Bootcamp.AcceptanceTests.TestSupport;
+using ClearMeasure.Bootcamp.AcceptanceTests;
 using NUnit.Framework;
 using Shouldly;
 

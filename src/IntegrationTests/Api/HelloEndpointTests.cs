@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using ClearMeasure.Bootcamp.IntegrationTests.TestSupport;
+using ClearMeasure.Bootcamp.IntegrationTests;
 using NUnit.Framework;
 using Shouldly;
 
