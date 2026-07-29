@@ -78,7 +78,8 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             var leaf = segments[1];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase)
+                   || leaf.Equals("hello", StringComparison.OrdinalIgnoreCase);
         }
 
         if (segments.Length >= 3
@@ -87,7 +88,8 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             var leaf = segments[2];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase)
+                   || leaf.Equals("hello", StringComparison.OrdinalIgnoreCase);
         }
 
         return false;
