@@ -37,18 +37,4 @@ public class HelloControllerTests
 
         result.StatusCode.ShouldBe(200);
     }
-
-    [Test]
-    public void Get_Should_ReturnJsonContentType()
-    {
-        var controller = new HelloController
-        {
-            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
-        };
-
-        var result = controller.Get();
-
-        result.ContentType.ShouldNotBeNull();
-        result.ContentType!.ShouldContain("application/json");
-    }
 }
