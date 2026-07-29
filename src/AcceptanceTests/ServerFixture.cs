@@ -47,6 +47,12 @@ public class ServerFixture
         SlowMo = configuration.GetValue<int>("SlowMo");
         HeadlessTestBrowser = configuration.GetValue<bool>("HeadlessTestBrowser");
 
+        // Playwright's Expect(...) assertions do NOT inherit the browser context's
+        // default timeout (set to 60s in AcceptanceTestBase) — they default to 5s.
+        // Under LevelOfParallelism(4) a cold Blazor WASM render can exceed 5s, so an
+        // assertion that is merely waiting for the first render fails with
+        // "<element(s) not found>". Align the assertion budget with the action budget.
+        Assertions.SetDefaultExpectTimeout(30_000);
 
         Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
