@@ -48,6 +48,7 @@ public class HelloControllerTests
 
         var result = controller.Get();
 
-        result.ContentType.ShouldContain("application/json");
+        result.ContentType.ShouldNotBeNull();
+        result.ContentType!.ShouldContain("application/json");
     }
 }
