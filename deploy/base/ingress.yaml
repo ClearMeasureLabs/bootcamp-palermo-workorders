@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: workorders-server
+  labels:
+    app.kubernetes.io/name: workorders
+    app.kubernetes.io/component: server
+  annotations:
+    # Assumes an ingress controller (e.g. NGINX) is installed on the cluster.
+    # For a pure "does it sync" test you can skip Ingress and use:
+    #   kubectl -n workorders port-forward svc/workorders-server 8080:80
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: workorders.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: workorders-server
+                port:
+                  number: 80

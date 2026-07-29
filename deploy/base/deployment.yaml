@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workorders-server
+  labels:
+    app.kubernetes.io/name: workorders
+    app.kubernetes.io/component: server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: workorders
+      app.kubernetes.io/component: server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: workorders
+        app.kubernetes.io/component: server
+    spec:
+      containers:
+        - name: server
+          # Image + tag are overridden per-overlay (see overlays/dev/kustomization.yaml).
+          # This is what Octopus's "Update Argo CD Application Image Tag" step / Argo will bump.
+          image: REGISTRY_PLACEHOLDER/workorders:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            # ASP.NET Core 10 default is already 8080; set explicitly so it never drifts.
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            # Matches the env var name the current Octopus ACA step sets.
+            - name: ConnectionStrings__SqlConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: workorders-secrets
+                  key: SqlConnectionString
+          readinessProbe:
+            httpGet:
+              path: /_healthcheck
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /_healthcheck
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            # Sized for a single-node Spot throwaway cluster. Tune later.
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
