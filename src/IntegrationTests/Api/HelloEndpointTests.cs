@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using ClearMeasure.Bootcamp.UI.Server;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 using Shouldly;
@@ -9,13 +10,13 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 [TestFixture]
 public class HelloEndpointTests : IntegratedTestBase
 {
-    private WebApplicationFactory<ClearMeasure.Bootcamp.UI.Server.Program>? _factory;
+    private WebApplicationFactory<UiServerWebApplicationMarker>? _factory;
     private HttpClient? _client;
 
     [SetUp]
     public void SetUp()
     {
-        _factory = new WebApplicationFactory<Program>();
+        _factory = new WebApplicationFactory<UiServerWebApplicationMarker>();
         _client = _factory.CreateClient();
     }
 
