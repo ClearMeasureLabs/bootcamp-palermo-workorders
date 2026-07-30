@@ -1,13 +1,13 @@
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using Xunit;
+using Shouldly;
 
-namespace ClearMeasure.Bootcamp.UnitTests.UI.Api.Controllers;
+namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 
+[TestFixture]
 public class HelloControllerTests
 {
-    [Fact]
+    [Test]
     public void Get_Should_ReturnJsonWithHelloWorldMessage()
     {
         // Arrange
@@ -17,19 +17,19 @@ public class HelloControllerTests
         var result = controller.Get();
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
+        result.ShouldBeOfType<OkObjectResult>();
         var okResult = result as OkObjectResult;
-        okResult!.StatusCode.Should().Be(200);
+        okResult!.StatusCode.ShouldBe(200);
         
         var value = okResult.Value;
-        value.Should().NotBeNull();
+        value.ShouldNotBeNull();
         
         var messageProperty = value!.GetType().GetProperty("message");
-        messageProperty.Should().NotBeNull();
-        messageProperty!.GetValue(value).Should().Be("Hello, World!");
+        messageProperty.ShouldNotBeNull();
+        messageProperty!.GetValue(value).ShouldBe("Hello, World!");
     }
 
-    [Fact]
+    [Test]
     public void Get_Should_ReturnExpectedMessageContent()
     {
         // Arrange
@@ -39,11 +39,11 @@ public class HelloControllerTests
         var result = controller.Get() as OkObjectResult;
 
         // Assert
-        result.Should().NotBeNull();
+        result.ShouldNotBeNull();
         var value = result!.Value;
         var messageProperty = value!.GetType().GetProperty("message");
         var messageValue = messageProperty!.GetValue(value) as string;
         
-        messageValue.Should().Be("Hello, World!");
+        messageValue.ShouldBe("Hello, World!");
     }
 }
