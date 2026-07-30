@@ -13,7 +13,11 @@ public class HelloEndpointAcceptanceTests : AcceptanceTestBase
     public async Task HelloEndpoint_Should_BeAccessibleAndReturnGreeting()
     {
         // Arrange
-        using var client = ServerFixture.CreateClient();
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var client = new HttpClient(handler) { BaseAddress = new Uri(ServerFixture.ApplicationBaseUrl) };
 
         // Act
         var response = await client.GetAsync("/api/hello");
