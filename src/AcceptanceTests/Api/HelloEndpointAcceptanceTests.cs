@@ -7,11 +7,16 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.Api;
 [TestFixture]
 public class HelloEndpointAcceptanceTests : AcceptanceTestBase
 {
+    protected override bool RequiresBrowser => false;
+
     [Test]
     public async Task HelloEndpoint_Should_BeAccessibleAndReturnGreeting()
     {
+        // Arrange
+        using var client = ServerFixture.CreateClient();
+
         // Act
-        var response = await Client.GetAsync("/api/hello");
+        var response = await client.GetAsync("/api/hello");
         var content = await response.Content.ReadFromJsonAsync<HelloResponse>();
 
         // Assert
