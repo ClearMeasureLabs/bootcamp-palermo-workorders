@@ -9,7 +9,7 @@ resources:
 # Point newTag at the tag you built/pushed in walkthrough step 2.
 images:
   - name: REGISTRY_PLACEHOLDER/workorders
-    newName: REGISTRY_PLACEHOLDER/workorders
+    newName: docker.io/library/workorders
     newTag: "0.1.0"
 
 # Environment-scoped labels for the Octopus/Argo "organize apps by environment" annotations.

@@ -8,6 +8,11 @@ Codefresh-hosted Argo CD control plane. This is exploration scaffolding per
 Reference: `arch/arch-argo-00-overview.md` for the full diagram set. This pilot targets
 view 05 (local k3s-in-WSL); view 03 (AKS Spot) is the cloud alternative, not covered here.
 
+**Status (2026-07-29):** P1-P4 verified complete on this workstation — k3s v1.36.2+k3s1
+node `Ready`; image imported into the k3s containerd; 28 DbUp scripts applied to the
+in-cluster SQL Server; app pod `Running` with `/_healthcheck` returning 200. P5-P6 not yet
+started.
+
 ## P1 — WSLC pilot (done, 2026-07-29)
 
 Verified on this workstation:
@@ -57,34 +62,52 @@ wsl.exe -d Ubuntu -- sudo /usr/local/bin/k3s-uninstall.sh
 
 ## P3 — App image
 
-Build published output, then build the container image with the root `Dockerfile` via
-WSLC (registry required — Argo pulls from a registry, not a local Docker cache, so
-`kind`/`k3d`-style local-load shortcuts do not apply here):
+Build published output, build the container image with the root `Dockerfile` via WSLC,
+save it to a tarball, then import it directly into k3s's containerd — no registry
+involved for the pilot:
 
 ```powershell
 dotnet publish src/UI/Server -c Release -o ./built
-& "$env:ProgramFiles\WSL\wslc.exe" build -t <registry>/workorders:0.1.0 .
-& "$env:ProgramFiles\WSL\wslc.exe" push <registry>/workorders:0.1.0
+& "$env:ProgramFiles\WSL\wslc.exe" build -t workorders:0.1.0 .
+& "$env:ProgramFiles\WSL\wslc.exe" save -o workorders-0.1.0.tar workorders:0.1.0
+wsl.exe -d Ubuntu -- sh -c "sudo k3s ctr images import /mnt/c/<path>/workorders-0.1.0.tar"
 ```
 
-`<registry>` is a GHCR or ACR repository reachable from both the build machine and the
-k3s node (e.g. `ghcr.io/clearmeasurelabs/workorders` or `myacr.azurecr.io/workorders`).
-Authenticate the registry (`wslc login` / `az acr login`) before pushing.
+Image lands in containerd as `docker.io/library/workorders:0.1.0`. This registryless
+flow works for the pilot because (a) single-node k3s runs pods on the same containerd
+the image was imported into — no pull is needed — and (b)
+`deploy/base/deployment.yaml` sets `imagePullPolicy: IfNotPresent`, so the kubelet
+accepts the locally-imported image instead of attempting a pull.
+
+A real registry (GHCR or ACR) plus `wslc push` becomes REQUIRED at P5: Argo-driven
+deploys target any cluster other than this single-node k3s VM — or a multi-node
+cluster — and those nodes must pull the image from somewhere reachable.
 
 ## P4 — Deploy manifests to k3s
+
+Pilot path runs SQL Server in-cluster rather than reaching out to Azure SQL: a SQL
+Server 2022 pod plus a `LoadBalancer` service named `mssql`, namespace `workorders`,
+database `WorkOrders`. DbUp runs from Windows through a WSL `kubectl port-forward`
+against that service.
 
 ```powershell
 wsl.exe -d Ubuntu -- sudo k3s kubectl create namespace workorders
 wsl.exe -d Ubuntu -- sudo k3s kubectl -n workorders create secret generic workorders-secrets `
-  --from-literal=SqlConnectionString='Server=tcp:...;Database=...;User ID=...;Password=...;'
+  --from-literal=SqlConnectionString='Server=mssql,1433;Database=WorkOrders;User ID=sa;Password=<SA_PASSWORD>;TrustServerCertificate=True;Encrypt=False'
 wsl.exe -d Ubuntu -- sudo k3s kubectl apply -k deploy/overlays/dev
 wsl.exe -d Ubuntu -- sudo k3s kubectl -n workorders rollout status deploy/workorders-server
-wsl.exe -d Ubuntu -- sudo k3s kubectl -n workorders port-forward svc/workorders-server 8080:80
+wsl.exe -d Ubuntu -- sudo k3s kubectl -n workorders port-forward svc/workorders-server 8090:80 --address 0.0.0.0
 ```
 
-Browse `http://localhost:8080/_healthcheck`. Set `REGISTRY_PLACEHOLDER` in
-`deploy/overlays/dev/kustomization.yaml` to the registry from P3 first (see
-`deploy/README.md`).
+Browse `http://127.0.0.1:8090/_healthcheck` from Windows — use the literal IPv4 address,
+not `localhost` (see Known limits). Production-analog alternative: point
+`SqlConnectionString` at an Azure SQL database instead of the in-cluster `mssql`
+service, matching the ACA production connection shape.
+
+Set `REGISTRY_PLACEHOLDER` in `deploy/overlays/dev/kustomization.yaml` first. For the
+local pilot the overlay's images `newName` is `docker.io/library/workorders`, matching
+the image imported via `k3s ctr` in P3. A registry reference (GHCR/ACR) replaces it at
+P5 (see `deploy/README.md`).
 
 ## P5 — Codefresh GitOps runtime
 
@@ -128,3 +151,13 @@ the two steps in place of the container-app update step per
   systemd (confirmed enabled in P1) restarts it automatically on VM boot, but a full
   `wsl --shutdown` still tears down the running VM and any port-forwards must be
   re-established.
+- From Windows, WSL port-forwards must be addressed as IPv4 `127.0.0.1`. `localhost`
+  resolves to `::1`, which the forward does not serve — connections then time out at
+  the protocol handshake despite the TCP connect succeeding.
+- k3s klipper-lb exposed SQL Server's 1433 as a `LoadBalancer` and TCP connect from
+  Windows succeeded, but the TDS handshake never completed. Use
+  `kubectl port-forward` for SQL access from Windows instead of the klipper-lb
+  `LoadBalancer` IP.
+- `/_healthcheck` returns 200 with body `Degraded` when only the LlmGateway check
+  fails (`AI_OpenAI_*` env vars unset) — expected in the pilot; the DB check passing
+  is what matters.
