@@ -1,0 +1,33 @@
+@startuml
+!include templates/plantuml-theme.puml
+
+scale 2/3
+left to right direction
+center header
+    C4 Architecture: Azure Foundry Chat Client
+endheader
+
+!include templates/c4/C4_Container.puml
+
+title AI Scenario 1: Azure AI Foundry model with chat client
+
+Person(user, "Church Staff", "Requests drafting and reporting help")
+
+System_Boundary(system, "Church Bulletin") {
+    Container(chatClient, "Chat Client", "Blazor WebAssembly", "Conversational assistant UI")
+    Container(api, "UI Server API", "ASP.NET", "Routes chat requests and applies business rules")
+    Container(llmGateway, "LlmGateway", "Microsoft.Extensions.AI", "Adapter for chat completion requests")
+}
+
+System_Ext(azureFoundry, "Azure AI Foundry", "Hosted model endpoint")
+System_Ext(dataStore, "Work Order Database", "SQL Server")
+
+Rel(user, chatClient, "Chats with assistant", "HTTPS")
+Rel(chatClient, api, "Sends prompts", "HTTPS")
+Rel(api, llmGateway, "Builds AI requests", "In-process")
+Rel(llmGateway, azureFoundry, "Calls chat completions", "HTTPS")
+Rel(api, dataStore, "Reads work orders for context", "EF Core / TCP")
+
+LEGEND("Legend","Chat Client: Blazor WASM UI\nUI Server API: ASP.NET endpoints\nLlmGateway: AI adapter\nAzure AI Foundry: hosted model runtime\nWork Order Database: SQL Server")
+FOOTER()
+@enduml
