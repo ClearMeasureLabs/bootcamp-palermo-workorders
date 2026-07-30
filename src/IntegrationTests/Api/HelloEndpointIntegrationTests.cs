@@ -1,65 +1,73 @@
 using System.Net;
 using System.Net.Http.Json;
-using FluentAssertions;
-using Xunit;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 
-public class HelloEndpointIntegrationTests : IntegrationTestBase
+[TestFixture]
+public class HelloEndpointIntegrationTests : IntegratedTestBase
 {
-    public HelloEndpointIntegrationTests(IntegrationTestFixture fixture) : base(fixture)
-    {
-    }
-
-    [Fact]
+    [Test]
     public async Task GetHello_Should_ReturnOkWithJsonResponse()
     {
+        // Arrange
+        using var client = TestHost.CreateClient();
+
         // Act
-        var response = await Client.GetAsync("/api/hello");
+        var response = await client.GetAsync("/api/hello");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
     }
 
-    [Fact]
+    [Test]
     public async Task GetHello_Should_ReturnExpectedJsonStructure()
     {
+        // Arrange
+        using var client = TestHost.CreateClient();
+
         // Act
-        var response = await Client.GetAsync("/api/hello");
+        var response = await client.GetAsync("/api/hello");
         var content = await response.Content.ReadFromJsonAsync<HelloResponse>();
 
         // Assert
-        content.Should().NotBeNull();
-        content!.Message.Should().Be("Hello, World!");
+        content.ShouldNotBeNull();
+        content.Message.ShouldBe("Hello, World!");
     }
 
-    [Fact]
+    [Test]
     public async Task GetHello_VersionedRoute_Should_ReturnSameResponse()
     {
+        // Arrange
+        using var client = TestHost.CreateClient();
+
         // Act
-        var unversionedResponse = await Client.GetAsync("/api/hello");
-        var versionedResponse = await Client.GetAsync("/api/v1.0/hello");
+        var unversionedResponse = await client.GetAsync("/api/hello");
+        var versionedResponse = await client.GetAsync("/api/v1.0/hello");
 
         var unversionedContent = await unversionedResponse.Content.ReadFromJsonAsync<HelloResponse>();
         var versionedContent = await versionedResponse.Content.ReadFromJsonAsync<HelloResponse>();
 
         // Assert
-        unversionedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        versionedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        unversionedContent!.Message.Should().Be(versionedContent!.Message);
+        unversionedResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        versionedResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        unversionedContent!.Message.ShouldBe(versionedContent!.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task GetHello_Should_AllowAnonymousAccess()
     {
+        // Arrange
+        using var client = TestHost.CreateClient();
+
         // Act
-        var response = await Client.GetAsync("/api/hello");
+        var response = await client.GetAsync("/api/hello");
 
         // Assert
-        response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
-        response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.ShouldNotBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldNotBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     private record HelloResponse(string Message);

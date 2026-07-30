@@ -1,17 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
-using FluentAssertions;
-using Xunit;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.Api;
 
+[TestFixture]
 public class HelloEndpointAcceptanceTests : AcceptanceTestBase
 {
-    public HelloEndpointAcceptanceTests(ServerFixture fixture) : base(fixture)
-    {
-    }
-
-    [Fact]
+    [Test]
     public async Task HelloEndpoint_Should_BeAccessibleAndReturnGreeting()
     {
         // Act
@@ -19,9 +15,9 @@ public class HelloEndpointAcceptanceTests : AcceptanceTestBase
         var content = await response.Content.ReadFromJsonAsync<HelloResponse>();
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        content.Should().NotBeNull();
-        content!.Message.Should().Be("Hello, World!");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        content.ShouldNotBeNull();
+        content.Message.ShouldBe("Hello, World!");
     }
 
     private record HelloResponse(string Message);
