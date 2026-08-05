@@ -1,0 +1,19 @@
+@startuml 0001-before
+!include <C4/C4_Component>
+
+title Work Order Model - Before Priority Levels
+
+Component(workorder, "WorkOrder", "Entity", "Current work order model without priority classification")
+
+Rel(workorder, workorder, "Properties:\n- Id: Guid\n- Number: string\n- Title: string\n- Description: string\n- Instructions: string\n- RoomNumber: string\n- Status: WorkOrderStatus\n- Creator: Employee\n- Assignee: Employee\n- CreatedDate: DateTime\n- AssignedDate: DateTime\n- CompletedDate: DateTime\n- Attachments: Collection")
+
+note right of workorder
+  **Current State:**
+  - No priority field
+  - All work orders treated equally
+  - Manual triage required
+  - No visual priority indicators
+  - No priority-based sorting/filtering
+end note
+
+@enduml

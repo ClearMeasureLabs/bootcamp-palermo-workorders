@@ -1,0 +1,52 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title After: Categorized Work Orders
+
+Person(user, "Facilities Manager", "Manages maintenance by category")
+
+System_Boundary(ui, "UI Layer") {
+    Component(search, "WorkOrderSearch.razor", "Blazor Component", "Search with category filter")
+    Component(manage, "WorkOrderManage.razor", "Blazor Component", "Create/edit with category")
+    Component(selector, "CategorySelector.razor", "Blazor Component", "Category dropdown")
+    Component(badge, "CategoryBadge.razor", "Blazor Component", "Color-coded display")
+}
+
+System_Boundary(core, "Core Layer") {
+    Component(model, "WorkOrder", "Domain Model", "Added: Category property")
+    Component(enum, "WorkOrderCategory", "Enum", "Facilities, AudioVisual, Grounds, HVAC, Other")
+    Component(query, "WorkOrderSpecificationQuery", "Query", "Added: MatchCategory method")
+}
+
+System_Boundary(data, "Data Layer") {
+    ComponentDb(db, "SQL Server", "Database", "WorkOrder table + Category column")
+}
+
+Rel(user, search, "Filters by", "Category dropdown")
+Rel(user, manage, "Selects", "Category")
+Rel(manage, selector, "Uses")
+Rel(search, badge, "Displays")
+Rel(selector, enum, "Binds to")
+Rel(badge, enum, "Displays")
+Rel(search, query, "Sends")
+Rel(query, model, "Filters")
+Rel(model, db, "Persists")
+
+note right of enum
+  **Categories:**
+  - Facilities (blue)
+  - Audio-Visual (purple)
+  - Grounds (green)
+  - HVAC (orange)
+  - Other (gray)
+end note
+
+note right of user
+  **Benefits:**
+  - Clear classification
+  - Easy filtering
+  - Visual identification
+  - Better resource allocation
+end note
+
+@enduml
