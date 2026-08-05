@@ -466,6 +466,453 @@ public class CreateWorkOrderCommandValidator
 - API clients not sending Priority get Normal default
 - No breaking changes to existing endpoints
 
+## Test Design
+
+### Unit Tests
+
+**WorkOrderPriority Enum Tests**
+```csharp
+[TestFixture]
+public class WorkOrderPriorityTests
+{
+    [Test]
+    public void Priority_Values_Should_Be_Ordered_Correctly()
+    {
+        Assert.That((int)WorkOrderPriority.Urgent, Is.EqualTo(0));
+        Assert.That((int)WorkOrderPriority.High, Is.EqualTo(1));
+        Assert.That((int)WorkOrderPriority.Normal, Is.EqualTo(2));
+        Assert.That((int)WorkOrderPriority.Low, Is.EqualTo(3));
+    }
+    
+    [Test]
+    public void Priority_Should_Sort_Urgent_First()
+    {
+        var priorities = new[] { 
+            WorkOrderPriority.Low, 
+            WorkOrderPriority.Normal, 
+            WorkOrderPriority.Urgent, 
+            WorkOrderPriority.High 
+        };
+        
+        var sorted = priorities.OrderBy(p => p).ToArray();
+        
+        Assert.That(sorted[0], Is.EqualTo(WorkOrderPriority.Urgent));
+        Assert.That(sorted[1], Is.EqualTo(WorkOrderPriority.High));
+        Assert.That(sorted[2], Is.EqualTo(WorkOrderPriority.Normal));
+        Assert.That(sorted[3], Is.EqualTo(WorkOrderPriority.Low));
+    }
+}
+```
+
+**WorkOrder Entity Tests**
+```csharp
+[TestFixture]
+public class WorkOrderEntityTests
+{
+    [Test]
+    public void New_WorkOrder_Should_Default_To_Normal_Priority()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.Priority, Is.EqualTo(WorkOrderPriority.Normal));
+    }
+    
+    [Test]
+    public void WorkOrder_Should_Accept_All_Priority_Values()
+    {
+        var workOrder = new WorkOrder();
+        
+        foreach (WorkOrderPriority priority in Enum.GetValues(typeof(WorkOrderPriority)))
+        {
+            workOrder.Priority = priority;
+            Assert.That(workOrder.Priority, Is.EqualTo(priority));
+        }
+    }
+}
+```
+
+**Command Validator Tests**
+```csharp
+[TestFixture]
+public class CreateWorkOrderCommandValidatorTests
+{
+    private CreateWorkOrderCommandValidator _validator;
+    
+    [SetUp]
+    public void SetUp()
+    {
+        _validator = new CreateWorkOrderCommandValidator();
+    }
+    
+    [Test]
+    public void Should_Accept_Valid_Priority_Values()
+    {
+        var command = new CreateWorkOrderCommand
+        {
+            Title = "Test",
+            Priority = WorkOrderPriority.Urgent
+        };
+        
+        var result = _validator.Validate(command);
+        Assert.That(result.IsValid, Is.True);
+    }
+    
+    [Test]
+    public void Should_Reject_Invalid_Priority_Value()
+    {
+        var command = new CreateWorkOrderCommand
+        {
+            Title = "Test",
+            Priority = (WorkOrderPriority)999
+        };
+        
+        var result = _validator.Validate(command);
+        Assert.That(result.IsValid, Is.False);
+        Assert.That(result.Errors.Any(e => e.PropertyName == "Priority"), Is.True);
+    }
+}
+```
+
+**Blazor Component Tests**
+```csharp
+[TestFixture]
+public class PriorityBadgeTests : TestContext
+{
+    [Test]
+    public void Should_Render_Urgent_Badge_With_Correct_Icon_And_Color()
+    {
+        var cut = RenderComponent<PriorityBadge>(parameters => parameters
+            .Add(p => p.Priority, WorkOrderPriority.Urgent));
+        
+        var badge = cut.Find(".priority-badge");
+        Assert.That(badge.ClassList, Does.Contain("priority-urgent"));
+        Assert.That(badge.TextContent, Does.Contain("⚠️"));
+        Assert.That(badge.TextContent, Does.Contain("Urgent"));
+    }
+    
+    [Test]
+    public void Should_Have_Accessible_Aria_Label()
+    {
+        var cut = RenderComponent<PriorityBadge>(parameters => parameters
+            .Add(p => p.Priority, WorkOrderPriority.High));
+        
+        var badge = cut.Find(".priority-badge");
+        Assert.That(badge.GetAttribute("aria-label"), 
+            Is.EqualTo("Priority: High - important issue"));
+    }
+}
+
+[TestFixture]
+public class PrioritySelectorTests : TestContext
+{
+    [Test]
+    public void Should_Default_To_Normal_Priority()
+    {
+        var cut = RenderComponent<PrioritySelector>();
+        
+        var select = cut.Find("select");
+        Assert.That(select.GetAttribute("value"), 
+            Is.EqualTo(WorkOrderPriority.Normal.ToString()));
+    }
+    
+    [Test]
+    public void Should_Trigger_ValueChanged_On_Selection()
+    {
+        WorkOrderPriority? changedValue = null;
+        var cut = RenderComponent<PrioritySelector>(parameters => parameters
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<WorkOrderPriority>(
+                this, value => changedValue = value)));
+        
+        var select = cut.Find("select");
+        select.Change(WorkOrderPriority.Urgent.ToString());
+        
+        Assert.That(changedValue, Is.EqualTo(WorkOrderPriority.Urgent));
+    }
+}
+```
+
+### Integration Tests
+
+**Database Migration Tests**
+```csharp
+[TestFixture]
+public class PriorityMigrationTests : IntegrationTestBase
+{
+    [Test]
+    public async Task Migration_Should_Add_Priority_Column_With_Default()
+    {
+        // Arrange: Create work order before migration
+        var workOrder = new WorkOrder { Title = "Test" };
+        await SaveAsync(workOrder);
+        
+        // Act: Run migration (handled by test setup)
+        
+        // Assert: Existing work order has Normal priority
+        var updated = await LoadAsync<WorkOrder>(workOrder.Id);
+        Assert.That(updated.Priority, Is.EqualTo(WorkOrderPriority.Normal));
+    }
+    
+    [Test]
+    public async Task Should_Enforce_Priority_Check_Constraint()
+    {
+        // Attempt to insert invalid priority value directly via SQL
+        var exception = Assert.ThrowsAsync<DbUpdateException>(async () =>
+        {
+            await ExecuteSqlAsync(
+                "INSERT INTO WorkOrders (Id, Number, Title, Priority) " +
+                "VALUES (NEWID(), 'WO-999', 'Test', 999)");
+        });
+        
+        Assert.That(exception.Message, Does.Contain("CK_WorkOrders_Priority"));
+    }
+}
+```
+
+**Query Tests**
+```csharp
+[TestFixture]
+public class WorkOrderQueryTests : IntegrationTestBase
+{
+    [Test]
+    public async Task Should_Sort_By_Priority_Then_CreatedDate()
+    {
+        // Arrange
+        var urgent = await CreateWorkOrderAsync("Urgent", WorkOrderPriority.Urgent);
+        var normal = await CreateWorkOrderAsync("Normal", WorkOrderPriority.Normal);
+        var high = await CreateWorkOrderAsync("High", WorkOrderPriority.High);
+        var low = await CreateWorkOrderAsync("Low", WorkOrderPriority.Low);
+        
+        // Act
+        var query = DbContext.WorkOrders.OrderByPriority();
+        var results = await query.ToListAsync();
+        
+        // Assert
+        Assert.That(results[0].Id, Is.EqualTo(urgent.Id));
+        Assert.That(results[1].Id, Is.EqualTo(high.Id));
+        Assert.That(results[2].Id, Is.EqualTo(normal.Id));
+        Assert.That(results[3].Id, Is.EqualTo(low.Id));
+    }
+    
+    [Test]
+    public async Task Should_Filter_By_Priority()
+    {
+        // Arrange
+        await CreateWorkOrderAsync("Urgent 1", WorkOrderPriority.Urgent);
+        await CreateWorkOrderAsync("Urgent 2", WorkOrderPriority.Urgent);
+        await CreateWorkOrderAsync("Normal", WorkOrderPriority.Normal);
+        
+        // Act
+        var query = DbContext.WorkOrders.FilterByPriority(WorkOrderPriority.Urgent);
+        var results = await query.ToListAsync();
+        
+        // Assert
+        Assert.That(results.Count, Is.EqualTo(2));
+        Assert.That(results.All(w => w.Priority == WorkOrderPriority.Urgent), Is.True);
+    }
+}
+```
+
+**API Tests**
+```csharp
+[TestFixture]
+public class WorkOrderApiTests : IntegrationTestBase
+{
+    [Test]
+    public async Task Create_WorkOrder_Should_Accept_Priority()
+    {
+        var command = new CreateWorkOrderCommand
+        {
+            Title = "Urgent Repair",
+            Description = "Broken HVAC",
+            Priority = WorkOrderPriority.Urgent
+        };
+        
+        var result = await SendAsync(command);
+        
+        Assert.That(result.Priority, Is.EqualTo(WorkOrderPriority.Urgent));
+    }
+    
+    [Test]
+    public async Task Create_WorkOrder_Should_Default_To_Normal_Priority()
+    {
+        var command = new CreateWorkOrderCommand
+        {
+            Title = "Standard Repair",
+            Description = "Paint touch-up"
+            // Priority not specified
+        };
+        
+        var result = await SendAsync(command);
+        
+        Assert.That(result.Priority, Is.EqualTo(WorkOrderPriority.Normal));
+    }
+    
+    [Test]
+    public async Task Update_WorkOrder_Should_Change_Priority()
+    {
+        // Arrange
+        var workOrder = await CreateWorkOrderAsync("Test", WorkOrderPriority.Normal);
+        
+        // Act
+        var command = new UpdateWorkOrderCommand
+        {
+            Id = workOrder.Id,
+            Priority = WorkOrderPriority.Urgent
+        };
+        await SendAsync(command);
+        
+        // Assert
+        var updated = await LoadAsync<WorkOrder>(workOrder.Id);
+        Assert.That(updated.Priority, Is.EqualTo(WorkOrderPriority.Urgent));
+    }
+}
+```
+
+### Acceptance Tests
+
+**Priority Selection Tests**
+```csharp
+[TestFixture]
+public class PrioritySelectionAcceptanceTests : AcceptanceTestBase
+{
+    [Test]
+    public async Task User_Can_Select_Priority_When_Creating_WorkOrder()
+    {
+        // Navigate to create work order page
+        await Page.GotoAsync("/workorders/create");
+        
+        // Fill in required fields
+        await Page.FillAsync("#title", "Broken HVAC");
+        await Page.FillAsync("#description", "No cooling");
+        
+        // Select Urgent priority
+        await Page.SelectOptionAsync("#priority", WorkOrderPriority.Urgent.ToString());
+        
+        // Submit form
+        await Page.ClickAsync("button[type=submit]");
+        
+        // Verify work order created with correct priority
+        await Page.WaitForSelectorAsync(".priority-badge.priority-urgent");
+        var badge = await Page.TextContentAsync(".priority-badge");
+        Assert.That(badge, Does.Contain("Urgent"));
+    }
+    
+    [Test]
+    public async Task Priority_Defaults_To_Normal()
+    {
+        await Page.GotoAsync("/workorders/create");
+        
+        var selectedValue = await Page.GetAttributeAsync("#priority", "value");
+        Assert.That(selectedValue, Is.EqualTo(WorkOrderPriority.Normal.ToString()));
+    }
+}
+```
+
+**Priority Display Tests**
+```csharp
+[TestFixture]
+public class PriorityDisplayAcceptanceTests : AcceptanceTestBase
+{
+    [Test]
+    public async Task WorkOrder_List_Shows_Priority_Badges()
+    {
+        // Arrange: Create work orders with different priorities
+        await CreateWorkOrderAsync("Urgent", WorkOrderPriority.Urgent);
+        await CreateWorkOrderAsync("High", WorkOrderPriority.High);
+        await CreateWorkOrderAsync("Normal", WorkOrderPriority.Normal);
+        
+        // Act: Navigate to work order list
+        await Page.GotoAsync("/workorders");
+        
+        // Assert: All priority badges are visible
+        await Page.WaitForSelectorAsync(".priority-badge.priority-urgent");
+        await Page.WaitForSelectorAsync(".priority-badge.priority-high");
+        await Page.WaitForSelectorAsync(".priority-badge.priority-normal");
+    }
+}
+```
+
+**Priority Sorting Tests**
+```csharp
+[TestFixture]
+public class PrioritySortingAcceptanceTests : AcceptanceTestBase
+{
+    [Test]
+    public async Task WorkOrders_Sort_By_Priority_By_Default()
+    {
+        // Arrange: Create work orders in random order
+        await CreateWorkOrderAsync("Low Priority", WorkOrderPriority.Low);
+        await CreateWorkOrderAsync("Urgent Priority", WorkOrderPriority.Urgent);
+        await CreateWorkOrderAsync("Normal Priority", WorkOrderPriority.Normal);
+        
+        // Act: Navigate to work order list
+        await Page.GotoAsync("/workorders");
+        
+        // Assert: First item is Urgent
+        var firstBadge = await Page.TextContentAsync(".work-order-card:first-child .priority-badge");
+        Assert.That(firstBadge, Does.Contain("Urgent"));
+    }
+}
+```
+
+**Priority Filtering Tests**
+```csharp
+[TestFixture]
+public class PriorityFilteringAcceptanceTests : AcceptanceTestBase
+{
+    [Test]
+    public async Task User_Can_Filter_By_Priority()
+    {
+        // Arrange
+        await CreateWorkOrderAsync("Urgent 1", WorkOrderPriority.Urgent);
+        await CreateWorkOrderAsync("Urgent 2", WorkOrderPriority.Urgent);
+        await CreateWorkOrderAsync("Normal", WorkOrderPriority.Normal);
+        
+        // Act: Navigate and filter
+        await Page.GotoAsync("/workorders");
+        await Page.SelectOptionAsync("#priority-filter", WorkOrderPriority.Urgent.ToString());
+        
+        // Assert: Only urgent work orders shown
+        var cards = await Page.QuerySelectorAllAsync(".work-order-card");
+        Assert.That(cards.Count, Is.EqualTo(2));
+        
+        foreach (var card in cards)
+        {
+            var badge = await card.QuerySelectorAsync(".priority-badge.priority-urgent");
+            Assert.That(badge, Is.Not.Null);
+        }
+    }
+}
+```
+
+### Test Coverage Goals
+
+- **Unit Tests**: 100% coverage of Priority enum, entity defaults, validators, components
+- **Integration Tests**: All CRUD operations, queries, migration, database constraints
+- **Acceptance Tests**: All user workflows (create, edit, view, sort, filter)
+
+### Test Data Setup
+
+```csharp
+public static class WorkOrderTestData
+{
+    public static WorkOrder CreateUrgentWorkOrder() => new()
+    {
+        Title = "Broken HVAC System",
+        Description = "No cooling in sanctuary",
+        Priority = WorkOrderPriority.Urgent,
+        Status = WorkOrderStatus.Draft
+    };
+    
+    public static WorkOrder CreateNormalWorkOrder() => new()
+    {
+        Title = "Paint Touch-up",
+        Description = "Scuff marks in hallway",
+        Priority = WorkOrderPriority.Normal,
+        Status = WorkOrderStatus.Draft
+    };
+}
+```
+
 ## References
 - Epic Issue: #8227
 - Child Issues: #8264, #8265, #8266
