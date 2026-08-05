@@ -1,0 +1,35 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Before: Uncategorized Work Orders
+
+Person(user, "Facilities Manager", "Manages maintenance")
+
+System_Boundary(ui, "UI Layer") {
+    Component(search, "WorkOrderSearch.razor", "Blazor Component", "Search and filter work orders")
+    Component(manage, "WorkOrderManage.razor", "Blazor Component", "Create/edit work orders")
+}
+
+System_Boundary(core, "Core Layer") {
+    Component(model, "WorkOrder", "Domain Model", "Properties: Title, Description, Status, Priority, AssignedTo")
+}
+
+System_Boundary(data, "Data Layer") {
+    ComponentDb(db, "SQL Server", "Database", "WorkOrder table")
+}
+
+Rel(user, search, "Searches", "No category filter")
+Rel(user, manage, "Creates", "No category field")
+Rel(search, model, "Queries")
+Rel(manage, model, "Creates/Updates")
+Rel(model, db, "Persists")
+
+note right of user
+  **Problems:**
+  - Cannot classify by area
+  - No category filtering
+  - No workload visibility
+  - Difficult to assign specialists
+end note
+
+@enduml
