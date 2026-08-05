@@ -1,0 +1,29 @@
+@using ClearMeasure.Bootcamp.Core.Model
+
+<span class="priority-badge priority-@Priority.ToString().ToLower()"
+      aria-label="Priority: @GetAriaLabel()">
+    @GetIcon() @Priority
+</span>
+
+@code {
+    [Parameter]
+    public WorkOrderPriority Priority { get; set; }
+    
+    private string GetIcon() => Priority switch
+    {
+        WorkOrderPriority.Urgent => "⚠️",
+        WorkOrderPriority.High => "↑",
+        WorkOrderPriority.Normal => "=",
+        WorkOrderPriority.Low => "↓",
+        _ => ""
+    };
+    
+    private string GetAriaLabel() => Priority switch
+    {
+        WorkOrderPriority.Urgent => "Urgent - requires immediate attention",
+        WorkOrderPriority.High => "High - important issue",
+        WorkOrderPriority.Normal => "Normal - standard maintenance",
+        WorkOrderPriority.Low => "Low - nice to have",
+        _ => Priority.ToString()
+    };
+}
