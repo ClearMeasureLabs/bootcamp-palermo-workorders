@@ -25,6 +25,8 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Normal;
 
+    public WorkOrderCategory Category { get; set; } = WorkOrderCategory.Other;
+
     // Recurrence properties
     public bool IsRecurring { get; set; } = false;
     public RecurrencePattern RecurrencePattern { get; set; } = RecurrencePattern.None;

@@ -56,6 +56,18 @@ public class WorkOrderMap : IEntityFrameworkMapping
             // Add check constraint for priority values
             entity.HasCheckConstraint("CK_WorkOrders_Priority", "Priority IN (0, 1, 2, 3)");
 
+            // Configure Category
+            entity.Property(e => e.Category)
+                .IsRequired()
+                .HasDefaultValue(WorkOrderCategory.Other);
+
+            // Create index for category-based queries
+            entity.HasIndex(e => e.Category)
+                .HasDatabaseName("IX_WorkOrders_Category");
+
+            // Add check constraint for category values
+            entity.HasCheckConstraint("CK_WorkOrders_Category", "Category IN (0, 1, 2, 3, 4)");
+
             // Configure Recurrence properties
             entity.Property(e => e.IsRecurring)
                 .IsRequired()
