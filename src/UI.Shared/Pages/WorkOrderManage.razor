@@ -55,6 +55,33 @@
                     </div>
                 </div>
 
+                @if (!Model.IsReadOnly)
+                {
+                    <div class="form-group recurrence-group">
+                        <RecurrenceSelector 
+                            @bind-Pattern="Model.RecurrencePattern"
+                            @bind-Interval="Model.RecurrenceInterval"
+                            @bind-NextScheduledDate="Model.NextScheduledDate" />
+                    </div>
+                }
+                else if (Model.IsRecurring || Model.ParentWorkOrderId.HasValue)
+                {
+                    <div class="form-group">
+                        <label class="form-label">Recurrence:</label>
+                        <div>
+                            <RecurrenceBadge 
+                                IsRecurring="@Model.IsRecurring"
+                                Pattern="@Model.RecurrencePattern"
+                                Interval="@Model.RecurrenceInterval"
+                                HasParent="@Model.ParentWorkOrderId.HasValue" />
+                            @if (Model.IsRecurring && Model.NextScheduledDate.HasValue)
+                            {
+                                <span class="ms-2 text-muted">Next: @Model.NextScheduledDate.Value.ToString("MMM dd, yyyy")</span>
+                            }
+                        </div>
+                    </div>
+                }
+
                 <div class="form-group">
                     <label for="Title" class="form-label">Title:</label>
                     <div>

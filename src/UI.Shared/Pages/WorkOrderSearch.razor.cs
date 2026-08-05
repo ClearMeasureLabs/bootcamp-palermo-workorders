@@ -14,6 +14,7 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
     [SupplyParameterFromQuery] public string? Priority { get; set; }
+    [SupplyParameterFromQuery] public string? IsRecurring { get; set; }
 
     public List<SelectListItem> PriorityOptions { get; set; } = new();
 
@@ -56,6 +57,11 @@ public partial class WorkOrderSearch : AppComponentBase
             Model.Filters.Priority = Priority;
         }
 
+        if (!string.IsNullOrEmpty(IsRecurring))
+        {
+            Model.Filters.IsRecurring = IsRecurring;
+        }
+
         // Perform initial search
         await SearchWorkOrders();
     }
@@ -81,11 +87,19 @@ public partial class WorkOrderSearch : AppComponentBase
             priority = parsedPriority;
         }
 
+        bool? isRecurring = null;
+        if (!string.IsNullOrWhiteSpace(Model.Filters.IsRecurring) &&
+            bool.TryParse(Model.Filters.IsRecurring, out var parsedIsRecurring))
+        {
+            isRecurring = parsedIsRecurring;
+        }
+
         var specification = new WorkOrderSpecificationQuery();
         specification.MatchCreator(creator);
         specification.MatchAssignee(assignee);
         specification.MatchStatus(status);
         specification.MatchPriority(priority);
+        specification.MatchRecurring(isRecurring);
 
         var results = await Bus.Send(specification);
         Model.Results = results.OrderBy(w => w.Priority).ThenByDescending(w => w.CreatedDate).ToArray();

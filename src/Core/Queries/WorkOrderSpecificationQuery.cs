@@ -25,6 +25,11 @@ public record WorkOrderSpecificationQuery : IRequest<WorkOrder[]>, IRemotableReq
         Priority = priority;
     }
 
+    public void MatchRecurring(bool? isRecurring)
+    {
+        IsRecurring = isRecurring;
+    }
+
     public string? StatusKey { get; set; }
 
     public Employee? Assignee { get; set; }
@@ -32,6 +37,8 @@ public record WorkOrderSpecificationQuery : IRequest<WorkOrder[]>, IRemotableReq
     public Employee? Creator { get; set; }
     
     public WorkOrderPriority? Priority { get; set; }
+    
+    public bool? IsRecurring { get; set; }
     
     public WorkOrderStatus? Status => StatusKey != null ? WorkOrderStatus.FromKey(StatusKey) : null;
 }
