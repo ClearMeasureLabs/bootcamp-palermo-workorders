@@ -43,6 +43,18 @@ public class WorkOrderMap : IEntityFrameworkMapping
             entity.Property(e => e.Status)
                 .HasConversion(statusConverter)
                 .HasMaxLength(3);
+
+            // Configure Priority
+            entity.Property(e => e.Priority)
+                .IsRequired()
+                .HasDefaultValue(WorkOrderPriority.Normal);
+
+            // Create index for priority-based queries
+            entity.HasIndex(e => new { e.Priority, e.CreatedDate })
+                .HasDatabaseName("IX_WorkOrders_Priority_CreatedDate");
+
+            // Add check constraint for priority values
+            entity.HasCheckConstraint("CK_WorkOrders_Priority", "Priority IN (0, 1, 2, 3)");
         });
     }
 }
