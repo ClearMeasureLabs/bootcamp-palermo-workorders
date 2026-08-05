@@ -30,6 +30,11 @@ public record WorkOrderSpecificationQuery : IRequest<WorkOrder[]>, IRemotableReq
         IsRecurring = isRecurring;
     }
 
+    public void MatchCategory(WorkOrderCategory? category)
+    {
+        Category = category;
+    }
+
     public string? StatusKey { get; set; }
 
     public Employee? Assignee { get; set; }
@@ -37,6 +42,8 @@ public record WorkOrderSpecificationQuery : IRequest<WorkOrder[]>, IRemotableReq
     public Employee? Creator { get; set; }
     
     public WorkOrderPriority? Priority { get; set; }
+    
+    public WorkOrderCategory? Category { get; set; }
     
     public bool? IsRecurring { get; set; }
     

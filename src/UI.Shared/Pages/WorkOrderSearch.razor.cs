@@ -14,6 +14,7 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
     [SupplyParameterFromQuery] public string? Priority { get; set; }
+    [SupplyParameterFromQuery] public string? Category { get; set; }
     [SupplyParameterFromQuery] public string? IsRecurring { get; set; }
 
     public List<SelectListItem> PriorityOptions { get; set; } = new();
@@ -57,6 +58,11 @@ public partial class WorkOrderSearch : AppComponentBase
             Model.Filters.Priority = Priority;
         }
 
+        if (!string.IsNullOrEmpty(Category))
+        {
+            Model.Filters.Category = Category;
+        }
+
         if (!string.IsNullOrEmpty(IsRecurring))
         {
             Model.Filters.IsRecurring = IsRecurring;
@@ -87,6 +93,13 @@ public partial class WorkOrderSearch : AppComponentBase
             priority = parsedPriority;
         }
 
+        WorkOrderCategory? category = null;
+        if (!string.IsNullOrWhiteSpace(Model.Filters.Category) &&
+            Enum.TryParse<WorkOrderCategory>(Model.Filters.Category, out var parsedCategory))
+        {
+            category = parsedCategory;
+        }
+
         bool? isRecurring = null;
         if (!string.IsNullOrWhiteSpace(Model.Filters.IsRecurring) &&
             bool.TryParse(Model.Filters.IsRecurring, out var parsedIsRecurring))
@@ -99,6 +112,7 @@ public partial class WorkOrderSearch : AppComponentBase
         specification.MatchAssignee(assignee);
         specification.MatchStatus(status);
         specification.MatchPriority(priority);
+        specification.MatchCategory(category);
         specification.MatchRecurring(isRecurring);
 
         var results = await Bus.Send(specification);
