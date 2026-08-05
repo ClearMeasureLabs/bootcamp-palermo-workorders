@@ -1,0 +1,31 @@
+@startuml 0001-after
+!include <C4/C4_Component>
+
+title Work Order Model - After Priority Levels
+
+Component(workorder, "WorkOrder", "Entity", "Enhanced work order model with priority classification")
+Component(priority, "WorkOrderPriority", "Enum", "Urgent | High | Normal | Low")
+
+Rel(workorder, priority, "uses")
+
+Rel(workorder, workorder, "Properties:\n- Id: Guid\n- Number: string\n- Title: string\n- Description: string\n- Instructions: string\n- RoomNumber: string\n- **Priority: WorkOrderPriority** (NEW)\n- Status: WorkOrderStatus\n- Creator: Employee\n- Assignee: Employee\n- CreatedDate: DateTime\n- AssignedDate: DateTime\n- CompletedDate: DateTime\n- Attachments: Collection")
+
+note right of priority
+  **Priority Levels:**
+  - Urgent (Red): Safety hazards, critical failures
+  - High (Orange): Important operational issues
+  - Normal (Blue): Standard maintenance (default)
+  - Low (Gray): Nice-to-have improvements
+end note
+
+note left of workorder
+  **New Capabilities:**
+  ✓ Priority field with enum constraint
+  ✓ Default value: Normal
+  ✓ Visual indicators (colors/icons)
+  ✓ Sort by priority (Urgent first)
+  ✓ Filter by priority level
+  ✓ Clear prioritization for staff
+end note
+
+@enduml
