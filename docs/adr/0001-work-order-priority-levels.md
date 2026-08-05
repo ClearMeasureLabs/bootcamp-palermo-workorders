@@ -190,6 +190,282 @@ Low:     #6B7280 (gray-500)
 - Priority column visible on mobile (essential information)
 - Swipe gestures for filtering on mobile
 
+## Technical Design
+
+### Database Schema Changes
+
+**New Enum Type**
+```csharp
+public enum WorkOrderPriority
+{
+    Urgent = 0,   // Highest priority
+    High = 1,
+    Normal = 2,   // Default
+    Low = 3       // Lowest priority
+}
+```
+
+**WorkOrder Entity Update**
+```csharp
+public class WorkOrder : Entity
+{
+    // Existing properties...
+    public Guid Id { get; set; }
+    public string Number { get; set; }
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public string Instructions { get; set; }
+    public string RoomNumber { get; set; }
+    public WorkOrderStatus Status { get; set; }
+    
+    // NEW PROPERTY
+    public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Normal;
+    
+    // Existing properties...
+    public Employee Creator { get; set; }
+    public Employee Assignee { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public DateTime? AssignedDate { get; set; }
+    public DateTime? CompletedDate { get; set; }
+}
+```
+
+**EF Core Migration**
+```sql
+-- Add Priority column with default value
+ALTER TABLE WorkOrders 
+ADD Priority INT NOT NULL DEFAULT 2;  -- Normal = 2
+
+-- Add check constraint
+ALTER TABLE WorkOrders
+ADD CONSTRAINT CK_WorkOrders_Priority 
+CHECK (Priority IN (0, 1, 2, 3));
+
+-- Create index for priority-based queries
+CREATE INDEX IX_WorkOrders_Priority_CreatedDate 
+ON WorkOrders(Priority ASC, CreatedDate DESC);
+```
+
+### API Changes
+
+**DTOs**
+```csharp
+// WorkOrderDto.cs - Add Priority property
+public class WorkOrderDto
+{
+    public Guid Id { get; set; }
+    public string Number { get; set; }
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public WorkOrderPriority Priority { get; set; }  // NEW
+    public WorkOrderStatus Status { get; set; }
+    // ... other properties
+}
+
+// CreateWorkOrderCommand.cs - Add Priority parameter
+public class CreateWorkOrderCommand : IRequest<WorkOrderDto>
+{
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public string Instructions { get; set; }
+    public string RoomNumber { get; set; }
+    public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Normal;  // NEW
+    // ... other properties
+}
+
+// UpdateWorkOrderCommand.cs - Add Priority parameter
+public class UpdateWorkOrderCommand : IRequest<WorkOrderDto>
+{
+    public Guid Id { get; set; }
+    public WorkOrderPriority Priority { get; set; }  // NEW
+    // ... other properties
+}
+```
+
+**Query Extensions**
+```csharp
+// WorkOrderQueryExtensions.cs
+public static class WorkOrderQueryExtensions
+{
+    public static IQueryable<WorkOrder> OrderByPriority(
+        this IQueryable<WorkOrder> query)
+    {
+        return query
+            .OrderBy(w => w.Priority)           // Urgent first (0)
+            .ThenByDescending(w => w.CreatedDate);
+    }
+    
+    public static IQueryable<WorkOrder> FilterByPriority(
+        this IQueryable<WorkOrder> query, 
+        WorkOrderPriority? priority)
+    {
+        return priority.HasValue 
+            ? query.Where(w => w.Priority == priority.Value)
+            : query;
+    }
+}
+```
+
+### Blazor Component Changes
+
+**Priority Selector Component**
+```razor
+<!-- PrioritySelector.razor -->
+<div class="priority-selector">
+    <label for="priority">Priority *</label>
+    <select id="priority" 
+            @bind="Value" 
+            class="form-select">
+        <option value="@WorkOrderPriority.Urgent">
+            ⚠️ Urgent - Safety hazards, critical failures
+        </option>
+        <option value="@WorkOrderPriority.High">
+            ↑ High - Important operational issues
+        </option>
+        <option value="@WorkOrderPriority.Normal" selected>
+            = Normal - Standard maintenance (default)
+        </option>
+        <option value="@WorkOrderPriority.Low">
+            ↓ Low - Nice-to-have improvements
+        </option>
+    </select>
+</div>
+
+@code {
+    [Parameter]
+    public WorkOrderPriority Value { get; set; } = WorkOrderPriority.Normal;
+    
+    [Parameter]
+    public EventCallback<WorkOrderPriority> ValueChanged { get; set; }
+}
+```
+
+**Priority Badge Component**
+```razor
+<!-- PriorityBadge.razor -->
+<span class="priority-badge priority-@Priority.ToString().ToLower()"
+      aria-label="Priority: @GetAriaLabel()">
+    @GetIcon() @Priority
+</span>
+
+@code {
+    [Parameter]
+    public WorkOrderPriority Priority { get; set; }
+    
+    private string GetIcon() => Priority switch
+    {
+        WorkOrderPriority.Urgent => "⚠️",
+        WorkOrderPriority.High => "↑",
+        WorkOrderPriority.Normal => "=",
+        WorkOrderPriority.Low => "↓",
+        _ => ""
+    };
+    
+    private string GetAriaLabel() => Priority switch
+    {
+        WorkOrderPriority.Urgent => "Urgent - requires immediate attention",
+        WorkOrderPriority.High => "High - important issue",
+        WorkOrderPriority.Normal => "Normal - standard maintenance",
+        WorkOrderPriority.Low => "Low - nice to have",
+        _ => Priority.ToString()
+    };
+}
+```
+
+**CSS Styles**
+```css
+/* PriorityBadge.razor.css */
+.priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.priority-urgent {
+    background-color: #FEE2E2;
+    color: #DC2626;
+}
+
+.priority-high {
+    background-color: #FFEDD5;
+    color: #EA580C;
+}
+
+.priority-normal {
+    background-color: #DBEAFE;
+    color: #2563EB;
+}
+
+.priority-low {
+    background-color: #F3F4F6;
+    color: #6B7280;
+}
+```
+
+### Validation Rules
+
+```csharp
+// CreateWorkOrderCommandValidator.cs
+public class CreateWorkOrderCommandValidator 
+    : AbstractValidator<CreateWorkOrderCommand>
+{
+    public CreateWorkOrderCommandValidator()
+    {
+        // Existing validations...
+        
+        RuleFor(x => x.Priority)
+            .IsInEnum()
+            .WithMessage("Priority must be a valid value (Urgent, High, Normal, or Low)");
+    }
+}
+```
+
+### Testing Strategy
+
+**Unit Tests**
+- WorkOrderPriority enum values and ordering
+- Priority default value (Normal)
+- Priority validation rules
+- Priority badge component rendering
+- Priority selector component binding
+
+**Integration Tests**
+- Create work order with each priority level
+- Update work order priority
+- Query work orders filtered by priority
+- Query work orders sorted by priority
+- Migration applies correctly
+
+**Acceptance Tests**
+- User can select priority when creating work order
+- User can update priority on existing work order
+- Work orders display with correct priority badge
+- Work order list sorts by priority correctly
+- Work order list filters by priority correctly
+
+### Performance Considerations
+
+- Index on (Priority, CreatedDate) for efficient sorting
+- Enum stored as INT (4 bytes) - minimal storage overhead
+- Priority filtering uses indexed column
+- No N+1 queries (Priority is on WorkOrder entity)
+
+### Security Considerations
+
+- Priority enum validation prevents invalid values
+- No authorization changes needed (same permissions as other work order fields)
+- Audit log captures priority changes
+
+### Backward Compatibility
+
+- Existing work orders get Priority = Normal via migration default
+- API clients not sending Priority get Normal default
+- No breaking changes to existing endpoints
+
 ## References
 - Epic Issue: #8227
 - Child Issues: #8264, #8265, #8266
