@@ -42,6 +42,17 @@
                     </div>
 
                     <div class="filter-group">
+                        <label class="filter-label" for="priority">Priority</label>
+                        <InputSelect id="@Elements.PrioritySelect" @bind-Value="Model.Filters.Priority" class="form-control">
+                            <option value="">All</option>
+                            @foreach (var priority in PriorityOptions)
+                            {
+                                <option value="@priority.Value">@priority.Text</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="filter-group">
                         <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
@@ -71,6 +82,7 @@
                     <thead>
                     <tr>
                         <th>WO #</th>
+                        <th>Priority</th>
                         <th>Creator</th>
                         <th>Assignee</th>
                         <th>Status</th>
@@ -91,6 +103,9 @@
                                     <a data-testid="@workOrderLinkTestId" href="/workorder/manage/@order.Number?mode=Edit">
                                         @order.Number
                                     </a>
+                                </td>
+                                <td>
+                                    <PriorityBadge Priority="@order.Priority" />
                                 </td>
                                 <td>@order.Creator?.GetFullName()</td>
                                 <td>@order.Assignee?.GetFullName()</td>
@@ -115,6 +130,7 @@
         CreatorSelect,
         AssigneeSelect,
         StatusSelect,
+        PrioritySelect,
         SearchButton,
         WorkOrderLink
     }
