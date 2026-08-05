@@ -103,6 +103,93 @@ This epic decomposes into three child issues:
 2. Add priority field to work order UI forms (#8265)
 3. Add priority sorting and filtering to work order list (#8266)
 
+## UX Design
+
+### Visual Design System
+
+**Priority Badges**
+- Urgent: Red badge with exclamation icon (⚠️)
+- High: Orange badge with up arrow (↑)
+- Normal: Blue badge with equals sign (=)
+- Low: Gray badge with down arrow (↓)
+
+**Color Palette**
+```
+Urgent:  #DC2626 (red-600)
+High:    #EA580C (orange-600)
+Normal:  #2563EB (blue-600)
+Low:     #6B7280 (gray-500)
+```
+
+### UI Components
+
+**Priority Dropdown (Create/Edit Forms)**
+```
+┌─────────────────────────────────┐
+│ Priority *                      │
+│ ┌─────────────────────────────┐ │
+│ │ ⚠️  Urgent                   ▼│ │
+│ └─────────────────────────────┘ │
+│                                 │
+│ Options:                        │
+│ ⚠️  Urgent - Safety hazards     │
+│ ↑  High - Important issues      │
+│ =  Normal - Standard (default)  │
+│ ↓  Low - Nice-to-have          │
+└─────────────────────────────────┘
+```
+
+**Work Order Card with Priority**
+```
+┌────────────────────────────────────┐
+│ ⚠️ WO-123: Broken HVAC System     │
+│ Status: Assigned  Priority: Urgent│
+│ Assignee: John Smith              │
+│ Created: 2026-08-05               │
+└────────────────────────────────────┘
+```
+
+**Work Order List with Priority Column**
+```
+┌──────────┬────────────────┬──────────┬──────────┐
+│ Priority │ Number         │ Title    │ Status   │
+├──────────┼────────────────┼──────────┼──────────┤
+│ ⚠️ Urgent│ WO-123        │ HVAC...  │ Assigned │
+│ ⚠️ Urgent│ WO-125        │ Gas...   │ Draft    │
+│ ↑ High   │ WO-124        │ Roof...  │ Progress │
+│ = Normal │ WO-122        │ Paint... │ Draft    │
+└──────────┴────────────────┴──────────┴──────────┘
+```
+
+### User Interactions
+
+**Priority Selection Flow**
+1. User opens create/edit work order form
+2. Priority dropdown defaults to "Normal"
+3. User clicks dropdown to see all options with descriptions
+4. User selects appropriate priority level
+5. Visual badge updates immediately to show selected priority
+6. Form validation ensures priority is set before save
+
+**Filtering & Sorting**
+- Filter dropdown above work order list: "All Priorities", "Urgent", "High", "Normal", "Low"
+- Default sort: Priority (Urgent → High → Normal → Low), then by Created Date (newest first)
+- Click priority column header to toggle sort direction
+- Active filters shown as removable chips
+
+### Accessibility Considerations
+- Color is not the only indicator (icons + text labels)
+- ARIA labels for screen readers: "Priority: Urgent - requires immediate attention"
+- Keyboard navigation support for priority dropdown
+- High contrast mode support
+- Focus indicators on interactive elements
+
+### Mobile Responsiveness
+- Priority badges scale appropriately on small screens
+- Dropdown touch targets minimum 44x44px
+- Priority column visible on mobile (essential information)
+- Swipe gestures for filtering on mobile
+
 ## References
 - Epic Issue: #8227
 - Child Issues: #8264, #8265, #8266
