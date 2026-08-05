@@ -104,6 +104,12 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             Description = workOrder.Description,
             Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
+            Priority = workOrder.Priority,
+            IsRecurring = workOrder.IsRecurring,
+            RecurrencePattern = workOrder.RecurrencePattern,
+            RecurrenceInterval = workOrder.RecurrenceInterval,
+            NextScheduledDate = workOrder.NextScheduledDate,
+            ParentWorkOrderId = workOrder.ParentWorkOrderId,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
@@ -144,6 +150,12 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         workOrder.Description = Model.Description;
         workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
+        workOrder.Priority = Model.Priority;
+        workOrder.IsRecurring = Model.IsRecurring;
+        workOrder.RecurrencePattern = Model.RecurrencePattern;
+        workOrder.RecurrenceInterval = Model.RecurrenceInterval;
+        workOrder.NextScheduledDate = Model.NextScheduledDate;
+        workOrder.ParentWorkOrderId = Model.ParentWorkOrderId;
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);

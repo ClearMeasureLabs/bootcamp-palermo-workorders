@@ -22,6 +22,15 @@ public class WorkOrderManageModel
 
     public string? Instructions { get; set; }
 
+    public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Normal;
+
+    // Recurrence properties
+    public bool IsRecurring { get; set; }
+    public RecurrencePattern RecurrencePattern { get; set; } = RecurrencePattern.None;
+    public int RecurrenceInterval { get; set; } = 1;
+    public DateTime? NextScheduledDate { get; set; }
+    public Guid? ParentWorkOrderId { get; set; }
+
     public bool IsReadOnly { get; set; }
 
     public string? AssignedDate { get; set; }
