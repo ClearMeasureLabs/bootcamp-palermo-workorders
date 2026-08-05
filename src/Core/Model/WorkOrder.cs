@@ -25,6 +25,13 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Normal;
 
+    // Recurrence properties
+    public bool IsRecurring { get; set; } = false;
+    public RecurrencePattern RecurrencePattern { get; set; } = RecurrencePattern.None;
+    public int RecurrenceInterval { get; set; } = 1;
+    public DateTime? NextScheduledDate { get; set; }
+    public Guid? ParentWorkOrderId { get; set; }
+
     public Employee? Creator { get; set; } = null;
 
     public Employee? Assignee { get; set; } = null;
@@ -84,4 +91,8 @@ public class WorkOrder : EntityBase<WorkOrder>
     }
 
     public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();
+    
+    // Recurrence navigation properties
+    public virtual WorkOrder? ParentWorkOrder { get; set; }
+    public virtual ICollection<WorkOrder> ChildWorkOrders { get; set; } = new List<WorkOrder>();
 }
