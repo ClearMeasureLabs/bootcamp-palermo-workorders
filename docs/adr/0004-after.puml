@@ -1,0 +1,63 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title After: Automatic Email Notifications
+
+Person(assignee, "Assignee", "Receives email notification")
+Person(creator, "Creator", "Receives email notification")
+
+System_Boundary(ui, "UI Layer") {
+    Component(manage, "WorkOrderManage.razor", "Blazor Component", "Work order management")
+    Component(settings, "Settings.razor", "Blazor Component", "Notification preferences")
+}
+
+System_Boundary(core, "Core Layer") {
+    Component(command, "SaveDraftCommand", "MediatR Command", "Updates work order status")
+    Component(model, "WorkOrder", "Domain Model", "Status changes")
+    Component(event, "WorkOrderAssignedEvent", "Domain Event", "Published on assignment")
+    Component(handler, "EmailNotificationHandler", "Event Handler", "Sends notifications")
+    Component(emailService, "IEmailService", "Service", "Email abstraction")
+}
+
+System_Boundary(infra, "Infrastructure") {
+    Component(smtp, "SmtpEmailService", "Implementation", "MailKit SMTP client")
+}
+
+System_Boundary(data, "Data Layer") {
+    ComponentDb(db, "SQL Server", "Database", "WorkOrder + Employee tables")
+}
+
+System_Boundary(external, "External") {
+    Component(smtpServer, "SMTP Server", "Email Service", "Gmail/SendGrid/etc")
+}
+
+Rel(manage, command, "Sends", "Status change")
+Rel(command, model, "Updates")
+Rel(model, db, "Persists")
+Rel(command, event, "Publishes")
+Rel(event, handler, "Triggers")
+Rel(handler, emailService, "Calls")
+Rel(emailService, smtp, "Delegates to")
+Rel(smtp, smtpServer, "Sends via SMTP")
+Rel(smtpServer, assignee, "Delivers email")
+Rel(smtpServer, creator, "Delivers email")
+Rel(settings, db, "Updates preferences")
+
+note right of handler
+  **Email Logic:**
+  - Check EmailNotificationsEnabled
+  - Render email template
+  - Send via IEmailService
+  - Log success/failure
+  - Don't block on failure
+end note
+
+note right of assignee
+  **Benefits:**
+  - Immediate notification
+  - No manual checking
+  - Faster response
+  - User control via preferences
+end note
+
+@enduml

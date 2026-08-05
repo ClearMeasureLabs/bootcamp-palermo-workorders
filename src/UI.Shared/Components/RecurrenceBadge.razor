@@ -1,0 +1,52 @@
+@using ClearMeasure.Bootcamp.Core.Model
+
+<span class="badge recurrence-badge @GetBadgeClass()" title="@GetTooltip()">
+    <i class="bi @GetIcon()"></i>
+    <span>@GetText()</span>
+</span>
+
+@code {
+    [Parameter] public bool IsRecurring { get; set; }
+    [Parameter] public RecurrencePattern Pattern { get; set; }
+    [Parameter] public int Interval { get; set; }
+    [Parameter] public bool HasParent { get; set; }
+    
+    private string GetBadgeClass()
+    {
+        if (IsRecurring) return "recurring";
+        if (HasParent) return "instance";
+        return "one-time";
+    }
+    
+    private string GetIcon()
+    {
+        if (IsRecurring) return "bi-arrow-repeat";
+        if (HasParent) return "bi-link-45deg";
+        return "bi-dash-circle";
+    }
+    
+    private string GetText()
+    {
+        if (IsRecurring)
+        {
+            var intervalText = Interval > 1 ? $"Every {Interval} " : "";
+            return Pattern switch
+            {
+                RecurrencePattern.Weekly => $"{intervalText}Weekly",
+                RecurrencePattern.Monthly => $"{intervalText}Monthly",
+                RecurrencePattern.Quarterly => $"{intervalText}Quarterly",
+                RecurrencePattern.Annually => $"{intervalText}Annually",
+                _ => "Recurring"
+            };
+        }
+        if (HasParent) return "Instance";
+        return "One-Time";
+    }
+    
+    private string GetTooltip()
+    {
+        if (IsRecurring) return "This is a recurring work order template";
+        if (HasParent) return "This work order was generated from a recurring template";
+        return "This is a one-time work order";
+    }
+}

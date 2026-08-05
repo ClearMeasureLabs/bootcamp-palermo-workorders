@@ -1,0 +1,37 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Before: Manual Status Checking
+
+Person(assignee, "Assignee", "Must check system manually")
+Person(creator, "Creator", "Must check system manually")
+
+System_Boundary(ui, "UI Layer") {
+    Component(manage, "WorkOrderManage.razor", "Blazor Component", "Work order management")
+}
+
+System_Boundary(core, "Core Layer") {
+    Component(command, "SaveDraftCommand", "MediatR Command", "Updates work order status")
+    Component(model, "WorkOrder", "Domain Model", "Status changes")
+}
+
+System_Boundary(data, "Data Layer") {
+    ComponentDb(db, "SQL Server", "Database", "WorkOrder table")
+}
+
+Rel(manage, command, "Sends", "Status change")
+Rel(command, model, "Updates")
+Rel(model, db, "Persists")
+
+Rel(assignee, manage, "Checks manually", "No notification")
+Rel(creator, manage, "Checks manually", "No notification")
+
+note right of assignee
+  **Problems:**
+  - No notification of assignment
+  - Must check system manually
+  - Delayed response
+  - Increased overhead
+end note
+
+@enduml

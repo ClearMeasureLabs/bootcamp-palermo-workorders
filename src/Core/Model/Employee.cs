@@ -28,7 +28,14 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string EmailAddress { get; set; }
 
+    /// <summary>
+    /// Alias for EmailAddress to support email notification service.
+    /// </summary>
+    public string? Email => EmailAddress;
+
     public string PreferredLanguage { get; set; } = "en-US";
+
+    public bool EmailNotificationsEnabled { get; set; } = true;
 
     public ISet<Role> Roles { get; init; } = new HashSet<Role>();
 
