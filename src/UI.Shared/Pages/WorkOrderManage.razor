@@ -55,6 +55,20 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label for="Category" class="form-label">Category:</label>
+                    <div>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <CategorySelector @bind-Value="Model.Category" Disabled="@Model.IsReadOnly" />
+                        }
+                        else
+                        {
+                            <CategoryBadge Category="@Model.Category" />
+                        }
+                    </div>
+                </div>
+
                 @if (!Model.IsReadOnly)
                 {
                     <div class="form-group recurrence-group">

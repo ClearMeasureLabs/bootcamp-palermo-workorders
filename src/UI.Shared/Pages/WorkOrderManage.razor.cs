@@ -105,6 +105,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
             Priority = workOrder.Priority,
+            Category = workOrder.Category,
             IsRecurring = workOrder.IsRecurring,
             RecurrencePattern = workOrder.RecurrencePattern,
             RecurrenceInterval = workOrder.RecurrenceInterval,
@@ -151,6 +152,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
         workOrder.Priority = Model.Priority;
+        workOrder.Category = Model.Category;
         workOrder.IsRecurring = Model.IsRecurring;
         workOrder.RecurrencePattern = Model.RecurrencePattern;
         workOrder.RecurrenceInterval = Model.RecurrenceInterval;

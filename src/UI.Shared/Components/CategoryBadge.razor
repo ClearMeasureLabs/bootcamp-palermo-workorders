@@ -1,0 +1,62 @@
+@using ClearMeasure.Bootcamp.Core.Model
+
+<span class="badge category-badge @GetBadgeClass()" title="@GetTooltip()">
+    <i class="bi @GetIcon()"></i>
+    <span>@GetText()</span>
+</span>
+
+@code {
+    [Parameter] public WorkOrderCategory Category { get; set; }
+    
+    private string GetBadgeClass()
+    {
+        return Category switch
+        {
+            WorkOrderCategory.Facilities => "facilities",
+            WorkOrderCategory.AudioVisual => "audiovisual",
+            WorkOrderCategory.Grounds => "grounds",
+            WorkOrderCategory.HVAC => "hvac",
+            WorkOrderCategory.Other => "other",
+            _ => "other"
+        };
+    }
+    
+    private string GetIcon()
+    {
+        return Category switch
+        {
+            WorkOrderCategory.Facilities => "bi-building",
+            WorkOrderCategory.AudioVisual => "bi-camera-video",
+            WorkOrderCategory.Grounds => "bi-tree",
+            WorkOrderCategory.HVAC => "bi-thermometer",
+            WorkOrderCategory.Other => "bi-gear",
+            _ => "bi-gear"
+        };
+    }
+    
+    private string GetText()
+    {
+        return Category switch
+        {
+            WorkOrderCategory.Facilities => "Facilities",
+            WorkOrderCategory.AudioVisual => "Audio-Visual",
+            WorkOrderCategory.Grounds => "Grounds",
+            WorkOrderCategory.HVAC => "HVAC",
+            WorkOrderCategory.Other => "Other",
+            _ => "Other"
+        };
+    }
+    
+    private string GetTooltip()
+    {
+        return Category switch
+        {
+            WorkOrderCategory.Facilities => "Building maintenance and repairs",
+            WorkOrderCategory.AudioVisual => "Sound, video, and lighting systems",
+            WorkOrderCategory.Grounds => "Landscaping and outdoor areas",
+            WorkOrderCategory.HVAC => "Heating, ventilation, and air conditioning",
+            WorkOrderCategory.Other => "Miscellaneous work",
+            _ => "Uncategorized work order"
+        };
+    }
+}

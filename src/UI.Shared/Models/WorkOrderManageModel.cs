@@ -24,6 +24,8 @@ public class WorkOrderManageModel
 
     public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Normal;
 
+    public WorkOrderCategory Category { get; set; } = WorkOrderCategory.Other;
+
     // Recurrence properties
     public bool IsRecurring { get; set; }
     public RecurrencePattern RecurrencePattern { get; set; } = RecurrencePattern.None;

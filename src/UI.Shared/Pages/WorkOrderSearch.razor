@@ -53,6 +53,18 @@
                     </div>
 
                     <div class="filter-group">
+                        <label class="filter-label" for="category">Category</label>
+                        <InputSelect id="@Elements.CategorySelect" @bind-Value="Model.Filters.Category" class="form-control">
+                            <option value="">All</option>
+                            <option value="Facilities">Facilities</option>
+                            <option value="AudioVisual">Audio-Visual</option>
+                            <option value="Grounds">Grounds</option>
+                            <option value="HVAC">HVAC</option>
+                            <option value="Other">Other</option>
+                        </InputSelect>
+                    </div>
+
+                    <div class="filter-group">
                         <label class="filter-label" for="recurring">Recurrence</label>
                         <InputSelect id="@Elements.RecurringSelect" @bind-Value="Model.Filters.IsRecurring" class="form-control">
                             <option value="">All</option>
@@ -92,6 +104,7 @@
                     <tr>
                         <th>WO #</th>
                         <th>Priority</th>
+                        <th>Category</th>
                         <th>Recurrence</th>
                         <th>Creator</th>
                         <th>Assignee</th>
@@ -116,6 +129,9 @@
                                 </td>
                                 <td>
                                     <PriorityBadge Priority="@order.Priority" />
+                                </td>
+                                <td>
+                                    <CategoryBadge Category="@order.Category" />
                                 </td>
                                 <td>
                                     <RecurrenceBadge 
@@ -152,6 +168,7 @@
         AssigneeSelect,
         StatusSelect,
         PrioritySelect,
+        CategorySelect,
         RecurringSelect,
         SearchButton,
         WorkOrderLink
