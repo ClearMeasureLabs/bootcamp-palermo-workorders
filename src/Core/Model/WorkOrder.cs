@@ -23,6 +23,8 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 
+    public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Normal;
+
     public Employee? Creator { get; set; } = null;
 
     public Employee? Assignee { get; set; } = null;
