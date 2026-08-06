@@ -118,6 +118,7 @@
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(123, 104, 238, 0.3);
     min-width: 150px;
+    min-height: 44px;
 }
 
 .btn-primary:hover {
