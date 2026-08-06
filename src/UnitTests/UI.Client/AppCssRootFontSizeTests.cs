@@ -1,3 +1,5 @@
+using Shouldly;
+
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Client;
 
 /// <summary>
