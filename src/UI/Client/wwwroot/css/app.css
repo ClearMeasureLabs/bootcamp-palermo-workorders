@@ -256,7 +256,7 @@ a:hover, .btn-link:hover {
 /* Responsive Typography */
 @media (max-width: 768px) {
     html, body {
-        font-size: 14px;
+        font-size: 13px;
     }
     
     .loading-progress {
@@ -269,8 +269,9 @@ a:hover, .btn-link:hover {
     }
 }
 
-/* Smooth scrolling */
+/* Smooth scrolling + one-notch-smaller desktop root (15px vs browser ~16px) */
 html {
+    font-size: 15px;
     scroll-behavior: smooth;
 }
 
