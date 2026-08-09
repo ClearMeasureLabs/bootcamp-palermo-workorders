@@ -9,17 +9,17 @@ endheader
 
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
 
-title Container diagram 
+title Container diagram (IFPUG Function Points per deployed process)
 
 Person(user, "Church Staff", "Pastor, volunteer, or leader")
 
 System_Boundary(system, "Church Bulletin") {
-    Container(ui, "Blazor WASM Client", "Blazor WebAssembly", "Interactive browser application")
-    Container(server, "UI Server", "ASP.NET / Azure Container App", "Hosts API, Blazor Server, MCP endpoint")
-    Container(worker, "Worker", ".NET Worker Service", "NServiceBus endpoint for async processing")
-    Container(mcpServer, "MCP Server", "ASP.NET", "Model Context Protocol tools for AI agents")
-    ContainerDb(db, "Database", "Azure SQL Server", "Work orders, employees, roles")
-    ContainerDb(nsbTransport, "NServiceBus Transport", "SQL Server", "Message queues and saga persistence")
+    Container(ui, "Blazor WASM Client", "Blazor WebAssembly", "Interactive browser application\n== 6 FP ==")
+    Container(server, "UI Server", "ASP.NET / Azure Container App", "Hosts API, Blazor Server, MCP endpoint\n== 98 FP ==")
+    Container(worker, "Worker", ".NET Worker Service", "NServiceBus endpoint for async processing\n== 27 FP ==")
+    Container(mcpServer, "MCP Server", "ASP.NET", "Model Context Protocol tools for AI agents\n== 37 FP ==")
+    ContainerDb(db, "Database", "Azure SQL Server", "Work orders, employees, roles\n== 28 FP ==")
+    ContainerDb(nsbTransport, "NServiceBus Transport", "SQL Server", "Message queues and saga persistence\n== 0 FP ==")
 }
 
 System_Ext(azureOpenAI, "Azure OpenAI", "LLM for AI agent features")
@@ -42,6 +42,6 @@ Rel(mcpServer, telemetry, "Sends traces/metrics/logs", "OpenTelemetry / HTTPS")
 Rel(acr, server, "Deploys image", "Docker")
 Rel(octopus, acr, "Publishes / manages artifacts", "AZ CLI / Octopus")
 
-LEGEND("Legend","UI: Blazor WASM Client\nServer: UI Server (Azure Container App)\nWorker: .NET Worker\nMCP Server: MCP Server\nDB: Azure SQL / SQL Server\nNSB: NServiceBus Transport\nACR: Azure Container Registry\nOTEL: Application Insights / OpenTelemetry\nLLM: Azure OpenAI")
+LEGEND("Function Point Count (IFPUG)","UI Server (Blazor Server + API + AI gateway): 98 FP\nMCP Server (AI-agent tools + resources): 37 FP\nWorker (.NET / NServiceBus AI-bot saga): 27 FP\nDatabase (Azure SQL - 4 ILFs): 28 FP\nBlazor WASM Client (client-only pages): 6 FP\nNServiceBus Transport (technical store): 0 FP\n----\nDATA functions: 35 FP (5 ILF, 0 EIF)\nTRANSACTIONAL functions: 161 FP (15 EI, 22 EQ, 6 EO)\n====\nTOTAL UNADJUSTED FP (UFP): 196\nMethod: IFPUG CPM 4.3.1 / Capers Jones, apportioned per deployed process")
 FOOTER()
 @enduml
