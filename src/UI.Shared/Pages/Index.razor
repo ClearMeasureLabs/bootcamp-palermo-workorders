@@ -1,10 +1,17 @@
 @page "/"
+@using ClearMeasure.Bootcamp.Core.Queries
+@inherits AppComponentBase
 
 <PageTitle>Clear Measure - .NET Bootcamp - Work Order Application</PageTitle>
 
 <div class="greeting-banner" data-testid="@nameof(Elements.GreetingBanner)">
     <span class="greeting-banner-emoji" aria-hidden="true" data-testid="@nameof(Elements.GreetingBannerEmoji)">⛪</span>
     <p>Welcome to the AI Software Factory!</p>
+</div>
+
+<div class="work-request-count" data-testid="@nameof(Elements.WorkRequestCount)">
+    <span class="work-request-count-number">@_workRequestCount</span>
+    <span class="work-request-count-label">Total Work Requests</span>
 </div>
 
 <div class="church-hero">
@@ -57,9 +64,17 @@
 </div>
 
 @code {
+    private int _workRequestCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _workRequestCount = await Bus.Send(new WorkOrderCountQuery());
+    }
+
     public enum Elements
     {
         GreetingBanner,
-        GreetingBannerEmoji
+        GreetingBannerEmoji,
+        WorkRequestCount
     }
 }

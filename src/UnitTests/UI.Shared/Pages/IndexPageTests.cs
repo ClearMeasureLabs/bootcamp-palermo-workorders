@@ -28,4 +28,18 @@ public class IndexPageTests
         emoji.GetAttribute("aria-hidden").ShouldBe("true");
         emoji.TextContent.ShouldContain("⛪");
     }
+
+    [Test]
+    public void ShouldDisplayTotalWorkRequestCount()
+    {
+        using var ctx = new TestContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus { WorkRequestCount = 42 });
+
+        var component = ctx.RenderComponent<IndexPage>();
+
+        var count = component.Find($"[data-testid='{nameof(IndexPage.Elements.WorkRequestCount)}']");
+        count.TextContent.ShouldContain("42");
+        count.TextContent.ShouldContain("Total Work Requests");
+    }
 }
