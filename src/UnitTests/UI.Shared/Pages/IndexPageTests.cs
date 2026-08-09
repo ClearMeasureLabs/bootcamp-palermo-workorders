@@ -12,6 +12,20 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class IndexPageTests
 {
     [Test]
+    public void ShouldDisplayAiDevFactoryBadge()
+    {
+        using var ctx = new TestContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.RenderComponent<IndexPage>();
+
+        var badge = component.Find($"[data-testid='{nameof(IndexPage.Elements.AiDevFactoryBadge)}']");
+        badge.ShouldNotBeNull();
+        badge.TextContent.ShouldBe("AI Dev Factory demo");
+    }
+
+    [Test]
     public void ShouldDisplayGreetingBanner()
     {
         using var ctx = new TestContext();
