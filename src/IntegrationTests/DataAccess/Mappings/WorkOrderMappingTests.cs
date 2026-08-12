@@ -50,6 +50,112 @@ public class WorkOrderMappingTests
     }
 
     [Test]
+    public void ShouldMapWorkOrderWithInstructions()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-INS-01",
+            Title = "Fix lighting",
+            Description = "Replace broken light bulbs in conference room",
+            Instructions = "Turn off power before replacing bulbs. Use ladder for ceiling fixtures.",
+            RoomNumber = "CR-101",
+            Status = WorkOrderStatus.Draft,
+            Creator = creator
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Include(wo => wo.Creator)
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe("Turn off power before replacing bulbs. Use ladder for ceiling fixtures.");
+    }
+
+    [Test]
+    public void ShouldMapWorkOrderWithNullInstructions()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator2", "Jane", "Smith", "jane@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-INS-02",
+            Title = "Fix plumbing",
+            Description = "Fix leaky faucet",
+            Instructions = null,
+            RoomNumber = "BR-201",
+            Status = WorkOrderStatus.Draft,
+            Creator = creator
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Include(wo => wo.Creator)
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void ShouldTruncateInstructionsTo4000Characters()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator3", "Bob", "Johnson", "bob@example.com");
+        var longInstructions = new string('X', 4500);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-INS-03",
+            Title = "Complex repair",
+            Description = "Detailed repair work",
+            Instructions = longInstructions,
+            RoomNumber = "MR-301",
+            Status = WorkOrderStatus.Draft,
+            Creator = creator
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Include(wo => wo.Creator)
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.Length.ShouldBe(4000);
+    }
+
+    [Test]
     public async Task ShouldSaveWorkOrder()
     {
         new DatabaseTests().Clean();
