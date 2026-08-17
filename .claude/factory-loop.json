@@ -1,0 +1,43 @@
+{
+  "tracker": "github-projects-v2",
+  "repo": "ClearMeasureLabs/bootcamp-palermo-workorders",
+  "project": { "owner": "ClearMeasureLabs", "ownerType": "organization", "number": 1 },
+  "columns": {
+    "Conceptual Definition": "design",
+    "UX Design": "design",
+    "Technical Design": "design",
+    "Test Design": "design",
+    "Development": "implement",
+    "Functional Testing": "verify",
+    "UX Testing": "verify",
+    "Release Queue": "terminal",
+    "Done": "terminal"
+  },
+  "doneForNowColumn": "Functional Testing",
+  "privateBuild": "pwsh -NoProfile ./PrivateBuild.ps1",
+  "acceptanceGate": "pwsh -NoProfile ./AcceptanceTests.ps1",
+  "expectedSuites": { "UnitTests": null, "IntegrationTests": null, "AcceptanceTests": null },
+  "mergeMethod": "merge",
+  "prePushGate": "merge-master-into-branch",
+  "issueClosePolicy": "close-on-merge-stay-closed",
+  "subagents": { "default": "sonnet", "implement": "sonnet", "complex": "sonnet", "mechanical": "sonnet" },
+  "subagentIsolation": "worktree-per-subagent",
+  "subagentPerColumn": true,
+  "columnProgression": "one-column-at-a-time",
+  "cleanupOnImplement": false,
+  "boardIds": {
+    "projectId": "PVT_kwDOAGeHnM4BHwEz",
+    "statusFieldId": "PVTSSF_lADOAGeHnM4BHwEzzg4ad5k",
+    "statusOptions": {
+      "Conceptual Definition": "c61d01c4",
+      "UX Design": "7e0d075c",
+      "Technical Design": "379cf003",
+      "Test Design": "f75ad846",
+      "Development": "47fc9ee4",
+      "Functional Testing": "b10cd406",
+      "UX Testing": "98b442f0",
+      "Release Queue": "eacd281f",
+      "Done": "98236657"
+    }
+  }
+}

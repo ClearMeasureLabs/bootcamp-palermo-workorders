@@ -149,6 +149,14 @@ Format: `{username}/{branch-description}`. AI agents use the username of the acc
 | Before PR | `.\acceptancetests.ps1` |
 | Docs-only changes | Skip builds |
 
+## Feature Loop
+
+Work items live on the ClearMeasureLabs project board: https://github.com/orgs/ClearMeasureLabs/projects/1
+
+- `/feature-loop N` — drive ONE work item across the board end-to-end (design → implement → verify, one column at a time, CI-verified merge). Rules: `.claude/skills/feature-loop/SKILL.md`
+- `/feature-loop-dispatch N1 N2 ...` — orchestrate a batch: children-first tree resolution, one sub-session per item, epic clamp, stall watchdog. Rules: `.claude/skills/feature-loop-dispatch/SKILL.md`
+- Board/build configuration (columns, cached board IDs, gates): `.claude/factory-loop.json`
+
 ## Further Reference
 
 - Architecture diagrams: `arch/` (C4 PlantUML + Mermaid)
