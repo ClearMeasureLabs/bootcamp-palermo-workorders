@@ -119,8 +119,8 @@ item**, including verbatim:
 > board column at a time via a fresh perspective per column (design → implement →
 > verify), never skipping columns, recording no-op justifications for non-applicable
 > columns; merge origin/master into the branch and re-run the private build
-> (`pwsh -NoProfile ./privatebuild.ps1`) before any push or PR; run
-> `pwsh -NoProfile ./acceptancetests.ps1` before opening the PR; triage every bot review
+> (`pwsh -NoProfile ./PrivateBuild.ps1`) before any push or PR; run
+> `pwsh -NoProfile ./AcceptanceTests.ps1` before opening the PR; triage every bot review
 > finding (fix or explicitly decline with a PR reply) before merge; a PR is complete only
 > when every check-run `conclusion` is `success` via
 > `gh api repos/{o}/{r}/commits/{sha}/check-runs` — never a shell exit code; follow the

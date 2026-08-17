@@ -14,8 +14,8 @@
     "Done": "terminal"
   },
   "doneForNowColumn": "Functional Testing",
-  "privateBuild": "pwsh -NoProfile ./privatebuild.ps1",
-  "acceptanceGate": "pwsh -NoProfile ./acceptancetests.ps1",
+  "privateBuild": "pwsh -NoProfile ./PrivateBuild.ps1",
+  "acceptanceGate": "pwsh -NoProfile ./AcceptanceTests.ps1",
   "expectedSuites": { "UnitTests": null, "IntegrationTests": null, "AcceptanceTests": null },
   "mergeMethod": "merge",
   "prePushGate": "merge-master-into-branch",

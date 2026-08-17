@@ -47,8 +47,8 @@ the resolved tree and execution order before starting.
 ## Build, PR, and merge gates
 
 - Branch naming: `{username}/{branch-description}` (the account that initiated the session).
-- **Private build before commit:** `pwsh -NoProfile ./privatebuild.ps1` must pass.
-- **Acceptance tests before PR:** `pwsh -NoProfile ./acceptancetests.ps1`.
+- **Private build before commit:** `pwsh -NoProfile ./PrivateBuild.ps1` must pass.
+- **Acceptance tests before PR:** `pwsh -NoProfile ./AcceptanceTests.ps1`.
 - **Merge master before PR (mandatory):** before pushing or opening/updating a PR, fetch
   and merge `origin/master` into the branch, resolve conflicts, and re-run the private
   build. PRs must arrive conflict-free against current master.

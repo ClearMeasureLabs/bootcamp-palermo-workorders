@@ -3,7 +3,7 @@
 # Safe: read-only against GitHub (REST only). Exit code 0 = no stalls, 2 = stalls found.
 #
 # Usage:
-#   pwsh -NoProfile ./Check-StalledLanes.ps1 -Repo ClearMeasure/Clear-Measure-Intelligence-Scorecard [-StaleMinutes 15] [-Json]
+#   pwsh -NoProfile ./Check-StalledLanes.ps1 -Repo ClearMeasureLabs/bootcamp-palermo-workorders [-StaleMinutes 15] [-Json]
 #
 # Detects, per open PR:
 #   GREEN_UNMERGED  - every check-run 'success' for > StaleMinutes, PR still open (stalled at merge step)
