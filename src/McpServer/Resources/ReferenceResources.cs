@@ -57,7 +57,7 @@ public class ReferenceResources
             {
                 new { Command = "InProgressToCompleteCommand", TargetStatus = "Complete" }
             },
-            Complete = System.Array.Empty<object>()
+            Complete = Array.Empty<object>()
         };
 
         return JsonSerializer.Serialize(transitions, JsonOptions);

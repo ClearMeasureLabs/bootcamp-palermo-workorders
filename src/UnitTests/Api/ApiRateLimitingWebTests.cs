@@ -30,7 +30,7 @@ public class ApiRateLimitingWebTests
         var limited = await client.GetAsync("/api/version");
         limited.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
         limited.Headers.TryGetValues("Retry-After", out var ra).ShouldBeTrue();
-        ra!.First().ShouldBe("60");
+        ra.First().ShouldBe("60");
         limited.Content.Headers.ContentType?.MediaType.ShouldBe("text/plain");
         (await limited.Content.ReadAsStringAsync()).ShouldBe("Too many requests. Please try again later.");
     }
@@ -71,8 +71,8 @@ public class ApiRateLimitingWebTests
         var response = await client.GetAsync("/api/time");
         response.Headers.TryGetValues(RateLimitingMiddleware.HeaderLimit, out var limit).ShouldBeTrue();
         response.Headers.TryGetValues(RateLimitingMiddleware.HeaderRemaining, out var remaining).ShouldBeTrue();
-        limit!.First().ShouldBe("5");
-        int.Parse(remaining!.First(), NumberFormatInfo.InvariantInfo).ShouldBeGreaterThanOrEqualTo(0);
+        limit.First().ShouldBe("5");
+        int.Parse(remaining.First(), NumberFormatInfo.InvariantInfo).ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Test]
@@ -84,7 +84,7 @@ public class ApiRateLimitingWebTests
         var blocked = await client.GetAsync("/api/time");
         blocked.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
         blocked.Headers.TryGetValues("Retry-After", out var retryValues).ShouldBeTrue();
-        retryValues!.First().ShouldBe("5");
+        retryValues.First().ShouldBe("5");
     }
 
     [Test]

@@ -58,7 +58,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
         response.ShouldNotBeNull();
         response.Messages.ShouldNotBeEmpty();
         response.Messages.Last().Text.ShouldNotBeNullOrWhiteSpace();
-        await TestContext.Out.WriteLineAsync(response.Messages.Last().Text!);
+        await TestContext.Out.WriteLineAsync(response.Messages.Last().Text);
     }
 
     [Test]
@@ -85,7 +85,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
                 "Return nothing but the work order number itself, with no extra text."),
             new(ChatRole.User, responseText)
         ]));
-        var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
+        var workOrderNumber = parseResponse.Messages.Last().Text.Trim();
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
         var db = TestHost.GetRequiredService<DataContext>();
@@ -125,7 +125,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
                 "Return nothing but the work order number itself, with no extra text."),
             new(ChatRole.User, responseText)
         ]));
-        var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
+        var workOrderNumber = parseResponse.Messages.Last().Text.Trim();
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
         var workOrder = await WaitForWorkOrderAsync(
@@ -205,7 +205,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
                 new(ChatRole.User, text)
             ]));
 
-            return parseResponse.Messages.Last().Text!.Trim();
+            return parseResponse.Messages.Last().Text.Trim();
         }
 
         async Task EnsureAssignedAsync()

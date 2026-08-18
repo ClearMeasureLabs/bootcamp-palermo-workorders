@@ -32,7 +32,7 @@ public class PingEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("text/plain");
+        mediaType.ShouldContain("text/plain");
         (await response.Content.ReadAsStringAsync()).ShouldBe("pong");
     }
 
@@ -44,7 +44,7 @@ public class PingEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("text/plain");
+        mediaType.ShouldContain("text/plain");
         (await response.Content.ReadAsStringAsync()).ShouldBe("pong");
     }
 

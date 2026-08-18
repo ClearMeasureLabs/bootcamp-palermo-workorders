@@ -33,7 +33,7 @@ public class DetailedHealthCheckEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/json");
+        mediaType.ShouldContain("application/json");
     }
 
     [Test]
