@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace ClearMeasure.Bootcamp.Core.Model;
 
 [JsonConverter(typeof(WorkOrderStatusJsonConverter))]
-public class WorkOrderStatus
+public class WorkOrderStatus : IEquatable<WorkOrderStatus>
 {
     private static readonly ILogger _logger = NullLogger<WorkOrderStatus>.Instance;
 
@@ -52,20 +52,29 @@ public class WorkOrderStatus
 
     public byte SortBy { get; set; }
 
+    public bool Equals(WorkOrderStatus? other)
+    {
+        if (ReferenceEquals(null, other))
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        if (GetType() != other.GetType())
+        {
+            return false;
+        }
+
+        return Code.Equals(other.Code);
+    }
+
     public override bool Equals(object? obj)
     {
-        var code = obj as WorkOrderStatus;
-        if (code == null)
-        {
-            return false;
-        }
-
-        if (GetType() != obj!.GetType())
-        {
-            return false;
-        }
-
-        return Code.Equals(code.Code);
+        return Equals(obj as WorkOrderStatus);
     }
 
     public override string ToString()
@@ -76,6 +85,16 @@ public class WorkOrderStatus
     public override int GetHashCode()
     {
         return Code.GetHashCode();
+    }
+
+    public static bool operator ==(WorkOrderStatus? left, WorkOrderStatus? right)
+    {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(WorkOrderStatus? left, WorkOrderStatus? right)
+    {
+        return !Equals(left, right);
     }
 
     public bool IsEmpty()
