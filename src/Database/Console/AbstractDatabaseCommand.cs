@@ -39,7 +39,9 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
     protected static string GetConnectionString(DatabaseOptions options)
     {
-        // Determine if this is a local server (localhost, 127.0.0.1, or LocalDB)
+        // Determine if this is a local/self-signed server (localhost, 127.0.0.1, LocalDB,
+        // or an external/shared SQL Server supplied via SQL_EXTERNAL - e.g. a k8s sidecar
+        // that also presents a self-signed certificate).
         var serverName = (options.DatabaseServer ?? string.Empty).Trim();
         var isLocalServer = serverName.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
@@ -47,7 +49,8 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
                            serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase) ||
                            serverName.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
+                           serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) ||
+                           string.Equals(Environment.GetEnvironmentVariable("SQL_EXTERNAL"), "true", StringComparison.OrdinalIgnoreCase);
 
 
 

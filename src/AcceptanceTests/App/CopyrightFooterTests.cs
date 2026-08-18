@@ -67,4 +67,16 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footerNote).ToBeVisibleAsync();
         await Expect(footerNote).ToContainTextAsync("Submit a new work order any time");
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowFinalOkMarker_OnLandingPage_WhenAnonymous()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        var marker = Page.GetByTestId(nameof(MainLayout.Elements.FinalOkMarker));
+        await marker.WaitForAsync();
+        await Expect(marker).ToBeVisibleAsync();
+        await Expect(marker).ToContainTextAsync("FINAL-OK");
+    }
 }
