@@ -67,4 +67,16 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footerNote).ToBeVisibleAsync();
         await Expect(footerNote).ToContainTextAsync("Submit a new work order any time");
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowGoSqlCmdOk_OnLandingPage_WhenAnonymous()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(GetInputDelayMs());
+
+        var goSqlCmdOk = Page.GetByTestId(nameof(MainLayout.Elements.GoSqlCmdOk));
+        await goSqlCmdOk.WaitForAsync();
+        await Expect(goSqlCmdOk).ToBeVisibleAsync();
+        await Expect(goSqlCmdOk).ToContainTextAsync("GOSQLCMD-OK");
+    }
 }
