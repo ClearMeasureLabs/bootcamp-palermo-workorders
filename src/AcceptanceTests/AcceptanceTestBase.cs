@@ -161,9 +161,16 @@ public abstract class AcceptanceTestBase
             // Ignore tracing errors during teardown
         }
 
-        try { await state.Page.CloseAsync(); } catch { }
-        try { await state.BrowserContext.CloseAsync(); } catch { }
-        try { await state.Browser.CloseAsync(); } catch { }
+        // Best-effort teardown: closing an already-closed/crashed Playwright object throws;
+        // logging (not rethrowing) avoids masking the actual test result during cleanup.
+        try { await state.Page.CloseAsync(); }
+        catch (Exception ex) { TestContext.Progress.WriteLine($"TearDownAsync: Page.CloseAsync failed: {ex}"); }
+
+        try { await state.BrowserContext.CloseAsync(); }
+        catch (Exception ex) { TestContext.Progress.WriteLine($"TearDownAsync: BrowserContext.CloseAsync failed: {ex}"); }
+
+        try { await state.Browser.CloseAsync(); }
+        catch (Exception ex) { TestContext.Progress.WriteLine($"TearDownAsync: Browser.CloseAsync failed: {ex}"); }
     }
 
     /// <summary>
