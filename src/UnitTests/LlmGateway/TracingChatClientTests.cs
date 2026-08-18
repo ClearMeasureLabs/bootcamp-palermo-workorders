@@ -70,6 +70,12 @@ public class TracingChatClientTests
             ChatOptions? options = null,
             CancellationToken cancellationToken = default)
         {
+            // Consume the sequence handed down by the caller, mirroring what a real inner client
+            // does when it serializes the conversation. This is what makes SingleUseMessageSequence's
+            // "enumerated more than once" guard actually fire if TracingChatClient regresses back to
+            // enumerating the raw caller-supplied sequence a second time instead of a materialized copy.
+            _ = messages.ToList();
+
             var response = new ChatResponse(new ChatMessage(ChatRole.Assistant, "Fixed"))
             {
                 ModelId = "stub-model"
@@ -82,6 +88,7 @@ public class TracingChatClientTests
             ChatOptions? options = null,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
+            _ = messages.ToList();
             await Task.Yield();
             yield return new ChatResponseUpdate(ChatRole.Assistant, "Fixed") { ModelId = "stub-model" };
         }
