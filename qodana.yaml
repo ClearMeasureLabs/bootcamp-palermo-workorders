@@ -1,0 +1,8 @@
+version: "1.0"
+linter: jetbrains/qodana-cdnet:latest
+dotnet:
+  solution: src/ChurchBulletin.sln
+exclude:
+  - name: All
+    paths:
+      - src/UI/Server/Generated
