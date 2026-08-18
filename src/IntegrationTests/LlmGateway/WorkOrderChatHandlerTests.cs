@@ -1,12 +1,26 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.Extensions.AI;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
 [TestFixture]
 public class WorkOrderChatHandlerTests : LlmTestBase
 {
+    [Test]
+    public async Task Should_ThrowOperationCanceledException_When_TokenIsAlreadyCanceled()
+    {
+        var workOrder = Faker<WorkOrder>();
+        var handler = TestHost.GetRequiredService<WorkOrderChatHandler>();
+        var query = new WorkOrderChatQuery("What is the number of this work order??", workOrder);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Should.ThrowAsync<OperationCanceledException>(
+            async () => await handler.Handle(query, cts.Token));
+    }
+
     [Test]
     public async Task Handle_WithValidWorkOrder_ReturnsChatResponse()
     {

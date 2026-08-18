@@ -35,7 +35,7 @@ public class McpServerAcceptanceTests : AcceptanceTestBase
     }
 
     [Test]
-    public async Task ShouldDiscoverAllMcpTools()
+    public void ShouldDiscoverAllMcpTools()
     {
         _helper!.Tools.Count.ShouldBeGreaterThanOrEqualTo(6);
 

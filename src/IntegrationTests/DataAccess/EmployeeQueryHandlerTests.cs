@@ -147,4 +147,32 @@ public class EmployeeQueryHandlerTests
             rehydrated.LastName.ShouldBe("Simpson");
         }
     }
+
+    [Test]
+    public async Task Should_ThrowOperationCanceledException_When_EmployeeByUserNameQueryTokenIsAlreadyCanceled()
+    {
+        new DatabaseTests().Clean();
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new EmployeeQueryHandler(dataContext);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Should.ThrowAsync<OperationCanceledException>(
+            async () => await handler.Handle(new EmployeeByUserNameQuery("1"), cts.Token));
+    }
+
+    [Test]
+    public async Task Should_ThrowOperationCanceledException_When_EmployeeGetAllQueryTokenIsAlreadyCanceled()
+    {
+        new DatabaseTests().Clean();
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new EmployeeQueryHandler(dataContext);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Should.ThrowAsync<OperationCanceledException>(
+            async () => await handler.Handle(new EmployeeGetAllQuery(), cts.Token));
+    }
 }
