@@ -73,7 +73,7 @@ public class WorkOrderStatusTests
     }
 
     [Test]
-    public void ShouldConsiderTwoDistinctInstancesWithTheSameCodeEqualByValue()
+    public void ShouldConsiderStatusesFromDifferentFactoryMethodsEqualByValue()
     {
         var fromCode = WorkOrderStatus.FromCode("DRT");
         var fromKey = WorkOrderStatus.FromKey("draft");
@@ -102,7 +102,7 @@ public class WorkOrderStatusTests
     }
 
     [Test]
-    public void WhenComparingRoundTrippedJsonStatusShouldBeValueEqualNotReferenceEqual()
+    public void WhenComparingRoundTrippedJsonStatusShouldReturnCanonicalInstanceEqualByValue()
     {
         var original = WorkOrderStatus.Complete;
         var json = JsonSerializer.Serialize(original);
@@ -132,5 +132,16 @@ public class WorkOrderStatusTests
             null)!;
 
         return (WorkOrderStatus)ctor.Invoke(new object[] { source.Code, source.Key, source.FriendlyName, source.SortBy });
+    }
+
+    [Test]
+    public void ShouldNotThrowWhenComparingAnInstanceWithNullCodeFromTheParameterlessConstructor()
+    {
+        var uninitialized = new WorkOrderStatus();
+
+        Should.NotThrow(() => _ = uninitialized == WorkOrderStatus.Draft);
+        Should.NotThrow(() => _ = WorkOrderStatus.Draft == uninitialized);
+        (uninitialized == WorkOrderStatus.Draft).ShouldBeFalse();
+        (uninitialized != WorkOrderStatus.Draft).ShouldBeTrue();
     }
 }

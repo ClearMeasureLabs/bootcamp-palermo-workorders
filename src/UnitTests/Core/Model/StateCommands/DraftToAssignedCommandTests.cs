@@ -1,4 +1,3 @@
-using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
@@ -66,7 +65,7 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
     public void ShouldBeValidWhenBeginStatusIsValueEqualToDraftEvenFromASeparateInstance()
     {
         var order = new WorkOrder();
-        order.Status = DeserializeStatusCopyOf(WorkOrderStatus.Draft);
+        order.Status = CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus.Draft);
         var employee = new Employee();
         order.Creator = employee;
 
@@ -80,9 +79,17 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
         return new DraftToAssignedCommand(order, employee);
     }
 
-    private static WorkOrderStatus DeserializeStatusCopyOf(WorkOrderStatus status)
+    private static WorkOrderStatus CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus source)
     {
-        var json = JsonSerializer.Serialize(status);
-        return JsonSerializer.Deserialize<WorkOrderStatus>(json)!;
+        var ctor = typeof(WorkOrderStatus).GetConstructor(
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance,
+            null,
+            new[] { typeof(string), typeof(string), typeof(string), typeof(byte) },
+            null)!;
+
+        var separateInstance = (WorkOrderStatus)ctor.Invoke(new object[] { source.Code, source.Key, source.FriendlyName, source.SortBy });
+        ReferenceEquals(separateInstance, source).ShouldBeFalse();
+
+        return separateInstance;
     }
 }

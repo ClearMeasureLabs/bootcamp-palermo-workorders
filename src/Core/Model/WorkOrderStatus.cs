@@ -90,7 +90,12 @@ public class WorkOrderStatus
             return false;
         }
 
-        return left.Equals(right);
+        if (left.GetType() != right.GetType())
+        {
+            return false;
+        }
+
+        return string.Equals(left.Code, right.Code, StringComparison.Ordinal);
     }
 
     public static bool operator !=(WorkOrderStatus? left, WorkOrderStatus? right)

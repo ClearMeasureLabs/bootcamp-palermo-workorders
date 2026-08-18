@@ -105,7 +105,7 @@ public class WorkOrderTests
     [Test]
     public void ShouldAllowReassignWhenStatusIsValueEqualToDraftEvenFromASeparateInstance()
     {
-        var order = new WorkOrder { Status = DeserializeStatusCopyOf(WorkOrderStatus.Draft) };
+        var order = new WorkOrder { Status = CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus.Draft) };
 
         order.CanReassign().ShouldBeTrue();
     }
@@ -113,14 +113,22 @@ public class WorkOrderTests
     [Test]
     public void ShouldNotAllowReassignWhenStatusIsNotDraft()
     {
-        var order = new WorkOrder { Status = DeserializeStatusCopyOf(WorkOrderStatus.Assigned) };
+        var order = new WorkOrder { Status = CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus.Assigned) };
 
         order.CanReassign().ShouldBeFalse();
     }
 
-    private static WorkOrderStatus DeserializeStatusCopyOf(WorkOrderStatus status)
+    private static WorkOrderStatus CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus source)
     {
-        var json = System.Text.Json.JsonSerializer.Serialize(status);
-        return System.Text.Json.JsonSerializer.Deserialize<WorkOrderStatus>(json)!;
+        var ctor = typeof(WorkOrderStatus).GetConstructor(
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance,
+            null,
+            new[] { typeof(string), typeof(string), typeof(string), typeof(byte) },
+            null)!;
+
+        var separateInstance = (WorkOrderStatus)ctor.Invoke(new object[] { source.Code, source.Key, source.FriendlyName, source.SortBy });
+        ReferenceEquals(separateInstance, source).ShouldBeFalse();
+
+        return separateInstance;
     }
 }
