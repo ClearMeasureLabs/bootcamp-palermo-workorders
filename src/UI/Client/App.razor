@@ -11,6 +11,14 @@
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
         </Found>
+        @* CS0618: Router.NotFound is obsolete in favor of NotFoundPage. Migration attempted in
+           #8312 (see commit a29ffdfc) and reverted (bfac55ad): setting NotFoundPage on this
+           standalone Blazor WebAssembly client's Router broke boot for EVERY route, not just the
+           not-found route (all Playwright acceptance tests timed out waiting for CopyrightFooter,
+           including on the plain landing page). NotFoundPage targets the Blazor Web App hosting
+           model (server-rendered Routes.razor with interactive render modes); it is not supported
+           by a WASM-standalone Router in this .NET 10 release. Declining the Qodana finding until
+           a WASM-standalone-compatible replacement ships upstream. *@
         <NotFound>
             <PageTitle>Not found</PageTitle>
             <LayoutView Layout="@typeof(ClearMeasure.Bootcamp.UI.Shared.MainLayout)">
