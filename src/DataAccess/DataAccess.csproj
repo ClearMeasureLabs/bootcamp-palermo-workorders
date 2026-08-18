@@ -27,4 +27,7 @@
 		<ProjectReference Include="..\Core\Core.csproj" />
 	</ItemGroup>
 
+  <ItemGroup>
+    <Using Include="NServiceBus" />
+  </ItemGroup>
 </Project>
