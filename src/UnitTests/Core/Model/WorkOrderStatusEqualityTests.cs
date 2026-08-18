@@ -6,12 +6,21 @@ namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 [TestFixture]
 public class WorkOrderStatusEqualityTests
 {
-    [Test]
-    public void Equals_SameCodeDifferentInstance_ShouldReturnTrue()
+    private sealed class DistinctWorkOrderStatus : WorkOrderStatus
     {
-        var first = WorkOrderStatus.FromCode("DRT");
-        var second = WorkOrderStatus.FromCode("DRT");
+        public DistinctWorkOrderStatus(string code, string key, string friendlyName, byte sortBy)
+            : base(code, key, friendlyName, sortBy)
+        {
+        }
+    }
 
+    [Test]
+    public void Equals_SameCodeDistinctInstance_ShouldReturnTrue()
+    {
+        var first = new DistinctWorkOrderStatus("DRT", "Draft", "Draft", 1);
+        var second = new DistinctWorkOrderStatus("DRT", "Draft", "Draft", 1);
+
+        ReferenceEquals(first, second).ShouldBeFalse();
         var result = first.Equals(second);
 
         result.ShouldBeTrue();
@@ -48,11 +57,22 @@ public class WorkOrderStatusEqualityTests
     }
 
     [Test]
-    public void EqualityOperator_SameCodeDifferentInstance_ShouldReturnTrue()
+    public void GetHashCode_SameCodeDistinctInstance_ShouldMatch()
     {
-        var first = WorkOrderStatus.FromCode("ASD");
-        var second = WorkOrderStatus.FromCode("ASD");
+        var first = new DistinctWorkOrderStatus("CMP", "Complete", "Complete", 4);
+        var second = new DistinctWorkOrderStatus("CMP", "Complete", "Complete", 4);
 
+        ReferenceEquals(first, second).ShouldBeFalse();
+        first.GetHashCode().ShouldBe(second.GetHashCode());
+    }
+
+    [Test]
+    public void EqualityOperator_SameCodeDistinctInstance_ShouldReturnTrue()
+    {
+        var first = new DistinctWorkOrderStatus("ASD", "Assigned", "Assigned", 2);
+        var second = new DistinctWorkOrderStatus("ASD", "Assigned", "Assigned", 2);
+
+        ReferenceEquals(first, second).ShouldBeFalse();
         (first == second).ShouldBeTrue();
         (first != second).ShouldBeFalse();
     }
