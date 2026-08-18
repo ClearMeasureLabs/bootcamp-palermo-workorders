@@ -131,7 +131,7 @@ public class WorkOrderMappingTests
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
-            var rehydratedWorkOrder = context.Set<WorkOrder>()
+            context.Set<WorkOrder>()
                 .Single(wo => wo.Id == order.Id);
         }
     }

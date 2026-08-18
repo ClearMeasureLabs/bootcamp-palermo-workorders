@@ -9,7 +9,6 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     [SetUp]
     public async Task Setup()
     {
-        var username = CurrentUser.UserName;
         await LoginAsCurrentUser();
     }
 

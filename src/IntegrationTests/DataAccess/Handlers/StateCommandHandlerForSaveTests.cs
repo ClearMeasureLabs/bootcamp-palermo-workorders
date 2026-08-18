@@ -71,7 +71,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
-        var result = await handler.Handle(command);
+        await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(workOrder.Title);
@@ -111,7 +111,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
-        var result = await handler.Handle(command);
+        await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
@@ -148,11 +148,10 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Title = "newtitle";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
-        var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
-        var result = await handler.Handle(command);
+        await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
