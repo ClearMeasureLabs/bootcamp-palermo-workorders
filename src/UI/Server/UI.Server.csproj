@@ -45,4 +45,7 @@
 	</ItemGroup>
 
 
+  <ItemGroup>
+    <Using Include="NServiceBus" />
+  </ItemGroup>
 </Project>
