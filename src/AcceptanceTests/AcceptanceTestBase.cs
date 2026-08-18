@@ -161,9 +161,32 @@ public abstract class AcceptanceTestBase
             // Ignore tracing errors during teardown
         }
 
-        try { await state.Page.CloseAsync(); } catch { }
-        try { await state.BrowserContext.CloseAsync(); } catch { }
-        try { await state.Browser.CloseAsync(); } catch { }
+        try
+        {
+            await state.Page.CloseAsync();
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing Page for {TestId}: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        try
+        {
+            await state.BrowserContext.CloseAsync();
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing BrowserContext for {TestId}: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        try
+        {
+            await state.Browser.CloseAsync();
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing Browser for {TestId}: {ex.GetType().Name}: {ex.Message}");
+        }
     }
 
     /// <summary>
