@@ -35,7 +35,7 @@ public class McpServerAcceptanceTests : AcceptanceTestBase
     }
 
     [Test]
-    public async Task ShouldDiscoverAllMcpTools()
+    public Task ShouldDiscoverAllMcpTools()
     {
         _helper!.Tools.Count.ShouldBeGreaterThanOrEqualTo(6);
 
@@ -46,6 +46,8 @@ public class McpServerAcceptanceTests : AcceptanceTestBase
         toolNames.ShouldContain("execute-work-order-command");
         toolNames.ShouldContain("list-employees");
         toolNames.ShouldContain("get-employee");
+
+        return Task.CompletedTask;
     }
 
     [Test]

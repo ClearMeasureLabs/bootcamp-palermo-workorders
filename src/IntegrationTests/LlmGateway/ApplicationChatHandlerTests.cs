@@ -281,12 +281,13 @@ public class ApplicationChatHandlerTests : LlmTestBase
             await AssertWorkOrderStateAsync(workOrder, WorkOrderStatus.Assigned);
         }
 
-        async Task AssertWorkOrderStateAsync(WorkOrder? workOrder, WorkOrderStatus status)
+        Task AssertWorkOrderStateAsync(WorkOrder? workOrder, WorkOrderStatus status)
         {
             workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
             workOrder.Status.ShouldBe(status);
             workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
             workOrder.Creator?.FirstName.ShouldBe("Timothy");
+            return Task.CompletedTask;
         }
     }
 }
