@@ -136,7 +136,5 @@ public class BusTests
         public string Message { get; set; } = string.Empty;
     }
 
-    private record TestQuery : IRequest<string>
-    {
-    }
+    private record TestQuery : IRequest<string>;
 }

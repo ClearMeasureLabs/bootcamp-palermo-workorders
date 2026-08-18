@@ -3,6 +3,4 @@ using Palermo.BlazorMvc;
 
 namespace ClearMeasure.Bootcamp.UI.Shared;
 
-public record WorkOrderSelectedEvent(WorkOrder CurrentWorkOrder) : IUiBusEvent
-{
-}
+public record WorkOrderSelectedEvent(WorkOrder CurrentWorkOrder) : IUiBusEvent;

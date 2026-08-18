@@ -1,4 +1,4 @@
-using ClearMeasure.Bootcamp.Core;
+﻿using ClearMeasure.Bootcamp.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

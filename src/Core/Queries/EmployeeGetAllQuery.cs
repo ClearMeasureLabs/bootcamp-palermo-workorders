@@ -4,6 +4,4 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 
-public class EmployeeGetAllQuery : IRequest<Employee[]>, IRemotableRequest
-{
-}
+public class EmployeeGetAllQuery : IRequest<Employee[]>, IRemotableRequest;

@@ -154,7 +154,5 @@ public class EmployeeTests
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
 
-    public class EmployeeProxy : Employee
-    {
-    }
+    public class EmployeeProxy : Employee;
 }
