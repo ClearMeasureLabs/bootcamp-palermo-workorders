@@ -35,7 +35,7 @@ public class ApiRateLimitingAcceptanceTests : AcceptanceTestBase
         if (!ServerFixture.StartLocalServer)
             Assert.Ignore("Requires local server with HTTP access to /api/*");
 
-        var response = await Client.GetAsync($"{ServerFixture.ApplicationBaseUrl}/api/version");
+        using var response = await Client.GetAsync($"{ServerFixture.ApplicationBaseUrl}/api/version");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         if (!response.Headers.TryGetValues("X-RateLimit-Limit", out _))
             Assert.Ignore("API rate limiting is disabled in this environment (e.g. Development appsettings).");
@@ -53,7 +53,7 @@ public class ApiRateLimitingAcceptanceTests : AcceptanceTestBase
         HttpStatusCode? last = null;
         for (var i = 0; i < 250; i++)
         {
-            var r = await Client.GetAsync($"{ServerFixture.ApplicationBaseUrl}/api/time");
+            using var r = await Client.GetAsync($"{ServerFixture.ApplicationBaseUrl}/api/time");
             last = r.StatusCode;
             if (r.StatusCode == HttpStatusCode.TooManyRequests)
                 break;
