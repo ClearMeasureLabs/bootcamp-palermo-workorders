@@ -9,7 +9,7 @@ namespace ClearMeasure.Bootcamp.UnitTests;
 
 public class ObjectMother
 {
-    private static bool _configured;
+    private static volatile bool _configured;
     public static object Lock = new();
 
     private static void EnsureConfigured()

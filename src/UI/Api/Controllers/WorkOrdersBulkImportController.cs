@@ -38,7 +38,13 @@ public sealed class WorkOrdersBulkImportController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Post(IFormFile file, CancellationToken cancellationToken)
     {
+        // Qodana ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract false positive:
+        // ASP.NET model binding can pass a null IFormFile when the "file" form field is
+        // missing, regardless of the non-nullable parameter annotation (see
+        // ShouldReturnBadRequest_WhenFileMissing). Null check retained intentionally.
+#pragma warning disable CS8073
         if (file == null || file.Length == 0)
+#pragma warning restore CS8073
         {
             return Problem(
                 detail: "A non-empty CSV file is required (form field name: file).",

@@ -164,7 +164,7 @@ public class McpWorkOrderToolTests
         WorkOrder? wo = null;
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
-            wo = context.Set<WorkOrder>().Where(wo => wo.Number == "WO-002").Single();
+            wo = context.Set<WorkOrder>().Where(w => w.Number == "WO-002").Single();
         }
 
         wo.Status.ShouldBe(WorkOrderStatus.Cancelled);
@@ -199,7 +199,7 @@ public class McpWorkOrderToolTests
         WorkOrder? wo = null;
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
-            wo = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-778");
+            wo = context.Set<WorkOrder>().Single(w => w.Number == "WO-778");
         }
 
         wo.Status.ShouldBe(WorkOrderStatus.Assigned);

@@ -40,7 +40,7 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
     protected static string GetConnectionString(DatabaseOptions options)
     {
         // Determine if this is a local server (localhost, 127.0.0.1, or LocalDB)
-        var serverName = (options.DatabaseServer ?? string.Empty).Trim();
+        var serverName = options.DatabaseServer.Trim();
         var isLocalServer = serverName.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
@@ -54,7 +54,7 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         
         // Format DataSource to use TCP on port 1433 for non-LocalDB connections
         // This forces TCP instead of Named Pipes
-        var dataSource = options.DatabaseServer ?? string.Empty;
+        var dataSource = options.DatabaseServer;
         var isLocalDb = serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
                        serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase);
         
