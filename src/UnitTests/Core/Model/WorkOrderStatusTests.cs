@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -69,5 +70,67 @@ public class WorkOrderStatusTests
         var deserialized = JsonSerializer.Deserialize<WorkOrder>(json);
 
         Assert.That(deserialized!.Status, Is.EqualTo(workOrder.Status));
+    }
+
+    [Test]
+    public void ShouldConsiderTwoDistinctInstancesWithTheSameCodeEqualByValue()
+    {
+        var fromCode = WorkOrderStatus.FromCode("DRT");
+        var fromKey = WorkOrderStatus.FromKey("draft");
+
+        (fromCode == fromKey).ShouldBeTrue();
+        (fromCode != fromKey).ShouldBeFalse();
+        (WorkOrderStatus.Draft == WorkOrderStatus.FromKey("draft")).ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldConsiderDifferentStatusesUnequalByValue()
+    {
+        (WorkOrderStatus.Draft == WorkOrderStatus.Assigned).ShouldBeFalse();
+        (WorkOrderStatus.Draft != WorkOrderStatus.Assigned).ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldTreatNullOperandsAsUnequalUnlessBothNull()
+    {
+        WorkOrderStatus? left = null;
+        WorkOrderStatus? right = null;
+
+        (left == right).ShouldBeTrue();
+        (WorkOrderStatus.Draft == null).ShouldBeFalse();
+        (null == WorkOrderStatus.Draft).ShouldBeFalse();
+    }
+
+    [Test]
+    public void WhenComparingRoundTrippedJsonStatusShouldBeValueEqualNotReferenceEqual()
+    {
+        var original = WorkOrderStatus.Complete;
+        var json = JsonSerializer.Serialize(original);
+        var deserialized = JsonSerializer.Deserialize<WorkOrderStatus>(json);
+
+        ReferenceEquals(deserialized, original).ShouldBeTrue();
+        (deserialized == original).ShouldBeTrue();
+    }
+
+    [Test]
+    public void WhenTwoSeparateInstancesShareTheSameCodeTheyShouldStillCompareEqualByValue()
+    {
+        var separateInstance = CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus.Draft);
+
+        ReferenceEquals(separateInstance, WorkOrderStatus.Draft).ShouldBeFalse();
+        (separateInstance == WorkOrderStatus.Draft).ShouldBeTrue();
+        (separateInstance != WorkOrderStatus.Draft).ShouldBeFalse();
+        separateInstance.Equals(WorkOrderStatus.Draft).ShouldBeTrue();
+    }
+
+    private static WorkOrderStatus CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus source)
+    {
+        var ctor = typeof(WorkOrderStatus).GetConstructor(
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance,
+            null,
+            new[] { typeof(string), typeof(string), typeof(string), typeof(byte) },
+            null)!;
+
+        return (WorkOrderStatus)ctor.Invoke(new object[] { source.Code, source.Key, source.FriendlyName, source.SortBy });
     }
 }

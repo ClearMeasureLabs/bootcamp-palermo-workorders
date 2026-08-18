@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -99,5 +100,27 @@ public class WorkOrderTests
         order.Status = WorkOrderStatus.Draft;
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void ShouldAllowReassignWhenStatusIsValueEqualToDraftEvenFromASeparateInstance()
+    {
+        var order = new WorkOrder { Status = DeserializeStatusCopyOf(WorkOrderStatus.Draft) };
+
+        order.CanReassign().ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldNotAllowReassignWhenStatusIsNotDraft()
+    {
+        var order = new WorkOrder { Status = DeserializeStatusCopyOf(WorkOrderStatus.Assigned) };
+
+        order.CanReassign().ShouldBeFalse();
+    }
+
+    private static WorkOrderStatus DeserializeStatusCopyOf(WorkOrderStatus status)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(status);
+        return System.Text.Json.JsonSerializer.Deserialize<WorkOrderStatus>(json)!;
     }
 }

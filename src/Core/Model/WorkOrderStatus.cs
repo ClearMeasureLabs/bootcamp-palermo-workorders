@@ -78,6 +78,26 @@ public class WorkOrderStatus
         return Code.GetHashCode();
     }
 
+    public static bool operator ==(WorkOrderStatus? left, WorkOrderStatus? right)
+    {
+        if (ReferenceEquals(left, right))
+        {
+            return true;
+        }
+
+        if (left is null || right is null)
+        {
+            return false;
+        }
+
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(WorkOrderStatus? left, WorkOrderStatus? right)
+    {
+        return !(left == right);
+    }
+
     public bool IsEmpty()
     {
         return Code == "";

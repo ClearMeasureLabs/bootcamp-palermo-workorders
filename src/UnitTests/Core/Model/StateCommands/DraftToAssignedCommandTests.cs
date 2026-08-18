@@ -1,6 +1,8 @@
+using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
@@ -60,8 +62,27 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
         Assert.That(order.AssignedDate, Is.Not.Null);
     }
 
+    [Test]
+    public void ShouldBeValidWhenBeginStatusIsValueEqualToDraftEvenFromASeparateInstance()
+    {
+        var order = new WorkOrder();
+        order.Status = DeserializeStatusCopyOf(WorkOrderStatus.Draft);
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new DraftToAssignedCommand(order, employee);
+
+        command.IsValid().ShouldBeTrue();
+    }
+
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
         return new DraftToAssignedCommand(order, employee);
+    }
+
+    private static WorkOrderStatus DeserializeStatusCopyOf(WorkOrderStatus status)
+    {
+        var json = JsonSerializer.Serialize(status);
+        return JsonSerializer.Deserialize<WorkOrderStatus>(json)!;
     }
 }
