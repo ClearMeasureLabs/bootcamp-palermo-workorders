@@ -28,7 +28,7 @@ public class ServerFixture
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
     public static bool HeadlessTestBrowser { get; set; } = true;
     public static bool DatabaseInitialized { get; private set; }
-    private static readonly object DatabaseLock = new();
+    private static readonly Lock DatabaseLock = new();
 
     // Shared across all warm-up/health-check/reset HTTP calls in this fixture (Qodana
     // ShortLivedHttpClient) instead of allocating a new HttpClientHandler/HttpClient per call.

@@ -26,10 +26,10 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
 
     private readonly ActivityListener _activityListener;
     private readonly MeterListener _meterListener;
-    private readonly object _tracesLock = new();
-    private readonly object _eventsLock = new();
-    private readonly object _logsLock = new();
-    private readonly object _metricsLock = new();
+    private readonly Lock _tracesLock = new();
+    private readonly Lock _eventsLock = new();
+    private readonly Lock _logsLock = new();
+    private readonly Lock _metricsLock = new();
 
     private StreamWriter? _tracesWriter;
     private StreamWriter? _eventsWriter;

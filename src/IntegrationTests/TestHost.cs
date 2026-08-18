@@ -22,7 +22,7 @@ public static class TestHost
 {
     public static DateTimeOffset TestTime { get; set; } = new(2000, 1, 1, 1, 1, 1, TimeSpan.Zero);
     private static bool _dependenciesRegistered;
-    private static readonly object Lock = new();
+    private static readonly Lock Lock = new();
     private static IHost? _host;
 
     public static IHost Instance
