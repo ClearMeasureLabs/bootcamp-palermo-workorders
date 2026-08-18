@@ -13,7 +13,7 @@
 
                 <div class="form-group">
                     <label for="employee">Select Church Member</label>
-                    <InputSelect data-testid="@Elements.User" @bind-Value="loginModel.Username" class="form-control">
+                    <InputSelect id="employee" data-testid="@Elements.User" @bind-Value="loginModel.Username" class="form-control">
                         <option value="">-- Select a parishioner or staff member --</option>
                         @foreach (var employee in Employees)
                         {
