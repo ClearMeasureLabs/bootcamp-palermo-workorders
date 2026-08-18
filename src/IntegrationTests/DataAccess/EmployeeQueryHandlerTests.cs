@@ -20,7 +20,7 @@ public class EmployeeQueryHandlerTests
         var one = new Employee("1", "first1", "last1", "email1");
         var two = new Employee("2", "first2", "last2", "email2");
         var three = new Employee("3", "first3", "last3", "email3");
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(one);
             context.Add(two);
@@ -42,7 +42,7 @@ public class EmployeeQueryHandlerTests
         var one = new Employee("1", "first1", "last1", "email1");
         var two = new Employee("2", "first2", "last2", "email2");
         var three = new Employee("3", "first3", "last3", "email3");
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(two);
             context.Add(three);
@@ -107,7 +107,7 @@ public class EmployeeQueryHandlerTests
 
         var one = new Employee("1", "first1", "last1", "email1");
         var two = new Employee("2", "First2", "Last2", "email2");
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(one);
             context.Add(two);
@@ -131,7 +131,7 @@ public class EmployeeQueryHandlerTests
         new DatabaseTests().Clean();
 
         var homer = new Employee("hsimpson", "Homer", "Simpson", "homer@test.com");
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(homer);
             await context.SaveChangesAsync();
@@ -140,7 +140,7 @@ public class EmployeeQueryHandlerTests
         var bus = TestHost.GetRequiredService<IBus>();
         _ = await bus.Send(new EmployeeGetAllQuery());
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             var rehydrated = context.Set<Employee>().Single(e => e.UserName == "hsimpson");
             rehydrated.FirstName.ShouldBe("Homer");

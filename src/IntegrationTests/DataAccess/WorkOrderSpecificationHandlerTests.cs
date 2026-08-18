@@ -32,7 +32,7 @@ public class WorkOrderSpecificationHandlerTests
         order2.Assignee = employee2;
         order2.Number = "456";
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee1);
             context.Add(employee2);
@@ -65,7 +65,7 @@ public class WorkOrderSpecificationHandlerTests
         order2.Creator = creator2;
         order2.Number = "456";
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator1);
             context.Add(creator2);
@@ -102,7 +102,7 @@ public class WorkOrderSpecificationHandlerTests
         order2.Number = "456";
         order2.Status = WorkOrderStatus.Draft;
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee1);
             context.Add(employee2);
@@ -141,7 +141,7 @@ public class WorkOrderSpecificationHandlerTests
         order2.Number = "456";
         order2.Status = WorkOrderStatus.Draft;
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee1);
             context.Add(employee2);
@@ -169,7 +169,7 @@ public class WorkOrderSpecificationHandlerTests
         var order1 = new WorkOrder { Creator = employee, Assignee = employee, Number = "123" };
         var order2 = new WorkOrder { Creator = employee, Assignee = employee, Number = "456" };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(order1);
             context.Add(order2);

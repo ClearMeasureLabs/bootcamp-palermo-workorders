@@ -20,7 +20,7 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
         var workOrder = new WorkOrder { Number = "WO-001", Creator = uploader };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(uploader);
             context.Add(workOrder);
@@ -38,7 +38,7 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         attachment.WorkOrderId.ShouldBe(workOrder.Id);
         attachment.UploadedById.ShouldBe(uploader.Id);
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             var persisted = context.Set<WorkOrderAttachment>().SingleOrDefault(a => a.Id == attachment.Id);
             persisted.ShouldNotBeNull();
@@ -54,7 +54,7 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
         var workOrder = new WorkOrder { Number = "WO-002", Creator = uploader };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(uploader);
             context.Add(workOrder);
@@ -80,7 +80,7 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
         var workOrder = new WorkOrder { Number = "WO-003", Creator = creator };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
             context.Add(workOrder);
