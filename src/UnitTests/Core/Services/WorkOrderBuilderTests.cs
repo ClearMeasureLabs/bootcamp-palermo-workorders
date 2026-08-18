@@ -26,14 +26,9 @@ public class WorkOrderBuilderTests
     }
 }
 
-public class WorkOrderNumberGeneratorStub : IWorkOrderNumberGenerator
+public class WorkOrderNumberGeneratorStub(string numberToReturn) : IWorkOrderNumberGenerator
 {
-    private readonly string _numberToReturn;
-
-    public WorkOrderNumberGeneratorStub(string numberToReturn)
-    {
-        _numberToReturn = numberToReturn;
-    }
+    private readonly string _numberToReturn = numberToReturn;
 
     public string GenerateNumber()
     {

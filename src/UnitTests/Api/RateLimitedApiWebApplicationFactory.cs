@@ -9,14 +9,9 @@ namespace ClearMeasure.Bootcamp.UnitTests.Api;
 /// <summary>
 /// Hosts UI.Server with a very low API rate limit for exercising 429 responses.
 /// </summary>
-public sealed class RateLimitedApiWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
+public sealed class RateLimitedApiWebApplicationFactory(string? sqlConnectionString = null) : WebApplicationFactory<UiServerWebApplicationMarker>
 {
-    private readonly string _sqlConnectionString;
-
-    public RateLimitedApiWebApplicationFactory(string? sqlConnectionString = null)
-    {
-        _sqlConnectionString = sqlConnectionString ?? WebApplicationTestingDatabase.SqliteSharedMemoryConnectionString;
-    }
+    private readonly string _sqlConnectionString = sqlConnectionString ?? WebApplicationTestingDatabase.SqliteSharedMemoryConnectionString;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

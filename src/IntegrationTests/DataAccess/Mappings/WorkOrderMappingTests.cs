@@ -372,9 +372,9 @@ public class WorkOrderMappingTests
             Title = "Max length instructions",
             Description = "Testing truncation",
             Creator = creator,
-            Status = WorkOrderStatus.Draft
+            Status = WorkOrderStatus.Draft,
+            Instructions = longInstructions
         };
-        workOrder.Instructions = longInstructions;
 
         using (var context = TestHost.GetRequiredService<DbContext>())
         {

@@ -7,14 +7,9 @@ namespace Worker.Handlers;
 /// This proves the NServiceBus Send/Reply pipeline works end-to-end between the
 /// originating endpoint and the Worker ("WorkOrderProcessing") endpoint.
 /// </summary>
-public class TracerBulletHandler : IHandleMessages<TracerBulletCommand>
+public class TracerBulletHandler(ILogger<TracerBulletHandler> logger) : IHandleMessages<TracerBulletCommand>
 {
-    private readonly ILogger<TracerBulletHandler> _logger;
-
-    public TracerBulletHandler(ILogger<TracerBulletHandler> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<TracerBulletHandler> _logger = logger;
 
     public async Task Handle(TracerBulletCommand message, IMessageHandlerContext context)
     {

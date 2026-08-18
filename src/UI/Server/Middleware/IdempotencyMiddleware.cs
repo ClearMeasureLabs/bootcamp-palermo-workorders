@@ -11,7 +11,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Middleware;
 /// Replays the first successful (2xx) response for duplicate POST or PUT requests to <c>/api/*</c> (and the Blazor WASM
 /// single-API paths) that share the same <see cref="IdempotencyConstants.HeaderName"/> and the same method, path, and body.
 /// </summary>
-public sealed class IdempotencyMiddleware
+public sealed class IdempotencyMiddleware(
+    RequestDelegate next,
+    IMemoryCache cache,
+    IOptionsMonitor<IdempotencyOptions> optionsMonitor)
 {
     private const string BindingPrefix = "__idempotency_binding:";
 
@@ -30,20 +33,10 @@ public sealed class IdempotencyMiddleware
         "Upgrade"
     };
 
-    private readonly RequestDelegate _next;
-    private readonly IMemoryCache _cache;
-    private readonly IOptionsMonitor<IdempotencyOptions> _optionsMonitor;
+    private readonly RequestDelegate _next = next;
+    private readonly IMemoryCache _cache = cache;
+    private readonly IOptionsMonitor<IdempotencyOptions> _optionsMonitor = optionsMonitor;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _keyLocks = new(StringComparer.Ordinal);
-
-    public IdempotencyMiddleware(
-        RequestDelegate next,
-        IMemoryCache cache,
-        IOptionsMonitor<IdempotencyOptions> optionsMonitor)
-    {
-        _next = next;
-        _cache = cache;
-        _optionsMonitor = optionsMonitor;
-    }
 
     public async Task InvokeAsync(HttpContext context)
     {

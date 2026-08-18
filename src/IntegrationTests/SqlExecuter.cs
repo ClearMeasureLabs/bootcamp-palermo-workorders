@@ -6,14 +6,9 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 
-public class SqlExecuter
+public class SqlExecuter(DatabaseFacade facade)
 {
-    private readonly DatabaseFacade _facade;
-
-    public SqlExecuter(DatabaseFacade facade)
-    {
-        _facade = facade;
-    }
+    private readonly DatabaseFacade _facade = facade;
 
     [SuppressMessage("Microsoft.Security", "CA2100:Review SQL queries for security vulnerabilities")]
     public void ExecuteSql(string commandText, Action<DbDataReader> readerAction)

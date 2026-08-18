@@ -30,14 +30,7 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
 
     public static WorkOrderStatus[] GetAllItems()
     {
-        return new[]
-        {
-            Draft,
-            Assigned,
-            InProgress,
-            Complete,
-            Cancelled
-        };
+        return [Draft, Assigned, InProgress, Complete, Cancelled];
     }
 
     public string Code { get; }

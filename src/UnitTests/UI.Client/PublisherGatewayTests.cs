@@ -105,15 +105,11 @@ public class PublisherGatewayTests
         values.Single().ShouldBe("client-secret");
     }
 
-    private class StubPublisherGateway : PublisherGateway
+    private class StubPublisherGateway() : PublisherGateway(new HttpClient())
     {
         private WebServiceMessage? _sendToTopicResponse = new();
 
         public WebServiceMessage? LastMessage { get; private set; }
-
-        public StubPublisherGateway() : base(new HttpClient())
-        {
-        }
 
         public void SetSendToTopicResponse(WebServiceMessage? response)
         {

@@ -22,14 +22,9 @@ public static class ApiRequestTimeoutsExtensions
         return services;
     }
 
-    private sealed class ConfigureApiRequestTimeoutPolicyOptions : IConfigureOptions<RequestTimeoutOptions>
+    private sealed class ConfigureApiRequestTimeoutPolicyOptions(IOptions<ApiRequestTimeoutOptions> apiOptions) : IConfigureOptions<RequestTimeoutOptions>
     {
-        private readonly IOptions<ApiRequestTimeoutOptions> _apiOptions;
-
-        public ConfigureApiRequestTimeoutPolicyOptions(IOptions<ApiRequestTimeoutOptions> apiOptions)
-        {
-            _apiOptions = apiOptions;
-        }
+        private readonly IOptions<ApiRequestTimeoutOptions> _apiOptions = apiOptions;
 
         public void Configure(RequestTimeoutOptions options)
         {

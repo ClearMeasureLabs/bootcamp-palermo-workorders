@@ -66,8 +66,7 @@ public class EmployeeQueryHandlerTests
     {
         new DatabaseTests().Clean();
 
-        var employee = new Employee("testuser", "Test", "User", "test@test.com");
-        employee.PreferredLanguage = "fr-FR";
+        var employee = new Employee("testuser", "Test", "User", "test@test.com") { PreferredLanguage = "fr-FR" };
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);

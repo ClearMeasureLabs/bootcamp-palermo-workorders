@@ -218,7 +218,7 @@ app.UseOutputCache();
 app.MapRazorPages();
 var apiControllers = app.MapControllers();
 var apiRequestTimeoutOpts = app.Services.GetRequiredService<IOptions<ApiRequestTimeoutOptions>>().Value;
-if (apiRequestTimeoutOpts.Enabled && apiRequestTimeoutOpts.TimeoutSeconds > 0)
+if (apiRequestTimeoutOpts is { Enabled: true, TimeoutSeconds: > 0 })
 {
     apiControllers.WithRequestTimeout(ApiRequestTimeoutsExtensions.ApiControllersPolicyName);
 }

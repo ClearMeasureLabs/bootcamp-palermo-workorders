@@ -3,16 +3,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 
-public sealed class DatabaseEmptier
+public sealed class DatabaseEmptier(DatabaseFacade database)
 {
-    private static readonly string[] IgnoredTables = { "[dbo].[sysdiagrams]", "[dbo].[SchemaVersions]" };
+    private static readonly string[] IgnoredTables = ["[dbo].[sysdiagrams]", "[dbo].[SchemaVersions]"];
     private static string? _deleteSql;
-    private readonly DatabaseFacade _database;
-
-    public DatabaseEmptier(DatabaseFacade database)
-    {
-        _database = database;
-    }
+    private readonly DatabaseFacade _database = database;
 
     public void DeleteAllData()
     {
@@ -37,7 +32,7 @@ public sealed class DatabaseEmptier
 
     private void DeleteAllDataSqlite()
     {
-        var tables = new List<string>();
+        List<string> tables = [];
         new SqlExecuter(_database).ExecuteSql(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
             reader => tables.Add(reader.GetString(0)));

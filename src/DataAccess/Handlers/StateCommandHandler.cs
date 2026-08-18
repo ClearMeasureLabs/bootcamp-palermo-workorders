@@ -41,7 +41,7 @@ public class StateCommandHandler(DbContext dbContext, TimeProvider time, IDistri
         var workOrderNumber = order.Number;
         var fullName = request.CurrentUser.GetFullName();
 
-        var debugMessage = string.Format("{0} has {1} work order {2}", fullName, loweredTransitionVerb, workOrderNumber);
+        var debugMessage = $"{fullName} has {loweredTransitionVerb} work order {workOrderNumber}";
         logger.LogDebug(debugMessage);
         logger.LogInformation("Executed");
 

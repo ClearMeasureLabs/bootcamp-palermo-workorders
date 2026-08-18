@@ -164,15 +164,11 @@ public class RemotableBusTests
         }
     }
 
-    private class StubPublisherGateway : PublisherGateway
+    private class StubPublisherGateway() : PublisherGateway(new HttpClient())
     {
         private object? _response;
 
         public object? LastRequest { get; private set; }
-
-        public StubPublisherGateway() : base(new HttpClient())
-        {
-        }
 
         public void SetResponse<T>(T? response)
         {

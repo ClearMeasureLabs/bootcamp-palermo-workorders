@@ -5,19 +5,13 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests;
 /// detecting JavaScript errors or stuck loading screens, and reloading until the LoginLink is visible.
 /// This ensures the WASM payload is fully downloaded and initialized before parallel tests begin.
 /// </summary>
-public class BlazorWasmWarmUp
+public class BlazorWasmWarmUp(IPlaywright playwright, string baseUrl)
 {
     private const int MaxAttempts = 5;
     private const int TimeoutSeconds = 30;
 
-    private readonly IPlaywright _playwright;
-    private readonly string _baseUrl;
-
-    public BlazorWasmWarmUp(IPlaywright playwright, string baseUrl)
-    {
-        _playwright = playwright;
-        _baseUrl = baseUrl;
-    }
+    private readonly IPlaywright _playwright = playwright;
+    private readonly string _baseUrl = baseUrl;
 
     /// <summary>
     /// Loads the home page in a disposable headless browser, retrying on JavaScript errors

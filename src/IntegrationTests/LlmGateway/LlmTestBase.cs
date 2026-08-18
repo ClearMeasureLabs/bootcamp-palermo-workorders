@@ -65,7 +65,7 @@ public abstract class LlmTestBase : IntegratedTestBase
     {
         for (var e = ex; e != null; e = e.InnerException)
         {
-            if (e is HttpRequestException http && http.StatusCode == HttpStatusCode.TooManyRequests)
+            if (e is HttpRequestException { StatusCode: HttpStatusCode.TooManyRequests })
             {
                 return true;
             }

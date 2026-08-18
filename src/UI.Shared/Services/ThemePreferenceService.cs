@@ -5,16 +5,14 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Services;
 /// <summary>
 /// Holds the current light/dark theme and persists the user's choice in browser local storage.
 /// </summary>
-public sealed class ThemePreferenceService : IAsyncDisposable
+public sealed class ThemePreferenceService(IJSRuntime js) : IAsyncDisposable
 {
     public const string ThemeJsModulePath = "./_content/ClearMeasure.Bootcamp.UI.Shared/js/theme.js";
 
-    private readonly IJSRuntime _js;
+    private readonly IJSRuntime _js = js;
     private IJSObjectReference? _module;
     private bool _isDarkMode;
     private bool _initialized;
-
-    public ThemePreferenceService(IJSRuntime js) => _js = js;
 
     public event Action? OnChange;
 

@@ -23,14 +23,8 @@ public class WorkOrderSpecificationHandlerTests
 
         var employee1 = new Employee("1", "1", "1", "1");
         var employee2 = new Employee("2", "2", "2", "2");
-        var order1 = new WorkOrder();
-        order1.Creator = employee2;
-        order1.Assignee = employee1;
-        order1.Number = "123";
-        var order2 = new WorkOrder();
-        order2.Creator = employee1;
-        order2.Assignee = employee2;
-        order2.Number = "456";
+        var order1 = new WorkOrder { Creator = employee2, Assignee = employee1, Number = "123" };
+        var order2 = new WorkOrder { Creator = employee1, Assignee = employee2, Number = "456" };
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
@@ -58,12 +52,8 @@ public class WorkOrderSpecificationHandlerTests
 
         var creator1 = new Employee("1", "1", "1", "1");
         var creator2 = new Employee("2", "2", "2", "2");
-        var order1 = new WorkOrder();
-        order1.Creator = creator1;
-        order1.Number = "123";
-        var order2 = new WorkOrder();
-        order2.Creator = creator2;
-        order2.Number = "456";
+        var order1 = new WorkOrder { Creator = creator1, Number = "123" };
+        var order2 = new WorkOrder { Creator = creator2, Number = "456" };
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
@@ -91,16 +81,8 @@ public class WorkOrderSpecificationHandlerTests
 
         var employee1 = new Employee("1", "1", "1", "1");
         var employee2 = new Employee("2", "2", "2", "2");
-        var order1 = new WorkOrder();
-        order1.Creator = employee2;
-        order1.Assignee = employee1;
-        order1.Number = "123";
-        order1.Status = WorkOrderStatus.Assigned;
-        var order2 = new WorkOrder();
-        order2.Creator = employee1;
-        order2.Assignee = employee2;
-        order2.Number = "456";
-        order2.Status = WorkOrderStatus.Draft;
+        var order1 = new WorkOrder { Creator = employee2, Assignee = employee1, Number = "123", Status = WorkOrderStatus.Assigned };
+        var order2 = new WorkOrder { Creator = employee1, Assignee = employee2, Number = "456", Status = WorkOrderStatus.Draft };
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
@@ -130,16 +112,8 @@ public class WorkOrderSpecificationHandlerTests
 
         var employee1 = new Employee("1", "1", "1", "1");
         var employee2 = new Employee("2", "2", "2", "2");
-        var order1 = new WorkOrder();
-        order1.Creator = employee2;
-        order1.Assignee = employee1;
-        order1.Number = "123";
-        order1.Status = WorkOrderStatus.Assigned;
-        var order2 = new WorkOrder();
-        order2.Creator = employee1;
-        order2.Assignee = employee2;
-        order2.Number = "456";
-        order2.Status = WorkOrderStatus.Draft;
+        var order1 = new WorkOrder { Creator = employee2, Assignee = employee1, Number = "123", Status = WorkOrderStatus.Assigned };
+        var order2 = new WorkOrder { Creator = employee1, Assignee = employee2, Number = "456", Status = WorkOrderStatus.Draft };
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {

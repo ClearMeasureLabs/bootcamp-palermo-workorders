@@ -1,7 +1,7 @@
 @using ClearMeasure.Bootcamp.UI.Shared.Authentication
 <ApplicationInsightsInit IsWasmStandalone="true" />
 <CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="new[] {typeof(ClearMeasure.Bootcamp.UI.Shared.MainLayout).Assembly}">
+    <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="[typeof(ClearMeasure.Bootcamp.UI.Shared.MainLayout).Assembly]">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(ClearMeasure.Bootcamp.UI.Shared.MainLayout)">
                 <NotAuthorized>

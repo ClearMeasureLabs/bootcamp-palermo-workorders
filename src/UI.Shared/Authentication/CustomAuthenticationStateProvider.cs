@@ -14,10 +14,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
     public void Login(string username)
     {
-        var identity = new ClaimsIdentity(new[]
-        {
-            new Claim(ClaimTypes.Name, username)
-        }, "Custom Authentication");
+        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Name, username)], "Custom Authentication");
 
         _currentUser = new ClaimsPrincipal(identity);
 
