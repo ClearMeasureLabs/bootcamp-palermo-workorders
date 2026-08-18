@@ -17,13 +17,15 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         ChatOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        var messageList = AsMaterializedList(messages);
+
         using var activity = StartActivity("ChatClient.GetResponseAsync");
-        activity?.SetTag("chat.prompt", GetLastUserMessage(messages));
+        activity?.SetTag("chat.prompt", GetLastUserMessage(messageList));
         activity?.AddEvent(new ActivityEvent("request.sent"));
 
         try
         {
-            var response = await base.GetResponseAsync(messages, options, cancellationToken);
+            var response = await base.GetResponseAsync(messageList, options, cancellationToken);
             activity?.AddEvent(new ActivityEvent("response.received"));
             activity?.SetTag("chat.model", response.ModelId);
             activity?.SetTag("chat.response", response.Text);
@@ -48,8 +50,10 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         ChatOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        var messageList = AsMaterializedList(messages);
+
         using var activity = StartActivity("ChatClient.GetStreamingResponseAsync");
-        activity?.SetTag("chat.prompt", GetLastUserMessage(messages));
+        activity?.SetTag("chat.prompt", GetLastUserMessage(messageList));
         activity?.AddEvent(new ActivityEvent("request.sent"));
 
         ChatResponseUpdate? lastUpdate = null;
@@ -58,7 +62,7 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         ChatResponseUpdate update;
 
         await using var enumerator = base
-            .GetStreamingResponseAsync(messages, options, cancellationToken)
+            .GetStreamingResponseAsync(messageList, options, cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
 
         while (true)
@@ -116,5 +120,17 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
     private string? GetLastUserMessage(IEnumerable<ChatMessage> messages)
     {
         return messages.LastOrDefault(m => m.Role == ChatRole.User)?.Text;
+    }
+
+    /// <summary>
+    /// Materializes the caller-supplied conversation history exactly once. The message list is a small,
+    /// finite, in-memory sequence (unlike the streaming response below, which must never be buffered),
+    /// so it is safe — and necessary — to snapshot it here to avoid re-enumerating a deferred/one-shot
+    /// source (e.g. a LINQ query or an already-consumed iterator) once for tracing and again for the
+    /// actual chat call.
+    /// </summary>
+    private static IReadOnlyList<ChatMessage> AsMaterializedList(IEnumerable<ChatMessage> messages)
+    {
+        return messages as IReadOnlyList<ChatMessage> ?? messages.ToList();
     }
 }
