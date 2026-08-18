@@ -146,7 +146,7 @@ inner join sys.schemas s on t.schema_id = s.schema_id",
 
     private class Relationship
     {
-        public string PrimaryKeyTable { get; set; } = null!;
-        public string ForeignKeyTable { get; set; } = null!;
+        public string PrimaryKeyTable { get; init; } = null!;
+        public string ForeignKeyTable { get; init; } = null!;
     }
 }

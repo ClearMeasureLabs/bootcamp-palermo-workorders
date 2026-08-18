@@ -6,7 +6,7 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 
 public record ApplicationChatQuery(string Prompt, string CurrentUsername) : IRequest<ChatResponse>, IRemotableRequest
 {
-    public List<ChatHistoryMessage> ChatHistory { get; set; } = [];
+    public List<ChatHistoryMessage> ChatHistory { get; init; } = [];
 }
 
 public record ChatHistoryMessage(string Role, string Content);

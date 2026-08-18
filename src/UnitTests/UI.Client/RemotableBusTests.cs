@@ -214,6 +214,6 @@ public class RemotableBusTests
 
     private class TestRemotableEvent : IRemotableEvent
     {
-        public string Message { get; set; } = string.Empty;
+        public string Message { get; init; } = string.Empty;
     }
 }

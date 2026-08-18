@@ -20,7 +20,7 @@ public sealed class RateLimitingMiddleware
     public const string HeaderRemaining = "X-RateLimit-Remaining";
 
     /// <summary>Response header: Unix timestamp when the window fully resets.</summary>
-    public const string HeaderReset = "X-RateLimit-Reset";
+    private const string HeaderReset = "X-RateLimit-Reset";
 
     private readonly RequestDelegate _next;
     private readonly IOptionsMonitor<ApiRateLimitingOptions> _optionsMonitor;

@@ -12,7 +12,7 @@ StateCommandBase(WorkOrder, CurrentUser)
         return WorkOrderStatus.Draft;
     }
 
-    public override WorkOrderStatus GetEndStatus()
+    protected override WorkOrderStatus GetEndStatus()
     {
         return WorkOrderStatus.Draft;
     }

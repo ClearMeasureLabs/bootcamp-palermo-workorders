@@ -10,7 +10,7 @@ public sealed class ApiKeyAuthenticationOptions
     /// <summary>
     /// When <c>true</c> and <see cref="ValidationKey"/> is non-empty, requests to protected API paths must send a matching <c>X-Api-Key</c> header.
     /// </summary>
-    public bool Enabled { get; set; }
+    public bool Enabled { get; init; }
 
     /// <summary>
     /// Secret value callers must send in the <c>X-Api-Key</c> header. Whitespace is trimmed when reading configuration.

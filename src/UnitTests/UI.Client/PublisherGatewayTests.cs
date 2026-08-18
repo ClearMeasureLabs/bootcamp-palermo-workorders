@@ -155,11 +155,11 @@ public class PublisherGatewayTests
 
     private class TestRemotableRequest : IRemotableRequest
     {
-        public string Data { get; set; } = "";
+        public string Data { get; init; } = "";
     }
 
     private class TestRemotableEvent : IRemotableEvent
     {
-        public string Message { get; set; } = "";
+        public string Message { get; init; } = "";
     }
 }
