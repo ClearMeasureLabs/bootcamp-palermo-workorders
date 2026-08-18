@@ -95,6 +95,16 @@ public class WorkOrderStatus
             return false;
         }
 
+        if (left.Code is null || right.Code is null)
+        {
+            // An instance with a null Code only exists briefly during EF Core /
+            // serialization materialization (see the parameterless constructor) and is
+            // never a legitimate domain value. Two such instances are not the same
+            // status just because both are uninitialized, so they never compare equal
+            // unless they are the same reference (handled above).
+            return false;
+        }
+
         return string.Equals(left.Code, right.Code, StringComparison.Ordinal);
     }
 

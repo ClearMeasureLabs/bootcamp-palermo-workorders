@@ -144,4 +144,28 @@ public class WorkOrderStatusTests
         (uninitialized == WorkOrderStatus.Draft).ShouldBeFalse();
         (uninitialized != WorkOrderStatus.Draft).ShouldBeTrue();
     }
+
+    [Test]
+    public void ShouldNotConsiderTwoSeparateUninitializedInstancesEqual()
+    {
+        var first = new WorkOrderStatus();
+        var second = new WorkOrderStatus();
+
+        ReferenceEquals(first, second).ShouldBeFalse();
+        Should.NotThrow(() => _ = first == second);
+        (first == second).ShouldBeFalse();
+        (first != second).ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldConsiderAnUninitializedInstanceEqualToItselfByReference()
+    {
+        var uninitialized = new WorkOrderStatus();
+        var sameInstance = uninitialized;
+
+#pragma warning disable CS1718 // Comparison made to same variable is intentional here
+        (uninitialized == sameInstance).ShouldBeTrue();
+        (uninitialized != sameInstance).ShouldBeFalse();
+#pragma warning restore CS1718
+    }
 }
