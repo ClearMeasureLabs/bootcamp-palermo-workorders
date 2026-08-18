@@ -15,7 +15,7 @@
                     <label for="employee">Select Church Member</label>
                     <InputSelect data-testid="@Elements.User" @bind-Value="loginModel.Username" class="form-control">
                         <option value="">-- Select a parishioner or staff member --</option>
-                        @foreach (var employee in employees)
+                        @foreach (var employee in Employees)
                         {
                             <option value="@employee.UserName">@GetLoginDropdownDisplayName(employee)</option>
                         }
@@ -23,9 +23,9 @@
                     <ValidationMessage For="@(() => loginModel.Username)"/>
                 </div>
 
-                @if (!string.IsNullOrEmpty(errorMessage))
+                @if (!string.IsNullOrEmpty(ErrorMessage))
                 {
-                    <div class="alert alert-danger">@errorMessage</div>
+                    <div class="alert alert-danger">@ErrorMessage</div>
                 }
 
                 <div class="text-center">

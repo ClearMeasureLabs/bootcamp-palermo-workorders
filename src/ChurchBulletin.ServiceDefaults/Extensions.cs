@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using OpenTelemetry;
@@ -10,7 +11,7 @@ using OpenTelemetry.Trace;
 using Serilog;
 using System.Diagnostics;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 public static class Extensions
 {

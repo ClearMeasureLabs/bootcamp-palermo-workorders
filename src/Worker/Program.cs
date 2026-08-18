@@ -1,3 +1,4 @@
+using ChurchBulletin.ServiceDefaults;
 using Worker;
 
 var builder = Host.CreateApplicationBuilder(args);

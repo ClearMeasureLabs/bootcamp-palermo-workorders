@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Represents a structured trace entry for telemetry file output.

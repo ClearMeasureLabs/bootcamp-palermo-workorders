@@ -133,14 +133,14 @@ public class EmployeeTests
     }
 
     [Test]
-    public void PreferredLanguageShouldDefaultToEnUS()
+    public void PreferredLanguageShouldDefaultToEnUs()
     {
         var employee = new Employee();
         Assert.That(employee.PreferredLanguage, Is.EqualTo("en-US"));
     }
 
     [Test]
-    public void PreferredLanguageShouldDefaultToEnUSWithConstructor()
+    public void PreferredLanguageShouldDefaultToEnUsWithConstructor()
     {
         var employee = new Employee("user", "First", "Last", "email@test.com");
         Assert.That(employee.PreferredLanguage, Is.EqualTo("en-US"));

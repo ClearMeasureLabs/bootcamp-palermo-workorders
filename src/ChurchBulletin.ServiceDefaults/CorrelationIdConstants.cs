@@ -1,4 +1,4 @@
-namespace ClearMeasure.Bootcamp.ServiceDefaults;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Names for correlation identifier propagation over HTTP.

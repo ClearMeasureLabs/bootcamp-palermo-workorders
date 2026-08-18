@@ -9,7 +9,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.LlmGateway;
 public class TranslationServiceTests
 {
     [Test]
-    public async Task ShouldReturnOriginalTextWhenTargetLanguageIsEnUS()
+    public async Task ShouldReturnOriginalTextWhenTargetLanguageIsEnUs()
     {
         var bus = new StubBus(available: true);
         var factory = new ChatClientFactory(bus);

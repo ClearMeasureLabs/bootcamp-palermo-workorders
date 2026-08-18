@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using ChurchBulletin.ServiceDefaults;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.ResponseCompression;
 using ClearMeasure.Bootcamp.Core;

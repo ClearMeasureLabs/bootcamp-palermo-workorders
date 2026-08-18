@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace ClearMeasure.Bootcamp.ServiceDefaults;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Ensures each HTTP request has a correlation identifier for logging, tracing, and response headers.

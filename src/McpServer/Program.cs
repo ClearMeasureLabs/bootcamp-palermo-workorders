@@ -1,3 +1,4 @@
+using ChurchBulletin.ServiceDefaults;
 using ClearMeasure.Bootcamp.McpServer;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.McpServer.Resources;

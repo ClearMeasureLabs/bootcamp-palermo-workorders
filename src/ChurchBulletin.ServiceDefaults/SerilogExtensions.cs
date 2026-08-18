@@ -1,17 +1,18 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Formatting.Compact;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Shared Serilog setup: compact JSON per line on stdout for container log aggregation.
 /// </summary>
 public static class SerilogExtensions
 {
-    private static readonly MethodInfo? s_hostApplicationBuilderAsHostBuilder = typeof(HostApplicationBuilder)
+    private static readonly MethodInfo? SHostApplicationBuilderAsHostBuilder = typeof(HostApplicationBuilder)
         .GetMethod("AsHostBuilder", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
     /// <summary>
@@ -27,7 +28,7 @@ public static class SerilogExtensions
                 web.Host.UseSerilog(ConfigureSerilog, writeToProviders: true);
                 break;
             case HostApplicationBuilder generic:
-                if (s_hostApplicationBuilderAsHostBuilder?.Invoke(generic, null) is not IHostBuilder hostBuilder)
+                if (SHostApplicationBuilderAsHostBuilder?.Invoke(generic, null) is not IHostBuilder hostBuilder)
                 {
                     throw new InvalidOperationException(
                         "Could not obtain IHostBuilder from HostApplicationBuilder for Serilog configuration.");

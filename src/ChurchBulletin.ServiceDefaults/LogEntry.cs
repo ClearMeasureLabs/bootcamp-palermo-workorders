@@ -1,5 +1,5 @@
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Represents a structured log entry for telemetry file output.
