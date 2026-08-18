@@ -168,4 +168,79 @@ public class WorkOrderStatusTests
         (uninitialized != sameInstance).ShouldBeFalse();
 #pragma warning restore CS1718
     }
+
+    [Test]
+    public void ShouldNotThrowWhenCallingEqualsOnAnInstanceWithNullCode()
+    {
+        var uninitialized = new WorkOrderStatus();
+
+        Should.NotThrow(() => uninitialized.Equals(WorkOrderStatus.Draft));
+        Should.NotThrow(() => WorkOrderStatus.Draft.Equals(uninitialized));
+        uninitialized.Equals(WorkOrderStatus.Draft).ShouldBeFalse();
+        WorkOrderStatus.Draft.Equals(uninitialized).ShouldBeFalse();
+    }
+
+    [Test]
+    public void ShouldNotThrowWhenCallingGetHashCodeOnAnInstanceWithNullCode()
+    {
+        var uninitialized = new WorkOrderStatus();
+
+        Should.NotThrow(() => uninitialized.GetHashCode());
+    }
+
+    [Test]
+    public void WhenComparingTwoUninitializedInstancesEqualsShouldAgreeWithOperator()
+    {
+        var first = new WorkOrderStatus();
+        var second = new WorkOrderStatus();
+
+        (first == second).ShouldBeFalse();
+        first.Equals(second).ShouldBeFalse();
+        (first == second).ShouldBe(first.Equals(second));
+    }
+
+    [Test]
+    public void ShouldAgreeBetweenEqualsOperatorForEveryCombinationOfNullAndNonNullCode()
+    {
+        var uninitialized = new WorkOrderStatus();
+        var separateInstance = CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus.Draft);
+
+        (WorkOrderStatus.Draft == separateInstance).ShouldBe(WorkOrderStatus.Draft.Equals(separateInstance));
+        (WorkOrderStatus.Draft == uninitialized).ShouldBe(WorkOrderStatus.Draft.Equals(uninitialized));
+        (uninitialized == WorkOrderStatus.Draft).ShouldBe(uninitialized.Equals(WorkOrderStatus.Draft));
+
+#pragma warning disable CS1718 // Comparison made to same variable is intentional here
+        (uninitialized == uninitialized).ShouldBe(uninitialized.Equals(uninitialized));
+#pragma warning restore CS1718
+    }
+
+    [Test]
+    public void EqualStatusesShouldProduceEqualHashCodes()
+    {
+        var separateInstance = CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus.Draft);
+
+        WorkOrderStatus.Draft.Equals(separateInstance).ShouldBeTrue();
+        WorkOrderStatus.Draft.GetHashCode().ShouldBe(separateInstance.GetHashCode());
+    }
+
+    [Test]
+    public void ShouldNotThrowWhenUsingAnInstanceWithNullCodeAsADictionaryKey()
+    {
+        var uninitialized = new WorkOrderStatus();
+
+        Should.NotThrow(() =>
+        {
+            var dictionary = new Dictionary<WorkOrderStatus, string> { { uninitialized, "value" } };
+            dictionary.ContainsKey(uninitialized).ShouldBeTrue();
+        });
+    }
+
+    [Test]
+    public void ShouldNotThrowWhenCallingIsEmptyOnAnInstanceWithNullCode()
+    {
+        var uninitialized = new WorkOrderStatus();
+
+        Should.NotThrow(() => uninitialized.IsEmpty());
+        uninitialized.IsEmpty().ShouldBeFalse();
+    }
 }
