@@ -1,5 +1,4 @@
 using DbUp;
-using DbUp.Engine;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;

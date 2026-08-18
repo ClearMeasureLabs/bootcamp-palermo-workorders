@@ -1,5 +1,4 @@
 using System.Net;
-using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.Api;
 

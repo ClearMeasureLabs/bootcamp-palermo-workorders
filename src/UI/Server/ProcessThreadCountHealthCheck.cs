@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
 

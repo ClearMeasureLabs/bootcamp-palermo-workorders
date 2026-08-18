@@ -1,5 +1,4 @@
 using ClearMeasure.Bootcamp.Core.Model.Messages;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using NServiceBus;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.NServiceBus;

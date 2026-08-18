@@ -4,7 +4,6 @@ using ClearMeasure.Bootcamp.UI.Shared;
 using Lamar;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ClearMeasure.Bootcamp.McpServer;
 

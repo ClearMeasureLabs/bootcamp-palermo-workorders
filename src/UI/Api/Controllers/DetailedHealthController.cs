@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 

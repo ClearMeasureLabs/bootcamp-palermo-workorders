@@ -7,7 +7,6 @@ using ClearMeasure.Bootcamp.UnitTests.Api;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 

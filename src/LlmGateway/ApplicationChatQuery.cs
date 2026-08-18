@@ -1,5 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core;
 using MediatR;
 using Microsoft.Extensions.AI;
 

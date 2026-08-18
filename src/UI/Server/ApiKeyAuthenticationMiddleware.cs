@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using ClearMeasure.Bootcamp.UI.Shared;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
 namespace ClearMeasure.Bootcamp.UI.Server;

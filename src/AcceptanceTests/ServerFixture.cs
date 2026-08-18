@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Net;
 using ClearMeasure.Bootcamp.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests;
 
