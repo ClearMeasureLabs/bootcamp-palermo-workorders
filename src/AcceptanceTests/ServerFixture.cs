@@ -91,17 +91,17 @@ public class ServerFixture
 
         for (var attempt = 1; attempt <= 3; attempt++)
         {
-            TestContext.Out.WriteLine($"HTTP warm-up: round {attempt}/3");
+            await TestContext.Out.WriteLineAsync($"HTTP warm-up: round {attempt}/3");
             foreach (var path in warmUpPaths)
             {
                 try
                 {
                     var response = await SharedHttpClient.GetAsync($"{ApplicationBaseUrl}{path}");
-                    TestContext.Out.WriteLine($"  {path} -> {(int)response.StatusCode}");
+                    await TestContext.Out.WriteLineAsync($"  {path} -> {(int)response.StatusCode}");
                 }
                 catch (Exception ex)
                 {
-                    TestContext.Out.WriteLine($"  {path} -> {ex.GetType().Name}: {ex.Message}");
+                    await TestContext.Out.WriteLineAsync($"  {path} -> {ex.GetType().Name}: {ex.Message}");
                 }
             }
 
@@ -121,7 +121,7 @@ public class ServerFixture
         const int delayBetweenAttemptsMs = 5000;
 
         // 1. Verify site is reachable
-        TestContext.Out.WriteLine("Health gate: verifying site is reachable...");
+        await TestContext.Out.WriteLineAsync("Health gate: verifying site is reachable...");
         HttpResponseMessage? siteResponse = null;
         Exception? lastSiteException = null;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
@@ -129,13 +129,13 @@ public class ServerFixture
             try
             {
                 siteResponse = await SharedHttpClient.GetAsync(ApplicationBaseUrl);
-                TestContext.Out.WriteLine($"  GET {ApplicationBaseUrl} -> {(int)siteResponse.StatusCode}");
+                await TestContext.Out.WriteLineAsync($"  GET {ApplicationBaseUrl} -> {(int)siteResponse.StatusCode}");
                 if (siteResponse.IsSuccessStatusCode) break;
             }
             catch (Exception ex)
             {
                 lastSiteException = ex;
-                TestContext.Out.WriteLine($"  GET {ApplicationBaseUrl} -> {ex.GetType().Name}: {ex.Message}");
+                await TestContext.Out.WriteLineAsync($"  GET {ApplicationBaseUrl} -> {ex.GetType().Name}: {ex.Message}");
             }
 
             if (attempt < maxAttempts) await Task.Delay(delayBetweenAttemptsMs);
@@ -151,7 +151,7 @@ public class ServerFixture
         }
 
         // 2. Verify /_healthcheck returns Healthy (includes database connectivity)
-        TestContext.Out.WriteLine("Health gate: verifying /_healthcheck...");
+        await TestContext.Out.WriteLineAsync("Health gate: verifying /_healthcheck...");
         var healthUrl = $"{ApplicationBaseUrl}/_healthcheck";
         string? healthBody = null;
         HttpStatusCode? healthStatus = null;
@@ -163,14 +163,14 @@ public class ServerFixture
                 var response = await SharedHttpClient.GetAsync(healthUrl);
                 healthStatus = response.StatusCode;
                 healthBody = await response.Content.ReadAsStringAsync();
-                TestContext.Out.WriteLine($"  GET {healthUrl} -> {(int)response.StatusCode}: {healthBody}");
+                await TestContext.Out.WriteLineAsync($"  GET {healthUrl} -> {(int)response.StatusCode}: {healthBody}");
                 if (response.IsSuccessStatusCode && IsAcceptableHealthStatus(healthBody))
                     break;
             }
             catch (Exception ex)
             {
                 lastHealthException = ex;
-                TestContext.Out.WriteLine($"  GET {healthUrl} -> {ex.GetType().Name}: {ex.Message}");
+                await TestContext.Out.WriteLineAsync($"  GET {healthUrl} -> {ex.GetType().Name}: {ex.Message}");
             }
 
             if (attempt < maxAttempts) await Task.Delay(delayBetweenAttemptsMs);
@@ -185,7 +185,7 @@ public class ServerFixture
                 $"Health gate FAILED: /_healthcheck did not return Healthy or Degraded after {maxAttempts} attempts. {detail}");
         }
 
-        TestContext.Out.WriteLine("Health gate: PASSED - site is reachable and healthy.");
+        await TestContext.Out.WriteLineAsync("Health gate: PASSED - site is reachable and healthy.");
     }
 
     private static bool IsAcceptableHealthStatus(string body) =>
@@ -306,17 +306,17 @@ public class ServerFixture
 
         if (!StartWorker)
         {
-            TestContext.Out.WriteLine("Worker: skipped (StartWorker=false).");
+            await TestContext.Out.WriteLineAsync("Worker: skipped (StartWorker=false).");
             return;
         }
 
         if (useSqlite)
         {
-            TestContext.Out.WriteLine("Worker: skipped (SQLite mode — Worker requires SqlServerTransport).");
+            await TestContext.Out.WriteLineAsync("Worker: skipped (SQLite mode — Worker requires SqlServerTransport).");
             return;
         }
 
-        TestContext.Out.WriteLine("Worker: starting...");
+        await TestContext.Out.WriteLineAsync("Worker: starting...");
         var config = BuildConfiguration;
         var arguments = $"run --no-build --configuration {config} --no-launch-profile";
 
@@ -388,13 +388,13 @@ public class ServerFixture
 
         if (completed == timeout)
         {
-            TestContext.Out.WriteLine(
+            await TestContext.Out.WriteLineAsync(
                 $"Worker: did not detect startup confirmation within {WaitTimeoutSeconds}s. " +
                 "Proceeding anyway — SqlServerTransport is durable and will deliver queued messages.");
         }
         else
         {
-            TestContext.Out.WriteLine("Worker: started successfully.");
+            await TestContext.Out.WriteLineAsync("Worker: started successfully.");
         }
 
         WorkerStarted = true;

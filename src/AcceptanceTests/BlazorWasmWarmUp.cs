@@ -25,7 +25,7 @@ public class BlazorWasmWarmUp
     /// </summary>
     public async Task ExecuteAsync()
     {
-        TestContext.Out.WriteLine("Blazor WASM warm-up: starting...");
+        await TestContext.Out.WriteLineAsync("Blazor WASM warm-up: starting...");
 
         await using var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
@@ -47,7 +47,7 @@ public class BlazorWasmWarmUp
         for (var attempt = 1; attempt <= MaxAttempts; attempt++)
         {
             jsErrors.Clear();
-            TestContext.Out.WriteLine($"Blazor WASM warm-up: attempt {attempt}/{MaxAttempts}");
+            await TestContext.Out.WriteLineAsync($"Blazor WASM warm-up: attempt {attempt}/{MaxAttempts}");
 
             await page.GotoAsync("/");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -61,24 +61,24 @@ public class BlazorWasmWarmUp
                     Timeout = TimeoutSeconds * 1000
                 });
 
-                TestContext.Out.WriteLine("Blazor WASM warm-up: LoginLink visible — app is ready.");
+                await TestContext.Out.WriteLineAsync("Blazor WASM warm-up: LoginLink visible — app is ready.");
                 await page.CloseAsync();
                 await context.CloseAsync();
                 return;
             }
             catch (TimeoutException)
             {
-                TestContext.Out.WriteLine(
+                await TestContext.Out.WriteLineAsync(
                     $"Blazor WASM warm-up: LoginLink not visible after {TimeoutSeconds}s. " +
                     $"JS errors captured: {jsErrors.Count}");
                 foreach (var error in jsErrors)
                 {
-                    TestContext.Out.WriteLine($"  JS error: {error}");
+                    await TestContext.Out.WriteLineAsync($"  JS error: {error}");
                 }
 
                 if (attempt < MaxAttempts)
                 {
-                    TestContext.Out.WriteLine("Blazor WASM warm-up: reloading page...");
+                    await TestContext.Out.WriteLineAsync("Blazor WASM warm-up: reloading page...");
                     await page.ReloadAsync();
                     await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
                 }
@@ -87,7 +87,7 @@ public class BlazorWasmWarmUp
 
         await page.CloseAsync();
         await context.CloseAsync();
-        TestContext.Out.WriteLine(
+        await TestContext.Out.WriteLineAsync(
             $"WARNING: Blazor WASM warm-up did not confirm LoginLink after {MaxAttempts} attempts. " +
             "Tests will proceed but may encounter loading issues.");
     }

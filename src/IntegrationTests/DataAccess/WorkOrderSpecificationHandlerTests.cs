@@ -38,7 +38,7 @@ public class WorkOrderSpecificationHandlerTests
             context.Add(employee2);
             context.Add(order1);
             context.Add(order2);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
@@ -71,7 +71,7 @@ public class WorkOrderSpecificationHandlerTests
             context.Add(creator2);
             context.Add(order1);
             context.Add(order2);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
@@ -108,7 +108,7 @@ public class WorkOrderSpecificationHandlerTests
             context.Add(employee2);
             context.Add(order1);
             context.Add(order2);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
@@ -147,7 +147,7 @@ public class WorkOrderSpecificationHandlerTests
             context.Add(employee2);
             context.Add(order1);
             context.Add(order2);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
