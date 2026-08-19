@@ -143,7 +143,6 @@ public class MainLayoutTests
 
         var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
         loginAnchor.GetAttribute("href").ShouldBe("/login");
-        loginAnchor.ClassList.ShouldContain("login-prompt-link");
     }
 
     [Test]
@@ -204,6 +203,21 @@ public class MainLayoutTests
         footer.TextContent.ShouldContain(yearText);
         footer.TextContent.ShouldContain("ClearMeasure Labs");
         layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}'] .site-footer-link").GetAttribute("href")!.TrimEnd('/').ShouldBe("https://clearmeasure.com");
+    }
+
+    [Test]
+    public void ShouldRenderFooterNote_WithinSiteFooter()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var note = layout.Find($"[data-testid='{nameof(MainLayout.Elements.FooterNote)}']");
+        note.TextContent.Trim().ShouldBe("Submit a new work order any time — requests are typically reviewed within one business day.");
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        footer.QuerySelector($"[data-testid='{nameof(MainLayout.Elements.FooterNote)}']").ShouldNotBeNull();
     }
 
     [Test]

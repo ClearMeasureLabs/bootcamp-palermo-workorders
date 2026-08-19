@@ -1,0 +1,46 @@
+@startuml process-view
+' 4+1 — PROCESS VIEW: runtime concurrency, the 3-slot gate, and per-run processes.
+title 4+1 Process View — concurrency & synchronization (gate = 3)
+
+|CLI invocations|
+start
+:./implement-issue.ps1 --issueid N;
+:dedup + create Secret;
+:argo submit;
+
+|Argo controller|
+if (running Workflows < 3?) then (yes)
+  :admit Workflow\n(acquire semaphore slot);
+else (no)
+  :enqueue\n(block on semaphore);
+  :... wait for a slot ...;
+  :admit when freed;
+endif
+
+|Workflow pod (per issue, up to 3 in parallel)|
+fork
+  :init: git clone (own emptyDir);
+  fork
+    :main: agent-entrypoint.ps1;
+    :run coding agent (LLM I/O);
+    :quality gates;
+    :push + open PR;
+  fork again
+    :sidecar: mssql (localhost:1433);
+  end fork
+  :main exits -> sidecar killed;
+end fork
+:release semaphore slot;
+
+|Argo controller|
+:next queued Workflow admitted;
+stop
+
+note right
+Up to 3 pods run truly in parallel.
+Each pod is a separate process group with
+its own PID namespace, network namespace,
+DB, and secret — no shared mutable state.
+end note
+
+@enduml

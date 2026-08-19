@@ -1,0 +1,36 @@
+@startuml c3-component
+' C4 Level 3 — Components inside one AI Dev pod (the runnable "container" from C2)
+!include <C4/C4_Component>
+
+title Component View — inside one AI Dev pod (ai-factory-agent)
+
+Container_Boundary(pod, "AI Dev pod (Workflow)") {
+
+  Component(clone, "Clone init-container", "pwsh + git", "Clones repo @ branch into the shared emptyDir /workspace before the agent starts")
+
+  Component(entry, "agent-entrypoint.ps1", "PowerShell", "Orchestrates the run: reads env + /run/secrets, starts the agent, then commits/pushes/opens PR")
+  Component(agent, "Coding agent CLI", "Claude Code / Bob Shell", "Implements the issue against the working tree; selected by AI_AGENT")
+  Component(gates, "Quality-gate runner", "build.ps1 / dotnet / Playwright", "Build + unit + integration + acceptance tests before a PR is opened")
+  Component(pr, "PR publisher", "gh CLI", "Commits, pushes the branch, opens the pull request")
+
+  ComponentDb(work, "Workspace", "emptyDir /workspace", "Per-pod git clone — no cross-task sharing")
+  Component(mssql, "SQL sidecar", "mssql:2022", "Ephemeral DB on pod-local localhost:1433")
+}
+
+System_Ext(github, "GitHub")
+System_Ext(llm, "Anthropic / Bob API")
+ContainerDb(secret, "agent-secret-<issue>", "k8s Secret", "gh token + agent key + SA password")
+
+Rel(clone, github, "git clone @ branch", "HTTPS")
+Rel(clone, work, "Writes checkout")
+Rel(entry, work, "Reads/writes source")
+Rel(entry, agent, "Runs headless")
+Rel(agent, llm, "LLM calls", "HTTPS")
+Rel(entry, gates, "Invokes")
+Rel(gates, mssql, "Migrate + integration tests", "TDS localhost")
+Rel(entry, pr, "On success")
+Rel(pr, github, "push + open PR", "HTTPS")
+Rel(entry, secret, "Reads token/keys", "projected volume")
+Rel(mssql, secret, "SA password", "env")
+
+@enduml

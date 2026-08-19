@@ -1,0 +1,97 @@
+@startuml dependencies
+title Onion Architecture - dependencies point inward to Core\n(Project Dependency Graph - ProjectReference edges)
+caption Solid arrows = compile-time ProjectReference, all pointing inward. Dashed arrows = test project references.\nDatabase has no project references (schema managed by DbUp). Full edge list is in the report.
+
+skinparam defaultFontName Segoe UI
+skinparam linetype polyline
+skinparam componentStyle rectangle
+skinparam roundCorner 40
+skinparam rectangle {
+  BorderColor #566573
+  BackgroundColor<<core>> #E8F4E8
+  BackgroundColor<<infra>> #E8EEF7
+  BackgroundColor<<ui>> #FDF3E7
+  BackgroundColor<<host>> #F0E8F7
+  BackgroundColor<<test>> #F7E8E8
+  BackgroundColor<<ringtest>> #FDF5F5
+  BackgroundColor<<ringui>> #FEFAF2
+  BackgroundColor<<ringhost>> #F8F4FB
+  BackgroundColor<<ringinfra>> #F3F7FC
+  BackgroundColor<<ringcore>> #F2FAF2
+}
+
+rectangle "TEST RING (outermost)" <<ringtest>> {
+  rectangle "UnitTests" <<test>> as ut
+  rectangle "IntegrationTests" <<test>> as it
+  rectangle "AcceptanceTests" <<test>> as at
+
+  rectangle "UI / PRESENTATION RING" <<ringui>> {
+    rectangle "UI.Client" <<ui>> as client
+    rectangle "UI.Api" <<ui>> as api
+  rectangle "UI.Shared" <<ui>> as shared
+
+    rectangle "COMPOSITION HOSTS RING" <<ringhost>> {
+      rectangle "AppHost" <<host>> as apphost
+      rectangle "UI.Server" <<host>> as server
+      rectangle "McpServer" <<host>> as mcp
+      rectangle "Worker" <<host>> as worker
+
+      rectangle "APPLICATION / INFRASTRUCTURE RING" <<ringinfra>> {
+        rectangle "DataAccess" <<infra>> as data
+        rectangle "LlmGateway" <<infra>> as llm
+        rectangle "ServiceDefaults" <<infra>> as sd
+
+        rectangle "DOMAIN CORE (center)" <<ringcore>> {
+          rectangle "Core" <<core>> as core
+          rectangle "Database" <<core>> as db
+        }
+      }
+    }
+  }
+}
+
+data --> core
+llm --> core
+shared --> core
+shared --> llm
+client --> core
+client --> shared
+api --> core
+mcp --> core
+mcp --> data
+mcp --> llm
+mcp --> sd
+mcp --> shared
+worker --> data
+worker --> llm
+worker --> sd
+server --> core
+server --> data
+server --> llm
+server --> mcp
+server --> api
+server --> client
+server --> shared
+server --> sd
+apphost --> server
+apphost --> worker
+ut ..> core
+ut ..> server
+it ..> data
+it ..> server
+at ..> server
+
+note bottom of core
+  Core references NO project.
+  Onion inner rule holds.
+end note
+
+legend right
+|= Color |= Ring (outer -> inner) |
+|<#F7E8E8> | Test projects (dashed edges) |
+|<#FDF3E7> | UI / Presentation |
+|<#F0E8F7> | Composition hosts |
+|<#E8EEF7> | Application / Infrastructure |
+|<#E8F4E8> | Domain Core (innermost) |
+endlegend
+@enduml

@@ -1,0 +1,90 @@
+# Step B: ONE shared SQL Server for the whole ai-factory namespace, replacing the
+# per-pod SQL sidecar. Each agent pod connects with its OWN database name
+# (ChurchBulletin_<issue>, via DATABASE_NAME) and drops+recreates only that
+# database each PrivateBuild, so pods are isolated on a single server instead of
+# each running their own ~1.5GB SQL Server. Big RAM win at higher concurrency.
+#
+# SA password lives in a Secret (not inline). Agent pods read the same Secret for
+# SQL_SA_PASSWORD (see workflowtemplate-agent.yaml). Rotate by editing the Secret.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sql-shared-sa
+  namespace: ai-factory
+type: Opaque
+stringData:
+  sa-password: "AiFactory#Sql1"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sql-shared
+  namespace: ai-factory
+  labels: { app: sql-shared }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }   # single writer
+  selector:
+    matchLabels: { app: sql-shared }
+  template:
+    metadata:
+      labels: { app: sql-shared }
+    spec:
+      containers:
+        - name: sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 1433
+          env:
+            - { name: ACCEPT_EULA,           value: "Y" }
+            - name: MSSQL_SA_PASSWORD
+              valueFrom: { secretKeyRef: { name: sql-shared-sa, key: sa-password } }
+            # One shared server hosts many per-issue databases, so give it more
+            # headroom than a per-pod sidecar - still capped so it cannot balloon.
+            - { name: MSSQL_MEMORY_LIMIT_MB, value: "3072" }
+          resources:
+            requests: { cpu: "1",  memory: "3Gi" }
+            limits:   { cpu: "3",  memory: "4Gi" }
+          readinessProbe:
+            tcpSocket: { port: 1433 }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          volumeMounts:
+            # Bound the DB files so accumulated per-issue databases cannot fill the
+            # node's container storage. Ephemeral by design: DBs are recreated per
+            # build, and each pod drops its own database on teardown.
+            - { name: mssql-data, mountPath: /var/opt/mssql }
+      volumes:
+        - name: mssql-data
+          emptyDir:
+            sizeLimit: 12Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sql-shared
+  namespace: ai-factory
+spec:
+  selector: { app: sql-shared }
+  ports:
+    - { protocol: TCP, port: 1433, targetPort: 1433 }
+---
+# Allow agent pods to reach the shared SQL Server on 1433 (the default-deny
+# NetworkPolicy otherwise permits only DNS + 443 egress). Scoped to the
+# sql-shared pods, not the whole namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-dev-egress-sqlshared
+  namespace: ai-factory
+spec:
+  podSelector:
+    matchLabels: { app: ai-dev }
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: { app: sql-shared }
+      ports:
+        - { protocol: TCP, port: 1433 }

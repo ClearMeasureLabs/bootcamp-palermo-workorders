@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Server;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Shouldly;
 
@@ -9,6 +11,31 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 [TestFixture]
 public class DetailedHealthCheckResponseWriterTests
 {
+    private sealed class FixedUtcTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
+    }
+
+    private static HealthReport CreateMinimalReport()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(
+                HealthStatus.Healthy,
+                "API layer is healthy",
+                TimeSpan.FromMilliseconds(5),
+                null,
+                new Dictionary<string, object>())
+        };
+        return new HealthReport(entries, TimeSpan.FromMilliseconds(5));
+    }
+
+    private static async Task<JsonDocument> WriteAndParseAsync(HttpContext context, HealthReport report)
+    {
+        await DetailedHealthCheckResponseWriter.WriteAsync(context, report);
+        context.Response.Body.Position = 0;
+        return await JsonDocument.ParseAsync(context.Response.Body);
+    }
     [Test]
     public async Task WriteAsync_Should_WriteJsonWithOverallStatusAndEntries()
     {
@@ -117,5 +144,115 @@ public class DetailedHealthCheckResponseWriterTests
         entry.TryGetProperty("exceptionDetail", out _).ShouldBeFalse();
         entry.TryGetProperty("description", out _).ShouldBeFalse();
         entry.TryGetProperty("data", out _).ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_IncludeServerUtcInRootJson_When_ResponseWritten()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        doc.RootElement.TryGetProperty("serverUtc", out var serverUtc).ShouldBeTrue();
+        var parsed = serverUtc.GetDateTimeOffset();
+        parsed.Offset.ShouldBe(TimeSpan.Zero);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_SetServerUtcFromTimeProvider_When_RegisteredOnRequestServices()
+    {
+        var fixedNow = new DateTimeOffset(2026, 7, 24, 5, 0, 0, TimeSpan.Zero);
+        var services = new ServiceCollection();
+        services.AddSingleton<TimeProvider>(new FixedUtcTimeProvider(fixedNow));
+        var context = new DefaultHttpContext
+        {
+            RequestServices = services.BuildServiceProvider()
+        };
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        var serverUtc = doc.RootElement.GetProperty("serverUtc").GetDateTimeOffset();
+        serverUtc.ShouldBe(fixedNow);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_UseSystemTimeProvider_When_TimeProviderNotRegistered()
+    {
+        var before = DateTimeOffset.UtcNow;
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        var after = DateTimeOffset.UtcNow;
+        var serverUtc = doc.RootElement.GetProperty("serverUtc").GetDateTimeOffset();
+        serverUtc.Offset.ShouldBe(TimeSpan.Zero);
+        serverUtc.ShouldBeGreaterThanOrEqualTo(before);
+        serverUtc.ShouldBeLessThanOrEqualTo(after);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_IncludeIs64BitProcessInRootJson_When_ResponseWritten()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        doc.RootElement.TryGetProperty("is64BitProcess", out var is64BitProcess).ShouldBeTrue();
+        is64BitProcess.GetBoolean().ShouldBe(Environment.Is64BitProcess);
+    }
+
+    [Test]
+    public async Task TimeZoneIdSerializedAsCamelCase()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        doc.RootElement.TryGetProperty("timeZoneId", out var timeZoneId).ShouldBeTrue();
+        timeZoneId.GetString().ShouldBe(TimeZoneInfo.Local.Id);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_IncludeProcessStartUtc_When_ResponseWritten()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        doc.RootElement.TryGetProperty("processStartUtc", out var processStartUtc).ShouldBeTrue();
+        var parsed = processStartUtc.GetDateTimeOffset();
+        parsed.Offset.ShouldBe(TimeSpan.Zero);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_SetProcessStartUtcFromCurrentProcess_When_ResponseWritten()
+    {
+        var expected = new DateTimeOffset(Process.GetCurrentProcess().StartTime).ToUniversalTime();
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        var processStartUtc = doc.RootElement.GetProperty("processStartUtc").GetDateTimeOffset();
+        processStartUtc.ShouldBe(expected);
+    }
+
+    [Test]
+    public async Task WriteAsync_Should_EnforceProcessStartUtcLessThanOrEqualServerUtc()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
+
+        var processStartUtc = doc.RootElement.GetProperty("processStartUtc").GetDateTimeOffset();
+        var serverUtc = doc.RootElement.GetProperty("serverUtc").GetDateTimeOffset();
+        processStartUtc.ShouldBeLessThanOrEqualTo(serverUtc);
     }
 }

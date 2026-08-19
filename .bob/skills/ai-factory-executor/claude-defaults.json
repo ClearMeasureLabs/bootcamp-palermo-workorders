@@ -1,0 +1,15 @@
+{
+  "hasCompletedOnboarding": true,
+  "theme": "dark",
+  "numStartups": 5,
+  "remoteControlAtStartup": true,
+  "bypassPermissionsModeAccepted": true,
+  "projects": {
+    "/workspace": {
+      "hasTrustDialogAccepted": true,
+      "hasCompletedProjectOnboarding": true,
+      "projectOnboardingSeenCount": 1,
+      "allowedTools": []
+    }
+  }
+}

@@ -48,6 +48,7 @@ public class WorkOrderManageAttachmentsTests
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(uploader));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
         ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));

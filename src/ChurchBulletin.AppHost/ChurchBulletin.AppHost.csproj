@@ -9,8 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Pin transitive MessagePack (from Aspire SDK) above 2.5.192 to resolve NU1902/NU1903. -->
+    <PackageReference Include="MessagePack" Version="2.5.302" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\UI\Server\UI.Server.csproj" />
     <ProjectReference Include="..\Worker\Worker.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="Aspire.Hosting" />
+  </ItemGroup>
 </Project>

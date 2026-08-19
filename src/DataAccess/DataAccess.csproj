@@ -18,6 +18,8 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="NServiceBus.Persistence.Sql.TransactionalSession" Version="8.3.0" />
+    <!-- Pin transitive SQLitePCLRaw above 2.1.11 to resolve NU1903 (GHSA-2m69-gcr7-jv3q). -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.12" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.8" />
 	</ItemGroup>
 
@@ -25,4 +27,7 @@
 		<ProjectReference Include="..\Core\Core.csproj" />
 	</ItemGroup>
 
+  <ItemGroup>
+    <Using Include="NServiceBus" />
+  </ItemGroup>
 </Project>

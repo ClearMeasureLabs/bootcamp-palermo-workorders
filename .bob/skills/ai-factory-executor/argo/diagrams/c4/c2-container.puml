@@ -1,0 +1,44 @@
+@startuml c2-container
+' C4 Level 2 — Container/Deployment view of the k3s node
+!include <C4/C4_Container>
+
+title Container View — AI Factory on single-node k3s (parallelism = 3)
+
+Person(dev, "Maintainer")
+System_Ext(github, "GitHub", "Issues / PRs")
+System_Ext(anthropic, "Anthropic / Bob API", "LLM backend")
+
+System_Boundary(k3s, "k3s node — namespace: ai-factory") {
+
+  Container(events, "Argo Events", "EventSource + Sensor", "Detects open issues labeled 'AI Factory' with no open PR; submits one Workflow per issue")
+  Container(wfc, "Argo Workflows controller", "argo-workflows", "Schedules Workflows from WorkflowTemplate; caps at 3 running at once")
+  ContainerDb(secrets, "Per-run Secrets", "k8s Secret", "gh token + agent key; owner-referenced to the Workflow, GC'd on completion")
+  Container(netpol, "NetworkPolicy", "default-deny + egress allow-list", "DNS + GitHub + Anthropic only; no pod-to-pod traffic")
+
+  Boundary(pods, "Up to 3 concurrent Workflow pods (one per issue)") {
+    Container(agent1, "AI Dev pod #A", "ai-factory-agent image", "init: git clone into own emptyDir; main: Claude/Bob + quality gates + PR")
+    ContainerDb(db1, "SQL sidecar #A", "mssql", "Ephemeral DB on pod-local localhost:1433")
+
+    Container(agent2, "AI Dev pod #B", "ai-factory-agent image", "Fully isolated: own clone, own secrets, own network")
+    ContainerDb(db2, "SQL sidecar #B", "mssql", "Ephemeral DB, pod-local")
+  }
+}
+
+Rel(dev, github, "Labels issues", "HTTPS")
+Rel(github, events, "Issue events (webhook or poll)", "HTTPS")
+Rel(events, wfc, "Submit Workflow (issue params)", "k8s API")
+Rel(events, secrets, "Creates per-run secret", "k8s API")
+Rel(wfc, agent1, "Creates pod", "k8s API")
+Rel(wfc, agent2, "Creates pod", "k8s API")
+
+Rel(agent1, db1, "EF Core / integration tests", "TDS localhost")
+Rel(agent2, db2, "EF Core / integration tests", "TDS localhost")
+Rel(secrets, agent1, "Projected read-only", "volume")
+Rel(secrets, agent2, "Projected read-only", "volume")
+
+Rel(agent1, github, "Clone / push / open PR", "HTTPS (egress allow-listed)")
+Rel(agent2, github, "Clone / push / open PR", "HTTPS")
+Rel(agent1, anthropic, "Run agent", "HTTPS")
+Rel(agent2, anthropic, "Run agent", "HTTPS")
+
+@enduml

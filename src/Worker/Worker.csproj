@@ -17,4 +17,7 @@
     <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
     <ProjectReference Include="..\LlmGateway\LlmGateway.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Using Include="NServiceBus" />
+  </ItemGroup>
 </Project>

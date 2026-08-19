@@ -299,6 +299,41 @@ jobs:
             /p:MSBuildTreatAllWarningsAsErrors=true \
             /p:EnforceCodeStyleInBuild=true
 
+  qodana:
+    name: Qodana (Community .NET)
+    runs-on: ubuntu-latest
+    concurrency:
+      group: qodana-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@v2025.2
+        # Informational for now: findings are reported but do not fail the build.
+        # To make this a hard gate later, remove continue-on-error and set
+        # fail-threshold (with a committed baseline) in qodana.yaml.
+        continue-on-error: true
+        with:
+          args: --linter,jetbrains/qodana-cdnet:latest,--solution,src/ChurchBulletin.sln
+          results-dir: ${{ runner.temp }}/qodana/results
+          upload-result: true
+          artifact-name: qodana-report
+          pr-mode: false
+
+      - name: Upload SARIF to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json
+
   build-windows:
     name: Integration Build (Windows LocalDB)
     runs-on: windows-latest
@@ -532,7 +567,13 @@ jobs:
   publish-octopus:
     name: Publish to Octopus Deploy
     needs: [build-linux]
-    if: success()
+    # Only publish to Octopus from the default branch. Deployments (deploy.yml)
+    # only ever run from master, so PR/feature-branch builds do not need Octopus
+    # packages. Scoping this here keeps the job off PR branches so it is never a
+    # blocking check for a pull request.
+    if: success() && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    # Non-fatal: an Octopus publishing failure must not fail the overall build.
+    continue-on-error: true
     runs-on: ubuntu-latest
     permissions:
       contents: read

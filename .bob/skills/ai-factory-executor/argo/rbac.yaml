@@ -1,0 +1,58 @@
+# ServiceAccounts + RBAC for the workflow pods and the Sensor that submits them.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ai-factory-workflow
+  namespace: ai-factory
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ai-factory-sensor
+  namespace: ai-factory
+---
+# Task 4: serve mode publishes the Cloudflare tunnel URL back onto its own Pod's
+# annotations (ai-factory/live-url) so it is queryable while the KEEP_ALIVE pod
+# stays running (a normal Argo output parameter cannot, since the pod never
+# exits). The workflow pod needs get/patch on its own pod for that.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ai-factory-workflow-podpatch
+  namespace: ai-factory
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ai-factory-workflow-podpatch
+  namespace: ai-factory
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: ai-factory-workflow-podpatch }
+subjects:
+  - { kind: ServiceAccount, name: ai-factory-workflow, namespace: ai-factory }
+---
+# Sensor needs to create Secrets (per-run creds) and submit Workflows.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ai-factory-sensor
+  namespace: ai-factory
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows"]
+    verbs: ["create", "get", "list"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "get", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ai-factory-sensor
+  namespace: ai-factory
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: ai-factory-sensor }
+subjects:
+  - { kind: ServiceAccount, name: ai-factory-sensor, namespace: ai-factory }

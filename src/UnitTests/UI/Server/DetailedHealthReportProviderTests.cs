@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Server;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -12,6 +14,21 @@ public class DetailedHealthReportProviderTests
     {
         public override DateTimeOffset GetUtcNow() => new(utcNow, TimeSpan.Zero);
     }
+
+    /// <summary>
+    /// Live process memory is sampled once inside the provider and again by the test
+    /// microseconds later. Any allocation — or a background GC — between the two samples
+    /// shifts the value, and because both are rounded to whole megabytes, crossing a single
+    /// 1 MiB boundary is enough to break exact equality (observed in CI: "should be 148 but
+    /// was 147"). These assertions verify the property is wired to the corresponding reader,
+    /// so compare against a fresh sample within a tolerance rather than demanding equality.
+    /// </summary>
+    private const int MemorySampleToleranceMb = 64;
+
+    private static void ShouldTrackLiveSample(int reported, int freshSample) =>
+        reported.ShouldBeInRange(
+            freshSample - MemorySampleToleranceMb,
+            freshSample + MemorySampleToleranceMb);
 
     [Test]
     public void FromComponentStatuses_Should_MapStatusesAndOverall()
@@ -33,6 +50,290 @@ public class DetailedHealthReportProviderTests
         detailed.Components.Count.ShouldBe(2);
         detailed.Components.ShouldContain(c => c.Name == "API" && c.Status == ComponentHealthStatus.Healthy);
         detailed.Components.ShouldContain(c => c.Name == "DataAccess" && c.Status == ComponentHealthStatus.Unhealthy);
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_SetProcessId()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.ProcessId.ShouldBe(Environment.ProcessId);
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_SetProcessorCount()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.ProcessorCount.ShouldBe(Environment.ProcessorCount);
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_SetIs64BitProcess()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.Is64BitProcess.ShouldBe(Environment.Is64BitProcess);
+    }
+
+    [Test]
+    public void TimeZoneIdSetFromComponentStatuses()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.TimeZoneId.ShouldBe(TimeZoneInfo.Local.Id);
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_SetProcessPriority()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.ProcessPriority.ShouldBe(DetailedHealthReportProvider.GetProcessPriority());
+        detailed.ProcessPriority.ShouldBe(Process.GetCurrentProcess().PriorityClass.ToString());
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetProcessId()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.ProcessId.ShouldBe(Environment.ProcessId);
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetProcessorCount()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.ProcessorCount.ShouldBe(Environment.ProcessorCount);
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetIs64BitProcess()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.Is64BitProcess.ShouldBe(Environment.Is64BitProcess);
+    }
+
+    [Test]
+    public void TimeZoneIdSetFromHealthReport()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.TimeZoneId.ShouldBe(TimeZoneInfo.Local.Id);
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetProcessPriority()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.ProcessPriority.ShouldBe(DetailedHealthReportProvider.GetProcessPriority());
+        detailed.ProcessPriority.ShouldBe(Process.GetCurrentProcess().PriorityClass.ToString());
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_SetOsDescription()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.OsDescription.ShouldNotBeNull();
+        detailed.OsDescription.ShouldNotBeEmpty();
+        detailed.OsDescription.ShouldBe(RuntimeInformation.OSDescription);
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_SetFrameworkDescription()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.FrameworkDescription.ShouldNotBeNull();
+        detailed.FrameworkDescription.ShouldNotBeEmpty();
+        detailed.FrameworkDescription.ShouldBe(RuntimeInformation.FrameworkDescription);
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_SetGcMemoryMb()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
+        ShouldTrackLiveSample(detailed.GcMemoryMb, DetailedHealthReportProvider.GetGcMemoryMb());
+    }
+
+    [Test]
+    public void FromComponentStatuses_Should_SetWorkingSetMb()
+    {
+        var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
+        {
+            ["API"] = HealthStatus.Healthy
+        };
+
+        var detailed = DetailedHealthReportProvider.FromComponentStatuses(
+            entries,
+            HealthStatus.Healthy,
+            TimeProvider.System);
+
+        detailed.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
+        ShouldTrackLiveSample(detailed.WorkingSetMb, DetailedHealthReportProvider.GetWorkingSetMb());
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetOsDescription()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.OsDescription.ShouldNotBeNull();
+        detailed.OsDescription.ShouldNotBeEmpty();
+        detailed.OsDescription.ShouldBe(RuntimeInformation.OSDescription);
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetFrameworkDescription()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.FrameworkDescription.ShouldNotBeNull();
+        detailed.FrameworkDescription.ShouldNotBeEmpty();
+        detailed.FrameworkDescription.ShouldBe(RuntimeInformation.FrameworkDescription);
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetGcMemoryMb()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
+        ShouldTrackLiveSample(detailed.GcMemoryMb, DetailedHealthReportProvider.GetGcMemoryMb());
+    }
+
+    [Test]
+    public void FromHealthReport_Should_SetWorkingSetMb()
+    {
+        var entries = new Dictionary<string, HealthReportEntry>
+        {
+            ["API"] = new(HealthStatus.Healthy, null, TimeSpan.Zero, null, new Dictionary<string, object>())
+        };
+        var report = new HealthReport(entries, TimeSpan.Zero);
+
+        var detailed = DetailedHealthReportProvider.FromHealthReport(report, TimeProvider.System);
+
+        detailed.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
+        ShouldTrackLiveSample(detailed.WorkingSetMb, DetailedHealthReportProvider.GetWorkingSetMb());
     }
 
     [Test]

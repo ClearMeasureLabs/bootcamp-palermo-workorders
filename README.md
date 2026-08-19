@@ -398,3 +398,88 @@ Maintaining architecture diagrams (PlantUML, Mermaid) as source files checked in
 - **Reference:** [The C4 Model — Tooling](https://c4model.com/#Tooling)
 
 🕐 Last updated: 2026-03-25T21:50:00Z
+
+## Deployment Verification
+
+Deployments are verified in the UAT environment before release.
+
+## Deployment Verification 20260727-081828
+
+Deployment run 20260727-081828 is verified in the UAT environment before release.
+
+## Deployment Verification 20260727-090150
+
+Deployment run 20260727-090150 is verified in the UAT environment before release.
+
+## Deployment Verification 20260727-094548
+
+Deployment run 20260727-094548 is verified in the UAT environment before release.
+
+## Deployment Verification 20260727-132512
+
+Deployment run 20260727-132512 is verified in the UAT environment before release.
+
+
+## Deployment Verification 20260727-201015
+
+Deployment run 20260727-201015 is verified in the UAT environment before release.
+
+
+
+## Deployment Verification 20260727-210050
+
+Deployment run 20260727-210050 is verified in the UAT environment before release.
+
+## Deployment Verification 20260727-222027
+
+Deployment run 20260727-222027 is verified in the UAT environment before release.
+
+## Deployment Verification 20260727-231313
+
+Deployment run 20260727-231313 is verified in the UAT environment before release.
+
+## Deployment Verification 20260728-000302
+
+Deployment run 20260728-000302 is verified in the UAT environment before release.
+
+
+## Deployment Verification 20260728-041350
+
+Deployment run 20260728-041350 is verified in the UAT environment before release.
+
+## Deployment Verification 20260728-200157
+
+Deployment run 20260728-200157 is verified in the UAT environment before release.
+
+## Deployment Verification 20260728-203209
+
+Deployment run 20260728-203209 is verified in the UAT environment before release.
+
+
+## Deployment Verification 20260728-210121
+
+Deployment run 20260728-210121 is verified in the UAT environment before release.
+
+## Deployment Verification 20260728-220129
+
+Deployment run 20260728-220129 is verified in the UAT environment before release.
+
+## Deployment Verification 20260729-012310
+
+Deployment run 20260729-012310 is verified in the UAT environment before release.
+
+
+## Deployment Verification 20260729-060151
+
+Deployment run 20260729-060151 is verified in the UAT environment before release.
+
+
+## Deployment Verification 20260729-172838
+
+Deployment run 20260729-172838 is verified in the UAT environment before release.
+
+
+
+## Deployment Verification 20260729-203926
+
+Deployment run 20260729-203926 is verified in the UAT environment before release.
