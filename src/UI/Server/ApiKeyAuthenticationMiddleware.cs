@@ -57,7 +57,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return false;
         }
 
-        if (IsPublicVersionOrTimePath(value))
+        if (IsPublicVersionOrTimePath(value) || IsPublicToolsRandomPath(value))
         {
             return false;
         }
@@ -92,6 +92,10 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 
         return false;
     }
+
+    internal static bool IsPublicToolsRandomPath(string pathValue) =>
+        pathValue.Equals("/api/tools/random", StringComparison.OrdinalIgnoreCase)
+        || pathValue.Equals("/api/v1.0/tools/random", StringComparison.OrdinalIgnoreCase);
 
     private static bool FixedTimeEqualsUtf8(string expected, string provided)
     {
