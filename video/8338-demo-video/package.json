@@ -1,0 +1,32 @@
+{
+  "name": "workorders-demo-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion-based demo video project for the Work Order management app (issue #8338). Independent Node/npm project; does not touch the .NET solution.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "capture": "ts-node --project tsconfig.capture.json capture/run-all.ts",
+    "render": "remotion render src/index.ts DemoVideo out/demo-video.mp4",
+    "studio": "remotion studio src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.capture.json"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.290",
+    "@remotion/media-utils": "4.0.290",
+    "@remotion/transitions": "4.0.290",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.290"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.9",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "msedge-tts": "^2.0.7",
+    "playwright": "1.54.0",
+    "ts-node": "10.9.2",
+    "typescript": "5.5.4"
+  }
+}
