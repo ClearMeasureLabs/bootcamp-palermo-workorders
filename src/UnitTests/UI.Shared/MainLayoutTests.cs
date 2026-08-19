@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
@@ -167,6 +168,49 @@ public class MainLayoutTests
 
         var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
         loginAnchor.GetAttribute("href").ShouldBe("/login");
+    }
+
+    [Test]
+    public void ShouldApplyLoginBlinkAnimation_WhenUserNotAuthenticated()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.Find(".auth-section").ShouldNotBeNull();
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.ClassList.ShouldContain("login-link-blink");
+    }
+
+    [Test]
+    public void ShouldNotApplyLoginBlinkAnimation_WhenUserIsAuthenticated()
+    {
+        using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.FindAll(".auth-section").Count.ShouldBe(0);
+        layout.FindAll($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']").Count.ShouldBe(0);
+        layout.FindAll(".login-link-blink").Count.ShouldBe(0);
+        layout.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']").ShouldNotBeNull();
+    }
+
+    [Test]
+    public void ShouldDisableBlinkAnimation_UnderPrefersReducedMotion()
+    {
+        var cssPath = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..",
+            "UI.Shared", "MainLayout.razor.css"));
+        File.Exists(cssPath).ShouldBeTrue();
+
+        var cssContent = File.ReadAllText(cssPath);
+        cssContent.ShouldContain("@media (prefers-reduced-motion: reduce)");
+        cssContent.ShouldContain(".auth-section ::deep a.login-link-blink");
+        cssContent.ShouldContain("animation: none");
+        cssContent.ShouldContain("@keyframes login-blink-pulse");
     }
 
     [Test]
