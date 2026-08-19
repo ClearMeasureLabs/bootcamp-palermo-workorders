@@ -75,14 +75,15 @@ public class WorkOrderBulkImportCsvParserTests
     }
 
     [Test]
-    public void ShouldSkipBlankLines_WhenPresent()
+    public void ShouldParseMultilineQuotedField_WhenLogicalLineSpansRows()
     {
-        var csv = "Title,Description,CreatorUsername\n\n  \nT,D,u\n";
+        var csv = "Title,Description,CreatorUsername\n"
+                  + "T,\"Line one\nLine two\",u\n";
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
         var result = WorkOrderBulkImportCsvParser.Parse(ms);
 
         result.Success.ShouldBeTrue();
         result.Rows.Count.ShouldBe(1);
-        result.Rows[0].Title.ShouldBe("T");
+        result.Rows[0].Description.ShouldBe("Line one\nLine two");
     }
 }
