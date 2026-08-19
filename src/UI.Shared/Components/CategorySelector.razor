@@ -1,0 +1,21 @@
+@using ClearMeasure.Bootcamp.Core.Model
+
+<div class="category-selector">
+    <label class="form-label">Category</label>
+    <select @bind="Value" 
+            class="form-select" 
+            disabled="@Disabled"
+            aria-label="Work order category">
+        <option value="@WorkOrderCategory.Facilities">Facilities</option>
+        <option value="@WorkOrderCategory.AudioVisual">Audio-Visual</option>
+        <option value="@WorkOrderCategory.Grounds">Grounds</option>
+        <option value="@WorkOrderCategory.HVAC">HVAC</option>
+        <option value="@WorkOrderCategory.Other">Other</option>
+    </select>
+</div>
+
+@code {
+    [Parameter] public WorkOrderCategory Value { get; set; } = WorkOrderCategory.Other;
+    [Parameter] public EventCallback<WorkOrderCategory> ValueChanged { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+}

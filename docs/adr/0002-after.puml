@@ -1,0 +1,63 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title After: Automated Recurring Work Order System
+
+Person(user, "Facilities Manager", "Configures recurrence once")
+
+System_Boundary(ui, "UI Layer") {
+    Component(manage, "WorkOrderManage.razor", "Blazor Component", "Work order form with recurrence")
+    Component(selector, "RecurrenceSelector.razor", "Blazor Component", "Pattern, interval, next date")
+    Component(badge, "RecurrenceBadge.razor", "Blazor Component", "Visual indicator")
+    Component(search, "WorkOrderSearch.razor", "Blazor Component", "Filter by recurring")
+}
+
+System_Boundary(core, "Core Layer") {
+    Component(command, "SaveDraftCommand", "MediatR Command", "Creates work order with recurrence")
+    Component(query, "RecurringWorkOrdersQuery", "MediatR Query", "Finds due recurring work orders")
+    Component(model, "WorkOrder", "Domain Model", "Added: IsRecurring, RecurrencePattern, RecurrenceInterval, NextScheduledDate, ParentWorkOrderId")
+    Component(enum, "RecurrencePattern", "Enum", "None, Weekly, Monthly, Quarterly, Annually")
+}
+
+System_Boundary(worker, "Worker Service") {
+    Component(service, "RecurringWorkOrderService", "IHostedService", "Runs hourly, generates instances")
+}
+
+System_Boundary(data, "Data Layer") {
+    ComponentDb(db, "SQL Server", "Database", "WorkOrder table with recurrence columns")
+}
+
+Rel(user, manage, "Configures once", "Set pattern & interval")
+Rel(manage, selector, "Uses")
+Rel(manage, command, "Sends", "HTTP/MediatR")
+Rel(command, model, "Creates template")
+Rel(model, db, "Persists")
+
+Rel(service, query, "Sends hourly", "Find due templates")
+Rel(query, db, "Queries", "WHERE IsRecurring=1 AND NextScheduledDate<=NOW")
+Rel(service, command, "Sends", "Create instance")
+Rel(command, db, "Persists instance")
+Rel(service, db, "Updates", "NextScheduledDate on template")
+
+Rel(search, badge, "Displays")
+Rel(badge, model, "Reads", "IsRecurring, Pattern")
+
+note right of service
+  **Automation:**
+  - Runs every hour
+  - Finds due templates
+  - Generates instances
+  - Updates next date
+  - Logs all actions
+end note
+
+note right of model
+  **New Properties:**
+  - IsRecurring: bool
+  - RecurrencePattern: enum
+  - RecurrenceInterval: int
+  - NextScheduledDate: DateTime?
+  - ParentWorkOrderId: Guid?
+end note
+
+@enduml
