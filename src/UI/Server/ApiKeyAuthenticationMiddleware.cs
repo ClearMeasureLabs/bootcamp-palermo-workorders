@@ -75,23 +75,37 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
 
         if (segments.Length == 2)
         {
-            var leaf = segments[1];
-            return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+            return IsPublicApiLeaf(segments[1]);
+        }
+
+        if (segments.Length == 3
+            && segments[1].Equals("tools", StringComparison.OrdinalIgnoreCase))
+        {
+            return segments[2].Equals("timestamp-converter", StringComparison.OrdinalIgnoreCase);
         }
 
         if (segments.Length >= 3
             && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
         {
-            var leaf = segments[2];
-            return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+            if (segments.Length == 3)
+            {
+                return IsPublicApiLeaf(segments[2]);
+            }
+
+            if (segments.Length == 4
+                && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase))
+            {
+                return segments[3].Equals("timestamp-converter", StringComparison.OrdinalIgnoreCase);
+            }
         }
 
         return false;
     }
+
+    private static bool IsPublicApiLeaf(string leaf) =>
+        leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
+        || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
+        || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
 
     private static bool FixedTimeEqualsUtf8(string expected, string provided)
     {
