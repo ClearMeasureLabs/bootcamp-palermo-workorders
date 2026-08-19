@@ -53,7 +53,7 @@ public class TranslationServiceTests
         var factory = new ChatClientFactory(bus);
         var service = new TranslationService(factory);
 
-        var result = await service.TranslateAsync(null!, "es-ES");
+        var result = await service.TranslateAsync(null, "es-ES");
 
         result.ShouldBe(string.Empty);
     }

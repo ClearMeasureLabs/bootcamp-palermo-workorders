@@ -170,11 +170,11 @@ public class WorkOrderManageSpeechTests
         public string? LastText { get; private set; }
         public string? LastTargetLanguage { get; private set; }
 
-        public Task<string> TranslateAsync(string text, string targetLanguageCode)
+        public Task<string> TranslateAsync(string? text, string targetLanguageCode)
         {
             LastText = text;
             LastTargetLanguage = targetLanguageCode;
-            return Task.FromResult(text);
+            return Task.FromResult(text ?? string.Empty);
         }
     }
 }

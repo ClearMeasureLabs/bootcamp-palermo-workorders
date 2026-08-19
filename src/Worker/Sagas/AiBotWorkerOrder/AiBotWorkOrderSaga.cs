@@ -31,7 +31,7 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
         Data.WorkOrderNumber = message.WorkOrderNumber;
 
         var query = new WorkOrderByNumberQuery(Data.WorkOrderNumber);
-        Data.WorkOrder = (await bus.Send(query))!;
+        Data.WorkOrder = await bus.Send(query);
 
         if (Data.WorkOrder?.Assignee is null)
         {
@@ -57,7 +57,10 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
         var chatClient = await chatClientFactory.GetChatClient();
         var chatResponse = await chatClient.GetResponseAsync(chatMessages, cancellationToken: context.CancellationToken);
 
-        Data.WorkOrder.Description = $"{Data.WorkOrder.Description}{Environment.NewLine}{Environment.NewLine}AI Bot: {chatResponse.Messages.Last()}";
+        // Data.WorkOrder is guaranteed non-null here: this handler only runs after
+        // AiBotStartedWorkOrderEvent, which the Start handler publishes only when the
+        // work order was found and has an assignee (see Handle(StartAiBotWorkOrderSagaCommand)).
+        Data.WorkOrder!.Description = $"{Data.WorkOrder.Description}{Environment.NewLine}{Environment.NewLine}AI Bot: {chatResponse.Messages.Last()}";
 
         var updatedEvent = new AiBotUpdatedWorkerOrderEvent(Data.SagaId);
         await context.Publish(updatedEvent);
@@ -65,7 +68,8 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
 
     public async Task Handle(AiBotUpdatedWorkerOrderEvent @event, IMessageHandlerContext context)
     {
-        var command = new InProgressToCompleteCommand(Data.WorkOrder, Data.WorkOrder.Assignee!);
+        // Data.WorkOrder is guaranteed non-null here for the same reason as above.
+        var command = new InProgressToCompleteCommand(Data.WorkOrder!, Data.WorkOrder!.Assignee!);
         var commandResult = await bus.Send(command);
         Data.WorkOrder = commandResult.WorkOrder;
 

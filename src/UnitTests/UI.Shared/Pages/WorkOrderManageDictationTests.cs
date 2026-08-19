@@ -299,9 +299,9 @@ public class WorkOrderManageDictationTests
 
     private class StubTranslationService : ITranslationService
     {
-        public Task<string> TranslateAsync(string text, string targetLanguageCode)
+        public Task<string> TranslateAsync(string? text, string targetLanguageCode)
         {
-            return Task.FromResult(text);
+            return Task.FromResult(text ?? string.Empty);
         }
     }
 }
