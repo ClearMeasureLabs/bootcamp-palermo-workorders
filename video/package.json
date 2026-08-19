@@ -6,7 +6,9 @@
     "start": "remotion studio",
     "render": "remotion render QodanaRemediation out/qodana-remediation.mp4",
     "render:room": "remotion render RoomNumber900 out/room-number-900.mp4",
-    "narration": "node scripts/generate-room-narration.cjs"
+    "narration": "node scripts/generate-room-narration.cjs",
+    "render:instructions": "remotion render InstructionsField out/instructions-field.mp4",
+    "narration:instructions": "node scripts/generate-instructions-narration.cjs"
   },
   "dependencies": {
     "@remotion/cli": "4.0.410",
