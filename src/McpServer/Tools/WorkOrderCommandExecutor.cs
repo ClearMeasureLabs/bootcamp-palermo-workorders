@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
@@ -12,6 +13,17 @@ internal static class WorkOrderCommandExecutor
 {
     internal const string AvailableCommandsList =
         "DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand, Shelve, InProgressToCompleteCommand, AssignedToCancelledCommand";
+
+    private static readonly IReadOnlyDictionary<string, Func<WorkOrder, Employee, StateCommandBase>> CommandFactories =
+        new Dictionary<string, Func<WorkOrder, Employee, StateCommandBase>>(StringComparer.Ordinal)
+        {
+            ["DraftToAssignedCommand"] = (workOrder, user) => new DraftToAssignedCommand(workOrder, user),
+            ["AssignedToInProgressCommand"] = (workOrder, user) => new AssignedToInProgressCommand(workOrder, user),
+            ["InProgressToAssignedCommand"] = (workOrder, user) => new InProgressToAssignedCommand(workOrder, user),
+            ["Shelve"] = (workOrder, user) => new InProgressToAssignedCommand(workOrder, user),
+            ["InProgressToCompleteCommand"] = (workOrder, user) => new InProgressToCompleteCommand(workOrder, user),
+            ["AssignedToCancelledCommand"] = (workOrder, user) => new AssignedToCancelledCommand(workOrder, user),
+        };
 
     internal static async Task<(WorkOrder? WorkOrder, string? Error)> LoadWorkOrderAsync(IBus bus, string workOrderNumber)
     {
@@ -60,22 +72,58 @@ internal static class WorkOrderCommandExecutor
     }
 
     internal static StateCommandBase? CreateCommand(string commandName, WorkOrder workOrder, Employee user) =>
-        commandName switch
-        {
-            "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
-            "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
-            "InProgressToAssignedCommand" => new InProgressToAssignedCommand(workOrder, user),
-            "Shelve" => new InProgressToAssignedCommand(workOrder, user),
-            "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
-            "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
-            _ => null
-        };
+        CommandFactories.TryGetValue(commandName, out var factory) ? factory(workOrder, user) : null;
 
     internal static string FormatUnknownCommand(string commandName) =>
         $"Unknown command '{commandName}'. Available commands: {AvailableCommandsList}.";
 
     internal static string FormatInvalidCommand(string commandName, WorkOrder workOrder, StateCommandBase command) =>
         $"Command '{commandName}' cannot be executed. Work order is in '{workOrder.Status.FriendlyName}' status but the command requires '{command.GetBeginStatus().FriendlyName}' status.";
+
+    internal static async Task<string> ExecuteCommandAsync(
+        IBus bus,
+        string workOrderNumber,
+        string commandName,
+        string executingUsername,
+        string? assigneeUsername)
+    {
+        var (workOrder, workOrderError) = await LoadWorkOrderAsync(bus, workOrderNumber);
+        if (workOrderError != null)
+        {
+            return workOrderError;
+        }
+
+        var (user, userError) = await LoadEmployeeAsync(
+            bus,
+            executingUsername,
+            $"Employee with username '{executingUsername}' not found.");
+        if (userError != null)
+        {
+            return userError;
+        }
+
+        if (commandName == "DraftToAssignedCommand"
+            && await PrepareDraftToAssignedAsync(bus, workOrder!, assigneeUsername) is { } assigneeError)
+        {
+            return assigneeError;
+        }
+
+        var command = CreateCommand(commandName, workOrder!, user!);
+        if (command == null)
+        {
+            return FormatUnknownCommand(commandName);
+        }
+
+        if (!command.IsValid())
+        {
+            return FormatInvalidCommand(commandName, workOrder!, command);
+        }
+
+        var result = await bus.Send(command);
+        return JsonSerializer.Serialize(
+            WorkOrderTools.FormatWorkOrderDetail(result.WorkOrder),
+            new JsonSerializerOptions { WriteIndented = true });
+    }
 
     private static async Task<Employee?> FindEmployeeByUsername(IBus bus, string username)
     {

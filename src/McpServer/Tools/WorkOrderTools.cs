@@ -84,55 +84,18 @@ public class WorkOrderTools
     }
 
     [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToAssignedCommand, Shelve, InProgressToCompleteCommand, AssignedToCancelledCommand.")]
-    public static async Task<string> ExecuteWorkOrderCommand(
+    public static Task<string> ExecuteWorkOrderCommand(
         IBus bus,
         [Description("The work order number")] string workOrderNumber,
         [Description("The command name (e.g., DraftToAssignedCommand)")] string commandName,
         [Description("Username of the employee executing the command")] string executingUsername,
-        [Description("Username of the employee to assign the work order to (required for DraftToAssignedCommand)")] string? assigneeUsername = null)
-    {
-        var (workOrder, workOrderError) = await WorkOrderCommandExecutor.LoadWorkOrderAsync(bus, workOrderNumber);
-        if (workOrderError != null)
-        {
-            return workOrderError;
-        }
-
-        var (user, userError) = await WorkOrderCommandExecutor.LoadEmployeeAsync(
+        [Description("Username of the employee to assign the work order to (required for DraftToAssignedCommand)")] string? assigneeUsername = null) =>
+        WorkOrderCommandExecutor.ExecuteCommandAsync(
             bus,
+            workOrderNumber,
+            commandName,
             executingUsername,
-            $"Employee with username '{executingUsername}' not found.");
-        if (userError != null)
-        {
-            return userError;
-        }
-
-        if (commandName == "DraftToAssignedCommand")
-        {
-            var assigneeError = await WorkOrderCommandExecutor.PrepareDraftToAssignedAsync(
-                bus,
-                workOrder!,
-                assigneeUsername);
-            if (assigneeError != null)
-            {
-                return assigneeError;
-            }
-        }
-
-        var command = WorkOrderCommandExecutor.CreateCommand(commandName, workOrder!, user!);
-        if (command == null)
-        {
-            return WorkOrderCommandExecutor.FormatUnknownCommand(commandName);
-        }
-
-        if (!command.IsValid())
-        {
-            return WorkOrderCommandExecutor.FormatInvalidCommand(commandName, workOrder!, command);
-        }
-
-        var result = await bus.Send(command);
-        return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
-            new JsonSerializerOptions { WriteIndented = true });
-    }
+            assigneeUsername);
 
     [McpServerTool(Name = "list-work-order-attachments"), Description("Lists all attachment metadata for a given work order by its number.")]
     public static async Task<string> ListWorkOrderAttachments(
@@ -179,7 +142,7 @@ public class WorkOrderTools
         Assignee = wo.Assignee?.GetFullName()
     };
 
-    private static object FormatWorkOrderDetail(WorkOrder wo) => new
+    internal static object FormatWorkOrderDetail(WorkOrder wo) => new
     {
         wo.Number,
         wo.Title,

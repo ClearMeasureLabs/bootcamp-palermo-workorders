@@ -30,38 +30,43 @@ public class ToolProvider(
             if (_tools != null)
                 return _tools;
 
-            var mcpUrl = McpEndpointResolver.ResolveMcpUrl(server);
-            logger.LogInformation("ToolProvider: connecting to MCP endpoint at {McpUrl}", mcpUrl);
-
-            var httpClient = httpClientFactory.CreateClient();
-            var transportOptions = new HttpClientTransportOptions
-            {
-                Endpoint = new Uri(mcpUrl),
-                Name = "ChurchBulletin-Loopback"
-            };
-            var transport = new HttpClientTransport(transportOptions, httpClient);
-
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            var localClient = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
-
-            try
-            {
-                var mcpTools = await localClient.ListToolsAsync(cancellationToken: cts.Token);
-                _client = localClient;
-                _tools = mcpTools.Cast<AITool>().ToList();
-            }
-            catch
-            {
-                await localClient.DisposeAsync();
-                throw;
-            }
-
-            logger.LogInformation("ToolProvider: discovered {ToolCount} tools via MCP", _tools.Count);
+            _tools = await DiscoverToolsAsync();
             return _tools;
         }
         finally
         {
             _lock.Release();
+        }
+    }
+
+    private async Task<IList<AITool>> DiscoverToolsAsync()
+    {
+        var mcpUrl = McpEndpointResolver.ResolveMcpUrl(server);
+        logger.LogInformation("ToolProvider: connecting to MCP endpoint at {McpUrl}", mcpUrl);
+
+        var httpClient = httpClientFactory.CreateClient();
+        var transportOptions = new HttpClientTransportOptions
+        {
+            Endpoint = new Uri(mcpUrl),
+            Name = "ChurchBulletin-Loopback"
+        };
+        var transport = new HttpClientTransport(transportOptions, httpClient);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var localClient = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
+
+        try
+        {
+            var mcpTools = await localClient.ListToolsAsync(cancellationToken: cts.Token);
+            _client = localClient;
+            var tools = mcpTools.Cast<AITool>().ToList();
+            logger.LogInformation("ToolProvider: discovered {ToolCount} tools via MCP", tools.Count);
+            return tools;
+        }
+        catch
+        {
+            await localClient.DisposeAsync();
+            throw;
         }
     }
 
