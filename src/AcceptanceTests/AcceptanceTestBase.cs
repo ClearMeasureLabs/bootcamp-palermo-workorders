@@ -36,6 +36,15 @@ public abstract class AcceptanceTestBase
     
     protected virtual bool? Headless { get; set; } = ServerFixture.HeadlessTestBrowser;
     protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
+    protected virtual ViewportSize BrowserViewport { get; } = new() { Width = 800, Height = 600 };
+    protected virtual int BrowserSlowMo => ServerFixture.SlowMo;
+
+    /// <summary>
+    /// When true, Playwright records a 1920×1080 video and writes named stills under
+    /// <c>video/public/footage</c> for the Remotion recap of this test run.
+    /// </summary>
+    protected virtual bool CaptureDemoFootage => false;
+
     public IBus Bus => TestHost.GetRequiredService<IBus>();
 
     protected static async Task SkipIfNoChatClient()
@@ -89,19 +98,27 @@ public abstract class AcceptanceTestBase
 
         var x = RandomPosition.Next(0, 1200);
         var y = RandomPosition.Next(0, 700);
+        var viewport = BrowserViewport;
         var browser = await ServerFixture.Playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
             Headless = Headless,
-            SlowMo = ServerFixture.SlowMo,
-            Args = [$"--window-position={x},{y}", "--window-size=800,600"]
+            SlowMo = BrowserSlowMo,
+            Args = [$"--window-position={x},{y}", $"--window-size={viewport.Width},{viewport.Height}"]
         });
 
-        var browserContext = await browser.NewContextAsync(new BrowserNewContextOptions
+        var contextOptions = new BrowserNewContextOptions
         {
             BaseURL = ServerFixture.ApplicationBaseUrl,
             IgnoreHTTPSErrors = true,
-            ViewportSize = new ViewportSize { Width = 800, Height = 600 }
-        });
+            ViewportSize = viewport
+        };
+        if (CaptureDemoFootage)
+        {
+            contextOptions.RecordVideoDir = GetDemoFootageDirectory();
+            contextOptions.RecordVideoSize = new RecordVideoSize { Width = viewport.Width, Height = viewport.Height };
+        }
+
+        var browserContext = await browser.NewContextAsync(contextOptions);
         browserContext.SetDefaultTimeout(60_000);
         
         await browserContext.Tracing.StartAsync(new TracingStartOptions
@@ -161,9 +178,24 @@ public abstract class AcceptanceTestBase
             // Ignore tracing errors during teardown
         }
 
+        IVideo? demoVideo = null;
+        try
+        {
+            demoVideo = CaptureDemoFootage ? state.Page.Video : null;
+        }
+        catch
+        {
+            demoVideo = null;
+        }
+
         try { await state.Page.CloseAsync(); } catch { }
         try { await state.BrowserContext.CloseAsync(); } catch { }
         try { await state.Browser.CloseAsync(); } catch { }
+
+        if (demoVideo != null)
+        {
+            await SaveDemoVideoAsync(demoVideo);
+        }
     }
 
     /// <summary>
@@ -188,6 +220,59 @@ public abstract class AcceptanceTestBase
             Path = fileName
         });
         TestContext.AddTestAttachment(Path.GetFullPath(fileName));
+    }
+
+    /// <summary>
+    /// Writes a full-page still of the live app into <c>video/public/footage</c> for Remotion.
+    /// </summary>
+    protected async Task CaptureDemoStillAsync(string fileName)
+    {
+        if (!CaptureDemoFootage)
+        {
+            return;
+        }
+
+        var path = Path.Combine(GetDemoFootageDirectory(), fileName);
+        await Page.ScreenshotAsync(new PageScreenshotOptions { Path = path });
+        TestContext.AddTestAttachment(path);
+    }
+
+    /// <summary>
+    /// Writes a locator still of the live app into <c>video/public/footage</c> for Remotion.
+    /// </summary>
+    protected async Task CaptureDemoStillAsync(string fileName, ILocator locator)
+    {
+        if (!CaptureDemoFootage)
+        {
+            return;
+        }
+
+        var path = Path.Combine(GetDemoFootageDirectory(), fileName);
+        await locator.ScreenshotAsync(new LocatorScreenshotOptions { Path = path });
+        TestContext.AddTestAttachment(path);
+    }
+
+    private static string GetDemoFootageDirectory()
+    {
+        var dir = Path.GetFullPath(Path.Combine(
+            TestContext.CurrentContext.TestDirectory,
+            "..", "..", "..", "..", "..",
+            "video", "public", "footage"));
+        Directory.CreateDirectory(dir);
+        return dir;
+    }
+
+    private async Task SaveDemoVideoAsync(IVideo video)
+    {
+        var recordedPath = await video.PathAsync();
+        var dest = Path.Combine(GetDemoFootageDirectory(), $"{TestContext.CurrentContext.Test.Name}.webm");
+        if (File.Exists(dest))
+        {
+            File.Delete(dest);
+        }
+
+        File.Move(recordedPath, dest);
+        TestContext.AddTestAttachment(dest);
     }
 
     protected TK Faker<TK>()
