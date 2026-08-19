@@ -36,6 +36,14 @@ public class ConditionalGetEtagTests
     }
 
     [Test]
+    public void Should_ReturnFalse_When_IfNoneMatchHeaderMissing()
+    {
+        var etag = ConditionalGetEtag.CreateWeakEtagForJson(new StubPayload { Id = 1 });
+        var request = new DefaultHttpContext().Request;
+        ConditionalGetEtag.IfNoneMatchIncludesEtag(request, etag).ShouldBeFalse();
+    }
+
+    [Test]
     public void Should_ProduceSameEtag_When_JsonPayloadEquivalent()
     {
         var a = ConditionalGetEtag.CreateWeakEtagForJson(new StubPayload { Id = 2, Name = "x" });
