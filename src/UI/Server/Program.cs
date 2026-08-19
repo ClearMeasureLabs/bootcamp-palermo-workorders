@@ -56,6 +56,22 @@ builder.Services.Configure<ApiKeyAuthenticationOptions>(
     builder.Configuration.GetSection(ApiKeyAuthenticationOptions.SectionName));
 builder.Services.Configure<DiagnosticsFeatureFlagsOptions>(
     builder.Configuration.GetSection(DiagnosticsFeatureFlagsOptions.SectionName));
+builder.Services.Configure<EnvironmentStatusOptions>(
+    builder.Configuration.GetSection(EnvironmentStatusOptions.SectionName));
+builder.Services.PostConfigure<EnvironmentStatusOptions>(o =>
+{
+    if (o.IncludedEnvironmentVariables.Count > 0)
+    {
+        return;
+    }
+
+    o.IncludedEnvironmentVariables =
+    [
+        "ASPNETCORE_ENVIRONMENT",
+        "DOTNET_ENVIRONMENT",
+        "DOTNET_RUNNING_IN_CONTAINER"
+    ];
+});
 builder.Services.PostConfigure<ApiKeyAuthenticationOptions>(o =>
     o.ValidationKey = string.IsNullOrWhiteSpace(o.ValidationKey) ? null : o.ValidationKey.Trim());
 builder.Services.AddRequestDecompression();
