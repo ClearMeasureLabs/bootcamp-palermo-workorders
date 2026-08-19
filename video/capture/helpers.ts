@@ -85,6 +85,9 @@ export async function finishRecording(
 
 	const recordedPath = await video.path();
 	const targetPath = path.join(FOOTAGE_DIR, `${name}.webm`);
+	if (fs.existsSync(targetPath)) {
+		fs.rmSync(targetPath);
+	}
 	fs.renameSync(recordedPath, targetPath);
 	console.log(`  saved ${targetPath}`);
 	return targetPath;

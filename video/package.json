@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Remotion-based demo video project for the Work Order management app (issue #8338). Independent Node/npm project; does not touch the .NET solution.",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "capture": "ts-node --project tsconfig.capture.json capture/run-all.ts",
     "render": "remotion render src/index.ts DemoVideo out/demo-video.mp4",
