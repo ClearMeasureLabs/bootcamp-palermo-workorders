@@ -193,6 +193,7 @@ public class MainLayoutTests
         layout.FindAll($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']").Count.ShouldBe(0);
         layout.FindAll(".auth-section").Count.ShouldBe(0);
         layout.Find(".user-section").ShouldNotBeNull();
+        layout.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']").ShouldNotBeNull();
     }
 
     [Test]
