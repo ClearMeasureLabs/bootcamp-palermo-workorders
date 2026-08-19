@@ -170,6 +170,32 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldApplyLoginBlinkAnimation_WhenUserNotAuthenticated()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.ClassList.ShouldContain("login-link-blink");
+        layout.Find(".auth-section").ShouldNotBeNull();
+    }
+
+    [Test]
+    public void ShouldNotApplyLoginBlinkAnimation_WhenUserIsAuthenticated()
+    {
+        using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.FindAll($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']").Count.ShouldBe(0);
+        layout.FindAll(".auth-section").Count.ShouldBe(0);
+        layout.Find(".user-section").ShouldNotBeNull();
+    }
+
+    [Test]
     public void ShouldRenderCopyrightFooter_WithCurrentYear_OrganizationAndLink_WhenNotAuthenticated()
     {
         using var ctx = CreateContext();
