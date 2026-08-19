@@ -134,6 +134,43 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderLoginLink_WithBlinkCTAClass_WhenUserIsNotAuthenticated()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.ClassList.ShouldContain("login-link-cta");
+    }
+
+    [Test]
+    public void ShouldNotRenderBlinkCTAClass_WhenUserIsAuthenticated()
+    {
+        using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.FindAll("a.login-link-cta").Count.ShouldBe(0);
+        layout.FindAll($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']").Count.ShouldBe(0);
+    }
+
+    [Test]
+    public void LoginLink_ShouldPreserveHref_AndTestIdWithCTAClass()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.GetAttribute("href").ShouldBe("/login");
+        loginAnchor.ClassList.ShouldContain("login-link-cta");
+    }
+
+    [Test]
     public void ShouldRenderLoginLink_InHeader_WhenUserIsNotAuthenticated()
     {
         using var ctx = CreateContext();
