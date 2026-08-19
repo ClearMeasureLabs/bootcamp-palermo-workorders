@@ -68,6 +68,23 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_Return200AndSamePayload_When_GetDetailedHealth_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var v1 = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using var legacyDoc = JsonDocument.Parse(await legacy.Content.ReadAsStringAsync());
+        using var v1Doc = JsonDocument.Parse(await v1.Content.ReadAsStringAsync());
+        legacyDoc.RootElement.GetProperty("overallStatus").GetString()
+            .ShouldBe(v1Doc.RootElement.GetProperty("overallStatus").GetString());
+        legacyDoc.RootElement.GetProperty("components").GetArrayLength()
+            .ShouldBe(v1Doc.RootElement.GetProperty("components").GetArrayLength());
+    }
+
+    [Test]
     public async Task Should_Return200AndJson_When_GetDetailedHealth()
     {
         var response = await _client!.GetAsync("/api/health/detailed");
