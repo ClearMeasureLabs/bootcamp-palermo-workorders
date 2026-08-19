@@ -26,12 +26,16 @@ public sealed class RealtimeNotificationWebSocketMiddleware(
             return;
         }
 
+        await HoldWebSocketConnectionAsync(context).ConfigureAwait(false);
+    }
+
+    private async Task HoldWebSocketConnectionAsync(HttpContext context)
+    {
         using var socket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
         var id = hub.Register(socket);
 
         try
         {
-            // Server-push: do not block in ReceiveAsync (TestHost deadlocks with client Receive + server Send).
             await Task.Delay(Timeout.InfiniteTimeSpan, context.RequestAborted).ConfigureAwait(false);
         }
         catch (OperationCanceledException)

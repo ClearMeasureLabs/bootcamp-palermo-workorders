@@ -12,6 +12,7 @@
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="ClearMeasure.Bootcamp.UnitTests" />
+		<InternalsVisibleTo Include="ClearMeasure.Bootcamp.IntegrationTests" />
 	</ItemGroup>
 
 	<ItemGroup>
