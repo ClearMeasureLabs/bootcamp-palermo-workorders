@@ -84,66 +84,18 @@ public class WorkOrderTools
     }
 
     [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToAssignedCommand, Shelve, InProgressToCompleteCommand, AssignedToCancelledCommand.")]
-    public static async Task<string> ExecuteWorkOrderCommand(
+    public static Task<string> ExecuteWorkOrderCommand(
         IBus bus,
         [Description("The work order number")] string workOrderNumber,
         [Description("The command name (e.g., DraftToAssignedCommand)")] string commandName,
         [Description("Username of the employee executing the command")] string executingUsername,
-        [Description("Username of the employee to assign the work order to (required for DraftToAssignedCommand)")] string? assigneeUsername = null)
-    {
-        var workOrder = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
-        if (workOrder == null)
-        {
-            return $"No work order found with number '{workOrderNumber}'.";
-        }
-
-        var user = await FindEmployeeByUsername(bus, executingUsername);
-        if (user == null)
-        {
-            return $"Employee with username '{executingUsername}' not found.";
-        }
-
-        if (commandName == "DraftToAssignedCommand")
-        {
-            if (string.IsNullOrEmpty(assigneeUsername))
-            {
-                return "DraftToAssignedCommand requires an assigneeUsername parameter.";
-            }
-
-            var assignee = await FindEmployeeByUsername(bus, assigneeUsername);
-            if (assignee == null)
-            {
-                return $"Assignee with username '{assigneeUsername}' not found.";
-            }
-
-            workOrder.Assignee = assignee;
-        }
-
-        StateCommandBase? command = commandName switch
-        {
-            "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
-            "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
-            "InProgressToAssignedCommand" => new InProgressToAssignedCommand(workOrder, user),
-            "Shelve" => new InProgressToAssignedCommand(workOrder, user),
-            "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
-            "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
-            _ => null
-        };
-
-        if (command == null)
-        {
-            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand, Shelve, InProgressToCompleteCommand, AssignedToCancelledCommand.";
-        }
-
-        if (!command.IsValid())
-        {
-            return $"Command '{commandName}' cannot be executed. Work order is in '{workOrder.Status.FriendlyName}' status but the command requires '{command.GetBeginStatus().FriendlyName}' status.";
-        }
-
-        var result = await bus.Send(command);
-        return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
-            new JsonSerializerOptions { WriteIndented = true });
-    }
+        [Description("Username of the employee to assign the work order to (required for DraftToAssignedCommand)")] string? assigneeUsername = null) =>
+        WorkOrderCommandExecutor.ExecuteCommandAsync(
+            bus,
+            workOrderNumber,
+            commandName,
+            executingUsername,
+            assigneeUsername);
 
     [McpServerTool(Name = "list-work-order-attachments"), Description("Lists all attachment metadata for a given work order by its number.")]
     public static async Task<string> ListWorkOrderAttachments(
@@ -190,7 +142,7 @@ public class WorkOrderTools
         Assignee = wo.Assignee?.GetFullName()
     };
 
-    private static object FormatWorkOrderDetail(WorkOrder wo) => new
+    internal static object FormatWorkOrderDetail(WorkOrder wo) => new
     {
         wo.Number,
         wo.Title,
