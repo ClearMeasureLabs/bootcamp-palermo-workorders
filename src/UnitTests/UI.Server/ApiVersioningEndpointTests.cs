@@ -78,6 +78,8 @@ public class ApiVersioningEndpointTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         response.Headers.TryGetValues("api-supported-versions", out var values).ShouldBeTrue();
         values.ShouldNotBeNull();
-        string.Join(", ", values!).ShouldContain("1.0");
+        var valuesList = values!.ToList();
+        valuesList.ShouldNotBeEmpty();
+        string.Join(", ", valuesList).ShouldContain("1.0");
     }
 }

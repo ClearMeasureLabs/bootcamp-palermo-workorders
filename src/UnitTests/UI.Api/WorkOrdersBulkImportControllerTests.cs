@@ -87,7 +87,7 @@ public class WorkOrdersBulkImportControllerTests
                 return Task.FromResult((TResponse)(object)new StateCommandResult(cmd.WorkOrder, "Save", "ok"));
             }
 
-            throw new NotSupportedException(request?.GetType().FullName);
+            throw new NotSupportedException(request.GetType().FullName);
         }
 
         public Task<object?> Send(object request) => throw new NotImplementedException();

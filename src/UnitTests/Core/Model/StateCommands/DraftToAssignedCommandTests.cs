@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
@@ -60,8 +61,35 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
         Assert.That(order.AssignedDate, Is.Not.Null);
     }
 
+    [Test]
+    public void ShouldBeValidWhenBeginStatusIsValueEqualToDraftEvenFromASeparateInstance()
+    {
+        var order = new WorkOrder();
+        order.Status = CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus.Draft);
+        var employee = new Employee();
+        order.Creator = employee;
+
+        var command = new DraftToAssignedCommand(order, employee);
+
+        command.IsValid().ShouldBeTrue();
+    }
+
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
         return new DraftToAssignedCommand(order, employee);
+    }
+
+    private static WorkOrderStatus CreateSeparateInstanceWithSameCodeAs(WorkOrderStatus source)
+    {
+        var ctor = typeof(WorkOrderStatus).GetConstructor(
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance,
+            null,
+            new[] { typeof(string), typeof(string), typeof(string), typeof(byte) },
+            null)!;
+
+        var separateInstance = (WorkOrderStatus)ctor.Invoke(new object[] { source.Code, source.Key, source.FriendlyName, source.SortBy });
+        ReferenceEquals(separateInstance, source).ShouldBeFalse();
+
+        return separateInstance;
     }
 }

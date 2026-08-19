@@ -36,7 +36,7 @@ public sealed class WorkOrdersBulkImportController(
     [Produces(MediaTypeNames.Application.Json)]
     [ProducesResponseType(typeof(WorkOrderBulkImportResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Post(IFormFile file, CancellationToken cancellationToken)
+    public async Task<IActionResult> Post(IFormFile? file, CancellationToken cancellationToken)
     {
         if (file == null || file.Length == 0)
         {

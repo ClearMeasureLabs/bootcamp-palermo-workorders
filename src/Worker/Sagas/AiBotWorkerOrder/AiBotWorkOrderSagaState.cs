@@ -8,5 +8,5 @@ public class AiBotWorkOrderSagaState : ContainSagaData
 
     public string WorkOrderNumber { get; set; } = string.Empty;
 
-    public WorkOrder WorkOrder { get; set; } = null!;
+    public WorkOrder? WorkOrder { get; set; }
 }

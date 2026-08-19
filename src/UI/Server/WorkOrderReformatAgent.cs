@@ -49,7 +49,7 @@ public class WorkOrderReformatAgent(
             };
 
             var response = await chatClient.GetResponseAsync(messages);
-            var responseText = response.Text?.Trim();
+            var responseText = response.Text.Trim();
 
             if (string.IsNullOrWhiteSpace(responseText) ||
                 responseText.Equals("NO_CHANGES", StringComparison.OrdinalIgnoreCase))
