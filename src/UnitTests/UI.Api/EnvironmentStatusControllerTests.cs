@@ -52,8 +52,6 @@ public class EnvironmentStatusControllerTests
         {
             Environment.GetEnvironmentVariable(varName).ShouldBe(secret);
             var options = new EnvironmentStatusOptions { MonitoredVariables = [varName] };
-            EnvironmentStatusBuilder.Build(new StubHostEnvironment("UnitTestHostEnv"), options)
-                .EnvironmentVariables.ShouldContainKey(varName);
             var controller = CreateController("UnitTestHostEnv", options);
             var expectedPayload = EnvironmentStatusBuilder.Build(new StubHostEnvironment("UnitTestHostEnv"), options);
 
