@@ -3,6 +3,16 @@ import {AbsoluteFill, Series, Audio, staticFile, interpolate, useCurrentFrame} f
 import {theme} from './theme';
 import {Scene, Eyebrow, Title, StatTile, Rise} from './components';
 
+const ROOM_MAX = 900;
+
+function buildSampleRoom(prefix: string, totalLength: number): string {
+  if (prefix.length >= totalLength) {
+    return prefix.slice(0, totalLength);
+  }
+
+  return prefix + '·'.repeat(totalLength - prefix.length);
+}
+
 const FADE = 10;
 
 const Fade: React.FC<{durationInFrames: number; children: React.ReactNode}> = ({
@@ -58,7 +68,9 @@ const FakeForm: React.FC<{
       style={{
         minHeight: 120,
         maxHeight: 180,
-        overflow: 'hidden',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        whiteSpace: 'pre-wrap',
         background: theme.surface,
         border: `1px solid ${status === 'saved' ? theme.good : status === 'blocked' || status === 'invalid' ? theme.critical : theme.border}`,
         borderRadius: 10,
@@ -122,7 +134,10 @@ export const BeforeScene: React.FC = () => {
 };
 
 export const AfterScene: React.FC = () => {
-  const room = 'R'.repeat(40) + ' Sanctuary balcony, north stairwell, third landing, west alcove beside the organ loft HVAC return, overflow chairs, plaster wall, and accessible route notes for fulfillment staff.';
+  const room = buildSampleRoom(
+    'Sanctuary balcony, north stairwell, third landing, west alcove beside the organ loft HVAC return, overflow chairs, plaster wall, and accessible route notes for fulfillment staff.',
+    ROOM_MAX
+  );
   return (
     <Scene>
       <Rise>
@@ -136,7 +151,7 @@ export const AfterScene: React.FC = () => {
         <StatTile value="901" label="Rejected" accent={theme.critical} delay={8} />
         <StatTile value="Optional" label="Empty still valid" accent={theme.series1} delay={16} />
       </div>
-      <FakeForm room={room} status="saved" limit={900} />
+      <FakeForm room={room} status="saved" limit={ROOM_MAX} />
       <Caption text="Narration: After the change, a nine-hundred-character Room value saves and comes back on the form, wrapping and scrolling so the full value stays readable." />
     </Scene>
   );
@@ -150,7 +165,7 @@ export const RejectScene: React.FC = () => (
     <Rise delay={6}>
       <Title size={64}>Nine hundred one is still rejected</Title>
     </Rise>
-    <FakeForm room={'X'.repeat(120) + ' …'} status="invalid" limit={900} />
+    <FakeForm room={'X'.repeat(ROOM_MAX + 1)} status="invalid" limit={ROOM_MAX} />
     <Caption text="Narration: Values of nine hundred one characters or more are rejected and are not stored. Existing shorter rooms remain valid." />
   </Scene>
 );

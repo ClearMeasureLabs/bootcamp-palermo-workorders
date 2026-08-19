@@ -81,9 +81,8 @@ public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
             new LocatorAssertionsToBeVisibleOptions { Timeout = 15_000 });
 
         WorkOrder? stored = await Bus.Send(new WorkOrderByNumberQuery(number));
-        if (stored != null)
-        {
-            stored.RoomNumber.ShouldNotBe(tooLong);
-        }
+        stored.ShouldNotBeNull();
+        (stored.RoomNumber?.Length ?? 0).ShouldBeLessThanOrEqualTo(WorkOrder.RoomNumberMaxLength);
+        stored.RoomNumber.ShouldNotBe(tooLong);
     }
 }
