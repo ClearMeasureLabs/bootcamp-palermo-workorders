@@ -3,104 +3,69 @@ using System.Globalization;
 namespace ClearMeasure.Bootcamp.UI.Api;
 
 /// <summary>
-/// Parses and formats timestamp inputs for <see cref="Controllers.TimestampConverterController"/>.
+/// Parses epoch or ISO-8601 inputs and builds timestamp converter responses.
 /// </summary>
 public static class TimestampConverter
 {
     /// <summary>
-    /// Absolute epoch values at or above this threshold are interpreted as milliseconds; otherwise seconds.
+    /// Values with absolute magnitude at or above this threshold are treated as Unix milliseconds; otherwise seconds.
     /// </summary>
-    public const long MillisecondThreshold = 1_000_000_000_000L;
+    public const long MillisecondsThreshold = 1_000_000_000_000L;
+
+    private const string UtcFormat = "yyyy-MM-dd HH:mm:ss 'UTC'";
+    private const string LocalFormat = "yyyy-MM-dd HH:mm:ss";
 
     /// <summary>
-    /// Parses exactly one of <paramref name="epoch"/> or <paramref name="iso"/> into a UTC instant.
+    /// Validates input and parses exactly one of <paramref name="epoch"/> or <paramref name="iso"/> into a UTC instant.
     /// </summary>
-    public static (bool Success, DateTimeOffset Instant, string? Error) TryParse(string? epoch, string? iso)
+    public static (bool Success, DateTimeOffset Instant, string? Error) TryParse(long? epoch, string? iso)
     {
-        var hasEpoch = !string.IsNullOrWhiteSpace(epoch);
+        var hasEpoch = epoch.HasValue;
         var hasIso = !string.IsNullOrWhiteSpace(iso);
 
         if (!hasEpoch && !hasIso)
         {
-            return (false, default, "Provide exactly one of 'epoch' or 'iso' query parameters.");
+            return (false, default, "Exactly one of 'epoch' or 'iso' query parameter is required.");
         }
 
         if (hasEpoch && hasIso)
         {
-            return (false, default, "Provide only one of 'epoch' or 'iso', not both.");
+            return (false, default, "Supply only one of 'epoch' or 'iso', not both.");
         }
 
         if (hasEpoch)
         {
-            return TryParseEpoch(epoch!);
+            var value = epoch!.Value;
+            var instant = Math.Abs(value) >= MillisecondsThreshold
+                ? DateTimeOffset.FromUnixTimeMilliseconds(value)
+                : DateTimeOffset.FromUnixTimeSeconds(value);
+            return (true, instant.ToUniversalTime(), null);
         }
 
-        return TryParseIso(iso!);
+        if (!DateTimeOffset.TryParse(
+                iso,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind,
+                out var parsed))
+        {
+            return (false, default, $"Unable to parse ISO-8601 value '{iso}'.");
+        }
+
+        return (true, parsed.ToUniversalTime(), null);
     }
 
     /// <summary>
-    /// Builds the API response for a parsed instant.
+    /// Builds the API response for a parsed UTC instant.
     /// </summary>
-    public static TimestampConverterResponse ToResponse(DateTimeOffset instant)
+    public static TimestampConverterResponse BuildResponse(DateTimeOffset instantUtc)
     {
-        var utc = instant.ToUniversalTime();
+        var utc = instantUtc.ToUniversalTime();
         var local = TimeZoneInfo.ConvertTime(utc, TimeZoneInfo.Local);
-
         return new TimestampConverterResponse(
             EpochSeconds: utc.ToUnixTimeSeconds(),
             EpochMilliseconds: utc.ToUnixTimeMilliseconds(),
             Iso8601: utc.ToString("O", CultureInfo.InvariantCulture),
-            UtcFormatted: utc.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", CultureInfo.InvariantCulture),
-            LocalFormatted: FormatLocal(local));
-    }
-
-    private static string FormatLocal(DateTimeOffset local)
-    {
-        var formatted = local.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-        var zone = TimeZoneInfo.Local.GetUtcOffset(local.DateTime);
-        var sign = zone >= TimeSpan.Zero ? "+" : "-";
-        var abs = zone.Duration();
-        return $"{formatted} (UTC{sign}{abs:hh\\:mm})";
-    }
-
-    private static (bool Success, DateTimeOffset Instant, string? Error) TryParseEpoch(string epochText)
-    {
-        if (!long.TryParse(epochText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var epochValue))
-        {
-            return (false, default, $"Epoch value '{epochText}' is not a valid integer.");
-        }
-
-        long epochMilliseconds;
-        if (Math.Abs(epochValue) >= MillisecondThreshold)
-        {
-            epochMilliseconds = epochValue;
-        }
-        else
-        {
-            epochMilliseconds = epochValue * 1000L;
-        }
-
-        try
-        {
-            return (true, DateTimeOffset.FromUnixTimeMilliseconds(epochMilliseconds), null);
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-            return (false, default, $"Epoch value '{epochText}' is out of range.");
-        }
-    }
-
-    private static (bool Success, DateTimeOffset Instant, string? Error) TryParseIso(string isoText)
-    {
-        if (!DateTimeOffset.TryParse(
-                isoText,
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.RoundtripKind,
-                out var instant))
-        {
-            return (false, default, $"ISO-8601 value '{isoText}' is not valid.");
-        }
-
-        return (true, instant, null);
+            UtcFormatted: utc.ToString(UtcFormat, CultureInfo.InvariantCulture),
+            LocalFormatted: local.ToString(LocalFormat, CultureInfo.InvariantCulture));
     }
 }

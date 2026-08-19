@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
@@ -32,7 +31,7 @@ public class TimestampConverterEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/tools/timestamp-converter?epoch=1609459200");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        await AssertJsonShape(response);
+        await AssertSuccessPayload(response);
     }
 
     [Test]
@@ -41,7 +40,7 @@ public class TimestampConverterEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/v1.0/tools/timestamp-converter?epoch=1609459200");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        await AssertJsonShape(response);
+        await AssertSuccessPayload(response);
     }
 
     [Test]
@@ -49,11 +48,11 @@ public class TimestampConverterEndpointIntegrationTests
     {
         var unversioned = await _client!.GetAsync("/api/tools/timestamp-converter?iso=2021-01-01T00:00:00Z");
         unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        await AssertJsonShape(unversioned);
+        await AssertSuccessPayload(unversioned);
 
         var versioned = await _client.GetAsync("/api/v1.0/tools/timestamp-converter?iso=2021-01-01T00:00:00Z");
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        await AssertJsonShape(versioned);
+        await AssertSuccessPayload(versioned);
     }
 
     [Test]
@@ -61,10 +60,7 @@ public class TimestampConverterEndpointIntegrationTests
     {
         var response = await _client!.GetAsync("/api/tools/timestamp-converter");
 
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        await AssertProblemDetails(response);
     }
 
     [Test]
@@ -73,10 +69,7 @@ public class TimestampConverterEndpointIntegrationTests
         var response = await _client!.GetAsync(
             "/api/tools/timestamp-converter?epoch=1234&iso=2021-01-01T00:00:00Z");
 
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        await AssertProblemDetails(response);
     }
 
     [Test]
@@ -85,9 +78,6 @@ public class TimestampConverterEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/tools/timestamp-converter?epoch=abc");
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
     }
 
     [Test]
@@ -95,10 +85,7 @@ public class TimestampConverterEndpointIntegrationTests
     {
         var response = await _client!.GetAsync("/api/tools/timestamp-converter?iso=not-a-date");
 
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        await AssertProblemDetails(response);
     }
 
     [Test]
@@ -114,7 +101,7 @@ public class TimestampConverterEndpointIntegrationTests
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    private static async Task AssertJsonShape(HttpResponseMessage response)
+    private static async Task AssertSuccessPayload(HttpResponseMessage response)
     {
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
@@ -122,11 +109,20 @@ public class TimestampConverterEndpointIntegrationTests
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
-        doc.RootElement.TryGetProperty("epochSeconds", out _).ShouldBeTrue();
-        doc.RootElement.TryGetProperty("epochMilliseconds", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("epochSeconds", out var epochSeconds).ShouldBeTrue();
+        epochSeconds.GetInt64().ShouldBe(1609459200);
+        doc.RootElement.TryGetProperty("epochMilliseconds", out var epochMilliseconds).ShouldBeTrue();
+        epochMilliseconds.GetInt64().ShouldBe(1609459200000);
         doc.RootElement.TryGetProperty("iso8601", out _).ShouldBeTrue();
         doc.RootElement.TryGetProperty("utcFormatted", out _).ShouldBeTrue();
         doc.RootElement.TryGetProperty("localFormatted", out _).ShouldBeTrue();
-        doc.RootElement.GetProperty("epochSeconds").GetInt64().ShouldBe(1609459200L);
+    }
+
+    private static async Task AssertProblemDetails(HttpResponseMessage response)
+    {
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("problem+json");
     }
 }

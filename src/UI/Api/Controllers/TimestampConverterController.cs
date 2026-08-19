@@ -8,28 +8,29 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
-/// Converts between Unix epoch timestamps and ISO-8601 strings for operators and integrations.
+/// Converts between Unix epoch values and ISO-8601 timestamps for operators and integrations.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/tools/timestamp-converter")]
 [Route($"{ApiRoutes.VersionedApiPrefix}/tools/timestamp-converter")]
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
-public class TimestampConverterController : ControllerBase
+public sealed class TimestampConverterController : ControllerBase
 {
     /// <summary>
-    /// Converts a Unix epoch or ISO-8601 timestamp into both representations plus human-readable UTC and local strings.
+    /// Converts a single timestamp input to epoch seconds, epoch milliseconds, ISO-8601, and formatted UTC/local strings.
     /// </summary>
     /// <param name="epoch">
-    /// Unix epoch as seconds or milliseconds. Values with absolute magnitude ≥ 1,000,000,000,000 are treated as milliseconds.
+    /// Unix timestamp in seconds or milliseconds. Values with absolute magnitude at or above
+    /// <see cref="TimestampConverter.MillisecondsThreshold"/> are interpreted as milliseconds; otherwise seconds.
     /// </param>
-    /// <param name="iso">ISO-8601 timestamp string.</param>
-    /// <returns>Both epoch and ISO forms plus formatted UTC/local strings.</returns>
+    /// <param name="iso">ISO-8601 timestamp string (round-trip kind).</param>
+    /// <returns>Both representations plus human-readable UTC and local formatted strings.</returns>
     [HttpGet]
     [AllowAnonymous]
     [ProducesResponseType(typeof(TimestampConverterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public IActionResult Get([FromQuery] string? epoch, [FromQuery] string? iso)
+    public IActionResult Get([FromQuery] long? epoch, [FromQuery] string? iso)
     {
         var parseResult = TimestampConverter.TryParse(epoch, iso);
         if (!parseResult.Success)
@@ -37,7 +38,7 @@ public class TimestampConverterController : ControllerBase
             return Problem(detail: parseResult.Error, statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var payload = TimestampConverter.ToResponse(parseResult.Instant);
+        var payload = TimestampConverter.BuildResponse(parseResult.Instant);
         return ConditionalGetEtag.JsonContent(payload);
     }
 }

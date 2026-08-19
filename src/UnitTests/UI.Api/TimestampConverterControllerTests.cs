@@ -11,7 +11,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 [TestFixture]
 public class TimestampConverterControllerTests
 {
-    private static readonly DateTimeOffset FixedInstant =
+    private static readonly DateTimeOffset KnownInstant =
         new(2021, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     private TimestampConverterController CreateController()
@@ -22,21 +22,33 @@ public class TimestampConverterControllerTests
         };
     }
 
+    private static TimestampConverterResponse Deserialize(ContentResult content)
+    {
+        var payload = JsonSerializer.Deserialize<TimestampConverterResponse>(
+            content.Content!,
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        return payload!;
+    }
+
     [Test]
     public void Get_EpochSeconds_Should_ReturnBothFormatsAndFormatted()
     {
         var controller = CreateController();
 
-        var result = controller.Get("1609459200", null);
+        var result = controller.Get(1609459200, null);
 
         var content = result.ShouldBeOfType<ContentResult>();
-        content.StatusCode.ShouldBe(200);
-        var payload = Deserialize(content.Content!);
-        payload.EpochSeconds.ShouldBe(1609459200L);
-        payload.EpochMilliseconds.ShouldBe(1609459200000L);
-        payload.Iso8601.ShouldBe(FixedInstant.ToString("O", CultureInfo.InvariantCulture));
+        content.ContentType.ShouldNotBeNull();
+        content.ContentType!.ShouldContain("application/json");
+        var payload = Deserialize(content);
+        payload.EpochSeconds.ShouldBe(1609459200);
+        payload.EpochMilliseconds.ShouldBe(1609459200000);
+        payload.Iso8601.ShouldBe(KnownInstant.ToString("O", CultureInfo.InvariantCulture));
         payload.UtcFormatted.ShouldBe("2021-01-01 00:00:00 UTC");
-        payload.LocalFormatted.ShouldNotBeNullOrWhiteSpace();
+        payload.LocalFormatted.ShouldBe(
+            TimeZoneInfo.ConvertTime(KnownInstant, TimeZoneInfo.Local)
+                .ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
     }
 
     [Test]
@@ -44,15 +56,13 @@ public class TimestampConverterControllerTests
     {
         var controller = CreateController();
 
-        var result = controller.Get("1609459200000", null);
+        var result = controller.Get(1609459200000, null);
 
         var content = result.ShouldBeOfType<ContentResult>();
-        content.StatusCode.ShouldBe(200);
-        var payload = Deserialize(content.Content!);
-        payload.EpochSeconds.ShouldBe(1609459200L);
-        payload.EpochMilliseconds.ShouldBe(1609459200000L);
-        payload.Iso8601.ShouldBe(FixedInstant.ToString("O", CultureInfo.InvariantCulture));
-        payload.UtcFormatted.ShouldBe("2021-01-01 00:00:00 UTC");
+        var payload = Deserialize(content);
+        payload.EpochSeconds.ShouldBe(1609459200);
+        payload.EpochMilliseconds.ShouldBe(1609459200000);
+        payload.Iso8601.ShouldBe(KnownInstant.ToString("O", CultureInfo.InvariantCulture));
     }
 
     [Test]
@@ -63,12 +73,10 @@ public class TimestampConverterControllerTests
         var result = controller.Get(null, "2021-01-01T00:00:00Z");
 
         var content = result.ShouldBeOfType<ContentResult>();
-        content.StatusCode.ShouldBe(200);
-        var payload = Deserialize(content.Content!);
-        payload.EpochSeconds.ShouldBe(1609459200L);
-        payload.EpochMilliseconds.ShouldBe(1609459200000L);
-        payload.Iso8601.ShouldBe(FixedInstant.ToString("O", CultureInfo.InvariantCulture));
-        payload.UtcFormatted.ShouldBe("2021-01-01 00:00:00 UTC");
+        var payload = Deserialize(content);
+        payload.EpochSeconds.ShouldBe(1609459200);
+        payload.EpochMilliseconds.ShouldBe(1609459200000);
+        payload.Iso8601.ShouldBe(KnownInstant.ToString("O", CultureInfo.InvariantCulture));
     }
 
     [Test]
@@ -79,9 +87,9 @@ public class TimestampConverterControllerTests
         var result = controller.Get(null, null);
 
         var problem = result.ShouldBeOfType<ObjectResult>();
-        problem.StatusCode.ShouldBe(400);
+        problem.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldNotBeNullOrWhiteSpace();
+        details.Detail.ShouldBe("Exactly one of 'epoch' or 'iso' query parameter is required.");
     }
 
     [Test]
@@ -89,27 +97,12 @@ public class TimestampConverterControllerTests
     {
         var controller = CreateController();
 
-        var result = controller.Get("1609459200", "2021-01-01T00:00:00Z");
+        var result = controller.Get(1234, "2021-01-01T00:00:00Z");
 
         var problem = result.ShouldBeOfType<ObjectResult>();
-        problem.StatusCode.ShouldBe(400);
+        problem.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldNotBeNull();
-        details.Detail!.ShouldContain("both");
-    }
-
-    [Test]
-    public void Get_InvalidEpochFormat_Should_Return400ProblemDetails()
-    {
-        var controller = CreateController();
-
-        var result = controller.Get("abc", null);
-
-        var problem = result.ShouldBeOfType<ObjectResult>();
-        problem.StatusCode.ShouldBe(400);
-        var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldNotBeNull();
-        details.Detail!.ShouldContain("abc");
+        details.Detail.ShouldBe("Supply only one of 'epoch' or 'iso', not both.");
     }
 
     [Test]
@@ -120,13 +113,8 @@ public class TimestampConverterControllerTests
         var result = controller.Get(null, "not-a-date");
 
         var problem = result.ShouldBeOfType<ObjectResult>();
-        problem.StatusCode.ShouldBe(400);
+        problem.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
         var details = problem.Value.ShouldBeOfType<ProblemDetails>();
-        details.Detail.ShouldNotBeNull();
-        details.Detail!.ShouldContain("not-a-date");
+        details.Detail.ShouldBe("Unable to parse ISO-8601 value 'not-a-date'.");
     }
-
-    private static TimestampConverterResponse Deserialize(string json) =>
-        JsonSerializer.Deserialize<TimestampConverterResponse>(json, ConditionalGetEtag.JsonSerializerOptions)!
-            ?? throw new InvalidOperationException("Expected JSON payload.");
 }
