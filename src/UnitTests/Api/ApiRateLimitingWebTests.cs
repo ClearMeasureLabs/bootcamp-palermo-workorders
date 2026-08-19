@@ -150,6 +150,16 @@ public class ApiRateLimitingWebTests
     }
 
     [Test]
+    public async Task Should_ApplyRateLimiting_When_DetailedHealthExceedsPolicy()
+    {
+        await using var factory = new TunableApiRateLimitWebApplicationFactory(StrictLimitSettings(2));
+        using var client = factory.CreateClient();
+        (await client.GetAsync("/api/health/detailed")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.GetAsync("/api/health/detailed")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.GetAsync("/api/health/detailed")).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Test]
     public async Task RateLimiting_WhenDisabled_AllowsUnlimitedApiCalls()
     {
         var settings = new Dictionary<string, string?>(StrictLimitSettings(1))
