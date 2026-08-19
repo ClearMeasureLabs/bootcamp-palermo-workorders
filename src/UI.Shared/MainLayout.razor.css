@@ -80,6 +80,11 @@
     padding: 1rem 0;
 }
 
+/* Rail visibility is owned by MainLayout; hide legacy NavMenu mobile header/toggler inside the rail. */
+.sidebar-nav ::deep .top-row {
+    display: none;
+}
+
 /* Sidebar Footer */
 .sidebar-footer {
     padding: 1rem 1.5rem;
