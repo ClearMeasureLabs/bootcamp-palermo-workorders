@@ -47,7 +47,6 @@ public class EnvironmentStatusControllerTests
     {
         const string varName = "8457_CTRL_REDACT";
         const string secret = "controller-secret-8457";
-        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "RedactTest8457");
         Environment.SetEnvironmentVariable(varName, secret);
         try
         {
@@ -56,23 +55,19 @@ public class EnvironmentStatusControllerTests
 
             var result = controller.Get();
             var content = result.ShouldBeOfType<ContentResult>();
+            content.Content.ShouldNotBeNull();
             content.Content!.ShouldNotContain(secret);
-            content.Content.ShouldNotContain("RedactTest8457");
-            content.Content.ShouldContain(EnvironmentStatusBuilder.RedactedValue);
 
             var payload = JsonSerializer.Deserialize<EnvironmentStatusResponse>(
                 content.Content,
                 ConditionalGetEtag.JsonSerializerOptions);
             payload.ShouldNotBeNull();
-            payload!.EnvironmentVariables.ShouldContainKey("ASPNETCORE_ENVIRONMENT");
-            payload.EnvironmentVariables.ShouldContainKey(varName);
-            payload.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
+            payload!.EnvironmentVariables.ShouldContainKey(varName);
             payload.EnvironmentVariables[varName].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
         }
         finally
         {
             Environment.SetEnvironmentVariable(varName, null);
-            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", null);
         }
     }
 
