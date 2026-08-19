@@ -1,0 +1,95 @@
+@using ClearMeasure.Bootcamp.Core.Model
+
+<div class="recurrence-selector">
+    <div class="mb-3">
+        <label class="form-label">Recurrence Pattern</label>
+        <select @bind="Pattern" class="form-select" @bind:after="OnPatternChanged" aria-label="Recurrence pattern">
+            <option value="@RecurrencePattern.None">One-Time (No Recurrence)</option>
+            <option value="@RecurrencePattern.Weekly">Weekly</option>
+            <option value="@RecurrencePattern.Monthly">Monthly</option>
+            <option value="@RecurrencePattern.Quarterly">Quarterly</option>
+            <option value="@RecurrencePattern.Annually">Annually</option>
+        </select>
+    </div>
+    
+    @if (Pattern != RecurrencePattern.None)
+    {
+        <div class="mb-3">
+            <label class="form-label">Repeat Every</label>
+            <div class="input-group">
+                <input type="number" 
+                       @bind="Interval" 
+                       @bind:after="OnIntervalChanged"
+                       min="1" 
+                       class="form-control" 
+                       aria-label="Recurrence interval" />
+                <span class="input-group-text">@GetIntervalLabel()</span>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Next Scheduled</label>
+            <input type="text" 
+                   value="@(NextScheduledDate?.ToString("MMM dd, yyyy h:mm tt"))" 
+                   class="form-control" 
+                   readonly 
+                   aria-label="Next scheduled date" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public RecurrencePattern Pattern { get; set; }
+    [Parameter] public EventCallback<RecurrencePattern> PatternChanged { get; set; }
+    
+    [Parameter] public int Interval { get; set; } = 1;
+    [Parameter] public EventCallback<int> IntervalChanged { get; set; }
+    
+    [Parameter] public DateTime? NextScheduledDate { get; set; }
+    [Parameter] public EventCallback<DateTime?> NextScheduledDateChanged { get; set; }
+    
+    private async Task OnPatternChanged()
+    {
+        await PatternChanged.InvokeAsync(Pattern);
+        await CalculateNextScheduledDate();
+    }
+    
+    private async Task OnIntervalChanged()
+    {
+        await IntervalChanged.InvokeAsync(Interval);
+        await CalculateNextScheduledDate();
+    }
+    
+    private async Task CalculateNextScheduledDate()
+    {
+        if (Pattern == RecurrencePattern.None)
+        {
+            await NextScheduledDateChanged.InvokeAsync(null);
+            return;
+        }
+        
+        var baseDate = DateTime.Now;
+        var nextDate = Pattern switch
+        {
+            RecurrencePattern.Weekly => baseDate.AddDays(7 * Interval),
+            RecurrencePattern.Monthly => baseDate.AddMonths(Interval),
+            RecurrencePattern.Quarterly => baseDate.AddMonths(3 * Interval),
+            RecurrencePattern.Annually => baseDate.AddYears(Interval),
+            _ => baseDate
+        };
+        
+        await NextScheduledDateChanged.InvokeAsync(nextDate);
+    }
+    
+    private string GetIntervalLabel()
+    {
+        return Pattern switch
+        {
+            RecurrencePattern.Weekly => Interval == 1 ? "week" : "weeks",
+            RecurrencePattern.Monthly => Interval == 1 ? "month" : "months",
+            RecurrencePattern.Quarterly => Interval == 1 ? "quarter" : "quarters",
+            RecurrencePattern.Annually => Interval == 1 ? "year" : "years",
+            _ => ""
+        };
+    }
+}

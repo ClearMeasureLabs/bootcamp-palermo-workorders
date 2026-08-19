@@ -12,5 +12,7 @@ public class WorkOrderSearchModel
         public string? Creator { get; set; }
         public string? Assignee { get; set; }
         public string? Status { get; set; }
+        public string? Priority { get; set; }
+        public string? IsRecurring { get; set; }
     }
 }

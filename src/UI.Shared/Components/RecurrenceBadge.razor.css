@@ -1,0 +1,28 @@
+.recurrence-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 9999px;
+}
+
+.recurrence-badge.recurring {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.recurrence-badge.instance {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.recurrence-badge.one-time {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.recurrence-badge i {
+    font-size: 1rem;
+}
