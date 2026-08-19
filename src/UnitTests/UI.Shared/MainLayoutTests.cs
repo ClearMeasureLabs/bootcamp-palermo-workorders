@@ -178,9 +178,9 @@ public class MainLayoutTests
         var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
         var layout = component.FindComponent<MainLayout>();
 
-        layout.Find(".auth-section").ShouldNotBeNull();
         var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
         loginAnchor.ClassList.ShouldContain("login-link-blink");
+        layout.Find(".auth-section").ShouldNotBeNull();
     }
 
     [Test]
@@ -191,9 +191,10 @@ public class MainLayoutTests
         var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
         var layout = component.FindComponent<MainLayout>();
 
-        layout.FindAll(".auth-section").Count.ShouldBe(0);
         layout.FindAll($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']").Count.ShouldBe(0);
+        layout.FindAll(".auth-section").Count.ShouldBe(0);
         layout.FindAll(".login-link-blink").Count.ShouldBe(0);
+        layout.Find(".user-section").ShouldNotBeNull();
         layout.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']").ShouldNotBeNull();
     }
 
