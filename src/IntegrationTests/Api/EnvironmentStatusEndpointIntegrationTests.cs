@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
@@ -113,7 +114,16 @@ public class EnvironmentStatusEndpointIntegrationTests
         Environment.SetEnvironmentVariable(varName, secret);
         try
         {
-            await using var factory = new EnvironmentStatusWebApplicationFactory();
+            await using var factory = new DiagnosticsWebApplicationFactory().WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureAppConfiguration((_, config) =>
+                {
+                    config.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["EnvironmentStatus:MonitoredVariables:0"] = varName
+                    });
+                });
+            });
             using var client = factory.CreateClient();
 
             var response = await client.GetAsync("/api/status/environment");
@@ -131,21 +141,6 @@ public class EnvironmentStatusEndpointIntegrationTests
         finally
         {
             Environment.SetEnvironmentVariable(varName, null);
-        }
-    }
-
-    private sealed class EnvironmentStatusWebApplicationFactory : DiagnosticsWebApplicationFactory
-    {
-        protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
-        {
-            base.ConfigureWebHost(builder);
-            builder.ConfigureAppConfiguration((_, config) =>
-            {
-                config.AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["EnvironmentStatus:MonitoredVariables:0"] = "8457_INT_REDACT"
-                });
-            });
         }
     }
 }
