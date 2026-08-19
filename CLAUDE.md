@@ -157,7 +157,7 @@ Work items live on the ClearMeasureLabs project board: https://github.com/orgs/C
   - **Cursor:** `.cursor/skills/feature-loop/SKILL.md` (slash command: `.cursor/commands/feature-loop.md`)
   - **Claude Code:** `.claude/skills/feature-loop/SKILL.md`
 - `/feature-loop-dispatch N1 N2 ...` — orchestrate a batch: children-first tree resolution, one sub-session per item, epic clamp, stall watchdog.
-  - **Cursor:** `.cursor/skills/feature-loop-dispatch/SKILL.md` (slash command: `.cursor/commands/feature-loop-dispatch.md`); uses Task `best-of-n-runner` + `resume`
+  - **Cursor:** `.cursor/skills/feature-loop-dispatch/SKILL.md` (slash command: `.cursor/commands/feature-loop-dispatch.md`); uses Task `best-of-n-runner`, `model: inherit` (Auto, cost-optimized), `resume`
   - **Claude Code:** `.claude/skills/feature-loop-dispatch/SKILL.md`
 - Board/build configuration (columns, cached board IDs, gates): `.claude/factory-loop.json` (shared)
 - Stall watchdog script (shared): `.claude/skills/feature-loop-dispatch/Check-StalledLanes.ps1`

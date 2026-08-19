@@ -11,6 +11,6 @@ Run **feature-loop dispatch** as the orchestrator for a batch of authorized work
 
 1. Read and follow `.cursor/skills/feature-loop-dispatch/SKILL.md` completely.
 2. Also follow `.cursor/skills/feature-loop/SKILL.md` for per-item rules and `.claude/factory-loop.json` for board/build config.
-3. Start the stall watchdog (`Check-StalledLanes.ps1`, GitHub-visible stalls only — no Cursor `-TasksDir`), resolve the epic/child tree, dispatch **one item-coordinator Task per issue** (`best-of-n-runner`, Sonnet pin, cap 3), enforce parent board clamp, and run until every authorized item is Done or hard-blocked.
+3. Start the stall watchdog (`Check-StalledLanes.ps1`, GitHub-visible stalls only — no Cursor `-TasksDir`), resolve the epic/child tree, dispatch **one item-coordinator Task per issue** (`best-of-n-runner`, `model: inherit` / Auto cost-optimized, cap 3), enforce parent board clamp, and run until every authorized item is Done or hard-blocked.
 
 Do not edit application code in the orchestrator session — only dispatch, verify, clamp, merge/card/issue closeout, and spawn closer Tasks when a stall needs code fixes.

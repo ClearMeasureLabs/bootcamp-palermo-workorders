@@ -63,7 +63,7 @@ Use the **Task** tool (not Claude's Agent tool):
 |--------|-----------------|
 | Column worker / writing / build / test | `subagent_type: "best-of-n-runner"` (isolated git worktree); launch **exactly one** runner per column (never N competing attempts of the same column) |
 | Read-only search | `subagent_type: "explore"` on the main checkout |
-| Model | Pin writing Tasks to `claude-sonnet-5-thinking-high` when `factory-loop.json` `subagents.default` is `"sonnet"` (Claude Sonnet mandate). Use `inherit` or another listed model **only** when the user explicitly named one. |
+| Model | `inherit` (Auto, cost-optimized). Omit a named model unless the user explicitly named a listed slug. |
 | Parallel independent children | `run_in_background: true`; cap at 3 writing Tasks |
 | Nudge a stalled worker | `resume` with the prior Task agent id (replaces Claude SendMessage) |
 

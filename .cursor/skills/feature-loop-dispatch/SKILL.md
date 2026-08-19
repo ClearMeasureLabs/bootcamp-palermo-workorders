@@ -119,7 +119,7 @@ itself per `.cursor/skills/feature-loop/SKILL.md`):
 | Parameter | Value |
 |-----------|--------|
 | `subagent_type` | `"best-of-n-runner"` (isolated git worktree); **exactly one** runner per item |
-| `model` | `claude-sonnet-5-thinking-high` when `factory-loop.json` `subagents.default` is `"sonnet"`; otherwise a user-named listed model |
+| `model` | `inherit` (Auto, cost-optimized). Named listed slugs only if the user asked for one. |
 | `run_in_background` | `true` for independent items |
 | Concurrency | Cap at 3 item-coordinator Tasks |
 
@@ -133,7 +133,7 @@ item**, including verbatim:
 > Follow this repo's `.cursor/skills/feature-loop/SKILL.md` and
 > `.claude/factory-loop.json` exactly. You are the **item coordinator**: drive #N
 > end-to-end, but for each board column spawn a dedicated column-worker Task
-> (`best-of-n-runner`, model `claude-sonnet-5-thinking-high` unless the user named
+> (`best-of-n-runner`, `model: inherit` / Auto cost-optimized unless the user named
 > another listed model) that does only that column's work — never skip columns; record
 > no-op justifications for non-applicable columns; at most one delegation hop (column
 > workers must not re-delegate). Work from origin/master in your worktree; merge
@@ -214,13 +214,12 @@ Finish with a single summary: per item — final column, PR, merge SHA, children
   span columns or re-delegate.
 - The orchestrator never edits application code (merge / card / issue / comment closeout
   only; code fixes require a closer Task).
-- Every writing Task: `best-of-n-runner` (own worktree) + Sonnet pin
-  (`claude-sonnet-5-thinking-high` when config says `sonnet`), unless the user named a
-  listed model.
+- Every writing Task: `best-of-n-runner` (own worktree) + `model: inherit` (Auto,
+  cost-optimized), unless the user named a listed model.
 - A parent never outranks its least-advanced open child on the board.
 - CI is verified via the check-runs API only.
 - REST-first; cached board IDs from `factory-loop.json`; check `rate_limit` before each
   dispatch wave.
 - Claude Agent / `isolation: "worktree"` / `SendMessage` / `model: "sonnet"` wording from
-  the `.claude` skills maps to Task / `best-of-n-runner` / `resume` /
-  `claude-sonnet-5-thinking-high` as above — not to unconditional `inherit`.
+  the `.claude` skills maps to Task / `best-of-n-runner` / `resume` / `inherit` (Auto,
+  cost-optimized). Do not pin a named Claude slug.
