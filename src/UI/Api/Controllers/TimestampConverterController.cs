@@ -15,7 +15,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [Route("api/tools/timestamp-converter")]
 [Route($"{ApiRoutes.VersionedApiPrefix}/tools/timestamp-converter")]
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
-public class TimestampConverterController : ControllerBase
+public sealed class TimestampConverterController : ControllerBase
 {
     /// <summary>
     /// Converts a timestamp supplied as <paramref name="epoch"/> (Unix seconds or milliseconds) or <paramref name="iso"/> (ISO-8601).

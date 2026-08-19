@@ -7,7 +7,10 @@ namespace ClearMeasure.Bootcamp.UI.Api;
 /// </summary>
 public static class TimestampConverter
 {
-    private const long MillisecondThreshold = 1_000_000_000_000L;
+    /// <summary>
+    /// Values with absolute magnitude at or above this threshold are treated as Unix milliseconds; otherwise seconds.
+    /// </summary>
+    public const long MillisecondsThreshold = 1_000_000_000_000L;
 
     /// <summary>
     /// Outcome of parsing exactly one of <paramref name="epoch"/> or <paramref name="iso"/>.
@@ -40,10 +43,10 @@ public static class TimestampConverter
                 return new ParseResult(false, default, $"Unable to parse epoch value: '{epoch}'.");
             }
 
-            var instant = Math.Abs(epochValue) >= MillisecondThreshold
+            var instant = Math.Abs(epochValue) >= MillisecondsThreshold
                 ? DateTimeOffset.FromUnixTimeMilliseconds(epochValue)
                 : DateTimeOffset.FromUnixTimeSeconds(epochValue);
-            return new ParseResult(true, instant, null);
+            return new ParseResult(true, instant.ToUniversalTime(), null);
         }
 
         if (!DateTimeOffset.TryParse(
@@ -55,7 +58,7 @@ public static class TimestampConverter
             return new ParseResult(false, default, $"Unable to parse ISO-8601 value: '{iso}'.");
         }
 
-        return new ParseResult(true, parsedIso, null);
+        return new ParseResult(true, parsedIso.ToUniversalTime(), null);
     }
 
     /// <summary>
@@ -64,7 +67,7 @@ public static class TimestampConverter
     public static TimestampConverterResponse ToResponse(DateTimeOffset instant)
     {
         var utc = instant.ToUniversalTime();
-        var local = TimeZoneInfo.ConvertTime(instant, TimeZoneInfo.Local);
+        var local = TimeZoneInfo.ConvertTime(utc, TimeZoneInfo.Local);
         return new TimestampConverterResponse(
             EpochSeconds: utc.ToUnixTimeSeconds(),
             EpochMilliseconds: utc.ToUnixTimeMilliseconds(),

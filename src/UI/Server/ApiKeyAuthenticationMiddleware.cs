@@ -107,15 +107,10 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return true;
         }
 
-        if (segments.Length == 4
-            && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase)
-            && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
-            && segments[3].Equals("timestamp-converter", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        return false;
+        return segments.Length == 4
+               && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase)
+               && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
+               && segments[3].Equals("timestamp-converter", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool FixedTimeEqualsUtf8(string expected, string provided)
