@@ -122,12 +122,17 @@ itself per `.cursor/skills/feature-loop/SKILL.md`):
 
 | Host session | Task `environment` | `subagent_type` |
 |--------------|-------------------|-----------------|
-| Cloud agent (private worker) | `"cloud"` | `"generalPurpose"` — **not** `best-of-n-runner` (cloud VMs cannot spawn isolated worktree runners on private workers) |
+| Cloud agent **with private worker** (this repo's typical cloud runs) | **Omit** — do **not** set `environment: "cloud"` (spawns a NEW_VM that cannot attach to the private worker and fails immediately) | `"generalPurpose"` — **not** `best-of-n-runner` |
+| Cloud agent without private worker | `"cloud"` | `"generalPurpose"` |
 | Local Cursor agent | `"local"` (default) | `"best-of-n-runner"` preferred; `generalPurpose` if worktree isolation unavailable |
 
-Never dispatch `environment: "local"` from a cloud host, or `environment: "cloud"` from a
-local host. The coordinator still uses its own git worktree inside the host environment
-(`git worktree add` from the repo checkout the host already has).
+**Same environment as host** means the subagent runs on the **host's existing VM** (private
+worker or local checkout), not a separately provisioned cloud VM. Omit the `environment`
+parameter on private-worker cloud hosts. The coordinator still uses its own git worktree
+(`git worktree add` from the repo the host already has).
+
+Never dispatch `environment: "local"` from a cloud private-worker host — that routes to a
+different machine than the host.
 
 | Parameter | Value |
 |-----------|--------|
