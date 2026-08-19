@@ -28,7 +28,7 @@ public class ServerFixture
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
     public static bool HeadlessTestBrowser { get; set; } = true;
     public static bool DatabaseInitialized { get; private set; }
-    private static readonly object DatabaseLock = new();
+    private static readonly Lock DatabaseLock = new();
     
     /// <summary>
     /// Shared Playwright instance for all tests. Thread-safe for parallel execution.
