@@ -75,7 +75,7 @@
                 <div class="form-group">
                     <label for="RoomNumber" class="form-label">Room:</label>
                     <div>
-                        <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
             </div>

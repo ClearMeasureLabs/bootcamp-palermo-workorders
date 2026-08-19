@@ -243,7 +243,7 @@ public class WorkOrderMappingTests
             Number = new string('A', 8), // Exceeds 7 char limit (WorkOrderMap)
             Title = new string('B', 301), // Exceeds 300 char limit
             Description = "valid",
-            RoomNumber = new string('D', 51), // Exceeds 50 char limit
+            RoomNumber = new string('D', WorkOrder.RoomNumberMaxLength + 1),
             Creator = creator,
             Status = WorkOrderStatus.Draft
         };
@@ -281,6 +281,41 @@ public class WorkOrderMappingTests
         context.SaveChanges();
 
         workOrder.Title.Length.ShouldBe(300);
+    }
+
+    [Test]
+    public void ShouldSupportMaxLengthRoomNumber()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var room = new string('R', WorkOrder.RoomNumberMaxLength);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-R9",
+            Title = "Max length room",
+            Description = "description",
+            RoomNumber = room,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.RoomNumber.ShouldBe(room);
+        rehydratedWorkOrder.RoomNumber!.Length.ShouldBe(WorkOrder.RoomNumberMaxLength);
     }
 
     [Test]
