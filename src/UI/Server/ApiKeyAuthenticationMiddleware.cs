@@ -81,13 +81,30 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
                    || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
         }
 
+        if (segments.Length == 3
+            && segments[1].Equals("status", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("environment", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         if (segments.Length >= 3
             && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
         {
             var leaf = segments[2];
-            return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+            if (leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
+                || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
+                || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (segments.Length == 4
+                && leaf.Equals("status", StringComparison.OrdinalIgnoreCase)
+                && segments[3].Equals("environment", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
         }
 
         return false;
