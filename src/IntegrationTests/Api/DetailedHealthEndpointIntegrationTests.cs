@@ -343,6 +343,48 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_DeserializeToDetailedHealthReport_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.OverallStatus.ShouldNotBeNullOrEmpty();
+        report.CheckedAtUtc.Kind.ShouldBe(DateTimeKind.Utc);
+        report.ProcessId.ShouldBe(Environment.ProcessId);
+        report.OsDescription.ShouldNotBeNullOrEmpty();
+        report.FrameworkDescription.ShouldNotBeNullOrEmpty();
+        report.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
+        report.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
+        report.ProcessorCount.ShouldBe(Environment.ProcessorCount);
+        report.Is64BitProcess.ShouldBe(Environment.Is64BitProcess);
+        report.TimeZoneId.ShouldBe(TimeZoneInfo.Local.Id);
+        report.ProcessPriority.ShouldNotBeNullOrEmpty();
+        report.Components.ShouldNotBeEmpty();
+    }
+
+    [Test]
+    public async Task Should_Return200AndSamePayload_When_GetDetailedHealth_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var v1 = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var legacyReport = await legacy.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var v1Report = await v1.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        legacyReport.ShouldNotBeNull();
+        v1Report.ShouldNotBeNull();
+        v1Report!.OverallStatus.ShouldBe(legacyReport!.OverallStatus);
+        v1Report.Components.Select(c => c.Name).ShouldBe(legacyReport.Components.Select(c => c.Name));
+    }
+
+    [Test]
     public async Task Should_ListExpectedComponentEntries_When_AggregatedFromRegisteredChecks()
     {
         var response = await _client!.GetAsync("/api/health/detailed");

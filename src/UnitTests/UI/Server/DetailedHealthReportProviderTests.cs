@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Server;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Shouldly;
 
@@ -439,6 +440,109 @@ public class DetailedHealthReportProviderTests
         component.Data.ShouldNotBeNull();
         component.Data!.Count.ShouldBe(2);
         component.Data["Provider"].ShouldBe("SqlServer");
+        component.Data["RetryCount"].ShouldBe(3);
+    }
+
+    [Test]
+    public async Task DetailedHealthReportProvider_GetAsync_Should_AggregateAllNonLiveChecks()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddHealthChecks()
+            .AddCheck("LiveProbe", () => HealthCheckResult.Healthy(), tags: ["live"])
+            .AddCheck("API", () => HealthCheckResult.Healthy())
+            .AddCheck("DataAccess", () => HealthCheckResult.Degraded("Slow"));
+        await using var provider = services.BuildServiceProvider();
+        var healthCheckService = provider.GetRequiredService<HealthCheckService>();
+        var sut = new DetailedHealthReportProvider(healthCheckService, TimeProvider.System);
+
+        var report = await sut.GetReportAsync();
+
+        var names = report.Components.Select(c => c.Name).ToHashSet();
+        names.ShouldContain("API");
+        names.ShouldContain("DataAccess");
+        names.ShouldNotContain("LiveProbe");
+        report.OverallStatus.ShouldBe(ComponentHealthStatus.Degraded);
+    }
+
+    [Test]
+    public async Task DetailedHealthReportProvider_GetAsync_Should_MapComponentEntries_WithNameStatusDescriptionDurationMs()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddHealthChecks()
+            .AddCheck("DataAccess", () => HealthCheckResult.Healthy("Database connection successful"));
+        await using var provider = services.BuildServiceProvider();
+        var healthCheckService = provider.GetRequiredService<HealthCheckService>();
+        var sut = new DetailedHealthReportProvider(healthCheckService, TimeProvider.System);
+
+        var report = await sut.GetReportAsync();
+
+        var component = report.Components.Single(c => c.Name == "DataAccess");
+        component.Status.ShouldBe(ComponentHealthStatus.Healthy);
+        component.Description.ShouldBe("Database connection successful");
+        component.DurationMs.ShouldNotBeNull();
+        component.DurationMs!.Value.ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
+    public async Task DetailedHealthReportProvider_GetAsync_Should_CaptureExceptionFields_When_CheckFails()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddHealthChecks()
+            .AddCheck("DataAccess", () => HealthCheckResult.Unhealthy(
+                "Database connection failed",
+                new InvalidOperationException("Connection refused")));
+        await using var provider = services.BuildServiceProvider();
+        var healthCheckService = provider.GetRequiredService<HealthCheckService>();
+        var sut = new DetailedHealthReportProvider(healthCheckService, TimeProvider.System);
+
+        var report = await sut.GetReportAsync();
+
+        var component = report.Components.Single(c => c.Name == "DataAccess");
+        component.Status.ShouldBe(ComponentHealthStatus.Unhealthy);
+        component.ExceptionMessage.ShouldBe("Connection refused");
+        component.ExceptionDetail.ShouldNotBeNull();
+        component.ExceptionDetail.ShouldContain("InvalidOperationException");
+    }
+
+    [Test]
+    public async Task DetailedHealthReportProvider_GetAsync_Should_SortComponentsByName()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddHealthChecks()
+            .AddCheck("Zed", () => HealthCheckResult.Healthy())
+            .AddCheck("Alpha", () => HealthCheckResult.Degraded());
+        await using var provider = services.BuildServiceProvider();
+        var healthCheckService = provider.GetRequiredService<HealthCheckService>();
+        var sut = new DetailedHealthReportProvider(healthCheckService, TimeProvider.System);
+
+        var report = await sut.GetReportAsync();
+
+        report.Components[0].Name.ShouldBe("Alpha");
+        report.Components[1].Name.ShouldBe("Zed");
+    }
+
+    [Test]
+    public async Task DetailedHealthReportProvider_GetAsync_Should_IncludeDataField_When_CheckReturnsMetadata()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddHealthChecks()
+            .AddCheck("DataAccess", () => HealthCheckResult.Degraded(
+                "Slow response",
+                data: new Dictionary<string, object> { ["Provider"] = "SqlServer", ["RetryCount"] = 3 }));
+        await using var provider = services.BuildServiceProvider();
+        var healthCheckService = provider.GetRequiredService<HealthCheckService>();
+        var sut = new DetailedHealthReportProvider(healthCheckService, TimeProvider.System);
+
+        var report = await sut.GetReportAsync();
+
+        var component = report.Components.Single(c => c.Name == "DataAccess");
+        component.Data.ShouldNotBeNull();
+        component.Data!["Provider"].ShouldBe("SqlServer");
         component.Data["RetryCount"].ShouldBe(3);
     }
 
