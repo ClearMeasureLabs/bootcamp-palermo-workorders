@@ -39,6 +39,17 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderNavLinksInsideModernSidebarRail()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.Find("#app-navigation-rail .nav-scrollable .nav-link").ShouldNotBeNull();
+    }
+
+    [Test]
     public void ShouldToggleNavRailCollapseAndUpdateAriaOnWideLayout()
     {
         using var ctx = CreateContext();

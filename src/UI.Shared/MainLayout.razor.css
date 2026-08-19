@@ -85,6 +85,12 @@
     display: none;
 }
 
+.sidebar-nav ::deep .nav-scrollable {
+    display: block !important;
+    min-height: auto;
+    height: auto;
+}
+
 /* Sidebar Footer */
 .sidebar-footer {
     padding: 1rem 1.5rem;
