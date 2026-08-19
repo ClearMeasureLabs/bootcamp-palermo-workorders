@@ -30,28 +30,38 @@ public class DatabaseOptions : CommandSettings
 
     public override ValidationResult Validate()
     {
-        if (string.IsNullOrWhiteSpace(DatabaseServer))
+        var serverError = ValidateRequired(DatabaseServer, "Database server is required");
+        if (serverError is not null)
         {
-            return ValidationResult.Error("Database server is required");
+            return serverError;
         }
 
-        if (string.IsNullOrWhiteSpace(DatabaseName))
+        var nameError = ValidateRequired(DatabaseName, "Database name is required");
+        if (nameError is not null)
         {
-            return ValidationResult.Error("Database name is required");
+            return nameError;
         }
 
+        return ValidateCredentials();
+    }
 
-        // If one credential is provided, both should be provided
-        if (!string.IsNullOrWhiteSpace(DatabaseUser) && string.IsNullOrWhiteSpace(DatabasePassword))
+    private static ValidationResult? ValidateRequired(string value, string message)
+    {
+        return string.IsNullOrWhiteSpace(value) ? ValidationResult.Error(message) : null;
+    }
+
+    private ValidationResult ValidateCredentials()
+    {
+        var hasUser = !string.IsNullOrWhiteSpace(DatabaseUser);
+        var hasPassword = !string.IsNullOrWhiteSpace(DatabasePassword);
+
+        if (hasUser == hasPassword)
         {
-            return ValidationResult.Error("Database password is required when username is provided");
+            return ValidationResult.Success();
         }
 
-        if (string.IsNullOrWhiteSpace(DatabaseUser) && !string.IsNullOrWhiteSpace(DatabasePassword))
-        {
-            return ValidationResult.Error("Database username is required when password is provided");
-        }
-
-        return ValidationResult.Success();
+        return hasUser
+            ? ValidationResult.Error("Database password is required when username is provided")
+            : ValidationResult.Error("Database username is required when password is provided");
     }
 }

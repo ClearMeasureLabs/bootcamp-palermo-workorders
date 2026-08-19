@@ -7,6 +7,14 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 /// </summary>
 public static class DatabaseConnectionStringBuilder
 {
+    private static readonly string[] LocalServerIndicators =
+    [
+        "localhost",
+        "127.0.0.1",
+        "localdb",
+        "(localdb)"
+    ];
+
     /// <summary>
     /// Builds a connection string from database command options.
     /// </summary>
@@ -32,19 +40,14 @@ public static class DatabaseConnectionStringBuilder
 
     public static bool IsLocalServer(string serverName)
     {
-        return serverName.Equals("localhost", StringComparison.OrdinalIgnoreCase)
-               || serverName.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase)
-               || serverName.Contains("localhost", StringComparison.OrdinalIgnoreCase)
-               || serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase)
-               || serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase)
-               || serverName.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase)
-               || serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
+        return LocalServerIndicators.Any(indicator =>
+            serverName.Contains(indicator, StringComparison.OrdinalIgnoreCase));
     }
 
     public static bool IsLocalDb(string serverName)
     {
-        return serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase)
-               || serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase);
+        return serverName.Contains("localdb", StringComparison.OrdinalIgnoreCase)
+               || serverName.Contains("(localdb)", StringComparison.OrdinalIgnoreCase);
     }
 
     public static string FormatDataSource(string dataSource, bool isLocalDb)
