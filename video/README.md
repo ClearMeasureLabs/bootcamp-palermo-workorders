@@ -23,6 +23,8 @@ npm run render:room # writes out/room-number-900.mp4
 Stills land in `public/footage/` (`after-new-form.png`, `after-room-filled.png`,
 `after-room-reopened.png`, `reject-validation.png`). Composition id:
 `RoomNumber900`. 1920×1080, 30 fps. Scenes live in `src/roomNumberVideo.tsx`.
+Narration clips are sized by `npm run narration`, which writes `src/narrationTiming.ts`
+so each scene is longer than its voice-over (head pause + full clip + tail pause).
 
 ## Qodana recap
 

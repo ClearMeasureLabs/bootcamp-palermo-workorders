@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AbsoluteFill,
   Series,
+  Sequence,
   Audio,
   Img,
   staticFile,
@@ -10,6 +11,7 @@ import {
 } from 'remotion';
 import {theme} from './theme';
 import {Scene, Eyebrow, Title, Rise} from './components';
+import {AUDIO_HEAD_FRAMES, NARRATION_SCENE_FRAMES} from './narrationTiming';
 
 const FADE = 10;
 
@@ -122,7 +124,7 @@ export const IntroScene: React.FC = () => (
         WorkOrderRoomNumberLengthTests — the same Playwright test that verified the change.
       </div>
     </Rise>
-    <Caption text="Narration: Lengthen the work-order Room field from fifty characters to nine hundred so detailed locations can be stored." />
+    <Caption text="The work-order Room field used to stop at fifty characters. We lengthened it to nine hundred, so staff can store a full location." />
   </Scene>
 );
 
@@ -131,20 +133,23 @@ export const BeforeScene: React.FC = () => (
     src="footage/after-new-form.png"
     eyebrow="The changed screen"
     heading="Work Order manage · Room is now a wrapping text area"
-    caption="Narration: This is the live Work Order manage screen from the Playwright test. Room is now a wrapping text area on the same form staff already use."
+    caption="Here is the live Work Order form from the Playwright test. Room is now a wrapping text area on the same screen staff already use."
     accent="#7b68ee"
   />
 );
 
 export const AfterScene: React.FC = () => {
   const frame = useCurrentFrame();
-  const src = frame < 150 ? 'footage/after-room-filled.png' : 'footage/after-room-reopened.png';
+  const src =
+    frame < NARRATION_SCENE_FRAMES.after / 2
+      ? 'footage/after-room-filled.png'
+      : 'footage/after-room-reopened.png';
   return (
     <ScreenStill
       src={src}
       eyebrow="ShouldSaveWorkOrderWith900CharacterRoom"
       heading="Nine hundred characters saved and displayed"
-      caption="Narration: The test typed nine hundred characters into Room, saved the draft, opened the work order again, and the full value was still on this screen."
+      caption="The test typed nine hundred characters into Room, saved the draft, and opened the work order again. The full value was still on this screen."
       accent="#0ca30c"
     />
   );
@@ -155,16 +160,16 @@ export const RejectScene: React.FC = () => (
     src="footage/reject-validation.png"
     eyebrow="ShouldRejectRoomLongerThan900Characters"
     heading="Nine hundred one is rejected on this form"
-    caption="Narration: The same Playwright test then entered nine hundred one characters. Save stayed on this form with the message Room cannot exceed 900 characters."
+    caption="Then the test entered nine hundred one characters. Save stayed on this form, with the message that Room cannot exceed nine hundred characters."
     accent="#d03b3b"
   />
 );
 
 export const ROOM_SCENES: {component: React.FC; durationInFrames: number; audio?: string}[] = [
-  {component: IntroScene, durationInFrames: 150, audio: 'audio/intro.mp3'},
-  {component: BeforeScene, durationInFrames: 180, audio: 'audio/before.mp3'},
-  {component: AfterScene, durationInFrames: 240, audio: 'audio/after.mp3'},
-  {component: RejectScene, durationInFrames: 180, audio: 'audio/reject.mp3'},
+  {component: IntroScene, durationInFrames: NARRATION_SCENE_FRAMES.intro, audio: 'audio/intro.mp3'},
+  {component: BeforeScene, durationInFrames: NARRATION_SCENE_FRAMES.before, audio: 'audio/before.mp3'},
+  {component: AfterScene, durationInFrames: NARRATION_SCENE_FRAMES.after, audio: 'audio/after.mp3'},
+  {component: RejectScene, durationInFrames: NARRATION_SCENE_FRAMES.reject, audio: 'audio/reject.mp3'},
 ];
 
 export const ROOM_TOTAL_FRAMES = ROOM_SCENES.reduce((sum, s) => sum + s.durationInFrames, 0);
@@ -176,8 +181,12 @@ export const RoomNumber900Video: React.FC = () => (
         <Series.Sequence key={Component.name} durationInFrames={durationInFrames}>
           <Fade durationInFrames={durationInFrames}>
             <Component />
-            {audio ? <Audio src={staticFile(audio)} /> : null}
           </Fade>
+          {audio ? (
+            <Sequence from={AUDIO_HEAD_FRAMES} durationInFrames={durationInFrames - AUDIO_HEAD_FRAMES}>
+              <Audio src={staticFile(audio)} />
+            </Sequence>
+          ) : null}
         </Series.Sequence>
       ))}
     </Series>
