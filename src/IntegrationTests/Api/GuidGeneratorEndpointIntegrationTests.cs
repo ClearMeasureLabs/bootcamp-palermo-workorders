@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UnitTests.Api;
@@ -41,7 +40,7 @@ public class GuidGeneratorEndpointIntegrationTests
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
-        var guids = doc.RootElement.GetProperty("guids");
+        doc.RootElement.TryGetProperty("guids", out var guids).ShouldBeTrue();
         guids.GetArrayLength().ShouldBe(1);
         Guid.TryParseExact(guids[0].GetString(), "D", out _).ShouldBeTrue();
     }
@@ -58,14 +57,14 @@ public class GuidGeneratorEndpointIntegrationTests
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
-        doc.RootElement.GetProperty("guids").GetArrayLength().ShouldBe(1);
+        doc.RootElement.TryGetProperty("guids", out var guids).ShouldBeTrue();
+        guids.GetArrayLength().ShouldBe(1);
     }
 
     [Test]
     public async Task Should_ReturnMultipleGuids_When_PostWithCount()
     {
-        var content = JsonContent.Create(new { count = 3 });
-        var response = await _client!.PostAsync("/api/tools/guid-generator", content);
+        var response = await _client!.PostAsJsonAsync("/api/tools/guid-generator", new { count = 3 });
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -74,18 +73,20 @@ public class GuidGeneratorEndpointIntegrationTests
         payload.ShouldNotBeNull();
         payload!.Guids.Length.ShouldBe(3);
         foreach (var guid in payload.Guids)
-        {
             Guid.TryParseExact(guid, "D", out _).ShouldBeTrue();
-        }
     }
 
     [Test]
     public async Task Should_ReturnBadRequest_When_CountOutOfRange()
     {
-        var content = JsonContent.Create(new { count = 101 });
-        var response = await _client!.PostAsync("/api/tools/guid-generator", content);
+        var response = await _client!.PostAsJsonAsync("/api/tools/guid-generator", new { count = 101 });
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("status", out var status).ShouldBeTrue();
+        status.GetInt32().ShouldBe(400);
     }
 
     [Test]
@@ -102,13 +103,22 @@ public class GuidGeneratorEndpointIntegrationTests
     [Test]
     public async Task Should_EnforceRateLimit_When_PostRepeatedly()
     {
-        await using var factory = new RateLimitedApiWebApplicationFactory();
+        var settings = new Dictionary<string, string?>
+        {
+            ["ApiRateLimiting:Enabled"] = "true",
+            ["ApiRateLimiting:PermitLimit"] = "2",
+            ["ApiRateLimiting:WindowSeconds"] = "60",
+            ["ApiRateLimiting:SegmentsPerWindow"] = "2",
+            ["ApiRateLimiting:QueueLimit"] = "0"
+        };
+        await using var factory = new TunableApiRateLimitWebApplicationFactory(settings);
         using var client = factory.CreateClient();
 
-        var first = await client.PostAsync("/api/tools/guid-generator", null);
-        first.StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        var second = await client.PostAsync("/api/tools/guid-generator", null);
-        second.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        (await client.PostAsJsonAsync("/api/tools/guid-generator", new { count = 1 })).StatusCode
+            .ShouldBe(HttpStatusCode.OK);
+        (await client.PostAsJsonAsync("/api/tools/guid-generator", new { count = 1 })).StatusCode
+            .ShouldBe(HttpStatusCode.OK);
+        (await client.PostAsJsonAsync("/api/tools/guid-generator", new { count = 1 })).StatusCode
+            .ShouldBe(HttpStatusCode.TooManyRequests);
     }
 }

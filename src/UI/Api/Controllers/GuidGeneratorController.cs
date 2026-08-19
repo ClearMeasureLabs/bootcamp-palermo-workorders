@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
-/// Generates one or more new GUIDs for operators and integrations.
+/// Generates one or more GUIDs on demand for operators and integrations.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -22,7 +22,7 @@ public class GuidGeneratorController : ControllerBase
     private const int MaxCount = 100;
 
     /// <summary>
-    /// Generates and returns new GUIDs. Optional JSON body: <c>{ "count": &lt;int&gt; }</c> (default 1, max 100).
+    /// Generates new GUIDs. Optional JSON body: <c>{ "count": &lt;int&gt; }</c> (default 1, max 100).
     /// </summary>
     [HttpPost]
     [AllowAnonymous]
@@ -42,15 +42,13 @@ public class GuidGeneratorController : ControllerBase
         if (count < MinCount || count > MaxCount)
         {
             return Problem(
-                detail: $"count must be between {MinCount} and {MaxCount} inclusive.",
+                detail: $"Count must be between {MinCount} and {MaxCount}, inclusive.",
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
         var guids = new string[count];
         for (var i = 0; i < count; i++)
-        {
             guids[i] = Guid.NewGuid().ToString("D");
-        }
 
         return Ok(new GuidGeneratorResponse(guids));
     }

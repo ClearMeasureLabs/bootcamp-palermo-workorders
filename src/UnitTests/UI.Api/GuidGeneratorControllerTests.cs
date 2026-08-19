@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net.Mime;
+using System.Reflection;
 using System.Text;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
@@ -55,9 +56,7 @@ public class GuidGeneratorControllerTests
         var payload = ok.Value.ShouldBeOfType<GuidGeneratorResponse>();
         payload.Guids.Length.ShouldBe(5);
         foreach (var guid in payload.Guids)
-        {
             Guid.TryParseExact(guid, "D", out _).ShouldBeTrue();
-        }
     }
 
     [Test]
@@ -156,11 +155,11 @@ public class GuidGeneratorControllerTests
     [Test]
     public void Post_Should_ReturnOkWithJsonContentType()
     {
-        var method = typeof(GuidGeneratorController).GetMethod(nameof(GuidGeneratorController.Post))!;
-        var produces = method.GetCustomAttributes(typeof(ProducesAttribute), inherit: true)
+        var method = typeof(GuidGeneratorController).GetMethod(nameof(GuidGeneratorController.Post));
+        method.ShouldNotBeNull();
+        var produces = method!.GetCustomAttributes(typeof(ProducesAttribute), inherit: false)
             .Cast<ProducesAttribute>()
-            .SelectMany(p => p.ContentTypes)
-            .ToList();
+            .SelectMany(a => a.ContentTypes);
         produces.ShouldContain(MediaTypeNames.Application.Json);
     }
 
