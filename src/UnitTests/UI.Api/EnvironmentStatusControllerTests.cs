@@ -57,6 +57,7 @@ public class EnvironmentStatusControllerTests
 
             var result = controller.Get();
             var content = result.ShouldBeOfType<ContentResult>();
+            content.Content.ShouldNotBeNull();
             content.Content!.ShouldNotContain(secret);
 
             var payload = JsonSerializer.Deserialize<EnvironmentStatusResponse>(

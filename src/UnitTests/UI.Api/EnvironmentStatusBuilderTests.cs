@@ -87,4 +87,34 @@ public class EnvironmentStatusBuilderTests
         names.ShouldContain("CUSTOM_VAR_8457");
         names.Count(n => n == "ASPNETCORE_ENVIRONMENT").ShouldBe(1);
     }
+
+    [Test]
+    public void Build_Should_RedactConfiguredVariables_When_VariablesAreSet()
+    {
+        const string varName = "8457_BUILD_REDACT";
+        const string secret = "build-secret-8457";
+        Environment.SetEnvironmentVariable(varName, secret);
+        try
+        {
+            var options = new EnvironmentStatusOptions { MonitoredVariables = [varName] };
+            var stubHost = new StubHostEnvironment("BuildTest8457");
+            var response = EnvironmentStatusBuilder.Build(stubHost, options);
+
+            response.EnvironmentVariables.ShouldContainKey(varName);
+            response.EnvironmentVariables[varName].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(varName, null);
+        }
+    }
+
+    private sealed class StubHostEnvironment(string environmentName) : Microsoft.Extensions.Hosting.IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = environmentName;
+        public string ApplicationName { get; set; } = "";
+        public string ContentRootPath { get; set; } = "";
+        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } =
+            new Microsoft.Extensions.FileProviders.NullFileProvider();
+    }
 }
