@@ -20,6 +20,7 @@ public class WorkOrderManageModel
 
     [Required] public string? Description { get; set; }
 
+    [StringLength(4000, ErrorMessage = "Instructions cannot exceed 4000 characters.")]
     public string? Instructions { get; set; }
 
     public bool IsReadOnly { get; set; }

@@ -81,6 +81,31 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
     }
 
     [Test]
+    public async Task ShouldPersistEmptyInstructionsWhenBlank()
+    {
+        new DatabaseTests().Clean();
+
+        var currentUser = Faker<Employee>();
+        currentUser.Id = Guid.NewGuid();
+        var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(currentUser);
+        await context.SaveChangesAsync();
+
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Id = Guid.Empty;
+        workOrder.Creator = currentUser;
+        workOrder.Instructions = null;
+
+        var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        var result = await handler.Handle(command);
+
+        var context2 = TestHost.GetRequiredService<DbContext>();
+        var order = context2.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
+        order.Instructions.ShouldBe(string.Empty);
+    }
+
+    [Test]
     public async Task ShouldUpdateWorkOrderWithAssigneeAndCreator()
     {
         new DatabaseTests().Clean();

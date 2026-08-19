@@ -99,6 +99,33 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldPlaceInstructionsFieldBetweenDescriptionAndRoom()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        var roomNumberField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
+
+        await Expect(descriptionField).ToBeVisibleAsync();
+        await Expect(instructionsField).ToBeVisibleAsync();
+        await Expect(roomNumberField).ToBeVisibleAsync();
+
+        var descriptionBounds = await descriptionField.BoundingBoxAsync();
+        var instructionsBounds = await instructionsField.BoundingBoxAsync();
+        var roomNumberBounds = await roomNumberField.BoundingBoxAsync();
+
+        descriptionBounds.ShouldNotBeNull();
+        instructionsBounds.ShouldNotBeNull();
+        roomNumberBounds.ShouldNotBeNull();
+
+        descriptionBounds!.Y.ShouldBeLessThan(instructionsBounds!.Y);
+        instructionsBounds.Y.ShouldBeLessThan(roomNumberBounds!.Y);
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldAssignEmployeeAndSave()
     {
         await LoginAsCurrentUser();
