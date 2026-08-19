@@ -12,15 +12,15 @@ const segments = [
   },
   {
     name: 'before',
-    text: 'Before the change, a detailed room identifier longer than fifty characters could not be saved. The database and mapping rejected it.'
+    text: 'This is the live Work Order manage screen from the Playwright test. Room is now a wrapping text area on the same form staff already use.'
   },
   {
     name: 'after',
-    text: 'After the change, a nine-hundred-character Room value saves and comes back on the form, wrapping and scrolling so the full value stays readable.'
+    text: 'The test typed nine hundred characters into Room, saved the draft, opened the work order again, and the full value was still on this screen.'
   },
   {
     name: 'reject',
-    text: 'Values of nine hundred one characters or more are rejected and are not stored. Existing shorter rooms remain valid.'
+    text: 'The same Playwright test then entered nine hundred one characters. Save stayed on this form with the message Room cannot exceed nine hundred characters.'
   }
 ];
 

@@ -9,6 +9,15 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
 {
+    protected override bool CaptureDemoFootage =>
+        string.Equals(Environment.GetEnvironmentVariable("DEMO_CAPTURE"), "1", StringComparison.Ordinal);
+
+    protected override ViewportSize BrowserViewport => CaptureDemoFootage
+        ? new ViewportSize { Width = 1920, Height = 1080 }
+        : new ViewportSize { Width = 800, Height = 600 };
+
+    protected override int BrowserSlowMo => CaptureDemoFootage ? 250 : ServerFixture.SlowMo;
+
     [Test, Retry(2)]
     public async Task ShouldSaveWorkOrderWith900CharacterRoom()
     {
@@ -27,10 +36,15 @@ public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
         await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         order.Number = await woNumberLocator.InnerTextAsync();
+        await CaptureDemoStillAsync("after-new-form.png");
 
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), room);
+
+        var roomField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
+        await CaptureDemoStillAsync("after-room-filled.png");
+        await CaptureDemoStillAsync("after-room-field.png", roomField);
 
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
@@ -40,8 +54,10 @@ public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
         await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await ClickWorkOrderNumberFromSearchPage(order);
 
-        var roomField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
+        roomField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
         await Expect(roomField).ToHaveValueAsync(room);
+        await CaptureDemoStillAsync("after-room-reopened.png");
+        await CaptureDemoStillAsync("after-room-field-saved.png", roomField);
 
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!))
             ?? throw new InvalidOperationException();
@@ -72,6 +88,7 @@ public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
         await roomField.EvaluateAsync("el => el.removeAttribute('maxlength')");
         await roomField.FillAsync(tooLong);
         await roomField.BlurAsync();
+        await CaptureDemoStillAsync("reject-room-filled.png");
 
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
@@ -79,6 +96,7 @@ public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
         await Expect(Page).ToHaveURLAsync(new Regex("workorder/manage"));
         await Expect(Page.GetByText("Room cannot exceed 900 characters.")).ToBeVisibleAsync(
             new LocatorAssertionsToBeVisibleOptions { Timeout = 15_000 });
+        await CaptureDemoStillAsync("reject-validation.png");
 
         WorkOrder? stored = await Bus.Send(new WorkOrderByNumberQuery(number));
         stored.ShouldBeNull();
