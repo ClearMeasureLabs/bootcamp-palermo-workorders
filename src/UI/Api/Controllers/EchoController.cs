@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
-/// Exposes request reflection for operator and client debugging.
+/// Exposes request reflection for operator and client-side debugging.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -23,8 +23,7 @@ public class EchoController : ControllerBase
     [AllowAnonymous]
     public IActionResult Get()
     {
-        var request = HttpContext.Request;
-        var payload = EchoRequestReflection.Build(request);
+        var payload = EchoRequestReflection.Build(HttpContext.Request);
         return ConditionalGetEtag.JsonContent(payload);
     }
 }
@@ -36,7 +35,7 @@ public sealed record EchoResponse(
     string Method,
     string Path,
     string PathBase,
-    string? QueryString,
+    string QueryString,
     IReadOnlyDictionary<string, string> Query,
     IReadOnlyDictionary<string, string> Headers);
 
@@ -54,6 +53,7 @@ internal static class EchoRequestReflection
         "Accept",
         "User-Agent",
         "Host",
+        "X-Correlation-Id",
         "X-Correlation-ID"
     };
 
@@ -68,7 +68,7 @@ internal static class EchoRequestReflection
             Method: request.Method,
             Path: request.Path.Value ?? string.Empty,
             PathBase: request.PathBase.Value ?? string.Empty,
-            QueryString: request.QueryString.HasValue ? request.QueryString.Value : null,
+            QueryString: request.QueryString.Value ?? string.Empty,
             Query: query,
             Headers: BuildSafeHeaders(request.Headers));
     }
@@ -94,13 +94,7 @@ internal static class EchoRequestReflection
         return result;
     }
 
-    private static bool ShouldIncludeHeader(string name)
-    {
-        if (SafeHeaderNames.Contains(name))
-        {
-            return true;
-        }
-
-        return name.StartsWith("X-", StringComparison.OrdinalIgnoreCase);
-    }
+    private static bool ShouldIncludeHeader(string name) =>
+        SafeHeaderNames.Contains(name)
+        || name.StartsWith("X-", StringComparison.OrdinalIgnoreCase);
 }
