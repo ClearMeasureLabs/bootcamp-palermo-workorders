@@ -1,4 +1,7 @@
 using System.Net;
+using System.Text.Json;
+using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
@@ -23,6 +26,12 @@ public class EtagConditionalGetWebTests
         using var client = _factory!.CreateClient();
         var first = await client.GetAsync("/api/version");
         first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        first.Content.Headers.ContentType!.MediaType.ShouldBe("application/json");
+        var payload = JsonSerializer.Deserialize<VersionMetadataResponse>(
+            await first.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        payload!.BuildConfiguration.ShouldNotBeNullOrEmpty();
         var etag = first.Headers.ETag;
         etag.ShouldNotBeNull();
 
