@@ -104,6 +104,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             Description = workOrder.Description,
             Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
+            Priority = workOrder.Priority,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
@@ -144,6 +145,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         workOrder.Description = Model.Description;
         workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
+        workOrder.Priority = Model.Priority;
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);

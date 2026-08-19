@@ -28,6 +28,11 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers
                 query = query.Where(wo => wo.Status == specification.Status);
             }
 
+            if (specification.Priority != null)
+            {
+                query = query.Where(wo => wo.Priority == specification.Priority);
+            }
+
             return await query.ToArrayAsync(cancellationToken);
         }
     }

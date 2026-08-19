@@ -22,6 +22,8 @@ public class WorkOrderManageModel
 
     public string? Instructions { get; set; }
 
+    public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Normal;
+
     public bool IsReadOnly { get; set; }
 
     public string? AssignedDate { get; set; }

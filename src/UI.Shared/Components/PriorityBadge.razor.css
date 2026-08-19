@@ -1,0 +1,30 @@
+.priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.priority-urgent {
+    background-color: #FEE2E2;
+    color: #DC2626;
+}
+
+.priority-high {
+    background-color: #FFEDD5;
+    color: #EA580C;
+}
+
+.priority-normal {
+    background-color: #DBEAFE;
+    color: #2563EB;
+}
+
+.priority-low {
+    background-color: #F3F4F6;
+    color: #6B7280;
+}
