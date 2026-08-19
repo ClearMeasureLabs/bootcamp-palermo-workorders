@@ -1,6 +1,5 @@
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
@@ -31,12 +30,7 @@ public class ToolProvider(
             if (_tools != null)
                 return _tools;
 
-            var addressFeature = server.Features.Get<IServerAddressesFeature>();
-            var address = addressFeature?.Addresses.FirstOrDefault()
-                          ?? throw new InvalidOperationException(
-                              "Cannot determine server address for MCP loopback connection");
-
-            var mcpUrl = address.TrimEnd('/') + "/mcp";
+            var mcpUrl = McpEndpointResolver.ResolveMcpUrl(server);
             logger.LogInformation("ToolProvider: connecting to MCP endpoint at {McpUrl}", mcpUrl);
 
             var httpClient = httpClientFactory.CreateClient();

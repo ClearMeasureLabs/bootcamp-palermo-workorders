@@ -91,53 +91,42 @@ public class WorkOrderTools
         [Description("Username of the employee executing the command")] string executingUsername,
         [Description("Username of the employee to assign the work order to (required for DraftToAssignedCommand)")] string? assigneeUsername = null)
     {
-        var workOrder = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
-        if (workOrder == null)
+        var (workOrder, workOrderError) = await WorkOrderCommandExecutor.LoadWorkOrderAsync(bus, workOrderNumber);
+        if (workOrderError != null)
         {
-            return $"No work order found with number '{workOrderNumber}'.";
+            return workOrderError;
         }
 
-        var user = await FindEmployeeByUsername(bus, executingUsername);
-        if (user == null)
+        var (user, userError) = await WorkOrderCommandExecutor.LoadEmployeeAsync(
+            bus,
+            executingUsername,
+            $"Employee with username '{executingUsername}' not found.");
+        if (userError != null)
         {
-            return $"Employee with username '{executingUsername}' not found.";
+            return userError;
         }
 
         if (commandName == "DraftToAssignedCommand")
         {
-            if (string.IsNullOrEmpty(assigneeUsername))
+            var assigneeError = await WorkOrderCommandExecutor.PrepareDraftToAssignedAsync(
+                bus,
+                workOrder!,
+                assigneeUsername);
+            if (assigneeError != null)
             {
-                return "DraftToAssignedCommand requires an assigneeUsername parameter.";
+                return assigneeError;
             }
-
-            var assignee = await FindEmployeeByUsername(bus, assigneeUsername);
-            if (assignee == null)
-            {
-                return $"Assignee with username '{assigneeUsername}' not found.";
-            }
-
-            workOrder.Assignee = assignee;
         }
 
-        StateCommandBase? command = commandName switch
-        {
-            "DraftToAssignedCommand" => new DraftToAssignedCommand(workOrder, user),
-            "AssignedToInProgressCommand" => new AssignedToInProgressCommand(workOrder, user),
-            "InProgressToAssignedCommand" => new InProgressToAssignedCommand(workOrder, user),
-            "Shelve" => new InProgressToAssignedCommand(workOrder, user),
-            "InProgressToCompleteCommand" => new InProgressToCompleteCommand(workOrder, user),
-            "AssignedToCancelledCommand" => new AssignedToCancelledCommand(workOrder, user),
-            _ => null
-        };
-
+        var command = WorkOrderCommandExecutor.CreateCommand(commandName, workOrder!, user!);
         if (command == null)
         {
-            return $"Unknown command '{commandName}'. Available commands: DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand, Shelve, InProgressToCompleteCommand, AssignedToCancelledCommand.";
+            return WorkOrderCommandExecutor.FormatUnknownCommand(commandName);
         }
 
         if (!command.IsValid())
         {
-            return $"Command '{commandName}' cannot be executed. Work order is in '{workOrder.Status.FriendlyName}' status but the command requires '{command.GetBeginStatus().FriendlyName}' status.";
+            return WorkOrderCommandExecutor.FormatInvalidCommand(commandName, workOrder!, command);
         }
 
         var result = await bus.Send(command);
