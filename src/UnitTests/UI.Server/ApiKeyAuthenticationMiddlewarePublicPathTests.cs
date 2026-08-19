@@ -20,9 +20,9 @@ public class ApiKeyAuthenticationMiddlewarePublicPathTests
 
     [TestCase("/api/version", "version")]
     [TestCase("/api/v1.0/time", "time")]
-    public void TryGetApiLeafSegment_ReturnsLeaf(string path, string expectedLeaf)
+    public void TryGetLeafSegment_ReturnsLeaf(string path, string expectedLeaf)
     {
-        ApiKeyAuthenticationMiddleware.TryGetApiLeafSegment(path, out var leaf).ShouldBeTrue();
+        ApiPublicPathRules.TryGetLeafSegment(path, out var leaf).ShouldBeTrue();
         leaf.ShouldBe(expectedLeaf);
     }
 

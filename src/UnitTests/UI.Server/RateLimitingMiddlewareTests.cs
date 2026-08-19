@@ -31,6 +31,12 @@ public class RateLimitingMiddlewareTests
         called.ShouldBeTrue();
     }
 
+    [Test]
+    public void ShouldApply_ReturnsFalse_WhenEndpointMissing()
+    {
+        RateLimitingMiddlewareRules.ShouldApply(new DefaultHttpContext()).ShouldBeFalse();
+    }
+
     private sealed class StubOptionsMonitor<T>(T value) : IOptionsMonitor<T> where T : class
     {
         public T CurrentValue => value;

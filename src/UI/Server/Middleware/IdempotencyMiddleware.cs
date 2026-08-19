@@ -46,52 +46,11 @@ public sealed class IdempotencyMiddleware
         _optionsMonitor = optionsMonitor;
     }
 
-    public async Task InvokeAsync(HttpContext context)
-    {
-        if (!ShouldInspect(context.Request))
-        {
-            await _next(context);
-            return;
-        }
+    public Task InvokeAsync(HttpContext context) =>
+        IdempotencyMiddlewareHandler.HandleAsync(context, _next, _cache, _keyLocks, _optionsMonitor);
 
-        var idempotencyKey = TryReadIdempotencyKey(context.Request);
-        if (idempotencyKey is null)
-        {
-            await _next(context);
-            return;
-        }
-
-        var opts = _optionsMonitor.CurrentValue;
-        if (idempotencyKey.Length > opts.MaxKeyLength)
-        {
-            await WriteBadRequestAsync(context, $"Idempotency key exceeds maximum length of {opts.MaxKeyLength}.");
-            return;
-        }
-
-        var compositeKey = await BuildCompositeKeyAsync(context.Request, idempotencyKey, context.RequestAborted);
-        if (await TryReplayCachedAsync(context, compositeKey))
-        {
-            return;
-        }
-
-        await ProcessUnderLockAsync(context, idempotencyKey, compositeKey, opts);
-    }
-
-    internal static bool ShouldInspect(HttpRequest request)
-    {
-        if (!HttpMethods.IsPost(request.Method) && !HttpMethods.IsPut(request.Method))
-        {
-            return false;
-        }
-
-        var path = request.Path;
-        if (path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        return ApiRateLimitingExtensions.ShouldApplyToPath(path);
-    }
+    internal static bool ShouldInspect(HttpRequest request) =>
+        IdempotencyInspectionRules.ShouldInspect(request);
 
     internal static string? TryReadIdempotencyKey(HttpRequest request)
     {
@@ -114,100 +73,6 @@ public sealed class IdempotencyMiddleware
         var bodyHash = await ComputeBodySha256HexAsync(request.Body, cancellationToken);
         request.Body.Position = 0;
         return $"{request.Method}\u001f{request.Path.Value}\u001f{idempotencyKey}\u001f{bodyHash}";
-    }
-
-    private async Task<bool> TryReplayCachedAsync(HttpContext context, string compositeKey)
-    {
-        if (!_cache.TryGetValue(compositeKey, out IdempotentResponseSnapshot? cachedSnapshot)
-            || cachedSnapshot is null)
-        {
-            return false;
-        }
-
-        await ReplayCachedResponseAsync(context, cachedSnapshot);
-        return true;
-    }
-
-    private async Task ProcessUnderLockAsync(
-        HttpContext context,
-        string idempotencyKey,
-        string compositeKey,
-        IdempotencyOptions opts)
-    {
-        var sem = _keyLocks.GetOrAdd(idempotencyKey, static _ => new SemaphoreSlim(1, 1));
-        await sem.WaitAsync(context.RequestAborted);
-        try
-        {
-            if (await TryReplayCachedAsync(context, compositeKey))
-            {
-                return;
-            }
-
-            if (HasConflictingBinding(idempotencyKey, compositeKey))
-            {
-                await WriteConflictAsync(context);
-                return;
-            }
-
-            await ExecuteCaptureAndForwardAsync(context, idempotencyKey, compositeKey, opts);
-        }
-        finally
-        {
-            sem.Release();
-        }
-    }
-
-    private bool HasConflictingBinding(string idempotencyKey, string compositeKey) =>
-        _cache.TryGetValue(BindingPrefix + idempotencyKey, out string? boundComposite)
-        && !string.Equals(boundComposite, compositeKey, StringComparison.Ordinal);
-
-    private async Task ExecuteCaptureAndForwardAsync(
-        HttpContext context,
-        string idempotencyKey,
-        string compositeKey,
-        IdempotencyOptions opts)
-    {
-        var originalBody = context.Response.Body;
-        await using var buffer = new MemoryStream();
-        context.Response.Body = buffer;
-
-        try
-        {
-            await _next(context);
-        }
-        finally
-        {
-            context.Response.Body = originalBody;
-        }
-
-        var status = context.Response.StatusCode;
-        if (status is >= 200 and < 300)
-        {
-            CacheSuccessfulResponse(idempotencyKey, compositeKey, context.Response, buffer, opts);
-        }
-
-        buffer.Position = 0;
-        context.Response.ContentLength = buffer.Length;
-        await buffer.CopyToAsync(originalBody, context.RequestAborted);
-    }
-
-    private void CacheSuccessfulResponse(
-        string idempotencyKey,
-        string compositeKey,
-        HttpResponse response,
-        MemoryStream buffer,
-        IdempotencyOptions opts)
-    {
-        var bodyBytes = buffer.ToArray();
-        var headers = CaptureResponseHeaders(response);
-        var snapshot = new IdempotentResponseSnapshot(response.StatusCode, headers, bodyBytes);
-        var cacheSeconds = Math.Max(1, opts.CacheEntrySeconds);
-        var cacheOptions = new MemoryCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cacheSeconds)
-        };
-        _cache.Set(compositeKey, snapshot, cacheOptions);
-        _cache.Set(BindingPrefix + idempotencyKey, compositeKey, cacheOptions);
     }
 
     internal static async Task<string> ComputeBodySha256HexAsync(Stream body, CancellationToken cancellationToken)
@@ -295,4 +160,69 @@ public sealed class IdempotencyMiddleware
         string Title,
         string? Detail,
         Dictionary<string, string[]>? Errors);
+}
+
+internal static class IdempotencyMiddlewareHandler
+{
+    internal static async Task HandleAsync(
+        HttpContext context,
+        RequestDelegate next,
+        IMemoryCache cache,
+        ConcurrentDictionary<string, SemaphoreSlim> keyLocks,
+        IOptionsMonitor<IdempotencyOptions> optionsMonitor)
+    {
+        if (!IdempotencyInspectionRules.ShouldInspect(context.Request))
+        {
+            await next(context);
+            return;
+        }
+
+        var idempotencyKey = IdempotencyMiddleware.TryReadIdempotencyKey(context.Request);
+        if (idempotencyKey is null)
+        {
+            await next(context);
+            return;
+        }
+
+        var opts = optionsMonitor.CurrentValue;
+        if (idempotencyKey.Length > opts.MaxKeyLength)
+        {
+            await IdempotencyMiddleware.WriteBadRequestAsync(
+                context,
+                $"Idempotency key exceeds maximum length of {opts.MaxKeyLength}.");
+            return;
+        }
+
+        var compositeKey = await IdempotencyMiddleware.BuildCompositeKeyAsync(
+            context.Request,
+            idempotencyKey,
+            context.RequestAborted);
+        if (await IdempotencyResponseCache.TryReplayCachedAsync(context, cache, compositeKey))
+        {
+            return;
+        }
+
+        await IdempotencyResponseCache.ProcessUnderLockAsync(
+            context,
+            next,
+            cache,
+            keyLocks,
+            idempotencyKey,
+            compositeKey,
+            opts);
+    }
+}
+
+internal static class IdempotencyInspectionRules
+{
+    internal static bool ShouldInspect(HttpRequest request) =>
+        IdempotencyInspectionRules.IsMutatingMethod(request.Method)
+        && IdempotencyInspectionRules.IsIdempotentPath(request.Path);
+
+    internal static bool IsMutatingMethod(string method) =>
+        HttpMethods.IsPost(method) || HttpMethods.IsPut(method);
+
+    internal static bool IsIdempotentPath(PathString path) =>
+        path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
+        || ApiRateLimitingExtensions.ShouldApplyToPath(path);
 }

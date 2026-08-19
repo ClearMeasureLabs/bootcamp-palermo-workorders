@@ -21,6 +21,6 @@ public class RequestBodyBufferingExtensionsTests
             request.ContentLength = contentLength.Value;
         }
 
-        RequestBodyBufferingExtensions.ShouldBuffer(request).ShouldBe(expected);
+        RequestBodyBufferingRules.ShouldBuffer(request).ShouldBe(expected);
     }
 }

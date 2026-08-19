@@ -7,11 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Middleware;
 
-public sealed class WebServiceMessageValidationMiddleware
+public sealed class WebServiceMessageValidationMiddleware(
+    RequestDelegate next,
+    ILogger<WebServiceMessageValidationMiddleware> logger)
 {
-    /// <summary>
-    /// Matches legacy <c>api/blazor-wasm-single-api</c> and versioned <c>api/v1.0/blazor-wasm-single-api</c>.
-    /// </summary>
     private const string SingleApiPathSuffix = "/blazor-wasm-single-api";
 
     private static readonly JsonSerializerOptions JsonOptions =
@@ -21,74 +20,15 @@ public sealed class WebServiceMessageValidationMiddleware
             PropertyNameCaseInsensitive = true
         };
 
-    private readonly RequestDelegate _next;
-    private readonly ILogger<WebServiceMessageValidationMiddleware> _logger;
-
-    public WebServiceMessageValidationMiddleware(
-        RequestDelegate next,
-        ILogger<WebServiceMessageValidationMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
-
-    public async Task InvokeAsync(
+    public Task InvokeAsync(
         HttpContext context,
         IValidator<WebServiceMessage> envelopeValidator,
-        IServiceProvider services)
-    {
-        if (!IsBlazorWasmSingleApiPost(context.Request))
-        {
-            await _next(context);
-            return;
-        }
+        IServiceProvider services) =>
+        WebServiceMessageValidationPipeline.InvokeAsync(context, next, envelopeValidator, services, logger);
 
-        var body = await ReadRequestBodyAsync(context.Request);
-        if (!TryDeserializeMessage(body, out var message, out var deserializeError))
-        {
-            _logger.LogDebug("Invalid WebServiceMessage JSON: {Detail}", deserializeError);
-            await WriteBadRequestAsync(context, deserializeError ?? "Invalid request body.");
-            return;
-        }
-
-        var envelopeResult = await envelopeValidator.ValidateAsync(message!, context.RequestAborted);
-        if (!envelopeResult.IsValid)
-        {
-            await WriteValidationProblemAsync(context, envelopeResult.Errors);
-            return;
-        }
-
-        var payloadResult = await WebServiceMessagePayloadValidator.ValidateAsync(
-            message!,
-            services,
-            context.RequestAborted);
-        if (!payloadResult.IsValid)
-        {
-            if (payloadResult.Errors.Count > 0)
-            {
-                await WriteValidationProblemAsync(context, payloadResult.Errors);
-            }
-            else
-            {
-                await WriteBadRequestAsync(context, payloadResult.BadRequestDetail ?? "Invalid request body.");
-            }
-
-            return;
-        }
-
-        await _next(context);
-    }
-
-    internal static bool IsBlazorWasmSingleApiPost(HttpRequest request)
-    {
-        if (!HttpMethods.IsPost(request.Method))
-        {
-            return false;
-        }
-
-        var path = request.Path.Value ?? "";
-        return path.EndsWith(SingleApiPathSuffix, StringComparison.OrdinalIgnoreCase);
-    }
+    internal static bool IsBlazorWasmSingleApiPost(HttpRequest request) =>
+        HttpMethods.IsPost(request.Method)
+        && (request.Path.Value ?? "").EndsWith(SingleApiPathSuffix, StringComparison.OrdinalIgnoreCase);
 
     internal static async Task<string> ReadRequestBodyAsync(HttpRequest request)
     {
@@ -179,17 +119,36 @@ internal static class WebServiceMessagePayloadValidator
         IServiceProvider services,
         CancellationToken cancellationToken)
     {
-        object payload;
+        if (!TryGetPayload(message, out var payload, out var payloadError))
+        {
+            return new PayloadValidationResult(false, Array.Empty<ValidationFailure>(), payloadError);
+        }
+
+        return await ValidatePayloadAsync(payload!, services, cancellationToken);
+    }
+
+    internal static bool TryGetPayload(WebServiceMessage message, out object? payload, out string? errorDetail)
+    {
+        payload = null;
+        errorDetail = null;
         try
         {
             payload = message.GetBodyObject();
+            return true;
         }
         catch (Exception ex) when (ex is JsonException or FormatException or TypeLoadException
             or FileNotFoundException or ArgumentNullException or InvalidOperationException)
         {
-            return new PayloadValidationResult(false, Array.Empty<ValidationFailure>(), "Invalid message payload or type.");
+            errorDetail = "Invalid message payload or type.";
+            return false;
         }
+    }
 
+    internal static async Task<PayloadValidationResult> ValidatePayloadAsync(
+        object payload,
+        IServiceProvider services,
+        CancellationToken cancellationToken)
+    {
         var validatorInterface = typeof(IValidator<>).MakeGenericType(payload.GetType());
         var payloadValidator = services.GetService(validatorInterface);
         if (payloadValidator is null)
@@ -217,11 +176,69 @@ internal static class WebServiceMessagePayloadValidator
         var resultProperty = validateTask.GetType().GetProperty(nameof(Task<object>.Result))!;
         var validationResult = (ValidationResult)resultProperty.GetValue(validateTask)!;
 
-        if (!validationResult.IsValid)
+        return validationResult.IsValid
+            ? new PayloadValidationResult(true, Array.Empty<ValidationFailure>(), null)
+            : new PayloadValidationResult(false, validationResult.Errors, null);
+    }
+}
+
+internal static class WebServiceMessageValidationPipeline
+{
+    internal static async Task InvokeAsync(
+        HttpContext context,
+        RequestDelegate next,
+        IValidator<WebServiceMessage> envelopeValidator,
+        IServiceProvider services,
+        ILogger<WebServiceMessageValidationMiddleware> logger)
+    {
+        if (!WebServiceMessageValidationMiddleware.IsBlazorWasmSingleApiPost(context.Request))
         {
-            return new PayloadValidationResult(false, validationResult.Errors, null);
+            await next(context);
+            return;
         }
 
-        return new PayloadValidationResult(true, Array.Empty<ValidationFailure>(), null);
+        var body = await WebServiceMessageValidationMiddleware.ReadRequestBodyAsync(context.Request);
+        if (!WebServiceMessageValidationMiddleware.TryDeserializeMessage(body, out var message, out var deserializeError))
+        {
+            logger.LogDebug("Invalid WebServiceMessage JSON: {Detail}", deserializeError);
+            await WebServiceMessageValidationMiddleware.WriteBadRequestAsync(
+                context,
+                deserializeError ?? "Invalid request body.");
+            return;
+        }
+
+        var envelopeResult = await envelopeValidator.ValidateAsync(message!, context.RequestAborted);
+        if (!envelopeResult.IsValid)
+        {
+            await WebServiceMessageValidationMiddleware.WriteValidationProblemAsync(context, envelopeResult.Errors);
+            return;
+        }
+
+        var payloadResult = await WebServiceMessagePayloadValidator.ValidateAsync(
+            message!,
+            services,
+            context.RequestAborted);
+        if (!payloadResult.IsValid)
+        {
+            await WritePayloadValidationFailureAsync(context, payloadResult);
+            return;
+        }
+
+        await next(context);
+    }
+
+    private static async Task WritePayloadValidationFailureAsync(
+        HttpContext context,
+        WebServiceMessagePayloadValidator.PayloadValidationResult payloadResult)
+    {
+        if (payloadResult.Errors.Count > 0)
+        {
+            await WebServiceMessageValidationMiddleware.WriteValidationProblemAsync(context, payloadResult.Errors);
+            return;
+        }
+
+        await WebServiceMessageValidationMiddleware.WriteBadRequestAsync(
+            context,
+            payloadResult.BadRequestDetail ?? "Invalid request body.");
     }
 }

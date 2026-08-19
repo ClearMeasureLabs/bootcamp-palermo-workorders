@@ -28,9 +28,6 @@ public sealed class RealtimeNotificationHub : IRealtimeNotificationHub
 {
     private readonly ConcurrentDictionary<Guid, WebSocket> _connections = new();
 
-    /// <summary>
-    /// Number of active connections (for diagnostics and tests).
-    /// </summary>
     public int ConnectionCount => _connections.Count;
 
     public Guid Register(WebSocket socket)
@@ -42,47 +39,48 @@ public sealed class RealtimeNotificationHub : IRealtimeNotificationHub
 
     public void Remove(Guid id) => _connections.TryRemove(id, out _);
 
-    /// <summary>
-    /// Broadcasts a MediatR <see cref="IRemotableEvent"/> using the same JSON envelope as <see cref="WebServiceMessage"/>.
-    /// </summary>
     public async Task BroadcastRemotableEventAsync(IRemotableEvent @event, CancellationToken cancellationToken = default)
     {
         var messageJson = new WebServiceMessage(@event).GetJson();
         var envelope = new RealtimeNotificationEnvelope(
             RealtimeNotificationKinds.RemotableEvent,
             messageJson);
-        var json = JsonSerializer.Serialize(
-            envelope,
-            RealtimeNotificationHubJson.Options);
+        var json = JsonSerializer.Serialize(envelope, RealtimeNotificationHubJson.Options);
         await BroadcastUtf8JsonAsync(json, cancellationToken).ConfigureAwait(false);
     }
 
     internal async Task BroadcastUtf8JsonAsync(string json, CancellationToken cancellationToken)
     {
         var bytes = Encoding.UTF8.GetBytes(json);
-
         foreach (var (id, socket) in _connections.ToArray())
         {
-            if (socket.State != WebSocketState.Open)
+            if (!await RealtimeWebSocketSender.TrySendAsync(socket, bytes, cancellationToken).ConfigureAwait(false))
             {
                 _connections.TryRemove(id, out _);
-                continue;
             }
+        }
+    }
+}
 
-            try
-            {
-                await socket
-                    .SendAsync(
-                        new ArraySegment<byte>(bytes),
-                        WebSocketMessageType.Text,
-                        endOfMessage: true,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch
-            {
-                _connections.TryRemove(id, out _);
-            }
+internal static class RealtimeWebSocketSender
+{
+    internal static async Task<bool> TrySendAsync(WebSocket socket, byte[] bytes, CancellationToken cancellationToken)
+    {
+        if (socket.State != WebSocketState.Open)
+        {
+            return false;
+        }
+
+        try
+        {
+            await socket
+                .SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken)
+                .ConfigureAwait(false);
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

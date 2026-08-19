@@ -267,16 +267,8 @@ public static class ServerApplication
     private static void MapApiControllers(WebApplication app)
     {
         var apiControllers = app.MapControllers();
-        var apiRequestTimeoutOpts = app.Services.GetRequiredService<IOptions<ApiRequestTimeoutOptions>>().Value;
-        if (apiRequestTimeoutOpts.Enabled && apiRequestTimeoutOpts.TimeoutSeconds > 0)
-        {
-            apiControllers.WithRequestTimeout(ApiRequestTimeoutsExtensions.ApiControllersPolicyName);
-        }
-
-        if (app.Services.IsServerCorsActive())
-        {
-            apiControllers.RequireCors(ServerCorsOptions.PolicyName);
-        }
+        ApiControllerMapping.ApplyRequestTimeout(app, apiControllers);
+        ApiControllerMapping.ApplyCorsWhenActive(app, apiControllers);
     }
 
     private static void MapIdempotencyProbes(WebApplication app)

@@ -14,61 +14,51 @@ public static class RequestBodyBufferingExtensions
     /// Inserts middleware that calls <see cref="HttpRequestRewindExtensions.EnableBuffering(HttpRequest,int,long)"/>.
     /// when <see cref="RequestBodyBufferingOptions.Enabled"/> is true.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Buffering runs only for <see cref="HttpMethods.Post"/>, <see cref="HttpMethods.Put"/>, and <see cref="HttpMethods.Patch"/>.
-    /// If <see cref="HttpRequest.ContentLength"/> is 0, buffering is skipped. If it is null (for example chunked transfer), buffering still runs.
-    /// </para>
-    /// <para>
-    /// After enabling buffering, the request body position is reset to 0 when the stream supports seeking.
-    /// </para>
-    /// <para>
-    /// Call after <c>UseRouting</c> and before middleware or endpoints that read the body (before <c>RateLimitingMiddleware</c> and <c>MapControllers</c>).
-    /// </para>
-    /// </remarks>
-    public static IApplicationBuilder UseRequestBodyBuffering(this IApplicationBuilder app)
+    public static IApplicationBuilder UseRequestBodyBuffering(this IApplicationBuilder app) =>
+        app.UseMiddleware<RequestBodyBufferingMiddleware>();
+}
+
+internal sealed class RequestBodyBufferingMiddleware(RequestDelegate next)
+{
+    public Task InvokeAsync(HttpContext context) =>
+        RequestBodyBufferingPipeline.InvokeAsync(context, next);
+}
+
+internal static class RequestBodyBufferingPipeline
+{
+    internal static async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        return app.Use(async (context, next) =>
+        var opts = context.RequestServices.GetRequiredService<IOptions<RequestBodyBufferingOptions>>().Value;
+        if (opts.Enabled && RequestBodyBufferingRules.ShouldBuffer(context.Request))
         {
-            var opts = context.RequestServices.GetRequiredService<IOptions<RequestBodyBufferingOptions>>().Value;
-            if (opts.Enabled && ShouldBuffer(context.Request))
+            var threshold = RequestBodyBufferingRules.ClampBufferThreshold(opts.BufferThreshold);
+            var thresholdInt = threshold > int.MaxValue ? int.MaxValue : (int)threshold;
+            context.Request.EnableBuffering(thresholdInt, long.MaxValue);
+            if (context.Request.Body.CanSeek)
             {
-                var threshold = ClampBufferThreshold(opts.BufferThreshold);
-                var thresholdInt = threshold > int.MaxValue ? int.MaxValue : (int)threshold;
-                context.Request.EnableBuffering(thresholdInt, long.MaxValue);
-                if (context.Request.Body.CanSeek)
-                {
-                    context.Request.Body.Position = 0;
-                }
+                context.Request.Body.Position = 0;
             }
+        }
 
-            await next(context);
-        });
+        await next(context);
     }
+}
 
+internal static class RequestBodyBufferingRules
+{
     internal static bool ShouldBuffer(HttpRequest request)
     {
-        var method = request.Method;
-        if (!HttpMethods.IsPost(method) && !HttpMethods.IsPut(method) && !HttpMethods.IsPatch(method))
+        if (!RequestBodyBufferingRules.IsMutableMethod(request.Method))
         {
             return false;
         }
 
-        if (request.ContentLength == 0)
-        {
-            return false;
-        }
-
-        return true;
+        return request.ContentLength != 0;
     }
 
-    private static long ClampBufferThreshold(long bufferThreshold)
-    {
-        if (bufferThreshold < 1)
-        {
-            return 1;
-        }
+    internal static bool IsMutableMethod(string method) =>
+        HttpMethods.IsPost(method) || HttpMethods.IsPut(method) || HttpMethods.IsPatch(method);
 
-        return bufferThreshold;
-    }
+    internal static long ClampBufferThreshold(long bufferThreshold) =>
+        bufferThreshold < 1 ? 1 : bufferThreshold;
 }
