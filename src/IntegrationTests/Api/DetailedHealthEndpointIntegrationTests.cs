@@ -3,6 +3,12 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Server;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -372,14 +378,16 @@ public class DetailedHealthEndpointIntegrationTests
     [Test]
     public async Task Should_Return304NotModified_When_IfNoneMatchMatchesDetailedHealthEtag()
     {
-        var first = await _client!.GetAsync("/api/health/detailed");
+        await using var factory = new FixedDetailedHealthWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var first = await client.GetAsync("/api/health/detailed");
         first.StatusCode.ShouldBe(HttpStatusCode.OK);
         var etag = first.Headers.ETag;
         etag.ShouldNotBeNull();
 
         using var second = new HttpRequestMessage(HttpMethod.Get, "/api/health/detailed");
         second.Headers.IfNoneMatch.Add(etag!);
-        var notModified = await _client.SendAsync(second);
+        var notModified = await client.SendAsync(second);
         notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
         (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
     }
@@ -387,12 +395,14 @@ public class DetailedHealthEndpointIntegrationTests
     [Test]
     public async Task Should_Return200WithPayload_When_IfNoneMatchDiffersFromDetailedHealthEtag()
     {
-        var first = await _client!.GetAsync("/api/health/detailed");
+        await using var factory = new FixedDetailedHealthWebApplicationFactory();
+        using var client = factory.CreateClient();
+        var first = await client.GetAsync("/api/health/detailed");
         first.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         using var second = new HttpRequestMessage(HttpMethod.Get, "/api/health/detailed");
         second.Headers.IfNoneMatch.Add(new System.Net.Http.Headers.EntityTagHeaderValue("\"stale\""));
-        var response = await _client.SendAsync(second);
+        var response = await client.SendAsync(second);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await response.Content.ReadAsByteArrayAsync()).Length.ShouldBeGreaterThan(0);
     }
@@ -419,6 +429,60 @@ public class DetailedHealthEndpointIntegrationTests
             (c.Status == ComponentHealthStatus.Healthy
                 || c.Status == ComponentHealthStatus.Degraded
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
+        }
+    }
+
+    private sealed class FixedDetailedHealthWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
+    {
+        private static readonly DetailedHealthReport FixedReport = new()
+        {
+            OverallStatus = ComponentHealthStatus.Healthy,
+            CheckedAtUtc = new DateTime(2026, 8, 19, 12, 0, 0, DateTimeKind.Utc),
+            ProcessId = 1,
+            OsDescription = "Test OS",
+            FrameworkDescription = ".NET Test",
+            GcMemoryMb = 10,
+            WorkingSetMb = 20,
+            ProcessorCount = 4,
+            Is64BitProcess = true,
+            TimeZoneId = "UTC",
+            ProcessPriority = "Normal",
+            Components =
+            [
+                new ComponentHealthEntry { Name = "API", Status = ComponentHealthStatus.Healthy }
+            ]
+        };
+
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.UseEnvironment("Testing");
+            builder.UseSetting("ConnectionStrings:SqlConnectionString", "Data Source=:memory:");
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:SqlConnectionString"] = "Data Source=:memory:",
+                    ["AI_OpenAI_ApiKey"] = "",
+                    ["AI_OpenAI_Url"] = "",
+                    ["AI_OpenAI_Model"] = "",
+                    ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
+                    ["ApiKeyAuthentication:Enabled"] = "false",
+                    ["ApiKeyAuthentication:ValidationKey"] = "",
+                    ["FeatureFlags:SampleFeatureA"] = "false",
+                    ["FeatureFlags:SampleFeatureB"] = "false"
+                });
+            });
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IDetailedHealthReportProvider>();
+                services.AddSingleton<IDetailedHealthReportProvider, StubDetailedHealthReportProvider>();
+            });
+        }
+
+        private sealed class StubDetailedHealthReportProvider : IDetailedHealthReportProvider
+        {
+            public Task<DetailedHealthReport> GetReportAsync(CancellationToken cancellationToken = default) =>
+                Task.FromResult(FixedReport);
         }
     }
 }
