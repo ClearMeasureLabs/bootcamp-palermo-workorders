@@ -13,9 +13,10 @@ public class WorkOrderReformatAgent(
 
     internal static ReformatResult? ParseResponse(string responseText, WorkOrder workOrder)
     {
-        var title = ReformatResponseLineParser.ReadTitle(responseText, workOrder.Title);
-        var description = ReformatResponseLineParser.ReadDescription(responseText, workOrder.Description);
-        return title == workOrder.Title && description == workOrder.Description
+        var title = ReformatResponseLineParser.ReadTitle(responseText, workOrder.Title ?? string.Empty);
+        var description = ReformatResponseLineParser.ReadDescription(responseText, workOrder.Description ?? string.Empty);
+        return title == (workOrder.Title ?? string.Empty)
+            && description == (workOrder.Description ?? string.Empty)
             ? null
             : new ReformatResult(title, description);
     }
