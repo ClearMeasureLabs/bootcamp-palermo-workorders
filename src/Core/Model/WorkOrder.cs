@@ -3,6 +3,12 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 public class WorkOrder : EntityBase<WorkOrder>
 {
     private string? _description = "";
+    private string? _instructions = "";
+
+    /// <summary>
+    /// Maximum length of <see cref="RoomNumber"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int RoomNumberMaxLength = 900;
 
     public string? Title { get; set; } = "";
 
@@ -10,6 +16,12 @@ public class WorkOrder : EntityBase<WorkOrder>
     {
         get => _description;
         set => _description = getTruncatedString(value);
+    }
+
+    public string? Instructions
+    {
+        get => _instructions;
+        set => _instructions = getTruncatedString(value);
     }
 
     public string? RoomNumber { get; set; } = null;
