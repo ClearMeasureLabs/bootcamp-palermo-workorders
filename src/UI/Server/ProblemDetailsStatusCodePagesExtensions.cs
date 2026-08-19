@@ -27,24 +27,7 @@ internal static class ProblemDetailsStatusCodePagesExtensions
                 return;
             }
 
-            var statusCode = httpContext.Response.StatusCode;
-            var problemDetails = new ProblemDetails
-            {
-                Status = statusCode,
-                Title = ReasonPhrases.GetReasonPhrase(statusCode),
-                Type = statusCode switch
-                {
-                    StatusCodes.Status404NotFound => "https://tools.ietf.org/html/rfc7231#section-6.5.4",
-                    StatusCodes.Status400BadRequest => "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-                    _ => "https://tools.ietf.org/html/rfc7231#section-6.6.1"
-                }
-            };
-
-            if (string.IsNullOrEmpty(problemDetails.Title))
-            {
-                problemDetails.Title = "An error occurred.";
-            }
-
+            var problemDetails = CreateProblemDetails(httpContext.Response.StatusCode);
             var problemDetailsService = httpContext.RequestServices.GetRequiredService<IProblemDetailsService>();
             await problemDetailsService.WriteAsync(new ProblemDetailsContext
             {
@@ -53,6 +36,31 @@ internal static class ProblemDetailsStatusCodePagesExtensions
             });
         });
     }
+
+    internal static ProblemDetails CreateProblemDetails(int statusCode)
+    {
+        var problemDetails = new ProblemDetails
+        {
+            Status = statusCode,
+            Title = ReasonPhrases.GetReasonPhrase(statusCode),
+            Type = ResolveProblemDetailsType(statusCode)
+        };
+
+        if (string.IsNullOrEmpty(problemDetails.Title))
+        {
+            problemDetails.Title = "An error occurred.";
+        }
+
+        return problemDetails;
+    }
+
+    internal static string ResolveProblemDetailsType(int statusCode) =>
+        statusCode switch
+        {
+            StatusCodes.Status404NotFound => "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+            StatusCodes.Status400BadRequest => "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+            _ => "https://tools.ietf.org/html/rfc7231#section-6.6.1"
+        };
 }
 
 internal static class ProblemDetailsPaths

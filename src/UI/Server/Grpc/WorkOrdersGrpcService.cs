@@ -35,7 +35,7 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
         return new GetWorkOrderByNumberReply { WorkOrder = MapWorkOrder(workOrder) };
     }
 
-    private static WorkOrder MapWorkOrder(Core.Model.WorkOrder source)
+    internal static WorkOrder MapWorkOrder(Core.Model.WorkOrder source)
     {
         var message = new WorkOrder
         {

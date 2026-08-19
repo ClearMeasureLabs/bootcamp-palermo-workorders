@@ -54,14 +54,8 @@ public sealed class IdempotencyMiddleware
             return;
         }
 
-        if (!context.Request.Headers.TryGetValue(IdempotencyConstants.HeaderName, out var keyValues))
-        {
-            await _next(context);
-            return;
-        }
-
-        var idempotencyKey = keyValues.ToString().Trim();
-        if (string.IsNullOrEmpty(idempotencyKey))
+        var idempotencyKey = TryReadIdempotencyKey(context.Request);
+        if (idempotencyKey is null)
         {
             await _next(context);
             return;
@@ -74,76 +68,16 @@ public sealed class IdempotencyMiddleware
             return;
         }
 
-        context.Request.EnableBuffering();
-        context.Request.Body.Position = 0;
-        var bodyHash = await ComputeBodySha256HexAsync(context.Request.Body, context.RequestAborted);
-        context.Request.Body.Position = 0;
-
-        var compositeKey =
-            $"{context.Request.Method}\u001f{context.Request.Path.Value}\u001f{idempotencyKey}\u001f{bodyHash}";
-
-        if (_cache.TryGetValue(compositeKey, out IdempotentResponseSnapshot? cachedSnapshot) && cachedSnapshot is not null)
+        var compositeKey = await BuildCompositeKeyAsync(context.Request, idempotencyKey, context.RequestAborted);
+        if (await TryReplayCachedAsync(context, compositeKey))
         {
-            await ReplayCachedResponseAsync(context, cachedSnapshot);
             return;
         }
 
-        var sem = _keyLocks.GetOrAdd(idempotencyKey, static _ => new SemaphoreSlim(1, 1));
-        await sem.WaitAsync(context.RequestAborted);
-        try
-        {
-            if (_cache.TryGetValue(compositeKey, out cachedSnapshot) && cachedSnapshot is not null)
-            {
-                await ReplayCachedResponseAsync(context, cachedSnapshot);
-                return;
-            }
-
-            if (_cache.TryGetValue(BindingPrefix + idempotencyKey, out string? boundComposite)
-                && !string.Equals(boundComposite, compositeKey, StringComparison.Ordinal))
-            {
-                await WriteConflictAsync(context);
-                return;
-            }
-
-            var originalBody = context.Response.Body;
-            await using var buffer = new MemoryStream();
-            context.Response.Body = buffer;
-
-            try
-            {
-                await _next(context);
-            }
-            finally
-            {
-                context.Response.Body = originalBody;
-            }
-
-            var status = context.Response.StatusCode;
-            if (status is >= 200 and < 300)
-            {
-                var bodyBytes = buffer.ToArray();
-                var headers = CaptureResponseHeaders(context.Response);
-                var snapshot = new IdempotentResponseSnapshot(status, headers, bodyBytes);
-                var cacheSeconds = Math.Max(1, opts.CacheEntrySeconds);
-                var cacheOptions = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cacheSeconds)
-                };
-                _cache.Set(compositeKey, snapshot, cacheOptions);
-                _cache.Set(BindingPrefix + idempotencyKey, compositeKey, cacheOptions);
-            }
-
-            buffer.Position = 0;
-            context.Response.ContentLength = buffer.Length;
-            await buffer.CopyToAsync(originalBody, context.RequestAborted);
-        }
-        finally
-        {
-            sem.Release();
-        }
+        await ProcessUnderLockAsync(context, idempotencyKey, compositeKey, opts);
     }
 
-    private static bool ShouldInspect(HttpRequest request)
+    internal static bool ShouldInspect(HttpRequest request)
     {
         if (!HttpMethods.IsPost(request.Method) && !HttpMethods.IsPut(request.Method))
         {
@@ -159,7 +93,124 @@ public sealed class IdempotencyMiddleware
         return ApiRateLimitingExtensions.ShouldApplyToPath(path);
     }
 
-    private static async Task<string> ComputeBodySha256HexAsync(Stream body, CancellationToken cancellationToken)
+    internal static string? TryReadIdempotencyKey(HttpRequest request)
+    {
+        if (!request.Headers.TryGetValue(IdempotencyConstants.HeaderName, out var keyValues))
+        {
+            return null;
+        }
+
+        var trimmed = keyValues.ToString().Trim();
+        return string.IsNullOrEmpty(trimmed) ? null : trimmed;
+    }
+
+    internal static async Task<string> BuildCompositeKeyAsync(
+        HttpRequest request,
+        string idempotencyKey,
+        CancellationToken cancellationToken)
+    {
+        request.EnableBuffering();
+        request.Body.Position = 0;
+        var bodyHash = await ComputeBodySha256HexAsync(request.Body, cancellationToken);
+        request.Body.Position = 0;
+        return $"{request.Method}\u001f{request.Path.Value}\u001f{idempotencyKey}\u001f{bodyHash}";
+    }
+
+    private async Task<bool> TryReplayCachedAsync(HttpContext context, string compositeKey)
+    {
+        if (!_cache.TryGetValue(compositeKey, out IdempotentResponseSnapshot? cachedSnapshot)
+            || cachedSnapshot is null)
+        {
+            return false;
+        }
+
+        await ReplayCachedResponseAsync(context, cachedSnapshot);
+        return true;
+    }
+
+    private async Task ProcessUnderLockAsync(
+        HttpContext context,
+        string idempotencyKey,
+        string compositeKey,
+        IdempotencyOptions opts)
+    {
+        var sem = _keyLocks.GetOrAdd(idempotencyKey, static _ => new SemaphoreSlim(1, 1));
+        await sem.WaitAsync(context.RequestAborted);
+        try
+        {
+            if (await TryReplayCachedAsync(context, compositeKey))
+            {
+                return;
+            }
+
+            if (HasConflictingBinding(idempotencyKey, compositeKey))
+            {
+                await WriteConflictAsync(context);
+                return;
+            }
+
+            await ExecuteCaptureAndForwardAsync(context, idempotencyKey, compositeKey, opts);
+        }
+        finally
+        {
+            sem.Release();
+        }
+    }
+
+    private bool HasConflictingBinding(string idempotencyKey, string compositeKey) =>
+        _cache.TryGetValue(BindingPrefix + idempotencyKey, out string? boundComposite)
+        && !string.Equals(boundComposite, compositeKey, StringComparison.Ordinal);
+
+    private async Task ExecuteCaptureAndForwardAsync(
+        HttpContext context,
+        string idempotencyKey,
+        string compositeKey,
+        IdempotencyOptions opts)
+    {
+        var originalBody = context.Response.Body;
+        await using var buffer = new MemoryStream();
+        context.Response.Body = buffer;
+
+        try
+        {
+            await _next(context);
+        }
+        finally
+        {
+            context.Response.Body = originalBody;
+        }
+
+        var status = context.Response.StatusCode;
+        if (status is >= 200 and < 300)
+        {
+            CacheSuccessfulResponse(idempotencyKey, compositeKey, context.Response, buffer, opts);
+        }
+
+        buffer.Position = 0;
+        context.Response.ContentLength = buffer.Length;
+        await buffer.CopyToAsync(originalBody, context.RequestAborted);
+    }
+
+    private void CacheSuccessfulResponse(
+        string idempotencyKey,
+        string compositeKey,
+        HttpResponse response,
+        MemoryStream buffer,
+        IdempotencyOptions opts)
+    {
+        var bodyBytes = buffer.ToArray();
+        var headers = CaptureResponseHeaders(response);
+        var snapshot = new IdempotentResponseSnapshot(response.StatusCode, headers, bodyBytes);
+        var cacheSeconds = Math.Max(1, opts.CacheEntrySeconds);
+        var cacheOptions = new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cacheSeconds)
+        };
+        _cache.Set(compositeKey, snapshot, cacheOptions);
+        _cache.Set(BindingPrefix + idempotencyKey, compositeKey, cacheOptions);
+    }
+
+    internal static async Task<string> ComputeBodySha256HexAsync(Stream body, CancellationToken cancellationToken)
     {
         using var sha = SHA256.Create();
         var buffer = new byte[8192];
@@ -173,7 +224,7 @@ public sealed class IdempotencyMiddleware
         return Convert.ToHexString(sha.Hash!);
     }
 
-    private static Dictionary<string, string[]> CaptureResponseHeaders(HttpResponse response)
+    internal static Dictionary<string, string[]> CaptureResponseHeaders(HttpResponse response)
     {
         var dict = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
         foreach (var header in response.Headers)
@@ -189,7 +240,7 @@ public sealed class IdempotencyMiddleware
         return dict;
     }
 
-    private static async Task ReplayCachedResponseAsync(HttpContext context, IdempotentResponseSnapshot cached)
+    internal static async Task ReplayCachedResponseAsync(HttpContext context, IdempotentResponseSnapshot cached)
     {
         context.Response.Clear();
         context.Response.StatusCode = cached.StatusCode;
@@ -207,7 +258,7 @@ public sealed class IdempotencyMiddleware
         await context.Response.Body.WriteAsync(cached.Body, context.RequestAborted);
     }
 
-    private static async Task WriteBadRequestAsync(HttpContext context, string detail)
+    internal static async Task WriteBadRequestAsync(HttpContext context, string detail)
     {
         context.Response.StatusCode = StatusCodes.Status400BadRequest;
         context.Response.ContentType = "application/problem+json";
@@ -222,7 +273,7 @@ public sealed class IdempotencyMiddleware
             context.RequestAborted);
     }
 
-    private static async Task WriteConflictAsync(HttpContext context)
+    internal static async Task WriteConflictAsync(HttpContext context)
     {
         context.Response.StatusCode = StatusCodes.Status409Conflict;
         context.Response.ContentType = "application/problem+json";
@@ -237,7 +288,7 @@ public sealed class IdempotencyMiddleware
             context.RequestAborted);
     }
 
-    private sealed record IdempotentResponseSnapshot(int StatusCode, Dictionary<string, string[]> Headers, byte[] Body);
+    internal sealed record IdempotentResponseSnapshot(int StatusCode, Dictionary<string, string[]> Headers, byte[] Body);
 
     private sealed record ValidationProblemDetailsDto(
         int Status,

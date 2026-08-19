@@ -46,7 +46,7 @@ public static class RequestBodyBufferingExtensions
         });
     }
 
-    private static bool ShouldBuffer(HttpRequest request)
+    internal static bool ShouldBuffer(HttpRequest request)
     {
         var method = request.Method;
         if (!HttpMethods.IsPost(method) && !HttpMethods.IsPut(method) && !HttpMethods.IsPatch(method))
