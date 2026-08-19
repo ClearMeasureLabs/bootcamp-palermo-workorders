@@ -75,17 +75,19 @@ public class TraceEntry
     /// <param name="activity">The activity to create the trace entry from.</param>
     /// <param name="status">The status of the activity.</param>
     public TraceEntry(Activity activity, string status)
+        : this()
     {
-        Timestamp = DateTime.UtcNow;
-        Status = status;
-        TraceId = activity.TraceId.ToString();
-        SpanId = activity.SpanId.ToString();
-        ParentSpanId = activity.ParentSpanId != default ? activity.ParentSpanId.ToString() : null;
-        Name = activity.DisplayName;
-        Source = activity.Source.Name;
-        DurationMs = activity.Duration.TotalMilliseconds;
-        StatusCode = activity.Status != ActivityStatusCode.Unset ? activity.Status.ToString() : null;
-        Error = activity.Status == ActivityStatusCode.Error ? activity.StatusDescription : null;
-        Tags = activity.Tags.ToDictionary(t => t.Key, t => t.Value);
+        var mapped = TraceEntryMapper.FromActivity(activity, status);
+        Timestamp = mapped.Timestamp;
+        Status = mapped.Status;
+        TraceId = mapped.TraceId;
+        SpanId = mapped.SpanId;
+        ParentSpanId = mapped.ParentSpanId;
+        Name = mapped.Name;
+        Source = mapped.Source;
+        DurationMs = mapped.DurationMs;
+        StatusCode = mapped.StatusCode;
+        Error = mapped.Error;
+        Tags = mapped.Tags;
     }
 }

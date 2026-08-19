@@ -116,10 +116,8 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
         _activityListener.Dispose();
         _meterListener.Dispose();
 
-        if (_tracesWriter != null) await _tracesWriter.DisposeAsync();
-        if (_eventsWriter != null) await _eventsWriter.DisposeAsync();
-        if (_logsWriter != null) await _logsWriter.DisposeAsync();
-        if (_metricsWriter != null) await _metricsWriter.DisposeAsync();
+        await TelemetryFileMaintenance.DisposeWritersAsync(
+            _tracesWriter, _eventsWriter, _logsWriter, _metricsWriter);
 
         GC.SuppressFinalize(this);
     }
@@ -128,7 +126,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
     {
         if (_tracesWriter == null) return;
 
-        var entry = new TraceEntry(activity, status);
+        var entry = TraceEntryMapper.FromActivity(activity, status);
 
         lock (_tracesLock)
         {
@@ -207,25 +205,8 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
         }
     }
 
-    private void CleanupOldFiles(int retentionDays = 7)
-    {
-        try
-        {
-            var cutoffDate = DateTime.UtcNow.AddDays(-retentionDays);
-
-            foreach (var file in Directory.GetFiles(TelemetryLogDirectory, "*.jsonl"))
-            {
-                if (File.GetCreationTimeUtc(file) < cutoffDate)
-                {
-                    File.Delete(file);
-                }
-            }
-        }
-        catch
-        {
-            // Ignore cleanup errors
-        }
-    }
+    private void CleanupOldFiles(int retentionDays = 7) =>
+        TelemetryFileMaintenance.DeleteFilesOlderThan(TelemetryLogDirectory, retentionDays);
 
     private void OnActivityStarted(Activity activity)
     {
