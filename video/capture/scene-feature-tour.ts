@@ -27,7 +27,7 @@ export async function captureFeatureTourScene(): Promise<void> {
 
 		const statusSelect = page.locator('#StatusSelect');
 		await statusSelect.waitFor({state: 'visible'});
-		await statusSelect.selectOption({value: 'ASD'});
+		await statusSelect.selectOption({value: 'Assigned'});
 		await pause(400);
 		const searchButton = page.locator('#SearchButton');
 		await searchButton.click();
