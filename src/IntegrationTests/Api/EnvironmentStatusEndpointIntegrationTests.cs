@@ -130,13 +130,14 @@ public class EnvironmentStatusEndpointIntegrationTests
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             var body = await response.Content.ReadAsStringAsync();
             body.ShouldNotContain(secret);
-            body.ShouldContain(EnvironmentStatusBuilder.RedactedValue);
 
-            var payload = await response.Content.ReadFromJsonAsync<EnvironmentStatusResponse>(
+            var payload = JsonSerializer.Deserialize<EnvironmentStatusResponse>(
+                body,
                 ConditionalGetEtag.JsonSerializerOptions);
             payload.ShouldNotBeNull();
             payload!.EnvironmentVariables.ShouldContainKey(varName);
             payload.EnvironmentVariables[varName].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
+            payload.EnvironmentVariables.Values.ShouldNotContain(secret);
         }
         finally
         {
