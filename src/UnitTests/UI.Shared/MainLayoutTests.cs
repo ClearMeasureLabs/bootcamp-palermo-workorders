@@ -112,6 +112,11 @@ public class MainLayoutTests
 
         rail.ClassList.ShouldContain("open");
         toggle.GetAttribute("aria-expanded").ShouldBe("true");
+
+        toggle.Click();
+
+        rail.ClassList.ShouldNotContain("open");
+        toggle.GetAttribute("aria-expanded").ShouldBe("false");
     }
 
     [Test]
