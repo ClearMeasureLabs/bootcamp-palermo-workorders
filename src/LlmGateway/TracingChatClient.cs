@@ -31,13 +31,7 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         }
         catch (Exception ex)
         {
-            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            activity?.AddEvent(new ActivityEvent("exception",
-                tags: new ActivityTagsCollection
-                {
-                    { "exception.type", ex.GetType().FullName },
-                    { "exception.message", ex.Message }
-                }));
+            ChatActivityTracing.RecordException(activity, ex);
             throw;
         }
     }
@@ -95,9 +89,7 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
             yield return update;
         }
 
-        activity?.AddEvent(new ActivityEvent("response.received"));
-        activity?.SetTag("chat.model", lastUpdate?.ModelId);
-        activity?.SetTag("chat.response", responseText.ToString());
+        ChatActivityTracing.RecordStreamingCompletion(activity, lastUpdate?.ModelId, responseText.ToString());
     }
 
     private Activity? StartActivity(string operationName)

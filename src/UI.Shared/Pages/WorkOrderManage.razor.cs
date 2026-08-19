@@ -175,20 +175,8 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
         try
         {
-            var utterance = new SpeechSynthesisUtterance
-            {
-                Text = translatedText,
-                Lang = _preferredLanguage
-            };
-
             var voices = await SpeechSynthesis.GetVoicesAsync();
-            var langPrefix = _preferredLanguage.Split('-')[0];
-            var matchingVoice = voices.FirstOrDefault(v => v.Lang?.StartsWith(langPrefix, StringComparison.OrdinalIgnoreCase) == true);
-            if (matchingVoice != null)
-            {
-                utterance.Voice = matchingVoice;
-            }
-
+            var utterance = WorkOrderSpeechHelper.CreateUtterance(translatedText, _preferredLanguage, voices);
             await SpeechSynthesis.SpeakAsync(utterance);
         }
         catch

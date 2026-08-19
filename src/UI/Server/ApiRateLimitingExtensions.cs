@@ -76,30 +76,6 @@ public static class ApiRateLimitingExtensions
         return path.StartsWithSegments(BlazorSingleApiPathV1, StringComparison.OrdinalIgnoreCase);
     }
 
-    internal static string ResolvePartitionKey(HttpContext httpContext, string apiKeyHeaderName)
-    {
-        if (!string.IsNullOrWhiteSpace(apiKeyHeaderName)
-            && httpContext.Request.Headers.TryGetValue(apiKeyHeaderName, out var keyValues))
-        {
-            var k = keyValues.ToString();
-            if (!string.IsNullOrWhiteSpace(k))
-            {
-                return "key:" + k;
-            }
-        }
-
-        var userName = httpContext.User.Identity?.Name;
-        if (!string.IsNullOrEmpty(userName))
-        {
-            return "user:" + userName;
-        }
-
-        var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
-        if (!string.IsNullOrEmpty(remoteIp))
-        {
-            return "ip:" + remoteIp;
-        }
-
-        return "anonymous";
-    }
+    internal static string ResolvePartitionKey(HttpContext httpContext, string apiKeyHeaderName) =>
+        ApiRateLimitPartitionResolver.Resolve(httpContext, apiKeyHeaderName);
 }

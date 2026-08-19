@@ -78,10 +78,13 @@ public class Bus : IBus
         activity.SetTag("bus.operation", operation);
         activity.SetTag("bus.message.type", messageName);
         activity.SetTag("bus.message.fullname", message.GetType().FullName);
-        AddPropertyTags(message, activity);
+        AddScalarPropertyTags(message, activity);
 
         return activity;
     }
+
+    private static void AddScalarPropertyTags(object message, Activity activity) =>
+        BusActivityTagger.AddScalarPropertyTags(message, activity);
 
     private static void SetActivityError(Activity? activity, Exception ex)
     {
@@ -92,19 +95,5 @@ public class Bus : IBus
         activity.SetTag("exception.type", ex.GetType().FullName);
         activity.SetTag("exception.message", ex.Message);
         activity.SetTag("exception.stacktrace", ex.ToString());
-    }
-
-    private static void AddPropertyTags(object message, Activity activity)
-    {
-        var properties = message.GetType().GetProperties();
-
-        foreach (var property in properties)
-        {
-            if (!typeof(IEnumerable).IsAssignableFrom(property.PropertyType) || property.PropertyType == typeof(string))
-            {
-                var propertyValue = property.GetValue(message);
-                activity.SetTag($"bus.message.{property.Name}", propertyValue?.ToString() ?? string.Empty);
-            }
-        }
     }
 }

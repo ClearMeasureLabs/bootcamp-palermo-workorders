@@ -9,7 +9,6 @@ namespace ClearMeasure.Bootcamp.ServiceDefaults;
 /// </summary>
 public sealed class CorrelationIdMiddleware
 {
-    private const int MaxIncomingLength = 128;
     private readonly RequestDelegate _next;
     private readonly ILogger<CorrelationIdMiddleware> _logger;
 
@@ -33,17 +32,5 @@ public sealed class CorrelationIdMiddleware
         }
     }
 
-    private static string ResolveCorrelationId(HttpContext context)
-    {
-        if (context.Request.Headers.TryGetValue(CorrelationIdConstants.HeaderName, out var fromHeader))
-        {
-            var id = fromHeader.ToString().Trim();
-            if (id.Length > 0 && id.Length <= MaxIncomingLength)
-            {
-                return id;
-            }
-        }
-
-        return Guid.NewGuid().ToString("D");
-    }
+    private static string ResolveCorrelationId(HttpContext context) => CorrelationIdResolver.Resolve(context);
 }
