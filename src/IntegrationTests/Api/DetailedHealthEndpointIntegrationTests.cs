@@ -343,6 +343,61 @@ public class DetailedHealthEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_SupportVersionedRoute_When_GetApiV1HealthDetailed()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var v1 = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var legacyReport = await legacy.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var v1Report = await v1.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        legacyReport.ShouldNotBeNull();
+        v1Report.ShouldNotBeNull();
+        v1Report!.OverallStatus.ShouldBe(legacyReport!.OverallStatus);
+        v1Report.Components.Count.ShouldBe(legacyReport.Components.Count);
+    }
+
+    [Test]
+    public async Task Should_SetEtagHeader_When_DetailedHealthReturned()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.ETag.ShouldNotBeNull();
+    }
+
+    [Test]
+    public async Task Should_Return304NotModified_When_IfNoneMatchMatchesDetailedHealthEtag()
+    {
+        var first = await _client!.GetAsync("/api/health/detailed");
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var etag = first.Headers.ETag;
+        etag.ShouldNotBeNull();
+
+        using var second = new HttpRequestMessage(HttpMethod.Get, "/api/health/detailed");
+        second.Headers.IfNoneMatch.Add(etag!);
+        var notModified = await _client.SendAsync(second);
+        notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
+        (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task Should_Return200WithPayload_When_IfNoneMatchDiffersFromDetailedHealthEtag()
+    {
+        var first = await _client!.GetAsync("/api/health/detailed");
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using var second = new HttpRequestMessage(HttpMethod.Get, "/api/health/detailed");
+        second.Headers.IfNoneMatch.Add(new System.Net.Http.Headers.EntityTagHeaderValue("\"stale\""));
+        var response = await _client.SendAsync(second);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await response.Content.ReadAsByteArrayAsync()).Length.ShouldBeGreaterThan(0);
+    }
+
+    [Test]
     public async Task Should_ListExpectedComponentEntries_When_AggregatedFromRegisteredChecks()
     {
         var response = await _client!.GetAsync("/api/health/detailed");
@@ -357,6 +412,8 @@ public class DetailedHealthEndpointIntegrationTests
         names.ShouldContain("Server");
         names.ShouldContain("API");
         names.ShouldContain("Jeffrey");
+        names.ShouldContain("NeedsReboot");
+        names.ShouldContain("ProcessThreadCount");
         foreach (var c in report.Components)
         {
             (c.Status == ComponentHealthStatus.Healthy
