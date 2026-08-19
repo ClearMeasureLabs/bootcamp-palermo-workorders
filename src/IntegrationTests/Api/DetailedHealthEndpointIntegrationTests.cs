@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UnitTests.Api;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -363,5 +365,138 @@ public class DetailedHealthEndpointIntegrationTests
                 || c.Status == ComponentHealthStatus.Degraded
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
         }
+    }
+
+    [Test]
+    public async Task Should_IncludeComponentNames_SortedAscending_When_Returned()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        var names = report!.Components.Select(c => c.Name).ToList();
+        names.Count.ShouldBeGreaterThan(1);
+        names.ShouldBe(names.OrderBy(n => n, StringComparer.Ordinal).ToList());
+    }
+
+    [Test]
+    public async Task Should_IncludeProcessMetadata_When_Requested()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report!.ProcessId.ShouldBeGreaterThan(0);
+        report.ProcessorCount.ShouldBeGreaterThanOrEqualTo(1);
+        report.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
+        report.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
+    }
+
+    [Test]
+    public async Task Should_Respond_When_GetUnversioned()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("overallStatus", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("components", out _).ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task Should_Respond_When_GetVersioned()
+    {
+        var unversioned = await _client!.GetAsync("/api/health/detailed");
+        var versioned = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using var unversionedDoc = JsonDocument.Parse(await unversioned.Content.ReadAsStringAsync());
+        using var versionedDoc = JsonDocument.Parse(await versioned.Content.ReadAsStringAsync());
+        unversionedDoc.RootElement.GetProperty("overallStatus").GetString()
+            .ShouldBe(versionedDoc.RootElement.GetProperty("overallStatus").GetString());
+        versionedDoc.RootElement.GetProperty("components").GetArrayLength()
+            .ShouldBe(unversionedDoc.RootElement.GetProperty("components").GetArrayLength());
+    }
+
+    [Test]
+    public async Task Should_IncludeETag_When_ConditionalGetEnabled()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.ETag.ShouldNotBeNull();
+    }
+
+    [Test]
+    public async Task Should_Return304NotModified_When_IfNoneMatchMatches()
+    {
+        await using var factory = new DetailedHealthWebApplicationFactory().WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptors = services
+                    .Where(d => d.ServiceType == typeof(IDetailedHealthReportProvider))
+                    .ToList();
+                foreach (var descriptor in descriptors)
+                    services.Remove(descriptor);
+                services.AddSingleton<IDetailedHealthReportProvider, FixedDetailedHealthReportProvider>();
+            });
+        });
+        using var client = factory.CreateClient();
+
+        var first = await client.GetAsync("/api/health/detailed");
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var etag = first.Headers.ETag;
+        etag.ShouldNotBeNull();
+
+        using var second = new HttpRequestMessage(HttpMethod.Get, "/api/health/detailed");
+        second.Headers.IfNoneMatch.Add(etag!);
+        var notModified = await client.SendAsync(second);
+        notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
+        (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task Should_BlockRequest_When_RateLimitExceeded()
+    {
+        await using var factory = new RateLimitedApiWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        (await client.GetAsync("/api/health/detailed")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.GetAsync("/api/health/detailed")).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    /// <summary>
+    /// Returns a deterministic report so conditional GET (ETag → 304) can be exercised without volatile host metrics.
+    /// </summary>
+    private sealed class FixedDetailedHealthReportProvider : IDetailedHealthReportProvider
+    {
+        private static readonly DetailedHealthReport FixedReport = new()
+        {
+            OverallStatus = ComponentHealthStatus.Healthy,
+            CheckedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            ProcessId = 1,
+            OsDescription = "test-os",
+            FrameworkDescription = "test-framework",
+            GcMemoryMb = 10,
+            WorkingSetMb = 20,
+            ProcessorCount = 4,
+            Is64BitProcess = true,
+            TimeZoneId = "UTC",
+            ProcessPriority = "Normal",
+            Components =
+            [
+                new ComponentHealthEntry { Name = "API", Status = ComponentHealthStatus.Healthy }
+            ]
+        };
+
+        public Task<DetailedHealthReport> GetReportAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(FixedReport);
     }
 }
