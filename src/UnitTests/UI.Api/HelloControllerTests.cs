@@ -11,11 +11,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 public class HelloControllerTests
 {
     [Test]
-<<<<<<< HEAD
-    public void Get_Should_Return200WithJsonMessage()
-=======
     public void Get_Should_Return200AndHelloWorldJson()
->>>>>>> 35cf1886 (Fix merge conflict markers in HelloController [AB#8608] (#8608))
     {
         var controller = new HelloController
         {
