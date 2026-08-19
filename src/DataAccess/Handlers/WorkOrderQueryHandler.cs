@@ -19,23 +19,7 @@ public class WorkOrderQueryHandler(DataContext context) :
 
     public async Task<WorkOrder[]> GetWorkOrdersAsync(WorkOrderSearchSpecification specification)
     {
-        IQueryable<WorkOrder> query = context.Set<WorkOrder>();
-
-        if (specification.Assignee != null)
-        {
-            query = query.Where(wo => wo.Assignee == specification.Assignee);
-        }
-
-        if (specification.Creator != null)
-        {
-            query = query.Where(wo => wo.Creator == specification.Creator);
-        }
-
-        if (specification.Status != null)
-        {
-            query = query.Where(wo => wo.Status == specification.Status);
-        }
-
+        var query = WorkOrderQueryFilters.Apply(context.Set<WorkOrder>(), specification);
         return await query.ToArrayAsync();
     }
 
