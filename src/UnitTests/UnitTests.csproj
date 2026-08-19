@@ -55,6 +55,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\ChurchBulletin.ServiceDefaults\ChurchBulletin.ServiceDefaults.csproj" />
 		<ProjectReference Include="..\Core\Core.csproj" />
+		<ProjectReference Include="..\Database\Database.csproj" />
 		<ProjectReference Include="..\UI\Client\UI.Client.csproj" />
 		<ProjectReference Include="..\UI\Api\UI.Api.csproj" />
 		<ProjectReference Include="..\UI\Server\UI.Server.csproj" />
