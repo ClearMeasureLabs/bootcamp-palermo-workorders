@@ -16,6 +16,10 @@ merge policy, cached board IDs) comes from `.claude/factory-loop.json` at the re
 (shared with the Claude skill). These rules are the contract for this repository; a user's
 own global rules may add to but never weaken them.
 
+**Canonical contract:** Keep gates identical to `.claude/skills/feature-loop/SKILL.md`.
+This file is the Cursor tool mapping only — when Claude gains a new gate, copy it here
+unchanged (except Agent → Task wording).
+
 **Before acting:** Read this file fully, then read `.claude/factory-loop.json`.
 
 ## Children first, depth-first (before touching the item)
@@ -26,14 +30,26 @@ its parent is reconsidered. A parent is never started while any of its descendan
 open. Independent siblings may be worked in parallel — each in its own Task worktree.
 Report the resolved tree and execution order before starting.
 
+## Roles (item coordinator vs column worker)
+
+Two Task roles — do not conflate them:
+
+| Role | Who | Scope |
+|------|-----|--------|
+| **Item coordinator** | The agent running this skill (or the one Task dispatched per item by feature-loop-dispatch) | Drives #N **end-to-end**: resolve children, advance one column at a time, verify each column, open PR, wait on CI, triage bots, merge, move card. May spawn column workers. |
+| **Column worker** | A Task the coordinator spawns for one board column | Does **only that column's** design/implement/verify work (or a recorded no-op). Never advances other columns. |
+
+`factory-loop.json` has `"subagentPerColumn": true`. The coordinator must not personally
+perform writing work across multiple columns; it spawns a fresh column worker per column
+(one delegation hop). Column workers never re-delegate.
+
 ## Column progression
 
 - **One column at a time.** The item advances exactly one board column per transition —
   never skips — and only after that column's work is verified. Columns and their roles
   (design / implement / verify / terminal) are in `factory-loop.json`.
-- **Independent Task per column.** Each column's work is done by its own dedicated Task
-  subagent; one column's deliverable is the next column's input. No single subagent
-  carries the item through multiple columns.
+- **Independent Task per column.** Each column's work is done by its own dedicated column
+  worker Task; one column's deliverable is the next column's input.
 - Non-applicable columns are passed through with a recorded no-op justification (an issue
   comment stating why the column does not apply).
 - On completion of the loop's scope, leave the card in `doneForNowColumn` from
@@ -45,15 +61,16 @@ Use the **Task** tool (not Claude's Agent tool):
 
 | Intent | Task parameters |
 |--------|-----------------|
-| Writing / build / test work | `subagent_type: "best-of-n-runner"` (isolated git worktree) |
+| Column worker / writing / build / test | `subagent_type: "best-of-n-runner"` (isolated git worktree); launch **exactly one** runner per column (never N competing attempts of the same column) |
 | Read-only search | `subagent_type: "explore"` on the main checkout |
-| Model | `model: "inherit"` unless the user explicitly named a listed model |
+| Model | Pin writing Tasks to `claude-sonnet-5-thinking-high` when `factory-loop.json` `subagents.default` is `"sonnet"` (Claude Sonnet mandate). Use `inherit` or another listed model **only** when the user explicitly named one. |
 | Parallel independent children | `run_in_background: true`; cap at 3 writing Tasks |
 | Nudge a stalled worker | `resume` with the prior Task agent id (replaces Claude SendMessage) |
 
 - **One worktree per writing Task.** Parallel writing Tasks never share a checkout.
 - Do not use `subagent_type: "claude"` — that is not a Cursor Task type.
-- At most one delegation hop below the current agent (no dispatcher chains).
+- At most one delegation hop below the item coordinator (column workers must DO work, not
+  re-delegate).
 
 ## Build, PR, and merge gates
 
@@ -142,7 +159,7 @@ issue node ID.)
 ## Anti-stall (single-item)
 
 1. NO DISPATCHER CHAINS — a Task spawned for column work must DO the work, never merely
-   re-delegate; at most one hop.
+   re-delegate; at most one hop below the item coordinator.
 2. SYNCHRONOUS FINISH — once CI is green, do bot triage, merge, issue close, and card
    move in the SAME turn; never end a turn between "CI green" and "merged".
 3. When waiting on CI, use a bounded poll (Shell / AwaitShell) and after EVERY resumption

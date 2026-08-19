@@ -18,6 +18,11 @@ This session is the **orchestrator**. The user has authorized the listed work it
 full, unattended implementation. From this point the session runs to completion without
 asking anything further — every decision is made autonomously under the rules below.
 
+**Canonical contract:** Keep gates identical to `.claude/skills/feature-loop-dispatch/SKILL.md`
+and the per-item rules in `.cursor/skills/feature-loop/SKILL.md`. This file is the Cursor
+orchestrator mapping — when Claude gains a new gate, copy it here (except Agent → Task
+wording).
+
 **Before acting:** Read this file, `.cursor/skills/feature-loop/SKILL.md`, and
 `.claude/factory-loop.json`. Those files are the contract; a user's own global rules may
 add to but never weaken them.
@@ -28,7 +33,7 @@ Sub-sessions stall silently: they spawn a background CI poller and end their tur
 completion notification may route to the orchestrator instead of the stopped worker — so a
 PR can sit fully green and unmerged. Detection must be EXTERNAL and MECHANICAL:
 
-1. Baseline (read-only, REST-only; exit 2 = stalls found):
+1. Baseline (read-only, REST-only; exit 2 = stalls found) — GitHub-visible stalls only:
 
    ```
    pwsh -NoProfile .claude/skills/feature-loop-dispatch/Check-StalledLanes.ps1 `
@@ -36,22 +41,26 @@ PR can sit fully green and unmerged. Detection must be EXTERNAL and MECHANICAL:
    ```
 
 2. Run it as a HEARTBEAT, not an alarm: launch a background Shell that sleeps ~15 minutes,
-   runs ONE check, and EXITS UNCONDITIONALLY — its exit wakes the orchestrator every cycle
-   regardless of findings. Re-arm at the end of every turn in which it fired. Prefer
-   AwaitShell for bounded waits; NEVER wait open-ended on Task notifications alone.
-   Pass `-TasksDir` / `-ActiveIds` when local Task output paths are known so pre-PR stalls
-   are caught via output-file staleness.
-3. For every stall it reports, act immediately:
+   runs ONE check (same command as above), and EXITS UNCONDITIONALLY — its exit wakes the
+   orchestrator every cycle regardless of findings. Re-arm at the end of every turn in
+   which it fired. Prefer AwaitShell for bounded waits; NEVER wait open-ended on Task
+   notifications alone.
+3. **LOCAL_STALL / `-TasksDir`:** Cursor Tasks do **not** write Claude-style
+   `{agentId}.output` files. Do **not** pass `-TasksDir` / `-ActiveIds` unless those paths
+   are confirmed to exist for this session. Pre-PR liveness relies on Task completion
+   notifications + `resume` + the 20-minute no-progress rule — not on LOCAL_STALL.
+4. For every stall it reports, act immediately:
    - `GREEN_UNMERGED` → `Task` with `resume` on the owning agent id: "PR #N is green;
-     triage bots, merge, move card, report." If unresumable, finish merge-side work in
-     the orchestrator (verify check-runs, triage bots, merge, card move) or spawn a fresh
-     closer Task (`best-of-n-runner`).
+     triage bots, merge, move card, report." If unresumable:
+     - Orchestrator **may** verify check-runs, post decline replies, merge (when
+       write-enabled), close the issue, and move the card — **no application code edits**.
+     - If any bot finding still needs a **code fix**, spawn a fresh closer Task
+       (`best-of-n-runner`) — never edit code in the orchestrator.
    - `DIRTY` → order (or spawn) conflict resolution: merge master into the branch,
      rebuild, re-push, re-verify.
    - `CI_FAILED` / `CI_STUCK` → order a fix-and-repush or re-trigger.
    - `MERGED_ISSUE_OPEN` → close the issue with the merge-evidence comment (verify
      sub_issues first; an issue clamped open behind open children is NOT a stall).
-   - `LOCAL_STALL` → resume or replace the stalled Task; do not wait further on it.
 
 ## Communication standard (applies to every update, issue comment, and PR description)
 
@@ -101,28 +110,34 @@ map, private build command, merge method, cached board IDs).
 4. Post the resolved tree and planned order as a comment on each authorized top-level
    item, and print it in the session before dispatching.
 
-## Phase 2 — Dispatch one Task per work item
+## Phase 2 — Dispatch one item-coordinator Task per work item
 
-For each work item whose turn has arrived, launch **one dedicated Task** via the Task tool:
+For each work item whose turn has arrived, launch **one item-coordinator Task** (not one
+Task per column — the coordinator owns the end-to-end loop and spawns column workers
+itself per `.cursor/skills/feature-loop/SKILL.md`):
 
 | Parameter | Value |
 |-----------|--------|
-| `subagent_type` | `"best-of-n-runner"` (isolated git worktree) |
-| `model` | `"inherit"` unless the user named a listed model |
+| `subagent_type` | `"best-of-n-runner"` (isolated git worktree); **exactly one** runner per item |
+| `model` | `claude-sonnet-5-thinking-high` when `factory-loop.json` `subagents.default` is `"sonnet"`; otherwise a user-named listed model |
 | `run_in_background` | `true` for independent items |
-| Concurrency | Cap at 3 writing Tasks |
+| Concurrency | Cap at 3 item-coordinator Tasks |
 
-The orchestrator itself never edits code.
+The orchestrator itself never edits application code (comments, merges, card moves, and
+issue closes are allowed when write-enabled).
 
 The Task prompt must instruct it to **run the feature loop on exactly that one work
 item**, including verbatim:
 
 > Run the feature loop on work item #N in ClearMeasureLabs/bootcamp-palermo-workorders.
 > Follow this repo's `.cursor/skills/feature-loop/SKILL.md` and
-> `.claude/factory-loop.json` exactly: work in your own worktree from origin/master; one
-> board column at a time via a fresh Task perspective per column (design → implement →
-> verify), never skipping columns, recording no-op justifications for non-applicable
-> columns; merge origin/master into the branch and re-run the private build
+> `.claude/factory-loop.json` exactly. You are the **item coordinator**: drive #N
+> end-to-end, but for each board column spawn a dedicated column-worker Task
+> (`best-of-n-runner`, model `claude-sonnet-5-thinking-high` unless the user named
+> another listed model) that does only that column's work — never skip columns; record
+> no-op justifications for non-applicable columns; at most one delegation hop (column
+> workers must not re-delegate). Work from origin/master in your worktree; merge
+> origin/master into the branch and re-run the private build
 > (`pwsh -NoProfile ./PrivateBuild.ps1`) before any push or PR; run
 > `pwsh -NoProfile ./AcceptanceTests.ps1` before opening the PR; triage every bot review
 > finding (fix or explicitly decline with a PR reply) before merge; a PR is complete only
@@ -171,9 +186,9 @@ When a Task reports completion:
    each clamp is recorded as a comment on the ancestor naming the child that caused it.
 4. **Promote epics only by clamp release:** when the last open child of an epic reaches
    Done, advance the epic one column at a time — each column transition performed by its
-   own dedicated Task per the column rules (a no-op justification pass is still a
-   pass) — until it too is Done. An epic never advances in the same action that closed
-   its child.
+   own dedicated column-worker Task per the column rules (a no-op justification pass is
+   still a pass) — until it too is Done. An epic never advances in the same action that
+   closed its child.
 5. Dispatch the next queued item(s) whose prerequisites are now met.
 
 ## Phase 4 — Walk-away completion
@@ -194,14 +209,18 @@ Finish with a single summary: per item — final column, PR, merge SHA, children
 
 ## Hard rules (restated, non-negotiable)
 
-- One Task = one work item's current column step; no Task carries an item across multiple
-  columns, and the orchestrator itself never edits code.
-- Every writing Task: `best-of-n-runner` (own worktree) + `model: "inherit"` (or a
-  user-named listed model).
+- **Dispatch:** one **item-coordinator** Task per work item (end-to-end).
+- **Inside that item:** one **column-worker** Task per board column; column workers never
+  span columns or re-delegate.
+- The orchestrator never edits application code (merge / card / issue / comment closeout
+  only; code fixes require a closer Task).
+- Every writing Task: `best-of-n-runner` (own worktree) + Sonnet pin
+  (`claude-sonnet-5-thinking-high` when config says `sonnet`), unless the user named a
+  listed model.
 - A parent never outranks its least-advanced open child on the board.
 - CI is verified via the check-runs API only.
 - REST-first; cached board IDs from `factory-loop.json`; check `rate_limit` before each
   dispatch wave.
 - Claude Agent / `isolation: "worktree"` / `SendMessage` / `model: "sonnet"` wording from
-  the `.claude` skills is **not** used here — map to Task / `best-of-n-runner` / `resume` /
-  `inherit` as above.
+  the `.claude` skills maps to Task / `best-of-n-runner` / `resume` /
+  `claude-sonnet-5-thinking-high` as above — not to unconditional `inherit`.
