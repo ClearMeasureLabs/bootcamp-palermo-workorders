@@ -22,42 +22,35 @@ public static class WorkOrderBulkImportCsvParser
     internal static WorkOrderBulkImportParseResult Parse(TextReader reader, CancellationToken cancellationToken = default)
     {
         var lineNumber = 0;
-        string? headerLine = ReadLogicalLine(reader, ref lineNumber, cancellationToken);
+        string? headerLine = CsvLineReader.ReadLogicalLine(reader, ref lineNumber, cancellationToken);
         if (headerLine == null)
         {
             return WorkOrderBulkImportParseResult.Fail("CSV is empty.");
         }
 
-        var headerValues = SplitCsvLine(headerLine);
-        var columnIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        for (var i = 0; i < headerValues.Count; i++)
+        var columnIndex = CsvColumnIndex.FromHeader(headerLine);
+        var missingColumn = columnIndex.FindMissingRequiredColumn(RequiredHeaders);
+        if (missingColumn != null)
         {
-            var name = headerValues[i].Trim();
-            if (name.Length > 0 && !columnIndex.ContainsKey(name))
-            {
-                columnIndex[name] = i;
-            }
+            return WorkOrderBulkImportParseResult.Fail(
+                $"Missing required column \"{missingColumn}\". Expected header: Title, Description, CreatorUsername, RoomNumber (optional).");
         }
 
-        foreach (var required in RequiredHeaders)
-        {
-            if (!columnIndex.ContainsKey(required))
-            {
-                return WorkOrderBulkImportParseResult.Fail(
-                    $"Missing required column \"{required}\". Expected header: Title, Description, CreatorUsername, RoomNumber (optional).");
-            }
-        }
+        var rows = ParseDataRows(reader, columnIndex, ref lineNumber, cancellationToken);
+        return WorkOrderBulkImportParseResult.Ok(rows);
+    }
 
-        var titleIx = columnIndex["Title"];
-        var descIx = columnIndex["Description"];
-        var creatorIx = columnIndex["CreatorUsername"];
-        var roomIx = columnIndex.TryGetValue("RoomNumber", out var r) ? r : -1;
-
+    private static List<WorkOrderBulkImportRow> ParseDataRows(
+        TextReader reader,
+        CsvColumnIndex columnIndex,
+        ref int lineNumber,
+        CancellationToken cancellationToken)
+    {
         var rows = new List<WorkOrderBulkImportRow>();
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var line = ReadLogicalLine(reader, ref lineNumber, cancellationToken);
+            var line = CsvLineReader.ReadLogicalLine(reader, ref lineNumber, cancellationToken);
             if (line == null)
             {
                 break;
@@ -68,113 +61,10 @@ public static class WorkOrderBulkImportCsvParser
                 continue;
             }
 
-            var cells = SplitCsvLine(line);
-            string? Cell(int index) => index >= 0 && index < cells.Count ? NullIfWhitespace(cells[index]) : null;
-
-            rows.Add(new WorkOrderBulkImportRow(
-                lineNumber,
-                Cell(titleIx),
-                Cell(descIx),
-                Cell(creatorIx),
-                roomIx >= 0 ? Cell(roomIx) : null));
+            rows.Add(columnIndex.ParseRow(line, lineNumber));
         }
 
-        return WorkOrderBulkImportParseResult.Ok(rows);
-    }
-
-    private static string? ReadLogicalLine(TextReader reader, ref int lineNumber, CancellationToken cancellationToken)
-    {
-        var first = reader.ReadLine();
-        if (first == null)
-        {
-            return null;
-        }
-
-        lineNumber++;
-        var combined = new StringBuilder(first);
-        while (CountUnescapedQuotes(combined.ToString()) % 2 != 0)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var next = reader.ReadLine();
-            if (next == null)
-            {
-                break;
-            }
-
-            lineNumber++;
-            combined.Append('\n').Append(next);
-        }
-
-        return combined.ToString();
-    }
-
-    private static int CountUnescapedQuotes(string s)
-    {
-        var count = 0;
-        var i = 0;
-        while (i < s.Length)
-        {
-            if (s[i] == '"')
-            {
-                if (i + 1 < s.Length && s[i + 1] == '"')
-                {
-                    i += 2;
-                    continue;
-                }
-
-                count++;
-            }
-
-            i++;
-        }
-
-        return count;
-    }
-
-    private static List<string> SplitCsvLine(string line)
-    {
-        var result = new List<string>();
-        var current = new StringBuilder();
-        var i = 0;
-        while (i < line.Length)
-        {
-            if (line[i] == '"')
-            {
-                i++;
-                while (i < line.Length)
-                {
-                    if (line[i] == '"')
-                    {
-                        if (i + 1 < line.Length && line[i + 1] == '"')
-                        {
-                            current.Append('"');
-                            i += 2;
-                            continue;
-                        }
-
-                        i++;
-                        break;
-                    }
-
-                    current.Append(line[i]);
-                    i++;
-                }
-            }
-            else if (line[i] == ',')
-            {
-                result.Add(current.ToString());
-                current.Clear();
-                i++;
-            }
-            else
-            {
-                current.Append(line[i]);
-                i++;
-            }
-        }
-
-        result.Add(current.ToString());
-        return result;
+        return rows;
     }
 
     private static string? NullIfWhitespace(string? s)
@@ -186,5 +76,168 @@ public static class WorkOrderBulkImportCsvParser
 
         var t = s.Trim();
         return t.Length == 0 ? null : t;
+    }
+
+    private sealed class CsvColumnIndex
+    {
+        private readonly Dictionary<string, int> _columns;
+
+        private CsvColumnIndex(Dictionary<string, int> columns) => _columns = columns;
+
+        public static CsvColumnIndex FromHeader(string headerLine)
+        {
+            var headerValues = CsvLineReader.SplitCsvLine(headerLine);
+            var columnIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < headerValues.Count; i++)
+            {
+                var name = headerValues[i].Trim();
+                if (name.Length > 0 && !columnIndex.ContainsKey(name))
+                {
+                    columnIndex[name] = i;
+                }
+            }
+
+            return new CsvColumnIndex(columnIndex);
+        }
+
+        public string? FindMissingRequiredColumn(IEnumerable<string> requiredHeaders)
+        {
+            foreach (var required in requiredHeaders)
+            {
+                if (!_columns.ContainsKey(required))
+                {
+                    return required;
+                }
+            }
+
+            return null;
+        }
+
+        public WorkOrderBulkImportRow ParseRow(string line, int lineNumber)
+        {
+            var cells = CsvLineReader.SplitCsvLine(line);
+            string? Cell(int index) => index >= 0 && index < cells.Count ? NullIfWhitespace(cells[index]) : null;
+
+            var titleIx = _columns["Title"];
+            var descIx = _columns["Description"];
+            var creatorIx = _columns["CreatorUsername"];
+            var roomIx = _columns.TryGetValue("RoomNumber", out var r) ? r : -1;
+
+            return new WorkOrderBulkImportRow(
+                lineNumber,
+                Cell(titleIx),
+                Cell(descIx),
+                Cell(creatorIx),
+                roomIx >= 0 ? Cell(roomIx) : null);
+        }
+    }
+
+    private static class CsvLineReader
+    {
+        internal static string? ReadLogicalLine(TextReader reader, ref int lineNumber, CancellationToken cancellationToken)
+        {
+            var first = reader.ReadLine();
+            if (first == null)
+            {
+                return null;
+            }
+
+            lineNumber++;
+            var combined = new StringBuilder(first);
+            while (HasUnclosedQuotes(combined.ToString()))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var next = reader.ReadLine();
+                if (next == null)
+                {
+                    break;
+                }
+
+                lineNumber++;
+                combined.Append('\n').Append(next);
+            }
+
+            return combined.ToString();
+        }
+
+        private static bool HasUnclosedQuotes(string line) => CountUnescapedQuotes(line) % 2 != 0;
+
+        internal static int CountUnescapedQuotes(string s)
+        {
+            var count = 0;
+            var i = 0;
+            while (i < s.Length)
+            {
+                if (s[i] == '"')
+                {
+                    if (IsEscapedQuote(s, i))
+                    {
+                        i += 2;
+                        continue;
+                    }
+
+                    count++;
+                }
+
+                i++;
+            }
+
+            return count;
+        }
+
+        internal static List<string> SplitCsvLine(string line)
+        {
+            var result = new List<string>();
+            var current = new StringBuilder();
+            var i = 0;
+            while (i < line.Length)
+            {
+                if (line[i] == '"')
+                {
+                    i = AppendQuotedField(line, i + 1, current);
+                }
+                else if (line[i] == ',')
+                {
+                    result.Add(current.ToString());
+                    current.Clear();
+                    i++;
+                }
+                else
+                {
+                    current.Append(line[i]);
+                    i++;
+                }
+            }
+
+            result.Add(current.ToString());
+            return result;
+        }
+
+        private static int AppendQuotedField(string line, int startIndex, StringBuilder current)
+        {
+            var i = startIndex;
+            while (i < line.Length)
+            {
+                if (line[i] == '"')
+                {
+                    if (IsEscapedQuote(line, i))
+                    {
+                        current.Append('"');
+                        i += 2;
+                        continue;
+                    }
+
+                    return i + 1;
+                }
+
+                current.Append(line[i]);
+                i++;
+            }
+
+            return i;
+        }
+
+        private static bool IsEscapedQuote(string s, int index) =>
+            s[index] == '"' && index + 1 < s.Length && s[index + 1] == '"';
     }
 }

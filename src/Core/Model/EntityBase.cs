@@ -16,7 +16,7 @@ public abstract class EntityBase<T> : IEquatable<T> where T : EntityBase<T>, new
             return true;
         }
 
-        return Id.Equals(other.Id) && !Id.Equals(Guid.Empty);
+        return HasSameNonEmptyId(Id, other.Id);
     }
 
     public override bool Equals(object? obj)
@@ -58,4 +58,7 @@ public abstract class EntityBase<T> : IEquatable<T> where T : EntityBase<T>, new
     {
         return !Equals(left, right);
     }
+
+    private static bool HasSameNonEmptyId(Guid left, Guid right) =>
+        left.Equals(right) && !left.Equals(Guid.Empty);
 }
