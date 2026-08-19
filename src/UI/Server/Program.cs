@@ -128,6 +128,9 @@ builder.Host.UseNServiceBus(_ => endpointConfiguration);
 // Build application
 var app = builder.Build();
 
+FeatureFlagRegistry.HydrateFrom(
+    app.Services.GetRequiredService<IOptions<DiagnosticsFeatureFlagsOptions>>().Value);
+
 app.UseSerilogShutdown();
 app.MapDefaultEndpoints();
 
