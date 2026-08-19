@@ -22,6 +22,10 @@ The per-item rules are defined by this repo's `/feature-loop` skill
 (`.claude/skills/feature-loop/SKILL.md`) and `.claude/factory-loop.json`. Those two files
 are the contract; a user's own global rules may add to but never weaken them.
 
+**Cursor:** use `.cursor/skills/feature-loop-dispatch/SKILL.md` (Task / `resume` /
+stall heartbeat via AwaitShell) instead of this Claude Agent-oriented file when running
+in Cursor.
+
 ## Phase 0 — Start the stall watchdog (before any dispatch)
 
 Sub-sessions stall silently: they spawn a background CI poller and end their turn, and the

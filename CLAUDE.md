@@ -153,9 +153,14 @@ Format: `{username}/{branch-description}`. AI agents use the username of the acc
 
 Work items live on the ClearMeasureLabs project board: https://github.com/orgs/ClearMeasureLabs/projects/1
 
-- `/feature-loop N` — drive ONE work item across the board end-to-end (design → implement → verify, one column at a time, CI-verified merge). Rules: `.claude/skills/feature-loop/SKILL.md`
-- `/feature-loop-dispatch N1 N2 ...` — orchestrate a batch: children-first tree resolution, one sub-session per item, epic clamp, stall watchdog. Rules: `.claude/skills/feature-loop-dispatch/SKILL.md`
-- Board/build configuration (columns, cached board IDs, gates): `.claude/factory-loop.json`
+- `/feature-loop N` — drive ONE work item across the board end-to-end (design → implement → verify, one column at a time, CI-verified merge).
+  - **Cursor:** `.cursor/skills/feature-loop/SKILL.md` (slash command: `.cursor/commands/feature-loop.md`)
+  - **Claude Code:** `.claude/skills/feature-loop/SKILL.md`
+- `/feature-loop-dispatch N1 N2 ...` — orchestrate a batch: children-first tree resolution, one sub-session per item, epic clamp, stall watchdog.
+  - **Cursor:** `.cursor/skills/feature-loop-dispatch/SKILL.md` (slash command: `.cursor/commands/feature-loop-dispatch.md`); uses Task `best-of-n-runner`, `model: inherit` (Auto, cost-optimized), `resume`
+  - **Claude Code:** `.claude/skills/feature-loop-dispatch/SKILL.md`
+- Board/build configuration (columns, cached board IDs, gates): `.claude/factory-loop.json` (shared)
+- Stall watchdog script (shared): `.claude/skills/feature-loop-dispatch/Check-StalledLanes.ps1`
 
 ## Further Reference
 
