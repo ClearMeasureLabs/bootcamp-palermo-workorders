@@ -1,0 +1,38 @@
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 9999px;
+}
+
+.category-badge.facilities {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.category-badge.audiovisual {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+}
+
+.category-badge.grounds {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.category-badge.hvac {
+    background-color: #ffedd5;
+    color: #c2410c;
+}
+
+.category-badge.other {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.category-badge i {
+    font-size: 1rem;
+}

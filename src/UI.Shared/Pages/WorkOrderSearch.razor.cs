@@ -13,6 +13,12 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
+    [SupplyParameterFromQuery] public string? Priority { get; set; }
+    [SupplyParameterFromQuery] public string? Category { get; set; }
+    [SupplyParameterFromQuery] public string? IsRecurring { get; set; }
+
+    public List<SelectListItem> PriorityOptions { get; set; } = new();
+
 
     protected override async Task OnParametersSetAsync()
     {
@@ -26,6 +32,9 @@ public partial class WorkOrderSearch : AppComponentBase
         var employees = await Bus.Send(new EmployeeGetAllQuery());
         UserOptions = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
         StatusOptions = WorkOrderStatus.GetAllItems().Select(s => new SelectListItem(s.Key, s.FriendlyName)).ToList();
+        PriorityOptions = Enum.GetValues<WorkOrderPriority>()
+            .Select(p => new SelectListItem(p.ToString(), p.ToString()))
+            .ToList();
         Model = new WorkOrderSearchModel();
 
         // Apply any query parameters
@@ -42,6 +51,21 @@ public partial class WorkOrderSearch : AppComponentBase
         if (!string.IsNullOrEmpty(Status))
         {
             Model.Filters.Status = Status;
+        }
+
+        if (!string.IsNullOrEmpty(Priority))
+        {
+            Model.Filters.Priority = Priority;
+        }
+
+        if (!string.IsNullOrEmpty(Category))
+        {
+            Model.Filters.Category = Category;
+        }
+
+        if (!string.IsNullOrEmpty(IsRecurring))
+        {
+            Model.Filters.IsRecurring = IsRecurring;
         }
 
         // Perform initial search
@@ -62,12 +86,37 @@ public partial class WorkOrderSearch : AppComponentBase
             ? WorkOrderStatus.FromKey(Model.Filters.Status)
             : null;
 
+        WorkOrderPriority? priority = null;
+        if (!string.IsNullOrWhiteSpace(Model.Filters.Priority) && 
+            Enum.TryParse<WorkOrderPriority>(Model.Filters.Priority, out var parsedPriority))
+        {
+            priority = parsedPriority;
+        }
+
+        WorkOrderCategory? category = null;
+        if (!string.IsNullOrWhiteSpace(Model.Filters.Category) &&
+            Enum.TryParse<WorkOrderCategory>(Model.Filters.Category, out var parsedCategory))
+        {
+            category = parsedCategory;
+        }
+
+        bool? isRecurring = null;
+        if (!string.IsNullOrWhiteSpace(Model.Filters.IsRecurring) &&
+            bool.TryParse(Model.Filters.IsRecurring, out var parsedIsRecurring))
+        {
+            isRecurring = parsedIsRecurring;
+        }
+
         var specification = new WorkOrderSpecificationQuery();
         specification.MatchCreator(creator);
         specification.MatchAssignee(assignee);
         specification.MatchStatus(status);
+        specification.MatchPriority(priority);
+        specification.MatchCategory(category);
+        specification.MatchRecurring(isRecurring);
 
-        Model.Results = await Bus.Send(specification);
+        var results = await Bus.Send(specification);
+        Model.Results = results.OrderBy(w => w.Priority).ThenByDescending(w => w.CreatedDate).ToArray();
         StateHasChanged();
     }
 
