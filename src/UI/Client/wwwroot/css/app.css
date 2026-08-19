@@ -253,10 +253,17 @@ a:hover, .btn-link:hover {
     padding: 1rem;
 }
 
+/* Root typography (one notch smaller) + smooth scrolling.
+   Desktop root must come BEFORE the mobile media query so ≤768px can override. */
+html {
+    font-size: 15px;
+    scroll-behavior: smooth;
+}
+
 /* Responsive Typography */
 @media (max-width: 768px) {
     html, body {
-        font-size: 14px;
+        font-size: 13px;
     }
     
     .loading-progress {
@@ -267,11 +274,6 @@ a:hover, .btn-link:hover {
     .loading-progress-text {
         font-size: 1rem;
     }
-}
-
-/* Smooth scrolling */
-html {
-    scroll-behavior: smooth;
 }
 
 /* Focus visible for better accessibility */
