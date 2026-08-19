@@ -74,20 +74,28 @@ dotnet tool install -g dotnet-reportgenerator-globaltool
 ### Step 2 — Collect coverage (Cobertura)
 
 This repo uses `coverlet.collector` on UnitTests, IntegrationTests, and AcceptanceTests.
-Run the solution test pass with XPlat coverage:
+The script delegates to **`build.ps1`** — the same pipeline as `AcceptanceTests.ps1`
+(Init → Compile → UnitTests → Setup-DatabaseForBuild → IntegrationTest → AcceptanceTests).
+Coverage Cobertura files land under `build/test/{UnitTests,IntegrationTests,AcceptanceTests}/`.
+
+Do not invoke bare `dotnet test` on the `.sln` or on AcceptanceTests in isolation; that skips
+database setup and server lifecycle and produces false failures.
+
+**All tests must pass.** The audit script fails if `dotnet test` exits non-zero. Acceptance
+failures usually indicate stale server/worker processes or a dirty worktree — not bad CRAP
+data to paper over.
+
+Recommended preflight on a clean checkout:
 
 ```powershell
-dotnet test src/ChurchBulletin.sln --configuration Release `
-  --collect:"XPlat Code Coverage" `
-  --results-directory crap-metrics/TestResults
+git worktree add ../clean-audit origin/master
+cd ../clean-audit
+.\AcceptanceTests.ps1   # must report Passed with 0 Failed
+pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1
 ```
 
-**Partial failures are OK.** Coverage is collected from tests that executed. If acceptance
-tests fail (Playwright, NServiceBus tracer bullet), continue with the Cobertura XML files
-produced — do not estimate coverage.
-
-If `--run-tests` on `dotnet-crap` exits with `TEST_FAILURE`, skip that flag and pass
-coverage files explicitly (the script does this automatically).
+Do not use `dotnet-crap --run-tests` directly — it aborts on any test failure. The script
+collects coverage via `dotnet test` and passes Cobertura paths to `dotnet-crap analyze`.
 
 Fallback when in-proc collector fails:
 
