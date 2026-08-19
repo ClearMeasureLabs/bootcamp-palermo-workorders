@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
+using ClearMeasure.Bootcamp.UnitTests.UI.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
@@ -95,6 +96,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton(AuthHttpClientTestSupport.CreateClient());
 
         var component = ctx.RenderComponent<Login>();
 
