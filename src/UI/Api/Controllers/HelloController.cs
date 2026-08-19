@@ -17,7 +17,14 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 public class HelloController : ControllerBase
 {
     /// <summary>
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    /// Returns a JSON greeting for reachability checks.
+=======
+>>>>>>> origin/cursor/8608-development
     /// Returns a greeting JSON payload for reachability checks.
+>>>>>>> 35cf1886 (Fix merge conflict markers in HelloController [AB#8608] (#8608))
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
