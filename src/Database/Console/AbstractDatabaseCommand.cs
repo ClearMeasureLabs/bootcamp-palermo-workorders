@@ -39,7 +39,10 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
     protected static string GetConnectionString(DatabaseOptions options)
     {
-        // Determine if this is a local server (localhost, 127.0.0.1, or LocalDB)
+        // Determine if this is a local server (localhost, 127.0.0.1, or LocalDB), or an
+        // external/shared test SQL Server provisioned for this build (SQL_EXTERNAL=true,
+        // e.g. a k8s sidecar/shared container with a self-signed certificate). Neither
+        // case is real production Azure SQL, so the self-signed certificate is trusted.
         var serverName = (options.DatabaseServer ?? string.Empty).Trim();
         var isLocalServer = serverName.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
@@ -47,7 +50,8 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
                            serverName.Contains("LocalDb", StringComparison.OrdinalIgnoreCase) ||
                            serverName.Contains("(LocalDb)", StringComparison.OrdinalIgnoreCase) ||
                            serverName.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
-                           serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
+                           serverName.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) ||
+                           Environment.GetEnvironmentVariable("SQL_EXTERNAL") == "true";
 
 
 

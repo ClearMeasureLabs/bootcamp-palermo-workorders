@@ -221,6 +221,21 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderParallelSpeedTag_WithinSiteFooter()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var tag = layout.Find($"[data-testid='{nameof(MainLayout.Elements.ParallelSpeedTag)}']");
+        tag.TextContent.Trim().ShouldBe("PAR-A");
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        footer.QuerySelector($"[data-testid='{nameof(MainLayout.Elements.ParallelSpeedTag)}']").ShouldNotBeNull();
+    }
+
+    [Test]
     public void ShouldRenderCompanyLink_WithAccessibleAttributes_WhenExternalLinkUsesNewTab()
     {
         using var ctx = CreateContext();
