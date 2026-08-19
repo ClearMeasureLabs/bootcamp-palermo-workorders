@@ -4,15 +4,14 @@ using Microsoft.Extensions.Hosting;
 namespace ClearMeasure.Bootcamp.UI.Api;
 
 /// <summary>
-/// Assembles the runtime environment snapshot with mandatory value redaction.
+/// Builds <see cref="EnvironmentStatusResponse"/> snapshots with mandatory value redaction.
 /// </summary>
 public static class EnvironmentStatusBuilder
 {
-    /// <summary>Placeholder emitted for any set monitored environment variable value.</summary>
+    /// <summary>Token substituted for any set environment variable value.</summary>
     public const string RedactedValue = "<redacted>";
 
-    /// <summary>Default operator-relevant environment variable names aligned with deployment runbooks.</summary>
-    public static readonly string[] DefaultMonitoredVariables =
+    private static readonly string[] DefaultMonitoredVariableNames =
     [
         "ASPNETCORE_ENVIRONMENT",
         "DATABASE_ENGINE",
@@ -25,20 +24,14 @@ public static class EnvironmentStatusBuilder
     ];
 
     /// <summary>
-    /// Builds a redacted environment status snapshot from BCL APIs and the process environment.
+    /// Builds a runtime environment snapshot using BCL APIs and curated, redacted environment variables.
     /// </summary>
-    public static EnvironmentStatusResponse Build(IHostEnvironment hostEnvironment, EnvironmentStatusOptions? options = null)
+    public static EnvironmentStatusResponse Build(
+        IHostEnvironment hostEnvironment,
+        EnvironmentStatusOptions? options = null)
     {
-        var monitored = ResolveMonitoredVariables(options);
-        var environmentVariables = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var name in monitored)
-        {
-            if (Environment.GetEnvironmentVariable(name) is not null)
-            {
-                environmentVariables[name] = RedactedValue;
-            }
-        }
-
+        var monitoredNames = CollectMonitoredVariableNames(options);
+        var environmentVariables = BuildRedactedEnvironmentVariables(monitoredNames);
         return new EnvironmentStatusResponse(
             OsDescription: RuntimeInformation.OSDescription,
             ProcessorCount: Environment.ProcessorCount,
@@ -47,14 +40,36 @@ public static class EnvironmentStatusBuilder
             EnvironmentVariables: environmentVariables);
     }
 
-    internal static IReadOnlyList<string> ResolveMonitoredVariables(EnvironmentStatusOptions? options)
+    internal static IReadOnlyList<string> CollectMonitoredVariableNames(EnvironmentStatusOptions? options)
     {
-        var configured = options?.MonitoredVariables;
-        if (configured is { Count: > 0 })
+        var names = new HashSet<string>(DefaultMonitoredVariableNames, StringComparer.Ordinal);
+        if (options?.MonitoredVariables is { Count: > 0 } extras)
         {
-            return configured;
+            foreach (var name in extras)
+            {
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    names.Add(name.Trim());
+                }
+            }
         }
 
-        return DefaultMonitoredVariables;
+        return names.OrderBy(n => n, StringComparer.Ordinal).ToArray();
+    }
+
+    internal static IReadOnlyDictionary<string, string> BuildRedactedEnvironmentVariables(
+        IEnumerable<string> monitoredNames)
+    {
+        var result = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        foreach (var name in monitoredNames)
+        {
+            var value = Environment.GetEnvironmentVariable(name);
+            if (value is not null)
+            {
+                result[name] = RedactedValue;
+            }
+        }
+
+        return result;
     }
 }

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
-/// Exposes runtime environment diagnostics for operators and integrations.
+/// Exposes host and runtime environment diagnostics for operators and support tooling.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]

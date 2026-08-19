@@ -13,10 +13,18 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 [TestFixture]
 public class EnvironmentStatusControllerTests
 {
+    private sealed class StubHostEnvironment(string environmentName) : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = environmentName;
+        public string ApplicationName { get; set; } = "";
+        public string ContentRootPath { get; set; } = "";
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+    }
+
     [Test]
     public void Get_Should_ReturnOk_WithExpectedJsonShape()
     {
-        var controller = CreateController(new StubHostEnvironment("TestEnvironment"));
+        var controller = CreateController("UnitTestEnv");
 
         var result = controller.Get();
 
@@ -27,80 +35,73 @@ public class EnvironmentStatusControllerTests
             content.Content!,
             ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
-        payload!.OsDescription.ShouldNotBeNullOrEmpty();
+        payload!.OsDescription.ShouldNotBeNullOrWhiteSpace();
         payload.ProcessorCount.ShouldBe(Environment.ProcessorCount);
-        payload.ClrVersion.ShouldNotBeNullOrEmpty();
-        payload.HostEnvironmentName.ShouldBe("TestEnvironment");
+        payload.ClrVersion.ShouldNotBeNullOrWhiteSpace();
+        payload.HostEnvironmentName.ShouldBe("UnitTestEnv");
         payload.EnvironmentVariables.ShouldNotBeNull();
     }
 
     [Test]
     public void Get_Should_RedactEnvironmentVariableValues_When_VariablesAreSet()
     {
-        const string rawAspNetCoreEnvironment = "SecretAspNetCoreValue";
-        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", rawAspNetCoreEnvironment);
-        Environment.SetEnvironmentVariable("DATABASE_ENGINE", "SQL-Container");
+        const string varName = "8457_CTRL_REDACT";
+        const string secret = "controller-secret-8457";
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "RedactTest8457");
+        Environment.SetEnvironmentVariable(varName, secret);
         try
         {
-            var controller = CreateController(new StubHostEnvironment("TestEnvironment"));
+            var options = new EnvironmentStatusOptions { MonitoredVariables = [varName] };
+            var controller = CreateController("RedactTest8457", options);
 
             var result = controller.Get();
             var content = result.ShouldBeOfType<ContentResult>();
-            content.Content!.ShouldNotContain(rawAspNetCoreEnvironment);
-            content.Content.ShouldNotContain("SQL-Container");
+            content.Content!.ShouldNotContain(secret);
+            content.Content.ShouldNotContain("RedactTest8457");
             content.Content.ShouldContain(EnvironmentStatusBuilder.RedactedValue);
 
             var payload = JsonSerializer.Deserialize<EnvironmentStatusResponse>(
                 content.Content,
                 ConditionalGetEtag.JsonSerializerOptions);
             payload.ShouldNotBeNull();
-            payload!.EnvironmentVariables.ContainsKey("ASPNETCORE_ENVIRONMENT").ShouldBeTrue();
+            payload!.EnvironmentVariables.ShouldContainKey("ASPNETCORE_ENVIRONMENT");
+            payload.EnvironmentVariables.ShouldContainKey(varName);
             payload.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
-            payload.EnvironmentVariables.ContainsKey("DATABASE_ENGINE").ShouldBeTrue();
-            payload.EnvironmentVariables["DATABASE_ENGINE"].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
+            payload.EnvironmentVariables[varName].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
         }
         finally
         {
+            Environment.SetEnvironmentVariable(varName, null);
             Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", null);
-            Environment.SetEnvironmentVariable("DATABASE_ENGINE", null);
         }
     }
 
     [Test]
     public void Get_Should_OmitUnsetEnvironmentVariables_When_NotPresent()
     {
-        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", null);
-        try
-        {
-            var controller = CreateController(new StubHostEnvironment("TestEnvironment"));
+        const string unsetName = "8457_CTRL_UNSET";
+        Environment.SetEnvironmentVariable(unsetName, null);
+        var options = new EnvironmentStatusOptions { MonitoredVariables = [unsetName] };
+        var controller = CreateController("OmitTest8457", options);
 
-            var result = controller.Get();
-            var content = result.ShouldBeOfType<ContentResult>();
-
-            content.Content!.ShouldNotContain("otelExporterOtlpEndpoint");
-            var payload = JsonSerializer.Deserialize<EnvironmentStatusResponse>(
-                content.Content,
-                ConditionalGetEtag.JsonSerializerOptions);
-            payload.ShouldNotBeNull();
-            payload!.EnvironmentVariables.ContainsKey("OTEL_EXPORTER_OTLP_ENDPOINT").ShouldBeFalse();
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", null);
-        }
+        var result = controller.Get();
+        var content = result.ShouldBeOfType<ContentResult>();
+        var payload = JsonSerializer.Deserialize<EnvironmentStatusResponse>(
+            content.Content!,
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        payload!.EnvironmentVariables.ShouldNotContainKey(unsetName);
     }
 
-    private static EnvironmentStatusController CreateController(IHostEnvironment hostEnvironment) =>
-        new(hostEnvironment, Options.Create(new EnvironmentStatusOptions()))
+    private static EnvironmentStatusController CreateController(
+        string environmentName,
+        EnvironmentStatusOptions? options = null)
+    {
+        return new EnvironmentStatusController(
+            new StubHostEnvironment(environmentName),
+            Options.Create(options ?? new EnvironmentStatusOptions()))
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
-
-    private sealed class StubHostEnvironment(string environmentName) : IHostEnvironment
-    {
-        public string EnvironmentName { get; set; } = environmentName;
-        public string ApplicationName { get; set; } = "";
-        public string ContentRootPath { get; set; } = "";
-        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }

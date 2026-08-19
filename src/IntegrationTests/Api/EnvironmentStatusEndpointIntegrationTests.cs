@@ -1,8 +1,8 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
+using Microsoft.Extensions.Configuration;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -106,13 +106,17 @@ public class EnvironmentStatusEndpointIntegrationTests
     }
 
     [Test]
-    public async Task Should_RedactConfiguredEnvironmentVariables_When_SeededInProcess()
+    public async Task Should_RedactSeededEnvironmentVariables_When_SetInProcess()
     {
-        const string secret = "integration-test-secret-value";
-        Environment.SetEnvironmentVariable("DATABASE_ENGINE", secret);
+        const string varName = "8457_INT_REDACT";
+        const string secret = "integration-secret-8457";
+        Environment.SetEnvironmentVariable(varName, secret);
         try
         {
-            var response = await _client!.GetAsync("/api/status/environment");
+            await using var factory = new EnvironmentStatusWebApplicationFactory();
+            using var client = factory.CreateClient();
+
+            var response = await client.GetAsync("/api/status/environment");
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             var body = await response.Content.ReadAsStringAsync();
             body.ShouldNotContain(secret);
@@ -121,12 +125,27 @@ public class EnvironmentStatusEndpointIntegrationTests
             var payload = await response.Content.ReadFromJsonAsync<EnvironmentStatusResponse>(
                 ConditionalGetEtag.JsonSerializerOptions);
             payload.ShouldNotBeNull();
-            payload!.EnvironmentVariables.ContainsKey("DATABASE_ENGINE").ShouldBeTrue();
-            payload.EnvironmentVariables["DATABASE_ENGINE"].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
+            payload!.EnvironmentVariables.ShouldContainKey(varName);
+            payload.EnvironmentVariables[varName].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
         }
         finally
         {
-            Environment.SetEnvironmentVariable("DATABASE_ENGINE", null);
+            Environment.SetEnvironmentVariable(varName, null);
+        }
+    }
+
+    private sealed class EnvironmentStatusWebApplicationFactory : DiagnosticsWebApplicationFactory
+    {
+        protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+        {
+            base.ConfigureWebHost(builder);
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["EnvironmentStatus:MonitoredVariables:0"] = "8457_INT_REDACT"
+                });
+            });
         }
     }
 }

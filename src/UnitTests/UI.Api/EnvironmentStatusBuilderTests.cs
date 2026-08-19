@@ -7,84 +7,84 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 public class EnvironmentStatusBuilderTests
 {
     [Test]
-    public void Build_Should_RedactValues_When_MonitoredVariablesAreSet()
+    public void BuildRedactedEnvironmentVariables_Should_OmitUnsetNames_When_NotPresent()
     {
-        const string secretValue = "super-secret-connection-string";
-        Environment.SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", secretValue);
-        Environment.SetEnvironmentVariable("AI_OpenAI_ApiKey", "sk-live-key");
+        var monitored = new[] { "8457_UNSET_A", "8457_UNSET_B" };
+
+        var result = EnvironmentStatusBuilder.BuildRedactedEnvironmentVariables(monitored);
+
+        result.Count.ShouldBe(0);
+    }
+
+    [Test]
+    public void BuildRedactedEnvironmentVariables_Should_RedactValues_When_VariablesAreSet()
+    {
+        const string varName = "8457_TEST_REDACT";
+        const string secret = "super-secret-value-8457";
+        Environment.SetEnvironmentVariable(varName, secret);
         try
         {
-            var payload = EnvironmentStatusBuilder.Build(new StubHostEnvironment("Testing"));
+            var result = EnvironmentStatusBuilder.BuildRedactedEnvironmentVariables([varName]);
 
-            payload.EnvironmentVariables.ContainsKey("ConnectionStrings__SqlConnectionString").ShouldBeTrue();
-            payload.EnvironmentVariables["ConnectionStrings__SqlConnectionString"].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
-            payload.EnvironmentVariables.ContainsKey("AI_OpenAI_ApiKey").ShouldBeTrue();
-            payload.EnvironmentVariables["AI_OpenAI_ApiKey"].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
-            payload.EnvironmentVariables.Values.ShouldNotContain(secretValue);
-            payload.EnvironmentVariables.Values.ShouldNotContain("sk-live-key");
+            result.Count.ShouldBe(1);
+            result.ShouldContainKey(varName);
+            result[varName].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
+            result[varName].ShouldNotBe(secret);
         }
         finally
         {
-            Environment.SetEnvironmentVariable("ConnectionStrings__SqlConnectionString", null);
-            Environment.SetEnvironmentVariable("AI_OpenAI_ApiKey", null);
+            Environment.SetEnvironmentVariable(varName, null);
         }
     }
 
     [Test]
-    public void Build_Should_OmitUnsetVariables_When_NotPresentInProcessEnvironment()
+    public void BuildRedactedEnvironmentVariables_Should_NeverEmitRawValues_When_MultipleVariablesSet()
     {
-        Environment.SetEnvironmentVariable("DATABASE_ENGINE", null);
+        const string varA = "8457_TEST_RAW_A";
+        const string varB = "8457_TEST_RAW_B";
+        const string valueA = "raw-value-a-8457";
+        const string valueB = "raw-value-b-8457";
+        Environment.SetEnvironmentVariable(varA, valueA);
+        Environment.SetEnvironmentVariable(varB, valueB);
         try
         {
-            var payload = EnvironmentStatusBuilder.Build(new StubHostEnvironment("Testing"));
+            var result = EnvironmentStatusBuilder.BuildRedactedEnvironmentVariables([varA, varB]);
+            var serialized = string.Join('|', result.Select(kv => $"{kv.Key}={kv.Value}"));
 
-            payload.EnvironmentVariables.ContainsKey("DATABASE_ENGINE").ShouldBeFalse();
+            serialized.ShouldNotContain(valueA);
+            serialized.ShouldNotContain(valueB);
+            result[varA].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
+            result[varB].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
         }
         finally
         {
-            Environment.SetEnvironmentVariable("DATABASE_ENGINE", null);
+            Environment.SetEnvironmentVariable(varA, null);
+            Environment.SetEnvironmentVariable(varB, null);
         }
     }
 
     [Test]
-    public void Build_Should_UseConfiguredMonitoredVariables_When_OptionsProvided()
+    public void CollectMonitoredVariableNames_Should_IncludeDefaults_When_OptionsNull()
     {
-        const string customName = "ENV_STATUS_BUILDER_TEST_VAR";
-        Environment.SetEnvironmentVariable(customName, "visible-if-not-redacted");
-        try
-        {
-            var options = new EnvironmentStatusOptions
-            {
-                MonitoredVariables = [customName]
-            };
-            var payload = EnvironmentStatusBuilder.Build(new StubHostEnvironment("Testing"), options);
+        var names = EnvironmentStatusBuilder.CollectMonitoredVariableNames(null);
 
-            payload.EnvironmentVariables.Keys.ShouldBe([customName]);
-            payload.EnvironmentVariables[customName].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable(customName, null);
-        }
+        names.ShouldContain("ASPNETCORE_ENVIRONMENT");
+        names.ShouldContain("DATABASE_ENGINE");
+        names.ShouldContain("ConnectionStrings__SqlConnectionString");
+        names.ShouldContain("AI_OpenAI_ApiKey");
     }
 
     [Test]
-    public void Build_Should_PopulateRuntimeFields_FromBcl()
+    public void CollectMonitoredVariableNames_Should_MergeConfiguredExtras_When_OptionsProvided()
     {
-        var payload = EnvironmentStatusBuilder.Build(new StubHostEnvironment("Staging"));
+        var options = new EnvironmentStatusOptions
+        {
+            MonitoredVariables = ["CUSTOM_VAR_8457", "ASPNETCORE_ENVIRONMENT"]
+        };
 
-        payload.OsDescription.ShouldBe(System.Runtime.InteropServices.RuntimeInformation.OSDescription);
-        payload.ProcessorCount.ShouldBe(Environment.ProcessorCount);
-        payload.ClrVersion.ShouldBe(Environment.Version.ToString());
-        payload.HostEnvironmentName.ShouldBe("Staging");
-    }
+        var names = EnvironmentStatusBuilder.CollectMonitoredVariableNames(options);
 
-    private sealed class StubHostEnvironment(string environmentName) : Microsoft.Extensions.Hosting.IHostEnvironment
-    {
-        public string EnvironmentName { get; set; } = environmentName;
-        public string ApplicationName { get; set; } = "";
-        public string ContentRootPath { get; set; } = "";
-        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } =
-            new Microsoft.Extensions.FileProviders.NullFileProvider();
+        names.ShouldContain("CUSTOM_VAR_8457");
+        names.Count(n => n == "ASPNETCORE_ENVIRONMENT").ShouldBe(1);
     }
 }
