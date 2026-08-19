@@ -50,20 +50,25 @@ public class EnvironmentStatusControllerTests
         Environment.SetEnvironmentVariable(varName, secret);
         try
         {
+            Environment.GetEnvironmentVariable(varName).ShouldBe(secret);
             var options = new EnvironmentStatusOptions { MonitoredVariables = [varName] };
+            EnvironmentStatusBuilder.Build(new StubHostEnvironment("UnitTestHostEnv"), options)
+                .EnvironmentVariables.ShouldContainKey(varName);
             var controller = CreateController("UnitTestHostEnv", options);
+            var expectedPayload = EnvironmentStatusBuilder.Build(new StubHostEnvironment("UnitTestHostEnv"), options);
 
             var result = controller.Get();
             var content = result.ShouldBeOfType<ContentResult>();
             content.Content!.ShouldNotContain(secret);
-            content.Content!.ShouldContain(EnvironmentStatusBuilder.RedactedValue);
 
             var payload = JsonSerializer.Deserialize<EnvironmentStatusResponse>(
                 content.Content!,
                 ConditionalGetEtag.JsonSerializerOptions);
             payload.ShouldNotBeNull();
-            payload!.EnvironmentVariables.ShouldContainKey(varName);
+            payload!.EnvironmentVariables.Count.ShouldBe(expectedPayload.EnvironmentVariables.Count);
+            payload.EnvironmentVariables.ShouldContainKey(varName);
             payload.EnvironmentVariables[varName].ShouldBe(EnvironmentStatusBuilder.RedactedValue);
+            payload.EnvironmentVariables.Values.ShouldNotContain(secret);
         }
         finally
         {
