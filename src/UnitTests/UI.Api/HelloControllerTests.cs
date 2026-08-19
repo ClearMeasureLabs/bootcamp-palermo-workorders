@@ -11,11 +11,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 public class HelloControllerTests
 {
     [Test]
-<<<<<<< HEAD
     public void Get_Should_Return200WithJsonMessage()
-=======
-    public void Get_Should_Return200AndHelloWorldJson()
->>>>>>> origin/cursor/8608-development
     {
         var controller = new HelloController
         {
