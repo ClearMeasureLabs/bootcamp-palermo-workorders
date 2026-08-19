@@ -406,4 +406,30 @@ public class DetailedHealthEndpointIntegrationTests
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
         }
     }
+
+    [Test]
+    public async Task Should_Return200AndJson_When_GetVersionedDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/health/detailed");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("application/json");
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("overallStatus", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("components", out var components).ShouldBeTrue();
+        components.ValueKind.ShouldBe(JsonValueKind.Array);
+        components.GetArrayLength().ShouldBeGreaterThan(0);
+    }
+
+    [Test]
+    public async Task Should_IncludeEtagHeader_When_GetDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.ETag.ShouldNotBeNull();
+    }
 }
