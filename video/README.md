@@ -6,14 +6,33 @@ touch the .NET solution, NuGet packages, `global.json`, or `.octopus/`.
 ## Layout
 
 - `capture/` — Playwright (TypeScript) scripts that drive the **real, running**
-  Work Order app and record `.webm` footage into `footage/` (gitignored — regenerate
-  with `npm run capture`). Helpers in `capture/helpers.ts` mirror the data-testid
-  based Click/Input/Select conventions from `src/AcceptanceTests/AcceptanceTestBase.cs`.
+  Work Order app and record `.webm` footage into `public/footage/` (gitignored —
+  regenerate with `npm run capture`). Helpers in `capture/helpers.ts` mirror the
+  data-testid based Click/Input/Select conventions from
+  `src/AcceptanceTests/AcceptanceTestBase.cs`.
+- `public/audio/` — narration voiceover (`.mp3`, committed) generated locally via
+  Microsoft Edge's online TTS service (`msedge-tts` devDependency, no API key) by
+  `scripts/generate-narration.cjs`. One clip per section: intro (purpose), assign
+  (happy path), complete (begin/complete work), features (tour), outro.
+- `public/stills/` — freeze-frame PNGs (committed) extracted from the tail of each
+  captured `.webm` clip via `ffmpeg -sseof -1.0 -i clip.webm -update 1 -q:v 2 out.png`.
+  Shown in the composition as `<Img>` + Ken Burns zoom (`StillScene.tsx`) instead of
+  `<Freeze>` + `OffthreadVideo`, which crashed the Remotion compositor when combined
+  with `TransitionSeries` premounting — see the comment in `FootageScene.tsx`.
 - `src/` — Remotion composition (`Root.tsx`, `Video.tsx`, per-scene components) that
-  sequences an animated intro, the assign scene, the begin/complete scene, a feature
-  tour, and an outro, using `@remotion/transitions` fades between scenes.
+  sequences an animated intro, the assign scene + freeze still, the begin/complete
+  scene + freeze still, a feature tour + freeze still, and an outro, with narration
+  `<Audio>` sequences timed to each section, using `@remotion/transitions` fades
+  between visual scenes.
 - `out/` — rendered output (gitignored).
 - `artifacts/demo-video.mp4` — the final compressed deliverable, committed to the repo.
+
+## Regenerating narration
+
+```bash
+npm install
+node scripts/generate-narration.cjs   # -> public/audio/*.mp3 via Microsoft Edge TTS
+```
 
 ## Reproducing the capture + render
 
@@ -43,7 +62,7 @@ touch the .NET solution, NuGet packages, `global.json`, or `.octopus/`.
    ```bash
    npm install
    npx playwright install chromium
-   DEMO_BASE_URL=https://localhost:7175 npm run capture   # real Playwright capture -> footage/*.webm
+   DEMO_BASE_URL=https://localhost:7175 npm run capture   # real Playwright capture -> public/footage/*.webm
    npm run render                                          # Remotion render -> out/demo-video.mp4
    ```
 

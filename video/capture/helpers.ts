@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 export const BASE_URL = process.env.DEMO_BASE_URL ?? 'https://localhost:7175';
-export const FOOTAGE_DIR = path.join(__dirname, '..', 'footage');
+export const FOOTAGE_DIR = path.join(__dirname, '..', 'public', 'footage');
 export const VIEWPORT = {width: 1920, height: 1080};
 
 if (!fs.existsSync(FOOTAGE_DIR)) {

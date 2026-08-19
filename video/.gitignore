@@ -1,5 +1,5 @@
 node_modules/
-footage/
+public/footage/
 out/
 dist-capture/
 *.log
