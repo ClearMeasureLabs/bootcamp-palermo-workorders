@@ -35,4 +35,10 @@ public class LoginDisplayNameFormatterTests
     {
         LoginDisplayNameFormatter.FormatForLoginDropdown("  \t ").ShouldBe("  \t ".ToUpperInvariant());
     }
+
+    [Test]
+    public void FormatForLoginDropdown_MixedCaseWithPunctuation_ReturnsUppercase()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown("John O'Brien Jr.").ShouldBe("JOHN O'BRIEN JR.");
+    }
 }
