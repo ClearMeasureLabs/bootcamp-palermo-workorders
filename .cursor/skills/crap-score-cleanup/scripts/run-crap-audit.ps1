@@ -1,0 +1,137 @@
+#Requires -Version 7.0
+<#
+.SYNOPSIS
+  Collect Cobertura coverage, compute CRAP scores, and roll up per-file metrics.
+
+.PARAMETER Solution
+  Path to the .NET solution. Defaults to src/ChurchBulletin.sln.
+
+.PARAMETER OutputDir
+  Directory for reports. Defaults to crap-metrics at repo root.
+
+.PARAMETER Threshold
+  CRAP threshold for "CRAPpy" methods. Default 15.
+
+.PARAMETER SkipTests
+  Skip test run; reuse existing Cobertura files under OutputDir/TestResults.
+
+.PARAMETER AllowPartialCoverage
+  Continue when dotnet test exits non-zero. Default is to fail — acceptance tests
+  must pass. Use only when diagnosing coverage from a partial run.
+
+.PARAMETER RepoRoot
+  Repository root containing src/ChurchBulletin.sln. Defaults to the directory that
+  contains the skill (three levels above scripts/). When using a git worktree, pass
+  the worktree path explicitly or run the script from that directory.
+
+.PARAMETER Configuration
+  dotnet build/test configuration. Default Release.
+#>
+param(
+    [string]$Solution = "src/ChurchBulletin.sln",
+    [string]$OutputDir = "crap-metrics",
+    [int]$Threshold = 15,
+    [switch]$SkipTests,
+    [switch]$AllowPartialCoverage,
+    [string]$RepoRoot = "",
+    [string]$Configuration = "Release"
+)
+
+$ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
+    $cwdRoot = (Get-Location).Path
+    if (Test-Path (Join-Path $cwdRoot "src/ChurchBulletin.sln")) {
+        $RepoRoot = $cwdRoot
+    }
+    else {
+        $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../../..")).Path
+    }
+}
+else {
+    $RepoRoot = (Resolve-Path $RepoRoot).Path
+}
+Set-Location $RepoRoot
+
+function Ensure-Tool {
+    param([string]$PackageId, [string]$Command, [string]$Version)
+    if (Get-Command $Command -ErrorAction SilentlyContinue) { return }
+    Write-Host "Installing $PackageId $Version ..."
+    dotnet tool install -g $PackageId --version $Version | Out-Null
+}
+
+Ensure-Tool -PackageId "crap4dotnet" -Command "dotnet-crap" -Version "0.1.1"
+Ensure-Tool -PackageId "dotnet-script" -Command "dotnet-script" -Version "1.6.0"
+
+$outPath = Join-Path $RepoRoot $OutputDir
+New-Item -ItemType Directory -Force -Path $outPath | Out-Null
+$testResults = Join-Path $outPath "TestResults"
+
+if (-not $SkipTests) {
+    Write-Host "Running build.ps1 test pipeline (Init -> Compile -> Unit -> Integration -> Acceptance) ..."
+    Push-Location $RepoRoot
+    try {
+        . (Join-Path $RepoRoot "build.ps1")
+
+        Resolve-DatabaseEngine
+        if ($script:databaseEngine -ne "SQLite") {
+            $script:databaseName = Get-ResolvedDatabaseName -explicitName "" -baseName $projectName -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
+        }
+
+        Init
+        Compile
+        UnitTests
+        Setup-DatabaseForBuild
+        IntegrationTest
+        AcceptanceTests
+    }
+    finally {
+        Pop-Location
+    }
+
+    $testResults = Join-Path $RepoRoot "build/test"
+}
+else {
+    $testResults = Join-Path $outPath "TestResults"
+    if (-not (Test-Path $testResults)) {
+        $testResults = Join-Path $RepoRoot "build/test"
+    }
+}
+
+$coverageFiles = @(Get-ChildItem -Path $testResults -Recurse -Filter "coverage.cobertura.xml" -ErrorAction SilentlyContinue)
+if ($coverageFiles.Count -eq 0) {
+    Write-Error "No coverage.cobertura.xml found under $testResults. Run without -SkipTests or check test output."
+}
+
+Write-Host "Found $($coverageFiles.Count) Cobertura file(s)."
+
+$reportJson = Join-Path $outPath "crap-report.json"
+$crapArgs = @(
+    "analyze", (Join-Path $RepoRoot $Solution),
+    "--threshold", $Threshold,
+    "--output", $reportJson
+)
+foreach ($f in $coverageFiles) {
+    $crapArgs += @("--coverage", $f.FullName)
+}
+
+Write-Host "Analyzing CRAP scores ..."
+& dotnet-crap @crapArgs
+$crapExit = $LASTEXITCODE
+# dotnet-crap exits non-zero when CRAPpy methods exist — that is expected.
+
+if (-not (Test-Path $reportJson)) {
+    Write-Error "CRAP report not produced at $reportJson"
+}
+
+Write-Host "Rolling up file-level scores ..."
+$rollupScript = Join-Path $PSScriptRoot "rollup-file-scores.csx"
+& dotnet-script $rollupScript -- $reportJson $outPath
+
+Write-Host ""
+Write-Host "=== CRAP audit complete ==="
+Write-Host "  Methods : $reportJson"
+Write-Host "  Files   : $(Join-Path $outPath 'crap-by-file.json')"
+Write-Host "  Summary : $(Join-Path $outPath 'crap-summary.md')"
+if ($crapExit -ne 0) {
+    Write-Host "  Note    : dotnet-crap reported CRAPpy methods (exit $crapExit) — review summary."
+}
