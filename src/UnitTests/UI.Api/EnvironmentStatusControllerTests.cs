@@ -61,7 +61,7 @@ public class EnvironmentStatusControllerTests
             content.Content!.ShouldContain(EnvironmentStatusBuilder.RedactedValue);
 
             var payload = JsonSerializer.Deserialize<EnvironmentStatusResponse>(
-                content.Content,
+                content.Content!,
                 ConditionalGetEtag.JsonSerializerOptions);
             payload.ShouldNotBeNull();
             payload!.EnvironmentVariables.ShouldContainKey("ASPNETCORE_ENVIRONMENT");
