@@ -10,6 +10,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public const int RoomNumberMaxLength = 900;
 
+    /// <summary>
+    /// Maximum length of <see cref="Instructions"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int InstructionsMaxLength = 4000;
+
     public string? Title { get; set; } = "";
 
     public string? Description
@@ -50,7 +55,7 @@ public class WorkOrder : EntityBase<WorkOrder>
             return string.Empty;
         }
 
-        var maxLength = Math.Min(4000, value.Length);
+        var maxLength = Math.Min(InstructionsMaxLength, value.Length);
         return value.Substring(0, maxLength);
     }
 

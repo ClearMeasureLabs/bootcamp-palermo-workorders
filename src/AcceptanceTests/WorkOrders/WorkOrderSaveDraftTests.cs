@@ -147,4 +147,45 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
 
         rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
     }
+
+    [Test, Retry(2)]
+    public async Task WorkOrderManage_InstructionsTextareaShouldCarryMaxLength4000()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await Expect(instructionsField).ToHaveAttributeAsync("maxlength", WorkOrder.InstructionsMaxLength.ToString());
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldRejectInstructionsOverMaxLengthWithValidationMessage()
+    {
+        await LoginAsCurrentUser();
+
+        var order = Faker<WorkOrder>();
+        order.Title = $"[{TestTag}] instructions over limit";
+        order.Number = null;
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
+        await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
+
+        var overLimitInstructions = new string('x', WorkOrder.InstructionsMaxLength + 1);
+        var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+        await instructionsField.EvaluateAsync(
+            "(el, value) => { el.removeAttribute('maxlength'); el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+            overLimitInstructions);
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+
+        await Expect(Page.GetByText("Instructions cannot exceed 4000 characters.")).ToBeVisibleAsync(
+            new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+    }
 }
