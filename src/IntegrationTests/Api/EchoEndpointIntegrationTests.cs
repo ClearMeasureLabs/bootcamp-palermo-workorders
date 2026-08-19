@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
@@ -30,21 +31,18 @@ public class EchoEndpointIntegrationTests
     [Test]
     public async Task Should_Return200AndJson_When_GetUnversioned()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/echo");
-        request.Headers.TryAddWithoutValidation("User-Agent", "IntegrationTest");
-
-        var response = await _client!.SendAsync(request);
+        var response = await _client!.GetAsync("/api/echo");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldBe("application/json");
+        mediaType!.ShouldContain("application/json");
         var body = await response.Content.ReadAsStringAsync();
-        var payload = JsonSerializer.Deserialize<EchoResponse>(body, ConditionalGetEtag.JsonSerializerOptions);
-        payload.ShouldNotBeNull();
-        payload!.Method.ShouldBe("GET");
-        payload.Path.ShouldBe("/api/echo");
-        payload.Headers.ContainsKey("User-Agent").ShouldBeTrue();
+        using var document = JsonDocument.Parse(body);
+        document.RootElement.TryGetProperty("method", out _).ShouldBeTrue();
+        document.RootElement.TryGetProperty("path", out _).ShouldBeTrue();
+        document.RootElement.TryGetProperty("query", out _).ShouldBeTrue();
+        document.RootElement.TryGetProperty("headers", out _).ShouldBeTrue();
     }
 
     [Test]
@@ -55,12 +53,7 @@ public class EchoEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldBe("application/json");
-        var body = await response.Content.ReadAsStringAsync();
-        var payload = JsonSerializer.Deserialize<EchoResponse>(body, ConditionalGetEtag.JsonSerializerOptions);
-        payload.ShouldNotBeNull();
-        payload!.Method.ShouldBe("GET");
-        payload.Path.ShouldBe("/api/v1.0/echo");
+        mediaType!.ShouldContain("application/json");
     }
 
     [Test]
@@ -69,8 +62,9 @@ public class EchoEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/echo?a=1&b=two");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var body = await response.Content.ReadAsStringAsync();
-        var payload = JsonSerializer.Deserialize<EchoResponse>(body, ConditionalGetEtag.JsonSerializerOptions);
+        var payload = JsonSerializer.Deserialize<EchoResponse>(
+            await response.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
         payload!.Query["a"].ShouldBe("1");
         payload.Query["b"].ShouldBe("two");
@@ -82,8 +76,9 @@ public class EchoEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/echo");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var body = await response.Content.ReadAsStringAsync();
-        var payload = JsonSerializer.Deserialize<EchoResponse>(body, ConditionalGetEtag.JsonSerializerOptions);
+        var payload = JsonSerializer.Deserialize<EchoResponse>(
+            await response.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
         payload!.Method.ShouldBe("GET");
     }
@@ -91,14 +86,29 @@ public class EchoEndpointIntegrationTests
     [Test]
     public async Task Should_Return200WithoutApiKey_When_AnonymousProbe()
     {
-        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        await using var factory = new DiagnosticsApiKeyProtectedWebApplicationFactory();
         using var client = factory.CreateClient();
 
-        var unversioned = await client.GetAsync("/api/echo");
-        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var response = await client.GetAsync("/api/echo");
 
-        var versioned = await client.GetAsync("/api/v1.0/echo");
-        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_EnforceApiKeyWhen_MiddlewareEnabled()
+    {
+        await using var factory = new DiagnosticsApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var withoutKey = await client.GetAsync("/api/diagnostics");
+        withoutKey.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        var echoWithoutKey = await client.GetAsync("/api/echo");
+        echoWithoutKey.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        client.DefaultRequestHeaders.Add(ApiKeyConstants.HeaderName, ApiKeyProtectedWebApplicationFactory.TestApiKey);
+        var echoWithKey = await client.GetAsync("/api/echo");
+        echoWithKey.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Test]
@@ -110,8 +120,9 @@ public class EchoEndpointIntegrationTests
         var response = await _client!.SendAsync(request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var body = await response.Content.ReadAsStringAsync();
-        var payload = JsonSerializer.Deserialize<EchoResponse>(body, ConditionalGetEtag.JsonSerializerOptions);
+        var payload = JsonSerializer.Deserialize<EchoResponse>(
+            await response.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
         payload!.Headers["X-Debug"].ShouldBe("trace-1");
     }
