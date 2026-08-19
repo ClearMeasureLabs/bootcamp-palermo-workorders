@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Api.Controllers;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
@@ -35,14 +37,12 @@ public class EchoEndpointIntegrationTests
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("application/json");
-
-        var json = await response.Content.ReadAsStringAsync();
-        using var document = JsonDocument.Parse(json);
-        var root = document.RootElement;
-        root.TryGetProperty("method", out _).ShouldBeTrue();
-        root.TryGetProperty("path", out _).ShouldBeTrue();
-        root.TryGetProperty("query", out _).ShouldBeTrue();
-        root.TryGetProperty("headers", out _).ShouldBeTrue();
+        var body = await response.Content.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(body);
+        document.RootElement.TryGetProperty("method", out _).ShouldBeTrue();
+        document.RootElement.TryGetProperty("path", out _).ShouldBeTrue();
+        document.RootElement.TryGetProperty("query", out _).ShouldBeTrue();
+        document.RootElement.TryGetProperty("headers", out _).ShouldBeTrue();
     }
 
     [Test]
@@ -54,10 +54,6 @@ public class EchoEndpointIntegrationTests
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("application/json");
-
-        var json = await response.Content.ReadAsStringAsync();
-        using var document = JsonDocument.Parse(json);
-        document.RootElement.TryGetProperty("method", out _).ShouldBeTrue();
     }
 
     [Test]
@@ -66,11 +62,12 @@ public class EchoEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/echo?a=1&b=two");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var json = await response.Content.ReadAsStringAsync();
-        using var document = JsonDocument.Parse(json);
-        var query = document.RootElement.GetProperty("query");
-        query.GetProperty("a").GetString().ShouldBe("1");
-        query.GetProperty("b").GetString().ShouldBe("two");
+        var payload = JsonSerializer.Deserialize<EchoResponse>(
+            await response.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        payload!.Query["a"].ShouldBe("1");
+        payload.Query["b"].ShouldBe("two");
     }
 
     [Test]
@@ -79,24 +76,11 @@ public class EchoEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/echo");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var json = await response.Content.ReadAsStringAsync();
-        using var document = JsonDocument.Parse(json);
-        document.RootElement.GetProperty("method").GetString().ShouldBe("GET");
-    }
-
-    [Test]
-    public async Task Should_IncludeCustomHeader_When_HeaderProvided()
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/echo");
-        request.Headers.Add("X-Test", "debug-value");
-
-        var response = await _client!.SendAsync(request);
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var json = await response.Content.ReadAsStringAsync();
-        using var document = JsonDocument.Parse(json);
-        var headers = document.RootElement.GetProperty("headers");
-        headers.GetProperty("X-Test").GetString().ShouldBe("debug-value");
+        var payload = JsonSerializer.Deserialize<EchoResponse>(
+            await response.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        payload!.Method.ShouldBe("GET");
     }
 
     [Test]
@@ -110,5 +94,38 @@ public class EchoEndpointIntegrationTests
 
         var versioned = await client.GetAsync("/api/v1.0/echo");
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_EnforceApiKeyWhen_MiddlewareEnabled()
+    {
+        await using var factory = new DiagnosticsApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var withoutKey = await client.GetAsync("/api/diagnostics");
+        withoutKey.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        var echoWithoutKey = await client.GetAsync("/api/echo");
+        echoWithoutKey.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        client.DefaultRequestHeaders.Add(ApiKeyConstants.HeaderName, ApiKeyProtectedWebApplicationFactory.TestApiKey);
+        var echoWithKey = await client.GetAsync("/api/echo");
+        echoWithKey.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_IncludeCustomHeader_When_XHeaderSent()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/echo");
+        request.Headers.TryAddWithoutValidation("X-Debug", "trace-1");
+
+        var response = await _client!.SendAsync(request);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var payload = JsonSerializer.Deserialize<EchoResponse>(
+            await response.Content.ReadAsStringAsync(),
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        payload!.Headers["X-Debug"].ShouldBe("trace-1");
     }
 }

@@ -38,7 +38,6 @@ public class EchoControllerTests
         content.StatusCode.ShouldBe(200);
         content.ContentType.ShouldNotBeNull();
         content.ContentType!.ShouldContain("application/json");
-
         var payload = Deserialize(content);
         payload.Method.ShouldBe("GET");
         payload.Path.ShouldBe("/api/echo");
@@ -51,8 +50,8 @@ public class EchoControllerTests
     public void Get_Should_IncludeSafeHeaders_When_Present()
     {
         var context = new DefaultHttpContext();
-        context.Request.Headers["User-Agent"] = "TestAgent";
-        context.Request.Headers["Accept"] = "application/json";
+        context.Request.Headers.UserAgent = "TestAgent";
+        context.Request.Headers.Accept = "application/json";
         context.Request.Headers["X-Test"] = "debug";
 
         var result = CreateController(context).Get();
@@ -67,10 +66,10 @@ public class EchoControllerTests
     public void Get_Should_OmitSensitiveHeaders_When_AuthorizationOrApiKeyPresent()
     {
         var context = new DefaultHttpContext();
-        context.Request.Headers["Authorization"] = "Bearer secret";
-        context.Request.Headers["Cookie"] = "session=abc";
+        context.Request.Headers.Authorization = "Bearer secret";
+        context.Request.Headers.Cookie = "session=abc";
         context.Request.Headers["X-Api-Key"] = "key-value";
-        context.Request.Headers["User-Agent"] = "TestAgent";
+        context.Request.Headers.Accept = "application/json";
 
         var result = CreateController(context).Get();
 
@@ -78,7 +77,7 @@ public class EchoControllerTests
         payload.Headers.ContainsKey("Authorization").ShouldBeFalse();
         payload.Headers.ContainsKey("Cookie").ShouldBeFalse();
         payload.Headers.ContainsKey("X-Api-Key").ShouldBeFalse();
-        payload.Headers["User-Agent"].ShouldBe("TestAgent");
+        payload.Headers["Accept"].ShouldBe("application/json");
     }
 
     [Test]

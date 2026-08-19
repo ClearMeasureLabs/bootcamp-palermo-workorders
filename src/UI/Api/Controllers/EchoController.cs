@@ -16,21 +16,6 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class EchoController : ControllerBase
 {
-    private static readonly HashSet<string> SensitiveHeaders = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Authorization",
-        "Cookie",
-        "X-Api-Key"
-    };
-
-    private static readonly HashSet<string> AlwaysIncludedHeaders = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Accept",
-        "User-Agent",
-        "Host",
-        "X-Correlation-ID"
-    };
-
     /// <summary>
     /// Returns JSON reflecting key properties of the incoming HTTP request.
     /// </summary>
@@ -38,51 +23,78 @@ public class EchoController : ControllerBase
     [AllowAnonymous]
     public IActionResult Get()
     {
-        var request = HttpContext.Request;
-        var query = request.Query.ToDictionary(
-            pair => pair.Key,
-            pair => pair.Value.ToString(),
-            StringComparer.OrdinalIgnoreCase);
-
-        var payload = new EchoResponse(
-            Method: request.Method,
-            Path: request.Path.Value ?? string.Empty,
-            PathBase: request.PathBase.Value ?? string.Empty,
-            QueryString: request.QueryString.Value ?? string.Empty,
-            Query: query,
-            Headers: CollectSafeHeaders(request.Headers));
-
+        var payload = EchoRequestReflection.Build(HttpContext.Request);
         return ConditionalGetEtag.JsonContent(payload);
-    }
-
-    internal static Dictionary<string, string> CollectSafeHeaders(IHeaderDictionary headers)
-    {
-        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var header in headers)
-        {
-            if (SensitiveHeaders.Contains(header.Key))
-            {
-                continue;
-            }
-
-            if (AlwaysIncludedHeaders.Contains(header.Key)
-                || header.Key.StartsWith("X-", StringComparison.OrdinalIgnoreCase))
-            {
-                result[header.Key] = header.Value.ToString();
-            }
-        }
-
-        return result;
     }
 }
 
 /// <summary>
 /// JSON payload for <c>GET /api/echo</c> and <c>GET /api/v1.0/echo</c>.
 /// </summary>
-public record EchoResponse(
+public sealed record EchoResponse(
     string Method,
     string Path,
     string PathBase,
     string QueryString,
     IReadOnlyDictionary<string, string> Query,
     IReadOnlyDictionary<string, string> Headers);
+
+internal static class EchoRequestReflection
+{
+    private static readonly HashSet<string> SensitiveHeaderNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Authorization",
+        "Cookie",
+        "X-Api-Key"
+    };
+
+    private static readonly HashSet<string> SafeHeaderNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Accept",
+        "User-Agent",
+        "Host",
+        "X-Correlation-Id",
+        "X-Correlation-ID"
+    };
+
+    internal static EchoResponse Build(HttpRequest request)
+    {
+        var query = request.Query.ToDictionary(
+            pair => pair.Key,
+            pair => pair.Value.ToString(),
+            StringComparer.OrdinalIgnoreCase);
+
+        return new EchoResponse(
+            Method: request.Method,
+            Path: request.Path.Value ?? string.Empty,
+            PathBase: request.PathBase.Value ?? string.Empty,
+            QueryString: request.QueryString.Value ?? string.Empty,
+            Query: query,
+            Headers: BuildSafeHeaders(request.Headers));
+    }
+
+    internal static Dictionary<string, string> BuildSafeHeaders(IHeaderDictionary headers)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var header in headers)
+        {
+            if (SensitiveHeaderNames.Contains(header.Key))
+            {
+                continue;
+            }
+
+            if (!ShouldIncludeHeader(header.Key))
+            {
+                continue;
+            }
+
+            result[header.Key] = header.Value.ToString();
+        }
+
+        return result;
+    }
+
+    private static bool ShouldIncludeHeader(string name) =>
+        SafeHeaderNames.Contains(name)
+        || name.StartsWith("X-", StringComparison.OrdinalIgnoreCase);
+}
