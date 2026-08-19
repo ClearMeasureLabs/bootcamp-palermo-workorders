@@ -21,8 +21,11 @@ public class HelloController : ControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult Get() =>
-        ConditionalGetEtag.JsonContent(new HelloResponse("Hello, World!"));
+    public IActionResult Get()
+    {
+        var payload = new HelloResponse("Hello, World!");
+        return ConditionalGetEtag.JsonContent(payload);
+    }
 }
 
 /// <summary>
