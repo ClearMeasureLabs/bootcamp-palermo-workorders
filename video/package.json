@@ -1,0 +1,22 @@
+{
+  "name": "qodana-remediation-video",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "remotion studio",
+    "render": "remotion render QodanaRemediation out/qodana-remediation.mp4",
+    "render:room": "remotion render RoomNumber900 out/room-number-900.mp4",
+    "narration": "node scripts/generate-room-narration.cjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.410",
+    "remotion": "4.0.410",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "msedge-tts": "^2.0.7",
+    "typescript": "5.7.3"
+  }
+}
