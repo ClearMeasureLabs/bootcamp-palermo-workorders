@@ -17,24 +17,12 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 public class HelloController : ControllerBase
 {
     /// <summary>
-<<<<<<< HEAD
     /// Returns a greeting message for reachability checks.
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
     public IActionResult Get() =>
         ConditionalGetEtag.JsonContent(new HelloResponse("Hello, World!"));
-=======
-    /// Returns a greeting JSON payload for reachability checks.
-    /// </summary>
-    [HttpGet]
-    [AllowAnonymous]
-    public IActionResult Get()
-    {
-        var payload = new HelloResponse("Hello, World!");
-        return ConditionalGetEtag.JsonContent(payload);
-    }
->>>>>>> origin/cursor/8608-development
 }
 
 /// <summary>
