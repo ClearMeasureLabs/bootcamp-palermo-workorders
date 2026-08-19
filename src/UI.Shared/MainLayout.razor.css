@@ -264,6 +264,37 @@
     text-decoration: none;
 }
 
+.auth-section ::deep a {
+    animation: login-blink 1s ease-in-out infinite;
+}
+
+@keyframes login-blink {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8);
+        background: rgba(245, 158, 11, 0.12);
+        color: #c05621;
+    }
+    50% {
+        opacity: 0.45;
+        box-shadow: 0 0 16px 6px rgba(245, 158, 11, 0.95);
+        background: rgba(245, 158, 11, 0.35);
+        color: #9c4221;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-section ::deep a {
+        animation: none;
+        font-weight: 700;
+        border: 2px solid #f59e0b;
+        background: rgba(245, 158, 11, 0.15);
+        color: #c05621;
+        opacity: 1;
+        box-shadow: none;
+    }
+}
+
 /* Modern Main Content */
 .modern-main {
     flex: 1;
@@ -555,6 +586,37 @@
 :global(html[data-theme="dark"]) .auth-section ::deep a:hover {
     background: #4a5568;
     color: #f7fafc;
+}
+
+:global(html[data-theme="dark"]) .auth-section ::deep a {
+    animation: login-blink-dark 1s ease-in-out infinite;
+}
+
+@keyframes login-blink-dark {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.85);
+        background: rgba(251, 191, 36, 0.18);
+        color: #fef3c7;
+    }
+    50% {
+        opacity: 0.5;
+        box-shadow: 0 0 18px 8px rgba(251, 191, 36, 0.95);
+        background: rgba(251, 191, 36, 0.4);
+        color: #fff;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :global(html[data-theme="dark"]) .auth-section ::deep a {
+        animation: none;
+        font-weight: 700;
+        border: 2px solid #fbbf24;
+        background: rgba(251, 191, 36, 0.2);
+        color: #fef3c7;
+        opacity: 1;
+        box-shadow: none;
+    }
 }
 
 :global(html[data-theme="dark"]) .modern-main {

@@ -170,6 +170,57 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldApplyBlinkAnimationToLoginLink_WhenUnauthenticated()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']").ShouldNotBeNull();
+
+        var cssContent = ReadMainLayoutCss();
+        cssContent.ShouldContain("login-blink");
+        cssContent.ShouldContain(".auth-section ::deep a");
+        cssContent.ShouldContain("animation: login-blink 1s ease-in-out infinite");
+    }
+
+    [Test]
+    public void ShouldNotApplyBlinkAnimationToLoginLink_WhenAuthenticated()
+    {
+        using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.FindAll($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']").Count.ShouldBe(0);
+        layout.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']").ShouldNotBeNull();
+    }
+
+    [Test]
+    public void ShouldDisableAnimationAndApplyStaticHighlight_WhenPrefersReducedMotion()
+    {
+        var cssContent = ReadMainLayoutCss();
+        cssContent.ShouldContain("prefers-reduced-motion: reduce");
+        cssContent.ShouldContain("animation: none");
+        cssContent.ShouldContain("font-weight: 700");
+    }
+
+    private static string ReadMainLayoutCss()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "src", "ChurchBulletin.sln")))
+        {
+            dir = dir.Parent;
+        }
+
+        dir.ShouldNotBeNull();
+        var cssPath = Path.Combine(dir.FullName, "src", "UI.Shared", "MainLayout.razor.css");
+        File.Exists(cssPath).ShouldBeTrue();
+        return File.ReadAllText(cssPath);
+    }
+
+    [Test]
     public void ShouldRenderCopyrightFooter_WithCurrentYear_OrganizationAndLink_WhenNotAuthenticated()
     {
         using var ctx = CreateContext();

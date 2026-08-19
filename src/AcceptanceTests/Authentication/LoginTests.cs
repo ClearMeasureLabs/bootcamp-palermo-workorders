@@ -1,3 +1,4 @@
+using System.Globalization;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -88,5 +89,95 @@ public class LoginTests : AcceptanceTestBase
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
         await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
+    }
+
+    [Test, Retry(2)]
+    public async Task LoginLink_ShouldBlinkOnUnauthenticatedPage_UntilLogin()
+    {
+        var logoutLink = Page.GetByTestId(nameof(Logout.Elements.LogoutLink));
+        if (await logoutLink.CountAsync() > 0)
+        {
+            await logoutLink.ClickAsync();
+            await Page.WaitForURLAsync("**/");
+        }
+
+        var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await Expect(loginLink).ToBeVisibleAsync();
+
+        var animationName = await loginLink.EvaluateAsync<string>(
+            "el => window.getComputedStyle(el).animationName");
+        animationName.ShouldNotBe("none");
+        animationName.ShouldContain("login-blink");
+
+        await Click(nameof(LoginLink.Elements.LoginLink));
+        await Page.WaitForURLAsync("**/login");
+        await Select(nameof(Login.Elements.User), "hsimpson");
+        await Click(nameof(Login.Elements.LoginButton));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText))).ToHaveTextAsync("Welcome hsimpson!");
+    }
+
+    [Test, Retry(2)]
+    public async Task LoginLink_ShouldBlinkAcrossMultipleUnauthenticatedPages()
+    {
+        var logoutLink = Page.GetByTestId(nameof(Logout.Elements.LogoutLink));
+        if (await logoutLink.CountAsync() > 0)
+        {
+            await logoutLink.ClickAsync();
+            await Page.WaitForURLAsync("**/");
+        }
+
+        foreach (var path in new[] { "/", "/counter" })
+        {
+            await Page.GotoAsync(path);
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+            await Expect(loginLink).ToBeVisibleAsync();
+
+            var animationName = await loginLink.EvaluateAsync<string>(
+                "el => window.getComputedStyle(el).animationName");
+            animationName.ShouldNotBe("none");
+            animationName.ShouldContain("login-blink");
+        }
+
+        await Click(nameof(LoginLink.Elements.LoginLink));
+        await Page.WaitForURLAsync("**/login");
+        await Select(nameof(Login.Elements.User), "hsimpson");
+        await Click(nameof(Login.Elements.LoginButton));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
+    }
+
+    [Test, Retry(2)]
+    public async Task LoginLink_BlinkAnimation_ShouldRespectReducedMotionPreference()
+    {
+        await Page.EmulateMediaAsync(new() { ReducedMotion = ReducedMotion.Reduce });
+
+        var logoutLink = Page.GetByTestId(nameof(Logout.Elements.LogoutLink));
+        if (await logoutLink.CountAsync() > 0)
+        {
+            await logoutLink.ClickAsync();
+            await Page.WaitForURLAsync("**/");
+        }
+
+        var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await Expect(loginLink).ToBeVisibleAsync();
+
+        var styles = await loginLink.EvaluateAsync<Dictionary<string, string>>(@"el => {
+            const cs = window.getComputedStyle(el);
+            return {
+                animationName: cs.animationName,
+                fontWeight: cs.fontWeight,
+                borderWidth: cs.borderTopWidth
+            };
+        }");
+
+        styles["animationName"].ShouldBe("none");
+        int.Parse(styles["fontWeight"], CultureInfo.InvariantCulture).ShouldBeGreaterThanOrEqualTo(700);
+        styles["borderWidth"].ShouldNotBe("0px");
     }
 }
