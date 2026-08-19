@@ -81,7 +81,7 @@ public class PublisherGatewayTests
         var result = await gateway.SendToTopic(message);
 
         result.ShouldNotBeNull();
-        result!.GetBodyObject().ShouldBeOfType<TestRemotableRequest>();
+        result.GetBodyObject().ShouldBeOfType<TestRemotableRequest>();
         ((TestRemotableRequest)result.GetBodyObject()).Data.ShouldBe("response data");
     }
 
@@ -102,18 +102,14 @@ public class PublisherGatewayTests
 
         stubHandler.LastRequest.ShouldNotBeNull();
         stubHandler.LastRequest!.Headers.TryGetValues(ApiKeyConstants.HeaderName, out var values).ShouldBeTrue();
-        values!.Single().ShouldBe("client-secret");
+        values.Single().ShouldBe("client-secret");
     }
 
-    private class StubPublisherGateway : PublisherGateway
+    private class StubPublisherGateway() : PublisherGateway(new HttpClient())
     {
         private WebServiceMessage? _sendToTopicResponse = new();
 
         public WebServiceMessage? LastMessage { get; private set; }
-
-        public StubPublisherGateway() : base(new HttpClient())
-        {
-        }
 
         public void SetSendToTopicResponse(WebServiceMessage? response)
         {
@@ -155,11 +151,11 @@ public class PublisherGatewayTests
 
     private class TestRemotableRequest : IRemotableRequest
     {
-        public string Data { get; set; } = "";
+        public string Data { get; init; } = "";
     }
 
     private class TestRemotableEvent : IRemotableEvent
     {
-        public string Message { get; set; } = "";
+        public string Message { get; init; } = "";
     }
 }

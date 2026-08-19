@@ -2,7 +2,6 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
-using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,7 +16,7 @@ public class EmployeeQueryHandler(DataContext context)
     {
         var employee = await context.Set<Employee>()
             .Include("Roles")
-            .SingleAsync(emp => emp.UserName == request.Username);
+            .SingleAsync(emp => emp.UserName == request.Username, cancellationToken);
         return employee;
     }
 
@@ -25,7 +24,7 @@ public class EmployeeQueryHandler(DataContext context)
     {
         var query = context.Set<Employee>()
             .Include("Roles");
-        var employees = await query.ToListAsync();
+        var employees = await query.ToListAsync(cancellationToken);
         if (EmployeeSpecification.All.CanFulfill)
         {
             employees = employees.Where(e => e.CanFulfillWorkOrder()).ToList();

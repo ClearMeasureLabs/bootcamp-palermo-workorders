@@ -14,7 +14,7 @@ public record DraftToAssignedCommand(WorkOrder WorkOrder, Employee CurrentUser)
         return WorkOrderStatus.Draft;
     }
 
-    public override WorkOrderStatus GetEndStatus()
+    protected override WorkOrderStatus GetEndStatus()
     {
         return WorkOrderStatus.Assigned;
     }

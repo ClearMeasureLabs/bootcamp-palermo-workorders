@@ -58,7 +58,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
         response.ShouldNotBeNull();
         response.Messages.ShouldNotBeEmpty();
         response.Messages.Last().Text.ShouldNotBeNullOrWhiteSpace();
-        await TestContext.Out.WriteLineAsync(response.Messages.Last().Text!);
+        await TestContext.Out.WriteLineAsync(response.Messages.Last().Text);
     }
 
     [Test]
@@ -85,7 +85,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
                 "Return nothing but the work order number itself, with no extra text."),
             new(ChatRole.User, responseText)
         ]));
-        var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
+        var workOrderNumber = parseResponse.Messages.Last().Text.Trim();
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
         var db = TestHost.GetRequiredService<DataContext>();
@@ -125,7 +125,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
                 "Return nothing but the work order number itself, with no extra text."),
             new(ChatRole.User, responseText)
         ]));
-        var workOrderNumber = parseResponse.Messages.Last().Text!.Trim();
+        var workOrderNumber = parseResponse.Messages.Last().Text.Trim();
         await TestContext.Out.WriteLineAsync($"Parsed work order number: {workOrderNumber}");
 
         var workOrder = await WaitForWorkOrderAsync(
@@ -205,7 +205,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
                 new(ChatRole.User, text)
             ]));
 
-            return parseResponse.Messages.Last().Text!.Trim();
+            return parseResponse.Messages.Last().Text.Trim();
         }
 
         async Task EnsureAssignedAsync()
@@ -281,12 +281,13 @@ public class ApplicationChatHandlerTests : LlmTestBase
             await AssertWorkOrderStateAsync(workOrder, WorkOrderStatus.Assigned);
         }
 
-        async Task AssertWorkOrderStateAsync(WorkOrder? workOrder, WorkOrderStatus status)
+        Task AssertWorkOrderStateAsync(WorkOrder? workOrder, WorkOrderStatus status)
         {
             workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
             workOrder.Status.ShouldBe(status);
             workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
             workOrder.Creator?.FirstName.ShouldBe("Timothy");
+            return Task.CompletedTask;
         }
     }
 }

@@ -1,5 +1,4 @@
 using ClearMeasure.Bootcamp.Core.Model.Messages;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using NServiceBus;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.NServiceBus;
@@ -34,10 +33,10 @@ public class TracerBulletTests : AcceptanceTestBase
 
         // Send the command — routed to "WorkOrderProcessing" endpoint via TestHost routing config
         await messageSession.Send(new TracerBulletCommand(correlationId));
-        TestContext.Out.WriteLine($"TracerBulletCommand sent with CorrelationId={correlationId}");
+        await TestContext.Out.WriteLineAsync($"TracerBulletCommand sent with CorrelationId={correlationId}");
 
         // Wait for the reply from Worker
         await replyTask;
-        TestContext.Out.WriteLine($"TracerBulletReplyMessage received for CorrelationId={correlationId}");
+        await TestContext.Out.WriteLineAsync($"TracerBulletReplyMessage received for CorrelationId={correlationId}");
     }
 }

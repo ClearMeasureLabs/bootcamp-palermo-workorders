@@ -75,7 +75,7 @@
             var workOrderChatQuery = new WorkOrderChatQuery(userMessage, _currentWorkOrder ?? throw new InvalidOperationException());
             var response = await Bus.Send(workOrderChatQuery);
 
-            var aiContent = response.Text ?? "No response received.";
+            var aiContent = response.Text;
             _chatMessages.Add(new ChatMessage { Content = aiContent, IsUser = false });
         }
         catch (Exception ex)
@@ -91,8 +91,8 @@
 
     private class ChatMessage
     {
-        public string Content { get; set; } = "";
-        public bool IsUser { get; set; }
+        public string Content { get; init; } = "";
+        public bool IsUser { get; init; }
     }
 
     public enum Elements

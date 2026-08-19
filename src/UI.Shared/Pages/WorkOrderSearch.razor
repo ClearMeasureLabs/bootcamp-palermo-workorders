@@ -9,7 +9,7 @@
             <EditForm Model="@Model" OnValidSubmit="OnSearch!">
                 <div class="filters-grid">
                     <div class="filter-group">
-                        <label class="filter-label" for="creator">Creator</label>
+                        <label class="filter-label" for="@Elements.CreatorSelect">Creator</label>
                         <InputSelect id="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
                             <option value="">All</option>
                             @foreach (var user in UserOptions)
@@ -20,7 +20,7 @@
                     </div>
 
                     <div class="filter-group">
-                        <label class="filter-label" for="assignee">Assignee</label>
+                        <label class="filter-label" for="@Elements.AssigneeSelect">Assignee</label>
                         <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
                             <option value="">All</option>
                             @foreach (var user in UserOptions)
@@ -31,7 +31,7 @@
                     </div>
 
                     <div class="filter-group">
-                        <label class="filter-label" for="status">Status</label>
+                        <label class="filter-label" for="@Elements.StatusSelect">Status</label>
                         <InputSelect id="@Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
                             <option value="">All</option>
                             @foreach (var status in StatusOptions)

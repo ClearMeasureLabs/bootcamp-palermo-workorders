@@ -20,12 +20,12 @@ public class EmployeeQueryHandlerTests
         var one = new Employee("1", "first1", "last1", "email1");
         var two = new Employee("2", "first2", "last2", "email2");
         var three = new Employee("3", "first3", "last3", "email3");
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(one);
             context.Add(two);
             context.Add(three);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
@@ -42,12 +42,12 @@ public class EmployeeQueryHandlerTests
         var one = new Employee("1", "first1", "last1", "email1");
         var two = new Employee("2", "first2", "last2", "email2");
         var three = new Employee("3", "first3", "last3", "email3");
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(two);
             context.Add(three);
             context.Add(one);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
@@ -66,8 +66,7 @@ public class EmployeeQueryHandlerTests
     {
         new DatabaseTests().Clean();
 
-        var employee = new Employee("testuser", "Test", "User", "test@test.com");
-        employee.PreferredLanguage = "fr-FR";
+        var employee = new Employee("testuser", "Test", "User", "test@test.com") { PreferredLanguage = "fr-FR" };
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
@@ -107,11 +106,11 @@ public class EmployeeQueryHandlerTests
 
         var one = new Employee("1", "first1", "last1", "email1");
         var two = new Employee("2", "First2", "Last2", "email2");
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(one);
             context.Add(two);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
@@ -131,16 +130,16 @@ public class EmployeeQueryHandlerTests
         new DatabaseTests().Clean();
 
         var homer = new Employee("hsimpson", "Homer", "Simpson", "homer@test.com");
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(homer);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var bus = TestHost.GetRequiredService<IBus>();
         _ = await bus.Send(new EmployeeGetAllQuery());
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             var rehydrated = context.Set<Employee>().Single(e => e.UserName == "hsimpson");
             rehydrated.FirstName.ShouldBe("Homer");

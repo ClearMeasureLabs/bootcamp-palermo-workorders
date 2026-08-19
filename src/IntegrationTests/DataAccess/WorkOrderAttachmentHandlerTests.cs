@@ -2,8 +2,6 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.DataAccess.Handlers;
-using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 
@@ -20,11 +18,11 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
         var workOrder = new WorkOrder { Number = "WO-001", Creator = uploader };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(uploader);
             context.Add(workOrder);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var bus = TestHost.GetRequiredService<IBus>();
@@ -38,7 +36,7 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         attachment.WorkOrderId.ShouldBe(workOrder.Id);
         attachment.UploadedById.ShouldBe(uploader.Id);
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             var persisted = context.Set<WorkOrderAttachment>().SingleOrDefault(a => a.Id == attachment.Id);
             persisted.ShouldNotBeNull();
@@ -54,11 +52,11 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
         var workOrder = new WorkOrder { Number = "WO-002", Creator = uploader };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(uploader);
             context.Add(workOrder);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var bus = TestHost.GetRequiredService<IBus>();
@@ -80,11 +78,11 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
         var workOrder = new WorkOrder { Number = "WO-003", Creator = creator };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
             context.Add(workOrder);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var bus = TestHost.GetRequiredService<IBus>();

@@ -8,14 +8,9 @@ namespace ClearMeasure.Bootcamp.UnitTests.Api;
 /// <summary>
 /// Hosts UI.Server with arbitrary <c>ApiRateLimiting:*</c> settings for middleware tests.
 /// </summary>
-public sealed class TunableApiRateLimitWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
+public sealed class TunableApiRateLimitWebApplicationFactory(IReadOnlyDictionary<string, string?> overrides) : WebApplicationFactory<UiServerWebApplicationMarker>
 {
-    private readonly IReadOnlyDictionary<string, string?> _overrides;
-
-    public TunableApiRateLimitWebApplicationFactory(IReadOnlyDictionary<string, string?> overrides)
-    {
-        _overrides = overrides;
-    }
+    private readonly IReadOnlyDictionary<string, string?> _overrides = overrides;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

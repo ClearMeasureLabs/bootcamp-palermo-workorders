@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Net;
 using ClearMeasure.Bootcamp.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests;
 
@@ -18,18 +17,28 @@ public class ServerFixture
             Path.DirectorySeparatorChar + "Release" + Path.DirectorySeparatorChar)
             ? "Release"
             : "Debug";
-    public static bool StartLocalServer { get; set; } = true;
-    public static int SlowMo { get; set; } = 100;
+    public static bool StartLocalServer { get; private set; } = true;
+    public static int SlowMo { get; private set; } = 100;
     public static string ApplicationBaseUrl { get; private set; } = string.Empty;
     private Process? _serverProcess;
     private Process? _workerProcess;
-    public static bool StartWorker { get; set; } = true;
+    public static bool StartWorker { get; private set; } = true;
     public static bool WorkerStarted { get; private set; }
-    public static bool SkipScreenshotsForSpeed { get; set; } = true;
-    public static bool HeadlessTestBrowser { get; set; } = true;
+    public static bool SkipScreenshotsForSpeed { get; private set; } = true;
+    public static bool HeadlessTestBrowser { get; private set; } = true;
     public static bool DatabaseInitialized { get; private set; }
-    private static readonly object DatabaseLock = new();
-    
+    private static readonly Lock DatabaseLock = new();
+
+    // Shared across all warm-up/health-check/reset HTTP calls in this fixture (Qodana
+    // ShortLivedHttpClient) instead of allocating a new HttpClientHandler/HttpClient per call.
+    // No IHttpClientFactory/DI container is available in this NUnit SetUpFixture.
+    private static readonly HttpClientHandler SharedHandler = new()
+    {
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    };
+
+    private static readonly HttpClient SharedHttpClient = new(SharedHandler) { Timeout = TimeSpan.FromSeconds(30) };
+
     /// <summary>
     /// Shared Playwright instance for all tests. Thread-safe for parallel execution.
     /// </summary>
@@ -77,27 +86,21 @@ public class ServerFixture
     {
         if (StartLocalServer) return; // local server is already warmed by StartAndWaitForServer
 
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
-
         string[] warmUpPaths = ["/", "/_healthcheck", "/_clienthealthcheck"];
 
         for (var attempt = 1; attempt <= 3; attempt++)
         {
-            TestContext.Out.WriteLine($"HTTP warm-up: round {attempt}/3");
+            await TestContext.Out.WriteLineAsync($"HTTP warm-up: round {attempt}/3");
             foreach (var path in warmUpPaths)
             {
                 try
                 {
-                    var response = await client.GetAsync($"{ApplicationBaseUrl}{path}");
-                    TestContext.Out.WriteLine($"  {path} -> {(int)response.StatusCode}");
+                    var response = await SharedHttpClient.GetAsync($"{ApplicationBaseUrl}{path}");
+                    await TestContext.Out.WriteLineAsync($"  {path} -> {(int)response.StatusCode}");
                 }
                 catch (Exception ex)
                 {
-                    TestContext.Out.WriteLine($"  {path} -> {ex.GetType().Name}: {ex.Message}");
+                    await TestContext.Out.WriteLineAsync($"  {path} -> {ex.GetType().Name}: {ex.Message}");
                 }
             }
 
@@ -116,28 +119,22 @@ public class ServerFixture
         const int maxAttempts = 3;
         const int delayBetweenAttemptsMs = 5000;
 
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
-
         // 1. Verify site is reachable
-        TestContext.Out.WriteLine("Health gate: verifying site is reachable...");
+        await TestContext.Out.WriteLineAsync("Health gate: verifying site is reachable...");
         HttpResponseMessage? siteResponse = null;
         Exception? lastSiteException = null;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             try
             {
-                siteResponse = await client.GetAsync(ApplicationBaseUrl);
-                TestContext.Out.WriteLine($"  GET {ApplicationBaseUrl} -> {(int)siteResponse.StatusCode}");
+                siteResponse = await SharedHttpClient.GetAsync(ApplicationBaseUrl);
+                await TestContext.Out.WriteLineAsync($"  GET {ApplicationBaseUrl} -> {(int)siteResponse.StatusCode}");
                 if (siteResponse.IsSuccessStatusCode) break;
             }
             catch (Exception ex)
             {
                 lastSiteException = ex;
-                TestContext.Out.WriteLine($"  GET {ApplicationBaseUrl} -> {ex.GetType().Name}: {ex.Message}");
+                await TestContext.Out.WriteLineAsync($"  GET {ApplicationBaseUrl} -> {ex.GetType().Name}: {ex.Message}");
             }
 
             if (attempt < maxAttempts) await Task.Delay(delayBetweenAttemptsMs);
@@ -153,7 +150,7 @@ public class ServerFixture
         }
 
         // 2. Verify /_healthcheck returns Healthy (includes database connectivity)
-        TestContext.Out.WriteLine("Health gate: verifying /_healthcheck...");
+        await TestContext.Out.WriteLineAsync("Health gate: verifying /_healthcheck...");
         var healthUrl = $"{ApplicationBaseUrl}/_healthcheck";
         string? healthBody = null;
         HttpStatusCode? healthStatus = null;
@@ -162,17 +159,17 @@ public class ServerFixture
         {
             try
             {
-                var response = await client.GetAsync(healthUrl);
+                var response = await SharedHttpClient.GetAsync(healthUrl);
                 healthStatus = response.StatusCode;
                 healthBody = await response.Content.ReadAsStringAsync();
-                TestContext.Out.WriteLine($"  GET {healthUrl} -> {(int)response.StatusCode}: {healthBody}");
+                await TestContext.Out.WriteLineAsync($"  GET {healthUrl} -> {(int)response.StatusCode}: {healthBody}");
                 if (response.IsSuccessStatusCode && IsAcceptableHealthStatus(healthBody))
                     break;
             }
             catch (Exception ex)
             {
                 lastHealthException = ex;
-                TestContext.Out.WriteLine($"  GET {healthUrl} -> {ex.GetType().Name}: {ex.Message}");
+                await TestContext.Out.WriteLineAsync($"  GET {healthUrl} -> {ex.GetType().Name}: {ex.Message}");
             }
 
             if (attempt < maxAttempts) await Task.Delay(delayBetweenAttemptsMs);
@@ -187,7 +184,7 @@ public class ServerFixture
                 $"Health gate FAILED: /_healthcheck did not return Healthy or Degraded after {maxAttempts} attempts. {detail}");
         }
 
-        TestContext.Out.WriteLine("Health gate: PASSED - site is reachable and healthy.");
+        await TestContext.Out.WriteLineAsync("Health gate: PASSED - site is reachable and healthy.");
     }
 
     private static bool IsAcceptableHealthStatus(string body) =>
@@ -271,11 +268,6 @@ public class ServerFixture
         _serverProcess.BeginErrorReadLine();
 
         // Wait for server to be ready
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler);
         var baseUrl = ApplicationBaseUrl;
         var timeout = TimeSpan.FromSeconds(WaitTimeoutSeconds);
         var start = DateTime.UtcNow;
@@ -284,7 +276,7 @@ public class ServerFixture
         {
             try
             {
-                var response = await client.GetAsync(baseUrl);
+                var response = await SharedHttpClient.GetAsync(baseUrl);
                 if (response.IsSuccessStatusCode)
                     return;
             }
@@ -313,17 +305,17 @@ public class ServerFixture
 
         if (!StartWorker)
         {
-            TestContext.Out.WriteLine("Worker: skipped (StartWorker=false).");
+            await TestContext.Out.WriteLineAsync("Worker: skipped (StartWorker=false).");
             return;
         }
 
         if (useSqlite)
         {
-            TestContext.Out.WriteLine("Worker: skipped (SQLite mode — Worker requires SqlServerTransport).");
+            await TestContext.Out.WriteLineAsync("Worker: skipped (SQLite mode — Worker requires SqlServerTransport).");
             return;
         }
 
-        TestContext.Out.WriteLine("Worker: starting...");
+        await TestContext.Out.WriteLineAsync("Worker: starting...");
         var config = BuildConfiguration;
         var arguments = $"run --no-build --configuration {config} --no-launch-profile";
 
@@ -395,13 +387,13 @@ public class ServerFixture
 
         if (completed == timeout)
         {
-            TestContext.Out.WriteLine(
+            await TestContext.Out.WriteLineAsync(
                 $"Worker: did not detect startup confirmation within {WaitTimeoutSeconds}s. " +
                 "Proceeding anyway — SqlServerTransport is durable and will deliver queued messages.");
         }
         else
         {
-            TestContext.Out.WriteLine("Worker: started successfully.");
+            await TestContext.Out.WriteLineAsync("Worker: started successfully.");
         }
 
         WorkerStarted = true;
@@ -409,16 +401,11 @@ public class ServerFixture
 
     private static async Task ResetServerDbConnections()
     {
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler);
-        var response = await client.PostAsync($"{ApplicationBaseUrl}/_diagnostics/reset-db-connections", null);
+        var response = await SharedHttpClient.PostAsync($"{ApplicationBaseUrl}/_diagnostics/reset-db-connections", null);
         response.EnsureSuccessStatusCode();
     }
 
-    internal static void InitializeDatabaseOnce()
+    private static void InitializeDatabaseOnce()
     {
         if (DatabaseInitialized) return;
 
@@ -456,5 +443,7 @@ public class ServerFixture
         try { _serverProcess?.Dispose(); } catch (ObjectDisposedException) { }
         _serverProcess = null;
         Playwright?.Dispose();
+        SharedHttpClient.Dispose();
+        SharedHandler.Dispose();
     }
 }

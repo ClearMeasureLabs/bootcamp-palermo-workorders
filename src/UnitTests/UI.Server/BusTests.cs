@@ -52,13 +52,13 @@ public class BusTests
     }
 
     [Test]
-    public void Should_PublishNotification_CallsMediator()
+    public async Task Should_PublishNotification_CallsMediator()
     {
         var stubMediator = new StubMediator();
         var bus = new Bus(stubMediator);
         var notification = new TestNotification { Message = "test message" };
 
-        bus.Publish(notification);
+        await bus.Publish(notification);
 
         stubMediator.LastNotification.ShouldBe(notification);
     }
@@ -136,7 +136,5 @@ public class BusTests
         public string Message { get; set; } = string.Empty;
     }
 
-    private record TestQuery : IRequest<string>
-    {
-    }
+    private record TestQuery : IRequest<string>;
 }

@@ -10,8 +10,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidInWrongStatus()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Complete;
+        var order = new WorkOrder { Status = WorkOrderStatus.Complete };
         var employee = new Employee();
         order.Creator = employee;
 
@@ -22,8 +21,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidWithWrongEmployee()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
+        var order = new WorkOrder { Status = WorkOrderStatus.Draft };
         var employee = new Employee();
         order.Creator = employee;
 
@@ -34,8 +32,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldBeValid()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
+        var order = new WorkOrder { Status = WorkOrderStatus.Draft };
         var employee = new Employee();
         order.Creator = employee;
 
@@ -46,9 +43,7 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldTransitionStateProperly()
     {
-        var order = new WorkOrder();
-        order.Number = "123";
-        order.Status = WorkOrderStatus.Draft;
+        var order = new WorkOrder { Number = "123", Status = WorkOrderStatus.Draft };
         var employee = new Employee();
         order.Creator = employee;
 

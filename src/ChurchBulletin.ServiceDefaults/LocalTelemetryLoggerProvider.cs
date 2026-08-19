@@ -1,19 +1,14 @@
 using Microsoft.Extensions.Logging;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Logger provider that writes log entries to the LocalTelemetryFileWriter.
 /// </summary>
-public class LocalTelemetryLoggerProvider : ILoggerProvider, ISupportExternalScope
+public class LocalTelemetryLoggerProvider(LocalTelemetryFileWriter fileWriter) : ILoggerProvider, ISupportExternalScope
 {
-    private readonly LocalTelemetryFileWriter _fileWriter;
+    private readonly LocalTelemetryFileWriter _fileWriter = fileWriter;
     private IExternalScopeProvider? _scopeProvider;
-
-    public LocalTelemetryLoggerProvider(LocalTelemetryFileWriter fileWriter)
-    {
-        _fileWriter = fileWriter;
-    }
 
     public void SetScopeProvider(IExternalScopeProvider scopeProvider)
     {
@@ -24,18 +19,11 @@ public class LocalTelemetryLoggerProvider : ILoggerProvider, ISupportExternalSco
 
     public void Dispose() { }
 
-    private class LocalTelemetryLogger : ILogger
+    private class LocalTelemetryLogger(LocalTelemetryFileWriter fileWriter, string categoryName, IExternalScopeProvider? scopeProvider) : ILogger
     {
-        private readonly LocalTelemetryFileWriter _fileWriter;
-        private readonly string _categoryName;
-        private readonly IExternalScopeProvider? _scopeProvider;
-
-        public LocalTelemetryLogger(LocalTelemetryFileWriter fileWriter, string categoryName, IExternalScopeProvider? scopeProvider)
-        {
-            _fileWriter = fileWriter;
-            _categoryName = categoryName;
-            _scopeProvider = scopeProvider;
-        }
+        private readonly LocalTelemetryFileWriter _fileWriter = fileWriter;
+        private readonly string _categoryName = categoryName;
+        private readonly IExternalScopeProvider? _scopeProvider = scopeProvider;
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {

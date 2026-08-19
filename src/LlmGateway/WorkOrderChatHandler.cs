@@ -1,5 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
-using MediatR;
+﻿using MediatR;
 using Microsoft.Extensions.AI;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
@@ -27,7 +26,7 @@ public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workO
         };
 
         IChatClient client = await factory.GetChatClient();
-        ChatResponse responseAsync = await client.GetResponseAsync(chatMessages, _chatOptions);
+        ChatResponse responseAsync = await client.GetResponseAsync(chatMessages, _chatOptions, cancellationToken);
         return responseAsync;
     }
 }

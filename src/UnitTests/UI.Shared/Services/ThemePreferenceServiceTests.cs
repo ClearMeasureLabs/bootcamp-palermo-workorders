@@ -75,16 +75,10 @@ public class ThemePreferenceServiceTests
             object?[]? args) =>
             InvokeAsync<TValue>(identifier, args);
 
-        private sealed class StubThemeModule : IJSObjectReference
+        private sealed class StubThemeModule(string theme, StubThemeJsRuntime parent) : IJSObjectReference
         {
-            private readonly StubThemeJsRuntime _parent;
-            private string _theme;
-
-            public StubThemeModule(string theme, StubThemeJsRuntime parent)
-            {
-                _theme = theme;
-                _parent = parent;
-            }
+            private readonly StubThemeJsRuntime _parent = parent;
+            private string _theme = theme;
 
             public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
             {

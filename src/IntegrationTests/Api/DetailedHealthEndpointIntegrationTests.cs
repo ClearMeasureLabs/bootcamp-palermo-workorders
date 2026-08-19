@@ -35,7 +35,7 @@ public class DetailedHealthEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/json");
+        mediaType.ShouldContain("application/json");
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
@@ -62,7 +62,7 @@ public class DetailedHealthEndpointIntegrationTests
         var payload = await response.Content.ReadFromJsonAsync<SimpleHealthResponse>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         payload.ShouldNotBeNull();
-        payload!.CurrentTimeUtc.Kind.ShouldBe(DateTimeKind.Utc);
+        payload.CurrentTimeUtc.Kind.ShouldBe(DateTimeKind.Utc);
         (DateTime.UtcNow - payload.CurrentTimeUtc).Duration().ShouldBeLessThan(TimeSpan.FromMinutes(5));
         payload.Uptime.ShouldBeGreaterThanOrEqualTo(TimeSpan.Zero);
     }
@@ -75,7 +75,7 @@ public class DetailedHealthEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/json");
+        mediaType.ShouldContain("application/json");
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
@@ -95,7 +95,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        report!.OverallStatus.ShouldBe(HealthReportBuilder.AggregateWorst(report.Components));
+        report.OverallStatus.ShouldBe(HealthReportBuilder.AggregateWorst(report.Components));
     }
 
     [Test]
@@ -107,7 +107,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        report!.CheckedAtUtc.Kind.ShouldBe(DateTimeKind.Utc);
+        report.CheckedAtUtc.Kind.ShouldBe(DateTimeKind.Utc);
         (DateTime.UtcNow - report.CheckedAtUtc).Duration().ShouldBeLessThan(TimeSpan.FromMinutes(5));
     }
 
@@ -141,7 +141,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        report!.ProcessId.ShouldBeGreaterThan(0);
+        report.ProcessId.ShouldBeGreaterThan(0);
         report.ProcessId.ShouldBe(Environment.ProcessId);
     }
 
@@ -156,7 +156,7 @@ public class DetailedHealthEndpointIntegrationTests
         doc.RootElement.TryGetProperty("osDescription", out var osDescription).ShouldBeTrue();
         var value = osDescription.GetString();
         value.ShouldNotBeNull();
-        value!.ShouldNotBeEmpty();
+        value.ShouldNotBeEmpty();
     }
 
     [Test]
@@ -168,7 +168,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        report!.OsDescription.ShouldNotBeNull();
+        report.OsDescription.ShouldNotBeNull();
         report.OsDescription.ShouldNotBeEmpty();
     }
 
@@ -183,7 +183,7 @@ public class DetailedHealthEndpointIntegrationTests
         doc.RootElement.TryGetProperty("frameworkDescription", out var frameworkDescription).ShouldBeTrue();
         var value = frameworkDescription.GetString();
         value.ShouldNotBeNull();
-        value!.ShouldNotBeEmpty();
+        value.ShouldNotBeEmpty();
     }
 
     [Test]
@@ -195,7 +195,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        report!.FrameworkDescription.ShouldNotBeNull();
+        report.FrameworkDescription.ShouldNotBeNull();
         report.FrameworkDescription.ShouldNotBeEmpty();
     }
 
@@ -221,7 +221,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        report!.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
+        report.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Test]
@@ -246,7 +246,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        report!.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
+        report.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Test]
@@ -272,7 +272,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        report!.ProcessorCount.ShouldBeGreaterThanOrEqualTo(1);
+        report.ProcessorCount.ShouldBeGreaterThanOrEqualTo(1);
         report.ProcessorCount.ShouldBe(Environment.ProcessorCount);
     }
 
@@ -297,7 +297,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        report!.Is64BitProcess.ShouldBe(Environment.Is64BitProcess);
+        report.Is64BitProcess.ShouldBe(Environment.Is64BitProcess);
     }
 
     [Test]
@@ -324,7 +324,7 @@ public class DetailedHealthEndpointIntegrationTests
         processPriority.ValueKind.ShouldBe(JsonValueKind.String);
         var value = processPriority.GetString();
         value.ShouldNotBeNull();
-        value!.ShouldNotBeEmpty();
+        value.ShouldNotBeEmpty();
         value.ShouldBe(Process.GetCurrentProcess().PriorityClass.ToString());
     }
 
@@ -337,7 +337,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        report!.ProcessPriority.ShouldNotBeNull();
+        report.ProcessPriority.ShouldNotBeNull();
         report.ProcessPriority.ShouldNotBeEmpty();
         report.ProcessPriority.ShouldBe(Process.GetCurrentProcess().PriorityClass.ToString());
     }
@@ -351,7 +351,7 @@ public class DetailedHealthEndpointIntegrationTests
         var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         report.ShouldNotBeNull();
-        var names = report!.Components.Select(c => c.Name).ToHashSet();
+        var names = report.Components.Select(c => c.Name).ToHashSet();
         names.ShouldContain("LlmGateway");
         names.ShouldContain("DataAccess");
         names.ShouldContain("Server");

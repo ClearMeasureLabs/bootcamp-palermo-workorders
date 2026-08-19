@@ -2,7 +2,6 @@ using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 
 namespace ClearMeasure.Bootcamp.McpServer;

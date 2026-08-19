@@ -13,13 +13,13 @@ public class ForecastQueryHandler : IRequestHandler<ForecastQuery, WeatherForeca
 
     private class WeatherForecastData
     {
-        private static readonly string[] Summaries = new[]
-        {
+        private static readonly string[] Summaries =
+        [
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
+        ];
 
 
-        private readonly WeatherForecast[] AllForecasts;
+        private readonly WeatherForecast[] _allForecasts;
 
         public WeatherForecastData()
         {
@@ -35,12 +35,12 @@ public class ForecastQueryHandler : IRequestHandler<ForecastQuery, WeatherForeca
                 forecasts.Add(forecast);
             }
 
-            AllForecasts = forecasts.ToArray();
+            _allForecasts = forecasts.ToArray();
         }
 
         public WeatherForecast[] GetAll()
         {
-            return AllForecasts;
+            return _allForecasts;
         }
     }
 }

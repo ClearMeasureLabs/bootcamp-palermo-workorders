@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -6,7 +7,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Background service that writes telemetry data to local text files.
@@ -26,10 +27,10 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
 
     private readonly ActivityListener _activityListener;
     private readonly MeterListener _meterListener;
-    private readonly object _tracesLock = new();
-    private readonly object _eventsLock = new();
-    private readonly object _logsLock = new();
-    private readonly object _metricsLock = new();
+    private readonly Lock _tracesLock = new();
+    private readonly Lock _eventsLock = new();
+    private readonly Lock _logsLock = new();
+    private readonly Lock _metricsLock = new();
 
     private StreamWriter? _tracesWriter;
     private StreamWriter? _eventsWriter;

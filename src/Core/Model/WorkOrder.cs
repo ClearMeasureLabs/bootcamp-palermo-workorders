@@ -20,13 +20,13 @@ public class WorkOrder : EntityBase<WorkOrder>
     public string? Description
     {
         get => _description;
-        set => _description = getTruncatedString(value);
+        set => _description = GetTruncatedString(value);
     }
 
     public string? Instructions
     {
         get => _instructions;
-        set => _instructions = getTruncatedString(value);
+        set => _instructions = GetTruncatedString(value);
     }
 
     public string? RoomNumber { get; set; } = null;
@@ -39,7 +39,7 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public string? Number { get; set; } = null!;
 
-    public string FriendlyStatus => getTextForStatus();
+    public string FriendlyStatus => GetTextForStatus();
 
 
     public DateTime? AssignedDate { get; set; }
@@ -48,7 +48,7 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public DateTime? CompletedDate { get; set; }
 
-    private string? getTruncatedString(string? value)
+    private string? GetTruncatedString(string? value)
     {
         if (value == null)
         {
@@ -59,7 +59,7 @@ public class WorkOrder : EntityBase<WorkOrder>
         return value.Substring(0, maxLength);
     }
 
-    protected string getTextForStatus()
+    protected string GetTextForStatus()
     {
         return Status.ToString();
     }

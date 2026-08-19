@@ -1,6 +1,5 @@
 using Asp.Versioning;
 using ClearMeasure.Bootcamp.Core.Model;
-using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;

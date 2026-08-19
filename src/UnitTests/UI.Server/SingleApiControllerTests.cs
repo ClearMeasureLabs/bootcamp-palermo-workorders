@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.Events;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Server.Controllers;
 using MediatR;
@@ -141,7 +142,7 @@ public class SingleApiControllerTests
         }
     }
 
-    public class NonRemotableObject
+    private class NonRemotableObject
     {
         public string Value { get; set; } = "";
     }

@@ -23,9 +23,11 @@ public class WorkOrderManageSpeechTests
     {
         using var ctx = new TestContext();
 
-        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
-        user.Id = Guid.NewGuid();
-        user.PreferredLanguage = "es-ES";
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com")
+        {
+            Id = Guid.NewGuid(),
+            PreferredLanguage = "es-ES"
+        };
 
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -54,8 +56,7 @@ public class WorkOrderManageSpeechTests
     {
         using var ctx = new TestContext();
 
-        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
-        user.Id = Guid.NewGuid();
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
 
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -84,9 +85,11 @@ public class WorkOrderManageSpeechTests
     {
         using var ctx = new TestContext();
 
-        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
-        user.Id = Guid.NewGuid();
-        user.PreferredLanguage = "es-ES";
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com")
+        {
+            Id = Guid.NewGuid(),
+            PreferredLanguage = "es-ES"
+        };
 
         var translationService = new StubTranslationService();
 

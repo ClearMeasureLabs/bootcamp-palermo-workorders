@@ -21,6 +21,6 @@ public class UpdateDatabaseCommand() : AbstractDatabaseCommand("Update")
             .Build();
 
         var result = upgradeEngine.PerformUpgrade();
-        return !result.Successful ? Fail(result?.Error?.ToString() ?? "Could not run scripts to update database.") : 0;
+        return !result.Successful ? Fail(result.Error?.ToString() ?? "Could not run scripts to update database.") : 0;
     }
 }

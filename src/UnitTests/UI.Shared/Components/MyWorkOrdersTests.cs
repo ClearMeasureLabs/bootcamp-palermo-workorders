@@ -174,7 +174,7 @@ public class MyWorkOrdersTests
     {
         public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
         {
-            if (request is WorkOrderSpecificationQuery query)
+            if (request is WorkOrderSpecificationQuery)
             {
                 var workOrders = new[]
                 {

@@ -5,16 +5,11 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.UI.Shared;
 
-public class Bus : IBus
+public class Bus(IMediator mediator) : IBus
 {
     private static readonly ActivitySource ActivitySource = new("ChurchBulletin.Application.Bus", "1.0.0");
 
-    private readonly IMediator _mediator;
-
-    public Bus(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
+    private readonly IMediator _mediator = mediator;
 
     public virtual async Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
     {

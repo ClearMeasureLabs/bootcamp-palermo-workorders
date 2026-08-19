@@ -2,12 +2,12 @@ using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using FluentValidation;
 using FluentValidation.Results;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Middleware;
 
-public sealed class WebServiceMessageValidationMiddleware
+public sealed class WebServiceMessageValidationMiddleware(
+    RequestDelegate next,
+    ILogger<WebServiceMessageValidationMiddleware> logger)
 {
     /// <summary>
     /// Matches legacy <c>api/blazor-wasm-single-api</c> and versioned <c>api/v1.0/blazor-wasm-single-api</c>.
@@ -21,16 +21,8 @@ public sealed class WebServiceMessageValidationMiddleware
             PropertyNameCaseInsensitive = true
         };
 
-    private readonly RequestDelegate _next;
-    private readonly ILogger<WebServiceMessageValidationMiddleware> _logger;
-
-    public WebServiceMessageValidationMiddleware(
-        RequestDelegate next,
-        ILogger<WebServiceMessageValidationMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
+    private readonly RequestDelegate _next = next;
+    private readonly ILogger<WebServiceMessageValidationMiddleware> _logger = logger;
 
     public async Task InvokeAsync(
         HttpContext context,
@@ -102,7 +94,7 @@ public sealed class WebServiceMessageValidationMiddleware
 
         var validateMethod = validatorInterface.GetMethod(
             "ValidateAsync",
-            new[] { payload.GetType(), typeof(CancellationToken) });
+            [payload.GetType(), typeof(CancellationToken)]);
         if (validateMethod is null)
         {
             await WriteBadRequestAsync(context, "Validation configuration error.");
@@ -111,7 +103,7 @@ public sealed class WebServiceMessageValidationMiddleware
 
         var validateTask = (Task)validateMethod.Invoke(
             payloadValidator,
-            new object?[] { payload, context.RequestAborted })!;
+            [payload, context.RequestAborted])!;
 
         await validateTask.ConfigureAwait(false);
 

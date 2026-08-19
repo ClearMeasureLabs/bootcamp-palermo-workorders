@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
 using Microsoft.AspNetCore.Components;
@@ -13,9 +13,11 @@ public partial class Login : AppComponentBase
     [Inject] public CustomAuthenticationStateProvider? AuthStateProvider { get; set; }
     [Inject] public NavigationManager? NavigationManager { get; set; }
 
+    // Qodana InconsistentNaming: declined — renaming to "LoginModel" would collide with the
+    // nested LoginModel type below, so the field keeps its current name.
     public readonly LoginModel loginModel = new();
-    public string? errorMessage;
-    public Employee[] employees = Array.Empty<Employee>();
+    public string? ErrorMessage;
+    public Employee[] Employees = Array.Empty<Employee>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -26,11 +28,11 @@ public partial class Login : AppComponentBase
     {
         try
         {
-            employees = await Bus.Send(new EmployeeGetAllQuery());
+            Employees = await Bus.Send(new EmployeeGetAllQuery());
         }
         catch (Exception ex)
         {
-            errorMessage = "Error loading employees: " + ex.Message;
+            ErrorMessage = "Error loading employees: " + ex.Message;
         }
     }
 
@@ -46,12 +48,12 @@ public partial class Login : AppComponentBase
     {
         if (string.IsNullOrEmpty(loginModel.Username))
         {
-            errorMessage = "Please select an employee";
+            ErrorMessage = "Please select an employee";
             return;
         }
 
         // Find the selected employee
-        var selectedEmployee = employees.FirstOrDefault(e => e.UserName == loginModel.Username);
+        var selectedEmployee = Employees.FirstOrDefault(e => e.UserName == loginModel.Username);
         if (selectedEmployee != null)
         {
             // Successful login
@@ -63,7 +65,7 @@ public partial class Login : AppComponentBase
         else
         {
             // Failed login
-            errorMessage = "Invalid employee selection";
+            ErrorMessage = "Invalid employee selection";
         }
     }
 

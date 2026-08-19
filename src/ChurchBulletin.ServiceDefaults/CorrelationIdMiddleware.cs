@@ -2,22 +2,16 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace ClearMeasure.Bootcamp.ServiceDefaults;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Ensures each HTTP request has a correlation identifier for logging, tracing, and response headers.
 /// </summary>
-public sealed class CorrelationIdMiddleware
+public sealed class CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)
 {
     private const int MaxIncomingLength = 128;
-    private readonly RequestDelegate _next;
-    private readonly ILogger<CorrelationIdMiddleware> _logger;
-
-    public CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
+    private readonly RequestDelegate _next = next;
+    private readonly ILogger<CorrelationIdMiddleware> _logger = logger;
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -38,7 +32,7 @@ public sealed class CorrelationIdMiddleware
         if (context.Request.Headers.TryGetValue(CorrelationIdConstants.HeaderName, out var fromHeader))
         {
             var id = fromHeader.ToString().Trim();
-            if (id.Length > 0 && id.Length <= MaxIncomingLength)
+            if (id.Length is > 0 and <= MaxIncomingLength)
             {
                 return id;
             }

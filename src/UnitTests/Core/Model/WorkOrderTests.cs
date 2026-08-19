@@ -22,8 +22,7 @@ public class WorkOrderTests
     [Test]
     public void ToStringShouldReturnWoNumber()
     {
-        var order = new WorkOrder();
-        order.Number = "456";
+        var order = new WorkOrder { Number = "456" };
         Assert.That(order.ToString(), Is.EqualTo("Work Order 456"));
     }
 
@@ -34,9 +33,6 @@ public class WorkOrderTests
         var guid = Guid.NewGuid();
         var creator = new Employee();
         var assignee = new Employee();
-        var createdDate = new DateTime(2000, 1, 1);
-        var completedDate = new DateTime(2000, 10, 1);
-        var auditDate = new DateTime(2000, 1, 1, 8, 0, 0);
 
         workOrder.Id = guid;
         workOrder.Title = "Title";
@@ -60,8 +56,7 @@ public class WorkOrderTests
     [Test]
     public void ShouldShowFriendlyStatusValuesAsStrings()
     {
-        var workOrder = new WorkOrder();
-        workOrder.Status = WorkOrderStatus.Assigned;
+        var workOrder = new WorkOrder { Status = WorkOrderStatus.Assigned };
 
         Assert.That(workOrder.FriendlyStatus, Is.EqualTo("Assigned"));
     }
@@ -70,8 +65,7 @@ public class WorkOrderTests
     public void ShouldTruncateTo4000CharactersOnDescription()
     {
         var longText = new string('x', 4001);
-        var order = new WorkOrder();
-        order.Description = longText;
+        var order = new WorkOrder { Description = longText };
         Assert.That(order.Description.Length, Is.EqualTo(4000));
     }
 
@@ -79,16 +73,14 @@ public class WorkOrderTests
     public void ShouldTruncateTo4000CharactersOnInstructions()
     {
         var longText = new string('x', 4001);
-        var order = new WorkOrder();
-        order.Instructions = longText;
+        var order = new WorkOrder { Instructions = longText };
         Assert.That(order.Instructions.Length, Is.EqualTo(4000));
     }
 
     [Test]
     public void ShouldReturnEmptyStringWhenInstructionsSetToNull()
     {
-        var order = new WorkOrder();
-        order.Instructions = null;
+        var order = new WorkOrder { Instructions = null };
         Assert.That(order.Instructions, Is.EqualTo(string.Empty));
     }
 
@@ -101,8 +93,7 @@ public class WorkOrderTests
     [Test]
     public void ShouldChangeStatus()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
+        var order = new WorkOrder { Status = WorkOrderStatus.Draft };
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }

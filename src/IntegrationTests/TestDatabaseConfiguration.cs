@@ -3,14 +3,9 @@ using Microsoft.Extensions.Configuration;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 
-public class TestDatabaseConfiguration : IDatabaseConfiguration
+public class TestDatabaseConfiguration(IConfiguration configuration) : IDatabaseConfiguration
 {
-    private readonly IConfiguration _configuration;
-
-    public TestDatabaseConfiguration(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
+    private readonly IConfiguration _configuration = configuration;
 
     public string GetConnectionString()
     {

@@ -173,11 +173,9 @@ public class WorkOrderManageDictationTests
         using var ctx = new TestContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
 
-        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
-        user.Id = Guid.NewGuid();
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
 
-        var creator = new Employee("someoneelse", "Someone", "Else", "se@example.com");
-        creator.Id = Guid.NewGuid();
+        var creator = new Employee("someoneelse", "Someone", "Else", "se@example.com") { Id = Guid.NewGuid() };
 
         var completedWorkOrder = new WorkOrder
         {
@@ -216,9 +214,11 @@ public class WorkOrderManageDictationTests
         var ctx = new TestContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
 
-        user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
-        user.Id = Guid.NewGuid();
-        user.PreferredLanguage = "es-ES";
+        user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com")
+        {
+            Id = Guid.NewGuid(),
+            PreferredLanguage = "es-ES"
+        };
 
         ctx.Services.AddSingleton<IBus>(new StubBus(null));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());

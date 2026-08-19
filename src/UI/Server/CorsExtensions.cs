@@ -38,6 +38,6 @@ public static class CorsExtensions
     public static bool IsServerCorsActive(this IServiceProvider services)
     {
         var options = services.GetRequiredService<IOptions<ServerCorsOptions>>().Value;
-        return options.Enabled && options.AllowedOrigins.Length > 0;
+        return options is { Enabled: true, AllowedOrigins.Length: > 0 };
     }
 }

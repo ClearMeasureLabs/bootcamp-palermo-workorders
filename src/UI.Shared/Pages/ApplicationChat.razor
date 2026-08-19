@@ -1,12 +1,9 @@
 @page "/ai-agent"
 @inherits AppComponentBase
-@using ClearMeasure.Bootcamp.Core.Model
-@using ClearMeasure.Bootcamp.Core.Queries
 @using ClearMeasure.Bootcamp.LlmGateway
-@using ClearMeasure.Bootcamp.UI.Shared.Authentication
 @using Microsoft.JSInterop
 @inject CustomAuthenticationStateProvider AuthStateProvider
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 
 <PageTitle>AI Agent - Work Order Assistant</PageTitle>
 
@@ -78,7 +75,7 @@
             _shouldScrollToBottom = false;
             try
             {
-                await JS.InvokeVoidAsync("scrollToBottom", _chatHistoryRef);
+                await Js.InvokeVoidAsync("scrollToBottom", _chatHistoryRef);
             }
             catch (JSDisconnectedException) { }
             catch (JSException) { }
@@ -108,7 +105,7 @@
             var query = new ApplicationChatQuery(userMessage, currentUserName) { ChatHistory = chatHistory };
             var response = await Bus.Send(query);
 
-            var aiContent = response.Text ?? "No response received.";
+            var aiContent = response.Text;
             _chatMessages.Add(new ChatMessage { Content = aiContent, IsUser = false });
         }
         catch (Exception ex)
@@ -133,8 +130,8 @@
 
     private class ChatMessage
     {
-        public string Content { get; set; } = "";
-        public bool IsUser { get; set; }
+        public string Content { get; init; } = "";
+        public bool IsUser { get; init; }
     }
 
     public enum Elements

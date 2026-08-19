@@ -13,5 +13,5 @@ public class EmployeeSpecification
         CanFulfill = canFulfill;
     }
 
-    public bool CanFulfill { get; set; }
+    public bool CanFulfill { get; }
 }

@@ -2,8 +2,6 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using MediatR;
 
-namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
+namespace ClearMeasure.Bootcamp.Core.Queries;
 
-public class EmployeeGetAllQuery : IRequest<Employee[]>, IRemotableRequest
-{
-}
+public class EmployeeGetAllQuery : IRequest<Employee[]>, IRemotableRequest;

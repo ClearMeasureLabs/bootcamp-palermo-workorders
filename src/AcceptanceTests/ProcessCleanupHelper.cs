@@ -20,14 +20,14 @@ public static class ProcessCleanupHelper
         {
             if (!process.HasExited)
             {
-                TestContext.Out.WriteLine($"Stopping process {process.Id}...");
+                await TestContext.Out.WriteLineAsync($"Stopping process {process.Id}...");
                 process.Kill(true);
                 await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
             }
         }
         catch (Exception ex)
         {
-            TestContext.Out.WriteLine($"Error killing process: {ex.Message}");
+            await TestContext.Out.WriteLineAsync($"Error killing process: {ex.Message}");
         }
         finally
         {
@@ -52,7 +52,7 @@ public static class ProcessCleanupHelper
             }
             catch (Exception ex)
             {
-                TestContext.Out.WriteLine($"Error killing server process: {ex.Message}");
+                await TestContext.Out.WriteLineAsync($"Error killing server process: {ex.Message}");
             }
             finally
             {

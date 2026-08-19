@@ -11,7 +11,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 /// Enforces sliding-window limits for endpoints marked with <see cref="EnableRateLimitingAttribute"/> using
 /// <see cref="ApiRateLimiting.PolicyName"/>, and adds standard rate-limit response headers.
 /// </summary>
-public sealed class RateLimitingMiddleware
+public sealed class RateLimitingMiddleware(
+    RequestDelegate next,
+    IOptionsMonitor<ApiRateLimitingOptions> optionsMonitor,
+    PartitionedRateLimiter<HttpContext> limiter)
 {
     /// <summary>Response header: configured permit limit for the window.</summary>
     public const string HeaderLimit = "X-RateLimit-Limit";
@@ -20,21 +23,11 @@ public sealed class RateLimitingMiddleware
     public const string HeaderRemaining = "X-RateLimit-Remaining";
 
     /// <summary>Response header: Unix timestamp when the window fully resets.</summary>
-    public const string HeaderReset = "X-RateLimit-Reset";
+    private const string HeaderReset = "X-RateLimit-Reset";
 
-    private readonly RequestDelegate _next;
-    private readonly IOptionsMonitor<ApiRateLimitingOptions> _optionsMonitor;
-    private readonly PartitionedRateLimiter<HttpContext> _limiter;
-
-    public RateLimitingMiddleware(
-        RequestDelegate next,
-        IOptionsMonitor<ApiRateLimitingOptions> optionsMonitor,
-        PartitionedRateLimiter<HttpContext> limiter)
-    {
-        _next = next;
-        _optionsMonitor = optionsMonitor;
-        _limiter = limiter;
-    }
+    private readonly RequestDelegate _next = next;
+    private readonly IOptionsMonitor<ApiRateLimitingOptions> _optionsMonitor = optionsMonitor;
+    private readonly PartitionedRateLimiter<HttpContext> _limiter = limiter;
 
     public async Task InvokeAsync(HttpContext context)
     {

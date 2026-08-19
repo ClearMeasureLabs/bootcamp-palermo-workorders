@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -10,10 +9,9 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Serilog;
-using Serilog.AspNetCore;
 using System.Diagnostics;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 public static class Extensions
 {
@@ -49,7 +47,7 @@ public static class Extensions
     /// <summary>
     /// Configures OpenTelemetry for the application, including logging, metrics, and tracing.
     /// </summary>
-    public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    private static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.Logging.AddOpenTelemetry(logging =>
         {
@@ -104,7 +102,7 @@ public static class Extensions
     /// If the OTEL_EXPORTER_OTLP_ENDPOINT environment variable is set, the OTLP exporter will be used.
     /// If ApplicationInsights:ConnectionString is configured, the Azure Monitor exporter will be used.
     /// </summary>
-    public static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder, OpenTelemetryBuilder otelBuilder) where TBuilder : IHostApplicationBuilder
+    private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder, OpenTelemetryBuilder otelBuilder) where TBuilder : IHostApplicationBuilder
     {
         var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
 
@@ -126,7 +124,7 @@ public static class Extensions
     /// <summary>
     /// Adds default health checks to the service.
     /// </summary>
-    public static TBuilder AddDefaultHealthChecks<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    private static TBuilder AddDefaultHealthChecks<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.Services
             .AddHealthChecks()

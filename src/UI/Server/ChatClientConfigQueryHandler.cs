@@ -1,7 +1,5 @@
 ﻿using ClearMeasure.Bootcamp.LlmGateway;
-using ClearMeasure.Bootcamp.UI.Client;
 using MediatR;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
 

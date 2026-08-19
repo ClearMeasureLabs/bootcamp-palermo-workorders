@@ -1,4 +1,3 @@
-using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared;
 using MediatR;
@@ -10,7 +9,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.LlmGateway;
 public class TranslationServiceTests
 {
     [Test]
-    public async Task ShouldReturnOriginalTextWhenTargetLanguageIsEnUS()
+    public async Task ShouldReturnOriginalTextWhenTargetLanguageIsEnUs()
     {
         var bus = new StubBus(available: true);
         var factory = new ChatClientFactory(bus);

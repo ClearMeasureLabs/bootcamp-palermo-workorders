@@ -13,7 +13,13 @@ public partial class TranslationService(ChatClientFactory chatClientFactory) : I
     {
         if (string.IsNullOrEmpty(text))
         {
+            // Qodana NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract false
+            // positive: MediatR/remote request deserialization can pass a null text value
+            // regardless of the non-nullable parameter annotation (see
+            // ShouldReturnOriginalTextWhenInputIsNull). Null-coalescing retained intentionally.
+#pragma warning disable CS8073, CS8825
             return text ?? string.Empty;
+#pragma warning restore CS8073, CS8825
         }
 
         if (targetLanguageCode == "en-US")

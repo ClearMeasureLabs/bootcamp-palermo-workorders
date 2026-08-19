@@ -42,10 +42,5 @@ public class ApiResponseCompressionWebTests
     /// <summary>
     /// Prevents <see cref="HttpClient"/> from stripping <c>Content-Encoding</c> so tests can assert compression headers.
     /// </summary>
-    private sealed class DecompressionHandler : DelegatingHandler
-    {
-        public DecompressionHandler() : base(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None })
-        {
-        }
-    }
+    private sealed class DecompressionHandler() : DelegatingHandler(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None });
 }

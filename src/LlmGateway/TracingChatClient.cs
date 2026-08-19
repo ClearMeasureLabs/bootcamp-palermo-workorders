@@ -17,13 +17,15 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         ChatOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        var messagesArray = messages.ToArray();
+
         using var activity = StartActivity("ChatClient.GetResponseAsync");
-        activity?.SetTag("chat.prompt", GetLastUserMessage(messages));
+        activity?.SetTag("chat.prompt", GetLastUserMessage(messagesArray));
         activity?.AddEvent(new ActivityEvent("request.sent"));
 
         try
         {
-            var response = await base.GetResponseAsync(messages, options, cancellationToken);
+            var response = await base.GetResponseAsync(messagesArray, options, cancellationToken);
             activity?.AddEvent(new ActivityEvent("response.received"));
             activity?.SetTag("chat.model", response.ModelId);
             activity?.SetTag("chat.response", response.Text);
@@ -48,8 +50,10 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         ChatOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        var messagesArray = messages.ToArray();
+
         using var activity = StartActivity("ChatClient.GetStreamingResponseAsync");
-        activity?.SetTag("chat.prompt", GetLastUserMessage(messages));
+        activity?.SetTag("chat.prompt", GetLastUserMessage(messagesArray));
         activity?.AddEvent(new ActivityEvent("request.sent"));
 
         ChatResponseUpdate? lastUpdate = null;
@@ -58,7 +62,7 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         ChatResponseUpdate update;
 
         await using var enumerator = base
-            .GetStreamingResponseAsync(messages, options, cancellationToken)
+            .GetStreamingResponseAsync(messagesArray, options, cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
 
         while (true)

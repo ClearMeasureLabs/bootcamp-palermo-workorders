@@ -1,7 +1,4 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Timeouts;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
@@ -25,14 +22,9 @@ public static class ApiRequestTimeoutsExtensions
         return services;
     }
 
-    private sealed class ConfigureApiRequestTimeoutPolicyOptions : IConfigureOptions<RequestTimeoutOptions>
+    private sealed class ConfigureApiRequestTimeoutPolicyOptions(IOptions<ApiRequestTimeoutOptions> apiOptions) : IConfigureOptions<RequestTimeoutOptions>
     {
-        private readonly IOptions<ApiRequestTimeoutOptions> _apiOptions;
-
-        public ConfigureApiRequestTimeoutPolicyOptions(IOptions<ApiRequestTimeoutOptions> apiOptions)
-        {
-            _apiOptions = apiOptions;
-        }
+        private readonly IOptions<ApiRequestTimeoutOptions> _apiOptions = apiOptions;
 
         public void Configure(RequestTimeoutOptions options)
         {

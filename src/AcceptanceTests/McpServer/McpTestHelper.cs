@@ -1,8 +1,5 @@
-using ClearMeasure.Bootcamp.AcceptanceTests;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 
@@ -23,7 +20,7 @@ public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
     public async Task ConnectAsync()
     {
         var mcpUrl = ServerFixture.ApplicationBaseUrl + "/mcp";
-        TestContext.Out.WriteLine($"McpTestHelper: connecting to {mcpUrl}");
+        await TestContext.Out.WriteLineAsync($"McpTestHelper: connecting to {mcpUrl}");
 
         var handler = new HttpClientHandler
         {
@@ -42,7 +39,7 @@ public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
         _client = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
         _tools = await _client.ListToolsAsync(cancellationToken: cts.Token);
 
-        TestContext.Out.WriteLine($"McpTestHelper: connected, {_tools.Count} tools discovered");
+        await TestContext.Out.WriteLineAsync($"McpTestHelper: connected, {_tools.Count} tools discovered");
     }
 
     public async Task<string> CallToolDirectly(string toolName, Dictionary<string, object?> arguments)

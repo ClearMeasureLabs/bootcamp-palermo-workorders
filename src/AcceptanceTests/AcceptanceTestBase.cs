@@ -1,13 +1,11 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using System.Collections.Concurrent;
-using System.Globalization;
 using Login = ClearMeasure.Bootcamp.UI.Shared.Pages.Login;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests;
@@ -34,9 +32,9 @@ public abstract class AcceptanceTestBase
 {
     private static readonly ConcurrentDictionary<string, TestState> TestStates = new();
     
-    protected virtual bool? Headless { get; set; } = ServerFixture.HeadlessTestBrowser;
-    protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
-    public IBus Bus => TestHost.GetRequiredService<IBus>();
+    protected virtual bool? Headless { get; } = ServerFixture.HeadlessTestBrowser;
+    protected virtual bool SkipScreenshotsForSpeed { get; } = ServerFixture.SkipScreenshotsForSpeed;
+    protected IBus Bus => TestHost.GetRequiredService<IBus>();
 
     protected static async Task SkipIfNoChatClient()
     {
@@ -161,9 +159,16 @@ public abstract class AcceptanceTestBase
             // Ignore tracing errors during teardown
         }
 
-        try { await state.Page.CloseAsync(); } catch { }
-        try { await state.BrowserContext.CloseAsync(); } catch { }
-        try { await state.Browser.CloseAsync(); } catch { }
+        // Best-effort teardown: closing an already-closed/crashed Playwright object throws;
+        // logging (not rethrowing) avoids masking the actual test result during cleanup.
+        try { await state.Page.CloseAsync(); }
+        catch (Exception ex) { TestContext.Progress.WriteLine($"TearDownAsync: Page.CloseAsync failed: {ex}"); }
+
+        try { await state.BrowserContext.CloseAsync(); }
+        catch (Exception ex) { TestContext.Progress.WriteLine($"TearDownAsync: BrowserContext.CloseAsync failed: {ex}"); }
+
+        try { await state.Browser.CloseAsync(); }
+        catch (Exception ex) { TestContext.Progress.WriteLine($"TearDownAsync: Browser.CloseAsync failed: {ex}"); }
     }
 
     /// <summary>

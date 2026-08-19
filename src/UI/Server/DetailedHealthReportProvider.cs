@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ClearMeasure.Bootcamp.UI.Api;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
 

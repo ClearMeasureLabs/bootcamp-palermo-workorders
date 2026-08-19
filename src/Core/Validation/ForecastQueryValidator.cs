@@ -3,6 +3,4 @@ using FluentValidation;
 
 namespace ClearMeasure.Bootcamp.Core.Validation;
 
-public sealed class ForecastQueryValidator : AbstractValidator<ForecastQuery>
-{
-}
+public sealed class ForecastQueryValidator : AbstractValidator<ForecastQuery>;
