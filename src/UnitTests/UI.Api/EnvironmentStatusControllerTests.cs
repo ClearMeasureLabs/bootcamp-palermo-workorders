@@ -47,17 +47,18 @@ public class EnvironmentStatusControllerTests
     {
         const string varName = "8457_CTRL_REDACT";
         const string secret = "controller-secret-8457";
-        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "RedactTest8457");
+        const string aspNetCoreSecret = "asp-net-core-secret-8457";
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", aspNetCoreSecret);
         Environment.SetEnvironmentVariable(varName, secret);
         try
         {
             var options = new EnvironmentStatusOptions { MonitoredVariables = [varName] };
-            var controller = CreateController("RedactTest8457", options);
+            var controller = CreateController("UnitTestHostEnv", options);
 
             var result = controller.Get();
             var content = result.ShouldBeOfType<ContentResult>();
             content.Content!.ShouldNotContain(secret);
-            content.Content!.ShouldNotContain("RedactTest8457");
+            content.Content!.ShouldNotContain(aspNetCoreSecret);
             content.Content!.ShouldContain(EnvironmentStatusBuilder.RedactedValue);
 
             var payload = JsonSerializer.Deserialize<EnvironmentStatusResponse>(
