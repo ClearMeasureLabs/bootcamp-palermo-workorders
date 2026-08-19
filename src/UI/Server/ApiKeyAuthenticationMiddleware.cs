@@ -81,16 +81,37 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
                    || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
         }
 
+        if (IsPublicToolsTimestampConverterPath(segments))
+        {
+            return true;
+        }
+
         if (segments.Length >= 3
             && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase))
         {
             var leaf = segments[2];
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+                   || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase)
+                   || IsPublicToolsTimestampConverterPath(segments);
         }
 
         return false;
+    }
+
+    private static bool IsPublicToolsTimestampConverterPath(string[] segments)
+    {
+        if (segments.Length == 3
+            && segments[1].Equals("tools", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("timestamp-converter", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return segments.Length == 4
+               && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase)
+               && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
+               && segments[3].Equals("timestamp-converter", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool FixedTimeEqualsUtf8(string expected, string provided)
