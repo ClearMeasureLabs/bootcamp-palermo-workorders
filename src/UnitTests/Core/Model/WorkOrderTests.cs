@@ -93,6 +93,12 @@ public class WorkOrderTests
     }
 
     [Test]
+    public void InstructionsMaxLength_ShouldBe4000()
+    {
+        Assert.That(WorkOrder.InstructionsMaxLength, Is.EqualTo(4000));
+    }
+
+    [Test]
     public void ShouldChangeStatus()
     {
         var order = new WorkOrder();

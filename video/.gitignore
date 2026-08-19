@@ -1,3 +1,4 @@
 node_modules/
 out/*
 !out/room-number-900.mp4
+!out/instructions-field.mp4

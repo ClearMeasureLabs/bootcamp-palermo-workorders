@@ -20,3 +20,18 @@ Composition id: `RoomNumber900`. 1920×1080, 30 fps. Scenes live in `src/roomNum
 npm start     # Remotion Studio
 npm run render  # writes out/qodana-remediation.mp4
 ```
+
+## Instructions field (#8287)
+
+Narrated before/after of the optional 4,000-character Instructions field added to the
+Work Order edit screen below Description.
+
+```
+npm install
+npm run narration:instructions   # TTS into public/audio/instructions-*.mp3
+npm run render:instructions      # writes out/instructions-field.mp4
+```
+
+Composition id: `InstructionsField`. 1920×1080, 30 fps. Scenes live in
+`src/instructionsFieldVideo.tsx`; narration text lives in
+`scripts/generate-instructions-narration.cjs`.
