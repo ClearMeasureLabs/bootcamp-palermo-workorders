@@ -17,7 +17,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 public class HelloController : ControllerBase
 {
     /// <summary>
-    /// Returns a greeting JSON payload for reachability checks.
+    /// Returns a JSON greeting for reachability checks.
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
