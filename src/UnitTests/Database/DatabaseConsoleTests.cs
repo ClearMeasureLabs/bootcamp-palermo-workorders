@@ -1,7 +1,6 @@
 using ClearMeasure.Bootcamp.Database.Console;
 using Microsoft.Data.SqlClient;
 using Shouldly;
-using Spectre.Console.Cli;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Database;
 

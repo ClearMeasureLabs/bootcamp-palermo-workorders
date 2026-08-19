@@ -23,7 +23,7 @@ public static class DatabaseConnectionStringBuilder
         var serverName = (options.DatabaseServer ?? string.Empty).Trim();
         var isLocalServer = IsLocalServer(serverName);
         var isLocalDb = IsLocalDb(serverName);
-        var dataSource = FormatDataSource(options.DatabaseServer ?? string.Empty, isLocalDb);
+        var dataSource = FormatDataSource(serverName, isLocalDb);
 
         var builder = new SqlConnectionStringBuilder
         {
@@ -71,12 +71,12 @@ public static class DatabaseConnectionStringBuilder
     {
         if (isLocalServer)
         {
-            builder.Encrypt = false;
+            builder.Encrypt = SqlConnectionEncryptOption.Optional;
             builder.TrustServerCertificate = true;
             return;
         }
 
-        builder.Encrypt = true;
+        builder.Encrypt = SqlConnectionEncryptOption.Mandatory;
         builder.TrustServerCertificate = false;
     }
 
