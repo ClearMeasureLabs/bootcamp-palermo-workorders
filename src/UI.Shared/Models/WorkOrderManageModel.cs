@@ -30,5 +30,6 @@ public class WorkOrderManageModel
 
     public string? CreatedDate { get; set; }
 
+    [StringLength(WorkOrder.RoomNumberMaxLength, ErrorMessage = "Room cannot exceed 900 characters.")]
     public string? RoomNumber { get; set; }
 }
