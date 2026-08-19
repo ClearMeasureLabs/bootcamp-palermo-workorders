@@ -73,6 +73,11 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return false;
         }
 
+        if (IsPublicToolsTimestampConverterPath(segments))
+        {
+            return true;
+        }
+
         if (segments.Length == 2)
         {
             var leaf = segments[1];
@@ -88,6 +93,26 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
             return leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
                    || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
+    }
+
+    private static bool IsPublicToolsTimestampConverterPath(string[] segments)
+    {
+        if (segments.Length == 3
+            && segments[1].Equals("tools", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("timestamp-converter", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (segments.Length == 4
+            && segments[1].StartsWith("v", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
+            && segments[3].Equals("timestamp-converter", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
         }
 
         return false;
