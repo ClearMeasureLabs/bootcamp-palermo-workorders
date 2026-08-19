@@ -15,6 +15,15 @@
 .PARAMETER SkipTests
   Skip test run; reuse existing Cobertura files under OutputDir/TestResults.
 
+.PARAMETER AllowPartialCoverage
+  Continue when dotnet test exits non-zero. Default is to fail — acceptance tests
+  must pass. Use only when diagnosing coverage from a partial run.
+
+.PARAMETER RepoRoot
+  Repository root containing src/ChurchBulletin.sln. Defaults to the directory that
+  contains the skill (three levels above scripts/). When using a git worktree, pass
+  the worktree path explicitly or run the script from that directory.
+
 .PARAMETER Configuration
   dotnet build/test configuration. Default Release.
 #>
@@ -23,12 +32,25 @@ param(
     [string]$OutputDir = "crap-metrics",
     [int]$Threshold = 30,
     [switch]$SkipTests,
+    [switch]$AllowPartialCoverage,
+    [string]$RepoRoot = "",
     [string]$Configuration = "Release"
 )
 
 $ErrorActionPreference = "Stop"
-$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../../..")).Path
-Set-Location $repoRoot
+if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
+    $cwdRoot = (Get-Location).Path
+    if (Test-Path (Join-Path $cwdRoot "src/ChurchBulletin.sln")) {
+        $RepoRoot = $cwdRoot
+    }
+    else {
+        $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../../..")).Path
+    }
+}
+else {
+    $RepoRoot = (Resolve-Path $RepoRoot).Path
+}
+Set-Location $RepoRoot
 
 function Ensure-Tool {
     param([string]$PackageId, [string]$Command, [string]$Version)
@@ -40,23 +62,38 @@ function Ensure-Tool {
 Ensure-Tool -PackageId "crap4dotnet" -Command "dotnet-crap" -Version "0.1.1"
 Ensure-Tool -PackageId "dotnet-script" -Command "dotnet-script" -Version "1.6.0"
 
-$outPath = Join-Path $repoRoot $OutputDir
-$testResults = Join-Path $outPath "TestResults"
+$outPath = Join-Path $RepoRoot $OutputDir
 New-Item -ItemType Directory -Force -Path $outPath | Out-Null
+$testResults = Join-Path $outPath "TestResults"
 
 if (-not $SkipTests) {
-    Write-Host "Running tests with XPlat Code Coverage ..."
-    New-Item -ItemType Directory -Force -Path $testResults | Out-Null
-    $testArgs = @(
-        "test", $Solution,
-        "--configuration", $Configuration,
-        "--collect:XPlat Code Coverage",
-        "--results-directory", $testResults
-    )
-    & dotnet @testArgs
-    $testExit = $LASTEXITCODE
-    if ($testExit -ne 0) {
-        Write-Warning "dotnet test exited $testExit — continuing with partial coverage if Cobertura files exist."
+    Write-Host "Running build.ps1 test pipeline (Init -> Compile -> Unit -> Integration -> Acceptance) ..."
+    Push-Location $RepoRoot
+    try {
+        . (Join-Path $RepoRoot "build.ps1")
+
+        Resolve-DatabaseEngine
+        if ($script:databaseEngine -ne "SQLite") {
+            $script:databaseName = Get-ResolvedDatabaseName -explicitName "" -baseName $projectName -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
+        }
+
+        Init
+        Compile
+        UnitTests
+        Setup-DatabaseForBuild
+        IntegrationTest
+        AcceptanceTests
+    }
+    finally {
+        Pop-Location
+    }
+
+    $testResults = Join-Path $RepoRoot "build/test"
+}
+else {
+    $testResults = Join-Path $outPath "TestResults"
+    if (-not (Test-Path $testResults)) {
+        $testResults = Join-Path $RepoRoot "build/test"
     }
 }
 
@@ -69,7 +106,7 @@ Write-Host "Found $($coverageFiles.Count) Cobertura file(s)."
 
 $reportJson = Join-Path $outPath "crap-report.json"
 $crapArgs = @(
-    "analyze", (Join-Path $repoRoot $Solution),
+    "analyze", (Join-Path $RepoRoot $Solution),
     "--threshold", $Threshold,
     "--output", $reportJson
 )
