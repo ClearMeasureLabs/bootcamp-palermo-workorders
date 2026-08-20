@@ -52,6 +52,28 @@ public class CrapGateEvaluatorTests
     }
 
     [Test]
+    public void EvaluateReport_WhenProductionCrapIs13_Threshold12RejectsAndThreshold13Accepts()
+    {
+        var json = """
+            {
+              "threshold": 12,
+              "methods": [
+                {
+                  "fullName": "ClearMeasure.Bootcamp.Core.Model.WorkOrder.ChangeStatus",
+                  "filePath": "D:/repo/src/Core/Model/WorkOrder.cs",
+                  "crap": 13,
+                  "complexity": 13,
+                  "coverage": 100
+                }
+              ]
+            }
+            """;
+
+        CrapGateEvaluator.EvaluateReport(json, threshold: 12).ViolationCount.ShouldBe(1);
+        CrapGateEvaluator.EvaluateReport(json, threshold: 13).ViolationCount.ShouldBe(0);
+    }
+
+    [Test]
     public void RollupScript_WhenRead_ContainsProductionExclusionTokens()
     {
         var scriptPath = FindRollupScript();
