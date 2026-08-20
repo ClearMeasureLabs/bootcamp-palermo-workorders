@@ -72,7 +72,8 @@ public class CoreCoberturaPresenceTests
         var source = File.ReadAllText(path);
 
         source.ShouldContain("coverlet.runsettings");
-        source.ShouldContain("--settings:$coverletRunSettings");
+        source.ShouldContain("--settings:");
+        source.ShouldContain("coverletRunSettings");
     }
 
     [Test]

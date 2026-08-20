@@ -69,7 +69,7 @@
 	<!-- Coverlet/Cecil cannot instrument Core.dll unless HealthChecks.Abstractions (and siblings) sit beside it. -->
 	<Target Name="CopyCoreCoverletResolutionAssemblies" AfterTargets="Build">
 		<PropertyGroup>
-			<_CoreOutDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\Core\bin\$(Configuration)\$(TargetFramework)\'))</_CoreOutDir>
+			<_CoreOutDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../Core/bin/$(Configuration)/$(TargetFramework)/'))</_CoreOutDir>
 		</PropertyGroup>
 		<ItemGroup>
 			<_CoreCoverletDep Include="$(_CoreOutDir)Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll" Condition="Exists('$(_CoreOutDir)Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll')" />
