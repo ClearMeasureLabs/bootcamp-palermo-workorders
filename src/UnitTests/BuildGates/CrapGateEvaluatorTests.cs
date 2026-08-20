@@ -94,6 +94,27 @@ public class CrapGateEvaluatorTests
     }
 
     [Test]
+    public void RollupScript_WriteSummary_UsesProductionGateStatsNotWholeSolutionStats()
+    {
+        var source = File.ReadAllText(FindRollupScript());
+        var writeSummaryStart = source.IndexOf("static async Task WriteSummaryAsync", StringComparison.Ordinal);
+        writeSummaryStart.ShouldBeGreaterThan(-1);
+        var writeSummaryEnd = source.IndexOf("static double Median", writeSummaryStart, StringComparison.Ordinal);
+        writeSummaryEnd.ShouldBeGreaterThan(writeSummaryStart);
+        var writeSummary = source.Substring(writeSummaryStart, writeSummaryEnd - writeSummaryStart);
+
+        writeSummary.ShouldContain("## Production gate stats");
+        writeSummary.ShouldContain("Out-of-scope paths");
+        writeSummary.ShouldContain("IsProductionFile(m.FilePath)");
+        writeSummary.ShouldNotContain("## Solution stats");
+        writeSummary.ShouldNotContain("report.Stats.MethodCount");
+        writeSummary.ShouldNotContain("report.Stats.CrappyMethodCount");
+        writeSummary.ShouldNotContain("report.Stats.AverageCrap");
+        writeSummary.ShouldNotContain("report.Stats.MedianCrap");
+        writeSummary.ShouldNotContain("report.Stats.TotalCrapLoad");
+    }
+
+    [Test]
     public void AuditScript_WhenRead_PrependsDotnetToolsToPath()
     {
         var dir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);

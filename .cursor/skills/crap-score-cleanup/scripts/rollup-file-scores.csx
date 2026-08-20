@@ -239,6 +239,17 @@ static string Csv(string value) =>
 static async Task WriteSummaryAsync(string path, CrapReport report, List<FileScore> files, int threshold)
 {
     var prod = files.Where(f => f.IsProduction).ToList();
+    var prodMethods = report.Methods
+        .Where(m => IsProductionFile(m.FilePath))
+        .ToList();
+    var methodCount = prodMethods.Count;
+    var crappyMethods = prodMethods.Where(m => m.Crap > threshold).ToList();
+    var crappyCount = crappyMethods.Count;
+    var crappyPercent = methodCount == 0 ? 0.0 : 100.0 * crappyCount / methodCount;
+    var averageCrap = methodCount == 0 ? 0.0 : prodMethods.Average(m => m.Crap);
+    var medianCrap = Median(prodMethods.Select(m => m.Crap).ToList());
+    var totalCrapLoad = crappyMethods.Sum(m => Math.Max(0, m.Crap - threshold));
+
     var sb = new StringBuilder();
     sb.AppendLine("# CRAP Score Summary");
     sb.AppendLine();
@@ -246,12 +257,13 @@ static async Task WriteSummaryAsync(string path, CrapReport report, List<FileSco
     sb.AppendLine($"**Generated:** {report.Timestamp:u}");
     sb.AppendLine($"**Threshold:** {threshold}");
     sb.AppendLine();
-    sb.AppendLine("## Solution stats");
-    sb.AppendLine($"- Methods analyzed: {report.Stats.MethodCount}");
-    sb.AppendLine($"- CRAPpy methods: {report.Stats.CrappyMethodCount} ({report.Stats.CrappyMethodPercent:F1}%)");
-    sb.AppendLine($"- Average CRAP: {report.Stats.AverageCrap:F1}");
-    sb.AppendLine($"- Median CRAP: {report.Stats.MedianCrap}");
-    sb.AppendLine($"- Total CRAP load: {report.Stats.TotalCrapLoad:F1}");
+    sb.AppendLine("## Production gate stats");
+    sb.AppendLine("_Out-of-scope paths (tests, `/Generated/`, `*.g.cs`, `*.Designer.cs`) are omitted from these stats._");
+    sb.AppendLine($"- Methods analyzed: {methodCount}");
+    sb.AppendLine($"- CRAPpy methods: {crappyCount} ({crappyPercent:F1}%)");
+    sb.AppendLine($"- Average CRAP: {averageCrap:F1}");
+    sb.AppendLine($"- Median CRAP: {medianCrap}");
+    sb.AppendLine($"- Total CRAP load: {totalCrapLoad:F1}");
     sb.AppendLine();
     sb.AppendLine("## Top 20 production files by MaxCrap");
     sb.AppendLine();
@@ -280,6 +292,17 @@ static async Task WriteSummaryAsync(string path, CrapReport report, List<FileSco
         }
     }
     await File.WriteAllTextAsync(path, sb.ToString());
+}
+
+static double Median(List<double> values)
+{
+    if (values.Count == 0)
+        return 0;
+    var sorted = values.OrderBy(v => v).ToList();
+    var mid = sorted.Count / 2;
+    return sorted.Count % 2 == 0
+        ? (sorted[mid - 1] + sorted[mid]) / 2.0
+        : sorted[mid];
 }
 
 static string Truncate(string s, int max) =>
