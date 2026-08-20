@@ -19,7 +19,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         || pathValue.Equals("/api", StringComparison.OrdinalIgnoreCase);
 
     internal static bool IsPublicVersionOrTimePath(string pathValue) =>
-        ApiPublicPathRules.TryGetLeafSegment(pathValue, out var leaf) && ApiPublicPathRules.IsPublicLeaf(leaf);
+        ApiPublicPathRules.IsPublicPath(pathValue);
 
     internal static bool IsAuthorized(HttpRequest request, string expectedKey)
     {
@@ -113,4 +113,31 @@ internal static class ApiPublicPathRules
         leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+
+    internal static bool IsPublicPath(string pathValue) =>
+        IsPublicNestedPath(pathValue)
+        || (TryGetLeafSegment(pathValue, out var leaf) && IsPublicLeaf(leaf));
+
+    internal static bool IsPublicNestedPath(string pathValue)
+    {
+        if (string.IsNullOrEmpty(pathValue))
+        {
+            return false;
+        }
+
+        var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length == 3
+            && segments[0].Equals("api", StringComparison.OrdinalIgnoreCase)
+            && segments[1].Equals("tools", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("hash", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return segments.Length == 4
+               && segments[0].Equals("api", StringComparison.OrdinalIgnoreCase)
+               && segments[1].StartsWith('v')
+               && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
+               && segments[3].Equals("hash", StringComparison.OrdinalIgnoreCase);
+    }
 }
