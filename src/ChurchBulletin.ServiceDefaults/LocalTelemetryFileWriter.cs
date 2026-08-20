@@ -190,6 +190,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             }
             catch (Exception)
             {
+                // Best-effort local telemetry file writes must never affect the application.
             }
         }
     }
