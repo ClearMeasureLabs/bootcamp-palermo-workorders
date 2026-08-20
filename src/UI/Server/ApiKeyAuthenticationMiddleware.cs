@@ -19,7 +19,8 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         || pathValue.Equals("/api", StringComparison.OrdinalIgnoreCase);
 
     internal static bool IsPublicVersionOrTimePath(string pathValue) =>
-        ApiPublicPathRules.TryGetLeafSegment(pathValue, out var leaf) && ApiPublicPathRules.IsPublicLeaf(leaf);
+        (ApiPublicPathRules.TryGetLeafSegment(pathValue, out var leaf) && ApiPublicPathRules.IsPublicLeaf(leaf))
+        || ApiPublicPathRules.IsPublicGuidGeneratorPath(pathValue);
 
     internal static bool IsAuthorized(HttpRequest request, string expectedKey)
     {
@@ -113,4 +114,28 @@ internal static class ApiPublicPathRules
         leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Nested tool route <c>/api/tools/guid-generator</c> (and versioned form) is anonymous like ping.
+    /// </summary>
+    internal static bool IsPublicGuidGeneratorPath(string pathValue)
+    {
+        var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length < 3 || !segments[0].Equals("api", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (segments.Length == 3
+            && segments[1].Equals("tools", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("guid-generator", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return segments.Length == 4
+               && segments[1].StartsWith('v')
+               && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
+               && segments[3].Equals("guid-generator", StringComparison.OrdinalIgnoreCase);
+    }
 }
