@@ -22,6 +22,8 @@ public class ApiKeyAuthenticationMiddlewarePublicPathTests
 
     [TestCase("/api/version", "version")]
     [TestCase("/api/v1.0/time", "time")]
+    [TestCase("/api/tools/timestamp-converter", "tools/timestamp-converter")]
+    [TestCase("/api/v1.0/tools/timestamp-converter", "tools/timestamp-converter")]
     public void TryGetLeafSegment_ReturnsLeaf(string path, string expectedLeaf)
     {
         ApiPublicPathRules.TryGetLeafSegment(path, out var leaf).ShouldBeTrue();
