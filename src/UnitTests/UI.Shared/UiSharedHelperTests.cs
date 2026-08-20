@@ -15,6 +15,13 @@ public class NavRailCssTests
     }
 
     [Test]
+    public void ShouldReturnPlainAppClass_WhenWideAndNavVisible()
+    {
+        NavRailCss.AppContainerClass(isNarrowViewport: false, navVisible: true)
+            .ShouldBe("modern-app");
+    }
+
+    [Test]
     public void ShouldUseOpenSidebarClass_WhenNarrowViewportAndNavVisible()
     {
         NavRailCss.SidebarClass(isNarrowViewport: true, navVisible: true)
@@ -26,6 +33,13 @@ public class NavRailCssTests
     {
         NavRailCss.SidebarClass(isNarrowViewport: false, navVisible: false)
             .ShouldBe("modern-sidebar rail-hidden");
+    }
+
+    [Test]
+    public void ShouldReturnBaseSidebar_WhenNarrowAndNavHidden()
+    {
+        NavRailCss.SidebarClass(isNarrowViewport: true, navVisible: false)
+            .ShouldBe("modern-sidebar");
     }
 }
 
