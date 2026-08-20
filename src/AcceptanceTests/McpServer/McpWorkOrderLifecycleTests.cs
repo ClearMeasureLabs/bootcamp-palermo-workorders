@@ -50,7 +50,7 @@ public class McpWorkOrderLifecycleTests : AcceptanceTestBase
             {
                 ["title"] = "Lifecycle test work order",
                 ["description"] = "Testing full lifecycle via direct MCP tool calls",
-                ["creatorUsername"] = creator.UserName!
+                ["creatorUsername"] = creator.UserName
             });
 
         createResult.ShouldContain("Lifecycle test work order");
@@ -59,43 +59,43 @@ public class McpWorkOrderLifecycleTests : AcceptanceTestBase
         workOrderNumber.ShouldNotBeNullOrEmpty("Work order number should be returned");
 
         // Step 2: Assign the work order (Draft -> Assigned)
-        var assignResult = await _helper!.CallToolDirectly("execute-work-order-command",
+        var assignResult = await _helper.CallToolDirectly("execute-work-order-command",
             new Dictionary<string, object?>
             {
                 ["workOrderNumber"] = workOrderNumber,
                 ["commandName"] = "DraftToAssignedCommand",
-                ["executingUsername"] = creator.UserName!,
-                ["assigneeUsername"] = assignee.UserName!
+                ["executingUsername"] = creator.UserName,
+                ["assigneeUsername"] = assignee.UserName
             });
 
         assignResult.ShouldContain("Assigned");
         assignResult.ShouldContain(assignee.GetFullName());
 
         // Step 3: Begin work (Assigned -> InProgress)
-        var beginResult = await _helper!.CallToolDirectly("execute-work-order-command",
+        var beginResult = await _helper.CallToolDirectly("execute-work-order-command",
             new Dictionary<string, object?>
             {
                 ["workOrderNumber"] = workOrderNumber,
                 ["commandName"] = "AssignedToInProgressCommand",
-                ["executingUsername"] = assignee.UserName!
+                ["executingUsername"] = assignee.UserName
             });
 
         beginResult.ShouldContain("In Progress");
 
         // Step 4: Complete work (InProgress -> Complete)
-        var completeResult = await _helper!.CallToolDirectly("execute-work-order-command",
+        var completeResult = await _helper.CallToolDirectly("execute-work-order-command",
             new Dictionary<string, object?>
             {
                 ["workOrderNumber"] = workOrderNumber,
                 ["commandName"] = "InProgressToCompleteCommand",
-                ["executingUsername"] = assignee.UserName!
+                ["executingUsername"] = assignee.UserName
             });
 
         completeResult.ShouldContain("Complete");
         completeResult.ShouldContain("CompletedDate");
 
         // Step 5: Verify final state via get-work-order
-        var getResult = await _helper!.CallToolDirectly("get-work-order",
+        var getResult = await _helper.CallToolDirectly("get-work-order",
             new Dictionary<string, object?>
             {
                 ["workOrderNumber"] = workOrderNumber

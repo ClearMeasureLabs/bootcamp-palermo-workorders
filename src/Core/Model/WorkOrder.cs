@@ -29,15 +29,15 @@ public class WorkOrder : EntityBase<WorkOrder>
         set => _instructions = getTruncatedString(value);
     }
 
-    public string? RoomNumber { get; set; } = null;
+    public string? RoomNumber { get; set; }
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 
-    public Employee? Creator { get; set; } = null;
+    public Employee? Creator { get; set; }
 
-    public Employee? Assignee { get; set; } = null;
+    public Employee? Assignee { get; set; }
 
-    public string? Number { get; set; } = null!;
+    public string? Number { get; set; }
 
     public string FriendlyStatus => getTextForStatus();
 

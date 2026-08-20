@@ -27,7 +27,7 @@ public class EtagConditionalGetWebTests
         etag.ShouldNotBeNull();
 
         using var second = new HttpRequestMessage(HttpMethod.Get, "/api/version");
-        second.Headers.IfNoneMatch.Add(etag!);
+        second.Headers.IfNoneMatch.Add(etag);
         var notModified = await client.SendAsync(second);
         notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
         (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);

@@ -43,7 +43,7 @@ public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 
         var healthResponse = await client.GetAsync("/_healthcheck");
         var healthBody = await healthResponse.Content.ReadAsStringAsync();
-        healthBody.ShouldContain("Unhealthy", Case.Insensitive);
+        healthBody.ShouldContain("Unhealthy");
     }
 
     [Test, Retry(2)]
@@ -59,7 +59,7 @@ public class NeedsRebootHealthCheckTests : AcceptanceTestBase
 
         var healthResponse = await client.GetAsync("/_healthcheck");
         var healthBody = await healthResponse.Content.ReadAsStringAsync();
-        healthBody.ShouldNotContain("Unhealthy", Case.Insensitive);
+        healthBody.ShouldNotContain("Unhealthy");
     }
 
     [Test, Retry(2)]

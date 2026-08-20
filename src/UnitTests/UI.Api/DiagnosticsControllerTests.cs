@@ -46,7 +46,7 @@ public class DiagnosticsControllerTests
             content.Content!,
             ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
-        payload!.Environment.ShouldBe("UnitTestEnv");
+        payload.Environment.ShouldBe("UnitTestEnv");
         payload.Uptime.ShouldBe(SimpleHealthResponseBuilder.Build(clock).Uptime);
         payload.FeatureFlags.SampleFeatureA.ShouldBeTrue();
         payload.FeatureFlags.SampleFeatureB.ShouldBeFalse();

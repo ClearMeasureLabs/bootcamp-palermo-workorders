@@ -169,7 +169,7 @@ internal static class WebServiceMessagePayloadValidator
 
         var validateTask = (Task)validateMethod.Invoke(
             payloadValidator,
-            new object?[] { payload, cancellationToken })!;
+            new[] { payload, cancellationToken })!;
 
         await validateTask.ConfigureAwait(false);
 

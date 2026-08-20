@@ -68,7 +68,7 @@ public class Bus : IBus
 
         var activity = parentContext.HasValue
             ? ActivitySource.StartActivity($"Bus.{operation} {messageName}", ActivityKind.Internal, parentContext.Value)
-            : ActivitySource.StartActivity($"Bus.{operation} {messageName}", ActivityKind.Internal);
+            : ActivitySource.StartActivity($"Bus.{operation} {messageName}");
 
         if (activity is null)
         {
