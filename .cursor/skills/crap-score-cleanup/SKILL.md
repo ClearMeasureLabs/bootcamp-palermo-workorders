@@ -193,7 +193,7 @@ To bring method with complexity `CC` below CRAP 14 (production gate):
 cov_needed = 1 - ((14 - CC) / CC²)^(1/3)
 ```
 
-Only valid when `CC < 14`.
+Only valid when `CC < 15`.
 
 ## Validation checklist
 
