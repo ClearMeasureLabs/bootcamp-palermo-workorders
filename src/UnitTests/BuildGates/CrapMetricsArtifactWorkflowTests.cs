@@ -6,43 +6,45 @@ namespace ClearMeasure.Bootcamp.UnitTests.BuildGates;
 public class CrapMetricsArtifactWorkflowTests
 {
     [Test]
-    public void BuildWorkflow_WhenRead_UploadsCrapMetricsAfterEnforceStep()
+    public void BuildWorkflow_WhenRead_AppendsCrapSummaryToJobSummaryAfterEnforceStep()
     {
         var yaml = File.ReadAllText(FindRepoFile(Path.Combine(".github", "workflows", "build.yml")));
 
         var enforceIndex = yaml.IndexOf("name: Enforce CRAP", StringComparison.Ordinal);
-        var uploadIndex = yaml.IndexOf("name: Upload CRAP metrics", StringComparison.Ordinal);
+        var summaryIndex = yaml.IndexOf("name: Publish CRAP summary to job summary", StringComparison.Ordinal);
         enforceIndex.ShouldBeGreaterThan(-1);
-        uploadIndex.ShouldBeGreaterThan(enforceIndex);
+        summaryIndex.ShouldBeGreaterThan(enforceIndex);
 
-        var uploadBlock = yaml.Substring(uploadIndex);
-        var nextJob = uploadBlock.IndexOf("\n  build-sqlite:", StringComparison.Ordinal);
-        if (nextJob > 0)
-        {
-            uploadBlock = uploadBlock.Substring(0, nextJob);
-        }
+        var nextStepMarker = "\n      - name:";
+        var nextStep = yaml.IndexOf(nextStepMarker, summaryIndex, StringComparison.Ordinal);
+        nextStep.ShouldBeGreaterThan(summaryIndex);
+        var summaryBlock = yaml.Substring(summaryIndex, nextStep - summaryIndex);
 
-        uploadBlock.ShouldContain("uses: actions/upload-artifact@v4");
-        uploadBlock.ShouldContain("if: always()");
-        uploadBlock.ShouldContain("name: crap-metrics-linux");
-        uploadBlock.ShouldContain("crap-metrics/crap-summary.md");
-        uploadBlock.ShouldContain("crap-metrics/crap-report.json");
-        uploadBlock.ShouldContain("crap-metrics/crap-by-file.json");
-        uploadBlock.ShouldContain("crap-metrics/crap-by-file.csv");
-        uploadBlock.ShouldContain("crap-metrics/crap-production-violations.json");
+        summaryBlock.ShouldContain("if: always()");
+        summaryBlock.ShouldContain("GITHUB_STEP_SUMMARY");
+        summaryBlock.ShouldContain("crap-metrics/crap-summary.md");
+        summaryBlock.ShouldNotContain("uses: actions/upload-artifact");
+        summaryBlock.ShouldNotContain("crap-metrics-linux");
+
+        yaml.ShouldNotContain("name: Upload CRAP metrics");
+        yaml.ShouldNotContain("crap-metrics-linux");
     }
 
     [Test]
-    public void CrapSkill_WhenRead_DocumentsLinuxArtifactDownload()
+    public void CrapSkill_WhenRead_DocumentsJobSummaryNotZipArtifact()
     {
         var skill = File.ReadAllText(FindRepoFile(Path.Combine(
             ".cursor", "skills", "crap-score-cleanup", "SKILL.md")));
 
-        skill.ShouldContain("crap-metrics-linux");
+        skill.ShouldContain("GITHUB_STEP_SUMMARY");
+        skill.ShouldContain("job summary");
+        skill.ShouldContain("crap-metrics/crap-summary.md");
         skill.ShouldContain("Integration Build (SQL container)");
-        skill.ShouldContain("Upload CRAP metrics");
+        skill.ShouldContain("Publish CRAP summary to job summary");
         skill.ShouldContain("if: always()");
-        skill.ShouldContain("Artifacts");
+        skill.ShouldNotContain("crap-metrics-linux");
+        skill.ShouldNotContain("upload-artifact");
+        skill.ShouldNotContain("Unzip");
     }
 
     private static string FindRepoFile(string relativePath)
