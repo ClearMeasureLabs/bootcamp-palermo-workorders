@@ -54,8 +54,8 @@ public class WorkOrderStatus
 
     public override bool Equals(object? obj)
     {
-        var code = obj as WorkOrderStatus;
-        if (code == null)
+        var other = obj as WorkOrderStatus;
+        if (other == null)
         {
             return false;
         }
@@ -65,7 +65,9 @@ public class WorkOrderStatus
             return false;
         }
 
-        return Code.Equals(code.Code);
+        // Delegate to operator== so both members agree on every combination of
+        // null/non-null Code (see the operator's remarks below).
+        return this == other;
     }
 
     public override string ToString()
@@ -75,11 +77,58 @@ public class WorkOrderStatus
 
     public override int GetHashCode()
     {
-        return Code.GetHashCode();
+        // An instance with a null Code only exists briefly during EF Core /
+        // serialization materialization (see the parameterless constructor) and is
+        // never a legitimate domain value. Such instances are never equal to anything
+        // but themselves (see operator==), so a fixed sentinel hash code here does not
+        // violate the Equals/GetHashCode contract; it only means uninitialized
+        // instances may collide with each other and with hash code 0, which is
+        // harmless since they never compare equal by value.
+        return Code is null ? 0 : Code.GetHashCode();
+    }
+
+    public static bool operator ==(WorkOrderStatus? left, WorkOrderStatus? right)
+    {
+        if (ReferenceEquals(left, right))
+        {
+            return true;
+        }
+
+        if (left is null || right is null)
+        {
+            return false;
+        }
+
+        if (left.GetType() != right.GetType())
+        {
+            return false;
+        }
+
+        if (left.Code is null || right.Code is null)
+        {
+            // An instance with a null Code only exists briefly during EF Core /
+            // serialization materialization (see the parameterless constructor) and is
+            // never a legitimate domain value. Two such instances are not the same
+            // status just because both are uninitialized, so they never compare equal
+            // unless they are the same reference (handled above).
+            return false;
+        }
+
+        return string.Equals(left.Code, right.Code, StringComparison.Ordinal);
+    }
+
+    public static bool operator !=(WorkOrderStatus? left, WorkOrderStatus? right)
+    {
+        return !(left == right);
     }
 
     public bool IsEmpty()
     {
+        // Code == "" is a string comparison, which string's own == operator handles
+        // safely for a null Code (null == "" is simply false, no exception). A
+        // null-Code (uninitialized) instance therefore correctly reports IsEmpty() as
+        // false rather than throwing - it is not "empty" in the None-singleton sense,
+        // it is transiently uninitialized. No change needed here.
         return Code == "";
     }
 
