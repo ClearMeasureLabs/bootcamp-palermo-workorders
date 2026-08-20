@@ -7,7 +7,7 @@ using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
-using ClearMeasure.Bootcamp.UI.Server.Grpc;
+using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
@@ -85,6 +85,7 @@ public static class ServerApplication
         builder.Services.AddRazorPages();
         builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
         builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton<IRequestMetrics, RequestMetrics>();
         builder.Services.AddScoped<IDistributedBus, DistributedBus>();
         builder.Services.AddMemoryCache();
         builder.Services.Configure<IdempotencyOptions>(
@@ -163,6 +164,7 @@ public static class ServerApplication
         app.UseSerilogShutdown();
         app.MapDefaultEndpoints();
         app.UseCorrelationId();
+        app.UseMiddleware<RequestMetricsMiddleware>();
         app.UseWhen(
             context => ProblemDetailsPaths.IsMachineOriented(context.Request.Path),
             branch => branch.UseExceptionHandler(new ExceptionHandlerOptions
