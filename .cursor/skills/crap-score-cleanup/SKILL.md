@@ -32,7 +32,7 @@ CRAP(m) = CC(m)² × (1 - cov(m)/100)³ + CC(m)
 **Threshold 30** is the standard "CRAPpy" cutoff. At 100% coverage, CRAP equals complexity
 (the minimum). At 0% coverage, CRAP = CC² + CC.
 
-Complexity alone can exceed the threshold: a method with CC ≥ 14 cannot reach CRAP < 14
+Complexity alone can exceed the threshold: a method with CC ≥ 15 cannot reach CRAP ≤ 14
 through testing alone — it must be refactored.
 
 ## Quick start
