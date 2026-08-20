@@ -1,0 +1,27 @@
+---
+description: After session work is complete, give a short summary of what is different now
+alwaysApply: true
+---
+
+# Session completion — what is different now
+
+Whenever the session’s work is **complete and done** (implementation finished, PR merged or ready, issue closed, or the user is clearly being handed a finished outcome), end with a **short update summary** of what is different now.
+
+## Required closing section
+
+Use a brief heading such as **What’s different now** (or equivalent). Keep it to a few bullets or short sentences. Cover only real deltas, for example:
+
+- Behavior or UX that changed for users
+- CI / quality gates that now pass, fail, or enforce something new
+- Config, scripts, or docs that landed (paths or PR/issue links when useful)
+- Risks removed or new constraints the team should know
+
+## Do not
+
+- Do not only restate tasks performed (“fixed X”, “opened PR”) without the resulting state
+- Do not dump full changelogs, file lists, or process narration
+- Do not skip this section when declaring STATUS: COMPLETE / done / ready
+
+## When it does not apply
+
+Skip if the turn is mid-work, a clarification question, or no durable change was delivered.
