@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.Core.Services;
 using Microsoft.Extensions.AI;
 
@@ -6,22 +5,9 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 
 public partial class TranslationService(ChatClientFactory chatClientFactory) : ITranslationService
 {
-    [GeneratedRegex(@"^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{1,8})*$")]
-    private static partial Regex Bcp47Regex();
-
     public async Task<string> TranslateAsync(string text, string targetLanguageCode)
     {
-        if (string.IsNullOrEmpty(text))
-        {
-            return text ?? string.Empty;
-        }
-
-        if (targetLanguageCode == "en-US")
-        {
-            return text;
-        }
-
-        if (!Bcp47Regex().IsMatch(targetLanguageCode))
+        if (TranslationGuard.ShouldReturnOriginal(text, targetLanguageCode))
         {
             return text;
         }
@@ -46,7 +32,7 @@ public partial class TranslationService(ChatClientFactory chatClientFactory) : I
         };
 
         var response = await chatClient.GetResponseAsync(messages);
-        var translatedText = response.Text?.Trim();
+        var translatedText = response.Text.Trim();
 
         return string.IsNullOrWhiteSpace(translatedText) ? text : translatedText;
     }

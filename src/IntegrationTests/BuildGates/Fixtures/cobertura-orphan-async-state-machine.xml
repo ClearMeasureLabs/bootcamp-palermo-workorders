@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<coverage line-rate="1" branch-rate="1" version="1.9" timestamp="1">
+  <sources>
+    <source>D:\repo\src\</source>
+  </sources>
+  <packages>
+    <package name="ClearMeasure.Bootcamp.UI.Server" line-rate="1" branch-rate="1" complexity="1">
+      <classes>
+        <class name="ClearMeasure.Bootcamp.UI.Server.RequestBodyBufferingPipeline/&lt;InvokeAsync&gt;d__0" filename="UI\Server\RequestBodyBufferingExtensions.cs" line-rate="1" branch-rate="1" complexity="1">
+          <methods>
+            <method name="MoveNext" signature="()" line-rate="1" branch-rate="1" complexity="1">
+              <lines>
+                <line number="31" hits="66" branch="False" />
+              </lines>
+            </method>
+          </methods>
+          <lines>
+            <line number="31" hits="66" branch="False" />
+          </lines>
+        </class>
+      </classes>
+    </package>
+  </packages>
+</coverage>

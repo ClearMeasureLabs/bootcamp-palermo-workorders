@@ -26,7 +26,7 @@
 }
 else
 {
-    <p><strong>Overall Status:</strong> <span data-testid="@ClientHealthCheck.Elements.Status">@_report.Status</span></p>
+    <p><strong>Overall Status:</strong> <span data-testid="@Elements.Status">@_report.Status</span></p>
     <ul>
         @foreach (var entry in _report.Entries)
         {
@@ -53,13 +53,27 @@ else
         Status
     }
 
-    private HealthReport _report = null!;
+    private HealthReport? _report;
 
     [Inject] public HealthCheckService Service { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        _report = await Service.CheckHealthAsync();
+        // Bound the health probe so a slow or hanging check cannot leave the page
+        // stuck on "Loading..." forever. On timeout, surface an Unhealthy report
+        // instead of never rendering the status.
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        try
+        {
+            _report = await Service.CheckHealthAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            _report = new HealthReport(
+                new Dictionary<string, HealthReportEntry>(),
+                HealthStatus.Unhealthy,
+                TimeSpan.Zero);
+        }
     }
 
     private string GetStatusCssClass(HealthStatus status)

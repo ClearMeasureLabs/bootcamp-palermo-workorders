@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Formatting.Compact;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Shared Serilog setup: compact JSON per line on stdout for container log aggregation.
@@ -22,24 +22,35 @@ public static class SerilogExtensions
     /// </summary>
     public static void AddSerilogJsonConsole(this IHostApplicationBuilder builder)
     {
+        WireSerilogToHost(builder);
+    }
+
+    private static void WireSerilogToHost(IHostApplicationBuilder builder)
+    {
         switch (builder)
         {
             case WebApplicationBuilder web:
                 web.Host.UseSerilog(ConfigureSerilog, writeToProviders: true);
-                break;
-            case HostApplicationBuilder generic:
-                if (s_hostApplicationBuilderAsHostBuilder?.Invoke(generic, null) is not IHostBuilder hostBuilder)
-                {
-                    throw new InvalidOperationException(
-                        "Could not obtain IHostBuilder from HostApplicationBuilder for Serilog configuration.");
-                }
-
+                return;
+            case HostApplicationBuilder generic when TryGetHostBuilder(generic, out var hostBuilder):
                 hostBuilder.UseSerilog(ConfigureSerilog, writeToProviders: true);
-                break;
+                return;
             default:
                 throw new NotSupportedException(
                     $"Serilog host wiring is not supported for builder type {builder.GetType().FullName}.");
         }
+    }
+
+    private static bool TryGetHostBuilder(HostApplicationBuilder generic, out IHostBuilder hostBuilder)
+    {
+        if (s_hostApplicationBuilderAsHostBuilder?.Invoke(generic, null) is IHostBuilder resolved)
+        {
+            hostBuilder = resolved;
+            return true;
+        }
+
+        hostBuilder = null!;
+        return false;
     }
 
     private static void ConfigureSerilog(HostBuilderContext context, IServiceProvider services, LoggerConfiguration lc)

@@ -11,12 +11,22 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<InternalsVisibleTo Include="ClearMeasure.Bootcamp.IntegrationTests" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="ModelContextProtocol" Version="1.0.0" />
 		<PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.0.0" />
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.1" />
 		<PackageReference Include="MediatR" Version="12.4.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
+		<!-- Pin transitive SQLitePCLRaw above 2.1.11 to resolve NU1903 (GHSA-2m69-gcr7-jv3q). -->
+		<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.12" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.15.2" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -46,6 +46,10 @@
                     <div>
                         <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
                         <button type="button" data-testid="@Elements.SpeakTitle" class="btn btn-sm btn-outline-secondary" aria-label="Speak title" title="Speak title" @onclick="SpeakTitleAsync">&#x1F50A;</button>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <button type="button" data-testid="@Elements.DictateTitle" class="@DictateButtonClass(DictationTarget.Title)" aria-label="Dictate title" title="Dictate title" aria-pressed="@DictateAriaPressed(DictationTarget.Title)" @onclick="DictateTitleAsync">&#x1F3A4;</button>
+                        }
                     </div>
                 </div>
 
@@ -54,6 +58,17 @@
                     <div>
                         <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
                         <button type="button" data-testid="@Elements.SpeakDescription" class="btn btn-sm btn-outline-secondary" aria-label="Speak description" title="Speak description" @onclick="SpeakDescriptionAsync">&#x1F50A;</button>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <button type="button" data-testid="@Elements.DictateDescription" class="@DictateButtonClass(DictationTarget.Description)" aria-label="Dictate description" title="Dictate description" aria-pressed="@DictateAriaPressed(DictationTarget.Description)" @onclick="DictateDescriptionAsync">&#x1F3A4;</button>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Instructions" class="form-label">Instructions:</label>
+                    <div>
+                        <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" maxlength="@WorkOrder.InstructionsMaxLength" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
 
@@ -67,7 +82,7 @@
                 <div class="form-group">
                     <label for="RoomNumber" class="form-label">Room:</label>
                     <div>
-                        <InputText data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
             </div>
@@ -153,7 +168,6 @@
         AssigneeFullName,
         Description,
         Instructions,
-        RoomNumber,
         AssignedDate,
         CompletedDate,
         CreatedDate,
@@ -170,6 +184,8 @@
         AttachmentUploadedBy,
         AttachmentUploadedDate,
         SpeakTitle,
-        SpeakDescription
+        SpeakDescription,
+        DictateTitle,
+        DictateDescription
     }
 }

@@ -4,40 +4,17 @@ public abstract class EntityBase<T> : IEquatable<T> where T : EntityBase<T>, new
 {
     public abstract Guid Id { get; set; }
 
-    public bool Equals(T? other)
-    {
-        if (ReferenceEquals(null, other))
-        {
-            return false;
-        }
+    public bool Equals(T? other) =>
+        other is not null && IsSameIdentity(other);
 
-        if (ReferenceEquals(this, other))
-        {
-            return true;
-        }
+    public override bool Equals(object? obj) =>
+        obj is T typed && IsSameTypedInstance(typed);
 
-        return Id.Equals(other.Id) && !Id.Equals(Guid.Empty);
-    }
+    private bool IsSameTypedInstance(T typed) =>
+        typed.GetType() == GetType() && IsSameIdentity(typed);
 
-    public override bool Equals(object? obj)
-    {
-        if (ReferenceEquals(null, obj))
-        {
-            return false;
-        }
-
-        if (ReferenceEquals(this, obj))
-        {
-            return true;
-        }
-
-        if (obj.GetType() != GetType())
-        {
-            return false;
-        }
-
-        return Equals((T)obj);
-    }
+    private bool IsSameIdentity(T other) =>
+        ReferenceEquals(this, other) || HasSameNonEmptyId(Id, other.Id);
 
     public override string ToString()
     {
@@ -58,4 +35,7 @@ public abstract class EntityBase<T> : IEquatable<T> where T : EntityBase<T>, new
     {
         return !Equals(left, right);
     }
+
+    private static bool HasSameNonEmptyId(Guid left, Guid right) =>
+        left.Equals(right) && !left.Equals(Guid.Empty);
 }

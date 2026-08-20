@@ -1,0 +1,189 @@
+# WorkflowTemplate — one AI Dev run per GitHub issue.
+# Each Workflow = one pod: agent (git clone + implement) + app-tunnel sidecar. The
+# database is a per-issue database on the SHARED sql-shared SQL Server (no DinD,
+# no per-pod SQL sidecar). Concurrency across issues is capped by the ConfigMap
+# in install (parallelism) and the semaphore below.
+# and by the semaphore below.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ai-dev-agent
+  namespace: ai-factory
+spec:
+  serviceAccountName: ai-factory-workflow
+  entrypoint: run
+  # Hard time budget. Covers the work phase (implement + PrivateBuild +
+  # Playwright AcceptanceTests with a fix loop) AND the KEEP_ALIVE inspection
+  # hold (default up to 4h, KEEP_ALIVE_MAX_HOURS), so allow up to 6h. The hold
+  # normally ends earlier when the remote user signals done.
+  activeDeadlineSeconds: 21600
+  ttlStrategy:
+    secondsAfterCompletion: 86400   # keep finished Workflows 1 day for log review
+  podGC:
+    strategy: OnWorkflowSuccess     # keep pods on failure for debugging
+  # Global 3-at-a-time gate (see semaphore-config.yaml). Redundant with the
+  # controller parallelism but makes the cap explicit and per-template.
+  synchronization:
+    # Argo v3.5 uses the singular `semaphore` object (the plural `semaphores`
+    # list form is v3.6+). Keep in sync with the installed controller version.
+    semaphore:
+      configMapKeyRef:
+        name: ai-factory-semaphores
+        key: agent-slots
+  arguments:
+    parameters:
+      - { name: issueNumber }
+      - { name: issueTitle }
+      - { name: issueBody }
+      - { name: issueUrl }
+      - { name: branchName }
+      - { name: repoOrg,        value: "ClearMeasureLabs" }
+      - { name: repoName,       value: "bootcamp-palermo-workorders" }
+      - { name: aiAgent,        value: "claude" }
+      # Model + reasoning effort for the claude agent. Default: Claude Sonnet 5, low effort.
+      - { name: aiModel,        value: "claude-sonnet-5" }
+      - { name: aiModelEffort,  value: "low" }
+      # Browser terminal (ttyd) into the live Claude session, on a 2nd tunnel. Default on.
+      - { name: terminalEnabled, value: "true" }
+      - { name: runQualityGates, value: "true" }
+      # KEEP_ALIVE serve mode: after the PR, run the app + Cloudflare quick tunnel
+      # and hold the pod open so the running app can be viewed at a public URL.
+      - { name: keepAlive,      value: "false" }
+      - { name: servePort,      value: "8080" }
+  templates:
+    - name: run
+      inputs:
+        parameters:
+          - { name: issueNumber }
+          - { name: issueTitle }
+          - { name: issueBody }
+          - { name: issueUrl }
+          - { name: branchName }
+          - { name: repoOrg }
+          - { name: repoName }
+          - { name: aiAgent }
+          - { name: aiModel }
+          - { name: aiModelEffort }
+          - { name: terminalEnabled }
+          - { name: runQualityGates }
+          - { name: keepAlive }
+          - { name: servePort }
+      # Right-sized after removing Docker-in-Docker + the in-DinD SQL Server. The
+      # main container now only runs the .NET build/test/serve + Claude agent;
+      # SQL runs in its own memory-capped sidecar. (Step A: requests lowered from
+      # 8Gi/3cpu, limits from 12Gi/4cpu.)
+      podSpecPatch: |
+        securityContext:
+          # emptyDir volumes (workspace, nuget) and secret files are group-owned
+          # by fsGroup, so the non-root user (1001) can read/write them.
+          fsGroup: 1001
+        containers:
+          - name: main
+            resources:
+              requests: { cpu: "2", memory: "4Gi" }
+              limits:   { cpu: "3", memory: "6Gi" }
+      metadata:
+        labels:
+          app: ai-dev
+          issue: "{{inputs.parameters.issueNumber}}"
+      volumes:
+        - name: workspace
+          emptyDir: {}
+        # Shared, persistent NuGet cache (warmed once) so `dotnet restore` fetches
+        # only deltas instead of the full graph each run. See argo/nuget-cache.yaml.
+        - name: nuget
+          persistentVolumeClaim:
+            claimName: nuget-cache
+        # Shared with the app-tunnel sidecar: the sidecar writes its quick-tunnel
+        # URL here (/shared/app-url.txt); the entrypoint reads + publishes it.
+        - name: tunnel-share
+          emptyDir: {}
+        - name: agent-secrets
+          secret:
+            secretName: "agent-secret-{{inputs.parameters.issueNumber}}"
+            # 0440: owner(root)+group(fsGroup 1001) read. Readable by the non-root
+            # user via fsGroup, not world-readable.
+            defaultMode: 0440
+      # Dedicated app-tunnel SIDECAR: runs the app's cloudflared as the ONLY
+      # tunnel in its own container. Pod containers share the network namespace,
+      # so it reaches the app the main container serves on 127.0.0.1:8080.
+      # Isolating it from the main container's churn (build + DinD + terminal
+      # tunnel) keeps the app tunnel's connection stable, so the published
+      # live-url does not deregister (NXDOMAIN) mid-session. Argo terminates
+      # sidecars when the main container completes.
+      sidecars:
+        - name: app-tunnel
+          image: ai-factory-agent:latest
+          imagePullPolicy: Never
+          command: ["bash", "-c"]
+          args:
+            - |
+              cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8080 > /shared/cf-app.log 2>&1 &
+              CF=$!
+              for i in $(seq 1 120); do
+                u=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /shared/cf-app.log | head -1)
+                if [ -n "$u" ]; then echo "$u" > /shared/app-url.txt; echo "app tunnel URL: $u"; break; fi
+                sleep 2
+              done
+              wait $CF
+          volumeMounts:
+            - { name: tunnel-share, mountPath: /shared }
+      # Step B: DB is provided by the ONE shared SQL Server (sql-shared Service),
+      # NOT a per-pod sidecar. Each pod uses its own database (ChurchBulletin_<issue>,
+      # via DATABASE_NAME) on that shared server and drops+recreates only its own DB
+      # each build, so pods are isolated without each running a ~1.5GB SQL Server.
+      # Reachability is granted by the ai-dev-egress-sqlshared NetworkPolicy.
+      # (See argo/shared-sqlserver.yaml.)
+      # The clone/branch is handled by the container entrypoint (agent-entrypoint.ps1),
+      # which does gh auth + git config + clone into the /workspace emptyDir +
+      # branch. A separate init clone container is redundant with that and is
+      # intentionally omitted.
+      container:
+        name: main
+        image: ai-factory-agent:latest
+        imagePullPolicy: Never   # image lives in the local shared containerd store
+        # Explicit command == the image ENTRYPOINT. Required because the emissary
+        # executor otherwise resolves the entrypoint by querying the registry,
+        # which fails for a local-only image (no docker.io manifest).
+        command: ["pwsh", "/usr/local/bin/agent-entrypoint.ps1"]
+        workingDir: /workspace
+        env:
+          # Downward API: pod name so serve mode can publish the live URL back
+          # onto this pod's annotations (see Task 4 in agent-entrypoint.ps1).
+          - name: POD_NAME
+            valueFrom: { fieldRef: { fieldPath: metadata.name } }
+          - name: POD_NAMESPACE
+            valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+          - { name: ISSUE_NUMBER,      value: "{{inputs.parameters.issueNumber}}" }
+          - { name: ISSUE_TITLE,       value: "{{inputs.parameters.issueTitle}}" }
+          - { name: ISSUE_BODY,        value: "{{inputs.parameters.issueBody}}" }
+          - { name: ISSUE_URL,         value: "{{inputs.parameters.issueUrl}}" }
+          - { name: BRANCH_NAME,       value: "{{inputs.parameters.branchName}}" }
+          - { name: REPO_ORG,          value: "{{inputs.parameters.repoOrg}}" }
+          - { name: REPO_NAME,         value: "{{inputs.parameters.repoName}}" }
+          - { name: AI_AGENT,          value: "{{inputs.parameters.aiAgent}}" }
+          - { name: AI_MODEL,          value: "{{inputs.parameters.aiModel}}" }
+          - { name: AI_MODEL_EFFORT,   value: "{{inputs.parameters.aiModelEffort}}" }
+          - { name: TERMINAL_ENABLED,  value: "{{inputs.parameters.terminalEnabled}}" }
+          - { name: MONITOR_CHECKS,    value: "false" }
+          - { name: RUN_QUALITY_GATES, value: "{{inputs.parameters.runQualityGates}}" }
+          # External SHARED SQL Server (sql-shared Service). No DinD, no sidecar.
+          - { name: SQL_SERVER_HOST,   value: "sql-shared,1433" }
+          - name: SQL_SA_PASSWORD
+            valueFrom: { secretKeyRef: { name: sql-shared-sa, key: sa-password } }
+          # Serve mode: hold the pod open with the app + Cloudflare tunnel.
+          - { name: KEEP_ALIVE,        value: "{{inputs.parameters.keepAlive}}" }
+          - { name: SERVE_PORT,        value: "{{inputs.parameters.servePort}}" }
+        volumeMounts:
+          - { name: workspace, mountPath: /workspace }
+          - { name: nuget, mountPath: /home/bobagent/.nuget/packages }
+          - { name: tunnel-share, mountPath: /shared }
+          # See init container note: avoid /run/secrets (collides with SA token).
+          - { name: agent-secrets, mountPath: /var/agent-secrets, readOnly: true }
+        securityContext:
+          # No Docker-in-Docker anymore, so NOT privileged. Runs as the non-root
+          # bobagent (1001). allowPrivilegeEscalation stays true only so the
+          # acceptance gate's occasional `sudo` (apt for any missing lib) works;
+          # the dangerous privileged flag is gone.
+          runAsUser: 1001
+          allowPrivilegeEscalation: true

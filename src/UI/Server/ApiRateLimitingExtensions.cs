@@ -1,9 +1,5 @@
 using System.Threading.RateLimiting;
-using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Shared;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
@@ -76,30 +72,6 @@ public static class ApiRateLimitingExtensions
         return path.StartsWithSegments(BlazorSingleApiPathV1, StringComparison.OrdinalIgnoreCase);
     }
 
-    internal static string ResolvePartitionKey(HttpContext httpContext, string apiKeyHeaderName)
-    {
-        if (!string.IsNullOrWhiteSpace(apiKeyHeaderName)
-            && httpContext.Request.Headers.TryGetValue(apiKeyHeaderName, out var keyValues))
-        {
-            var k = keyValues.ToString();
-            if (!string.IsNullOrWhiteSpace(k))
-            {
-                return "key:" + k;
-            }
-        }
-
-        var userName = httpContext.User.Identity?.Name;
-        if (!string.IsNullOrEmpty(userName))
-        {
-            return "user:" + userName;
-        }
-
-        var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
-        if (!string.IsNullOrEmpty(remoteIp))
-        {
-            return "ip:" + remoteIp;
-        }
-
-        return "anonymous";
-    }
+    internal static string ResolvePartitionKey(HttpContext httpContext, string apiKeyHeaderName) =>
+        ApiRateLimitPartitionResolver.Resolve(httpContext, apiKeyHeaderName);
 }

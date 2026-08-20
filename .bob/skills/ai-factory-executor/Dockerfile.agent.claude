@@ -1,0 +1,219 @@
+# AI Factory Agent Container - CLAUDE-ONLY variant.
+# Identical to Dockerfile.agent but WITHOUT the IBM Bob Shell (bobshell) CLI,
+# whose private tarball (bobshell-1.0.6.tgz) is not in the build context here.
+# The agent runs `claude` (Claude Code) non-interactively to implement a GitHub
+# issue, then the entrypoint commits, pushes, and opens a PR. Selected at runtime
+# with AI_AGENT=claude (the default). AI_AGENT=bob is unsupported in this image.
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ENV DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+ENV DOTNET_NOLOGO=1
+ENV NUGET_PACKAGES=/tmp/nuget-packages
+
+# Install base dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    wget \
+    apt-transport-https \
+    curl \
+    jq \
+    vim \
+    less \
+    tmux \
+    gnupg \
+    lsb-release \
+    ca-certificates
+
+# Install PowerShell 7+
+RUN wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" && \
+    dpkg -i packages-microsoft-prod.deb && \
+    apt-get update && \
+    apt-get install -y powershell && \
+    rm packages-microsoft-prod.deb
+
+# Install git
+RUN apt-get install -y git
+
+# Install GitHub CLI
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y gh
+
+# NOTE: the full Docker engine (docker-ce/containerd/buildx, ~340MB) is NO LONGER
+# installed. The DB for integration tests + serve mode is provided by an EXTERNAL
+# SQL Server reachable over the pod network (a sidecar or a shared server), so the
+# agent no longer runs Docker-in-Docker and does not need --privileged. build.ps1
+# runs its SQL path in external mode (SQL_EXTERNAL=true). To restore local DinD,
+# reinstate this layer and set ENABLE_DIND=true.
+
+# Install SQLite
+RUN apt-get install -y sqlite3 libsqlite3-dev
+
+# Install Playwright dependencies for browser automation (AcceptanceTests)
+# Note: libasound2 replaced with libasound2t64 in Ubuntu 24.04
+RUN apt-get install -y \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libasound2t64 \
+    libatspi2.0-0 \
+    libxshmfence1
+
+# unzip for archive extraction. build-essential (gcc/make, ~230MB) was removed:
+# the agent compiles .NET (no native toolchain needed) and the global npm packages
+# (claude-code, playwright) ship prebuilt - verified no native .node modules.
+RUN apt-get install -y \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install cloudflared for KEEP_ALIVE serve mode. After a green PR the entrypoint
+# can launch the built app and expose it via a Cloudflare "quick tunnel"
+# (trycloudflare.com) so the running app with the issue implemented is reachable
+# from a public URL printed to the container logs. No Cloudflare account needed.
+RUN curl -fsSL -o /usr/local/bin/cloudflared \
+        https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 && \
+    chmod +x /usr/local/bin/cloudflared && \
+    cloudflared --version
+
+# Install Node.js 20 LTS (required by the Claude Code CLI)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    node --version && npm --version
+
+# Install the Claude Code CLI (public package). This image runs the 'claude'
+# agent (AI_AGENT=claude, the default). The Bob Shell agent is not installed.
+RUN npm install -g @anthropic-ai/claude-code && \
+    claude --version
+
+# SQL tooling: go-sqlcmd (~23MB) instead of the SqlServer PowerShell module
+# (~219MB). build.ps1's New-SqlServerDatabase uses `sqlcmd` when the PS module is
+# absent (and skips Install-Module when sqlcmd is present), so the drop/create +
+# readiness SQL all work against the external/shared server without the heavy
+# module. (Local dev/CI with the module installed still use Invoke-Sqlcmd.)
+RUN apt-get update && apt-get install -y bzip2 && \
+    curl -fsSL -o /tmp/sqlcmd.tar.bz2 \
+        https://github.com/microsoft/go-sqlcmd/releases/latest/download/sqlcmd-linux-amd64.tar.bz2 && \
+    tar xjf /tmp/sqlcmd.tar.bz2 -C /usr/local/bin sqlcmd && \
+    chmod +x /usr/local/bin/sqlcmd && rm /tmp/sqlcmd.tar.bz2 && \
+    rm -rf /var/lib/apt/lists/* && \
+    sqlcmd --version
+
+# Update .NET workloads to prevent verification issues during build
+RUN dotnet workload update --skip-sign-check || true
+
+# Install Playwright browsers + OS deps for the AcceptanceTests quality gate.
+# The repo's build.ps1 runs `playwright.ps1 install chromium --with-deps`; the
+# browsers are pre-installed here into a shared, world-readable location so that
+# runtime call is a fast no-op. Version matches Microsoft.Playwright (1.54.0).
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# Install the OS deps (via --with-deps chromium) but keep only the headless-shell
+# browser build. The acceptance tests launch Chromium with Headless=true, which
+# Playwright 1.54 serves from chromium_headless_shell (~323MB), NOT the full
+# Chromium (~590MB) - verified empirically. Removing the full build saves ~590MB;
+# the entrypoint rewrites build.ps1's runtime `install chromium` to
+# `install chromium-headless-shell` so it stays a no-op (no re-download).
+RUN apt-get update && apt-get install -y \
+    fonts-liberation \
+    libappindicator3-1 \
+    xdg-utils \
+    sudo && \
+    npm install -g playwright@1.54.0 && \
+    npx --yes playwright@1.54.0 install --with-deps chromium && \
+    rm -rf /ms-playwright/chromium-[0-9]* && \
+    chown -R 1001:1001 /ms-playwright && \
+    chmod -R a+rX /ms-playwright && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install ttyd - a browser-based terminal. In KEEP_ALIVE serve mode the
+# entrypoint runs `ttyd tmux attach -t agent` behind a second Cloudflare quick
+# tunnel so a human can open a terminal (in the browser) attached to the live
+# Claude Code session in the container. Static amd64 binary. (Placed late so it
+# doesn't invalidate the expensive Node/Playwright layers above.)
+RUN curl -fsSL -o /usr/local/bin/ttyd \
+        https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.x86_64 && \
+    chmod +x /usr/local/bin/ttyd && \
+    ttyd --version
+
+# Create non-root user for security (use UID 1001 to avoid conflict with base image)
+RUN useradd -m -s /bin/bash -u 1001 bobagent && \
+    mkdir -p /workspace /home/bobagent/.bob /home/bobagent/.config/gh /home/bobagent/.nuget && \
+    chown -R bobagent:bobagent /workspace /home/bobagent
+
+# Add bobagent to docker group (for Docker CLI access)
+RUN groupadd -f docker && usermod -aG docker bobagent
+
+# Allow bobagent passwordless sudo so the acceptance-test gate's
+# `playwright install --with-deps` (which apt-installs) succeeds as non-root.
+RUN echo "bobagent ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/bobagent && \
+    chmod 0440 /etc/sudoers.d/bobagent
+
+# Ownership of /ms-playwright (UID 1001 = bobagent) is applied INSIDE the
+# playwright install RUN above. A separate `RUN chown -R ...` here would copy the
+# entire ~917MB browser directory into a second image layer (measured: +1.26GB).
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy entrypoint scripts
+COPY agent-entrypoint.ps1 /usr/local/bin/agent-entrypoint.ps1
+COPY experiment-entrypoint.ps1 /usr/local/bin/experiment-entrypoint.ps1
+COPY start-dind.ps1 /usr/local/bin/start-dind.ps1
+RUN chmod +x /usr/local/bin/agent-entrypoint.ps1 /usr/local/bin/experiment-entrypoint.ps1 /usr/local/bin/start-dind.ps1
+
+# Switch to non-root user
+USER bobagent
+
+# Set environment variables for bobagent user
+ENV PATH="${PATH}:/home/bobagent/.dotnet/tools"
+ENV NUGET_PACKAGES=/home/bobagent/.nuget/packages
+ENV DOTNET_SKIP_WORKLOAD_INTEGRITY_CHECK=true
+# Disable MSBuild's animated Terminal Logger. With a TTY (docker run -t) it would
+# otherwise batch/redraw output; off => the plain console logger streams line by
+# line to `docker logs`. en-US forces stable UTF-8 console output.
+ENV MSBUILDTERMINALLOGGER=off
+ENV DOTNET_CLI_UI_LANGUAGE=en-US
+
+# Bake a default Claude Code config so every interactive session in the
+# container starts with Remote Control enabled (remoteControlAtStartup) and with
+# onboarding/trust/bypass pre-accepted for headless start. This makes all
+# interactive container sessions visible/controllable from the Claude app by
+# default, without needing to pass --remote-control explicitly.
+COPY --chown=bobagent:bobagent claude-defaults.json /home/bobagent/.claude.json
+
+# Generate the ASP.NET Core HTTPS development certificate for bobagent. Without
+# it, Kestrel cannot bind https://localhost:7174 and every acceptance test fails
+# in OneTimeSetUp with "connection refused". Generate only (no OS trust): the
+# test HttpClient uses DangerousAcceptAnyServerCertificateValidator and Playwright
+# ignores HTTPS errors, so Kestrel just needs a cert to present.
+RUN dotnet dev-certs https && dotnet dev-certs https --check
+
+# NOTE: NuGet is pre-warmed via a SHARED persistent cache volume (see
+# argo/nuget-cache.yaml + the `nuget` volume in workflowtemplate-agent.yaml), NOT
+# baked into the image. Baking the restored packages here inflated the image by
+# ~5.4GB (the .NET/Blazor-WASM runtime packs are huge), defeating the size goal;
+# a shared PVC warmed once gives the same fast in-pod restore with zero image bloat.
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pwsh -Command "exit 0"
+
+# Entrypoint
+ENTRYPOINT ["pwsh", "/usr/local/bin/agent-entrypoint.ps1"]

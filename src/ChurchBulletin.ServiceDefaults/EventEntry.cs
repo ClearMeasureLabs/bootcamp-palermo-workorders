@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Represents a structured event entry for telemetry file output.
@@ -50,6 +50,6 @@ public class EventEntry
         TraceId = activity.TraceId.ToString();
         SpanId = activity.SpanId.ToString();
         EventName = evt.Name;
-        Tags = evt.Tags.ToDictionary(t => t.Key, t => (object?)t.Value);
+        Tags = evt.Tags.ToDictionary(t => t.Key, t => t.Value);
     }
 }

@@ -4,7 +4,17 @@ public class WorkOrder : EntityBase<WorkOrder>
 {
     private const int MaxPlainTextFieldLength = 4000;
     private string? _description = "";
-    private string? _instructions;
+    private string? _instructions = "";
+
+    /// <summary>
+    /// Maximum length of <see cref="RoomNumber"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int RoomNumberMaxLength = 900;
+
+    /// <summary>
+    /// Maximum length of <see cref="Instructions"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int InstructionsMaxLength = 4000;
 
     public string? Title { get; set; } = "";
 
@@ -14,24 +24,21 @@ public class WorkOrder : EntityBase<WorkOrder>
         set => _description = getTruncatedString(value);
     }
 
-    /// <summary>
-    /// Optional execution instructions; plain text, max 4000 characters (truncated in setter).
-    /// </summary>
     public string? Instructions
     {
         get => _instructions;
-        set => _instructions = string.IsNullOrWhiteSpace(value) ? null : getTruncatedString(value);
+        set => _instructions = getTruncatedString(value);
     }
 
-    public string? RoomNumber { get; set; } = null;
+    public string? RoomNumber { get; set; }
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 
-    public Employee? Creator { get; set; } = null;
+    public Employee? Creator { get; set; }
 
-    public Employee? Assignee { get; set; } = null;
+    public Employee? Assignee { get; set; }
 
-    public string? Number { get; set; } = null!;
+    public string? Number { get; set; }
 
     public string FriendlyStatus => getTextForStatus();
 
@@ -49,7 +56,7 @@ public class WorkOrder : EntityBase<WorkOrder>
             return string.Empty;
         }
 
-        var maxLength = Math.Min(MaxPlainTextFieldLength, value.Length);
+        var maxLength = Math.Min(InstructionsMaxLength, value.Length);
         return value.Substring(0, maxLength);
     }
 

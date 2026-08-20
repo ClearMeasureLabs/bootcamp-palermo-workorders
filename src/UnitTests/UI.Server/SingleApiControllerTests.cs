@@ -1,12 +1,12 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.Events;
-using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Server.Controllers;
 using MediatR;
 using Shouldly;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Messaging;
+using ClearMeasure.Bootcamp.Core.Queries;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 
@@ -84,6 +84,7 @@ public class SingleApiControllerTests
         var message = new WebServiceMessage(new NonRemotableObject { Value = "test" });
 
         await Should.ThrowAsync<InvalidOperationException>(async () => await controller.Post(message));
+        message.GetBodyObject().ShouldBeOfType<NonRemotableObject>().Value.ShouldBe("test");
     }
 
     [Test]

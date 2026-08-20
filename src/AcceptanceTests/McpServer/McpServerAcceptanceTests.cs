@@ -1,9 +1,6 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
-using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
@@ -60,7 +57,7 @@ public class McpServerAcceptanceTests : AcceptanceTestBase
             {
                 ["title"] = "Direct MCP tool test",
                 ["description"] = "Created via direct tool call",
-                ["creatorUsername"] = creator.UserName!
+                ["creatorUsername"] = creator.UserName
             });
 
         result.ShouldContain("Direct MCP tool test");

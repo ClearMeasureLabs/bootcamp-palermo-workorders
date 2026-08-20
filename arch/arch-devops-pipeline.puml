@@ -1,7 +1,6 @@
 @startuml
-!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
-
-LAYOUT_LEFT_RIGHT()
+!include templates/plantuml-theme.puml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
 
 title Church Bulletin DevOps Pipeline
 
@@ -32,10 +31,12 @@ System_Boundary(github, "GitHub") {
     }
 
     System_Boundary(build_wf, "Build Workflow (.github/workflows/build.yml)") {
-        Component(build_linux, "Integration Build", "SQL Container", "Linux")
-        Component(build_sqlite, "Integration Build", "SQLite", "Linux")
-        Component(build_arm, "Integration Build", "ARM SQLite", "")
-        Component(build_win, "Integration Build", "Windows LocalDB", "")
+        Component(build_matrix, "Platform Matrix", "GitHub Actions matrix", "linux/x86, linux/arm, windows")
+        Component(ci_cache, "CI Cache", "GitHub Actions Cache", "Restores build & dependency cache")
+        Component(build_linux, "Integration Build (Linux)", "SQL Container", "x86 image")
+        Component(build_sqlite, "Integration Build (SQLite)", "SQLite", "Linux")
+        Component(build_arm, "Integration Build (ARM)", "ARM SQLite", "arm64")
+        Component(build_win, "Integration Build (Windows)", "Windows LocalDB", "windows")
         Component(code_analysis, "Code Analysis", "Tool", "format + analyzers")
         Component(security_scan, "Security Scan", "Tool", "vulnerabilities + Gitleaks")
         Component(at_x86, "Acceptance Tests", "x86 SQLite", "")
@@ -43,10 +44,15 @@ System_Boundary(github, "GitHub") {
     }
 
     System_Boundary(publish, "Publish (needs: build-linux)") {
-        Component(docker_push, "Docker Build", "ACR", "")
-        Component(gh_packages, "Publish to GitHub Packages", "Nuget", "")
-        Component(octo_push, "Publish to Octopus Deploy", "Octopus CLI", "")
+        Component(docker_push, "Docker Build", "ACR Build", "Build and push container images (multi-arch)")
+        Component(artifact_store, "Immutable Artifacts", "ACR / GitHub Packages", "Images and packages: semver tags + digest (content-addressed)")
+        Component(gh_packages, "Publish to GitHub Packages", "NuGet", "Push NuGet packages")
+        Component(octo_push, "Publish to Octopus Deploy", "Octopus CLI", "Push release to Octopus")
     }
+
+    Rel(docker_push, artifact_store, "Push images", "ACR / HTTPS")
+    Rel(gh_packages, artifact_store, "Push packages", "NuGet")
+    Rel(octo_push, artifact_store, "Link artifacts", "Release references images by digest")
 
     Component(merge, "Merge to master", "Git", "")
     Component(master_build, "Build Workflow", "GitHub Actions", "master push")
@@ -99,5 +105,6 @@ Rel(uat, prod, "needs + success")
 
 Rel(deploy_wf, octopus, "each environment executes")
 
-center footer DevOps Pipeline
+LEGEND("Legend","Platform matrix: GitHub Actions (linux/x86, linux/arm, windows)\nCI Cache: restore node / dotnet caches for faster builds\nArtifacts: images published to ACR (semver + digest) and NuGet packages published to GitHub Packages\nDeployment: Octopus Deploy applies releases per environment")
+FOOTER()
 @enduml

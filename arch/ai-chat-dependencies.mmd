@@ -1,0 +1,119 @@
+flowchart TB
+    classDef ui fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef shared fill:#e0e7ff,stroke:#4f46e5,color:#312e81
+    classDef server fill:#cffafe,stroke:#0891b2,color:#164e63
+    classDef llm fill:#fef3c7,stroke:#d97706,color:#78350f
+    classDef mcp fill:#fce7f3,stroke:#db2777,color:#831843
+    classDef core fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef data fill:#d1fae5,stroke:#059669,color:#064e3b
+    classDef ext fill:#f3f4f6,stroke:#6b7280,color:#111827
+
+    subgraph UIClient["UI.Client (WASM)"]
+        RBus["RemotableBus"]:::ui
+        GW["PublisherGateway"]:::ui
+    end
+
+    subgraph UIShared["UI.Shared"]
+        AppChat["ApplicationChat.razor"]:::shared
+        WoChat["WorkOrderChat.razor"]:::shared
+        Bus["Bus"]:::shared
+    end
+
+    subgraph UIServer["UI.Server"]
+        API["SingleApiController"]:::server
+        SBus["ServerRealtimeBus"]:::server
+        CfgHandler["ChatClientConfigQueryHandler"]:::server
+        MapMcp["/mcp endpoint (co-hosted)"]:::server
+    end
+
+    subgraph LlmGateway["LlmGateway"]
+        AppQ["ApplicationChatQuery"]:::llm
+        WoQ["WorkOrderChatQuery"]:::llm
+        CfgQ["ChatClientConfigQuery"]:::llm
+        AppH["ApplicationChatHandler"]:::llm
+        WoH["WorkOrderChatHandler"]:::llm
+        CF["ChatClientFactory"]:::llm
+        Trace["TracingChatClient"]:::llm
+        ITool["IToolProvider"]:::llm
+        WoTool["WorkOrderTool<br/>(2 local methods)"]:::llm
+    end
+
+    subgraph McpServer["McpServer"]
+        ToolProv["ToolProvider<br/>(loopback MCP client)"]:::mcp
+        WoTools["WorkOrderTools"]:::mcp
+        EmpTools["EmployeeTools"]:::mcp
+        RefRes["ReferenceResources"]:::mcp
+    end
+
+    subgraph Core["Core"]
+        IRem["IRemotableRequest"]:::core
+        WoByNum["WorkOrderByNumberQuery"]:::core
+        EmpAll["EmployeeGetAllQuery"]:::core
+        Domain["WorkOrder / Employee"]:::core
+    end
+
+    subgraph DataAccess["DataAccess"]
+        WoQH["WorkOrderQueryHandler"]:::data
+        EmpQH["EmployeeQueryHandler"]:::data
+        Ctx["DataContext (EF Core)"]:::data
+    end
+
+    subgraph External["External"]
+        MEAI["Microsoft.Extensions.AI"]:::ext
+        Azure["Azure OpenAI"]:::ext
+    end
+
+    %% UI dispatch
+    AppChat -->|Bus.Send| Bus
+    WoChat -->|Bus.Send| Bus
+    Bus -.overridden by.-> RBus
+    RBus -->|IRemotableRequest| GW
+    GW -->|HTTP POST /api| API
+    API --> SBus
+
+    %% Server -> handlers via MediatR
+    SBus -->|MediatR| AppH
+    SBus -->|MediatR| WoH
+    SBus -->|MediatR| CfgHandler
+
+    %% Queries realized by handlers
+    AppQ -.handled by.-> AppH
+    WoQ -.handled by.-> WoH
+    CfgQ -.handled by.-> CfgHandler
+
+    %% Handler dependencies
+    AppH --> ITool
+    AppH --> CF
+    WoH --> WoTool
+    WoH --> CF
+
+    %% Tool provider is MCP
+    ITool -.implemented by.-> ToolProv
+    ToolProv -->|HTTP /mcp| MapMcp
+    MapMcp --> WoTools
+    MapMcp --> EmpTools
+    MapMcp --> RefRes
+
+    %% Tools reach domain via IBus
+    WoTools -->|IBus.Send| WoByNum
+    EmpTools -->|IBus.Send| EmpAll
+    WoTool -->|IBus.Send| WoByNum
+    WoTool -->|IBus.Send| EmpAll
+
+    %% Core queries handled in DataAccess
+    WoByNum -.handled by.-> WoQH
+    EmpAll -.handled by.-> EmpQH
+    WoQH --> Ctx
+    EmpQH --> Ctx
+
+    %% Chat client factory
+    CF -->|ChatClientConfigQuery| CfgQ
+    CF --> Trace
+    Trace --> MEAI
+    MEAI --> Azure
+
+    %% Marker interface
+    AppQ -.->|marker| IRem
+    WoQ -.->|marker| IRem
+    CfgQ -.->|marker| IRem
+    WoByNum -.->|marker| IRem

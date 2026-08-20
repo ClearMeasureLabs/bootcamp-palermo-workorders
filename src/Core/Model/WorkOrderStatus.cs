@@ -1,14 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ClearMeasure.Bootcamp.Core.Model;
 
 [JsonConverter(typeof(WorkOrderStatusJsonConverter))]
-public class WorkOrderStatus
+public class WorkOrderStatus : IEquatable<WorkOrderStatus>
 {
-    private static readonly ILogger _logger = NullLogger<WorkOrderStatus>.Instance;
 
     public static readonly WorkOrderStatus None = new("", "", " ", 0);
     public static readonly WorkOrderStatus Draft = new("DRT", "Draft", "Draft", 1);
@@ -52,21 +49,19 @@ public class WorkOrderStatus
 
     public byte SortBy { get; set; }
 
-    public override bool Equals(object? obj)
-    {
-        var code = obj as WorkOrderStatus;
-        if (code == null)
-        {
-            return false;
-        }
+    /// <inheritdoc />
+    public bool Equals(WorkOrderStatus? other) =>
+        ReferenceEquals(this, other) || HasSameCode(other);
 
-        if (GetType() != obj!.GetType())
-        {
-            return false;
-        }
+    private bool HasSameCode(WorkOrderStatus? other) =>
+        other is not null
+        && GetType() == other.GetType()
+        && CodesEqual(other.Code);
 
-        return Code.Equals(code.Code);
-    }
+    private bool CodesEqual(string? otherCode) =>
+        Code is not null && string.Equals(Code, otherCode, StringComparison.Ordinal);
+
+    public override bool Equals(object? obj) => Equals(obj as WorkOrderStatus);
 
     public override string ToString()
     {
@@ -75,11 +70,29 @@ public class WorkOrderStatus
 
     public override int GetHashCode()
     {
-        return Code.GetHashCode();
+        // Null-Code instances are never equal by value (see Equals); a fixed sentinel
+        // avoids NullReferenceException during materialization.
+        return Code is null ? 0 : Code.GetHashCode();
     }
+
+    /// <summary>
+    /// Value equality by <see cref="Code"/> (not reference). Thin wrapper over
+    /// <see cref="Equals(WorkOrderStatus?)"/> so Qodana reference-comparison findings
+    /// and CRAP stay on the covered Equals path.
+    /// </summary>
+    public static bool operator ==(WorkOrderStatus? left, WorkOrderStatus? right) =>
+        left is null ? right is null : left.Equals(right);
+
+    public static bool operator !=(WorkOrderStatus? left, WorkOrderStatus? right) =>
+        !(left == right);
 
     public bool IsEmpty()
     {
+        // Code == "" is a string comparison, which string's own == operator handles
+        // safely for a null Code (null == "" is simply false, no exception). A
+        // null-Code (uninitialized) instance therefore correctly reports IsEmpty() as
+        // false rather than throwing - it is not "empty" in the None-singleton sense,
+        // it is transiently uninitialized. No change needed here.
         return Code == "";
     }
 
@@ -94,22 +107,14 @@ public class WorkOrderStatus
 
     public static WorkOrderStatus FromKey(string? key)
     {
-        if (key == null)
-        {
-            throw new NotSupportedException("Finding a WorkOrderStatusCode for a null key is not supported");
-        }
+        ArgumentNullException.ThrowIfNull(key);
 
-        var items = GetAllItems();
-        var match = Array.Find(items,
-            instance => instance.Key.Equals(key, StringComparison.InvariantCultureIgnoreCase))!;
+        var match = Array.Find(GetAllItems(),
+            instance => instance.Key.Equals(key, StringComparison.InvariantCultureIgnoreCase));
 
-        if (match == null)
-        {
-            throw new ArgumentOutOfRangeException(
-                $"Key '{key}' is not a valid key for {nameof(WorkOrderStatus)}");
-        }
-
-        return match;
+        return match ?? throw new ArgumentOutOfRangeException(
+            nameof(key),
+            $"Key '{key}' is not a valid key for {nameof(WorkOrderStatus)}");
     }
 
     public static WorkOrderStatus Parse(string? name)

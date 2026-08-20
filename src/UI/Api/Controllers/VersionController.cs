@@ -1,12 +1,10 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Asp.Versioning;
-using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.Extensions.Hosting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 

@@ -15,7 +15,7 @@ public class CanConnectToLlmServerHealthCheck(
         if (!availability.IsAvailable)
         {
             logger.LogWarning(availability.Message);
-            return HealthCheckResult.Degraded(availability.Message);
+            return LlmHealthEvaluator.FromAvailability(availability);
         }
 
         try
@@ -28,17 +28,19 @@ public class CanConnectToLlmServerHealthCheck(
             if (response.Messages.Count > 0)
             {
                 logger.LogDebug("Health check success via ChatClientFactory");
-                return HealthCheckResult.Healthy("Chat client is connected");
+            }
+            else
+            {
+                logger.LogWarning("Chat client returned empty response");
             }
 
-            logger.LogWarning("Chat client returned empty response");
-            return HealthCheckResult.Degraded("Chat client returned empty response");
+            return LlmHealthEvaluator.FromChatResponse(response);
         }
         catch (Exception ex)
         {
             var message = $"Chat client connection failed: {ex.Message}";
             logger.LogWarning(message);
-            return HealthCheckResult.Unhealthy(message, ex);
+            return LlmHealthEvaluator.FromException(ex);
         }
     }
 }

@@ -1,5 +1,4 @@
 using ClearMeasure.Bootcamp.Core;
-using Microsoft.Extensions.Configuration;
 
 namespace ClearMeasure.Bootcamp.McpServer;
 

@@ -64,14 +64,84 @@ pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
 dotnet test src/AcceptanceTests --configuration Debug
 ```
 
-## Run Locally
+## Quick start — Run locally
 
-```bash
-cd src/UI/Server
-dotnet run
-```
+The repository supports three common local development workflows. Pick the one that matches your environment.
 
-The application starts at `https://localhost:7174`. Health check endpoint: `https://localhost:7174/_healthcheck`.
+- Windows (Visual Studio / LocalDB)
+
+  1. Open the solution in Visual Studio (ChurchBulletin.sln).
+  2. Ensure LocalDB is available and your launch profile is configured.
+  3. Run UI.Server from Visual Studio or:
+     ```powershell
+     cd src/UI/Server
+     dotnet run
+     ```
+  Note: Visual Studio launch profiles may override ConnectionStrings in launchSettings.json. Use the Environment configuration below if you need to override.
+
+- Linux / macOS (recommended with Docker)
+
+  1. Start a SQL Server container:
+     ```bash
+     docker run --name churchbulletin-mssql \
+       -e 'MSSQL_SA_PASSWORD=churchbulletin-mssql#1A' \
+       -e 'ACCEPT_EULA=Y' \
+       -p 1433:1433 \
+       -d mcr.microsoft.com/mssql/server:2022-latest
+     ```
+  2. Set environment variables and run the server:
+     ```bash
+     export ConnectionStrings__SqlConnectionString="server=localhost,1433;database=ChurchBulletin;User ID=sa;Password=churchbulletin-mssql#1A;TrustServerCertificate=true;"
+     export ASPNETCORE_ENVIRONMENT=Development
+     # Must set APPLICATIONINSIGHTS_CONNECTION_STRING or set to an empty string to avoid the Azure Monitor exporter crashing:
+     export APPLICATIONINSIGHTS_CONNECTION_STRING=""
+     # Prevent the app from attempting to contact Azure OpenAI (leave empty if not used)
+     export AI_OpenAI_ApiKey=""
+     export AI_OpenAI_Url=""
+     export AI_OpenAI_Model=""
+     cd src/UI/Server
+     dotnet run --no-launch-profile --urls "https://localhost:7174;http://localhost:5174"
+     ```
+  Important: use `--no-launch-profile` on Linux/macOS to avoid the Windows LocalDB connection string from launchSettings.json overriding your env vars.
+
+- SQLite fallback (no Docker)
+
+  1. Set the database engine and run the build scripts:
+     ```bash
+     export DATABASE_ENGINE=SQLite
+     cd src
+     pwsh -NoProfile -ExecutionPolicy Bypass -File ./PrivateBuild.ps1
+     ```
+  The build scripts will use SQLite when Docker is not available.
+
+Health and URLs
+- The application starts at https://localhost:7174 by default.
+- Health check endpoint: https://localhost:7174/_healthcheck
+
+Architecture diagrams
+- See the arch/ folder for PlantUML sources and rendered images. The architecture docs (arch/README.md) explain rendering and icon configuration.
+- To regenerate PlantUML images locally: use the helper scripts:
+  - PowerShell: pwsh arch/render-diagrams.ps1
+  - Bash: ./arch/render-diagrams.sh
+- A CI job (.github/workflows/render-diagrams.yml) validates that diagram images are kept in sync on pull requests.
+- To install the optional pre-commit hook that re-renders diagrams when .puml files are staged, run the repository setup script.
+  - Bash (Linux/macOS/Git Bash): ./scripts/setup-dev-env.sh
+  - PowerShell (Windows): pwsh ./scripts/setup-dev-env.ps1
+
+Playwright (acceptance tests)
+- Install browsers (PowerShell):
+  ```powershell
+  pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
+  ```
+- Run acceptance tests:
+  ```bash
+  dotnet test src/AcceptanceTests --configuration Debug
+  ```
+
+gRPC (work orders)
+- Protobuf contract: src/UI/Server/Protos/workorders.proto
+- Generated C# (checked in): src/UI/Server/Generated/Protos/
+- To regenerate the C# files after editing .proto, run the Grpc.Tools generation on an x64 machine and replace the checked-in generated files (Grpc.Tools can be unstable on ARM).
 
 ---
 
@@ -328,3 +398,88 @@ Maintaining architecture diagrams (PlantUML, Mermaid) as source files checked in
 - **Reference:** [The C4 Model — Tooling](https://c4model.com/#Tooling)
 
 🕐 Last updated: 2026-03-25T21:50:00Z
+
+## Deployment Verification
+
+Deployments are verified in the UAT environment before release.
+
+## Deployment Verification 20260727-081828
+
+Deployment run 20260727-081828 is verified in the UAT environment before release.
+
+## Deployment Verification 20260727-090150
+
+Deployment run 20260727-090150 is verified in the UAT environment before release.
+
+## Deployment Verification 20260727-094548
+
+Deployment run 20260727-094548 is verified in the UAT environment before release.
+
+## Deployment Verification 20260727-132512
+
+Deployment run 20260727-132512 is verified in the UAT environment before release.
+
+
+## Deployment Verification 20260727-201015
+
+Deployment run 20260727-201015 is verified in the UAT environment before release.
+
+
+
+## Deployment Verification 20260727-210050
+
+Deployment run 20260727-210050 is verified in the UAT environment before release.
+
+## Deployment Verification 20260727-222027
+
+Deployment run 20260727-222027 is verified in the UAT environment before release.
+
+## Deployment Verification 20260727-231313
+
+Deployment run 20260727-231313 is verified in the UAT environment before release.
+
+## Deployment Verification 20260728-000302
+
+Deployment run 20260728-000302 is verified in the UAT environment before release.
+
+
+## Deployment Verification 20260728-041350
+
+Deployment run 20260728-041350 is verified in the UAT environment before release.
+
+## Deployment Verification 20260728-200157
+
+Deployment run 20260728-200157 is verified in the UAT environment before release.
+
+## Deployment Verification 20260728-203209
+
+Deployment run 20260728-203209 is verified in the UAT environment before release.
+
+
+## Deployment Verification 20260728-210121
+
+Deployment run 20260728-210121 is verified in the UAT environment before release.
+
+## Deployment Verification 20260728-220129
+
+Deployment run 20260728-220129 is verified in the UAT environment before release.
+
+## Deployment Verification 20260729-012310
+
+Deployment run 20260729-012310 is verified in the UAT environment before release.
+
+
+## Deployment Verification 20260729-060151
+
+Deployment run 20260729-060151 is verified in the UAT environment before release.
+
+
+## Deployment Verification 20260729-172838
+
+Deployment run 20260729-172838 is verified in the UAT environment before release.
+
+
+
+## Deployment Verification 20260729-203926
+
+Deployment run 20260729-203926 is verified in the UAT environment before release.

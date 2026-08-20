@@ -33,6 +33,7 @@ public class WorkOrderManageSpeechTests
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
         ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
@@ -62,6 +63,7 @@ public class WorkOrderManageSpeechTests
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
         ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
@@ -94,6 +96,7 @@ public class WorkOrderManageSpeechTests
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(translationService);
         ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
@@ -117,6 +120,45 @@ public class WorkOrderManageSpeechTests
         {
             translationService.LastText.ShouldBe("Test title");
             translationService.LastTargetLanguage.ShouldBe("es-ES");
+        });
+    }
+
+    [Test]
+    public void SpeakDescriptionButtonShouldInvokeTranslationService()
+    {
+        using var ctx = new TestContext();
+
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
+        user.Id = Guid.NewGuid();
+        user.PreferredLanguage = "fr-FR";
+
+        var translationService = new StubTranslationService();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(translationService);
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.RenderComponent<WorkOrderManage>();
+
+        component.WaitForAssertion(() =>
+        {
+            component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ShouldNotBeNull();
+        });
+
+        component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").Change("Test description");
+        component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']").Click();
+
+        component.WaitForAssertion(() =>
+        {
+            translationService.LastText.ShouldBe("Test description");
+            translationService.LastTargetLanguage.ShouldBe("fr-FR");
         });
     }
 

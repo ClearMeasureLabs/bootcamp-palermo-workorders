@@ -1,0 +1,17 @@
+UnitTests              files=  80 code=  5369 cc=   68
+IntegrationTests       files=  48 code=  3876 cc=  110
+AcceptanceTests        files=  40 code=  3085 cc=  164
+UI.Shared              files=  40 code=  2045 cc=  104
+UI/Server              files=  39 code=  1870 cc=  130
+GENERATED(excl)        files=   2 code=  1405 cc=  284
+Core                   files=  64 code=  1087 cc=   70
+UI/Api                 files=  24 code=   590 cc=   24
+ChurchBulletin.ServiceDefaults files=  12 code=   570 cc=   36
+DataAccess             files=  20 code=   496 cc=   31
+UI/Client              files=  14 code=   486 cc=   12
+McpServer              files=   8 code=   462 cc=   28
+LlmGateway             files=  13 code=   349 cc=   15
+Database               files=   7 code=   309 cc=   24
+Worker                 files=  12 code=   232 cc=    4
+ChurchBulletin.AppHost files=   1 code=    10 cc=    0
+src                    files=   1 code=     0 cc=    0

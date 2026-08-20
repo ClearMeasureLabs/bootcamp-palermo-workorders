@@ -30,7 +30,7 @@ public class VersionControllerTests
             content.Content!,
             ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
-        payload!.AssemblyVersion.ShouldNotBeNullOrEmpty();
+        payload.AssemblyVersion.ShouldNotBeNullOrEmpty();
         payload.InformationalVersion.ShouldNotBeNullOrEmpty();
         payload.Environment.ShouldBe("TestEnvironment");
         payload.MachineName.ShouldBe(Environment.MachineName);

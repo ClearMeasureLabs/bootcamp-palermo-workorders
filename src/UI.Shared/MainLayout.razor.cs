@@ -15,7 +15,8 @@ public partial class MainLayout : IAsyncDisposable
     public enum Elements
     {
         NavRailToggle,
-        CopyrightFooter
+        CopyrightFooter,
+        FooterNote
     }
 
     /// <summary>
@@ -37,19 +38,9 @@ public partial class MainLayout : IAsyncDisposable
     private bool _viewportSynced;
     private bool _navVisible = true;
 
-    private string AppContainerClass =>
-        !_isNarrowViewport && !_navVisible ? "modern-app rail-collapsed" : "modern-app";
+    private string AppContainerClass => NavRailCss.AppContainerClass(_isNarrowViewport, _navVisible);
 
-    private string SidebarClass
-    {
-        get
-        {
-            const string baseClass = "modern-sidebar";
-            if (_isNarrowViewport)
-                return _navVisible ? $"{baseClass} open" : baseClass;
-            return _navVisible ? baseClass : $"{baseClass} rail-hidden";
-        }
-    }
+    private string SidebarClass => NavRailCss.SidebarClass(_isNarrowViewport, _navVisible);
 
     private string NavToggleTitle =>
         _navVisible ? "Hide navigation panel" : "Show navigation panel";

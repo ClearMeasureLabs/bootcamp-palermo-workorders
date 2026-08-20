@@ -1,0 +1,50 @@
+@startuml devops
+title Build / DevOps / Deploy View\nFrom developer push through quality gates to Azure Container Apps
+caption Same PowerShell build runs locally (privatebuild) and in CI. Octopus owns both app deploy and DB migrations.
+
+skinparam defaultFontName Segoe UI
+skinparam componentStyle rectangle
+left to right direction
+skinparam rectangle {
+  BorderColor #566573
+  BackgroundColor<<dev>> #FDF3E7
+  BackgroundColor<<ci>> #E8EEF7
+  BackgroundColor<<deploy>> #F0E8F7
+  BackgroundColor<<run>> #E8F4E8
+}
+
+rectangle "Developer" <<dev>> as dev
+rectangle "Git repo\n(GitHub)" <<dev>> as git
+rectangle "PrivateBuild.ps1\nbuild.ps1 / BuildFunctions.ps1" <<ci>> as build
+rectangle "Quality gates\n- dotnet build (Release)\n- UnitTests 273\n- DbUp migrate\n- IntegrationTests 119" <<ci>> as gates
+rectangle "AcceptanceTests\n(Playwright, 88)" <<ci>> as accept
+rectangle "Docker image\n(Dockerfile)" <<deploy>> as docker
+rectangle "Octopus Deploy\n(.octopus)" <<deploy>> as octo
+cloud "Azure Container Apps" <<run>> as aca
+database "SQL Server\n(DbUp scripts)" <<run>> as sql
+
+dev --> git : push / PR
+git --> build : CI trigger
+build --> gates : compile + test
+gates --> accept : before PR
+build --> docker : package
+docker --> octo
+accept --> octo : gate passed
+octo --> aca : deploy
+octo --> sql : run migrations
+aca --> sql : runtime
+
+note bottom of build
+  Build/DevOps code ~800 LOC PowerShell.
+  Do NOT modify .octopus / build scripts
+  without approval (repo rule).
+end note
+
+legend bottom
+|= Color |= Stage |
+|<#FDF3E7> | Source control |
+|<#E8EEF7> | Build + quality gates |
+|<#F0E8F7> | Packaging + deployment |
+|<#E8F4E8> | Runtime environment |
+endlegend
+@enduml

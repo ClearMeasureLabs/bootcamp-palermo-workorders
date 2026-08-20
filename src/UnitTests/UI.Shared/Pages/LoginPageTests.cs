@@ -17,7 +17,6 @@ public class LoginPageTests
     [Test]
     public void ShouldOnlyRequireUsername()
     {
-        var loginPage = new Login();
         var loginModel = new Login.LoginModel { Username = "hsimpson" };
 
         var validationContext = new ValidationContext(loginModel);
@@ -31,7 +30,6 @@ public class LoginPageTests
     [Test]
     public void ShouldRequireUsername()
     {
-        var loginPage = new Login();
         var loginModel = new Login.LoginModel { Username = "" };
 
         var validationContext = new ValidationContext(loginModel);
@@ -57,6 +55,8 @@ public class LoginPageTests
 
         var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
         employeeSelect.ShouldNotBeNull();
+        employeeSelect.GetAttribute("id").ShouldBe(nameof(Login.Elements.User));
+        component.Find($"label[for='{Login.Elements.User}']").ShouldNotBeNull();
 
         var options = component.FindAll("option");
         options.Count.ShouldBe(5);

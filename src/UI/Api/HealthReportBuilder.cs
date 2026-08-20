@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
 namespace ClearMeasure.Bootcamp.UI.Api;
 
 /// <summary>
@@ -16,6 +19,15 @@ public static class HealthReportBuilder
         return new DetailedHealthReport
         {
             CheckedAtUtc = clock.GetUtcNow().UtcDateTime,
+            ProcessId = Environment.ProcessId,
+            OsDescription = RuntimeInformation.OSDescription,
+            FrameworkDescription = RuntimeInformation.FrameworkDescription,
+            GcMemoryMb = (int)Math.Round(GC.GetTotalMemory(false) / 1_048_576.0),
+            WorkingSetMb = (int)Math.Round(Environment.WorkingSet / 1_048_576.0),
+            ProcessorCount = Environment.ProcessorCount,
+            Is64BitProcess = Environment.Is64BitProcess,
+            TimeZoneId = TimeZoneInfo.Local.Id,
+            ProcessPriority = Process.GetCurrentProcess().PriorityClass.ToString(),
             Components = components,
             OverallStatus = AggregateWorst(components)
         };

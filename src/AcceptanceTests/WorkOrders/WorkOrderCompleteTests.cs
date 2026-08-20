@@ -22,11 +22,12 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         order = await BeginExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
-        var expectedInstructions = "Finish before end of day";
+        var expectedTitle = "Title from automation";
+        var expectedDescription = "Description";
+        var expectedInstructions = "Bring ladder and safety gear";
         order.Title = expectedTitle;
         order.Description = expectedDescription;
         order.Instructions = expectedInstructions;
-        await Input(nameof(WorkOrderManage.Elements.Instructions), expectedInstructions);
         order = await CompleteExistingWorkOrder(order);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 

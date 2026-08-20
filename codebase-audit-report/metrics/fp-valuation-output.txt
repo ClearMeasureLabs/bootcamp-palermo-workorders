@@ -1,0 +1,62 @@
+==================== IFPUG FUNCTION POINT COUNT ====================
+
+Type  Complexity  Count  Weight    FP   Detail
+EI    Avg             7       4    28   SaveDraft/create, DraftToAssigned, AssignedToInP
+EO    Avg             4       5    20   WorkOrder reformat (LLM), Translation, Telemetry
+EQ    Low             7       3    21   WorkOrderByNumber, WorkOrder list/spec, Employee
+ILF-1 High            1      15    15   WorkOrder aggregate (number,status,dates,rooms,c
+ILF-2 Avg             1      10    10   Employee + Roles aggregate
+ILF-3 Low             1       7     7   Attachment metadata
+EIF   Low             1       5     5   Azure OpenAI interface (referenced, not maintain
+
+Unadjusted Function Points (UFP) = 106
+
+==================== VALUE ADJUSTMENT FACTOR (GSC) ====================
+
+1  Data communications            5   HTTP + gRPC + WebSocket + MCP transports
+2  Distributed data processing    3   Blazor WASM client + server + Worker + MCP host
+3  Performance                    3   rate limiting, idempotency, async throughout
+4  Heavily used configuration     2   standard appsettings, no tuned constraints
+5  Transaction rate               2   internal-scale traffic
+6  Online data entry              5   interactive Blazor forms, primary UX
+7  End-user efficiency            4   speech synth/recognition, dark mode, dictation
+8  Online update                  4   ILFs updated interactively via commands
+9  Complex processing             3   LLM reformat, CSV import, state machine
+10 Reusability                    3   UI.Shared + ServiceDefaults shared components
+11 Installation ease              2   container deploy, DbUp migrations
+12 Operational ease               4   health checks, OTel, telemetry file writer
+13 Multiple sites                 3   Azure Container Apps + Aspire orchestration
+14 Facilitate change              3   CQRS/MediatR seams, smart enums
+
+Total Degree of Influence (TDI) = 46
+VAF = 0.65 + 0.01 x 46 = 1.11
+Adjusted Function Points (AFP) = 106 x 1.11 = 118
+
+==================== BACKFIRING CROSS-CHECK (Capers Jones) ====================
+
+Language             LOC  LOC/FP      FP
+C# (System)         7075      55   128.6
+Razor (System)      1431      50    28.6
+SQL (System)        1505      40    37.6
+
+System backfiring total = 195 FP (LOC-based UPPER bound)
+IFPUG hand count (AFP)  = 118 FP (conservative primary)
+Adopted System size     = 118-195 FP; midpoint ~ 156 FP
+
+DevOps/Test backfiring (informational) = 242 FP-equiv (Test C# 12330 + build 800 LOC)
+
+==================== ECONOMIC VALUATION ====================
+
+BLS May-2024 median dev salary = $133,080; burdened x1.45 = $192,966; day rate = $877/day (220 days/yr)
+
+Valuing System at 118 FP (IFPUG). Effort = FP / (FP-per-day).
+
+FP/day  Band                        Man-days  Staff-mo    Cost(System)
+0.32    Full-lifecycle (Jones)           369      16.8        $323,437
+0.50    Conservative                     236      10.7        $207,000
+1.00    Industry mid                     118       5.4        $103,500
+2.00    Small-team coding                 59       2.7         $51,750
+3.00    Aggressive/AI-assisted            39       1.8         $34,500
+
+Note: the 0.32 row is FULL-lifecycle (System only). Do NOT sum System+DevOps/Test at this row.
+Most-likely replacement investment (mid band 0.5-1.0 FP/day): $100k - $210k.

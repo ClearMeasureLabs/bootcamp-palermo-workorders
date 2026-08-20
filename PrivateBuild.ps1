@@ -18,3 +18,9 @@ if (-not [string]::IsNullOrEmpty($databaseName)) {
     $buildArgs["databaseName"] = $databaseName
 }
 Build @buildArgs
+
+$crapAudit = Join-Path $PSScriptRoot ".cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1"
+& $crapAudit -Threshold 13 -SkipTests -FailOnViolations
+if ($LASTEXITCODE -ne 0) {
+    throw "CRAP gate failed: in-scope production methods exceed threshold 13. See crap-metrics/crap-production-violations.json"
+}

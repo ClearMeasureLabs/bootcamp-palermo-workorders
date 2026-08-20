@@ -183,7 +183,7 @@ public class McpWorkOrderToolTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-002", "AssignedToCancelledCommand", "user1");
 
-        WorkOrder? wo = null;
+        WorkOrder wo;
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
             wo = context.Set<WorkOrder>().Where(wo => wo.Number == "WO-002").Single();
@@ -218,7 +218,7 @@ public class McpWorkOrderToolTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-778", "InProgressToAssignedCommand", "gwillie");
 
-        WorkOrder? wo = null;
+        WorkOrder wo;
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
             wo = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-778");
@@ -339,5 +339,125 @@ public class McpWorkOrderToolTests
 
         wo.Status.ShouldBe(WorkOrderStatus.InProgress);
         wo.Assignee!.UserName.ShouldBe("worker1");
+    }
+
+    [Test]
+    public async Task ShouldReturnNotFoundWhenExecutingWorkOrderCommandForMissingWorkOrder()
+    {
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "MISSING-WO", "AssignedToCancelledCommand", "user1");
+
+        result.ShouldContain("No work order found");
+    }
+
+    [Test]
+    public async Task ShouldReturnNotFoundWhenExecutingUserMissing()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var order = new WorkOrder { Creator = employee, Number = "WO-501", Title = "Test", Status = WorkOrderStatus.Assigned };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-501", "AssignedToCancelledCommand", "ghost");
+
+        result.ShouldContain("Employee with username 'ghost' not found");
+    }
+
+    [Test]
+    public async Task ShouldReturnNotFoundWhenAssigneeMissingForDraftToAssigned()
+    {
+        var creator = new Employee("creator1", "Jane", "Creator", "creator@test.com");
+        creator.AddRole(new Role("Manager", true, false));
+        var draftOrder = new WorkOrder
+        {
+            Creator = creator,
+            Number = "WO-503",
+            Title = "Missing assignee",
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(draftOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ExecuteWorkOrderCommand(
+            bus,
+            "WO-503",
+            "DraftToAssignedCommand",
+            "creator1",
+            "missing-assignee");
+
+        result.ShouldContain("Assignee with username 'missing-assignee' not found");
+    }
+
+    [Test]
+    public async Task ShouldReturnErrorWhenCommandInvalidForCurrentStatus()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var draftOrder = new WorkOrder { Creator = employee, Number = "WO-504", Title = "Draft", Status = WorkOrderStatus.Draft };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(draftOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-504", "AssignedToCancelledCommand", "user1");
+
+        result.ShouldContain("cannot be executed");
+        result.ShouldContain("Draft");
+    }
+
+    [Test]
+    public async Task ShouldExecuteInProgressToCompleteCommand()
+    {
+        var creator = new Employee("creator1", "Jane", "Creator", "creator@test.com");
+        var assignee = new Employee("worker1", "Sam", "Worker", "worker@test.com");
+        assignee.AddRole(new Role("Worker", false, true));
+        var inProgressOrder = new WorkOrder
+        {
+            Creator = creator,
+            Assignee = assignee,
+            Number = "WO-505",
+            Title = "Complete me",
+            Status = WorkOrderStatus.InProgress
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(assignee);
+            context.Add(inProgressOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ExecuteWorkOrderCommand(
+            bus,
+            "WO-505",
+            "InProgressToCompleteCommand",
+            "worker1");
+
+        result.ShouldContain("Complete");
+
+        WorkOrder? wo;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            wo = await context.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-505");
+        }
+
+        wo.Status.ShouldBe(WorkOrderStatus.Complete);
     }
 }

@@ -61,6 +61,7 @@ public class BusTests
         bus.Publish(notification);
 
         stubMediator.LastNotification.ShouldBe(notification);
+        ((TestNotification)stubMediator.LastNotification!).Message.ShouldBe("test message");
     }
 
     private class StubMediator : IMediator
@@ -126,10 +127,7 @@ public class BusTests
         }
     }
 
-    private class TestCommand
-    {
-        public string Data { get; set; } = "test data";
-    }
+    private class TestCommand;
 
     private class TestNotification : INotification
     {

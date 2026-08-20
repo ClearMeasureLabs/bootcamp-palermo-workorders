@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Net;
 using ClearMeasure.Bootcamp.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests;
 
@@ -28,7 +27,7 @@ public class ServerFixture
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
     public static bool HeadlessTestBrowser { get; set; } = true;
     public static bool DatabaseInitialized { get; private set; }
-    private static readonly object DatabaseLock = new();
+    private static readonly Lock DatabaseLock = new();
     
     /// <summary>
     /// Shared Playwright instance for all tests. Thread-safe for parallel execution.
@@ -47,6 +46,12 @@ public class ServerFixture
         SlowMo = configuration.GetValue<int>("SlowMo");
         HeadlessTestBrowser = configuration.GetValue<bool>("HeadlessTestBrowser");
 
+        // Playwright's Expect(...) assertions do NOT inherit the browser context's
+        // default timeout (set to 60s in AcceptanceTestBase) — they default to 5s.
+        // Under LevelOfParallelism(4) a cold Blazor WASM render can exceed 5s, so an
+        // assertion that is merely waiting for the first render fails with
+        // "<element(s) not found>". Align the assertion budget with the action budget.
+        Assertions.SetDefaultExpectTimeout(30_000);
 
         Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
@@ -71,11 +76,7 @@ public class ServerFixture
     {
         if (StartLocalServer) return; // local server is already warmed by StartAndWaitForServer
 
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+        var client = TestHttpClientFactory.CreateInsecureClient();
 
         string[] warmUpPaths = ["/", "/_healthcheck", "/_clienthealthcheck"];
 
@@ -110,11 +111,7 @@ public class ServerFixture
         const int maxAttempts = 3;
         const int delayBetweenAttemptsMs = 5000;
 
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+        var client = TestHttpClientFactory.CreateInsecureClient();
 
         // 1. Verify site is reachable
         TestContext.Out.WriteLine("Health gate: verifying site is reachable...");
@@ -265,11 +262,7 @@ public class ServerFixture
         _serverProcess.BeginErrorReadLine();
 
         // Wait for server to be ready
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler);
+        var client = TestHttpClientFactory.CreateInsecureClient();
         var baseUrl = ApplicationBaseUrl;
         var timeout = TimeSpan.FromSeconds(WaitTimeoutSeconds);
         var start = DateTime.UtcNow;
@@ -403,11 +396,7 @@ public class ServerFixture
 
     private static async Task ResetServerDbConnections()
     {
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler);
+        var client = TestHttpClientFactory.CreateInsecureClient();
         var response = await client.PostAsync($"{ApplicationBaseUrl}/_diagnostics/reset-db-connections", null);
         response.EnsureSuccessStatusCode();
     }

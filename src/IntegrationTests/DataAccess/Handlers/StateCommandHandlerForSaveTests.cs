@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
@@ -24,6 +24,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Id = Guid.Empty;
         workOrder.CreatedDate = null; // Ensure CreatedDate is null to test setting it;
         workOrder.Creator = currentUser;
+        workOrder.Instructions = "Turn off water main first";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
@@ -39,6 +40,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         var order = context3.Find<WorkOrder>(result.WorkOrder.Id) ?? throw new InvalidOperationException();
         order.CreatedDate.ShouldBe(TestHost.TestTime.DateTime);
         order.Title.ShouldBe(workOrder.Title);
+        order.Instructions.ShouldBe("Turn off water main first");
     }
 
     [Test]
@@ -69,7 +71,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
-        var result = await handler.Handle(command);
+        _ = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe(workOrder.Title);
@@ -103,18 +105,18 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Creator = currentUser;
         workOrder.Assignee = assignee;
         workOrder.Title = "newtitle";
-        workOrder.Instructions = "Updated instructions text";
+        workOrder.Instructions = "Updated guidance after inspection.";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
-        var result = await handler.Handle(command);
+        _ = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");
         order.Description.ShouldBe(workOrder.Description);
-        order.Instructions.ShouldBe("Updated instructions text");
+        order.Instructions.ShouldBe("Updated guidance after inspection.");
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
     }
@@ -146,11 +148,11 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
         workOrder.Title = "newtitle";
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
-        var remotedCommand = RemotableRequestTests.SimulateRemoteObject(command);
+        _ = RemotableRequestTests.SimulateRemoteObject(command);
 
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
 
-        var result = await handler.Handle(command);
+        _ = await handler.Handle(command);
         var context3 = TestHost.GetRequiredService<DbContext>();
         var order = context3.Find<WorkOrder>(workOrder.Id) ?? throw new InvalidOperationException();
         order.Title.ShouldBe("newtitle");

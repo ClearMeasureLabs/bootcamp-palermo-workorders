@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.IntegrationTests;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,7 @@ public class WorkOrderMappingTests
             Number = "WO-01",
             Title = "Fix lighting",
             Description = "Replace broken light bulbs in conference room",
-            Instructions = "Turn off breaker before replacing bulbs.",
+            Instructions = "Lock out panel before work.",
             RoomNumber = "CR-101",
             Status = WorkOrderStatus.Draft,
             Creator = creator
@@ -45,7 +45,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Number.ShouldBe("WO-01");
         rehydratedWorkOrder.Title.ShouldBe("Fix lighting");
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
-        rehydratedWorkOrder.Instructions.ShouldBe("Turn off breaker before replacing bulbs.");
+        rehydratedWorkOrder.Instructions.ShouldBe("Lock out panel before work.");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
@@ -65,7 +65,7 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
-            Instructions = "use ladder",
+            Instructions = "Use 10ft ladder",
             RoomNumber = "123 a"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
@@ -113,7 +113,7 @@ public class WorkOrderMappingTests
             Assignee = assignee,
             Title = "foo",
             Description = "bar",
-            Instructions = "",
+            Instructions = "Use 10ft ladder",
             RoomNumber = "123 a"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
@@ -134,6 +134,7 @@ public class WorkOrderMappingTests
         {
             var rehydratedWorkOrder = context.Set<WorkOrder>()
                 .Single(wo => wo.Id == order.Id);
+            rehydratedWorkOrder.Id.ShouldBe(order.Id);
         }
     }
 
@@ -276,9 +277,7 @@ public class WorkOrderMappingTests
             Number = new string('A', 8), // Exceeds 7 char limit (WorkOrderMap)
             Title = new string('B', 301), // Exceeds 300 char limit
             Description = "valid",
-            // Instructions setter truncates to 4000 before EF (same as Description)
-            Instructions = new string('E', 4001),
-            RoomNumber = new string('D', 51), // Exceeds 50 char limit
+            RoomNumber = new string('D', WorkOrder.RoomNumberMaxLength + 1),
             Creator = creator,
             Status = WorkOrderStatus.Draft
         };
@@ -351,6 +350,41 @@ public class WorkOrderMappingTests
     }
 
     [Test]
+    public void ShouldSupportMaxLengthRoomNumber()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var room = new string('R', WorkOrder.RoomNumberMaxLength);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-R9",
+            Title = "Max length room",
+            Description = "description",
+            RoomNumber = room,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.RoomNumber.ShouldBe(room);
+        rehydratedWorkOrder.RoomNumber!.Length.ShouldBe(WorkOrder.RoomNumberMaxLength);
+    }
+
+    [Test]
     public void ShouldEagerFetchCreatorAndAssigneeByDefault()
     {
         new DatabaseTests().Clean();
@@ -392,5 +426,71 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee!.Id.ShouldBe(assignee.Id);
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
+    }
+
+    [Test]
+    public void ShouldPersistNullInstructionsForLegacyWorkOrder()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-07",
+            Title = "Legacy work order",
+            Description = "No instructions provided",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions.ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void ShouldPersistInstructionsAtMaxLength()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var longInstructions = new string('I', 4001);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-08",
+            Title = "Max length instructions",
+            Description = "Testing truncation",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+        workOrder.Instructions = longInstructions;
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
     }
 }

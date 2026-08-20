@@ -1,0 +1,31 @@
+# Sensor — on each calendar tick, run the dispatcher Workflow, which discovers
+# eligible issues (labeled, open, no open PR) and submits one ai-dev-agent
+# Workflow per issue. Discovery + dedup live in the dispatcher (below) because
+# they need `gh` calls the Sensor can't make inline.
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: ai-factory-dispatch
+  namespace: ai-factory
+spec:
+  template:
+    serviceAccountName: ai-factory-sensor
+  dependencies:
+    - name: tick
+      eventSourceName: ai-factory-tick
+      eventName: tick
+  triggers:
+    - template:
+        name: run-dispatcher
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: ai-dev-dispatch-
+                namespace: ai-factory
+              spec:
+                workflowTemplateRef:
+                  name: ai-dev-dispatcher

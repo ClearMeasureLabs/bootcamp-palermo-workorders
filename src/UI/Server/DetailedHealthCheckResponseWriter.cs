@@ -1,6 +1,6 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
 
@@ -25,8 +25,16 @@ public static class DetailedHealthCheckResponseWriter
     {
         context.Response.ContentType = "application/json; charset=utf-8";
 
+        // RequestServices is annotated non-null, but DefaultHttpContext may leave it unset
+        // (unit tests / early pipeline). GetService throws on a null provider.
+        var timeProvider = context.RequestServices?.GetService<TimeProvider>() ?? TimeProvider.System;
+
         var response = new DetailedHealthCheckResponse
         {
+            ServerUtc = timeProvider.GetUtcNow(),
+            ProcessStartUtc = new DateTimeOffset(Process.GetCurrentProcess().StartTime).ToUniversalTime(),
+            Is64BitProcess = Environment.Is64BitProcess,
+            TimeZoneId = TimeZoneInfo.Local.Id,
             OverallStatus = report.Status.ToString(),
             TotalDurationMs = report.TotalDuration.TotalMilliseconds,
             Entries = report.Entries
@@ -54,6 +62,18 @@ public static class DetailedHealthCheckResponseWriter
 
     internal sealed class DetailedHealthCheckResponse
     {
+        /// <summary>UTC timestamp when the health report was written.</summary>
+        public DateTimeOffset ServerUtc { get; init; }
+
+        /// <summary>UTC timestamp when the host process started (from <see cref="Process.StartTime"/>).</summary>
+        public DateTimeOffset ProcessStartUtc { get; init; }
+
+        /// <summary>Whether the host process runs as 64-bit (from <see cref="Environment.Is64BitProcess"/>).</summary>
+        public bool Is64BitProcess { get; init; }
+
+        /// <summary>Host local time zone identifier from <see cref="TimeZoneInfo.Local"/>.</summary>
+        public string TimeZoneId { get; init; } = string.Empty;
+
         /// <summary>Overall aggregated status of all health checks.</summary>
         public required string OverallStatus { get; init; }
 

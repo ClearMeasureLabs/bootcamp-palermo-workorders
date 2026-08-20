@@ -1,4 +1,5 @@
 @startuml
+!include templates/plantuml-theme.puml
 
 title DraftToAssignedCommand Sequence Diagram
 
@@ -47,4 +48,6 @@ mediator --> sBus : StateCommandResult
 sBus --> api : StateCommandResult
 api --> ui : WebServiceMessage\n(serialized result)
 
+LEGEND("Legend","Bus: IBus (local mediator bus)\nDistributedBus: IDistributedBus publishes domain events\nNServiceBus: external transport for long-running processing\nNote: WorkOrderAssignedToBotEvent published when assignee has Bot role")
+FOOTER()
 @enduml

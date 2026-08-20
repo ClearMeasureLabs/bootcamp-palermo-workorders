@@ -11,7 +11,6 @@ using ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 using Bunit.TestDoubles;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using Palermo.BlazorMvc;
 using Shouldly;
 using TestContext = Bunit.TestContext;
@@ -59,6 +58,35 @@ public class MainLayoutTests
         toggle.GetAttribute("title")!.ShouldContain("Show");
         layout.Find(".modern-app").ClassList.ShouldContain("rail-collapsed");
         layout.Find("#app-navigation-rail").ClassList.ShouldContain("rail-hidden");
+
+        toggle.Click();
+
+        toggle.GetAttribute("aria-expanded").ShouldBe("true");
+        toggle.GetAttribute("title")!.ShouldContain("Hide");
+        layout.Find(".modern-app").ClassList.ShouldNotContain("rail-collapsed");
+        layout.Find("#app-navigation-rail").ClassList.ShouldNotContain("rail-hidden");
+    }
+
+    [Test]
+    public void ShouldRenderCorrectIconForNavVisibility()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        component.WaitForAssertion(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        component.InvokeAsync(() => layout.Instance.OnViewportChanged(false)).GetAwaiter().GetResult();
+
+        var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        toggle.InnerHtml.ShouldContain("bi-chevron-double-left");
+
+        toggle.Click();
+
+        toggle.InnerHtml.ShouldContain("bi-list");
     }
 
     [Test]
@@ -114,7 +142,6 @@ public class MainLayoutTests
 
         var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
         loginAnchor.GetAttribute("href").ShouldBe("/login");
-        loginAnchor.ClassList.ShouldContain("login-prompt-link");
     }
 
     [Test]
@@ -178,6 +205,21 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderFooterNote_WithinSiteFooter()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var note = layout.Find($"[data-testid='{nameof(MainLayout.Elements.FooterNote)}']");
+        note.TextContent.Trim().ShouldBe("Submit a new work order any time — requests are typically reviewed within one business day.");
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        footer.QuerySelector($"[data-testid='{nameof(MainLayout.Elements.FooterNote)}']").ShouldNotBeNull();
+    }
+
+    [Test]
     public void ShouldRenderCompanyLink_WithAccessibleAttributes_WhenExternalLinkUsesNewTab()
     {
         using var ctx = CreateContext();
@@ -228,7 +270,7 @@ public class MainLayoutTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession());
-        ctx.Services.AddSingleton<IJSRuntime>(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
         var customAuth = new CustomAuthenticationStateProvider();
         if (authenticateAsUser != null)

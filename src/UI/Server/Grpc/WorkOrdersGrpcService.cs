@@ -1,8 +1,7 @@
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using Grpc.Core;
-using GrpcWorkOrder = ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder;
+using Google.Protobuf.WellKnownTypes;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Grpc;
 
@@ -12,10 +11,8 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc;
 public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
 {
     /// <inheritdoc />
-    public override Task<PingReply> Ping(PingRequest request, ServerCallContext context)
-    {
-        return Task.FromResult(new PingReply { Message = "ok" });
-    }
+    public override Task<PingReply> Ping(PingRequest request, ServerCallContext context) =>
+        Task.FromResult(new PingReply { Message = "ok" });
 
     /// <inheritdoc />
     public override async Task<GetWorkOrderByNumberReply> GetWorkOrderByNumber(
@@ -36,7 +33,7 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
         return new GetWorkOrderByNumberReply { WorkOrder = MapWorkOrder(workOrder) };
     }
 
-    private static GrpcWorkOrder MapWorkOrder(Core.Model.WorkOrder source)
+    internal static WorkOrder MapWorkOrder(Core.Model.WorkOrder source)
     {
         var message = new GrpcWorkOrder
         {
@@ -50,24 +47,22 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
             AssigneeUsername = source.Assignee?.UserName ?? ""
         };
 
-        if (source.AssignedDate.HasValue)
-        {
-            message.AssignedDateUtc = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(
-                DateTime.SpecifyKind(source.AssignedDate.Value, DateTimeKind.Utc));
-        }
-
-        if (source.CreatedDate.HasValue)
-        {
-            message.CreatedDateUtc = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(
-                DateTime.SpecifyKind(source.CreatedDate.Value, DateTimeKind.Utc));
-        }
-
-        if (source.CompletedDate.HasValue)
-        {
-            message.CompletedDateUtc = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(
-                DateTime.SpecifyKind(source.CompletedDate.Value, DateTimeKind.Utc));
-        }
-
+        GrpcWorkOrderDateMapper.ApplyOptionalDates(message, source);
         return message;
     }
+}
+
+internal static class GrpcWorkOrderDateMapper
+{
+    internal static void ApplyOptionalDates(WorkOrder message, Core.Model.WorkOrder source)
+    {
+        message.AssignedDateUtc = ToUtcTimestamp(source.AssignedDate);
+        message.CreatedDateUtc = ToUtcTimestamp(source.CreatedDate);
+        message.CompletedDateUtc = ToUtcTimestamp(source.CompletedDate);
+    }
+
+    internal static Timestamp? ToUtcTimestamp(DateTime? value) =>
+        value.HasValue
+            ? Timestamp.FromDateTime(DateTime.SpecifyKind(value.Value, DateTimeKind.Utc))
+            : null;
 }

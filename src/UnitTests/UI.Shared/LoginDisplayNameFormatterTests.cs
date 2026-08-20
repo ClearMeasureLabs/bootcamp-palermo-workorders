@@ -29,4 +29,10 @@ public class LoginDisplayNameFormatterTests
     {
         LoginDisplayNameFormatter.FormatForLoginDropdown(string.Empty).ShouldBe(string.Empty);
     }
+
+    [Test]
+    public void FormatForLoginDropdown_WhitespaceOnly_PreservesLengthAndCaseMapsToUpperInvariant()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown("  \t ").ShouldBe("  \t ".ToUpperInvariant());
+    }
 }

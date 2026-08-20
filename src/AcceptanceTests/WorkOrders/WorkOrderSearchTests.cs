@@ -9,8 +9,41 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     [SetUp]
     public async Task Setup()
     {
-        var username = CurrentUser.UserName;
         await LoginAsCurrentUser();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_PreserveMixedCaseNames_InWorkOrderSearchDropdowns()
+    {
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
+
+        await Expect(creatorSelect.Locator("option").Filter(new() { HasText = "Timothy Lovejoy" })).ToHaveCountAsync(1);
+        await Expect(assigneeSelect.Locator("option").Filter(new() { HasText = "Timothy Lovejoy" })).ToHaveCountAsync(1);
+
+        var creatorTexts = await creatorSelect.Locator("option").AllInnerTextsAsync();
+        var assigneeTexts = await assigneeSelect.Locator("option").AllInnerTextsAsync();
+
+        creatorTexts.ShouldNotContain("TIMOTHY LOVEJOY JR");
+        assigneeTexts.ShouldNotContain("TIMOTHY LOVEJOY JR");
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldAssociateFilterLabelsWithSelectIds()
+    {
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.Locator($"label[for='{WorkOrderSearch.Elements.CreatorSelect}']")).ToBeAttachedAsync();
+        await Expect(Page.Locator($"label[for='{WorkOrderSearch.Elements.AssigneeSelect}']")).ToBeAttachedAsync();
+        await Expect(Page.Locator($"label[for='{WorkOrderSearch.Elements.StatusSelect}']")).ToBeAttachedAsync();
+
+        await Expect(Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}")).ToBeVisibleAsync();
+        await Expect(Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}")).ToBeVisibleAsync();
+        await Expect(Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}")).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]

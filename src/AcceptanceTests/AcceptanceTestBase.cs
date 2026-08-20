@@ -2,13 +2,11 @@ using System;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using System.Collections.Concurrent;
-using System.Globalization;
 using Login = ClearMeasure.Bootcamp.UI.Shared.Pages.Login;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests;
@@ -157,14 +155,37 @@ public abstract class AcceptanceTestBase
                     $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip")
             });
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore tracing errors during teardown
+            TestContext.Out.WriteLine($"TearDownAsync: ignoring tracing stop failure for {TestId}: {ex.GetType().Name}: {ex.Message}");
         }
 
-        try { await state.Page.CloseAsync(); } catch { }
-        try { await state.BrowserContext.CloseAsync(); } catch { }
-        try { await state.Browser.CloseAsync(); } catch { }
+        try
+        {
+            await state.Page.CloseAsync();
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing Page for {TestId}: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        try
+        {
+            await state.BrowserContext.CloseAsync();
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing BrowserContext for {TestId}: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        try
+        {
+            await state.Browser.CloseAsync();
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing Browser for {TestId}: {ex.GetType().Name}: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -375,7 +396,10 @@ public abstract class AcceptanceTestBase
         order.Number = newWorkOrderNumber;
         await Input(nameof(WorkOrderManage.Elements.Title), testTitle);
         await Input(nameof(WorkOrderManage.Elements.Description), testDescription);
-        await Input(nameof(WorkOrderManage.Elements.Instructions), testInstructions ?? "");
+        if (!string.IsNullOrEmpty(testInstructions))
+        {
+            await Input(nameof(WorkOrderManage.Elements.Instructions), testInstructions);
+        }
         await Input(nameof(WorkOrderManage.Elements.RoomNumber), testRoomNumber);
         await TakeScreenshotAsync(2, "FormFilled");
 
@@ -505,26 +529,12 @@ public abstract class AcceptanceTestBase
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
 
-        var latest = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
-
-        var titleLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
-        var descriptionLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
-        var instructionsLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
-        await titleLocator.WaitForAsync();
-        await descriptionLocator.WaitForAsync();
-        await instructionsLocator.WaitForAsync();
-
-        var titleOnForm = await titleLocator.InputValueAsync();
-        var descriptionOnForm = await descriptionLocator.InputValueAsync();
-        var instructionsOnForm = await instructionsLocator.InputValueAsync();
-
-        var titleToSubmit = ResolveWorkOrderTextForSubmit(order.Title, titleOnForm, latest.Title);
-        var descriptionToSubmit = ResolveWorkOrderTextForSubmit(order.Description, descriptionOnForm, latest.Description);
-        var instructionsToSubmit = ResolveWorkOrderTextForSubmit(order.Instructions, instructionsOnForm, latest.Instructions);
-
-        await InputIfChanged(nameof(WorkOrderManage.Elements.Title), titleToSubmit);
-        await InputIfChanged(nameof(WorkOrderManage.Elements.Description), descriptionToSubmit);
-        await InputIfChanged(nameof(WorkOrderManage.Elements.Instructions), instructionsToSubmit);
+        await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
+        await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
+        if (!string.IsNullOrEmpty(order.Instructions))
+        {
+            await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions);
+        }
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
         await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);

@@ -1,4 +1,3 @@
-using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared;
 using MediatR;
@@ -44,18 +43,6 @@ public class TranslationServiceTests
         var result = await service.TranslateAsync("", "es-ES");
 
         result.ShouldBe("");
-    }
-
-    [Test]
-    public async Task ShouldReturnOriginalTextWhenInputIsNull()
-    {
-        var bus = new StubBus(available: true);
-        var factory = new ChatClientFactory(bus);
-        var service = new TranslationService(factory);
-
-        var result = await service.TranslateAsync(null!, "es-ES");
-
-        result.ShouldBe(string.Empty);
     }
 
     [Test]

@@ -34,6 +34,33 @@ public sealed class DetailedHealthReport
     /// <summary>UTC instant when the report was built (ISO-8601 when serialized).</summary>
     public required DateTime CheckedAtUtc { get; init; }
 
+    /// <summary>Host OS process identifier for observability correlation across instances.</summary>
+    public required int ProcessId { get; init; }
+
+    /// <summary>Operating system description from <see cref="System.Runtime.InteropServices.RuntimeInformation.OSDescription"/>.</summary>
+    public required string OsDescription { get; init; }
+
+    /// <summary>Runtime framework description from <see cref="System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription"/>.</summary>
+    public required string FrameworkDescription { get; init; }
+
+    /// <summary>Managed heap size from <see cref="GC.GetTotalMemory(bool)"/>, expressed in megabytes and rounded.</summary>
+    public required int GcMemoryMb { get; init; }
+
+    /// <summary>Process working set from <see cref="Environment.WorkingSet"/>, expressed in megabytes and rounded.</summary>
+    public required int WorkingSetMb { get; init; }
+
+    /// <summary>Logical processor count from <see cref="Environment.ProcessorCount"/> for load-balancing hints.</summary>
+    public required int ProcessorCount { get; init; }
+
+    /// <summary>Whether the host process runs as 64-bit (from <see cref="Environment.Is64BitProcess"/>).</summary>
+    public required bool Is64BitProcess { get; init; }
+
+    /// <summary>Host local time zone identifier from <see cref="TimeZoneInfo.Local"/>.</summary>
+    public required string TimeZoneId { get; init; }
+
+    /// <summary>Process scheduling priority from <see cref="System.Diagnostics.Process.PriorityClass"/>.</summary>
+    public required string ProcessPriority { get; init; }
+
     /// <summary>Per-logical-component entries (mock or probe-derived).</summary>
     public required IReadOnlyList<ComponentHealthEntry> Components { get; init; }
 }

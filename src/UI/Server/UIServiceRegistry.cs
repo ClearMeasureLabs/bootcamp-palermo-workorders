@@ -7,14 +7,11 @@ using ClearMeasure.Bootcamp.DataAccess;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.McpServer;
-using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
-using ClearMeasure.Bootcamp.UI.Shared;
 using FluentValidation;
 using Lamar;
 using MediatR;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using FunJeffreyCustomEventHealthCheck = ClearMeasure.Bootcamp.UI.Shared.FunJeffreyCustomEventHealthCheck;
 
@@ -70,7 +67,8 @@ public class UiServiceRegistry : ServiceRegistry
             .AddCheck<Is64BitProcessHealthCheck>("Server")
             .AddCheck<HealthCheck>("API")
             .AddCheck<FunJeffreyCustomEventHealthCheck>("Jeffrey")
-            .AddCheck<NeedsRebootHealthCheck>("NeedsReboot");
+            .AddCheck<NeedsRebootHealthCheck>("NeedsReboot")
+            .AddCheck<ProcessThreadCountHealthCheck>("ProcessThreadCount");
 
         this.AddSingleton<IDetailedHealthReportProvider, DetailedHealthReportProvider>();
     }

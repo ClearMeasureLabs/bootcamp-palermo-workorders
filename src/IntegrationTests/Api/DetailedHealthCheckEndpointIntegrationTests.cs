@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using Shouldly;
@@ -32,7 +33,7 @@ public class DetailedHealthCheckEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/json");
+        mediaType.ShouldContain("application/json");
     }
 
     [Test]
@@ -94,5 +95,142 @@ public class DetailedHealthCheckEndpointIntegrationTests
         names.ShouldContain("API");
         names.ShouldContain("Jeffrey");
         names.ShouldContain("NeedsReboot");
+        names.ShouldContain("ProcessThreadCount");
+    }
+
+    [Test]
+    public async Task Should_IncludeThreadCountInDetailedHealthCheckJson_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        var entries = doc.RootElement.GetProperty("entries");
+
+        var processThreadEntry = entries.EnumerateArray()
+            .First(e => e.GetProperty("name").GetString() == "ProcessThreadCount");
+
+        processThreadEntry.TryGetProperty("data", out var data).ShouldBeTrue();
+        data.TryGetProperty("threadCount", out var threadCount).ShouldBeTrue();
+        var threadCountValue = threadCount.ValueKind == JsonValueKind.Number
+            ? threadCount.GetInt32()
+            : int.Parse(threadCount.GetString()!);
+        threadCountValue.ShouldBeGreaterThan(0);
+    }
+
+    [Test]
+    public async Task Should_ReportThreadCountMatchingCurrentProcess_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        var entries = doc.RootElement.GetProperty("entries");
+
+        var processThreadEntry = entries.EnumerateArray()
+            .First(e => e.GetProperty("name").GetString() == "ProcessThreadCount");
+
+        var threadCount = processThreadEntry.GetProperty("data").GetProperty("threadCount");
+        var threadCountValue = threadCount.ValueKind == JsonValueKind.Number
+            ? threadCount.GetInt32()
+            : int.Parse(threadCount.GetString()!);
+
+        var currentThreadCount = Process.GetCurrentProcess().Threads.Count;
+        threadCountValue.ShouldBeInRange(currentThreadCount - 2, currentThreadCount + 2);
+    }
+
+    [Test]
+    public async Task Should_IncludeServerUtc_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+
+        doc.RootElement.TryGetProperty("serverUtc", out var serverUtc).ShouldBeTrue();
+        serverUtc.GetDateTimeOffset().ShouldNotBe(default);
+    }
+
+    [Test]
+    public async Task Should_ReturnRecentUtcServerUtc_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+
+        var serverUtc = doc.RootElement.GetProperty("serverUtc").GetDateTimeOffset();
+        serverUtc.Offset.ShouldBe(TimeSpan.Zero);
+        (DateTimeOffset.UtcNow - serverUtc).Duration().ShouldBeLessThan(TimeSpan.FromMinutes(5));
+    }
+
+    [Test]
+    public async Task Should_IncludeIs64BitProcess_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("is64BitProcess", out var is64BitProcess).ShouldBeTrue();
+        is64BitProcess.GetBoolean().ShouldBe(Environment.Is64BitProcess);
+    }
+
+    [Test]
+    public async Task GetHealthCheckDetailedReturnsTimeZoneId()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("timeZoneId", out var timeZoneId).ShouldBeTrue();
+        timeZoneId.GetString().ShouldBe(TimeZoneInfo.Local.Id);
+    }
+
+    [Test]
+    public async Task Should_IncludeProcessStartUtc_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+
+        doc.RootElement.TryGetProperty("processStartUtc", out var processStartUtc).ShouldBeTrue();
+        processStartUtc.ValueKind.ShouldNotBe(JsonValueKind.Null);
+        processStartUtc.GetDateTimeOffset().Offset.ShouldBe(TimeSpan.Zero);
+    }
+
+    [Test]
+    public async Task Should_ReturnValidUtcProcessStartUtc_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+
+        var processStartUtc = doc.RootElement.GetProperty("processStartUtc").GetDateTimeOffset();
+        processStartUtc.Offset.ShouldBe(TimeSpan.Zero);
+        (DateTimeOffset.UtcNow - processStartUtc).Duration().ShouldBeLessThan(TimeSpan.FromDays(1));
+    }
+
+    [Test]
+    public async Task Should_IncludeProcessStartUtcLessThanServerUtc_When_GetDetailedHealthCheckEndpoint()
+    {
+        var response = await _client!.GetAsync("/_healthcheck/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+
+        var processStartUtc = doc.RootElement.GetProperty("processStartUtc").GetDateTimeOffset();
+        var serverUtc = doc.RootElement.GetProperty("serverUtc").GetDateTimeOffset();
+        processStartUtc.ShouldBeLessThanOrEqualTo(serverUtc);
     }
 }

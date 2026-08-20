@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Shouldly;
+using ChurchBulletin.ServiceDefaults;
 
 namespace ClearMeasure.Bootcamp.UnitTests.ServiceDefaults;
 

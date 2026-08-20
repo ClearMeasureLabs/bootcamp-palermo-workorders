@@ -20,10 +20,11 @@ $projectConfig = $env:BuildConfiguration
 $framework = "net10.0"
 $version = $env:BUILD_BUILDNUMBER
 
-$verbosity = "quiet"
+$verbosity = "normal"
 
 $build_dir = Join-Path $base_dir "build"
 $test_dir = Join-Path $build_dir "test"
+$coverletRunSettings = Join-Path $base_dir "coverlet.runsettings"
 
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
@@ -64,7 +65,10 @@ Function Init {
 
 	switch ($script:databaseEngine) {
 		"SQL-Container" {
-			if (-not (Test-IsDockerRunning)) {
+			# SQL_EXTERNAL=true => connect to an already-running SQL Server (a k8s
+			# sidecar or a shared server) instead of starting a local Docker
+			# container, so no Docker daemon is required in the build environment.
+			if ($env:SQL_EXTERNAL -ne "true" -and -not (Test-IsDockerRunning)) {
 				throw "Docker is not running. Start Docker (for example, Docker Desktop) so the container-based SQL Server required for 'SQL-Container' builds can run, then rerun this build script."
 			}
 		}
@@ -110,6 +114,7 @@ Function UnitTests {
 			& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "UnitTests") --no-build `
 				--no-restore --configuration $projectConfig `
+				--settings:$coverletRunSettings `
 				--collect:"XPlat Code Coverage"
 		}
 	}
@@ -120,7 +125,13 @@ Function UnitTests {
 
 Function Setup-DatabaseForBuild {
 	if ($script:databaseEngine -eq "SQL-Container") {
-		New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+		# With an external/shared SQL Server (SQL_EXTERNAL=true) the server already
+		# exists, so skip creating a per-build Docker container. New-SqlServerDatabase
+		# still runs, dropping and recreating THIS build's database on that server -
+		# so every PrivateBuild starts from a clean, freshly-migrated database.
+		if ($env:SQL_EXTERNAL -ne "true") {
+			New-DockerContainerForSqlServer -containerName $(Get-ContainerName $script:databaseName)
+		}
 		New-SqlServerDatabase -serverName $script:databaseServer -databaseName $script:databaseName
 		$containerName = Get-ContainerName -DatabaseName $script:databaseName
 		$sqlPassword = Get-SqlServerPassword -ContainerName $containerName
@@ -142,6 +153,7 @@ Function IntegrationTest {
 				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
 					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 					--no-restore --configuration $projectConfig `
+					--settings:$coverletRunSettings `
 					--collect:"XPlat Code Coverage" `
 					--filter "Category!=SqlServerOnly"
 			}
@@ -149,6 +161,7 @@ Function IntegrationTest {
 				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
 					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 					--no-restore --configuration $projectConfig `
+					--settings:$coverletRunSettings `
 					--collect:"XPlat Code Coverage"
 			}
 		}

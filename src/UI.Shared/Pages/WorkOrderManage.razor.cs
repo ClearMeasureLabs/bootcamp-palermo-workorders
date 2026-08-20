@@ -6,22 +6,26 @@ using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
 using Microsoft.AspNetCore.Components;
 using Palermo.BlazorMvc;
+using Microsoft.JSInterop;
 using System.Globalization;
+using Toolbelt.Blazor.SpeechRecognition;
 using Toolbelt.Blazor.SpeechSynthesis;
 
 namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 [Route("/workorder/manage/{id?}")]
-public partial class WorkOrderManage : AppComponentBase
+public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 {
     private WorkOrder? _workOrder;
     private WorkOrderAttachment[] _attachments = [];
     private string _preferredLanguage = "en-US";
+    private DictationTarget _dictationTarget = DictationTarget.None;
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
     [Inject] public IUserSession? UserSession { get; set; }
     [Inject] private NavigationManager? NavigationManager { get; set; }
     [Inject] public ITranslationService? TranslationService { get; set; }
     [Inject] public SpeechSynthesis? SpeechSynthesis { get; set; }
+    [Inject] public SpeechRecognition? SpeechRecognition { get; set; }
 
     public WorkOrderManageModel Model { get; set; } = new();
     public List<SelectListItem> UserOptions { get; set; } = new();
@@ -35,6 +39,12 @@ public partial class WorkOrderManage : AppComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        if (SpeechRecognition != null)
+        {
+            SpeechRecognition.Result += OnSpeechResult;
+            SpeechRecognition.End += OnSpeechEnd;
+        }
+
         await LoadUserOptions();
         await LoadWorkOrder();
 
@@ -70,7 +80,7 @@ public partial class WorkOrderManage : AppComponentBase
 
         Model = CreateViewModel(CurrentMode, workOrder);
         var commandList = new StateCommandList();
-        Model.IsReadOnly = !commandList!.GetValidStateCommands(workOrder, currentUser).Any();
+        Model.IsReadOnly = !commandList.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
         _workOrder = workOrder;
 
@@ -87,7 +97,7 @@ public partial class WorkOrderManage : AppComponentBase
             WorkOrder = workOrder,
             Mode = mode,
             WorkOrderNumber = workOrder.Number,
-            Status = workOrder.Status!.FriendlyName,
+            Status = workOrder.Status.FriendlyName,
             CreatorFullName = workOrder.Creator!.GetFullName(),
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
@@ -165,26 +175,139 @@ public partial class WorkOrderManage : AppComponentBase
 
         try
         {
-            var utterance = new SpeechSynthesisUtterance
-            {
-                Text = translatedText,
-                Lang = _preferredLanguage
-            };
-
             var voices = await SpeechSynthesis.GetVoicesAsync();
-            var langPrefix = _preferredLanguage.Split('-')[0];
-            var matchingVoice = voices.FirstOrDefault(v => v.Lang?.StartsWith(langPrefix, StringComparison.OrdinalIgnoreCase) == true);
-            if (matchingVoice != null)
-            {
-                utterance.Voice = matchingVoice;
-            }
-
+            var utterance = WorkOrderSpeechHelper.CreateUtterance(translatedText, _preferredLanguage, voices);
             await SpeechSynthesis.SpeakAsync(utterance);
         }
         catch
         {
             // Speech synthesis may not be available in all environments
         }
+    }
+
+    private async Task DictateTitleAsync()
+    {
+        await ToggleDictationAsync(DictationTarget.Title);
+    }
+
+    private async Task DictateDescriptionAsync()
+    {
+        await ToggleDictationAsync(DictationTarget.Description);
+    }
+
+    private async Task ToggleDictationAsync(DictationTarget target)
+    {
+        if (SpeechRecognition == null)
+        {
+            return;
+        }
+
+        if (_dictationTarget == target)
+        {
+            _dictationTarget = DictationTarget.None;
+            try
+            {
+                await SpeechRecognition.StopAsync();
+            }
+            catch
+            {
+                // Speech recognition may not be available in all environments
+            }
+            return;
+        }
+
+        SpeechRecognition.Lang = _preferredLanguage;
+        SpeechRecognition.Continuous = false;
+        SpeechRecognition.InterimResults = false;
+        _dictationTarget = target;
+
+        try
+        {
+            await SpeechRecognition.StartAsync();
+        }
+        catch
+        {
+            // Speech recognition may not be available in all environments
+            _dictationTarget = DictationTarget.None;
+        }
+    }
+
+    private void OnSpeechResult(object? sender, SpeechRecognitionEventArgs args)
+    {
+        var transcripts = (args.Results ?? [])
+            .Skip(args.ResultIndex)
+            .Where(result => result.IsFinal)
+            .Select(result => result.Items?.FirstOrDefault()?.Transcript?.Trim())
+            .Where(transcript => !string.IsNullOrEmpty(transcript));
+        var transcript = string.Join(" ", transcripts);
+
+        if (string.IsNullOrEmpty(transcript))
+        {
+            return;
+        }
+
+        if (_dictationTarget == DictationTarget.Title)
+        {
+            Model.Title = AppendTranscript(Model.Title, transcript);
+        }
+        else if (_dictationTarget == DictationTarget.Description)
+        {
+            Model.Description = AppendTranscript(Model.Description, transcript);
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnSpeechEnd(object? sender, EventArgs e)
+    {
+        _dictationTarget = DictationTarget.None;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private static string AppendTranscript(string? existingText, string transcript)
+    {
+        return string.IsNullOrEmpty(existingText) ? transcript : $"{existingText} {transcript}";
+    }
+
+    private string DictateButtonClass(DictationTarget target)
+    {
+        return _dictationTarget == target ? "btn btn-sm btn-danger" : "btn btn-sm btn-outline-secondary";
+    }
+
+    private string DictateAriaPressed(DictationTarget target)
+    {
+        return _dictationTarget == target ? "true" : "false";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (SpeechRecognition == null)
+        {
+            return;
+        }
+
+        SpeechRecognition.Result -= OnSpeechResult;
+        SpeechRecognition.End -= OnSpeechEnd;
+
+        try
+        {
+            if (_dictationTarget != DictationTarget.None)
+            {
+                await SpeechRecognition.StopAsync();
+            }
+
+            await SpeechRecognition.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    private enum DictationTarget
+    {
+        None,
+        Title,
+        Description
     }
 }
 

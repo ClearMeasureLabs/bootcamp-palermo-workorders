@@ -12,8 +12,8 @@
                 <ValidationSummary/>
 
                 <div class="form-group">
-                    <label for="employee">Select Church Member</label>
-                    <InputSelect data-testid="@Elements.User" @bind-Value="loginModel.Username" class="form-control">
+                    <label for="@Elements.User">Select Church Member</label>
+                    <InputSelect id="@Elements.User" data-testid="@Elements.User" @bind-Value="loginModel.Username" class="form-control">
                         <option value="">-- Select a parishioner or staff member --</option>
                         @foreach (var employee in employees)
                         {
@@ -29,7 +29,7 @@
                 }
 
                 <div class="text-center">
-                    <button data-testid="@Elements.LoginButton" type="submit" class="btn btn-primary btn-login-portal">Enter Church Portal</button>
+                    <button data-testid="@Elements.LoginButton" type="submit" class="btn btn-primary">Enter Church Portal</button>
                 </div>
             </EditForm>
 

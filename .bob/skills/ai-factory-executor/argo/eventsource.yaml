@@ -1,0 +1,14 @@
+# Polling EventSource — no inbound network needed (safe on a single box behind NAT).
+# Fires on an interval; the Sensor's trigger does the actual `gh issue list`
+# discovery + dedup and submits Workflows. Switch to a `github` EventSource
+# (webhook) later if real-time triggering is wanted and an ingress is available.
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: ai-factory-tick
+  namespace: ai-factory
+spec:
+  calendar:
+    tick:
+      # Every 5 minutes. Each tick prompts the Sensor to poll GitHub.
+      interval: 5m
