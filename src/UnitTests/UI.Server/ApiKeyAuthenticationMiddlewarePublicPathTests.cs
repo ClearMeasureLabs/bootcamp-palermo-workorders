@@ -11,6 +11,8 @@ public class ApiKeyAuthenticationMiddlewarePublicPathTests
     [TestCase("/api/v1.0/version", true)]
     [TestCase("/api/time", true)]
     [TestCase("/api/v1.0/ping", true)]
+    [TestCase("/api/echo", true)]
+    [TestCase("/api/v1.0/echo", true)]
     [TestCase("/api/health", false)]
     [TestCase("/mcp", false)]
     public void IsPublicVersionOrTimePath_ReturnsExpected(string path, bool expectedPublic)
@@ -20,6 +22,8 @@ public class ApiKeyAuthenticationMiddlewarePublicPathTests
 
     [TestCase("/api/version", "version")]
     [TestCase("/api/v1.0/time", "time")]
+    [TestCase("/api/echo", "echo")]
+    [TestCase("/api/v1.0/echo", "echo")]
     public void TryGetLeafSegment_ReturnsLeaf(string path, string expectedLeaf)
     {
         ApiPublicPathRules.TryGetLeafSegment(path, out var leaf).ShouldBeTrue();

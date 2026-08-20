@@ -112,5 +112,6 @@ internal static class ApiPublicPathRules
     internal static bool IsPublicLeaf(string leaf) =>
         leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-        || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+        || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase)
+        || leaf.Equals("echo", StringComparison.OrdinalIgnoreCase);
 }
