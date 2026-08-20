@@ -5,8 +5,8 @@
 			<DataCollector friendlyName="XPlat Code Coverage">
 				<Configuration>
 					<Format>cobertura</Format>
-					<!-- Instrument production ClearMeasure.Bootcamp.* assemblies (Core, DataAccess, UI.*, …). -->
-					<Include>[ClearMeasure.Bootcamp.*]*</Include>
+					<!-- Instrument production assemblies: Bootcamp.* plus ChurchBulletin.ServiceDefaults (Aspire defaults). -->
+					<Include>[ClearMeasure.Bootcamp.*]*,[ChurchBulletin.ServiceDefaults]*</Include>
 					<!-- Exclude test assemblies so Cobertura is not dominated by UnitTests.* paths. -->
 					<Exclude>[ClearMeasure.Bootcamp.UnitTests*]*,[ClearMeasure.Bootcamp.IntegrationTests*]*,[ClearMeasure.Bootcamp.AcceptanceTests*]*</Exclude>
 					<ExcludeByAttribute>GeneratedCodeAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>

@@ -100,11 +100,12 @@ The script delegates to **`build.ps1`** — the same pipeline as `AcceptanceTest
 Coverage Cobertura files land under `build/test/{UnitTests,IntegrationTests,AcceptanceTests}/`.
 
 **Coverlet must instrument production assemblies.** Repo-root `coverlet.runsettings` sets
-`Include` to `[ClearMeasure.Bootcamp.*]*` and excludes `*UnitTests*`, `*IntegrationTests*`,
+`Include` to `[ClearMeasure.Bootcamp.*]*,[ChurchBulletin.ServiceDefaults]*` and excludes `*UnitTests*`, `*IntegrationTests*`,
 and `*AcceptanceTests*`. `build.ps1` UnitTests / IntegrationTest pass
 `--settings:…/coverlet.runsettings` with `--collect:"XPlat Code Coverage"`. Without that
 Include, Cobertura often contains only `UnitTests\Core\…` paths and **omits** production
-`src/Core/` (`ClearMeasure.Bootcamp.Core`), so CRAP keeps cov ≈ 0 for Core methods.
+`ClearMeasure.Bootcamp.Core`. Omitting `ChurchBulletin.ServiceDefaults` from Include leaves
+those methods at cov ≈ 0 and can fail the CRAP ≤ 14 gate.
 
 **Verify Core is present** after unit tests:
 

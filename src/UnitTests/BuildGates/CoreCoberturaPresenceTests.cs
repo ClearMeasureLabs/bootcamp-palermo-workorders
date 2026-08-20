@@ -58,7 +58,7 @@ public class CoreCoberturaPresenceTests
         var path = FindRepoFile("coverlet.runsettings");
         var xml = File.ReadAllText(path);
 
-        xml.ShouldContain("<Include>[ClearMeasure.Bootcamp.*]*</Include>");
+        xml.ShouldContain("<Include>[ClearMeasure.Bootcamp.*]*,[ChurchBulletin.ServiceDefaults]*</Include>");
         xml.ShouldContain("UnitTests");
         xml.ShouldContain("IntegrationTests");
         xml.ShouldContain("AcceptanceTests");
