@@ -301,7 +301,7 @@ public class BaselineDatabaseCommandTests
                 DatabaseName = "CrapGateBaseline"
             };
 
-            var result = (int)method!.Invoke(
+            var result = (int)method.Invoke(
                 cmd,
                 [null!, options, "Server=localhost;Database=test;Integrated Security=true;TrustServerCertificate=true", CancellationToken.None])!;
 
@@ -342,7 +342,7 @@ public class RebuildDatabaseCommandTests
                 "Server=127.0.0.1,1;Database=ChurchBulletinCrapGate;User ID=sa;Password=invalid;" +
                 "TrustServerCertificate=true;Encrypt=false;Connect Timeout=1;";
 
-            var result = (int)method!.Invoke(
+            var result = (int)method.Invoke(
                 cmd,
                 [null!, options, connectionString, CancellationToken.None])!;
 
