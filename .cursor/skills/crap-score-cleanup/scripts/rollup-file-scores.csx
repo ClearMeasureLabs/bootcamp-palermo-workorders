@@ -168,7 +168,8 @@ static Dictionary<string, Dictionary<int, int>> LoadCoberturaHits(string path)
     var result = new Dictionary<string, Dictionary<int, int>>(StringComparer.OrdinalIgnoreCase);
     foreach (var classElement in doc.Descendants("class"))
     {
-        var filename = (string?)classElement.Attribute("filename") ?? "";
+        var filenameAttr = classElement.Attribute("filename");
+        var filename = filenameAttr == null ? "" : filenameAttr.Value;
         var key = CoverageFileKey(filename);
         if (string.IsNullOrEmpty(key))
             continue;
@@ -179,11 +180,17 @@ static Dictionary<string, Dictionary<int, int>> LoadCoberturaHits(string path)
             result[key] = lines;
         }
 
-        foreach (var line in classElement.Element("lines")?.Elements("line") ?? Enumerable.Empty<XElement>())
+        var linesElement = classElement.Element("lines");
+        var lineElements = linesElement == null
+            ? Enumerable.Empty<XElement>()
+            : linesElement.Elements("line");
+        foreach (var line in lineElements)
         {
-            if (!int.TryParse((string?)line.Attribute("number"), out var number))
+            var numberAttr = line.Attribute("number");
+            var hitsAttr = line.Attribute("hits");
+            if (numberAttr == null || !int.TryParse(numberAttr.Value, out var number))
                 continue;
-            var hits = int.TryParse((string?)line.Attribute("hits"), out var h) ? h : 0;
+            var hits = hitsAttr != null && int.TryParse(hitsAttr.Value, out var h) ? h : 0;
             if (lines.TryGetValue(number, out var existing))
                 lines[number] = Math.Max(existing, hits);
             else
