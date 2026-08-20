@@ -9,9 +9,19 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
     {
         var tools = await toolProvider.GetToolsAsync();
         var chatOptions = new ChatOptions { Tools = tools };
+        var chatMessages = BuildChatMessages(request);
 
-        string prompt = request.Prompt;
-        var chatMessages = new List<ChatMessage>()
+        IChatClient client = await factory.GetChatClient();
+        ChatResponse response = await client.GetResponseAsync(chatMessages, chatOptions);
+        return response;
+    }
+
+    /// <summary>
+    /// Builds the system, history, and user messages for an application chat turn.
+    /// </summary>
+    public static List<ChatMessage> BuildChatMessages(ApplicationChatQuery request)
+    {
+        var chatMessages = new List<ChatMessage>
         {
             new(ChatRole.System, "You are a helpful AI assistant for a work order management application. " +
                                  "You can help with general questions, look up work orders, find employees, " +
@@ -26,10 +36,7 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
             chatMessages.Add(new ChatMessage(role, history.Content));
         }
 
-        chatMessages.Add(new ChatMessage(ChatRole.User, prompt));
-
-        IChatClient client = await factory.GetChatClient();
-        ChatResponse response = await client.GetResponseAsync(chatMessages, chatOptions);
-        return response;
+        chatMessages.Add(new ChatMessage(ChatRole.User, request.Prompt));
+        return chatMessages;
     }
 }

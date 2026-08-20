@@ -13,23 +13,10 @@ public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, string connectionString, CancellationToken cancellationToken)
     {
         var scriptDir = GetScriptDirectory(options);
-        var steps = new (Func<DatabaseResult> Run, string FallbackMessage)[]
+        var result = DatabaseRebuildSteps.RunFullRebuild(connectionString, scriptDir);
+        if (!result.Successful)
         {
-            (() => DatabaseRebuildSteps.RunCreateAndUpdate(connectionString, scriptDir),
-                "Could not run scripts to rebuild database."),
-            (() => DatabaseRebuildSteps.RunEverytime(connectionString, scriptDir),
-                "Failed to re-apply RunAlways scripts."),
-            (() => DatabaseRebuildSteps.RunTestData(connectionString, scriptDir),
-                "Failed to run TestData scripts.")
-        };
-
-        foreach (var (run, fallbackMessage) in steps)
-        {
-            var result = run();
-            if (!result.Successful)
-            {
-                return Fail(result.ErrorMessage ?? fallbackMessage);
-            }
+            return Fail(result.ErrorMessage ?? "Could not run scripts to rebuild database.");
         }
 
         AnsiConsole.MarkupLine($"[green]Finished updating {options.DatabaseName}.[/]");
