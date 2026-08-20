@@ -362,3 +362,6 @@ coverage.cobertura.xml
 /build
 /.claude/settings.local.json
 nul
+
+# Local Qodana scan output (./Qodana.ps1)
+/qodana-results/
