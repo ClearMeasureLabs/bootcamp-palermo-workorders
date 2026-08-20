@@ -84,6 +84,8 @@ public class CrapGateEvaluatorTests
                 var source = File.ReadAllText(candidate);
                 source.ShouldContain("Join-Path $HOME \".dotnet\" \"tools\"");
                 source.ShouldContain("$env:PATH = \"$dotnetTools");
+                source.ShouldContain("dotnet-script\" -Command \"dotnet-script\" -Version \"2.0.0\"");
+                source.ShouldContain("Failed to roll up CRAP scores");
                 return;
             }
 

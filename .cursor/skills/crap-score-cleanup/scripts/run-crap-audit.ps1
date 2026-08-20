@@ -62,16 +62,18 @@ $env:PATH = "$dotnetTools$([IO.Path]::PathSeparator)$env:PATH"
 
 function Ensure-Tool {
     param([string]$PackageId, [string]$Command, [string]$Version)
-    if (Get-Command $Command -ErrorAction SilentlyContinue) { return }
-    Write-Host "Installing $PackageId $Version ..."
-    & dotnet tool install -g $PackageId --version $Version
+    Write-Host "Ensuring $PackageId $Version ..."
+    & dotnet tool update -g $PackageId --version $Version
+    if ($LASTEXITCODE -ne 0) {
+        & dotnet tool install -g $PackageId --version $Version
+    }
     if (-not (Get-Command $Command -ErrorAction SilentlyContinue)) {
         Write-Error "Failed to install or locate $Command ($PackageId $Version)."
     }
 }
 
 Ensure-Tool -PackageId "crap4dotnet" -Command "dotnet-crap" -Version "0.1.1"
-Ensure-Tool -PackageId "dotnet-script" -Command "dotnet-script" -Version "1.6.0"
+Ensure-Tool -PackageId "dotnet-script" -Command "dotnet-script" -Version "2.0.0"
 
 $outPath = Join-Path $RepoRoot $OutputDir
 New-Item -ItemType Directory -Force -Path $outPath | Out-Null
@@ -144,19 +146,22 @@ if (-not (Test-Path $reportJson)) {
 Write-Host "Rolling up file-level scores ..."
 $rollupScript = Join-Path $PSScriptRoot "rollup-file-scores.csx"
 & dotnet-script $rollupScript -- $reportJson $outPath
+$violationsPath = Join-Path $outPath "crap-production-violations.json"
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path $violationsPath)) {
+    Write-Error "Failed to roll up CRAP scores (dotnet-script exit $LASTEXITCODE). Expected $violationsPath"
+}
 
 Write-Host ""
 Write-Host "=== CRAP audit complete ==="
 Write-Host "  Methods : $reportJson"
 Write-Host "  Files   : $(Join-Path $outPath 'crap-by-file.json')"
 Write-Host "  Summary : $(Join-Path $outPath 'crap-summary.md')"
-Write-Host "  Gate    : $(Join-Path $outPath 'crap-production-violations.json')"
+Write-Host "  Gate    : $violationsPath"
 if ($crapExit -ne 0) {
     Write-Host "  Note    : dotnet-crap reported CRAPpy methods (exit $crapExit) — review summary (tests/generated may be included)."
 }
 
 $assertScript = Join-Path $PSScriptRoot "assert-crap-gate.ps1"
-$violationsPath = Join-Path $outPath "crap-production-violations.json"
 if ($FailOnViolations) {
     & $assertScript -ViolationsPath $violationsPath
     exit $LASTEXITCODE

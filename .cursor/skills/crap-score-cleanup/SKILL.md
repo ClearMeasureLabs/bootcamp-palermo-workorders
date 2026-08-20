@@ -70,7 +70,7 @@ Coverage comes from UnitTests + IntegrationTests + AcceptanceTests Cobertura mer
 
 ```powershell
 dotnet tool install -g crap4dotnet --version 0.1.1
-dotnet tool install -g dotnet-script --version 1.6.0
+dotnet tool install -g dotnet-script --version 2.0.0
 ```
 
 Optional HTML report:

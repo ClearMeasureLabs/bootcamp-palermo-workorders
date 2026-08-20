@@ -100,7 +100,7 @@ public class CrapGateScriptTests
         using var install = Process.Start(new ProcessStartInfo
         {
             FileName = "dotnet",
-            ArgumentList = { "tool", "install", "-g", "dotnet-script", "--version", "1.6.0" },
+            ArgumentList = { "tool", "install", "-g", "dotnet-script", "--version", "2.0.0" },
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false
