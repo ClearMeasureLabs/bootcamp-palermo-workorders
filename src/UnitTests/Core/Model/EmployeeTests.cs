@@ -115,11 +115,59 @@ public class EmployeeTests
     }
 
     [Test]
+    public void CanCreateWorkOrder_ShouldReturnFalse_WhenNoRoles()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.CanCreateWorkOrder().ShouldBeFalse();
+    }
+
+    [Test]
+    public void CanCreateWorkOrder_ShouldReturnFalse_WhenRolesLackPermission()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.AddRole(new Role("viewer", false, false));
+        employee.CanCreateWorkOrder().ShouldBeFalse();
+    }
+
+    [Test]
+    public void CanCreateWorkOrder_ShouldReturnTrue_WhenLaterRoleGrantsPermission()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.AddRole(new Role("viewer", false, false));
+        employee.AddRole(new Role("creator", true, false));
+        employee.CanCreateWorkOrder().ShouldBeTrue();
+    }
+
+    [Test]
     public void ShouldBeAbleToFulfillWorkOrder()
     {
         var employee1 = new Employee("", "1", "1", "");
         employee1.AddRole(new Role("", false, true));
         Assert.That(employee1.CanFulfillWorkOrder(), Is.EqualTo(true));
+    }
+
+    [Test]
+    public void CanFulfillWorkOrder_ShouldReturnFalse_WhenNoRoles()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.CanFulfillWorkOrder().ShouldBeFalse();
+    }
+
+    [Test]
+    public void CanFulfillWorkOrder_ShouldReturnFalse_WhenRolesLackPermission()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.AddRole(new Role("creator", true, false));
+        employee.CanFulfillWorkOrder().ShouldBeFalse();
+    }
+
+    [Test]
+    public void CanFulfillWorkOrder_ShouldReturnTrue_WhenLaterRoleGrantsPermission()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.AddRole(new Role("creator", true, false));
+        employee.AddRole(new Role("fulfiller", false, true));
+        employee.CanFulfillWorkOrder().ShouldBeTrue();
     }
 
     [Test]
