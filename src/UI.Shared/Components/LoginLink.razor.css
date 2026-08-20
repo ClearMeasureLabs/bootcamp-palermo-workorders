@@ -1,0 +1,54 @@
+.login-link-attention {
+    --login-blink-bg-start: #ffd700;
+    --login-blink-text-start: #1a202c;
+    --login-blink-bg-mid: #ff6b00;
+    --login-blink-text-mid: #ffffff;
+    animation: login-blink 1s ease-in-out infinite;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+@keyframes login-blink {
+    0%, 100% {
+        background-color: var(--login-blink-bg-start);
+        color: var(--login-blink-text-start);
+    }
+
+    50% {
+        background-color: var(--login-blink-bg-mid);
+        color: var(--login-blink-text-mid);
+    }
+}
+
+.login-link-attention:hover,
+.login-link-attention:focus {
+    animation-play-state: paused;
+    background-color: var(--login-blink-bg-mid);
+    color: var(--login-blink-text-mid);
+}
+
+.login-link-attention:focus-visible {
+    outline: 2px solid #4a5568;
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .login-link-attention {
+        animation: none;
+        background-color: var(--login-blink-bg-start);
+        border: 2px solid var(--login-blink-bg-mid);
+        color: var(--login-blink-text-start);
+    }
+}
+
+:global(html[data-theme="dark"]) .login-link-attention {
+    --login-blink-bg-start: #f6e05e;
+    --login-blink-text-start: #1a202c;
+    --login-blink-bg-mid: #ed8936;
+    --login-blink-text-mid: #1a202c;
+}
+
+:global(html[data-theme="dark"]) .login-link-attention:focus-visible {
+    outline-color: #90cdf4;
+}

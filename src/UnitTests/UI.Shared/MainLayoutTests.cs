@@ -146,6 +146,44 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldApplyLoginLinkAttentionClass_WhenNotAuthenticated()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.ClassList.ShouldContain("login-link-attention");
+    }
+
+    [Test]
+    public void ShouldNotHaveLoginLinkAttentionClass_WhenAuthenticated()
+    {
+        using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.FindAll($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']").Count.ShouldBe(0);
+        layout.FindAll(".login-link-attention").Count.ShouldBe(0);
+    }
+
+    [Test]
+    public void ShouldPreserveLoginLinkHref_WithAttentionClass()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.GetAttribute("href").ShouldBe("/login");
+        loginAnchor.ClassList.ShouldContain("login-link-attention");
+        loginAnchor.GetAttribute("data-testid").ShouldBe(nameof(LoginLink.Elements.LoginLink));
+    }
+
+    [Test]
     public void ShouldNotRenderLoginLink_WhenUserIsAuthenticated()
     {
         using var ctx = CreateContext(authenticateAsUser: "hsimpson");
