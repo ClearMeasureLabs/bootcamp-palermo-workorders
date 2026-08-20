@@ -46,9 +46,12 @@ public class TimestampConverterController : ControllerBase
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
+        DateTimeOffset dateTimeOffset;
+        string? error;
+
         if (hasEpoch)
         {
-            if (!TimestampConverter.TryParseEpoch(epoch!, out var dateTimeOffset, out var error))
+            if (!TimestampConverter.TryParseEpoch(epoch!, out dateTimeOffset, out error))
             {
                 return Problem(detail: error, statusCode: StatusCodes.Status400BadRequest);
             }
