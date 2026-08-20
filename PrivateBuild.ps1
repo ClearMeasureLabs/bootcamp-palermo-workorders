@@ -20,7 +20,7 @@ if (-not [string]::IsNullOrEmpty($databaseName)) {
 Build @buildArgs
 
 $crapAudit = Join-Path $PSScriptRoot ".cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1"
-& $crapAudit -Threshold 13 -SkipTests -FailOnViolations
+& $crapAudit -Threshold 12 -SkipTests -FailOnViolations
 if ($LASTEXITCODE -ne 0) {
-    throw "CRAP gate failed: in-scope production methods exceed threshold 13. See crap-metrics/crap-production-violations.json"
+    throw "CRAP gate failed: in-scope production methods exceed threshold 12. See crap-metrics/crap-production-violations.json"
 }
