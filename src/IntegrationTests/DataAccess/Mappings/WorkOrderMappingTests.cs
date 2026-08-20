@@ -461,7 +461,7 @@ public class WorkOrderMappingTests
     }
 
     [Test]
-    public void ShouldPersistInstructionsAtMaxLength()
+    public void ShouldTruncateInstructionsOverMaxLengthWhenPersisting()
     {
         new DatabaseTests().Clean();
 

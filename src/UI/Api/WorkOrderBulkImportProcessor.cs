@@ -117,6 +117,7 @@ internal sealed class WorkOrderBulkImportProcessor(IBus bus, IWorkOrderNumberGen
             Creator = creator,
             Status = WorkOrderStatus.Draft,
             Number = numberGenerator.GenerateNumber(),
+            Instructions = row.Instructions,
             RoomNumber = row.RoomNumber
         };
 

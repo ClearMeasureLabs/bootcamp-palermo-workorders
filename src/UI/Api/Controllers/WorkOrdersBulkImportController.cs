@@ -23,7 +23,8 @@ public sealed class WorkOrdersBulkImportController(
     IWorkOrderNumberGenerator numberGenerator) : ControllerBase
 {
     /// <summary>
-    /// Imports work orders from a CSV file. Form field name: <c>file</c>.
+    /// Imports work orders from a CSV file (multipart field <c>file</c>) or CSV text
+    /// (url-encoded field <c>csv</c>).
     /// Header row required: Title, Description, CreatorUsername; optional columns: Instructions, RoomNumber.
     /// </summary>
     [HttpPost]
@@ -35,13 +36,13 @@ public sealed class WorkOrdersBulkImportController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Post(IFormFile? file, CancellationToken cancellationToken)
     {
-        var uploadError = WorkOrderBulkImportProcessor.ValidateUpload(file);
-        if (uploadError != null)
+        var resolveError = await TryResolveCsvStreamAsync(file, cancellationToken);
+        if (resolveError.Error != null)
         {
-            return Problem(detail: uploadError, statusCode: StatusCodes.Status400BadRequest);
+            return Problem(detail: resolveError.Error, statusCode: StatusCodes.Status400BadRequest);
         }
 
-        await using var stream = csvStream;
+        await using var stream = resolveError.Stream!;
         var parseResult = WorkOrderBulkImportCsvParser.Parse(stream, cancellationToken);
         if (!parseResult.Success)
         {
@@ -56,5 +57,37 @@ public sealed class WorkOrdersBulkImportController(
         var processor = new WorkOrderBulkImportProcessor(bus, numberGenerator);
         var response = await processor.ImportAsync(parseResult.Rows, cancellationToken);
         return Ok(response);
+    }
+
+    private async Task<(Stream? Stream, string? Error)> TryResolveCsvStreamAsync(
+        IFormFile? file,
+        CancellationToken cancellationToken)
+    {
+        if (file != null)
+        {
+            var uploadError = WorkOrderBulkImportProcessor.ValidateUpload(file);
+            if (uploadError != null)
+            {
+                return (null, uploadError);
+            }
+
+            return (file.OpenReadStream(), null);
+        }
+
+        if (Request.HasFormContentType)
+        {
+            var form = await Request.ReadFormAsync(cancellationToken);
+            var csvField = form["csv"].ToString();
+            if (string.IsNullOrEmpty(csvField))
+            {
+                return (null,
+                    "Provide a CSV file (multipart field name: file) or CSV text (url-encoded field name: csv).");
+            }
+
+            return (new MemoryStream(Encoding.UTF8.GetBytes(csvField)), null);
+        }
+
+        return (null,
+            "Provide a CSV file (multipart field name: file) or CSV text (url-encoded field name: csv).");
     }
 }

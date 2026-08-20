@@ -1,5 +1,4 @@
 using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
-using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -13,8 +12,6 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         await LoginAsCurrentUser();
 
         var order = await CreateAndSaveNewWorkOrder();
-        var expectedTitle = order.Title ?? "";
-        var expectedDescription = order.Description ?? "";
         order = await ClickWorkOrderNumberFromSearchPage(order);
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
         order = await ClickWorkOrderNumberFromSearchPage(order);

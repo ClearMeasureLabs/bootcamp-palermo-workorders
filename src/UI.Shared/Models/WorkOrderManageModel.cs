@@ -20,8 +20,6 @@ public class WorkOrderManageModel
 
     [Required] [MaxLength(4000)] public string? Description { get; set; }
 
-    [MaxLength(4000)] public string? Instructions { get; set; }
-
     [StringLength(WorkOrder.InstructionsMaxLength, ErrorMessage = "Instructions cannot exceed 4000 characters.")]
     public string? Instructions { get; set; }
 

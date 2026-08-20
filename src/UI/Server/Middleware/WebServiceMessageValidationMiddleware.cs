@@ -4,6 +4,7 @@ using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Middleware;
 
@@ -39,20 +40,39 @@ public sealed class WebServiceMessageValidationMiddleware(
         return body;
     }
 
-    internal static bool TryDeserializeMessage(string body, out WebServiceMessage? message, out string? errorDetail)
+    internal static bool TryDeserializeMessage(string body, out WebServiceMessage? message, out string? errorDetail) =>
+        TryDeserializeMessage(body, contentType: null, out message, out errorDetail);
+
+    /// <summary>
+    /// Deserializes a <see cref="WebServiceMessage"/> from JSON or from
+    /// <c>application/x-www-form-urlencoded</c> fields <c>typeName</c> and <c>body</c>
+    /// (Azure DevOps service hooks).
+    /// </summary>
+    internal static bool TryDeserializeMessage(
+        string body,
+        string? contentType,
+        out WebServiceMessage? message,
+        out string? errorDetail)
     {
         message = null;
         errorDetail = null;
-        try
+
+        if (IsApplicationXWwwFormUrlEncoded(contentType))
         {
             message = TryParseWebServiceMessageFromFormUrlEncoded(body);
             if (message is null)
             {
-                await WriteBadRequestAsync(
-                    context,
-                    "Invalid form body. Expected application/x-www-form-urlencoded fields \"typeName\" and \"body\".");
-                return;
+                errorDetail =
+                    "Invalid form body. Expected application/x-www-form-urlencoded fields \"typeName\" and \"body\".";
+                return false;
             }
+
+            return true;
+        }
+
+        try
+        {
+            message = JsonSerializer.Deserialize<WebServiceMessage>(body, JsonOptions);
         }
         catch (JsonException)
         {
@@ -67,6 +87,54 @@ public sealed class WebServiceMessageValidationMiddleware(
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Rewrites the request to JSON so controller model binding matches the JSON path
+    /// (for example Azure DevOps service hooks posting <c>application/x-www-form-urlencoded</c>).
+    /// </summary>
+    internal static void ReplaceRequestBodyWithNormalizedJson(HttpRequest request, WebServiceMessage message)
+    {
+        var normalized = JsonSerializer.Serialize(message, typeof(WebServiceMessage), JsonOptions);
+        var buffer = Encoding.UTF8.GetBytes(normalized);
+        var stream = new MemoryStream(buffer, writable: false);
+        request.Body = stream;
+        request.ContentType = "application/json; charset=utf-8";
+        request.Headers.ContentLength = buffer.Length;
+        stream.Position = 0;
+    }
+
+    internal static bool IsApplicationXWwwFormUrlEncoded(string? contentType)
+    {
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            return false;
+        }
+
+        return MediaTypeHeaderValue.TryParse(contentType, out var parsed)
+               && string.Equals(
+                   parsed.MediaType,
+                   "application/x-www-form-urlencoded",
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static WebServiceMessage? TryParseWebServiceMessageFromFormUrlEncoded(string rawBody)
+    {
+        var form = QueryHelpers.ParseQuery(rawBody);
+        if (!form.TryGetValue("typeName", out var typeNameValues)
+            || !form.TryGetValue("body", out var bodyValues))
+        {
+            return null;
+        }
+
+        var typeName = typeNameValues.ToString();
+        var body = bodyValues.ToString();
+        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(body))
+        {
+            return null;
+        }
+
+        return new WebServiceMessage { TypeName = typeName, Body = body };
     }
 
     internal static async Task WriteBadRequestAsync(HttpContext context, string detail)
@@ -205,9 +273,13 @@ internal static class WebServiceMessageValidationPipeline
         }
 
         var body = await WebServiceMessageValidationMiddleware.ReadRequestBodyAsync(context.Request);
-        if (!WebServiceMessageValidationMiddleware.TryDeserializeMessage(body, out var message, out var deserializeError))
+        if (!WebServiceMessageValidationMiddleware.TryDeserializeMessage(
+                body,
+                context.Request.ContentType,
+                out var message,
+                out var deserializeError))
         {
-            logger.LogDebug("Invalid WebServiceMessage JSON: {Detail}", deserializeError);
+            logger.LogDebug("Invalid WebServiceMessage body: {Detail}", deserializeError);
             await WebServiceMessageValidationMiddleware.WriteBadRequestAsync(
                 context,
                 deserializeError ?? "Invalid request body.");
@@ -229,6 +301,11 @@ internal static class WebServiceMessageValidationPipeline
         {
             await WritePayloadValidationFailureAsync(context, payloadResult);
             return;
+        }
+
+        if (WebServiceMessageValidationMiddleware.IsApplicationXWwwFormUrlEncoded(context.Request.ContentType))
+        {
+            WebServiceMessageValidationMiddleware.ReplaceRequestBodyWithNormalizedJson(context.Request, message!);
         }
 
         await next(context);
