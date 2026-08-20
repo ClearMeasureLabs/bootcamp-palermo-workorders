@@ -61,10 +61,10 @@ jobs:
           . ./build.ps1
           Build
 
-      - name: Enforce CRAP ≤ 14 (production)
+      - name: Enforce CRAP ≤ 13 (production)
         shell: pwsh
         run: |
-          pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 14 -SkipTests -FailOnViolations
+          pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 13 -SkipTests -FailOnViolations
 
       - name: Publish CRAP summary to job summary
         if: always()

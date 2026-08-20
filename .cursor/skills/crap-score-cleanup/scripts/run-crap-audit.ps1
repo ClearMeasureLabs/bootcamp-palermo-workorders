@@ -10,7 +10,7 @@
   Directory for reports. Defaults to crap-metrics at repo root.
 
 .PARAMETER Threshold
-  CRAP threshold for "CRAPpy" methods. Default 14.
+  CRAP threshold for "CRAPpy" methods. Default 13.
 
 .PARAMETER SkipTests
   Skip test run; reuse existing Cobertura files under OutputDir/TestResults.
@@ -34,7 +34,7 @@
 param(
     [string]$Solution = "src/ChurchBulletin.sln",
     [string]$OutputDir = "crap-metrics",
-    [int]$Threshold = 14,
+    [int]$Threshold = 13,
     [switch]$SkipTests,
     [switch]$AllowPartialCoverage,
     [string]$RepoRoot = "",
