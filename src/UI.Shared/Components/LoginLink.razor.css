@@ -1,0 +1,30 @@
+a.login-link-blink {
+	animation: login-link-blink-pulse 1s ease-in-out infinite;
+	background-color: #f6e05e;
+	color: #1a202c;
+	font-weight: 700;
+}
+
+@keyframes login-link-blink-pulse {
+	0%,
+	100% {
+		opacity: 1;
+		background-color: #f6e05e;
+		box-shadow: 0 0 0 0 rgba(214, 158, 46, 0.55);
+	}
+
+	50% {
+		opacity: 0.35;
+		background-color: #ecc94b;
+		box-shadow: 0 0 0 6px rgba(214, 158, 46, 0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	a.login-link-blink {
+		animation: none;
+		opacity: 1;
+		background-color: #f6e05e;
+		box-shadow: none;
+	}
+}

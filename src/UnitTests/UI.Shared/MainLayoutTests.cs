@@ -146,6 +146,33 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldApplyBlinkClass_OnLoginLink_WhenNotAuthenticated()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.ClassList.ShouldContain("login-link-blink");
+    }
+
+    [Test]
+    public void ShouldKeepLoginHrefAndTestId_WhenBlinkApplied()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.GetAttribute("href").ShouldBe("/login");
+        loginAnchor.GetAttribute("data-testid").ShouldBe(nameof(LoginLink.Elements.LoginLink));
+        loginAnchor.TextContent.Trim().ShouldBe("Login");
+        loginAnchor.ClassList.ShouldContain("login-link-blink");
+    }
+
+    [Test]
     public void ShouldNotRenderLoginLink_WhenUserIsAuthenticated()
     {
         using var ctx = CreateContext(authenticateAsUser: "hsimpson");
