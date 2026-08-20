@@ -5,7 +5,7 @@
 **Artifact:** `qodana-report`  
 **Baseline total:** **973** findings (463 High, 510 Info)  
 **CI today:** warnings-only (`continue-on-error: true` on the Qodana job in `.github/workflows/build.yml`)  
-**Goal:** reduce High findings enough to turn Qodana into a **build failure** gate (remove `continue-on-error`, set `fail-threshold` / baseline in `qodana.yaml`)
+**Goal:** reduce High findings enough to turn Qodana into a **build failure** gate (remove `continue-on-error`, set `failThreshold` / baseline in `qodana.yaml`)
 
 ---
 
@@ -21,7 +21,7 @@ Qodana Community for .NET is producing a large volume of findings, but severity 
 | High — other redundancies / naming / docs | ~79 | ~8% | Batch cleanup |
 | Info — style / modernization | 510 | ~52% | Optional; exclude or baseline for gate |
 
-**Recommended gate strategy:** do not fail the build on all 973 items. Remediate P0–P2 High defect/dead-code cohorts, mechanically clear bulk High noise (P3), then enable a **fail-threshold of 0 new High** against a committed baseline that either excludes Info-only inspections or baselines remaining Info.
+**Recommended gate strategy:** do not fail the build on all 973 items. Remediate P0–P2 High defect/dead-code cohorts, mechanically clear bulk High noise (P3), then enable a **`failThreshold` of 0 new High** against a committed baseline that either excludes Info-only inspections or baselines remaining Info.
 
 ---
 
@@ -159,7 +159,7 @@ Do **not** block the fail-gate on these unless product owners want a style manda
 **Outcome:** agreed fail policy before large cleanup PRs.
 
 1. Decide fail mode:
-   - **Preferred:** `fail-threshold: 0` for **new** High problems vs committed baseline; Info allowed or excluded.
+   - **Preferred:** `failThreshold: 0` for **new** High problems vs committed baseline; Info allowed or excluded.
    - **Aggressive:** fail on any High remaining (requires P0–P3 complete).
 2. Confirm exclusions already in `qodana.yaml` (`src/UI/Server/Generated`) and whether to add:
    - acceptance/integration test paths (optional — not recommended; prefer fix)
@@ -220,7 +220,7 @@ Prefer automated cleanup (Rider Code Cleanup, `dotnet format`, or IDE bulk fix) 
 
 1. Commit baseline (if using incremental gate):  
    `qodana.yaml` → `baseline: qodana.sarif.json` (or JetBrains baseline path used by the action).
-2. Set `fail-threshold: 0` (new High problems) **or** absolute threshold matching remaining accepted High.
+2. Set `failThreshold: 0` (new High problems) **or** absolute threshold matching remaining accepted High.
 3. Remove `continue-on-error: true` from the Qodana step in `.github/workflows/build.yml`.
 4. Keep SARIF upload to GitHub code scanning.
 5. Optionally add job summary script (see experimental worktrees’ `Publish-QodanaJobSummary.ps1`) for visibility.
@@ -283,7 +283,7 @@ Recompute after each phase from `result-allProblems.json` / SARIF in the `qodana
 
 ---
 
-## 8. Closeout status (epic #8839)
+## 9. Closeout status (epic #8839)
 
 **As of master tip `89b58a607ceac7eda72ef8ceaeae888817821136` (2026-08-20):**
 
