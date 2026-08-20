@@ -78,11 +78,25 @@ public class LoginPageTests
 
         var component = ctx.RenderComponent<Login>();
 
-        var hsimpsonOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "hsimpson");
+        var options = component.FindAll("option").Where(o => !string.IsNullOrEmpty(o.GetAttribute("value"))).ToList();
+
+        var hsimpsonOption = options.Single(o => o.GetAttribute("value") == "hsimpson");
         hsimpsonOption.TextContent.ShouldBe("HOMER SIMPSON");
 
-        var jdoeOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "jdoe");
+        var mburnsOption = options.Single(o => o.GetAttribute("value") == "mburns");
+        mburnsOption.TextContent.ShouldBe("MONTGOMERY BURNS");
+
+        var nflandersOption = options.Single(o => o.GetAttribute("value") == "nflanders");
+        nflandersOption.TextContent.ShouldBe("NED FLANDERS");
+
+        var jdoeOption = options.Single(o => o.GetAttribute("value") == "jdoe");
         jdoeOption.TextContent.ShouldBe("MARY JANE SIMPSON");
+
+        foreach (var option in options)
+        {
+            option.GetAttribute("value").ShouldNotBeNullOrWhiteSpace();
+            option.TextContent.ShouldBe(option.TextContent.ToUpperInvariant());
+        }
     }
 
     [Test]
