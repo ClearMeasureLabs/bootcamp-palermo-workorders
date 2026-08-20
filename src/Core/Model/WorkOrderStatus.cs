@@ -53,7 +53,10 @@ public class WorkOrderStatus
     public byte SortBy { get; set; }
 
     public override bool Equals(object? obj) =>
-        obj is WorkOrderStatus code && GetType() == obj.GetType() && Code.Equals(code.Code);
+        obj is WorkOrderStatus status && IsSameCode(status);
+
+    private bool IsSameCode(WorkOrderStatus status) =>
+        GetType() == status.GetType() && Code.Equals(status.Code);
 
     public override string ToString()
     {
