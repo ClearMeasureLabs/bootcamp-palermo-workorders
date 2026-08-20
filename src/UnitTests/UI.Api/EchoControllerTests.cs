@@ -47,7 +47,7 @@ public class EchoControllerTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Method = HttpMethods.Get;
         httpContext.Request.Path = "/api/echo";
-        httpContext.Request.QueryString = new QueryString("?foo=bar&x=1");
+        httpContext.Request.QueryString = new QueryString("?foo=bar&n=1");
         var controller = new EchoController
         {
             ControllerContext = new ControllerContext { HttpContext = httpContext }
@@ -60,9 +60,9 @@ public class EchoControllerTests
             content.Content!,
             ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
-        payload!.QueryString.ShouldBe("?foo=bar&x=1");
+        payload!.QueryString.ShouldBe("?foo=bar&n=1");
         payload.Query["foo"].ShouldBe("bar");
-        payload.Query["x"].ShouldBe("1");
+        payload.Query["n"].ShouldBe("1");
     }
 
     [Test]
@@ -71,7 +71,7 @@ public class EchoControllerTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Method = HttpMethods.Get;
         httpContext.Request.Path = "/api/echo";
-        httpContext.Request.Headers["X-Debug"] = "trace-1";
+        httpContext.Request.Headers["X-Trace-Id"] = "abc-123";
         httpContext.Request.Headers["Accept"] = "application/json";
         var controller = new EchoController
         {
@@ -85,7 +85,9 @@ public class EchoControllerTests
             content.Content!,
             ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
-        payload!.Headers["X-Debug"].ShouldBe("trace-1");
+        payload!.Headers.ShouldContainKey("X-Trace-Id");
+        payload.Headers["X-Trace-Id"].ShouldBe("abc-123");
+        payload.Headers.ShouldContainKey("Accept");
         payload.Headers["Accept"].ShouldBe("application/json");
     }
 }

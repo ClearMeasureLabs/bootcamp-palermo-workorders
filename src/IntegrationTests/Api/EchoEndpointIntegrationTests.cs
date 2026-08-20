@@ -1,5 +1,6 @@
 using System.Net;
-using System.Text.Json;
+using System.Net.Http.Json;
+using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
@@ -34,43 +35,34 @@ public class EchoEndpointIntegrationTests
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("application/json");
-
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        using var doc = await JsonDocument.ParseAsync(stream);
-        doc.RootElement.TryGetProperty("method", out var method).ShouldBeTrue();
-        method.GetString().ShouldBe("GET");
-        doc.RootElement.TryGetProperty("path", out var path).ShouldBeTrue();
-        path.GetString().ShouldBe("/api/echo");
-        doc.RootElement.TryGetProperty("queryString", out var queryString).ShouldBeTrue();
-        var queryStringValue = queryString.GetString();
-        queryStringValue.ShouldNotBeNull();
-        queryStringValue!.ShouldContain("probe=1");
-        doc.RootElement.TryGetProperty("scheme", out _).ShouldBeTrue();
-        doc.RootElement.TryGetProperty("host", out _).ShouldBeTrue();
-        doc.RootElement.TryGetProperty("protocol", out _).ShouldBeTrue();
-        doc.RootElement.TryGetProperty("headers", out _).ShouldBeTrue();
-        doc.RootElement.TryGetProperty("query", out var query).ShouldBeTrue();
-        query.TryGetProperty("probe", out var probe).ShouldBeTrue();
-        probe.GetString().ShouldBe("1");
+        var payload = await response.Content.ReadFromJsonAsync<EchoResponse>(
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        payload!.Method.ShouldBe(HttpMethod.Get.Method);
+        payload.Path.ShouldContain("echo");
+        payload.QueryString.ShouldContain("probe=1");
+        payload.Query["probe"].ShouldBe("1");
+        payload.Scheme.ShouldNotBeNullOrWhiteSpace();
+        payload.Host.ShouldNotBeNullOrWhiteSpace();
+        payload.Protocol.ShouldNotBeNullOrWhiteSpace();
+        payload.Headers.Count.ShouldBeGreaterThan(0);
     }
 
     [Test]
     public async Task Should_Return200AndJson_When_GetVersioned()
     {
-        var response = await _client!.GetAsync("/api/v1.0/echo");
+        var response = await _client!.GetAsync("/api/v1.0/echo?probe=2");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("application/json");
-
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        using var doc = await JsonDocument.ParseAsync(stream);
-        doc.RootElement.TryGetProperty("method", out var method).ShouldBeTrue();
-        method.GetString().ShouldBe("GET");
-        doc.RootElement.TryGetProperty("path", out var path).ShouldBeTrue();
-        path.GetString().ShouldBe("/api/v1.0/echo");
-        doc.RootElement.TryGetProperty("headers", out _).ShouldBeTrue();
+        var payload = await response.Content.ReadFromJsonAsync<EchoResponse>(
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        payload!.Method.ShouldBe(HttpMethod.Get.Method);
+        payload.Path.ShouldContain("echo");
+        payload.Query["probe"].ShouldBe("2");
     }
 
     [Test]

@@ -7,7 +7,7 @@ public sealed record EchoResponse(
     string Method,
     string Path,
     string QueryString,
-    IReadOnlyDictionary<string, string> Query,
+    IReadOnlyDictionary<string, string?> Query,
     string Scheme,
     string Host,
     string Protocol,
