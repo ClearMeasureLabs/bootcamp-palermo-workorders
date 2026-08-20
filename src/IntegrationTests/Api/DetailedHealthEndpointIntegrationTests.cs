@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
+using ClearMeasure.Bootcamp.UI.Server;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -363,5 +364,66 @@ public class DetailedHealthEndpointIntegrationTests
                 || c.Status == ComponentHealthStatus.Degraded
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
         }
+    }
+
+    [Test]
+    public async Task Should_Return200_When_OverallStatusUnhealthy()
+    {
+        NeedsRebootHealthCheck.NeedsReboot = true;
+        try
+        {
+            var response = await _client!.GetAsync("/api/health/detailed");
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+            var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            report.ShouldNotBeNull();
+            report!.OverallStatus.ShouldBe(ComponentHealthStatus.Unhealthy);
+        }
+        finally
+        {
+            NeedsRebootHealthCheck.NeedsReboot = false;
+        }
+    }
+
+    [Test]
+    public async Task Should_ReturnSamePayload_When_GetVersionedDetailedHealth()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var v1 = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var legacyPayload = JsonSerializer.Deserialize<JsonElement>(await legacy.Content.ReadAsStringAsync());
+        var v1Payload = JsonSerializer.Deserialize<JsonElement>(await v1.Content.ReadAsStringAsync());
+
+        legacyPayload.GetProperty("overallStatus").GetString().ShouldBe(
+            v1Payload.GetProperty("overallStatus").GetString());
+
+        var legacyComponents = legacyPayload.GetProperty("components").EnumerateArray()
+            .Select(e => (e.GetProperty("name").GetString(), e.GetProperty("status").GetString()))
+            .OrderBy(x => x.Item1)
+            .ToList();
+        var v1Components = v1Payload.GetProperty("components").EnumerateArray()
+            .Select(e => (e.GetProperty("name").GetString(), e.GetProperty("status").GetString()))
+            .OrderBy(x => x.Item1)
+            .ToList();
+
+        legacyComponents.ShouldBeEquivalentTo(v1Components);
+    }
+
+    [Test]
+    public async Task Should_Return304NotModified_When_IfNoneMatchMatchesEtag()
+    {
+        var first = await _client!.GetAsync("/api/health/detailed");
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        first.Headers.ETag.ShouldNotBeNull();
+
+        using var second = new HttpRequestMessage(HttpMethod.Get, "/api/health/detailed");
+        second.Headers.IfNoneMatch.Add(first.Headers.ETag!);
+        var notModified = await _client.SendAsync(second);
+        notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
+        (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
     }
 }
