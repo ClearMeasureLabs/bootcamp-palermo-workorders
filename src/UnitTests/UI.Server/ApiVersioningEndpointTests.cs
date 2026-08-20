@@ -60,6 +60,24 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_Return200AndSameJson_When_GetVersion_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/version");
+        var v1 = await _client.GetAsync("/api/v1.0/version");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        v1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using var legacyDoc = JsonDocument.Parse(await legacy.Content.ReadAsStringAsync());
+        using var v1Doc = JsonDocument.Parse(await v1.Content.ReadAsStringAsync());
+        foreach (var property in legacyDoc.RootElement.EnumerateObject())
+        {
+            v1Doc.RootElement.TryGetProperty(property.Name, out var v1Value).ShouldBeTrue();
+            v1Value.ToString().ShouldBe(property.Value.ToString());
+        }
+    }
+
+    [Test]
     public async Task Should_Return200_When_GetTime_V1Path()
     {
         var response = await _client!.GetAsync("/api/v1.0/time");
