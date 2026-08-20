@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 
-namespace ClearMeasure.Bootcamp.ServiceDefaults;
+namespace ChurchBulletin.ServiceDefaults;
 
 internal static class CorrelationIdResolver
 {

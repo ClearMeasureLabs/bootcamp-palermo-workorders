@@ -14,7 +14,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Middleware;
 /// </summary>
 public sealed class IdempotencyMiddleware
 {
-    private const string BindingPrefix = "__idempotency_binding:";
 
     private static readonly JsonSerializerOptions JsonOptions =
         new(JsonSerializerDefaults.Web);

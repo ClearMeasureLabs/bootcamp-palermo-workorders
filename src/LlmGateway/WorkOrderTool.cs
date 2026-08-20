@@ -1,8 +1,7 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 

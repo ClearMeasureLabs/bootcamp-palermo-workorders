@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
@@ -174,7 +174,7 @@ public class MyWorkOrdersTests
     {
         public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
         {
-            if (request is WorkOrderSpecificationQuery query)
+            if (request is WorkOrderSpecificationQuery)
             {
                 var workOrders = new[]
                 {

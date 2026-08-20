@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;
+using ChurchBulletin.ServiceDefaults;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
 

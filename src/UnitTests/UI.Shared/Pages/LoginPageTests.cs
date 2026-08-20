@@ -17,7 +17,6 @@ public class LoginPageTests
     [Test]
     public void ShouldOnlyRequireUsername()
     {
-        var loginPage = new Login();
         var loginModel = new Login.LoginModel { Username = "hsimpson" };
 
         var validationContext = new ValidationContext(loginModel);
@@ -31,7 +30,6 @@ public class LoginPageTests
     [Test]
     public void ShouldRequireUsername()
     {
-        var loginPage = new Login();
         var loginModel = new Login.LoginModel { Username = "" };
 
         var validationContext = new ValidationContext(loginModel);

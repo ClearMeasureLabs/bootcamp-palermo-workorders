@@ -18,7 +18,7 @@ public class WorkOrderAiChatTests : AcceptanceTestBase
         var order = await CreateAndSaveNewWorkOrder();
         order = await ClickWorkOrderNumberFromSearchPage(order);
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
-        order = await ClickWorkOrderNumberFromSearchPage(order);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         // Input prompt and send message
         const string prompt = "tell me about this work order";
@@ -47,7 +47,7 @@ public class WorkOrderAiChatTests : AcceptanceTestBase
         var order = await CreateAndSaveNewWorkOrder();
         order = await ClickWorkOrderNumberFromSearchPage(order);
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
-        order = await ClickWorkOrderNumberFromSearchPage(order);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         // Input prompt and send message
         const string prompt = "what is the number of this work order?";
@@ -79,7 +79,7 @@ public class WorkOrderAiChatTests : AcceptanceTestBase
         var order = await CreateAndSaveNewWorkOrder();
         order = await ClickWorkOrderNumberFromSearchPage(order);
         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
-        order = await ClickWorkOrderNumberFromSearchPage(order);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         // Input prompt and send message
         const string prompt = "list employees";

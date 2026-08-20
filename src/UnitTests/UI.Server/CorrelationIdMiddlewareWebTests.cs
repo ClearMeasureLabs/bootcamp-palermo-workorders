@@ -1,5 +1,5 @@
 using System.Net;
-using ClearMeasure.Bootcamp.ServiceDefaults;
+using ChurchBulletin.ServiceDefaults;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;

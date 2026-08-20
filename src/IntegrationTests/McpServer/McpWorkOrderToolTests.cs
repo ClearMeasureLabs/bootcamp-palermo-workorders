@@ -159,7 +159,7 @@ public class McpWorkOrderToolTests
         }
 
         var bus = TestHost.GetRequiredService<IBus>();
-        var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-002", "AssignedToCancelledCommand", "user1");
+        _ = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-002", "AssignedToCancelledCommand", "user1");
 
         WorkOrder? wo = null;
         using (var context = TestHost.GetRequiredService<DbContext>())
@@ -194,7 +194,7 @@ public class McpWorkOrderToolTests
         }
 
         var bus = TestHost.GetRequiredService<IBus>();
-        var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-778", "InProgressToAssignedCommand", "gwillie");
+        _ = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-778", "InProgressToAssignedCommand", "gwillie");
 
         WorkOrder? wo = null;
         using (var context = TestHost.GetRequiredService<DbContext>())

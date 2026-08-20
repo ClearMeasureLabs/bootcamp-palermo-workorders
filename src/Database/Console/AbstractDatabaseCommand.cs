@@ -17,7 +17,6 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
 
     public override int Execute(CommandContext context, DatabaseOptions options, CancellationToken cancellationToken)
     {
-        ShowOptionsOnConsole(options);
         var connectionString = GetConnectionString(options);
         try
         {
@@ -47,8 +46,4 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         return code;
     }
 
-    private void ShowOptionsOnConsole(DatabaseOptions options)
-    {
-        // Suppressed for clean build output; details available at DEBUG log level
-    }
 }

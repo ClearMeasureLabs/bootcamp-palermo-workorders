@@ -71,6 +71,7 @@ public class RemotableBusTests
         await bus.Publish(notification);
 
         stubMediator.LastNotification.ShouldBe(notification);
+        ((TestNotification)stubMediator.LastNotification!).Message.ShouldBe("test message");
         stubGateway.LastRequest.ShouldBeNull();
     }
 
@@ -192,20 +193,11 @@ public class RemotableBusTests
         }
     }
 
-    private record NonRemotableTestRequest : IRequest<string>
-    {
-        public string Data { get; set; } = "non-remotable";
-    }
+    private record NonRemotableTestRequest : IRequest<string>;
 
-    private record TestRemotableRequest : IRequest<string>, IRemotableRequest
-    {
-        public string Data { get; set; } = "non-remotable";
-    }
+    private record TestRemotableRequest : IRequest<string>, IRemotableRequest;
 
-    private class TestCommand
-    {
-        public string Data { get; set; } = "test data";
-    }
+    private class TestCommand;
 
     private class TestNotification : INotification
     {

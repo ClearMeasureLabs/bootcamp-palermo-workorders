@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
@@ -83,7 +83,7 @@ public class WorkOrderMappingTests
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
-            var rehydratedWorkOrder = context.Set<WorkOrder>()
+            _ = context.Set<WorkOrder>()
                 .Include(wo => wo.Creator)
                 .Include(wo => wo.Assignee)
                 .Single(wo => wo.Id == order.Id);
@@ -131,7 +131,7 @@ public class WorkOrderMappingTests
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
-            var rehydratedWorkOrder = context.Set<WorkOrder>()
+            _ = context.Set<WorkOrder>()
                 .Single(wo => wo.Id == order.Id);
         }
     }

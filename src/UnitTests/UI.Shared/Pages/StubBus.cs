@@ -25,7 +25,7 @@ public class StubBus() : Bus(null!)
             return (Task<TResponse>)EmployeeByUserNameQueryResponse<TResponse>();
         }
 
-        if (request is WorkOrderSpecificationQuery query)
+        if (request is WorkOrderSpecificationQuery)
         {
             return Task.FromResult<TResponse>((TResponse)(object)WorkOrderSpecificationQueryResponse());
         }

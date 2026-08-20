@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Worker;
+using ChurchBulletin.ServiceDefaults;
 
 var builder = Host.CreateApplicationBuilder(args);
 
