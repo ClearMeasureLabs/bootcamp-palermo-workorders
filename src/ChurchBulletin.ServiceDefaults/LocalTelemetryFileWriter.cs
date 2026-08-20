@@ -26,10 +26,10 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
 
     private readonly ActivityListener _activityListener;
     private readonly MeterListener _meterListener;
-    private readonly Lock _tracesLock = new();
-    private readonly Lock _eventsLock = new();
-    private readonly Lock _logsLock = new();
-    private readonly Lock _metricsLock = new();
+    private readonly object _tracesLock = new();
+    private readonly object _eventsLock = new();
+    private readonly object _logsLock = new();
+    private readonly object _metricsLock = new();
 
     private StreamWriter? _tracesWriter;
     private StreamWriter? _eventsWriter;
@@ -116,10 +116,8 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
         _activityListener.Dispose();
         _meterListener.Dispose();
 
-        if (_tracesWriter != null) await _tracesWriter.DisposeAsync();
-        if (_eventsWriter != null) await _eventsWriter.DisposeAsync();
-        if (_logsWriter != null) await _logsWriter.DisposeAsync();
-        if (_metricsWriter != null) await _metricsWriter.DisposeAsync();
+        await TelemetryFileMaintenance.DisposeWritersAsync(
+            _tracesWriter, _eventsWriter, _logsWriter, _metricsWriter);
 
         GC.SuppressFinalize(this);
     }
@@ -128,7 +126,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
     {
         if (_tracesWriter == null) return;
 
-        var entry = new TraceEntry(activity, status);
+        var entry = TraceEntryMapper.FromActivity(activity, status);
 
         lock (_tracesLock)
         {
@@ -138,7 +136,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             }
             catch (Exception)
             {
-                // Best-effort local telemetry file writes must never affect the application.
+                // Ignore write errors to prevent affecting application
             }
         }
     }
@@ -157,33 +155,41 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             }
             catch (Exception)
             {
-                // Best-effort local telemetry file writes must never affect the application.
+                // Ignore write errors to prevent affecting application
             }
         }
     }
 
     public void WriteLogEntry(LogLevel level, string category, string message, Exception? exception = null)
     {
-        if (_logsWriter == null) return;
+        if (_logsWriter == null)
+        {
+            return;
+        }
 
-        var entry = new LogEntry
+        WriteJsonLine(_logsWriter, _logsLock, CreateLogEntry(level, category, message, exception));
+    }
+
+    private static LogEntry CreateLogEntry(LogLevel level, string category, string message, Exception? exception) =>
+        new()
         {
             Timestamp = DateTime.UtcNow,
             Level = level.ToString(),
             Category = category,
             Message = message,
-            Exception = exception != null ? new LogEntryError(exception) : null
+            Exception = exception == null ? null : new LogEntryError(exception)
         };
 
-        lock (_logsLock)
+    private void WriteJsonLine(StreamWriter writer, object gate, object entry)
+    {
+        lock (gate)
         {
             try
             {
-                _logsWriter.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
+                writer.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
             }
             catch (Exception)
             {
-                // Best-effort local telemetry file writes must never affect the application.
             }
         }
     }
@@ -202,30 +208,13 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             }
             catch (Exception)
             {
-                // Best-effort local telemetry file writes must never affect the application.
+                // Ignore write errors to prevent affecting application
             }
         }
     }
 
-    private void CleanupOldFiles(int retentionDays = 7)
-    {
-        try
-        {
-            var cutoffDate = DateTime.UtcNow.AddDays(-retentionDays);
-
-            foreach (var file in Directory.GetFiles(TelemetryLogDirectory, "*.jsonl"))
-            {
-                if (File.GetCreationTimeUtc(file) < cutoffDate)
-                {
-                    File.Delete(file);
-                }
-            }
-        }
-        catch (Exception)
-        {
-            // Ignore cleanup errors
-        }
-    }
+    private void CleanupOldFiles(int retentionDays = 7) =>
+        TelemetryFileMaintenance.DeleteFilesOlderThan(TelemetryLogDirectory, retentionDays);
 
     private void OnActivityStarted(Activity activity)
     {

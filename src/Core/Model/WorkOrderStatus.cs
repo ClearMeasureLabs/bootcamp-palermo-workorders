@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace ClearMeasure.Bootcamp.Core.Model;
 
 [JsonConverter(typeof(WorkOrderStatusJsonConverter))]
-public class WorkOrderStatus
+public class WorkOrderStatus : IEquatable<WorkOrderStatus>
 {
     private static readonly ILogger _logger = NullLogger<WorkOrderStatus>.Instance;
 
@@ -52,23 +52,35 @@ public class WorkOrderStatus
 
     public byte SortBy { get; set; }
 
-    public override bool Equals(object? obj)
+    /// <inheritdoc />
+    public bool Equals(WorkOrderStatus? other)
     {
-        var other = obj as WorkOrderStatus;
-        if (other == null)
+        if (ReferenceEquals(null, other))
         {
             return false;
         }
 
-        if (GetType() != obj!.GetType())
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        if (GetType() != other.GetType())
         {
             return false;
         }
 
-        // Delegate to operator== so both members agree on every combination of
-        // null/non-null Code (see the operator's remarks below).
-        return this == other;
+        // Null Code only exists briefly during EF Core / serialization materialization
+        // (parameterless constructor). Uninitialized instances never compare equal by value.
+        if (Code is null || other.Code is null)
+        {
+            return false;
+        }
+
+        return string.Equals(Code, other.Code, StringComparison.Ordinal);
     }
+
+    public override bool Equals(object? obj) => Equals(obj as WorkOrderStatus);
 
     public override string ToString()
     {
@@ -77,50 +89,21 @@ public class WorkOrderStatus
 
     public override int GetHashCode()
     {
-        // An instance with a null Code only exists briefly during EF Core /
-        // serialization materialization (see the parameterless constructor) and is
-        // never a legitimate domain value. Such instances are never equal to anything
-        // but themselves (see operator==), so a fixed sentinel hash code here does not
-        // violate the Equals/GetHashCode contract; it only means uninitialized
-        // instances may collide with each other and with hash code 0, which is
-        // harmless since they never compare equal by value.
+        // Null-Code instances are never equal by value (see Equals); a fixed sentinel
+        // avoids NullReferenceException during materialization.
         return Code is null ? 0 : Code.GetHashCode();
     }
 
-    public static bool operator ==(WorkOrderStatus? left, WorkOrderStatus? right)
-    {
-        if (ReferenceEquals(left, right))
-        {
-            return true;
-        }
+    /// <summary>
+    /// Value equality by <see cref="Code"/> (not reference). Thin wrapper over
+    /// <see cref="Equals(WorkOrderStatus?)"/> so Qodana reference-comparison findings
+    /// and CRAP stay on the covered Equals path.
+    /// </summary>
+    public static bool operator ==(WorkOrderStatus? left, WorkOrderStatus? right) =>
+        left is null ? right is null : left.Equals(right);
 
-        if (left is null || right is null)
-        {
-            return false;
-        }
-
-        if (left.GetType() != right.GetType())
-        {
-            return false;
-        }
-
-        if (left.Code is null || right.Code is null)
-        {
-            // An instance with a null Code only exists briefly during EF Core /
-            // serialization materialization (see the parameterless constructor) and is
-            // never a legitimate domain value. Two such instances are not the same
-            // status just because both are uninitialized, so they never compare equal
-            // unless they are the same reference (handled above).
-            return false;
-        }
-
-        return string.Equals(left.Code, right.Code, StringComparison.Ordinal);
-    }
-
-    public static bool operator !=(WorkOrderStatus? left, WorkOrderStatus? right)
-    {
-        return !(left == right);
-    }
+    public static bool operator !=(WorkOrderStatus? left, WorkOrderStatus? right) =>
+        !(left == right);
 
     public bool IsEmpty()
     {
