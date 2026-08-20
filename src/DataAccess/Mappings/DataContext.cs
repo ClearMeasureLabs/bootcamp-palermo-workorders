@@ -1,7 +1,6 @@
 ﻿using ClearMeasure.Bootcamp.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Mappings;
 

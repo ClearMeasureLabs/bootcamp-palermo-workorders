@@ -1,8 +1,6 @@
 using ClearMeasure.Bootcamp.UI.Server;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;

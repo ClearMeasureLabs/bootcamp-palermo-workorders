@@ -1,5 +1,4 @@
 using ClearMeasure.Bootcamp.UI.Server;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Shouldly;
 

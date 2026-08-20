@@ -3,7 +3,6 @@ using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using ClearMeasure.Bootcamp.UI.Shared;
-using Microsoft.Extensions.Configuration;
 
 namespace ClearMeasure.Bootcamp.UI.Client;
 

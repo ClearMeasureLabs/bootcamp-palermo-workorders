@@ -1,6 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
-using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 

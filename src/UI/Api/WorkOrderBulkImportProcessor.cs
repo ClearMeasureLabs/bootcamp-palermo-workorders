@@ -4,7 +4,6 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
-using Microsoft.AspNetCore.Http;
 
 namespace ClearMeasure.Bootcamp.UI.Api;
 

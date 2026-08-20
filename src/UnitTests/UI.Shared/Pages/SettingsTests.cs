@@ -6,7 +6,6 @@ using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using Palermo.BlazorMvc;
 using Shouldly;
 using TestContext = Bunit.TestContext;

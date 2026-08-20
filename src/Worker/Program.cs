@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Hosting;
 using Worker;
 using ChurchBulletin.ServiceDefaults;
 

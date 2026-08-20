@@ -1,4 +1,3 @@
-using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using MediatR;
 

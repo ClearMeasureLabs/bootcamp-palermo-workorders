@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Shared;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
