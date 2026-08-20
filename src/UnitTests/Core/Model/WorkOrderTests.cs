@@ -34,9 +34,6 @@ public class WorkOrderTests
         var guid = Guid.NewGuid();
         var creator = new Employee();
         var assignee = new Employee();
-        var createdDate = new DateTime(2000, 1, 1);
-        var completedDate = new DateTime(2000, 10, 1);
-        var auditDate = new DateTime(2000, 1, 1, 8, 0, 0);
 
         workOrder.Id = guid;
         workOrder.Title = "Title";

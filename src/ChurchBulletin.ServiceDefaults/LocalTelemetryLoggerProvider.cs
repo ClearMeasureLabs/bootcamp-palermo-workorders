@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Logger provider that writes log entries to the LocalTelemetryFileWriter.

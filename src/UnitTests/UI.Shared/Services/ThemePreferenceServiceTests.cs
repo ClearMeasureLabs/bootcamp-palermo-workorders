@@ -129,8 +129,6 @@ public class ThemePreferenceServiceTests
                 }
             }
 
-            public ValueTask InvokeVoidAsync(string identifier, CancellationToken cancellationToken, object?[]? args) =>
-                InvokeVoidAsync(identifier, args);
 
             public ValueTask DisposeAsync() => ValueTask.CompletedTask;
         }

@@ -1,14 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ClearMeasure.Bootcamp.Core.Model;
 
 [JsonConverter(typeof(WorkOrderStatusJsonConverter))]
 public class WorkOrderStatus : IEquatable<WorkOrderStatus>
 {
-    private static readonly ILogger _logger = NullLogger<WorkOrderStatus>.Instance;
 
     public static readonly WorkOrderStatus None = new("", "", " ", 0);
     public static readonly WorkOrderStatus Draft = new("DRT", "Draft", "Draft", 1);

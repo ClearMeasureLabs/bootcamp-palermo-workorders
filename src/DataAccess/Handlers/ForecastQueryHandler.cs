@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using MediatR;
 
@@ -28,7 +28,7 @@ public class ForecastQueryHandler : IRequestHandler<ForecastQuery, WeatherForeca
             {
                 var forecast = new WeatherForecast
                 {
-                    Date = DateTime.Now.AddDays(i), Id = i,
+                    Date = DateTime.Now.AddDays(i),
                     Summary = Summaries[Random.Shared.Next(Summaries.Length)],
                     TemperatureC = Random.Shared.Next(-20, 55)
                 };

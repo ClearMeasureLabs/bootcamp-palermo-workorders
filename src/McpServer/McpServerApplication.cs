@@ -4,6 +4,7 @@ using Lamar.Microsoft.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ChurchBulletin.ServiceDefaults;
 
 namespace ClearMeasure.Bootcamp.McpServer;
 

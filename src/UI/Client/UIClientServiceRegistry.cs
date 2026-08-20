@@ -25,7 +25,7 @@ public class UIClientServiceRegistry : ServiceRegistry
         this.AddScoped<AuthenticationStateProvider>(provider =>
             provider.GetRequiredService<CustomAuthenticationStateProvider>());
 
-        this.AddScoped<IUiBus>(provider => new MvcBus(NullLogger<MvcBus>.Instance));
+        this.AddScoped<IUiBus>(_ => new MvcBus(NullLogger<MvcBus>.Instance));
         this.AddScoped<IUserSession, UserSession>();
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<RemotableBus>());
         this.AddTransient<IPublisherGateway>(sp =>

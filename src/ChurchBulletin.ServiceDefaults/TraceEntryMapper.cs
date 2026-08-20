@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 internal static class TraceEntryMapper
 {

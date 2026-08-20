@@ -13,7 +13,7 @@ using Serilog;
 using Serilog.AspNetCore;
 using System.Diagnostics;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 public static class Extensions
 {

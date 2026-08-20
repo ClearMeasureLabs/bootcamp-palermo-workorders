@@ -30,8 +30,7 @@ public class WorkOrdersBulkImportControllerTests
     public async Task ShouldReturnBadRequest_WhenFileEmpty()
     {
         var controller = CreateController(new StubBus());
-        var file = CreateFormFile("", "empty.csv", "text/csv");
-        file = new FormFile(new MemoryStream(), 0, 0, "file", "empty.csv")
+        var file = new FormFile(new MemoryStream(), 0, 0, "file", "empty.csv")
         {
             Headers = new HeaderDictionary(),
             ContentType = "text/csv"

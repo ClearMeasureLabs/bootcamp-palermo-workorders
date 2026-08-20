@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using ClearMeasure.Bootcamp.ServiceDefaults;
+using ChurchBulletin.ServiceDefaults;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

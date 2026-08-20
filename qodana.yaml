@@ -18,3 +18,32 @@ exclude:
   - name: ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
     paths:
       - src/UI/Server/DetailedHealthCheckResponseWriter.cs
+  # UnusedAutoPropertyAccessor: getters are consumed by System.Text.Json / health JSON writers
+  # via reflection, not by direct C# reads. Public shape is intentional API.
+  - name: UnusedAutoPropertyAccessor.Global
+    paths:
+      - src/ChurchBulletin.ServiceDefaults/LogEntry.cs
+      - src/ChurchBulletin.ServiceDefaults/LogEntryError.cs
+      - src/ChurchBulletin.ServiceDefaults/EventEntry.cs
+      - src/ChurchBulletin.ServiceDefaults/MetricEntry.cs
+      - src/UI/Server/DetailedHealthCheckResponseWriter.cs
+  # NotAccessedPositionalProperty: record/DTO positional members exist for JSON, SignalR,
+  # equality, or API contract shapes; in-process code does not always read every slot.
+  - name: NotAccessedPositionalProperty.Global
+    paths:
+      - src/Core/Model/Events/WorkOrderAssignedToBotEvent.cs
+      - src/Core/Model/StateCommands/StateCommandResult.cs
+      - src/UI/Api/WorkOrderBulkImportModels.cs
+      - src/UI/Server/Notifications/RealtimeNotificationHub.cs
+      - src/UI.Shared/Models/UserLoggedInEvent.cs
+      - src/UI.Shared/Models/UserLoggedOutEvent.cs
+      - src/UI/Server/Middleware/IdempotencyMiddleware.cs
+      - src/UI/Server/Middleware/WebServiceMessageValidationMiddleware.cs
+  - name: NotAccessedPositionalProperty.Local
+    paths:
+      - src/UnitTests/BuildGates/CrapGateEvaluator.cs
+  # Reflection-driven property reads in unit helpers (etag / activity tags).
+  - name: UnusedAutoPropertyAccessor.Local
+    paths:
+      - src/UnitTests/Api/ConditionalGetEtagTests.cs
+      - src/UnitTests/UI.Shared/UiSharedHelperTests.cs

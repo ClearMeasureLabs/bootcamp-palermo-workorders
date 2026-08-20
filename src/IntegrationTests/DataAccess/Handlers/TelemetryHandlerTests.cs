@@ -16,15 +16,15 @@ public class TelemetryHandlerTests
 
         using var listener = new MeterListener();
 
-        listener.InstrumentPublished = (instrument, meterListener) =>
+        listener.InstrumentPublished = (publishedInstrument, meterListener) =>
         {
-            if (instrument.Name == "app.user.logins")
+            if (publishedInstrument.Name == "app.user.logins")
             {
-                meterListener.EnableMeasurementEvents(instrument);
+                meterListener.EnableMeasurementEvents(publishedInstrument);
             }
         };
 
-        listener.SetMeasurementEventCallback<long>((instrument, measurement, tags, state) =>
+        listener.SetMeasurementEventCallback<long>((_, measurement, tags, _) =>
         {
             recorded += measurement;
 
@@ -56,15 +56,15 @@ public class TelemetryHandlerTests
         long recorded = 0;
 
         using var listener = new MeterListener();
-        listener.InstrumentPublished = (instrument, meterListener) =>
+        listener.InstrumentPublished = (publishedInstrument, meterListener) =>
         {
-            if (instrument.Name == "app.user.logins")
+            if (publishedInstrument.Name == "app.user.logins")
             {
-                meterListener.EnableMeasurementEvents(instrument);
+                meterListener.EnableMeasurementEvents(publishedInstrument);
             }
         };
 
-        listener.SetMeasurementEventCallback<long>((instrument, measurement, tags, state) =>
+        listener.SetMeasurementEventCallback<long>((_, measurement, _, _) =>
         {
             recorded += measurement;
         });

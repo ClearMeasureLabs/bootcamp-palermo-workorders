@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Shouldly;
+using ChurchBulletin.ServiceDefaults;
 
 namespace ClearMeasure.Bootcamp.UnitTests.ServiceDefaults;
 
