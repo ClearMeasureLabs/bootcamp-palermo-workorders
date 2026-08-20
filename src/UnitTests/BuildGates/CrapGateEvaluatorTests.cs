@@ -72,6 +72,28 @@ public class CrapGateEvaluatorTests
     }
 
     [Test]
+    public void AuditScript_WhenRead_PrependsDotnetToolsToPath()
+    {
+        var dir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+        while (dir != null)
+        {
+            var candidate = Path.Combine(dir.FullName,
+                ".cursor", "skills", "crap-score-cleanup", "scripts", "run-crap-audit.ps1");
+            if (File.Exists(candidate))
+            {
+                var source = File.ReadAllText(candidate);
+                source.ShouldContain("Join-Path $HOME \".dotnet\" \"tools\"");
+                source.ShouldContain("$env:PATH = \"$dotnetTools");
+                return;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new FileNotFoundException("run-crap-audit.ps1 not found from test directory.");
+    }
+
+    [Test]
     public void FlattenScript_WhenRead_ContainsAsyncStateMachinePattern()
     {
         var dir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);

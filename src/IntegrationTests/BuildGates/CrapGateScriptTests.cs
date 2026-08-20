@@ -34,18 +34,8 @@ public class CrapGateScriptTests
         File.Exists(script).ShouldBeTrue(script);
         File.Exists(fixture).ShouldBeTrue(fixture);
 
-        using var process = Process.Start(new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            ArgumentList = { "script", script, "--", output, fixture },
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false
-        });
-        process.ShouldNotBeNull();
-        process!.WaitForExit(60_000).ShouldBeTrue();
-        var logs = process.StandardError.ReadToEnd() + process.StandardOutput.ReadToEnd();
-        process.ExitCode.ShouldBe(0, logs);
+        var logs = RunDotnetScript(script, output, fixture, out var exitCode);
+        exitCode.ShouldBe(0, logs);
 
         var xml = File.ReadAllText(output);
         xml.ShouldContain("name=\"ExecuteCommandAsync\"");
@@ -64,22 +54,88 @@ public class CrapGateScriptTests
         var output = Path.Combine(Path.GetTempPath(), $"crap-orphan-{Guid.NewGuid():N}.xml");
         File.Exists(fixture).ShouldBeTrue(fixture);
 
+        var logs = RunDotnetScript(script, output, fixture, out var exitCode);
+        exitCode.ShouldBe(0, logs);
+
+        var xml = File.ReadAllText(output);
+        xml.ShouldContain("name=\"ClearMeasure.Bootcamp.UI.Server.RequestBodyBufferingPipeline\"");
+        xml.ShouldContain("name=\"InvokeAsync\"");
+        File.Delete(output);
+    }
+
+    private static string RunDotnetScript(string script, string output, string fixture, out int exitCode)
+    {
+        var tool = EnsureDotnetScript();
         using var process = Process.Start(new ProcessStartInfo
         {
-            FileName = "dotnet",
-            ArgumentList = { "script", script, "--", output, fixture },
+            FileName = tool,
+            ArgumentList = { script, "--", output, fixture },
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false
         });
         process.ShouldNotBeNull();
         process!.WaitForExit(60_000).ShouldBeTrue();
-        process.ExitCode.ShouldBe(0, process.StandardError.ReadToEnd() + process.StandardOutput.ReadToEnd());
+        exitCode = process.ExitCode;
+        return process.StandardError.ReadToEnd() + process.StandardOutput.ReadToEnd();
+    }
 
-        var xml = File.ReadAllText(output);
-        xml.ShouldContain("name=\"ClearMeasure.Bootcamp.UI.Server.RequestBodyBufferingPipeline\"");
-        xml.ShouldContain("name=\"InvokeAsync\"");
-        File.Delete(output);
+    private static string EnsureDotnetScript()
+    {
+        var fileName = OperatingSystem.IsWindows() ? "dotnet-script.exe" : "dotnet-script";
+        var installed = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".dotnet", "tools", fileName);
+        if (File.Exists(installed))
+        {
+            return installed;
+        }
+
+        var existing = FindOnPath(fileName);
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        using var install = Process.Start(new ProcessStartInfo)
+        {
+            FileName = "dotnet",
+            ArgumentList = { "tool", "install", "-g", "dotnet-script", "--version", "1.6.0" },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        });
+        install.ShouldNotBeNull();
+        install!.WaitForExit(120_000).ShouldBeTrue();
+        var logs = install.StandardError.ReadToEnd() + install.StandardOutput.ReadToEnd();
+        if (File.Exists(installed))
+        {
+            return installed;
+        }
+
+        var pathLookup = FindOnPath(fileName);
+        pathLookup.ShouldNotBeNull($"dotnet-script not found after install. {logs}");
+        return pathLookup!;
+    }
+
+    private static string? FindOnPath(string fileName)
+    {
+        var path = Environment.GetEnvironmentVariable("PATH");
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        foreach (var dir in path.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var candidate = Path.Combine(dir.Trim(), fileName);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 
     private static int RunAssertScript(string fixtureFileName)

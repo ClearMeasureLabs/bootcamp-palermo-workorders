@@ -57,11 +57,17 @@ else {
 }
 Set-Location $RepoRoot
 
+$dotnetTools = Join-Path $HOME ".dotnet" "tools"
+$env:PATH = "$dotnetTools$([IO.Path]::PathSeparator)$env:PATH"
+
 function Ensure-Tool {
     param([string]$PackageId, [string]$Command, [string]$Version)
     if (Get-Command $Command -ErrorAction SilentlyContinue) { return }
     Write-Host "Installing $PackageId $Version ..."
-    dotnet tool install -g $PackageId --version $Version | Out-Null
+    & dotnet tool install -g $PackageId --version $Version
+    if (-not (Get-Command $Command -ErrorAction SilentlyContinue)) {
+        Write-Error "Failed to install or locate $Command ($PackageId $Version)."
+    }
 }
 
 Ensure-Tool -PackageId "crap4dotnet" -Command "dotnet-crap" -Version "0.1.1"
