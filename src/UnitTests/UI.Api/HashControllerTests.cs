@@ -8,17 +8,21 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 [TestFixture]
 public class HashControllerTests
 {
-    [Test]
-    public void Post_Should_Return200WithKnownHashes_When_TextIsHello()
-    {
-        var controller = new HashController
+    private static HashController CreateController() =>
+        new()
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
 
-        var result = controller.Post(new HashTextRequest("hello"));
+    [Test]
+    public void Post_Should_Return200WithKnownHashes_When_TextIsHello()
+    {
+        var controller = CreateController();
+        var request = new HashTextRequest("hello");
 
-        var ok = result.Result.ShouldBeOfType<OkObjectResult>();
+        var result = controller.Post(request);
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
         ok.StatusCode.ShouldBe(200);
         var body = ok.Value.ShouldBeOfType<HashTextResponse>();
         body.Sha256.ShouldBe("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
@@ -29,14 +33,12 @@ public class HashControllerTests
     [Test]
     public void Post_Should_Return200WithEmptyStringHashes_When_TextIsEmpty()
     {
-        var controller = new HashController
-        {
-            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
-        };
+        var controller = CreateController();
+        var request = new HashTextRequest(string.Empty);
 
-        var result = controller.Post(new HashTextRequest(""));
+        var result = controller.Post(request);
 
-        var ok = result.Result.ShouldBeOfType<OkObjectResult>();
+        var ok = result.ShouldBeOfType<OkObjectResult>();
         ok.StatusCode.ShouldBe(200);
         var body = ok.Value.ShouldBeOfType<HashTextResponse>();
         body.Sha256.ShouldBe("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
@@ -47,30 +49,29 @@ public class HashControllerTests
     [Test]
     public void Post_Should_Return400Problem_When_TextIsNull()
     {
-        var controller = new HashController
-        {
-            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
-        };
+        var controller = CreateController();
+        var request = new HashTextRequest(null);
 
-        var result = controller.Post(new HashTextRequest(null));
+        var result = controller.Post(request);
 
-        var objectResult = result.Result.ShouldBeOfType<ObjectResult>();
-        objectResult.StatusCode.ShouldBe(400);
-        objectResult.Value.ShouldBeOfType<ProblemDetails>();
+        var problem = result.ShouldBeOfType<ObjectResult>();
+        problem.StatusCode.ShouldBe(400);
+        var details = problem.Value.ShouldBeOfType<ProblemDetails>();
+        details.Detail.ShouldNotBeNull();
+        details.Detail!.ShouldContain("text");
     }
 
     [Test]
     public void Post_Should_Return400Problem_When_TextIsMissing()
     {
-        var controller = new HashController
-        {
-            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
-        };
+        var controller = CreateController();
 
         var result = controller.Post(null);
 
-        var objectResult = result.Result.ShouldBeOfType<ObjectResult>();
-        objectResult.StatusCode.ShouldBe(400);
-        objectResult.Value.ShouldBeOfType<ProblemDetails>();
+        var problem = result.ShouldBeOfType<ObjectResult>();
+        problem.StatusCode.ShouldBe(400);
+        var details = problem.Value.ShouldBeOfType<ProblemDetails>();
+        details.Detail.ShouldNotBeNull();
+        details.Detail!.ShouldContain("text");
     }
 }

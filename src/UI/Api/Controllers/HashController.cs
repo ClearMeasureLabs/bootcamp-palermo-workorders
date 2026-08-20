@@ -1,3 +1,4 @@
+using System.Net.Mime;
 using System.Security.Cryptography;
 using System.Text;
 using Asp.Versioning;
@@ -17,20 +18,22 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [Route("api/tools/hash")]
 [Route($"{ApiRoutes.VersionedApiPrefix}/tools/hash")]
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
-public class HashController : ControllerBase
+public sealed class HashController : ControllerBase
 {
     /// <summary>
-    /// Returns SHA-256, MD5, and SHA-1 hashes of the request text.
+    /// Returns SHA-256, MD5, and SHA-1 hashes of the request <paramref name="request"/> text (UTF-8).
     /// </summary>
     [HttpPost]
     [AllowAnonymous]
-    [Consumes("application/json")]
-    [Produces("application/json")]
-    public ActionResult<HashTextResponse> Post([FromBody] HashTextRequest? request)
+    [Consumes(MediaTypeNames.Application.Json)]
+    [Produces(MediaTypeNames.Application.Json)]
+    [ProducesResponseType(typeof(HashTextResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public IActionResult Post([FromBody] HashTextRequest? request)
     {
         if (request?.Text is null)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "text is required");
+            return Problem(detail: "text is required.", statusCode: StatusCodes.Status400BadRequest);
         }
 
         var bytes = Encoding.UTF8.GetBytes(request.Text);
@@ -44,15 +47,15 @@ public class HashController : ControllerBase
 }
 
 /// <summary>
-/// Request body for hash computation.
+/// JSON body for <see cref="HashController.Post"/>.
 /// </summary>
-/// <param name="Text">UTF-8 text to hash.</param>
-public record HashTextRequest(string? Text);
+/// <param name="Text">Plain text to hash (UTF-8 encoded).</param>
+public sealed record HashTextRequest(string? Text);
 
 /// <summary>
-/// Hash digests as lowercase hexadecimal strings.
+/// JSON response containing lowercase hexadecimal digests.
 /// </summary>
 /// <param name="Sha256">SHA-256 digest.</param>
 /// <param name="Md5">MD5 digest.</param>
 /// <param name="Sha1">SHA-1 digest.</param>
-public record HashTextResponse(string Sha256, string Md5, string Sha1);
+public sealed record HashTextResponse(string Sha256, string Md5, string Sha1);

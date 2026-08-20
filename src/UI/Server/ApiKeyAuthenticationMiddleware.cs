@@ -19,8 +19,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         || pathValue.Equals("/api", StringComparison.OrdinalIgnoreCase);
 
     internal static bool IsPublicVersionOrTimePath(string pathValue) =>
-        (ApiPublicPathRules.TryGetLeafSegment(pathValue, out var leaf) && ApiPublicPathRules.IsPublicLeaf(leaf))
-        || ApiPublicPathRules.IsPublicToolsHashPath(pathValue);
+        ApiPublicPathRules.IsPublicPath(pathValue);
 
     internal static bool IsAuthorized(HttpRequest request, string expectedKey)
     {
@@ -115,26 +114,30 @@ internal static class ApiPublicPathRules
         || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
 
-    internal static bool IsPublicToolsHashPath(string pathValue)
+    internal static bool IsPublicPath(string pathValue) =>
+        IsPublicNestedPath(pathValue)
+        || (TryGetLeafSegment(pathValue, out var leaf) && IsPublicLeaf(leaf));
+
+    internal static bool IsPublicNestedPath(string pathValue)
     {
-        var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (segments.Length < 3 || !segments[0].Equals("api", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrEmpty(pathValue))
         {
             return false;
         }
 
-        if (segments.Length == 3)
+        var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length == 3
+            && segments[0].Equals("api", StringComparison.OrdinalIgnoreCase)
+            && segments[1].Equals("tools", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("hash", StringComparison.OrdinalIgnoreCase))
         {
-            return segments[1].Equals("tools", StringComparison.OrdinalIgnoreCase)
-                && segments[2].Equals("hash", StringComparison.OrdinalIgnoreCase);
+            return true;
         }
 
-        if (segments.Length == 4 && segments[1].StartsWith('v'))
-        {
-            return segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
-                && segments[3].Equals("hash", StringComparison.OrdinalIgnoreCase);
-        }
-
-        return false;
+        return segments.Length == 4
+               && segments[0].Equals("api", StringComparison.OrdinalIgnoreCase)
+               && segments[1].StartsWith('v')
+               && segments[2].Equals("tools", StringComparison.OrdinalIgnoreCase)
+               && segments[3].Equals("hash", StringComparison.OrdinalIgnoreCase);
     }
 }

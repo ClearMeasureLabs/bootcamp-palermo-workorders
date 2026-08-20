@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
@@ -8,6 +9,8 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 [TestFixture]
 public class HashEndpointIntegrationTests
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     private DiagnosticsWebApplicationFactory? _factory;
     private HttpClient? _client;
 
@@ -31,8 +34,10 @@ public class HashEndpointIntegrationTests
         var response = await _client!.PostAsJsonAsync("/api/tools/hash", new { text = "hello" });
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        response.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
-        var body = await response.Content.ReadFromJsonAsync<HashResponse>();
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("json");
+        var body = await response.Content.ReadFromJsonAsync<HashResponse>(JsonOptions);
         body.ShouldNotBeNull();
         body!.Sha256.ShouldBe("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
         body.Md5.ShouldBe("5d41402abc4b2a76b9719d911017c592");
@@ -45,8 +50,10 @@ public class HashEndpointIntegrationTests
         var response = await _client!.PostAsJsonAsync("/api/v1.0/tools/hash", new { text = "hello" });
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        response.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
-        var body = await response.Content.ReadFromJsonAsync<HashResponse>();
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("json");
+        var body = await response.Content.ReadFromJsonAsync<HashResponse>(JsonOptions);
         body.ShouldNotBeNull();
         body!.Sha256.ShouldBe("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
         body.Md5.ShouldBe("5d41402abc4b2a76b9719d911017c592");
@@ -69,12 +76,14 @@ public class HashEndpointIntegrationTests
 
         var unversioned = await client.PostAsJsonAsync("/api/tools/hash", new { text = "hello" });
         unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var unversionedBody = await unversioned.Content.ReadFromJsonAsync<HashResponse>();
+        var unversionedBody = await unversioned.Content.ReadFromJsonAsync<HashResponse>(JsonOptions);
+        unversionedBody.ShouldNotBeNull();
         unversionedBody!.Sha256.ShouldBe("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
 
         var versioned = await client.PostAsJsonAsync("/api/v1.0/tools/hash", new { text = "hello" });
         versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var versionedBody = await versioned.Content.ReadFromJsonAsync<HashResponse>();
+        var versionedBody = await versioned.Content.ReadFromJsonAsync<HashResponse>(JsonOptions);
+        versionedBody.ShouldNotBeNull();
         versionedBody!.Sha256.ShouldBe("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
     }
 
