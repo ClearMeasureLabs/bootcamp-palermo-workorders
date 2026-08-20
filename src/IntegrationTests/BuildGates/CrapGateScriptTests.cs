@@ -97,7 +97,7 @@ public class CrapGateScriptTests
             return existing;
         }
 
-        using var install = Process.Start(new ProcessStartInfo)
+        using var install = Process.Start(new ProcessStartInfo
         {
             FileName = "dotnet",
             ArgumentList = { "tool", "install", "-g", "dotnet-script", "--version", "1.6.0" },
