@@ -10,15 +10,21 @@ public class CrapMetricsArtifactWorkflowTests
     {
         var yaml = File.ReadAllText(FindRepoFile(Path.Combine(".github", "workflows", "build.yml")));
 
-        var enforceIndex = yaml.IndexOf("name: Enforce CRAP", StringComparison.Ordinal);
-        var summaryIndex = yaml.IndexOf("name: Publish CRAP summary to job summary", StringComparison.Ordinal);
+        var jobStart = yaml.IndexOf("  build-linux:", StringComparison.Ordinal);
+        jobStart.ShouldBeGreaterThan(-1);
+        var nextJob = yaml.IndexOf("\n  build-sqlite:", jobStart, StringComparison.Ordinal);
+        nextJob.ShouldBeGreaterThan(jobStart);
+        var linuxJob = yaml.Substring(jobStart, nextJob - jobStart);
+
+        var enforceIndex = linuxJob.IndexOf("name: Enforce CRAP", StringComparison.Ordinal);
+        var summaryIndex = linuxJob.IndexOf("name: Publish CRAP summary to job summary", StringComparison.Ordinal);
         enforceIndex.ShouldBeGreaterThan(-1);
         summaryIndex.ShouldBeGreaterThan(enforceIndex);
 
         var nextStepMarker = "\n      - name:";
-        var nextStep = yaml.IndexOf(nextStepMarker, summaryIndex, StringComparison.Ordinal);
+        var nextStep = linuxJob.IndexOf(nextStepMarker, summaryIndex, StringComparison.Ordinal);
         nextStep.ShouldBeGreaterThan(summaryIndex);
-        var summaryBlock = yaml.Substring(summaryIndex, nextStep - summaryIndex);
+        var summaryBlock = linuxJob.Substring(summaryIndex, nextStep - summaryIndex);
 
         summaryBlock.ShouldContain("if: always()");
         summaryBlock.ShouldContain("GITHUB_STEP_SUMMARY");
@@ -26,7 +32,8 @@ public class CrapMetricsArtifactWorkflowTests
         summaryBlock.ShouldNotContain("uses: actions/upload-artifact");
         summaryBlock.ShouldNotContain("crap-metrics-linux");
 
-        yaml.ShouldNotContain("name: Upload CRAP metrics");
+        linuxJob.ShouldNotContain("name: Upload CRAP metrics");
+        linuxJob.ShouldNotContain("crap-metrics-linux");
         yaml.ShouldNotContain("crap-metrics-linux");
     }
 
