@@ -169,6 +169,26 @@ issue node ID.)
 5. Every wait needs a deadline: if no observable progress in 20 minutes, stop waiting,
    check state directly, and either take over or report the blockage.
 
+## Completion heartbeat (mandatory — never hand off while pending)
+
+The item coordinator MUST NOT end a turn or send a final message while CI, merge, issue
+close, or card move is still pending.
+
+When CI is running, poll every **60–90 seconds** until every check-run on the PR head (and,
+after merge, on `origin/master` tip) has `conclusion` `success` or `skipped`:
+
+```
+gh api repos/{owner}/{repo}/commits/{sha}/check-runs \
+  --jq '[.check_runs[] | select(.status != "completed" or (.conclusion != "success" and .conclusion != "skipped")) | {name, status, conclusion}]'
+```
+
+Forbidden final states: "CI still running", "in progress", "will follow up", "monitoring".
+Keep polling and finishing closeout in the same session.
+
+The final message MUST begin with **`STATUS: COMPLETE`** or **`STATUS: BLOCKED`**, then
+final board column, PR number, merge commit SHA, and any children created — only after
+independent API verification of green CI on the merge commit.
+
 ## Reporting
 
 Every status update states, in order: what happened, what it means for the work item, and
