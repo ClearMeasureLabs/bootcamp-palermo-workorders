@@ -1,6 +1,5 @@
-using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using FluentValidation;
 using ClearMeasure.Bootcamp.Core.Queries;
+using FluentValidation;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Validation;
 

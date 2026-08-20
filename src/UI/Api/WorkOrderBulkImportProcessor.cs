@@ -86,7 +86,7 @@ internal sealed class WorkOrderBulkImportProcessor(IBus bus, IWorkOrderNumberGen
         Dictionary<string, Employee> creatorsByUsername,
         CancellationToken cancellationToken)
     {
-        _ = cancellationToken;
+        cancellationToken.ThrowIfCancellationRequested();
         var username = row.CreatorUsername!;
         if (creatorsByUsername.TryGetValue(username, out var cached))
         {
@@ -110,7 +110,7 @@ internal sealed class WorkOrderBulkImportProcessor(IBus bus, IWorkOrderNumberGen
         Employee creator,
         CancellationToken cancellationToken)
     {
-        _ = cancellationToken;
+        cancellationToken.ThrowIfCancellationRequested();
         var workOrder = new WorkOrder
         {
             Title = row.Title,
