@@ -13,29 +13,73 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 public class VersionControllerTests
 {
     [Test]
-    public void Get_Should_ReturnOk_WithExpectedShape()
+    public void Get_Should_Return200WithValidJsonShape()
     {
         var stubHostEnvironment = new StubHostEnvironment("TestEnvironment");
-        var controller = new VersionController(stubHostEnvironment)
-        {
-            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
-        };
+        var controller = CreateController(stubHostEnvironment);
 
         var result = controller.Get();
 
         var content = result.ShouldBeOfType<ContentResult>();
+        content.StatusCode.ShouldBe(200);
         content.ContentType.ShouldNotBeNull();
         content.ContentType!.ShouldContain("application/json");
-        var payload = JsonSerializer.Deserialize<VersionMetadataResponse>(
-            content.Content!,
-            ConditionalGetEtag.JsonSerializerOptions);
-        payload.ShouldNotBeNull();
-        payload!.AssemblyVersion.ShouldNotBeNullOrEmpty();
+        var payload = DeserializePayload(content.Content!);
+        payload.AssemblyVersion.ShouldNotBeNull();
+        payload.InformationalVersion.ShouldNotBeNull();
+        payload.BuildConfiguration.ShouldNotBeNull();
+        payload.Environment.ShouldNotBeNull();
+    }
+
+    [Test]
+    public void Get_Should_HaveNonEmptyVersionFields()
+    {
+        var controller = CreateController(new StubHostEnvironment("TestEnvironment"));
+
+        var result = controller.Get();
+
+        var content = result.ShouldBeOfType<ContentResult>();
+        var payload = DeserializePayload(content.Content!);
+        payload.AssemblyVersion.ShouldNotBeNullOrEmpty();
         payload.InformationalVersion.ShouldNotBeNullOrEmpty();
-        payload.Environment.ShouldBe("TestEnvironment");
+    }
+
+    [Test]
+    public void Get_Should_IncludeBuildConfiguration()
+    {
+        var controller = CreateController(new StubHostEnvironment("TestEnvironment"));
+
+        var result = controller.Get();
+
+        var content = result.ShouldBeOfType<ContentResult>();
+        var payload = DeserializePayload(content.Content!);
+        payload.BuildConfiguration.ShouldNotBeNullOrEmpty();
+    }
+
+    [Test]
+    public void Get_Should_IncludeEnvironmentName()
+    {
+        var controller = CreateController(new StubHostEnvironment("Staging"));
+
+        var result = controller.Get();
+
+        var content = result.ShouldBeOfType<ContentResult>();
+        var payload = DeserializePayload(content.Content!);
+        payload.Environment.ShouldBe("Staging");
         payload.MachineName.ShouldBe(Environment.MachineName);
         payload.FrameworkDescription.ShouldBe(System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
     }
+
+    private static VersionController CreateController(StubHostEnvironment stubHostEnvironment) =>
+        new(stubHostEnvironment)
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
+
+    private static VersionMetadataResponse DeserializePayload(string json) =>
+        JsonSerializer.Deserialize<VersionMetadataResponse>(
+            json,
+            ConditionalGetEtag.JsonSerializerOptions).ShouldNotBeNull();
 
     private sealed class StubHostEnvironment(string environmentName) : IHostEnvironment
     {
