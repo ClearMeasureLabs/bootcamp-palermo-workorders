@@ -12,14 +12,14 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
         var chatMessages = BuildChatMessages(request);
 
         IChatClient client = await factory.GetChatClient();
-        ChatResponse response = await client.GetResponseAsync(chatMessages, chatOptions);
+        ChatResponse response = await client.GetResponseAsync(chatMessages, chatOptions, cancellationToken);
         return response;
     }
 
     /// <summary>
     /// Builds the system, history, and user messages for an application chat turn.
     /// </summary>
-    public static List<ChatMessage> BuildChatMessages(ApplicationChatQuery request)
+    internal static List<ChatMessage> BuildChatMessages(ApplicationChatQuery request)
     {
         var chatMessages = new List<ChatMessage>
         {
