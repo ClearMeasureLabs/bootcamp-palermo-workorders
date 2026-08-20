@@ -16,11 +16,17 @@ public sealed class DetailedHealthReportProvider(
     public async Task<DetailedHealthReport> GetReportAsync(CancellationToken cancellationToken = default)
     {
         var report = await healthCheckService.CheckHealthAsync(
-            registration => !registration.Tags.Contains("live"),
+            IncludeInDetailedReport,
             cancellationToken);
 
         return FromHealthReport(report, timeProvider);
     }
+
+    /// <summary>
+    /// Omits Aspire/liveness-only checks tagged <c>live</c> from the detailed API report.
+    /// </summary>
+    internal static bool IncludeInDetailedReport(HealthCheckRegistration registration) =>
+        !registration.Tags.Contains("live");
 
     internal static DetailedHealthReport FromHealthReport(HealthReport report, TimeProvider clock)
     {

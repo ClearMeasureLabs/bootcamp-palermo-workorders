@@ -29,13 +29,15 @@ public class HealthReportBuilderTests
     }
 
     [Test]
-    public void HealthReportBuilder_Build_Should_SetOverallStatus_FromWorstComponent()
+    public void HealthReportBuilder_FromEntries_Should_SetOverallStatus_FromWorstComponent()
     {
         var healthyOnly = new[]
         {
             new ComponentHealthEntry { Name = "A", Status = ComponentHealthStatus.Healthy },
             new ComponentHealthEntry { Name = "B", Status = ComponentHealthStatus.Healthy }
         };
+        var healthyReport = HealthReportBuilder.FromEntries(TimeProvider.System, healthyOnly);
+        healthyReport.OverallStatus.ShouldBe(ComponentHealthStatus.Healthy);
         HealthReportBuilder.AggregateWorst(healthyOnly).ShouldBe(ComponentHealthStatus.Healthy);
 
         var mixed = new[]
@@ -43,6 +45,8 @@ public class HealthReportBuilderTests
             new ComponentHealthEntry { Name = "A", Status = ComponentHealthStatus.Healthy },
             new ComponentHealthEntry { Name = "B", Status = ComponentHealthStatus.Degraded }
         };
+        var mixedReport = HealthReportBuilder.FromEntries(TimeProvider.System, mixed);
+        mixedReport.OverallStatus.ShouldBe(ComponentHealthStatus.Degraded);
         HealthReportBuilder.AggregateWorst(mixed).ShouldBe(ComponentHealthStatus.Degraded);
 
         var withUnhealthy = new[]
@@ -51,7 +55,30 @@ public class HealthReportBuilderTests
             new ComponentHealthEntry { Name = "B", Status = ComponentHealthStatus.Unhealthy },
             new ComponentHealthEntry { Name = "C", Status = ComponentHealthStatus.Degraded }
         };
+        var unhealthyReport = HealthReportBuilder.FromEntries(TimeProvider.System, withUnhealthy);
+        unhealthyReport.OverallStatus.ShouldBe(ComponentHealthStatus.Unhealthy);
         HealthReportBuilder.AggregateWorst(withUnhealthy).ShouldBe(ComponentHealthStatus.Unhealthy);
+    }
+
+    [Test]
+    public void HealthReportBuilder_FromEntries_Should_SetCheckedAtUtc_AndHostMetadata()
+    {
+        var fixedTime = new DateTime(2026, 3, 26, 12, 0, 0, DateTimeKind.Utc);
+        var report = HealthReportBuilder.FromEntries(
+            new FixedUtcTimeProvider(fixedTime),
+            [new ComponentHealthEntry { Name = "X", Status = ComponentHealthStatus.Healthy }]);
+
+        report.CheckedAtUtc.ShouldBe(fixedTime);
+        report.CheckedAtUtc.Kind.ShouldBe(DateTimeKind.Utc);
+        report.ProcessId.ShouldBe(Environment.ProcessId);
+        report.OsDescription.ShouldBe(RuntimeInformation.OSDescription);
+        report.FrameworkDescription.ShouldBe(RuntimeInformation.FrameworkDescription);
+        report.GcMemoryMb.ShouldBeGreaterThanOrEqualTo(0);
+        report.WorkingSetMb.ShouldBeGreaterThanOrEqualTo(0);
+        report.ProcessorCount.ShouldBe(Environment.ProcessorCount);
+        report.Is64BitProcess.ShouldBe(Environment.Is64BitProcess);
+        report.TimeZoneId.ShouldBe(TimeZoneInfo.Local.Id);
+        report.ProcessPriority.ShouldNotBeNullOrWhiteSpace();
     }
 
     [Test]

@@ -94,13 +94,15 @@ internal static class ApiPublicPathRules
             return false;
         }
 
-        if (segments.Length == 2)
+        // /api/{leaf} or /api/{leaf}/... (e.g. /api/health/detailed)
+        if (segments.Length == 2 || !segments[1].StartsWith('v'))
         {
             leaf = segments[1];
             return true;
         }
 
-        if (!segments[1].StartsWith('v'))
+        // /api/v{version}/{leaf} or /api/v{version}/{leaf}/...
+        if (segments.Length < 3)
         {
             return false;
         }
@@ -112,5 +114,6 @@ internal static class ApiPublicPathRules
     internal static bool IsPublicLeaf(string leaf) =>
         leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-        || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+        || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase)
+        || leaf.Equals("health", StringComparison.OrdinalIgnoreCase);
 }

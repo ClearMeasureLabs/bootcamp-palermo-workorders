@@ -24,8 +24,13 @@ public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
                 ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
-                ["ApiKeyAuthentication:Enabled"] = "false",
-                ["ApiKeyAuthentication:ValidationKey"] = "",
+                ["ApiKeyAuthentication:Enabled"] = "true",
+                ["ApiKeyAuthentication:ValidationKey"] = "integration-test-api-key",
+                ["ApiRateLimiting:Enabled"] = "true",
+                ["ApiRateLimiting:PermitLimit"] = "100",
+                ["ApiRateLimiting:WindowSeconds"] = "60",
+                ["ApiRateLimiting:SegmentsPerWindow"] = "4",
+                ["ApiRateLimiting:QueueLimit"] = "0",
                 ["FeatureFlags:SampleFeatureA"] = "false",
                 ["FeatureFlags:SampleFeatureB"] = "false"
             });
