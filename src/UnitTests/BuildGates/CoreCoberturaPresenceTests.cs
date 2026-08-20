@@ -6,6 +6,12 @@ namespace ClearMeasure.Bootcamp.UnitTests.BuildGates;
 public class CoreCoberturaPresenceTests
 {
     [Test]
+    public void HasProductionCoreHits_WhenCorePackageHasHits_ReturnsTrue()
+    {
+        CoreCoberturaPresence.HasProductionCoreHits(CorePackageWithHitsFixture).ShouldBeTrue();
+    }
+
+    [Test]
     public void HasProductionCoreHits_WhenCoreFileHasHits_ReturnsTrue()
     {
         CoreCoberturaPresence.HasProductionCoreHits(CoreWithHitsFixture).ShouldBeTrue();
@@ -28,6 +34,13 @@ public class CoreCoberturaPresenceTests
     {
         CoreCoberturaPresence.IsProductionCoreFilename(
                 @"D:\repo\src\Core\Model\Employee.cs")
+            .ShouldBeTrue();
+    }
+
+    [Test]
+    public void IsProductionCoreFilename_WhenCoverletRelativeCorePath_ReturnsTrue()
+    {
+        CoreCoberturaPresence.IsProductionCoreFilename(@"Core\Model\Employee.cs")
             .ShouldBeTrue();
     }
 
@@ -69,9 +82,24 @@ public class CoreCoberturaPresenceTests
             ".cursor", "skills", "crap-score-cleanup", "scripts", "assert-core-cobertura.ps1"));
         var source = File.ReadAllText(path);
 
-        source.ShouldContain("Test-HasProductionCoreHits");
-        source.ShouldContain("src/core");
+        source.ShouldContain("ClearMeasure.Bootcamp.Core");
         source.ShouldContain("exit 1");
+    }
+
+    [Test]
+    public void CoreProject_WhenRead_EnablesCopyLocalLockFileAssemblies()
+    {
+        var path = FindRepoFile(Path.Combine("src", "Core", "Core.csproj"));
+        File.ReadAllText(path).ShouldContain("CopyLocalLockFileAssemblies");
+    }
+
+    [Test]
+    public void UnitTestsProject_WhenRead_CopiesCoreCoverletResolutionAssemblies()
+    {
+        var path = FindRepoFile(Path.Combine("src", "UnitTests", "UnitTests.csproj"));
+        var source = File.ReadAllText(path);
+        source.ShouldContain("CopyCoreCoverletResolutionAssemblies");
+        source.ShouldContain("HealthChecks.Abstractions");
     }
 
     private static string FindRepoFile(string relativePath)
@@ -90,6 +118,23 @@ public class CoreCoberturaPresenceTests
 
         throw new FileNotFoundException($"Repo file not found: {relativePath}");
     }
+
+    private const string CorePackageWithHitsFixture = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <coverage>
+          <packages>
+            <package name="ClearMeasure.Bootcamp.Core">
+              <classes>
+                <class name="ClearMeasure.Bootcamp.Core.Model.Employee" filename="Model/Employee.cs" line-rate="1">
+                  <lines>
+                    <line number="10" hits="3" />
+                  </lines>
+                </class>
+              </classes>
+            </package>
+          </packages>
+        </coverage>
+        """;
 
     private const string CoreWithHitsFixture = """
         <?xml version="1.0" encoding="utf-8"?>
@@ -131,7 +176,7 @@ public class CoreCoberturaPresenceTests
           <packages>
             <package name="ClearMeasure.Bootcamp.Core">
               <classes>
-                <class name="ClearMeasure.Bootcamp.Core.Model.Employee" filename="src/Core/Model/Employee.cs" line-rate="0">
+                <class name="ClearMeasure.Bootcamp.Core.Model.Employee" filename="Model/Employee.cs" line-rate="0">
                   <lines>
                     <line number="10" hits="0" />
                   </lines>

@@ -109,13 +109,14 @@ Include, Cobertura often contains only `UnitTests\Core\…` paths and **omits** 
 **Verify Core is present** after unit tests:
 
 ```powershell
-Select-String -Path build/test/**/coverage.cobertura.xml -Pattern 'src[/\\]Core[/\\]' | Select-Object -First 5
+Select-String -Path build/test/**/coverage.cobertura.xml -Pattern 'package name="ClearMeasure.Bootcamp.Core"' | Select-Object -First 5
 # Or hard-check (also run by run-crap-audit.ps1):
 pwsh .cursor/skills/crap-score-cleanup/scripts/assert-core-cobertura.ps1
 ```
 
-Expect `filename` attributes under `src/Core/` (or `src\Core\`) with `hits` &gt; 0. The audit
-fails if production Core coverage is missing.
+Expect a Cobertura `<package name="ClearMeasure.Bootcamp.Core">` (filenames are often relative to `src/Core/`, e.g. `Model\Employee.cs`) with `hits` &gt; 0. The audit fails if production Core coverage is missing.
+
+**Coverlet instrumentation prerequisite:** `ClearMeasure.Bootcamp.Core` references `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions`. Coverlet/Cecil must resolve that assembly next to `Core.dll`; without it, Coverlet silently skips Core. `Core.csproj` sets `CopyLocalLockFileAssemblies=true`, and UnitTests/IntegrationTests run target `CopyCoreCoverletResolutionAssemblies` to copy HealthChecks/Logging/DI abstractions into the test output beside Core.
 
 Do not invoke bare `dotnet test` on the `.sln` or on AcceptanceTests in isolation; that skips
 database setup and server lifecycle and produces false failures.

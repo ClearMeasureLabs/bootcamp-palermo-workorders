@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-  Fail when Cobertura coverage lacks production ClearMeasure.Bootcamp.Core (src/Core) line hits.
+  Fail when Cobertura coverage lacks production ClearMeasure.Bootcamp.Core line hits.
 
 .PARAMETER CoverageRoot
   Directory to search recursively for coverage.cobertura.xml (default: build/test under repo root).
@@ -48,22 +48,34 @@ function Test-HasProductionCoreHits {
     param([string]$XmlPath)
 
     [xml]$doc = Get-Content -LiteralPath $XmlPath -Raw
-    $classes = @($doc.SelectNodes("//class"))
-    foreach ($class in $classes) {
+    foreach ($package in @($doc.SelectNodes("//package"))) {
+        if ([string]$package.name -ne "ClearMeasure.Bootcamp.Core") {
+            continue
+        }
+
+        foreach ($line in @($package.SelectNodes(".//line"))) {
+            $hits = 0
+            [void][int]::TryParse([string]$line.hits, [ref]$hits)
+            if ($hits -gt 0) {
+                return $true
+            }
+        }
+    }
+
+    foreach ($class in @($doc.SelectNodes("//class"))) {
         $filename = [string]$class.filename
-        if ([string]::IsNullOrWhiteSpace($filename)) {
-            continue
-        }
-
+        $className = [string]$class.name
         $normalized = $filename.Replace('\', '/').ToLowerInvariant()
-        if ($normalized.Contains('/unittests/') -or
+        $isTestPath = $normalized.Contains('/unittests/') -or
             $normalized.Contains('/integrationtests/') -or
-            $normalized.Contains('/acceptancetests/')) {
-            continue
-        }
-
-        $isCore = $normalized.Contains('/src/core/') -or $normalized.StartsWith('src/core/')
-        if (-not $isCore) {
+            $normalized.Contains('/acceptancetests/')
+        $isCorePath = (-not $isTestPath) -and (
+            $normalized.Contains('/src/core/') -or
+            $normalized.StartsWith('src/core/') -or
+            $normalized.StartsWith('core/'))
+        $isCoreType = $className.StartsWith('ClearMeasure.Bootcamp.Core.') -and
+            -not $className.StartsWith('ClearMeasure.Bootcamp.UnitTests.')
+        if (-not ($isCorePath -or $isCoreType)) {
             continue
         }
 
@@ -90,8 +102,9 @@ foreach ($file in $coverageFiles) {
 }
 
 if (-not $found) {
-    Write-Host "Core Cobertura hard-check failed: no production src/Core filename with line hits > 0 in $($coverageFiles.Count) Cobertura file(s) under $CoverageRoot."
-    Write-Host "Ensure coverlet.runsettings Include=[ClearMeasure.Bootcamp.*]* is passed via --settings on Unit/Integration tests."
+    Write-Host "Core Cobertura hard-check failed: no ClearMeasure.Bootcamp.Core package/file with line hits > 0 in $($coverageFiles.Count) Cobertura file(s) under $CoverageRoot."
+    Write-Host "Coverlet needs Core NuGet deps (HealthChecks.Abstractions, Logging.Abstractions) beside Core.dll — Core/UnitTests set CopyLocalLockFileAssemblies=true."
+    Write-Host "Also ensure coverlet.runsettings Include=[ClearMeasure.Bootcamp.*]* is passed via --settings on Unit/Integration tests."
     exit 1
 }
 

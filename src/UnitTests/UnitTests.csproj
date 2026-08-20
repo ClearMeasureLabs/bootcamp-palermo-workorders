@@ -7,6 +7,8 @@
 
 		<IsPackable>false</IsPackable>
 		<PreserveCompilationContext>true</PreserveCompilationContext>
+		<!-- Ensure Core NuGet deps land in output so Coverlet can instrument ClearMeasure.Bootcamp.Core -->
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 
 		<AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
 		<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
@@ -61,5 +63,18 @@
 		<ProjectReference Include="..\UI\Server\UI.Server.csproj" />
 		<ProjectReference Include="..\UI.Shared\UI.Shared.csproj" />
 	</ItemGroup>
+
+	<!-- Coverlet/Cecil cannot instrument Core.dll unless HealthChecks.Abstractions (and siblings) sit beside it. -->
+	<Target Name="CopyCoreCoverletResolutionAssemblies" AfterTargets="Build">
+		<PropertyGroup>
+			<_CoreOutDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\Core\bin\$(Configuration)\$(TargetFramework)\'))</_CoreOutDir>
+		</PropertyGroup>
+		<ItemGroup>
+			<_CoreCoverletDep Include="$(_CoreOutDir)Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll" Condition="Exists('$(_CoreOutDir)Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll')" />
+			<_CoreCoverletDep Include="$(_CoreOutDir)Microsoft.Extensions.Logging.Abstractions.dll" Condition="Exists('$(_CoreOutDir)Microsoft.Extensions.Logging.Abstractions.dll')" />
+			<_CoreCoverletDep Include="$(_CoreOutDir)Microsoft.Extensions.DependencyInjection.Abstractions.dll" Condition="Exists('$(_CoreOutDir)Microsoft.Extensions.DependencyInjection.Abstractions.dll')" />
+		</ItemGroup>
+		<Copy SourceFiles="@(_CoreCoverletDep)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" Condition="'@(_CoreCoverletDep)' != ''" />
+	</Target>
 
 </Project>
