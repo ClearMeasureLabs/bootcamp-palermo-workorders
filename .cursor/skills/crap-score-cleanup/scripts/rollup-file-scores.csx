@@ -49,6 +49,20 @@ var files = report.Methods
 var byFileJson = Path.Combine(outputDir, "crap-by-file.json");
 var byFileCsv = Path.Combine(outputDir, "crap-by-file.csv");
 var summaryMd = Path.Combine(outputDir, "crap-summary.md");
+var violationsJson = Path.Combine(outputDir, "crap-production-violations.json");
+
+var productionViolations = report.Methods
+    .Where(m => m.Crap > threshold && IsProductionFile(m.FilePath))
+    .OrderByDescending(m => m.Crap)
+    .Select(m => new
+    {
+        fullName = m.FullName,
+        filePath = m.FilePath,
+        crap = m.Crap,
+        complexity = m.Complexity,
+        coverage = m.Coverage
+    })
+    .ToList();
 
 await File.WriteAllTextAsync(byFileJson, JsonSerializer.Serialize(new
 {
@@ -60,10 +74,20 @@ await File.WriteAllTextAsync(byFileJson, JsonSerializer.Serialize(new
     files
 }, JsonOptions));
 
+await File.WriteAllTextAsync(violationsJson, JsonSerializer.Serialize(new
+{
+    schemaVersion = "1.0",
+    generatedAt = DateTimeOffset.UtcNow,
+    threshold,
+    violationCount = productionViolations.Count,
+    methods = productionViolations
+}, JsonOptions));
+
 await WriteCsvAsync(byFileCsv, files);
 await WriteSummaryAsync(summaryMd, report, files, threshold);
 
 Console.WriteLine($"Wrote {files.Count} file scores to {outputDir}");
+Console.WriteLine($"Production methods over threshold {threshold}: {productionViolations.Count}");
 
 static string NormalizePath(string path) =>
     path.Replace('\\', '/').Trim();

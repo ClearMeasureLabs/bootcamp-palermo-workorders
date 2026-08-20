@@ -1,0 +1,13 @@
+{
+  "threshold": 15,
+  "violationCount": 1,
+  "methods": [
+    {
+      "fullName": "ClearMeasure.Bootcamp.Core.Import.WorkOrderBulkImportCsvParser.Parse",
+      "filePath": "D:/repo/src/Core/Import/WorkOrderBulkImportCsvParser.cs",
+      "crap": 20,
+      "complexity": 4,
+      "coverage": 0
+    }
+  ]
+}

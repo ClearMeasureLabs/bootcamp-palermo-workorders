@@ -26,6 +26,10 @@
 
 .PARAMETER Configuration
   dotnet build/test configuration. Default Release.
+
+.PARAMETER FailOnViolations
+  Exit 1 when any in-scope production method has CRAP greater than Threshold.
+  Test projects and generated code are excluded. Use this for PrivateBuild/CI.
 #>
 param(
     [string]$Solution = "src/ChurchBulletin.sln",
@@ -34,7 +38,8 @@ param(
     [switch]$SkipTests,
     [switch]$AllowPartialCoverage,
     [string]$RepoRoot = "",
-    [string]$Configuration = "Release"
+    [string]$Configuration = "Release",
+    [switch]$FailOnViolations
 )
 
 $ErrorActionPreference = "Stop"
@@ -132,6 +137,14 @@ Write-Host "=== CRAP audit complete ==="
 Write-Host "  Methods : $reportJson"
 Write-Host "  Files   : $(Join-Path $outPath 'crap-by-file.json')"
 Write-Host "  Summary : $(Join-Path $outPath 'crap-summary.md')"
+Write-Host "  Gate    : $(Join-Path $outPath 'crap-production-violations.json')"
 if ($crapExit -ne 0) {
-    Write-Host "  Note    : dotnet-crap reported CRAPpy methods (exit $crapExit) — review summary."
+    Write-Host "  Note    : dotnet-crap reported CRAPpy methods (exit $crapExit) — review summary (tests/generated may be included)."
+}
+
+$assertScript = Join-Path $PSScriptRoot "assert-crap-gate.ps1"
+$violationsPath = Join-Path $outPath "crap-production-violations.json"
+if ($FailOnViolations) {
+    & $assertScript -ViolationsPath $violationsPath
+    exit $LASTEXITCODE
 }

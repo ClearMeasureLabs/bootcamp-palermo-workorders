@@ -61,6 +61,11 @@ jobs:
           . ./build.ps1
           Build
 
+      - name: Enforce CRAP ≤ 15 (production)
+        shell: pwsh
+        run: |
+          pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 15 -SkipTests -FailOnViolations
+
       # Publish test results
       - name: Test Reporter
         uses: dorny/test-reporter@v2.1.1

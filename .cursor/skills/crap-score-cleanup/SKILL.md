@@ -43,6 +43,14 @@ From the repo root:
 pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1
 ```
 
+**CI / private-build gate (threshold 15, production only):** after unit + integration coverage exists under `build/test`, fail the build when any in-scope production method has CRAP > 15 (test projects and generated code are excluded):
+
+```powershell
+pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 15 -SkipTests -FailOnViolations
+```
+
+`PrivateBuild.ps1` and the Linux integration-build job in `.github/workflows/build.yml` run this automatically. `dotnet-crap` may still exit non-zero because of CRAPpy *test* methods; the gate uses `crap-metrics/crap-production-violations.json` (from `assert-crap-gate.ps1`) and only fails on production violations.
+
 Outputs land in `crap-metrics/`:
 
 | File | Contents |
