@@ -43,6 +43,18 @@ public class WorkOrderManageInstructionsFieldTests
         var instructions = component.WaitForElement($"[data-testid='{WorkOrderManage.Elements.Instructions}']");
         instructions.TagName.ShouldBe("TEXTAREA");
         instructions.GetAttribute("maxlength").ShouldBe(WorkOrder.InstructionsMaxLength.ToString());
+
+        var description = component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']");
+        var room = component.Find($"[data-testid='{WorkOrderManage.Elements.RoomNumber}']");
+        var markup = component.Markup;
+        var descriptionIndex = markup.IndexOf($"data-testid=\"{WorkOrderManage.Elements.Description}\"", StringComparison.Ordinal);
+        var instructionsIndex = markup.IndexOf($"data-testid=\"{WorkOrderManage.Elements.Instructions}\"", StringComparison.Ordinal);
+        var roomIndex = markup.IndexOf($"data-testid=\"{WorkOrderManage.Elements.RoomNumber}\"", StringComparison.Ordinal);
+        description.ShouldNotBeNull();
+        room.ShouldNotBeNull();
+        descriptionIndex.ShouldBeGreaterThanOrEqualTo(0);
+        instructionsIndex.ShouldBeGreaterThan(descriptionIndex);
+        roomIndex.ShouldBeGreaterThan(instructionsIndex);
     }
 
     private class StubWorkOrderManageBus : Bus
