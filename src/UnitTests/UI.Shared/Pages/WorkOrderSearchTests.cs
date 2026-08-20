@@ -49,6 +49,30 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public void ShouldAssociateFilterLabelsWithMatchingSelectIds()
+    {
+        using var ctx = new TestContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+
+        var component = ctx.RenderComponent<WorkOrderSearch>();
+
+        AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.CreatorSelect);
+        AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.AssigneeSelect);
+        AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.StatusSelect);
+    }
+
+    private static void AssertLabelForMatchesSelectId(IRenderedComponent<WorkOrderSearch> component, WorkOrderSearch.Elements element)
+    {
+        var id = element.ToString();
+        var select = component.Find($"#{id}");
+        select.ShouldNotBeNull();
+        var label = component.Find($"label[for='{id}']");
+        label.ShouldNotBeNull();
+    }
+
+    [Test]
     public void ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
     {
         using var ctx = new TestContext();

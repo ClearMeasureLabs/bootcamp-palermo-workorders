@@ -33,7 +33,7 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
         var query = new WorkOrderByNumberQuery(Data.WorkOrderNumber);
         Data.WorkOrder = (await bus.Send(query))!;
 
-        if (Data.WorkOrder?.Assignee is null)
+        if (Data.WorkOrder.Assignee is null)
         {
             MarkAsComplete();
             return;

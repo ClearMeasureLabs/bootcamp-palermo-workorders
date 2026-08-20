@@ -26,6 +26,8 @@ public static class DetailedHealthCheckResponseWriter
     {
         context.Response.ContentType = "application/json; charset=utf-8";
 
+        // RequestServices is annotated non-null, but DefaultHttpContext may leave it unset
+        // (unit tests / early pipeline). GetService throws on a null provider.
         var timeProvider = context.RequestServices?.GetService<TimeProvider>() ?? TimeProvider.System;
 
         var response = new DetailedHealthCheckResponse

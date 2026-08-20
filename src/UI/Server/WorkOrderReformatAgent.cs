@@ -84,7 +84,7 @@ internal static class ReformatWorkOrderRunner
             new(ChatRole.User, ReformatPrompts.ForWorkOrder(workOrder))
         };
         var response = await chatClient.GetResponseAsync(messages);
-        return response.Text?.Trim();
+        return response.Text.Trim();
     }
 }
 
