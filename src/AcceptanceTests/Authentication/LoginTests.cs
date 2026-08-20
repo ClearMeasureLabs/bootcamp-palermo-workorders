@@ -44,6 +44,19 @@ public class LoginTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task Should_ExposeUserSelectIdMatchingLabelFor()
+    {
+        await Page.GotoAsync("/login");
+
+        var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        var homerOption = userSelect.Locator("option[value='hsimpson']");
+        await WaitForEmployeeOptionsRenderedAsync(homerOption);
+
+        await Expect(userSelect).ToHaveAttributeAsync("id", nameof(Login.Elements.User));
+        await Expect(Page.Locator($"label[for='{Login.Elements.User}']")).ToBeAttachedAsync();
+    }
+
+    [Test, Retry(2)]
     public async Task Should_LoginSuccessfully_UsingUsernameValue_NotDisplayLabel()
     {
         await Page.GotoAsync("/login");

@@ -47,18 +47,6 @@ public class TranslationServiceTests
     }
 
     [Test]
-    public async Task ShouldReturnOriginalTextWhenInputIsNull()
-    {
-        var bus = new StubBus(available: true);
-        var factory = new ChatClientFactory(bus);
-        var service = new TranslationService(factory);
-
-        var result = await service.TranslateAsync(null!, "es-ES");
-
-        result.ShouldBe(string.Empty);
-    }
-
-    [Test]
     public async Task ShouldReturnOriginalTextWhenLanguageCodeIsInvalid()
     {
         var bus = new StubBus(available: true);

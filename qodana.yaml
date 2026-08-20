@@ -6,3 +6,15 @@ exclude:
   - name: All
     paths:
       - src/UI/Server/Generated
+  # Html.AttributeValueNotResolved: `role="switch"` is valid ARIA 1.1; the HTML
+  # inspector does not recognize the value. Keep the role for Settings dark-mode a11y.
+  - name: Html.AttributeValueNotResolved
+    paths:
+      - src/UI.Shared/Pages/Settings.razor
+  # ConditionalAccessQualifierIsNonNullableAccordingToAPIContract:
+  # HttpContext.RequestServices is annotated non-null, but DefaultHttpContext can leave it
+  # unset. Microsoft.Extensions.DependencyInjection.GetService throws on a null provider,
+  # so the ?. is required for unit tests and early pipeline safety.
+  - name: ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+    paths:
+      - src/UI/Server/DetailedHealthCheckResponseWriter.cs

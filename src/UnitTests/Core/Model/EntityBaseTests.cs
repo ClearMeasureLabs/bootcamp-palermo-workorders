@@ -42,11 +42,12 @@ public class EntityBaseTests
     public void ShouldNotBeEqual_WhenOtherIsNull()
     {
         var entity = new TestEntity { Id = Guid.NewGuid() };
+        TestEntity? other = null;
 
-        entity.Equals((TestEntity?)null).ShouldBeFalse();
-        (entity == null).ShouldBeFalse();
-        (entity != null).ShouldBeTrue();
-        (null != entity).ShouldBeTrue();
+        entity.Equals(other).ShouldBeFalse();
+        (entity == other).ShouldBeFalse();
+        (entity != other).ShouldBeTrue();
+        (other != entity).ShouldBeTrue();
     }
 
     [Test]

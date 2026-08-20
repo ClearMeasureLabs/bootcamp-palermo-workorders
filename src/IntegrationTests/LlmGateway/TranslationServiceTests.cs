@@ -40,4 +40,15 @@ public class TranslationServiceTests : LlmTestBase
 
         result.ShouldBe("Hello world");
     }
+
+    [Test]
+    public async Task ShouldReturnOriginalTextWhenInputIsEmpty()
+    {
+        var factory = TestHost.GetRequiredService<ChatClientFactory>();
+        var service = new TranslationService(factory);
+
+        var result = await service.TranslateAsync("", "es-ES");
+
+        result.ShouldBe("");
+    }
 }

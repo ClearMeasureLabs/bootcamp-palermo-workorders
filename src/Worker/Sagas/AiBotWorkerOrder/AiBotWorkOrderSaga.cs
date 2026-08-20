@@ -31,13 +31,15 @@ public class AiBotWorkOrderSaga(IBus bus, ChatClientFactory chatClientFactory) :
         Data.WorkOrderNumber = message.WorkOrderNumber;
 
         var query = new WorkOrderByNumberQuery(Data.WorkOrderNumber);
-        Data.WorkOrder = (await bus.Send(query))!;
+        var workOrder = await bus.Send(query);
 
-        if (Data.WorkOrder?.Assignee is null)
+        if (workOrder?.Assignee is null)
         {
             MarkAsComplete();
             return;
         }
+
+        Data.WorkOrder = workOrder;
 
         var command = new AssignedToInProgressCommand(Data.WorkOrder, Data.WorkOrder.Assignee);
         var commandResult = await bus.Send(command);

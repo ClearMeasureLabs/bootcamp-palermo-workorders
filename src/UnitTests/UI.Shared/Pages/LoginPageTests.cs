@@ -57,6 +57,8 @@ public class LoginPageTests
 
         var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
         employeeSelect.ShouldNotBeNull();
+        employeeSelect.GetAttribute("id").ShouldBe(nameof(Login.Elements.User));
+        component.Find($"label[for='{Login.Elements.User}']").ShouldNotBeNull();
 
         var options = component.FindAll("option");
         options.Count.ShouldBe(5);
