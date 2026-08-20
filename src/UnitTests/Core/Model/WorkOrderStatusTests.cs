@@ -88,7 +88,7 @@ public class WorkOrderStatusTests
     public void Equals_ShouldReturnTrue_WhenCodesMatch()
     {
         WorkOrderStatus.Draft.Equals(WorkOrderStatus.Draft).ShouldBeTrue();
-        WorkOrderStatus.Draft.GetHashCode().ShouldBe(WorkOrderStatus.Draft.GetHashCode());
+        WorkOrderStatus.Draft.GetHashCode().ShouldBe(WorkOrderStatus.FromCode("DRT").GetHashCode());
     }
 
     [Test]

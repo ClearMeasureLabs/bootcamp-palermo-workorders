@@ -50,7 +50,13 @@ public class LocalTelemetryFileWriterTests
 
         using var cts = new CancellationTokenSource();
         var start = writer.StartAsync(cts.Token);
-        await Task.Delay(100);
+
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (DateTime.UtcNow < deadline && Directory.GetFiles(directory, "*.jsonl").Length == 0)
+        {
+            await Task.Delay(25);
+        }
+
         Directory.Exists(directory).ShouldBeTrue();
         Directory.GetFiles(directory, "*.jsonl").Length.ShouldBeGreaterThanOrEqualTo(1);
 

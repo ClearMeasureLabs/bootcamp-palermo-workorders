@@ -116,15 +116,8 @@ public class AutoReformatAgentServiceTests
             TimeProvider.System);
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
-        try
-        {
-            await service.StartAsync(cts.Token);
-            await Task.Delay(300);
-        }
-        catch (OperationCanceledException)
-        {
-        }
-
+        await service.StartAsync(cts.Token);
+        await Task.Delay(50);
         await service.StopAsync(CancellationToken.None);
     }
 

@@ -31,7 +31,7 @@ public class RealtimeNotificationWebSocketMiddlewareTests
     }
 
     [Test]
-    public async Task Should_AcceptWebSocket_AndUnregister_WhenClientDisconnects()
+    public async Task Should_AcceptWebSocket_WhenClientConnects()
     {
         await using var factory = new ApiVersioningRoutingWebApplicationFactory();
         var wsClient = factory.Server.CreateWebSocketClient();

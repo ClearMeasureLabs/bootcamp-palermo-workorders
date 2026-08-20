@@ -85,9 +85,10 @@ public class WorkOrderManageSubmitTests
         ctx.Services.AddSpeechRecognition();
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
-        navigationManager.NavigateTo("http://localhost/?Mode=Edit&WorkOrderNumber=WO-EDIT");
+        navigationManager.NavigateTo("http://localhost/?Mode=Edit&Id=WO-EDIT");
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.RenderComponent<WorkOrderManage>(parameters => parameters
+            .Add(p => p.Id, "WO-EDIT"));
 
         component.WaitForAssertion(() =>
         {
