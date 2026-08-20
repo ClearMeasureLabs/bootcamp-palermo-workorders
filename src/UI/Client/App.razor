@@ -11,6 +11,10 @@
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
         </Found>
+        @* Router.NotFound is obsolete (CS0618) in favor of NotFoundPage; deliberately retained here.
+           Qodana Phase 1 triage (#8321): migrating to NotFoundPage was attempted on this .NET 10
+           release and broke standalone WebAssembly boot. Do not migrate until a future .NET
+           release fixes that regression; then this comment and the obsolete usage can be removed. *@
         <NotFound>
             <PageTitle>Not found</PageTitle>
             <LayoutView Layout="@typeof(ClearMeasure.Bootcamp.UI.Shared.MainLayout)">

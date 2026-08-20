@@ -134,7 +134,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             {
                 _tracesWriter.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
             }
-            catch
+            catch (Exception)
             {
                 // Ignore write errors to prevent affecting application
             }
@@ -153,7 +153,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             {
                 _eventsWriter.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
             }
-            catch
+            catch (Exception)
             {
                 // Ignore write errors to prevent affecting application
             }
@@ -188,8 +188,9 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             {
                 writer.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
             }
-            catch
+            catch (Exception)
             {
+                // Best-effort local telemetry file writes must never affect the application.
             }
         }
     }
@@ -206,7 +207,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             {
                 _metricsWriter.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
             }
-            catch
+            catch (Exception)
             {
                 // Ignore write errors to prevent affecting application
             }

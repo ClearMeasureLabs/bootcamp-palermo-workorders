@@ -17,63 +17,19 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         ChatOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        var messageList = AsMaterializedList(messages);
+
         using var activity = StartActivity("ChatClient.GetResponseAsync");
-        activity?.SetTag("chat.prompt", GetLastUserMessage(messages));
+        activity?.SetTag("chat.prompt", GetLastUserMessage(messageList));
         activity?.AddEvent(new ActivityEvent("request.sent"));
 
         try
         {
-            var response = await base.GetResponseAsync(messages, options, cancellationToken);
+            var response = await base.GetResponseAsync(messageList, options, cancellationToken);
             activity?.AddEvent(new ActivityEvent("response.received"));
             activity?.SetTag("chat.model", response.ModelId);
             activity?.SetTag("chat.response", response.Text);
             return response;
-        }
-        catch (Exception ex)
-        {
-            ChatActivityTracing.RecordException(activity, ex);
-            throw;
-        }
-    }
-
-    /// <inheritdoc />
-    public override async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
-        IEnumerable<ChatMessage> messages,
-        ChatOptions? options = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        using var activity = StartActivity("ChatClient.GetStreamingResponseAsync");
-        activity?.SetTag("chat.prompt", GetLastUserMessage(messages));
-        activity?.AddEvent(new ActivityEvent("request.sent"));
-
-        ChatResponseUpdate? lastUpdate = null;
-        var responseText = new System.Text.StringBuilder();
-
-        await using var enumerator = base
-            .GetStreamingResponseAsync(messages, options, cancellationToken)
-            .GetAsyncEnumerator(cancellationToken);
-
-        while (await TryMoveNextAsync(enumerator, activity, cancellationToken))
-        {
-            var update = enumerator.Current;
-            lastUpdate = update;
-            if (YieldIfText(update, responseText))
-            {
-                yield return update;
-            }
-        }
-
-        ChatActivityTracing.RecordStreamingCompletion(activity, lastUpdate?.ModelId, responseText.ToString());
-    }
-
-    private static async Task<bool> TryMoveNextAsync(
-        IAsyncEnumerator<ChatResponseUpdate> enumerator,
-        Activity? activity,
-        CancellationToken _)
-    {
-        try
-        {
-            return await enumerator.MoveNextAsync();
         }
         catch (Exception ex)
         {
@@ -88,15 +44,64 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         }
     }
 
-    private static bool YieldIfText(ChatResponseUpdate update, System.Text.StringBuilder responseText)
+    /// <inheritdoc />
+    public override async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+        IEnumerable<ChatMessage> messages,
+        ChatOptions? options = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(update.Text))
+        var messageList = AsMaterializedList(messages);
+
+        using var activity = StartActivity("ChatClient.GetStreamingResponseAsync");
+        activity?.SetTag("chat.prompt", GetLastUserMessage(messageList));
+        activity?.AddEvent(new ActivityEvent("request.sent"));
+
+        ChatResponseUpdate? lastUpdate = null;
+        var responseText = new System.Text.StringBuilder();
+
+        ChatResponseUpdate update;
+
+        await using var enumerator = base
+            .GetStreamingResponseAsync(messageList, options, cancellationToken)
+            .GetAsyncEnumerator(cancellationToken);
+
+        while (true)
         {
-            return false;
+            try
+            {
+                if (!await enumerator.MoveNextAsync())
+                {
+                    break;
+                }
+
+                update = enumerator.Current;
+            }
+            catch (Exception ex)
+            {
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                activity?.AddEvent(new ActivityEvent("exception",
+                    tags: new ActivityTagsCollection
+                    {
+                        { "exception.type", ex.GetType().FullName },
+                        { "exception.message", ex.Message }
+                    }));
+                throw;
+            }
+
+            lastUpdate = update;
+
+            if (string.IsNullOrWhiteSpace(update.Text))
+            {
+                continue;
+            }
+
+            responseText.Append(update.Text);
+            yield return update;
         }
 
-        responseText.Append(update.Text);
-        return true;
+        activity?.AddEvent(new ActivityEvent("response.received"));
+        activity?.SetTag("chat.model", lastUpdate?.ModelId);
+        activity?.SetTag("chat.response", responseText.ToString());
     }
 
     private Activity? StartActivity(string operationName)
@@ -115,5 +120,17 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
     private string? GetLastUserMessage(IEnumerable<ChatMessage> messages)
     {
         return messages.LastOrDefault(m => m.Role == ChatRole.User)?.Text;
+    }
+
+    /// <summary>
+    /// Materializes the caller-supplied conversation history exactly once. The message list is a small,
+    /// finite, in-memory sequence (unlike the streaming response below, which must never be buffered),
+    /// so it is safe — and necessary — to snapshot it here to avoid re-enumerating a deferred/one-shot
+    /// source (e.g. a LINQ query or an already-consumed iterator) once for tracing and again for the
+    /// actual chat call.
+    /// </summary>
+    private static IReadOnlyList<ChatMessage> AsMaterializedList(IEnumerable<ChatMessage> messages)
+    {
+        return messages as IReadOnlyList<ChatMessage> ?? messages.ToList();
     }
 }

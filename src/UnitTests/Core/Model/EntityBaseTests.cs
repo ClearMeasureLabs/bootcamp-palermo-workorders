@@ -55,7 +55,10 @@ public class EntityBaseTests
         var entity = new TestEntity { Id = Guid.NewGuid() };
         var other = new OtherTestEntity { Id = entity.Id };
 
-        entity.Equals((object)other).ShouldBeFalse();
+        // Intentional cross-type Equals contract check (same Id, different EntityBase<T>).
+        // ReSharper disable once SuspiciousTypeConversion.Global
+        object otherAsObject = other;
+        entity.Equals(otherAsObject).ShouldBeFalse();
     }
 
     [Test]
