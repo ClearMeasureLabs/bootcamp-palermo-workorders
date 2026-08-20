@@ -32,7 +32,7 @@ CRAP(m) = CC(m)² × (1 - cov(m)/100)³ + CC(m)
 **Threshold 30** is the standard "CRAPpy" cutoff. At 100% coverage, CRAP equals complexity
 (the minimum). At 0% coverage, CRAP = CC² + CC.
 
-Complexity alone can exceed the threshold: a method with CC ≥ 15 cannot reach CRAP < 15
+Complexity alone can exceed the threshold: a method with CC ≥ 15 cannot reach CRAP ≤ 14
 through testing alone — it must be refactored.
 
 ## Quick start
@@ -43,10 +43,10 @@ From the repo root:
 pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1
 ```
 
-**CI / private-build gate (threshold 15, production only):** after unit + integration coverage exists under `build/test`, fail the build when any in-scope production method has CRAP > 15 (test projects and generated code are excluded):
+**CI / private-build gate (threshold 14, production only):** after unit + integration coverage exists under `build/test`, fail the build when any in-scope production method has CRAP > 14 (test projects and generated code are excluded):
 
 ```powershell
-pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 15 -SkipTests -FailOnViolations
+pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 14 -SkipTests -FailOnViolations
 ```
 
 `PrivateBuild.ps1` and the Linux integration-build job in `.github/workflows/build.yml` run this automatically. Coverlet records async methods on compiler-generated state-machine types; the audit flattens those hits onto the original methods (`flatten-cobertura.csx`) before `dotnet-crap`, then overlays line coverage in `rollup-file-scores.csx`. `dotnet-crap` may still exit non-zero because of CRAPpy *test* methods; the gate uses `crap-metrics/crap-production-violations.json` (from `assert-crap-gate.ps1`) and only fails on production violations.
@@ -200,10 +200,10 @@ dotnet-crap diff crap-metrics/crap-report-before.json crap-metrics/crap-report.j
 
 ### Coverage needed formula
 
-To bring method with complexity `CC` below CRAP 15:
+To bring method with complexity `CC` below CRAP 14 (production gate):
 
 ```
-cov_needed = 1 - ((15 - CC) / CC²)^(1/3)
+cov_needed = 1 - ((14 - CC) / CC²)^(1/3)
 ```
 
 Only valid when `CC < 15`.
