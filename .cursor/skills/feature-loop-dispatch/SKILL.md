@@ -224,8 +224,70 @@ worker saw it. If a Task fails, read its output, fix the dispatch (new Task, cor
 prompt, or a filed child defect), and continue — a local build failure is diagnosed to
 root cause, never dismissed as environmental.
 
-Finish with a single summary: per item — final column, PR, merge SHA, children created
-(and their outcomes), plus any item left blocked and exactly why.
+**Phase 4 does not authorize ending the session.** Walk-away means the user does not need
+to answer questions — not that the orchestrator may stop while work is still pending.
+Session termination requires Phase 5 verification first.
+
+## Phase 5 — Completion heartbeat (mandatory — never hand off while pending)
+
+The orchestrator MUST NOT end a turn — and MUST NOT send a final user-facing message —
+while ANY of the following remain unresolved:
+
+- Any authorized work item not verified Done (issue closed, or explicitly hard-blocked with
+  reason recorded on the issue)
+- Any PR for the work set still open and unmerged
+- Any CI check-run with `status != "completed"`, or `conclusion` not in (`success`,
+  `skipped`)
+- Any dispatched Task whose outcome has not been independently verified
+- Any merge to master whose tip commit has not been API-verified green
+
+### Forbidden terminal messages
+
+Never end the session with status equivalent to:
+
+- "CI is still running" / "checks in progress" / "waiting on CI"
+- "In progress" / "monitoring" / "will follow up" / "polling started"
+- A partial summary that leaves verification unfinished
+
+If CI, merges, or Tasks are pending, **keep working** — poll, resume, merge, or fix —
+until Phase 5 exit criteria are met or a hard block is documented.
+
+### CI polling heartbeat (60–90 seconds)
+
+Whenever CI is pending on a PR head SHA or a post-merge master tip SHA:
+
+1. Poll every **60–90 seconds** (foreground sleep loop or background Shell that exits when
+   done). Example:
+
+   ```
+   gh api repos/ClearMeasureLabs/bootcamp-palermo-workorders/commits/{sha}/check-runs `
+     --jq '[.check_runs[] | select(.status != "completed" or (.conclusion != "success" and .conclusion != "skipped")) | {name, status, conclusion}]'
+   ```
+
+2. An empty `[]` result means CI is complete for that SHA. Non-empty means keep polling.
+3. After every merge, poll **`origin/master` tip SHA** until all check-runs are green.
+   Merge alone is not Done.
+4. On CI failure, act in the same session (fix, re-push, or spawn a closer Task) — do not
+   report Done and leave red CI running.
+
+Phase 0's ~15-minute stall watchdog and Phase 5's ~75-second CI poll **both** run for the
+whole session. Phase 5 prevents the gap where a turn ends with "CI running" between
+watchdog cycles.
+
+### Session-end gate (independent verification)
+
+Before the ONLY permitted final message, verify ALL of:
+
+- [ ] Every work item: closed, or hard-blocked with documented reason
+- [ ] Every PR: merged (or documented why merge was impossible)
+- [ ] Every relevant merge commit / master tip: all check-runs `success` or `skipped` via
+  the check-runs API — never shell exit codes, never subagent claims
+- [ ] `Check-StalledLanes.ps1` baseline: no `GREEN_UNMERGED`, `CI_STUCK`, or `CI_FAILED`
+  for the work set
+
+The final message MUST begin with **`STATUS: COMPLETE`** or **`STATUS: BLOCKED`** (with
+the exact blocker). Then: per item — final column, PR, merge SHA, children created (and
+outcomes), plus any item left blocked and exactly why.
 
 ## Hard rules (restated, non-negotiable)
 
