@@ -61,6 +61,83 @@ public class AutoReformatAgentServiceTests
         await service.ReformatWorkOrdersAsync();
     }
 
+    [Test]
+    public async Task ExecuteAsync_ReturnsImmediately_WhenDisabled()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IBus>(new StubDraftWorkOrderBus([]));
+        services.AddSingleton(new WorkOrderReformatAgent(new ChatClientFactory(new StubUnavailableBus()), NullLogger<WorkOrderReformatAgent>.Instance));
+        var provider = services.BuildServiceProvider();
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["DISABLE_AUTO_REFORMAT_AGENT"] = "true" })
+            .Build();
+        var service = new AutoReformatAgentService(
+            provider,
+            NullLogger<AutoReformatAgentService>.Instance,
+            config,
+            TimeProvider.System);
+
+        await service.StartAsync(CancellationToken.None);
+        await service.StopAsync(CancellationToken.None);
+    }
+
+    [Test]
+    public async Task ExecuteAsync_ExitsLoop_WhenCancelledDuringDelay()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IBus>(new StubDraftWorkOrderBus([]));
+        services.AddSingleton(new WorkOrderReformatAgent(new ChatClientFactory(new StubUnavailableBus()), NullLogger<WorkOrderReformatAgent>.Instance));
+        var provider = services.BuildServiceProvider();
+        var service = new AutoReformatAgentService(
+            provider,
+            NullLogger<AutoReformatAgentService>.Instance,
+            new ConfigurationBuilder().Build(),
+            TimeProvider.System);
+
+        using var cts = new CancellationTokenSource();
+        var start = service.StartAsync(cts.Token);
+        await Task.Delay(50);
+        cts.Cancel();
+        await service.StopAsync(CancellationToken.None);
+        await start;
+    }
+
+    [Test]
+    public async Task ExecuteAsync_Continues_WhenReformatThrowsThenCancelled()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IBus>(new StubThrowingBus());
+        services.AddSingleton(new WorkOrderReformatAgent(new ChatClientFactory(new StubUnavailableBus()), NullLogger<WorkOrderReformatAgent>.Instance));
+        var provider = services.BuildServiceProvider();
+        var service = new AutoReformatAgentService(
+            provider,
+            NullLogger<AutoReformatAgentService>.Instance,
+            new ConfigurationBuilder().Build(),
+            TimeProvider.System);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+        try
+        {
+            await service.StartAsync(cts.Token);
+            await Task.Delay(300);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+
+        await service.StopAsync(CancellationToken.None);
+    }
+
+    private sealed class StubThrowingBus : IBus
+    {
+        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request) =>
+            throw new InvalidOperationException("reformat-query-failed");
+
+        public Task<object?> Send(object request) => throw new NotSupportedException();
+
+        public Task Publish(INotification notification) => throw new NotSupportedException();
+    }
+
     private sealed class StubDraftWorkOrderBus(WorkOrder[] workOrders) : IBus
     {
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)

@@ -42,6 +42,25 @@ public class LocalTelemetryFileWriterTests
         writer.TelemetryLogDirectory.ShouldBe(directory);
     }
 
+    [Test]
+    public async Task ExecuteAsync_ShouldCreateLogFiles_ThenCancelCleanly()
+    {
+        var directory = CreateTempDirectory();
+        await using var writer = new LocalTelemetryFileWriter(new StubConfiguration(directory));
+
+        using var cts = new CancellationTokenSource();
+        var start = writer.StartAsync(cts.Token);
+        await Task.Delay(100);
+        Directory.Exists(directory).ShouldBeTrue();
+        Directory.GetFiles(directory, "*.jsonl").Length.ShouldBeGreaterThanOrEqualTo(1);
+
+        writer.WriteLogEntry(LogLevel.Error, "cat", "msg", new InvalidOperationException("write-me"));
+
+        cts.Cancel();
+        await writer.StopAsync(CancellationToken.None);
+        await start;
+    }
+
     private static string CreateTempDirectory()
     {
         var path = Path.Combine(Path.GetTempPath(), "telemetry-tests-" + Guid.NewGuid().ToString("N"));

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -69,5 +70,55 @@ public class WorkOrderStatusTests
         var deserialized = JsonSerializer.Deserialize<WorkOrder>(json);
 
         Assert.That(deserialized!.Status, Is.EqualTo(workOrder.Status));
+    }
+
+    [Test]
+    public void Equals_ShouldReturnFalse_WhenOtherIsNull()
+    {
+        WorkOrderStatus.Draft.Equals(null).ShouldBeFalse();
+    }
+
+    [Test]
+    public void Equals_ShouldReturnFalse_WhenOtherIsDifferentType()
+    {
+        WorkOrderStatus.Draft.Equals("Draft").ShouldBeFalse();
+    }
+
+    [Test]
+    public void Equals_ShouldReturnTrue_WhenCodesMatch()
+    {
+        WorkOrderStatus.Draft.Equals(WorkOrderStatus.Draft).ShouldBeTrue();
+        WorkOrderStatus.Draft.GetHashCode().ShouldBe(WorkOrderStatus.Draft.GetHashCode());
+    }
+
+    [Test]
+    public void Equals_ShouldReturnFalse_WhenCodesDiffer()
+    {
+        WorkOrderStatus.Draft.Equals(WorkOrderStatus.Assigned).ShouldBeFalse();
+    }
+
+    [Test]
+    public void FromCode_ShouldReturnMatchingStatus()
+    {
+        WorkOrderStatus.FromCode("ASD").ShouldBe(WorkOrderStatus.Assigned);
+    }
+
+    [Test]
+    public void FromKey_ShouldThrow_WhenKeyIsNull()
+    {
+        Should.Throw<NotSupportedException>(() => WorkOrderStatus.FromKey(null));
+    }
+
+    [Test]
+    public void IsEmpty_ShouldBeTrue_ForNone()
+    {
+        WorkOrderStatus.None.IsEmpty().ShouldBeTrue();
+        WorkOrderStatus.Draft.IsEmpty().ShouldBeFalse();
+    }
+
+    [Test]
+    public void ToString_ShouldReturnFriendlyName()
+    {
+        WorkOrderStatus.InProgress.ToString().ShouldBe("In Progress");
     }
 }
