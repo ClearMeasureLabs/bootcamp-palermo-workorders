@@ -51,6 +51,19 @@ pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 14 
 
 `PrivateBuild.ps1` and the Linux integration-build job in `.github/workflows/build.yml` run this automatically. Coverlet records async methods on compiler-generated state-machine types; the audit flattens those hits onto the original methods (`flatten-cobertura.csx`) before `dotnet-crap`, then overlays line coverage in `rollup-file-scores.csx`. `dotnet-crap` may still exit non-zero because of CRAPpy *test* methods; the gate uses `crap-metrics/crap-production-violations.json` (from `assert-crap-gate.ps1`) and only fails on production violations.
 
+### GitHub Actions job summary (CI)
+
+The **Integration Build (SQL container)** job (`build-linux` in `.github/workflows/build.yml`) appends `crap-metrics/crap-summary.md` to the GitHub Actions **job summary** after **Enforce CRAP ≤ 14 (production)**. The step is **Publish CRAP summary to job summary** (`if: always()`), so the Markdown is on the run page when the gate passes **and** when it fails.
+
+| Item | Value |
+|------|--------|
+| Workflow | `Build` (`.github/workflows/build.yml`) |
+| Job | Integration Build (SQL container) |
+| Location | Job summary (`$GITHUB_STEP_SUMMARY` / `$env:GITHUB_STEP_SUMMARY`) |
+| File | `crap-metrics/crap-summary.md` (raw Markdown appended) |
+
+**Read:** open the workflow run → **Integration Build (SQL container)** → job **Summary**. The CRAP markdown renders there. Reports are not published as a zip artifact. `crap-metrics/` remains gitignored and is not committed.
+
 Outputs land in `crap-metrics/`:
 
 | File | Contents |

@@ -66,6 +66,17 @@ jobs:
         run: |
           pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 14 -SkipTests -FailOnViolations
 
+      - name: Publish CRAP summary to job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $summary = "crap-metrics/crap-summary.md"
+          if (Test-Path $summary) {
+            Get-Content -LiteralPath $summary -Raw | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+          } else {
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "## CRAP summary`n`n``crap-summary.md`` was not produced."
+          }
+
       # Publish test results
       - name: Test Reporter
         uses: dorny/test-reporter@v2.1.1
