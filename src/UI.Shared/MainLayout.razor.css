@@ -267,12 +267,16 @@
 @keyframes loginLinkPulse {
     0%, 100% {
         opacity: 1;
-        box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.35);
+        background: rgba(74, 144, 226, 0.25);
+        box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.5);
+        color: #2b6cb0;
     }
 
     50% {
-        opacity: 0.55;
-        box-shadow: 0 0 14px 4px rgba(74, 144, 226, 0.55);
+        opacity: 0.45;
+        background: rgba(74, 144, 226, 0.05);
+        box-shadow: 0 0 18px 6px rgba(74, 144, 226, 0.75);
+        color: #4a5568;
     }
 }
 
@@ -591,12 +595,16 @@
 @keyframes loginLinkPulseDark {
     0%, 100% {
         opacity: 1;
-        box-shadow: 0 0 0 0 rgba(99, 179, 237, 0.4);
+        background: rgba(99, 179, 237, 0.35);
+        box-shadow: 0 0 0 0 rgba(99, 179, 237, 0.55);
+        color: #f7fafc;
     }
 
     50% {
-        opacity: 0.55;
-        box-shadow: 0 0 14px 4px rgba(99, 179, 237, 0.65);
+        opacity: 0.45;
+        background: rgba(99, 179, 237, 0.08);
+        box-shadow: 0 0 18px 6px rgba(99, 179, 237, 0.85);
+        color: #cbd5e0;
     }
 }
 
