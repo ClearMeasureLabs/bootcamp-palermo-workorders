@@ -59,7 +59,7 @@ public class SettingsTests
     {
         var ctx = new TestContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Strict;
-        ctx.Services.AddSingleton<IJSRuntime>(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());

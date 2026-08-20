@@ -69,8 +69,8 @@ public class AiAgentPageTests : AcceptanceTestBase
         var viewportHeight = Page.ViewportSize?.Height ?? 0;
         viewportHeight.ShouldBeGreaterThan(0);
 
-        (inputBounds!.Y + inputBounds.Height <= viewportHeight).ShouldBeTrue();
-        (buttonBounds!.Y + buttonBounds.Height <= viewportHeight).ShouldBeTrue();
+        (inputBounds.Y + inputBounds.Height <= viewportHeight).ShouldBeTrue();
+        (buttonBounds.Y + buttonBounds.Height <= viewportHeight).ShouldBeTrue();
 
         var documentScrollY = await Page.EvaluateAsync<int>("() => Math.floor(window.scrollY)");
         documentScrollY.ShouldBe(0);

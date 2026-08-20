@@ -19,7 +19,7 @@ public class ProblemDetailsWebTests
         response.IsSuccessStatusCode.ShouldBeFalse();
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        mediaType.ShouldContain("application/problem+json");
 
         var json = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
@@ -40,7 +40,7 @@ public class ProblemDetailsWebTests
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/problem+json");
+        mediaType.ShouldContain("application/problem+json");
 
         var json = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);

@@ -60,7 +60,7 @@ public class McpServerAcceptanceTests : AcceptanceTestBase
             {
                 ["title"] = "Direct MCP tool test",
                 ["description"] = "Created via direct tool call",
-                ["creatorUsername"] = creator.UserName!
+                ["creatorUsername"] = creator.UserName
             });
 
         result.ShouldContain("Direct MCP tool test");

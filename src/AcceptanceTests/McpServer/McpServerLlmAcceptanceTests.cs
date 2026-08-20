@@ -91,7 +91,7 @@ public class McpServerLlmAcceptanceTests : AcceptanceTestBase
 
         response.Text.ShouldNotBeNullOrEmpty();
         knownUsernames.ShouldContain(
-            username => response.Text.Contains(username!),
+            username => response.Text.Contains(username),
             "Response should contain at least one known employee username");
     }
 }

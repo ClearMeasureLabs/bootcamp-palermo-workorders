@@ -75,7 +75,7 @@ public class CrapGateScriptTests
             UseShellExecute = false
         });
         process.ShouldNotBeNull();
-        process!.WaitForExit(60_000).ShouldBeTrue();
+        process.WaitForExit(60_000).ShouldBeTrue();
         exitCode = process.ExitCode;
         return process.StandardError.ReadToEnd() + process.StandardOutput.ReadToEnd();
     }
@@ -106,7 +106,7 @@ public class CrapGateScriptTests
             UseShellExecute = false
         });
         install.ShouldNotBeNull();
-        install!.WaitForExit(120_000).ShouldBeTrue();
+        install.WaitForExit(120_000).ShouldBeTrue();
         var logs = install.StandardError.ReadToEnd() + install.StandardOutput.ReadToEnd();
         if (File.Exists(installed))
         {
@@ -115,7 +115,7 @@ public class CrapGateScriptTests
 
         var pathLookup = FindOnPath(fileName);
         pathLookup.ShouldNotBeNull($"dotnet-script not found after install. {logs}");
-        return pathLookup!;
+        return pathLookup;
     }
 
     private static string? FindOnPath(string fileName)
@@ -157,7 +157,7 @@ public class CrapGateScriptTests
             UseShellExecute = false
         });
         process.ShouldNotBeNull();
-        process!.WaitForExit(30_000).ShouldBeTrue();
+        process.WaitForExit(30_000).ShouldBeTrue();
         return process.ExitCode;
     }
 

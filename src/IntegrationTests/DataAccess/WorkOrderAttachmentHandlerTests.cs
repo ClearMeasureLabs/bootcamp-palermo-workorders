@@ -42,7 +42,7 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         {
             var persisted = context.Set<WorkOrderAttachment>().SingleOrDefault(a => a.Id == attachment.Id);
             persisted.ShouldNotBeNull();
-            persisted!.FileName.ShouldBe("damage-photo.jpg");
+            persisted.FileName.ShouldBe("damage-photo.jpg");
         }
     }
 
