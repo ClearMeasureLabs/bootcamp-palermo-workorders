@@ -49,6 +49,22 @@ public class ApiVersioningEndpointTests
     }
 
     [Test]
+    public async Task Should_Return200AnonymousJson_When_GetApiVersion()
+    {
+        var response = await _client!.GetAsync("/api/version");
+
+        await AssertVersionMetadataJsonAsync(response);
+    }
+
+    [Test]
+    public async Task Should_Return200AnonymousJson_When_GetApiV1Version()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/version");
+
+        await AssertVersionMetadataJsonAsync(response);
+    }
+
+    [Test]
     public async Task Should_Return200_When_GetVersion_V1Path()
     {
         var response = await _client!.GetAsync("/api/v1.0/version");
@@ -57,6 +73,23 @@ public class ApiVersioningEndpointTests
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
         mediaType!.ShouldContain("application/json");
+    }
+
+    private static async Task AssertVersionMetadataJsonAsync(HttpResponseMessage response)
+    {
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType!.ShouldContain("application/json");
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = doc.RootElement;
+        root.GetProperty("assemblyVersion").GetString().ShouldNotBeNullOrEmpty();
+        root.GetProperty("informationalVersion").GetString().ShouldNotBeNullOrEmpty();
+        root.TryGetProperty("buildConfiguration", out _).ShouldBeTrue();
+        root.GetProperty("environment").GetString().ShouldNotBeNullOrEmpty();
+        root.GetProperty("machineName").GetString().ShouldNotBeNullOrEmpty();
+        root.GetProperty("frameworkDescription").GetString().ShouldNotBeNullOrEmpty();
     }
 
     [Test]
