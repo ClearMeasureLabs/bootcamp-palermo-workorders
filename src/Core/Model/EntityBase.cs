@@ -8,7 +8,10 @@ public abstract class EntityBase<T> : IEquatable<T> where T : EntityBase<T>, new
         other is not null && IsSameIdentity(other);
 
     public override bool Equals(object? obj) =>
-        obj is T typed && typed.GetType() == GetType() && IsSameIdentity(typed);
+        obj is T typed && IsSameTypedInstance(typed);
+
+    private bool IsSameTypedInstance(T typed) =>
+        typed.GetType() == GetType() && IsSameIdentity(typed);
 
     private bool IsSameIdentity(T other) =>
         ReferenceEquals(this, other) || HasSameNonEmptyId(Id, other.Id);
