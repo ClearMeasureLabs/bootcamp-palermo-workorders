@@ -1,8 +1,6 @@
 using Asp.Versioning;
-using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;

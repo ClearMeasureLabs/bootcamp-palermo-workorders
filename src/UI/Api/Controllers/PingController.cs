@@ -1,7 +1,5 @@
 using Asp.Versioning;
-using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 

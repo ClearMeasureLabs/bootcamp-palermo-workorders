@@ -11,7 +11,6 @@ using ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 using Bunit.TestDoubles;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using Palermo.BlazorMvc;
 using Shouldly;
 using TestContext = Bunit.TestContext;

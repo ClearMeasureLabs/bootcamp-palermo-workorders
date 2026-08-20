@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using NUnit.Framework;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 

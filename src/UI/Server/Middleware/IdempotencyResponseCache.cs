@@ -1,7 +1,5 @@
 using System.Collections.Concurrent;
-using ClearMeasure.Bootcamp.UI.Shared;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Middleware;
 

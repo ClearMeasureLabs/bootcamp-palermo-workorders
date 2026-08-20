@@ -1,7 +1,5 @@
 using Asp.Versioning;
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.Core.Services;
-using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.McpServer.Tools;
@@ -12,14 +10,9 @@ using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 using ClearMeasure.Bootcamp.UI.Server.Testing;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http.Timeouts;
-using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.Options;
 using ChurchBulletin.ServiceDefaults;
 
 namespace ClearMeasure.Bootcamp.UI.Server;

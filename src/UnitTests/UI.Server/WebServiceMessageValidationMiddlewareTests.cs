@@ -1,4 +1,3 @@
-using ClearMeasure.Bootcamp.Core.Messaging;
 using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using Microsoft.AspNetCore.Http;
 using Shouldly;

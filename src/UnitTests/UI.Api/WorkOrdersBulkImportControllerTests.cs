@@ -1,5 +1,4 @@
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.Core.Import;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;

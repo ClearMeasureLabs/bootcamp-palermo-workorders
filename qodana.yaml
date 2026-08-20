@@ -3,9 +3,9 @@ linter: jetbrains/qodana-cdnet:latest
 dotnet:
   solution: src/ChurchBulletin.sln
 # Phase 5 (#8846): fail on new/absent problems vs committed baseline.
-# Residual High (e.g. RedundantUsingDirective) stay baselined so master stays green.
 # Community .NET supports failThreshold only (not severityThresholds).
-# Refresh qodana.sarif.json when intentionally remediating baselined findings.
+# Refresh qodana.sarif.json when intentionally remediating baselined findings
+# (e.g. #8933 RedundantUsingDirective compile-verified cleanup).
 failThreshold: 0
 exclude:
   - name: All

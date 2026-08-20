@@ -1,8 +1,5 @@
-using ClearMeasure.Bootcamp.AcceptanceTests;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 
