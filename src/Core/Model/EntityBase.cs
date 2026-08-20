@@ -19,25 +19,8 @@ public abstract class EntityBase<T> : IEquatable<T> where T : EntityBase<T>, new
         return HasSameNonEmptyId(Id, other.Id);
     }
 
-    public override bool Equals(object? obj)
-    {
-        if (ReferenceEquals(null, obj))
-        {
-            return false;
-        }
-
-        if (ReferenceEquals(this, obj))
-        {
-            return true;
-        }
-
-        if (obj.GetType() != GetType())
-        {
-            return false;
-        }
-
-        return Equals((T)obj);
-    }
+    public override bool Equals(object? obj) =>
+        obj is T typed && typed.GetType() == GetType() && Equals(typed);
 
     public override string ToString()
     {

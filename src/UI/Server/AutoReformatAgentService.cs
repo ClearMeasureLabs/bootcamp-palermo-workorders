@@ -46,22 +46,28 @@ public class AutoReformatAgentService : BackgroundService
 
     private async Task RunLoopAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (!stoppingToken.IsCancellationRequested && await TryRunOnceAsync(stoppingToken))
         {
-            try
-            {
-                await ReformatWorkOrdersAsync();
-                await Task.Delay(TimeSpan.FromSeconds(5), _timeProvider, stoppingToken);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in AutoReformatAgentService execution");
-                await Task.Delay(TimeSpan.FromSeconds(30), _timeProvider, stoppingToken);
-            }
+        }
+    }
+
+    private async Task<bool> TryRunOnceAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            await ReformatWorkOrdersAsync();
+            await Task.Delay(TimeSpan.FromSeconds(5), _timeProvider, stoppingToken);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in AutoReformatAgentService execution");
+            await Task.Delay(TimeSpan.FromSeconds(30), _timeProvider, stoppingToken);
+            return true;
         }
     }
 

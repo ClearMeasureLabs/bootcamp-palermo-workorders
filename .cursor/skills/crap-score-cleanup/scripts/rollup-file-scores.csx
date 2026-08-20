@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Xml.Linq;
 
 if (Args.Count < 2)
 {
@@ -19,6 +20,12 @@ Directory.CreateDirectory(outputDir);
 var json = await File.ReadAllTextAsync(reportPath);
 var report = JsonSerializer.Deserialize<CrapReport>(json, JsonOptions)
     ?? throw new InvalidOperationException("Failed to parse CRAP report.");
+
+var flattenedCoverage = Path.Combine(outputDir, "coverage.flattened.cobertura.xml");
+if (File.Exists(flattenedCoverage))
+{
+    report = OverlayLineCoverage(report, flattenedCoverage);
+}
 
 var threshold = report.Threshold;
 var files = report.Methods
@@ -49,6 +56,20 @@ var files = report.Methods
 var byFileJson = Path.Combine(outputDir, "crap-by-file.json");
 var byFileCsv = Path.Combine(outputDir, "crap-by-file.csv");
 var summaryMd = Path.Combine(outputDir, "crap-summary.md");
+var violationsJson = Path.Combine(outputDir, "crap-production-violations.json");
+
+var productionViolations = report.Methods
+    .Where(m => m.Crap > threshold && IsProductionFile(m.FilePath))
+    .OrderByDescending(m => m.Crap)
+    .Select(m => new
+    {
+        fullName = m.FullName,
+        filePath = m.FilePath,
+        crap = m.Crap,
+        complexity = m.Complexity,
+        coverage = m.Coverage
+    })
+    .ToList();
 
 await File.WriteAllTextAsync(byFileJson, JsonSerializer.Serialize(new
 {
@@ -60,22 +81,133 @@ await File.WriteAllTextAsync(byFileJson, JsonSerializer.Serialize(new
     files
 }, JsonOptions));
 
+await File.WriteAllTextAsync(violationsJson, JsonSerializer.Serialize(new
+{
+    schemaVersion = "1.0",
+    generatedAt = DateTimeOffset.UtcNow,
+    threshold,
+    violationCount = productionViolations.Count,
+    methods = productionViolations
+}, JsonOptions));
+
 await WriteCsvAsync(byFileCsv, files);
 await WriteSummaryAsync(summaryMd, report, files, threshold);
 
 Console.WriteLine($"Wrote {files.Count} file scores to {outputDir}");
+Console.WriteLine($"Production methods over threshold {threshold}: {productionViolations.Count}");
 
 static string NormalizePath(string path) =>
     path.Replace('\\', '/').Trim();
 
 static bool IsProductionFile(string path)
 {
-    var p = path.ToLowerInvariant();
+    var p = NormalizePath(path).ToLowerInvariant();
     if (p.Contains("/unittests/") || p.Contains("/integrationtests/") || p.Contains("/acceptancetests/"))
         return false;
     if (p.Contains("/generated/") || p.EndsWith(".g.cs") || p.EndsWith(".designer.cs"))
         return false;
     return p.Contains("/src/");
+}
+
+static CrapReport OverlayLineCoverage(CrapReport report, string coberturaPath)
+{
+    var hitsByFile = LoadCoberturaHits(coberturaPath);
+    if (hitsByFile.Count == 0)
+        return report;
+
+    var methods = report.Methods
+        .Select(m => OverlayMethod(m, report.Methods, hitsByFile))
+        .ToList();
+    return new CrapReport
+    {
+        Project = report.Project,
+        Timestamp = report.Timestamp,
+        Threshold = report.Threshold,
+        Stats = report.Stats,
+        Methods = methods
+    };
+}
+
+static MethodScore OverlayMethod(
+    MethodScore method,
+    List<MethodScore> allMethods,
+    Dictionary<string, Dictionary<int, int>> hitsByFile)
+{
+    var fileKey = CoverageFileKey(method.FilePath);
+    if (string.IsNullOrEmpty(fileKey) || !hitsByFile.TryGetValue(fileKey, out var lineHits))
+        return method;
+
+    var start = method.LineNumber <= 0 ? 1 : method.LineNumber;
+    var end = allMethods
+        .Where(m => CoverageFileKey(m.FilePath) == fileKey && m.LineNumber > start)
+        .Select(m => m.LineNumber)
+        .DefaultIfEmpty(int.MaxValue)
+        .Min();
+
+    var lines = lineHits.Where(kv => kv.Key >= start && kv.Key < end).ToList();
+    if (lines.Count == 0)
+        return method;
+
+    var covered = lines.Count(kv => kv.Value > 0);
+    var coverage = 100.0 * covered / lines.Count;
+    var crap = method.Complexity * method.Complexity * Math.Pow(1 - coverage / 100.0, 3) + method.Complexity;
+    return new MethodScore
+    {
+        FullName = method.FullName,
+        FilePath = method.FilePath,
+        LineNumber = method.LineNumber,
+        Crap = Math.Round(crap, 4),
+        Complexity = method.Complexity,
+        Coverage = Math.Round(coverage, 4)
+    };
+}
+
+static Dictionary<string, Dictionary<int, int>> LoadCoberturaHits(string path)
+{
+    var doc = XDocument.Load(path);
+    var result = new Dictionary<string, Dictionary<int, int>>(StringComparer.OrdinalIgnoreCase);
+    foreach (var classElement in doc.Descendants("class"))
+    {
+        var filenameAttr = classElement.Attribute("filename");
+        var filename = filenameAttr == null ? "" : filenameAttr.Value;
+        var key = CoverageFileKey(filename);
+        if (string.IsNullOrEmpty(key))
+            continue;
+
+        if (!result.TryGetValue(key, out var lines))
+        {
+            lines = new Dictionary<int, int>();
+            result[key] = lines;
+        }
+
+        var linesElement = classElement.Element("lines");
+        var lineElements = linesElement == null
+            ? Enumerable.Empty<XElement>()
+            : linesElement.Elements("line");
+        foreach (var line in lineElements)
+        {
+            var numberAttr = line.Attribute("number");
+            var hitsAttr = line.Attribute("hits");
+            if (numberAttr == null || !int.TryParse(numberAttr.Value, out var number))
+                continue;
+            var hits = hitsAttr != null && int.TryParse(hitsAttr.Value, out var h) ? h : 0;
+            if (lines.TryGetValue(number, out var existing))
+                lines[number] = Math.Max(existing, hits);
+            else
+                lines[number] = hits;
+        }
+    }
+
+    return result;
+}
+
+static string CoverageFileKey(string path)
+{
+    var normalized = NormalizePath(path).TrimStart('/');
+    var src = normalized.IndexOf("/src/", StringComparison.OrdinalIgnoreCase);
+    if (src >= 0)
+        normalized = normalized[(src + 5)..];
+    return normalized.ToLowerInvariant();
 }
 
 static async Task WriteCsvAsync(string path, List<FileScore> files)
@@ -183,6 +315,7 @@ record MethodScore
 {
     public string FullName { get; init; } = "";
     public string FilePath { get; init; } = "";
+    public int LineNumber { get; init; }
     public double Crap { get; init; }
     public int Complexity { get; init; }
     public double Coverage { get; init; }

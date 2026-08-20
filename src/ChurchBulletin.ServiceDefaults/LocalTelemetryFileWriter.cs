@@ -162,26 +162,34 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
 
     public void WriteLogEntry(LogLevel level, string category, string message, Exception? exception = null)
     {
-        if (_logsWriter == null) return;
+        if (_logsWriter == null)
+        {
+            return;
+        }
 
-        var entry = new LogEntry
+        WriteJsonLine(_logsWriter, _logsLock, CreateLogEntry(level, category, message, exception));
+    }
+
+    private static LogEntry CreateLogEntry(LogLevel level, string category, string message, Exception? exception) =>
+        new()
         {
             Timestamp = DateTime.UtcNow,
             Level = level.ToString(),
             Category = category,
             Message = message,
-            Exception = exception != null ? new LogEntryError(exception) : null
+            Exception = exception == null ? null : new LogEntryError(exception)
         };
 
-        lock (_logsLock)
+    private void WriteJsonLine(StreamWriter writer, object gate, object entry)
+    {
+        lock (gate)
         {
             try
             {
-                _logsWriter.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
+                writer.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
             }
             catch
             {
-                // Ignore write errors to prevent affecting application
             }
         }
     }
