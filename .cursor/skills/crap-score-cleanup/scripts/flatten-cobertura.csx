@@ -148,16 +148,48 @@ public static class CoberturaAsyncCoverageFlattener
             .GroupBy(c => Attr(c, "filename") + "|" + Attr(c, "name"))
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
-        foreach (var sourceClass in source.Descendants("class"))
+        var targetPackages = target.Descendants("package")
+            .GroupBy(p => Attr(p, "name"))
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+
+        var targetPackagesRoot = target.Descendants("packages").FirstOrDefault();
+        if (targetPackagesRoot == null)
         {
-            var key = Attr(sourceClass, "filename") + "|" + Attr(sourceClass, "name");
-            XElement targetClass;
-            if (!targetClasses.TryGetValue(key, out targetClass))
+            return;
+        }
+
+        foreach (var sourcePackage in source.Descendants("package"))
+        {
+            var packageName = Attr(sourcePackage, "name");
+            XElement targetPackage;
+            if (!targetPackages.TryGetValue(packageName, out targetPackage))
             {
+                targetPackage = new XElement(sourcePackage);
+                targetPackagesRoot.Add(targetPackage);
+                targetPackages[packageName] = targetPackage;
+                foreach (var added in targetPackage.Descendants("class"))
+                {
+                    targetClasses[Attr(added, "filename") + "|" + Attr(added, "name")] = added;
+                }
+
                 continue;
             }
 
-            CopyLines(sourceClass, targetClass);
+            var targetClassesContainer = targetPackage.Element("classes") ?? targetPackage;
+            foreach (var sourceClass in sourcePackage.Descendants("class"))
+            {
+                var key = Attr(sourceClass, "filename") + "|" + Attr(sourceClass, "name");
+                XElement targetClass;
+                if (!targetClasses.TryGetValue(key, out targetClass))
+                {
+                    var clone = new XElement(sourceClass);
+                    targetClassesContainer.Add(clone);
+                    targetClasses[key] = clone;
+                    continue;
+                }
+
+                CopyLines(sourceClass, targetClass);
+            }
         }
     }
 

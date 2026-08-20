@@ -31,31 +31,48 @@ internal static class ReformatWorkOrderRunner
     {
         try
         {
-            var responseText = await RequestReformatTextAsync(chatClientFactory, workOrder);
-            if (string.IsNullOrWhiteSpace(responseText)
-                || responseText.Equals("NO_CHANGES", StringComparison.OrdinalIgnoreCase))
-            {
-                logger.LogInformation("No reformatting needed for WorkOrder {WorkOrderNumber}", workOrder.Number);
-                return null;
-            }
-
-            var result = WorkOrderReformatAgent.ParseResponse(responseText, workOrder);
-            if (result != null)
-            {
-                logger.LogInformation(
-                    "Reformatted WorkOrder {WorkOrderNumber}: Title changed={TitleChanged}, Description changed={DescriptionChanged}",
-                    workOrder.Number,
-                    result.Title != workOrder.Title,
-                    result.Description != workOrder.Description);
-            }
-
-            return result;
+            return await RunCoreAsync(chatClientFactory, logger, workOrder);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error reformatting WorkOrder {WorkOrderNumber}", workOrder.Number);
             return null;
         }
+    }
+
+    private static async Task<ReformatResult?> RunCoreAsync(
+        ChatClientFactory chatClientFactory,
+        ILogger<WorkOrderReformatAgent> logger,
+        WorkOrder workOrder)
+    {
+        var responseText = await RequestReformatTextAsync(chatClientFactory, workOrder);
+        if (IsNoChangeResponse(responseText))
+        {
+            logger.LogInformation("No reformatting needed for WorkOrder {WorkOrderNumber}", workOrder.Number);
+            return null;
+        }
+
+        var result = WorkOrderReformatAgent.ParseResponse(responseText!, workOrder);
+        LogReformat(logger, workOrder, result);
+        return result;
+    }
+
+    private static bool IsNoChangeResponse(string? responseText) =>
+        string.IsNullOrWhiteSpace(responseText)
+        || responseText.Equals("NO_CHANGES", StringComparison.OrdinalIgnoreCase);
+
+    private static void LogReformat(ILogger logger, WorkOrder workOrder, ReformatResult? result)
+    {
+        if (result == null)
+        {
+            return;
+        }
+
+        logger.LogInformation(
+            "Reformatted WorkOrder {WorkOrderNumber}: Title changed={TitleChanged}, Description changed={DescriptionChanged}",
+            workOrder.Number,
+            result.Title != workOrder.Title,
+            result.Description != workOrder.Description);
     }
 
     private static async Task<string?> RequestReformatTextAsync(ChatClientFactory chatClientFactory, WorkOrder workOrder)

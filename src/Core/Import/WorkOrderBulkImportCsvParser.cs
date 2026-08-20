@@ -47,24 +47,26 @@ public static class WorkOrderBulkImportCsvParser
         CancellationToken cancellationToken)
     {
         var rows = new List<WorkOrderBulkImportRow>();
-        while (true)
+        string? line;
+        while ((line = CsvLineReader.ReadLogicalLine(reader, ref lineNumber, cancellationToken)) != null)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var line = CsvLineReader.ReadLogicalLine(reader, ref lineNumber, cancellationToken);
-            if (line == null)
-            {
-                break;
-            }
-
-            if (string.IsNullOrWhiteSpace(line))
-            {
-                continue;
-            }
-
-            rows.Add(columnIndex.ParseRow(line, lineNumber));
+            AddNonEmptyRow(rows, columnIndex, line, lineNumber);
         }
 
         return rows;
+    }
+
+    private static void AddNonEmptyRow(
+        List<WorkOrderBulkImportRow> rows,
+        CsvColumnIndex columnIndex,
+        string line,
+        int lineNumber)
+    {
+        if (!string.IsNullOrWhiteSpace(line))
+        {
+            rows.Add(columnIndex.ParseRow(line, lineNumber));
+        }
     }
 
     private static string? NullIfWhitespace(string? s)
@@ -90,14 +92,19 @@ public static class WorkOrderBulkImportCsvParser
             var columnIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < headerValues.Count; i++)
             {
-                var name = headerValues[i].Trim();
-                if (name.Length > 0 && !columnIndex.ContainsKey(name))
-                {
-                    columnIndex[name] = i;
-                }
+                AddUniqueHeader(columnIndex, headerValues[i], i);
             }
 
             return new CsvColumnIndex(columnIndex);
+        }
+
+        private static void AddUniqueHeader(Dictionary<string, int> columnIndex, string rawName, int index)
+        {
+            var name = rawName.Trim();
+            if (name.Length > 0 && !columnIndex.ContainsKey(name))
+            {
+                columnIndex[name] = index;
+            }
         }
 
         public string? FindMissingRequiredColumn(IEnumerable<string> requiredHeaders)
@@ -144,6 +151,16 @@ public static class WorkOrderBulkImportCsvParser
 
             lineNumber++;
             var combined = new StringBuilder(first);
+            AppendContinuationLines(reader, combined, ref lineNumber, cancellationToken);
+            return combined.ToString();
+        }
+
+        private static void AppendContinuationLines(
+            TextReader reader,
+            StringBuilder combined,
+            ref int lineNumber,
+            CancellationToken cancellationToken)
+        {
             while (HasUnclosedQuotes(combined.ToString()))
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -156,8 +173,6 @@ public static class WorkOrderBulkImportCsvParser
                 lineNumber++;
                 combined.Append('\n').Append(next);
             }
-
-            return combined.ToString();
         }
 
         private static bool HasUnclosedQuotes(string line) => CountUnescapedQuotes(line) % 2 != 0;
@@ -168,21 +183,26 @@ public static class WorkOrderBulkImportCsvParser
             var i = 0;
             while (i < s.Length)
             {
-                if (s[i] == '"')
-                {
-                    if (IsEscapedQuote(s, i))
-                    {
-                        i += 2;
-                        continue;
-                    }
-
-                    count++;
-                }
-
-                i++;
+                i += CountQuoteAt(s, i, ref count);
             }
 
             return count;
+        }
+
+        private static int CountQuoteAt(string s, int i, ref int count)
+        {
+            if (s[i] != '"')
+            {
+                return 1;
+            }
+
+            if (IsEscapedQuote(s, i))
+            {
+                return 2;
+            }
+
+            count++;
+            return 1;
         }
 
         internal static List<string> SplitCsvLine(string line)
@@ -192,25 +212,29 @@ public static class WorkOrderBulkImportCsvParser
             var i = 0;
             while (i < line.Length)
             {
-                if (line[i] == '"')
-                {
-                    i = AppendQuotedField(line, i + 1, current);
-                }
-                else if (line[i] == ',')
-                {
-                    result.Add(current.ToString());
-                    current.Clear();
-                    i++;
-                }
-                else
-                {
-                    current.Append(line[i]);
-                    i++;
-                }
+                i = AppendNextCsvToken(line, i, current, result);
             }
 
             result.Add(current.ToString());
             return result;
+        }
+
+        private static int AppendNextCsvToken(string line, int i, StringBuilder current, List<string> result)
+        {
+            if (line[i] == '"')
+            {
+                return AppendQuotedField(line, i + 1, current);
+            }
+
+            if (line[i] == ',')
+            {
+                result.Add(current.ToString());
+                current.Clear();
+                return i + 1;
+            }
+
+            current.Append(line[i]);
+            return i + 1;
         }
 
         private static int AppendQuotedField(string line, int startIndex, StringBuilder current)
@@ -218,23 +242,33 @@ public static class WorkOrderBulkImportCsvParser
             var i = startIndex;
             while (i < line.Length)
             {
-                if (line[i] == '"')
+                var next = AppendQuotedCharacter(line, i, current);
+                if (next < 0)
                 {
-                    if (IsEscapedQuote(line, i))
-                    {
-                        current.Append('"');
-                        i += 2;
-                        continue;
-                    }
-
                     return i + 1;
                 }
 
-                current.Append(line[i]);
-                i++;
+                i = next;
             }
 
             return i;
+        }
+
+        private static int AppendQuotedCharacter(string line, int i, StringBuilder current)
+        {
+            if (line[i] != '"')
+            {
+                current.Append(line[i]);
+                return i + 1;
+            }
+
+            if (IsEscapedQuote(line, i))
+            {
+                current.Append('"');
+                return i + 2;
+            }
+
+            return -1;
         }
 
         private static bool IsEscapedQuote(string s, int index) =>

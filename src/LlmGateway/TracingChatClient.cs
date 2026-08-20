@@ -49,47 +49,54 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         ChatResponseUpdate? lastUpdate = null;
         var responseText = new System.Text.StringBuilder();
 
-        ChatResponseUpdate update;
-
         await using var enumerator = base
             .GetStreamingResponseAsync(messages, options, cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
 
-        while (true)
+        while (await TryMoveNextAsync(enumerator, activity, cancellationToken))
         {
-            try
-            {
-                if (!await enumerator.MoveNextAsync())
-                {
-                    break;
-                }
-
-                update = enumerator.Current;
-            }
-            catch (Exception ex)
-            {
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                activity?.AddEvent(new ActivityEvent("exception",
-                    tags: new ActivityTagsCollection
-                    {
-                        { "exception.type", ex.GetType().FullName },
-                        { "exception.message", ex.Message }
-                    }));
-                throw;
-            }
-
+            var update = enumerator.Current;
             lastUpdate = update;
-
-            if (string.IsNullOrWhiteSpace(update.Text))
+            if (YieldIfText(update, responseText))
             {
-                continue;
+                yield return update;
             }
-
-            responseText.Append(update.Text);
-            yield return update;
         }
 
         ChatActivityTracing.RecordStreamingCompletion(activity, lastUpdate?.ModelId, responseText.ToString());
+    }
+
+    private static async Task<bool> TryMoveNextAsync(
+        IAsyncEnumerator<ChatResponseUpdate> enumerator,
+        Activity? activity,
+        CancellationToken _)
+    {
+        try
+        {
+            return await enumerator.MoveNextAsync();
+        }
+        catch (Exception ex)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.AddEvent(new ActivityEvent("exception",
+                tags: new ActivityTagsCollection
+                {
+                    { "exception.type", ex.GetType().FullName },
+                    { "exception.message", ex.Message }
+                }));
+            throw;
+        }
+    }
+
+    private static bool YieldIfText(ChatResponseUpdate update, System.Text.StringBuilder responseText)
+    {
+        if (string.IsNullOrWhiteSpace(update.Text))
+        {
+            return false;
+        }
+
+        responseText.Append(update.Text);
+        return true;
     }
 
     private Activity? StartActivity(string operationName)
