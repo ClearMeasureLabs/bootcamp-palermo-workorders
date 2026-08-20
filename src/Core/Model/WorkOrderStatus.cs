@@ -53,32 +53,16 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
     public byte SortBy { get; set; }
 
     /// <inheritdoc />
-    public bool Equals(WorkOrderStatus? other)
-    {
-        if (ReferenceEquals(null, other))
-        {
-            return false;
-        }
+    public bool Equals(WorkOrderStatus? other) =>
+        ReferenceEquals(this, other) || HasSameCode(other);
 
-        if (ReferenceEquals(this, other))
-        {
-            return true;
-        }
+    private bool HasSameCode(WorkOrderStatus? other) =>
+        other is not null
+        && GetType() == other.GetType()
+        && CodesEqual(other.Code);
 
-        if (GetType() != other.GetType())
-        {
-            return false;
-        }
-
-        // Null Code only exists briefly during EF Core / serialization materialization
-        // (parameterless constructor). Uninitialized instances never compare equal by value.
-        if (Code is null || other.Code is null)
-        {
-            return false;
-        }
-
-        return string.Equals(Code, other.Code, StringComparison.Ordinal);
-    }
+    private bool CodesEqual(string? otherCode) =>
+        Code is not null && string.Equals(Code, otherCode, StringComparison.Ordinal);
 
     public override bool Equals(object? obj) => Equals(obj as WorkOrderStatus);
 
