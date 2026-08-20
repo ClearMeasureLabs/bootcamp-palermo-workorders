@@ -8,7 +8,7 @@ public class CrapGateEvaluatorTests
     [Test]
     public void EvaluateReport_WhenOnlyTestsAndGeneratedExceedThreshold_ReturnsZero()
     {
-        var result = CrapGateEvaluator.EvaluateReport(PassFixture, threshold: 15);
+        var result = CrapGateEvaluator.EvaluateReport(PassFixture, threshold: 14);
 
         result.ViolationCount.ShouldBe(0);
         result.Methods.ShouldBeEmpty();
@@ -17,7 +17,7 @@ public class CrapGateEvaluatorTests
     [Test]
     public void EvaluateReport_WhenProductionMethodExceedsThreshold_ReturnsThatMethod()
     {
-        var result = CrapGateEvaluator.EvaluateReport(FailFixture, threshold: 15);
+        var result = CrapGateEvaluator.EvaluateReport(FailFixture, threshold: 14);
 
         result.ViolationCount.ShouldBe(1);
         result.Methods[0].FullName.ShouldBe("ClearMeasure.Bootcamp.Core.Import.WorkOrderBulkImportCsvParser.Parse");
@@ -29,7 +29,7 @@ public class CrapGateEvaluatorTests
     {
         var json = """
             {
-              "threshold": 15,
+              "threshold": 14,
               "methods": [
                 {
                   "fullName": "ClearMeasure.Bootcamp.McpServer.Tools.WorkOrderCommandExecutor.ExecuteCommandAsync",
@@ -42,7 +42,7 @@ public class CrapGateEvaluatorTests
             }
             """;
 
-        CrapGateEvaluator.EvaluateReport(json, threshold: 15).ViolationCount.ShouldBe(1);
+        CrapGateEvaluator.EvaluateReport(json, threshold: 14).ViolationCount.ShouldBe(1);
     }
 
     [Test]
@@ -138,7 +138,7 @@ public class CrapGateEvaluatorTests
 
     private const string PassFixture = """
         {
-          "threshold": 15,
+          "threshold": 14,
           "methods": [
             {
               "fullName": "ClearMeasure.Bootcamp.Core.Model.WorkOrder.get_Title",
@@ -167,7 +167,7 @@ public class CrapGateEvaluatorTests
 
     private const string FailFixture = """
         {
-          "threshold": 15,
+          "threshold": 14,
           "methods": [
             {
               "fullName": "ClearMeasure.Bootcamp.Core.Import.WorkOrderBulkImportCsvParser.Parse",
