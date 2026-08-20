@@ -128,6 +128,23 @@ public class AutoReformatAgentServiceTests
         await service.StopAsync(CancellationToken.None);
     }
 
+    [Test]
+    public async Task ReformatWorkOrdersAsync_ProcessesDrafts_WhenAgentReturnsNull()
+    {
+        var workOrder = new WorkOrder { Number = "WO-2", Status = WorkOrderStatus.Draft, Title = "t", Description = "d" };
+        var services = new ServiceCollection();
+        services.AddSingleton<IBus>(new StubDraftWorkOrderBus([workOrder]));
+        services.AddSingleton(new WorkOrderReformatAgent(new ChatClientFactory(new StubUnavailableBus()), NullLogger<WorkOrderReformatAgent>.Instance));
+        var provider = services.BuildServiceProvider();
+        var service = new AutoReformatAgentService(
+            provider,
+            NullLogger<AutoReformatAgentService>.Instance,
+            new ConfigurationBuilder().Build(),
+            TimeProvider.System);
+
+        await service.ReformatWorkOrdersAsync();
+    }
+
     private sealed class StubThrowingBus : IBus
     {
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request) =>

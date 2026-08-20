@@ -106,7 +106,7 @@ public class WorkOrderStatusTests
     [Test]
     public void FromKey_ShouldThrow_WhenKeyIsNull()
     {
-        Should.Throw<NotSupportedException>(() => WorkOrderStatus.FromKey(null));
+        Should.Throw<ArgumentNullException>(() => WorkOrderStatus.FromKey(null));
     }
 
     [Test]

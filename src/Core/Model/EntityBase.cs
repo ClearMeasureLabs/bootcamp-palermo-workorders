@@ -4,20 +4,8 @@ public abstract class EntityBase<T> : IEquatable<T> where T : EntityBase<T>, new
 {
     public abstract Guid Id { get; set; }
 
-    public bool Equals(T? other)
-    {
-        if (ReferenceEquals(null, other))
-        {
-            return false;
-        }
-
-        if (ReferenceEquals(this, other))
-        {
-            return true;
-        }
-
-        return HasSameNonEmptyId(Id, other.Id);
-    }
+    public bool Equals(T? other) =>
+        other is not null && (ReferenceEquals(this, other) || HasSameNonEmptyId(Id, other.Id));
 
     public override bool Equals(object? obj) =>
         obj is T typed && typed.GetType() == GetType() && Equals(typed);

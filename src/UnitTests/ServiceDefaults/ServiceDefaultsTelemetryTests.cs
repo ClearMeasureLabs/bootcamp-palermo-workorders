@@ -56,6 +56,23 @@ public class LocalTelemetryFileWriterTests
 
         writer.WriteLogEntry(LogLevel.Error, "cat", "msg", new InvalidOperationException("write-me"));
 
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = _ => true,
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded
+        };
+        ActivitySource.AddActivityListener(listener);
+        using var source = new ActivitySource("telemetry-test");
+        using (var activity = source.StartActivity("sample"))
+        {
+            activity.ShouldNotBeNull();
+            activity!.AddEvent(new ActivityEvent("evt"));
+            writer.WriteTraceEntry(activity, "STARTED");
+            writer.WriteEventEntry(activity, activity.Events.First());
+        }
+
+        writer.WriteMetricEntry("m1", 1.5, "ms", new Dictionary<string, object?> { ["k"] = "v" });
+
         cts.Cancel();
         await writer.StopAsync(CancellationToken.None);
         await start;

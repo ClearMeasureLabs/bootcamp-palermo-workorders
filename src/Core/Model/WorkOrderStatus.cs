@@ -52,21 +52,8 @@ public class WorkOrderStatus
 
     public byte SortBy { get; set; }
 
-    public override bool Equals(object? obj)
-    {
-        var code = obj as WorkOrderStatus;
-        if (code == null)
-        {
-            return false;
-        }
-
-        if (GetType() != obj!.GetType())
-        {
-            return false;
-        }
-
-        return Code.Equals(code.Code);
-    }
+    public override bool Equals(object? obj) =>
+        obj is WorkOrderStatus code && GetType() == obj.GetType() && Code.Equals(code.Code);
 
     public override string ToString()
     {
@@ -94,22 +81,14 @@ public class WorkOrderStatus
 
     public static WorkOrderStatus FromKey(string? key)
     {
-        if (key == null)
-        {
-            throw new NotSupportedException("Finding a WorkOrderStatusCode for a null key is not supported");
-        }
+        ArgumentNullException.ThrowIfNull(key);
 
-        var items = GetAllItems();
-        var match = Array.Find(items,
-            instance => instance.Key.Equals(key, StringComparison.InvariantCultureIgnoreCase))!;
+        var match = Array.Find(GetAllItems(),
+            instance => instance.Key.Equals(key, StringComparison.InvariantCultureIgnoreCase));
 
-        if (match == null)
-        {
-            throw new ArgumentOutOfRangeException(
-                $"Key '{key}' is not a valid key for {nameof(WorkOrderStatus)}");
-        }
-
-        return match;
+        return match ?? throw new ArgumentOutOfRangeException(
+            nameof(key),
+            $"Key '{key}' is not a valid key for {nameof(WorkOrderStatus)}");
     }
 
     public static WorkOrderStatus Parse(string? name)
