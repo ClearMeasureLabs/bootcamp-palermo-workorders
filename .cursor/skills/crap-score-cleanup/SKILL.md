@@ -53,7 +53,7 @@ pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 14 
 
 ### GitHub Actions artifact (CI)
 
-The **Integration Build (SQL container)** job (`build-linux` in `.github/workflows/build.yml`) uploads the audit reports after **Enforce CRAP ≤ 15 (production)** (the production CRAP gate step). The step is **Upload CRAP metrics** (`if: always()`), so the files are available when the gate passes **and** when it fails.
+The **Integration Build (SQL container)** job (`build-linux` in `.github/workflows/build.yml`) uploads the audit reports after **Enforce CRAP ≤ 14 (production)**. The step is **Upload CRAP metrics** (`if: always()`), so the files are available when the gate passes **and** when it fails.
 
 | Item | Value |
 |------|--------|
