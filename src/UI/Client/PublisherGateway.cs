@@ -38,10 +38,10 @@ public class PublisherGateway(HttpClient httpClient, IConfiguration? configurati
 
     public virtual async Task<WebServiceMessage?> SendToTopic(WebServiceMessage message)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, ApiRelativeUrl)
-        {
-            Content = JsonContent.Create(message)
-        };
+        // Construct then assign Content so a Content factory throw cannot skip Dispose
+        // (Qodana UsingStatementResourceInitialization).
+        using var request = new HttpRequestMessage(HttpMethod.Post, ApiRelativeUrl);
+        request.Content = JsonContent.Create(message);
         var key = configuration?["ApiKeyAuthentication:ValidationKey"];
         if (!string.IsNullOrWhiteSpace(key))
         {

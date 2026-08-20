@@ -98,11 +98,9 @@ public class TraceEntryTests
     [Test]
     public void ShouldMapActivityFields_WhenConstructedFromActivity()
     {
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData
-        };
+        using var listener = new ActivityListener();
+        listener.ShouldListenTo = _ => true;
+        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         using var source = new ActivitySource("TestSource");

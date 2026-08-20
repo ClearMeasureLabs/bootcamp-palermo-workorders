@@ -28,7 +28,7 @@ public class ServerFixture
     public static bool SkipScreenshotsForSpeed { get; set; } = true;
     public static bool HeadlessTestBrowser { get; set; } = true;
     public static bool DatabaseInitialized { get; private set; }
-    private static readonly object DatabaseLock = new();
+    private static readonly Lock DatabaseLock = new();
     
     /// <summary>
     /// Shared Playwright instance for all tests. Thread-safe for parallel execution.
@@ -77,11 +77,7 @@ public class ServerFixture
     {
         if (StartLocalServer) return; // local server is already warmed by StartAndWaitForServer
 
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+        var client = TestHttpClientFactory.CreateInsecureClient();
 
         string[] warmUpPaths = ["/", "/_healthcheck", "/_clienthealthcheck"];
 
@@ -116,11 +112,7 @@ public class ServerFixture
         const int maxAttempts = 3;
         const int delayBetweenAttemptsMs = 5000;
 
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+        var client = TestHttpClientFactory.CreateInsecureClient();
 
         // 1. Verify site is reachable
         TestContext.Out.WriteLine("Health gate: verifying site is reachable...");
@@ -271,11 +263,7 @@ public class ServerFixture
         _serverProcess.BeginErrorReadLine();
 
         // Wait for server to be ready
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler);
+        var client = TestHttpClientFactory.CreateInsecureClient();
         var baseUrl = ApplicationBaseUrl;
         var timeout = TimeSpan.FromSeconds(WaitTimeoutSeconds);
         var start = DateTime.UtcNow;
@@ -409,11 +397,7 @@ public class ServerFixture
 
     private static async Task ResetServerDbConnections()
     {
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler);
+        var client = TestHttpClientFactory.CreateInsecureClient();
         var response = await client.PostAsync($"{ApplicationBaseUrl}/_diagnostics/reset-db-connections", null);
         response.EnsureSuccessStatusCode();
     }

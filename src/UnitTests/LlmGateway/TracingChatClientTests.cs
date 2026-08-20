@@ -9,6 +9,36 @@ namespace ClearMeasure.Bootcamp.UnitTests.LlmGateway;
 public class TracingChatClientTests
 {
     [Test]
+    public async Task ShouldEnumerateMessagesExactlyOnce_When_GetResponseAsync()
+    {
+        var innerClient = new ConsumingStubChatClient();
+        var client = new TracingChatClient(innerClient);
+        var messages = new SingleUseMessageSequence(new ChatMessage(ChatRole.User, "Fix the pipe"));
+
+        var response = await client.GetResponseAsync(messages);
+
+        response.ShouldNotBeNull();
+        messages.EnumerationCount.ShouldBe(1);
+    }
+
+    [Test]
+    public async Task ShouldEnumerateMessagesExactlyOnce_When_GetStreamingResponseAsync()
+    {
+        var innerClient = new ConsumingStubChatClient();
+        var client = new TracingChatClient(innerClient);
+        var messages = new SingleUseMessageSequence(new ChatMessage(ChatRole.User, "Fix the pipe"));
+
+        var updates = new List<ChatResponseUpdate>();
+        await foreach (var update in client.GetStreamingResponseAsync(messages))
+        {
+            updates.Add(update);
+        }
+
+        updates.ShouldNotBeEmpty();
+        messages.EnumerationCount.ShouldBe(1);
+    }
+
+    [Test]
     public async Task GetStreamingResponseAsync_ShouldYieldTextUpdates()
     {
         var inner = new StubChatClient(
@@ -67,6 +97,58 @@ public class TracingChatClientTests
 
         await Should.ThrowAsync<InvalidOperationException>(async () =>
             await client.GetResponseAsync([new ChatMessage(ChatRole.User, "hi")]));
+    }
+
+    /// <summary>
+    /// Conversation history that can be enumerated exactly once (guards PossibleMultipleEnumeration).
+    /// </summary>
+    private class SingleUseMessageSequence(params ChatMessage[] messages) : IEnumerable<ChatMessage>
+    {
+        public int EnumerationCount { get; private set; }
+
+        public IEnumerator<ChatMessage> GetEnumerator()
+        {
+            EnumerationCount++;
+            if (EnumerationCount > 1)
+            {
+                throw new InvalidOperationException("This sequence can only be enumerated once.");
+            }
+
+            return messages.AsEnumerable().GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    private class ConsumingStubChatClient : IChatClient
+    {
+        public Task<ChatResponse> GetResponseAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            _ = messages.ToList();
+            return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, "Fixed"))
+            {
+                ModelId = "stub-model"
+            });
+        }
+
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            _ = messages.ToList();
+            await Task.Yield();
+            yield return new ChatResponseUpdate(ChatRole.Assistant, "Fixed") { ModelId = "stub-model" };
+        }
+
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+
+        public void Dispose()
+        {
+        }
     }
 
     private sealed class StubChatClient(
