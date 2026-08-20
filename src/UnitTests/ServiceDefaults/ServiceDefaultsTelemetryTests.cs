@@ -42,6 +42,48 @@ public class LocalTelemetryFileWriterTests
         writer.TelemetryLogDirectory.ShouldBe(directory);
     }
 
+    [Test]
+    public async Task ExecuteAsync_ShouldCreateLogFiles_ThenCancelCleanly()
+    {
+        var directory = CreateTempDirectory();
+        await using var writer = new LocalTelemetryFileWriter(new StubConfiguration(directory));
+
+        using var cts = new CancellationTokenSource();
+        var start = writer.StartAsync(cts.Token);
+
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (DateTime.UtcNow < deadline && Directory.GetFiles(directory, "*.jsonl").Length == 0)
+        {
+            await Task.Delay(25);
+        }
+
+        Directory.Exists(directory).ShouldBeTrue();
+        Directory.GetFiles(directory, "*.jsonl").Length.ShouldBeGreaterThanOrEqualTo(1);
+
+        writer.WriteLogEntry(LogLevel.Error, "cat", "msg", new InvalidOperationException("write-me"));
+
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = _ => true,
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded
+        };
+        ActivitySource.AddActivityListener(listener);
+        using var source = new ActivitySource("telemetry-test");
+        using (var activity = source.StartActivity("sample"))
+        {
+            activity.ShouldNotBeNull();
+            activity!.AddEvent(new ActivityEvent("evt"));
+            writer.WriteTraceEntry(activity, "STARTED");
+            writer.WriteEventEntry(activity, activity.Events.First());
+        }
+
+        writer.WriteMetricEntry("m1", 1.5, "ms", new Dictionary<string, object?> { ["k"] = "v" });
+
+        cts.Cancel();
+        await writer.StopAsync(CancellationToken.None);
+        await start;
+    }
+
     private static string CreateTempDirectory()
     {
         var path = Path.Combine(Path.GetTempPath(), "telemetry-tests-" + Guid.NewGuid().ToString("N"));

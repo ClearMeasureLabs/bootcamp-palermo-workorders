@@ -45,6 +45,8 @@ public class EntityBaseTests
 
         entity.Equals((TestEntity?)null).ShouldBeFalse();
         (entity == null).ShouldBeFalse();
+        (entity != null).ShouldBeTrue();
+        (null != entity).ShouldBeTrue();
     }
 
     [Test]
