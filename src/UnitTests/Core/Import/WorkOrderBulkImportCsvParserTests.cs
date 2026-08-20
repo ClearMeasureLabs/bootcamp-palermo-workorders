@@ -86,4 +86,28 @@ public class WorkOrderBulkImportCsvParserTests
         result.Rows.Count.ShouldBe(1);
         result.Rows[0].Description.ShouldBe("Line one\nLine two");
     }
+
+    [Test]
+    public void ShouldSucceedWithEmptyRows_WhenHeaderOnly()
+    {
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes("Title,Description,CreatorUsername\n"));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeTrue();
+        result.Rows.Count.ShouldBe(0);
+    }
+
+    [Test]
+    public void ShouldSkipBlankDataLines_WhenWhitespaceOnlyRowsPresent()
+    {
+        var csv = "Title,Description,CreatorUsername\n"
+                  + "   \n"
+                  + "Keep,Desc,user1\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeTrue();
+        result.Rows.Count.ShouldBe(1);
+        result.Rows[0].Title.ShouldBe("Keep");
+    }
 }
