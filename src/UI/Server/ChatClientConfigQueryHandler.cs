@@ -11,11 +11,11 @@ public class ChatClientConfigQueryHandler(IConfiguration configuration, ILogger<
     public Task<ChatClientConfig> Handle(ChatClientConfigQuery request, CancellationToken cancellationToken)
     {
         var apiKey = configuration.GetValue<string>("AI_OpenAI_ApiKey");
-        logger.LogDebug($"AI_OpenAI_ApiKey found as {apiKey}");
+        logger.LogDebug("AI_OpenAI_ApiKey configured: {Configured}", !string.IsNullOrEmpty(apiKey));
         var openAiUrl = configuration.GetValue<string>("AI_OpenAI_Url");
-        logger.LogDebug($"AI_OpenAI_Url found as {apiKey}");
+        logger.LogDebug("AI_OpenAI_Url found as {Url}", openAiUrl);
         var openAiModel = configuration.GetValue<string>("AI_OpenAI_Model");
-        logger.LogDebug($"AI_OpenAI_Model found as {apiKey}");
+        logger.LogDebug("AI_OpenAI_Model found as {Model}", openAiModel);
 
         return Task.FromResult(new ChatClientConfig
         {
