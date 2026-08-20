@@ -117,6 +117,13 @@ if ($coverageFiles.Count -eq 0) {
 
 Write-Host "Found $($coverageFiles.Count) Cobertura file(s)."
 
+$assertCoreScript = Join-Path $PSScriptRoot "assert-core-cobertura.ps1"
+Write-Host "Asserting production ClearMeasure.Bootcamp.Core appears in Cobertura ..."
+& $assertCoreScript -CoverageRoot $testResults -RepoRoot $RepoRoot
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Core Cobertura hard-check failed (exit $LASTEXITCODE). Production src/Core must be instrumented via coverlet.runsettings."
+}
+
 $flattenScript = Join-Path $PSScriptRoot "flatten-cobertura.csx"
 $flattenedCoverage = Join-Path $outPath "coverage.flattened.cobertura.xml"
 $flattenArgs = @($flattenScript, "--", $flattenedCoverage) + @($coverageFiles | ForEach-Object { $_.FullName })

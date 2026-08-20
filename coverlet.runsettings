@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+	<DataCollectionRunSettings>
+		<DataCollectors>
+			<DataCollector friendlyName="XPlat Code Coverage">
+				<Configuration>
+					<Format>cobertura</Format>
+					<!-- Instrument production ClearMeasure.Bootcamp.* assemblies (Core, DataAccess, UI.*, …). -->
+					<Include>[ClearMeasure.Bootcamp.*]*</Include>
+					<!-- Exclude test assemblies so Cobertura is not dominated by UnitTests.* paths. -->
+					<Exclude>[ClearMeasure.Bootcamp.UnitTests*]*,[ClearMeasure.Bootcamp.IntegrationTests*]*,[ClearMeasure.Bootcamp.AcceptanceTests*]*</Exclude>
+					<ExcludeByAttribute>GeneratedCodeAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+					<ExcludeByFile>**/*.g.cs,**/Generated/**,**/obj/**</ExcludeByFile>
+				</Configuration>
+			</DataCollector>
+		</DataCollectors>
+	</DataCollectionRunSettings>
+</RunSettings>

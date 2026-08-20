@@ -99,6 +99,24 @@ The script delegates to **`build.ps1`** — the same pipeline as `AcceptanceTest
 (Init → Compile → UnitTests → Setup-DatabaseForBuild → IntegrationTest → AcceptanceTests).
 Coverage Cobertura files land under `build/test/{UnitTests,IntegrationTests,AcceptanceTests}/`.
 
+**Coverlet must instrument production assemblies.** Repo-root `coverlet.runsettings` sets
+`Include` to `[ClearMeasure.Bootcamp.*]*` and excludes `*UnitTests*`, `*IntegrationTests*`,
+and `*AcceptanceTests*`. `build.ps1` UnitTests / IntegrationTest pass
+`--settings:…/coverlet.runsettings` with `--collect:"XPlat Code Coverage"`. Without that
+Include, Cobertura often contains only `UnitTests\Core\…` paths and **omits** production
+`src/Core/` (`ClearMeasure.Bootcamp.Core`), so CRAP keeps cov ≈ 0 for Core methods.
+
+**Verify Core is present** after unit tests:
+
+```powershell
+Select-String -Path build/test/**/coverage.cobertura.xml -Pattern 'src[/\\]Core[/\\]' | Select-Object -First 5
+# Or hard-check (also run by run-crap-audit.ps1):
+pwsh .cursor/skills/crap-score-cleanup/scripts/assert-core-cobertura.ps1
+```
+
+Expect `filename` attributes under `src/Core/` (or `src\Core\`) with `hits` &gt; 0. The audit
+fails if production Core coverage is missing.
+
 Do not invoke bare `dotnet test` on the `.sln` or on AcceptanceTests in isolation; that skips
 database setup and server lifecycle and produces false failures.
 

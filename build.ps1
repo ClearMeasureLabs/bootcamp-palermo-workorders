@@ -24,6 +24,7 @@ $verbosity = "normal"
 
 $build_dir = Join-Path $base_dir "build"
 $test_dir = Join-Path $build_dir "test"
+$coverletRunSettings = Join-Path $base_dir "coverlet.runsettings"
 
 $databaseAction = $env:DatabaseAction
 if ([string]::IsNullOrEmpty($databaseAction)) { $databaseAction = "Update" }
@@ -113,6 +114,7 @@ Function UnitTests {
 			& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
 				--results-directory $(Join-Path $test_dir "UnitTests") --no-build `
 				--no-restore --configuration $projectConfig `
+				--settings:$coverletRunSettings `
 				--collect:"XPlat Code Coverage"
 		}
 	}
@@ -151,6 +153,7 @@ Function IntegrationTest {
 				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
 					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 					--no-restore --configuration $projectConfig `
+					--settings:$coverletRunSettings `
 					--collect:"XPlat Code Coverage" `
 					--filter "Category!=SqlServerOnly"
 			}
@@ -158,6 +161,7 @@ Function IntegrationTest {
 				& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v $verbosity --logger:trx `
 					--results-directory $(Join-Path $test_dir "IntegrationTests") --no-build `
 					--no-restore --configuration $projectConfig `
+					--settings:$coverletRunSettings `
 					--collect:"XPlat Code Coverage"
 			}
 		}
