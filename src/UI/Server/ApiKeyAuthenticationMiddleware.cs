@@ -100,17 +100,24 @@ internal static class ApiPublicPathRules
             return true;
         }
 
-        if (!segments[1].StartsWith('v'))
+        if (segments[1].StartsWith('v'))
         {
-            return false;
+            if (segments.Length < 3)
+            {
+                return false;
+            }
+
+            leaf = string.Join('/', segments.AsSpan(2));
+            return leaf.Length > 0;
         }
 
-        leaf = segments[2];
-        return true;
+        leaf = string.Join('/', segments.AsSpan(1));
+        return leaf.Length > 0;
     }
 
     internal static bool IsPublicLeaf(string leaf) =>
         leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-        || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+        || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase)
+        || leaf.Equals("tools/timestamp-converter", StringComparison.OrdinalIgnoreCase);
 }
