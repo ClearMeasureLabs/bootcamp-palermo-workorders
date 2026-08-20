@@ -19,7 +19,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         || pathValue.Equals("/api", StringComparison.OrdinalIgnoreCase);
 
     internal static bool IsPublicVersionOrTimePath(string pathValue) =>
-        ApiPublicPathRules.TryGetLeafSegment(pathValue, out var leaf) && ApiPublicPathRules.IsPublicLeaf(leaf);
+        ApiPublicPathRules.IsPublicPath(pathValue);
 
     internal static bool IsAuthorized(HttpRequest request, string expectedKey)
     {
@@ -85,6 +85,10 @@ internal static class ApiKeyValidationRules
 
 internal static class ApiPublicPathRules
 {
+    internal static bool IsPublicPath(string pathValue) =>
+        (TryGetLeafSegment(pathValue, out var leaf) && IsPublicLeaf(leaf))
+        || IsFeaturesFlagsPath(pathValue);
+
     internal static bool TryGetLeafSegment(string pathValue, out string leaf)
     {
         leaf = string.Empty;
@@ -113,4 +117,28 @@ internal static class ApiPublicPathRules
         leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// <c>/api/features/flags</c> and <c>/api/v{version}/features/flags</c> are anonymous ops surfaces.
+    /// </summary>
+    internal static bool IsFeaturesFlagsPath(string pathValue)
+    {
+        var segments = pathValue.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length < 3 || !segments[0].Equals("api", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (segments.Length == 3
+            && segments[1].Equals("features", StringComparison.OrdinalIgnoreCase)
+            && segments[2].Equals("flags", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return segments.Length == 4
+               && segments[1].StartsWith('v')
+               && segments[2].Equals("features", StringComparison.OrdinalIgnoreCase)
+               && segments[3].Equals("flags", StringComparison.OrdinalIgnoreCase);
+    }
 }
