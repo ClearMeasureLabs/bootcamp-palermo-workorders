@@ -146,6 +146,20 @@ public class MainLayoutTests
     }
 
     [Test]
+    public void ShouldRenderLoginLink_WithLoginLinkClass_WhenUserIsNotAuthenticated()
+    {
+        using var ctx = CreateContext();
+
+        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.ClassList.ShouldContain("login-link");
+        loginAnchor.GetAttribute("href").ShouldBe("/login");
+        layout.Find(".auth-section").QuerySelector($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']").ShouldNotBeNull();
+    }
+
+    [Test]
     public void ShouldNotRenderLoginLink_WhenUserIsAuthenticated()
     {
         using var ctx = CreateContext(authenticateAsUser: "hsimpson");

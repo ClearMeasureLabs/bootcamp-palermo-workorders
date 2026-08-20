@@ -264,6 +264,37 @@
     text-decoration: none;
 }
 
+@keyframes loginLinkPulse {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.35);
+    }
+
+    50% {
+        opacity: 0.55;
+        box-shadow: 0 0 14px 4px rgba(74, 144, 226, 0.55);
+    }
+}
+
+.auth-section ::deep a.login-link {
+    animation: loginLinkPulse 1s ease-in-out infinite;
+}
+
+.auth-section ::deep a.login-link:hover,
+.auth-section ::deep a.login-link:focus,
+.auth-section ::deep a.login-link:focus-visible {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-section ::deep a.login-link {
+        animation: none;
+        border: 2px solid #4a90e2;
+        background: rgba(74, 144, 226, 0.15);
+        opacity: 1;
+    }
+}
+
 /* Modern Main Content */
 .modern-main {
     flex: 1;
@@ -555,6 +586,31 @@
 :global(html[data-theme="dark"]) .auth-section ::deep a:hover {
     background: #4a5568;
     color: #f7fafc;
+}
+
+@keyframes loginLinkPulseDark {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(99, 179, 237, 0.4);
+    }
+
+    50% {
+        opacity: 0.55;
+        box-shadow: 0 0 14px 4px rgba(99, 179, 237, 0.65);
+    }
+}
+
+:global(html[data-theme="dark"]) .auth-section ::deep a.login-link {
+    animation: loginLinkPulseDark 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :global(html[data-theme="dark"]) .auth-section ::deep a.login-link {
+        animation: none;
+        border: 2px solid #63b3ed;
+        background: rgba(99, 179, 237, 0.2);
+        opacity: 1;
+    }
 }
 
 :global(html[data-theme="dark"]) .modern-main {
