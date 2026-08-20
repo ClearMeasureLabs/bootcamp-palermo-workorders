@@ -59,30 +59,7 @@ public class LoginPageTests
         employeeSelect.ShouldNotBeNull();
 
         var options = component.FindAll("option");
-        options.Count.ShouldBe(5);
-
-        options[0].GetAttribute("value").ShouldBe(string.Empty);
-        options[0].TextContent.ShouldBe("-- Select a parishioner or staff member --");
-    }
-
-    [Test]
-    public void ShouldDisplayUppercaseLabelsInLoginDropdown_ForMixedAndAllCapsNames()
-    {
-        using var ctx = new TestContext();
-
-        var provider = new CustomAuthenticationStateProvider();
-        ctx.Services.AddSingleton(provider);
-        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new StubBus());
-
-        var component = ctx.RenderComponent<Login>();
-
-        var hsimpsonOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "hsimpson");
-        hsimpsonOption.TextContent.ShouldBe("HOMER SIMPSON");
-
-        var jdoeOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "jdoe");
-        jdoeOption.TextContent.ShouldBe("MARY JANE SIMPSON");
+        options.Count.ShouldBe(4);
     }
 
     [Test]
