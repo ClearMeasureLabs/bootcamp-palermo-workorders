@@ -242,6 +242,9 @@ public class WorkOrderStatusTests
 
         Should.NotThrow(() => uninitialized.IsEmpty());
         uninitialized.IsEmpty().ShouldBeFalse();
+    }
+
+    [Test]
     public void Equals_ShouldReturnFalse_WhenOtherIsNull()
     {
         WorkOrderStatus.Draft.Equals(null).ShouldBeFalse();
