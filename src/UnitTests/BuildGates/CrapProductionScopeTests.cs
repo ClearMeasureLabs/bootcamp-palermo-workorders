@@ -12,6 +12,13 @@ public class CrapProductionScopeTests
     }
 
     [Test]
+    public void IsProductionFile_WhenWindowsBackslashSrcPath_ReturnsTrue()
+    {
+        CrapProductionScope.IsProductionFile(@"D:\bootcamp-palermo-workorders\src\McpServer\Tools\WorkOrderCommandExecutor.cs")
+            .ShouldBeTrue();
+    }
+
+    [Test]
     public void IsProductionFile_WhenUnitTestPath_ReturnsFalse()
     {
         CrapProductionScope.IsProductionFile("/repo/src/UnitTests/Core/WorkOrderTests.cs").ShouldBeFalse();

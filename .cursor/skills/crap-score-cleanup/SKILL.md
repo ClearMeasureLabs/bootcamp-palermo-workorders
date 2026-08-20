@@ -49,7 +49,7 @@ pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1
 pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 15 -SkipTests -FailOnViolations
 ```
 
-`PrivateBuild.ps1` and the Linux integration-build job in `.github/workflows/build.yml` run this automatically. `dotnet-crap` may still exit non-zero because of CRAPpy *test* methods; the gate uses `crap-metrics/crap-production-violations.json` (from `assert-crap-gate.ps1`) and only fails on production violations.
+`PrivateBuild.ps1` and the Linux integration-build job in `.github/workflows/build.yml` run this automatically. Coverlet records async methods on compiler-generated state-machine types; the audit flattens those hits onto the original methods (`flatten-cobertura.csx`) before `dotnet-crap`, then overlays line coverage in `rollup-file-scores.csx`. `dotnet-crap` may still exit non-zero because of CRAPpy *test* methods; the gate uses `crap-metrics/crap-production-violations.json` (from `assert-crap-gate.ps1`) and only fails on production violations.
 
 Outputs land in `crap-metrics/`:
 

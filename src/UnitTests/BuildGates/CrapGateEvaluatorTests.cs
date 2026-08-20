@@ -25,6 +25,27 @@ public class CrapGateEvaluatorTests
     }
 
     [Test]
+    public void EvaluateReport_WhenWindowsBackslashProductionPathExceedsThreshold_CountsViolation()
+    {
+        var json = """
+            {
+              "threshold": 15,
+              "methods": [
+                {
+                  "fullName": "ClearMeasure.Bootcamp.McpServer.Tools.WorkOrderCommandExecutor.ExecuteCommandAsync",
+                  "filePath": "D:\\\\bootcamp-palermo-workorders\\\\src\\\\McpServer\\\\Tools\\\\WorkOrderCommandExecutor.cs",
+                  "crap": 56,
+                  "complexity": 7,
+                  "coverage": 0
+                }
+              ]
+            }
+            """;
+
+        CrapGateEvaluator.EvaluateReport(json, threshold: 15).ViolationCount.ShouldBe(1);
+    }
+
+    [Test]
     public void EvaluateReport_WhenThresholdRaisedAboveProductionCrap_ReturnsZero()
     {
         CrapGateEvaluator.EvaluateReport(FailFixture, threshold: 20).ViolationCount.ShouldBe(0);
@@ -37,6 +58,7 @@ public class CrapGateEvaluatorTests
         var source = File.ReadAllText(scriptPath);
 
         source.ShouldContain("IsProductionFile");
+        source.ShouldContain("NormalizePath(path)");
         source.ShouldContain("/unittests/");
         source.ShouldContain("/integrationtests/");
         source.ShouldContain("/acceptancetests/");
@@ -45,6 +67,31 @@ public class CrapGateEvaluatorTests
         source.ShouldContain(".designer.cs");
         source.ShouldContain("/src/");
         source.ShouldContain("crap-production-violations.json");
+        source.ShouldContain("OverlayLineCoverage");
+        source.ShouldContain("coverage.flattened.cobertura.xml");
+    }
+
+    [Test]
+    public void FlattenScript_WhenRead_ContainsAsyncStateMachinePattern()
+    {
+        var dir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+        while (dir != null)
+        {
+            var candidate = Path.Combine(dir.FullName,
+                ".cursor", "skills", "crap-score-cleanup", "scripts", "flatten-cobertura.csx");
+            if (File.Exists(candidate))
+            {
+                var source = File.ReadAllText(candidate);
+                source.ShouldContain("StateMachineClassName");
+                source.ShouldContain("FlattenAndMerge");
+                source.ShouldContain("<(?<method>[^>]+)>d__");
+                return;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new FileNotFoundException("flatten-cobertura.csx not found from test directory.");
     }
 
     private static string FindRollupScript()

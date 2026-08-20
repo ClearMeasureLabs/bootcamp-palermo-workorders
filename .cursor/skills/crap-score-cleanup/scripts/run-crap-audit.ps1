@@ -109,15 +109,22 @@ if ($coverageFiles.Count -eq 0) {
 
 Write-Host "Found $($coverageFiles.Count) Cobertura file(s)."
 
+$flattenScript = Join-Path $PSScriptRoot "flatten-cobertura.csx"
+$flattenedCoverage = Join-Path $outPath "coverage.flattened.cobertura.xml"
+$flattenArgs = @($flattenScript, "--", $flattenedCoverage) + @($coverageFiles | ForEach-Object { $_.FullName })
+Write-Host "Flattening async Cobertura state machines for crap4dotnet ..."
+& dotnet-script @flattenArgs
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path $flattenedCoverage)) {
+    Write-Error "Failed to flatten Cobertura coverage at $flattenedCoverage"
+}
+
 $reportJson = Join-Path $outPath "crap-report.json"
 $crapArgs = @(
     "analyze", (Join-Path $RepoRoot $Solution),
     "--threshold", $Threshold,
-    "--output", $reportJson
+    "--output", $reportJson,
+    "--coverage", $flattenedCoverage
 )
-foreach ($f in $coverageFiles) {
-    $crapArgs += @("--coverage", $f.FullName)
-}
 
 Write-Host "Analyzing CRAP scores ..."
 & dotnet-crap @crapArgs

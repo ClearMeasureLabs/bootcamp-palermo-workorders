@@ -22,6 +22,66 @@ public class CrapGateScriptTests
         exitCode.ShouldBe(1);
     }
 
+    [Test]
+    public void FlattenCobertura_WhenAsyncStateMachine_CopiesHitsOntoOriginalMethod()
+    {
+        var repoRoot = FindRepoRoot();
+        var script = Path.Combine(repoRoot, ".cursor", "skills", "crap-score-cleanup", "scripts",
+            "flatten-cobertura.csx");
+        var fixture = Path.Combine(TestContext.CurrentContext.TestDirectory, "BuildGates", "Fixtures",
+            "cobertura-async-state-machine.xml");
+        var output = Path.Combine(Path.GetTempPath(), $"crap-flat-{Guid.NewGuid():N}.xml");
+        File.Exists(script).ShouldBeTrue(script);
+        File.Exists(fixture).ShouldBeTrue(fixture);
+
+        using var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = "dotnet",
+            ArgumentList = { "script", script, "--", output, fixture },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        });
+        process.ShouldNotBeNull();
+        process!.WaitForExit(60_000).ShouldBeTrue();
+        var logs = process.StandardError.ReadToEnd() + process.StandardOutput.ReadToEnd();
+        process.ExitCode.ShouldBe(0, logs);
+
+        var xml = File.ReadAllText(output);
+        xml.ShouldContain("name=\"ExecuteCommandAsync\"");
+        xml.ShouldContain("number=\"90\"");
+        File.Delete(output);
+    }
+
+    [Test]
+    public void FlattenCobertura_WhenOnlyStateMachineClassExists_SynthesizesParentMethod()
+    {
+        var repoRoot = FindRepoRoot();
+        var script = Path.Combine(repoRoot, ".cursor", "skills", "crap-score-cleanup", "scripts",
+            "flatten-cobertura.csx");
+        var fixture = Path.Combine(TestContext.CurrentContext.TestDirectory, "BuildGates", "Fixtures",
+            "cobertura-orphan-async-state-machine.xml");
+        var output = Path.Combine(Path.GetTempPath(), $"crap-orphan-{Guid.NewGuid():N}.xml");
+        File.Exists(fixture).ShouldBeTrue(fixture);
+
+        using var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = "dotnet",
+            ArgumentList = { "script", script, "--", output, fixture },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        });
+        process.ShouldNotBeNull();
+        process!.WaitForExit(60_000).ShouldBeTrue();
+        process.ExitCode.ShouldBe(0, process.StandardError.ReadToEnd() + process.StandardOutput.ReadToEnd());
+
+        var xml = File.ReadAllText(output);
+        xml.ShouldContain("name=\"ClearMeasure.Bootcamp.UI.Server.RequestBodyBufferingPipeline\"");
+        xml.ShouldContain("name=\"InvokeAsync\"");
+        File.Delete(output);
+    }
+
     private static int RunAssertScript(string fixtureFileName)
     {
         var repoRoot = FindRepoRoot();
