@@ -83,7 +83,7 @@ public class WorkOrderMappingTests
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
-            _ = context.Set<WorkOrder>()
+            var rehydratedWorkOrder = context.Set<WorkOrder>()
                 .Include(wo => wo.Creator)
                 .Include(wo => wo.Assignee)
                 .Single(wo => wo.Id == order.Id);
@@ -131,8 +131,9 @@ public class WorkOrderMappingTests
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
-            _ = context.Set<WorkOrder>()
+            var rehydratedWorkOrder = context.Set<WorkOrder>()
                 .Single(wo => wo.Id == order.Id);
+            rehydratedWorkOrder.Id.ShouldBe(order.Id);
         }
     }
 

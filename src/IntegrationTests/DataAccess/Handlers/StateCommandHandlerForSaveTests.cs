@@ -28,7 +28,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
 
         var command = RemotableRequestTests.SimulateRemoteObject(new SaveDraftCommand(workOrder, currentUser));
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
-        _ = await handler.Handle(command);
+        var result = await handler.Handle(command);
 
         result.TransitionVerbPresentTense.ShouldBe(command.TransitionVerbPresentTense);
         result.WorkOrder.Creator.ShouldBe(currentUser);
