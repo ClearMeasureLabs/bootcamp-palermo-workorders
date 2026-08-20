@@ -32,7 +32,7 @@ CRAP(m) = CC(m)² × (1 - cov(m)/100)³ + CC(m)
 **Threshold 30** is the standard "CRAPpy" cutoff. At 100% coverage, CRAP equals complexity
 (the minimum). At 0% coverage, CRAP = CC² + CC.
 
-Complexity alone can exceed the threshold: a method with CC ≥ 14 cannot reach CRAP ≤ 13
+Complexity alone can exceed the threshold: a method with CC ≥ 13 cannot reach CRAP ≤ 12
 through testing alone — it must be refactored.
 
 ## Quick start
@@ -43,17 +43,17 @@ From the repo root:
 pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1
 ```
 
-**CI / private-build gate (threshold 13, production only):** after unit + integration coverage exists under `build/test`, fail the build when any in-scope production method has CRAP > 13 (test projects and generated code are excluded):
+**CI / private-build gate (threshold 12, production only):** after unit + integration coverage exists under `build/test`, fail the build when any in-scope production method has CRAP > 12 (test projects and generated code are excluded):
 
 ```powershell
-pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 13 -SkipTests -FailOnViolations
+pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 12 -SkipTests -FailOnViolations
 ```
 
 `PrivateBuild.ps1` and the Linux integration-build job in `.github/workflows/build.yml` run this automatically. Coverlet records async methods on compiler-generated state-machine types; the audit flattens those hits onto the original methods (`flatten-cobertura.csx`) before `dotnet-crap`, then overlays line coverage in `rollup-file-scores.csx`. `dotnet-crap` may still exit non-zero because of CRAPpy *test* methods; the gate uses `crap-metrics/crap-production-violations.json` (from `assert-crap-gate.ps1`) and only fails on production violations.
 
 ### GitHub Actions job summary (CI)
 
-The **Integration Build (SQL container)** job (`build-linux` in `.github/workflows/build.yml`) appends `crap-metrics/crap-summary.md` to the GitHub Actions **job summary** after **Enforce CRAP ≤ 13 (production)**. The step is **Publish CRAP summary to job summary** (`if: always()`), so the Markdown is on the run page when the gate passes **and** when it fails.
+The **Integration Build (SQL container)** job (`build-linux` in `.github/workflows/build.yml`) appends `crap-metrics/crap-summary.md` to the GitHub Actions **job summary** after **Enforce CRAP ≤ 12 (production)**. The step is **Publish CRAP summary to job summary** (`if: always()`), so the Markdown is on the run page when the gate passes **and** when it fails.
 
 | Item | Value |
 |------|--------|
@@ -105,7 +105,7 @@ and `*AcceptanceTests*`. `build.ps1` UnitTests / IntegrationTest pass
 `--settings:…/coverlet.runsettings` with `--collect:"XPlat Code Coverage"`. Without that
 Include, Cobertura often contains only `UnitTests\Core\…` paths and **omits** production
 `ClearMeasure.Bootcamp.Core`. Omitting `ChurchBulletin.ServiceDefaults` from Include leaves
-those methods at cov ≈ 0 and can fail the CRAP ≤ 13 gate.
+those methods at cov ≈ 0 and can fail the CRAP ≤ 12 gate.
 
 **Verify Core is present** after unit tests:
 
@@ -220,13 +220,13 @@ dotnet-crap diff crap-metrics/crap-report-before.json crap-metrics/crap-report.j
 
 ### Coverage needed formula
 
-To bring method with complexity `CC` below CRAP 13 (production gate):
+To bring method with complexity `CC` below CRAP 12 (production gate):
 
 ```
-cov_needed = 1 - ((13 - CC) / CC²)^(1/3)
+cov_needed = 1 - ((12 - CC) / CC²)^(1/3)
 ```
 
-Only valid when `CC < 14`.
+Only valid when `CC < 13`.
 
 ## Validation checklist
 

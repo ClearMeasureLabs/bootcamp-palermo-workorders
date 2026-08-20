@@ -8,7 +8,7 @@ public class CrapGateEvaluatorTests
     [Test]
     public void EvaluateReport_WhenOnlyTestsAndGeneratedExceedThreshold_ReturnsZero()
     {
-        var result = CrapGateEvaluator.EvaluateReport(PassFixture, threshold: 13);
+        var result = CrapGateEvaluator.EvaluateReport(PassFixture, threshold: 12);
 
         result.ViolationCount.ShouldBe(0);
         result.Methods.ShouldBeEmpty();
@@ -17,7 +17,7 @@ public class CrapGateEvaluatorTests
     [Test]
     public void EvaluateReport_WhenProductionMethodExceedsThreshold_ReturnsThatMethod()
     {
-        var result = CrapGateEvaluator.EvaluateReport(FailFixture, threshold: 13);
+        var result = CrapGateEvaluator.EvaluateReport(FailFixture, threshold: 12);
 
         result.ViolationCount.ShouldBe(1);
         result.Methods[0].FullName.ShouldBe("ClearMeasure.Bootcamp.Core.Import.WorkOrderBulkImportCsvParser.Parse");
@@ -29,7 +29,7 @@ public class CrapGateEvaluatorTests
     {
         var json = """
             {
-              "threshold": 13,
+              "threshold": 12,
               "methods": [
                 {
                   "fullName": "ClearMeasure.Bootcamp.McpServer.Tools.WorkOrderCommandExecutor.ExecuteCommandAsync",
@@ -42,13 +42,35 @@ public class CrapGateEvaluatorTests
             }
             """;
 
-        CrapGateEvaluator.EvaluateReport(json, threshold: 13).ViolationCount.ShouldBe(1);
+        CrapGateEvaluator.EvaluateReport(json, threshold: 12).ViolationCount.ShouldBe(1);
     }
 
     [Test]
     public void EvaluateReport_WhenThresholdRaisedAboveProductionCrap_ReturnsZero()
     {
         CrapGateEvaluator.EvaluateReport(FailFixture, threshold: 20).ViolationCount.ShouldBe(0);
+    }
+
+    [Test]
+    public void EvaluateReport_WhenProductionCrapIs13_Threshold12RejectsAndThreshold13Accepts()
+    {
+        var json = """
+            {
+              "threshold": 12,
+              "methods": [
+                {
+                  "fullName": "ClearMeasure.Bootcamp.Core.Model.WorkOrder.ChangeStatus",
+                  "filePath": "D:/repo/src/Core/Model/WorkOrder.cs",
+                  "crap": 13,
+                  "complexity": 13,
+                  "coverage": 100
+                }
+              ]
+            }
+            """;
+
+        CrapGateEvaluator.EvaluateReport(json, threshold: 12).ViolationCount.ShouldBe(1);
+        CrapGateEvaluator.EvaluateReport(json, threshold: 13).ViolationCount.ShouldBe(0);
     }
 
     [Test]
@@ -138,7 +160,7 @@ public class CrapGateEvaluatorTests
 
     private const string PassFixture = """
         {
-          "threshold": 13,
+          "threshold": 12,
           "methods": [
             {
               "fullName": "ClearMeasure.Bootcamp.Core.Model.WorkOrder.get_Title",
@@ -167,7 +189,7 @@ public class CrapGateEvaluatorTests
 
     private const string FailFixture = """
         {
-          "threshold": 13,
+          "threshold": 12,
           "methods": [
             {
               "fullName": "ClearMeasure.Bootcamp.Core.Import.WorkOrderBulkImportCsvParser.Parse",
