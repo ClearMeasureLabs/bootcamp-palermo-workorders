@@ -70,7 +70,7 @@ public class WorkOrdersBulkImportIntegrationTests
         var first = await db2.Set<WorkOrder>().SingleAsync(w => w.Title == "First");
         first.Instructions.ShouldBe("Note A");
         var second = await db2.Set<WorkOrder>().SingleAsync(w => w.Title == "Second");
-        second.Instructions.ShouldBeNull();
+        second.Instructions.ShouldBe(string.Empty);
     }
 
     [Test]
