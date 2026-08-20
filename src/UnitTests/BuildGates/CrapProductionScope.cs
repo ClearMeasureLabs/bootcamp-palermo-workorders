@@ -1,7 +1,7 @@
 namespace ClearMeasure.Bootcamp.UnitTests.BuildGates;
 
 /// <summary>
-/// Production-file filter for the CRAP ≤ 14 gate. Keep in sync with
+/// Production-file filter for the CRAP ≤ 13 gate. Keep in sync with
 /// <c>IsProductionFile</c> in <c>.cursor/skills/crap-score-cleanup/scripts/rollup-file-scores.csx</c>.
 /// </summary>
 public static class CrapProductionScope
