@@ -1,4 +1,9 @@
 name: Build
+# VERSION-MARKER: the "2.4." prefix below is hardcoded because GitHub Actions' run-name
+# expression context does not have access to `env` (env.MAJOR_VERSION / env.MINOR_VERSION,
+# defined below) or to any job output — run-name is evaluated before any job runs, from the
+# `github`/`inputs`/`vars`/`secrets` contexts only. If MAJOR_VERSION/MINOR_VERSION change,
+# update this literal to match.
 run-name: "2.4.${{ github.run_number }} • Build • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
 on:
   push:
@@ -12,10 +17,10 @@ jobs:
     name: Integration Build (SQL container)
     runs-on: ubuntu-latest
     concurrency:
-      # Integration Build will be cancelled when new commits arrive on the branch. 
-      # To protect the master branch, use ${{ github.ref != 'refs/heads/main' }} for cancel-in-progress:
+      # Cancelled when new commits arrive on the same non-master branch/PR; on master,
+      # cancel-in-progress is disabled below so builds queue instead of being dropped.
       group: build-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
       packages: write
@@ -33,9 +38,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       # Set version environment variable
       - name: Set Version
@@ -165,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: build-sqlite-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
       packages: read
@@ -181,9 +186,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set Version
         run: |
@@ -224,7 +229,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     concurrency:
       group: build-arm-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
       packages: read
@@ -240,9 +245,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-arm-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-arm-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set Version
         run: |
@@ -283,7 +288,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: code-analysis-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
       packages: read
@@ -296,9 +301,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore solution
         run: dotnet restore src/ChurchBulletin.sln
@@ -321,7 +326,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: qodana-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
       security-events: write
@@ -354,7 +359,7 @@ jobs:
     runs-on: windows-latest
     concurrency:
       group: build-windows-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
       packages: read
@@ -369,9 +374,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set Version
         shell: pwsh
@@ -413,10 +418,10 @@ jobs:
     if: success() 
     runs-on: ubuntu-latest
     concurrency:
-      # Stop publishing a release candidate if a newer job arrives.
-      # To protect the master branch, use ${{ github.ref != 'refs/heads/main' }} for cancel-in-progress:
+      # Cancelled when a newer job arrives on the same non-master branch/PR; on master,
+      # cancel-in-progress is disabled below so publishing queues instead of being dropped.
       group: build-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
       packages: read
@@ -655,7 +660,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: security-scan-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
       packages: read
@@ -671,9 +676,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore solution
         run: dotnet restore src/ChurchBulletin.sln
@@ -755,7 +760,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: acceptance-tests-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
       packages: read
@@ -770,9 +775,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -822,7 +827,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     concurrency:
       group: acceptance-tests-arm-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
       packages: read
@@ -838,9 +843,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-arm-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-arm-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4

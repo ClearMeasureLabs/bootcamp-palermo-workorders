@@ -1,4 +1,9 @@
 name: Deploy
+# VERSION-MARKER: the "2.4." prefix below is hardcoded for the same reason as build.yml's
+# run-name — GitHub Actions' run-name expression context has no access to `env` or job
+# outputs, only `github`/`inputs`/`vars`/`secrets`, so MAJOR_VERSION/MINOR_VERSION (defined
+# in the workflow-level `env:` block below) cannot be referenced here. If those values
+# change, update this literal to match.
 run-name: "${{ inputs.release_number && format('{0} • Deploy', inputs.release_number) || format('2.4.{0} • Deploy • {1}', github.event.workflow_run.run_number, github.event.workflow_run.head_branch) }}"
 on:
   workflow_run:
@@ -11,6 +16,11 @@ on:
         description: 'Release version to deploy (must match an existing Integration Build version, e.g. 2.4.394)'
         required: true
         type: string
+      force_skip_tdd:
+        description: 'Force deploy to UAT/Prod without TDD (bypasses acceptance tests) — use only for emergency releases.'
+        required: false
+        type: boolean
+        default: false
 env:
   MAJOR_VERSION: 2
   MINOR_VERSION: 4
@@ -205,9 +215,20 @@ jobs:
 
           $containerAppConnectionString = $appJson.connStr
           Write-Host "Container App Connection String retrieved: $(-not [string]::IsNullOrWhiteSpace($containerAppConnectionString))"
+          if (-not [string]::IsNullOrWhiteSpace($containerAppConnectionString)) {
+            Write-Host "::add-mask::$containerAppConnectionString"
+          }
           "ConnectionStrings__SqlConnectionString=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
+      # Degraded health status gating policy (see #9017, decision recorded on that issue):
+      # - TDD (this job) hard-fails on Degraded. TDD gates the Playwright acceptance-test run
+      #   immediately below and has full app configuration wired, so Degraded here means
+      #   something is actually broken, not a known/expected config gap.
+      # - UAT/Prod (below) stay non-blocking on Degraded for now because they are currently
+      #   Degraded solely due to the known, separately-tracked LlmGateway AI_OpenAI_* config
+      #   gap in #9016. Once #9016 closes that gap, tightening UAT/Prod to hard-fail on
+      #   Degraded (matching TDD) should be filed as a fast-follow.
       - name: Wait for Container App to become healthy
         shell: pwsh
         run: |
@@ -234,7 +255,8 @@ jobs:
                 Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
                 Write-Host "Timestamp: $(Get-Date -Format o)"
                 Write-Host "--- End Diagnostics ---"
-                exit 0
+                Write-Error "Container App returned Degraded health status; treating as failure (TDD gates acceptance tests and has full config, see #9017)."
+                exit 1
               }
             } catch {
               Write-Host "Attempt ${i}: $($_.Exception.Message)"
@@ -269,6 +291,7 @@ jobs:
 
 
       - name: Upload Acceptance Test Results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: acceptance-test-results-tdd
@@ -308,12 +331,13 @@ jobs:
     name: UAT
     needs: [deploy-to-tdd]
     # Run UAT when:
-    # 1. Manual workflow_dispatch with a release_number (TDD is skipped), OR
+    # 1. Manual workflow_dispatch with a release_number AND force_skip_tdd=true
+    #    (explicit emergency-bypass opt-in; TDD is skipped), OR
     # 2. TDD succeeded on master/main from a push-triggered Integration Build
     # !cancelled() is required so the if condition is evaluated even when TDD is skipped
     if: >-
       !cancelled() && (
-        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'workflow_dispatch' && (inputs.force_skip_tdd == true || inputs.force_skip_tdd == 'true')) ||
         (needs.deploy-to-tdd.result == 'success' &&
          github.event.workflow_run.event == 'push' &&
          (github.event.workflow_run.head_branch == 'master' ||
@@ -330,6 +354,17 @@ jobs:
     # Configure this in GitHub repo Settings > Environments > UAT > Required reviewers.
 
     steps:
+      - name: Validate release_number format
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          $releaseNumber = "${{ inputs.release_number }}"
+          if ($releaseNumber -notmatch '^\d+\.\d+\.\d+$') {
+            Write-Error "Invalid release_number '$releaseNumber'. Expected semver-ish format N.N.N (e.g. 2.4.394)."
+            exit 1
+          }
+          Write-Host "release_number '$releaseNumber' is valid."
+
       - name: Set Version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -393,6 +428,12 @@ jobs:
           Write-Host "Container App URL: $containerAppUrl"
           "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
+      # Degraded health status is non-blocking here (see #9017): UAT is currently Degraded
+      # solely due to the known, separately-tracked LlmGateway AI_OpenAI_* config gap in
+      # #9016, so promotion stays green, but the status is surfaced loudly via ::warning::
+      # and the job summary instead of being silently swallowed. Unreachable/non-200
+      # handling below is untouched (may be governed by #9011). Once #9016 lands, tighten
+      # this to hard-fail on Degraded, matching TDD, as a fast-follow.
       - name: Wait for Container App to become healthy
         shell: pwsh
         run: |
@@ -407,7 +448,25 @@ jobs:
           for ($i = 1; $i -le $maxAttempts; $i++) {
             try {
               $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
-              Write-Host "Attempt ${i}: HTTP $($response.StatusCode)"
+              $body = $response.Content
+              Write-Host "Attempt ${i}: HTTP $($response.StatusCode) - $body"
+              if ($response.StatusCode -eq 200 -and $body -match 'Healthy') {
+                Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
+                exit 0
+              }
+              if ($response.StatusCode -eq 200 -and $body -match 'Degraded') {
+                Write-Host "::warning::Container App returned Degraded health status after $i attempts."
+                Write-Host "--- Degraded Health Check Diagnostics ---"
+                Write-Host "Health check response body: $body"
+                Write-Host "Health check HTTP status: $($response.StatusCode)"
+                Write-Host "Health check headers:"
+                $response.Headers.GetEnumerator() | ForEach-Object { Write-Host "  $($_.Key): $($_.Value)" }
+                Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
+                Write-Host "Timestamp: $(Get-Date -Format o)"
+                Write-Host "--- End Diagnostics ---"
+                "### :warning: UAT Container App is Degraded`n`nHealth check at ``$url`` returned HTTP 200 with a Degraded status after $i attempts. This is currently expected due to the LlmGateway AI_OpenAI_* config gap tracked in #9016 and is non-blocking for promotion. See job logs for full diagnostics.`n`n- Response body: ``$body```n- Timestamp: $(Get-Date -Format o)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+                exit 0
+              }
               if ($response.StatusCode -eq 200) {
                 Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
                 exit 0
@@ -425,7 +484,14 @@ jobs:
     needs: [deploy-to-uat]
     # Do not use success() — skipped TDD on workflow_dispatch makes success() false
     # and skips Prod even when UAT succeeded.
-    if: ${{ !cancelled() && needs.deploy-to-uat.result == 'success' }}
+    # Defense-in-depth: a workflow_dispatch run can only reach Prod when force_skip_tdd
+    # was explicitly set (mirrors the deploy-to-uat gate above).
+    if: >-
+      !cancelled() && needs.deploy-to-uat.result == 'success' &&
+      (github.event_name != 'workflow_dispatch' || inputs.force_skip_tdd == true || inputs.force_skip_tdd == 'true')
+    concurrency:
+      group: deploy-to-prod
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     environment:
       name: Prod
@@ -493,6 +559,12 @@ jobs:
           Write-Host "Container App URL: $containerAppUrl"
           "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
+      # Degraded health status is non-blocking here (see #9017): Prod is currently Degraded
+      # solely due to the known, separately-tracked LlmGateway AI_OpenAI_* config gap in
+      # #9016, so promotion stays green, but the status is surfaced loudly via ::warning::
+      # and the job summary instead of being silently swallowed. Unreachable/non-200
+      # handling below is untouched (may be governed by #9011). Once #9016 lands, tighten
+      # this to hard-fail on Degraded, matching TDD, as a fast-follow.
       - name: Wait for Container App to become healthy
         shell: pwsh
         run: |
@@ -507,7 +579,25 @@ jobs:
           for ($i = 1; $i -le $maxAttempts; $i++) {
             try {
               $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
-              Write-Host "Attempt ${i}: HTTP $($response.StatusCode)"
+              $body = $response.Content
+              Write-Host "Attempt ${i}: HTTP $($response.StatusCode) - $body"
+              if ($response.StatusCode -eq 200 -and $body -match 'Healthy') {
+                Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
+                exit 0
+              }
+              if ($response.StatusCode -eq 200 -and $body -match 'Degraded') {
+                Write-Host "::warning::Container App returned Degraded health status after $i attempts."
+                Write-Host "--- Degraded Health Check Diagnostics ---"
+                Write-Host "Health check response body: $body"
+                Write-Host "Health check HTTP status: $($response.StatusCode)"
+                Write-Host "Health check headers:"
+                $response.Headers.GetEnumerator() | ForEach-Object { Write-Host "  $($_.Key): $($_.Value)" }
+                Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
+                Write-Host "Timestamp: $(Get-Date -Format o)"
+                Write-Host "--- End Diagnostics ---"
+                "### :warning: Prod Container App is Degraded`n`nHealth check at ``$url`` returned HTTP 200 with a Degraded status after $i attempts. This is currently expected due to the LlmGateway AI_OpenAI_* config gap tracked in #9016 and is non-blocking for promotion. See job logs for full diagnostics.`n`n- Response body: ``$body```n- Timestamp: $(Get-Date -Format o)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+                exit 0
+              }
               if ($response.StatusCode -eq 200) {
                 Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
                 exit 0
