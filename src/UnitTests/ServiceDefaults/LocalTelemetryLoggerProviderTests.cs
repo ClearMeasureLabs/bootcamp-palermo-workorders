@@ -17,7 +17,6 @@ public class LocalTelemetryLoggerProviderTests
         var logger = provider.CreateLogger("Test.Category");
 
         logger.ShouldNotBeNull();
-        provider.Dispose();
     }
 
     [TestCase(LogLevel.Trace, false)]
@@ -50,7 +49,7 @@ public class LocalTelemetryLoggerProviderTests
 
         logger.Log(LogLevel.Debug, new EventId(1), "debug-should-not-appear", null, static (s, _) => s);
 
-        cts.Cancel();
+        await cts.CancelAsync();
         await writer.StopAsync(CancellationToken.None);
         await start;
 
@@ -77,7 +76,7 @@ public class LocalTelemetryLoggerProviderTests
             new InvalidOperationException("boom-details"),
             static (s, _) => s);
 
-        cts.Cancel();
+        await cts.CancelAsync();
         await writer.StopAsync(CancellationToken.None);
         await start;
 
