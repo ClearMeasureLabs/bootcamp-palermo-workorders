@@ -52,13 +52,13 @@ public class BusTests
     }
 
     [Test]
-    public void Should_PublishNotification_CallsMediator()
+    public async Task Should_PublishNotification_CallsMediator()
     {
         var stubMediator = new StubMediator();
         var bus = new Bus(stubMediator);
         var notification = new TestNotification { Message = "test message" };
 
-        bus.Publish(notification);
+        await bus.Publish(notification);
 
         stubMediator.LastNotification.ShouldBe(notification);
         ((TestNotification)stubMediator.LastNotification!).Message.ShouldBe("test message");

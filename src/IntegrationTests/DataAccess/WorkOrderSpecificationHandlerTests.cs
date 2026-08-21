@@ -13,7 +13,8 @@ public class WorkOrderSpecificationHandlerTests
     [Test]
     public void ShouldHandleRemotedQuery()
     {
-        new WorkOrderSpecificationQuery();
+        var query = new WorkOrderSpecificationQuery();
+        query.ShouldNotBeNull();
     }
 
     [Test]

@@ -37,17 +37,20 @@ public class BusActivityTaggerTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = _ => true;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = SampleAllData;
         ActivitySource.AddActivityListener(listener);
 
         using var source = new ActivitySource("Test");
-        using var activity = source.StartActivity("bus");
+        using var activity = source.CreateActivity("bus", ActivityKind.Internal)?.Start();
         activity.ShouldNotBeNull();
 
-        BusActivityTagger.AddScalarPropertyTags(new TestBusMessage { Number = "WO-1" }, activity!);
+        BusActivityTagger.AddScalarPropertyTags(new TestBusMessage { Number = "WO-1" }, activity);
 
-        activity!.GetTagItem("bus.message.Number").ShouldBe("WO-1");
+        activity.GetTagItem("bus.message.Number").ShouldBe("WO-1");
     }
+
+    private static ActivitySamplingResult SampleAllData(ref ActivityCreationOptions<ActivityContext> _) =>
+        ActivitySamplingResult.AllData;
 
     private sealed class TestBusMessage
     {

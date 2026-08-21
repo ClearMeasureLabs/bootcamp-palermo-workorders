@@ -245,12 +245,7 @@ public static class ServerApplication
             var second = await secondReader.ReadToEndAsync(cancellationToken);
             return Results.Json(new { first, second });
         });
-        app.MapPost("/__test/request-body-echo", async (HttpContext httpContext) =>
-        {
-            httpContext.Response.ContentType = "text/plain; charset=utf-8";
-            using var reader = new StreamReader(httpContext.Request.Body);
-            await httpContext.Response.WriteAsync(await reader.ReadToEndAsync());
-        });
+        app.MapPost("/__test/request-body-echo", EchoRequestBodyAsync);
         app.MapGet(
                 "/api/_test/request-timeout-probe",
                 async (HttpContext httpContext) =>
@@ -259,6 +254,13 @@ public static class ServerApplication
                     return Results.Ok();
                 })
             .WithRequestTimeout(TimeSpan.FromMilliseconds(500));
+    }
+
+    private static async Task EchoRequestBodyAsync(HttpContext httpContext)
+    {
+        httpContext.Response.ContentType = "text/plain; charset=utf-8";
+        using var reader = new StreamReader(httpContext.Request.Body);
+        await httpContext.Response.WriteAsync(await reader.ReadToEndAsync());
     }
 
     private static void MapApiControllers(WebApplication app)

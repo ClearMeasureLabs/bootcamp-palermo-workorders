@@ -45,7 +45,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
         _activityListener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            Sample = SampleAllDataAndRecorded,
             ActivityStarted = OnActivityStarted,
             ActivityStopped = OnActivityStopped
         };
@@ -222,6 +222,9 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
     {
         WriteTraceEntry(activity, "STARTED");
     }
+
+    private static ActivitySamplingResult SampleAllDataAndRecorded(ref ActivityCreationOptions<ActivityContext> _) =>
+        ActivitySamplingResult.AllDataAndRecorded;
 
     private void OnActivityStopped(Activity activity)
     {

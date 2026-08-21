@@ -22,7 +22,7 @@ public class WorkOrderManageDictationTests
     [Test]
     public void ShouldRenderDictateTitleButton()
     {
-        using var ctx = CreateTestContext(out _);
+        using var ctx = CreateTestContext();
 
         var component = ctx.RenderComponent<WorkOrderManage>();
 
@@ -39,7 +39,7 @@ public class WorkOrderManageDictationTests
     [Test]
     public void ShouldRenderDictateDescriptionButton()
     {
-        using var ctx = CreateTestContext(out _);
+        using var ctx = CreateTestContext();
 
         var component = ctx.RenderComponent<WorkOrderManage>();
 
@@ -56,7 +56,7 @@ public class WorkOrderManageDictationTests
     [Test]
     public void DictateTitleButtonShouldShowListeningStateWhenClicked()
     {
-        using var ctx = CreateTestContext(out _);
+        using var ctx = CreateTestContext();
 
         var component = ctx.RenderComponent<WorkOrderManage>();
 
@@ -83,7 +83,7 @@ public class WorkOrderManageDictationTests
     [Test]
     public async Task ShouldAppendFinalTranscriptToTitleWhenDictating()
     {
-        using var ctx = CreateTestContext(out _);
+        using var ctx = CreateTestContext();
 
         var component = ctx.RenderComponent<WorkOrderManage>();
 
@@ -100,7 +100,7 @@ public class WorkOrderManageDictationTests
     [Test]
     public async Task ShouldSetDescriptionFromTranscriptWhenFieldIsEmpty()
     {
-        using var ctx = CreateTestContext(out _);
+        using var ctx = CreateTestContext();
 
         var component = ctx.RenderComponent<WorkOrderManage>();
 
@@ -117,7 +117,7 @@ public class WorkOrderManageDictationTests
     [Test]
     public async Task ShouldIgnoreInterimResultsWhenDictating()
     {
-        using var ctx = CreateTestContext(out _);
+        using var ctx = CreateTestContext();
 
         var component = ctx.RenderComponent<WorkOrderManage>();
 
@@ -146,7 +146,7 @@ public class WorkOrderManageDictationTests
     [Test]
     public async Task ShouldResetListeningStateWhenRecognitionEnds()
     {
-        using var ctx = CreateTestContext(out _);
+        using var ctx = CreateTestContext();
 
         var component = ctx.RenderComponent<WorkOrderManage>();
 
@@ -211,12 +211,12 @@ public class WorkOrderManageDictationTests
         });
     }
 
-    private static TestContext CreateTestContext(out Employee user)
+    private static TestContext CreateTestContext()
     {
         var ctx = new TestContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
 
-        user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
         user.Id = Guid.NewGuid();
         user.PreferredLanguage = "es-ES";
 

@@ -59,6 +59,8 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
         && CodesEqual(other.Code);
 
     private bool CodesEqual(string? otherCode) =>
+        // Uninitialized (null!) Code never matches by value — including vs another null Code.
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         Code is not null && string.Equals(Code, otherCode, StringComparison.Ordinal);
 
     public override bool Equals(object? obj) => Equals(obj as WorkOrderStatus);
@@ -71,7 +73,9 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
     public override int GetHashCode()
     {
         // Null-Code instances are never equal by value (see Equals); a fixed sentinel
-        // avoids NullReferenceException during materialization.
+        // avoids NullReferenceException during materialization. Parameterless ctor uses
+        // null! so NRT claims Code is never null — suppress that contract mismatch.
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         return Code is null ? 0 : Code.GetHashCode();
     }
 

@@ -13,7 +13,7 @@ public class ClientHealthCheckTests
     [Test]
     public async Task RemotableBusHealthCheck_ShouldReturnHealthy_WhenBusHealthy()
     {
-        var check = new RemotableBusHealthCheck(new StubHealthBus(HealthStatus.Healthy), NullLogger<RemotableBusHealthCheck>.Instance);
+        var check = new RemotableBusHealthCheck(new StubHealthBus(), NullLogger<RemotableBusHealthCheck>.Instance);
 
         var result = await check.CheckHealthAsync(new HealthCheckContext());
 
@@ -46,7 +46,7 @@ public class ClientHealthCheckTests
     [Test]
     public async Task ServerHealthCheck_ShouldReturnHealthy_WhenBusHealthy()
     {
-        var check = new ServerHealthCheck(new StubHealthBus(HealthStatus.Healthy), NullLogger<ServerHealthCheck>.Instance);
+        var check = new ServerHealthCheck(new StubHealthBus(), NullLogger<ServerHealthCheck>.Instance);
 
         var result = await check.CheckHealthAsync(new HealthCheckContext());
 
