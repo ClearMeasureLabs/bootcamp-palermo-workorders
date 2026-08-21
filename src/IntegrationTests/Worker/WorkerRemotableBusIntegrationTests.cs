@@ -27,7 +27,9 @@ public class WorkerRemotableBusIntegrationTests
         var result = await bus.Send(new EchoRequest("ping"));
 
         result.Value.ShouldBe("pong");
+        handler.ReceivedTypeName.ShouldNotBeNull();
         handler.ReceivedTypeName.ShouldContain(nameof(EchoRequest));
+        handler.ReceivedBody.ShouldNotBeNull();
         handler.ReceivedBody.ShouldContain("ping");
     }
 
