@@ -328,7 +328,7 @@ jobs:
     # !cancelled() is required so the if condition is evaluated even when TDD is skipped
     if: >-
       !cancelled() && (
-        (github.event_name == 'workflow_dispatch' && inputs.force_skip_tdd == true) ||
+        (github.event_name == 'workflow_dispatch' && (inputs.force_skip_tdd == true || inputs.force_skip_tdd == 'true')) ||
         (needs.deploy-to-tdd.result == 'success' &&
          github.event.workflow_run.event == 'push' &&
          (github.event.workflow_run.head_branch == 'master' ||
@@ -476,7 +476,7 @@ jobs:
     # was explicitly set (mirrors the deploy-to-uat gate above).
     if: >-
       !cancelled() && needs.deploy-to-uat.result == 'success' &&
-      (github.event_name != 'workflow_dispatch' || inputs.force_skip_tdd == true)
+      (github.event_name != 'workflow_dispatch' || inputs.force_skip_tdd == true || inputs.force_skip_tdd == 'true')
     concurrency:
       group: deploy-to-prod
       cancel-in-progress: false
