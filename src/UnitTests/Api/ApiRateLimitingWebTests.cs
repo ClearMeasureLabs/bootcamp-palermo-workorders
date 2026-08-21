@@ -161,4 +161,14 @@ public class ApiRateLimitingWebTests
         for (var i = 0; i < 5; i++)
             (await client.GetAsync("/api/time")).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Test]
+    public async Task Should_Return429_When_DetailedHealthExceedsRateLimit()
+    {
+        await using var factory = new TunableApiRateLimitWebApplicationFactory(StrictLimitSettings(2));
+        using var client = factory.CreateClient();
+        (await client.GetAsync("/api/health/detailed")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.GetAsync("/api/health/detailed")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.GetAsync("/api/health/detailed")).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
 }
