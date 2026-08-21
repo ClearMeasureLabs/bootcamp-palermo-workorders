@@ -73,6 +73,29 @@ public class DeployWorkflowContainerAppUrlTests
         yaml.Substring(tddStart, uatStart - tddStart).ShouldContain(factoryPrefixLine);
     }
 
+    [Test]
+    public void DeployWorkflow_UatAndProd_WhenVarsEmpty_EmitSkipWarningsNamingRequiredEnvironmentVariables()
+    {
+        var uatJob = ReadJob("  deploy-to-uat:", "  deploy-to-prod:");
+        var yaml = File.ReadAllText(FindRepoFile(Path.Combine(".github", "workflows", "deploy.yml")));
+        var prodStart = yaml.IndexOf("  deploy-to-prod:", StringComparison.Ordinal);
+        var prodJob = yaml.Substring(prodStart);
+
+        uatJob.ShouldContain(
+            "Skipping UAT Container App URL: CONTAINER_APP_NAME or UAT_RESOURCE_GROUP_NAME is empty.");
+        prodJob.ShouldContain(
+            "Skipping Prod Container App URL: CONTAINER_APP_NAME or PROD_RESOURCE_GROUP_NAME is empty.");
+
+        var deployEnvVarsDoc = File.ReadAllText(
+            FindRepoFile(Path.Combine(".github", "DEPLOY_ENVIRONMENT_VARIABLES.md")));
+        deployEnvVarsDoc.ShouldContain("CONTAINER_APP_NAME");
+        deployEnvVarsDoc.ShouldContain("UAT_RESOURCE_GROUP_NAME");
+        deployEnvVarsDoc.ShouldContain("PROD_RESOURCE_GROUP_NAME");
+        deployEnvVarsDoc.ShouldContain("ui-gh");
+        deployEnvVarsDoc.ShouldContain("bootcamp-uat");
+        deployEnvVarsDoc.ShouldContain("bootcamp-prod");
+    }
+
     private static string ReadJob(string jobMarker, string nextJobMarker)
     {
         var yaml = File.ReadAllText(FindRepoFile(Path.Combine(".github", "workflows", "deploy.yml")));
