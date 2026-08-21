@@ -83,7 +83,8 @@ public class StubBus() : Bus(null!)
             new Employee("hsimpson", "HOMER", "SIMPSON", "homer@springfield.com"),
             new Employee("mburns", "Montgomery", "Burns", "burns@plant.com"),
             new Employee("nflanders", "Ned", "Flanders", "ned@flanders.com"),
-            new Employee("jdoe", "mary jane", "SIMPSON", "mj@test.com")
+            new Employee("jdoe", "mary jane", "SIMPSON", "mj@test.com"),
+            new Employee("tlovejoy", "Timothy", "Lovejoy Jr", "reverend@firstchurchspringfield.org")
         };
         return Task.FromResult<TResponse>((TResponse)(object)employees);
     }

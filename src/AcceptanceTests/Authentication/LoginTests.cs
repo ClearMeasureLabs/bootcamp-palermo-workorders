@@ -102,4 +102,39 @@ public class LoginTests : AcceptanceTestBase
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
         await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
     }
+
+    [Test, Retry(2)]
+    public async Task Should_ShowLovejoyShortcut_OnLogin_WithoutSelectingMember()
+    {
+        await Page.GotoAsync("/login");
+
+        var shortcut = Page.GetByTestId(nameof(Login.Elements.LovejoyShortcut));
+        await shortcut.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000
+        });
+
+        await Expect(shortcut).ToBeVisibleAsync();
+        await Expect(shortcut).ToHaveTextAsync("Log in as Timothy Lovejoy");
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_LoginAsTlovejoy_WhenLovejoyShortcutClicked()
+    {
+        await Page.GotoAsync("/login");
+
+        var shortcut = Page.GetByTestId(nameof(Login.Elements.LovejoyShortcut));
+        await shortcut.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000
+        });
+
+        await Click(nameof(Login.Elements.LovejoyShortcut));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
+        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome tlovejoy!");
+    }
 }
