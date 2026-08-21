@@ -398,21 +398,7 @@ public abstract class AcceptanceTestBase
 
     protected async Task<WorkOrder> ClickWorkOrderNumberFromSearchPage(WorkOrder order)
     {
-        // Status commands NavigateTo /workorder/search; wait for that URL and row link
-        // before click so Blazor result render races do not time out on WorkOrderLink*.
-        if (!Page.Url.Contains("/workorder/search", StringComparison.OrdinalIgnoreCase))
-        {
-            await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
-        }
-
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        var linkTestId = nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number;
-        await Page.GetByTestId(linkTestId).WaitForAsync(new LocatorWaitForOptions
-        {
-            State = WaitForSelectorState.Visible,
-            Timeout = 60_000
-        });
-        await Click(linkTestId);
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
         await woNumberLocator.WaitForAsync();
