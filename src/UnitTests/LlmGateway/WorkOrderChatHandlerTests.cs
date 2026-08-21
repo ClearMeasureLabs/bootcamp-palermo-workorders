@@ -32,16 +32,8 @@ public class WorkOrderChatHandlerTests
         factory.LastOptions.Tools!.Count.ShouldBe(2);
     }
 
-    private sealed class StubChatClientFactory : ChatClientFactory
+    private sealed class StubChatClientFactory(IBus bus, string reply) : ChatClientFactory(bus)
     {
-        private readonly string _reply;
-
-        public StubChatClientFactory(IBus bus, string reply)
-            : base(bus)
-        {
-            _reply = reply;
-        }
-
         public int GetChatClientCallCount { get; private set; }
         public IList<ChatMessage>? LastMessages { get; private set; }
         public ChatOptions? LastOptions { get; private set; }
@@ -49,7 +41,7 @@ public class WorkOrderChatHandlerTests
         public override Task<IChatClient> GetChatClient()
         {
             GetChatClientCallCount++;
-            return Task.FromResult<IChatClient>(new StubChatClient(_reply, this));
+            return Task.FromResult<IChatClient>(new StubChatClient(reply, this));
         }
 
         public void Capture(IEnumerable<ChatMessage> messages, ChatOptions? options)
