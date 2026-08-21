@@ -11,9 +11,29 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 public static class DatabaseRebuildSteps
 {
     /// <summary>
+    /// Runs Create, Update, Everytime, then TestData for a full rebuild.
+    /// </summary>
+    public static DatabaseResult RunFullRebuild(string connectionString, string scriptDir)
+    {
+        var createUpdate = RunCreateAndUpdate(connectionString, scriptDir);
+        if (!createUpdate.Successful)
+        {
+            return createUpdate;
+        }
+
+        var everytime = RunEverytime(connectionString, scriptDir);
+        if (!everytime.Successful)
+        {
+            return everytime;
+        }
+
+        return RunTestData(connectionString, scriptDir);
+    }
+
+    /// <summary>
     /// Runs Create and Update scripts (journaled, run-once).
     /// </summary>
-    public static DatabaseResult RunCreateAndUpdate(string connectionString, string scriptDir)
+    private static DatabaseResult RunCreateAndUpdate(string connectionString, string scriptDir)
     {
         var engine = DeployChanges.To
             .SqlDatabase(connectionString)
@@ -29,7 +49,7 @@ public static class DatabaseRebuildSteps
     /// <summary>
     /// Runs Everytime scripts (run-always, not journaled).
     /// </summary>
-    public static DatabaseResult RunEverytime(string connectionString, string scriptDir)
+    private static DatabaseResult RunEverytime(string connectionString, string scriptDir)
     {
         var engine = DeployChanges.To
             .SqlDatabase(connectionString)
@@ -46,7 +66,7 @@ public static class DatabaseRebuildSteps
     /// <summary>
     /// Runs TestData scripts (journaled).
     /// </summary>
-    public static DatabaseResult RunTestData(string connectionString, string scriptDir)
+    private static DatabaseResult RunTestData(string connectionString, string scriptDir)
     {
         var engine = DeployChanges.To
             .SqlDatabase(connectionString)

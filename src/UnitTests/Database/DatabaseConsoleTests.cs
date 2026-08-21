@@ -233,4 +233,124 @@ public class DatabaseRebuildStepsTests
     {
         DatabaseResult.Success().Successful.ShouldBeTrue();
     }
+
+    [Test]
+    public void RunFullRebuild_WhenConnectionUnreachable_ReturnsFailure()
+    {
+        var scriptRoot = Path.Combine(Path.GetTempPath(), "crap-rebuild-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(scriptRoot, "Create"));
+        Directory.CreateDirectory(Path.Combine(scriptRoot, "Update"));
+        Directory.CreateDirectory(Path.Combine(scriptRoot, "Everytime"));
+        Directory.CreateDirectory(Path.Combine(scriptRoot, "TestData"));
+        try
+        {
+            var connectionString =
+                "Server=127.0.0.1,1;Database=ChurchBulletinCrapGate;User ID=sa;Password=invalid;" +
+                "TrustServerCertificate=true;Encrypt=false;Connect Timeout=1;";
+
+            var result = DatabaseRebuildSteps.RunFullRebuild(connectionString, scriptRoot);
+
+            result.Successful.ShouldBeFalse();
+            result.ErrorMessage.ShouldNotBeNullOrWhiteSpace();
+        }
+        finally
+        {
+            Directory.Delete(scriptRoot, recursive: true);
+        }
+    }
+}
+
+[TestFixture]
+public class BaselineDatabaseCommandTests
+{
+    [Test]
+    public void MarkCreateAndUpdateScripts_WhenDirectoriesMissing_ReturnsZero()
+    {
+        var scriptRoot = Path.Combine(Path.GetTempPath(), "crap-baseline-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(scriptRoot);
+        try
+        {
+            var result = BaselineDatabaseCommand.MarkCreateAndUpdateScripts(
+                "Server=localhost;Database=test;Integrated Security=true;TrustServerCertificate=true",
+                scriptRoot);
+
+            result.ShouldBe(0);
+        }
+        finally
+        {
+            Directory.Delete(scriptRoot, recursive: true);
+        }
+    }
+
+    [Test]
+    public void ExecuteInternal_WhenScriptDirsMissing_ReturnsZero()
+    {
+        var scriptRoot = Path.Combine(Path.GetTempPath(), "crap-baseline-exec-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(scriptRoot);
+        try
+        {
+            var cmd = new BaselineDatabaseCommand();
+            var method = typeof(BaselineDatabaseCommand).GetMethod(
+                "ExecuteInternal",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            method.ShouldNotBeNull();
+
+            var options = new DatabaseOptions
+            {
+                ScriptDir = scriptRoot,
+                DatabaseName = "CrapGateBaseline"
+            };
+
+            var result = (int)method.Invoke(
+                cmd,
+                [null!, options, "Server=localhost;Database=test;Integrated Security=true;TrustServerCertificate=true", CancellationToken.None])!;
+
+            result.ShouldBe(0);
+        }
+        finally
+        {
+            Directory.Delete(scriptRoot, recursive: true);
+        }
+    }
+}
+
+[TestFixture]
+public class RebuildDatabaseCommandTests
+{
+    [Test]
+    public void ExecuteInternal_WhenConnectionUnreachable_ReturnsFailureCode()
+    {
+        var scriptRoot = Path.Combine(Path.GetTempPath(), "crap-rebuild-exec-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(scriptRoot, "Create"));
+        Directory.CreateDirectory(Path.Combine(scriptRoot, "Update"));
+        Directory.CreateDirectory(Path.Combine(scriptRoot, "Everytime"));
+        Directory.CreateDirectory(Path.Combine(scriptRoot, "TestData"));
+        try
+        {
+            var cmd = new RebuildDatabaseCommand();
+            var method = typeof(RebuildDatabaseCommand).GetMethod(
+                "ExecuteInternal",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            method.ShouldNotBeNull();
+
+            var options = new DatabaseOptions
+            {
+                ScriptDir = scriptRoot,
+                DatabaseName = "CrapGateRebuild"
+            };
+            var connectionString =
+                "Server=127.0.0.1,1;Database=ChurchBulletinCrapGate;User ID=sa;Password=invalid;" +
+                "TrustServerCertificate=true;Encrypt=false;Connect Timeout=1;";
+
+            var result = (int)method.Invoke(
+                cmd,
+                [null!, options, connectionString, CancellationToken.None])!;
+
+            result.ShouldBe(-1);
+        }
+        finally
+        {
+            Directory.Delete(scriptRoot, recursive: true);
+        }
+    }
 }
