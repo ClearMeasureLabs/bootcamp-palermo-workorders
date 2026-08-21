@@ -235,7 +235,7 @@ public class WorkOrderSpecificationHandlerTests
         var specification = new WorkOrderSpecificationQuery();
         specification.MatchCreator(creator);
 
-        var orders = repository.Handle(specification).Result;
+        var orders = await repository.Handle(specification);
 
         orders.Length.ShouldBe(1);
 

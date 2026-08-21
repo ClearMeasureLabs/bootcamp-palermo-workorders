@@ -264,7 +264,7 @@ public class WorkOrderQueryHandlerTests
         var specification = new WorkOrderSearchSpecification();
         specification.MatchCreator(creator);
 
-        var orders = repository.GetWorkOrdersAsync(specification).Result;
+        var orders = await repository.GetWorkOrdersAsync(specification);
 
         orders.Length.ShouldBe(1);
 
