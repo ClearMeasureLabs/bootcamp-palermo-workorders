@@ -4,9 +4,15 @@
 
 The Deploy GitHub Action failed repeatedly on master between 05:32Z and 15:08Z on
 2026-08-21 (commits `9614eff0` through `6f577f22`), due to THREE distinct, unrelated
-root causes that overlapped in the same time window. All three are now fixed; Deploy
-has been green on every master run since 15:21Z (commit `2b66f8204a`), including
-current master HEAD.
+root causes that overlapped in the same time window. All three failure modes as
+originally observed are fixed, and the Deploy workflow itself has run green on
+every master run since 15:21Z (commit `2b66f8204a`), including current master
+HEAD. **However**, live environment verification (see "Live probe correction"
+below) found the mode-3 fix only masked the symptom rather than closing the
+underlying gap: the Container App FQDN lookup still fails with `AuthorizationFailed`
+(a service-principal RBAC issue), which silently skips the UAT/Prod health checks
+rather than blocking the job. That gap, plus a related LlmGateway config gap, is
+tracked as residual defects (#9011, #9016) and is not yet resolved.
 
 ## Historical Context (episode 21 of 21)
 
