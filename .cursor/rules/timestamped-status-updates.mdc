@@ -1,0 +1,39 @@
+---
+description: Always timestamp user-visible status updates (absolute + age)
+alwaysApply: true
+---
+
+# Timestamped status updates
+
+**Always** put a clear timestamp on user-visible progress / status updates so the reader can tell how long ago the update was recorded.
+
+## Required format
+
+Lead each status update (or status table / heartbeat reply) with both:
+
+1. **Absolute local time** — ISO-like with timezone offset, e.g. `2026-08-21 13:19:26 -05:00`
+2. **Relative age** — e.g. `(just now)` on that post
+
+Example:
+
+```
+**Status** · 2026-08-21 13:19:26 -05:00 (just now)
+
+| Item | State |
+|------|--------|
+| ... | ... |
+```
+
+## When it applies
+
+- Feature-loop / feature-loop-dispatch progress replies
+- Heartbeat / stall-check wakeups
+- “Still working?” / “?” status answers
+- Mid-session orchestration updates
+- Subagent completion follow-ups that report remaining work
+
+## Notes
+
+- Use the machine’s current clock for the absolute stamp (do not invent times).
+- Keep the rest of the update terse; the timestamp is metadata, not the message.
+- Account preference (Jeffrey Palermo): also mirrored under the user Cursor rules directory.
