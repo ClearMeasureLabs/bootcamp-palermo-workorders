@@ -62,7 +62,7 @@ public class GrpcWorkOrderIntegrationTests
         using (var scope = _factory!.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<DataContext>();
-            db.Database.EnsureCreated();
+            await db.Database.EnsureCreatedAsync();
             var creator = new Employee("grpc-creator", "G", "Rpc", "g@t.test");
             db.Add(creator);
             var order = new DomainWorkOrder
@@ -76,7 +76,7 @@ public class GrpcWorkOrderIntegrationTests
                 CreatedDate = new DateTime(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc)
             };
             db.Add(order);
-            db.SaveChanges();
+            await db.SaveChangesAsync();
         }
 
         using var channel = CreateGrpcChannel();

@@ -22,7 +22,7 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         {
             context.Add(uploader);
             context.Add(workOrder);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var bus = TestHost.GetRequiredService<IBus>();
@@ -56,7 +56,7 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         {
             context.Add(uploader);
             context.Add(workOrder);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var bus = TestHost.GetRequiredService<IBus>();
@@ -82,7 +82,7 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         {
             context.Add(creator);
             context.Add(workOrder);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var bus = TestHost.GetRequiredService<IBus>();

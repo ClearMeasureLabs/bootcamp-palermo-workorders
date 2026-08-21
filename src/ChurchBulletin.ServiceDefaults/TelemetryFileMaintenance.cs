@@ -26,14 +26,12 @@ internal static class TelemetryFileMaintenance
     {
         foreach (var writer in writers)
         {
-            if (writer is IAsyncDisposable asyncDisposable)
+            if (writer is null)
             {
-                await asyncDisposable.DisposeAsync();
+                continue;
             }
-            else if (writer != null)
-            {
-                writer.Dispose();
-            }
+
+            await writer.DisposeAsync();
         }
     }
 }

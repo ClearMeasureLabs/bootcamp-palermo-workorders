@@ -79,7 +79,7 @@ public class LocalTelemetryFileWriterTests
 
         writer.WriteMetricEntry("m1", 1.5, "ms", new Dictionary<string, object?> { ["k"] = "v" });
 
-        cts.Cancel();
+        await cts.CancelAsync();
         await writer.StopAsync(CancellationToken.None);
         await start;
     }

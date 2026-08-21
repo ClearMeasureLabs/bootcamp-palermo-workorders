@@ -144,6 +144,6 @@ public class SingleApiControllerTests
 
     private class NonRemotableObject
     {
-        public string Value { get; set; } = "";
+        public string Value { get; init; } = "";
     }
 }

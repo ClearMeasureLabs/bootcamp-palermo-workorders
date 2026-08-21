@@ -96,7 +96,7 @@ public class StateCommandListTests
             return isValid;
         }
 
-        public string TransitionVerbPresentTense { get; set; } = String.Empty;
+        public string TransitionVerbPresentTense { get; init; } = String.Empty;
 
         public bool Matches(string commandName)
         {

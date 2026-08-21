@@ -40,10 +40,10 @@ public class WorkOrdersBulkImportIntegrationTests
         using (var scope = _factory!.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<DataContext>();
-            db.Database.EnsureCreated();
+            await db.Database.EnsureCreatedAsync();
             var creator = new Employee("bulk-user", "Bulk", "User", "bulk@t.test");
             db.Add(creator);
-            db.SaveChanges();
+            await db.SaveChangesAsync();
         }
 
         var csv = "Title,Description,CreatorUsername,RoomNumber\n"
@@ -74,7 +74,7 @@ public class WorkOrdersBulkImportIntegrationTests
         using (var scope = _factory!.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<DataContext>();
-            db.Database.EnsureCreated();
+            await db.Database.EnsureCreatedAsync();
         }
 
         var csv = "Title,Description,CreatorUsername\nT,D,nobody\n";
