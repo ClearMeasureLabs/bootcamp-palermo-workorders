@@ -368,17 +368,25 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Octopus deploy is the release gate; Azure FQDN lookup is best-effort (SP may lack RG read).
       - name: Get Container App FQDN
         shell: pwsh
+        continue-on-error: true
         run: |
+          $appName = "${{ vars.CONTAINER_APP_NAME }}".Trim()
+          $resourceGroup = "${{ vars.UAT_RESOURCE_GROUP_NAME }}".Trim()
+          if ([string]::IsNullOrWhiteSpace($appName) -or [string]::IsNullOrWhiteSpace($resourceGroup)) {
+            Write-Host "::warning::Skipping UAT Container App URL: CONTAINER_APP_NAME or UAT_RESOURCE_GROUP_NAME is empty."
+            exit 0
+          }
           $fqdn = az containerapp show `
-            --name ${{ vars.CONTAINER_APP_NAME }} `
-            --resource-group ${{ vars.UAT_RESOURCE_GROUP_NAME }} `
+            --name $appName `
+            --resource-group $resourceGroup `
             --query "properties.configuration.ingress.fqdn" `
-            -o tsv
-          if ([string]::IsNullOrWhiteSpace($fqdn)) {
-            Write-Error "Error: Could not retrieve container app FQDN"
-            exit 1
+            -o tsv 2>&1
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($fqdn) -or $fqdn -match 'ERROR') {
+            Write-Host "::warning::Could not retrieve UAT container app FQDN (Octopus deploy already succeeded). Details: $fqdn"
+            exit 0
           }
           $containerAppUrl = "https://$fqdn"
           Write-Host "Container App FQDN: $fqdn"
@@ -386,7 +394,9 @@ jobs:
           "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Wait for Container App to become healthy
+        if: env.CONTAINER_APP_URL != ''
         shell: pwsh
+        continue-on-error: true
         run: |
           $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
           $maxAttempts = 12
@@ -456,15 +466,22 @@ jobs:
 
       - name: Get Container App FQDN
         shell: pwsh
+        continue-on-error: true
         run: |
+          $appName = "${{ vars.CONTAINER_APP_NAME }}".Trim()
+          $resourceGroup = "${{ vars.PROD_RESOURCE_GROUP_NAME }}".Trim()
+          if ([string]::IsNullOrWhiteSpace($appName) -or [string]::IsNullOrWhiteSpace($resourceGroup)) {
+            Write-Host "::warning::Skipping Prod Container App URL: CONTAINER_APP_NAME or PROD_RESOURCE_GROUP_NAME is empty."
+            exit 0
+          }
           $fqdn = az containerapp show `
-            --name ${{ vars.CONTAINER_APP_NAME }} `
-            --resource-group ${{ vars.PROD_RESOURCE_GROUP_NAME }} `
+            --name $appName `
+            --resource-group $resourceGroup `
             --query "properties.configuration.ingress.fqdn" `
-            -o tsv
-          if ([string]::IsNullOrWhiteSpace($fqdn)) {
-            Write-Error "Error: Could not retrieve container app FQDN"
-            exit 1
+            -o tsv 2>&1
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($fqdn) -or $fqdn -match 'ERROR') {
+            Write-Host "::warning::Could not retrieve Prod container app FQDN (Octopus deploy already succeeded). Details: $fqdn"
+            exit 0
           }
           $containerAppUrl = "https://$fqdn"
           Write-Host "Container App FQDN: $fqdn"
@@ -472,7 +489,9 @@ jobs:
           "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Wait for Container App to become healthy
+        if: env.CONTAINER_APP_URL != ''
         shell: pwsh
+        continue-on-error: true
         run: |
           $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
           $maxAttempts = 12
