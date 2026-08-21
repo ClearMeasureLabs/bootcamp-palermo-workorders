@@ -23,8 +23,7 @@ public class WorkOrderManageInstructionsFieldTests
     {
         using var ctx = new TestContext();
 
-        var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
-        creator.Id = Guid.NewGuid();
+        var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         var workOrderId = Guid.NewGuid();
 
         ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus());

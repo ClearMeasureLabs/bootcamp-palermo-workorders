@@ -23,8 +23,7 @@ public class WorkOrderManageAttachmentsTests
     {
         using var ctx = new TestContext();
 
-        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
-        uploader.Id = Guid.NewGuid();
+        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         var workOrderId = Guid.NewGuid();
 
         var attachments = new[]

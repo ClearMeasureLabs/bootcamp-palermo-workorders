@@ -60,10 +60,11 @@ public class EmployeeTests
     [Test]
     public void FullNameShouldCombineFirstAndLastName()
     {
-        var employee = new Employee();
-
-        employee.FirstName = "Bob";
-        employee.LastName = "Joe";
+        var employee = new Employee()
+        {
+            FirstName = "Bob",
+            LastName = "Joe"
+        };
 
         Assert.That(employee.GetFullName(), Is.EqualTo("Bob Joe"));
     }
@@ -197,8 +198,7 @@ public class EmployeeTests
     [Test]
     public void ShouldSetPreferredLanguage()
     {
-        var employee = new Employee();
-        employee.PreferredLanguage = "de-DE";
+        var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
 }
