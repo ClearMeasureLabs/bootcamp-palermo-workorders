@@ -12,7 +12,8 @@ public class CanConnectToLlmServerHealthCheckTests
     [Test]
     public async Task CheckHealthAsync_WhenUnavailable_ReturnsDegraded()
     {
-        var healthCheck = CreateHealthCheck(new StubChatClientFactory(available: false));
+        var healthCheck = CreateHealthCheck(new StubChatClientFactory(
+            new ChatClientAvailabilityResult(false, "missing configuration")));
 
         var result = await healthCheck.CheckHealthAsync(CreateContext(healthCheck));
 
@@ -25,7 +26,9 @@ public class CanConnectToLlmServerHealthCheckTests
     public async Task CheckHealthAsync_WhenChatSucceeds_ReturnsHealthy()
     {
         var response = new ChatResponse([new ChatMessage(ChatRole.Assistant, "OK")]);
-        var healthCheck = CreateHealthCheck(new StubChatClientFactory(available: true, response: response));
+        var healthCheck = CreateHealthCheck(new StubChatClientFactory(
+            new ChatClientAvailabilityResult(true, "configured"),
+            response));
 
         var result = await healthCheck.CheckHealthAsync(CreateContext(healthCheck));
 
@@ -35,8 +38,9 @@ public class CanConnectToLlmServerHealthCheckTests
     [Test]
     public async Task CheckHealthAsync_WhenChatEmpty_ReturnsDegraded()
     {
-        var healthCheck = CreateHealthCheck(
-            new StubChatClientFactory(available: true, response: new ChatResponse([])));
+        var healthCheck = CreateHealthCheck(new StubChatClientFactory(
+            new ChatClientAvailabilityResult(true, "configured"),
+            new ChatResponse([])));
 
         var result = await healthCheck.CheckHealthAsync(CreateContext(healthCheck));
 
@@ -46,8 +50,7 @@ public class CanConnectToLlmServerHealthCheckTests
     [Test]
     public async Task CheckHealthAsync_WhenChatThrows_ReturnsUnhealthy()
     {
-        var healthCheck = CreateHealthCheck(
-            new StubChatClientFactory(available: true, throwOnGetClient: true));
+        var healthCheck = CreateHealthCheck(new ThrowingChatClientFactory());
 
         var result = await healthCheck.CheckHealthAsync(CreateContext(healthCheck));
 
@@ -66,24 +69,23 @@ public class CanConnectToLlmServerHealthCheckTests
         };
 
     private sealed class StubChatClientFactory(
-        bool available,
-        ChatResponse? response = null,
-        bool throwOnGetClient = false) : ChatClientFactory(null!)
+        ChatClientAvailabilityResult availability,
+        ChatResponse? response = null) : ChatClientFactory(null!)
     {
         public override Task<ChatClientAvailabilityResult> IsChatClientAvailable() =>
-            Task.FromResult(available
-                ? new ChatClientAvailabilityResult(true, "configured")
-                : new ChatClientAvailabilityResult(false, "missing configuration"));
+            Task.FromResult(availability);
 
-        public override Task<IChatClient> GetChatClient()
-        {
-            if (throwOnGetClient)
-            {
-                throw new InvalidOperationException("probe-failed");
-            }
+        public override Task<IChatClient> GetChatClient() =>
+            Task.FromResult<IChatClient>(new StubHealthChatClient(response ?? new ChatResponse([])));
+    }
 
-            return Task.FromResult<IChatClient>(new StubHealthChatClient(response ?? new ChatResponse([])));
-        }
+    private sealed class ThrowingChatClientFactory() : ChatClientFactory(null!)
+    {
+        public override Task<ChatClientAvailabilityResult> IsChatClientAvailable() =>
+            Task.FromResult(new ChatClientAvailabilityResult(true, "configured"));
+
+        public override Task<IChatClient> GetChatClient() =>
+            throw new InvalidOperationException("probe-failed");
     }
 
     private sealed class StubHealthChatClient(ChatResponse response) : IChatClient
