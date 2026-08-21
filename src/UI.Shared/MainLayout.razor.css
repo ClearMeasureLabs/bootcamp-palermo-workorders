@@ -247,8 +247,16 @@
     color: #4a5568;
 }
 
-.user-section ::deep a,
-.auth-section ::deep a {
+.user-section ::deep a {
+    color: #4a5568;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+.auth-section ::deep a:not(.login-link-cta) {
     color: #4a5568;
     text-decoration: none;
     font-weight: 500;
@@ -258,7 +266,7 @@
 }
 
 .user-section ::deep a:hover,
-.auth-section ::deep a:hover {
+.auth-section ::deep a:not(.login-link-cta):hover {
     background: #e2e8f0;
     color: #2d3748;
     text-decoration: none;
@@ -547,12 +555,12 @@
 
 :global(html[data-theme="dark"]) .user-section ::deep span,
 :global(html[data-theme="dark"]) .user-section ::deep a,
-:global(html[data-theme="dark"]) .auth-section ::deep a {
+:global(html[data-theme="dark"]) .auth-section ::deep a:not(.login-link-cta) {
     color: #e2e8f0;
 }
 
 :global(html[data-theme="dark"]) .user-section ::deep a:hover,
-:global(html[data-theme="dark"]) .auth-section ::deep a:hover {
+:global(html[data-theme="dark"]) .auth-section ::deep a:not(.login-link-cta):hover {
     background: #4a5568;
     color: #f7fafc;
 }
