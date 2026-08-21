@@ -264,6 +264,19 @@ public abstract class AcceptanceTestBase
         await EvaluateClickIfVisibleAsync(locator);
     }
 
+    /// <summary>
+    /// Clicks a work-order state command submit button with a real Playwright click.
+    /// EvaluateAsync(el.click()) can race Blazor's @onclick SelectedCommand assignment against
+    /// EditForm OnValidSubmit.
+    /// </summary>
+    protected async Task ClickCommandButton(string elementTestId)
+    {
+        await TakeScreenshotAsync();
+        var locator = Page.GetByTestId(elementTestId);
+        await Expect(locator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        await locator.ClickAsync(new LocatorClickOptions { Timeout = 30_000 });
+    }
+
     private static async Task WaitForIfHiddenAsync(ILocator locator)
     {
         if (!await locator.IsVisibleAsync())
@@ -426,16 +439,43 @@ public abstract class AcceptanceTestBase
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
-        
+
         await Select(nameof(WorkOrderManage.Elements.Assignee), username);
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
+
+        var assignButtonTestId =
+            nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name;
+        await Expect(Page.GetByTestId(assignButtonTestId))
+            .ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+
+        var searchNav = Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 30_000 });
+        await ClickCommandButton(assignButtonTestId);
+        try
+        {
+            await searchNav;
+        }
+        catch (TimeoutException)
+        {
+        }
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        WorkOrder? rehyratedOrder = null;
+        for (var attempt = 0; attempt < 40; attempt++)
+        {
+            rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!))
+                ?? throw new InvalidOperationException();
+            if (rehyratedOrder.Status == WorkOrderStatus.Assigned && rehyratedOrder.Assignee != null)
+            {
+                return rehyratedOrder;
+            }
 
+            await Task.Delay(250);
+        }
+
+        rehyratedOrder!.Status.ShouldBe(WorkOrderStatus.Assigned);
+        rehyratedOrder.Assignee.ShouldNotBeNull();
         return rehyratedOrder;
     }
 
@@ -447,11 +487,34 @@ public abstract class AcceptanceTestBase
 
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name);
+        var beginButtonTestId =
+            nameof(WorkOrderManage.Elements.CommandButton) + AssignedToInProgressCommand.Name;
+        var searchNav = Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 30_000 });
+        await ClickCommandButton(beginButtonTestId);
+        try
+        {
+            await searchNav;
+        }
+        catch (TimeoutException)
+        {
+        }
+
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        WorkOrder? rehyratedOrder = null;
+        for (var attempt = 0; attempt < 40; attempt++)
+        {
+            rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!))
+                ?? throw new InvalidOperationException();
+            if (rehyratedOrder.Status == WorkOrderStatus.InProgress)
+            {
+                return rehyratedOrder;
+            }
 
+            await Task.Delay(250);
+        }
+
+        rehyratedOrder!.Status.ShouldBe(WorkOrderStatus.InProgress);
         return rehyratedOrder;
     }
 
@@ -467,10 +530,38 @@ public abstract class AcceptanceTestBase
         {
             await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions);
         }
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
+
+        var completeButtonTestId =
+            nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name;
+        // Soft timeout: ARM runners sometimes miss SPA nav; poll Bus + later search wait recover.
+        var searchNav = Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 30_000 });
+        await ClickCommandButton(completeButtonTestId);
+        try
+        {
+            await searchNav;
+        }
+        catch (TimeoutException)
+        {
+            // Submit may still be in flight; ClickWorkOrderNumberFromSearchPage waits for search later.
+        }
+
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs()); // Give time for the save operation to complete on Azure
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+
+        WorkOrder? rehyratedOrder = null;
+        for (var attempt = 0; attempt < 40; attempt++)
+        {
+            rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!))
+                ?? throw new InvalidOperationException();
+            if (rehyratedOrder.Status == WorkOrderStatus.Complete && rehyratedOrder.CompletedDate != null)
+            {
+                return rehyratedOrder;
+            }
+
+            await Task.Delay(250);
+        }
+
+        rehyratedOrder!.Status.ShouldBe(WorkOrderStatus.Complete);
+        rehyratedOrder.CompletedDate.ShouldNotBeNull();
         return rehyratedOrder;
     }
 }
