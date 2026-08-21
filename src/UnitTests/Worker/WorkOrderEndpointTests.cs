@@ -61,13 +61,8 @@ public class WorkOrderEndpointTests
         return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
     }
 
-    private sealed class HarnessEndpoint : WorkOrderEndpoint
+    private sealed class HarnessEndpoint(IConfiguration configuration) : WorkOrderEndpoint(configuration)
     {
-        public HarnessEndpoint(IConfiguration configuration)
-            : base(configuration)
-        {
-        }
-
         public EndpointOptions ExposedEndpointOptions => EndpointOptions;
         public SqlPersistenceOptions ExposedSqlOptions => SqlPersistenceOptions;
 

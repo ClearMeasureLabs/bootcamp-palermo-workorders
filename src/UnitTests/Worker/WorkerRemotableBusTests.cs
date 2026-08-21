@@ -63,7 +63,7 @@ public class WorkerRemotableBusTests
         var handler = new StubHttpMessageHandler(new TestRemotableResponse("ignored"));
         var bus = new RemotableBus(new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") }, "api/bus");
 
-        await bus.Publish(new TestRemotableEvent { Message = "hello" });
+        await bus.Publish(new TestRemotableEvent());
 
         handler.LastPath.ShouldNotBeNull();
         handler.LastPath.ShouldContain("api/bus");
@@ -79,15 +79,8 @@ public class WorkerRemotableBusTests
             .Message.ShouldContain("IRemotableEvent");
     }
 
-    private sealed class StubHttpMessageHandler : HttpMessageHandler
+    private sealed class StubHttpMessageHandler(object? responseBody) : HttpMessageHandler
     {
-        private readonly object? _responseBody;
-
-        public StubHttpMessageHandler(object? responseBody)
-        {
-            _responseBody = responseBody;
-        }
-
         public string? LastPath { get; private set; }
         public WebServiceMessage? LastPayload { get; private set; }
 
@@ -100,7 +93,7 @@ public class WorkerRemotableBusTests
                 LastPayload = await request.Content.ReadFromJsonAsync<WebServiceMessage>(cancellationToken);
             }
 
-            if (_responseBody == null)
+            if (responseBody == null)
             {
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
@@ -108,7 +101,7 @@ public class WorkerRemotableBusTests
                 };
             }
 
-            var message = new WebServiceMessage(_responseBody);
+            var message = new WebServiceMessage(responseBody);
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(JsonSerializer.Serialize(message))
@@ -122,10 +115,7 @@ public class WorkerRemotableBusTests
 
     private record NonRemotableRequest : IRequest<string>;
 
-    private sealed class TestRemotableEvent : IRemotableEvent
-    {
-        public string Message { get; set; } = string.Empty;
-    }
+    private sealed class TestRemotableEvent : IRemotableEvent;
 
     private sealed class NonRemotableNotification : INotification;
 }

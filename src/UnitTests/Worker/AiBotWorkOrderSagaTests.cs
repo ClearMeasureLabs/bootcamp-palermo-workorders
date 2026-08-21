@@ -25,11 +25,13 @@ public class AiBotWorkOrderSagaTests
     {
         var bus = new StubBus();
         bus.SetResponse<WorkOrderByNumberQuery, WorkOrder?>(new WorkOrder { Number = "WO-1", Assignee = null });
-        var saga = new AiBotWorkOrderSaga(bus, new StubChatClientFactory(bus));
-        saga.Data = new AiBotWorkOrderSagaState();
-        var stub = StubMessageHandlerContext.Create(out var context);
+        var saga = new AiBotWorkOrderSaga(bus, new StubChatClientFactory(bus))
+        {
+            Data = new AiBotWorkOrderSagaState()
+        };
+        var stub = StubMessageHandlerContext.Create();
 
-        await saga.Handle(new StartAiBotWorkOrderSagaCommand(Guid.NewGuid(), "WO-1"), context);
+        await saga.Handle(new StartAiBotWorkOrderSagaCommand(Guid.NewGuid(), "WO-1"), stub.Context);
 
         IsComplete(saga).ShouldBeTrue();
         stub.PublishedMessages.ShouldBeEmpty();
@@ -51,11 +53,13 @@ public class AiBotWorkOrderSagaTests
         bus.SetResponse<WorkOrderByNumberQuery, WorkOrder?>(workOrder);
         bus.SetResponse<AssignedToInProgressCommand, StateCommandResult>(
             new StateCommandResult(workOrder));
-        var saga = new AiBotWorkOrderSaga(bus, new StubChatClientFactory(bus));
-        saga.Data = new AiBotWorkOrderSagaState();
-        var stub = StubMessageHandlerContext.Create(out var context);
+        var saga = new AiBotWorkOrderSaga(bus, new StubChatClientFactory(bus))
+        {
+            Data = new AiBotWorkOrderSagaState()
+        };
+        var stub = StubMessageHandlerContext.Create();
 
-        await saga.Handle(new StartAiBotWorkOrderSagaCommand(sagaId, "WO-2"), context);
+        await saga.Handle(new StartAiBotWorkOrderSagaCommand(sagaId, "WO-2"), stub.Context);
 
         saga.Data.SagaId.ShouldBe(sagaId);
         saga.Data.WorkOrderNumber.ShouldBe("WO-2");
@@ -76,16 +80,18 @@ public class AiBotWorkOrderSagaTests
             Description = "Base"
         };
         var bus = new StubBus();
-        var saga = new AiBotWorkOrderSaga(bus, new StubChatClientFactory(bus, "done"));
-        saga.Data = new AiBotWorkOrderSagaState
+        var saga = new AiBotWorkOrderSaga(bus, new StubChatClientFactory(bus, "done"))
         {
-            SagaId = sagaId,
-            WorkOrderNumber = "WO-3",
-            WorkOrder = workOrder
+            Data = new AiBotWorkOrderSagaState
+            {
+                SagaId = sagaId,
+                WorkOrderNumber = "WO-3",
+                WorkOrder = workOrder
+            }
         };
-        var stub = StubMessageHandlerContext.Create(out var context);
+        var stub = StubMessageHandlerContext.Create();
 
-        await saga.Handle(new AiBotStartedWorkOrderEvent(sagaId), context);
+        await saga.Handle(new AiBotStartedWorkOrderEvent(sagaId), stub.Context);
 
         saga.Data.WorkOrder.Description.ShouldContain("AI Bot:");
         saga.Data.WorkOrder.Description.ShouldContain("done");
@@ -113,15 +119,17 @@ public class AiBotWorkOrderSagaTests
         var bus = new StubBus();
         bus.SetResponse<InProgressToCompleteCommand, StateCommandResult>(
             new StateCommandResult(completed));
-        var saga = new AiBotWorkOrderSaga(bus, new StubChatClientFactory(bus));
-        saga.Data = new AiBotWorkOrderSagaState
+        var saga = new AiBotWorkOrderSaga(bus, new StubChatClientFactory(bus))
         {
-            SagaId = sagaId,
-            WorkOrder = workOrder
+            Data = new AiBotWorkOrderSagaState
+            {
+                SagaId = sagaId,
+                WorkOrder = workOrder
+            }
         };
-        var stub = StubMessageHandlerContext.Create(out var context);
+        var stub = StubMessageHandlerContext.Create();
 
-        await saga.Handle(new AiBotUpdatedWorkerOrderEvent(sagaId), context);
+        await saga.Handle(new AiBotUpdatedWorkerOrderEvent(sagaId), stub.Context);
 
         saga.Data.WorkOrder.Status.ShouldBe(WorkOrderStatus.Complete);
         stub.PublishedMessages.Count.ShouldBe(1);
@@ -131,11 +139,13 @@ public class AiBotWorkOrderSagaTests
     [Test]
     public async Task Handle_Completed_ShouldMarkSagaComplete()
     {
-        var saga = new AiBotWorkOrderSaga(new StubBus(), new StubChatClientFactory(new StubBus()));
-        saga.Data = new AiBotWorkOrderSagaState { SagaId = Guid.NewGuid() };
-        var stub = StubMessageHandlerContext.Create(out var context);
+        var saga = new AiBotWorkOrderSaga(new StubBus(), new StubChatClientFactory(new StubBus()))
+        {
+            Data = new AiBotWorkOrderSagaState { SagaId = Guid.NewGuid() }
+        };
+        var stub = StubMessageHandlerContext.Create();
 
-        await saga.Handle(new AiBotCompletedWorkOrderEvent(saga.Data.SagaId), context);
+        await saga.Handle(new AiBotCompletedWorkOrderEvent(saga.Data.SagaId), stub.Context);
 
         IsComplete(saga).ShouldBeTrue();
         stub.PublishedMessages.ShouldBeEmpty();
@@ -144,18 +154,10 @@ public class AiBotWorkOrderSagaTests
     private static bool IsComplete(AiBotWorkOrderSaga saga) =>
         (bool)CompletedProperty.GetValue(saga)!;
 
-    private sealed class StubChatClientFactory : ChatClientFactory
+    private sealed class StubChatClientFactory(IBus bus, string reply = "ai-reply") : ChatClientFactory(bus)
     {
-        private readonly string _reply;
-
-        public StubChatClientFactory(IBus bus, string reply = "ai-reply")
-            : base(bus)
-        {
-            _reply = reply;
-        }
-
         public override Task<IChatClient> GetChatClient() =>
-            Task.FromResult<IChatClient>(new StubChatClient(_reply));
+            Task.FromResult<IChatClient>(new StubChatClient(reply));
     }
 
     private sealed class StubChatClient(string reply) : IChatClient

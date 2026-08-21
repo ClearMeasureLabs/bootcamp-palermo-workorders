@@ -21,27 +21,23 @@ public class WorkerRemotableBusIntegrationTests
     {
         var responsePayload = new EchoResponse("pong");
         using var handler = new RoundTripHandler(responsePayload);
-        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://worker-test/") };
+        using var httpClient = new HttpClient(handler);
+        httpClient.BaseAddress = new Uri("http://worker-test/");
         var bus = new RemotableBus(httpClient, "remotable");
+        var request = new EchoRequest("ping");
 
-        var result = await bus.Send(new EchoRequest("ping"));
+        var result = await bus.Send(request);
 
         result.Value.ShouldBe("pong");
+        request.Value.ShouldBe("ping");
         handler.ReceivedTypeName.ShouldNotBeNull();
         handler.ReceivedTypeName.ShouldContain(nameof(EchoRequest));
         handler.ReceivedBody.ShouldNotBeNull();
         handler.ReceivedBody.ShouldContain("ping");
     }
 
-    private sealed class RoundTripHandler : HttpMessageHandler
+    private sealed class RoundTripHandler(object responseBody) : HttpMessageHandler
     {
-        private readonly object _responseBody;
-
-        public RoundTripHandler(object responseBody)
-        {
-            _responseBody = responseBody;
-        }
-
         public string? ReceivedTypeName { get; private set; }
         public string? ReceivedBody { get; private set; }
 
@@ -52,7 +48,7 @@ public class WorkerRemotableBusIntegrationTests
             ReceivedTypeName = incoming!.TypeName;
             ReceivedBody = incoming.Body;
 
-            var outbound = new WebServiceMessage(_responseBody);
+            var outbound = new WebServiceMessage(responseBody);
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(JsonSerializer.Serialize(outbound))

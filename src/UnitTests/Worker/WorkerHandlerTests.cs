@@ -13,10 +13,10 @@ public class WorkerHandlerTests
     [Test]
     public async Task AiBotHandler_Handle_ShouldCompleteWithoutSending()
     {
-        var stub = StubMessageHandlerContext.Create(out var context);
+        var stub = StubMessageHandlerContext.Create();
         var handler = new AiBotHandler();
 
-        await handler.Handle(new WorkOrderAssignedToBotEvent("WO-1", Guid.NewGuid()), context);
+        await handler.Handle(new WorkOrderAssignedToBotEvent("WO-1", Guid.NewGuid()), stub.Context);
 
         stub.SentLocalMessages.ShouldBeEmpty();
         stub.RepliedMessages.ShouldBeEmpty();
@@ -26,10 +26,10 @@ public class WorkerHandlerTests
     [Test]
     public async Task EventHandler_Handle_ShouldSendLocalStartSagaCommand()
     {
-        var stub = StubMessageHandlerContext.Create(out var context);
+        var stub = StubMessageHandlerContext.Create();
         var handler = new global::Worker.Handlers.EventHandler();
 
-        await handler.Handle(new WorkOrderAssignedToBotEvent("WO-42", Guid.NewGuid()), context);
+        await handler.Handle(new WorkOrderAssignedToBotEvent("WO-42", Guid.NewGuid()), stub.Context);
 
         stub.SentLocalMessages.Count.ShouldBe(1);
         var command = stub.SentLocalMessages[0].ShouldBeOfType<StartAiBotWorkOrderSagaCommand>();
@@ -40,11 +40,11 @@ public class WorkerHandlerTests
     [Test]
     public async Task TracerBulletHandler_Handle_ShouldReplyWithSameCorrelationId()
     {
-        var stub = StubMessageHandlerContext.Create(out var context);
+        var stub = StubMessageHandlerContext.Create();
         var handler = new TracerBulletHandler(NullLogger<TracerBulletHandler>.Instance);
         var correlationId = Guid.NewGuid();
 
-        await handler.Handle(new TracerBulletCommand(correlationId), context);
+        await handler.Handle(new TracerBulletCommand(correlationId), stub.Context);
 
         stub.RepliedMessages.Count.ShouldBe(1);
         var reply = stub.RepliedMessages[0].ShouldBeOfType<TracerBulletReplyMessage>();

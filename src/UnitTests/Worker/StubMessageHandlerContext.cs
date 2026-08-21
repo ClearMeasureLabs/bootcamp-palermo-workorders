@@ -17,10 +17,16 @@ public class StubMessageHandlerContext : DispatchProxy
     public IReadOnlyList<object> RepliedMessages => _replied;
     public IReadOnlyList<object> PublishedMessages => _published;
 
-    public static StubMessageHandlerContext Create(out IMessageHandlerContext context)
+    public IMessageHandlerContext Context { get; private set; } = null!;
+
+    public static StubMessageHandlerContext Create()
     {
-        context = Create<IMessageHandlerContext, StubMessageHandlerContext>()!;
-        return (StubMessageHandlerContext)context;
+        var context = Create<IMessageHandlerContext, StubMessageHandlerContext>();
+        // DispatchProxy.Create returns TInterface backed by TProxy; Qodana cannot prove the relationship.
+        // ReSharper disable once SuspiciousTypeConversion.Global
+        var stub = (StubMessageHandlerContext)(object)context;
+        stub.Context = context;
+        return stub;
     }
 
     protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
