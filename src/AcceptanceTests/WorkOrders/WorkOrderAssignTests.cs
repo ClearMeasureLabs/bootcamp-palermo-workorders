@@ -14,8 +14,7 @@ public class WorkOrderAssignTests : AcceptanceTestBase
 
         var order = await CreateAndSaveNewWorkOrder();
 
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
         await woNumberLocator.WaitForAsync();
@@ -26,9 +25,7 @@ public class WorkOrderAssignTests : AcceptanceTestBase
         await Input(nameof(WorkOrderManage.Elements.Description), "newdesc");
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
 
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
