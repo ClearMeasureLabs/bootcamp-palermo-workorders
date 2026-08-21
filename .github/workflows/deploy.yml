@@ -11,6 +11,11 @@ on:
         description: 'Release version to deploy (must match an existing Integration Build version, e.g. 2.4.394)'
         required: true
         type: string
+      force_skip_tdd:
+        description: 'Force deploy to UAT/Prod without TDD (bypasses acceptance tests) — use only for emergency releases.'
+        required: false
+        type: boolean
+        default: false
 env:
   MAJOR_VERSION: 2
   MINOR_VERSION: 4
@@ -317,12 +322,13 @@ jobs:
     name: UAT
     needs: [deploy-to-tdd]
     # Run UAT when:
-    # 1. Manual workflow_dispatch with a release_number (TDD is skipped), OR
+    # 1. Manual workflow_dispatch with a release_number AND force_skip_tdd=true
+    #    (explicit emergency-bypass opt-in; TDD is skipped), OR
     # 2. TDD succeeded on master/main from a push-triggered Integration Build
     # !cancelled() is required so the if condition is evaluated even when TDD is skipped
     if: >-
       !cancelled() && (
-        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'workflow_dispatch' && inputs.force_skip_tdd == true) ||
         (needs.deploy-to-tdd.result == 'success' &&
          github.event.workflow_run.event == 'push' &&
          (github.event.workflow_run.head_branch == 'master' ||
@@ -339,6 +345,17 @@ jobs:
     # Configure this in GitHub repo Settings > Environments > UAT > Required reviewers.
 
     steps:
+      - name: Validate release_number format
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          $releaseNumber = "${{ inputs.release_number }}"
+          if ($releaseNumber -notmatch '^\d+\.\d+\.\d+$') {
+            Write-Error "Invalid release_number '$releaseNumber'. Expected semver-ish format N.N.N (e.g. 2.4.394)."
+            exit 1
+          }
+          Write-Host "release_number '$releaseNumber' is valid."
+
       - name: Set Version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -455,7 +472,14 @@ jobs:
     needs: [deploy-to-uat]
     # Do not use success() — skipped TDD on workflow_dispatch makes success() false
     # and skips Prod even when UAT succeeded.
-    if: ${{ !cancelled() && needs.deploy-to-uat.result == 'success' }}
+    # Defense-in-depth: a workflow_dispatch run can only reach Prod when force_skip_tdd
+    # was explicitly set (mirrors the deploy-to-uat gate above).
+    if: >-
+      !cancelled() && needs.deploy-to-uat.result == 'success' &&
+      (github.event_name != 'workflow_dispatch' || inputs.force_skip_tdd == true)
+    concurrency:
+      group: deploy-to-prod
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     environment:
       name: Prod
