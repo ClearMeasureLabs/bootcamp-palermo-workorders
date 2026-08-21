@@ -1,4 +1,9 @@
 name: Deploy
+# VERSION-MARKER: the "2.4." prefix below is hardcoded for the same reason as build.yml's
+# run-name — GitHub Actions' run-name expression context has no access to `env` or job
+# outputs, only `github`/`inputs`/`vars`/`secrets`, so MAJOR_VERSION/MINOR_VERSION (defined
+# per-job further down as env vars) cannot be referenced here. If those values change,
+# update this literal to match.
 run-name: "${{ inputs.release_number && format('{0} • Deploy', inputs.release_number) || format('2.4.{0} • Deploy • {1}', github.event.workflow_run.run_number, github.event.workflow_run.head_branch) }}"
 on:
   workflow_run:
@@ -210,6 +215,9 @@ jobs:
 
           $containerAppConnectionString = $appJson.connStr
           Write-Host "Container App Connection String retrieved: $(-not [string]::IsNullOrWhiteSpace($containerAppConnectionString))"
+          if (-not [string]::IsNullOrWhiteSpace($containerAppConnectionString)) {
+            Write-Host "::add-mask::$containerAppConnectionString"
+          }
           "ConnectionStrings__SqlConnectionString=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "CONTAINER_APP_CONNECTION_STRING=$containerAppConnectionString" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
@@ -283,6 +291,7 @@ jobs:
 
 
       - name: Upload Acceptance Test Results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: acceptance-test-results-tdd
