@@ -21,11 +21,13 @@ public class StubMessageHandlerContext : DispatchProxy
 
     public static StubMessageHandlerContext Create()
     {
-        var context = Create<IMessageHandlerContext, StubMessageHandlerContext>();
-        // DispatchProxy.Create returns TInterface backed by TProxy.
-        // ReSharper disable once SuspiciousTypeConversion.Global
-        var stub = (StubMessageHandlerContext)context;
-        stub.Context = context;
+        // Box the DispatchProxy result so recovering TProxy uses a normal type test,
+        // not a dual-inheritance cast (SuspiciousTypeConversion) or a cast Qodana
+        // treats as redundant when applied directly to the interface-typed local.
+        object proxy = Create<IMessageHandlerContext, StubMessageHandlerContext>();
+        var stub = proxy as StubMessageHandlerContext
+            ?? throw new InvalidOperationException("DispatchProxy did not create StubMessageHandlerContext.");
+        stub.Context = (IMessageHandlerContext)proxy;
         return stub;
     }
 
@@ -34,21 +36,21 @@ public class StubMessageHandlerContext : DispatchProxy
         ArgumentNullException.ThrowIfNull(targetMethod);
 
         var name = targetMethod.Name;
-        if ((name is "SendLocal" or "Send") && args is { Length: > 0 } && args[0] is not null)
+        if ((name is "SendLocal" or "Send") && args is { Length: > 0 } && args[0] is { } sent)
         {
-            _sentLocal.Add(args[0]!);
+            _sentLocal.Add(sent);
             return CompletedFor(targetMethod.ReturnType);
         }
 
-        if (name == "Reply" && args is { Length: > 0 } && args[0] is not null)
+        if (name == "Reply" && args is { Length: > 0 } && args[0] is { } replied)
         {
-            _replied.Add(args[0]!);
+            _replied.Add(replied);
             return CompletedFor(targetMethod.ReturnType);
         }
 
-        if (name == "Publish" && args is { Length: > 0 } && args[0] is not null)
+        if (name == "Publish" && args is { Length: > 0 } && args[0] is { } published)
         {
-            _published.Add(args[0]!);
+            _published.Add(published);
             return CompletedFor(targetMethod.ReturnType);
         }
 
