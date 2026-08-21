@@ -33,9 +33,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       # Set version environment variable
       - name: Set Version
@@ -181,9 +181,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set Version
         run: |
@@ -240,9 +240,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-arm-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-arm-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set Version
         run: |
@@ -296,9 +296,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore solution
         run: dotnet restore src/ChurchBulletin.sln
@@ -369,9 +369,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set Version
         shell: pwsh
@@ -671,9 +671,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore solution
         run: dotnet restore src/ChurchBulletin.sln
@@ -770,9 +770,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -838,9 +838,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-arm-${{ hashFiles('src/**/*.csproj') }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}-arm-
+            nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
