@@ -126,19 +126,29 @@ jobs:
             Write-Host "Fixed execute permissions on .playwright/ directory"
           }
 
+      # Include runner.arch so x64 Deploy does not restore ARM64 browsers via
+      # restore-keys (build.yml keys are playwright-Linux-ARM64-*/X64-*). Completes
+      # the incomplete arch split from 01f2f191 which only updated build.yml.
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
           restore-keys: |
-            playwright-${{ runner.os }}-
+            playwright-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Install Playwright
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
+          # Exact-key miss can still restore a prefix match. Wipe the cache dir so a
+          # stale wrong-arch headless_shell cannot skip re-download on install.
+          $playwrightCache = Join-Path $HOME ".cache/ms-playwright"
+          if (Test-Path $playwrightCache) {
+            Write-Host "Clearing Playwright cache before install (no exact cache-hit): $playwrightCache"
+            Remove-Item -Recurse -Force $playwrightCache
+          }
           $playwrightScript = Join-Path $env:TEST_DIR "playwright.ps1"
           if (Test-Path $playwrightScript) {
             Write-Host "Installing Playwright browsers from $playwrightScript"
