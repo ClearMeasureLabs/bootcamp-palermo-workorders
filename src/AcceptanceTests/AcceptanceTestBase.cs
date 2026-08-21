@@ -146,6 +146,14 @@ public abstract class AcceptanceTestBase
         if (!TestStates.TryRemove(TestId, out var state))
             return;
 
+        await SafeStopTracingAsync(state);
+        await SafeCloseAsync(() => state.Page.CloseAsync(), "Page");
+        await SafeCloseAsync(() => state.BrowserContext.CloseAsync(), "BrowserContext");
+        await SafeCloseAsync(() => state.Browser.CloseAsync(), "Browser");
+    }
+
+    private async Task SafeStopTracingAsync(TestState state)
+    {
         try
         {
             await state.BrowserContext.Tracing.StopAsync(new TracingStopOptions
@@ -158,32 +166,17 @@ public abstract class AcceptanceTestBase
         {
             TestContext.Out.WriteLine($"TearDownAsync: ignoring tracing stop failure for {TestId}: {ex.GetType().Name}: {ex.Message}");
         }
+    }
 
+    private async Task SafeCloseAsync(Func<Task> closeAsync, string resourceName)
+    {
         try
         {
-            await state.Page.CloseAsync();
+            await closeAsync();
         }
         catch (Exception ex)
         {
-            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing Page for {TestId}: {ex.GetType().Name}: {ex.Message}");
-        }
-
-        try
-        {
-            await state.BrowserContext.CloseAsync();
-        }
-        catch (Exception ex)
-        {
-            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing BrowserContext for {TestId}: {ex.GetType().Name}: {ex.Message}");
-        }
-
-        try
-        {
-            await state.Browser.CloseAsync();
-        }
-        catch (Exception ex)
-        {
-            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing Browser for {TestId}: {ex.GetType().Name}: {ex.Message}");
+            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing {resourceName} for {TestId}: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -262,14 +255,49 @@ public abstract class AcceptanceTestBase
     protected async Task Click(string elementTestId)
     {
         await TakeScreenshotAsync();
-        ILocator locator = Page.GetByTestId(elementTestId);
-        if(!await locator.IsVisibleAsync()) await locator.WaitForAsync();
-        if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
-        if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
-        if (await locator.IsVisibleAsync()) await locator.FocusAsync();
-        if (await locator.IsVisibleAsync()) await locator.BlurAsync();
-        if (await locator.IsVisibleAsync())
-            await locator.EvaluateAsync("el => el.click()");
+        var locator = Page.GetByTestId(elementTestId);
+        await EnsureVisibleAsync(locator);
+        await FocusAndBlurIfVisibleAsync(locator);
+        await EvaluateClickIfVisibleAsync(locator);
+    }
+
+    private static async Task EnsureVisibleAsync(ILocator locator)
+    {
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            if (await locator.IsVisibleAsync())
+            {
+                return;
+            }
+
+            await locator.WaitForAsync();
+        }
+    }
+
+    private static async Task FocusAndBlurIfVisibleAsync(ILocator locator)
+    {
+        if (!await locator.IsVisibleAsync())
+        {
+            return;
+        }
+
+        await locator.FocusAsync();
+        if (!await locator.IsVisibleAsync())
+        {
+            return;
+        }
+
+        await locator.BlurAsync();
+    }
+
+    private static async Task EvaluateClickIfVisibleAsync(ILocator locator)
+    {
+        if (!await locator.IsVisibleAsync())
+        {
+            return;
+        }
+
+        await locator.EvaluateAsync("el => el.click()");
     }
 
     protected async Task Input(string elementTestId, string? value)
