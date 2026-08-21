@@ -86,12 +86,24 @@ public class ChatClientFactoryAvailabilityTests
 public class LlmHealthEvaluatorTests
 {
     [Test]
-    public void ShouldReturnDegraded_WhenAvailabilityMissing()
+    public void ShouldReturnHealthyWithInfo_WhenAvailabilityMissing()
     {
         var result = LlmHealthEvaluator.FromAvailability(
             new ChatClientAvailabilityResult(false, "missing config"));
 
-        result.Status.ShouldBe(HealthStatus.Degraded);
+        result.Status.ShouldBe(HealthStatus.Healthy);
+        result.Description.ShouldNotBeNull();
+        result.Description.ShouldContain("not enabled in this environment");
+    }
+
+    [Test]
+    public void ShouldReturnHealthy_WhenAvailable()
+    {
+        var result = LlmHealthEvaluator.FromAvailability(
+            new ChatClientAvailabilityResult(true, "configured"));
+
+        result.Status.ShouldBe(HealthStatus.Healthy);
+        result.Description.ShouldBe("configured");
     }
 
     [Test]

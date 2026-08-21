@@ -26,7 +26,7 @@ public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
     }
 
     [Test]
-    public async Task CheckHealthAsync_WithMissingApiKey_ReturnsDegraded()
+    public async Task CheckHealthAsync_WithMissingApiKey_ReturnsHealthyWithInfo()
     {
         var factory = CreateFactoryWithConfig(apiKey: null, url: "https://placeholder.openai.azure.com", model: "gpt-4o");
         var logger = TestHost.GetRequiredService<ILogger<CanConnectToLlmServerHealthCheck>>();
@@ -38,13 +38,15 @@ public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
 
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Status.ShouldBe(HealthStatus.Degraded);
+        result.Status.ShouldBe(HealthStatus.Healthy);
         result.Description.ShouldNotBeNullOrEmpty();
+        result.Description.ShouldContain("AI_OpenAI_ApiKey");
+        result.Description.ShouldContain("not enabled in this environment");
         Console.WriteLine($"Status: {result.Status}, Description: {result.Description}");
     }
 
     [Test]
-    public async Task CheckHealthAsync_WithMissingUrl_ReturnsDegraded()
+    public async Task CheckHealthAsync_WithMissingUrl_ReturnsHealthyWithInfo()
     {
         var factory = CreateFactoryWithConfig(apiKey: "some-api-key", url: null, model: "gpt-4o");
         var logger = TestHost.GetRequiredService<ILogger<CanConnectToLlmServerHealthCheck>>();
@@ -56,8 +58,10 @@ public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
 
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Status.ShouldBe(HealthStatus.Degraded);
+        result.Status.ShouldBe(HealthStatus.Healthy);
         result.Description.ShouldNotBeNullOrEmpty();
+        result.Description.ShouldContain("AI_OpenAI_Url");
+        result.Description.ShouldContain("not enabled in this environment");
         Console.WriteLine($"Status: {result.Status}, Description: {result.Description}");
     }
 
