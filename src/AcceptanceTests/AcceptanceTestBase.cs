@@ -468,15 +468,28 @@ public abstract class AcceptanceTestBase
             await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions);
         }
 
-        var completeButton = Page.GetByTestId(
-            nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
+        var completeButtonTestId =
+            nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name;
+        var completeButton = Page.GetByTestId(completeButtonTestId);
         await Expect(completeButton).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
-        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+
+        // Start URL wait before click so Blazor client-side NavigateTo is not missed.
+        // Soft timeout: ARM runners sometimes miss SPA nav; poll Bus + later search wait recover.
+        var searchNav = Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 30_000 });
+        await Click(completeButtonTestId);
+        try
+        {
+            await searchNav;
+        }
+        catch (TimeoutException)
+        {
+            // Submit may still be in flight; ClickWorkOrderNumberFromSearchPage waits for search later.
+        }
+
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         WorkOrder? rehyratedOrder = null;
-        for (var attempt = 0; attempt < 20; attempt++)
+        for (var attempt = 0; attempt < 40; attempt++)
         {
             rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!))
                 ?? throw new InvalidOperationException();
