@@ -131,9 +131,11 @@ jobs:
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
+          # Include runner.arch so x64 Deploy does not restore ARM64 browsers via
+          # restore-keys (build.yml keys are playwright-Linux-ARM64-*/X64-*).
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
           restore-keys: |
-            playwright-${{ runner.os }}-
+            playwright-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Install Playwright
         if: steps.playwright-cache.outputs.cache-hit != 'true'
