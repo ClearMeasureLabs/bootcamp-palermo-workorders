@@ -52,7 +52,7 @@ public class WorkOrderManageEventBusNotifyTests
 
         var component = ctx.RenderComponent<WorkOrderManage>();
 
-        component.WaitForAssertion(() => uiBus.NotifiedWorkOrderSelectedCount.ShouldBeGreaterThan(0));
+        component.WaitForAssertion(() => uiBus.NotifiedWorkOrderSelectedCount.ShouldBe(1));
         var countAfterInitialLoad = uiBus.NotifiedWorkOrderSelectedCount;
 
         var titleInput = component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']");

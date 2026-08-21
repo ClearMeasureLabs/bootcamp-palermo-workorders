@@ -55,10 +55,10 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     {
         // Notify only when the loaded work order actually changes identity (e.g. after
         // LoadWorkOrder() completes for a new navigation), not on every render. Notifying
-        // unconditionally on every render forced WorkOrderChat (an IListener<WorkOrderSelectedEvent>)
-        // to reset its own in-progress state (_prompt, _chatMessages) and call StateHasChanged()
-        // after every keystroke-driven re-render of this page, which is unnecessary churn and can
-        // interleave with in-flight rendering of sibling components during rapid form edits.
+        // unconditionally on every render forced listeners of WorkOrderSelectedEvent (such as
+        // WorkOrderChat) to reset their in-progress chat input/history and re-render after every
+        // keystroke-driven re-render of this page, which is unnecessary churn and can interleave
+        // with in-flight rendering of sibling components during rapid form edits.
         if (_workOrder != null && !ReferenceEquals(_workOrder, _lastNotifiedWorkOrder))
         {
             _lastNotifiedWorkOrder = _workOrder;
