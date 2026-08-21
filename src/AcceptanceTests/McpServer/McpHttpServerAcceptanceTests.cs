@@ -68,7 +68,7 @@ public class McpHttpServerAcceptanceTests : AcceptanceTestBase
             {
                 ["title"] = "HTTP transport test",
                 ["description"] = "Created via HTTP MCP transport",
-                ["creatorUsername"] = creator.UserName!
+                ["creatorUsername"] = creator.UserName
             });
 
         text.ShouldContain("HTTP transport test");
@@ -85,10 +85,10 @@ public class McpHttpServerAcceptanceTests : AcceptanceTestBase
         var text = await _helper!.CallToolDirectly("get-employee",
             new Dictionary<string, object?>
             {
-                ["username"] = known.UserName!
+                ["username"] = known.UserName
             });
 
         text.ShouldNotBeNullOrEmpty();
-        text.ShouldContain(known.UserName!);
+        text.ShouldContain(known.UserName);
     }
 }

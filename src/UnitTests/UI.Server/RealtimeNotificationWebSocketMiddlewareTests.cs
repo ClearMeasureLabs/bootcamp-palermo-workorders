@@ -37,7 +37,7 @@ public class RealtimeNotificationWebSocketMiddlewareTests
         var wsClient = factory.Server.CreateWebSocketClient();
 
         using var socket = await wsClient.ConnectAsync(
-            new Uri(factory.Server.BaseAddress!, RealtimeNotificationWebSocketMiddleware.Path),
+            new Uri(factory.Server.BaseAddress, RealtimeNotificationWebSocketMiddleware.Path),
             CancellationToken.None);
 
         socket.State.ShouldBe(WebSocketState.Open);

@@ -65,14 +65,14 @@ public class LocalTelemetryFileWriterTests
         using var listener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded
+            Sample = SampleAllDataAndRecorded
         };
         ActivitySource.AddActivityListener(listener);
         using var source = new ActivitySource("telemetry-test");
-        using (var activity = source.StartActivity("sample"))
+        using (var activity = source.CreateActivity("sample", ActivityKind.Internal)?.Start())
         {
             activity.ShouldNotBeNull();
-            activity!.AddEvent(new ActivityEvent("evt"));
+            activity.AddEvent(new ActivityEvent("evt"));
             writer.WriteTraceEntry(activity, "STARTED");
             writer.WriteEventEntry(activity, activity.Events.First());
         }
@@ -90,6 +90,9 @@ public class LocalTelemetryFileWriterTests
         Directory.CreateDirectory(path);
         return path;
     }
+
+    private static ActivitySamplingResult SampleAllDataAndRecorded(ref ActivityCreationOptions<ActivityContext> _) =>
+        ActivitySamplingResult.AllDataAndRecorded;
 }
 
 [TestFixture]
@@ -100,13 +103,13 @@ public class TraceEntryTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = _ => true;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = SampleAllData;
         ActivitySource.AddActivityListener(listener);
 
         using var source = new ActivitySource("TestSource");
-        using var activity = source.StartActivity("sample");
+        using var activity = source.CreateActivity("sample", ActivityKind.Internal)?.Start();
         activity.ShouldNotBeNull();
-        activity!.SetTag("key", "value");
+        activity.SetTag("key", "value");
 
         var entry = new TraceEntry(activity, "STARTED");
 
@@ -117,6 +120,9 @@ public class TraceEntryTests
         entry.SpanId.ShouldBe(activity.SpanId.ToString());
         entry.Tags["key"].ShouldBe("value");
     }
+
+    private static ActivitySamplingResult SampleAllData(ref ActivityCreationOptions<ActivityContext> _) =>
+        ActivitySamplingResult.AllData;
 }
 
 [TestFixture]

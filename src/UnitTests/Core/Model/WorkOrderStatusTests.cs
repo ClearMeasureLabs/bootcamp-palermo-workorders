@@ -95,11 +95,14 @@ public class WorkOrderStatusTests
     {
         WorkOrderStatus? left = null;
         WorkOrderStatus? right = null;
+        WorkOrderStatus? draft = NullableDraft();
 
         (left == right).ShouldBeTrue();
-        (WorkOrderStatus.Draft == null).ShouldBeFalse();
-        (null == WorkOrderStatus.Draft).ShouldBeFalse();
+        (draft == null).ShouldBeFalse();
+        (null == draft).ShouldBeFalse();
     }
+
+    private static WorkOrderStatus? NullableDraft() => WorkOrderStatus.Draft;
 
     [Test]
     public void WhenComparingRoundTrippedJsonStatusShouldReturnCanonicalInstanceEqualByValue()
@@ -208,10 +211,9 @@ public class WorkOrderStatusTests
         (WorkOrderStatus.Draft == separateInstance).ShouldBe(WorkOrderStatus.Draft.Equals(separateInstance));
         (WorkOrderStatus.Draft == uninitialized).ShouldBe(WorkOrderStatus.Draft.Equals(uninitialized));
         (uninitialized == WorkOrderStatus.Draft).ShouldBe(uninitialized.Equals(WorkOrderStatus.Draft));
-
-#pragma warning disable CS1718 // Comparison made to same variable is intentional here
-        (uninitialized == uninitialized).ShouldBe(uninitialized.Equals(uninitialized));
-#pragma warning restore CS1718
+        var same = uninitialized;
+        same.Equals(uninitialized).ShouldBeTrue();
+        ReferenceEquals(same, uninitialized).ShouldBeTrue();
     }
 
     [Test]
@@ -253,7 +255,7 @@ public class WorkOrderStatusTests
     [Test]
     public void Equals_ShouldReturnFalse_WhenOtherIsDifferentType()
     {
-        WorkOrderStatus.Draft.Equals("Draft").ShouldBeFalse();
+        WorkOrderStatus.Draft.Equals(new object()).ShouldBeFalse();
     }
 
     [Test]

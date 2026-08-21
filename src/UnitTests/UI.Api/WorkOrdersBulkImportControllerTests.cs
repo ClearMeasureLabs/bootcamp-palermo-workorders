@@ -169,7 +169,7 @@ public class WorkOrdersBulkImportControllerTests
     public void ShouldAcceptCsv_WhenExtensionOrContentTypeMatches()
     {
         WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.csv", "application/octet-stream")).ShouldBeTrue();
-        WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.txt", "text/csv")).ShouldBeTrue();
+        WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.txt")).ShouldBeTrue();
         WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.txt", "application/vnd.ms-excel")).ShouldBeTrue();
         WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.txt", "text/plain")).ShouldBeFalse();
     }
