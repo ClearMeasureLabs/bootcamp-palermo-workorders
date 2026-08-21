@@ -1,5 +1,4 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Local
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 using ClearMeasure.Bootcamp.UI.Api;
 using Microsoft.AspNetCore.Http;
 using Shouldly;
