@@ -141,7 +141,7 @@ public class ServerFixture
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             (siteResponse, lastSiteException) =
-                await AttemptGet(client, ApplicationBaseUrl, siteResponse, lastSiteException);
+                await AttemptGet(client, ApplicationBaseUrl, siteResponse);
             if (siteResponse?.IsSuccessStatusCode == true)
             {
                 return (true, string.Empty);
@@ -171,6 +171,7 @@ public class ServerFixture
             }
             else
             {
+                lastHealthException = null;
                 healthStatus = attemptResult.Status;
                 healthBody = attemptResult.Body;
                 if (IsSuccessfulHealth(attemptResult.Status, attemptResult.Body))
@@ -188,14 +189,13 @@ public class ServerFixture
     private static async Task<(HttpResponseMessage? Response, Exception? Exception)> AttemptGet(
         HttpClient client,
         string url,
-        HttpResponseMessage? previousResponse,
-        Exception? previousException)
+        HttpResponseMessage? previousResponse)
     {
         try
         {
             var response = await client.GetAsync(url);
             TestContext.Out.WriteLine($"  GET {url} -> {(int)response.StatusCode}");
-            return (response, previousException);
+            return (response, null);
         }
         catch (Exception ex)
         {
