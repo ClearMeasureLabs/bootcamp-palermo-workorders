@@ -2,8 +2,8 @@ name: Deploy
 # VERSION-MARKER: the "2.4." prefix below is hardcoded for the same reason as build.yml's
 # run-name — GitHub Actions' run-name expression context has no access to `env` or job
 # outputs, only `github`/`inputs`/`vars`/`secrets`, so MAJOR_VERSION/MINOR_VERSION (defined
-# per-job further down as env vars) cannot be referenced here. If those values change,
-# update this literal to match.
+# in the workflow-level `env:` block below) cannot be referenced here. If those values
+# change, update this literal to match.
 run-name: "${{ inputs.release_number && format('{0} • Deploy', inputs.release_number) || format('2.4.{0} • Deploy • {1}', github.event.workflow_run.run_number, github.event.workflow_run.head_branch) }}"
 on:
   workflow_run:
