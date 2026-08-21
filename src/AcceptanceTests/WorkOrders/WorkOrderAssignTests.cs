@@ -29,7 +29,7 @@ public class WorkOrderAssignTests : AcceptanceTestBase
         var assignButtonTestId =
             nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name;
         var searchNav = Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 30_000 });
-        await Click(assignButtonTestId);
+        await ClickCommandButton(assignButtonTestId);
         try
         {
             await searchNav;

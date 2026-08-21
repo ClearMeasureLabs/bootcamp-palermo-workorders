@@ -24,7 +24,7 @@ public class WorkOrderCancelTests : AcceptanceTestBase
         var cancelButtonTestId =
             nameof(WorkOrderManage.Elements.CommandButton) + AssignedToCancelledCommand.Name;
         var searchNav = Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 30_000 });
-        await Click(cancelButtonTestId);
+        await ClickCommandButton(cancelButtonTestId);
         try
         {
             await searchNav;
