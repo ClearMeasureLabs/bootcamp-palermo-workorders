@@ -123,6 +123,10 @@ public static class TestHost
                 var conventions = new MessagingConventions();
                 endpointConfiguration.Conventions().Add(conventions);
 
+                // Worker hosts its own endpoint; scanning Worker.dll here discovers
+                // AiBotWorkOrderSaga without saga persistence and breaks TestHost startup.
+                endpointConfiguration.AssemblyScanner().ExcludeAssemblies("Worker.dll");
+
                 return endpointConfiguration;
             })
             .Build();
