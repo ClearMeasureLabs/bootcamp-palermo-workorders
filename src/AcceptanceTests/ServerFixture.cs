@@ -288,17 +288,13 @@ public class ServerFixture
         // Always pin the same connection string TestHost uses so Bus asserts and UI share one DB.
         process.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] =
             useSqlite ? ResolveSqliteConnectionString(connectionString) : connectionString;
-        if (useSqlite)
-        {
-            ApplySqliteServerEnvironment(process);
-        }
-    }
-
-    private static void ApplySqliteServerEnvironment(Process process)
-    {
+        // --no-launch-profile: set the same host env SQLite path already needed.
         process.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
         process.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] =
             "InstrumentationKey=00000000-0000-0000-0000-000000000000";
+        process.StartInfo.Environment["AI_OpenAI_ApiKey"] = "";
+        process.StartInfo.Environment["AI_OpenAI_Url"] = "";
+        process.StartInfo.Environment["AI_OpenAI_Model"] = "";
     }
 
     private static string ResolveSqliteConnectionString(string connectionString)
