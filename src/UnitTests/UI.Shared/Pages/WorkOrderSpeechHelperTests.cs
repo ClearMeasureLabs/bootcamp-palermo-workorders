@@ -26,7 +26,7 @@ public class WorkOrderSpeechHelperTests
     public void CreateUtterance_ShouldSelectMatchingVoice_ByLanguagePrefix()
     {
         var english = CreateVoice("en-US");
-        var spanish = CreateVoice("es-MX");
+        var spanish = CreateVoice("ES-MX");
 
         var utterance = WorkOrderSpeechHelper.CreateUtterance(
             "Buenos dias",

@@ -39,8 +39,9 @@ public class UserSessionTests
         };
         var authProvider = new CustomAuthenticationStateProvider();
         authProvider.Login("hsimpson");
+        var stubBus = new StubEmployeeBus(employee);
         var session = new UserSession(
-            new StubEmployeeBus(employee),
+            stubBus,
             authProvider,
             ctx.Services.GetRequiredService<NavigationManager>());
 
@@ -49,6 +50,7 @@ public class UserSessionTests
         user.ShouldNotBeNull();
         user.UserName.ShouldBe("hsimpson");
         user.FirstName.ShouldBe("Homer");
+        stubBus.LastQueriedUsername.ShouldBe("hsimpson");
     }
 
     [Test]
@@ -85,10 +87,13 @@ public class UserSessionTests
 
     private sealed class StubEmployeeBus(Employee? employee) : IBus
     {
+        public string? LastQueriedUsername { get; private set; }
+
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
         {
-            if (request is EmployeeByUserNameQuery)
+            if (request is EmployeeByUserNameQuery query)
             {
+                LastQueriedUsername = query.Username;
                 return Task.FromResult((TResponse)(object)employee!);
             }
 
