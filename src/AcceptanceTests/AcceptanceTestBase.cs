@@ -467,10 +467,29 @@ public abstract class AcceptanceTestBase
         {
             await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions);
         }
+
+        var completeButton = Page.GetByTestId(
+            nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
+        await Expect(completeButton).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs()); // Give time for the save operation to complete on Azure
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+
+        WorkOrder? rehyratedOrder = null;
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!))
+                ?? throw new InvalidOperationException();
+            if (rehyratedOrder.Status == WorkOrderStatus.Complete && rehyratedOrder.CompletedDate != null)
+            {
+                return rehyratedOrder;
+            }
+
+            await Task.Delay(250);
+        }
+
+        rehyratedOrder!.Status.ShouldBe(WorkOrderStatus.Complete);
+        rehyratedOrder.CompletedDate.ShouldNotBeNull();
         return rehyratedOrder;
     }
 }

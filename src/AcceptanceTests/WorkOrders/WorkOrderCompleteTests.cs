@@ -44,11 +44,16 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
 
+        var completedDateLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.CompletedDate));
+        await Expect(completedDateLocator).Not.ToBeEmptyAsync();
 
         var displayedDateTime = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CompletedDate));
+        displayedDateTime.ShouldNotBeNull();
 
         var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ??
                              throw new InvalidOperationException();
+        rehyratedOrder.Status.ShouldBe(WorkOrderStatus.Complete);
+        rehyratedOrder.CompletedDate.ShouldNotBeNull();
         rehyratedOrder.CompletedDate.TruncateToMinute().ShouldBe(displayedDateTime);
     }
 
