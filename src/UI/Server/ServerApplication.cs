@@ -149,6 +149,9 @@ public static class ServerApplication
 
         var conventions = new MessagingConventions();
         endpointConfiguration.Conventions().Add(conventions);
+        // Worker hosts WorkOrderProcessing; scanning Worker.dll here discovers sagas without
+        // matching persistence when LearningTransport is used (unit/integration hosts).
+        endpointConfiguration.AssemblyScanner().ExcludeAssemblies("Worker.dll");
         builder.Host.UseNServiceBus(_ => endpointConfiguration);
     }
 
