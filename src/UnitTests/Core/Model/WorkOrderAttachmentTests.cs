@@ -10,8 +10,7 @@ public class WorkOrderAttachmentTests
     public void WorkOrderAttachment_ShouldRequireFileName()
     {
         var workOrder = new WorkOrder { Id = Guid.NewGuid() };
-        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
-        uploader.Id = Guid.NewGuid();
+        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
 
         var command = new ClearMeasure.Bootcamp.Core.Model.StateCommands.AddAttachmentMetadataCommand(
             workOrder, uploader, "", "image/jpeg", 1024);
@@ -23,10 +22,8 @@ public class WorkOrderAttachmentTests
     public void WorkOrderAttachment_ShouldSetUploadedDate()
     {
         var workOrder = new WorkOrder { Id = Guid.NewGuid() };
-        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
-        uploader.Id = Guid.NewGuid();
         var expectedDate = new DateTime(2025, 1, 15, 10, 0, 0);
-
+        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         var command = new ClearMeasure.Bootcamp.Core.Model.StateCommands.AddAttachmentMetadataCommand(
             workOrder, uploader, "damage-photo.jpg", "image/jpeg", 2048);
 

@@ -10,10 +10,12 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidInWrongStatus()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Complete;
         var employee = new Employee();
-        order.Creator = employee;
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.Complete,
+            Creator = employee
+        };
 
         var command = new DraftToAssignedCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
@@ -22,11 +24,13 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidWithWrongEmployee()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
         var differentEmployee = new Employee();
-        order.Assignee = employee;
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.Draft,
+            Assignee = employee
+        };
 
         var command = new DraftToAssignedCommand(order, differentEmployee);
         Assert.That(command.IsValid(), Is.False);
@@ -35,10 +39,12 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldBeValid()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
-        order.Creator = employee;
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.Draft,
+            Creator = employee
+        };
 
         var command = new DraftToAssignedCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
@@ -47,11 +53,13 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldTransitionStateProperly()
     {
-        var order = new WorkOrder();
-        order.Number = "123";
-        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
-        order.Creator = employee;
+        var order = new WorkOrder()
+        {
+            Number = "123",
+            Status = WorkOrderStatus.Draft,
+            Creator = employee
+        };
 
         var command = new DraftToAssignedCommand(order, employee);
         command.Execute(new StateCommandContext());

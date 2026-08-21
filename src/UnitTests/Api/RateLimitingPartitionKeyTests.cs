@@ -18,8 +18,10 @@ public class RateLimitingPartitionKeyTests
     [Test]
     public void Should_UseIpPartition_When_NoApiKey()
     {
-        var ctx = new DefaultHttpContext();
-        ctx.Connection.RemoteIpAddress = System.Net.IPAddress.Parse("10.0.0.5");
+        var ctx = new DefaultHttpContext
+        {
+            Connection = { RemoteIpAddress = System.Net.IPAddress.Parse("10.0.0.5") }
+        };
         ApiRateLimitingExtensions.ResolvePartitionKey(ctx, "X-API-Key").ShouldBe("ip:10.0.0.5");
     }
 

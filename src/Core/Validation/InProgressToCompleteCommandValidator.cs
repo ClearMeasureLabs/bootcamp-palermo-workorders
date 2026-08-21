@@ -3,6 +3,4 @@ using FluentValidation;
 
 namespace ClearMeasure.Bootcamp.Core.Validation;
 
-public sealed class InProgressToCompleteCommandValidator : AbstractValidator<InProgressToCompleteCommand>
-{
-}
+public sealed class InProgressToCompleteCommandValidator : AbstractValidator<InProgressToCompleteCommand>;

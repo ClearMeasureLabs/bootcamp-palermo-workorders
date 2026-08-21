@@ -22,7 +22,7 @@ public class McpEmployeeToolTests
         var emp1 = new Employee("jdoe", "John", "Doe", "john@test.com");
         var emp2 = new Employee("jsmith", "Jane", "Smith", "jane@test.com");
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(emp1);
             context.Add(emp2);
@@ -52,7 +52,7 @@ public class McpEmployeeToolTests
     {
         var emp = new Employee("jdoe", "John", "Doe", "john@test.com");
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(emp);
             await context.SaveChangesAsync();

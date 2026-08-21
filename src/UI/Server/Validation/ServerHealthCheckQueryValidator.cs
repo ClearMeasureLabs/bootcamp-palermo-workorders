@@ -9,6 +9,4 @@ namespace ClearMeasure.Bootcamp.UI.Server.Validation;
 /// WebServiceMessage validation middleware finds a registered validator and
 /// lets the request through (an unregistered payload type is rejected with 400).
 /// </summary>
-public sealed class ServerHealthCheckQueryValidator : AbstractValidator<ServerHealthCheckQuery>
-{
-}
+public sealed class ServerHealthCheckQueryValidator : AbstractValidator<ServerHealthCheckQuery>;

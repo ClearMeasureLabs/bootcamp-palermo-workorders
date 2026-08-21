@@ -10,10 +10,12 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidInWrongStatus()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
-        order.Assignee = employee;
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.Draft,
+            Assignee = employee
+        };
 
         var command = new AssignedToInProgressCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
@@ -22,10 +24,12 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidWithWrongEmployee()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
-        order.Assignee = employee;
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.Assigned,
+            Assignee = employee
+        };
 
         var command = new AssignedToInProgressCommand(order, new Employee());
         Assert.That(command.IsValid(), Is.False);
@@ -34,10 +38,12 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldBeValid()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
-        order.Assignee = employee;
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.Assigned,
+            Assignee = employee
+        };
 
         var command = new AssignedToInProgressCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
@@ -46,11 +52,13 @@ public class AssignedToInProgressCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldTransitionStateProperly()
     {
-        var order = new WorkOrder();
-        order.Number = "123";
-        order.Status = WorkOrderStatus.Assigned;
         var employee = new Employee();
-        order.Assignee = employee;
+        var order = new WorkOrder()
+        {
+            Number = "123",
+            Status = WorkOrderStatus.Assigned,
+            Assignee = employee
+        };
 
         var command = new AssignedToInProgressCommand(order, employee);
         command.Execute(new StateCommandContext());

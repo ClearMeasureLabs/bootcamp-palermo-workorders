@@ -24,7 +24,7 @@ public class McpWorkOrderToolTests
         var order1 = new WorkOrder { Creator = employee, Number = "WO-001", Title = "Fix sink" };
         var order2 = new WorkOrder { Creator = employee, Number = "WO-002", Title = "Paint wall" };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
             context.Add(order1);
@@ -48,7 +48,7 @@ public class McpWorkOrderToolTests
         var draftOrder = new WorkOrder { Creator = employee, Number = "WO-001", Title = "Draft order", Status = WorkOrderStatus.Draft };
         var assignedOrder = new WorkOrder { Creator = employee, Number = "WO-002", Title = "Assigned order", Status = WorkOrderStatus.Assigned };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
             context.Add(draftOrder);
@@ -69,7 +69,7 @@ public class McpWorkOrderToolTests
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
         var order = new WorkOrder { Creator = employee, Number = "WO-100", Title = "Test order", Description = "A description", RoomNumber = "101" };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
             context.Add(order);
@@ -99,7 +99,7 @@ public class McpWorkOrderToolTests
     {
         var employee = new Employee("creator1", "Jane", "Smith", "jane@test.com");
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
             await context.SaveChangesAsync();
@@ -130,7 +130,7 @@ public class McpWorkOrderToolTests
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
         var order = new WorkOrder { Creator = employee, Number = "WO-300", Title = "Test" };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
             context.Add(order);
@@ -151,7 +151,7 @@ public class McpWorkOrderToolTests
         //var order = new WorkOrder { Creator = employee, Number = "WO-300", Title = "Test" };
         var assignedOrder = new WorkOrder { Creator = employee, Number = "WO-002", Title = "Assigned order", Status = WorkOrderStatus.Assigned };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
             context.Add(assignedOrder);
@@ -162,7 +162,7 @@ public class McpWorkOrderToolTests
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-002", "AssignedToCancelledCommand", "user1");
 
         WorkOrder wo;
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             wo = context.Set<WorkOrder>().Where(wo => wo.Number == "WO-002").Single();
         }
@@ -185,7 +185,7 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.InProgress
         };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
             context.Add(assignee);
@@ -197,7 +197,7 @@ public class McpWorkOrderToolTests
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-778", "InProgressToAssignedCommand", "gwillie");
 
         WorkOrder wo;
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             wo = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-778");
         }
@@ -219,7 +219,7 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.Draft
         };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
             context.Add(draftOrder);
@@ -247,7 +247,7 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.InProgress
         };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
             context.Add(assignee);
@@ -259,7 +259,7 @@ public class McpWorkOrderToolTests
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-779", "Shelve", "gwillie");
 
         WorkOrder? wo;
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             wo = await context.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-779");
         }
@@ -283,7 +283,7 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.Draft
         };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
             context.Add(assignee);
@@ -310,7 +310,7 @@ public class McpWorkOrderToolTests
         beginResult.ShouldContain("In Progress");
 
         WorkOrder? wo;
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             wo = await context.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-402");
         }
@@ -334,7 +334,7 @@ public class McpWorkOrderToolTests
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
         var order = new WorkOrder { Creator = employee, Number = "WO-501", Title = "Test", Status = WorkOrderStatus.Assigned };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
             context.Add(order);
@@ -360,7 +360,7 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.Draft
         };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
             context.Add(draftOrder);
@@ -384,7 +384,7 @@ public class McpWorkOrderToolTests
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
         var draftOrder = new WorkOrder { Creator = employee, Number = "WO-504", Title = "Draft", Status = WorkOrderStatus.Draft };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
             context.Add(draftOrder);
@@ -413,7 +413,7 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.InProgress
         };
 
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
             context.Add(assignee);
@@ -431,7 +431,7 @@ public class McpWorkOrderToolTests
         result.ShouldContain("Complete");
 
         WorkOrder? wo;
-        using (var context = TestHost.GetRequiredService<DbContext>())
+        await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             wo = await context.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-505");
         }
