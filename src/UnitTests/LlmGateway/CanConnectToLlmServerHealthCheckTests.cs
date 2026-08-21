@@ -10,16 +10,17 @@ namespace ClearMeasure.Bootcamp.UnitTests.LlmGateway;
 public class CanConnectToLlmServerHealthCheckTests
 {
     [Test]
-    public async Task CheckHealthAsync_WhenUnavailable_ReturnsDegraded()
+    public async Task CheckHealthAsync_WhenNotConfigured_ReturnsHealthyWithInfo()
     {
         var healthCheck = CreateHealthCheck(new StubChatClientFactory(
             new ChatClientAvailabilityResult(false, "missing configuration")));
 
         var result = await healthCheck.CheckHealthAsync(CreateContext(healthCheck));
 
-        result.Status.ShouldBe(HealthStatus.Degraded);
+        result.Status.ShouldBe(HealthStatus.Healthy);
         result.Description.ShouldNotBeNull();
         result.Description.ShouldContain("missing");
+        result.Description.ShouldContain("not enabled in this environment");
     }
 
     [Test]
