@@ -4,6 +4,10 @@ See `CLAUDE.md` for full project overview, solution structure, architecture, cod
 
 ## Cursor Cloud specific instructions
 
+### Status updates (all sessions)
+
+Arm a **recurring 5-minute** `subscribe_timer` (`delaySeconds: 300`, not `once`) and post a short status update on every fire — including while waiting on subagents or CI. See `.cursor/rules/five-minute-status-updates.mdc`.
+
 ### System Dependencies
 
 - **.NET SDK 10.0.100** (prerelease) - installed via `dotnet-install.sh`
