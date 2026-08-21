@@ -398,28 +398,7 @@ public abstract class AcceptanceTestBase
 
     protected async Task<WorkOrder> ClickWorkOrderNumberFromSearchPage(WorkOrder order)
     {
-        var linkTestId = nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number;
-        var linkLocator = Page.GetByTestId(linkTestId);
-        // Search grid can lag after create/status transitions; wait + reload before Click.
-        for (var attempt = 0; attempt < 5; attempt++)
-        {
-            try
-            {
-                await linkLocator.WaitForAsync(new LocatorWaitForOptions
-                {
-                    State = WaitForSelectorState.Visible,
-                    Timeout = 15_000
-                });
-                break;
-            }
-            catch (TimeoutException) when (attempt < 4)
-            {
-                await Page.ReloadAsync();
-                await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-            }
-        }
-
-        await Click(linkTestId);
+        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
         await woNumberLocator.WaitForAsync();
