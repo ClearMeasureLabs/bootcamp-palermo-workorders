@@ -274,9 +274,9 @@ public class ServerFixture
     private static string BuildServerArguments(bool useSqlite)
     {
         var config = BuildConfiguration;
-        return useSqlite
-            ? $"run --no-build --configuration {config} --no-launch-profile --urls={ApplicationBaseUrl}"
-            : $"run --no-build --configuration {config} --urls={ApplicationBaseUrl}";
+        // Always --no-launch-profile so launchSettings LocalDB does not override the
+        // ConnectionStrings__SqlConnectionString pinned in ConfigureServerEnvironment.
+        return $"run --no-build --configuration {config} --no-launch-profile --urls={ApplicationBaseUrl}";
     }
 
     private static void ConfigureServerEnvironment(Process process, bool useSqlite, string connectionString)
@@ -285,19 +285,20 @@ public class ServerFixture
         process.StartInfo.Environment["DISABLE_AUTO_REFORMAT_AGENT"] = "true";
         process.StartInfo.Environment["ApiKeyAuthentication__Enabled"] = "false";
         process.StartInfo.Environment["ApiKeyAuthentication__ValidationKey"] = "";
+        // Always pin the same connection string TestHost uses so Bus asserts and UI share one DB.
+        process.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] =
+            useSqlite ? ResolveSqliteConnectionString(connectionString) : connectionString;
         if (useSqlite)
         {
-            ApplySqliteServerEnvironment(process, connectionString);
+            ApplySqliteServerEnvironment(process);
         }
     }
 
-    private static void ApplySqliteServerEnvironment(Process process, string connectionString)
+    private static void ApplySqliteServerEnvironment(Process process)
     {
         process.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
         process.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] =
             "InstrumentationKey=00000000-0000-0000-0000-000000000000";
-        process.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] =
-            ResolveSqliteConnectionString(connectionString);
     }
 
     private static string ResolveSqliteConnectionString(string connectionString)

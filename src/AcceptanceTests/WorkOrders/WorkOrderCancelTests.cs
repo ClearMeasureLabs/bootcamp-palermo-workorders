@@ -49,11 +49,16 @@ public class WorkOrderCancelTests : AcceptanceTestBase
         persisted!.Status.ShouldBe(WorkOrderStatus.Cancelled);
 
         await ClickWorkOrderNumberFromSearchPage(order);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)))
+            .ToHaveTextAsync(order.Number!);
+        await Page.ReloadAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)))
+            .ToHaveTextAsync(order.Number!);
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Cancelled.FriendlyName);
 
-        // Title/description can lose a bind race under ARM load; cancelled status is the contract.
         var titleValue = await Page.GetByTestId(nameof(WorkOrderManage.Elements.Title)).InputValueAsync();
         titleValue.ShouldNotBeNullOrWhiteSpace();
         var descriptionValue = await Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)).InputValueAsync();

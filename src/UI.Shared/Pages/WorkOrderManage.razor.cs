@@ -41,8 +41,6 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        _editContext = new EditContext(Model);
-
         if (SpeechRecognition != null)
         {
             SpeechRecognition.Result += OnSpeechResult;
