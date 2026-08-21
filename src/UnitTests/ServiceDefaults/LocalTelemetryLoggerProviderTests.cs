@@ -8,10 +8,10 @@ namespace ClearMeasure.Bootcamp.UnitTests.ServiceDefaults;
 public class LocalTelemetryLoggerProviderTests
 {
     [Test]
-    public void CreateLogger_ShouldReturnLogger_AndDisposeIsSafe()
+    public async Task CreateLogger_ShouldReturnLogger_AndDisposeIsSafe()
     {
         var directory = CreateTempDirectory();
-        using var writer = new LocalTelemetryFileWriter(new StubConfiguration(directory));
+        await using var writer = new LocalTelemetryFileWriter(new StubConfiguration(directory));
         using var provider = new LocalTelemetryLoggerProvider(writer);
 
         var logger = provider.CreateLogger("Test.Category");
@@ -25,10 +25,10 @@ public class LocalTelemetryLoggerProviderTests
     [TestCase(LogLevel.Warning, true)]
     [TestCase(LogLevel.Error, true)]
     [TestCase(LogLevel.Critical, true)]
-    public void IsEnabled_ShouldFilterBelowInformation(LogLevel level, bool expected)
+    public async Task IsEnabled_ShouldFilterBelowInformation(LogLevel level, bool expected)
     {
         var directory = CreateTempDirectory();
-        using var writer = new LocalTelemetryFileWriter(new StubConfiguration(directory));
+        await using var writer = new LocalTelemetryFileWriter(new StubConfiguration(directory));
         using var provider = new LocalTelemetryLoggerProvider(writer);
         var logger = provider.CreateLogger("Filter.Category");
 
@@ -87,10 +87,10 @@ public class LocalTelemetryLoggerProviderTests
     }
 
     [Test]
-    public void BeginScope_ShouldPushState_WhenScopeProviderSet()
+    public async Task BeginScope_ShouldPushState_WhenScopeProviderSet()
     {
         var directory = CreateTempDirectory();
-        using var writer = new LocalTelemetryFileWriter(new StubConfiguration(directory));
+        await using var writer = new LocalTelemetryFileWriter(new StubConfiguration(directory));
         using var provider = new LocalTelemetryLoggerProvider(writer);
         var scopeProvider = new StubExternalScopeProvider();
         provider.SetScopeProvider(scopeProvider);
