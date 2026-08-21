@@ -297,13 +297,29 @@ public abstract class AcceptanceTestBase
 
     private static async Task EvaluateClickIfVisibleAsync(ILocator locator)
     {
-        if (!await locator.IsVisibleAsync())
+        // Previously this silently no-op'd (skipped the click entirely, with no error) if the
+        // element happened to be momentarily not-visible at the instant of the check -- e.g. mid
+        // re-render while Blazor is still processing a preceding field's change/blur callback.
+        // That silent skip meant a state-command submit click could simply never fire, which then
+        // hung the caller waiting up to 90s for a navigation that was never going to happen. Wait
+        // (with a bounded timeout) for the element to actually become visible instead of bailing
+        // out on a single transient check.
+        try
+        {
+            await locator.WaitForAsync(new LocatorWaitForOptions
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 10_000
+            });
+        }
+        catch (TimeoutException)
         {
             return;
         }
 
         await locator.EvaluateAsync("el => el.click()");
     }
+
 
     protected async Task Input(string elementTestId, string? value)
     {
