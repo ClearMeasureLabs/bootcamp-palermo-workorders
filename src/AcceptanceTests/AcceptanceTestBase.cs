@@ -352,7 +352,7 @@ public abstract class AcceptanceTestBase
         // LevelOfParallelism(4) the Blazor WASM message loop is CPU-starved enough that a
         // previous field's change/blur callback can still be queued when the next field is
         // touched, letting a later re-render silently overwrite an already-typed value with
-        // stale model state (root cause of #9022). 300ms gives real headroom under that
+        // stale model state (root cause of #9022). 750ms gives real headroom under that
         // contention while remaining negligible for a normal local run.
         return 750;
     }
