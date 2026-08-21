@@ -24,37 +24,7 @@ public static class CoreCoberturaPresence
         }
 
         var document = XDocument.Parse(coberturaXml);
-
-        foreach (var package in document.Descendants("package"))
-        {
-            var packageName = package.Attribute("name")?.Value;
-            if (!string.Equals(packageName, CorePackageName, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (HasAnyLineHit(package))
-            {
-                return true;
-            }
-        }
-
-        foreach (var classElement in document.Descendants("class"))
-        {
-            var filename = classElement.Attribute("filename")?.Value;
-            var className = classElement.Attribute("name")?.Value;
-            if (!IsProductionCoreClass(filename, className))
-            {
-                continue;
-            }
-
-            if (HasAnyLineHit(classElement))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return HasHitsInCorePackage(document) || HasHitsInProductionCoreClasses(document);
     }
 
     /// <summary>
@@ -68,18 +38,13 @@ public static class CoreCoberturaPresence
             return false;
         }
 
-        var normalized = filename.Replace('\\', '/');
-        var lower = normalized.ToLowerInvariant();
-        if (lower.Contains("/unittests/", StringComparison.Ordinal)
-            || lower.Contains("/integrationtests/", StringComparison.Ordinal)
-            || lower.Contains("/acceptancetests/", StringComparison.Ordinal))
+        var lower = filename.Replace('\\', '/').ToLowerInvariant();
+        if (IsExcludedTestFilename(lower))
         {
             return false;
         }
 
-        return lower.Contains("/src/core/", StringComparison.Ordinal)
-               || lower.StartsWith("src/core/", StringComparison.Ordinal)
-               || lower.StartsWith("core/", StringComparison.Ordinal);
+        return IsCorePath(lower);
     }
 
     /// <summary>
@@ -101,16 +66,85 @@ public static class CoreCoberturaPresence
                && !className.StartsWith("ClearMeasure.Bootcamp.UnitTests.", StringComparison.Ordinal);
     }
 
-    private static bool HasAnyLineHit(XElement scope)
+    private static bool HasHitsInCorePackage(XDocument document)
     {
-        foreach (var line in scope.Descendants("line"))
+        foreach (var package in document.Descendants("package"))
         {
-            if (int.TryParse(line.Attribute("hits")?.Value, out var hits) && hits > 0)
+            if (PackageElementHasCoreHits(package))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static bool PackageElementHasCoreHits(XElement package)
+    {
+        var packageName = GetAttributeValue(package, "name");
+        if (!string.Equals(packageName, CorePackageName, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        return HasAnyLineHit(package);
+    }
+
+    private static bool HasHitsInProductionCoreClasses(XDocument document)
+    {
+        foreach (var classElement in document.Descendants("class"))
+        {
+            if (ClassElementHasProductionHits(classElement))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ClassElementHasProductionHits(XElement classElement)
+    {
+        var filename = GetAttributeValue(classElement, "filename");
+        var className = GetAttributeValue(classElement, "name");
+        return IsProductionCoreClass(filename, className) && HasAnyLineHit(classElement);
+    }
+
+    private static string? GetAttributeValue(XElement element, string name)
+    {
+        return element.Attribute(name)?.Value;
+    }
+
+    private static bool IsExcludedTestFilename(string lower)
+    {
+        return lower.Contains("/unittests/", StringComparison.Ordinal)
+               || lower.Contains("/integrationtests/", StringComparison.Ordinal)
+               || lower.Contains("/acceptancetests/", StringComparison.Ordinal);
+    }
+
+    private static bool IsCorePath(string lower)
+    {
+        return lower.Contains("/src/core/", StringComparison.Ordinal)
+               || lower.StartsWith("src/core/", StringComparison.Ordinal)
+               || lower.StartsWith("core/", StringComparison.Ordinal);
+    }
+
+    private static bool HasAnyLineHit(XElement scope)
+    {
+        foreach (var line in scope.Descendants("line"))
+        {
+            if (LineHasHits(line))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool LineHasHits(XElement line)
+    {
+        var hitsText = GetAttributeValue(line, "hits");
+        return int.TryParse(hitsText, out var hits) && hits > 0;
     }
 }
