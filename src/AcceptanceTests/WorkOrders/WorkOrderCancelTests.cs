@@ -48,7 +48,7 @@ public class WorkOrderCancelTests : AcceptanceTestBase
 
         persisted!.Status.ShouldBe(WorkOrderStatus.Cancelled);
 
-        order = await ClickWorkOrderNumberFromSearchPage(order);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Cancelled.FriendlyName);
