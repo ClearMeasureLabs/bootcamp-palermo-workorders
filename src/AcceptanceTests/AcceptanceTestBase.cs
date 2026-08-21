@@ -400,11 +400,23 @@ public abstract class AcceptanceTestBase
     {
         var linkTestId = nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number;
         var linkLocator = Page.GetByTestId(linkTestId);
-        // After status transitions the search grid can lag; reload once if the row link is missing.
-        if (!await linkLocator.IsVisibleAsync())
+        // Search grid can lag after create/status transitions; wait + reload before Click.
+        for (var attempt = 0; attempt < 5; attempt++)
         {
-            await Page.ReloadAsync();
-            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            try
+            {
+                await linkLocator.WaitForAsync(new LocatorWaitForOptions
+                {
+                    State = WaitForSelectorState.Visible,
+                    Timeout = 15_000
+                });
+                break;
+            }
+            catch (TimeoutException) when (attempt < 4)
+            {
+                await Page.ReloadAsync();
+                await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            }
         }
 
         await Click(linkTestId);
