@@ -95,7 +95,7 @@ public class AutoReformatAgentServiceTests
         using var cts = new CancellationTokenSource();
         var start = service.StartAsync(cts.Token);
         await Task.Delay(50);
-        cts.Cancel();
+        await cts.CancelAsync();
         await service.StopAsync(CancellationToken.None);
         await start;
     }

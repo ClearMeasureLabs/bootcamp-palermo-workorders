@@ -44,7 +44,7 @@ public static class Extensions
     /// <summary>
     /// Configures OpenTelemetry for the application, including logging, metrics, and tracing.
     /// </summary>
-    private static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    private static void ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.Logging.AddOpenTelemetry(logging =>
         {
@@ -90,8 +90,6 @@ public static class Extensions
             builder.Services.AddHostedService(sp => sp.GetRequiredService<LocalTelemetryFileWriter>());
             builder.Services.AddSingleton<ILoggerProvider, LocalTelemetryLoggerProvider>();
         }
-
-        return builder;
     }
 
     /// <summary>
@@ -99,7 +97,7 @@ public static class Extensions
     /// If the OTEL_EXPORTER_OTLP_ENDPOINT environment variable is set, the OTLP exporter will be used.
     /// If ApplicationInsights:ConnectionString is configured, the Azure Monitor exporter will be used.
     /// </summary>
-    private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder, OpenTelemetryBuilder otelBuilder) where TBuilder : IHostApplicationBuilder
+    private static void AddOpenTelemetryExporters<TBuilder>(this TBuilder builder, OpenTelemetryBuilder otelBuilder) where TBuilder : IHostApplicationBuilder
     {
         var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
 
@@ -114,20 +112,16 @@ public static class Extensions
         {
             otelBuilder.UseAzureMonitor();
         }
-
-        return builder;
     }
 
     /// <summary>
     /// Adds default health checks to the service.
     /// </summary>
-    private static TBuilder AddDefaultHealthChecks<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    private static void AddDefaultHealthChecks<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.Services
             .AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
-
-        return builder;
     }
 
     /// <summary>

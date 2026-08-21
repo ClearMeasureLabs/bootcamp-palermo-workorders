@@ -24,7 +24,7 @@ public class EmployeeQueryHandlerTests
             context.Add(one);
             context.Add(two);
             context.Add(three);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
@@ -46,7 +46,7 @@ public class EmployeeQueryHandlerTests
             context.Add(two);
             context.Add(three);
             context.Add(one);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
@@ -69,7 +69,7 @@ public class EmployeeQueryHandlerTests
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
@@ -88,7 +88,7 @@ public class EmployeeQueryHandlerTests
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(employee);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
@@ -109,7 +109,7 @@ public class EmployeeQueryHandlerTests
         {
             context.Add(one);
             context.Add(two);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
@@ -132,7 +132,7 @@ public class EmployeeQueryHandlerTests
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(homer);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
         var bus = TestHost.GetRequiredService<IBus>();

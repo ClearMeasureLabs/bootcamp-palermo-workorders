@@ -201,11 +201,11 @@ public class RemotableBusTests
 
     private class TestNotification : INotification
     {
-        public string Message { get; set; } = string.Empty;
+        public string Message { get; init; } = string.Empty;
     }
 
     private class TestRemotableEvent : IRemotableEvent
     {
-        public string Message { get; set; } = string.Empty;
+        public string Message { get; init; } = string.Empty;
     }
 }

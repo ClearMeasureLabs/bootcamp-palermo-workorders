@@ -192,16 +192,16 @@ public class WorkOrdersBulkImportControllerTests
 
     private sealed class StubNumberGenerator : IWorkOrderNumberGenerator
     {
-        public string Next { get; set; } = "N1";
+        public string Next { get; init; } = "N1";
 
         public string GenerateNumber() => Next;
     }
 
     private sealed class StubBus : IBus
     {
-        public Employee? Employee { get; set; }
+        public Employee? Employee { get; init; }
 
-        public Exception? SaveDraftThrows { get; set; }
+        public Exception? SaveDraftThrows { get; init; }
 
         public int SaveDraftCalls { get; private set; }
 

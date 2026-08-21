@@ -131,7 +131,7 @@ public class BusTests
 
     private class TestNotification : INotification
     {
-        public string Message { get; set; } = string.Empty;
+        public string Message { get; init; } = string.Empty;
     }
 
     private record TestQuery : IRequest<string>;
