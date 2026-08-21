@@ -1,5 +1,3 @@
-using System.Net.WebSockets;
-
 namespace ClearMeasure.Bootcamp.UI.Server.Notifications;
 
 /// <summary>
@@ -7,8 +5,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Notifications;
 /// </summary>
 public sealed class RealtimeNotificationWebSocketMiddleware(
     RequestDelegate next,
-    IRealtimeNotificationHub hub,
-    ILogger<RealtimeNotificationWebSocketMiddleware> logger)
+    IRealtimeNotificationHub hub)
 {
     public const string Path = "/ws/notifications";
 
@@ -40,10 +37,7 @@ public sealed class RealtimeNotificationWebSocketMiddleware(
         }
         catch (OperationCanceledException)
         {
-        }
-        catch (WebSocketException ex)
-        {
-            logger.LogDebug(ex, "WebSocket connection ended.");
+            // Client disconnected or request aborted.
         }
         finally
         {
