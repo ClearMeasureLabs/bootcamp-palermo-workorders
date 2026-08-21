@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared;
 using MediatR;
+using Microsoft.Extensions.AI;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.LlmGateway;
@@ -34,6 +35,16 @@ public class TranslationServiceTests
     }
 
     [Test]
+    public async Task ShouldReturnOriginalTextWhenGetChatClientThrows()
+    {
+        var service = new TranslationService(new ThrowingChatClientFactory());
+
+        var result = await service.TranslateAsync("Hello", "es-ES");
+
+        result.ShouldBe("Hello");
+    }
+
+    [Test]
     public async Task ShouldReturnOriginalTextWhenInputIsEmpty()
     {
         var bus = new StubBus(available: true);
@@ -58,6 +69,28 @@ public class TranslationServiceTests
         bus.ChatClientConfigQueryCount.ShouldBe(0);
     }
 
+    [Test]
+    public async Task ShouldReturnTranslatedTextWhenChatClientSucceeds()
+    {
+        var response = new ChatResponse([new ChatMessage(ChatRole.Assistant, "  Hola  ")]);
+        var service = new TranslationService(new StubChatClientFactory(response));
+
+        var result = await service.TranslateAsync("Hello", "es-ES");
+
+        result.ShouldBe("Hola");
+    }
+
+    [Test]
+    public async Task ShouldReturnOriginalTextWhenTranslationIsWhitespace()
+    {
+        var response = new ChatResponse([new ChatMessage(ChatRole.Assistant, "   ")]);
+        var service = new TranslationService(new StubChatClientFactory(response));
+
+        var result = await service.TranslateAsync("Hello", "es-ES");
+
+        result.ShouldBe("Hello");
+    }
+
     private class StubBus(bool available) : Bus(null!)
     {
         public int ChatClientConfigQueryCount { get; private set; }
@@ -80,5 +113,38 @@ public class TranslationServiceTests
         }
 
         public override Task Publish(INotification notification) => Task.CompletedTask;
+    }
+
+    private sealed class StubChatClientFactory(ChatResponse response) : ChatClientFactory(null!)
+    {
+        public override Task<IChatClient> GetChatClient() =>
+            Task.FromResult<IChatClient>(new StubTranslationChatClient(response));
+    }
+
+    private sealed class ThrowingChatClientFactory() : ChatClientFactory(null!)
+    {
+        public override Task<IChatClient> GetChatClient() =>
+            throw new InvalidOperationException("chat-client-unavailable");
+    }
+
+    private sealed class StubTranslationChatClient(ChatResponse response) : IChatClient
+    {
+        public void Dispose()
+        {
+        }
+
+        public Task<ChatResponse> GetResponseAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(response);
+
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
     }
 }
