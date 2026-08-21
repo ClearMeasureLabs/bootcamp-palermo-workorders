@@ -1,3 +1,5 @@
+// ReSharper disable NotAccessedPositionalProperty.Global
+// ReSharper disable NotAccessedPositionalProperty.Local
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;

@@ -1,3 +1,5 @@
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Local
 using System.Diagnostics;
 
 namespace ChurchBulletin.ServiceDefaults;
