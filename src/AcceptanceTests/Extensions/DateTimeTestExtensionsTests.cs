@@ -17,8 +17,7 @@ public class DateTimeTestExtensionsTests
     {
         using var _ = new CultureScope("en-US");
         var result = "11/20/2025 10:04:50 PM".ToTestDateTime();
-        result.ShouldNotBeNull();
-        result!.Value.ShouldBe(new DateTime(2025, 11, 20, 22, 4, 0));
+        result.ShouldBe(new DateTime(2025, 11, 20, 22, 4, 0));
     }
 
     [Test]
@@ -26,8 +25,7 @@ public class DateTimeTestExtensionsTests
     {
         using var _ = new CultureScope("en-CA");
         var result = "2025-11-20 3:57:55 p.m.".ToTestDateTime();
-        result.ShouldNotBeNull();
-        result!.Value.ShouldBe(new DateTime(2025, 11, 20, 15, 57, 0));
+        result.ShouldBe(new DateTime(2025, 11, 20, 15, 57, 0));
     }
 
     [Test]

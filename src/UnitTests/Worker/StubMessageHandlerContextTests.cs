@@ -1,3 +1,4 @@
+using NServiceBus;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Worker;
@@ -11,7 +12,7 @@ public class StubMessageHandlerContextTests
         var stub = StubMessageHandlerContext.Create();
         var message = new object();
 
-        await stub.Context.Publish(message);
+        await stub.Context.Publish(message, new PublishOptions());
 
         stub.PublishedMessages.Count.ShouldBe(1);
         stub.PublishedMessages[0].ShouldBeSameAs(message);
