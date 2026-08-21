@@ -265,16 +265,14 @@ public abstract class AcceptanceTestBase
     }
 
     /// <summary>
-    /// Clicks a work-order state command submit button with a real Playwright click.
-    /// EvaluateAsync(el.click()) can race Blazor's @onclick SelectedCommand assignment against
-    /// EditForm OnValidSubmit.
+    /// Clicks a work-order state command submit button.
+    /// Prefer Evaluate click (same as Click) so Blazor WASM client-side NavigateTo does not
+    /// hang Playwright's default navigation wait. WorkOrderManage sets SelectedCommand on
+    /// mousedown so EvaluateAsync(el.click()) still assigns the command before submit.
     /// </summary>
     protected async Task ClickCommandButton(string elementTestId)
     {
-        await TakeScreenshotAsync();
-        var locator = Page.GetByTestId(elementTestId);
-        await Expect(locator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
-        await locator.ClickAsync(new LocatorClickOptions { Timeout = 30_000 });
+        await Click(elementTestId);
     }
 
     private static async Task WaitForIfHiddenAsync(ILocator locator)
@@ -415,7 +413,17 @@ public abstract class AcceptanceTestBase
         // before click so Blazor result render races do not time out on WorkOrderLink*.
         if (!Page.Url.Contains("/workorder/search", StringComparison.OrdinalIgnoreCase))
         {
-            await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+            try
+            {
+                await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 60_000 });
+            }
+            catch (TimeoutException)
+            {
+                if (!Page.Url.Contains("/workorder/search", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw;
+                }
+            }
         }
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);

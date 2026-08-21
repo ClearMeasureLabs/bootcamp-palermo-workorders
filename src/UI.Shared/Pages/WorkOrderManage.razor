@@ -141,7 +141,10 @@
                     {
                         var buttonTestId = Elements.CommandButton + command.TransitionVerbPresentTense;
                         var buttonClass = "btn btn-primary";
-                        <button data-testid="@buttonTestId" type="submit" @onclick="@(() => SelectedCommand = command.TransitionVerbPresentTense)" class="@buttonClass">
+                        <button data-testid="@buttonTestId" type="submit"
+                                @onmousedown="@(() => SelectedCommand = command.TransitionVerbPresentTense)"
+                                @onclick="@(() => SelectedCommand = command.TransitionVerbPresentTense)"
+                                class="@buttonClass">
                             @command.TransitionVerbPresentTense
                         </button>
                     }
