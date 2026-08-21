@@ -151,6 +151,27 @@ Current master HEAD (`60f1cf10`) Deploy run `32511996076`
 was required; the window is fully closed with all three root causes fixed by
 commits already on master (`f622d6a0`, `1ff3080f`, `8268a930`).
 
+**Live probe correction (2026-08-21 ~19:00Z):** a direct `/_healthcheck` probe of all
+three environments (independent of the Deploy workflow's own health-check step)
+found the green run's status only partially trustworthy. All three environments do
+serve the correct deployed image (`2.4.2589`) and are online. TDD is Healthy. UAT
+and Prod are **Degraded** — the `LlmGateway` health check reports the
+`AI_OpenAI_ApiKey` / `AI_OpenAI_Url` / `AI_OpenAI_Model` chat client as
+unconfigured in those two environments (TDD has this configuration; UAT/Prod do
+not). More significantly, run `32511996076`'s own logs show UAT and Prod were
+**never actually health-checked at all**: both "Get Container App FQDN" steps
+failed with `AuthorizationFailed` — the deploy service principal lacks
+`Microsoft.App/containerApps/read` on `bootcamp-uat` and `bootcamp-prod` — and
+`continue-on-error: true` on that step (added by the mode-3 fix, `8268a930`) left
+`CONTAINER_APP_URL` empty, which the health-check step's
+`if: env.CONTAINER_APP_URL != ''` guard then silently skipped. This corrects the
+earlier hypothesis in #9011 (below) that the FQDN failures were purely a missing
+repo-vars problem — the real gap is service-principal RBAC, not repo variable
+configuration; #9011 has been updated with this correction. Separately, even TDD's
+"blocking" health loop treats a `Degraded` response as passing by design
+(`deploy.yml` ~226), so `Degraded` currently never blocks promotion anywhere in the
+pipeline (tracked as #9017 below).
+
 ## Residual Defects
 
 All 6 failing runs in the window are fully explained by the 3 root causes above,
@@ -169,10 +190,11 @@ surfaced one latent bug of the same class as mode 1. Filed as child work items o
 - **#9011** — UAT/Prod health checks are non-blocking (regression from the mode-3
   fix, commit `8268a930`): the FQDN lookup AND the health-check step are
   `continue-on-error: true`, so a crash-looping revision can promote to Prod with
-  zero post-deploy verification. Includes the likely *real* root cause of the mode-3
-  FQDN failures — the `UAT_RESOURCE_GROUP_NAME` / `PROD_RESOURCE_GROUP_NAME` /
-  `CONTAINER_APP_NAME` repo vars appear to have never been set, rather than being
-  purely a permissions problem.
+  zero post-deploy verification. **Updated by live-probe correction** (comment on
+  #9011): the FQDN failures are a service-principal RBAC gap
+  (`Microsoft.App/containerApps/read` missing on `bootcamp-uat`/`bootcamp-prod`),
+  not a repo-vars misconfiguration as first hypothesized — grant the role, then
+  remove `continue-on-error` and make the health checks blocking.
 - **#9012** — Prod gating weakened by the mode-3-adjacent commit `6adbc92d`: on
   `workflow_dispatch`, Prod can be reached with an unvalidated `release_number` and
   no test gate; also no concurrency group on the Prod job.
@@ -182,7 +204,14 @@ surfaced one latent bug of the same class as mode 1. Filed as child work items o
 - **#9014** — misc CI hardening: `cancel-in-progress` silently drops superseded
   master Deploy runs, `.trx` upload lacks `if: always()`, SQL connection string is
   unmasked in logs, hardcoded `2.4.` version literal in `run-name`.
+- **#9016** — UAT and Prod are currently serving Degraded (LlmGateway chat client
+  unconfigured); configure `AI_OpenAI_ApiKey`/`AI_OpenAI_Url`/`AI_OpenAI_Model` in
+  those environments or explicitly mark that health check optional there.
+- **#9017** — decide whether a `Degraded` health response should gate promotion;
+  currently it never does anywhere in the pipeline (`deploy.yml` ~226 treats
+  `Degraded` as passing by design).
 
-None of #9011–#9014 block Deploy being green today; they are hardening/defect work
-for the fixes already on master, scoped as separate PRs per the discovered-work
-rule (this PR is the analysis/catalog deliverable only).
+None of #9011–#9014, #9016, or #9017 block Deploy being green (in workflow-run
+terms) today; they are hardening/defect work for the fixes already on master and
+for the environment state uncovered by direct probing, scoped as separate PRs per
+the discovered-work rule (this PR is the analysis/catalog deliverable only).
