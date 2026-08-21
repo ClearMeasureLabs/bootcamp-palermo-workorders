@@ -12,8 +12,7 @@ public class ErrorModelTests
     [Test]
     public void OnGet_Should_SetRequestId_FromTraceIdentifier()
     {
-        var httpContext = new DefaultHttpContext();
-        httpContext.TraceIdentifier = "trace-8970";
+        var httpContext = new DefaultHttpContext { TraceIdentifier = "trace-8970" };
         var model = CreateModel(httpContext);
 
         model.OnGet();
@@ -31,12 +30,9 @@ public class ErrorModelTests
         model.ShowRequestId.ShouldBeFalse();
     }
 
-    private static ErrorModel CreateModel(HttpContext httpContext)
-    {
-        var model = new ErrorModel(NullLogger<ErrorModel>.Instance)
+    private static ErrorModel CreateModel(HttpContext httpContext) =>
+        new(NullLogger<ErrorModel>.Instance)
         {
             PageContext = new PageContext { HttpContext = httpContext }
         };
-        return model;
-    }
 }

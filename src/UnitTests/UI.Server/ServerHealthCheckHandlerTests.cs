@@ -28,7 +28,7 @@ public class ServerHealthCheckHandlerTests
         {
             var entries = new Dictionary<string, HealthReportEntry>
             {
-                ["stub"] = new HealthReportEntry(status, description: null, TimeSpan.Zero, exception: null, data: null)
+                ["stub"] = new(status, description: null, TimeSpan.Zero, exception: null, data: null)
             };
             return Task.FromResult(new HealthReport(entries, TimeSpan.Zero));
         }

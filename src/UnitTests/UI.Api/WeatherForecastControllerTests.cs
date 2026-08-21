@@ -22,12 +22,12 @@ public class WeatherForecastControllerTests
         var content = result.ShouldBeOfType<ContentResult>();
         content.StatusCode.ShouldBe(StatusCodes.Status200OK);
         content.ContentType.ShouldNotBeNull();
-        content.ContentType!.ShouldContain("application/json");
+        content.ContentType.ShouldContain("application/json");
         var forecasts = JsonSerializer.Deserialize<WeatherForecast[]>(
             content.Content!,
             ConditionalGetEtag.JsonSerializerOptions);
         forecasts.ShouldNotBeNull();
-        forecasts!.Length.ShouldBe(5);
+        forecasts.Length.ShouldBe(5);
         controller.Response.Headers.ETag.ToString().ShouldNotBeNullOrEmpty();
     }
 

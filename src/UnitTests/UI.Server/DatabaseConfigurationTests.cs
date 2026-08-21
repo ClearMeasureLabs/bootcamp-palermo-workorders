@@ -22,7 +22,7 @@ public class DatabaseConfigurationTests
         var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
         var sut = new DatabaseConfiguration(configuration);
 
-        Should.Throw<InvalidOperationException>(() => sut.GetConnectionString())
+        Should.Throw<InvalidOperationException>(sut.GetConnectionString)
             .Message.ShouldContain("SqlConnectionString");
     }
 
@@ -32,7 +32,7 @@ public class DatabaseConfigurationTests
         var configuration = BuildConfiguration("Data Source=:memory:");
         var sut = new DatabaseConfiguration(configuration);
 
-        Should.NotThrow(() => sut.ResetConnectionPool());
+        Should.NotThrow(sut.ResetConnectionPool);
     }
 
     [Test]
@@ -41,7 +41,7 @@ public class DatabaseConfigurationTests
         var configuration = BuildConfiguration("Server=.;Database=Test;TrustServerCertificate=true;");
         var sut = new DatabaseConfiguration(configuration);
 
-        Should.NotThrow(() => sut.ResetConnectionPool());
+        Should.NotThrow(sut.ResetConnectionPool);
     }
 
     private static IConfiguration BuildConfiguration(string connectionString) =>
