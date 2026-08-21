@@ -354,3 +354,41 @@ public class RebuildDatabaseCommandTests
         }
     }
 }
+
+[TestFixture]
+public class UpdateDatabaseCommandTests
+{
+    [Test]
+    public void ExecuteInternal_WhenConnectionUnreachable_ReturnsFailureCode()
+    {
+        var scriptRoot = Path.Combine(Path.GetTempPath(), "crap-update-exec-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(scriptRoot, "Update"));
+        try
+        {
+            var cmd = new UpdateDatabaseCommand();
+            var method = typeof(UpdateDatabaseCommand).GetMethod(
+                "ExecuteInternal",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            method.ShouldNotBeNull();
+
+            var options = new DatabaseOptions
+            {
+                ScriptDir = scriptRoot,
+                DatabaseName = "CrapGateUpdate"
+            };
+            var connectionString =
+                "Server=127.0.0.1,1;Database=ChurchBulletinCrapGate;User ID=sa;Password=invalid;" +
+                "TrustServerCertificate=true;Encrypt=false;Connect Timeout=1;";
+
+            var result = (int)method.Invoke(
+                cmd,
+                [null!, options, connectionString, CancellationToken.None])!;
+
+            result.ShouldBe(-1);
+        }
+        finally
+        {
+            Directory.Delete(scriptRoot, recursive: true);
+        }
+    }
+}
