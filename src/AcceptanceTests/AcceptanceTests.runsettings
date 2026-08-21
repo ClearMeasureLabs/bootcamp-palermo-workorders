@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <NUnit>
-    <NumberOfTestWorkers>8</NumberOfTestWorkers>
+    <!-- #9019: standard GitHub-hosted ubuntu-latest / ubuntu-24.04-arm runners have 4 cores.
+         8 parallel workers each launching their own Chromium browser oversubscribed the runner
+         under CI load, producing intermittent 90s Playwright navigation timeouts in different
+         tests each run (WorkOrderCompleteTests, WorkOrderBeginTests, WorkOrderCancelTests,
+         WorkOrderAssignTests, BlazorWasmWarmUp/ServerFixture) while the ARM SQLite variant on
+         the same commit consistently passed. Reduced to match runner core count. -->
+    <NumberOfTestWorkers>4</NumberOfTestWorkers>
   </NUnit>
   <LoggerRunSettings>
     <Loggers>
