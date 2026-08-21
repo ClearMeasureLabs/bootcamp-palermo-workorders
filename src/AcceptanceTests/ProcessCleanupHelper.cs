@@ -91,17 +91,12 @@ public static class ProcessCleanupHelper
     {
         try
         {
-            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return;
-            var port = uri.Port;
+            if (!TryGetPort(url, out var port))
+            {
+                return;
+            }
 
-            if (OperatingSystem.IsWindows())
-            {
-                KillProcessOnPortWindows(port);
-            }
-            else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
-            {
-                KillProcessOnPortUnix(port);
-            }
+            KillProcessOnPortForCurrentOs(port);
         }
         catch (Exception ex)
         {
@@ -109,51 +104,86 @@ public static class ProcessCleanupHelper
         }
     }
 
+    private static bool TryGetPort(string url, out int port)
+    {
+        port = 0;
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        port = uri.Port;
+        return true;
+    }
+
+    private static void KillProcessOnPortForCurrentOs(int port)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            KillProcessOnPortWindows(port);
+            return;
+        }
+
+        if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+        {
+            KillProcessOnPortUnix(port);
+        }
+    }
+
     private static void KillProcessOnPortWindows(int port)
     {
-        var psi = new ProcessStartInfo
+        var output = RunCapture("netstat", "-ano");
+        if (output == null)
         {
-            FileName = "netstat",
-            Arguments = "-ano",
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        using var netstat = Process.Start(psi);
-        if (netstat == null) return;
-
-        var output = netstat.StandardOutput.ReadToEnd();
-        netstat.WaitForExit(5000);
+            return;
+        }
 
         var listenPattern = $":{port}";
         foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
-            if (!line.Contains(listenPattern) || !line.Contains("LISTENING", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length > 0 && int.TryParse(parts[^1], out var pid) && pid > 0)
+            if (TryParseWindowsListeningPid(line, listenPattern, out var pid))
             {
                 KillProcessById(pid, port);
             }
         }
     }
 
+    private static bool TryParseWindowsListeningPid(string line, string listenPattern, out int pid)
+    {
+        pid = 0;
+        if (!IsWindowsListeningLine(line, listenPattern))
+        {
+            return false;
+        }
+
+        return TryParseTrailingPid(line, out pid);
+    }
+
+    private static bool IsWindowsListeningLine(string line, string listenPattern)
+    {
+        return line.Contains(listenPattern)
+               && line.Contains("LISTENING", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryParseTrailingPid(string line, out int pid)
+    {
+        pid = 0;
+        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+        {
+            return false;
+        }
+
+        return int.TryParse(parts[^1], out pid) && pid > 0;
+    }
+
     private static void KillProcessOnPortUnix(int port)
     {
-        var psi = new ProcessStartInfo
+        var output = RunCapture("lsof", $"-ti :{port}");
+        if (output == null)
         {
-            FileName = "lsof",
-            Arguments = $"-ti :{port}",
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        using var lsof = Process.Start(psi);
-        if (lsof == null) return;
-
-        var output = lsof.StandardOutput.ReadToEnd();
-        lsof.WaitForExit(5000);
+            return;
+        }
 
         foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
@@ -162,6 +192,27 @@ public static class ProcessCleanupHelper
                 KillProcessById(pid, port);
             }
         }
+    }
+
+    private static string? RunCapture(string fileName, string arguments)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = fileName,
+            Arguments = arguments,
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using var process = Process.Start(psi);
+        if (process == null)
+        {
+            return null;
+        }
+
+        var output = process.StandardOutput.ReadToEnd();
+        process.WaitForExit(5000);
+        return output;
     }
 
     private static void KillProcessById(int pid, int port)

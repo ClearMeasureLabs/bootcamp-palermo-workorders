@@ -14,35 +14,73 @@ public static class CrapGateEvaluator
     {
         using var document = JsonDocument.Parse(reportJson);
         var methods = new List<CrapMethodViolation>();
-        if (!document.RootElement.TryGetProperty("methods", out var methodsElement)
-            || methodsElement.ValueKind != JsonValueKind.Array)
+        if (!TryGetMethodsArray(document.RootElement, out var methodsElement))
         {
             return new CrapGateResult(threshold, 0, methods);
         }
 
         foreach (var method in methodsElement.EnumerateArray())
         {
-            var filePath = method.TryGetProperty("filePath", out var filePathElement)
-                ? filePathElement.GetString()
-                : null;
-            var crap = method.TryGetProperty("crap", out var crapElement)
-                ? crapElement.GetDouble()
-                : 0;
-            if (crap <= threshold || !CrapProductionScope.IsProductionFile(filePath))
+            if (TryCreateViolation(method, threshold, out var violation))
             {
-                continue;
+                methods.Add(violation);
             }
-
-            methods.Add(new CrapMethodViolation(
-                method.TryGetProperty("fullName", out var nameElement) ? nameElement.GetString() ?? "" : "",
-                filePath ?? "",
-                crap,
-                method.TryGetProperty("complexity", out var complexityElement) ? complexityElement.GetInt32() : 0,
-                method.TryGetProperty("coverage", out var coverageElement) ? coverageElement.GetDouble() : 0));
         }
 
         methods.Sort((left, right) => right.Crap.CompareTo(left.Crap));
         return new CrapGateResult(threshold, methods.Count, methods);
+    }
+
+    private static bool TryGetMethodsArray(JsonElement root, out JsonElement methodsElement)
+    {
+        if (root.TryGetProperty("methods", out methodsElement)
+            && methodsElement.ValueKind == JsonValueKind.Array)
+        {
+            return true;
+        }
+
+        methodsElement = default;
+        return false;
+    }
+
+    private static bool TryCreateViolation(JsonElement method, int threshold, out CrapMethodViolation violation)
+    {
+        var filePath = ReadString(method, "filePath");
+        var crap = ReadDouble(method, "crap");
+        if (crap <= threshold || !CrapProductionScope.IsProductionFile(filePath))
+        {
+            violation = null!;
+            return false;
+        }
+
+        violation = new CrapMethodViolation(
+            ReadString(method, "fullName") ?? "",
+            filePath ?? "",
+            crap,
+            ReadInt(method, "complexity"),
+            ReadDouble(method, "coverage"));
+        return true;
+    }
+
+    private static string? ReadString(JsonElement method, string propertyName)
+    {
+        return method.TryGetProperty(propertyName, out var element)
+            ? element.GetString()
+            : null;
+    }
+
+    private static double ReadDouble(JsonElement method, string propertyName)
+    {
+        return method.TryGetProperty(propertyName, out var element)
+            ? element.GetDouble()
+            : 0;
+    }
+
+    private static int ReadInt(JsonElement method, string propertyName)
+    {
+        return method.TryGetProperty(propertyName, out var element)
+            ? element.GetInt32()
+            : 0;
     }
 }
 
