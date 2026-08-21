@@ -53,7 +53,7 @@ internal static class RequestBodyBufferingRules
         return request.ContentLength != 0;
     }
 
-    internal static bool IsMutableMethod(string method) =>
+    private static bool IsMutableMethod(string method) =>
         HttpMethods.IsPost(method) || HttpMethods.IsPut(method) || HttpMethods.IsPatch(method);
 
     internal static long ClampBufferThreshold(long bufferThreshold) =>

@@ -79,7 +79,7 @@ public class StateCommandListTests
         Assert.That(commands, Is.SameAs(expected));
         }
 
-    public class StubStateCommandList : StateCommandList
+    private class StubStateCommandList : StateCommandList
     {
         public IStateCommand[] CommandsToReturn { get; set; } = null!;
 
@@ -89,7 +89,7 @@ public class StateCommandListTests
         }
     }
 
-    public class StubbedStateCommand(bool isValid) : IStateCommand
+    private class StubbedStateCommand(bool isValid) : IStateCommand
     {
         public bool IsValid()
         {

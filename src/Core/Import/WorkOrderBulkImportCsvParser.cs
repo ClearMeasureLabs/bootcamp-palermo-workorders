@@ -169,7 +169,7 @@ public static class WorkOrderBulkImportCsvParser
 
         private static bool HasUnclosedQuotes(string line) => CountUnescapedQuotes(line) % 2 != 0;
 
-        internal static int CountUnescapedQuotes(string s)
+        private static int CountUnescapedQuotes(string s)
         {
             var count = 0;
             var i = 0;

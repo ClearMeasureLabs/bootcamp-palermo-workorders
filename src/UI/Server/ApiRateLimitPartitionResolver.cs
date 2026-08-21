@@ -18,7 +18,7 @@ internal static class ApiRateLimitPartitionResolver
         return TryGetIpPartition(httpContext, out var ipPartition) ? ipPartition : "anonymous";
     }
 
-    internal static bool TryGetKeyPartition(HttpContext httpContext, string apiKeyHeaderName, out string partition)
+    private static bool TryGetKeyPartition(HttpContext httpContext, string apiKeyHeaderName, out string partition)
     {
         partition = string.Empty;
         if (string.IsNullOrWhiteSpace(apiKeyHeaderName)
@@ -37,7 +37,7 @@ internal static class ApiRateLimitPartitionResolver
         return true;
     }
 
-    internal static bool TryGetUserPartition(HttpContext httpContext, out string partition)
+    private static bool TryGetUserPartition(HttpContext httpContext, out string partition)
     {
         partition = string.Empty;
         var userName = httpContext.User.Identity?.Name;
@@ -50,7 +50,7 @@ internal static class ApiRateLimitPartitionResolver
         return true;
     }
 
-    internal static bool TryGetIpPartition(HttpContext httpContext, out string partition)
+    private static bool TryGetIpPartition(HttpContext httpContext, out string partition)
     {
         partition = string.Empty;
         var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();

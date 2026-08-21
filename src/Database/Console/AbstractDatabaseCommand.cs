@@ -4,12 +4,8 @@ using Spectre.Console.Cli;
 
 namespace ClearMeasure.Bootcamp.Database.Console;
 
-public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseOptions>
+public abstract class AbstractDatabaseCommand : Command<DatabaseOptions>
 {
-    // ReSharper disable once MemberCanBePrivate.Global
-    protected readonly string Action = action;
-
-
     protected static string GetScriptDirectory(DatabaseOptions options)
     {
         return Path.GetFullPath(options.ScriptDir);
@@ -35,7 +31,7 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
     protected abstract int ExecuteInternal(CommandContext context, DatabaseOptions options, string connectionString, CancellationToken cancellationToken);
     // ReSharper restore UnusedParameter.Global
 
-    protected static string GetConnectionString(DatabaseOptions options)
+    private static string GetConnectionString(DatabaseOptions options)
     {
         return DatabaseConnectionStringBuilder.Build(options);
     }
@@ -45,5 +41,4 @@ public abstract class AbstractDatabaseCommand(string action) : Command<DatabaseO
         AnsiConsole.MarkupLine($"[red]{message.EscapeMarkup()}[/]");
         return code;
     }
-
 }

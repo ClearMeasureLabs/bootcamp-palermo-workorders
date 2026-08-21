@@ -60,7 +60,7 @@ public static class McpServerApplication
         return app;
     }
 
-    internal static void ConfigureTransport(IMcpServerBuilder mcpBuilder, bool useHttp)
+    private static void ConfigureTransport(IMcpServerBuilder mcpBuilder, bool useHttp)
     {
         if (useHttp)
         {
@@ -72,7 +72,7 @@ public static class McpServerApplication
         }
     }
 
-    internal static void ConfigurePipeline(WebApplication app, bool useHttp)
+    private static void ConfigurePipeline(WebApplication app, bool useHttp)
     {
         if (useHttp)
         {

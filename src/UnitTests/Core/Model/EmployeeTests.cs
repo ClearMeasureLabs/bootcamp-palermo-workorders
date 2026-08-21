@@ -201,6 +201,4 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
-
-    public class EmployeeProxy : Employee;
 }

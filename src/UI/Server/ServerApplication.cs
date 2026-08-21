@@ -221,7 +221,7 @@ public static class ServerApplication
         });
     }
 
-    internal static void MapTestingEndpoints(WebApplication app)
+    private static void MapTestingEndpoints(WebApplication app)
     {
         if (!string.Equals(app.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
         {
@@ -283,7 +283,7 @@ public static class ServerApplication
         app.MapPut("/api/_test/idempotency-probe", Probe);
     }
 
-    internal static async Task FallbackToIndexHtml(HttpContext context)
+    private static async Task FallbackToIndexHtml(HttpContext context)
     {
         if (ProblemDetailsPaths.IsMachineOriented(context.Request.Path))
         {

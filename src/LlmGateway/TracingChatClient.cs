@@ -9,7 +9,7 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 /// </summary>
 public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(innerClient)
 {
-    internal static readonly ActivitySource ActivitySource = new("ChurchBulletin.LlmGateway", "1.0.0");
+    private static readonly ActivitySource ActivitySource = new("ChurchBulletin.LlmGateway", "1.0.0");
 
     /// <inheritdoc />
     public override async Task<ChatResponse> GetResponseAsync(

@@ -4,13 +4,8 @@ public class EmployeeSpecification
 {
     public static readonly EmployeeSpecification All = new();
 
-    public EmployeeSpecification()
+    private EmployeeSpecification()
     {
-    }
-
-    public EmployeeSpecification(bool canFulfill)
-    {
-        CanFulfill = canFulfill;
     }
 
     public bool CanFulfill { get; set; }

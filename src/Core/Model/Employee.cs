@@ -64,9 +64,4 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     {
         Roles.Add(role);
     }
-
-    public string GetNotificationEmail(DayOfWeek day)
-    {
-        return EmailAddress;
-    }
 }

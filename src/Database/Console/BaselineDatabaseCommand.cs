@@ -9,7 +9,7 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 /// This is useful when introducing DbUp to an existing database.
 /// </summary>
 [UsedImplicitly]
-public class BaselineDatabaseCommand() : AbstractDatabaseCommand("baseline")
+public class BaselineDatabaseCommand : AbstractDatabaseCommand
 {
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, string connectionString, CancellationToken cancellationToken)
     {

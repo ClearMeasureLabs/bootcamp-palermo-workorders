@@ -9,11 +9,6 @@ namespace ClearMeasure.Bootcamp.UI.Client;
 public class PublisherGateway(HttpClient httpClient, IConfiguration? configuration = null) : IPublisherGateway
 {
     /// <summary>
-    /// Path segment after <c>api/</c> (no leading slash). Used with versioned base <c>api/v1.0/{path}</c>.
-    /// </summary>
-    public const string ApiRelativePath = WebServiceApiRoutes.AbstractPathSegment;
-
-    /// <summary>
     /// Legacy unversioned URL for the Blazor WASM single-API endpoint.
     /// </summary>
     public const string ApiRelativeUrl = WebServiceApiRoutes.LegacyRelativeUrl;

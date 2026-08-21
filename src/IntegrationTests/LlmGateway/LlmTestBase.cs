@@ -35,22 +35,6 @@ public abstract class LlmTestBase : IntegratedTestBase
         }
     }
 
-    /// <summary>
-    /// Azure OpenAI occasionally returns HTTP 429 during CI; skip instead of failing the build.
-    /// </summary>
-    protected static async Task ExecuteLlmAsync(Func<Task> action)
-    {
-        try
-        {
-            await action();
-        }
-        catch (Exception ex)
-        {
-            ThrowIfAzureOpenAiRateLimited(ex);
-            throw;
-        }
-    }
-
     private static void ThrowIfAzureOpenAiRateLimited(Exception ex)
     {
         if (!IsAzureOpenAiRateLimited(ex))

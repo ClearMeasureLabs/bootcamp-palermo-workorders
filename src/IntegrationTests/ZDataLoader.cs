@@ -294,15 +294,4 @@ public class ZDataLoader
         db.Add(christmasOrder6);
         db.SaveChanges();
     }
-
-    public Employee CreateUser()
-    {
-        using var context = TestHost.GetRequiredService<DbContext>();
-        var employee = TestHost.Faker<Employee>();
-        employee.UserName = "current" + employee.UserName;
-        employee.AddRole(new Role("admin", true, true));
-        context.Add(employee);
-        context.SaveChanges();
-        return employee;
-    }
 }

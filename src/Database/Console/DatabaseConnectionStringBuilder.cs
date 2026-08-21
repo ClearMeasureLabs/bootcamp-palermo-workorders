@@ -60,14 +60,14 @@ public static class DatabaseConnectionStringBuilder
         return $"{dataSource},1433";
     }
 
-    internal static bool HasPortOrInstance(string dataSource)
+    private static bool HasPortOrInstance(string dataSource)
     {
         return dataSource.Contains(',')
                || dataSource.Contains(':')
                || dataSource.Contains('\\');
     }
 
-    internal static void ApplySecuritySettings(SqlConnectionStringBuilder builder, bool isLocalServer)
+    private static void ApplySecuritySettings(SqlConnectionStringBuilder builder, bool isLocalServer)
     {
         if (isLocalServer)
         {
@@ -80,7 +80,7 @@ public static class DatabaseConnectionStringBuilder
         builder.TrustServerCertificate = false;
     }
 
-    internal static void ApplyAuthentication(SqlConnectionStringBuilder builder, DatabaseOptions options)
+    private static void ApplyAuthentication(SqlConnectionStringBuilder builder, DatabaseOptions options)
     {
         if (string.IsNullOrWhiteSpace(options.DatabaseUser))
         {

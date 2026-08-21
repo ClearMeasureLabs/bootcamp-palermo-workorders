@@ -116,10 +116,10 @@ internal static class ReformatResponseLineParser
         return defaultDescription;
     }
 
-    internal static bool TryParseTitle(string line, out string value) =>
+    private static bool TryParseTitle(string line, out string value) =>
         TryParsePrefixedLine(line, "TITLE:", out value);
 
-    internal static bool TryParseDescription(string line, out string value) =>
+    private static bool TryParseDescription(string line, out string value) =>
         TryParsePrefixedLine(line, "DESCRIPTION:", out value);
 
     private static bool TryParsePrefixedLine(string line, string prefix, out string value)
