@@ -23,6 +23,8 @@ public class WorkOrderAssignTests : AcceptanceTestBase
         await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
         await Input(nameof(WorkOrderManage.Elements.Title), "newtitle");
         await Input(nameof(WorkOrderManage.Elements.Description), "newdesc");
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync("newtitle");
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToHaveValueAsync("newdesc");
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
 
         await ClickWorkOrderNumberFromSearchPage(order);

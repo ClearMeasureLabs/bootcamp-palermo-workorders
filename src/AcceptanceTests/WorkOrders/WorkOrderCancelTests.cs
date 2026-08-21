@@ -19,6 +19,8 @@ public class WorkOrderCancelTests : AcceptanceTestBase
         order.Description = "Description";
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync(order.Title);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToHaveValueAsync(order.Description);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToCancelledCommand.Name);
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
