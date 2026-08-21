@@ -398,7 +398,20 @@ public abstract class AcceptanceTestBase
 
     protected async Task<WorkOrder> ClickWorkOrderNumberFromSearchPage(WorkOrder order)
     {
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        // State commands NavigateTo search; wait for that URL before looking for the row link.
+        if (!Page.Url.Contains("/workorder/search", StringComparison.OrdinalIgnoreCase))
+        {
+            await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        }
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        var linkTestId = nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number;
+        await Page.GetByTestId(linkTestId).WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 60_000
+        });
+        await Click(linkTestId);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
         await woNumberLocator.WaitForAsync();
