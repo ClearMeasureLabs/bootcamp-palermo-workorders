@@ -383,7 +383,7 @@ jobs:
             --name $appName `
             --resource-group $resourceGroup `
             --query "properties.configuration.ingress.fqdn" `
-            -o tsv 2>&1
+            -o tsv 2>$null
           if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($fqdn) -or $fqdn -match 'ERROR') {
             Write-Host "::warning::Could not retrieve UAT container app FQDN (Octopus deploy already succeeded). Details: $fqdn"
             exit 0
@@ -394,10 +394,12 @@ jobs:
           "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Wait for Container App to become healthy
-        if: env.CONTAINER_APP_URL != ''
         shell: pwsh
-        continue-on-error: true
         run: |
+          if ([string]::IsNullOrWhiteSpace("${{ env.CONTAINER_APP_URL }}")) {
+            Write-Host "::error::Container App URL could not be resolved (FQDN lookup failed or was skipped). Cannot verify deploy health."
+            exit 1
+          }
           $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
           $maxAttempts = 12
           $delaySeconds = 5
@@ -415,7 +417,8 @@ jobs:
             }
             if ($i -lt $maxAttempts) { Start-Sleep -Seconds $delaySeconds }
           }
-          Write-Host "::warning::Container App health check did not succeed after $maxAttempts attempts; URL was still printed above."
+          Write-Host "::error::Container App health check did not succeed after $maxAttempts attempts."
+          exit 1
 
   deploy-to-prod:
     name: Prod
@@ -480,7 +483,7 @@ jobs:
             --name $appName `
             --resource-group $resourceGroup `
             --query "properties.configuration.ingress.fqdn" `
-            -o tsv 2>&1
+            -o tsv 2>$null
           if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($fqdn) -or $fqdn -match 'ERROR') {
             Write-Host "::warning::Could not retrieve Prod container app FQDN (Octopus deploy already succeeded). Details: $fqdn"
             exit 0
@@ -491,10 +494,12 @@ jobs:
           "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Wait for Container App to become healthy
-        if: env.CONTAINER_APP_URL != ''
         shell: pwsh
-        continue-on-error: true
         run: |
+          if ([string]::IsNullOrWhiteSpace("${{ env.CONTAINER_APP_URL }}")) {
+            Write-Host "::error::Container App URL could not be resolved (FQDN lookup failed or was skipped). Cannot verify deploy health."
+            exit 1
+          }
           $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
           $maxAttempts = 12
           $delaySeconds = 5
@@ -512,4 +517,5 @@ jobs:
             }
             if ($i -lt $maxAttempts) { Start-Sleep -Seconds $delaySeconds }
           }
-          Write-Host "::warning::Container App health check did not succeed after $maxAttempts attempts; URL was still printed above."
+          Write-Host "::error::Container App health check did not succeed after $maxAttempts attempts."
+          exit 1
