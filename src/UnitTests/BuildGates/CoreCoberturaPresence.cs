@@ -112,8 +112,7 @@ public static class CoreCoberturaPresence
 
     private static string? GetAttributeValue(XElement element, string name)
     {
-        var attribute = element.Attribute(name);
-        return attribute == null ? null : attribute.Value;
+        return element.Attribute(name)?.Value;
     }
 
     private static bool IsExcludedTestFilename(string lower)

@@ -256,38 +256,36 @@ public abstract class AcceptanceTestBase
     {
         await TakeScreenshotAsync();
         var locator = Page.GetByTestId(elementTestId);
-        await EnsureVisibleAsync(locator);
-        await FocusAndBlurIfVisibleAsync(locator);
+        await WaitForIfHiddenAsync(locator);
+        await WaitForIfHiddenAsync(locator);
+        await WaitForIfHiddenAsync(locator);
+        await FocusIfVisibleAsync(locator);
+        await BlurIfVisibleAsync(locator);
         await EvaluateClickIfVisibleAsync(locator);
     }
 
-    private static async Task EnsureVisibleAsync(ILocator locator)
+    private static async Task WaitForIfHiddenAsync(ILocator locator)
     {
-        for (var attempt = 0; attempt < 3; attempt++)
+        if (!await locator.IsVisibleAsync())
         {
-            if (await locator.IsVisibleAsync())
-            {
-                return;
-            }
-
             await locator.WaitForAsync();
         }
     }
 
-    private static async Task FocusAndBlurIfVisibleAsync(ILocator locator)
+    private static async Task FocusIfVisibleAsync(ILocator locator)
     {
-        if (!await locator.IsVisibleAsync())
+        if (await locator.IsVisibleAsync())
         {
-            return;
+            await locator.FocusAsync();
         }
+    }
 
-        await locator.FocusAsync();
-        if (!await locator.IsVisibleAsync())
+    private static async Task BlurIfVisibleAsync(ILocator locator)
+    {
+        if (await locator.IsVisibleAsync())
         {
-            return;
+            await locator.BlurAsync();
         }
-
-        await locator.BlurAsync();
     }
 
     private static async Task EvaluateClickIfVisibleAsync(ILocator locator)
