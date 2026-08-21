@@ -25,6 +25,8 @@ public class DeployWorkflowContainerAppUrlTests
         fqdnBlock.ShouldContain("vars.UAT_RESOURCE_GROUP_NAME");
         fqdnBlock.ShouldContain("properties.configuration.ingress.fqdn");
         fqdnBlock.ShouldContain("Container App URL:");
+        fqdnBlock.ShouldContain("continue-on-error: true");
+        fqdnBlock.ShouldContain("Skipping UAT Container App URL");
         fqdnBlock.ShouldNotContain(".azurecontainerapps.io");
     }
 
@@ -51,6 +53,8 @@ public class DeployWorkflowContainerAppUrlTests
         fqdnBlock.ShouldContain("vars.PROD_RESOURCE_GROUP_NAME");
         fqdnBlock.ShouldContain("properties.configuration.ingress.fqdn");
         fqdnBlock.ShouldContain("Container App URL:");
+        fqdnBlock.ShouldContain("continue-on-error: true");
+        fqdnBlock.ShouldContain("Skipping Prod Container App URL");
         fqdnBlock.ShouldNotContain(".azurecontainerapps.io");
     }
 
