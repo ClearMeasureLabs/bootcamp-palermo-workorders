@@ -1,0 +1,15 @@
+---
+description: Every long-running session must post a status update every 5 minutes via timer
+alwaysApply: true
+---
+
+# Five-minute status updates (all sessions)
+
+For any session that may run longer than a few minutes (feature-loop dispatch, CI waits, multi-agent orchestration, audits, builds):
+
+1. **Arm a recurring 5-minute timer immediately** using `cursor-subscriptions` → `subscribe_timer` with `delaySeconds: 300` (do **not** set `once: true`). Name it clearly (e.g. `status-update-5m`).
+2. **On every timer fire:** post a short user-visible status (what is in progress, blocked, or done; next step). Then ensure the recurring timer is still armed.
+3. **Do this no matter what** — even when waiting on subagents, CI, or idle orchestration. Do not rely on stall heartbeats alone; those may be longer than 5 minutes.
+4. Prefer the subscriptions timer over ad-hoc sleep loops so the update arrives as a follow-up when the agent is free.
+
+Terse updates only. No jargon. State facts: work item numbers, PR numbers, board column, blockers.
