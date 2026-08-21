@@ -40,6 +40,8 @@ public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
 
         result.Status.ShouldBe(HealthStatus.Healthy);
         result.Description.ShouldNotBeNullOrEmpty();
+        result.Description.ShouldContain("AI_OpenAI_ApiKey");
+        result.Description.ShouldContain("not enabled in this environment");
         Console.WriteLine($"Status: {result.Status}, Description: {result.Description}");
     }
 
@@ -58,6 +60,8 @@ public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
 
         result.Status.ShouldBe(HealthStatus.Healthy);
         result.Description.ShouldNotBeNullOrEmpty();
+        result.Description.ShouldContain("AI_OpenAI_Url");
+        result.Description.ShouldContain("not enabled in this environment");
         Console.WriteLine($"Status: {result.Status}, Description: {result.Description}");
     }
 
