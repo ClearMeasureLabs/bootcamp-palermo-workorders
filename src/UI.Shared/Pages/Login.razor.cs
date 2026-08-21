@@ -42,6 +42,14 @@ public partial class Login : AppComponentBase
         return LoginDisplayNameFormatter.FormatForLoginDropdown(employee.GetFullName());
     }
 
+    private const string TimothyLovejoyUsername = "tlovejoy";
+
+    private async Task LoginAsTimothyLovejoy()
+    {
+        loginModel.Username = TimothyLovejoyUsername;
+        await AuthenticateAndNavigate();
+    }
+
     private async Task HandleLogin()
     {
         if (string.IsNullOrEmpty(loginModel.Username))
@@ -50,11 +58,14 @@ public partial class Login : AppComponentBase
             return;
         }
 
-        // Find the selected employee
+        await AuthenticateAndNavigate();
+    }
+
+    private async Task AuthenticateAndNavigate()
+    {
         var selectedEmployee = employees.FirstOrDefault(e => e.UserName == loginModel.Username);
         if (selectedEmployee != null)
         {
-            // Successful login
             AuthStateProvider!.Login(loginModel.Username);
             EventBus.Notify(new UserLoggedInEvent(loginModel.Username));
             await Bus.Publish(new Core.Model.Events.UserLoggedInEvent(loginModel.Username));
@@ -62,7 +73,6 @@ public partial class Login : AppComponentBase
         }
         else
         {
-            // Failed login
             errorMessage = "Invalid employee selection";
         }
     }

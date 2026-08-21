@@ -33,6 +33,15 @@
                 </div>
             </EditForm>
 
+            <div class="text-center lovejoy-shortcut">
+                <button type="button"
+                        data-testid="@Elements.LovejoyShortcut"
+                        class="btn btn-link lovejoy-shortcut-link"
+                        @onclick="LoginAsTimothyLovejoy">
+                    Log in as Timothy Lovejoy
+                </button>
+            </div>
+
             <div class="church-blessing">
                 "May your service to the church be blessed and your work orders be few."
             </div>
@@ -45,7 +54,8 @@
     public enum Elements
     {
         User,
-        LoginButton
+        LoginButton,
+        LovejoyShortcut
     }
 
 }

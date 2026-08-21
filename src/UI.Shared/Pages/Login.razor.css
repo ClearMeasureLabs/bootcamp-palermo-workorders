@@ -153,6 +153,30 @@
     text-align: center;
 }
 
+.lovejoy-shortcut {
+    margin-top: 1rem;
+}
+
+.lovejoy-shortcut-link {
+    background: none;
+    border: none;
+    color: #4a5568;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: underline;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.lovejoy-shortcut-link:hover {
+    color: #2d3748;
+    text-decoration: underline;
+    transform: none;
+    box-shadow: none;
+    background: none;
+}
+
 .church-blessing {
     text-align: center;
     margin-top: 1.5rem;
@@ -224,5 +248,13 @@
 :global(html[data-theme="dark"]) .login-body select {
     background: #374151;
     border-color: #4a5568;
+    color: #f7fafc;
+}
+
+:global(html[data-theme="dark"]) .lovejoy-shortcut-link {
+    color: #cbd5e0;
+}
+
+:global(html[data-theme="dark"]) .lovejoy-shortcut-link:hover {
     color: #f7fafc;
 }
