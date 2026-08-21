@@ -109,6 +109,23 @@ public class LoginPageTests
     }
 
     [Test]
+    public void ShouldRenderLoginButtonWithEnlargedPortalClass()
+    {
+        using var ctx = new TestContext();
+
+        var provider = new CustomAuthenticationStateProvider();
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.RenderComponent<Login>();
+
+        var submitButton = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
+        submitButton.ClassList.ShouldContain("btn-login-portal");
+    }
+
+    [Test]
     public void ShouldDisplayFirstChurchOfShelbyvilleSubtitle()
     {
         using var ctx = new TestContext();
