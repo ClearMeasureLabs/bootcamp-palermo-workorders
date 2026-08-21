@@ -1,10 +1,10 @@
 name: Build
-run-name: "1.4.${{ github.run_number }} • Build • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
+run-name: "2.4.${{ github.run_number }} • Build • ${{ github.event.pull_request.title != '' && github.event.pull_request.title || github.head_ref || github.ref_name }}"
 on:
   push:
   workflow_dispatch:
 env:
-  MAJOR_VERSION: 1
+  MAJOR_VERSION: 2
   MINOR_VERSION: 4
 
 jobs:
