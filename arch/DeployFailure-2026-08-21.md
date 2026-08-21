@@ -8,6 +8,44 @@ root causes that overlapped in the same time window. All three are now fixed; De
 has been green on every master run since 15:21Z (commit `2b66f8204a`), including
 current master HEAD.
 
+## Historical Context (episode 21 of 21)
+
+A separate full-history audit of the Deploy workflow (all 502 runs, 2026-02-22 to
+2026-08-21, posted as issue #9008 comment
+[5373938083](https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders/issues/9008#issuecomment-5373938083))
+found 289 completed master runs (207 green, 82 red) across 21 distinct green→red
+episodes. Today's 05:32Z–15:08Z outage is **episode 21**, not the first Deploy
+failure this project has had:
+
+- The first-ever green→red was 2026-02-22 (TDD job, exit code 1); recovered same
+  night.
+- A separate, earlier episode today — **EP20, 01:16Z–01:54Z** — was an OctopusDeploy
+  create-release-action error that recovered before EP21 (this window) began at
+  05:32Z. EP20 is out of scope for this doc's `f68aad70..6f577f22` window.
+- The longest-ever outage was **EP18**, 41 consecutive red runs over ~13 days
+  (2026-07-16 to 07-29), caused by an invalid/rotated Octopus API key.
+- Recurring themes across all 21 episodes: TDD acceptance-test failures (most
+  common), Octopus service errors (503s, gateway timeouts, failed deploy tasks,
+  release-version collisions — the same collision class seen as mode 2 below), and
+  one GitHub environment approval-gate rejection.
+
+The audit's summary of EP21 groups all 6 red runs under "TDD Run Acceptance tests"
+with cached-Playwright-binary corruption as the cause and the Container App FQDN
+error as secondary. Direct log inspection of each of the 6 failing runs (below,
+via `gh run view <id> --log-failed`, re-verified against raw log text) shows EP21
+is actually **three distinct proximate failure signatures**, not one: the
+Playwright ARM64 cache corruption is real and is the cause of the very first red
+run (`32450953882`), but the three middle reds (`dd8b6172`, `d1a35c2a`, `dd14d8fe`)
+fail specifically on an Octopus release-version collision
+(`Release '1.4.25xx' already exists`) inside the TDD job's Octopus release-creation
+step — a different error class from the Playwright/browser-cache symptom, and
+consistent with the "release-version collision" theme the historical audit calls
+out as recurring across other episodes. The final two reds (`d96dd27d`, `6f577f22`)
+show TDD passing (Playwright fixed) but UAT failing on the Container App FQDN
+`AuthorizationFailed` lookup. This doc's per-run table and root-cause sections below
+reflect the raw-log evidence; the mode numbering (1/2/3) is used consistently
+throughout.
+
 ## Failure Window
 
 - First failing run: `32450953882` (05:32:57Z, headSha `9614eff0`, TDD job)
@@ -115,7 +153,36 @@ commits already on master (`f622d6a0`, `1ff3080f`, `8268a930`).
 
 ## Residual Defects
 
-None found. All 6 failing runs in the window are fully explained by the 3 root
-causes above, and each root cause has a confirmed fixing commit whose merge
-coincides with or precedes the run that stopped exhibiting that error. No child
-work items filed for this issue.
+All 6 failing runs in the window are fully explained by the 3 root causes above,
+and each root cause has a confirmed fixing commit whose merge coincides with or
+precedes the run that stopped exhibiting that error — the failure *window itself*
+is closed with no unexplained red run remaining.
+
+However, a follow-up code review of the fixes that closed the window
+(`deploy.yml` / `build.yml` / `.octopus/deployment_process.ocl`, posted as issue
+#9008 comment
+[5373961642](https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders/issues/9008#issuecomment-5373961642))
+found that several of the fixes muted symptoms rather than closing gaps, and
+surfaced one latent bug of the same class as mode 1. Filed as child work items of
+#9008 (leftmost board column), not fixed in this PR:
+
+- **#9011** — UAT/Prod health checks are non-blocking (regression from the mode-3
+  fix, commit `8268a930`): the FQDN lookup AND the health-check step are
+  `continue-on-error: true`, so a crash-looping revision can promote to Prod with
+  zero post-deploy verification. Includes the likely *real* root cause of the mode-3
+  FQDN failures — the `UAT_RESOURCE_GROUP_NAME` / `PROD_RESOURCE_GROUP_NAME` /
+  `CONTAINER_APP_NAME` repo vars appear to have never been set, rather than being
+  purely a permissions problem.
+- **#9012** — Prod gating weakened by the mode-3-adjacent commit `6adbc92d`: on
+  `workflow_dispatch`, Prod can be reached with an unvalidated `release_number` and
+  no test gate; also no concurrency group on the Prod job.
+- **#9013** — the NuGet cache in `build.yml` has the same cross-architecture
+  poisoning mechanism that caused mode 1 (Playwright), unfixed: ARM and x64 jobs
+  share a restore-key prefix.
+- **#9014** — misc CI hardening: `cancel-in-progress` silently drops superseded
+  master Deploy runs, `.trx` upload lacks `if: always()`, SQL connection string is
+  unmasked in logs, hardcoded `2.4.` version literal in `run-name`.
+
+None of #9011–#9014 block Deploy being green today; they are hardening/defect work
+for the fixes already on master, scoped as separate PRs per the discovered-work
+rule (this PR is the analysis/catalog deliverable only).
