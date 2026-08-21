@@ -531,6 +531,8 @@ public abstract class AcceptanceTestBase
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
+            .ToHaveTextAsync(WorkOrderStatus.InProgress.FriendlyName);
 
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);

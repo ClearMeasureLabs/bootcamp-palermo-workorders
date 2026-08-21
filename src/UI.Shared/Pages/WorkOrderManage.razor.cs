@@ -5,6 +5,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Palermo.BlazorMvc;
 using Microsoft.JSInterop;
 using System.Globalization;
@@ -28,6 +29,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     [Inject] public SpeechRecognition? SpeechRecognition { get; set; }
 
     public WorkOrderManageModel Model { get; set; } = new();
+    private EditContext _editContext = default!;
     public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     public string? SelectedCommand { get; set; }
@@ -39,6 +41,8 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        _editContext = new EditContext(Model);
+
         if (SpeechRecognition != null)
         {
             SpeechRecognition.Result += OnSpeechResult;
@@ -79,6 +83,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         }
 
         Model = CreateViewModel(CurrentMode, workOrder);
+        _editContext = new EditContext(Model);
         var commandList = new StateCommandList();
         Model.IsReadOnly = !commandList.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
@@ -116,6 +121,17 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         var items = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
         items.Insert(0, new SelectListItem("", ""));
         UserOptions = items;
+    }
+
+    private async Task OnCommandClickedAsync(string commandName)
+    {
+        SelectedCommand = commandName;
+        if (!_editContext.Validate())
+        {
+            return;
+        }
+
+        await HandleSubmit();
     }
 
     private async Task HandleSubmit()
