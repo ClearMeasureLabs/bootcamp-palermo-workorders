@@ -261,6 +261,13 @@ public abstract class AcceptanceTestBase
         await WaitForIfHiddenAsync(locator);
         await FocusIfVisibleAsync(locator);
         await BlurIfVisibleAsync(locator);
+
+        // Give the Blazor WASM message loop a moment to finish processing any still-pending
+        // onchange/blur callbacks from fields filled immediately before this click (e.g. Title
+        // then Description then a submit-button click). Without this, a form submit can fire
+        // while an earlier field's change callback is still queued, so HandleSubmit reads stale
+        // Model state even though the DOM already shows the typed value (root cause of #9022).
+        await Task.Delay(GetInputDelayMs());
         await EvaluateClickIfVisibleAsync(locator);
     }
 
@@ -323,7 +330,13 @@ public abstract class AcceptanceTestBase
         var delayMs = GetInputDelayMs();
         await Task.Delay(delayMs);
 
-        await Expect(locator).ToHaveValueAsync(value ?? "");
+        // Note: this only proves the <input>'s raw DOM value matches -- FillAsync sets that
+        // synchronously and is not proof that Blazor's WASM message loop has actually processed
+        // the change/blur callback and synced Model state yet. The explicit Timeout below gives
+        // that catch-up real wall-clock time under CI's LevelOfParallelism(4) contention (see
+        // ServerFixture.cs: "a cold Blazor WASM render can exceed 5s"), rather than accepting the
+        // Playwright default (5s) which the observed CI race shows is not always sufficient.
+        await Expect(locator).ToHaveValueAsync(value ?? "", new LocatorAssertionsToHaveValueOptions { Timeout = 30_000 });
     }
 
     protected int GetInputDelayMs()
@@ -333,7 +346,15 @@ public abstract class AcceptanceTestBase
         {
             return delay;
         }
-        return 100; // Default to 100ms for local performance
+
+        // Default settle delay after a Fill/Blur or Select before the caller moves on to another
+        // field or action. 100ms was tuned for a quiet local machine; under CI's
+        // LevelOfParallelism(4) the Blazor WASM message loop is CPU-starved enough that a
+        // previous field's change/blur callback can still be queued when the next field is
+        // touched, letting a later re-render silently overwrite an already-typed value with
+        // stale model state (root cause of #9022). 300ms gives real headroom under that
+        // contention while remaining negligible for a normal local run.
+        return 750;
     }
 
     protected async Task Select(string elementTestId, string? value)
@@ -349,6 +370,16 @@ public abstract class AcceptanceTestBase
 
         await Expect(locator).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
         await locator.SelectOptionAsync(value ?? "");
+
+        // Give the Blazor WASM message loop time to actually process the change/onchange
+        // callback and update bound C# state before the caller moves on to the next field.
+        // Playwright's own DOM-value assertions below only prove the <select> element's raw
+        // value was set (which SelectOptionAsync does synchronously in the DOM) -- they do NOT
+        // prove Blazor's C# binding has caught up. Under CI's LevelOfParallelism(4), a cold
+        // Blazor WASM render/dispatch can lag well past a short fixed delay (see ServerFixture.cs),
+        // so subsequent Input() calls on other fields can race ahead of this field's own commit.
+        await Task.Delay(GetInputDelayMs());
+        await Expect(locator).ToHaveValueAsync(value ?? "", new LocatorAssertionsToHaveValueOptions { Timeout = 30_000 });
     }
 
     protected async Task<WorkOrder> CreateAndSaveNewWorkOrder()
