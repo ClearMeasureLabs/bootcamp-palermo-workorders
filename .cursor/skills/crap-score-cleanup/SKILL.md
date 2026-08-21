@@ -240,13 +240,13 @@ dotnet-crap diff crap-metrics/crap-report-before.json crap-metrics/crap-report.j
 
 ### Coverage needed formula
 
-To bring method with complexity `CC` below CRAP 11 (production gate):
+To bring method with complexity `CC` below the shared production gate (see `crap-gate-threshold.json`), where `T` is `productionThreshold` from that file:
 
 ```
-cov_needed = 1 - ((11 - CC) / CC²)^(1/3)
+cov_needed = 1 - ((T - CC) / CC²)^(1/3)
 ```
 
-Only valid when `CC < 12`.
+Only valid when `CC < T + 1` (at 100% coverage CRAP = CC, so CC > T requires refactor).
 
 ## Validation checklist
 
