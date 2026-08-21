@@ -1,5 +1,6 @@
 using System.Reflection;
 using NServiceBus;
+using NServiceBus.Extensibility;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Worker;
 
@@ -71,9 +72,7 @@ public class StubMessageHandlerContext : DispatchProxy
 
         if (name == "get_Extensions")
         {
-            return Activator.CreateInstance(
-                Type.GetType("NServiceBus.Extensibility.ContextBag, NServiceBus")
-                ?? throw new InvalidOperationException("NServiceBus ContextBag type not found."));
+            return new ContextBag();
         }
 
         return CompletedFor(targetMethod.ReturnType);
