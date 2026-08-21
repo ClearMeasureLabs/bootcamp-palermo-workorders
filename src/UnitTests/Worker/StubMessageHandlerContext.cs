@@ -12,12 +12,28 @@ public class StubMessageHandlerContext : DispatchProxy
     private readonly List<object> _sentLocal = [];
     private readonly List<object> _replied = [];
     private readonly List<object> _published = [];
+    private readonly Dictionary<string, Func<object?[]?, Type, object?>> _handlers;
 
     public IReadOnlyList<object> SentLocalMessages => _sentLocal;
     public IReadOnlyList<object> RepliedMessages => _replied;
     public IReadOnlyList<object> PublishedMessages => _published;
 
     public IMessageHandlerContext Context { get; private set; } = null!;
+
+    public StubMessageHandlerContext()
+    {
+        _handlers = new Dictionary<string, Func<object?[]?, Type, object?>>(StringComparer.Ordinal)
+        {
+            ["SendLocal"] = RecordSentLocal,
+            ["Send"] = RecordSentLocal,
+            ["Reply"] = RecordReply,
+            ["Publish"] = RecordPublish,
+            ["get_MessageId"] = static (_, _) => string.Empty,
+            ["get_ReplyToAddress"] = static (_, _) => string.Empty,
+            ["get_MessageHeaders"] = static (_, _) => new Dictionary<string, string>(),
+            ["get_Extensions"] = static (_, _) => CreateContextBag()
+        };
+    }
 
     public static StubMessageHandlerContext Create()
     {
@@ -35,50 +51,45 @@ public class StubMessageHandlerContext : DispatchProxy
     {
         ArgumentNullException.ThrowIfNull(targetMethod);
 
-        var name = targetMethod.Name;
-        if ((name is "SendLocal" or "Send") && args is { Length: > 0 } && args[0] is { } sent)
-        {
-            _sentLocal.Add(sent);
-            return CompletedFor(targetMethod.ReturnType);
-        }
-
-        if (name == "Reply" && args is { Length: > 0 } && args[0] is { } replied)
-        {
-            _replied.Add(replied);
-            return CompletedFor(targetMethod.ReturnType);
-        }
-
-        if (name == "Publish" && args is { Length: > 0 } && args[0] is { } published)
-        {
-            _published.Add(published);
-            return CompletedFor(targetMethod.ReturnType);
-        }
-
         if (targetMethod.ReturnType == typeof(CancellationToken))
         {
             return CancellationToken.None;
         }
 
-        if (name is "get_MessageId" or "get_ReplyToAddress")
+        if (_handlers.TryGetValue(targetMethod.Name, out var handler))
         {
-            return string.Empty;
-        }
-
-        if (name == "get_MessageHeaders")
-        {
-            return new Dictionary<string, string>();
-        }
-
-        if (name == "get_Extensions")
-        {
-            return Activator.CreateInstance(
-                Type.GetType("NServiceBus.Extensibility.ContextBag, NServiceBus")
-                ?? throw new InvalidOperationException("NServiceBus ContextBag type not found."));
+            return handler(args, targetMethod.ReturnType);
         }
 
         return CompletedFor(targetMethod.ReturnType);
     }
 
+    private object? RecordSentLocal(object?[]? args, Type returnType) =>
+        RecordMessage(args, _sentLocal, returnType);
+
+    private object? RecordReply(object?[]? args, Type returnType) =>
+        RecordMessage(args, _replied, returnType);
+
+    private object? RecordPublish(object?[]? args, Type returnType) =>
+        RecordMessage(args, _published, returnType);
+
+    private static object? RecordMessage(object?[]? args, List<object> sink, Type returnType)
+    {
+        if (args is { Length: > 0 } && args[0] is { } message)
+        {
+            sink.Add(message);
+        }
+
+        return CompletedFor(returnType);
+    }
+
+    private static object CreateContextBag()
+    {
+        var type = Type.GetType("NServiceBus.Extensibility.ContextBag, NServiceBus.Core")
+            ?? Type.GetType("NServiceBus.Extensibility.ContextBag, NServiceBus")
+            ?? throw new InvalidOperationException("NServiceBus ContextBag type not found.");
+        return System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(type);
+    }
     private static object? CompletedFor(Type returnType)
     {
         if (returnType == typeof(void) || returnType == typeof(Task))
@@ -88,12 +99,17 @@ public class StubMessageHandlerContext : DispatchProxy
 
         if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
         {
-            var resultType = returnType.GetGenericArguments()[0];
-            var fromResult = typeof(Task).GetMethod(nameof(Task.FromResult))!.MakeGenericMethod(resultType);
-            return fromResult.Invoke(null, [GetDefault(resultType)]);
+            return CreateCompletedGenericTask(returnType);
         }
 
         return GetDefault(returnType);
+    }
+
+    private static object? CreateCompletedGenericTask(Type returnType)
+    {
+        var resultType = returnType.GetGenericArguments()[0];
+        var fromResult = typeof(Task).GetMethod(nameof(Task.FromResult))!.MakeGenericMethod(resultType);
+        return fromResult.Invoke(null, [GetDefault(resultType)]);
     }
 
     private static object? GetDefault(Type type) =>

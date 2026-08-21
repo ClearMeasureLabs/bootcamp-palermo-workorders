@@ -110,76 +110,149 @@ public class ServerFixture
     {
         const int maxAttempts = 3;
         const int delayBetweenAttemptsMs = 5000;
-
         var client = TestHttpClientFactory.CreateInsecureClient();
 
-        // 1. Verify site is reachable
         TestContext.Out.WriteLine("Health gate: verifying site is reachable...");
+        var siteResult = await TryReachSite(client, maxAttempts, delayBetweenAttemptsMs);
+        if (!siteResult.Succeeded)
+        {
+            Assert.Fail(
+                $"Health gate FAILED: Site is not reachable at {ApplicationBaseUrl} after {maxAttempts} attempts. {siteResult.Detail}");
+        }
+
+        TestContext.Out.WriteLine("Health gate: verifying /_healthcheck...");
+        var healthResult = await TryGetHealthBody(client, maxAttempts, delayBetweenAttemptsMs);
+        if (!healthResult.Succeeded)
+        {
+            Assert.Fail(
+                $"Health gate FAILED: /_healthcheck did not return Healthy or Degraded after {maxAttempts} attempts. {healthResult.Detail}");
+        }
+
+        TestContext.Out.WriteLine("Health gate: PASSED - site is reachable and healthy.");
+    }
+
+    private static async Task<(bool Succeeded, string Detail)> TryReachSite(
+        HttpClient client,
+        int maxAttempts,
+        int delayBetweenAttemptsMs)
+    {
         HttpResponseMessage? siteResponse = null;
         Exception? lastSiteException = null;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            try
+            (siteResponse, lastSiteException) =
+                await AttemptGet(client, ApplicationBaseUrl, siteResponse, lastSiteException);
+            if (siteResponse?.IsSuccessStatusCode == true)
             {
-                siteResponse = await client.GetAsync(ApplicationBaseUrl);
-                TestContext.Out.WriteLine($"  GET {ApplicationBaseUrl} -> {(int)siteResponse.StatusCode}");
-                if (siteResponse.IsSuccessStatusCode) break;
-            }
-            catch (Exception ex)
-            {
-                lastSiteException = ex;
-                TestContext.Out.WriteLine($"  GET {ApplicationBaseUrl} -> {ex.GetType().Name}: {ex.Message}");
+                return (true, string.Empty);
             }
 
-            if (attempt < maxAttempts) await Task.Delay(delayBetweenAttemptsMs);
+            await DelayIfMoreAttempts(attempt, maxAttempts, delayBetweenAttemptsMs);
         }
 
-        if (siteResponse == null || !siteResponse.IsSuccessStatusCode)
-        {
-            var detail = lastSiteException != null
-                ? $"Last exception: {lastSiteException.GetType().Name}: {lastSiteException.Message}"
-                : $"Last status code: {siteResponse?.StatusCode}";
-            Assert.Fail(
-                $"Health gate FAILED: Site is not reachable at {ApplicationBaseUrl} after {maxAttempts} attempts. {detail}");
-        }
+        return (false, FormatReachFailure(lastSiteException, siteResponse));
+    }
 
-        // 2. Verify /_healthcheck returns Healthy (includes database connectivity)
-        TestContext.Out.WriteLine("Health gate: verifying /_healthcheck...");
+    private static async Task<(bool Succeeded, string Detail)> TryGetHealthBody(
+        HttpClient client,
+        int maxAttempts,
+        int delayBetweenAttemptsMs)
+    {
         var healthUrl = $"{ApplicationBaseUrl}/_healthcheck";
         string? healthBody = null;
         HttpStatusCode? healthStatus = null;
         Exception? lastHealthException = null;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            try
+            var attemptResult = await AttemptHealthGet(client, healthUrl);
+            if (attemptResult.Exception != null)
             {
-                var response = await client.GetAsync(healthUrl);
-                healthStatus = response.StatusCode;
-                healthBody = await response.Content.ReadAsStringAsync();
-                TestContext.Out.WriteLine($"  GET {healthUrl} -> {(int)response.StatusCode}: {healthBody}");
-                if (response.IsSuccessStatusCode && IsAcceptableHealthStatus(healthBody))
-                    break;
+                lastHealthException = attemptResult.Exception;
             }
-            catch (Exception ex)
+            else
             {
-                lastHealthException = ex;
-                TestContext.Out.WriteLine($"  GET {healthUrl} -> {ex.GetType().Name}: {ex.Message}");
+                healthStatus = attemptResult.Status;
+                healthBody = attemptResult.Body;
+                if (IsSuccessfulHealth(attemptResult.Status, attemptResult.Body))
+                {
+                    return (true, string.Empty);
+                }
             }
 
-            if (attempt < maxAttempts) await Task.Delay(delayBetweenAttemptsMs);
+            await DelayIfMoreAttempts(attempt, maxAttempts, delayBetweenAttemptsMs);
         }
 
-        if (healthBody == null || !IsAcceptableHealthStatus(healthBody))
-        {
-            var detail = lastHealthException != null
-                ? $"Last exception: {lastHealthException.GetType().Name}: {lastHealthException.Message}"
-                : $"Status: {healthStatus}, Body: {healthBody}";
-            Assert.Fail(
-                $"Health gate FAILED: /_healthcheck did not return Healthy or Degraded after {maxAttempts} attempts. {detail}");
-        }
-
-        TestContext.Out.WriteLine("Health gate: PASSED - site is reachable and healthy.");
+        return (false, FormatHealthFailure(lastHealthException, healthStatus, healthBody));
     }
+
+    private static async Task<(HttpResponseMessage? Response, Exception? Exception)> AttemptGet(
+        HttpClient client,
+        string url,
+        HttpResponseMessage? previousResponse,
+        Exception? previousException)
+    {
+        try
+        {
+            var response = await client.GetAsync(url);
+            TestContext.Out.WriteLine($"  GET {url} -> {(int)response.StatusCode}");
+            return (response, previousException);
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"  GET {url} -> {ex.GetType().Name}: {ex.Message}");
+            return (previousResponse, ex);
+        }
+    }
+
+    private static async Task<(HttpStatusCode? Status, string? Body, Exception? Exception)> AttemptHealthGet(
+        HttpClient client,
+        string healthUrl)
+    {
+        try
+        {
+            var response = await client.GetAsync(healthUrl);
+            var body = await response.Content.ReadAsStringAsync();
+            TestContext.Out.WriteLine($"  GET {healthUrl} -> {(int)response.StatusCode}: {body}");
+            return (response.StatusCode, body, null);
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"  GET {healthUrl} -> {ex.GetType().Name}: {ex.Message}");
+            return (null, null, ex);
+        }
+    }
+
+    private static bool IsSuccessfulHealth(HttpStatusCode? status, string? body)
+    {
+        if (status is null || body is null)
+        {
+            return false;
+        }
+
+        var code = (int)status.Value;
+        return code is >= 200 and < 300 && IsAcceptableHealthStatus(body);
+    }
+
+    private static async Task DelayIfMoreAttempts(int attempt, int maxAttempts, int delayBetweenAttemptsMs)
+    {
+        if (attempt < maxAttempts)
+        {
+            await Task.Delay(delayBetweenAttemptsMs);
+        }
+    }
+
+    private static string FormatReachFailure(Exception? lastSiteException, HttpResponseMessage? siteResponse) =>
+        lastSiteException != null
+            ? $"Last exception: {lastSiteException.GetType().Name}: {lastSiteException.Message}"
+            : $"Last status code: {siteResponse?.StatusCode}";
+
+    private static string FormatHealthFailure(
+        Exception? lastHealthException,
+        HttpStatusCode? healthStatus,
+        string? healthBody) =>
+        lastHealthException != null
+            ? $"Last exception: {lastHealthException.GetType().Name}: {lastHealthException.Message}"
+            : $"Status: {healthStatus}, Body: {healthBody}";
 
     private static bool IsAcceptableHealthStatus(string body) =>
         body.Contains("Healthy", StringComparison.OrdinalIgnoreCase) ||
@@ -187,83 +260,70 @@ public class ServerFixture
 
     private async Task StartAndWaitForServer()
     {
-        var configuration = TestHost.GetRequiredService<IConfiguration>();
-        var connectionString = configuration.GetConnectionString("SqlConnectionString") ?? "";
-        var useSqlite = connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
-
-        // Use --no-build to skip recompilation (already built by the build script)
-        // and --no-launch-profile to prevent launchSettings.json from overriding
-        // environment variables (e.g. connection strings) set by the test harness
-        var config = BuildConfiguration;
-        var arguments = useSqlite
-            ? $"run --no-build --configuration {config} --no-launch-profile --urls={ApplicationBaseUrl}"
-            : $"run --no-build --configuration {config} --urls={ApplicationBaseUrl}";
-
-        _serverProcess = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = arguments,
-                WorkingDirectory = ProjectPath,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            }
-        };
-        _serverProcess.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
-
-        if (useSqlite)
-        {
-            _serverProcess.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
-
-            // Provide a dummy Application Insights connection string to prevent the
-            // Azure Monitor exporter from throwing when --no-launch-profile is used
-            _serverProcess.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] =
-                "InstrumentationKey=00000000-0000-0000-0000-000000000000";
-
-            // For SQLite file-based databases, resolve to absolute path so the server
-            // process uses the same database file regardless of its working directory
-            if (!connectionString.Contains(":memory:", StringComparison.OrdinalIgnoreCase))
-            {
-                var dbPath = connectionString["Data Source=".Length..].Trim();
-                var semicolonIndex = dbPath.IndexOf(';');
-                if (semicolonIndex >= 0) dbPath = dbPath[..semicolonIndex];
-
-                if (!Path.IsPathRooted(dbPath))
-                {
-                    var absolutePath = Path.GetFullPath(dbPath);
-                    connectionString = $"Data Source={absolutePath}";
-                }
-            }
-
-            _serverProcess.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] = connectionString;
-        }
-
-        // Acceptance runs inherit CI environment variables; disable API key auth so Blazor WASM
-        // (PublisherGateway) and health checks are not blocked when the pipeline sets ApiKeyAuthentication.
-        _serverProcess.StartInfo.Environment["ApiKeyAuthentication__Enabled"] = "false";
-        _serverProcess.StartInfo.Environment["ApiKeyAuthentication__ValidationKey"] = "";
-
-        _serverProcess.OutputDataReceived += (_, e) =>
-        {
-            if (e.Data != null)
-                TestContext.Out.WriteLine($"  [Server stdout] {e.Data}");
-        };
-        _serverProcess.ErrorDataReceived += (_, e) =>
-        {
-            if (e.Data != null)
-                TestContext.Out.WriteLine($"  [Server stderr] {e.Data}");
-        };
-
+        var connectionString = GetSqlConnectionString();
+        var useSqlite = IsSqliteConnection(connectionString);
+        _serverProcess = CreateDotnetProcess(ProjectPath, BuildServerArguments(useSqlite));
+        ConfigureServerEnvironment(_serverProcess, useSqlite, connectionString);
+        AttachProcessLogging(_serverProcess, "Server");
         _serverProcess.Start();
         _serverProcess.BeginOutputReadLine();
         _serverProcess.BeginErrorReadLine();
+        await WaitUntilUrlReady(ApplicationBaseUrl);
+    }
 
-        // Wait for server to be ready
+    private static string BuildServerArguments(bool useSqlite)
+    {
+        var config = BuildConfiguration;
+        return useSqlite
+            ? $"run --no-build --configuration {config} --no-launch-profile --urls={ApplicationBaseUrl}"
+            : $"run --no-build --configuration {config} --urls={ApplicationBaseUrl}";
+    }
+
+    private static void ConfigureServerEnvironment(Process process, bool useSqlite, string connectionString)
+    {
+        process.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
+        process.StartInfo.Environment["ApiKeyAuthentication__Enabled"] = "false";
+        process.StartInfo.Environment["ApiKeyAuthentication__ValidationKey"] = "";
+        if (useSqlite)
+        {
+            ApplySqliteServerEnvironment(process, connectionString);
+        }
+    }
+
+    private static void ApplySqliteServerEnvironment(Process process, string connectionString)
+    {
+        process.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
+        process.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] =
+            "InstrumentationKey=00000000-0000-0000-0000-000000000000";
+        process.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] =
+            ResolveSqliteConnectionString(connectionString);
+    }
+
+    private static string ResolveSqliteConnectionString(string connectionString)
+    {
+        if (connectionString.Contains(":memory:", StringComparison.OrdinalIgnoreCase))
+        {
+            return connectionString;
+        }
+
+        var dbPath = connectionString["Data Source=".Length..].Trim();
+        var semicolonIndex = dbPath.IndexOf(';');
+        if (semicolonIndex >= 0)
+        {
+            dbPath = dbPath[..semicolonIndex];
+        }
+
+        if (!Path.IsPathRooted(dbPath))
+        {
+            dbPath = Path.GetFullPath(dbPath);
+        }
+
+        return $"Data Source={dbPath}";
+    }
+
+    private static async Task WaitUntilUrlReady(string baseUrl)
+    {
         var client = TestHttpClientFactory.CreateInsecureClient();
-        var baseUrl = ApplicationBaseUrl;
         var timeout = TimeSpan.FromSeconds(WaitTimeoutSeconds);
         var start = DateTime.UtcNow;
         Exception? lastException = null;
@@ -273,7 +333,9 @@ public class ServerFixture
             {
                 var response = await client.GetAsync(baseUrl);
                 if (response.IsSuccessStatusCode)
+                {
                     return;
+                }
             }
             catch (Exception ex)
             {
@@ -294,33 +356,114 @@ public class ServerFixture
     /// </summary>
     private async Task StartAndWaitForWorker()
     {
-        var configuration = TestHost.GetRequiredService<IConfiguration>();
-        var connectionString = configuration.GetConnectionString("SqlConnectionString") ?? "";
-        var useSqlite = connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
-
-        if (!StartWorker)
+        var connectionString = GetSqlConnectionString();
+        if (ShouldSkipWorker(IsSqliteConnection(connectionString)))
         {
-            TestContext.Out.WriteLine("Worker: skipped (StartWorker=false).");
-            return;
-        }
-
-        if (useSqlite)
-        {
-            TestContext.Out.WriteLine("Worker: skipped (SQLite mode — Worker requires SqlServerTransport).");
             return;
         }
 
         TestContext.Out.WriteLine("Worker: starting...");
         var config = BuildConfiguration;
-        var arguments = $"run --no-build --configuration {config} --no-launch-profile";
+        _workerProcess = CreateDotnetProcess(
+            WorkerProjectPath,
+            $"run --no-build --configuration {config} --no-launch-profile");
+        ConfigureWorkerEnvironment(_workerProcess, connectionString);
+        var readySignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        AttachWorkerLogging(_workerProcess, readySignal);
+        _workerProcess.Start();
+        _workerProcess.BeginOutputReadLine();
+        _workerProcess.BeginErrorReadLine();
+        await WaitForWorkerReadySignal(readySignal);
+        WorkerStarted = true;
+    }
 
-        _workerProcess = new Process
+    private static bool ShouldSkipWorker(bool useSqlite)
+    {
+        if (!StartWorker)
+        {
+            TestContext.Out.WriteLine("Worker: skipped (StartWorker=false).");
+            return true;
+        }
+
+        if (useSqlite)
+        {
+            TestContext.Out.WriteLine("Worker: skipped (SQLite mode — Worker requires SqlServerTransport).");
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void ConfigureWorkerEnvironment(Process process, string connectionString)
+    {
+        process.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] = connectionString;
+        process.StartInfo.Environment["RemotableBus__ApiUrl"] =
+            $"{ApplicationBaseUrl}/api/blazor-wasm-single-api";
+        process.StartInfo.Environment["DOTNET_ENVIRONMENT"] = "Development";
+        process.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
+        process.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] =
+            "InstrumentationKey=00000000-0000-0000-0000-000000000000";
+        process.StartInfo.Environment["AI_OpenAI_ApiKey"] = "";
+        process.StartInfo.Environment["AI_OpenAI_Url"] = "";
+        process.StartInfo.Environment["AI_OpenAI_Model"] = "";
+    }
+
+    private static void AttachWorkerLogging(Process process, TaskCompletionSource<bool> readySignal)
+    {
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data == null)
+            {
+                return;
+            }
+
+            TestContext.Out.WriteLine($"  [Worker stdout] {e.Data}");
+            if (e.Data.Contains("started", StringComparison.OrdinalIgnoreCase))
+            {
+                readySignal.TrySetResult(true);
+            }
+        };
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+            {
+                TestContext.Out.WriteLine($"  [Worker stderr] {e.Data}");
+            }
+        };
+    }
+
+    private static async Task WaitForWorkerReadySignal(TaskCompletionSource<bool> readySignal)
+    {
+        var timeout = Task.Delay(TimeSpan.FromSeconds(WaitTimeoutSeconds));
+        var completed = await Task.WhenAny(readySignal.Task, timeout);
+        if (completed == timeout)
+        {
+            TestContext.Out.WriteLine(
+                $"Worker: did not detect startup confirmation within {WaitTimeoutSeconds}s. " +
+                "Proceeding anyway — SqlServerTransport is durable and will deliver queued messages.");
+            return;
+        }
+
+        TestContext.Out.WriteLine("Worker: started successfully.");
+    }
+
+    private static string GetSqlConnectionString()
+    {
+        var configuration = TestHost.GetRequiredService<IConfiguration>();
+        return configuration.GetConnectionString("SqlConnectionString") ?? "";
+    }
+
+    private static bool IsSqliteConnection(string connectionString) =>
+        connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
+
+    private static Process CreateDotnetProcess(string workingDirectory, string arguments) =>
+        new()
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
                 Arguments = arguments,
-                WorkingDirectory = WorkerProjectPath,
+                WorkingDirectory = workingDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -328,70 +471,22 @@ public class ServerFixture
             }
         };
 
-        // Connection string for SqlServerTransport
-        _workerProcess.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] = connectionString;
-
-        // Point Worker's RemotableBus back to the test UI.Server instance
-        _workerProcess.StartInfo.Environment["RemotableBus__ApiUrl"] =
-            $"{ApplicationBaseUrl}/api/blazor-wasm-single-api";
-
-        _workerProcess.StartInfo.Environment["DOTNET_ENVIRONMENT"] = "Development";
-        _workerProcess.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
-
-        // Provide a dummy Application Insights connection string to prevent the
-        // Azure Monitor exporter from throwing when --no-launch-profile is used
-        _workerProcess.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] =
-            "InstrumentationKey=00000000-0000-0000-0000-000000000000";
-
-        // Prevent the Worker from trying to connect to Azure OpenAI
-        _workerProcess.StartInfo.Environment["AI_OpenAI_ApiKey"] = "";
-        _workerProcess.StartInfo.Environment["AI_OpenAI_Url"] = "";
-        _workerProcess.StartInfo.Environment["AI_OpenAI_Model"] = "";
-
-        _workerProcess.Start();
-
-        // Worker is a generic host (no HTTP endpoint to poll). Monitor stdout for the
-        // NServiceBus endpoint startup confirmation. NServiceBus logs when the endpoint
-        // is successfully started. As a safety net, SqlServerTransport is durable — any
-        // messages published before Worker is fully ready will be consumed once it starts.
-        var readySignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        _workerProcess.OutputDataReceived += (_, e) =>
-        {
-            if (e.Data == null) return;
-            TestContext.Out.WriteLine($"  [Worker stdout] {e.Data}");
-            // NServiceBus logs the endpoint name when it starts successfully
-            if (e.Data.Contains("started", StringComparison.OrdinalIgnoreCase))
-            {
-                readySignal.TrySetResult(true);
-            }
-        };
-
-        _workerProcess.ErrorDataReceived += (_, e) =>
+    private static void AttachProcessLogging(Process process, string label)
+    {
+        process.OutputDataReceived += (_, e) =>
         {
             if (e.Data != null)
-                TestContext.Out.WriteLine($"  [Worker stderr] {e.Data}");
+            {
+                TestContext.Out.WriteLine($"  [{label} stdout] {e.Data}");
+            }
         };
-
-        _workerProcess.BeginOutputReadLine();
-        _workerProcess.BeginErrorReadLine();
-
-        // Wait for the ready signal or timeout
-        var timeout = Task.Delay(TimeSpan.FromSeconds(WaitTimeoutSeconds));
-        var completed = await Task.WhenAny(readySignal.Task, timeout);
-
-        if (completed == timeout)
+        process.ErrorDataReceived += (_, e) =>
         {
-            TestContext.Out.WriteLine(
-                $"Worker: did not detect startup confirmation within {WaitTimeoutSeconds}s. " +
-                "Proceeding anyway — SqlServerTransport is durable and will deliver queued messages.");
-        }
-        else
-        {
-            TestContext.Out.WriteLine("Worker: started successfully.");
-        }
-
-        WorkerStarted = true;
+            if (e.Data != null)
+            {
+                TestContext.Out.WriteLine($"  [{label} stderr] {e.Data}");
+            }
+        };
     }
 
     private static async Task ResetServerDbConnections()
