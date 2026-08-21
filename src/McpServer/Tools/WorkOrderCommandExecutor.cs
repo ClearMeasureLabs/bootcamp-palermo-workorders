@@ -87,10 +87,31 @@ internal static class WorkOrderCommandExecutor
         string executingUsername,
         string? assigneeUsername)
     {
+        var prepared = await TryPrepareCommandContextAsync(
+            bus,
+            workOrderNumber,
+            commandName,
+            executingUsername,
+            assigneeUsername);
+        if (prepared.Error != null)
+        {
+            return prepared.Error;
+        }
+
+        return await RunPreparedCommandAsync(bus, commandName, prepared.WorkOrder!, prepared.User!);
+    }
+
+    private static async Task<(WorkOrder? WorkOrder, Employee? User, string? Error)> TryPrepareCommandContextAsync(
+        IBus bus,
+        string workOrderNumber,
+        string commandName,
+        string executingUsername,
+        string? assigneeUsername)
+    {
         var (workOrder, workOrderError) = await LoadWorkOrderAsync(bus, workOrderNumber);
         if (workOrderError != null)
         {
-            return workOrderError;
+            return (null, null, workOrderError);
         }
 
         var (user, userError) = await LoadEmployeeAsync(
@@ -99,16 +120,28 @@ internal static class WorkOrderCommandExecutor
             $"Employee with username '{executingUsername}' not found.");
         if (userError != null)
         {
-            return userError;
+            return (null, null, userError);
         }
 
-        if (commandName == "DraftToAssignedCommand"
-            && await PrepareDraftToAssignedAsync(bus, workOrder!, assigneeUsername) is { } assigneeError)
+        if (commandName == "DraftToAssignedCommand")
         {
-            return assigneeError;
+            var assigneeError = await PrepareDraftToAssignedAsync(bus, workOrder!, assigneeUsername);
+            if (assigneeError != null)
+            {
+                return (null, null, assigneeError);
+            }
         }
 
-        var command = CreateCommand(commandName, workOrder!, user!);
+        return (workOrder, user, null);
+    }
+
+    private static async Task<string> RunPreparedCommandAsync(
+        IBus bus,
+        string commandName,
+        WorkOrder workOrder,
+        Employee user)
+    {
+        var command = CreateCommand(commandName, workOrder, user);
         if (command == null)
         {
             return FormatUnknownCommand(commandName);
@@ -116,7 +149,7 @@ internal static class WorkOrderCommandExecutor
 
         if (!command.IsValid())
         {
-            return FormatInvalidCommand(commandName, workOrder!, command);
+            return FormatInvalidCommand(commandName, workOrder, command);
         }
 
         var result = await bus.Send(command);

@@ -162,6 +162,40 @@ public class WorkOrderManageSpeechTests
         });
     }
 
+    [Test]
+    public void SpeakTitleButton_WhenTitleEmpty_DoesNotInvokeTranslationService()
+    {
+        using var ctx = new TestContext();
+
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
+        user.Id = Guid.NewGuid();
+        user.PreferredLanguage = "es-ES";
+
+        var translationService = new StubTranslationService();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilderEmptyTitle());
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(translationService);
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.RenderComponent<WorkOrderManage>();
+
+        component.WaitForAssertion(() =>
+        {
+            component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakTitle}']").ShouldNotBeNull();
+        });
+
+        component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakTitle}']").Click();
+
+        translationService.LastText.ShouldBeNull();
+    }
+
     private class StubBus() : Bus(null!)
     {
         public override Task Publish(INotification notification) => Task.CompletedTask;
@@ -195,6 +229,21 @@ public class WorkOrderManageSpeechTests
                 Status = WorkOrderStatus.Draft,
                 Creator = creator,
                 Title = "Test title"
+            };
+        }
+    }
+
+    private class StubWorkOrderBuilderEmptyTitle : IWorkOrderBuilder
+    {
+        public WorkOrder CreateNewWorkOrder(Employee creator)
+        {
+            return new WorkOrder
+            {
+                Id = Guid.NewGuid(),
+                Number = "WO-TEST",
+                Status = WorkOrderStatus.Draft,
+                Creator = creator,
+                Title = ""
             };
         }
     }
