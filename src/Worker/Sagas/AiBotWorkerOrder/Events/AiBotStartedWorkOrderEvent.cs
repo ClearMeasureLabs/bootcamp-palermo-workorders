@@ -1,5 +1,3 @@
-﻿namespace Worker.Sagas.AiBotWorkerOrder.Events;
+namespace Worker.Sagas.AiBotWorkerOrder.Events;
 
-public record AiBotStartedWorkOrderEvent(Guid SagaId)
-{
-}
+public record AiBotStartedWorkOrderEvent(Guid SagaId);

@@ -3,6 +3,4 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public record ChatClientConfigQuery : IRequest<ChatClientConfig>, IRemotableRequest
-{
-}
+public record ChatClientConfigQuery : IRequest<ChatClientConfig>, IRemotableRequest;

@@ -1,3 +1,4 @@
+// ReSharper disable UnusedAutoPropertyAccessor.Local
 using System.Diagnostics;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;

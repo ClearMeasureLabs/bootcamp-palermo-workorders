@@ -126,14 +126,13 @@ jobs:
             Write-Host "Fixed execute permissions on .playwright/ directory"
           }
 
-      # Include runner.arch so x64 Deploy does not restore ARM64 browsers via
-      # restore-keys (build.yml keys are playwright-Linux-ARM64-*/X64-*). Completes
-      # the incomplete arch split from 01f2f191 which only updated build.yml.
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
+          # Include runner.arch so x64 Deploy does not restore ARM64 browsers via
+          # restore-keys (build.yml keys are playwright-Linux-ARM64-*/X64-*).
           key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/AcceptanceTests/AcceptanceTests.csproj') }}
           restore-keys: |
             playwright-${{ runner.os }}-${{ runner.arch }}-
@@ -142,8 +141,8 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          # Exact-key miss can still restore a prefix match. Wipe the cache dir so a
-          # stale wrong-arch headless_shell cannot skip re-download on install.
+          # Exact-key miss can still restore a prefix match. Wipe so a stale wrong-arch
+          # headless_shell cannot skip re-download on install.
           $playwrightCache = Join-Path $HOME ".cache/ms-playwright"
           if (Test-Path $playwrightCache) {
             Write-Host "Clearing Playwright cache before install (no exact cache-hit): $playwrightCache"
@@ -376,6 +375,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Octopus deploy is the release gate; Azure FQDN lookup is best-effort (SP may lack RG read).
       - name: Get Container App FQDN
         shell: pwsh
         continue-on-error: true
@@ -383,16 +383,16 @@ jobs:
           $appName = "${{ vars.CONTAINER_APP_NAME }}".Trim()
           $resourceGroup = "${{ vars.UAT_RESOURCE_GROUP_NAME }}".Trim()
           if ([string]::IsNullOrWhiteSpace($appName) -or [string]::IsNullOrWhiteSpace($resourceGroup)) {
-            Write-Host "::warning::Skipping UAT Container App URL: CONTAINER_APP_NAME or UAT_RESOURCE_GROUP_NAME is empty in this environment."
+            Write-Host "::warning::Skipping UAT Container App URL: CONTAINER_APP_NAME or UAT_RESOURCE_GROUP_NAME is empty."
             exit 0
           }
           $fqdn = az containerapp show `
             --name $appName `
             --resource-group $resourceGroup `
             --query "properties.configuration.ingress.fqdn" `
-            -o tsv
-          if ([string]::IsNullOrWhiteSpace($fqdn)) {
-            Write-Host "::warning::Could not retrieve UAT container app FQDN"
+            -o tsv 2>&1
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($fqdn) -or $fqdn -match 'ERROR') {
+            Write-Host "::warning::Could not retrieve UAT container app FQDN (Octopus deploy already succeeded). Details: $fqdn"
             exit 0
           }
           $containerAppUrl = "https://$fqdn"
@@ -427,7 +427,9 @@ jobs:
   deploy-to-prod:
     name: Prod
     needs: [deploy-to-uat]
-    if: success()
+    # Do not use success() — skipped TDD on workflow_dispatch makes success() false
+    # and skips Prod even when UAT succeeded.
+    if: ${{ !cancelled() && needs.deploy-to-uat.result == 'success' }}
     runs-on: ubuntu-latest
     environment:
       name: Prod
@@ -478,16 +480,16 @@ jobs:
           $appName = "${{ vars.CONTAINER_APP_NAME }}".Trim()
           $resourceGroup = "${{ vars.PROD_RESOURCE_GROUP_NAME }}".Trim()
           if ([string]::IsNullOrWhiteSpace($appName) -or [string]::IsNullOrWhiteSpace($resourceGroup)) {
-            Write-Host "::warning::Skipping Prod Container App URL: CONTAINER_APP_NAME or PROD_RESOURCE_GROUP_NAME is empty in this environment."
+            Write-Host "::warning::Skipping Prod Container App URL: CONTAINER_APP_NAME or PROD_RESOURCE_GROUP_NAME is empty."
             exit 0
           }
           $fqdn = az containerapp show `
             --name $appName `
             --resource-group $resourceGroup `
             --query "properties.configuration.ingress.fqdn" `
-            -o tsv
-          if ([string]::IsNullOrWhiteSpace($fqdn)) {
-            Write-Host "::warning::Could not retrieve Prod container app FQDN"
+            -o tsv 2>&1
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($fqdn) -or $fqdn -match 'ERROR') {
+            Write-Host "::warning::Could not retrieve Prod container app FQDN (Octopus deploy already succeeded). Details: $fqdn"
             exit 0
           }
           $containerAppUrl = "https://$fqdn"

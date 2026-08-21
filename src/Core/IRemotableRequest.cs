@@ -1,5 +1,3 @@
-﻿namespace ClearMeasure.Bootcamp.Core;
+namespace ClearMeasure.Bootcamp.Core;
 
-public interface IRemotableRequest
-{
-}
+public interface IRemotableRequest;

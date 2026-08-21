@@ -1,4 +1,6 @@
-﻿using Palermo.BlazorMvc;
+// ReSharper disable NotAccessedPositionalProperty.Global
+// ReSharper disable NotAccessedPositionalProperty.Local
+using Palermo.BlazorMvc;
 
 namespace ClearMeasure.Bootcamp.UI.Shared.Models;
 
