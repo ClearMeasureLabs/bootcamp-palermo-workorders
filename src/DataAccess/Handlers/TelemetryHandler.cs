@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model.Events;
+using ClearMeasure.Bootcamp.Core.Model.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.Metrics;
@@ -10,7 +10,7 @@ public class TelemetryHandler(ILogger<TelemetryHandler> logger)
 {
     private static readonly Meter Meter = new("ChurchBulletin.Application", "1.0.0");
 
-    public static readonly Counter<long> LoginCounter = Meter.CreateCounter<long>(
+    private static readonly Counter<long> LoginCounter = Meter.CreateCounter<long>(
         "app.user.logins",
         unit: "{logins}",
         description: "Number of user login events");

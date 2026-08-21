@@ -60,7 +60,7 @@ internal static class GrpcWorkOrderDateMapper
         message.CompletedDateUtc = ToUtcTimestamp(source.CompletedDate);
     }
 
-    internal static Timestamp? ToUtcTimestamp(DateTime? value) =>
+    private static Timestamp? ToUtcTimestamp(DateTime? value) =>
         value.HasValue
             ? Timestamp.FromDateTime(DateTime.SpecifyKind(value.Value, DateTimeKind.Utc))
             : null;

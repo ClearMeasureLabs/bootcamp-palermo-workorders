@@ -51,7 +51,7 @@ public sealed class RealtimeNotificationHub : IRealtimeNotificationHub
         await BroadcastUtf8JsonAsync(json, cancellationToken).ConfigureAwait(false);
     }
 
-    internal async Task BroadcastUtf8JsonAsync(string json, CancellationToken cancellationToken)
+    private async Task BroadcastUtf8JsonAsync(string json, CancellationToken cancellationToken)
     {
         var bytes = Encoding.UTF8.GetBytes(json);
         foreach (var (id, socket) in _connections.ToArray())

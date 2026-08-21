@@ -11,7 +11,7 @@ public static class CoreCoberturaPresence
     /// <summary>
     /// Production Core Cobertura package name emitted by Coverlet.
     /// </summary>
-    public const string CorePackageName = "ClearMeasure.Bootcamp.Core";
+    private const string CorePackageName = "ClearMeasure.Bootcamp.Core";
 
     /// <summary>
     /// Returns true when the Core package (or production Core filenames) has a line with hits &gt; 0.
@@ -50,7 +50,7 @@ public static class CoreCoberturaPresence
     /// <summary>
     /// True when the Cobertura class belongs to production Core (package path or type name).
     /// </summary>
-    public static bool IsProductionCoreClass(string? filename, string? className)
+    private static bool IsProductionCoreClass(string? filename, string? className)
     {
         if (IsProductionCoreFilename(filename))
         {

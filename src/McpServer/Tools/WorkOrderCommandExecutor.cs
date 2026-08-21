@@ -11,7 +11,7 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 /// </summary>
 internal static class WorkOrderCommandExecutor
 {
-    internal const string AvailableCommandsList =
+    private const string AvailableCommandsList =
         "DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand, Shelve, InProgressToCompleteCommand, AssignedToCancelledCommand";
 
     private static readonly IReadOnlyDictionary<string, Func<WorkOrder, Employee, StateCommandBase>> CommandFactories =
@@ -25,7 +25,7 @@ internal static class WorkOrderCommandExecutor
             ["AssignedToCancelledCommand"] = (workOrder, user) => new AssignedToCancelledCommand(workOrder, user),
         };
 
-    internal static async Task<(WorkOrder? WorkOrder, string? Error)> LoadWorkOrderAsync(IBus bus, string workOrderNumber)
+    private static async Task<(WorkOrder? WorkOrder, string? Error)> LoadWorkOrderAsync(IBus bus, string workOrderNumber)
     {
         var workOrder = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
         if (workOrder == null)
@@ -36,7 +36,7 @@ internal static class WorkOrderCommandExecutor
         return (workOrder, null);
     }
 
-    internal static async Task<(Employee? Employee, string? Error)> LoadEmployeeAsync(IBus bus, string username, string notFoundMessage)
+    private static async Task<(Employee? Employee, string? Error)> LoadEmployeeAsync(IBus bus, string username, string notFoundMessage)
     {
         var employee = await FindEmployeeByUsername(bus, username);
         if (employee == null)
@@ -47,7 +47,7 @@ internal static class WorkOrderCommandExecutor
         return (employee, null);
     }
 
-    internal static async Task<string?> PrepareDraftToAssignedAsync(
+    private static async Task<string?> PrepareDraftToAssignedAsync(
         IBus bus,
         WorkOrder workOrder,
         string? assigneeUsername)
@@ -71,13 +71,13 @@ internal static class WorkOrderCommandExecutor
         return null;
     }
 
-    internal static StateCommandBase? CreateCommand(string commandName, WorkOrder workOrder, Employee user) =>
+    private static StateCommandBase? CreateCommand(string commandName, WorkOrder workOrder, Employee user) =>
         CommandFactories.TryGetValue(commandName, out var factory) ? factory(workOrder, user) : null;
 
-    internal static string FormatUnknownCommand(string commandName) =>
+    private static string FormatUnknownCommand(string commandName) =>
         $"Unknown command '{commandName}'. Available commands: {AvailableCommandsList}.";
 
-    internal static string FormatInvalidCommand(string commandName, WorkOrder workOrder, StateCommandBase command) =>
+    private static string FormatInvalidCommand(string commandName, WorkOrder workOrder, StateCommandBase command) =>
         $"Command '{commandName}' cannot be executed. Work order is in '{workOrder.Status.FriendlyName}' status but the command requires '{command.GetBeginStatus().FriendlyName}' status.";
 
     internal static async Task<string> ExecuteCommandAsync(

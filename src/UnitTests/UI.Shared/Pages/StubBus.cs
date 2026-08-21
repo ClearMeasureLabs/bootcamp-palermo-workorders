@@ -50,7 +50,7 @@ public class StubBus() : Bus(null!)
         throw new NotImplementedException();
     }
 
-    public Func<WorkOrder[]> WorkOrderSpecificationQueryResponse => () =>
+    private Func<WorkOrder[]> WorkOrderSpecificationQueryResponse => () =>
     [
         new WorkOrder
         {
@@ -70,7 +70,7 @@ public class StubBus() : Bus(null!)
         }
     ];
 
-    public static Task EmployeeByUserNameQueryResponse<TResponse>()
+    private static Task EmployeeByUserNameQueryResponse<TResponse>()
     {
         var employee = new Employee("hsimpson", "Homer", "Simpson", "homer@springfield.com");
         return Task.FromResult<TResponse>((TResponse)(object)employee);

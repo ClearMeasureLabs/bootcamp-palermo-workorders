@@ -31,7 +31,7 @@ public sealed class ApiKeyAuthenticationMiddleware(RequestDelegate next)
         return !string.IsNullOrEmpty(provided) && FixedTimeEqualsUtf8(expectedKey, provided);
     }
 
-    internal static bool FixedTimeEqualsUtf8(string expected, string provided)
+    private static bool FixedTimeEqualsUtf8(string expected, string provided)
     {
         var expectedBytes = Encoding.UTF8.GetBytes(expected);
         var providedBytes = Encoding.UTF8.GetBytes(provided);

@@ -8,7 +8,7 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 /// This should match the DbUp "Update" action, which only runs Update.
 /// </summary>
 [UsedImplicitly]
-public class UpdateDatabaseCommand() : AbstractDatabaseCommand("Update")
+public class UpdateDatabaseCommand : AbstractDatabaseCommand
 {
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, string connectionString, CancellationToken cancellationToken)
     {

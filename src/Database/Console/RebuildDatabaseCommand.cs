@@ -8,7 +8,7 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 /// This should resemble the DbUp "Rebuild" action, which runs Create, Update, Everytime, and TestData scripts.
 /// </summary>
 [UsedImplicitly]
-public class RebuildDatabaseCommand() : AbstractDatabaseCommand("Rebuild")
+public class RebuildDatabaseCommand : AbstractDatabaseCommand
 {
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, string connectionString, CancellationToken cancellationToken)
     {

@@ -75,7 +75,7 @@ public sealed class IdempotencyMiddleware
         return $"{request.Method}\u001f{request.Path.Value}\u001f{idempotencyKey}\u001f{bodyHash}";
     }
 
-    internal static async Task<string> ComputeBodySha256HexAsync(Stream body, CancellationToken cancellationToken)
+    private static async Task<string> ComputeBodySha256HexAsync(Stream body, CancellationToken cancellationToken)
     {
         using var sha = SHA256.Create();
         var buffer = new byte[8192];
@@ -219,10 +219,10 @@ internal static class IdempotencyInspectionRules
         IdempotencyInspectionRules.IsMutatingMethod(request.Method)
         && IdempotencyInspectionRules.IsIdempotentPath(request.Path);
 
-    internal static bool IsMutatingMethod(string method) =>
+    private static bool IsMutatingMethod(string method) =>
         HttpMethods.IsPost(method) || HttpMethods.IsPut(method);
 
-    internal static bool IsIdempotentPath(PathString path) =>
+    private static bool IsIdempotentPath(PathString path) =>
         path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
         || ApiRateLimitingExtensions.ShouldApplyToPath(path);
 }

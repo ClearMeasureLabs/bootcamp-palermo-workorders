@@ -19,7 +19,7 @@ public static class ConditionalGetEtag
     /// <summary>
     /// Builds a weak entity-tag of the form <c>W/"{lowercase-hex}"</c> (SHA-256 of the representation) from UTF-8 bytes.
     /// </summary>
-    public static EntityTagHeaderValue CreateWeakEtag(ReadOnlySpan<byte> representationUtf8)
+    private static EntityTagHeaderValue CreateWeakEtag(ReadOnlySpan<byte> representationUtf8)
     {
         var hash = SHA256.HashData(representationUtf8);
         var hex = Convert.ToHexStringLower(hash);
