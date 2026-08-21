@@ -1,4 +1,3 @@
-using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
@@ -48,7 +47,7 @@ public class UserSessionTests
         var user = await session.GetCurrentUserAsync();
 
         user.ShouldNotBeNull();
-        user!.UserName.ShouldBe("hsimpson");
+        user.UserName.ShouldBe("hsimpson");
         user.FirstName.ShouldBe("Homer");
     }
 
@@ -63,7 +62,7 @@ public class UserSessionTests
             authProvider,
             ctx.Services.GetRequiredService<NavigationManager>());
 
-        var ex = await Should.ThrowAsync<Exception>(() => session.GetCurrentUserAsync());
+        var ex = await Should.ThrowAsync<Exception>(session.GetCurrentUserAsync);
 
         ex.Message.ShouldContain("doesn't exist");
     }

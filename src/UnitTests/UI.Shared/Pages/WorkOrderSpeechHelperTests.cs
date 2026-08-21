@@ -55,7 +55,7 @@ public class WorkOrderSpeechHelperTests
         var langField = typeof(SpeechSynthesisVoice).GetField("<Lang>k__BackingField",
             BindingFlags.Instance | BindingFlags.NonPublic);
         langField.ShouldNotBeNull();
-        langField!.SetValue(voice, lang);
+        langField.SetValue(voice, lang);
         return voice;
     }
 }
