@@ -51,7 +51,14 @@ function Get-ProductionCrapGateThreshold {
         Write-Error "CRAP gate threshold file not found: $configPath"
     }
     $payload = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-    return [int]$payload.productionThreshold
+    if ($null -eq $payload.productionThreshold) {
+        Write-Error "CRAP gate threshold file missing productionThreshold: $configPath"
+    }
+    $value = 0
+    if (-not [int]::TryParse([string]$payload.productionThreshold, [ref]$value) -or $value -le 0) {
+        Write-Error "CRAP gate productionThreshold must be a positive integer in $configPath (got '$($payload.productionThreshold)')."
+    }
+    return $value
 }
 
 if (-not $PSBoundParameters.ContainsKey("Threshold")) {

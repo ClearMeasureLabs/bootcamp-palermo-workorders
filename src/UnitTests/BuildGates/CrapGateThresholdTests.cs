@@ -24,8 +24,9 @@ public class CrapGateThresholdTests
         var skill = File.ReadAllText(FindRepoFile(Path.Combine(
             ".cursor", "skills", "crap-score-cleanup", "SKILL.md")));
         var config = File.ReadAllText(FindRepoFile(CrapGateThreshold.RelativeConfigPath));
+        using var configDoc = System.Text.Json.JsonDocument.Parse(config);
+        configDoc.RootElement.GetProperty("productionThreshold").GetInt32().ShouldBe(threshold);
 
-        config.ShouldContain($"\"productionThreshold\": {threshold}");
         privateBuild.ShouldContain("crap-gate-threshold.json");
         privateBuild.ShouldNotContain($"-Threshold {threshold}");
         workflow.ShouldContain("crap-gate-threshold.json");
