@@ -1,0 +1,102 @@
+using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.UI.Client;
+using ClearMeasure.Bootcamp.UI.Shared.Authentication;
+using MediatR;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
+using Shouldly;
+using TestContext = Bunit.TestContext;
+
+namespace ClearMeasure.Bootcamp.UnitTests.UI.Client;
+
+[TestFixture]
+public class UserSessionTests
+{
+    [Test]
+    public async Task GetCurrentUserAsync_ShouldReturnNull_WhenUsernameEmpty()
+    {
+        using var ctx = new TestContext();
+        var authProvider = new CustomAuthenticationStateProvider();
+        var session = new UserSession(
+            new StubEmployeeBus(null),
+            authProvider,
+            ctx.Services.GetRequiredService<NavigationManager>());
+
+        var user = await session.GetCurrentUserAsync();
+
+        user.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task GetCurrentUserAsync_ShouldReturnEmployee_WhenValid()
+    {
+        using var ctx = new TestContext();
+        var employee = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com")
+        {
+            Id = Guid.NewGuid()
+        };
+        var authProvider = new CustomAuthenticationStateProvider();
+        authProvider.Login("hsimpson");
+        var session = new UserSession(
+            new StubEmployeeBus(employee),
+            authProvider,
+            ctx.Services.GetRequiredService<NavigationManager>());
+
+        var user = await session.GetCurrentUserAsync();
+
+        user.ShouldNotBeNull();
+        user.UserName.ShouldBe("hsimpson");
+        user.FirstName.ShouldBe("Homer");
+    }
+
+    [Test]
+    public async Task GetCurrentUserAsync_ShouldThrow_WhenEmployeeMissing()
+    {
+        using var ctx = new TestContext();
+        var authProvider = new CustomAuthenticationStateProvider();
+        authProvider.Login("unknown");
+        var session = new UserSession(
+            new StubEmployeeBus(null),
+            authProvider,
+            ctx.Services.GetRequiredService<NavigationManager>());
+
+        var ex = await Should.ThrowAsync<Exception>(session.GetCurrentUserAsync);
+
+        ex.Message.ShouldContain("doesn't exist");
+    }
+
+    [Test]
+    public async Task LogOut_ShouldClearAuth_AndNavigateToLogin()
+    {
+        using var ctx = new TestContext();
+        var authProvider = new CustomAuthenticationStateProvider();
+        authProvider.Login("hsimpson");
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        var session = new UserSession(new StubEmployeeBus(null), authProvider, navigationManager);
+
+        session.LogOut();
+
+        var authState = await authProvider.GetAuthenticationStateAsync();
+        authState.User.Identity!.IsAuthenticated.ShouldBeFalse();
+        navigationManager.Uri.ShouldEndWith("/login");
+    }
+
+    private sealed class StubEmployeeBus(Employee? employee) : IBus
+    {
+        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
+        {
+            if (request is EmployeeByUserNameQuery)
+            {
+                return Task.FromResult((TResponse)(object)employee!);
+            }
+
+            throw new NotSupportedException(request.GetType().Name);
+        }
+
+        public Task<object?> Send(object request) => throw new NotSupportedException();
+
+        public Task Publish(INotification notification) => throw new NotSupportedException();
+    }
+}

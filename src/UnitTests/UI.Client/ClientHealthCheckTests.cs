@@ -76,6 +76,17 @@ public class ClientHealthCheckTests
         result.Description.ShouldNotBeNull().ShouldContain("Degraded");
     }
 
+    [Test]
+    public async Task HealthCheckTracer_ShouldReturnHealthy()
+    {
+        var check = new HealthCheckTracer(NullLogger<HealthCheckTracer>.Instance);
+
+        var result = await check.CheckHealthAsync(new HealthCheckContext());
+
+        result.Status.ShouldBe(HealthStatus.Healthy);
+        result.Description.ShouldBe("UI.Client is healthy");
+    }
+
     private sealed class StubHealthBus(HealthStatus status = HealthStatus.Healthy, bool throwOnSend = false) : IBus
     {
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
