@@ -123,6 +123,10 @@ issue node ID.)
 
 ## Completion heartbeat (mandatory — never hand off while pending)
 
+**Always-on memory:** `.cursor/rules/feature-loop-progress-heartbeat.mdc` — for dispatch and
+multi-item runs, keep the ~15-minute stall/progress heartbeat armed until the full work set
+finishes; this section is the per-item CI/closeout poll.
+
 The agent driving #N MUST NOT end a turn or send a final message while CI, merge, issue
 close, or card move is still pending.
 

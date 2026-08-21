@@ -2,8 +2,6 @@ using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using FluentValidation;
 using FluentValidation.Results;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Middleware;
 
@@ -169,7 +167,7 @@ internal static class WebServiceMessagePayloadValidator
 
         var validateTask = (Task)validateMethod.Invoke(
             payloadValidator,
-            new object?[] { payload, cancellationToken })!;
+            new[] { payload, cancellationToken })!;
 
         await validateTask.ConfigureAwait(false);
 

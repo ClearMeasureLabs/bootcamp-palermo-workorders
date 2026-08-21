@@ -28,6 +28,10 @@ in Cursor.
 
 ## Phase 0 — Start the stall watchdog (before any dispatch)
 
+**Always-on memory:** `.cursor/rules/feature-loop-progress-heartbeat.mdc` — keep the ~15-minute
+progress heartbeat armed until the entire authorized work set is fully complete. Do not skip
+or one-shot this phase.
+
 Sub-sessions stall silently: they spawn a background CI poller and end their turn, and the
 poller's completion notification routes to whoever is listening (often the orchestrator,
 not the stopped lane) — so a PR can sit fully green and unmerged for hours. Detection must

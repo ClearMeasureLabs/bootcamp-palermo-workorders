@@ -44,6 +44,19 @@ public class LoginTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task Should_ExposeUserSelectIdMatchingLabelFor()
+    {
+        await Page.GotoAsync("/login");
+
+        var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        var homerOption = userSelect.Locator("option[value='hsimpson']");
+        await WaitForEmployeeOptionsRenderedAsync(homerOption);
+
+        await Expect(userSelect).ToHaveAttributeAsync("id", nameof(Login.Elements.User));
+        await Expect(Page.Locator($"label[for='{Login.Elements.User}']")).ToBeAttachedAsync();
+    }
+
+    [Test, Retry(2)]
     public async Task Should_LoginSuccessfully_UsingUsernameValue_NotDisplayLabel()
     {
         await Page.GotoAsync("/login");
@@ -88,5 +101,40 @@ public class LoginTests : AcceptanceTestBase
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
         await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_ShowLovejoyShortcut_OnLogin_WithoutSelectingMember()
+    {
+        await Page.GotoAsync("/login");
+
+        var shortcut = Page.GetByTestId(nameof(Login.Elements.LovejoyShortcut));
+        await shortcut.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000
+        });
+
+        await Expect(shortcut).ToBeVisibleAsync();
+        await Expect(shortcut).ToHaveTextAsync("Log in as Timothy Lovejoy");
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_LoginAsTlovejoy_WhenLovejoyShortcutClicked()
+    {
+        await Page.GotoAsync("/login");
+
+        var shortcut = Page.GetByTestId(nameof(Login.Elements.LovejoyShortcut));
+        await shortcut.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000
+        });
+
+        await Click(nameof(Login.Elements.LovejoyShortcut));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
+        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome tlovejoy!");
     }
 }

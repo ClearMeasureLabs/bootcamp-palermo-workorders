@@ -1,5 +1,4 @@
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.Core.Import;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
@@ -30,8 +29,7 @@ public class WorkOrdersBulkImportControllerTests
     public async Task ShouldReturnBadRequest_WhenFileEmpty()
     {
         var controller = CreateController(new StubBus());
-        var file = CreateFormFile("", "empty.csv", "text/csv");
-        file = new FormFile(new MemoryStream(), 0, 0, "file", "empty.csv")
+        var file = new FormFile(new MemoryStream(), 0, 0, "file", "empty.csv")
         {
             Headers = new HeaderDictionary(),
             ContentType = "text/csv"
@@ -171,7 +169,7 @@ public class WorkOrdersBulkImportControllerTests
     public void ShouldAcceptCsv_WhenExtensionOrContentTypeMatches()
     {
         WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.csv", "application/octet-stream")).ShouldBeTrue();
-        WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.txt", "text/csv")).ShouldBeTrue();
+        WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.txt")).ShouldBeTrue();
         WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.txt", "application/vnd.ms-excel")).ShouldBeTrue();
         WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.txt", "text/plain")).ShouldBeFalse();
     }
@@ -233,7 +231,7 @@ public class WorkOrdersBulkImportControllerTests
                 return Task.FromResult((TResponse)(object)new StateCommandResult(cmd.WorkOrder, "Save", "ok"));
             }
 
-            throw new NotSupportedException(request?.GetType().FullName);
+            throw new NotSupportedException(request.GetType().FullName);
         }
 
         public Task<object?> Send(object request) => throw new NotImplementedException();

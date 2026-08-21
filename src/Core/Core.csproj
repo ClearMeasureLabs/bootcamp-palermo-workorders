@@ -7,6 +7,8 @@
 	  <AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
 	  <RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+    <!-- Coverlet/Cecil must resolve HealthChecks.Abstractions + Logging.Abstractions next to Core.dll -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>

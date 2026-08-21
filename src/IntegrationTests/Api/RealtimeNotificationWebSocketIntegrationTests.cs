@@ -11,7 +11,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 /// <summary>
 /// Verifies the WebSocket route and related HTTP wiring in the Testing host.
 /// Full in-process WebSocket frame tests against <see cref="Microsoft.AspNetCore.TestHost.TestServer"/> are unreliable
-/// (connect/receive can block indefinitely in CI); real socket behavior is covered by <see cref="ServerRealtimeBusTests"/>
+/// (connect/receive can block indefinitely in CI); real socket behavior is covered by unit middleware tests
 /// and manual or browser-based checks when the Blazor client subscribes.
 /// </summary>
 [TestFixture]

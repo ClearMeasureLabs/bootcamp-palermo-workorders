@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using ClearMeasure.Bootcamp.ServiceDefaults;
+using ChurchBulletin.ServiceDefaults;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,12 +42,57 @@ public class LocalTelemetryFileWriterTests
         writer.TelemetryLogDirectory.ShouldBe(directory);
     }
 
+    [Test]
+    public async Task ExecuteAsync_ShouldCreateLogFiles_ThenCancelCleanly()
+    {
+        var directory = CreateTempDirectory();
+        await using var writer = new LocalTelemetryFileWriter(new StubConfiguration(directory));
+
+        using var cts = new CancellationTokenSource();
+        var start = writer.StartAsync(cts.Token);
+
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (DateTime.UtcNow < deadline && Directory.GetFiles(directory, "*.jsonl").Length == 0)
+        {
+            await Task.Delay(25);
+        }
+
+        Directory.Exists(directory).ShouldBeTrue();
+        Directory.GetFiles(directory, "*.jsonl").Length.ShouldBeGreaterThanOrEqualTo(1);
+
+        writer.WriteLogEntry(LogLevel.Error, "cat", "msg", new InvalidOperationException("write-me"));
+
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = _ => true,
+            Sample = SampleAllDataAndRecorded
+        };
+        ActivitySource.AddActivityListener(listener);
+        using var source = new ActivitySource("telemetry-test");
+        using (var activity = source.CreateActivity("sample", ActivityKind.Internal)?.Start())
+        {
+            activity.ShouldNotBeNull();
+            activity.AddEvent(new ActivityEvent("evt"));
+            writer.WriteTraceEntry(activity, "STARTED");
+            writer.WriteEventEntry(activity, activity.Events.First());
+        }
+
+        writer.WriteMetricEntry("m1", 1.5, "ms", new Dictionary<string, object?> { ["k"] = "v" });
+
+        cts.Cancel();
+        await writer.StopAsync(CancellationToken.None);
+        await start;
+    }
+
     private static string CreateTempDirectory()
     {
         var path = Path.Combine(Path.GetTempPath(), "telemetry-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(path);
         return path;
     }
+
+    private static ActivitySamplingResult SampleAllDataAndRecorded(ref ActivityCreationOptions<ActivityContext> _) =>
+        ActivitySamplingResult.AllDataAndRecorded;
 }
 
 [TestFixture]
@@ -56,17 +101,15 @@ public class TraceEntryTests
     [Test]
     public void ShouldMapActivityFields_WhenConstructedFromActivity()
     {
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData
-        };
+        using var listener = new ActivityListener();
+        listener.ShouldListenTo = _ => true;
+        listener.Sample = SampleAllData;
         ActivitySource.AddActivityListener(listener);
 
         using var source = new ActivitySource("TestSource");
-        using var activity = source.StartActivity("sample");
+        using var activity = source.CreateActivity("sample", ActivityKind.Internal)?.Start();
         activity.ShouldNotBeNull();
-        activity!.SetTag("key", "value");
+        activity.SetTag("key", "value");
 
         var entry = new TraceEntry(activity, "STARTED");
 
@@ -77,6 +120,9 @@ public class TraceEntryTests
         entry.SpanId.ShouldBe(activity.SpanId.ToString());
         entry.Tags["key"].ShouldBe("value");
     }
+
+    private static ActivitySamplingResult SampleAllData(ref ActivityCreationOptions<ActivityContext> _) =>
+        ActivitySamplingResult.AllData;
 }
 
 [TestFixture]

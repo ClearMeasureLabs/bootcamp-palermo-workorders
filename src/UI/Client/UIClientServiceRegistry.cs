@@ -2,17 +2,13 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Client.HealthChecks;
-using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Lamar;
 using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using OpenAI;
 using Palermo.BlazorMvc;
-using static System.Net.WebRequestMethods;
 
 namespace ClearMeasure.Bootcamp.UI.Client;
 
@@ -25,7 +21,7 @@ public class UIClientServiceRegistry : ServiceRegistry
         this.AddScoped<AuthenticationStateProvider>(provider =>
             provider.GetRequiredService<CustomAuthenticationStateProvider>());
 
-        this.AddScoped<IUiBus>(provider => new MvcBus(NullLogger<MvcBus>.Instance));
+        this.AddScoped<IUiBus>(_ => new MvcBus(NullLogger<MvcBus>.Instance));
         this.AddScoped<IUserSession, UserSession>();
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<RemotableBus>());
         this.AddTransient<IPublisherGateway>(sp =>

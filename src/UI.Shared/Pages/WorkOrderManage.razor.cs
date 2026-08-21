@@ -80,7 +80,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
         Model = CreateViewModel(CurrentMode, workOrder);
         var commandList = new StateCommandList();
-        Model.IsReadOnly = !commandList!.GetValidStateCommands(workOrder, currentUser).Any();
+        Model.IsReadOnly = !commandList.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
         _workOrder = workOrder;
 
@@ -97,7 +97,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             WorkOrder = workOrder,
             Mode = mode,
             WorkOrderNumber = workOrder.Number,
-            Status = workOrder.Status!.FriendlyName,
+            Status = workOrder.Status.FriendlyName,
             CreatorFullName = workOrder.Creator!.GetFullName(),
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
@@ -166,16 +166,23 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
     private async Task SpeakTextAsync(string? text)
     {
-        if (string.IsNullOrEmpty(text) || SpeechSynthesis == null || TranslationService == null)
+        if (!CanSpeak(text))
         {
             return;
         }
 
-        var translatedText = await TranslationService.TranslateAsync(text, _preferredLanguage);
+        var translatedText = await TranslationService!.TranslateAsync(text!, _preferredLanguage);
+        await SpeakTranslatedTextAsync(translatedText);
+    }
 
+    private bool CanSpeak(string? text) =>
+        !string.IsNullOrEmpty(text) && SpeechSynthesis != null && TranslationService != null;
+
+    private async Task SpeakTranslatedTextAsync(string translatedText)
+    {
         try
         {
-            var voices = await SpeechSynthesis.GetVoicesAsync();
+            var voices = await SpeechSynthesis!.GetVoicesAsync();
             var utterance = WorkOrderSpeechHelper.CreateUtterance(translatedText, _preferredLanguage, voices);
             await SpeechSynthesis.SpeakAsync(utterance);
         }

@@ -33,19 +33,43 @@ public class WorkOrderSearchTests
         assigneeSelect.ShouldNotBeNull();
         statusSelect.ShouldNotBeNull();
 
-        // Verify user options are loaded (4 employees + "All" option = 5 options)
+        // Verify user options are loaded (5 employees + "All" option = 6 options)
         var creatorOptions = creatorSelect.QuerySelectorAll("option");
-        creatorOptions.Length.ShouldBe(5);
+        creatorOptions.Length.ShouldBe(6);
         creatorOptions[0].TextContent.ShouldBe("All");
 
         var assigneeOptions = assigneeSelect.QuerySelectorAll("option");
-        assigneeOptions.Length.ShouldBe(5);
+        assigneeOptions.Length.ShouldBe(6);
         assigneeOptions[0].TextContent.ShouldBe("All");
 
         // Verify status options are loaded (4 statuses + "All" option = 5 options)
         var statusOptions = statusSelect.QuerySelectorAll("option");
         statusOptions.Length.ShouldBe(6);
         statusOptions[0].TextContent.ShouldBe("All");
+    }
+
+    [Test]
+    public void ShouldAssociateFilterLabelsWithMatchingSelectIds()
+    {
+        using var ctx = new TestContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+
+        var component = ctx.RenderComponent<WorkOrderSearch>();
+
+        AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.CreatorSelect);
+        AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.AssigneeSelect);
+        AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.StatusSelect);
+    }
+
+    private static void AssertLabelForMatchesSelectId(IRenderedComponent<WorkOrderSearch> component, WorkOrderSearch.Elements element)
+    {
+        var id = element.ToString();
+        var select = component.Find($"#{id}");
+        select.ShouldNotBeNull();
+        var label = component.Find($"label[for='{id}']");
+        label.ShouldNotBeNull();
     }
 
     [Test]

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.WebSockets;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using Shouldly;
 
@@ -27,5 +28,19 @@ public class RealtimeNotificationWebSocketMiddlewareTests
         var response = await client.GetAsync("/not-ws");
 
         response.StatusCode.ShouldNotBe(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task Should_AcceptWebSocket_WhenClientConnects()
+    {
+        await using var factory = new ApiVersioningRoutingWebApplicationFactory();
+        var wsClient = factory.Server.CreateWebSocketClient();
+
+        using var socket = await wsClient.ConnectAsync(
+            new Uri(factory.Server.BaseAddress, RealtimeNotificationWebSocketMiddleware.Path),
+            CancellationToken.None);
+
+        socket.State.ShouldBe(WebSocketState.Open);
+        socket.Abort();
     }
 }

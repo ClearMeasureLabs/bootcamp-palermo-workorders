@@ -1,7 +1,5 @@
 using Asp.Versioning;
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.Core.Services;
-using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.McpServer.Tools;
@@ -12,14 +10,10 @@ using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using ClearMeasure.Bootcamp.UI.Server.RateLimiting;
 using ClearMeasure.Bootcamp.UI.Server.Testing;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http.Timeouts;
-using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.Options;
+using ChurchBulletin.ServiceDefaults;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
 
@@ -155,6 +149,9 @@ public static class ServerApplication
 
         var conventions = new MessagingConventions();
         endpointConfiguration.Conventions().Add(conventions);
+        // Worker hosts WorkOrderProcessing; scanning Worker.dll here discovers sagas without
+        // matching persistence when LearningTransport is used (unit/integration hosts).
+        endpointConfiguration.AssemblyScanner().ExcludeAssemblies("Worker.dll");
         builder.Host.UseNServiceBus(_ => endpointConfiguration);
     }
 
@@ -248,12 +245,7 @@ public static class ServerApplication
             var second = await secondReader.ReadToEndAsync(cancellationToken);
             return Results.Json(new { first, second });
         });
-        app.MapPost("/__test/request-body-echo", async (HttpContext httpContext) =>
-        {
-            httpContext.Response.ContentType = "text/plain; charset=utf-8";
-            using var reader = new StreamReader(httpContext.Request.Body);
-            await httpContext.Response.WriteAsync(await reader.ReadToEndAsync());
-        });
+        app.MapPost("/__test/request-body-echo", EchoRequestBodyAsync);
         app.MapGet(
                 "/api/_test/request-timeout-probe",
                 async (HttpContext httpContext) =>
@@ -262,6 +254,13 @@ public static class ServerApplication
                     return Results.Ok();
                 })
             .WithRequestTimeout(TimeSpan.FromMilliseconds(500));
+    }
+
+    private static async Task EchoRequestBodyAsync(HttpContext httpContext)
+    {
+        httpContext.Response.ContentType = "text/plain; charset=utf-8";
+        using var reader = new StreamReader(httpContext.Request.Body);
+        await httpContext.Response.WriteAsync(await reader.ReadToEndAsync());
     }
 
     private static void MapApiControllers(WebApplication app)

@@ -1,10 +1,7 @@
 using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
-using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 

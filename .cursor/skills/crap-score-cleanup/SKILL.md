@@ -32,8 +32,28 @@ CRAP(m) = CC(m)² × (1 - cov(m)/100)³ + CC(m)
 **Threshold 30** is the standard "CRAPpy" cutoff. At 100% coverage, CRAP equals complexity
 (the minimum). At 0% coverage, CRAP = CC² + CC.
 
-Complexity alone can exceed the threshold: a method with CC ≥ 15 cannot reach CRAP ≤ 14
-through testing alone — it must be refactored.
+Complexity alone can exceed the production gate: when cyclomatic complexity is greater than
+the configured threshold, CRAP cannot be brought under the gate by tests alone — the method
+must be refactored.
+
+## Production gate threshold (single source of truth)
+
+**Authoritative file:** `.cursor/skills/crap-score-cleanup/crap-gate-threshold.json`
+
+```json
+{ "productionThreshold": <integer> }
+```
+
+All enforcement entry points **read** `productionThreshold` from that file:
+
+| Consumer | How it uses the value |
+|----------|------------------------|
+| `run-crap-audit.ps1` | Default when `-Threshold` is omitted (`Get-ProductionCrapGateThreshold`) |
+| `PrivateBuild.ps1` | Invokes the audit without `-Threshold`; error text loads the JSON |
+| `.github/workflows/build.yml` | Enforce CRAP step omits `-Threshold` (script loads the JSON) |
+| Build-gate unit/integration tests | `CrapGateThreshold.ReadProductionThreshold()` / fixture threshold fields |
+
+To lower the gate in a later epic step, change **only** `productionThreshold` (plus remediate any new violations). Do not reintroduce hardcoded gate integers in PrivateBuild, build.yml, or the audit default.
 
 ## Quick start
 
@@ -43,17 +63,17 @@ From the repo root:
 pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1
 ```
 
-**CI / private-build gate (threshold 14, production only):** after unit + integration coverage exists under `build/test`, fail the build when any in-scope production method has CRAP > 14 (test projects and generated code are excluded):
+**CI / private-build gate (production only):** after unit + integration coverage exists under `build/test`, fail the build when any in-scope production method has CRAP greater than the shared `productionThreshold` (test projects and generated code are excluded):
 
 ```powershell
-pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 14 -SkipTests -FailOnViolations
+pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -SkipTests -FailOnViolations
 ```
 
 `PrivateBuild.ps1` and the Linux integration-build job in `.github/workflows/build.yml` run this automatically. Coverlet records async methods on compiler-generated state-machine types; the audit flattens those hits onto the original methods (`flatten-cobertura.csx`) before `dotnet-crap`, then overlays line coverage in `rollup-file-scores.csx`. `dotnet-crap` may still exit non-zero because of CRAPpy *test* methods; the gate uses `crap-metrics/crap-production-violations.json` (from `assert-crap-gate.ps1`) and only fails on production violations.
 
 ### GitHub Actions job summary (CI)
 
-The **Integration Build (SQL container)** job (`build-linux` in `.github/workflows/build.yml`) appends `crap-metrics/crap-summary.md` to the GitHub Actions **job summary** after **Enforce CRAP ≤ 14 (production)**. The step is **Publish CRAP summary to job summary** (`if: always()`), so the Markdown is on the run page when the gate passes **and** when it fails.
+The **Integration Build (SQL container)** job (`build-linux` in `.github/workflows/build.yml`) appends `crap-metrics/crap-summary.md` to the GitHub Actions **job summary** after **Enforce CRAP (production)**. The step is **Publish CRAP summary to job summary** (`if: always()`), so the Markdown is on the run page when the gate passes **and** when it fails.
 
 | Item | Value |
 |------|--------|
@@ -98,6 +118,26 @@ This repo uses `coverlet.collector` on UnitTests, IntegrationTests, and Acceptan
 The script delegates to **`build.ps1`** — the same pipeline as `AcceptanceTests.ps1`
 (Init → Compile → UnitTests → Setup-DatabaseForBuild → IntegrationTest → AcceptanceTests).
 Coverage Cobertura files land under `build/test/{UnitTests,IntegrationTests,AcceptanceTests}/`.
+
+**Coverlet must instrument production assemblies.** Repo-root `coverlet.runsettings` sets
+`Include` to `[ClearMeasure.Bootcamp.*]*,[ChurchBulletin.ServiceDefaults]*` and excludes `*UnitTests*`, `*IntegrationTests*`,
+and `*AcceptanceTests*`. `build.ps1` UnitTests / IntegrationTest pass
+`--settings:…/coverlet.runsettings` with `--collect:"XPlat Code Coverage"`. Without that
+Include, Cobertura often contains only `UnitTests\Core\…` paths and **omits** production
+`ClearMeasure.Bootcamp.Core`. Omitting `ChurchBulletin.ServiceDefaults` from Include leaves
+those methods at cov ≈ 0 and can fail the production CRAP gate.
+
+**Verify Core is present** after unit tests:
+
+```powershell
+Select-String -Path build/test/**/coverage.cobertura.xml -Pattern 'package name="ClearMeasure.Bootcamp.Core"' | Select-Object -First 5
+# Or hard-check (also run by run-crap-audit.ps1):
+pwsh .cursor/skills/crap-score-cleanup/scripts/assert-core-cobertura.ps1
+```
+
+Expect a Cobertura `<package name="ClearMeasure.Bootcamp.Core">` (filenames are often relative to `src/Core/`, e.g. `Model\Employee.cs`) with `hits` &gt; 0. The audit fails if production Core coverage is missing.
+
+**Coverlet instrumentation prerequisite:** `ClearMeasure.Bootcamp.Core` references `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions`. Coverlet/Cecil must resolve that assembly next to `Core.dll`; without it, Coverlet silently skips Core. `Core.csproj` sets `CopyLocalLockFileAssemblies=true`, and UnitTests/IntegrationTests run target `CopyCoreCoverletResolutionAssemblies` to copy HealthChecks/Logging/DI abstractions into the test output beside Core.
 
 Do not invoke bare `dotnet test` on the `.sln` or on AcceptanceTests in isolation; that skips
 database setup and server lifecycle and produces false failures.
@@ -200,13 +240,13 @@ dotnet-crap diff crap-metrics/crap-report-before.json crap-metrics/crap-report.j
 
 ### Coverage needed formula
 
-To bring method with complexity `CC` below CRAP 14 (production gate):
+To bring method with complexity `CC` below the shared production gate (see `crap-gate-threshold.json`), where `T` is `productionThreshold` from that file:
 
 ```
-cov_needed = 1 - ((14 - CC) / CC²)^(1/3)
+cov_needed = 1 - ((T - CC) / CC²)^(1/3)
 ```
 
-Only valid when `CC < 15`.
+Only valid when `CC < T + 1` (at 100% coverage CRAP = CC, so CC > T requires refactor).
 
 ## Validation checklist
 

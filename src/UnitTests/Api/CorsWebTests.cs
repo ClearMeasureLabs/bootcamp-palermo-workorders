@@ -20,7 +20,7 @@ public class CorsWebTests
 
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         response.Headers.TryGetValues("Access-Control-Allow-Origin", out var allowOrigin).ShouldBeTrue();
-        allowOrigin!.Single().ShouldBe("https://allowed.example");
+        allowOrigin.Single().ShouldBe("https://allowed.example");
     }
 
     [Test]

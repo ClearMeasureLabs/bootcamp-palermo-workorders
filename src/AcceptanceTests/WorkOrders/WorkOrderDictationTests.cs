@@ -11,7 +11,7 @@ public class WorkOrderDictationTests : AcceptanceTestBase
         await LoginAsCurrentUser();
 
         var order = await CreateAndSaveNewWorkOrder();
-        order = await ClickWorkOrderNumberFromSearchPage(order);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         var dictateTitleButton = Page.GetByTestId(nameof(WorkOrderManage.Elements.DictateTitle));
         await Expect(dictateTitleButton).ToBeVisibleAsync();
@@ -23,7 +23,7 @@ public class WorkOrderDictationTests : AcceptanceTestBase
         await LoginAsCurrentUser();
 
         var order = await CreateAndSaveNewWorkOrder();
-        order = await ClickWorkOrderNumberFromSearchPage(order);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         var dictateDescriptionButton = Page.GetByTestId(nameof(WorkOrderManage.Elements.DictateDescription));
         await Expect(dictateDescriptionButton).ToBeVisibleAsync();
@@ -35,7 +35,7 @@ public class WorkOrderDictationTests : AcceptanceTestBase
         await LoginAsCurrentUser();
 
         var order = await CreateAndSaveNewWorkOrder();
-        order = await ClickWorkOrderNumberFromSearchPage(order);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         await Click(nameof(WorkOrderManage.Elements.DictateTitle));
 
@@ -48,7 +48,7 @@ public class WorkOrderDictationTests : AcceptanceTestBase
         await LoginAsCurrentUser();
 
         var order = await CreateAndSaveNewWorkOrder();
-        order = await ClickWorkOrderNumberFromSearchPage(order);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         await Click(nameof(WorkOrderManage.Elements.DictateDescription));
 
@@ -70,7 +70,7 @@ public class WorkOrderDictationTests : AcceptanceTestBase
         order = await ClickWorkOrderNumberFromSearchPage(order);
 
         order = await CompleteExistingWorkOrder(order);
-        order = await ClickWorkOrderNumberFromSearchPage(order);
+        await ClickWorkOrderNumberFromSearchPage(order);
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.SpeakTitle))).ToBeVisibleAsync();

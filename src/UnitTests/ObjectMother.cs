@@ -9,7 +9,7 @@ namespace ClearMeasure.Bootcamp.UnitTests;
 
 public class ObjectMother
 {
-    private static bool _configured;
+    private static volatile bool _configured;
     public static object Lock = new();
 
     private static void EnsureConfigured()
@@ -56,21 +56,40 @@ public class ObjectMother
         var properties = expected.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
         foreach (var property in properties)
         {
-            if (typeof(IEnumerable).IsAssignableFrom(property.PropertyType) && property.PropertyType != typeof(string))
-            {
-                continue;
-            }
-
-            var expectedValue = property.GetValue(expected, null);
-            var actualValue = property.GetValue(actual, null);
-            if (!Equals(expectedValue, actualValue))
-            {
-                if (property.DeclaringType != null)
-                {
-                    Assert.Fail(
-                        $"Property {property.DeclaringType.Name}.{property.Name} does not match. Expected: {expectedValue} but was: {actualValue}");
-                }
-            }
+            AssertComparableProperty(property, expected, actual);
         }
+    }
+
+    private static void AssertComparableProperty(PropertyInfo property, object expected, object actual)
+    {
+        if (IsNonStringEnumerable(property.PropertyType))
+        {
+            return;
+        }
+
+        var expectedValue = property.GetValue(expected, null);
+        var actualValue = property.GetValue(actual, null);
+        if (Equals(expectedValue, actualValue))
+        {
+            return;
+        }
+
+        FailMismatchedProperty(property, expectedValue, actualValue);
+    }
+
+    private static bool IsNonStringEnumerable(Type propertyType)
+    {
+        return typeof(IEnumerable).IsAssignableFrom(propertyType) && propertyType != typeof(string);
+    }
+
+    private static void FailMismatchedProperty(PropertyInfo property, object? expectedValue, object? actualValue)
+    {
+        if (property.DeclaringType == null)
+        {
+            return;
+        }
+
+        Assert.Fail(
+            $"Property {property.DeclaringType.Name}.{property.Name} does not match. Expected: {expectedValue} but was: {actualValue}");
     }
 }

@@ -6,7 +6,6 @@ using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using Palermo.BlazorMvc;
 using Shouldly;
 using TestContext = Bunit.TestContext;
@@ -59,7 +58,7 @@ public class SettingsTests
     {
         var ctx = new TestContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Strict;
-        ctx.Services.AddSingleton<IJSRuntime>(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());

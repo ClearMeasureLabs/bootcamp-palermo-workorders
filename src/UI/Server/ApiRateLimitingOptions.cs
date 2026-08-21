@@ -30,7 +30,7 @@ public sealed class ApiRateLimitingOptions
     /// <summary>
     /// Queued permits when the window is full; 0 means fail immediately.
     /// </summary>
-    public int QueueLimit { get; set; } = 0;
+    public int QueueLimit { get; set; }
 
     /// <summary>
     /// Optional header for per-client key; when absent, user name or connection remote IP is used.

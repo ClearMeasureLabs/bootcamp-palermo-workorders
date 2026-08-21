@@ -13,7 +13,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using NServiceBus.Features;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
@@ -123,6 +122,10 @@ public static class TestHost
 
                 var conventions = new MessagingConventions();
                 endpointConfiguration.Conventions().Add(conventions);
+
+                // Worker hosts its own endpoint; scanning Worker.dll here discovers
+                // AiBotWorkOrderSaga without saga persistence and breaks TestHost startup.
+                endpointConfiguration.AssemblyScanner().ExcludeAssemblies("Worker.dll");
 
                 return endpointConfiguration;
             })

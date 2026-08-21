@@ -8,13 +8,21 @@ namespace ClearMeasure.Bootcamp.LlmGateway;
 
 public class ChatClientFactory(IBus bus)
 {
-    public async Task<ChatClientAvailabilityResult> IsChatClientAvailable()
+    /// <summary>
+    /// Returns whether chat client configuration is present and usable.
+    /// Virtual for unit-test stubs of dependent health checks.
+    /// </summary>
+    public virtual async Task<ChatClientAvailabilityResult> IsChatClientAvailable()
     {
         var config = await bus.Send(new ChatClientConfigQuery());
         return ChatClientConfigValidator.Validate(config);
     }
 
-    public async Task<IChatClient> GetChatClient()
+    /// <summary>
+    /// Builds a tracing-wrapped chat client from configured Azure OpenAI settings.
+    /// Virtual for unit-test stubs of dependent health checks.
+    /// </summary>
+    public virtual async Task<IChatClient> GetChatClient()
     {
         var config = await bus.Send(new ChatClientConfigQuery());
         var apiKey = config.AiOpenAiApiKey

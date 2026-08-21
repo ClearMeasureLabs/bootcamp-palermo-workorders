@@ -1,5 +1,4 @@
 using System.Net;
-using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.Api;
 
@@ -14,12 +13,8 @@ public class ApiRateLimitingAcceptanceTests : AcceptanceTestBase
         if (!ServerFixture.StartLocalServer)
             Assert.Ignore("Requires local server with HTTP access to /api/*");
 
-        using var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler) { BaseAddress = new Uri(ServerFixture.ApplicationBaseUrl) };
-        var response = await client.GetAsync("/api/version");
+        var client = TestHttpClientFactory.CreateInsecureClient();
+        using var response = await client.GetAsync($"{ServerFixture.ApplicationBaseUrl}/api/version");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         if (!response.Headers.TryGetValues("X-RateLimit-Limit", out _))
             Assert.Ignore("API rate limiting is disabled in this environment (e.g. Development appsettings).");
@@ -34,15 +29,11 @@ public class ApiRateLimitingAcceptanceTests : AcceptanceTestBase
         if (!ServerFixture.StartLocalServer)
             Assert.Ignore("Requires local server with HTTP access to /api/*");
 
-        using var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var client = new HttpClient(handler) { BaseAddress = new Uri(ServerFixture.ApplicationBaseUrl) };
+        var client = TestHttpClientFactory.CreateInsecureClient();
         HttpStatusCode? last = null;
         for (var i = 0; i < 250; i++)
         {
-            var r = await client.GetAsync("/api/time");
+            using var r = await client.GetAsync($"{ServerFixture.ApplicationBaseUrl}/api/time");
             last = r.StatusCode;
             if (r.StatusCode == HttpStatusCode.TooManyRequests)
                 break;

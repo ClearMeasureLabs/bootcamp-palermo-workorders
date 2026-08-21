@@ -33,7 +33,7 @@ public class WorkOrderChatHandlerTests : LlmTestBase
             Assert.Inconclusive("LLM returned empty response");
         }
 
-        if (!responseText!.Contains(workOrder.Number!, StringComparison.OrdinalIgnoreCase))
+        if (!responseText.Contains(workOrder.Number!, StringComparison.OrdinalIgnoreCase))
         {
             Assert.Inconclusive(
                 $"LLM response did not contain work order number '{workOrder.Number}'");
@@ -67,7 +67,7 @@ public class WorkOrderChatHandlerTests : LlmTestBase
             Assert.Inconclusive("LLM returned empty response");
         }
 
-        if (!responseText!.Contains("Lovejoy", StringComparison.OrdinalIgnoreCase))
+        if (!responseText.Contains("Lovejoy", StringComparison.OrdinalIgnoreCase))
         {
             Assert.Inconclusive(
                 $"LLM response did not contain 'Lovejoy'. Response: {responseText}");

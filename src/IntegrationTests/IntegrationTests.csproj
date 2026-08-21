@@ -45,7 +45,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
 		<PackageReference Include="NUnit" Version="4.3.2" />
 		<PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
@@ -65,4 +65,17 @@
   <ItemGroup>
     <Using Include="NServiceBus" />
   </ItemGroup>
+
+	<!-- Coverlet/Cecil cannot instrument Core.dll unless HealthChecks.Abstractions (and siblings) sit beside it. -->
+	<Target Name="CopyCoreCoverletResolutionAssemblies" AfterTargets="Build">
+		<PropertyGroup>
+			<_CoreOutDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../Core/bin/$(Configuration)/$(TargetFramework)/'))</_CoreOutDir>
+		</PropertyGroup>
+		<ItemGroup>
+			<_CoreCoverletDep Include="$(_CoreOutDir)Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll" Condition="Exists('$(_CoreOutDir)Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll')" />
+			<_CoreCoverletDep Include="$(_CoreOutDir)Microsoft.Extensions.Logging.Abstractions.dll" Condition="Exists('$(_CoreOutDir)Microsoft.Extensions.Logging.Abstractions.dll')" />
+			<_CoreCoverletDep Include="$(_CoreOutDir)Microsoft.Extensions.DependencyInjection.Abstractions.dll" Condition="Exists('$(_CoreOutDir)Microsoft.Extensions.DependencyInjection.Abstractions.dll')" />
+		</ItemGroup>
+		<Copy SourceFiles="@(_CoreCoverletDep)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" Condition="'@(_CoreCoverletDep)' != ''" />
+	</Target>
 </Project>

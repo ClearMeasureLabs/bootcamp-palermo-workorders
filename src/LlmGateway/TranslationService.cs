@@ -9,7 +9,7 @@ public partial class TranslationService(ChatClientFactory chatClientFactory) : I
     {
         if (TranslationGuard.ShouldReturnOriginal(text, targetLanguageCode))
         {
-            return text ?? string.Empty;
+            return text;
         }
 
         IChatClient chatClient;
@@ -32,7 +32,7 @@ public partial class TranslationService(ChatClientFactory chatClientFactory) : I
         };
 
         var response = await chatClient.GetResponseAsync(messages);
-        var translatedText = response.Text?.Trim();
+        var translatedText = response.Text.Trim();
 
         return string.IsNullOrWhiteSpace(translatedText) ? text : translatedText;
     }

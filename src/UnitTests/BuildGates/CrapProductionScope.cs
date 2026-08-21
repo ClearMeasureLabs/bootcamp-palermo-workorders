@@ -1,7 +1,8 @@
 namespace ClearMeasure.Bootcamp.UnitTests.BuildGates;
 
 /// <summary>
-/// Production-file filter for the CRAP ≤ 14 gate. Keep in sync with
+/// Production-file filter for the CRAP production gate
+/// (<c>crap-gate-threshold.json</c>). Keep in sync with
 /// <c>IsProductionFile</c> in <c>.cursor/skills/crap-score-cleanup/scripts/rollup-file-scores.csx</c>.
 /// </summary>
 public static class CrapProductionScope
@@ -18,20 +19,30 @@ public static class CrapProductionScope
         }
 
         var normalized = path.Replace('\\', '/').ToLowerInvariant();
-        if (normalized.Contains("/unittests/", StringComparison.Ordinal)
-            || normalized.Contains("/integrationtests/", StringComparison.Ordinal)
-            || normalized.Contains("/acceptancetests/", StringComparison.Ordinal))
+        if (IsExcludedTestPath(normalized) || IsGeneratedPath(normalized))
         {
             return false;
         }
 
-        if (normalized.Contains("/generated/", StringComparison.Ordinal)
-            || normalized.EndsWith(".g.cs", StringComparison.Ordinal)
-            || normalized.EndsWith(".designer.cs", StringComparison.Ordinal))
-        {
-            return false;
-        }
+        return IsUnderSrc(normalized);
+    }
 
+    private static bool IsExcludedTestPath(string normalized)
+    {
+        return normalized.Contains("/unittests/", StringComparison.Ordinal)
+               || normalized.Contains("/integrationtests/", StringComparison.Ordinal)
+               || normalized.Contains("/acceptancetests/", StringComparison.Ordinal);
+    }
+
+    private static bool IsGeneratedPath(string normalized)
+    {
+        return normalized.Contains("/generated/", StringComparison.Ordinal)
+               || normalized.EndsWith(".g.cs", StringComparison.Ordinal)
+               || normalized.EndsWith(".designer.cs", StringComparison.Ordinal);
+    }
+
+    private static bool IsUnderSrc(string normalized)
+    {
         return normalized.Contains("/src/", StringComparison.Ordinal);
     }
 }

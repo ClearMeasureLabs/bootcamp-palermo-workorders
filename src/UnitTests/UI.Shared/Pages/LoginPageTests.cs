@@ -17,7 +17,6 @@ public class LoginPageTests
     [Test]
     public void ShouldOnlyRequireUsername()
     {
-        var loginPage = new Login();
         var loginModel = new Login.LoginModel { Username = "hsimpson" };
 
         var validationContext = new ValidationContext(loginModel);
@@ -31,7 +30,6 @@ public class LoginPageTests
     [Test]
     public void ShouldRequireUsername()
     {
-        var loginPage = new Login();
         var loginModel = new Login.LoginModel { Username = "" };
 
         var validationContext = new ValidationContext(loginModel);
@@ -57,9 +55,11 @@ public class LoginPageTests
 
         var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
         employeeSelect.ShouldNotBeNull();
+        employeeSelect.GetAttribute("id").ShouldBe(nameof(Login.Elements.User));
+        component.Find($"label[for='{Login.Elements.User}']").ShouldNotBeNull();
 
         var options = component.FindAll("option");
-        options.Count.ShouldBe(5);
+        options.Count.ShouldBe(6);
 
         options[0].GetAttribute("value").ShouldBe(string.Empty);
         options[0].TextContent.ShouldBe("-- Select a parishioner or staff member --");
@@ -123,5 +123,69 @@ public class LoginPageTests
 
         var subtitle = component.Find(".login-subtitle");
         subtitle.TextContent.ShouldBe("First Church of Shelbyville");
+    }
+
+    [Test]
+    public void Should_ShowLovejoyShortcut_WithoutDropdownSelection()
+    {
+        using var ctx = new TestContext();
+
+        var provider = new CustomAuthenticationStateProvider();
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.RenderComponent<Login>();
+
+        var shortcut = component.Find($"[data-testid='{Login.Elements.LovejoyShortcut}']");
+        shortcut.ShouldNotBeNull();
+        shortcut.TextContent.Trim().ShouldBe("Log in as Timothy Lovejoy");
+        provider.IsAuthenticated().ShouldBeFalse();
+    }
+
+    [Test]
+    public void Should_LoginAsTlovejoy_WhenLovejoyShortcutClicked()
+    {
+        using var ctx = new TestContext();
+
+        var provider = new CustomAuthenticationStateProvider();
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.RenderComponent<Login>();
+
+        var shortcut = component.Find($"[data-testid='{Login.Elements.LovejoyShortcut}']");
+        shortcut.Click();
+
+        provider.IsAuthenticated().ShouldBeTrue();
+        provider.GetUsername().ShouldBe("tlovejoy");
+    }
+
+    [Test]
+    public void Should_KeepDropdownLoginUnchanged_WhenLovejoyShortcutPresent()
+    {
+        using var ctx = new TestContext();
+
+        var provider = new CustomAuthenticationStateProvider();
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.RenderComponent<Login>();
+
+        component.Find($"[data-testid='{Login.Elements.LovejoyShortcut}']").ShouldNotBeNull();
+
+        var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
+        var submitButton = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
+
+        employeeSelect.Change("hsimpson");
+        submitButton.Click();
+
+        provider.IsAuthenticated().ShouldBeTrue();
+        provider.GetUsername().ShouldBe("hsimpson");
     }
 }

@@ -14,6 +14,8 @@ public class DarkModeTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/settings");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Page.GetByTestId(nameof(Settings.Elements.DarkModeSwitch)).WaitForAsync();
+        await Expect(Page.GetByTestId(nameof(Settings.Elements.DarkModeSwitch)))
+            .ToHaveAttributeAsync("role", "switch");
 
         var initial = await Page.EvaluateAsync<string>(
             "() => document.documentElement.getAttribute('data-theme')");

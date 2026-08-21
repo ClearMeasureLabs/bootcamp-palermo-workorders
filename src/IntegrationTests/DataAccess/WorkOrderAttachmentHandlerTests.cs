@@ -2,8 +2,6 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.DataAccess.Handlers;
-using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 
@@ -42,7 +40,7 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
         {
             var persisted = context.Set<WorkOrderAttachment>().SingleOrDefault(a => a.Id == attachment.Id);
             persisted.ShouldNotBeNull();
-            persisted!.FileName.ShouldBe("damage-photo.jpg");
+            persisted.FileName.ShouldBe("damage-photo.jpg");
         }
     }
 

@@ -1,8 +1,6 @@
 using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.IntegrationTests;
-using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using NavMenu = ClearMeasure.Bootcamp.UI.Shared.NavMenu;
 

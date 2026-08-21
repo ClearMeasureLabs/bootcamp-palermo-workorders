@@ -4,7 +4,6 @@ using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Shouldly;
 
@@ -38,7 +37,7 @@ public class DiagnosticsEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/json");
+        mediaType.ShouldContain("application/json");
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
@@ -55,7 +54,7 @@ public class DiagnosticsEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType!.ShouldContain("application/json");
+        mediaType.ShouldContain("application/json");
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
@@ -73,7 +72,7 @@ public class DiagnosticsEndpointIntegrationTests
         var payload = await response.Content.ReadFromJsonAsync<DiagnosticsResponse>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         payload.ShouldNotBeNull();
-        payload!.Environment.ShouldBe("Testing");
+        payload.Environment.ShouldBe("Testing");
     }
 
     [Test]
@@ -87,7 +86,7 @@ public class DiagnosticsEndpointIntegrationTests
         var payload = await response.Content.ReadFromJsonAsync<DiagnosticsResponse>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         payload.ShouldNotBeNull();
-        payload!.Uptime.ShouldBeGreaterThanOrEqualTo(TimeSpan.Zero);
+        payload.Uptime.ShouldBeGreaterThanOrEqualTo(TimeSpan.Zero);
         var health = SimpleHealthResponseBuilder.Build(TimeProvider.System);
         (after - before).ShouldBeLessThan(TimeSpan.FromSeconds(30));
         payload.Uptime.ShouldBeLessThanOrEqualTo(health.Uptime + TimeSpan.FromSeconds(2));
@@ -103,7 +102,7 @@ public class DiagnosticsEndpointIntegrationTests
         var payload = await response.Content.ReadFromJsonAsync<DiagnosticsResponse>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         payload.ShouldNotBeNull();
-        payload!.FeatureFlags.SampleFeatureA.ShouldBeTrue();
+        payload.FeatureFlags.SampleFeatureA.ShouldBeTrue();
         payload.FeatureFlags.SampleFeatureB.ShouldBeFalse();
     }
 
@@ -129,7 +128,7 @@ public class DiagnosticsEndpointIntegrationTests
         var payload = await response.Content.ReadFromJsonAsync<DiagnosticsResponse>(
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         payload.ShouldNotBeNull();
-        payload!.FeatureFlags.SampleFeatureA.ShouldBeFalse();
+        payload.FeatureFlags.SampleFeatureA.ShouldBeFalse();
         payload.FeatureFlags.SampleFeatureB.ShouldBeTrue();
     }
 

@@ -1,4 +1,4 @@
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Represents a structured metric entry for telemetry file output.

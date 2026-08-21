@@ -42,9 +42,12 @@ public class EntityBaseTests
     public void ShouldNotBeEqual_WhenOtherIsNull()
     {
         var entity = new TestEntity { Id = Guid.NewGuid() };
+        TestEntity? other = null;
 
-        entity.Equals((TestEntity?)null).ShouldBeFalse();
-        (entity == null).ShouldBeFalse();
+        entity.Equals(other).ShouldBeFalse();
+        (entity == other).ShouldBeFalse();
+        (entity != other).ShouldBeTrue();
+        (other != entity).ShouldBeTrue();
     }
 
     [Test]
@@ -53,7 +56,10 @@ public class EntityBaseTests
         var entity = new TestEntity { Id = Guid.NewGuid() };
         var other = new OtherTestEntity { Id = entity.Id };
 
-        entity.Equals((object)other).ShouldBeFalse();
+        // Intentional cross-type Equals contract check (same Id, different EntityBase<T>).
+        // ReSharper disable once SuspiciousTypeConversion.Global
+        object otherAsObject = other;
+        entity.Equals(otherAsObject).ShouldBeFalse();
     }
 
     [Test]

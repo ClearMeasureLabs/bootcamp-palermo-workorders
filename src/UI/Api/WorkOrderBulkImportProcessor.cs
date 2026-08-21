@@ -4,7 +4,6 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
-using Microsoft.AspNetCore.Http;
 
 namespace ClearMeasure.Bootcamp.UI.Api;
 
@@ -86,6 +85,7 @@ internal sealed class WorkOrderBulkImportProcessor(IBus bus, IWorkOrderNumberGen
         Dictionary<string, Employee> creatorsByUsername,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var username = row.CreatorUsername!;
         if (creatorsByUsername.TryGetValue(username, out var cached))
         {
@@ -109,6 +109,7 @@ internal sealed class WorkOrderBulkImportProcessor(IBus bus, IWorkOrderNumberGen
         Employee creator,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var workOrder = new WorkOrder
         {
             Title = row.Title,

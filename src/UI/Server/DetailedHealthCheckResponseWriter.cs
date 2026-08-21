@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ClearMeasure.Bootcamp.UI.Server;
 
@@ -26,7 +25,10 @@ public static class DetailedHealthCheckResponseWriter
     {
         context.Response.ContentType = "application/json; charset=utf-8";
 
-        var timeProvider = context.RequestServices?.GetService<TimeProvider>() ?? TimeProvider.System;
+        // DefaultHttpContext in unit tests may leave RequestServices unset despite the
+        // non-null annotation; cast allows a safe fallback to TimeProvider.System.
+        var services = (IServiceProvider?)context.RequestServices;
+        var timeProvider = services?.GetService<TimeProvider>() ?? TimeProvider.System;
 
         var response = new DetailedHealthCheckResponse
         {

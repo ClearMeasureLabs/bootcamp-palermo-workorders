@@ -1,5 +1,5 @@
 using System.Net;
-using ClearMeasure.Bootcamp.ServiceDefaults;
+using ChurchBulletin.ServiceDefaults;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
@@ -17,7 +17,7 @@ public class CorrelationIdMiddlewareWebTests
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         response.Headers.TryGetValues(CorrelationIdConstants.HeaderName, out var values).ShouldBeTrue();
-        var id = values!.Single();
+        var id = values.Single();
         id.Length.ShouldBeGreaterThan(0);
         Guid.TryParse(id, out _).ShouldBeTrue();
     }

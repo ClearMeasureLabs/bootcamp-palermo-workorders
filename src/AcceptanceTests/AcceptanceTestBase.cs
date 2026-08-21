@@ -1,13 +1,11 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using System.Collections.Concurrent;
-using System.Globalization;
 using Login = ClearMeasure.Bootcamp.UI.Shared.Pages.Login;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests;
@@ -148,6 +146,14 @@ public abstract class AcceptanceTestBase
         if (!TestStates.TryRemove(TestId, out var state))
             return;
 
+        await SafeStopTracingAsync(state);
+        await SafeCloseAsync(() => state.Page.CloseAsync(), "Page");
+        await SafeCloseAsync(() => state.BrowserContext.CloseAsync(), "BrowserContext");
+        await SafeCloseAsync(() => state.Browser.CloseAsync(), "Browser");
+    }
+
+    private async Task SafeStopTracingAsync(TestState state)
+    {
         try
         {
             await state.BrowserContext.Tracing.StopAsync(new TracingStopOptions
@@ -156,14 +162,22 @@ public abstract class AcceptanceTestBase
                     $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip")
             });
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore tracing errors during teardown
+            TestContext.Out.WriteLine($"TearDownAsync: ignoring tracing stop failure for {TestId}: {ex.GetType().Name}: {ex.Message}");
         }
+    }
 
-        try { await state.Page.CloseAsync(); } catch { }
-        try { await state.BrowserContext.CloseAsync(); } catch { }
-        try { await state.Browser.CloseAsync(); } catch { }
+    private async Task SafeCloseAsync(Func<Task> closeAsync, string resourceName)
+    {
+        try
+        {
+            await closeAsync();
+        }
+        catch (Exception ex)
+        {
+            TestContext.Out.WriteLine($"TearDownAsync: ignoring failure closing {resourceName} for {TestId}: {ex.GetType().Name}: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -241,14 +255,47 @@ public abstract class AcceptanceTestBase
     protected async Task Click(string elementTestId)
     {
         await TakeScreenshotAsync();
-        ILocator locator = Page.GetByTestId(elementTestId);
-        if(!await locator.IsVisibleAsync()) await locator.WaitForAsync();
-        if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
-        if (!await locator.IsVisibleAsync()) await locator.WaitForAsync();
-        if (await locator.IsVisibleAsync()) await locator.FocusAsync();
-        if (await locator.IsVisibleAsync()) await locator.BlurAsync();
+        var locator = Page.GetByTestId(elementTestId);
+        await WaitForIfHiddenAsync(locator);
+        await WaitForIfHiddenAsync(locator);
+        await WaitForIfHiddenAsync(locator);
+        await FocusIfVisibleAsync(locator);
+        await BlurIfVisibleAsync(locator);
+        await EvaluateClickIfVisibleAsync(locator);
+    }
+
+    private static async Task WaitForIfHiddenAsync(ILocator locator)
+    {
+        if (!await locator.IsVisibleAsync())
+        {
+            await locator.WaitForAsync();
+        }
+    }
+
+    private static async Task FocusIfVisibleAsync(ILocator locator)
+    {
         if (await locator.IsVisibleAsync())
-            await locator.EvaluateAsync("el => el.click()");
+        {
+            await locator.FocusAsync();
+        }
+    }
+
+    private static async Task BlurIfVisibleAsync(ILocator locator)
+    {
+        if (await locator.IsVisibleAsync())
+        {
+            await locator.BlurAsync();
+        }
+    }
+
+    private static async Task EvaluateClickIfVisibleAsync(ILocator locator)
+    {
+        if (!await locator.IsVisibleAsync())
+        {
+            return;
+        }
+
+        await locator.EvaluateAsync("el => el.click()");
     }
 
     protected async Task Input(string elementTestId, string? value)

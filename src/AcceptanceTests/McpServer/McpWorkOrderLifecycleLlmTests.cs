@@ -1,9 +1,6 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
-using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
@@ -50,21 +47,21 @@ public class McpWorkOrderLifecycleLlmTests : AcceptanceTestBase
             {
                 ["title"] = "LLM lifecycle test",
                 ["description"] = "Testing full lifecycle via LLM",
-                ["creatorUsername"] = creator.UserName!
+                ["creatorUsername"] = creator.UserName
             });
         var workOrderNumber = McpTestHelper.ExtractJsonValue(createResult, "Number");
 
-        await _helper!.CallToolDirectly("execute-work-order-command",
+        await _helper.CallToolDirectly("execute-work-order-command",
             new Dictionary<string, object?>
             {
                 ["workOrderNumber"] = workOrderNumber,
                 ["commandName"] = "DraftToAssignedCommand",
-                ["executingUsername"] = creator.UserName!,
-                ["assigneeUsername"] = assignee.UserName!
+                ["executingUsername"] = creator.UserName,
+                ["assigneeUsername"] = assignee.UserName
             });
 
         // Ask the LLM to begin and complete the work order
-        var response = await _helper!.SendPrompt(
+        var response = await _helper.SendPrompt(
             $"Work order '{workOrderNumber}' is currently in Assigned status, assigned to '{assignee.UserName}'.\n" +
             $"Do these two steps using the execute-work-order-command tool:\n" +
             $"1. Call execute-work-order-command with workOrderNumber='{workOrderNumber}', commandName='AssignedToInProgressCommand', executingUsername='{assignee.UserName}'\n" +

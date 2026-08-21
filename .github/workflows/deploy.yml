@@ -361,6 +361,50 @@ jobs:
           server_task_id: ${{ fromJson(steps.start-deploy-to-uat.outputs.server_tasks)[0].serverTaskId }}
           timeout_after: 1800
 
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Container App FQDN
+        shell: pwsh
+        run: |
+          $fqdn = az containerapp show `
+            --name ${{ vars.CONTAINER_APP_NAME }} `
+            --resource-group ${{ vars.UAT_RESOURCE_GROUP_NAME }} `
+            --query "properties.configuration.ingress.fqdn" `
+            -o tsv
+          if ([string]::IsNullOrWhiteSpace($fqdn)) {
+            Write-Error "Error: Could not retrieve container app FQDN"
+            exit 1
+          }
+          $containerAppUrl = "https://$fqdn"
+          Write-Host "Container App FQDN: $fqdn"
+          Write-Host "Container App URL: $containerAppUrl"
+          "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Wait for Container App to become healthy
+        shell: pwsh
+        run: |
+          $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
+          $maxAttempts = 12
+          $delaySeconds = 5
+          Write-Host "Polling $url for healthy response (max ${maxAttempts} attempts, ${delaySeconds}s apart)..."
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            try {
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
+              Write-Host "Attempt ${i}: HTTP $($response.StatusCode)"
+              if ($response.StatusCode -eq 200) {
+                Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
+                exit 0
+              }
+            } catch {
+              Write-Host "Attempt ${i}: $($_.Exception.Message)"
+            }
+            if ($i -lt $maxAttempts) { Start-Sleep -Seconds $delaySeconds }
+          }
+          Write-Host "::warning::Container App health check did not succeed after $maxAttempts attempts; URL was still printed above."
+
   deploy-to-prod:
     name: Prod
     needs: [deploy-to-uat]
@@ -402,3 +446,47 @@ jobs:
         with:
           server_task_id: ${{ fromJson(steps.start-deploy-to-prod.outputs.server_tasks)[0].serverTaskId }}
           timeout_after: 1800
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Container App FQDN
+        shell: pwsh
+        run: |
+          $fqdn = az containerapp show `
+            --name ${{ vars.CONTAINER_APP_NAME }} `
+            --resource-group ${{ vars.PROD_RESOURCE_GROUP_NAME }} `
+            --query "properties.configuration.ingress.fqdn" `
+            -o tsv
+          if ([string]::IsNullOrWhiteSpace($fqdn)) {
+            Write-Error "Error: Could not retrieve container app FQDN"
+            exit 1
+          }
+          $containerAppUrl = "https://$fqdn"
+          Write-Host "Container App FQDN: $fqdn"
+          Write-Host "Container App URL: $containerAppUrl"
+          "CONTAINER_APP_URL=$containerAppUrl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Wait for Container App to become healthy
+        shell: pwsh
+        run: |
+          $url = "${{ env.CONTAINER_APP_URL }}/_healthcheck"
+          $maxAttempts = 12
+          $delaySeconds = 5
+          Write-Host "Polling $url for healthy response (max ${maxAttempts} attempts, ${delaySeconds}s apart)..."
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            try {
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
+              Write-Host "Attempt ${i}: HTTP $($response.StatusCode)"
+              if ($response.StatusCode -eq 200) {
+                Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
+                exit 0
+              }
+            } catch {
+              Write-Host "Attempt ${i}: $($_.Exception.Message)"
+            }
+            if ($i -lt $maxAttempts) { Start-Sleep -Seconds $delaySeconds }
+          }
+          Write-Host "::warning::Container App health check did not succeed after $maxAttempts attempts; URL was still printed above."

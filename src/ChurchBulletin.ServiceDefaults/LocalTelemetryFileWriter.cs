@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -6,7 +7,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Microsoft.Extensions.Hosting;
+namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>
 /// Background service that writes telemetry data to local text files.
@@ -44,7 +45,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
         _activityListener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            Sample = SampleAllDataAndRecorded,
             ActivityStarted = OnActivityStarted,
             ActivityStopped = OnActivityStopped
         };
@@ -134,7 +135,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             {
                 _tracesWriter.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
             }
-            catch
+            catch (Exception)
             {
                 // Ignore write errors to prevent affecting application
             }
@@ -153,7 +154,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             {
                 _eventsWriter.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
             }
-            catch
+            catch (Exception)
             {
                 // Ignore write errors to prevent affecting application
             }
@@ -188,8 +189,9 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             {
                 writer.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
             }
-            catch
+            catch (Exception)
             {
+                // Best-effort local telemetry file writes must never affect the application.
             }
         }
     }
@@ -206,7 +208,7 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
             {
                 _metricsWriter.WriteLine(JsonSerializer.Serialize(entry, JsonOptions));
             }
-            catch
+            catch (Exception)
             {
                 // Ignore write errors to prevent affecting application
             }
@@ -220,6 +222,9 @@ public class LocalTelemetryFileWriter : BackgroundService, IAsyncDisposable
     {
         WriteTraceEntry(activity, "STARTED");
     }
+
+    private static ActivitySamplingResult SampleAllDataAndRecorded(ref ActivityCreationOptions<ActivityContext> _) =>
+        ActivitySamplingResult.AllDataAndRecorded;
 
     private void OnActivityStopped(Activity activity)
     {

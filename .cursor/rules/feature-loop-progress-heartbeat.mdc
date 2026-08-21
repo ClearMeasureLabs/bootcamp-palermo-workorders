@@ -1,0 +1,27 @@
+---
+description: Always arm a progress heartbeat until feature-loop / feature-loop-dispatch fully completes
+alwaysApply: true
+---
+
+# Feature-loop progress heartbeat (mandatory — always on)
+
+**ALWAYS** set and keep a progress heartbeat whenever this session runs **feature-loop** or **feature-loop-dispatch** (or equivalent: driving work items across the board through implement → PR → CI → merge → Done). Keep the heartbeat armed until the work set is **fully complete**. Do not treat this as optional or one-shot.
+
+## When it applies
+
+- `/feature-loop`, `/feature-loop-dispatch`, or any instruction to implement/dispatch GitHub work items end-to-end on the ClearMeasureLabs board
+- Continues until **every** authorized item is Done (or hard-blocked with a documented reason), every related PR is merged (or documented impossible), and CI on merge/`master` tip is API-verified green
+
+## Required heartbeat
+
+1. **At start:** run a stall/progress check baseline (e.g. `Check-StalledLanes.ps1` for this repo when available).
+2. **Re-arm every turn** while work remains: launch a background wait of about **15 minutes**, run **one** progress/stall check, then **exit unconditionally** so the orchestrator wakes even when nothing looks wrong.
+3. On each wake: independently verify open PRs / CI / board status for the work set; fix stalls (`GREEN_UNMERGED`, `CI_FAILED`, `CI_STUCK`, dirty branch, merged-but-issue-open) before continuing.
+4. **Do not** end the session or send a final `STATUS: COMPLETE` while any authorized item, PR, or CI verification is still pending — keep the heartbeat alive and keep working.
+5. When the work set is truly done, stop re-arming and only then emit the final status.
+
+## Pair with skill completion rules
+
+- Feature-loop-dispatch Phase 0/4/5 and the per-item feature-loop completion heartbeat still apply; this rule does not weaken them.
+- See `.claude/skills/feature-loop-dispatch/SKILL.md` Phase 0 and `.cursor/skills/feature-loop-dispatch/SKILL.md` Phase 0 for the mechanical check command.
+- When the work set is truly done, stop re-arming the heartbeat and then apply the session-completion **What's different now** summary if that rule is present.

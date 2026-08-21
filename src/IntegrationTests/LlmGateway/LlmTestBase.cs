@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http;
 using ClearMeasure.Bootcamp.LlmGateway;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;

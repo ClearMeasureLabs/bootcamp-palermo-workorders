@@ -69,16 +69,8 @@ public static class WorkOrderBulkImportCsvParser
         }
     }
 
-    private static string? NullIfWhitespace(string? s)
-    {
-        if (s == null)
-        {
-            return null;
-        }
-
-        var t = s.Trim();
-        return t.Length == 0 ? null : t;
-    }
+    private static string? NullIfWhitespace(string? s) =>
+        string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 
     private sealed class CsvColumnIndex
     {

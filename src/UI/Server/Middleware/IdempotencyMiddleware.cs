@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Shared;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
@@ -14,7 +13,6 @@ namespace ClearMeasure.Bootcamp.UI.Server.Middleware;
 /// </summary>
 public sealed class IdempotencyMiddleware
 {
-    private const string BindingPrefix = "__idempotency_binding:";
 
     private static readonly JsonSerializerOptions JsonOptions =
         new(JsonSerializerDefaults.Web);

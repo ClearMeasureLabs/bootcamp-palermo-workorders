@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
@@ -133,6 +133,7 @@ public class WorkOrderMappingTests
         {
             var rehydratedWorkOrder = context.Set<WorkOrder>()
                 .Single(wo => wo.Id == order.Id);
+            rehydratedWorkOrder.Id.ShouldBe(order.Id);
         }
     }
 

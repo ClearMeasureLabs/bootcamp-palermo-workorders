@@ -8,8 +8,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Error</title>
-    <link href="~/css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="~/css/app.css" rel="stylesheet" asp-append-version="true" />
+    @* Inline styles only: UI.Api has no shared wwwroot CSS. Linking ~/css/* duplicated
+       Client static web assets (build conflict) and Qodana Html.PathError treated ~/ as project root. *@
+    <style>
+        body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 2rem; }
+        .text-danger { color: #dc3545; }
+        code { font-family: ui-monospace, Consolas, monospace; }
+    </style>
 </head>
 
 <body>

@@ -2,7 +2,54 @@ version: "1.0"
 linter: jetbrains/qodana-cdnet:latest
 dotnet:
   solution: src/ChurchBulletin.sln
+# Phase 5 (#8846): fail on new/absent problems vs committed baseline.
+# Community .NET supports failThreshold only (not severityThresholds).
+# Refresh qodana.sarif.json when intentionally remediating baselined findings
+# (e.g. #8933 RedundantUsingDirective compile-verified cleanup).
+failThreshold: 0
 exclude:
   - name: All
     paths:
       - src/UI/Server/Generated
+  # Html.AttributeValueNotResolved: `role="switch"` is valid ARIA 1.1; the HTML
+  # inspector does not recognize the value. Keep the role for Settings dark-mode a11y.
+  - name: Html.AttributeValueNotResolved
+    paths:
+      - src/UI.Shared/Pages/Settings.razor
+  # ConditionalAccessQualifierIsNonNullableAccordingToAPIContract:
+  # HttpContext.RequestServices is annotated non-null, but DefaultHttpContext can leave it
+  # unset. Microsoft.Extensions.DependencyInjection.GetService throws on a null provider,
+  # so the ?. is required for unit tests and early pipeline safety.
+  - name: ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+    paths:
+      - src/UI/Server/DetailedHealthCheckResponseWriter.cs
+  # UnusedAutoPropertyAccessor: getters are consumed by System.Text.Json / health JSON writers
+  # via reflection, not by direct C# reads. Public shape is intentional API.
+  - name: UnusedAutoPropertyAccessor.Global
+    paths:
+      - src/ChurchBulletin.ServiceDefaults/LogEntry.cs
+      - src/ChurchBulletin.ServiceDefaults/LogEntryError.cs
+      - src/ChurchBulletin.ServiceDefaults/EventEntry.cs
+      - src/ChurchBulletin.ServiceDefaults/MetricEntry.cs
+      - src/UI/Server/DetailedHealthCheckResponseWriter.cs
+  # NotAccessedPositionalProperty: record/DTO positional members exist for JSON, SignalR,
+  # equality, or API contract shapes; in-process code does not always read every slot.
+  - name: NotAccessedPositionalProperty.Global
+    paths:
+      - src/Core/Model/Events/WorkOrderAssignedToBotEvent.cs
+      - src/Core/Model/StateCommands/StateCommandResult.cs
+      - src/UI/Api/WorkOrderBulkImportModels.cs
+      - src/UI/Server/Notifications/RealtimeNotificationHub.cs
+      - src/UI.Shared/Models/UserLoggedInEvent.cs
+      - src/UI.Shared/Models/UserLoggedOutEvent.cs
+      - src/UI/Server/Middleware/IdempotencyMiddleware.cs
+      - src/UI/Server/Middleware/WebServiceMessageValidationMiddleware.cs
+  - name: NotAccessedPositionalProperty.Local
+    paths:
+      - src/UnitTests/BuildGates/CrapGateEvaluator.cs
+  # Reflection-driven property reads in unit helpers (etag / activity tags).
+  - name: UnusedAutoPropertyAccessor.Local
+    paths:
+      - src/UnitTests/Api/ConditionalGetEtagTests.cs
+      - src/UnitTests/UI.Shared/UiSharedHelperTests.cs
+

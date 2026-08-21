@@ -20,7 +20,20 @@ if (-not [string]::IsNullOrEmpty($databaseName)) {
 Build @buildArgs
 
 $crapAudit = Join-Path $PSScriptRoot ".cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1"
-& $crapAudit -Threshold 14 -SkipTests -FailOnViolations
+$crapThresholdConfig = Join-Path $PSScriptRoot ".cursor/skills/crap-score-cleanup/crap-gate-threshold.json"
+if (-not (Test-Path -LiteralPath $crapThresholdConfig)) {
+    throw "CRAP gate threshold file not found: $crapThresholdConfig"
+}
+$crapThresholdPayload = Get-Content -LiteralPath $crapThresholdConfig -Raw | ConvertFrom-Json
+if ($null -eq $crapThresholdPayload.productionThreshold) {
+    throw "CRAP gate threshold file missing productionThreshold: $crapThresholdConfig"
+}
+$crapThreshold = 0
+if (-not [int]::TryParse([string]$crapThresholdPayload.productionThreshold, [ref]$crapThreshold) -or $crapThreshold -le 0) {
+    throw "CRAP gate productionThreshold must be a positive integer in $crapThresholdConfig (got '$($crapThresholdPayload.productionThreshold)')."
+}
+# Threshold comes from crap-gate-threshold.json (single source of truth); do not pass -Threshold here.
+& $crapAudit -SkipTests -FailOnViolations
 if ($LASTEXITCODE -ne 0) {
-    throw "CRAP gate failed: in-scope production methods exceed threshold 14. See crap-metrics/crap-production-violations.json"
+    throw "CRAP gate failed: in-scope production methods exceed threshold $crapThreshold. See crap-metrics/crap-production-violations.json"
 }

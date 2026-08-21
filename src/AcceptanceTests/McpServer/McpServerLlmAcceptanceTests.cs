@@ -1,9 +1,6 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
-using ClearMeasure.Bootcamp.IntegrationTests;
 using ClearMeasure.Bootcamp.LlmGateway;
-using ClearMeasure.Bootcamp.UI.Shared.Pages;
-using Shouldly;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
@@ -91,7 +88,7 @@ public class McpServerLlmAcceptanceTests : AcceptanceTestBase
 
         response.Text.ShouldNotBeNullOrEmpty();
         knownUsernames.ShouldContain(
-            username => response.Text.Contains(username!),
+            username => response.Text.Contains(username),
             "Response should contain at least one known employee username");
     }
 }

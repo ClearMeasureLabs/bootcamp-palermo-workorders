@@ -61,10 +61,11 @@ jobs:
           . ./build.ps1
           Build
 
-      - name: Enforce CRAP ≤ 14 (production)
+      - name: Enforce CRAP (production)
         shell: pwsh
         run: |
-          pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -Threshold 14 -SkipTests -FailOnViolations
+          # Threshold from .cursor/skills/crap-score-cleanup/crap-gate-threshold.json (single source of truth).
+          pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -SkipTests -FailOnViolations
 
       - name: Publish CRAP summary to job summary
         if: always()
@@ -333,12 +334,10 @@ jobs:
 
       - name: Qodana Scan
         uses: JetBrains/qodana-action@v2025.2
-        # Informational for now: findings are reported but do not fail the build.
-        # To make this a hard gate later, remove continue-on-error and set
-        # fail-threshold (with a committed baseline) in qodana.yaml.
-        continue-on-error: true
+        # Hard gate (#8846): failThreshold 0 + committed baseline (qodana.sarif.json).
+        # Unchanged baselined findings do not fail; new/absent problems do.
         with:
-          args: --linter,jetbrains/qodana-cdnet:latest,--solution,src/ChurchBulletin.sln
+          args: --linter,jetbrains/qodana-cdnet:latest,--solution,src/ChurchBulletin.sln,--baseline,qodana.sarif.json,--fail-threshold,0
           results-dir: ${{ runner.temp }}/qodana/results
           upload-result: true
           artifact-name: qodana-report
