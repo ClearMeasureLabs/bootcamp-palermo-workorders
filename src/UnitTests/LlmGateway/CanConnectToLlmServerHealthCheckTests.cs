@@ -1,4 +1,3 @@
-using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -48,7 +47,7 @@ public class CanConnectToLlmServerHealthCheckTests
     public async Task CheckHealthAsync_WhenChatThrows_ReturnsUnhealthy()
     {
         var healthCheck = CreateHealthCheck(
-            new StubChatClientFactory(available: true, failOnGetResponse: true));
+            new StubChatClientFactory(available: true, throwOnGetClient: true));
 
         var result = await healthCheck.CheckHealthAsync(CreateContext(healthCheck));
 
@@ -69,18 +68,25 @@ public class CanConnectToLlmServerHealthCheckTests
     private sealed class StubChatClientFactory(
         bool available,
         ChatResponse? response = null,
-        bool failOnGetResponse = false) : ChatClientFactory(null!)
+        bool throwOnGetClient = false) : ChatClientFactory(null!)
     {
         public override Task<ChatClientAvailabilityResult> IsChatClientAvailable() =>
             Task.FromResult(available
                 ? new ChatClientAvailabilityResult(true, "configured")
                 : new ChatClientAvailabilityResult(false, "missing configuration"));
 
-        public override Task<IChatClient> GetChatClient() =>
-            Task.FromResult<IChatClient>(new StubHealthChatClient(response, failOnGetResponse));
+        public override Task<IChatClient> GetChatClient()
+        {
+            if (throwOnGetClient)
+            {
+                throw new InvalidOperationException("probe-failed");
+            }
+
+            return Task.FromResult<IChatClient>(new StubHealthChatClient(response ?? new ChatResponse([])));
+        }
     }
 
-    private sealed class StubHealthChatClient(ChatResponse? response, bool failOnGetResponse) : IChatClient
+    private sealed class StubHealthChatClient(ChatResponse response) : IChatClient
     {
         public void Dispose()
         {
@@ -89,15 +95,8 @@ public class CanConnectToLlmServerHealthCheckTests
         public Task<ChatResponse> GetResponseAsync(
             IEnumerable<ChatMessage> messages,
             ChatOptions? options = null,
-            CancellationToken cancellationToken = default)
-        {
-            if (failOnGetResponse)
-            {
-                throw new InvalidOperationException("probe-failed");
-            }
-
-            return Task.FromResult(response ?? new ChatResponse([]));
-        }
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(response);
 
         public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
             IEnumerable<ChatMessage> messages,

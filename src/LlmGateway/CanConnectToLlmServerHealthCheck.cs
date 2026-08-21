@@ -34,7 +34,7 @@ public class CanConnectToLlmServerHealthCheck(
         }
         catch (Exception ex)
         {
-            logger.LogWarning("Chat client connection failed: {Message}", ex.Message);
+            logger.LogWarning(ex, "Chat client connection failed");
             return LlmHealthEvaluator.FromException(ex);
         }
     }
