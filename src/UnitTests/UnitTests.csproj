@@ -62,6 +62,7 @@
 		<ProjectReference Include="..\UI\Api\UI.Api.csproj" />
 		<ProjectReference Include="..\UI\Server\UI.Server.csproj" />
 		<ProjectReference Include="..\UI.Shared\UI.Shared.csproj" />
+		<ProjectReference Include="..\McpServer\McpServer.csproj" />
 	</ItemGroup>
 
 	<!-- Coverlet/Cecil cannot instrument Core.dll unless HealthChecks.Abstractions (and siblings) sit beside it. -->
