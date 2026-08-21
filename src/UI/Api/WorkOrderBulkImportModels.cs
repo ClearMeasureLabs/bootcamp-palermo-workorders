@@ -1,3 +1,5 @@
+// ReSharper disable NotAccessedPositionalProperty.Global
+// ReSharper disable NotAccessedPositionalProperty.Local
 namespace ClearMeasure.Bootcamp.UI.Api;
 
 /// <summary>
