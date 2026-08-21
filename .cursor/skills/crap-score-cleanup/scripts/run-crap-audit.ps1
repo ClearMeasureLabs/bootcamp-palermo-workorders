@@ -10,7 +10,8 @@
   Directory for reports. Defaults to crap-metrics at repo root.
 
 .PARAMETER Threshold
-  CRAP threshold for "CRAPpy" methods. Default 11.
+  CRAP threshold for "CRAPpy" methods. When omitted, reads productionThreshold from
+  ../crap-gate-threshold.json (single source of truth for the CI/PrivateBuild gate).
 
 .PARAMETER SkipTests
   Skip test run; reuse existing Cobertura files under OutputDir/TestResults.
@@ -34,7 +35,7 @@
 param(
     [string]$Solution = "src/ChurchBulletin.sln",
     [string]$OutputDir = "crap-metrics",
-    [int]$Threshold = 11,
+    [int]$Threshold = 0,
     [switch]$SkipTests,
     [switch]$AllowPartialCoverage,
     [string]$RepoRoot = "",
@@ -43,6 +44,27 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+function Get-ProductionCrapGateThreshold {
+    $configPath = Join-Path $PSScriptRoot ".." "crap-gate-threshold.json"
+    if (-not (Test-Path -LiteralPath $configPath)) {
+        Write-Error "CRAP gate threshold file not found: $configPath"
+    }
+    $payload = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+    if ($null -eq $payload.productionThreshold) {
+        Write-Error "CRAP gate threshold file missing productionThreshold: $configPath"
+    }
+    $value = 0
+    if (-not [int]::TryParse([string]$payload.productionThreshold, [ref]$value) -or $value -le 0) {
+        Write-Error "CRAP gate productionThreshold must be a positive integer in $configPath (got '$($payload.productionThreshold)')."
+    }
+    return $value
+}
+
+if (-not $PSBoundParameters.ContainsKey("Threshold")) {
+    $Threshold = Get-ProductionCrapGateThreshold
+}
+
 if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
     $cwdRoot = (Get-Location).Path
     if (Test-Path (Join-Path $cwdRoot "src/ChurchBulletin.sln")) {
