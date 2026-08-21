@@ -420,7 +420,9 @@ jobs:
   deploy-to-prod:
     name: Prod
     needs: [deploy-to-uat]
-    if: success()
+    # Do not use success() — skipped TDD on workflow_dispatch makes success() false
+    # and skips Prod even when UAT succeeded.
+    if: ${{ !cancelled() && needs.deploy-to-uat.result == 'success' }}
     runs-on: ubuntu-latest
     environment:
       name: Prod
