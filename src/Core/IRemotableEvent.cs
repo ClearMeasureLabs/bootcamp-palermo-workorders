@@ -1,7 +1,5 @@
-﻿using MediatR;
+using MediatR;
 
 namespace ClearMeasure.Bootcamp.Core;
 
-public interface IRemotableEvent : INotification
-{
-}
+public interface IRemotableEvent : INotification;

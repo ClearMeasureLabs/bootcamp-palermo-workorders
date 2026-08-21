@@ -10,10 +10,12 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidInWrongStatus()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Complete;
         var employee = new Employee();
-        order.Creator = employee;
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.Complete,
+            Creator = employee
+        };
 
         var command = new SaveDraftCommand(order, employee);
         Assert.That(command.IsValid(), Is.False);
@@ -22,10 +24,12 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldNotBeValidWithWrongEmployee()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
-        order.Creator = employee;
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.Draft,
+            Creator = employee
+        };
 
         var command = new SaveDraftCommand(order, new Employee());
         Assert.That(command.IsValid(), Is.False);
@@ -34,10 +38,12 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldBeValid()
     {
-        var order = new WorkOrder();
-        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
-        order.Creator = employee;
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.Draft,
+            Creator = employee
+        };
 
         var command = new SaveDraftCommand(order, employee);
         Assert.That(command.IsValid(), Is.True);
@@ -46,11 +52,13 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     [Test]
     public void ShouldTransitionStateProperly()
     {
-        var order = new WorkOrder();
-        order.Number = "123";
-        order.Status = WorkOrderStatus.Draft;
         var employee = new Employee();
-        order.Creator = employee;
+        var order = new WorkOrder()
+        {
+            Number = "123",
+            Status = WorkOrderStatus.Draft,
+            Creator = employee
+        };
 
         var command = new SaveDraftCommand(order, employee);
         command.Execute(new StateCommandContext());

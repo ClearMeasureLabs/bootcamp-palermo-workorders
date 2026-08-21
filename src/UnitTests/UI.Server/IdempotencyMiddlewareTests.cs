@@ -39,12 +39,17 @@ public class IdempotencyMiddlewareTests
     [Test]
     public async Task BuildCompositeKeyAsync_IncludesBodyHash()
     {
-        var context = new DefaultHttpContext();
-        context.Request.Method = "POST";
-        context.Request.Path = "/api/test";
         var bodyBytes = System.Text.Encoding.UTF8.GetBytes("payload");
-        context.Request.Body = new MemoryStream(bodyBytes);
-        context.Request.ContentLength = bodyBytes.Length;
+        var context = new DefaultHttpContext
+        {
+            Request =
+            {
+                Method = "POST",
+                Path = "/api/test",
+                Body = new MemoryStream(bodyBytes),
+                ContentLength = bodyBytes.Length
+            }
+        };
 
         var key1 = await IdempotencyMiddleware.BuildCompositeKeyAsync(context.Request, "k1", CancellationToken.None);
         context.Request.Body = new MemoryStream(bodyBytes);

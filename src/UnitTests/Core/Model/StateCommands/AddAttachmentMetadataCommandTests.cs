@@ -11,10 +11,8 @@ public class AddAttachmentMetadataCommandTests
     public void AddAttachmentMetadataCommand_ShouldAddAttachment()
     {
         var workOrder = new WorkOrder { Id = Guid.NewGuid() };
-        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
-        uploader.Id = Guid.NewGuid();
         var uploadDate = new DateTime(2025, 3, 1, 8, 0, 0);
-
+        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         var command = new AddAttachmentMetadataCommand(
             workOrder, uploader, "damage-photo.jpg", "image/jpeg", 4096);
 

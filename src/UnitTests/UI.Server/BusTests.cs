@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.UI.Shared;
+using ClearMeasure.Bootcamp.UI.Shared;
 using MediatR;
 using Shouldly;
 
@@ -134,7 +134,5 @@ public class BusTests
         public string Message { get; set; } = string.Empty;
     }
 
-    private record TestQuery : IRequest<string>
-    {
-    }
+    private record TestQuery : IRequest<string>;
 }

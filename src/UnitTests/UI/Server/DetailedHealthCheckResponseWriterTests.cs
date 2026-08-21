@@ -49,8 +49,10 @@ public class DetailedHealthCheckResponseWriterTests
                 new Dictionary<string, object>())
         };
         var report = new HealthReport(entries, TimeSpan.FromMilliseconds(5));
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         await DetailedHealthCheckResponseWriter.WriteAsync(context, report);
 
@@ -79,8 +81,10 @@ public class DetailedHealthCheckResponseWriterTests
                 new Dictionary<string, object>())
         };
         var report = new HealthReport(entries, TimeSpan.FromMilliseconds(150));
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         await DetailedHealthCheckResponseWriter.WriteAsync(context, report);
 
@@ -108,8 +112,10 @@ public class DetailedHealthCheckResponseWriterTests
                 data)
         };
         var report = new HealthReport(entries, TimeSpan.FromMilliseconds(5000));
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         await DetailedHealthCheckResponseWriter.WriteAsync(context, report);
 
@@ -132,8 +138,10 @@ public class DetailedHealthCheckResponseWriterTests
                 new Dictionary<string, object>())
         };
         var report = new HealthReport(entries, TimeSpan.FromMilliseconds(1));
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         await DetailedHealthCheckResponseWriter.WriteAsync(context, report);
 
@@ -149,8 +157,10 @@ public class DetailedHealthCheckResponseWriterTests
     [Test]
     public async Task WriteAsync_Should_IncludeServerUtcInRootJson_When_ResponseWritten()
     {
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
 
@@ -167,9 +177,9 @@ public class DetailedHealthCheckResponseWriterTests
         services.AddSingleton<TimeProvider>(new FixedUtcTimeProvider(fixedNow));
         var context = new DefaultHttpContext
         {
-            RequestServices = services.BuildServiceProvider()
+            RequestServices = services.BuildServiceProvider(),
+            Response = { Body = new MemoryStream() }
         };
-        context.Response.Body = new MemoryStream();
 
         using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
 
@@ -181,8 +191,10 @@ public class DetailedHealthCheckResponseWriterTests
     public async Task WriteAsync_Should_UseSystemTimeProvider_When_TimeProviderNotRegistered()
     {
         var before = DateTimeOffset.UtcNow;
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
 
@@ -196,8 +208,10 @@ public class DetailedHealthCheckResponseWriterTests
     [Test]
     public async Task WriteAsync_Should_IncludeIs64BitProcessInRootJson_When_ResponseWritten()
     {
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
 
@@ -208,8 +222,10 @@ public class DetailedHealthCheckResponseWriterTests
     [Test]
     public async Task TimeZoneIdSerializedAsCamelCase()
     {
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
 
@@ -220,8 +236,10 @@ public class DetailedHealthCheckResponseWriterTests
     [Test]
     public async Task WriteAsync_Should_IncludeProcessStartUtc_When_ResponseWritten()
     {
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
 
@@ -234,8 +252,10 @@ public class DetailedHealthCheckResponseWriterTests
     public async Task WriteAsync_Should_SetProcessStartUtcFromCurrentProcess_When_ResponseWritten()
     {
         var expected = new DateTimeOffset(Process.GetCurrentProcess().StartTime).ToUniversalTime();
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
 
@@ -246,8 +266,10 @@ public class DetailedHealthCheckResponseWriterTests
     [Test]
     public async Task WriteAsync_Should_EnforceProcessStartUtcLessThanOrEqualServerUtc()
     {
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext
+        {
+            Response = { Body = new MemoryStream() }
+        };
 
         using var doc = await WriteAndParseAsync(context, CreateMinimalReport());
 
