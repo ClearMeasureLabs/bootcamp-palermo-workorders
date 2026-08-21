@@ -1,5 +1,5 @@
 name: Deploy
-run-name: "${{ inputs.release_number && format('{0} • Deploy', inputs.release_number) || format('1.4.{0} • Deploy • {1}', github.event.workflow_run.run_number, github.event.workflow_run.head_branch) }}"
+run-name: "${{ inputs.release_number && format('{0} • Deploy', inputs.release_number) || format('2.4.{0} • Deploy • {1}', github.event.workflow_run.run_number, github.event.workflow_run.head_branch) }}"
 on:
   workflow_run:
     workflows: ["Build"]
@@ -8,11 +8,11 @@ on:
   workflow_dispatch:
     inputs:
       release_number:
-        description: 'Release version to deploy (must match an existing Integration Build version, e.g. 1.4.394)'
+        description: 'Release version to deploy (must match an existing Integration Build version, e.g. 2.4.394)'
         required: true
         type: string
 env:
-  MAJOR_VERSION: 1
+  MAJOR_VERSION: 2
   MINOR_VERSION: 4
 
 jobs:

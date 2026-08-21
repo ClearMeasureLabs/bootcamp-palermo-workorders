@@ -72,7 +72,7 @@ These can be added as separate workflows if needed.
 ## Version Numbering
 
 The workflow uses semantic versioning:
-- Major version: `1` (configured via `MAJOR_VERSION` env var)
+- Major version: `2` (configured via `MAJOR_VERSION` env var)
 - Minor version: `3` (configured via `MINOR_VERSION` env var)
 - Build number: GitHub run number (automatic)
 
