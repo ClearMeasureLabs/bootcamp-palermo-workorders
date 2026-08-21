@@ -8,7 +8,8 @@ public class CrapGateEvaluatorTests
     [Test]
     public void EvaluateReport_WhenOnlyTestsAndGeneratedExceedThreshold_ReturnsZero()
     {
-        var result = CrapGateEvaluator.EvaluateReport(PassFixture, threshold: 11);
+        var gate = CrapGateThreshold.ReadProductionThreshold();
+        var result = CrapGateEvaluator.EvaluateReport(PassFixture(gate), threshold: gate);
 
         result.ViolationCount.ShouldBe(0);
         result.Methods.ShouldBeEmpty();
@@ -17,7 +18,8 @@ public class CrapGateEvaluatorTests
     [Test]
     public void EvaluateReport_WhenProductionMethodExceedsThreshold_ReturnsThatMethod()
     {
-        var result = CrapGateEvaluator.EvaluateReport(FailFixture, threshold: 11);
+        var gate = CrapGateThreshold.ReadProductionThreshold();
+        var result = CrapGateEvaluator.EvaluateReport(FailFixture(gate), threshold: gate);
 
         result.ViolationCount.ShouldBe(1);
         result.Methods[0].FullName.ShouldBe("ClearMeasure.Bootcamp.Core.Import.WorkOrderBulkImportCsvParser.Parse");
@@ -27,9 +29,10 @@ public class CrapGateEvaluatorTests
     [Test]
     public void EvaluateReport_WhenWindowsBackslashProductionPathExceedsThreshold_CountsViolation()
     {
-        var json = """
+        var gate = CrapGateThreshold.ReadProductionThreshold();
+        var json = $$"""
             {
-              "threshold": 11,
+              "threshold": {{gate}},
               "methods": [
                 {
                   "fullName": "ClearMeasure.Bootcamp.McpServer.Tools.WorkOrderCommandExecutor.ExecuteCommandAsync",
@@ -42,35 +45,38 @@ public class CrapGateEvaluatorTests
             }
             """;
 
-        CrapGateEvaluator.EvaluateReport(json, threshold: 11).ViolationCount.ShouldBe(1);
+        CrapGateEvaluator.EvaluateReport(json, threshold: gate).ViolationCount.ShouldBe(1);
     }
 
     [Test]
     public void EvaluateReport_WhenThresholdRaisedAboveProductionCrap_ReturnsZero()
     {
-        CrapGateEvaluator.EvaluateReport(FailFixture, threshold: 20).ViolationCount.ShouldBe(0);
+        var gate = CrapGateThreshold.ReadProductionThreshold();
+        CrapGateEvaluator.EvaluateReport(FailFixture(gate), threshold: 20).ViolationCount.ShouldBe(0);
     }
 
     [Test]
-    public void EvaluateReport_WhenProductionCrapIs12_Threshold11RejectsAndThreshold12Accepts()
+    public void EvaluateReport_WhenProductionCrapIsJustOverGate_RejectsAtGateAndAcceptsAtGatePlusOne()
     {
-        var json = """
+        var gate = CrapGateThreshold.ReadProductionThreshold();
+        var justOver = gate + 1;
+        var json = $$"""
             {
-              "threshold": 11,
+              "threshold": {{gate}},
               "methods": [
                 {
                   "fullName": "ClearMeasure.Bootcamp.Core.Model.WorkOrder.ChangeStatus",
                   "filePath": "D:/repo/src/Core/Model/WorkOrder.cs",
-                  "crap": 12,
-                  "complexity": 12,
+                  "crap": {{justOver}},
+                  "complexity": {{justOver}},
                   "coverage": 100
                 }
               ]
             }
             """;
 
-        CrapGateEvaluator.EvaluateReport(json, threshold: 11).ViolationCount.ShouldBe(1);
-        CrapGateEvaluator.EvaluateReport(json, threshold: 12).ViolationCount.ShouldBe(0);
+        CrapGateEvaluator.EvaluateReport(json, threshold: gate).ViolationCount.ShouldBe(1);
+        CrapGateEvaluator.EvaluateReport(json, threshold: justOver).ViolationCount.ShouldBe(0);
     }
 
     [Test]
@@ -179,9 +185,9 @@ public class CrapGateEvaluatorTests
         throw new FileNotFoundException("rollup-file-scores.csx not found from test directory.");
     }
 
-    private const string PassFixture = """
+    private static string PassFixture(int threshold) => $$"""
         {
-          "threshold": 11,
+          "threshold": {{threshold}},
           "methods": [
             {
               "fullName": "ClearMeasure.Bootcamp.Core.Model.WorkOrder.get_Title",
@@ -208,9 +214,9 @@ public class CrapGateEvaluatorTests
         }
         """;
 
-    private const string FailFixture = """
+    private static string FailFixture(int threshold) => $$"""
         {
-          "threshold": 11,
+          "threshold": {{threshold}},
           "methods": [
             {
               "fullName": "ClearMeasure.Bootcamp.Core.Import.WorkOrderBulkImportCsvParser.Parse",

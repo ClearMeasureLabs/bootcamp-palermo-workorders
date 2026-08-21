@@ -20,7 +20,10 @@ if (-not [string]::IsNullOrEmpty($databaseName)) {
 Build @buildArgs
 
 $crapAudit = Join-Path $PSScriptRoot ".cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1"
-& $crapAudit -Threshold 11 -SkipTests -FailOnViolations
+$crapThresholdConfig = Join-Path $PSScriptRoot ".cursor/skills/crap-score-cleanup/crap-gate-threshold.json"
+$crapThreshold = [int]((Get-Content -LiteralPath $crapThresholdConfig -Raw | ConvertFrom-Json).productionThreshold)
+# Threshold comes from crap-gate-threshold.json (single source of truth); do not pass -Threshold here.
+& $crapAudit -SkipTests -FailOnViolations
 if ($LASTEXITCODE -ne 0) {
-    throw "CRAP gate failed: in-scope production methods exceed threshold 11. See crap-metrics/crap-production-violations.json"
+    throw "CRAP gate failed: in-scope production methods exceed threshold $crapThreshold. See crap-metrics/crap-production-violations.json"
 }
