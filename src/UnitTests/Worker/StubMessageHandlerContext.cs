@@ -22,9 +22,9 @@ public class StubMessageHandlerContext : DispatchProxy
     public static StubMessageHandlerContext Create()
     {
         var context = Create<IMessageHandlerContext, StubMessageHandlerContext>();
-        // DispatchProxy.Create returns TInterface backed by TProxy; Qodana cannot prove the relationship.
+        // DispatchProxy.Create returns TInterface backed by TProxy.
         // ReSharper disable once SuspiciousTypeConversion.Global
-        var stub = (StubMessageHandlerContext)(object)context;
+        var stub = (StubMessageHandlerContext)context;
         stub.Context = context;
         return stub;
     }
