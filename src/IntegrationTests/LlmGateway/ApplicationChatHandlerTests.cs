@@ -228,9 +228,10 @@ public class ApplicationChatHandlerTests : LlmTestBase
             if (workOrder is null || workOrder.Status != WorkOrderStatus.Assigned)
             {
                 // Create may leave Draft; later LLM turns can also SaveDraft back to Draft.
+                // Predicate param is non-nullable WorkOrder; use always-true to load current row.
                 workOrder ??= await WaitForWorkOrderAsync(
                     workOrderNumber,
-                    wo => wo is not null,
+                    _ => true,
                     TimeSpan.FromSeconds(60));
 
                 if (workOrder?.Status == WorkOrderStatus.Draft)
