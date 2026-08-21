@@ -426,16 +426,43 @@ public abstract class AcceptanceTestBase
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
-        
+
         await Select(nameof(WorkOrderManage.Elements.Assignee), username);
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
+
+        var assignButtonTestId =
+            nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name;
+        await Expect(Page.GetByTestId(assignButtonTestId))
+            .ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+
+        var searchNav = Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 30_000 });
+        await Click(assignButtonTestId);
+        try
+        {
+            await searchNav;
+        }
+        catch (TimeoutException)
+        {
+        }
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
+        WorkOrder? rehyratedOrder = null;
+        for (var attempt = 0; attempt < 40; attempt++)
+        {
+            rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!))
+                ?? throw new InvalidOperationException();
+            if (rehyratedOrder.Status == WorkOrderStatus.Assigned && rehyratedOrder.Assignee != null)
+            {
+                return rehyratedOrder;
+            }
 
+            await Task.Delay(250);
+        }
+
+        rehyratedOrder!.Status.ShouldBe(WorkOrderStatus.Assigned);
+        rehyratedOrder.Assignee.ShouldNotBeNull();
         return rehyratedOrder;
     }
 

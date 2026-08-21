@@ -25,18 +25,46 @@ public class WorkOrderAssignTests : AcceptanceTestBase
         await Input(nameof(WorkOrderManage.Elements.Description), "newdesc");
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync("newtitle");
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToHaveValueAsync("newdesc");
-        await Click(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name);
+
+        var assignButtonTestId =
+            nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name;
+        var searchNav = Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 30_000 });
+        await Click(assignButtonTestId);
+        try
+        {
+            await searchNav;
+        }
+        catch (TimeoutException)
+        {
+        }
+
+        WorkOrder? persisted = null;
+        for (var attempt = 0; attempt < 40; attempt++)
+        {
+            persisted = await Bus.Send(new WorkOrderByNumberQuery(order.Number!))
+                ?? throw new InvalidOperationException();
+            if (persisted.Status == WorkOrderStatus.Assigned)
+            {
+                break;
+            }
+
+            await Task.Delay(250);
+        }
+
+        persisted!.Status.ShouldBe(WorkOrderStatus.Assigned);
 
         await ClickWorkOrderNumberFromSearchPage(order);
 
         await woNumberLocator.WaitForAsync();
         await Expect(woNumberLocator).ToHaveTextAsync(order.Number!);
 
+        // Status first: Assignee disabled lags behind status paint on slow ARM runners.
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
+            .ToHaveTextAsync(WorkOrderStatus.Assigned.FriendlyName);
+
         var assigneeField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee));
         await Expect(assigneeField).ToBeDisabledAsync();
         await Expect(assigneeField).ToHaveValueAsync(CurrentUser.UserName);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
-            .ToHaveTextAsync(WorkOrderStatus.Assigned.FriendlyName);
 
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!))
             ?? throw new InvalidOperationException();
