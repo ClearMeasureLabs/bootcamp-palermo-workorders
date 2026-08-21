@@ -262,7 +262,7 @@ public class ServerFixture
     {
         var connectionString = GetSqlConnectionString();
         var useSqlite = IsSqliteConnection(connectionString);
-        _serverProcess = CreateDotnetProcess(ProjectPath, BuildServerArguments(useSqlite));
+        _serverProcess = CreateDotnetProcess(ProjectPath, BuildServerArguments());
         ConfigureServerEnvironment(_serverProcess, useSqlite, connectionString);
         AttachProcessLogging(_serverProcess, "Server");
         _serverProcess.Start();
@@ -271,7 +271,7 @@ public class ServerFixture
         await WaitUntilUrlReady(ApplicationBaseUrl);
     }
 
-    private static string BuildServerArguments(bool useSqlite)
+    private static string BuildServerArguments()
     {
         var config = BuildConfiguration;
         // Always --no-launch-profile so launchSettings LocalDB does not override the

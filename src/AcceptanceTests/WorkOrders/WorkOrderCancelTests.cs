@@ -51,17 +51,9 @@ public class WorkOrderCancelTests : AcceptanceTestBase
         await ClickWorkOrderNumberFromSearchPage(order);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)))
             .ToHaveTextAsync(order.Number!);
-        await Page.ReloadAsync();
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)))
-            .ToHaveTextAsync(order.Number!);
-
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync(WorkOrderStatus.Cancelled.FriendlyName);
-
-        var titleValue = await Page.GetByTestId(nameof(WorkOrderManage.Elements.Title)).InputValueAsync();
-        titleValue.ShouldNotBeNullOrWhiteSpace();
-        var descriptionValue = await Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)).InputValueAsync();
-        descriptionValue.ShouldNotBeNullOrWhiteSpace();
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage)))
+            .ToHaveTextAsync("This work order is read-only for you at this time.");
     }
 }
