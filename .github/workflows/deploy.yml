@@ -414,13 +414,16 @@ jobs:
             Write-Host "::warning::Skipping UAT Container App URL: CONTAINER_APP_NAME or UAT_RESOURCE_GROUP_NAME is empty."
             exit 0
           }
+          $azErrFile = [System.IO.Path]::GetTempFileName()
           $fqdn = az containerapp show `
             --name $appName `
             --resource-group $resourceGroup `
             --query "properties.configuration.ingress.fqdn" `
-            -o tsv 2>$null
+            -o tsv 2>$azErrFile
+          $azErrText = (Get-Content -Path $azErrFile -Raw -ErrorAction SilentlyContinue)
+          Remove-Item -Path $azErrFile -ErrorAction SilentlyContinue
           if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($fqdn) -or $fqdn -match 'ERROR') {
-            Write-Host "::warning::Could not retrieve UAT container app FQDN (Octopus deploy already succeeded). Details: $fqdn"
+            Write-Host "::warning::Could not retrieve UAT container app FQDN (Octopus deploy already succeeded). az stderr: $azErrText"
             exit 0
           }
           $containerAppUrl = "https://$fqdn"
@@ -451,7 +454,7 @@ jobs:
               $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
               $body = $response.Content
               Write-Host "Attempt ${i}: HTTP $($response.StatusCode) - $body"
-              if ($response.StatusCode -eq 200 -and $body -match 'Healthy') {
+              if ($response.StatusCode -eq 200 -and $body -match '\bHealthy\b') {
                 Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
                 exit 0
               }
@@ -469,8 +472,7 @@ jobs:
                 exit 0
               }
               if ($response.StatusCode -eq 200) {
-                Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
-                exit 0
+                Write-Host "::warning::HTTP 200 response did not contain a recognized health status (Healthy/Degraded); not treated as a pass."
               }
             } catch {
               Write-Host "Attempt ${i}: $($_.Exception.Message)"
@@ -546,13 +548,16 @@ jobs:
             Write-Host "::warning::Skipping Prod Container App URL: CONTAINER_APP_NAME or PROD_RESOURCE_GROUP_NAME is empty."
             exit 0
           }
+          $azErrFile = [System.IO.Path]::GetTempFileName()
           $fqdn = az containerapp show `
             --name $appName `
             --resource-group $resourceGroup `
             --query "properties.configuration.ingress.fqdn" `
-            -o tsv 2>$null
+            -o tsv 2>$azErrFile
+          $azErrText = (Get-Content -Path $azErrFile -Raw -ErrorAction SilentlyContinue)
+          Remove-Item -Path $azErrFile -ErrorAction SilentlyContinue
           if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($fqdn) -or $fqdn -match 'ERROR') {
-            Write-Host "::warning::Could not retrieve Prod container app FQDN (Octopus deploy already succeeded). Details: $fqdn"
+            Write-Host "::warning::Could not retrieve Prod container app FQDN (Octopus deploy already succeeded). az stderr: $azErrText"
             exit 0
           }
           $containerAppUrl = "https://$fqdn"
@@ -583,7 +588,7 @@ jobs:
               $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
               $body = $response.Content
               Write-Host "Attempt ${i}: HTTP $($response.StatusCode) - $body"
-              if ($response.StatusCode -eq 200 -and $body -match 'Healthy') {
+              if ($response.StatusCode -eq 200 -and $body -match '\bHealthy\b') {
                 Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
                 exit 0
               }
@@ -601,8 +606,7 @@ jobs:
                 exit 0
               }
               if ($response.StatusCode -eq 200) {
-                Write-Host "Container App URL: ${{ env.CONTAINER_APP_URL }}"
-                exit 0
+                Write-Host "::warning::HTTP 200 response did not contain a recognized health status (Healthy/Degraded); not treated as a pass."
               }
             } catch {
               Write-Host "Attempt ${i}: $($_.Exception.Message)"
