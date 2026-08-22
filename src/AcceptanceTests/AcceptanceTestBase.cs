@@ -228,7 +228,7 @@ public abstract class AcceptanceTestBase
         var username = CurrentUser.UserName;
         await TakeScreenshotAsync();
         await Click(nameof(LoginLink.Elements.LoginLink));
-        await Page.WaitForURLAsync("**/login");
+        await Page.WaitForURLAsync("**/login", new PageWaitForURLOptions { WaitUntil = WaitUntilState.Commit });
         await Expect(Page.GetByTestId(nameof(Login.Elements.User))).ToBeVisibleAsync();
 
         // Fill in username only
@@ -410,7 +410,7 @@ public abstract class AcceptanceTestBase
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
-        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New", new PageWaitForURLOptions { WaitUntil = WaitUntilState.Commit });
         await TakeScreenshotAsync(1, "NewWorkOrderPage");
 
         ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
@@ -428,7 +428,7 @@ public abstract class AcceptanceTestBase
 
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
-        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000, WaitUntil = WaitUntilState.Commit });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         WorkOrder? rehyratedOrder = null;
@@ -447,9 +447,19 @@ public abstract class AcceptanceTestBase
     {
         // Status commands NavigateTo /workorder/search; wait for that URL and row link
         // before click so Blazor result render races do not time out on WorkOrderLink*.
+        //
+        // WaitUntil = Commit (not the default Load) because Blazor WASM's client-side
+        // NavigationManager.NavigateTo performs a same-document (History API) navigation,
+        // not a full page reload, so the browser's "load" event does not fire again. Waiting
+        // for "Load" here was racy under CI load: it would occasionally never resolve and hang
+        // until the 90s timeout on whichever test happened to hit the window, even though the
+        // SPA had already navigated to the right URL (root cause of the intermittent
+        // "waiting for navigation to **/workorder/search until Load" failures across multiple
+        // unrelated tests). Commit only waits for the navigation to be committed, which a
+        // same-document route change does reliably fire.
         if (!Page.Url.Contains("/workorder/search", StringComparison.OrdinalIgnoreCase))
         {
-            await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+            await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000, WaitUntil = WaitUntilState.Commit });
         }
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
