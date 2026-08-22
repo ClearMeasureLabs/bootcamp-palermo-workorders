@@ -41,6 +41,10 @@ public class LoginTests : AcceptanceTestBase
         var placeholderOption = userSelect.Locator("option[value='']");
         await Expect(placeholderOption).ToHaveTextAsync("-- Select a parishioner or staff member --");
         await Expect(homerOption).ToHaveTextAsync("HOMER SIMPSON");
+
+        // Seeded mixed-case names must render all-caps in this dropdown only.
+        var helenOption = userSelect.Locator("option[value='hlovejoy']");
+        await Expect(helenOption).ToHaveTextAsync("HELEN LOVEJOY");
     }
 
     [Test, Retry(2)]
