@@ -19,7 +19,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageEventBusNotifyTests
 {
     [Test]
-    public void SpyUiBus_ShouldCountNonGenericNotify_WhenNotifiedThroughTheObjectOverload()
+    public void ShouldCountNonGenericNotify_WhenNotifiedThroughTheObjectOverload()
     {
         var uiBus = new SpyUiBus();
         var workOrder = new WorkOrder { Id = Guid.NewGuid(), Number = "WO-TEST" };
@@ -31,7 +31,7 @@ public class WorkOrderManageEventBusNotifyTests
     }
 
     [Test]
-    public void WorkOrderManage_ShouldNotRenotifyWorkOrderSelectedOnEveryRerender_WhenWorkOrderIsUnchanged()
+    public void ShouldNotRenotifyWorkOrderSelectedOnEveryRerender_WhenWorkOrderIsUnchanged()
     {
         using var ctx = new TestContext();
 
