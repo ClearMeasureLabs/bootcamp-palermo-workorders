@@ -368,9 +368,12 @@ public abstract class AcceptanceTestBase
         // LevelOfParallelism(4) the Blazor WASM message loop is CPU-starved enough that a
         // previous field's change/blur callback can still be queued when the next field is
         // touched, letting a later re-render silently overwrite an already-typed value with
-        // stale model state (root cause of #9022). 750ms gives real headroom under that
-        // contention while remaining negligible for a normal local run.
-        return 750;
+        // stale model state (root cause of #9022). Flows that chain three field commits in a
+        // row (Title, Description, Instructions -- e.g. CompleteExistingWorkOrder) accumulate
+        // more of this lag than two-field flows before the final submit click, so this needs
+        // more headroom than a single field commit; 1200ms gives that margin under CI's ARM
+        // runners in particular while remaining negligible for a normal local run.
+        return 1200;
     }
 
     protected async Task Select(string elementTestId, string? value)
