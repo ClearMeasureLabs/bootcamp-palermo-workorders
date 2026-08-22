@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Server;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Shouldly;
 
@@ -31,7 +32,7 @@ public class DetailedHealthReportProviderTests
             freshSample + MemorySampleToleranceMb);
 
     [Test]
-    public void FromComponentStatuses_Should_MapStatusesAndOverall()
+    public void DetailedHealthReportProvider_FromComponentStatuses_Should_MapStatusesAndOverall()
     {
         var fixedTime = new DateTime(2026, 3, 30, 10, 0, 0, DateTimeKind.Utc);
         var entries = new Dictionary<string, HealthStatus>(StringComparer.Ordinal)
@@ -50,6 +51,60 @@ public class DetailedHealthReportProviderTests
         detailed.Components.Count.ShouldBe(2);
         detailed.Components.ShouldContain(c => c.Name == "API" && c.Status == ComponentHealthStatus.Healthy);
         detailed.Components.ShouldContain(c => c.Name == "DataAccess" && c.Status == ComponentHealthStatus.Unhealthy);
+    }
+
+    [Test]
+    public async Task DetailedHealthReportProvider_FromHealthReport_Should_MapEntries_ExcludingLiveTags()
+    {
+        var fixedTime = new DateTime(2026, 4, 2, 9, 0, 0, DateTimeKind.Utc);
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<TimeProvider>(new FixedUtcTimeProvider(fixedTime));
+        services.AddHealthChecks()
+            .AddCheck("self", () => HealthCheckResult.Healthy("liveness"), tags: ["live"])
+            .AddCheck("API", () => HealthCheckResult.Healthy("api ok"))
+            .AddCheck("DataAccess", () => HealthCheckResult.Unhealthy("db down"));
+        await using var provider = services.BuildServiceProvider();
+        var healthChecks = provider.GetRequiredService<HealthCheckService>();
+        var reportProvider = new DetailedHealthReportProvider(
+            healthChecks,
+            provider.GetRequiredService<TimeProvider>());
+
+        var detailed = await reportProvider.GetReportAsync();
+
+        detailed.CheckedAtUtc.ShouldBe(fixedTime);
+        detailed.OverallStatus.ShouldBe(ComponentHealthStatus.Unhealthy);
+        detailed.Components.ShouldNotContain(c => c.Name == "self");
+        var api = detailed.Components.Single(c => c.Name == "API");
+        api.Status.ShouldBe(ComponentHealthStatus.Healthy);
+        api.Description.ShouldBe("api ok");
+        api.DurationMs.ShouldNotBeNull();
+        api.DurationMs!.Value.ShouldBeGreaterThanOrEqualTo(0);
+        detailed.Components.ShouldContain(c =>
+            c.Name == "DataAccess"
+            && c.Status == ComponentHealthStatus.Unhealthy
+            && c.Description == "db down");
+
+        var liveRegistration = new HealthCheckRegistration(
+            "self",
+            new StubHealthCheck(HealthCheckResult.Healthy()),
+            failureStatus: null,
+            tags: ["live"]);
+        DetailedHealthReportProvider.IncludeInDetailedReport(liveRegistration).ShouldBeFalse();
+        var apiRegistration = new HealthCheckRegistration(
+            "API",
+            new StubHealthCheck(HealthCheckResult.Healthy()),
+            failureStatus: null,
+            tags: null);
+        DetailedHealthReportProvider.IncludeInDetailedReport(apiRegistration).ShouldBeTrue();
+    }
+
+    private sealed class StubHealthCheck(HealthCheckResult result) : IHealthCheck
+    {
+        public Task<HealthCheckResult> CheckHealthAsync(
+            HealthCheckContext context,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(result);
     }
 
     [Test]

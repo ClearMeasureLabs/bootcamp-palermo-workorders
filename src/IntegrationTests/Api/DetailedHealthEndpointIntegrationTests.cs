@@ -364,4 +364,42 @@ public class DetailedHealthEndpointIntegrationTests
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
         }
     }
+
+    [Test]
+    public async Task Should_Return200AndSamePayload_When_GetDetailedHealth_LegacyAndV1Paths()
+    {
+        var legacy = await _client!.GetAsync("/api/health/detailed");
+        var versioned = await _client.GetAsync("/api/v1.0/health/detailed");
+
+        legacy.StatusCode.ShouldBe(HttpStatusCode.OK);
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var legacyReport = await legacy.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var versionedReport = await versioned.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        legacyReport.ShouldNotBeNull();
+        versionedReport.ShouldNotBeNull();
+        versionedReport!.OverallStatus.ShouldBe(legacyReport!.OverallStatus);
+        versionedReport.Components.Count.ShouldBe(legacyReport.Components.Count);
+        versionedReport.Components.Select(c => c.Name).OrderBy(n => n)
+            .ShouldBe(legacyReport.Components.Select(c => c.Name).OrderBy(n => n));
+        versionedReport.ProcessId.ShouldBe(legacyReport.ProcessId);
+        versionedReport.OsDescription.ShouldBe(legacyReport.OsDescription);
+        versionedReport.FrameworkDescription.ShouldBe(legacyReport.FrameworkDescription);
+    }
+
+    [Test]
+    public async Task Should_IncludeRateLimitHeaders_When_Applicable()
+    {
+        var response = await _client!.GetAsync("/api/health/detailed");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        if (!response.Headers.TryGetValues("X-RateLimit-Limit", out _))
+            Assert.Ignore("API rate limiting headers not present (policy disabled for this host).");
+
+        response.Headers.TryGetValues("X-RateLimit-Remaining", out _).ShouldBeTrue();
+        response.Headers.TryGetValues("X-RateLimit-Reset", out _).ShouldBeTrue();
+    }
 }

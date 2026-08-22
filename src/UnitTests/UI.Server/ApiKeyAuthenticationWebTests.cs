@@ -8,14 +8,27 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 public class ApiKeyAuthenticationWebTests
 {
     [Test]
-    public async Task Should_Return401_When_ApiHealthCalledWithoutKey()
+    public async Task Should_Return200_When_ApiHealthCalledWithoutKey()
     {
         await using var factory = new ApiKeyProtectedWebApplicationFactory();
         using var client = factory.CreateClient();
 
         var response = await client.GetAsync("/api/health");
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_Return200_When_ApiHealthDetailedCalledWithoutKey()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unversioned = await client.GetAsync("/api/health/detailed");
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var versioned = await client.GetAsync("/api/v1.0/health/detailed");
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Test]
@@ -60,13 +73,25 @@ public class ApiKeyAuthenticationWebTests
     }
 
     [Test]
-    public async Task Should_Return401_When_WrongKey()
+    public async Task Should_Return200_When_WrongKey_OnPublicHealthPath()
     {
         await using var factory = new ApiKeyProtectedWebApplicationFactory();
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Add(ApiKeyConstants.HeaderName, "wrong");
 
         var response = await client.GetAsync("/api/v1.0/health");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Test]
+    public async Task Should_Return401_When_WrongKey_OnProtectedPath()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add(ApiKeyConstants.HeaderName, "wrong");
+
+        var response = await client.GetAsync("/api/diagnostics");
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }

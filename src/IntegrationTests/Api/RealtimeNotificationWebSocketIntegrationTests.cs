@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core.Messaging;
 using ClearMeasure.Bootcamp.Core.Model.Events;
 using ClearMeasure.Bootcamp.UI.Client;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
+using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -57,10 +58,13 @@ public class RealtimeNotificationWebSocketIntegrationTests
     public async Task Should_AcceptPublisherGatewayPost_When_RemotableEventPublished()
     {
         var loginEvent = new UserLoggedInEvent("integration-ws-user");
-        var postResponse = await _client!.PostAsJsonAsync(
-                PublisherGateway.ApiRelativeUrl,
-                new WebServiceMessage(loginEvent))
-            .ConfigureAwait(false);
+        using var request = new HttpRequestMessage(HttpMethod.Post, PublisherGateway.ApiRelativeUrl)
+        {
+            Content = JsonContent.Create(new WebServiceMessage(loginEvent))
+        };
+        request.Headers.Add(ApiKeyConstants.HeaderName, DetailedHealthWebApplicationFactory.TestApiKey);
+
+        var postResponse = await _client!.SendAsync(request).ConfigureAwait(false);
         postResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
