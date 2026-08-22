@@ -11,7 +11,10 @@ public class ApiKeyAuthenticationMiddlewarePublicPathTests
     [TestCase("/api/v1.0/version", true)]
     [TestCase("/api/time", true)]
     [TestCase("/api/v1.0/ping", true)]
+    [TestCase("/api/tools/guid-generator", true)]
+    [TestCase("/api/v1.0/tools/guid-generator", true)]
     [TestCase("/api/health", false)]
+    [TestCase("/api/tools/other", false)]
     [TestCase("/mcp", false)]
     public void IsPublicVersionOrTimePath_ReturnsExpected(string path, bool expectedPublic)
     {
