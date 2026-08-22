@@ -228,7 +228,7 @@ public abstract class AcceptanceTestBase
         var username = CurrentUser.UserName;
         await TakeScreenshotAsync();
         await Click(nameof(LoginLink.Elements.LoginLink));
-        await Page.WaitForURLAsync("**/login", new PageWaitForURLOptions { WaitUntil = WaitUntilState.Commit });
+        await Page.WaitForURLAsync("**/login");
         await Expect(Page.GetByTestId(nameof(Login.Elements.User))).ToBeVisibleAsync();
 
         // Fill in username only
@@ -261,13 +261,6 @@ public abstract class AcceptanceTestBase
         await WaitForIfHiddenAsync(locator);
         await FocusIfVisibleAsync(locator);
         await BlurIfVisibleAsync(locator);
-
-        // Give the Blazor WASM message loop a moment to finish processing any still-pending
-        // onchange/blur callbacks from fields filled immediately before this click (e.g. Title
-        // then Description then a submit-button click). Without this, a form submit can fire
-        // while an earlier field's change callback is still queued, so HandleSubmit reads stale
-        // Model state even though the DOM already shows the typed value (root cause of #9022).
-        await Task.Delay(GetInputDelayMs());
         await EvaluateClickIfVisibleAsync(locator);
     }
 
@@ -297,29 +290,13 @@ public abstract class AcceptanceTestBase
 
     private static async Task EvaluateClickIfVisibleAsync(ILocator locator)
     {
-        // Previously this silently no-op'd (skipped the click entirely, with no error) if the
-        // element happened to be momentarily not-visible at the instant of the check -- e.g. mid
-        // re-render while Blazor is still processing a preceding field's change/blur callback.
-        // That silent skip meant a state-command submit click could simply never fire, which then
-        // hung the caller waiting up to 90s for a navigation that was never going to happen. Wait
-        // (with a bounded timeout) for the element to actually become visible instead of bailing
-        // out on a single transient check.
-        try
-        {
-            await locator.WaitForAsync(new LocatorWaitForOptions
-            {
-                State = WaitForSelectorState.Visible,
-                Timeout = 10_000
-            });
-        }
-        catch (TimeoutException)
+        if (!await locator.IsVisibleAsync())
         {
             return;
         }
 
         await locator.EvaluateAsync("el => el.click()");
     }
-
 
     protected async Task Input(string elementTestId, string? value)
     {
@@ -346,13 +323,7 @@ public abstract class AcceptanceTestBase
         var delayMs = GetInputDelayMs();
         await Task.Delay(delayMs);
 
-        // Note: this only proves the <input>'s raw DOM value matches -- FillAsync sets that
-        // synchronously and is not proof that Blazor's WASM message loop has actually processed
-        // the change/blur callback and synced Model state yet. The explicit Timeout below gives
-        // that catch-up real wall-clock time under CI's LevelOfParallelism(4) contention (see
-        // ServerFixture.cs: "a cold Blazor WASM render can exceed 5s"), rather than accepting the
-        // Playwright default (5s) which the observed CI race shows is not always sufficient.
-        await Expect(locator).ToHaveValueAsync(value ?? "", new LocatorAssertionsToHaveValueOptions { Timeout = 30_000 });
+        await Expect(locator).ToHaveValueAsync(value ?? "");
     }
 
     protected int GetInputDelayMs()
@@ -362,18 +333,7 @@ public abstract class AcceptanceTestBase
         {
             return delay;
         }
-
-        // Default settle delay after a Fill/Blur or Select before the caller moves on to another
-        // field or action. 100ms was tuned for a quiet local machine; under CI's
-        // LevelOfParallelism(4) the Blazor WASM message loop is CPU-starved enough that a
-        // previous field's change/blur callback can still be queued when the next field is
-        // touched, letting a later re-render silently overwrite an already-typed value with
-        // stale model state (root cause of #9022). Flows that chain three field commits in a
-        // row (Title, Description, Instructions -- e.g. CompleteExistingWorkOrder) accumulate
-        // more of this lag than two-field flows before the final submit click, so this needs
-        // more headroom than a single field commit; 1200ms gives that margin under CI's ARM
-        // runners in particular while remaining negligible for a normal local run.
-        return 1200;
+        return 100; // Default to 100ms for local performance
     }
 
     protected async Task Select(string elementTestId, string? value)
@@ -389,16 +349,6 @@ public abstract class AcceptanceTestBase
 
         await Expect(locator).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
         await locator.SelectOptionAsync(value ?? "");
-
-        // Give the Blazor WASM message loop time to actually process the change/onchange
-        // callback and update bound C# state before the caller moves on to the next field.
-        // Playwright's own DOM-value assertions below only prove the <select> element's raw
-        // value was set (which SelectOptionAsync does synchronously in the DOM) -- they do NOT
-        // prove Blazor's C# binding has caught up. Under CI's LevelOfParallelism(4), a cold
-        // Blazor WASM render/dispatch can lag well past a short fixed delay (see ServerFixture.cs),
-        // so subsequent Input() calls on other fields can race ahead of this field's own commit.
-        await Task.Delay(GetInputDelayMs());
-        await Expect(locator).ToHaveValueAsync(value ?? "", new LocatorAssertionsToHaveValueOptions { Timeout = 30_000 });
     }
 
     protected async Task<WorkOrder> CreateAndSaveNewWorkOrder()
@@ -413,7 +363,7 @@ public abstract class AcceptanceTestBase
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
-        await Page.WaitForURLAsync("**/workorder/manage?mode=New", new PageWaitForURLOptions { WaitUntil = WaitUntilState.Commit });
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
         await TakeScreenshotAsync(1, "NewWorkOrderPage");
 
         ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
@@ -431,7 +381,7 @@ public abstract class AcceptanceTestBase
 
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
-        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000, WaitUntil = WaitUntilState.Commit });
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         WorkOrder? rehyratedOrder = null;
@@ -450,19 +400,9 @@ public abstract class AcceptanceTestBase
     {
         // Status commands NavigateTo /workorder/search; wait for that URL and row link
         // before click so Blazor result render races do not time out on WorkOrderLink*.
-        //
-        // WaitUntil = Commit (not the default Load) because Blazor WASM's client-side
-        // NavigationManager.NavigateTo performs a same-document (History API) navigation,
-        // not a full page reload, so the browser's "load" event does not fire again. Waiting
-        // for "Load" here was racy under CI load: it would occasionally never resolve and hang
-        // until the 90s timeout on whichever test happened to hit the window, even though the
-        // SPA had already navigated to the right URL (root cause of the intermittent
-        // "waiting for navigation to **/workorder/search until Load" failures across multiple
-        // unrelated tests). Commit only waits for the navigation to be committed, which a
-        // same-document route change does reliably fire.
         if (!Page.Url.Contains("/workorder/search", StringComparison.OrdinalIgnoreCase))
         {
-            await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000, WaitUntil = WaitUntilState.Commit });
+            await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
         }
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
