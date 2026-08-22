@@ -431,9 +431,10 @@ jobs:
       # Degraded health status is non-blocking here (see #9017): UAT is currently Degraded
       # solely due to the known, separately-tracked LlmGateway AI_OpenAI_* config gap in
       # #9016, so promotion stays green, but the status is surfaced loudly via ::warning::
-      # and the job summary instead of being silently swallowed. Unreachable/non-200
-      # handling below is untouched (may be governed by #9011). Once #9016 lands, tighten
-      # this to hard-fail on Degraded, matching TDD, as a fast-follow.
+      # and the job summary instead of being silently swallowed. Unresolved URLs and
+      # unreachable/non-200 responses (transport failures, exhausted retries) are blocking
+      # per #9011: they fail the step below with exit 1. Once #9016 lands, tighten this
+      # further to also hard-fail on Degraded, matching TDD, as a fast-follow.
       - name: Wait for Container App to become healthy
         shell: pwsh
         run: |
@@ -562,9 +563,10 @@ jobs:
       # Degraded health status is non-blocking here (see #9017): Prod is currently Degraded
       # solely due to the known, separately-tracked LlmGateway AI_OpenAI_* config gap in
       # #9016, so promotion stays green, but the status is surfaced loudly via ::warning::
-      # and the job summary instead of being silently swallowed. Unreachable/non-200
-      # handling below is untouched (may be governed by #9011). Once #9016 lands, tighten
-      # this to hard-fail on Degraded, matching TDD, as a fast-follow.
+      # and the job summary instead of being silently swallowed. Unresolved URLs and
+      # unreachable/non-200 responses (transport failures, exhausted retries) are blocking
+      # per #9011: they fail the step below with exit 1. Once #9016 lands, tighten this
+      # further to also hard-fail on Degraded, matching TDD, as a fast-follow.
       - name: Wait for Container App to become healthy
         shell: pwsh
         run: |
