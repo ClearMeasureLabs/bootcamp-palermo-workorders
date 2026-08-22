@@ -17,6 +17,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 {
     private WorkOrder? _workOrder;
+    private WorkOrder? _lastNotifiedWorkOrder;
     private WorkOrderAttachment[] _attachments = [];
     private string _preferredLanguage = "en-US";
     private DictationTarget _dictationTarget = DictationTarget.None;
@@ -52,8 +53,15 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_workOrder != null)
+        // Notify only when the loaded work order actually changes identity (e.g. after
+        // LoadWorkOrder() completes for a new navigation), not on every render. Notifying
+        // unconditionally on every render forced listeners of WorkOrderSelectedEvent (such as
+        // WorkOrderChat) to reset their in-progress chat input/history and re-render after every
+        // keystroke-driven re-render of this page, which is unnecessary churn and can interleave
+        // with in-flight rendering of sibling components during rapid form edits.
+        if (_workOrder != null && !ReferenceEquals(_workOrder, _lastNotifiedWorkOrder))
         {
+            _lastNotifiedWorkOrder = _workOrder;
             EventBus.Notify(new WorkOrderSelectedEvent(_workOrder));
         }
         return base.OnAfterRenderAsync(firstRender);
