@@ -70,8 +70,42 @@ jobs:
           "VERSION=$version" >> $env:GITHUB_ENV
           Write-Host "Build version: $version"
 
+      # Idempotency check for reruns (#9032): if a prior partially-failed run already
+      # created this version's release in Octopus, the create-release-action below fails
+      # permanently with "Release 'X' already exists for this project", which blocks the
+      # standard GitHub Actions "rerun failed jobs" recovery path. Query the Octopus REST
+      # API directly (same OCTOPUS_URL/OCTOPUS_API_KEY/OCTOPUS_SPACE/OCTOPUS_PROJECT used by
+      # the action below) for a release matching this run's version, and skip creation when
+      # one already exists. Happy-path (no prior release) behavior is unchanged.
+      - name: Check for existing Octopus Release
+        id: check-existing-octopus-release
+        shell: pwsh
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+          OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+          OCTOPUS_PROJECT: ${{ vars.OCTOPUS_PROJECT }}
+        run: |
+          $version = "${{ env.VERSION }}"
+          $uri = "$($env:OCTOPUS_URL.TrimEnd('/'))/api/$($env:OCTOPUS_SPACE)/projects/$($env:OCTOPUS_PROJECT)/releases/$version"
+
+          Write-Host "Checking for existing Octopus release: $uri"
+          $response = Invoke-WebRequest -Uri $uri -Method Get -Headers @{ 'X-Octopus-ApiKey' = $env:OCTOPUS_API_KEY } -SkipHttpErrorCheck -UseBasicParsing
+
+          if ($response.StatusCode -eq 200) {
+            Write-Host "Release '$version' already exists for project '$($env:OCTOPUS_PROJECT)' -- skipping Create Octopus Release (rerun-safe)."
+            "release_exists=true" >> $env:GITHUB_OUTPUT
+          } elseif ($response.StatusCode -eq 404) {
+            Write-Host "No existing release '$version' found for project '$($env:OCTOPUS_PROJECT)' -- proceeding to create it."
+            "release_exists=false" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Error "Unexpected response checking for existing Octopus release: HTTP $($response.StatusCode) - $($response.Content)"
+            exit 1
+          }
+
       - name: Create Octopus Release
         id: create-octopus-release
+        if: steps.check-existing-octopus-release.outputs.release_exists != 'true'
         uses: OctopusDeploy/create-release-action@v3
         env:
           OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
