@@ -18,6 +18,13 @@ public class ApiKeyAuthenticationMiddlewarePublicPathTests
         ApiKeyAuthenticationMiddleware.IsPublicVersionOrTimePath(path).ShouldBe(expectedPublic);
     }
 
+    [TestCase("/api/tools/timestamp-converter", true)]
+    [TestCase("/api/v1.0/tools/timestamp-converter", true)]
+    public void IsPublicToolsPath_ReturnsTrue_ForUnversionedAndVersionedRoutes(string path, bool expectedPublic)
+    {
+        ApiKeyAuthenticationMiddleware.IsPublicToolsPath(path).ShouldBe(expectedPublic);
+    }
+
     [TestCase("/api/version", "version")]
     [TestCase("/api/v1.0/time", "time")]
     public void TryGetLeafSegment_ReturnsLeaf(string path, string expectedLeaf)
