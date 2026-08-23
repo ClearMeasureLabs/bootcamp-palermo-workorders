@@ -2,6 +2,8 @@ using System.Threading.RateLimiting;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Microsoft.Extensions.Options;
 
+// ReSharper disable once UnusedMethodReturnValue.Global -- Qodana C6 (#9039): fluent
+// IServiceCollection extension-method pattern; chained return value is by design, not always used.
 namespace ClearMeasure.Bootcamp.UI.Server;
 
 /// <summary>

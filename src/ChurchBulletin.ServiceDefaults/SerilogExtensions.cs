@@ -5,6 +5,9 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Formatting.Compact;
 
+// ReSharper disable UnusedMethodReturnValue.Global -- Qodana C6 (#9039): fluent
+// IHostApplicationBuilder/IApplicationBuilder extension-method pattern; chained return value is by
+// design, not always used.
 namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>

@@ -39,7 +39,7 @@ public class IdempotencyMiddlewareTests
     [Test]
     public async Task BuildCompositeKeyAsync_IncludesBodyHash()
     {
-        var bodyBytes = System.Text.Encoding.UTF8.GetBytes("payload");
+        var bodyBytes = "payload"u8.ToArray();
         var context = new DefaultHttpContext
         {
             Request =

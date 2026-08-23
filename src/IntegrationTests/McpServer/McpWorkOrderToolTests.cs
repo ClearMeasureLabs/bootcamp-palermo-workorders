@@ -164,7 +164,7 @@ public class McpWorkOrderToolTests
         WorkOrder wo;
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
-            wo = context.Set<WorkOrder>().Where(wo => wo.Number == "WO-002").Single();
+            wo = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-002");
         }
 
         wo.Status.ShouldBe(WorkOrderStatus.Cancelled);

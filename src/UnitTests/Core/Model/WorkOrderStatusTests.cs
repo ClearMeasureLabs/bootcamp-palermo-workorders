@@ -131,10 +131,10 @@ public class WorkOrderStatusTests
         var ctor = typeof(WorkOrderStatus).GetConstructor(
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance,
             null,
-            new[] { typeof(string), typeof(string), typeof(string), typeof(byte) },
+            [typeof(string), typeof(string), typeof(string), typeof(byte)],
             null)!;
 
-        return (WorkOrderStatus)ctor.Invoke(new object[] { source.Code, source.Key, source.FriendlyName, source.SortBy });
+        return (WorkOrderStatus)ctor.Invoke([source.Code, source.Key, source.FriendlyName, source.SortBy]);
     }
 
     [Test]
@@ -188,7 +188,7 @@ public class WorkOrderStatusTests
     {
         var uninitialized = new WorkOrderStatus();
 
-        Should.NotThrow(() => uninitialized.GetHashCode());
+        Should.NotThrow(uninitialized.GetHashCode);
     }
 
     [Test]
@@ -242,7 +242,7 @@ public class WorkOrderStatusTests
     {
         var uninitialized = new WorkOrderStatus();
 
-        Should.NotThrow(() => uninitialized.IsEmpty());
+        Should.NotThrow(uninitialized.IsEmpty);
         uninitialized.IsEmpty().ShouldBeFalse();
     }
 

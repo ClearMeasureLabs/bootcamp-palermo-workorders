@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 
+// ReSharper disable once UnusedMethodReturnValue.Global -- Qodana C6 (#9039): fluent
+// IApplicationBuilder extension-method pattern; chained return value is by design, not always used.
 namespace ChurchBulletin.ServiceDefaults;
 
 /// <summary>

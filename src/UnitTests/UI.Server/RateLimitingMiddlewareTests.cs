@@ -14,17 +14,18 @@ public class RateLimitingMiddlewareTests
     public async Task InvokeAsync_CallsNext_WhenEndpointHasNoRateLimitAttribute()
     {
         var called = false;
-        RequestDelegate next = _ =>
+
+        Task Next(HttpContext _)
         {
             called = true;
             return Task.CompletedTask;
-        };
+        }
 
         var monitor = new StubOptionsMonitor<ApiRateLimitingOptions>(new ApiRateLimitingOptions { Enabled = true });
         var limiter = PartitionedRateLimiter.Create<HttpContext, string>(_ =>
             RateLimitPartition.GetNoLimiter(string.Empty));
 
-        var middleware = new RateLimitingMiddleware(next, monitor, limiter);
+        var middleware = new RateLimitingMiddleware(Next, monitor, limiter);
         var context = new DefaultHttpContext();
         await middleware.InvokeAsync(context);
 

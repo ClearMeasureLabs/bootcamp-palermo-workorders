@@ -45,7 +45,7 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string GetFullName()
     {
-        return string.Format("{0} {1}", FirstName, LastName);
+        return $"{FirstName} {LastName}";
     }
 
     public override string ToString()

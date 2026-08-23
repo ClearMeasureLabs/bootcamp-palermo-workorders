@@ -10,6 +10,9 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Serilog;
 
+// ReSharper disable UnusedMethodReturnValue.Global -- Qodana C6 (#9039): fluent
+// IHostApplicationBuilder/IServiceCollection extension-method pattern; chained return value is by
+// design, not always used.
 namespace ChurchBulletin.ServiceDefaults;
 
 public static class Extensions

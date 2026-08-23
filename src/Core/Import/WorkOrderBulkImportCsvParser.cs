@@ -47,8 +47,7 @@ public static class WorkOrderBulkImportCsvParser
         CancellationToken cancellationToken)
     {
         var rows = new List<WorkOrderBulkImportRow>();
-        string? line;
-        while ((line = CsvLineReader.ReadLogicalLine(reader, ref lineNumber, cancellationToken)) != null)
+        while (CsvLineReader.ReadLogicalLine(reader, ref lineNumber, cancellationToken) is { } line)
         {
             cancellationToken.ThrowIfCancellationRequested();
             AddNonEmptyRow(rows, columnIndex, line, lineNumber);
@@ -93,9 +92,9 @@ public static class WorkOrderBulkImportCsvParser
         private static void AddUniqueHeader(Dictionary<string, int> columnIndex, string rawName, int index)
         {
             var name = rawName.Trim();
-            if (name.Length > 0 && !columnIndex.ContainsKey(name))
+            if (name.Length > 0)
             {
-                columnIndex[name] = index;
+                columnIndex.TryAdd(name, index);
             }
         }
 
@@ -120,7 +119,7 @@ public static class WorkOrderBulkImportCsvParser
             var titleIx = _columns["Title"];
             var descIx = _columns["Description"];
             var creatorIx = _columns["CreatorUsername"];
-            var roomIx = _columns.TryGetValue("RoomNumber", out var r) ? r : -1;
+            var roomIx = _columns.GetValueOrDefault("RoomNumber", -1);
 
             return new WorkOrderBulkImportRow(
                 lineNumber,

@@ -72,3 +72,44 @@ exclude:
       - src/UI/Server/Middleware/IdempotencyMiddleware.cs
       - src/UI/Server/Middleware/WebServiceMessageValidationMiddleware.cs
       - src/UnitTests/BuildGates/CrapGateEvaluator.cs
+  # Qodana C6 (#9039): MethodHasAsyncOverload — Playwright/NUnit sync APIs are the idiomatic
+  # call shape in these two acceptance-test bootstrap files; enforced with file-level
+  # `// ReSharper disable` directives (path exclude below is documentation-only, see #8986/C2).
+  - name: MethodHasAsyncOverload
+    paths:
+      - src/AcceptanceTests/AcceptanceTestBase.cs
+      - src/AcceptanceTests/BlazorWasmWarmUp.cs
+  # Qodana C6 (#9039): UnusedType.Global — these 10 FluentValidation AbstractValidator types are
+  # discovered via assembly-scan/DI reflection, not by direct reference. Enforced with file-level
+  # `// ReSharper disable once` directives (path exclude below is documentation-only, see #8986/C2).
+  # ServerHealthCheckQueryValidator.cs and IntegrationTests/Handlers/TracerBulletReplyHandler.cs are
+  # deliberately NOT listed here and stay in the qodana.sarif.json baseline.
+  - name: UnusedType.Global
+    paths:
+      - src/Core/Validation/AssignedToCancelledCommandValidator.cs
+      - src/Core/Validation/AssignedToInProgressCommandValidator.cs
+      - src/Core/Validation/DraftToAssignedCommandValidator.cs
+      - src/Core/Validation/ForecastQueryValidator.cs
+      - src/Core/Validation/InProgressToAssignedCommandValidator.cs
+      - src/Core/Validation/InProgressToCompleteCommandValidator.cs
+      - src/Core/Validation/SaveDraftCommandValidator.cs
+      - src/Core/Validation/UserLoggedInEventValidator.cs
+      - src/Core/Validation/WorkOrderByNumberQueryValidator.cs
+      - src/Core/Validation/WorkOrderSpecificationQueryValidator.cs
+  # Qodana C6 (#9039): UnusedMethodReturnValue.Global — fluent IServiceCollection /
+  # IHostApplicationBuilder / IApplicationBuilder extension-method pattern; the chained return
+  # value is by design and not always used by every call site. Enforced with file-level
+  # `// ReSharper disable` directives (path exclude below is documentation-only, see #8986/C2).
+  - name: UnusedMethodReturnValue.Global
+    paths:
+      - src/UI/Server/ApiRateLimitingExtensions.cs
+      - src/UI/Server/ApiRequestTimeoutsExtensions.cs
+      - src/UI/Server/CorsExtensions.cs
+      - src/UI/Server/RequestBodyBufferingExtensions.cs
+      - src/ChurchBulletin.ServiceDefaults/Extensions.cs
+      - src/ChurchBulletin.ServiceDefaults/CorrelationIdMiddlewareExtensions.cs
+      - src/ChurchBulletin.ServiceDefaults/SerilogExtensions.cs
+  # Qodana C6 (#9039) / epic #8984 guardrail: ConvertToPrimaryConstructor (25 findings,
+  # repo-wide) is left in the qodana.sarif.json baseline BY DESIGN — no mass primary-constructor
+  # rewrite. This is a deliberate coding-style choice, not a deferred fix; no path-scoped or
+  # file-level exclude is added for it.

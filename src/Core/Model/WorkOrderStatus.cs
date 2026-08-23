@@ -31,14 +31,7 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
 
     public static WorkOrderStatus[] GetAllItems()
     {
-        return new[]
-        {
-            Draft,
-            Assigned,
-            InProgress,
-            Complete,
-            Cancelled
-        };
+        return [Draft, Assigned, InProgress, Complete, Cancelled];
     }
 
     public string Code { get; }
@@ -85,7 +78,7 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
     /// and CRAP stay on the covered Equals path.
     /// </summary>
     public static bool operator ==(WorkOrderStatus? left, WorkOrderStatus? right) =>
-        left is null ? right is null : left.Equals(right);
+        left?.Equals(right) ?? right is null;
 
     public static bool operator !=(WorkOrderStatus? left, WorkOrderStatus? right) =>
         !(left == right);
