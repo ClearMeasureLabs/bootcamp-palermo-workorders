@@ -20,7 +20,7 @@ public class WorkOrderBulkImportCsvParserTests
     [Test]
     public void ShouldFail_WhenRequiredColumnMissing()
     {
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes("Title,Description\na,b\n"));
+        using var ms = new MemoryStream("Title,Description\na,b\n"u8.ToArray());
         var result = WorkOrderBulkImportCsvParser.Parse(ms);
 
         result.Success.ShouldBeFalse();
@@ -90,7 +90,7 @@ public class WorkOrderBulkImportCsvParserTests
     [Test]
     public void ShouldSucceedWithEmptyRows_WhenHeaderOnly()
     {
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes("Title,Description,CreatorUsername\n"));
+        using var ms = new MemoryStream("Title,Description,CreatorUsername\n"u8.ToArray());
         var result = WorkOrderBulkImportCsvParser.Parse(ms);
 
         result.Success.ShouldBeTrue();

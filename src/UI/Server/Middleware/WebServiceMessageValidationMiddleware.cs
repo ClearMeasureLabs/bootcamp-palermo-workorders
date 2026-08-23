@@ -161,7 +161,7 @@ internal static class WebServiceMessagePayloadValidator
 
         var validateMethod = validatorInterface.GetMethod(
             "ValidateAsync",
-            new[] { payload.GetType(), typeof(CancellationToken) });
+            [payload.GetType(), typeof(CancellationToken)]);
         if (validateMethod is null)
         {
             return new PayloadValidationResult(false, Array.Empty<ValidationFailure>(), "Validation configuration error.");
@@ -169,7 +169,7 @@ internal static class WebServiceMessagePayloadValidator
 
         var validateTask = (Task)validateMethod.Invoke(
             payloadValidator,
-            new[] { payload, cancellationToken })!;
+            [payload, cancellationToken])!;
 
         await validateTask.ConfigureAwait(false);
 

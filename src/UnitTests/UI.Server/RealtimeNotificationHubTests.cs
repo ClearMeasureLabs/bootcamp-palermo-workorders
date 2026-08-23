@@ -34,15 +34,13 @@ public class RealtimeNotificationHubTests
 
     private sealed class RecordingWebSocket : WebSocket
     {
-        private readonly WebSocketState _state;
-
-        public RecordingWebSocket(WebSocketState state) => _state = state;
+        public RecordingWebSocket(WebSocketState state) => State = state;
 
         public List<byte[]> SentPayloads { get; } = [];
 
         public override WebSocketCloseStatus? CloseStatus => null;
         public override string? CloseStatusDescription => null;
-        public override WebSocketState State => _state;
+        public override WebSocketState State { get; }
         public override string? SubProtocol => null;
         public override void Abort()
         {

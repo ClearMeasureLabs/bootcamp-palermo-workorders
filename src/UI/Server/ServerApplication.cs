@@ -129,7 +129,7 @@ public static class ServerApplication
 
     private static void RegisterNServiceBus(WebApplicationBuilder builder)
     {
-        var endpointConfiguration = new NServiceBus.EndpointConfiguration("UI.Server");
+        var endpointConfiguration = new EndpointConfiguration("UI.Server");
         endpointConfiguration.UseSerialization<SystemJsonSerializer>();
         endpointConfiguration.EnableInstallers();
         endpointConfiguration.EnableOpenTelemetry();

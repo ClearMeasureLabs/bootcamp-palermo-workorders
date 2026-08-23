@@ -8,6 +8,9 @@ using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using System.Collections.Concurrent;
 using Login = ClearMeasure.Bootcamp.UI.Shared.Pages.Login;
 
+// ReSharper disable MethodHasAsyncOverload -- Qodana C6 (#9039): Playwright/NUnit sync APIs are the
+// idiomatic call shape here; qodana.yaml path-scoped exclude is documentation-only (qodana-cdnet
+// ignores it, see #8986/C2), so enforcement is this file-level directive.
 namespace ClearMeasure.Bootcamp.AcceptanceTests;
 
 /// <summary>
