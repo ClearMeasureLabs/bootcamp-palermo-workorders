@@ -2,75 +2,56 @@ using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.BuildGates;
 
+/// <summary>
+/// Guards the Deploy workflow shape after the UAT/Prod FQDN lookup removal:
+/// UAT and Prod end at the Octopus await-task gate with no Azure FQDN lookup
+/// or URL-based health check, while TDD retains full URL verification.
+/// </summary>
 [TestFixture]
 public class DeployWorkflowContainerAppUrlTests
 {
     [Test]
-    public void DeployWorkflow_UatJob_WhenRead_PrintsContainerAppUrlAfterAwait()
+    public void DeployWorkflow_UatJob_WhenRead_HasNoFqdnLookupAfterAwait()
     {
         var uatJob = ReadJob("  deploy-to-uat:", "  deploy-to-prod:");
 
-        var awaitIndex = uatJob.IndexOf("Wait for the UAT deployment to complete", StringComparison.Ordinal);
-        awaitIndex.ShouldBeGreaterThan(-1);
-
-        var loginIndex = uatJob.IndexOf("azure/login@v2", awaitIndex, StringComparison.Ordinal);
-        loginIndex.ShouldBeGreaterThan(awaitIndex);
-
-        var fqdnStepIndex = uatJob.IndexOf("Get Container App FQDN", awaitIndex, StringComparison.Ordinal);
-        fqdnStepIndex.ShouldBeGreaterThan(loginIndex);
-
-        var fqdnBlock = ExtractStepBlock(uatJob, fqdnStepIndex);
-        fqdnBlock.ShouldContain("az containerapp show");
-        fqdnBlock.ShouldContain("vars.CONTAINER_APP_NAME");
-        fqdnBlock.ShouldContain("vars.UAT_RESOURCE_GROUP_NAME");
-        fqdnBlock.ShouldContain("properties.configuration.ingress.fqdn");
-        fqdnBlock.ShouldContain("Container App URL:");
-        fqdnBlock.ShouldNotContain(".azurecontainerapps.io");
+        uatJob.IndexOf("Wait for the UAT deployment to complete", StringComparison.Ordinal)
+            .ShouldBeGreaterThan(-1);
+        uatJob.ShouldNotContain("Get Container App FQDN");
+        uatJob.ShouldNotContain("az containerapp show");
+        uatJob.ShouldNotContain("Wait for Container App to become healthy");
+        uatJob.ShouldNotContain("azure/login@v2");
     }
 
     [Test]
-    public void DeployWorkflow_ProdJob_WhenRead_PrintsContainerAppUrlAfterAwait()
+    public void DeployWorkflow_ProdJob_WhenRead_HasNoFqdnLookupAfterAwait()
     {
         var yaml = File.ReadAllText(FindRepoFile(Path.Combine(".github", "workflows", "deploy.yml")));
         var prodStart = yaml.IndexOf("  deploy-to-prod:", StringComparison.Ordinal);
         prodStart.ShouldBeGreaterThan(-1);
         var prodJob = yaml.Substring(prodStart);
 
-        var awaitIndex = prodJob.IndexOf("Wait for the Prod deployment to complete", StringComparison.Ordinal);
-        awaitIndex.ShouldBeGreaterThan(-1);
-
-        var loginIndex = prodJob.IndexOf("azure/login@v2", awaitIndex, StringComparison.Ordinal);
-        loginIndex.ShouldBeGreaterThan(awaitIndex);
-
-        var fqdnStepIndex = prodJob.IndexOf("Get Container App FQDN", awaitIndex, StringComparison.Ordinal);
-        fqdnStepIndex.ShouldBeGreaterThan(loginIndex);
-
-        var fqdnBlock = ExtractStepBlock(prodJob, fqdnStepIndex);
-        fqdnBlock.ShouldContain("az containerapp show");
-        fqdnBlock.ShouldContain("vars.CONTAINER_APP_NAME");
-        fqdnBlock.ShouldContain("vars.PROD_RESOURCE_GROUP_NAME");
-        fqdnBlock.ShouldContain("properties.configuration.ingress.fqdn");
-        fqdnBlock.ShouldContain("Container App URL:");
-        fqdnBlock.ShouldNotContain(".azurecontainerapps.io");
+        prodJob.IndexOf("Wait for the Prod deployment to complete", StringComparison.Ordinal)
+            .ShouldBeGreaterThan(-1);
+        prodJob.ShouldNotContain("Get Container App FQDN");
+        prodJob.ShouldNotContain("az containerapp show");
+        prodJob.ShouldNotContain("Wait for Container App to become healthy");
+        prodJob.ShouldNotContain("azure/login@v2");
     }
 
     [Test]
-    public void DeployWorkflow_UrlSteps_WhenRead_MatchFactoryParserPrefix()
+    public void DeployWorkflow_TddJob_WhenRead_RetainsUrlVerification()
     {
         var yaml = File.ReadAllText(FindRepoFile(Path.Combine(".github", "workflows", "deploy.yml")));
-        var uatJob = ReadJob("  deploy-to-uat:", "  deploy-to-prod:");
-        var prodStart = yaml.IndexOf("  deploy-to-prod:", StringComparison.Ordinal);
-        var prodJob = yaml.Substring(prodStart);
-
-        const string factoryPrefixLine = "Write-Host \"Container App URL: $containerAppUrl\"";
-        uatJob.ShouldContain(factoryPrefixLine);
-        prodJob.ShouldContain(factoryPrefixLine);
-
         var tddStart = yaml.IndexOf("  deploy-to-tdd:", StringComparison.Ordinal);
         var uatStart = yaml.IndexOf("  deploy-to-uat:", StringComparison.Ordinal);
         tddStart.ShouldBeGreaterThan(-1);
         uatStart.ShouldBeGreaterThan(tddStart);
-        yaml.Substring(tddStart, uatStart - tddStart).ShouldContain(factoryPrefixLine);
+        var tddJob = yaml.Substring(tddStart, uatStart - tddStart);
+
+        tddJob.ShouldContain("Get Container App FQDN");
+        tddJob.ShouldContain("Wait for Container App to become healthy");
+        tddJob.ShouldContain("Write-Host \"Container App URL: $containerAppUrl\"");
     }
 
     private static string ReadJob(string jobMarker, string nextJobMarker)
@@ -81,18 +62,6 @@ public class DeployWorkflowContainerAppUrlTests
         var nextJob = yaml.IndexOf(nextJobMarker, jobStart, StringComparison.Ordinal);
         nextJob.ShouldBeGreaterThan(jobStart);
         return yaml.Substring(jobStart, nextJob - jobStart);
-    }
-
-    private static string ExtractStepBlock(string jobYaml, int stepNameIndex)
-    {
-        var nextStepMarker = "\n      - name:";
-        var nextStep = jobYaml.IndexOf(nextStepMarker, stepNameIndex, StringComparison.Ordinal);
-        if (nextStep < 0)
-        {
-            return jobYaml.Substring(stepNameIndex);
-        }
-
-        return jobYaml.Substring(stepNameIndex, nextStep - stepNameIndex);
     }
 
     private static string FindRepoFile(string relativePath)
