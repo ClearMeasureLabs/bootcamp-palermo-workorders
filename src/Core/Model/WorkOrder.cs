@@ -16,13 +16,13 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public string? Description
     {
-        get => field;
+        get;
         set => field = getTruncatedString(value);
     } = "";
 
     public string? Instructions
     {
-        get => field;
+        get;
         set => field = getTruncatedString(value);
     } = "";
 
