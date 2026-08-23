@@ -35,5 +35,5 @@ public sealed class ApiRateLimitingOptions
     /// <summary>
     /// Optional header for per-client key; when absent, user name or connection remote IP is used.
     /// </summary>
-    public string ApiKeyHeaderName { get; init; } = "X-API-Key";
+    public string ApiKeyHeaderName { get; set; } = "X-API-Key";
 }

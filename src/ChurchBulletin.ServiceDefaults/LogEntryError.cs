@@ -21,12 +21,12 @@ public class LogEntryError
     /// <summary>
     /// Gets the stack trace of the exception.
     /// </summary>
-    public string? StackTrace { get; init; }
+    public string? StackTrace { get; }
 
     /// <summary>
     /// Gets the inner exception details, if any.
     /// </summary>
-    public LogEntryError? InnerException { get; init; }
+    public LogEntryError? InnerException { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LogEntryError"/> class.
