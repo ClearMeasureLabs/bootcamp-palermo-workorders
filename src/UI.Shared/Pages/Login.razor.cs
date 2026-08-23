@@ -13,9 +13,9 @@ public partial class Login : AppComponentBase
     [Inject] public CustomAuthenticationStateProvider? AuthStateProvider { get; set; }
     [Inject] public NavigationManager? NavigationManager { get; set; }
 
-    public readonly LoginModel loginModel = new();
-    public string? errorMessage;
-    public Employee[] employees = Array.Empty<Employee>();
+    public readonly LoginModel LoginModelValue = new();
+    public string? ErrorMessage;
+    public Employee[] Employees = Array.Empty<Employee>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -26,11 +26,11 @@ public partial class Login : AppComponentBase
     {
         try
         {
-            employees = await Bus.Send(new EmployeeGetAllQuery());
+            Employees = await Bus.Send(new EmployeeGetAllQuery());
         }
         catch (Exception ex)
         {
-            errorMessage = "Error loading employees: " + ex.Message;
+            ErrorMessage = "Error loading employees: " + ex.Message;
         }
     }
 
@@ -46,15 +46,15 @@ public partial class Login : AppComponentBase
 
     private async Task LoginAsTimothyLovejoy()
     {
-        loginModel.Username = TimothyLovejoyUsername;
+        LoginModelValue.Username = TimothyLovejoyUsername;
         await AuthenticateAndNavigate();
     }
 
     private async Task HandleLogin()
     {
-        if (string.IsNullOrEmpty(loginModel.Username))
+        if (string.IsNullOrEmpty(LoginModelValue.Username))
         {
-            errorMessage = "Please select an employee";
+            ErrorMessage = "Please select an employee";
             return;
         }
 
@@ -63,17 +63,17 @@ public partial class Login : AppComponentBase
 
     private async Task AuthenticateAndNavigate()
     {
-        var selectedEmployee = employees.FirstOrDefault(e => e.UserName == loginModel.Username);
+        var selectedEmployee = Employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username);
         if (selectedEmployee != null)
         {
-            AuthStateProvider!.Login(loginModel.Username);
-            EventBus.Notify(new UserLoggedInEvent(loginModel.Username));
-            await Bus.Publish(new Core.Model.Events.UserLoggedInEvent(loginModel.Username));
+            AuthStateProvider!.Login(LoginModelValue.Username);
+            EventBus.Notify(new UserLoggedInEvent(LoginModelValue.Username));
+            await Bus.Publish(new Core.Model.Events.UserLoggedInEvent(LoginModelValue.Username));
             NavigationManager!.NavigateTo("/");
         }
         else
         {
-            errorMessage = "Invalid employee selection";
+            ErrorMessage = "Invalid employee selection";
         }
     }
 

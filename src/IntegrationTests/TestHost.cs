@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NServiceBus.Features;
+using System.Threading;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 
@@ -21,10 +22,10 @@ public static class TestHost
 {
     public static DateTimeOffset TestTime { get; set; } = new(2000, 1, 1, 1, 1, 1, TimeSpan.Zero);
     private static bool _dependenciesRegistered;
-    private static readonly object Lock = new();
+    private static readonly Lock DependenciesRegistrationLock = new();
     private static IHost? _host;
 
-    public static IHost Instance
+    private static IHost Instance
     {
         get
         {
@@ -209,7 +210,7 @@ public static class TestHost
     {
         if (!_dependenciesRegistered)
         {
-            lock (Lock)
+            lock (DependenciesRegistrationLock)
             {
                 if (!_dependenciesRegistered)
                 {

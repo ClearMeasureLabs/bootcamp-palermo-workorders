@@ -15,7 +15,7 @@ namespace ChurchBulletin.ServiceDefaults;
 /// </summary>
 public static class SerilogExtensions
 {
-    private static readonly MethodInfo? s_hostApplicationBuilderAsHostBuilder = typeof(HostApplicationBuilder)
+    private static readonly MethodInfo? HostApplicationBuilderAsHostBuilderMethod = typeof(HostApplicationBuilder)
         .GetMethod("AsHostBuilder", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
     /// <summary>
@@ -46,7 +46,7 @@ public static class SerilogExtensions
 
     private static bool TryGetHostBuilder(HostApplicationBuilder generic, out IHostBuilder hostBuilder)
     {
-        if (s_hostApplicationBuilderAsHostBuilder?.Invoke(generic, null) is IHostBuilder resolved)
+        if (HostApplicationBuilderAsHostBuilderMethod?.Invoke(generic, null) is IHostBuilder resolved)
         {
             hostBuilder = resolved;
             return true;
