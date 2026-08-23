@@ -26,7 +26,7 @@ public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workO
         };
 
         IChatClient client = await factory.GetChatClient();
-        ChatResponse responseAsync = await client.GetResponseAsync(chatMessages, _chatOptions, cancellationToken);
-        return responseAsync;
+        ChatResponse response = await client.GetResponseAsync(chatMessages, _chatOptions, cancellationToken);
+        return response;
     }
 }
