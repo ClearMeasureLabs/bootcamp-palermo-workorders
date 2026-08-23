@@ -19,7 +19,7 @@ public class ForecastQueryHandler : IRequestHandler<ForecastQuery, WeatherForeca
         ];
 
 
-        private readonly WeatherForecast[] AllForecasts;
+        private readonly WeatherForecast[] _allForecasts;
 
         public WeatherForecastData()
         {
@@ -35,12 +35,12 @@ public class ForecastQueryHandler : IRequestHandler<ForecastQuery, WeatherForeca
                 forecasts.Add(forecast);
             }
 
-            AllForecasts = forecasts.ToArray();
+            _allForecasts = forecasts.ToArray();
         }
 
         public WeatherForecast[] GetAll()
         {
-            return AllForecasts;
+            return _allForecasts;
         }
     }
 }

@@ -7,25 +7,25 @@
             <div class="login-subtitle">First Church of Shelbyville</div>
         </div>
         <div class="login-body">
-            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+            <EditForm Model="@LoginModelValue" OnValidSubmit="HandleLogin">
                 <DataAnnotationsValidator/>
                 <ValidationSummary/>
 
                 <div class="form-group">
                     <label for="@Elements.User">Select Church Member</label>
-                    <InputSelect id="@Elements.User" data-testid="@Elements.User" @bind-Value="loginModel.Username" class="form-control">
+                    <InputSelect id="@Elements.User" data-testid="@Elements.User" @bind-Value="LoginModelValue.Username" class="form-control">
                         <option value="">-- Select a parishioner or staff member --</option>
-                        @foreach (var employee in employees)
+                        @foreach (var employee in Employees)
                         {
                             <option value="@employee.UserName">@GetLoginDropdownDisplayName(employee)</option>
                         }
                     </InputSelect>
-                    <ValidationMessage For="@(() => loginModel.Username)"/>
+                    <ValidationMessage For="@(() => LoginModelValue.Username)"/>
                 </div>
 
-                @if (!string.IsNullOrEmpty(errorMessage))
+                @if (!string.IsNullOrEmpty(ErrorMessage))
                 {
-                    <div class="alert alert-danger">@errorMessage</div>
+                    <div class="alert alert-danger">@ErrorMessage</div>
                 }
 
                 <div class="text-center">

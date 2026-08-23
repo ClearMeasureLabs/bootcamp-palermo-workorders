@@ -5,7 +5,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests;
 
 public sealed class DatabaseEmptier
 {
-    private static readonly string[] _ignoredTables = ["[dbo].[sysdiagrams]", "[dbo].[SchemaVersions]"];
+    private static readonly string[] IgnoredTables = ["[dbo].[sysdiagrams]", "[dbo].[SchemaVersions]"];
     private static string? _deleteSql;
     private readonly DatabaseFacade _database;
 
@@ -137,7 +137,7 @@ order by
 from sys.tables t
 inner join sys.schemas s on t.schema_id = s.schema_id",
             reader => tables.Add(reader.GetString(0)));
-        var list = tables.Except(_ignoredTables);
+        var list = tables.Except(IgnoredTables);
         return list.Where(s => s.Contains("[dbo]")).ToList();
     }
 
