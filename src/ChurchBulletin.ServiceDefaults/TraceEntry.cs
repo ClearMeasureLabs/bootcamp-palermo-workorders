@@ -8,59 +8,59 @@ namespace ChurchBulletin.ServiceDefaults;
 public class TraceEntry
 {
     /// <summary>
-    /// Gets or sets the timestamp when the trace entry was created.
+    /// Gets the timestamp when the trace entry was created.
     /// </summary>
-    public DateTime Timestamp { get; set; }
+    public DateTime Timestamp { get; init; }
 
     /// <summary>
-    /// Gets or sets the status of the activity (e.g., STARTED, STOPPED).
+    /// Gets the status of the activity (e.g., STARTED, STOPPED).
     /// </summary>
-    public string Status { get; set; } = string.Empty;
+    public string Status { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the trace ID.
+    /// Gets the trace ID.
     /// </summary>
-    public string TraceId { get; set; } = string.Empty;
+    public string TraceId { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the span ID.
+    /// Gets the span ID.
     /// </summary>
-    public string SpanId { get; set; } = string.Empty;
+    public string SpanId { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the parent span ID, if any.
+    /// Gets the parent span ID, if any.
     /// </summary>
-    public string? ParentSpanId { get; set; }
+    public string? ParentSpanId { get; init; }
 
     /// <summary>
-    /// Gets or sets the display name of the activity.
+    /// Gets the display name of the activity.
     /// </summary>
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the source name of the activity.
+    /// Gets the source name of the activity.
     /// </summary>
-    public string Source { get; set; } = string.Empty;
+    public string Source { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the duration of the activity in milliseconds.
+    /// Gets the duration of the activity in milliseconds.
     /// </summary>
-    public double DurationMs { get; set; }
+    public double DurationMs { get; init; }
 
     /// <summary>
-    /// Gets or sets the status code of the activity.
+    /// Gets the status code of the activity.
     /// </summary>
-    public string? StatusCode { get; set; }
+    public string? StatusCode { get; init; }
 
     /// <summary>
-    /// Gets or sets the error description if the activity failed.
+    /// Gets the error description if the activity failed.
     /// </summary>
-    public string? Error { get; set; }
+    public string? Error { get; init; }
 
     /// <summary>
-    /// Gets or sets the tags associated with the activity.
+    /// Gets the tags associated with the activity.
     /// </summary>
-    public Dictionary<string, string?> Tags { get; set; } = [];
+    public Dictionary<string, string?> Tags { get; init; } = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TraceEntry"/> class.
