@@ -80096,7 +80096,7 @@
       "invocations": [
         {
           "exitCode": 255,
-          "exitCodeDescription": "Failure condition triggered\n - Detected 3 problems across all severities, fail threshold 0",
+          "exitCodeDescription": "Failure condition triggered\n - Detected 4 problems across all severities, fail threshold 0",
           "executionSuccessful": true
         }
       ],
@@ -80104,8 +80104,8 @@
       "versionControlProvenance": [
         {
           "repositoryUri": "https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders.git",
-          "revisionId": "e6ef06732657ac92c8e7c8dc5810c3aee544c262",
-          "branch": "jeffrey/9039-qodana-c6-mechanical-cleanup",
+          "revisionId": "a575a16da7194579d3e7ab96dd565dfffa72ca57",
+          "branch": "jeffrey/9041-qodana-c8-naming-dead-members-lock",
           "properties": {
             "repoUrl": "https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders.git",
             "lastAuthorName": "Jeffrey Palermo",
@@ -80167,13 +80167,6 @@
         },
         {
           "location": {
-            "uri": "ChurchBulletin.ServiceDefaults/LogEntryError.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
             "uri": "IntegrationTests/TestHost.cs",
             "uriBaseId": "solutionDir"
           },
@@ -80224,13 +80217,6 @@
         {
           "location": {
             "uri": "UI/Client/App.razor",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryFileWriter.cs",
             "uriBaseId": "solutionDir"
           },
           "hashes": {}
@@ -80447,13 +80433,6 @@
         },
         {
           "location": {
-            "uri": "DataAccess/Handlers/ForecastQueryHandler.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
             "uri": "UnitTests/Core/Model/EmployeeTests.cs",
             "uriBaseId": "solutionDir"
           },
@@ -80475,48 +80454,6 @@
         },
         {
           "location": {
-            "uri": "UI.Shared/NavMenu.Razor.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "UI.Shared/Pages/Login.razor.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "Core/Model/WorkOrder.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "ChurchBulletin.ServiceDefaults/SerilogExtensions.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "UI.Shared/Pages/ApplicationChat.razor",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "UI.Shared/Pages/Counter.razor",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
             "uri": "Core/Queries/WorkOrderSpecificationQuery.cs",
             "uriBaseId": "solutionDir"
           },
@@ -80532,6 +80469,13 @@
         {
           "location": {
             "uri": "UI.Shared/Pages/FetchData.razor.cs",
+            "uriBaseId": "solutionDir"
+          },
+          "hashes": {}
+        },
+        {
+          "location": {
+            "uri": "UI.Shared/Pages/Login.razor.cs",
             "uriBaseId": "solutionDir"
           },
           "hashes": {}
@@ -80622,20 +80566,6 @@
         },
         {
           "location": {
-            "uri": "DataAccess/Handlers/EmployeeQueryHandler.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "LlmGateway/WorkOrderChatHandler.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
             "uri": "UnitTests/ServiceDefaults/ServiceDefaultsTelemetryTests.cs",
             "uriBaseId": "solutionDir"
           },
@@ -80678,13 +80608,6 @@
         },
         {
           "location": {
-            "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
             "uri": "Core/ConfigurationModel.cs",
             "uriBaseId": "solutionDir"
           },
@@ -80713,6 +80636,13 @@
         },
         {
           "location": {
+            "uri": "Core/Model/WorkOrder.cs",
+            "uriBaseId": "solutionDir"
+          },
+          "hashes": {}
+        },
+        {
+          "location": {
             "uri": "Core/Model/WorkOrderAttachment.cs",
             "uriBaseId": "solutionDir"
           },
@@ -80727,21 +80657,7 @@
         },
         {
           "location": {
-            "uri": "Database/Console/DatabaseOptions.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
             "uri": "LlmGateway/ApplicationChatQuery.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "LlmGateway/ChatClientConfig.cs",
             "uriBaseId": "solutionDir"
           },
           "hashes": {}
@@ -80755,27 +80671,6 @@
         },
         {
           "location": {
-            "uri": "UI/Api/DiagnosticsFeatureFlagsOptions.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "UI/Server/ApiKeyAuthenticationOptions.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "UI/Server/ServerCorsOptions.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
             "uri": "UI.Shared/Components/WorkOrderChat.razor",
             "uriBaseId": "solutionDir"
           },
@@ -80783,7 +80678,28 @@
         },
         {
           "location": {
+            "uri": "UI.Shared/Pages/ApplicationChat.razor",
+            "uriBaseId": "solutionDir"
+          },
+          "hashes": {}
+        },
+        {
+          "location": {
+            "uri": "LlmGateway/WorkOrderChatHandler.cs",
+            "uriBaseId": "solutionDir"
+          },
+          "hashes": {}
+        },
+        {
+          "location": {
             "uri": "UI/Server/Middleware/WebServiceMessageValidationMiddleware.cs",
+            "uriBaseId": "solutionDir"
+          },
+          "hashes": {}
+        },
+        {
+          "location": {
+            "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryFileWriter.cs",
             "uriBaseId": "solutionDir"
           },
           "hashes": {}
@@ -80819,20 +80735,6 @@
         {
           "location": {
             "uri": "ChurchBulletin.ServiceDefaults/MetricEntry.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "UI.Shared/Pages/WorkOrderManage.razor",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
-            "uri": "UI.Shared/NavMenu.razor",
             "uriBaseId": "solutionDir"
           },
           "hashes": {}
@@ -81277,133 +81179,27 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/LogEntryError.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 6
-                },
-                "region": {
-                  "startLine": 24,
-                  "startColumn": 38,
-                  "endLine": 24,
-                  "endColumn": 42,
-                  "charOffset": 669,
-                  "charLength": 4,
-                  "snippet": {
-                    "text": "set;"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 23,
-                  "startColumn": 1,
-                  "endLine": 25,
-                  "endColumn": 1,
-                  "charOffset": 613,
-                  "charLength": 63,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string? StackTrace { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "3E0D2B16FE7E7DC08CADF877E7556605B59322795DED1DF6F9B44FC025320CD3"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
-          "ruleIndex": 70,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Auto-property can be made get-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/LogEntryError.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 6
-                },
-                "region": {
-                  "startLine": 29,
-                  "startColumn": 49,
-                  "endLine": 29,
-                  "endColumn": 53,
-                  "charOffset": 820,
-                  "charLength": 4,
-                  "snippet": {
-                    "text": "set;"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 28,
-                  "startColumn": 1,
-                  "endLine": 30,
-                  "endColumn": 1,
-                  "charOffset": 753,
-                  "charLength": 74,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public LogEntryError? InnerException { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "F78BDA124CDD912E26036D2C6301E138EA5B3E8311742FCDE7DEB2615B2A9558"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
-          "ruleIndex": 70,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Auto-property can be made get-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
                   "uri": "IntegrationTests/TestHost.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 7
+                  "index": 6
                 },
                 "region": {
-                  "startLine": 22,
+                  "startLine": 23,
                   "startColumn": 50,
-                  "endLine": 22,
+                  "endLine": 23,
                   "endColumn": 54,
-                  "charOffset": 784,
+                  "charOffset": 808,
                   "charLength": 4,
                   "snippet": {
                     "text": "set;"
                   }
                 },
                 "contextRegion": {
-                  "startLine": 21,
+                  "startLine": 22,
                   "startColumn": 1,
-                  "endLine": 23,
+                  "endLine": 24,
                   "endColumn": 49,
-                  "charOffset": 733,
+                  "charOffset": 757,
                   "charLength": 149,
                   "snippet": {
                     "text": "{\n    public static DateTimeOffset TestTime { get; set; } = new(2000, 1, 1, 1, 1, 1, TimeSpan.Zero);\n    private static bool _dependenciesRegistered;"
@@ -81438,7 +81234,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Models/WorkOrderSearchModel.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 8
+                  "index": 7
                 },
                 "region": {
                   "startLine": 7,
@@ -81491,7 +81287,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Pages/SelectListItem.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 9
+                  "index": 8
                 },
                 "region": {
                   "startLine": 5,
@@ -81544,7 +81340,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Pages/SelectListItem.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 9
+                  "index": 8
                 },
                 "region": {
                   "startLine": 6,
@@ -81597,7 +81393,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/ApiRateLimitingOptions.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 10
+                  "index": 9
                 },
                 "region": {
                   "startLine": 38,
@@ -81650,7 +81446,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/ApiRequestTimeoutOptions.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 11
+                  "index": 10
                 },
                 "region": {
                   "startLine": 11,
@@ -81703,7 +81499,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/ApiRequestTimeoutOptions.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 11
+                  "index": 10
                 },
                 "region": {
                   "startLine": 14,
@@ -81756,7 +81552,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/Middleware/IdempotencyOptions.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 12
+                  "index": 11
                 },
                 "region": {
                   "startLine": 13,
@@ -81809,7 +81605,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/Middleware/IdempotencyOptions.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 12
+                  "index": 11
                 },
                 "region": {
                   "startLine": 18,
@@ -81862,7 +81658,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/RequestBodyBufferingOptions.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 13
+                  "index": 12
                 },
                 "region": {
                   "startLine": 13,
@@ -81915,7 +81711,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/RequestBodyBufferingOptions.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 13
+                  "index": 12
                 },
                 "region": {
                   "startLine": 19,
@@ -81955,218 +81751,6 @@
           }
         },
         {
-          "ruleId": "ChangeFieldTypeToSystemThreadingLock",
-          "ruleIndex": 333,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Consider changing the type of 'Lock' field to 'System.Threading.Lock' to express the field's intent"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "IntegrationTests/TestHost.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 7
-                },
-                "region": {
-                  "startLine": 24,
-                  "startColumn": 29,
-                  "endLine": 24,
-                  "endColumn": 35,
-                  "charOffset": 911,
-                  "charLength": 6,
-                  "snippet": {
-                    "text": "object"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 23,
-                  "startColumn": 1,
-                  "endLine": 25,
-                  "endColumn": 33,
-                  "charOffset": 834,
-                  "charLength": 130,
-                  "snippet": {
-                    "text": "    private static bool _dependenciesRegistered;\n    private static readonly object Lock = new();\n    private static IHost? _host;"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "C4A12FC32A364FF721E834CFA6DBEB6D3382BBAE81A6600AEDA838A76FA8AAC0"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "ChangeFieldTypeToSystemThreadingLock",
-          "ruleIndex": 333,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Consider changing the type of '_eventsLock' field to 'System.Threading.Lock' to express the field's intent"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryFileWriter.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 15
-                },
-                "region": {
-                  "startLine": 31,
-                  "startColumn": 22,
-                  "endLine": 31,
-                  "endColumn": 28,
-                  "charOffset": 983,
-                  "charLength": 6,
-                  "snippet": {
-                    "text": "object"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 30,
-                  "startColumn": 1,
-                  "endLine": 32,
-                  "endColumn": 47,
-                  "charOffset": 913,
-                  "charLength": 144,
-                  "snippet": {
-                    "text": "    private readonly object _tracesLock = new();\n    private readonly object _eventsLock = new();\n    private readonly object _logsLock = new();"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "D9232F479142FF503A8526BD6208151B89CB45D59774C0F5750797AEBEFB68C4"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "ChangeFieldTypeToSystemThreadingLock",
-          "ruleIndex": 333,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Consider changing the type of '_metricsLock' field to 'System.Threading.Lock' to express the field's intent"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryFileWriter.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 15
-                },
-                "region": {
-                  "startLine": 33,
-                  "startColumn": 22,
-                  "endLine": 33,
-                  "endColumn": 28,
-                  "charOffset": 1079,
-                  "charLength": 6,
-                  "snippet": {
-                    "text": "object"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 32,
-                  "startColumn": 1,
-                  "endLine": 34,
-                  "endColumn": 1,
-                  "charOffset": 1011,
-                  "charLength": 97,
-                  "snippet": {
-                    "text": "    private readonly object _logsLock = new();\n    private readonly object _metricsLock = new();\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "F8418D09B3E4BA829BA111FF9A36FD830FE494BAB440E4A3DBED9CCCA904D124"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "ChangeFieldTypeToSystemThreadingLock",
-          "ruleIndex": 333,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Consider changing the type of '_tracesLock' field to 'System.Threading.Lock' to express the field's intent"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryFileWriter.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 15
-                },
-                "region": {
-                  "startLine": 30,
-                  "startColumn": 22,
-                  "endLine": 30,
-                  "endColumn": 28,
-                  "charOffset": 934,
-                  "charLength": 6,
-                  "snippet": {
-                    "text": "object"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 29,
-                  "startColumn": 1,
-                  "endLine": 31,
-                  "endColumn": 49,
-                  "charOffset": 862,
-                  "charLength": 148,
-                  "snippet": {
-                    "text": "    private readonly MeterListener _meterListener;\n    private readonly object _tracesLock = new();\n    private readonly object _eventsLock = new();"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "9AACE3D117ABD85EC9D875BA7ECEF1EC9A1B27F85AAC95D503441B469E54B221"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
           "ruleId": "ClassNeverInstantiated.Global",
           "ruleIndex": 342,
           "kind": "fail",
@@ -82180,7 +81764,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/Validation/EmployeeGetAllQueryValidator.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 16
+                  "index": 14
                 },
                 "region": {
                   "startLine": 6,
@@ -82233,7 +81817,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/ObjectMother.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 17
+                  "index": 15
                 },
                 "region": {
                   "startLine": 10,
@@ -82286,7 +81870,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/UiServerWebApplicationMarker.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 18
+                  "index": 16
                 },
                 "region": {
                   "startLine": 6,
@@ -82339,7 +81923,7 @@
                 "artifactLocation": {
                   "uri": "Core/Validation/WebServiceMessageValidator.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 19
+                  "index": 17
                 },
                 "region": {
                   "startLine": 6,
@@ -82392,7 +81976,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/Core/Model/WorkOrderStatusTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 20
+                  "index": 18
                 },
                 "region": {
                   "startLine": 102,
@@ -82445,7 +82029,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/BlazorWasmWarmUp.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 21
+                  "index": 19
                 },
                 "region": {
                   "startLine": 19,
@@ -82498,7 +82082,7 @@
                 "artifactLocation": {
                   "uri": "ChurchBulletin.ServiceDefaults/CorrelationIdMiddleware.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 22
+                  "index": 20
                 },
                 "region": {
                   "startLine": 15,
@@ -82551,7 +82135,7 @@
                 "artifactLocation": {
                   "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryLoggerProvider.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 23
+                  "index": 21
                 },
                 "region": {
                   "startLine": 13,
@@ -82604,7 +82188,7 @@
                 "artifactLocation": {
                   "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryLoggerProvider.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 23
+                  "index": 21
                 },
                 "region": {
                   "startLine": 33,
@@ -82657,7 +82241,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/Employee.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 24
+                  "index": 22
                 },
                 "region": {
                   "startLine": 13,
@@ -82710,14 +82294,14 @@
                 "artifactLocation": {
                   "uri": "IntegrationTests/DatabaseEmptier.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 25
+                  "index": 23
                 },
                 "region": {
                   "startLine": 12,
                   "startColumn": 12,
                   "endLine": 12,
                   "endColumn": 27,
-                  "charOffset": 382,
+                  "charOffset": 381,
                   "charLength": 15,
                   "snippet": {
                     "text": "DatabaseEmptier"
@@ -82728,7 +82312,7 @@
                   "startColumn": 1,
                   "endLine": 13,
                   "endColumn": 6,
-                  "charOffset": 370,
+                  "charOffset": 369,
                   "charLength": 58,
                   "snippet": {
                     "text": "\n    public DatabaseEmptier(DatabaseFacade database)\n    {"
@@ -82763,7 +82347,7 @@
                 "artifactLocation": {
                   "uri": "IntegrationTests/SqlExecuter.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 26
+                  "index": 24
                 },
                 "region": {
                   "startLine": 13,
@@ -82816,7 +82400,7 @@
                 "artifactLocation": {
                   "uri": "IntegrationTests/TestDatabaseConfiguration.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 27
+                  "index": 25
                 },
                 "region": {
                   "startLine": 10,
@@ -82869,7 +82453,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Bus.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 28
+                  "index": 26
                 },
                 "region": {
                   "startLine": 13,
@@ -82922,7 +82506,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Services/ThemePreferenceService.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 29
+                  "index": 27
                 },
                 "region": {
                   "startLine": 17,
@@ -83028,14 +82612,14 @@
                 "artifactLocation": {
                   "uri": "UI/Server/ApiRequestTimeoutsExtensions.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 30
+                  "index": 28
                 },
                 "region": {
                   "startLine": 31,
                   "startColumn": 16,
                   "endLine": 31,
                   "endColumn": 55,
-                  "charOffset": 1504,
+                  "charOffset": 1499,
                   "charLength": 39,
                   "snippet": {
                     "text": "ConfigureApiRequestTimeoutPolicyOptions"
@@ -83046,7 +82630,7 @@
                   "startColumn": 1,
                   "endLine": 32,
                   "endColumn": 10,
-                  "charOffset": 1488,
+                  "charOffset": 1483,
                   "charLength": 112,
                   "snippet": {
                     "text": "\n        public ConfigureApiRequestTimeoutPolicyOptions(IOptions<ApiRequestTimeoutOptions> apiOptions)\n        {"
@@ -83081,7 +82665,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/AutoReformatAgentService.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 31
+                  "index": 29
                 },
                 "region": {
                   "startLine": 19,
@@ -83134,7 +82718,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/Middleware/IdempotencyMiddleware.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 32
+                  "index": 30
                 },
                 "region": {
                   "startLine": 39,
@@ -83187,7 +82771,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/Api/RateLimitedApiWebApplicationFactory.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 33
+                  "index": 31
                 },
                 "region": {
                   "startLine": 16,
@@ -83240,7 +82824,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/Api/TunableApiRateLimitWebApplicationFactory.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 34
+                  "index": 32
                 },
                 "region": {
                   "startLine": 15,
@@ -83293,7 +82877,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/Core/Services/WorkOrderBuilderTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 35
+                  "index": 33
                 },
                 "region": {
                   "startLine": 33,
@@ -83346,7 +82930,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Client/PublisherGatewayTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 36
+                  "index": 34
                 },
                 "region": {
                   "startLine": 114,
@@ -83399,7 +82983,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Client/PublisherGatewayTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 36
+                  "index": 34
                 },
                 "region": {
                   "startLine": 114,
@@ -83452,7 +83036,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Server/ApiResponseCompressionWebTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 38
+                  "index": 36
                 },
                 "region": {
                   "startLine": 47,
@@ -83505,7 +83089,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Shared/Pages/WorkOrderManageEventBusNotifyTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 40
+                  "index": 38
                 },
                 "region": {
                   "startLine": 110,
@@ -83558,7 +83142,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Shared/Pages/WorkOrderManageEventBusNotifyTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 40
+                  "index": 38
                 },
                 "region": {
                   "startLine": 110,
@@ -83611,7 +83195,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Shared/Services/ThemePreferenceServiceTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 43
+                  "index": 41
                 },
                 "region": {
                   "startLine": 83,
@@ -83664,7 +83248,7 @@
                 "artifactLocation": {
                   "uri": "Worker/Handlers/TracerBulletHandler.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 44
+                  "index": 42
                 },
                 "region": {
                   "startLine": 14,
@@ -83717,7 +83301,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/ObjectMother.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 17
+                  "index": 15
                 },
                 "region": {
                   "startLine": 10,
@@ -83770,7 +83354,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Services/ThemePreferenceService.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 29
+                  "index": 27
                 },
                 "region": {
                   "startLine": 19,
@@ -83823,7 +83407,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/ObjectMother.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 17
+                  "index": 15
                 },
                 "region": {
                   "startLine": 13,
@@ -83876,7 +83460,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Pages/Settings.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 45
+                  "index": 43
                 },
                 "region": {
                   "startLine": 16,
@@ -83921,59 +83505,6 @@
           "kind": "fail",
           "level": "note",
           "message": {
-            "text": "Name 'AllForecasts' does not match rule 'Instance fields (private)'. Suggested name is '_allForecasts'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "DataAccess/Handlers/ForecastQueryHandler.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 46
-                },
-                "region": {
-                  "startLine": 22,
-                  "startColumn": 44,
-                  "endLine": 22,
-                  "endColumn": 56,
-                  "charOffset": 697,
-                  "charLength": 12,
-                  "snippet": {
-                    "text": "AllForecasts"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 21,
-                  "startColumn": 1,
-                  "endLine": 23,
-                  "endColumn": 1,
-                  "charOffset": 653,
-                  "charLength": 58,
-                  "snippet": {
-                    "text": "\n        private readonly WeatherForecast[] AllForecasts;\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "3DD2E17C0F5BACD54448F961E7E7026108A71AF9148B692687306FAD658F22AC"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
             "text": "Name 'PreferredLanguageShouldDefaultToEnUS' does not match rule 'non_field_members_should_be_pascal_case'. Suggested name is 'PreferredLanguageShouldDefaultToEnUs'."
           },
           "locations": [
@@ -83982,7 +83513,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/Core/Model/EmployeeTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 47
+                  "index": 44
                 },
                 "region": {
                   "startLine": 185,
@@ -84035,7 +83566,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/Core/Model/EmployeeTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 47
+                  "index": 44
                 },
                 "region": {
                   "startLine": 192,
@@ -84088,7 +83619,7 @@
                 "artifactLocation": {
                   "uri": "IntegrationTests/LlmGateway/TranslationServiceTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 48
+                  "index": 45
                 },
                 "region": {
                   "startLine": 34,
@@ -84141,7 +83672,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/LlmGateway/TranslationServiceTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 49
+                  "index": 46
                 },
                 "region": {
                   "startLine": 13,
@@ -84181,483 +83712,6 @@
           }
         },
         {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Name 'collapseNavMenu' does not match rule 'Instance fields (private)'. Suggested name is '_collapseNavMenu'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI.Shared/NavMenu.Razor.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 50
-                },
-                "region": {
-                  "startLine": 14,
-                  "startColumn": 18,
-                  "endLine": 14,
-                  "endColumn": 33,
-                  "charOffset": 431,
-                  "charLength": 15,
-                  "snippet": {
-                    "text": "collapseNavMenu"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 13,
-                  "startColumn": 1,
-                  "endLine": 15,
-                  "endColumn": 1,
-                  "charOffset": 413,
-                  "charLength": 42,
-                  "snippet": {
-                    "text": "\n    private bool collapseNavMenu = true;\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "6133AA3A0AF8184A1CFB4F02D784BE38D5FD98C600F9B40E55A98BDB0556E41A"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Name 'employees' does not match rule 'Instance fields (not private)'. Suggested name is 'Employees'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI.Shared/Pages/Login.razor.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 51
-                },
-                "region": {
-                  "startLine": 18,
-                  "startColumn": 23,
-                  "endLine": 18,
-                  "endColumn": 32,
-                  "charOffset": 648,
-                  "charLength": 9,
-                  "snippet": {
-                    "text": "employees"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 17,
-                  "startColumn": 1,
-                  "endLine": 19,
-                  "endColumn": 1,
-                  "charOffset": 593,
-                  "charLength": 92,
-                  "snippet": {
-                    "text": "    public string? errorMessage;\n    public Employee[] employees = Array.Empty<Employee>();\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "FBA393A0411BC7984DB97C382ACA5B032664770B92794D7D3FF403A1394A00CA"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Name 'errorMessage' does not match rule 'Instance fields (not private)'. Suggested name is 'ErrorMessage'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI.Shared/Pages/Login.razor.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 51
-                },
-                "region": {
-                  "startLine": 17,
-                  "startColumn": 20,
-                  "endLine": 17,
-                  "endColumn": 32,
-                  "charOffset": 612,
-                  "charLength": 12,
-                  "snippet": {
-                    "text": "errorMessage"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 16,
-                  "startColumn": 1,
-                  "endLine": 18,
-                  "endColumn": 59,
-                  "charOffset": 542,
-                  "charLength": 142,
-                  "snippet": {
-                    "text": "    public readonly LoginModel loginModel = new();\n    public string? errorMessage;\n    public Employee[] employees = Array.Empty<Employee>();"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "DA6FAB4E7B09AA36768CC37BBC14CBE8188420D8F49D97994EC97A71D7ECC051"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Name 'getTextForStatus' does not match rule 'non_field_members_should_be_pascal_case'. Suggested name is 'GetTextForStatus'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "Core/Model/WorkOrder.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 52
-                },
-                "region": {
-                  "startLine": 59,
-                  "startColumn": 22,
-                  "endLine": 59,
-                  "endColumn": 38,
-                  "charOffset": 1501,
-                  "charLength": 16,
-                  "snippet": {
-                    "text": "getTextForStatus"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 58,
-                  "startColumn": 1,
-                  "endLine": 60,
-                  "endColumn": 6,
-                  "charOffset": 1479,
-                  "charLength": 46,
-                  "snippet": {
-                    "text": "\n    protected string getTextForStatus()\n    {"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "7C0ECFB3816550C75E349B53A632D5277C095571347C189FA186C299C70B1036"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Name 'getTruncatedString' does not match rule 'non_field_members_should_be_pascal_case'. Suggested name is 'GetTruncatedString'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "Core/Model/WorkOrder.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 52
-                },
-                "region": {
-                  "startLine": 48,
-                  "startColumn": 20,
-                  "endLine": 48,
-                  "endColumn": 38,
-                  "charOffset": 1235,
-                  "charLength": 18,
-                  "snippet": {
-                    "text": "getTruncatedString"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 47,
-                  "startColumn": 1,
-                  "endLine": 49,
-                  "endColumn": 6,
-                  "charOffset": 1215,
-                  "charLength": 59,
-                  "snippet": {
-                    "text": "\n    private string getTruncatedString(string? value)\n    {"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "E6967835A58CB31B5065F751F07D91410D831627B8F3AD2F93C93647DB7F55FD"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Name 'loginModel' does not match rule 'Instance fields (not private)'. Suggested name is 'LoginModel'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI.Shared/Pages/Login.razor.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 51
-                },
-                "region": {
-                  "startLine": 16,
-                  "startColumn": 32,
-                  "endLine": 16,
-                  "endColumn": 42,
-                  "charOffset": 573,
-                  "charLength": 10,
-                  "snippet": {
-                    "text": "loginModel"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 15,
-                  "startColumn": 1,
-                  "endLine": 17,
-                  "endColumn": 33,
-                  "charOffset": 541,
-                  "charLength": 84,
-                  "snippet": {
-                    "text": "\n    public readonly LoginModel loginModel = new();\n    public string? errorMessage;"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "2E6AD12E1FCC99A0F1B8C0D00372A13BFC8D1E35CF040B7BCC80A0F589BEB734"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Name 's_hostApplicationBuilderAsHostBuilder' does not match rule 'Static readonly fields (private)'. Suggested name is 'SHostApplicationBuilderAsHostBuilder'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/SerilogExtensions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 53
-                },
-                "region": {
-                  "startLine": 18,
-                  "startColumn": 41,
-                  "endLine": 18,
-                  "endColumn": 78,
-                  "charOffset": 645,
-                  "charLength": 37,
-                  "snippet": {
-                    "text": "s_hostApplicationBuilderAsHostBuilder"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 17,
-                  "startColumn": 1,
-                  "endLine": 19,
-                  "endColumn": 107,
-                  "charOffset": 603,
-                  "charLength": 219,
-                  "snippet": {
-                    "text": "{\n    private static readonly MethodInfo? s_hostApplicationBuilderAsHostBuilder = typeof(HostApplicationBuilder)\n        .GetMethod(\"AsHostBuilder\", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "1EF285F8C52923C1C356502338F73ABD9587A481A11D37455BE594B44A910646"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Name 'JS' does not match rule 'Properties'. Suggested name is 'Js'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI.Shared/Pages/ApplicationChat.razor",
-                  "uriBaseId": "solutionDir",
-                  "index": 54
-                },
-                "region": {
-                  "startLine": 6,
-                  "startColumn": 20,
-                  "endLine": 6,
-                  "endColumn": 22,
-                  "charOffset": 191,
-                  "charLength": 2,
-                  "snippet": {
-                    "text": "JS"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 5,
-                  "startColumn": 1,
-                  "endLine": 7,
-                  "endColumn": 1,
-                  "charOffset": 112,
-                  "charLength": 82,
-                  "snippet": {
-                    "text": "@inject CustomAuthenticationStateProvider AuthStateProvider\n@inject IJSRuntime JS\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "D6B86EF0AC333840ACD5B721A85D593DC4D053A32C901DFD9787A770C2706C5F"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "High",
-            "tags": [
-              "Razor Component",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Name 'currentCount' does not match rule 'Instance fields (private)'. Suggested name is '_currentCount'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI.Shared/Pages/Counter.razor",
-                  "uriBaseId": "solutionDir",
-                  "index": 55
-                },
-                "region": {
-                  "startLine": 52,
-                  "startColumn": 17,
-                  "endLine": 52,
-                  "endColumn": 29,
-                  "charOffset": 1812,
-                  "charLength": 12,
-                  "snippet": {
-                    "text": "currentCount"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 51,
-                  "startColumn": 1,
-                  "endLine": 53,
-                  "endColumn": 1,
-                  "charOffset": 1795,
-                  "charLength": 31,
-                  "snippet": {
-                    "text": "\n    private int currentCount;\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "D32908EFF6DF819426DA18A8A0666C1E20CAC6372BE474F90927F01FEDDB3862"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "High",
-            "tags": [
-              "Razor Component",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
           "ruleId": "InconsistentlySynchronizedField",
           "ruleIndex": 2349,
           "kind": "fail",
@@ -84671,7 +83725,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/ObjectMother.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 17
+                  "index": 15
                 },
                 "region": {
                   "startLine": 17,
@@ -84724,7 +83778,7 @@
                 "artifactLocation": {
                   "uri": "Core/Queries/WorkOrderSpecificationQuery.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 56
+                  "index": 47
                 },
                 "region": {
                   "startLine": 25,
@@ -84777,7 +83831,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 28,
@@ -84830,7 +83884,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Pages/FetchData.razor.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 58
+                  "index": 49
                 },
                 "region": {
                   "startLine": 12,
@@ -84883,7 +83937,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 27,
@@ -84936,7 +83990,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 21,
@@ -84989,7 +84043,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 20,
@@ -85042,7 +84096,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/ObjectMother.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 17
+                  "index": 15
                 },
                 "region": {
                   "startLine": 13,
@@ -85082,112 +84136,6 @@
           }
         },
         {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Name 'employees' does not match rule 'Instance fields (not private)'. Suggested name is 'Employees'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI.Shared/Pages/Login.razor.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 51
-                },
-                "region": {
-                  "startLine": 18,
-                  "startColumn": 23,
-                  "endLine": 18,
-                  "endColumn": 32,
-                  "charOffset": 648,
-                  "charLength": 9,
-                  "snippet": {
-                    "text": "employees"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 17,
-                  "startColumn": 1,
-                  "endLine": 19,
-                  "endColumn": 1,
-                  "charOffset": 593,
-                  "charLength": 92,
-                  "snippet": {
-                    "text": "    public string? errorMessage;\n    public Employee[] employees = Array.Empty<Employee>();\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "FBA393A0411BC7984DB97C382ACA5B032664770B92794D7D3FF403A1394A00CA"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Name 'errorMessage' does not match rule 'Instance fields (not private)'. Suggested name is 'ErrorMessage'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI.Shared/Pages/Login.razor.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 51
-                },
-                "region": {
-                  "startLine": 17,
-                  "startColumn": 20,
-                  "endLine": 17,
-                  "endColumn": 32,
-                  "charOffset": 612,
-                  "charLength": 12,
-                  "snippet": {
-                    "text": "errorMessage"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 16,
-                  "startColumn": 1,
-                  "endLine": 18,
-                  "endColumn": 59,
-                  "charOffset": 542,
-                  "charLength": 142,
-                  "snippet": {
-                    "text": "    public readonly LoginModel loginModel = new();\n    public string? errorMessage;\n    public Employee[] employees = Array.Empty<Employee>();"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "DA6FAB4E7B09AA36768CC37BBC14CBE8188420D8F49D97994EC97A71D7ECC051"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
           "ruleId": "MemberCanBePrivate.Global",
           "ruleIndex": 2398,
           "kind": "fail",
@@ -85201,7 +84149,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 499,
@@ -85254,7 +84202,7 @@
                 "artifactLocation": {
                   "uri": "Core/Import/WorkOrderBulkImportCsvParser.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 59
+                  "index": 51
                 },
                 "region": {
                   "startLine": 22,
@@ -85307,7 +84255,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/Core/Queries/RemotableRequestTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 60
+                  "index": 52
                 },
                 "region": {
                   "startLine": 63,
@@ -85360,7 +84308,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Pages/WorkOrderManage.razor.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 61
+                  "index": 53
                 },
                 "region": {
                   "startLine": 39,
@@ -85413,7 +84361,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 29,
@@ -85458,59 +84406,6 @@
           "kind": "fail",
           "level": "note",
           "message": {
-            "text": "Property 'Instance' can be made private"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "IntegrationTests/TestHost.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 7
-                },
-                "region": {
-                  "startLine": 27,
-                  "startColumn": 5,
-                  "endLine": 27,
-                  "endColumn": 11,
-                  "charOffset": 970,
-                  "charLength": 6,
-                  "snippet": {
-                    "text": "public"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 26,
-                  "startColumn": 1,
-                  "endLine": 28,
-                  "endColumn": 6,
-                  "charOffset": 965,
-                  "charLength": 39,
-                  "snippet": {
-                    "text": "\n    public static IHost Instance\n    {"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "8FC2E7FFF4586C8C1627B7277D7E7FB80F9A7EC521F1757C9224D4C5C000C5C9"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "MemberCanBePrivate.Global",
-          "ruleIndex": 2398,
-          "kind": "fail",
-          "level": "note",
-          "message": {
             "text": "Property 'SelectedCommand' can be made private"
           },
           "locations": [
@@ -85519,7 +84414,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Pages/WorkOrderManage.razor.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 61
+                  "index": 53
                 },
                 "region": {
                   "startLine": 34,
@@ -85572,7 +84467,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 25,
@@ -85625,7 +84520,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Pages/WorkOrderManage.razor.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 61
+                  "index": 53
                 },
                 "region": {
                   "startLine": 32,
@@ -85678,7 +84573,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Pages/WorkOrderManage.razor.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 61
+                  "index": 53
                 },
                 "region": {
                   "startLine": 33,
@@ -85731,7 +84626,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Components/LastWorkOrder.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 62
+                  "index": 54
                 },
                 "region": {
                   "startLine": 14,
@@ -85784,7 +84679,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/StateCommands/StateCommandBase.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 63
+                  "index": 55
                 },
                 "region": {
                   "startLine": 9,
@@ -85890,7 +84785,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/AppComponentBase.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 64
+                  "index": 56
                 },
                 "region": {
                   "startLine": 9,
@@ -85943,7 +84838,7 @@
                 "artifactLocation": {
                   "uri": "IntegrationTests/LlmGateway/LlmTestBase.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 65
+                  "index": 57
                 },
                 "region": {
                   "startLine": 52,
@@ -85996,7 +84891,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Pages/Settings.razor.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 66
+                  "index": 58
                 },
                 "region": {
                   "startLine": 26,
@@ -86049,14 +84944,14 @@
                 "artifactLocation": {
                   "uri": "UI/Server/CorsExtensions.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 67
+                  "index": 59
                 },
                 "region": {
                   "startLine": 43,
                   "startColumn": 32,
                   "endLine": 43,
                   "endColumn": 34,
-                  "charOffset": 1837,
+                  "charOffset": 1832,
                   "charLength": 2,
                   "snippet": {
                     "text": "&&"
@@ -86067,7 +84962,7 @@
                   "startColumn": 1,
                   "endLine": 44,
                   "endColumn": 6,
-                  "charOffset": 1718,
+                  "charOffset": 1713,
                   "charLength": 162,
                   "snippet": {
                     "text": "        var options = services.GetRequiredService<IOptions<ServerCorsOptions>>().Value;\n        return options.Enabled && options.AllowedOrigins.Length > 0;\n    }"
@@ -86102,7 +84997,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/McpServer/McpTestHelper.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 68
+                  "index": 60
                 },
                 "region": {
                   "startLine": 23,
@@ -86155,7 +85050,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/McpServer/McpTestHelper.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 68
+                  "index": 60
                 },
                 "region": {
                   "startLine": 42,
@@ -86208,7 +85103,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/NServiceBus/TracerBulletTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 69
+                  "index": 61
                 },
                 "region": {
                   "startLine": 36,
@@ -86261,7 +85156,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/NServiceBus/TracerBulletTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 69
+                  "index": 61
                 },
                 "region": {
                   "startLine": 40,
@@ -86314,7 +85209,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ProcessCleanupHelper.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 70
+                  "index": 62
                 },
                 "region": {
                   "startLine": 23,
@@ -86367,7 +85262,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ProcessCleanupHelper.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 70
+                  "index": 62
                 },
                 "region": {
                   "startLine": 30,
@@ -86420,7 +85315,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ProcessCleanupHelper.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 70
+                  "index": 62
                 },
                 "region": {
                   "startLine": 55,
@@ -86473,7 +85368,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 85,
@@ -86526,7 +85421,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 91,
@@ -86579,7 +85474,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 95,
@@ -86632,7 +85527,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 115,
@@ -86685,7 +85580,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 123,
@@ -86738,7 +85633,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 131,
@@ -86791,7 +85686,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 197,
@@ -86844,7 +85739,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 202,
@@ -86897,7 +85792,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 215,
@@ -86950,7 +85845,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 220,
@@ -87003,7 +85898,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 365,
@@ -87056,7 +85951,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 441,
@@ -87109,7 +86004,7 @@
                 "artifactLocation": {
                   "uri": "AcceptanceTests/ServerFixture.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 48
                 },
                 "region": {
                   "startLine": 447,
@@ -87160,168 +86055,9 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "DataAccess/Handlers/EmployeeQueryHandler.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 71
-                },
-                "region": {
-                  "startLine": 19,
-                  "startColumn": 14,
-                  "endLine": 19,
-                  "endColumn": 25,
-                  "charOffset": 682,
-                  "charLength": 11,
-                  "snippet": {
-                    "text": "SingleAsync"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 18,
-                  "startColumn": 1,
-                  "endLine": 20,
-                  "endColumn": 25,
-                  "charOffset": 639,
-                  "charLength": 121,
-                  "snippet": {
-                    "text": "            .Include(\"Roles\")\n            .SingleAsync(emp => emp.UserName == request.Username);\n        return employee;"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "C7852AA0FE32BA33265B4D9F28B4CAE3640E5257121C066672DBEA2B504D7A82"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "MethodSupportsCancellation",
-          "ruleIndex": 2416,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Method has overload with cancellation support"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "DataAccess/Handlers/EmployeeQueryHandler.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 71
-                },
-                "region": {
-                  "startLine": 27,
-                  "startColumn": 37,
-                  "endLine": 27,
-                  "endColumn": 48,
-                  "charOffset": 1002,
-                  "charLength": 11,
-                  "snippet": {
-                    "text": "ToListAsync"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 26,
-                  "startColumn": 1,
-                  "endLine": 28,
-                  "endColumn": 50,
-                  "charOffset": 935,
-                  "charLength": 131,
-                  "snippet": {
-                    "text": "            .Include(\"Roles\");\n        var employees = await query.ToListAsync();\n        if (EmployeeSpecification.All.CanFulfill)"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "2850A29A54D2E734862BA6C0F721A155CA5FFC221546E97A85E5190DC383FF2B"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "MethodSupportsCancellation",
-          "ruleIndex": 2416,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Method has overload with cancellation support"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "LlmGateway/WorkOrderChatHandler.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 72
-                },
-                "region": {
-                  "startLine": 29,
-                  "startColumn": 51,
-                  "endLine": 29,
-                  "endColumn": 67,
-                  "charOffset": 1217,
-                  "charLength": 16,
-                  "snippet": {
-                    "text": "GetResponseAsync"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 28,
-                  "startColumn": 1,
-                  "endLine": 30,
-                  "endColumn": 30,
-                  "charOffset": 1107,
-                  "charLength": 185,
-                  "snippet": {
-                    "text": "        IChatClient client = await factory.GetChatClient();\n        ChatResponse responseAsync = await client.GetResponseAsync(chatMessages, _chatOptions);\n        return responseAsync;"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "A6C87D0F1034D332B646734B723FB4FF7861CA3B8562ECC2AED9AE9450773C39"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "MethodSupportsCancellation",
-          "ruleIndex": 2416,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Method has overload with cancellation support"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
                   "uri": "UnitTests/ServiceDefaults/ServiceDefaultsTelemetryTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 73
+                  "index": 63
                 },
                 "region": {
                   "startLine": 57,
@@ -87374,7 +86110,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Server/AutoReformatAgentServiceTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 74
+                  "index": 64
                 },
                 "region": {
                   "startLine": 97,
@@ -87427,7 +86163,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Server/AutoReformatAgentServiceTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 74
+                  "index": 64
                 },
                 "region": {
                   "startLine": 118,
@@ -87480,7 +86216,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/LlmGateway/TracingChatClientTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 75
+                  "index": 65
                 },
                 "region": {
                   "startLine": 158,
@@ -87533,7 +86269,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/LlmGateway/TracingChatClientTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 75
+                  "index": 65
                 },
                 "region": {
                   "startLine": 157,
@@ -87586,7 +86322,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Client/ClientHealthCheckTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 76
+                  "index": 66
                 },
                 "region": {
                   "startLine": 90,
@@ -87639,7 +86375,7 @@
                 "artifactLocation": {
                   "uri": "LlmGateway/TranslationService.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 77
+                  "index": 67
                 },
                 "region": {
                   "startLine": 6,
@@ -87692,7 +86428,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/MainLayout.razor.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 78
+                  "index": 68
                 },
                 "region": {
                   "startLine": 28,
@@ -87745,7 +86481,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/MainLayout.razor.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 78
+                  "index": 68
                 },
                 "region": {
                   "startLine": 31,
@@ -87798,7 +86534,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/MainLayout.razor.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 78
+                  "index": 68
                 },
                 "region": {
                   "startLine": 31,
@@ -87849,698 +86585,9 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/LogEntryError.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 6
-                },
-                "region": {
-                  "startLine": 14,
-                  "startColumn": 32,
-                  "endLine": 14,
-                  "endColumn": 35,
-                  "charOffset": 409,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 13,
-                  "startColumn": 1,
-                  "endLine": 15,
-                  "endColumn": 1,
-                  "charOffset": 359,
-                  "charLength": 57,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string? Type { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "1D733D7C229C4A803E2440B0F5BE602C67787A1E4D600EA2A5CBB160DD8697EA"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/LogEntryError.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 6
-                },
-                "region": {
-                  "startLine": 19,
-                  "startColumn": 35,
-                  "endLine": 19,
-                  "endColumn": 38,
-                  "charOffset": 532,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 18,
-                  "startColumn": 1,
-                  "endLine": 20,
-                  "endColumn": 1,
-                  "charOffset": 479,
-                  "charLength": 60,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string? Message { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "CEE86863539DD17158F624FD869A9C0A5D8E6BD8F39806BBFFA31A88011BD9D3"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 13,
-                  "startColumn": 38,
-                  "endLine": 13,
-                  "endColumn": 41,
-                  "charOffset": 335,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 12,
-                  "startColumn": 1,
-                  "endLine": 14,
-                  "endColumn": 1,
-                  "charOffset": 279,
-                  "charLength": 63,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public DateTime Timestamp { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "C48B75C5223DBC85DE0281872B9D39B6235FB140D3F9E23B08D9E945AD4C60DD"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 18,
-                  "startColumn": 33,
-                  "endLine": 18,
-                  "endColumn": 36,
-                  "charOffset": 486,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 17,
-                  "startColumn": 1,
-                  "endLine": 19,
-                  "endColumn": 1,
-                  "charOffset": 435,
-                  "charLength": 74,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string Status { get; set; } = string.Empty;\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "5C2F0AD0504D610360A6E279F0EA821BE3B082E1E932AB87F2CC96FB0969BF22"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 23,
-                  "startColumn": 34,
-                  "endLine": 23,
-                  "endColumn": 37,
-                  "charOffset": 615,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 22,
-                  "startColumn": 1,
-                  "endLine": 24,
-                  "endColumn": 1,
-                  "charOffset": 563,
-                  "charLength": 75,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string TraceId { get; set; } = string.Empty;\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "36C1A85C315FC33A0B3A30DC3B750B92CFD504C2C661366D2133D7BFB297D004"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 28,
-                  "startColumn": 33,
-                  "endLine": 28,
-                  "endColumn": 36,
-                  "charOffset": 742,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 27,
-                  "startColumn": 1,
-                  "endLine": 29,
-                  "endColumn": 1,
-                  "charOffset": 691,
-                  "charLength": 74,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string SpanId { get; set; } = string.Empty;\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "8F9B92863035F27FA57E79C5FDB2FF02A0E144E473CB7E740A07C28E58702A3D"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 33,
-                  "startColumn": 40,
-                  "endLine": 33,
-                  "endColumn": 43,
-                  "charOffset": 891,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 32,
-                  "startColumn": 1,
-                  "endLine": 34,
-                  "endColumn": 1,
-                  "charOffset": 833,
-                  "charLength": 65,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string? ParentSpanId { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "9883632E7E7C13BAA699121966D7CBEE376DD7BC8E929600A77DA86B94712589"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 38,
-                  "startColumn": 31,
-                  "endLine": 38,
-                  "endColumn": 34,
-                  "charOffset": 1021,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 37,
-                  "startColumn": 1,
-                  "endLine": 39,
-                  "endColumn": 1,
-                  "charOffset": 972,
-                  "charLength": 72,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string Name { get; set; } = string.Empty;\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "E03D74F24C73501BB99BC8D57C007BEFA3459D363D63B47845A4E87AE2299E5E"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 43,
-                  "startColumn": 33,
-                  "endLine": 43,
-                  "endColumn": 36,
-                  "charOffset": 1168,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 42,
-                  "startColumn": 1,
-                  "endLine": 44,
-                  "endColumn": 1,
-                  "charOffset": 1117,
-                  "charLength": 74,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string Source { get; set; } = string.Empty;\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "BE5CC4F1292CFD70D16BC86C9A1B48FF69FCBC8E0C40DD8C07332D4C5DEA9E04"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 48,
-                  "startColumn": 37,
-                  "endLine": 48,
-                  "endColumn": 40,
-                  "charOffset": 1332,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 47,
-                  "startColumn": 1,
-                  "endLine": 49,
-                  "endColumn": 1,
-                  "charOffset": 1277,
-                  "charLength": 62,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public double DurationMs { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "35944314ADA20442BCED49E452A324B4D6C40AD7C4F46660711B4B6DC862E8B0"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 53,
-                  "startColumn": 38,
-                  "endLine": 53,
-                  "endColumn": 41,
-                  "charOffset": 1468,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 52,
-                  "startColumn": 1,
-                  "endLine": 54,
-                  "endColumn": 1,
-                  "charOffset": 1412,
-                  "charLength": 63,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string? StatusCode { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "7A6FCE29B61220C254D97FF89494FF0EDAE71BA6470E6F8D0B0208B31A2CD6A9"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 58,
-                  "startColumn": 33,
-                  "endLine": 58,
-                  "endColumn": 36,
-                  "charOffset": 1612,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 57,
-                  "startColumn": 1,
-                  "endLine": 59,
-                  "endColumn": 1,
-                  "charOffset": 1561,
-                  "charLength": 58,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string? Error { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "17697D0440406B57710D42C11F32996C7AE55F820CD9A1CAFCB10EA119E2B483"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "ChurchBulletin.ServiceDefaults/TraceEntry.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 79
-                },
-                "region": {
-                  "startLine": 63,
-                  "startColumn": 52,
-                  "endLine": 63,
-                  "endColumn": 55,
-                  "charOffset": 1768,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 62,
-                  "startColumn": 1,
-                  "endLine": 64,
-                  "endColumn": 1,
-                  "charOffset": 1698,
-                  "charLength": 83,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public Dictionary<string, string?> Tags { get; set; } = [];\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "52B595DF3F8C3F03496B450AA64A25362A502960BCF1DF254E11E5518CC791FC"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
                   "uri": "Core/ConfigurationModel.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 80
+                  "index": 69
                 },
                 "region": {
                   "startLine": 5,
@@ -88593,7 +86640,7 @@
                 "artifactLocation": {
                   "uri": "Core/Messaging/WebServiceMessage.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 81
+                  "index": 70
                 },
                 "region": {
                   "startLine": 10,
@@ -88646,7 +86693,7 @@
                 "artifactLocation": {
                   "uri": "Core/Messaging/WebServiceMessage.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 81
+                  "index": 70
                 },
                 "region": {
                   "startLine": 11,
@@ -88699,7 +86746,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/Role.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 82
+                  "index": 71
                 },
                 "region": {
                   "startLine": 9,
@@ -88752,7 +86799,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/Role.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 82
+                  "index": 71
                 },
                 "region": {
                   "startLine": 11,
@@ -88805,7 +86852,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/Role.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 82
+                  "index": 71
                 },
                 "region": {
                   "startLine": 13,
@@ -88858,7 +86905,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WeatherForecast.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 83
+                  "index": 72
                 },
                 "region": {
                   "startLine": 8,
@@ -88911,7 +86958,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WeatherForecast.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 83
+                  "index": 72
                 },
                 "region": {
                   "startLine": 10,
@@ -88964,7 +87011,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WeatherForecast.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 83
+                  "index": 72
                 },
                 "region": {
                   "startLine": 12,
@@ -89017,14 +87064,14 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrder.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 52
+                  "index": 73
                 },
                 "region": {
                   "startLine": 91,
                   "startColumn": 64,
                   "endLine": 91,
                   "endColumn": 67,
-                  "charOffset": 2185,
+                  "charOffset": 2167,
                   "charLength": 3,
                   "snippet": {
                     "text": "set"
@@ -89035,7 +87082,7 @@
                   "startColumn": 1,
                   "endLine": 92,
                   "endColumn": 2,
-                  "charOffset": 2121,
+                  "charOffset": 2103,
                   "charLength": 107,
                   "snippet": {
                     "text": "\n    public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();\n}"
@@ -89070,7 +87117,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrderAttachment.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 84
+                  "index": 74
                 },
                 "region": {
                   "startLine": 5,
@@ -89123,7 +87170,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrderAttachment.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 84
+                  "index": 74
                 },
                 "region": {
                   "startLine": 6,
@@ -89176,7 +87223,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrderAttachment.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 84
+                  "index": 74
                 },
                 "region": {
                   "startLine": 7,
@@ -89229,7 +87276,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrderAttachment.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 84
+                  "index": 74
                 },
                 "region": {
                   "startLine": 8,
@@ -89282,7 +87329,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrderAttachment.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 84
+                  "index": 74
                 },
                 "region": {
                   "startLine": 9,
@@ -89335,7 +87382,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrderAttachment.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 84
+                  "index": 74
                 },
                 "region": {
                   "startLine": 10,
@@ -89388,7 +87435,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrderAttachment.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 84
+                  "index": 74
                 },
                 "region": {
                   "startLine": 11,
@@ -89441,7 +87488,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrderAttachment.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 84
+                  "index": 74
                 },
                 "region": {
                   "startLine": 13,
@@ -89494,7 +87541,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrderStatus.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 85
+                  "index": 75
                 },
                 "region": {
                   "startLine": 41,
@@ -89547,7 +87594,7 @@
                 "artifactLocation": {
                   "uri": "Core/Model/WorkOrderStatus.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 85
+                  "index": 75
                 },
                 "region": {
                   "startLine": 43,
@@ -89598,274 +87645,9 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "Database/Console/DatabaseOptions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 86
-                },
-                "region": {
-                  "startLine": 13,
-                  "startColumn": 41,
-                  "endLine": 13,
-                  "endColumn": 44,
-                  "charOffset": 368,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 12,
-                  "startColumn": 1,
-                  "endLine": 14,
-                  "endColumn": 1,
-                  "charOffset": 271,
-                  "charLength": 120,
-                  "snippet": {
-                    "text": "    [Description(\"The database server name or address\")]\n    public string DatabaseServer { get; set; } = string.Empty;\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "74C9D8C96362122AA5A64D5C16364EBDEEAD11B495F9937C46B3CB46ADEE23D9"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "Database/Console/DatabaseOptions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 86
-                },
-                "region": {
-                  "startLine": 17,
-                  "startColumn": 39,
-                  "endLine": 17,
-                  "endColumn": 42,
-                  "charOffset": 519,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 16,
-                  "startColumn": 1,
-                  "endLine": 18,
-                  "endColumn": 1,
-                  "charOffset": 435,
-                  "charLength": 107,
-                  "snippet": {
-                    "text": "    [Description(\"The name of the database\")]\n    public string DatabaseName { get; set; } = string.Empty;\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "637530F7D3140FA3BA44CEF90ABA8F66DC030CF07942DCC14368980286DD87BE"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "Database/Console/DatabaseOptions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 86
-                },
-                "region": {
-                  "startLine": 21,
-                  "startColumn": 36,
-                  "endLine": 21,
-                  "endColumn": 39,
-                  "charOffset": 710,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 20,
-                  "startColumn": 1,
-                  "endLine": 22,
-                  "endColumn": 1,
-                  "charOffset": 583,
-                  "charLength": 150,
-                  "snippet": {
-                    "text": "    [Description(\"The directory containing the migration scripts. Defaults to .\\\\scripts\")]\n    public string ScriptDir { get; set; } = \".\\\\scripts\";\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "9BD3D794CF769AB49A650EE6E270AB62408003BB15B3AD34421012EBE5A7AC73"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "Database/Console/DatabaseOptions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 86
-                },
-                "region": {
-                  "startLine": 25,
-                  "startColumn": 40,
-                  "endLine": 25,
-                  "endColumn": 43,
-                  "charOffset": 883,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 24,
-                  "startColumn": 1,
-                  "endLine": 26,
-                  "endColumn": 1,
-                  "charOffset": 777,
-                  "charLength": 113,
-                  "snippet": {
-                    "text": "    [Description(\"Optional database username for authentication\")]\n    public string? DatabaseUser { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "632A9396ABF5CECF7F210FE30D10F1B9A542DDB7672012132EA6A3076A32C24E"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "Database/Console/DatabaseOptions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 86
-                },
-                "region": {
-                  "startLine": 29,
-                  "startColumn": 44,
-                  "endLine": 29,
-                  "endColumn": 47,
-                  "charOffset": 1048,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 28,
-                  "startColumn": 1,
-                  "endLine": 30,
-                  "endColumn": 1,
-                  "charOffset": 938,
-                  "charLength": 117,
-                  "snippet": {
-                    "text": "    [Description(\"Optional database password for authentication\")]\n    public string? DatabasePassword { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "912A744F027F175AFFB5B6379BA3C387E9953E7A11B70365AB8B7FD87630EDB0"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
                   "uri": "LlmGateway/ApplicationChatQuery.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 87
+                  "index": 76
                 },
                 "region": {
                   "startLine": 9,
@@ -89916,168 +87698,9 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "LlmGateway/ChatClientConfig.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 88
-                },
-                "region": {
-                  "startLine": 5,
-                  "startColumn": 51,
-                  "endLine": 5,
-                  "endColumn": 54,
-                  "charOffset": 127,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 4,
-                  "startColumn": 1,
-                  "endLine": 6,
-                  "endColumn": 54,
-                  "charOffset": 75,
-                  "charLength": 112,
-                  "snippet": {
-                    "text": "{\n    public required string? AiOpenAiApiKey { get; set; }\n    public required string? AiOpenAiUrl { get; set; }"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "A296AFB4F72D060AA46D1D4052D91085C386CD71774F2AC8E1F2A35C24922025"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "LlmGateway/ChatClientConfig.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 88
-                },
-                "region": {
-                  "startLine": 6,
-                  "startColumn": 48,
-                  "endLine": 6,
-                  "endColumn": 51,
-                  "charOffset": 181,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 5,
-                  "startColumn": 1,
-                  "endLine": 7,
-                  "endColumn": 56,
-                  "charOffset": 77,
-                  "charLength": 166,
-                  "snippet": {
-                    "text": "    public required string? AiOpenAiApiKey { get; set; }\n    public required string? AiOpenAiUrl { get; set; }\n    public required string? AiOpenAiModel { get; set; }"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "8EBFF0D482E6AF02FF4D6F60135A64F7A3D8FB7CCBD6F2B69B42CA3E72E6E5FC"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "LlmGateway/ChatClientConfig.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 88
-                },
-                "region": {
-                  "startLine": 7,
-                  "startColumn": 50,
-                  "endLine": 7,
-                  "endColumn": 53,
-                  "charOffset": 237,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 6,
-                  "startColumn": 1,
-                  "endLine": 8,
-                  "endColumn": 2,
-                  "charOffset": 134,
-                  "charLength": 111,
-                  "snippet": {
-                    "text": "    public required string? AiOpenAiUrl { get; set; }\n    public required string? AiOpenAiModel { get; set; }\n}"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "09B129B081DCAF36B99BD6E4A89FEC6D4CABCC98CB48C9D3E1AA5E95D0429FC5"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
                   "uri": "UI.Shared/Models/WorkOrderManageModel.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 89
+                  "index": 77
                 },
                 "region": {
                   "startLine": 8,
@@ -90130,7 +87753,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Models/WorkOrderManageModel.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 89
+                  "index": 77
                 },
                 "region": {
                   "startLine": 9,
@@ -90183,7 +87806,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Models/WorkOrderManageModel.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 89
+                  "index": 77
                 },
                 "region": {
                   "startLine": 11,
@@ -90236,7 +87859,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Models/WorkOrderManageModel.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 89
+                  "index": 77
                 },
                 "region": {
                   "startLine": 13,
@@ -90289,7 +87912,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Models/WorkOrderManageModel.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 89
+                  "index": 77
                 },
                 "region": {
                   "startLine": 15,
@@ -90342,7 +87965,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Models/WorkOrderManageModel.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 89
+                  "index": 77
                 },
                 "region": {
                   "startLine": 28,
@@ -90395,7 +88018,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Models/WorkOrderManageModel.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 89
+                  "index": 77
                 },
                 "region": {
                   "startLine": 30,
@@ -90448,7 +88071,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Models/WorkOrderManageModel.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 89
+                  "index": 77
                 },
                 "region": {
                   "startLine": 32,
@@ -90488,271 +88111,6 @@
           }
         },
         {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI/Api/DiagnosticsFeatureFlagsOptions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 90
-                },
-                "region": {
-                  "startLine": 12,
-                  "startColumn": 39,
-                  "endLine": 12,
-                  "endColumn": 42,
-                  "charOffset": 530,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 11,
-                  "startColumn": 1,
-                  "endLine": 13,
-                  "endColumn": 1,
-                  "charOffset": 381,
-                  "charLength": 156,
-                  "snippet": {
-                    "text": "    /// <summary>Sample flag for contract stability; replace or extend with product flags as needed.</summary>\n    public bool SampleFeatureA { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "B7C270C59CE55E270C3C9C88D7F515EA989C60776AA0D5424EDEF0AC55F539FE"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI/Api/DiagnosticsFeatureFlagsOptions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 90
-                },
-                "region": {
-                  "startLine": 15,
-                  "startColumn": 39,
-                  "endLine": 15,
-                  "endColumn": 42,
-                  "charOffset": 687,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 14,
-                  "startColumn": 1,
-                  "endLine": 16,
-                  "endColumn": 2,
-                  "charOffset": 538,
-                  "charLength": 157,
-                  "snippet": {
-                    "text": "    /// <summary>Sample flag for contract stability; replace or extend with product flags as needed.</summary>\n    public bool SampleFeatureB { get; set; }\n}"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "710A52D0D7B3FF7BE16A78B4ECF691936B0347DB9367FE5A77774C63682DAA73"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI/Server/ApiKeyAuthenticationOptions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 91
-                },
-                "region": {
-                  "startLine": 13,
-                  "startColumn": 32,
-                  "endLine": 13,
-                  "endColumn": 35,
-                  "charOffset": 501,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 12,
-                  "startColumn": 1,
-                  "endLine": 14,
-                  "endColumn": 1,
-                  "charOffset": 451,
-                  "charLength": 57,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public bool Enabled { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "2365BF63BBF361C89E73208D1259D19B39C313FC01BF3A38B8818F7F98F4BD68"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI/Server/ApiKeyAuthenticationOptions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 91
-                },
-                "region": {
-                  "startLine": 13,
-                  "startColumn": 32,
-                  "endLine": 13,
-                  "endColumn": 35,
-                  "charOffset": 501,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 12,
-                  "startColumn": 1,
-                  "endLine": 14,
-                  "endColumn": 1,
-                  "charOffset": 451,
-                  "charLength": 57,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public bool Enabled { get; set; }\n"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "2365BF63BBF361C89E73208D1259D19B39C313FC01BF3A38B8818F7F98F4BD68"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "PropertyCanBeMadeInitOnly.Global",
-          "ruleIndex": 2544,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Property can be made init-only"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI/Server/ServerCorsOptions.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 92
-                },
-                "region": {
-                  "startLine": 23,
-                  "startColumn": 43,
-                  "endLine": 23,
-                  "endColumn": 46,
-                  "charOffset": 781,
-                  "charLength": 3,
-                  "snippet": {
-                    "text": "set"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 22,
-                  "startColumn": 1,
-                  "endLine": 24,
-                  "endColumn": 2,
-                  "charOffset": 720,
-                  "charLength": 75,
-                  "snippet": {
-                    "text": "    /// </summary>\n    public string[] AllowedOrigins { get; set; } = [];\n}"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "6A3FF1E0EFC120FCCCACA3D662CE52A706C8BBEE5CDD6BB6C7C7AE0607C39FA4"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
           "ruleId": "PropertyCanBeMadeInitOnly.Local",
           "ruleIndex": 2545,
           "kind": "fail",
@@ -90766,7 +88124,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Components/WorkOrderChat.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 93
+                  "index": 78
                 },
                 "region": {
                   "startLine": 96,
@@ -90819,7 +88177,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Components/WorkOrderChat.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 93
+                  "index": 78
                 },
                 "region": {
                   "startLine": 97,
@@ -90872,7 +88230,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Components/WorkOrderChat.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 93
+                  "index": 78
                 },
                 "region": {
                   "startLine": 96,
@@ -90925,7 +88283,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Components/WorkOrderChat.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 93
+                  "index": 78
                 },
                 "region": {
                   "startLine": 97,
@@ -90978,7 +88336,7 @@
                 "artifactLocation": {
                   "uri": "LlmGateway/WorkOrderChatHandler.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 72
+                  "index": 80
                 },
                 "region": {
                   "startLine": 23,
@@ -91031,7 +88389,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/Middleware/WebServiceMessageValidationMiddleware.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 94
+                  "index": 81
                 },
                 "region": {
                   "startLine": 176,
@@ -91084,7 +88442,7 @@
                 "artifactLocation": {
                   "uri": "LlmGateway/TranslationGuard.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 95
+                  "index": 83
                 },
                 "region": {
                   "startLine": 7,
@@ -91137,7 +88495,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/Core/Model/WorkOrderStatusTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 20
+                  "index": 18
                 },
                 "region": {
                   "startLine": 105,
@@ -91190,7 +88548,7 @@
                 "artifactLocation": {
                   "uri": "LlmGateway/TracingChatClient.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 96
+                  "index": 84
                 },
                 "region": {
                   "startLine": 62,
@@ -91243,7 +88601,7 @@
                 "artifactLocation": {
                   "uri": "Core/Services/EmployeeSpecification.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 97
+                  "index": 85
                 },
                 "region": {
                   "startLine": 11,
@@ -91349,7 +88707,7 @@
                 "artifactLocation": {
                   "uri": "ChurchBulletin.ServiceDefaults/EventEntry.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 98
+                  "index": 86
                 },
                 "region": {
                   "startLine": 40,
@@ -91402,7 +88760,7 @@
                 "artifactLocation": {
                   "uri": "ChurchBulletin.ServiceDefaults/MetricEntry.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 99
+                  "index": 87
                 },
                 "region": {
                   "startLine": 38,
@@ -91447,112 +88805,6 @@
           "kind": "fail",
           "level": "note",
           "message": {
-            "text": "Enum member 'AuditEntriesTable' is never used"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI.Shared/Pages/WorkOrderManage.razor",
-                  "uriBaseId": "solutionDir",
-                  "index": 100
-                },
-                "region": {
-                  "startLine": 168,
-                  "startColumn": 9,
-                  "endLine": 168,
-                  "endColumn": 26,
-                  "charOffset": 8243,
-                  "charLength": 17,
-                  "snippet": {
-                    "text": "AuditEntriesTable"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 167,
-                  "startColumn": 1,
-                  "endLine": 169,
-                  "endColumn": 25,
-                  "charOffset": 8214,
-                  "charLength": 72,
-                  "snippet": {
-                    "text": "        CreatedDate,\n        AuditEntriesTable,\n        ReadOnlyMessage,"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "5917AE4883C32CADB679FFD77BE68DF81C3843F81AA63A9D6E5BBBD2F8673DD6"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "Razor Component",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "UnusedMember.Global",
-          "ruleIndex": 2928,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Enum member 'LastWorkOrder' is never used"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "UI.Shared/NavMenu.razor",
-                  "uriBaseId": "solutionDir",
-                  "index": 101
-                },
-                "region": {
-                  "startLine": 108,
-                  "startColumn": 9,
-                  "endLine": 108,
-                  "endColumn": 22,
-                  "charOffset": 4729,
-                  "charLength": 13,
-                  "snippet": {
-                    "text": "LastWorkOrder"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 107,
-                  "startColumn": 1,
-                  "endLine": 109,
-                  "endColumn": 6,
-                  "charOffset": 4699,
-                  "charLength": 49,
-                  "snippet": {
-                    "text": "        NewWorkOrder,\n        LastWorkOrder\n    }"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "408D46A54DF40AE53BE3D1981E7FD2F97EF954AA7A7110A97E55C226F9E38555"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "Razor Component",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "UnusedMember.Global",
-          "ruleIndex": 2928,
-          "kind": "fail",
-          "level": "note",
-          "message": {
             "text": "Method 'GetStateCommand' is never used"
           },
           "locations": [
@@ -91561,7 +88813,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/Core/Model/StateCommands/StateCommandBaseTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 102
+                  "index": 88
                 },
                 "region": {
                   "startLine": 8,
@@ -91614,7 +88866,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Shared/Components/LogoutTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 103
+                  "index": 89
                 },
                 "region": {
                   "startLine": 132,
@@ -91667,7 +88919,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Shared/Pages/StubUiBus.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 104
+                  "index": 90
                 },
                 "region": {
                   "startLine": 7,
@@ -91720,7 +88972,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Shared/Services/ThemePreferenceServiceTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 43
+                  "index": 41
                 },
                 "region": {
                   "startLine": 115,
@@ -91773,7 +89025,7 @@
                 "artifactLocation": {
                   "uri": "Core/Services/IStateCommand.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 105
+                  "index": 91
                 },
                 "region": {
                   "startLine": 13,
@@ -91826,7 +89078,7 @@
                 "artifactLocation": {
                   "uri": "Core/Services/IStateCommand.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 105
+                  "index": 91
                 },
                 "region": {
                   "startLine": 12,
@@ -91879,7 +89131,7 @@
                 "artifactLocation": {
                   "uri": "DataAccess/Mappings/IEntityFrameworkMapping.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 106
+                  "index": 92
                 },
                 "region": {
                   "startLine": 7,
@@ -91932,7 +89184,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Shared/Pages/StubUiBus.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 104
+                  "index": 90
                 },
                 "region": {
                   "startLine": 7,
@@ -91985,7 +89237,7 @@
                 "artifactLocation": {
                   "uri": "UI/Server/Validation/ServerHealthCheckQueryValidator.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 107
+                  "index": 93
                 },
                 "region": {
                   "startLine": 12,
@@ -92038,7 +89290,7 @@
                 "artifactLocation": {
                   "uri": "IntegrationTests/Handlers/TracerBulletReplyHandler.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 108
+                  "index": 94
                 },
                 "region": {
                   "startLine": 9,
@@ -92091,7 +89343,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Components/WorkOrderChat.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 93
+                  "index": 78
                 },
                 "region": {
                   "startLine": 12,
@@ -92144,7 +89396,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Components/WorkOrderChat.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 93
+                  "index": 78
                 },
                 "region": {
                   "startLine": 34,
@@ -92197,7 +89449,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Components/WorkOrderChat.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 93
+                  "index": 78
                 },
                 "region": {
                   "startLine": 26,
@@ -92250,7 +89502,7 @@
                 "artifactLocation": {
                   "uri": "UI.Shared/Components/WorkOrderChat.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 93
+                  "index": 78
                 },
                 "region": {
                   "startLine": 38,
@@ -92303,7 +89555,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/ServiceDefaults/ServiceDefaultsTelemetryTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 73
+                  "index": 63
                 },
                 "region": {
                   "startLine": 65,
@@ -92356,7 +89608,7 @@
                 "artifactLocation": {
                   "uri": "IntegrationTests/McpServer/McpWorkOrderToolTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 109
+                  "index": 95
                 },
                 "region": {
                   "startLine": 202,
@@ -92515,7 +89767,7 @@
                 "artifactLocation": {
                   "uri": "UI/Client/App.razor",
                   "uriBaseId": "solutionDir",
-                  "index": 14
+                  "index": 13
                 },
                 "region": {
                   "startLine": 17,
@@ -92545,7 +89797,7 @@
           "partialFingerprints": {
             "equalIndicator/v1": "91D3E906EEF0BCBF232514B6F05A59278DDF82DF9461FEF40D8DB8C634A631F6"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "High",
             "tags": [
@@ -92568,7 +89820,7 @@
                 "artifactLocation": {
                   "uri": "UnitTests/UI.Server/RealtimeNotificationHubTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 39
+                  "index": 37
                 },
                 "region": {
                   "startLine": 37,
@@ -92619,27 +89871,27 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "UnitTests/UI.Shared/Pages/WorkOrderManageRoomFieldTests.cs",
+                  "uri": "UnitTests/UI.Shared/Pages/WorkOrderManageEventBusNotifyTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 42
+                  "index": 38
                 },
                 "region": {
-                  "startLine": 49,
+                  "startLine": 110,
                   "startColumn": 16,
-                  "endLine": 49,
+                  "endLine": 110,
                   "endColumn": 38,
-                  "charOffset": 1953,
+                  "charOffset": 3887,
                   "charLength": 22,
                   "snippet": {
                     "text": "StubWorkOrderManageBus"
                   }
                 },
                 "contextRegion": {
-                  "startLine": 48,
+                  "startLine": 109,
                   "startColumn": 1,
-                  "endLine": 50,
+                  "endLine": 111,
                   "endColumn": 10,
-                  "charOffset": 1932,
+                  "charOffset": 3866,
                   "charLength": 69,
                   "snippet": {
                     "text": "    {\n        public StubWorkOrderManageBus() : base(null!)\n        {"
@@ -92652,165 +89904,6 @@
             "equalIndicator/v1": "B11FD700F64938B73178853442B49C2D295BD93AF1ADE6CF997EF14583C37C1F"
           },
           "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "InconsistentNaming",
-          "ruleIndex": 2347,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Name '_ignoredTables' does not match rule 'Static readonly fields (private)'. Suggested name is 'IgnoredTables'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "IntegrationTests/DatabaseEmptier.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 25
-                },
-                "region": {
-                  "startLine": 8,
-                  "startColumn": 38,
-                  "endLine": 8,
-                  "endColumn": 52,
-                  "charOffset": 216,
-                  "charLength": 14,
-                  "snippet": {
-                    "text": "_ignoredTables"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 7,
-                  "startColumn": 1,
-                  "endLine": 9,
-                  "endColumn": 39,
-                  "charOffset": 177,
-                  "charLength": 145,
-                  "snippet": {
-                    "text": "{\n    private static readonly string[] _ignoredTables = [\"[dbo].[sysdiagrams]\", \"[dbo].[SchemaVersions]\"];\n    private static string? _deleteSql;"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "3B84BBBEA0DE5215EFBBFB76406B6B90E25D463B849247AE3EC7E77C3614DB5D"
-          },
-          "baselineState": "unchanged",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "RedundantAccessorBody",
-          "ruleIndex": 2561,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Redundant accessor body"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "Core/Model/WorkOrder.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 52
-                },
-                "region": {
-                  "startLine": 19,
-                  "startColumn": 13,
-                  "endLine": 19,
-                  "endColumn": 22,
-                  "charOffset": 566,
-                  "charLength": 9,
-                  "snippet": {
-                    "text": "=> field;"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 18,
-                  "startColumn": 1,
-                  "endLine": 20,
-                  "endColumn": 50,
-                  "charOffset": 548,
-                  "charLength": 77,
-                  "snippet": {
-                    "text": "    {\n        get => field;\n        set => field = getTruncatedString(value);"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "E1647DE25F922E7C3AA97330E01C25D0AC98F56159B3F713BBD25595762A4A9E"
-          },
-          "baselineState": "new",
-          "properties": {
-            "qodanaSeverity": "Moderate",
-            "tags": [
-              "C#",
-              ".NET 10.0"
-            ]
-          }
-        },
-        {
-          "ruleId": "RedundantAccessorBody",
-          "ruleIndex": 2561,
-          "kind": "fail",
-          "level": "note",
-          "message": {
-            "text": "Redundant accessor body"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "Core/Model/WorkOrder.cs",
-                  "uriBaseId": "solutionDir",
-                  "index": 52
-                },
-                "region": {
-                  "startLine": 25,
-                  "startColumn": 13,
-                  "endLine": 25,
-                  "endColumn": 22,
-                  "charOffset": 689,
-                  "charLength": 9,
-                  "snippet": {
-                    "text": "=> field;"
-                  }
-                },
-                "contextRegion": {
-                  "startLine": 24,
-                  "startColumn": 1,
-                  "endLine": 26,
-                  "endColumn": 50,
-                  "charOffset": 671,
-                  "charLength": 77,
-                  "snippet": {
-                    "text": "    {\n        get => field;\n        set => field = getTruncatedString(value);"
-                  }
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "equalIndicator/v1": "E1647DE25F922E7C3AA97330E01C25D0AC98F56159B3F713BBD25595762A4A9E"
-          },
-          "baselineState": "new",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -92833,7 +89926,7 @@
                 "artifactLocation": {
                   "uri": "IntegrationTests/McpServer/McpWorkOrderToolTests.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 109
+                  "index": 95
                 },
                 "region": {
                   "startLine": 167,
@@ -92871,13 +89964,225 @@
               ".NET 10.0"
             ]
           }
+        },
+        {
+          "ruleId": "MemberCanBePrivate.Global",
+          "ruleIndex": 2398,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Field 'Employees' can be made private"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Pages/Login.razor.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 50
+                },
+                "region": {
+                  "startLine": 18,
+                  "startColumn": 5,
+                  "endLine": 18,
+                  "endColumn": 11,
+                  "charOffset": 635,
+                  "charLength": 6,
+                  "snippet": {
+                    "text": "public"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 19,
+                  "endColumn": 1,
+                  "charOffset": 598,
+                  "charLength": 92,
+                  "snippet": {
+                    "text": "    public string? ErrorMessage;\n    public Employee[] Employees = Array.Empty<Employee>();\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "B6C8113A1A0CCFA9BFC9821AD7EB88E34EC880D78E77BC8C63C89C5DC42A3CF2"
+          },
+          "baselineState": "new",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "MemberCanBePrivate.Global",
+          "ruleIndex": 2398,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Field 'ErrorMessage' can be made private"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Pages/Login.razor.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 50
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 5,
+                  "endLine": 17,
+                  "endColumn": 11,
+                  "charOffset": 602,
+                  "charLength": 6,
+                  "snippet": {
+                    "text": "public"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 18,
+                  "endColumn": 59,
+                  "charOffset": 542,
+                  "charLength": 147,
+                  "snippet": {
+                    "text": "    public readonly LoginModel LoginModelValue = new();\n    public string? ErrorMessage;\n    public Employee[] Employees = Array.Empty<Employee>();"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "499EE5F4C18836768EA4C50B6D31827094C0668B9206BFC7AC611BE89CD462C3"
+          },
+          "baselineState": "new",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "RedundantUsingDirective",
+          "ruleIndex": 2663,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Using directive is not required by the code and can be safely removed"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryFileWriter.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 82
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 1,
+                  "endLine": 9,
+                  "endColumn": 24,
+                  "charOffset": 261,
+                  "charLength": 23,
+                  "snippet": {
+                    "text": "using System.Threading;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 8,
+                  "startColumn": 1,
+                  "endLine": 10,
+                  "endColumn": 1,
+                  "charOffset": 223,
+                  "charLength": 62,
+                  "snippet": {
+                    "text": "using System.Text.Json.Serialization;\nusing System.Threading;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "634C048FCE94037EA2AB536E1850EA7DBD47A14022EF0DFBA92055FDEC21413B"
+          },
+          "baselineState": "new",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "RedundantUsingDirective",
+          "ruleIndex": 2663,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Using directive is not required by the code and can be safely removed"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "IntegrationTests/TestHost.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 6
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 17,
+                  "endColumn": 24,
+                  "charOffset": 652,
+                  "charLength": 23,
+                  "snippet": {
+                    "text": "using System.Threading;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 18,
+                  "endColumn": 1,
+                  "charOffset": 624,
+                  "charLength": 52,
+                  "snippet": {
+                    "text": "using NServiceBus.Features;\nusing System.Threading;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "5FD7AFE92CB09D6B52040191EB7C8F5ECC6CEC275028AFE4C9606CCF1B264F5A"
+          },
+          "baselineState": "new",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
         }
       ],
       "automationDetails": {
         "id": "QDNETC/qodana/2026-08-23",
-        "guid": "82d8c18c-c7a3-4cfc-a2cc-d7f6aa224fa0",
+        "guid": "f0c416f4-b4f8-417b-9cb4-5caa8cec1ad6",
         "properties": {
-          "jobUrl": "https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders/actions/runs/32616145146"
+          "jobUrl": "https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders/actions/runs/32642570880"
         }
       },
       "newlineSequences": [
