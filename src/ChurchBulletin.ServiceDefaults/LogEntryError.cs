@@ -9,24 +9,24 @@ namespace ChurchBulletin.ServiceDefaults;
 public class LogEntryError
 {
     /// <summary>
-    /// Gets or sets the fully qualified type name of the exception.
+    /// Gets the fully qualified type name of the exception.
     /// </summary>
-    public string? Type { get; set; }
+    public string? Type { get; init; }
 
     /// <summary>
-    /// Gets or sets the exception message.
+    /// Gets the exception message.
     /// </summary>
-    public string? Message { get; set; }
+    public string? Message { get; init; }
 
     /// <summary>
-    /// Gets or sets the stack trace of the exception.
+    /// Gets the stack trace of the exception.
     /// </summary>
-    public string? StackTrace { get; set; }
+    public string? StackTrace { get; init; }
 
     /// <summary>
-    /// Gets or sets the inner exception details, if any.
+    /// Gets the inner exception details, if any.
     /// </summary>
-    public LogEntryError? InnerException { get; set; }
+    public LogEntryError? InnerException { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LogEntryError"/> class.

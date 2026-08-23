@@ -9,8 +9,8 @@ public sealed class DiagnosticsFeatureFlagsOptions
     public const string SectionName = "FeatureFlags";
 
     /// <summary>Sample flag for contract stability; replace or extend with product flags as needed.</summary>
-    public bool SampleFeatureA { get; set; }
+    public bool SampleFeatureA { get; init; }
 
     /// <summary>Sample flag for contract stability; replace or extend with product flags as needed.</summary>
-    public bool SampleFeatureB { get; set; }
+    public bool SampleFeatureB { get; init; }
 }

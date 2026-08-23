@@ -10,10 +10,10 @@ public sealed class IdempotencyOptions
     /// <summary>
     /// How long a successful response snapshot is retained for replay, in seconds. Default 24 hours.
     /// </summary>
-    public int CacheEntrySeconds { get; set; } = 86400;
+    public int CacheEntrySeconds { get; init; } = 86400;
 
     /// <summary>
     /// Maximum length of the idempotency key header value (after trim). Longer values yield 400 Bad Request.
     /// </summary>
-    public int MaxKeyLength { get; set; } = 256;
+    public int MaxKeyLength { get; init; } = 256;
 }

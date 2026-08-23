@@ -10,23 +10,23 @@ public class DatabaseOptions : CommandSettings
 {
     [CommandArgument(0, "<databaseServer>")]
     [Description("The database server name or address")]
-    public string DatabaseServer { get; set; } = string.Empty;
+    public string DatabaseServer { get; init; } = string.Empty;
 
     [CommandArgument(1, "<databaseName>")]
     [Description("The name of the database")]
-    public string DatabaseName { get; set; } = string.Empty;
+    public string DatabaseName { get; init; } = string.Empty;
 
     [CommandArgument(2, "[scriptDir]")]
     [Description("The directory containing the migration scripts. Defaults to .\\scripts")]
-    public string ScriptDir { get; set; } = ".\\scripts";
+    public string ScriptDir { get; init; } = ".\\scripts";
 
     [CommandArgument(3, "[databaseUser]")]
     [Description("Optional database username for authentication")]
-    public string? DatabaseUser { get; set; }
+    public string? DatabaseUser { get; init; }
 
     [CommandArgument(4, "[databasePassword]")]
     [Description("Optional database password for authentication")]
-    public string? DatabasePassword { get; set; }
+    public string? DatabasePassword { get; init; }
 
     public override ValidationResult Validate()
     {
