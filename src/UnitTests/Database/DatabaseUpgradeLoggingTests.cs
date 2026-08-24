@@ -57,6 +57,26 @@ public class DatabaseUpgradeLoggingTests
             Console.SetError(originalErr);
         }
     }
+
+    [Test]
+    public void ShouldEmitExceptionType_WhenQuietLogLogsErrorWithEmptyMessage()
+    {
+        var log = new QuietLog();
+        var writer = new StringWriter();
+        var originalErr = Console.Error;
+        try
+        {
+            Console.SetError(writer);
+
+            log.LogError(new Exception(string.Empty), "upgrade failed");
+
+            writer.ToString().ShouldContain(nameof(Exception));
+        }
+        finally
+        {
+            Console.SetError(originalErr);
+        }
+    }
 }
 
 [TestFixture]
