@@ -38,15 +38,12 @@ public class AiAgentPageTests : AcceptanceTestBase
         await AssertPromptControlsAreInViewport(chatInput, sendButton);
 
         await Page.SetViewportSizeAsync(1440, 900);
-        await Page.WaitForTimeoutAsync(150);
         await AssertPromptControlsAreInViewport(chatInput, sendButton);
 
         await Page.SetViewportSizeAsync(900, 700);
-        await Page.WaitForTimeoutAsync(150);
         await AssertPromptControlsAreInViewport(chatInput, sendButton);
 
         await Page.SetViewportSizeAsync(768, 540);
-        await Page.WaitForTimeoutAsync(150);
         await AssertPromptControlsAreInViewport(chatInput, sendButton);
 
         var canScrollHistory = await history.EvaluateAsync<bool>(

@@ -323,9 +323,6 @@ public abstract class AcceptanceTestBase
         await locator.FillAsync(value ?? "");
         await locator.BlurAsync();
 
-        var delayMs = GetInputDelayMs();
-        await Task.Delay(delayMs);
-
         await Expect(locator).ToHaveValueAsync(value ?? "");
     }
 
@@ -336,7 +333,7 @@ public abstract class AcceptanceTestBase
         {
             return delay;
         }
-        return 100; // Default to 100ms for local performance
+        return 0;
     }
 
     protected async Task Select(string elementTestId, string? value)
@@ -478,7 +475,6 @@ public abstract class AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToHaveValueAsync(order.Description ?? "");
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + InProgressToCompleteCommand.Name);
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs()); // Give time for the save operation to complete on Azure
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         return rehyratedOrder;
     }

@@ -10,7 +10,6 @@ public class CopyrightFooterTests : AcceptanceTestBase
     public async Task ShouldShowCopyrightFooter_OnLandingPage_WhenAnonymous()
     {
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         var footer = Page.GetByTestId(nameof(MainLayout.Elements.CopyrightFooter));
         await footer.WaitForAsync();
@@ -33,7 +32,6 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         var footer = Page.GetByTestId(nameof(MainLayout.Elements.CopyrightFooter));
         await Expect(footer).ToBeVisibleAsync();
@@ -47,7 +45,6 @@ public class CopyrightFooterTests : AcceptanceTestBase
     {
         await Page.GotoAsync("/this-route-does-not-exist-1842");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         var footer = Page.GetByTestId(nameof(MainLayout.Elements.CopyrightFooter));
         await footer.WaitForAsync();
@@ -60,7 +57,6 @@ public class CopyrightFooterTests : AcceptanceTestBase
     public async Task ShouldShowFooterNote_OnLandingPage_WhenAnonymous()
     {
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         var footerNote = Page.GetByTestId(nameof(MainLayout.Elements.FooterNote));
         await footerNote.WaitForAsync();
