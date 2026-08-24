@@ -28,6 +28,11 @@ public class DatabaseOptions : CommandSettings
     [Description("Optional database password for authentication")]
     public string? DatabasePassword { get; init; }
 
+    /// <summary>
+    /// When true, DbUp upgrade logging is fully suppressed (used by unit tests exercising intentional failures).
+    /// </summary>
+    public bool SuppressUpgradeConsoleOutput { get; init; }
+
     public override ValidationResult Validate()
     {
         var serverError = ValidateRequired(DatabaseServer, "Database server is required");

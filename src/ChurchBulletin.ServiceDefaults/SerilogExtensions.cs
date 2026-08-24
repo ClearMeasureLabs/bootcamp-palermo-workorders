@@ -30,19 +30,27 @@ public static class SerilogExtensions
 
     private static void WireSerilogToHost(IHostApplicationBuilder builder)
     {
+        var writeToProviders = ShouldWriteToProviders(builder.Environment);
         switch (builder)
         {
             case WebApplicationBuilder web:
-                web.Host.UseSerilog(ConfigureSerilog, writeToProviders: true);
+                web.Host.UseSerilog(ConfigureSerilog, writeToProviders: writeToProviders);
                 return;
             case HostApplicationBuilder generic when TryGetHostBuilder(generic, out var hostBuilder):
-                hostBuilder.UseSerilog(ConfigureSerilog, writeToProviders: true);
+                hostBuilder.UseSerilog(ConfigureSerilog, writeToProviders: writeToProviders);
                 return;
             default:
                 throw new NotSupportedException(
                     $"Serilog host wiring is not supported for builder type {builder.GetType().FullName}.");
         }
     }
+
+    /// <summary>
+    /// Serilog forwards to MEL providers when <c>writeToProviders</c> is true (production).
+    /// Test hosts use the <c>Testing</c> environment to avoid duplicate console lines from Serilog JSON plus MEL console.
+    /// </summary>
+    public static bool ShouldWriteToProviders(IHostEnvironment environment) =>
+        !environment.IsEnvironment("Testing");
 
     private static bool TryGetHostBuilder(HostApplicationBuilder generic, out IHostBuilder hostBuilder)
     {

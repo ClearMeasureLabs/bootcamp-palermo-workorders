@@ -172,13 +172,16 @@ public static class ServerApplication
         {
             app.UseWebAssemblyDebugging();
         }
-        else
+        else if (!app.Environment.IsEnvironment("Testing"))
         {
             app.UseExceptionHandler("/Error");
             app.UseHsts();
         }
 
-        app.UseHttpsRedirection();
+        if (!app.Environment.IsEnvironment("Testing"))
+        {
+            app.UseHttpsRedirection();
+        }
         app.UseRequestDecompression();
         app.UseResponseCompression();
         app.UseBlazorFrameworkFiles();

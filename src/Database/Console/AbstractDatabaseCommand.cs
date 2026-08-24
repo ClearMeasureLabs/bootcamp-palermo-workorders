@@ -16,7 +16,7 @@ public abstract class AbstractDatabaseCommand : Command<DatabaseOptions>
         var connectionString = GetConnectionString(options);
         try
         {
-            EnsureDatabase.For.SqlDatabase(connectionString, new QuietLog());
+            EnsureDatabase.For.SqlDatabase(connectionString, DatabaseUpgradeLogSelector.ForOptions(options));
         }
         catch (Exception ex)
         {

@@ -13,7 +13,10 @@ public class RebuildDatabaseCommand : AbstractDatabaseCommand
     protected override int ExecuteInternal(CommandContext context, DatabaseOptions options, string connectionString, CancellationToken cancellationToken)
     {
         var scriptDir = GetScriptDirectory(options);
-        var result = DatabaseRebuildSteps.RunFullRebuild(connectionString, scriptDir);
+        var result = DatabaseRebuildSteps.RunFullRebuild(
+            connectionString,
+            scriptDir,
+            DatabaseUpgradeLogSelector.ForOptions(options));
         if (!result.Successful)
         {
             return Fail(result.ErrorMessage ?? "Could not run scripts to rebuild database.");
