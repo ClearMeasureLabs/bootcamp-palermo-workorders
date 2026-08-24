@@ -5,10 +5,14 @@
 
 .PARAMETER ViolationsPath
   Path to crap-production-violations.json written by rollup-file-scores.csx.
+
+.PARAMETER Quiet
+  Suppress gate result output to the console. Exit codes are unchanged.
 #>
 param(
     [Parameter(Mandatory = $true)]
-    [string]$ViolationsPath
+    [string]$ViolationsPath,
+    [switch]$Quiet
 )
 
 $ErrorActionPreference = "Stop"
@@ -22,14 +26,18 @@ $payload = Get-Content -LiteralPath $ViolationsPath -Raw | ConvertFrom-Json
 $count = [int]$payload.violationCount
 $threshold = $payload.threshold
 if ($count -gt 0) {
-    Write-Host "CRAP gate failed: $count production method(s) exceed threshold $threshold"
-    if ($payload.methods) {
-        foreach ($method in $payload.methods) {
-            Write-Host ("  CRAP {0:N1}  CC {1}  cov {2}%  {3}" -f $method.crap, $method.complexity, $method.coverage, $method.fullName)
+    if (-not $Quiet) {
+        Write-Host "CRAP gate failed: $count production method(s) exceed threshold $threshold"
+        if ($payload.methods) {
+            foreach ($method in $payload.methods) {
+                Write-Host ("  CRAP {0:N1}  CC {1}  cov {2}%  {3}" -f $method.crap, $method.complexity, $method.coverage, $method.fullName)
+            }
         }
     }
     exit 1
 }
 
-Write-Host "CRAP gate passed: 0 production methods exceed threshold $threshold"
+if (-not $Quiet) {
+    Write-Host "CRAP gate passed: 0 production methods exceed threshold $threshold"
+}
 exit 0
