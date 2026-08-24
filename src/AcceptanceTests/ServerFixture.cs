@@ -18,7 +18,7 @@ public class ServerFixture
             ? "Release"
             : "Debug";
     public static bool StartLocalServer { get; set; } = true;
-    public static int SlowMo { get; set; }
+    public static int SlowMo { get; set; } = 0;
     public static string ApplicationBaseUrl { get; private set; } = string.Empty;
     private Process? _serverProcess;
     private Process? _workerProcess;
