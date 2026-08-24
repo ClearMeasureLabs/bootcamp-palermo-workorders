@@ -53,22 +53,21 @@ public class AiAgentPageTests : AcceptanceTestBase
 
     private async Task AssertPromptControlsAreInViewport(ILocator chatInput, ILocator sendButton)
     {
-        await Expect(chatInput).ToBeVisibleAsync();
-        await Expect(sendButton).ToBeVisibleAsync();
-
-        var inputBounds = await chatInput.BoundingBoxAsync();
-        var buttonBounds = await sendButton.BoundingBoxAsync();
-
-        inputBounds.ShouldNotBeNull();
-        buttonBounds.ShouldNotBeNull();
+        await Expect(chatInput).ToBeInViewportAsync();
+        await Expect(sendButton).ToBeInViewportAsync();
 
         var viewportHeight = Page.ViewportSize?.Height ?? 0;
         viewportHeight.ShouldBeGreaterThan(0);
 
-        (inputBounds.Y + inputBounds.Height <= viewportHeight).ShouldBeTrue();
-        (buttonBounds.Y + buttonBounds.Height <= viewportHeight).ShouldBeTrue();
-
-        var documentScrollY = await Page.EvaluateAsync<int>("() => Math.floor(window.scrollY)");
-        documentScrollY.ShouldBe(0);
+        await Page.WaitForFunctionAsync(
+            $@"() => {{
+                const input = document.querySelector('[data-testid=""{nameof(ApplicationChat.Elements.ChatInput)}""]');
+                const button = document.querySelector('[data-testid=""{nameof(ApplicationChat.Elements.SendButton)}""]');
+                if (!input || !button) return false;
+                const bottomWithinViewport = el => el.getBoundingClientRect().bottom <= {viewportHeight} + 0.5;
+                return bottomWithinViewport(input)
+                    && bottomWithinViewport(button)
+                    && Math.floor(window.scrollY) === 0;
+            }}");
     }
 }
