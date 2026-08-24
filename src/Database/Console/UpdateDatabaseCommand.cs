@@ -17,7 +17,7 @@ public class UpdateDatabaseCommand : AbstractDatabaseCommand
             .SqlDatabase(connectionString)
             .WithScriptsFromFileSystem(scriptDir)
             .JournalToSqlTable("dbo", "SchemaVersions")
-            .LogTo(new QuietLog())
+            .LogTo(DatabaseUpgradeLogSelector.ForOptions(options))
             .Build();
 
         var result = upgradeEngine.PerformUpgrade();

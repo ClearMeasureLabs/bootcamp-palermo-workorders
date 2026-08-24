@@ -248,7 +248,7 @@ public class DatabaseRebuildStepsTests
                 "Server=127.0.0.1,1;Database=ChurchBulletinCrapGate;User ID=sa;Password=invalid;" +
                 "TrustServerCertificate=true;Encrypt=false;Connect Timeout=1;";
 
-            var result = DatabaseRebuildSteps.RunFullRebuild(connectionString, scriptRoot);
+            var result = DatabaseRebuildSteps.RunFullRebuild(connectionString, scriptRoot, new NullUpgradeLog());
 
             result.Successful.ShouldBeFalse();
             result.ErrorMessage.ShouldNotBeNullOrWhiteSpace();
@@ -336,7 +336,8 @@ public class RebuildDatabaseCommandTests
             var options = new DatabaseOptions
             {
                 ScriptDir = scriptRoot,
-                DatabaseName = "CrapGateRebuild"
+                DatabaseName = "CrapGateRebuild",
+                SuppressUpgradeConsoleOutput = true
             };
             var connectionString =
                 "Server=127.0.0.1,1;Database=ChurchBulletinCrapGate;User ID=sa;Password=invalid;" +
@@ -374,7 +375,8 @@ public class UpdateDatabaseCommandTests
             var options = new DatabaseOptions
             {
                 ScriptDir = scriptRoot,
-                DatabaseName = "CrapGateUpdate"
+                DatabaseName = "CrapGateUpdate",
+                SuppressUpgradeConsoleOutput = true
             };
             var connectionString =
                 "Server=127.0.0.1,1;Database=ChurchBulletinCrapGate;User ID=sa;Password=invalid;" +

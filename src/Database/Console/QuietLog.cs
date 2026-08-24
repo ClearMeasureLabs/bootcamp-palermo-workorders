@@ -40,6 +40,7 @@ public class QuietLog : IUpgradeLog
     public void LogError(Exception ex, string format, params object[] args)
     {
         System.Console.Error.WriteLine("[ERROR] " + string.Format(format, args));
-        System.Console.Error.WriteLine(ex.ToString());
+        var detail = string.IsNullOrWhiteSpace(ex.Message) ? ex.GetType().Name : ex.Message;
+        System.Console.Error.WriteLine(detail);
     }
 }

@@ -22,7 +22,7 @@ public class CanConnectToLlmServerHealthCheck(
 
     private HealthCheckResult LogUnavailable(ChatClientAvailabilityResult availability)
     {
-        logger.LogWarning(availability.Message);
+        logger.LogDebug(availability.Message);
         return LlmHealthEvaluator.FromAvailability(availability);
     }
 
