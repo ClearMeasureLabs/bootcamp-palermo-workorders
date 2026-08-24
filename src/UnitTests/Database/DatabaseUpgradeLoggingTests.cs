@@ -1,5 +1,4 @@
 using ClearMeasure.Bootcamp.Database.Console;
-using DbUp.Engine.Output;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Shouldly;
