@@ -31,6 +31,10 @@
 .PARAMETER FailOnViolations
   Exit 1 when any in-scope production method has CRAP greater than Threshold.
   Test projects and generated code are excluded. Use this for PrivateBuild/CI.
+
+.PARAMETER Quiet
+  Suppress progress and report output to the console. Errors still fail the script.
+  PrivateBuild uses this so the gate runs without printing the CRAP report.
 #>
 param(
     [string]$Solution = "src/ChurchBulletin.sln",
@@ -40,10 +44,30 @@ param(
     [switch]$AllowPartialCoverage,
     [string]$RepoRoot = "",
     [string]$Configuration = "Release",
-    [switch]$FailOnViolations
+    [switch]$FailOnViolations,
+    [switch]$Quiet
 )
 
 $ErrorActionPreference = "Stop"
+
+function Write-AuditHost {
+    param([string]$Message)
+    if (-not $Quiet) {
+        Write-Host $Message
+    }
+}
+
+function Invoke-QuietExternal {
+    param(
+        [scriptblock]$Command
+    )
+    if ($Quiet) {
+        & $Command *> $null
+    }
+    else {
+        & $Command
+    }
+}
 
 function Get-ProductionCrapGateThreshold {
     $configPath = Join-Path $PSScriptRoot ".." "crap-gate-threshold.json"
@@ -84,10 +108,18 @@ $env:PATH = "$dotnetTools$([IO.Path]::PathSeparator)$env:PATH"
 
 function Ensure-Tool {
     param([string]$PackageId, [string]$Command, [string]$Version)
-    Write-Host "Ensuring $PackageId $Version ..."
-    & dotnet tool update -g $PackageId --version $Version
-    if ($LASTEXITCODE -ne 0) {
-        & dotnet tool install -g $PackageId --version $Version
+    Write-AuditHost "Ensuring $PackageId $Version ..."
+    if ($Quiet) {
+        & dotnet tool update -g $PackageId --version $Version *> $null
+        if ($LASTEXITCODE -ne 0) {
+            & dotnet tool install -g $PackageId --version $Version *> $null
+        }
+    }
+    else {
+        & dotnet tool update -g $PackageId --version $Version
+        if ($LASTEXITCODE -ne 0) {
+            & dotnet tool install -g $PackageId --version $Version
+        }
     }
     if (-not (Get-Command $Command -ErrorAction SilentlyContinue)) {
         Write-Error "Failed to install or locate $Command ($PackageId $Version)."
@@ -102,7 +134,7 @@ New-Item -ItemType Directory -Force -Path $outPath | Out-Null
 $testResults = Join-Path $outPath "TestResults"
 
 if (-not $SkipTests) {
-    Write-Host "Running build.ps1 test pipeline (Init -> Compile -> Unit -> Integration -> Acceptance) ..."
+    Write-AuditHost "Running build.ps1 test pipeline (Init -> Compile -> Unit -> Integration -> Acceptance) ..."
     Push-Location $RepoRoot
     try {
         . (Join-Path $RepoRoot "build.ps1")
@@ -137,11 +169,11 @@ if ($coverageFiles.Count -eq 0) {
     Write-Error "No coverage.cobertura.xml found under $testResults. Run without -SkipTests or check test output."
 }
 
-Write-Host "Found $($coverageFiles.Count) Cobertura file(s)."
+Write-AuditHost "Found $($coverageFiles.Count) Cobertura file(s)."
 
 $assertCoreScript = Join-Path $PSScriptRoot "assert-core-cobertura.ps1"
-Write-Host "Asserting production ClearMeasure.Bootcamp.Core appears in Cobertura ..."
-& $assertCoreScript -CoverageRoot $testResults -RepoRoot $RepoRoot
+Write-AuditHost "Asserting production ClearMeasure.Bootcamp.Core appears in Cobertura ..."
+Invoke-QuietExternal { & $assertCoreScript -CoverageRoot $testResults -RepoRoot $RepoRoot }
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Core Cobertura hard-check failed (exit $LASTEXITCODE). Production src/Core must be instrumented via coverlet.runsettings."
 }
@@ -149,8 +181,8 @@ if ($LASTEXITCODE -ne 0) {
 $flattenScript = Join-Path $PSScriptRoot "flatten-cobertura.csx"
 $flattenedCoverage = Join-Path $outPath "coverage.flattened.cobertura.xml"
 $flattenArgs = @($flattenScript, "--", $flattenedCoverage) + @($coverageFiles | ForEach-Object { $_.FullName })
-Write-Host "Flattening async Cobertura state machines for crap4dotnet ..."
-& dotnet-script @flattenArgs
+Write-AuditHost "Flattening async Cobertura state machines for crap4dotnet ..."
+Invoke-QuietExternal { & dotnet-script @flattenArgs }
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $flattenedCoverage)) {
     Write-Error "Failed to flatten Cobertura coverage at $flattenedCoverage"
 }
@@ -163,8 +195,8 @@ $crapArgs = @(
     "--coverage", $flattenedCoverage
 )
 
-Write-Host "Analyzing CRAP scores ..."
-& dotnet-crap @crapArgs
+Write-AuditHost "Analyzing CRAP scores ..."
+Invoke-QuietExternal { & dotnet-crap @crapArgs }
 $crapExit = $LASTEXITCODE
 # dotnet-crap exits non-zero when CRAPpy methods exist — that is expected.
 
@@ -172,26 +204,34 @@ if (-not (Test-Path $reportJson)) {
     Write-Error "CRAP report not produced at $reportJson"
 }
 
-Write-Host "Rolling up file-level scores ..."
+Write-AuditHost "Rolling up file-level scores ..."
 $rollupScript = Join-Path $PSScriptRoot "rollup-file-scores.csx"
-& dotnet-script $rollupScript -- $reportJson $outPath
+Invoke-QuietExternal { & dotnet-script $rollupScript -- $reportJson $outPath }
 $violationsPath = Join-Path $outPath "crap-production-violations.json"
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $violationsPath)) {
     Write-Error "Failed to roll up CRAP scores (dotnet-script exit $LASTEXITCODE). Expected $violationsPath"
 }
 
-Write-Host ""
-Write-Host "=== CRAP audit complete ==="
-Write-Host "  Methods : $reportJson"
-Write-Host "  Files   : $(Join-Path $outPath 'crap-by-file.json')"
-Write-Host "  Summary : $(Join-Path $outPath 'crap-summary.md')"
-Write-Host "  Gate    : $violationsPath"
-if ($crapExit -ne 0) {
-    Write-Host "  Note    : dotnet-crap reported CRAPpy methods (exit $crapExit) — review summary (tests/generated may be included)."
+if (-not $Quiet) {
+    Write-Host ""
+    Write-Host "=== CRAP audit complete ==="
+    Write-Host "  Methods : $reportJson"
+    Write-Host "  Files   : $(Join-Path $outPath 'crap-by-file.json')"
+    Write-Host "  Summary : $(Join-Path $outPath 'crap-summary.md')"
+    Write-Host "  Gate    : $violationsPath"
+    if ($crapExit -ne 0) {
+        Write-Host "  Note    : dotnet-crap reported CRAPpy methods (exit $crapExit) — review summary (tests/generated may be included)."
+    }
 }
 
 $assertScript = Join-Path $PSScriptRoot "assert-crap-gate.ps1"
 if ($FailOnViolations) {
-    & $assertScript -ViolationsPath $violationsPath
+    $assertArgs = @{
+        ViolationsPath = $violationsPath
+    }
+    if ($Quiet) {
+        $assertArgs["Quiet"] = $true
+    }
+    & $assertScript @assertArgs
     exit $LASTEXITCODE
 }

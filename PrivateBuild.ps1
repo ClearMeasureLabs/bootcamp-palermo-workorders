@@ -33,7 +33,7 @@ if (-not [int]::TryParse([string]$crapThresholdPayload.productionThreshold, [ref
     throw "CRAP gate productionThreshold must be a positive integer in $crapThresholdConfig (got '$($crapThresholdPayload.productionThreshold)')."
 }
 # Threshold comes from crap-gate-threshold.json (single source of truth); do not pass -Threshold here.
-& $crapAudit -SkipTests -FailOnViolations
+& $crapAudit -SkipTests -FailOnViolations -Quiet
 if ($LASTEXITCODE -ne 0) {
     throw "CRAP gate failed: in-scope production methods exceed threshold $crapThreshold. See crap-metrics/crap-production-violations.json"
 }
