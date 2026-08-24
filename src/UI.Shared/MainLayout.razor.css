@@ -267,11 +267,17 @@
 /* Modern Main Content */
 .modern-main {
     flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    min-height: calc(100vh - 120px);
 }
 
 .content-wrapper {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     padding: 2rem;
     max-width: 100%;
     margin: 0 auto;
