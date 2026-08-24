@@ -56,10 +56,18 @@ if ! command -v dockerd &>/dev/null; then
     curl -fsSL https://get.docker.com | sudo sh
 fi
 
-if ! command -v fuse-overlayfs &>/dev/null; then
+if dpkg -l fuse3 fuse-overlayfs 2>/dev/null | grep -q '^iU'; then
+    echo "==> Repairing half-configured fuse packages..."
+    sudo DEBIAN_FRONTEND=noninteractive dpkg --force-confdef --force-confold --configure -a
+fi
+
+if ! dpkg -s fuse-overlayfs 2>/dev/null | grep -q 'Status: install ok installed'; then
     echo "==> Installing fuse-overlayfs..."
     sudo apt-get update -qq
-    sudo apt-get install -y -qq fuse-overlayfs >/dev/null
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" \
+        fuse-overlayfs
 fi
 
 if [ ! -f /etc/docker/daemon.json ] || ! grep -q fuse-overlayfs /etc/docker/daemon.json 2>/dev/null; then
