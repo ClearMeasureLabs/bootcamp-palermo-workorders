@@ -326,16 +326,6 @@ public abstract class AcceptanceTestBase
         await Expect(locator).ToHaveValueAsync(value ?? "");
     }
 
-    protected int GetInputDelayMs()
-    {
-        var envValue = Environment.GetEnvironmentVariable("TEST_INPUT_DELAY_MS");
-        if (int.TryParse(envValue, out var delay))
-        {
-            return delay;
-        }
-        return 0;
-    }
-
     protected async Task Select(string elementTestId, string? value)
     {
         var locator = Page.GetByTestId(elementTestId);
