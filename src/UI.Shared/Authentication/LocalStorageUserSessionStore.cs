@@ -39,5 +39,11 @@ public sealed class LocalStorageUserSessionStore : IUserSessionStore
     public async Task ClearAsync()
     {
         await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
+        var remaining = await _js.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+        if (!string.IsNullOrEmpty(remaining))
+        {
+            throw new InvalidOperationException(
+                $"Failed to clear user session; '{StorageKey}' still contains a value.");
+        }
     }
 }
