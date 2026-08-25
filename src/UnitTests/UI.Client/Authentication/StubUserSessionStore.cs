@@ -41,7 +41,7 @@ public sealed class StubUserSessionStore : IUserSessionStore
     /// When true, <see cref="ClearAsync"/> leaves the username in place and throws
     /// (simulates a stubborn localStorage key that survives removeItem).
     /// </summary>
-    public bool KeepUsernameOnClear { get; set; }
+    public bool KeepUsernameOnClear { get; init; }
 
     /// <inheritdoc />
     public Task<string?> GetAsync()

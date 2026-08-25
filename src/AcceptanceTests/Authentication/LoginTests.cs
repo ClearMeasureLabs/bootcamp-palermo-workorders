@@ -212,16 +212,8 @@ public class LoginTests : AcceptanceTestBase
 
         var logoutControl = Page.GetByTestId(nameof(Logout.Elements.LogoutLink));
         var tagName = await logoutControl.EvaluateAsync<string>("el => el.tagName.toLowerCase()");
-        if (tagName == "button")
-        {
-            await Expect(logoutControl).ToHaveAttributeAsync("type", "button");
-        }
-        else
-        {
-            tagName.ShouldBe("a");
-            var href = await logoutControl.GetAttributeAsync("href");
-            href.ShouldNotBe("#");
-        }
+        tagName.ShouldBe("button");
+        await Expect(logoutControl).ToHaveAttributeAsync("type", "button");
 
         await Click(nameof(Logout.Elements.LogoutLink));
         await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToBeVisibleAsync();

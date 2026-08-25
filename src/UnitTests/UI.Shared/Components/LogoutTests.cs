@@ -50,7 +50,6 @@ public class LogoutTests
         var component = ctx.Render<Logout>();
 
         var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
-        logoutButton.ShouldNotBeNull();
         logoutButton.TagName.ShouldBe("BUTTON");
         logoutButton.GetAttribute("type").ShouldBe("button");
         logoutButton.TextContent.ShouldBe("Logout");
