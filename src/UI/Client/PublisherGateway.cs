@@ -42,8 +42,15 @@ public class PublisherGateway(HttpClient httpClient, IConfiguration? configurati
             request.Headers.TryAddWithoutValidation(ApiKeyConstants.HeaderName, key.Trim());
         }
 
-        var result = await httpClient.SendAsync(request);
+        using var result = await httpClient.SendAsync(request);
         var json = await result.Content.ReadAsStringAsync();
+        if (!result.IsSuccessStatusCode)
+        {
+            // Response bodies can carry internal detail; surface status only to the UI.
+            throw new InvalidOperationException(
+                $"Remoting call failed ({(int)result.StatusCode} {result.ReasonPhrase}).");
+        }
+
         return JsonSerializer.Deserialize<WebServiceMessage>(json);
     }
 }

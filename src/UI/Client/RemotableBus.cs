@@ -11,6 +11,12 @@ public class RemotableBus(IMediator mediator, IPublisherGateway gateway) : Bus(m
         if (request is IRemotableRequest remotableRequest)
         {
             var result = await gateway.Publish(remotableRequest) ?? throw new InvalidOperationException();
+            if (string.IsNullOrWhiteSpace(result.TypeName))
+            {
+                throw new InvalidOperationException(
+                    "Remoting response missing TypeName; server likely returned a non-WebServiceMessage error body.");
+            }
+
             var returnEvent = (TResponse)result.GetBodyObject();
             return returnEvent;
         }

@@ -16,6 +16,7 @@ public class ToolProvider(
 {
     private readonly SemaphoreSlim _lock = new(1, 1);
     private McpClient? _client;
+    private HttpClient? _ownedHttpClient;
     private IList<AITool>? _tools;
 
     public async Task<IList<AITool>> GetToolsAsync()
@@ -43,7 +44,7 @@ public class ToolProvider(
         var mcpUrl = McpEndpointResolver.ResolveMcpUrl(server);
         logger.LogInformation("ToolProvider: connecting to MCP endpoint at {McpUrl}", mcpUrl);
 
-        var httpClient = httpClientFactory.CreateClient();
+        var httpClient = CreateLoopbackHttpClient(mcpUrl);
         var transportOptions = new HttpClientTransportOptions
         {
             Endpoint = new Uri(mcpUrl),
@@ -69,6 +70,14 @@ public class ToolProvider(
         }
     }
 
+    private HttpClient CreateLoopbackHttpClient(string mcpUrl)
+    {
+        // Discovery can be retried after a failure; release any client from the previous attempt.
+        _ownedHttpClient?.Dispose();
+        _ownedHttpClient = McpLoopbackHttpClient.CreateForDevCertificate(mcpUrl);
+        return _ownedHttpClient ?? httpClientFactory.CreateClient();
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_client != null)
@@ -76,6 +85,9 @@ public class ToolProvider(
             await _client.DisposeAsync();
             _client = null;
         }
+
+        _ownedHttpClient?.Dispose();
+        _ownedHttpClient = null;
         _lock.Dispose();
     }
 }

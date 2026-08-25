@@ -1,6 +1,6 @@
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
-using ClearMeasure.Bootcamp.LlmGateway;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;

@@ -42,6 +42,7 @@ public class WorkOrderManageAttachmentsTests
 
         ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus(attachments));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(workOrderId));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(uploader));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());

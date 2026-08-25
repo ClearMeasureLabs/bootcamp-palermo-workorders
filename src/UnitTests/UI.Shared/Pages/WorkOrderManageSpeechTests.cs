@@ -30,6 +30,7 @@ public class WorkOrderManageSpeechTests
 
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
@@ -59,6 +60,7 @@ public class WorkOrderManageSpeechTests
 
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
@@ -94,6 +96,7 @@ public class WorkOrderManageSpeechTests
 
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(translationService);
@@ -140,6 +143,7 @@ public class WorkOrderManageSpeechTests
 
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(translationService);
@@ -181,6 +185,7 @@ public class WorkOrderManageSpeechTests
 
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilderEmptyTitle());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(translationService);

@@ -1,6 +1,6 @@
 @page "/ai-agent"
 @inherits AppComponentBase
-@using ClearMeasure.Bootcamp.LlmGateway
+@using ClearMeasure.Bootcamp.Core.Queries
 @using Microsoft.JSInterop
 @inject CustomAuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime Js
@@ -103,8 +103,8 @@
                 .Select(m => new ChatHistoryMessage(m.IsUser ? "user" : "assistant", m.Content))
                 .ToList();
             var query = new ApplicationChatQuery(userMessage, currentUserName) { ChatHistory = chatHistory };
+            // ApplicationChatResult is a plain DTO — ChatResponse cannot cross WASM remoting safely.
             var response = await Bus.Send(query);
-
             var aiContent = string.IsNullOrWhiteSpace(response.Text)
                 ? "No response received."
                 : response.Text;

@@ -27,6 +27,18 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     [Inject] public ITranslationService? TranslationService { get; set; }
     [Inject] public SpeechSynthesis? SpeechSynthesis { get; set; }
     [Inject] public SpeechRecognition? SpeechRecognition { get; set; }
+    [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
+
+    private DueDateUrgency CurrentDueDateUrgency =>
+        _workOrder == null
+            ? DueDateUrgency.None
+            : DueDateUrgencyCalculator.Calculate(Model.DueDateInput, _workOrder.Status, Clock);
+
+    private string CurrentDueDateCssClass =>
+        DueDateUrgencyCalculator.CssClass(CurrentDueDateUrgency);
+
+    private string? CurrentDueDateUrgencyText =>
+        DueDateUrgencyCalculator.ScreenReaderText(CurrentDueDateUrgency);
 
     public WorkOrderManageModel Model { get; set; } = new();
     public List<SelectListItem> UserOptions { get; set; } = new();
@@ -114,9 +126,14 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             RoomNumber = workOrder.RoomNumber,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
-            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture)
+            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
+            DueDateInput = workOrder.DueDate,
+            DueDateDisplay = FormatDueDateDisplay(workOrder.DueDate)
         };
     }
+
+    private static string? FormatDueDateDisplay(DateOnly? dueDate) =>
+        dueDate?.ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
 
     private async Task LoadUserOptions()
     {
@@ -152,6 +169,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         workOrder.Description = Model.Description;
         workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
+        workOrder.DueDate = Model.DueDateInput;
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
