@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -17,11 +16,11 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class ApplicationChatTests
 {
     [Test]
-    public void ShouldRenderChatShellAndInputElements()
+    public async Task ShouldRenderChatShellAndInputElements()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        var component = ctx.RenderComponent<ApplicationChat>();
+        var component = ctx.Render<ApplicationChat>();
 
         component.Find($"[data-testid='{ApplicationChat.Elements.ChatShell}']").ShouldNotBeNull();
         component.Find($"[data-testid='{ApplicationChat.Elements.ChatContainer}']").ShouldNotBeNull();
@@ -31,15 +30,15 @@ public class ApplicationChatTests
     }
 
     [Test]
-    public void ShouldRenderChatHistoryViewportAfterSendingMessage()
+    public async Task ShouldRenderChatHistoryViewportAfterSendingMessage()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        var component = ctx.RenderComponent<ApplicationChat>();
-        component.Find($"[data-testid='{ApplicationChat.Elements.ChatInput}']").Change("first prompt");
-        component.Find($"[data-testid='{ApplicationChat.Elements.SendButton}']").Click();
+        var component = ctx.Render<ApplicationChat>();
+        await component.Find($"[data-testid='{ApplicationChat.Elements.ChatInput}']").ChangeAsync(new() { Value = "first prompt" });
+        await component.Find($"[data-testid='{ApplicationChat.Elements.SendButton}']").ClickAsync(new());
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{ApplicationChat.Elements.ChatHistory}']").ShouldNotBeNull();
             component.Find($"[data-testid='{ApplicationChat.Elements.ChatHistoryViewport}']").ShouldNotBeNull();
@@ -48,18 +47,18 @@ public class ApplicationChatTests
     }
 
     [Test]
-    public void ShouldKeepPromptInputAvailableAfterManyMessages()
+    public async Task ShouldKeepPromptInputAvailableAfterManyMessages()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        var component = ctx.RenderComponent<ApplicationChat>();
+        var component = ctx.Render<ApplicationChat>();
 
         for (var i = 0; i < 12; i++)
         {
             var prompt = $"Prompt {i}";
-            component.Find($"[data-testid='{ApplicationChat.Elements.ChatInput}']").Change(prompt);
-            component.Find($"[data-testid='{ApplicationChat.Elements.SendButton}']").Click();
-            component.WaitForAssertion(() =>
+            await component.Find($"[data-testid='{ApplicationChat.Elements.ChatInput}']").ChangeAsync(new() { Value = prompt });
+            await component.Find($"[data-testid='{ApplicationChat.Elements.SendButton}']").ClickAsync(new());
+            await component.WaitForAssertionAsync(() =>
             {
                 component.Markup.ShouldContain(prompt);
             });
@@ -71,16 +70,16 @@ public class ApplicationChatTests
     }
 
     [Test]
-    public void ShouldSendMessageWhenEnterKeyPressed()
+    public async Task ShouldSendMessageWhenEnterKeyPressed()
     {
-        using var ctx = CreateContext();
-        var component = ctx.RenderComponent<ApplicationChat>();
+        await using var ctx = CreateContext();
+        var component = ctx.Render<ApplicationChat>();
 
         var chatInput = component.Find($"[data-testid='{ApplicationChat.Elements.ChatInput}']");
-        chatInput.Change("test prompt via enter");
-        chatInput.KeyDown(new KeyboardEventArgs { Key = "Enter" });
+        await chatInput.ChangeAsync(new() { Value = "test prompt via enter" });
+        await chatInput.KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{ApplicationChat.Elements.ChatHistory}']").ShouldNotBeNull();
             component.FindAll(".chat-message").Count.ShouldBeGreaterThanOrEqualTo(1);
@@ -88,10 +87,10 @@ public class ApplicationChatTests
         });
     }
 
-    private static TestContext CreateContext()
+    private static BunitContext CreateContext()
     {
-        var ctx = new TestContext();
-        ctx.JSInterop.SetupVoid("scrollToBottom", _ => true);
+        var ctx = new BunitContext();
+        ctx.JSInterop.SetupVoid("scrollToBottom", _ => true).SetVoidResult();
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new ApplicationChatStubBus());
 

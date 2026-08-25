@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 using IndexPage = ClearMeasure.Bootcamp.UI.Shared.Pages.Index;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -12,13 +11,13 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class IndexPageTests
 {
     [Test]
-    public void ShouldDisplayGreetingBanner()
+    public async Task ShouldDisplayGreetingBanner()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
 
-        var component = ctx.RenderComponent<IndexPage>();
+        var component = ctx.Render<IndexPage>();
 
         var banner = component.Find($"[data-testid='{nameof(IndexPage.Elements.GreetingBanner)}']");
         banner.ShouldNotBeNull();

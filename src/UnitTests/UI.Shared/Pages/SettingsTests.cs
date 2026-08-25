@@ -1,5 +1,4 @@
 using Bunit;
-using Bunit.TestDoubles;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -16,14 +14,14 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class SettingsTests
 {
     [Test]
-    public void Settings_AuthenticatedUser_ShouldRenderAppearanceSectionAndDarkModeSwitch()
+    public async Task Settings_AuthenticatedUser_ShouldRenderAppearanceSectionAndDarkModeSwitch()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
         var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         module.Setup<string>("getTheme").SetResult("light");
-        module.SetupVoid("syncDomFromTheme", _ => true);
+        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
 
-        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
 
         component.Find("h2").TextContent.ShouldContain("Appearance");
         var sw = component.Find($"[data-testid='{nameof(Settings.Elements.DarkModeSwitch)}']");
@@ -35,35 +33,35 @@ public class SettingsTests
     [Test]
     public async Task Settings_ToggleDarkMode_ShouldInvokeSetThemeInteropAndUpdateServiceState()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
         var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         module.Setup<string>("getTheme").SetResult("light");
-        module.SetupVoid("syncDomFromTheme", _ => true);
-        module.SetupVoid("setTheme", _ => true);
+        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        module.SetupVoid("setTheme", _ => true).SetVoidResult();
 
-        var component = ctx.RenderComponent<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
         var theme = ctx.Services.GetRequiredService<ThemePreferenceService>();
 
         await component.InvokeAsync(() => Task.CompletedTask);
         theme.IsDarkMode.ShouldBeFalse();
 
         var sw = component.Find($"[data-testid='{nameof(Settings.Elements.DarkModeSwitch)}']");
-        sw.Change(true);
+        await sw.ChangeAsync(new() { Value = true });
 
-        component.WaitForAssertion(() => theme.IsDarkMode.ShouldBeTrue());
+        await component.WaitForAssertionAsync(() => theme.IsDarkMode.ShouldBeTrue());
         module.VerifyInvoke("setTheme");
     }
 
-    private static TestContext CreateContext()
+    private static BunitContext CreateContext()
     {
-        var ctx = new TestContext();
+        var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Strict;
         ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
 
-        var bunitAuth = ctx.AddTestAuthorization();
+        var bunitAuth = ctx.AddAuthorization();
         bunitAuth.SetAuthorized("hsimpson");
         var customAuth = new CustomAuthenticationStateProvider();
         customAuth.Login("hsimpson");
