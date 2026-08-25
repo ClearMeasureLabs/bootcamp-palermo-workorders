@@ -1,0 +1,135 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Church Bulletin / Work Orders — C4 Container (runtime)
+
+SHOW_LEGEND()
+LAYOUT_WITH_LEGEND()
+
+Person(staff, "Church staff / member", "Pastor, volunteer, or leader using the work-order portal")
+Person(agent_user, "AI / MCP client", "Optional Model Context Protocol consumer of work-order and employee tools")
+
+System_Boundary(c4sys, "ChurchBulletin.sln runtime") {
+    Container(uiClient, "UI.Client", "Blazor WebAssembly", "Church work-order portal in the browser. Demo login picker (CustomAuthenticationStateProvider). Client health page /_clienthealthcheck.")
+    Container(uiServer, "UI.Server", "ASP.NET Core 10 / ClearMeasure.Bootcamp.UI.Server.dll", "Production process. Hosts Blazor WASM files, UI.Api controllers, gRPC WorkOrders, MCP at /mcp, NServiceBus endpoint UI.Server, WebSockets, in-process MemoryCache/OutputCache, AutoReformatAgentService. Health: /_healthcheck, /_healthcheck/detailed, /health, /alive.")
+    Container(worker, "Worker", ".NET Worker / NServiceBus", "WorkOrderProcessing endpoint (Aspire AppHost name worker). SQL persistence + SqlServerTransport. Not in the production Dockerfile; local/dev orchestration only.")
+    Container(mcpStandalone, "McpServer", "ASP.NET / stdio or HTTP", "Standalone MCP host (ChurchBulletin 1.0.0). Production MCP is in-process on UI.Server at /mcp.")
+    ContainerDb(sql, "ChurchBulletin-gh", "Azure SQL / SQL Server", "Work orders, employees, roles. ConnectionStrings:SqlConnectionString. Local: LocalDB or SQL 2022; CI fallback SQLite.")
+    ContainerDb(nsb, "nServiceBus schema", "SQL Server transport", "NServiceBus queues, sagas, subscriptions, outbox in schema nServiceBus on the same SQL instance.")
+}
+
+System_Ext(openai, "Azure OpenAI", "LLM via AI_OpenAI_Url / AI_OpenAI_ApiKey / AI_OpenAI_Model (LlmGateway library)")
+System_Ext(appi, "Application Insights / OTel", "Traces, metrics, logs (APPLICATIONINSIGHTS / Azure Monitor exporter)")
+System_Ext(acr, "churchbulletingithubacr", "Azure Container Registry — churchbulletin.ui:{version}")
+System_Ext(gha, "GitHub Actions", "Build 2.4.x then Deploy workflow_run to TDD → UAT → Prod")
+System_Ext(octopus, "Octopus Deploy", "https://clearmeasure.octopus.app/ — DbUp ChurchBulletin.Database then az containerapp update")
+
+Rel(staff, uiClient, "Uses portal + demo login", "HTTPS")
+Rel(uiClient, uiServer, "API, gRPC, WebSockets, static WASM", "HTTPS / HTTP2")
+Rel(agent_user, uiServer, "MCP tools WorkOrderTools / EmployeeTools", "HTTP /mcp")
+Rel(uiServer, sql, "EF Core DataContext reads/writes", "TDS / SqlConnectionString")
+Rel(uiServer, nsb, "Sends/receives as endpoint UI.Server", "NServiceBus SqlServerTransport")
+Rel(worker, nsb, "Consumes as WorkOrderProcessing", "NServiceBus SqlServerTransport")
+Rel(worker, sql, "Saga persistence + RemotableBus HTTP back to API", "TDS + HTTPS")
+Rel(mcpStandalone, sql, "Same DataAccess when run standalone", "TDS")
+Rel(uiServer, openai, "Chat + WorkOrderReformatAgent (LlmGateway)", "HTTPS")
+Rel(worker, openai, "ChatClientFactory if configured", "HTTPS")
+Rel(uiServer, appi, "OpenTelemetry + App Insights SDK", "HTTPS")
+Rel(worker, appi, "OpenTelemetry", "HTTPS")
+Rel(gha, acr, "docker build/push churchbulletin.ui", "Docker")
+Rel(gha, octopus, "Create/deploy release 2.4.*", "Octopus API")
+Rel(octopus, uiServer, "Update ACA image + SqlConnectionString", "az containerapp")
+Rel(octopus, sql, "DbUp scripts via ChurchBulletin.Database", "TDS")
+Rel(acr, uiServer, "Image pulled by Container App", "Docker")
+
+SHOW_FLOATING_LEGEND()
+@enduml
+
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+title Church Bulletin / Work Orders — C4 Deployment (Azure + CI)
+
+SHOW_LEGEND()
+
+Person(staff, "Church staff / member", "Browser user of the live portal")
+
+Deployment_Node(browser, "End-user browser", "Chromium / Edge / Firefox") {
+    Container(uiClient, "UI.Client", "Blazor WASM", "Served from UI.Server wwwroot")
+}
+
+Deployment_Node(gha_cloud, "GitHub", "Actions + Packages") {
+    Container(buildWf, "build.yml", "GitHub Actions", "Linux SQL container, SQLite, ARM, Windows LocalDB, acceptance Playwright, Qodana. Packages ChurchBulletin.UI nupkg. Pushes churchbulletin.ui to ACR. Publishes nupkgs to GitHub Packages + Octopus.")
+    Container(deployWf, "deploy.yml", "GitHub Actions", "On successful master Build: Octopus TDD (health gate /_healthcheck + Playwright), then UAT, then Prod. Version 2.4.{run_number}.")
+}
+
+Deployment_Node(octo, "clearmeasure.octopus.app", "Octopus Deploy") {
+    Container(octoProj, "Octopus project", "OCL in .octopus/", "Steps: Ensure .NET 10, Run DB migrations (ChurchBulletin.Database UpdateAzureSql.ps1), Add Revision to Container App.")
+}
+
+Deployment_Node(azure, "Azure South Central US", "az_location = southcentralus") {
+    Deployment_Node(acrNode, "churchbulletingithubacr.azurecr.io", "Azure Container Registry") {
+        Container(image, "churchbulletin.ui", "mcr.microsoft.com/dotnet/aspnet:10.0", "ENTRYPOINT ClearMeasure.Bootcamp.UI.Server.dll. Exposes 8080/80. Tag = Octopus.Release.Number.")
+    }
+
+    Deployment_Node(tddRg, "bootcamp-tdd", "Resource group") {
+        Deployment_Node(tddCae, "bootcamp-palermo-workorders-container-apps-TDD-cae", "Container Apps Environment") {
+            Deployment_Node(tddApp, "ui-gh", "Azure Container App") {
+                Container(tddUi, "UI.Server (TDD)", "churchbulletin.ui", "Ingress FQDN. Env ConnectionStrings__SqlConnectionString. Live known URL pattern ui-gh.*.southcentralus.azurecontainerapps.io")
+            }
+        }
+        Deployment_Node(tddSql, "bootcamp-palermo-workorders.database.windows.net", "Azure SQL Server") {
+            ContainerDb(tddDb, "ChurchBulletin-gh", "Azure SQL Basic", "App data + nServiceBus schema")
+        }
+    }
+
+    Deployment_Node(uatRg, "bootcamp-uat", "Resource group") {
+        Deployment_Node(uatCae, "bootcamp-palermo-workorders-container-apps-UAT-cae", "Container Apps Environment") {
+            Deployment_Node(uatApp, "ui-gh", "Azure Container App") {
+                Container(uatUi, "UI.Server (UAT)", "churchbulletin.ui", "Same image, environment-specific SQL")
+            }
+        }
+        Deployment_Node(uatSql, "bootcamp-palermo-workorders-uat.database.windows.net", "Azure SQL Server") {
+            ContainerDb(uatDb, "ChurchBulletin-gh", "Azure SQL Basic", "UAT database")
+        }
+    }
+
+    Deployment_Node(prodRg, "bootcamp-prod", "Resource group") {
+        Deployment_Node(prodCae, "bootcamp-palermo-workorders-container-apps-Prod-cae", "Container Apps Environment") {
+            Deployment_Node(prodApp, "ui-gh", "Azure Container App") {
+                Container(prodUi, "UI.Server (Prod)", "churchbulletin.ui", "Production revision. Health probes /_healthcheck")
+            }
+        }
+        Deployment_Node(prodSql, "bootcamp-palermo-workorders-prod.database.windows.net", "Azure SQL Server") {
+            ContainerDb(prodDb, "ChurchBulletin-gh", "Azure SQL Basic", "Production database")
+        }
+    }
+
+    System_Ext(openai, "Azure OpenAI", "Optional; UAT/Prod may be Degraded if AI_OpenAI_* unset")
+    System_Ext(appi, "Application Insights", "When ApplicationInsights:ConnectionString is set")
+}
+
+Rel(staff, uiClient, "HTTPS")
+Rel(uiClient, tddUi, "Live GH demo often TDD/ui-gh", "HTTPS")
+Rel(tddUi, tddDb, "SqlConnectionString", "TDS")
+Rel(uatUi, uatDb, "SqlConnectionString", "TDS")
+Rel(prodUi, prodDb, "SqlConnectionString", "TDS")
+Rel(tddUi, openai, "LlmGateway if configured", "HTTPS")
+Rel(uatUi, openai, "LlmGateway if configured", "HTTPS")
+Rel(prodUi, openai, "LlmGateway if configured", "HTTPS")
+Rel(tddUi, appi, "OTel / App Insights", "HTTPS")
+Rel(buildWf, image, "docker push", "ACR")
+Rel(buildWf, octoProj, "dotnet-octo push + packages")
+Rel(deployWf, octoProj, "create-release + deploy TDD/UAT/Prod")
+Rel(octoProj, tddDb, "DbUp update")
+Rel(octoProj, uatDb, "DbUp update")
+Rel(octoProj, prodDb, "DbUp update")
+Rel(octoProj, tddUi, "az containerapp update --image")
+Rel(octoProj, uatUi, "az containerapp update --image")
+Rel(octoProj, prodUi, "az containerapp update --image")
+Rel(image, tddUi, "revision pull")
+Rel(image, uatUi, "revision pull")
+Rel(image, prodUi, "revision pull")
+
+SHOW_FLOATING_LEGEND()
+@enduml
