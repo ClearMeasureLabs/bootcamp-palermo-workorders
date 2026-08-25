@@ -34,7 +34,8 @@ public class CompilerWarningGateTests
             .SelectMany(path => XDocument.Load(path)
                 .Descendants()
                 .Where(element =>
-                    element.Name.LocalName == "TreatWarningsAsErrors"
+                    element.Name.LocalName is
+                        "TreatWarningsAsErrors" or "MSBuildTreatAllWarningsAsErrors"
                     && bool.TryParse(element.Value, out var enabled)
                     && enabled)
                 .Select(_ => path))
