@@ -11,6 +11,9 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 public class WorkOrderDueDateTests : AcceptanceTestBase
 {
+    private const string DueTodayBackground = "rgb(254, 240, 138)";
+    private const string OverdueBackground = "rgb(254, 202, 202)";
+
     [Test, Retry(2)]
     public async Task ShouldSaveEmptyDueDateAndShowBlankOnSearch()
     {
@@ -131,6 +134,46 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         await Expect(overdueCell).Not.ToHaveClassAsync(new Regex("due-date-today|due-date-overdue"));
         await Expect(todayCell).ToContainTextAsync(today.ToString("MMM d, yyyy", CultureInfo.InvariantCulture));
         await Expect(overdueCell).ToContainTextAsync(overdue.ToString("MMM d, yyyy", CultureInfo.InvariantCulture));
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldPaintDueDateControlYellowTodayAndRedOverdue()
+    {
+        await LoginAsCurrentUser();
+        var today = ChurchTimeZone.Today(TimeProvider.System);
+        var overdue = today.AddDays(-3);
+
+        var todayOrder = await CreateDraftWithDueDateAsync($"[{TestTag}] painted due today", today);
+        var overdueOrder = await CreateDraftWithDueDateAsync($"[{TestTag}] painted overdue", overdue);
+
+        var todayCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + todayOrder.Number);
+        var overdueCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + overdueOrder.Number);
+        await Expect(todayCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
+        await Expect(overdueCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
+        (await BackgroundColorAsync(todayCell)).ShouldBe(DueTodayBackground);
+        (await BackgroundColorAsync(overdueCell)).ShouldBe(OverdueBackground);
+
+        await AssertManageDueDateBackgroundAsync(todayOrder, DueTodayBackground);
+        await AssertManageDueDateBackgroundAsync(overdueOrder, OverdueBackground);
+    }
+
+    private async Task AssertManageDueDateBackgroundAsync(WorkOrder order, string expectedBackground)
+    {
+        await ClickWorkOrderNumberFromSearchPage(order);
+
+        var dueDateInput = Page.GetByTestId(nameof(WorkOrderManage.Elements.DueDate));
+        await Expect(dueDateInput).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        (await BackgroundColorAsync(dueDateInput)).ShouldBe(expectedBackground);
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+    }
+
+    private static async Task<string> BackgroundColorAsync(ILocator locator)
+    {
+        return await locator.EvaluateAsync<string>(
+            "element => window.getComputedStyle(element).backgroundColor");
     }
 
     private async Task<WorkOrder> CreateDraftWithDueDateAsync(string title, DateOnly dueDate)

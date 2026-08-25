@@ -151,14 +151,18 @@
     gap: 0.5rem;
 }
 
-.due-date-today {
+/* InputDate renders the control, so it never receives this component's CSS
+   isolation scope attribute. ::deep reaches it and the read-only span alike. */
+.due-date-field ::deep .due-date-today {
     background-color: #fef08a !important;
+    background-image: none !important;
     color: #854d0e !important;
     border-color: #facc15 !important;
 }
 
-.due-date-overdue {
+.due-date-field ::deep .due-date-overdue {
     background-color: #fecaca !important;
+    background-image: none !important;
     color: #991b1b !important;
     border-color: #f87171 !important;
 }
