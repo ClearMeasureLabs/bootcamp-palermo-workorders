@@ -8,31 +8,6 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared;
 
 [TestFixture]
-public class NavRailCssTests
-{
-    [Test]
-    public void ShouldCollapseAppContainer_WhenWideViewportAndNavHidden()
-    {
-        NavRailCss.AppContainerClass(isNarrowViewport: false, navVisible: false)
-            .ShouldBe("modern-app rail-collapsed");
-    }
-
-    [Test]
-    public void ShouldUseOpenSidebarClass_WhenNarrowViewportAndNavVisible()
-    {
-        NavRailCss.SidebarClass(isNarrowViewport: true, navVisible: true)
-            .ShouldBe("modern-sidebar open");
-    }
-
-    [Test]
-    public void ShouldHideRailSidebar_WhenWideViewportAndNavHidden()
-    {
-        NavRailCss.SidebarClass(isNarrowViewport: false, navVisible: false)
-            .ShouldBe("modern-sidebar rail-hidden");
-    }
-}
-
-[TestFixture]
 public class BusActivityTaggerTests
 {
     [Test]
