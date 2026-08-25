@@ -31,7 +31,7 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
     /// Prefers <see cref="ChatResponse.Text"/>; falls back to last assistant message text
     /// when tool-invocation responses leave Text empty.
     /// </summary>
-    internal static string ExtractAssistantText(ChatResponse response)
+    private static string ExtractAssistantText(ChatResponse response)
     {
         if (!string.IsNullOrWhiteSpace(response.Text))
         {

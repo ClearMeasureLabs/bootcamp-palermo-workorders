@@ -1,4 +1,3 @@
-using ClearMeasure.Bootcamp.Core;
 using MediatR;
 
 namespace ClearMeasure.Bootcamp.Core.Queries;
@@ -13,7 +12,7 @@ public record ApplicationChatQuery(string Prompt, string CurrentUsername)
     /// <summary>
     /// Prior messages supplied as context for this chat turn.
     /// </summary>
-    public List<ChatHistoryMessage> ChatHistory { get; set; } = [];
+    public List<ChatHistoryMessage> ChatHistory { get; init; } = [];
 }
 
 /// <summary>

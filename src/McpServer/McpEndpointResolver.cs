@@ -12,7 +12,7 @@ internal static class McpEndpointResolver
     internal static string ResolveMcpUrl(IServer server)
     {
         var addressFeature = server.Features.Get<IServerAddressesFeature>();
-        var addresses = addressFeature?.Addresses?.ToList()
+        var addresses = addressFeature?.Addresses.ToList()
                         ?? throw new InvalidOperationException(
                             "Cannot determine server address for MCP loopback connection");
 
