@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.LlmGateway;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Login = ClearMeasure.Bootcamp.UI.Shared.Pages.Login;
