@@ -151,15 +151,13 @@
     gap: 0.5rem;
 }
 
-.due-date-today,
-:global(.due-date-today) {
+.due-date-today {
     background-color: #fef08a !important;
     color: #854d0e !important;
     border-color: #facc15 !important;
 }
 
-.due-date-overdue,
-:global(.due-date-overdue) {
+.due-date-overdue {
     background-color: #fecaca !important;
     color: #991b1b !important;
     border-color: #f87171 !important;

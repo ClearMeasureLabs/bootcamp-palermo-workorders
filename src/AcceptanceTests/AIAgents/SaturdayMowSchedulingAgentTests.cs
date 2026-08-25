@@ -43,10 +43,8 @@ public class SaturdayMowSchedulingAgentTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         const string prompt =
-            "Create 10 work orders for Groundskeeper Willie MacDougal (username gwillie) to mow the grass, " +
+            "Create 10 work orders for Groundskeeper Willie MacDougal to mow the grass, " +
             "one per week for the next 10 Saturdays, each due that Saturday (the day before Sunday service). " +
-            "Use create-dated-work-orders once with creatorUsername='tlovejoy', assigneeUsername='gwillie', " +
-            "title='Mow the grass', description='Weekly Saturday lawn mowing', saturdayCount=10. " +
             "In your reply list every work order number and due date.";
 
         await Input(nameof(ApplicationChat.Elements.ChatInput), prompt);
