@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
@@ -17,66 +16,6 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.AIAgents;
 [TestFixture]
 public class SaturdayMowSchedulingAgentTests : AcceptanceTestBase
 {
-    // #region agent log
-    private static void AgentLog(string hypothesisId, string location, string message, object data)
-    {
-        try
-        {
-            var payload = new Dictionary<string, object?>
-            {
-                ["hypothesisId"] = hypothesisId,
-                ["location"] = location,
-                ["message"] = message,
-                ["data"] = data,
-                ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                ["runId"] = "pre-fix"
-            };
-            File.AppendAllText(
-                "/opt/cursor/logs/debug.log",
-                JsonSerializer.Serialize(payload) + "\n");
-        }
-        catch
-        {
-            // Diagnostic only — never fail the test on log I/O.
-        }
-    }
-
-    private async Task<Dictionary<string, string?>> CaptureLoginDiagAsync(string phase)
-    {
-        var diag = Page.GetByTestId(nameof(Login.Elements.LoginDiag));
-        var diagCount = await diag.CountAsync();
-        string? alertText = null;
-        var alert = Page.Locator(".alert-danger");
-        if (await alert.CountAsync() > 0)
-        {
-            alertText = await alert.First.InnerTextAsync();
-        }
-
-        var attrs = new Dictionary<string, string?>
-        {
-            ["phase"] = phase,
-            ["url"] = Page.Url,
-            ["diagCount"] = diagCount.ToString(),
-            ["welcomeCount"] = (await Page.GetByTestId(nameof(Logout.Elements.WelcomeText)).CountAsync()).ToString(),
-            ["loginLinkCount"] = (await Page.GetByTestId(nameof(LoginLink.Elements.LoginLink)).CountAsync()).ToString(),
-            ["alertText"] = alertText,
-            ["employeeOptionCount"] = (await Page.GetByTestId(nameof(Login.Elements.User))
-                .Locator("option[value]:not([value=''])").CountAsync()).ToString()
-        };
-        if (diagCount > 0)
-        {
-            attrs["employeeCount"] = await diag.GetAttributeAsync("data-employee-count");
-            attrs["hasTlovejoy"] = await diag.GetAttributeAsync("data-has-tlovejoy");
-            attrs["loadCompleted"] = await diag.GetAttributeAsync("data-load-completed");
-            attrs["error"] = await diag.GetAttributeAsync("data-error");
-            attrs["authOutcome"] = await diag.GetAttributeAsync("data-auth-outcome");
-            attrs["username"] = await diag.GetAttributeAsync("data-username");
-        }
-
-        return attrs;
-    }
-    // #endregion
-
     [SetUp]
     public async Task EnsureLlmAvailable()
     {
@@ -87,23 +26,6 @@ public class SaturdayMowSchedulingAgentTests : AcceptanceTestBase
     [Retry(2)]
     public async Task ShouldCreateTenSaturdayMowsForWillieViaAiAgent()
     {
-        // #region agent log
-        var apiStatuses = new List<int>();
-        Page.Response += (_, response) =>
-        {
-            if (response.Url.Contains("blazor-wasm-single-api", StringComparison.OrdinalIgnoreCase)
-                || response.Url.Contains("/api/", StringComparison.OrdinalIgnoreCase))
-            {
-                apiStatuses.Add(response.Status);
-            }
-        };
-        AgentLog("E", "SaturdayMowSchedulingAgentTests.cs:entry", "Test entry", new
-        {
-            baseUrl = ServerFixture.ApplicationBaseUrl,
-            startLocal = ServerFixture.StartLocalServer
-        });
-        // #endregion
-
         await Page.GotoAsync("/login");
         var shortcut = Page.GetByTestId(nameof(Login.Elements.LovejoyShortcut));
         await shortcut.WaitForAsync(new LocatorWaitForOptions
@@ -111,44 +33,8 @@ public class SaturdayMowSchedulingAgentTests : AcceptanceTestBase
             State = WaitForSelectorState.Visible,
             Timeout = 90_000
         });
-        // #region agent log
-        var beforeClick = await CaptureLoginDiagAsync("before-lovejoy-click");
-        AgentLog("A", "SaturdayMowSchedulingAgentTests.cs:beforeClick", "Login diag before Lovejoy click", beforeClick);
-        AgentLog("B", "SaturdayMowSchedulingAgentTests.cs:beforeClickApi", "API statuses before click", new
-        {
-            statuses = apiStatuses.ToArray(),
-            count429 = apiStatuses.Count(s => s == 429)
-        });
-        var shortcutVisible = await shortcut.IsVisibleAsync();
-        // #endregion
         await Click(nameof(Login.Elements.LovejoyShortcut));
-        // #region agent log
-        AgentLog("C", "SaturdayMowSchedulingAgentTests.cs:afterClickHelper", "Click helper returned", new
-        {
-            shortcutVisibleBeforeClick = shortcutVisible,
-            url = Page.Url
-        });
-        // #endregion
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        // #region agent log
-        // Brief settle so Blazor can re-render LoginDiag / NavigateTo after onclick.
-        await Page.WaitForTimeoutAsync(500);
-        var afterClick = await CaptureLoginDiagAsync("after-lovejoy-click");
-        AgentLog("A", "SaturdayMowSchedulingAgentTests.cs:afterClick", "Login diag after Lovejoy click", afterClick);
-        AgentLog("B", "SaturdayMowSchedulingAgentTests.cs:afterClickApi", "API statuses after click", new
-        {
-            statuses = apiStatuses.ToArray(),
-            count429 = apiStatuses.Count(s => s == 429)
-        });
-        AgentLog("D", "SaturdayMowSchedulingAgentTests.cs:afterClickAuth", "Auth/welcome presence", new
-        {
-            url = Page.Url,
-            welcomeCount = afterClick.GetValueOrDefault("welcomeCount"),
-            loginLinkCount = afterClick.GetValueOrDefault("loginLinkCount"),
-            authOutcome = afterClick.GetValueOrDefault("authOutcome"),
-            error = afterClick.GetValueOrDefault("error")
-        });
-        // #endregion
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
             .ToHaveTextAsync("Welcome tlovejoy!");
 
