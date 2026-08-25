@@ -74,8 +74,8 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
+        await WaitForNewWorkOrderFormReadyAsync();
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
-        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         order.Number = await woNumberLocator.InnerTextAsync();
 
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
@@ -171,7 +171,12 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
+        await WaitForNewWorkOrderFormReadyAsync();
+
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
+        var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        await Expect(titleField).ToHaveValueAsync(order.Title!);
+
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description);
 
         var overLimitInstructions = new string('x', WorkOrder.InstructionsMaxLength + 1);

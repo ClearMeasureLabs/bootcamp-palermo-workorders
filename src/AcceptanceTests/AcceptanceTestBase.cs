@@ -301,6 +301,16 @@ public abstract class AcceptanceTestBase
         await locator.EvaluateAsync("el => el.click()");
     }
 
+    /// <summary>
+    /// Waits until the New Work Order form is bound (WorkOrderNumber visible).
+    /// Call before filling Title/Description/Instructions on mode=New; URL alone is not ready.
+    /// </summary>
+    protected async Task WaitForNewWorkOrderFormReadyAsync()
+    {
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+    }
+
     protected async Task Input(string elementTestId, string? value)
     {
         var locator = Page.GetByTestId(elementTestId);
@@ -356,8 +366,8 @@ public abstract class AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
         await TakeScreenshotAsync(1, "NewWorkOrderPage");
 
+        await WaitForNewWorkOrderFormReadyAsync();
         ILocator woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
-        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         var newWorkOrderNumber = await woNumberLocator.InnerTextAsync();
         order.Number = newWorkOrderNumber;
         await Input(nameof(WorkOrderManage.Elements.Title), testTitle);
