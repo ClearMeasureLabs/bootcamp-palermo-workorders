@@ -61,16 +61,13 @@ public class CustomAuthenticationStateProviderTests
 
         await authProvider.Login("tlovejoy");
 
-        store.Operations.ShouldContain("SetBeforeAuthenticated");
-        store.Operations.IndexOf("SetBeforeAuthenticated").ShouldBeLessThan(
-            store.Operations.Count); // set recorded during Login before notify completes
+        store.Operations[0].ShouldBe("SetBeforeAuthenticated");
         (await store.GetAsync()).ShouldBe("tlovejoy");
         authProvider.IsAuthenticated().ShouldBeTrue();
         authProvider.GetUsername().ShouldBe("tlovejoy");
         notified.ShouldBeTrue();
         notifiedState!.User.Identity!.IsAuthenticated.ShouldBeTrue();
         notifiedState.User.Identity.Name.ShouldBe("tlovejoy");
-        store.Operations[0].ShouldBe("SetBeforeAuthenticated");
     }
 
     [Test]
