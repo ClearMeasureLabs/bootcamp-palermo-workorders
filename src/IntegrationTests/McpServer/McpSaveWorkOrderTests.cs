@@ -45,16 +45,16 @@ public class McpSaveWorkOrderTests
 
         var saveResult = await WorkOrderTools.SaveWorkOrder(
             bus,
-            number!,
+            number,
             "creator1",
             title: "Saturday mow",
             dueDate: string.Empty);
 
         saveResult.ShouldContain("Saturday mow");
 
-        var reloaded = await bus.Send(new WorkOrderByNumberQuery(number!));
+        var reloaded = await bus.Send(new WorkOrderByNumberQuery(number));
         reloaded.ShouldNotBeNull();
-        reloaded!.Title.ShouldBe("Saturday mow");
+        reloaded.Title.ShouldBe("Saturday mow");
         reloaded.DueDate.ShouldBeNull();
         reloaded.Instructions.ShouldBe(instructions);
         reloaded.RoomNumber.ShouldBe(room);
@@ -461,7 +461,10 @@ public class McpSaveWorkOrderTests
         var field = executorType.GetField("CommandFactories", BindingFlags.NonPublic | BindingFlags.Static);
         field.ShouldNotBeNull();
 
-        var factories = (IReadOnlyDictionary<string, Func<WorkOrder, Employee, StateCommandBase>>)field!.GetValue(null)!;
+        var fieldValue = field.GetValue(null);
+        fieldValue.ShouldNotBeNull();
+
+        var factories = (IReadOnlyDictionary<string, Func<WorkOrder, Employee, StateCommandBase>>)fieldValue;
         factories.Keys.ShouldNotContain("Save");
         factories.Keys.ShouldNotContain("SaveDraftCommand");
         factories.Keys.ShouldNotContain(SaveDraftCommand.Name);
