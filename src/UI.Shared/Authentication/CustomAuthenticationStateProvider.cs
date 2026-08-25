@@ -9,6 +9,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Authentication;
 /// </summary>
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
+    private readonly SemaphoreSlim _stateLock = new(1, 1);
     private readonly IUserSessionStore _userSessionStore;
     private ClaimsPrincipal _currentUser = new(new ClaimsIdentity());
 
@@ -24,16 +25,24 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     /// <inheritdoc />
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        if (!IsAuthenticated())
+        await _stateLock.WaitAsync();
+        try
         {
-            var username = await _userSessionStore.GetAsync();
-            if (!string.IsNullOrEmpty(username))
+            if (!IsAuthenticated())
             {
-                _currentUser = CreatePrincipal(username);
+                var username = await _userSessionStore.GetAsync();
+                if (!string.IsNullOrEmpty(username))
+                {
+                    _currentUser = CreatePrincipal(username);
+                }
             }
-        }
 
-        return new AuthenticationState(_currentUser);
+            return new AuthenticationState(_currentUser);
+        }
+        finally
+        {
+            _stateLock.Release();
+        }
     }
 
     /// <summary>
@@ -42,9 +51,17 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     /// <param name="username">Selected employee username.</param>
     public async Task Login(string username)
     {
-        await _userSessionStore.SetAsync(username);
-        _currentUser = CreatePrincipal(username);
-        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        await _stateLock.WaitAsync();
+        try
+        {
+            await _userSessionStore.SetAsync(username);
+            _currentUser = CreatePrincipal(username);
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
+        }
+        finally
+        {
+            _stateLock.Release();
+        }
     }
 
     /// <summary>
@@ -52,9 +69,17 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     /// </summary>
     public async Task Logout()
     {
-        await _userSessionStore.ClearAsync();
-        _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
-        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        await _stateLock.WaitAsync();
+        try
+        {
+            await _userSessionStore.ClearAsync();
+            _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
+        }
+        finally
+        {
+            _stateLock.Release();
+        }
     }
 
     /// <summary>

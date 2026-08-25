@@ -13,8 +13,10 @@ public class UserSession(
     NavigationManager navigationManager)
     : IUserSession
 {
+    /// <inheritdoc />
     public async Task<Employee?> GetCurrentUserAsync()
     {
+        await authProvider.GetAuthenticationStateAsync();
         var username = authProvider.GetUsername();
         if (string.IsNullOrEmpty(username))
         {
@@ -26,9 +28,12 @@ public class UserSession(
         return currentUser;
     }
 
-    public void LogOut()
+    /// <summary>
+    /// Clears the persisted login and navigates to the login page.
+    /// </summary>
+    public async Task LogOut()
     {
-        authProvider.Logout().GetAwaiter().GetResult();
+        await authProvider.Logout();
         navigationManager.NavigateTo("/login");
     }
 

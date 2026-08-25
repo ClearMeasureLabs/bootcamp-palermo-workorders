@@ -7,11 +7,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Authentication;
 /// </summary>
 public sealed class LocalStorageUserSessionStore : IUserSessionStore
 {
-    /// <summary>
-    /// Browser localStorage key for the selected username.
-    /// </summary>
-    public const string StorageKey = "bootcamp.userSession.username";
-
+    private const string StorageKey = "bootcamp.userSession.username";
     private readonly IJSRuntime _js;
 
     /// <summary>
@@ -27,7 +23,7 @@ public sealed class LocalStorageUserSessionStore : IUserSessionStore
         {
             return await _js.InvokeAsync<string?>("localStorage.getItem", StorageKey);
         }
-        catch (JSDisconnectedException)
+        catch (JSException)
         {
             return null;
         }
@@ -40,7 +36,7 @@ public sealed class LocalStorageUserSessionStore : IUserSessionStore
         {
             await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, username);
         }
-        catch (JSDisconnectedException)
+        catch (JSException)
         {
         }
     }
@@ -52,7 +48,7 @@ public sealed class LocalStorageUserSessionStore : IUserSessionStore
         {
             await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
         }
-        catch (JSDisconnectedException)
+        catch (JSException)
         {
         }
     }

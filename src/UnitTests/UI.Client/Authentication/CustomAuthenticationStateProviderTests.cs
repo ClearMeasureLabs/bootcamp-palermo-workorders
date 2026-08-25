@@ -1,5 +1,4 @@
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
-using Microsoft.AspNetCore.Components.Authorization;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
@@ -48,52 +47,40 @@ public class CustomAuthenticationStateProviderTests
     [Test]
     public async Task Login_ShouldWriteStoreThenSetPrincipalThenNotify()
     {
-        CustomAuthenticationStateProvider? authProvider = null;
-        var store = new StubUserSessionStore(() => authProvider!.IsAuthenticated());
-        authProvider = new CustomAuthenticationStateProvider(store);
-        var notified = false;
-        AuthenticationState? notifiedState = null;
-        authProvider.AuthenticationStateChanged += async task =>
-        {
-            notifiedState = await task;
-            notified = true;
-        };
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        store.IsAuthenticatedSnapshot = authProvider.IsAuthenticated;
+        authProvider.AuthenticationStateChanged += _ =>
+            store.Operations.Add(authProvider.IsAuthenticated()
+                ? "NotifyAuthenticated"
+                : "NotifyUnauthenticated");
 
         await authProvider.Login("tlovejoy");
 
-        store.Operations[0].ShouldBe("SetBeforeAuthenticated");
+        store.Operations.ShouldBe(["SetBeforeAuthenticated", "NotifyAuthenticated"]);
         (await store.GetAsync()).ShouldBe("tlovejoy");
         authProvider.IsAuthenticated().ShouldBeTrue();
         authProvider.GetUsername().ShouldBe("tlovejoy");
-        notified.ShouldBeTrue();
-        notifiedState!.User.Identity!.IsAuthenticated.ShouldBeTrue();
-        notifiedState.User.Identity.Name.ShouldBe("tlovejoy");
     }
 
     [Test]
     public async Task Logout_ShouldClearStoreThenClearPrincipalThenNotify()
     {
-        CustomAuthenticationStateProvider? authProvider = null;
-        var store = new StubUserSessionStore(() => authProvider!.IsAuthenticated());
-        authProvider = new CustomAuthenticationStateProvider(store);
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        store.IsAuthenticatedSnapshot = authProvider.IsAuthenticated;
         await authProvider.Login("tlovejoy");
         store.Operations.Clear();
-
-        var notified = false;
-        AuthenticationState? notifiedState = null;
-        authProvider.AuthenticationStateChanged += async task =>
-        {
-            notifiedState = await task;
-            notified = true;
-        };
+        authProvider.AuthenticationStateChanged += _ =>
+            store.Operations.Add(authProvider.IsAuthenticated()
+                ? "NotifyAuthenticated"
+                : "NotifyUnauthenticated");
 
         await authProvider.Logout();
 
-        store.Operations[0].ShouldBe("ClearWhileAuthenticated");
+        store.Operations.ShouldBe(["ClearWhileAuthenticated", "NotifyUnauthenticated"]);
         (await store.GetAsync()).ShouldBeNull();
         authProvider.IsAuthenticated().ShouldBeFalse();
-        notified.ShouldBeTrue();
-        notifiedState!.User.Identity!.IsAuthenticated.ShouldBeFalse();
     }
 
     [Test]
@@ -123,5 +110,25 @@ public class CustomAuthenticationStateProviderTests
 
         authState.User.Identity!.IsAuthenticated.ShouldBeFalse();
         (await store.GetAsync()).ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Logout_ShouldRemainUnauthenticated_WhenRestoreWasAlreadyInFlight()
+    {
+        var pendingGet = new TaskCompletionSource<string?>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var store = new StubUserSessionStore { PendingGet = pendingGet };
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        var restoreTask = authProvider.GetAuthenticationStateAsync();
+
+        var logoutTask = authProvider.Logout();
+        pendingGet.SetResult("tlovejoy");
+
+        await restoreTask;
+        await logoutTask;
+        var authState = await authProvider.GetAuthenticationStateAsync();
+
+        authState.User.Identity!.IsAuthenticated.ShouldBeFalse();
+        authProvider.GetUsername().ShouldBeNull();
     }
 }

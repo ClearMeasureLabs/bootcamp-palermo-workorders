@@ -151,6 +151,7 @@ public class LoginTests : AcceptanceTestBase
             .ToHaveTextAsync("Welcome tlovejoy!");
         await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
+        await Expect(Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder))).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]

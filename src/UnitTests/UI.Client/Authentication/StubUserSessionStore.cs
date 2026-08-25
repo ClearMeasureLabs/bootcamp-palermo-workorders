@@ -7,47 +7,39 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 /// </summary>
 public sealed class StubUserSessionStore : IUserSessionStore
 {
-    private readonly Func<bool>? _isAuthenticatedSnapshot;
-
-    /// <summary>
-    /// Creates an empty in-memory store.
-    /// </summary>
-    public StubUserSessionStore()
-    {
-    }
-
-    /// <summary>
-    /// Creates a store that records whether authentication was already set when Set/Clear run.
-    /// </summary>
-    /// <param name="isAuthenticatedSnapshot">Callback evaluated during Set/Clear for ordering assertions.</param>
-    public StubUserSessionStore(Func<bool> isAuthenticatedSnapshot)
-    {
-        _isAuthenticatedSnapshot = isAuthenticatedSnapshot;
-    }
-
     /// <summary>
     /// Currently stored username, or null when cleared.
     /// </summary>
     public string? Username { get; set; }
 
     /// <summary>
+    /// Returns the provider's authentication state when Set/Clear run.
+    /// </summary>
+    public Func<bool>? IsAuthenticatedSnapshot { private get; set; }
+
+    /// <summary>
     /// Ordered operation labels for assertions (Set/Clear/Get and auth timing markers).
     /// </summary>
     public List<string> Operations { get; } = [];
+
+    /// <summary>
+    /// Optional pending read used to control restoration timing.
+    /// </summary>
+    public TaskCompletionSource<string?>? PendingGet { private get; set; }
 
     /// <inheritdoc />
     public Task<string?> GetAsync()
     {
         Operations.Add("Get");
-        return Task.FromResult(Username);
+        return PendingGet?.Task ?? Task.FromResult(Username);
     }
 
     /// <inheritdoc />
     public Task SetAsync(string username)
     {
-        if (_isAuthenticatedSnapshot is not null)
+        if (IsAuthenticatedSnapshot is not null)
         {
-            Operations.Add(_isAuthenticatedSnapshot() ? "SetWhileAuthenticated" : "SetBeforeAuthenticated");
+            Operations.Add(IsAuthenticatedSnapshot() ? "SetWhileAuthenticated" : "SetBeforeAuthenticated");
         }
         else
         {
@@ -61,9 +53,9 @@ public sealed class StubUserSessionStore : IUserSessionStore
     /// <inheritdoc />
     public Task ClearAsync()
     {
-        if (_isAuthenticatedSnapshot is not null)
+        if (IsAuthenticatedSnapshot is not null)
         {
-            Operations.Add(_isAuthenticatedSnapshot() ? "ClearWhileAuthenticated" : "ClearWhileUnauthenticated");
+            Operations.Add(IsAuthenticatedSnapshot() ? "ClearWhileAuthenticated" : "ClearWhileUnauthenticated");
         }
         else
         {
@@ -71,6 +63,7 @@ public sealed class StubUserSessionStore : IUserSessionStore
         }
 
         Username = null;
+        PendingGet = null;
         return Task.CompletedTask;
     }
 }
