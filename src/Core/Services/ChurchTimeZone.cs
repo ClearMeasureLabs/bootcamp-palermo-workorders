@@ -9,7 +9,7 @@ public static class ChurchTimeZone
     private const string WindowsId = "Central Standard Time";
 
     /// <summary>
-    /// Gets the America/Chicago timezone, falling back to Central Standard Time on Windows.
+    /// Gets America/Chicago, then Central Standard Time, with UTC as a safe final fallback.
     /// </summary>
     public static TimeZoneInfo Chicago { get; } = ResolveChicago();
 
@@ -33,19 +33,24 @@ public static class ChurchTimeZone
         return today.AddDays(daysUntilSaturday);
     }
 
-    private static TimeZoneInfo ResolveChicago()
+    private static TimeZoneInfo ResolveChicago() =>
+        FindTimeZone(IanaId)
+        ?? FindTimeZone(WindowsId)
+        ?? TimeZoneInfo.Utc;
+
+    private static TimeZoneInfo? FindTimeZone(string id)
     {
         try
         {
-            return TimeZoneInfo.FindSystemTimeZoneById(IanaId);
+            return TimeZoneInfo.FindSystemTimeZoneById(id);
         }
         catch (TimeZoneNotFoundException)
         {
-            return TimeZoneInfo.FindSystemTimeZoneById(WindowsId);
+            return null;
         }
         catch (InvalidTimeZoneException)
         {
-            return TimeZoneInfo.FindSystemTimeZoneById(WindowsId);
+            return null;
         }
     }
 }
