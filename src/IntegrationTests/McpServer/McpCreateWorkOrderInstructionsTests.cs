@@ -39,9 +39,9 @@ public class McpCreateWorkOrderInstructionsTests
         var number = ExtractWorkOrderNumber(result);
         number.ShouldNotBeNullOrWhiteSpace();
 
-        var reloaded = await bus.Send(new WorkOrderByNumberQuery(number!));
+        var reloaded = await bus.Send(new WorkOrderByNumberQuery(number));
         reloaded.ShouldNotBeNull();
-        reloaded!.Instructions.ShouldBe(instructions);
+        reloaded.Instructions.ShouldBe(instructions);
         reloaded.Instructions.ShouldNotBe(description);
         reloaded.Description.ShouldBe(description);
     }
