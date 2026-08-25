@@ -1,0 +1,46 @@
+@startuml
+!include templates/plantuml-theme.puml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+title AI Software Factory — SDLC workflow (C4 Container)
+
+Person(anyone, "Anyone", "Submits a change, problem, bug, or issue")
+Person(leader, "Software leader", "Manages delivery from the weekly scorecard")
+Person(engineer, "Engineer", "Owns unclear and complex work")
+
+System_Boundary(factory, "AI Software Factory (orchestration)") {
+  Container(ai, "AI column runners", "Agents", "Move easy tokens station to station. Each automation is a hypothesis.")
+  Container(scorecard, "Weekly scorecard", "Metrics", "Throughput, mean time to delivery, escaped defects, production incidents")
+}
+
+System_Boundary(env, "Professional-grade DevOps environment") {
+  Container(work, "Tracking Work", "Board", "Every item has type and status. Unclear work does not start a build.")
+  Container(code, "Tracking Code", "Git")
+  Container(build, "Building Code", "CI")
+  Container(validate, "Validating the Code", "Tests")
+  Container(rc, "Release Candidate Creation", "Package")
+  Container(deploy, "Deploying the Release", "CD")
+  Container(operate, "Operating and Monitoring", "Prod", "Incidents and escaped defects become new work")
+}
+
+Rel(anyone, work, "1. Submit")
+Rel(work, ai, "2a. Easy: incident, escaped defect, small defined change")
+Rel(work, engineer, "2b. Unclear stays human")
+Rel(ai, code, "3. Move token through stations")
+Rel(engineer, code, "3. Track code")
+Rel(code, build, "4. Build")
+Rel(build, validate, "5. Validate")
+Rel(validate, rc, "6. RC")
+Rel(rc, deploy, "7. Deploy")
+Rel(deploy, operate, "8. Operate")
+Rel(operate, work, "9. Incident or escaped defect")
+Rel(work, scorecard, "Emits")
+Rel(code, scorecard, "Emits")
+Rel(build, scorecard, "Emits")
+Rel(validate, scorecard, "Emits")
+Rel(rc, scorecard, "Emits")
+Rel(deploy, scorecard, "Emits")
+Rel(operate, scorecard, "Emits")
+Rel(scorecard, leader, "Keep or kill each AI column")
+Rel(leader, work, "Tune the line")
+@enduml
