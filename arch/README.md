@@ -58,6 +58,7 @@ Several PlantUML files include remote C4 library snippets via `!includeurl`. To 
 | File | Diagram type | Description |
 |------|--------------|-------------|
 | `arch-c4-system.md` | C4Context | Church Bulletin system context |
+| `arch-c4-ai-software-factory.puml` | C4Container | AI Software Factory SDLC workflow |
 | `arch-c4-container-deployment.md` | C4Container | Containers (DB, app, UI) |
 | `arch-c4-component-project-dependencies.md` | C4Component | Solution/project structure |
 | `arch-c4-class-domain-model.md` | C4Component | Work order domain model |
