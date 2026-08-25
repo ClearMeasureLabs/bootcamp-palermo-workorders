@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
+using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -63,8 +64,8 @@ public class SettingsTests
 
         var bunitAuth = ctx.AddAuthorization();
         bunitAuth.SetAuthorized("hsimpson");
-        var customAuth = new CustomAuthenticationStateProvider();
-        customAuth.Login("hsimpson");
+        var customAuth = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        customAuth.Login("hsimpson").GetAwaiter().GetResult();
         ctx.Services.AddSingleton<AuthenticationStateProvider>(customAuth);
         ctx.Services.AddSingleton(customAuth);
 

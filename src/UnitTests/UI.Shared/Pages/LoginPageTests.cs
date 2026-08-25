@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
+using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -46,7 +47,7 @@ public class LoginPageTests
     {
         await using var ctx = new BunitContext();
 
-        var provider = new CustomAuthenticationStateProvider();
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -71,7 +72,7 @@ public class LoginPageTests
     {
         await using var ctx = new BunitContext();
 
-        var provider = new CustomAuthenticationStateProvider();
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -91,7 +92,7 @@ public class LoginPageTests
     {
         await using var ctx = new BunitContext();
 
-        var provider = new CustomAuthenticationStateProvider();
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -114,7 +115,7 @@ public class LoginPageTests
     {
         await using var ctx = new BunitContext();
 
-        var provider = new CustomAuthenticationStateProvider();
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -131,7 +132,7 @@ public class LoginPageTests
     {
         await using var ctx = new BunitContext();
 
-        var provider = new CustomAuthenticationStateProvider();
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -150,7 +151,7 @@ public class LoginPageTests
     {
         await using var ctx = new BunitContext();
 
-        var provider = new CustomAuthenticationStateProvider();
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -170,7 +171,7 @@ public class LoginPageTests
     {
         await using var ctx = new BunitContext();
 
-        var provider = new CustomAuthenticationStateProvider();
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         var gatedBus = new GatedEmployeeStubBus();
         ctx.Services.AddSingleton(provider);
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
@@ -202,7 +203,7 @@ public class LoginPageTests
     {
         await using var ctx = new BunitContext();
 
-        var provider = new CustomAuthenticationStateProvider();
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());

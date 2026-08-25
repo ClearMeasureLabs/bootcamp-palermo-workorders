@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
+using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -94,8 +95,8 @@ public class ApplicationChatTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new ApplicationChatStubBus());
 
-        var provider = new CustomAuthenticationStateProvider();
-        provider.Login("hsimpson");
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        provider.Login("hsimpson").GetAwaiter().GetResult();
         ctx.Services.AddSingleton(provider);
 
         return ctx;

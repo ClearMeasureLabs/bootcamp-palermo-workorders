@@ -17,6 +17,7 @@ public class UIClientServiceRegistry : ServiceRegistry
 {
     public UIClientServiceRegistry()
     {
+        this.AddSingleton<IUserSessionStore, LocalStorageUserSessionStore>();
         this.AddScoped<CustomAuthenticationStateProvider>();
         this.AddScoped<AuthenticationStateProvider>(provider =>
             provider.GetRequiredService<CustomAuthenticationStateProvider>());

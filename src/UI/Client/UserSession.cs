@@ -28,7 +28,7 @@ public class UserSession(
 
     public void LogOut()
     {
-        authProvider.Logout();
+        authProvider.Logout().GetAwaiter().GetResult();
         navigationManager.NavigateTo("/login");
     }
 

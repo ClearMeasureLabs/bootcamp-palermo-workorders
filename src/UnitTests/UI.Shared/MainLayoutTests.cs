@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
+using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared;
 
@@ -270,10 +271,10 @@ public class MainLayoutTests
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession());
         ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
-        var customAuth = new CustomAuthenticationStateProvider();
+        var customAuth = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         if (authenticateAsUser != null)
         {
-            customAuth.Login(authenticateAsUser);
+            customAuth.Login(authenticateAsUser).GetAwaiter().GetResult();
         }
 
         ctx.Services.AddSingleton(customAuth);
