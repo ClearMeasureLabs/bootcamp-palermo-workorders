@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Palermo.BlazorMvc;
 using Shouldly;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Client;
 
@@ -14,13 +13,13 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Client;
 public class ClientHealthCheckPageTests
 {
     [Test]
-    public void ClientHealthCheck_ShouldRenderStatus_WhenHealthServiceReturnsReport()
+    public async Task ClientHealthCheck_ShouldRenderStatus_WhenHealthServiceReturnsReport()
     {
-        using var ctx = CreateContextWithHealthChecks();
+        await using var ctx = CreateContextWithHealthChecks();
 
-        var component = ctx.RenderComponent<ClientHealthCheck>();
+        var component = ctx.Render<ClientHealthCheck>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{ClientHealthCheck.Elements.Status}']").ShouldNotBeNull();
         });
@@ -28,27 +27,27 @@ public class ClientHealthCheckPageTests
     }
 
     [Test]
-    public void DetailedClientHealthCheck_ShouldRenderStatus_WhenHealthServiceReturnsReport()
+    public async Task DetailedClientHealthCheck_ShouldRenderStatus_WhenHealthServiceReturnsReport()
     {
-        using var ctx = CreateContextWithHealthChecks();
+        await using var ctx = CreateContextWithHealthChecks();
 
-        var component = ctx.RenderComponent<DetailedClientHealthCheck>();
+        var component = ctx.Render<DetailedClientHealthCheck>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{DetailedClientHealthCheck.Elements.Status}']").ShouldNotBeNull();
         });
         component.Markup.ShouldNotContain("Loading detailed health report");
     }
 
-    private static TestContext CreateContextWithHealthChecks()
+    private static BunitContext CreateContextWithHealthChecks()
     {
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddHealthChecks();
         var provider = services.BuildServiceProvider();
 
-        var ctx = new TestContext();
+        var ctx = new BunitContext();
         ctx.Services.AddSingleton(provider.GetRequiredService<HealthCheckService>());
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());

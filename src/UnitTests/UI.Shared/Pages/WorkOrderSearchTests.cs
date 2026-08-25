@@ -6,16 +6,15 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class WorkOrderSearchTests
 {
     [Test]
-    public void ShouldLoadDropDownsInitiallyOnLoad()
+    public async Task ShouldLoadDropDownsInitiallyOnLoad()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         ctx.Services.AddSingleton<IBus>(new StubBus());
@@ -23,7 +22,7 @@ public class WorkOrderSearchTests
         ctx.Services.AddSingleton(TimeProvider.System);
 
         // Act
-        var component = ctx.RenderComponent<WorkOrderSearch>();
+        var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
         var creatorSelect = component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}");
@@ -50,15 +49,15 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public void ShouldAssociateFilterLabelsWithMatchingSelectIds()
+    public async Task ShouldAssociateFilterLabelsWithMatchingSelectIds()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
 
-        var component = ctx.RenderComponent<WorkOrderSearch>();
+        var component = ctx.Render<WorkOrderSearch>();
 
         AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.CreatorSelect);
         AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.AssigneeSelect);
@@ -75,9 +74,9 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public void ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
+    public async Task ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         var stubBus = new StubBus();
@@ -86,7 +85,7 @@ public class WorkOrderSearchTests
         ctx.Services.AddSingleton(TimeProvider.System);
 
         // Act
-        var component = ctx.RenderComponent<WorkOrderSearch>();
+        var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
         var workOrderTable = component.Find(".grid-data");
@@ -97,9 +96,9 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public void ShouldLoadWorkOrderTableWithCreatorFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderTableWithCreatorFilterOnInitialLoad()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         var stubBus = new StubBus();
@@ -112,7 +111,7 @@ public class WorkOrderSearchTests
         navigationManager.NavigateTo(uri);
 
         // Act
-        var component = ctx.RenderComponent<WorkOrderSearch>();
+        var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
         var workOrderTable = component.Find(".grid-data");
@@ -121,9 +120,9 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public void ShouldLoadWorkOrderTableWithAssigneeFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderTableWithAssigneeFilterOnInitialLoad()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         var stubBus = new StubBus();
@@ -136,7 +135,7 @@ public class WorkOrderSearchTests
         navigationManager.NavigateTo(uri);
 
         // Act
-        var component = ctx.RenderComponent<WorkOrderSearch>();
+        var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
         var workOrderTable = component.Find(".grid-data");
@@ -145,9 +144,9 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public void ShouldLoadWorkOrderTableWithStatusFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderTableWithStatusFilterOnInitialLoad()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         var stubBus = new StubBus();
@@ -160,7 +159,7 @@ public class WorkOrderSearchTests
         navigationManager.NavigateTo(uri);
 
         // Act
-        var component = ctx.RenderComponent<WorkOrderSearch>();
+        var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
         var workOrderTable = component.Find(".grid-data");
@@ -169,9 +168,9 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public void AfterInitialLoadSelectingAllThreeOptionsShouldLoadWorkOrders()
+    public async Task AfterInitialLoadSelectingAllThreeOptionsShouldLoadWorkOrders()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         var stubBus = new StubBus();
@@ -179,19 +178,19 @@ public class WorkOrderSearchTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
 
-        var component = ctx.RenderComponent<WorkOrderSearch>();
+        var component = ctx.Render<WorkOrderSearch>();
 
         // Act
         var creatorSelect = component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
 
-        creatorSelect.Change("jpalermo");
-        assigneeSelect.Change("hsimpson");
-        statusSelect.Change(WorkOrderStatus.InProgress.Key);
+        await creatorSelect.ChangeAsync(new() { Value = "jpalermo" });
+        await assigneeSelect.ChangeAsync(new() { Value = "hsimpson" });
+        await statusSelect.ChangeAsync(new() { Value = WorkOrderStatus.InProgress.Key });
 
         var searchButton = component.Find($"#{WorkOrderSearch.Elements.SearchButton}");
-        searchButton.Click();
+        await searchButton.ClickAsync(new());
 
         // Assert
         var workOrderTable = component.Find(".grid-data");

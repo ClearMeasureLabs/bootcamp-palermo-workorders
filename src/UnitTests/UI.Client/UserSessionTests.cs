@@ -7,7 +7,7 @@ using MediatR;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using TestContext = Bunit.TestContext;
+using Bunit;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Client;
 
@@ -17,7 +17,7 @@ public class UserSessionTests
     [Test]
     public async Task GetCurrentUserAsync_ShouldReturnNull_WhenUsernameEmpty()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
         var authProvider = new CustomAuthenticationStateProvider();
         var session = new UserSession(
             new StubEmployeeBus(null),
@@ -32,7 +32,7 @@ public class UserSessionTests
     [Test]
     public async Task GetCurrentUserAsync_ShouldReturnEmployee_WhenValid()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
         var employee = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com")
         {
             Id = Guid.NewGuid()
@@ -56,7 +56,7 @@ public class UserSessionTests
     [Test]
     public async Task GetCurrentUserAsync_ShouldThrow_WhenEmployeeMissing()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
         var authProvider = new CustomAuthenticationStateProvider();
         authProvider.Login("unknown");
         var session = new UserSession(
@@ -72,7 +72,7 @@ public class UserSessionTests
     [Test]
     public async Task LogOut_ShouldClearAuth_AndNavigateToLogin()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
         var authProvider = new CustomAuthenticationStateProvider();
         authProvider.Login("hsimpson");
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
