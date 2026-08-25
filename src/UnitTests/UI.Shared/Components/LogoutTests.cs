@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
+using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Components;
 
@@ -20,8 +21,8 @@ public class LogoutTests
     {
         await using var ctx = new BunitContext();
 
-        var authProvider = new CustomAuthenticationStateProvider();
-        authProvider.Login("hsimpson");
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
 
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -39,8 +40,8 @@ public class LogoutTests
     {
         await using var ctx = new BunitContext();
 
-        var authProvider = new CustomAuthenticationStateProvider();
-        authProvider.Login("hsimpson");
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
 
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -60,8 +61,8 @@ public class LogoutTests
     {
         await using var ctx = new BunitContext();
 
-        var authProvider = new CustomAuthenticationStateProvider();
-        authProvider.Login("hsimpson");
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
         var spyEventBus = new SpyUiBus();
 
         ctx.Services.AddSingleton(authProvider);
@@ -82,8 +83,8 @@ public class LogoutTests
     {
         await using var ctx = new BunitContext();
 
-        var authProvider = new CustomAuthenticationStateProvider();
-        authProvider.Login("hsimpson");
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
 
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -105,7 +106,7 @@ public class LogoutTests
 
         var spyEventBus = new SpyUiBus();
 
-        ctx.Services.AddSingleton<CustomAuthenticationStateProvider>();
+        ctx.Services.AddSingleton(new CustomAuthenticationStateProvider(new StubUserSessionStore()));
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 

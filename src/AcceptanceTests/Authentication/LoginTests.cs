@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -136,6 +137,84 @@ public class LoginTests : AcceptanceTestBase
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
         await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome tlovejoy!");
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_RetainWelcomeTlovejoy_WhenPageReloadedAfterLovejoyLogin()
+    {
+        await LoginAsLovejoyViaShortcutAsync();
+
+        await Page.ReloadAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
+            .ToHaveTextAsync("Welcome tlovejoy!");
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
+        await Expect(Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder))).ToBeVisibleAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_RetainWelcomeTlovejoy_WhenHardNavigatingHomeAfterLovejoyLogin()
+    {
+        await LoginAsLovejoyViaShortcutAsync();
+
+        await Page.GotoAsync(ServerFixture.ApplicationBaseUrl + "/");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
+            .ToHaveTextAsync("Welcome tlovejoy!");
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_RetainWelcomeTlovejoy_WhenHardNavigatingHomeAfterHealthcheck()
+    {
+        await LoginAsLovejoyViaShortcutAsync();
+
+        await Page.GotoAsync(ServerFixture.ApplicationBaseUrl + "/_healthcheck");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GotoAsync(ServerFixture.ApplicationBaseUrl + "/");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
+            .ToHaveTextAsync("Welcome tlovejoy!");
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_ShowLogin_WhenHardNavigatingHomeAfterLogout()
+    {
+        await LoginAsLovejoyViaShortcutAsync();
+
+        await Click(nameof(Logout.Elements.LogoutLink));
+        await Page.WaitForURLAsync("**/login");
+        await Page.GotoAsync(ServerFixture.ApplicationBaseUrl + "/");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText))).ToHaveCountAsync(0);
+    }
+
+    private async Task LoginAsLovejoyViaShortcutAsync()
+    {
+        await Page.GotoAsync("/login");
+
+        var shortcut = Page.GetByTestId(nameof(Login.Elements.LovejoyShortcut));
+        await shortcut.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000
+        });
+
+        await Click(nameof(Login.Elements.LovejoyShortcut));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
+            .ToHaveTextAsync("Welcome tlovejoy!");
     }
 
     /// <summary>

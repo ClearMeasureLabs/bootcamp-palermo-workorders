@@ -12,9 +12,9 @@
 
 @code {
 
-    private void HandleLogout()
+    private async Task HandleLogout()
     {
-        AuthStateProvider.Logout();
+        await AuthStateProvider.Logout();
         EventBus.Notify(new UserLoggedOutEvent(AuthStateProvider.GetUsername()));
         NavigationManager.NavigateTo("/login");
     }

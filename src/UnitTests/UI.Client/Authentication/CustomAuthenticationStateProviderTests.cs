@@ -9,18 +9,24 @@ public class CustomAuthenticationStateProviderTests
     [Test]
     public async Task ShouldReturnUnauthenticatedUserWhenNotLoggedIn()
     {
-        var authProvider = new CustomAuthenticationStateProvider();
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
+
         var authState = await authProvider.GetAuthenticationStateAsync();
+
         authState.User.Identity!.IsAuthenticated.ShouldBeFalse();
     }
 
     [Test]
     public async Task ShouldReturnAuthenticatedUserAfterLogin()
     {
-        var authProvider = new CustomAuthenticationStateProvider();
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
         const string username = "hsimpson";
-        authProvider.Login(username);
+
+        await authProvider.Login(username);
         var authState = await authProvider.GetAuthenticationStateAsync();
+
         authState.User.Identity!.IsAuthenticated.ShouldBeTrue();
         authState.User.Identity.Name.ShouldBe(username);
     }
@@ -28,10 +34,131 @@ public class CustomAuthenticationStateProviderTests
     [Test]
     public async Task ShouldReturnUnauthenticatedUserAfterLogout()
     {
-        var authProvider = new CustomAuthenticationStateProvider();
-        authProvider.Login("hsimpson");
-        authProvider.Logout();
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        await authProvider.Login("hsimpson");
+
+        await authProvider.Logout();
         var authState = await authProvider.GetAuthenticationStateAsync();
+
         authState.User.Identity!.IsAuthenticated.ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Login_ShouldWriteStoreThenSetPrincipalThenNotify()
+    {
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        store.IsAuthenticatedSnapshot = authProvider.IsAuthenticated;
+        authProvider.AuthenticationStateChanged += _ =>
+            store.Operations.Add(authProvider.IsAuthenticated()
+                ? "NotifyAuthenticated"
+                : "NotifyUnauthenticated");
+
+        await authProvider.Login("tlovejoy");
+
+        store.Operations.ShouldBe(["SetBeforeAuthenticated", "NotifyAuthenticated"]);
+        (await store.GetAsync()).ShouldBe("tlovejoy");
+        authProvider.IsAuthenticated().ShouldBeTrue();
+        authProvider.GetUsername().ShouldBe("tlovejoy");
+    }
+
+    [Test]
+    public async Task Logout_ShouldClearStoreThenClearPrincipalThenNotify()
+    {
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        store.IsAuthenticatedSnapshot = authProvider.IsAuthenticated;
+        await authProvider.Login("tlovejoy");
+        store.Operations.Clear();
+        authProvider.AuthenticationStateChanged += _ =>
+            store.Operations.Add(authProvider.IsAuthenticated()
+                ? "NotifyAuthenticated"
+                : "NotifyUnauthenticated");
+
+        await authProvider.Logout();
+
+        store.Operations.ShouldBe(["ClearWhileAuthenticated", "NotifyUnauthenticated"]);
+        (await store.GetAsync()).ShouldBeNull();
+        authProvider.IsAuthenticated().ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task GetAuthenticationStateAsync_ShouldRestoreTlovejoyFromStoreWithoutLogin()
+    {
+        var store = new StubUserSessionStore { Username = "tlovejoy" };
+        var authProvider = new CustomAuthenticationStateProvider(store);
+
+        var authState = await authProvider.GetAuthenticationStateAsync();
+
+        authState.User.Identity!.IsAuthenticated.ShouldBeTrue();
+        authState.User.Identity.Name.ShouldBe("tlovejoy");
+        authProvider.GetUsername().ShouldBe("tlovejoy");
+        store.Operations.ShouldContain("Get");
+    }
+
+    [Test]
+    public async Task GetAuthenticationStateAsync_ShouldStayUnauthenticated_AfterLogoutClearsStore()
+    {
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        await authProvider.Login("tlovejoy");
+        await authProvider.Logout();
+
+        var restoredProvider = new CustomAuthenticationStateProvider(store);
+        var authState = await restoredProvider.GetAuthenticationStateAsync();
+
+        authState.User.Identity!.IsAuthenticated.ShouldBeFalse();
+        (await store.GetAsync()).ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Logout_ShouldRemainUnauthenticated_WhenRestoreWasAlreadyInFlight()
+    {
+        var pendingGet = new TaskCompletionSource<string?>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var store = new StubUserSessionStore { PendingGet = pendingGet };
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        var restoreTask = authProvider.GetAuthenticationStateAsync();
+
+        var logoutTask = authProvider.Logout();
+        pendingGet.SetResult("tlovejoy");
+
+        await restoreTask;
+        await logoutTask;
+        var authState = await authProvider.GetAuthenticationStateAsync();
+
+        authState.User.Identity!.IsAuthenticated.ShouldBeFalse();
+        authProvider.GetUsername().ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Login_ShouldRemainUnauthenticated_WhenStoreWriteFails()
+    {
+        var store = new StubUserSessionStore
+        {
+            SetException = new InvalidOperationException("Storage unavailable")
+        };
+        var authProvider = new CustomAuthenticationStateProvider(store);
+
+        await Should.ThrowAsync<InvalidOperationException>(() => authProvider.Login("tlovejoy"));
+
+        authProvider.IsAuthenticated().ShouldBeFalse();
+        authProvider.GetUsername().ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Logout_ShouldRemainAuthenticated_WhenStoreClearFails()
+    {
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        await authProvider.Login("tlovejoy");
+        store.ClearException = new InvalidOperationException("Storage unavailable");
+
+        await Should.ThrowAsync<InvalidOperationException>(authProvider.Logout);
+
+        authProvider.IsAuthenticated().ShouldBeTrue();
+        authProvider.GetUsername().ShouldBe("tlovejoy");
+        store.Username.ShouldBe("tlovejoy");
     }
 }

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Bunit;
+using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Client;
 
@@ -18,7 +19,7 @@ public class UserSessionTests
     public async Task GetCurrentUserAsync_ShouldReturnNull_WhenUsernameEmpty()
     {
         await using var ctx = new BunitContext();
-        var authProvider = new CustomAuthenticationStateProvider();
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         var session = new UserSession(
             new StubEmployeeBus(null),
             authProvider,
@@ -37,8 +38,8 @@ public class UserSessionTests
         {
             Id = Guid.NewGuid()
         };
-        var authProvider = new CustomAuthenticationStateProvider();
-        authProvider.Login("hsimpson");
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
         var stubBus = new StubEmployeeBus(employee);
         var session = new UserSession(
             stubBus,
@@ -54,11 +55,33 @@ public class UserSessionTests
     }
 
     [Test]
+    public async Task GetCurrentUserAsync_ShouldRestoreStoredUsername_BeforeQueryingEmployee()
+    {
+        await using var ctx = new BunitContext();
+        var employee = new Employee("tlovejoy", "Timothy", "Lovejoy", "lovejoy@example.com")
+        {
+            Id = Guid.NewGuid()
+        };
+        var store = new StubUserSessionStore { Username = "tlovejoy" };
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        var stubBus = new StubEmployeeBus(employee);
+        var session = new UserSession(
+            stubBus,
+            authProvider,
+            ctx.Services.GetRequiredService<NavigationManager>());
+
+        var user = await session.GetCurrentUserAsync();
+
+        user.ShouldBe(employee);
+        stubBus.LastQueriedUsername.ShouldBe("tlovejoy");
+    }
+
+    [Test]
     public async Task GetCurrentUserAsync_ShouldThrow_WhenEmployeeMissing()
     {
         await using var ctx = new BunitContext();
-        var authProvider = new CustomAuthenticationStateProvider();
-        authProvider.Login("unknown");
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("unknown");
         var session = new UserSession(
             new StubEmployeeBus(null),
             authProvider,
@@ -73,12 +96,12 @@ public class UserSessionTests
     public async Task LogOut_ShouldClearAuth_AndNavigateToLogin()
     {
         await using var ctx = new BunitContext();
-        var authProvider = new CustomAuthenticationStateProvider();
-        authProvider.Login("hsimpson");
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         var session = new UserSession(new StubEmployeeBus(null), authProvider, navigationManager);
 
-        session.LogOut();
+        await session.LogOut();
 
         var authState = await authProvider.GetAuthenticationStateAsync();
         authState.User.Identity!.IsAuthenticated.ShouldBeFalse();

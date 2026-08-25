@@ -70,7 +70,7 @@ public partial class Login : AppComponentBase
         var selectedEmployee = Employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username);
         if (selectedEmployee != null)
         {
-            AuthStateProvider!.Login(LoginModelValue.Username);
+            await AuthStateProvider!.Login(LoginModelValue.Username);
             EventBus.Notify(new UserLoggedInEvent(LoginModelValue.Username));
             await Bus.Publish(new Core.Model.Events.UserLoggedInEvent(LoginModelValue.Username));
             NavigationManager!.NavigateTo("/");
