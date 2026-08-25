@@ -17,9 +17,12 @@ public partial class Login : AppComponentBase
     public string? ErrorMessage;
     public Employee[] Employees = Array.Empty<Employee>();
 
-    protected override async Task OnInitializedAsync()
+    private Task _employeesLoadTask = Task.CompletedTask;
+
+    protected override Task OnInitializedAsync()
     {
-        await LoadEmployees();
+        _employeesLoadTask = LoadEmployees();
+        return _employeesLoadTask;
     }
 
     private async Task LoadEmployees()
@@ -46,6 +49,7 @@ public partial class Login : AppComponentBase
 
     private async Task LoginAsTimothyLovejoy()
     {
+        await _employeesLoadTask;
         LoginModelValue.Username = TimothyLovejoyUsername;
         await AuthenticateAndNavigate();
     }
