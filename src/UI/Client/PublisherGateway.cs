@@ -46,13 +46,11 @@ public class PublisherGateway(HttpClient httpClient, IConfiguration? configurati
         var json = await result.Content.ReadAsStringAsync();
         if (!result.IsSuccessStatusCode)
         {
+            // Response bodies can carry internal detail; surface status only to the UI.
             throw new InvalidOperationException(
-                $"Remoting call failed ({(int)result.StatusCode} {result.ReasonPhrase}): {Truncate(json, 500)}");
+                $"Remoting call failed ({(int)result.StatusCode} {result.ReasonPhrase}).");
         }
 
         return JsonSerializer.Deserialize<WebServiceMessage>(json);
     }
-
-    private static string Truncate(string value, int max) =>
-        value.Length <= max ? value : value[..max] + "…";
 }

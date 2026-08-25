@@ -72,6 +72,8 @@ public class ToolProvider(
 
     private HttpClient CreateLoopbackHttpClient(string mcpUrl)
     {
+        // Discovery can be retried after a failure; release any client from the previous attempt.
+        _ownedHttpClient?.Dispose();
         _ownedHttpClient = McpLoopbackHttpClient.CreateForDevCertificate(mcpUrl);
         return _ownedHttpClient ?? httpClientFactory.CreateClient();
     }
