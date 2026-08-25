@@ -23,8 +23,8 @@ public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
-        await WaitForNewWorkOrderFormReadyAsync();
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         order.Number = await woNumberLocator.InnerTextAsync();
 
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
@@ -59,8 +59,8 @@ public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 
-        await WaitForNewWorkOrderFormReadyAsync();
         var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         var number = await woNumberLocator.InnerTextAsync();
 
         await Input(nameof(WorkOrderManage.Elements.Title), $"[{TestTag}] 901 char room");
