@@ -1,4 +1,3 @@
-using System.Net.Security;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.Extensions.AI;
@@ -17,6 +16,7 @@ public class ToolProvider(
 {
     private readonly SemaphoreSlim _lock = new(1, 1);
     private McpClient? _client;
+    private HttpClient? _ownedHttpClient;
     private IList<AITool>? _tools;
 
     public async Task<IList<AITool>> GetToolsAsync()
@@ -70,24 +70,10 @@ public class ToolProvider(
         }
     }
 
-    /// <summary>
-    /// Loopback HTTPS uses the ASP.NET dev certificate; accept it for in-process MCP discovery.
-    /// Prefer the shared factory client for plain http:// endpoints.
-    /// </summary>
     private HttpClient CreateLoopbackHttpClient(string mcpUrl)
     {
-        var mcpUri = new Uri(mcpUrl);
-        if (mcpUri.Scheme != Uri.UriSchemeHttps || !mcpUri.IsLoopback)
-        {
-            return httpClientFactory.CreateClient();
-        }
-
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = (_, _, _, errors) =>
-                errors is SslPolicyErrors.None or SslPolicyErrors.RemoteCertificateChainErrors
-        };
-        return new HttpClient(handler);
+        _ownedHttpClient = McpLoopbackHttpClient.CreateForDevCertificate(mcpUrl);
+        return _ownedHttpClient ?? httpClientFactory.CreateClient();
     }
 
     public async ValueTask DisposeAsync()
@@ -97,6 +83,9 @@ public class ToolProvider(
             await _client.DisposeAsync();
             _client = null;
         }
+
+        _ownedHttpClient?.Dispose();
+        _ownedHttpClient = null;
         _lock.Dispose();
     }
 }
