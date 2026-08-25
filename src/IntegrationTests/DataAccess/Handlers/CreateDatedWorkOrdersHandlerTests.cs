@@ -3,6 +3,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
@@ -12,6 +13,18 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 [TestFixture]
 public class CreateDatedWorkOrdersHandlerTests
 {
+    private sealed class StubFailingPublishBus : IBus
+    {
+        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request) =>
+            throw new NotSupportedException();
+
+        public Task<object?> Send(object request) =>
+            throw new NotSupportedException();
+
+        public Task Publish(INotification notification) =>
+            Task.FromException(new InvalidOperationException("Simulated telemetry failure"));
+    }
+
     private sealed class ThrowingAfterCountNumberGenerator(int succeedCount) : IWorkOrderNumberGenerator
     {
         private int _count;
@@ -228,5 +241,42 @@ public class CreateDatedWorkOrdersHandlerTests
         {
             (await context.Set<WorkOrder>().CountAsync()).ShouldBe(0);
         }
+    }
+
+    [Test]
+    public async Task Handle_WhenTelemetryPublishFails_ReturnsCommittedWorkOrders()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("tlovejoy", "Timothy", "Lovejoy", "t@test.com");
+        var assignee = new Employee("gwillie", "Groundskeeper Willie", "MacDougal", "w@test.com");
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(assignee);
+            await context.SaveChangesAsync();
+        }
+
+        await using var db = TestHost.GetRequiredService<DbContext>();
+        var handler = new CreateDatedWorkOrdersHandler(
+            db,
+            new StubFailingPublishBus(),
+            new ThrowingAfterCountNumberGenerator(1),
+            TimeProvider.System,
+            NullLogger<CreateDatedWorkOrdersHandler>.Instance);
+
+        var result = await handler.Handle(
+            new CreateDatedWorkOrdersCommand(
+                "tlovejoy",
+                "gwillie",
+                "Mow the grass",
+                "Weekly Saturday mow",
+                [new DateOnly(2026, 8, 29)]),
+            CancellationToken.None);
+
+        result.Success.ShouldBeTrue();
+        result.WorkOrders.Count.ShouldBe(1);
+        await using var verifyContext = TestHost.GetRequiredService<DbContext>();
+        (await verifyContext.Set<WorkOrder>().CountAsync()).ShouldBe(1);
     }
 }

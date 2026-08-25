@@ -42,7 +42,7 @@ public class PublisherGateway(HttpClient httpClient, IConfiguration? configurati
             request.Headers.TryAddWithoutValidation(ApiKeyConstants.HeaderName, key.Trim());
         }
 
-        var result = await httpClient.SendAsync(request);
+        using var result = await httpClient.SendAsync(request);
         var json = await result.Content.ReadAsStringAsync();
         if (!result.IsSuccessStatusCode)
         {

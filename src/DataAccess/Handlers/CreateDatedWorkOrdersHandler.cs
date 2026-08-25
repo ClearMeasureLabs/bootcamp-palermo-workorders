@@ -52,10 +52,10 @@ public class CreateDatedWorkOrdersHandler(
         }
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var created = new List<CreatedDatedWorkOrder>(request.DueDates.Count);
         try
         {
             var now = time.GetUtcNow().DateTime;
-            var created = new List<CreatedDatedWorkOrder>(request.DueDates.Count);
 
             foreach (var dueDate in request.DueDates)
             {
@@ -78,24 +78,38 @@ public class CreateDatedWorkOrdersHandler(
 
             await dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-
-            await bus.Publish(new DatedWorkOrdersCreatedEvent(created.Count));
-
-            logger.LogInformation(
-                "Created {Count} dated work orders for assignee {AssigneeUsername}",
-                created.Count,
-                request.AssigneeUsername);
-
-            return new CreateDatedWorkOrdersResult(
-                true,
-                $"Created {created.Count} work orders.",
-                created);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed creating dated work orders; rolling back");
             await transaction.RollbackAsync(cancellationToken);
             throw;
+        }
+
+        await PublishCreatedEventAsync(created.Count);
+
+        logger.LogInformation(
+            "Created {Count} dated work orders for assignee {AssigneeUsername}",
+            created.Count,
+            request.AssigneeUsername);
+
+        return new CreateDatedWorkOrdersResult(
+            true,
+            $"Created {created.Count} work orders.",
+            created);
+    }
+
+    private async Task PublishCreatedEventAsync(int count)
+    {
+        try
+        {
+            await bus.Publish(new DatedWorkOrdersCreatedEvent(count));
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Created {Count} dated work orders, but publishing the telemetry event failed",
+                count);
         }
     }
 
