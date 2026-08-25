@@ -43,7 +43,7 @@ public class ToolProvider(
         var mcpUrl = McpEndpointResolver.ResolveMcpUrl(server);
         logger.LogInformation("ToolProvider: connecting to MCP endpoint at {McpUrl}", mcpUrl);
 
-        var httpClient = httpClientFactory.CreateClient();
+        var httpClient = CreateLoopbackHttpClient(mcpUrl);
         var transportOptions = new HttpClientTransportOptions
         {
             Endpoint = new Uri(mcpUrl),
@@ -67,6 +67,25 @@ public class ToolProvider(
             await localClient.DisposeAsync();
             throw;
         }
+    }
+
+    /// <summary>
+    /// Loopback HTTPS uses the ASP.NET dev certificate; accept it for in-process MCP discovery.
+    /// Prefer the shared factory client for plain http:// endpoints.
+    /// </summary>
+    private HttpClient CreateLoopbackHttpClient(string mcpUrl)
+    {
+        if (!mcpUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return httpClientFactory.CreateClient();
+        }
+
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        return new HttpClient(handler);
     }
 
     public async ValueTask DisposeAsync()

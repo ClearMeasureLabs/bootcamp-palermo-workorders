@@ -1,13 +1,9 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
-using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
-using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.UI.Shared;
-using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,13 +41,14 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         await Click(saveButtonTestId);
         await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
 
+        // Empty <span> has no layout box; Playwright treats that as not visible. Assert attached + blank.
         var dueDateCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + order.Number);
-        await Expect(dueDateCell).ToBeVisibleAsync();
+        await Expect(dueDateCell).ToBeAttachedAsync();
         await Expect(dueDateCell).ToHaveTextAsync(string.Empty);
 
         var rehydrated = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
         rehydrated.ShouldNotBeNull();
-        rehydrated!.DueDate.ShouldBeNull();
+        rehydrated.DueDate.ShouldBeNull();
     }
 
     [Test, Retry(2)]
@@ -103,22 +100,33 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var todayOrder = await CreateDraftWithDueDateAsync($"[{TestTag}] due today", today);
         var overdueOrder = await CreateDraftWithDueDateAsync($"[{TestTag}] overdue", overdue);
 
-        await Page.GotoAsync("/workorder/search");
+        await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var todayCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + todayOrder.Number);
         var overdueCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + overdueOrder.Number);
+        await Expect(todayCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
+        await Expect(overdueCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
         await Expect(todayCell).ToHaveClassAsync(new Regex("due-date-today"));
         await Expect(overdueCell).ToHaveClassAsync(new Regex("due-date-overdue"));
 
         await CompleteWorkOrderViaBusAsync(todayOrder.Number!);
         await CancelWorkOrderViaBusAsync(overdueOrder.Number!);
 
-        await Page.ReloadAsync();
+        // Full Page.ReloadAsync drops in-memory Blazor auth and lands on /login.
+        // Soft-navigate within the SPA so search re-queries without losing the session.
+        await Click(nameof(NavMenu.Elements.Counter));
+        await Page.WaitForURLAsync("**/counter");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         todayCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + todayOrder.Number);
         overdueCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + overdueOrder.Number);
+
+        await Expect(todayCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
+        await Expect(overdueCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
         await Expect(todayCell).Not.ToHaveClassAsync(new Regex("due-date-today|due-date-overdue"));
         await Expect(overdueCell).Not.ToHaveClassAsync(new Regex("due-date-today|due-date-overdue"));
         await Expect(todayCell).ToContainTextAsync(today.ToString("MMM d, yyyy", CultureInfo.InvariantCulture));
@@ -131,8 +139,9 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         order.Title = title;
         order.Number = null;
 
-        await Page.GotoAsync("/");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        var newWorkOrder = Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder));
+        await Expect(newWorkOrder).ToBeVisibleAsync(
+            new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
 

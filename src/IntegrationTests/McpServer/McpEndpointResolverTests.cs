@@ -18,6 +18,22 @@ public class McpEndpointResolverTests
     }
 
     [Test]
+    public void ShouldPreferHttpAddressWhenHttpsAlsoPresent()
+    {
+        var server = new StubServer(["https://localhost:7174", "http://127.0.0.1:5174"]);
+
+        McpEndpointResolver.ResolveMcpUrl(server).ShouldBe("http://127.0.0.1:5174/mcp");
+    }
+
+    [Test]
+    public void ShouldResolveHttpsWhenOnlyHttpsIsPresent()
+    {
+        var server = new StubServer(["https://localhost:7174/"]);
+
+        McpEndpointResolver.ResolveMcpUrl(server).ShouldBe("https://localhost:7174/mcp");
+    }
+
+    [Test]
     public void ShouldThrowWhenServerHasNoAddress()
     {
         var server = new StubServer([]);

@@ -1,5 +1,6 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.McpServer.Tools;
@@ -53,12 +54,11 @@ public class ApplicationChatHandlerTests : LlmTestBase
         var currentUser = "tlovejoy";
         var query = new ApplicationChatQuery("Show me all the work orders that I created", currentUser);
 
-        ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
+        ApplicationChatResult response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
 
         response.ShouldNotBeNull();
-        response.Messages.ShouldNotBeEmpty();
-        response.Messages.Last().Text.ShouldNotBeNullOrWhiteSpace();
-        await TestContext.Out.WriteLineAsync(response.Messages.Last().Text);
+        response.Text.ShouldNotBeNullOrWhiteSpace();
+        await TestContext.Out.WriteLineAsync(response.Text);
     }
 
     [Test]
@@ -71,9 +71,9 @@ public class ApplicationChatHandlerTests : LlmTestBase
             "As tlovejoy, create a work order for mowing grass ",
             "tlovejoy");
 
-        ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
+        ApplicationChatResult response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
 
-        var responseText = response.Messages.LastOrDefault()?.Text;
+        var responseText = response.Text;
         await TestContext.Out.WriteLineAsync($"LLM response: {responseText}");
 
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
@@ -111,9 +111,9 @@ public class ApplicationChatHandlerTests : LlmTestBase
             "Confirm the assignment in your response.",
             "tlovejoy");
 
-        ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
+        ApplicationChatResult response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
 
-        var responseText = response.Messages.LastOrDefault()?.Text;
+        var responseText = response.Text;
         await TestContext.Out.WriteLineAsync($"LLM response: {responseText}");
 
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
@@ -192,9 +192,9 @@ public class ApplicationChatHandlerTests : LlmTestBase
             var handler = TestHost.GetRequiredService<ApplicationChatHandler>();
             var query = new ApplicationChatQuery(text, user);
 
-            ChatResponse response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
+            ApplicationChatResult response = await ExecuteLlmAsync(() => handler.Handle(query, CancellationToken.None));
 
-            return response.Messages.LastOrDefault()?.Text!;
+            return response.Text;
         }
 
         async Task<string> ParseWorkOrderNumberAsync(string text)

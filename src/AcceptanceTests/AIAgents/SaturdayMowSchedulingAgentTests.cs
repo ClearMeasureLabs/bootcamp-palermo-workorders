@@ -52,16 +52,28 @@ public class SaturdayMowSchedulingAgentTests : AcceptanceTestBase
         await Input(nameof(ApplicationChat.Elements.ChatInput), prompt);
         await Click(nameof(ApplicationChat.Elements.SendButton));
 
+        var expectedDates = WorkOrderToolsComingSaturdays();
+        var firstDateText = expectedDates[0].ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        // Wait for the assistant bubble to contain tool-backed content (not merely to exist).
+        // AiMessage1 can appear before the full reply is meaningful if the model echoes early.
         var aiMessage = Page.GetByTestId(nameof(ApplicationChat.Elements.AiMessage) + "1");
-        await aiMessage.WaitForAsync(new LocatorWaitForOptions { Timeout = 180_000 });
+        await Expect(aiMessage).ToContainTextAsync(
+            firstDateText,
+            new LocatorAssertionsToContainTextOptions { Timeout = 180_000 });
+        await Expect(Page.GetByTestId(nameof(ApplicationChat.Elements.LoadingIndicator)))
+            .ToHaveCountAsync(0);
 
         var chatText = await Page.GetByTestId(nameof(ApplicationChat.Elements.ChatHistory)).InnerTextAsync();
         chatText.ShouldNotBeNullOrEmpty();
+        var aiText = await aiMessage.InnerTextAsync();
+        aiText.ShouldNotBeNullOrEmpty();
 
-        var expectedDates = WorkOrderToolsComingSaturdays();
         foreach (var date in expectedDates)
         {
-            chatText.ShouldContain(date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+            var iso = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            aiText.ShouldContain(iso);
+            chatText.ShouldContain(iso);
         }
 
         var bus = TestHost.GetRequiredService<IBus>();
@@ -91,13 +103,20 @@ public class SaturdayMowSchedulingAgentTests : AcceptanceTestBase
             chatText.ShouldContain(wo.Number!);
         }
 
-        await Page.GotoAsync("/workorder/search?Assignee=gwillie");
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForURLAsync("**/workorder/search**");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        // Full Page.GotoAsync drops in-memory Blazor auth. Filter within the SPA instead.
+        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
+        await Expect(assigneeSelect).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        await assigneeSelect.SelectOptionAsync("gwillie");
+        await Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}").ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         foreach (var wo in matchingSet)
         {
             var cell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + wo.Number);
-            await Expect(cell).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+            await Expect(cell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
             await Expect(cell).ToContainTextAsync(
                 wo.DueDate!.Value.ToString("MMM d, yyyy", CultureInfo.InvariantCulture));
         }

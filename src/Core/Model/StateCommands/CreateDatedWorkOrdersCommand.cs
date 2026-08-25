@@ -1,4 +1,3 @@
-using ClearMeasure.Bootcamp.Core.Services;
 using MediatR;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;

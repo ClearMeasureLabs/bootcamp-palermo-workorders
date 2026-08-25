@@ -66,7 +66,7 @@ internal static class DatedWorkOrderScheduling
         return dates;
     }
 
-    internal static (IReadOnlyList<DateOnly> Dates, string? Error) TryParseDueDateList(string dueDates)
+    private static (IReadOnlyList<DateOnly> Dates, string? Error) TryParseDueDateList(string dueDates)
     {
         var list = new List<DateOnly>();
         foreach (var part in dueDates.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
