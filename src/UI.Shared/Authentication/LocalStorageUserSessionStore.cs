@@ -32,7 +32,15 @@ public sealed class LocalStorageUserSessionStore : IUserSessionStore
     /// <inheritdoc />
     public async Task SetAsync(string username)
     {
-        await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, username);
+        try
+        {
+            await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, username);
+        }
+        catch (JSException exception)
+        {
+            throw new InvalidOperationException(
+                $"Failed to persist user session to '{StorageKey}'.", exception);
+        }
     }
 
     /// <inheritdoc />

@@ -49,12 +49,26 @@ public class LocalStorageUserSessionStoreTests
         ex.InnerException.ShouldBe(jsException);
     }
 
+    [Test]
+    public async Task SetAsync_WhenStorageInteropFails_ShouldThrowWithStorageContext()
+    {
+        var jsException = new JSException("localStorage unavailable");
+        var js = new StubLocalStorageJsRuntime { SetItemException = jsException };
+        var store = new LocalStorageUserSessionStore(js);
+
+        var ex = await Should.ThrowAsync<InvalidOperationException>(() => store.SetAsync("tlovejoy"));
+
+        ex.Message.ShouldContain(StorageKey);
+        ex.InnerException.ShouldBe(jsException);
+    }
+
     private sealed class StubLocalStorageJsRuntime : IJSRuntime
     {
         private string? _value;
 
         public bool RefuseToRemove { get; init; }
         public JSException? GetItemException { get; init; }
+        public JSException? SetItemException { get; init; }
         public int RemoveItemCalls { get; private set; }
         public int GetItemCalls { get; private set; }
 
@@ -75,6 +89,11 @@ public class LocalStorageUserSessionStoreTests
 
                     return ValueTask.FromResult((TValue)(object?)_value!);
                 case "localStorage.setItem":
+                    if (SetItemException is not null)
+                    {
+                        throw SetItemException;
+                    }
+
                     _value = (string?)args![1];
                     return ValueTask.FromResult(default(TValue)!);
                 case "localStorage.removeItem":
