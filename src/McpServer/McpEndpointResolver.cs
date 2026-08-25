@@ -40,7 +40,7 @@ internal static class McpEndpointResolver
     /// Maps Kestrel bind-any hosts to loopback while preserving scheme and port.
     /// Unspecified addresses cannot be used as HttpClient targets.
     /// </summary>
-    internal static string ToClientReachableAddress(string address)
+    private static string ToClientReachableAddress(string address)
     {
         if (!Uri.TryCreate(address, UriKind.Absolute, out var uri))
         {
