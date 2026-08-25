@@ -1,8 +1,10 @@
 using Bunit;
 using System.ComponentModel.DataAnnotations;
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
@@ -164,6 +166,38 @@ public class LoginPageTests
     }
 
     [Test]
+    public async Task Should_LoginAsTlovejoy_WhenLovejoyClickedBeforeEmployeesLoaded()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider();
+        var gatedBus = new GatedEmployeeStubBus();
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(gatedBus);
+
+        var component = ctx.Render<Login>();
+
+        component.FindAll("option")
+            .Count(o => !string.IsNullOrEmpty(o.GetAttribute("value")))
+            .ShouldBe(0);
+
+        var shortcut = component.Find($"[data-testid='{Login.Elements.LovejoyShortcut}']");
+        var clickTask = shortcut.ClickAsync(new());
+
+        provider.IsAuthenticated().ShouldBeFalse();
+
+        gatedBus.ReleaseEmployees();
+        await clickTask;
+        await component.WaitForAssertionAsync(() =>
+        {
+            provider.IsAuthenticated().ShouldBeTrue();
+            provider.GetUsername().ShouldBe("tlovejoy");
+        });
+    }
+
+    [Test]
     public async Task Should_KeepDropdownLoginUnchanged_WhenLovejoyShortcutPresent()
     {
         await using var ctx = new BunitContext();
@@ -186,5 +220,23 @@ public class LoginPageTests
 
         provider.IsAuthenticated().ShouldBeTrue();
         provider.GetUsername().ShouldBe("hsimpson");
+    }
+
+    private sealed class GatedEmployeeStubBus : StubBus
+    {
+        private readonly TaskCompletionSource _gate =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void ReleaseEmployees() => _gate.TrySetResult();
+
+        public override async Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
+        {
+            if (request is EmployeeGetAllQuery)
+            {
+                await _gate.Task;
+            }
+
+            return await base.Send(request);
+        }
     }
 }

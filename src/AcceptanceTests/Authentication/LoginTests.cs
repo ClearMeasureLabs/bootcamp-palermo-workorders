@@ -137,4 +137,50 @@ public class LoginTests : AcceptanceTestBase
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
         await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome tlovejoy!");
     }
+
+    /// <summary>
+    /// Regression (#9086): Lovejoy shortcut must await the in-flight EmployeeGetAllQuery
+    /// so an early click still authenticates as tlovejoy once employees load.
+    /// </summary>
+    [Test, Retry(2)]
+    public async Task Should_LoginAsTlovejoy_WhenLovejoyClickedBeforeEmployeesLoaded()
+    {
+        const int employeeQueryDelayMs = 1_000;
+
+        await Page.RouteAsync("**/*blazor-wasm-single-api*", async route =>
+        {
+            if (!string.Equals(route.Request.Method, "POST", StringComparison.OrdinalIgnoreCase))
+            {
+                await route.ContinueAsync();
+                return;
+            }
+
+            var postData = route.Request.PostData ?? string.Empty;
+            if (postData.Contains("EmployeeGetAllQuery", StringComparison.Ordinal))
+            {
+                await Task.Delay(employeeQueryDelayMs);
+            }
+
+            await route.ContinueAsync();
+        });
+
+        await Page.GotoAsync("/login");
+        var shortcut = Page.GetByTestId(nameof(Login.Elements.LovejoyShortcut));
+        await shortcut.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000
+        });
+
+        var employeeOptions = Page.GetByTestId(nameof(Login.Elements.User))
+            .Locator("option[value]:not([value=''])");
+        await Expect(employeeOptions).ToHaveCountAsync(0);
+
+        await Click(nameof(Login.Elements.LovejoyShortcut));
+
+        var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
+        await Expect(welcomeTextLocator).ToHaveTextAsync(
+            "Welcome tlovejoy!",
+            new LocatorAssertionsToHaveTextOptions { Timeout = 60_000 });
+    }
 }
