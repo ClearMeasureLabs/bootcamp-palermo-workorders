@@ -30,7 +30,7 @@ public sealed class StubUserSessionStore : IUserSessionStore
     /// <summary>
     /// Optional failure raised by <see cref="SetAsync"/>.
     /// </summary>
-    public Exception? SetException { private get; set; }
+    public Exception? SetException { private get; init; }
 
     /// <summary>
     /// Optional failure raised by <see cref="ClearAsync"/>.
