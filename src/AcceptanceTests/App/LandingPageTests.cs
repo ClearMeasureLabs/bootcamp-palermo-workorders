@@ -9,7 +9,6 @@ public class LandingPageTests : AcceptanceTestBase
     public async Task Should_DisplayChurchTitle_WithDarkGreyColor()
     {
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         var titleElement = Page.Locator(".church-title");
         await titleElement.WaitForAsync();
@@ -23,7 +22,6 @@ public class LandingPageTests : AcceptanceTestBase
     public async Task Should_DisplayGreetingBanner_WithExpectedText()
     {
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         var banner = Page.GetByTestId(nameof(IndexPage.Elements.GreetingBanner));
         await banner.WaitForAsync();

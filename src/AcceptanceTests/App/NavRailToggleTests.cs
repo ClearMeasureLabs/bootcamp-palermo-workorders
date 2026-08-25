@@ -12,21 +12,18 @@ public class NavRailToggleTests : AcceptanceTestBase
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         var urlBefore = Page.Url;
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
         await Expect(toggle).ToBeVisibleAsync();
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
-        await Task.Delay(GetInputDelayMs());
 
         var rail = Page.Locator("#app-navigation-rail");
         (await rail.GetAttributeAsync("class"))!.ShouldContain("rail-hidden");
         (await Page.Locator(".modern-app").GetAttributeAsync("class"))!.ShouldContain("rail-collapsed");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
-        await Task.Delay(GetInputDelayMs());
 
         (await rail.GetAttributeAsync("class"))!.ShouldNotContain("rail-hidden");
         (await Page.Locator(".modern-app").GetAttributeAsync("class"))!.ShouldNotContain("rail-collapsed");
@@ -39,19 +36,16 @@ public class NavRailToggleTests : AcceptanceTestBase
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
         (await toggle.GetAttributeAsync("aria-expanded")).ShouldBe("true");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
-        await Task.Delay(GetInputDelayMs());
 
         (await toggle.GetAttributeAsync("aria-expanded")).ShouldBe("false");
         (await toggle.GetAttributeAsync("title"))!.ShouldContain("Show");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
-        await Task.Delay(GetInputDelayMs());
 
         (await toggle.GetAttributeAsync("aria-expanded")).ShouldBe("true");
         (await toggle.GetAttributeAsync("title"))!.ShouldContain("Hide");
@@ -64,14 +58,12 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         var urlBefore = Page.Url;
         var searchButton = Page.Locator($"#{nameof(WorkOrderSearch.Elements.SearchButton)}");
         await Expect(searchButton).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
-        await Task.Delay(GetInputDelayMs());
 
         (await Page.Locator(".modern-app").GetAttributeAsync("class"))!.ShouldContain("rail-collapsed");
         await Expect(searchButton).ToBeVisibleAsync();
@@ -85,23 +77,18 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
-        await Task.Delay(GetInputDelayMs());
 
         await Page.SetViewportSizeAsync(375, 667);
-        await Task.Delay(GetInputDelayMs() * 2);
 
         var rail = Page.Locator("#app-navigation-rail");
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
-        await Task.Delay(GetInputDelayMs());
         (await rail.GetAttributeAsync("class"))!.ShouldContain("open");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
-        await Task.Delay(GetInputDelayMs());
         (await rail.GetAttributeAsync("class"))!.ShouldNotContain("open");
         await Expect(toggle).ToBeFocusedAsync();
     }
@@ -110,7 +97,6 @@ public class NavRailToggleTests : AcceptanceTestBase
     public async Task ShouldShowNavRailToggle_OnAnonymousLandingPage()
     {
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Task.Delay(GetInputDelayMs());
 
         // First interactive element after a cold anonymous WASM boot: allow generous warmup.
         // browserContext.SetDefaultTimeout does not apply to web-first assertions (they default to
@@ -119,11 +105,9 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Expect(toggle).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
-        await Task.Delay(GetInputDelayMs());
         (await Page.Locator("#app-navigation-rail").GetAttributeAsync("class"))!.ShouldContain("rail-hidden");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
-        await Task.Delay(GetInputDelayMs());
         (await Page.Locator("#app-navigation-rail").GetAttributeAsync("class"))!.ShouldNotContain("rail-hidden");
     }
 }

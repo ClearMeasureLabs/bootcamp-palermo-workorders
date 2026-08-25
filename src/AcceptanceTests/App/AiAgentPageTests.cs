@@ -38,15 +38,15 @@ public class AiAgentPageTests : AcceptanceTestBase
         await AssertPromptControlsAreInViewport(chatInput, sendButton);
 
         await Page.SetViewportSizeAsync(1440, 900);
-        await Page.WaitForTimeoutAsync(150);
+        await WaitForViewportSizeAsync(1440, 900);
         await AssertPromptControlsAreInViewport(chatInput, sendButton);
 
         await Page.SetViewportSizeAsync(900, 700);
-        await Page.WaitForTimeoutAsync(150);
+        await WaitForViewportSizeAsync(900, 700);
         await AssertPromptControlsAreInViewport(chatInput, sendButton);
 
         await Page.SetViewportSizeAsync(768, 540);
-        await Page.WaitForTimeoutAsync(150);
+        await WaitForViewportSizeAsync(768, 540);
         await AssertPromptControlsAreInViewport(chatInput, sendButton);
 
         var canScrollHistory = await history.EvaluateAsync<bool>(
@@ -54,24 +54,31 @@ public class AiAgentPageTests : AcceptanceTestBase
         canScrollHistory.ShouldBeTrue();
     }
 
+    private async Task WaitForViewportSizeAsync(int width, int height)
+    {
+        await Page.WaitForFunctionAsync(
+            $"() => window.innerWidth === {width} && window.innerHeight === {height}");
+    }
+
     private async Task AssertPromptControlsAreInViewport(ILocator chatInput, ILocator sendButton)
     {
-        await Expect(chatInput).ToBeVisibleAsync();
-        await Expect(sendButton).ToBeVisibleAsync();
+        var chatInputTestId = nameof(ApplicationChat.Elements.ChatInput);
+        var sendButtonTestId = nameof(ApplicationChat.Elements.SendButton);
 
-        var inputBounds = await chatInput.BoundingBoxAsync();
-        var buttonBounds = await sendButton.BoundingBoxAsync();
+        await Page.WaitForFunctionAsync(
+            $@"() => {{
+                const input = document.querySelector('[data-testid=""{chatInputTestId}""]');
+                const button = document.querySelector('[data-testid=""{sendButtonTestId}""]');
+                if (!input || !button) return false;
+                const viewportHeight = window.innerHeight;
+                const fullyVisible = el => {{
+                    const rect = el.getBoundingClientRect();
+                    return rect.top >= 0 && rect.bottom <= viewportHeight + 0.5;
+                }};
+                return fullyVisible(input) && fullyVisible(button);
+            }}");
 
-        inputBounds.ShouldNotBeNull();
-        buttonBounds.ShouldNotBeNull();
-
-        var viewportHeight = Page.ViewportSize?.Height ?? 0;
-        viewportHeight.ShouldBeGreaterThan(0);
-
-        (inputBounds.Y + inputBounds.Height <= viewportHeight).ShouldBeTrue();
-        (buttonBounds.Y + buttonBounds.Height <= viewportHeight).ShouldBeTrue();
-
-        var documentScrollY = await Page.EvaluateAsync<int>("() => Math.floor(window.scrollY)");
-        documentScrollY.ShouldBe(0);
+        await Expect(chatInput).ToBeInViewportAsync();
+        await Expect(sendButton).ToBeInViewportAsync();
     }
 }

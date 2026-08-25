@@ -28,11 +28,13 @@ public class AutoReformatAgentTests : AcceptanceTestBase
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + "Save");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        // Wait for the background reformat agent to process (polls every 5 seconds)
-        await Task.Delay(8000);
-
-        // Reload the work order from the database to check agent changes
         var rehydrated = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
+        for (var attempt = 0; attempt < 120 && rehydrated?.Description == order.Description; attempt++)
+        {
+            await Task.Delay(250);
+            rehydrated = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
+        }
+
         rehydrated.ShouldNotBeNull();
 
         // The reformat agent should have capitalized the title's first letter
