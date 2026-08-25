@@ -313,7 +313,7 @@ public class McpSaveWorkOrderTests
         var assignedOrder = new WorkOrder
         {
             Creator = creator,
-            Number = "WO-501",
+            Number = "WO-910",
             Title = "Assigned title",
             Description = "Assigned description",
             Instructions = "Assigned instructions",
@@ -332,14 +332,14 @@ public class McpSaveWorkOrderTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.SaveWorkOrder(
             bus,
-            "WO-501",
+            "WO-910",
             "creator1",
             title: "New title");
 
         result.ShouldContain("cannot be executed");
         result.ShouldContain("Assigned");
 
-        var reloaded = await bus.Send(new WorkOrderByNumberQuery("WO-ASSIGNED"));
+        var reloaded = await bus.Send(new WorkOrderByNumberQuery("WO-910"));
         reloaded!.Title.ShouldBe("Assigned title");
         reloaded.Description.ShouldBe("Assigned description");
         reloaded.Instructions.ShouldBe("Assigned instructions");
@@ -355,7 +355,7 @@ public class McpSaveWorkOrderTests
         var completeOrder = new WorkOrder
         {
             Creator = creator,
-            Number = "WO-502",
+            Number = "WO-911",
             Title = "Complete title",
             Status = WorkOrderStatus.Complete
         };
@@ -370,14 +370,14 @@ public class McpSaveWorkOrderTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.SaveWorkOrder(
             bus,
-            "WO-502",
+            "WO-911",
             "creator1",
             title: "New title");
 
         result.ShouldContain("cannot be executed");
         result.ShouldContain("Complete");
 
-        var reloaded = await bus.Send(new WorkOrderByNumberQuery("WO-COMPLETE"));
+        var reloaded = await bus.Send(new WorkOrderByNumberQuery("WO-911"));
         reloaded!.Title.ShouldBe("Complete title");
         reloaded.Status.ShouldBe(WorkOrderStatus.Complete);
     }
@@ -390,7 +390,7 @@ public class McpSaveWorkOrderTests
         var draftOrder = new WorkOrder
         {
             Creator = creator,
-            Number = "WO-503",
+            Number = "WO-912",
             Title = "Draft title",
             Status = WorkOrderStatus.Draft
         };
@@ -406,13 +406,13 @@ public class McpSaveWorkOrderTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.SaveWorkOrder(
             bus,
-            "WO-503",
+            "WO-912",
             "other1",
             title: "New title");
 
         result.ShouldContain("cannot be executed");
 
-        var reloaded = await bus.Send(new WorkOrderByNumberQuery("WO-DRAFT"));
+        var reloaded = await bus.Send(new WorkOrderByNumberQuery("WO-912"));
         reloaded!.Title.ShouldBe("Draft title");
     }
 
