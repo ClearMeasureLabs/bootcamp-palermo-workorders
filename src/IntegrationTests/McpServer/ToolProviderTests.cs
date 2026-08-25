@@ -20,7 +20,7 @@ public class ToolProviderTests
         var sqlitePath = Path.Combine(Path.GetTempPath(), $"mcp-toolprovider-{Guid.NewGuid():N}.db");
         _application = McpServerApplication.BuildApplication(["--http"], builder =>
         {
-            builder.WebHost.UseUrls("http://127.0.0.1:0");
+            builder.WebHost.UseUrls("http://0.0.0.0:0");
             builder.Services.AddHttpClient();
             builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
