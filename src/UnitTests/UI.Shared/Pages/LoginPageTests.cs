@@ -66,6 +66,26 @@ public class LoginPageTests
     }
 
     [Test]
+    public void ShouldDisplayUppercaseLabelsInLoginDropdown_ForMixedAndAllCapsNames()
+    {
+        using var ctx = new TestContext();
+
+        var provider = new CustomAuthenticationStateProvider();
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.RenderComponent<Login>();
+
+        var hsimpsonOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "hsimpson");
+        hsimpsonOption.TextContent.ShouldBe("HOMER SIMPSON");
+
+        var jdoeOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "jdoe");
+        jdoeOption.TextContent.ShouldBe("MARY JANE SIMPSON");
+    }
+
+    [Test]
     public void ShouldLoginWithSelectedEmployee()
     {
         using var ctx = new TestContext();

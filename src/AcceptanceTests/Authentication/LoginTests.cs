@@ -30,6 +30,20 @@ public class LoginTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task Should_DisplayUppercaseNames_InLoginDropdown()
+    {
+        await Page.GotoAsync("/login");
+
+        var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        var homerOption = userSelect.Locator("option[value='hsimpson']");
+        await WaitForEmployeeOptionsRenderedAsync(homerOption);
+
+        var placeholderOption = userSelect.Locator("option[value='']");
+        await Expect(placeholderOption).ToHaveTextAsync("-- Select a parishioner or staff member --");
+        await Expect(homerOption).ToHaveTextAsync("HOMER SIMPSON");
+    }
+
+    [Test, Retry(2)]
     public async Task Should_ExposeUserSelectIdMatchingLabelFor()
     {
         await Page.GotoAsync("/login");
@@ -40,6 +54,24 @@ public class LoginTests : AcceptanceTestBase
 
         await Expect(userSelect).ToHaveAttributeAsync("id", nameof(Login.Elements.User));
         await Expect(Page.Locator($"label[for='{Login.Elements.User}']")).ToBeAttachedAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_LoginSuccessfully_UsingUsernameValue_NotDisplayLabel()
+    {
+        await Page.GotoAsync("/login");
+
+        var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        var homerOption = userSelect.Locator("option[value='hsimpson']");
+        await WaitForEmployeeOptionsRenderedAsync(homerOption);
+        await Expect(homerOption).ToHaveTextAsync("HOMER SIMPSON");
+
+        await Select(nameof(Login.Elements.User), "hsimpson");
+        await Click(nameof(Login.Elements.LoginButton));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
+        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
     }
 
     [Test, Retry(2)]
