@@ -77,7 +77,7 @@ public class ApplicationChatTests
 
         var chatInput = component.Find($"[data-testid='{ApplicationChat.Elements.ChatInput}']");
         await chatInput.ChangeAsync(new() { Value = "test prompt via enter" });
-        chatInput.KeyDown(new KeyboardEventArgs { Key = "Enter" });
+        await chatInput.KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
 
         await component.WaitForAssertionAsync(() =>
         {

@@ -38,7 +38,8 @@ public class WorkOrderManageInstructionsFieldTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        var instructions = component.WaitForElement($"[data-testid='{WorkOrderManage.Elements.Instructions}']");
+        var instructions = await component.WaitForElementAsync(
+            $"[data-testid='{WorkOrderManage.Elements.Instructions}']");
         instructions.TagName.ShouldBe("TEXTAREA");
         instructions.GetAttribute("maxlength").ShouldBe(WorkOrder.InstructionsMaxLength.ToString());
     }

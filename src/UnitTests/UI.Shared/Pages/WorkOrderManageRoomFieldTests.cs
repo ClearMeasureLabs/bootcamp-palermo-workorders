@@ -38,7 +38,8 @@ public class WorkOrderManageRoomFieldTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        var room = component.WaitForElement($"[data-testid='{WorkOrderManage.Elements.RoomNumber}']");
+        var room = await component.WaitForElementAsync(
+            $"[data-testid='{WorkOrderManage.Elements.RoomNumber}']");
         room.TagName.ShouldBe("TEXTAREA");
         room.GetAttribute("maxlength").ShouldBe(WorkOrder.RoomNumberMaxLength.ToString());
     }
