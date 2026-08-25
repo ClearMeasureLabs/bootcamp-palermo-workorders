@@ -50,6 +50,38 @@ public class McpEndpointResolverTests
     }
 
     [Test]
+    public void ShouldRewriteUnspecifiedIpv4BindAddressToLoopback()
+    {
+        var server = new StubServer(["http://0.0.0.0:8080"]);
+
+        McpEndpointResolver.ResolveMcpUrl(server).ShouldBe("http://127.0.0.1:8080/mcp");
+    }
+
+    [Test]
+    public void ShouldRewriteUnspecifiedIpv6BindAddressToLoopback()
+    {
+        var server = new StubServer(["http://[::]:8080"]);
+
+        McpEndpointResolver.ResolveMcpUrl(server).ShouldBe("http://[::1]:8080/mcp");
+    }
+
+    [Test]
+    public void ShouldRewritePlusWildcardHttpAddressToLoopback()
+    {
+        var server = new StubServer(["http://+:9090"]);
+
+        McpEndpointResolver.ResolveMcpUrl(server).ShouldBe("http://127.0.0.1:9090/mcp");
+    }
+
+    [Test]
+    public void ShouldRewriteStarWildcardHttpAddressToLoopback()
+    {
+        var server = new StubServer(["http://*:9091"]);
+
+        McpEndpointResolver.ResolveMcpUrl(server).ShouldBe("http://127.0.0.1:9091/mcp");
+    }
+
+    [Test]
     public void ShouldThrowWhenServerHasNoAddress()
     {
         var server = new StubServer([]);
