@@ -34,6 +34,22 @@ public class McpEndpointResolverTests
     }
 
     [Test]
+    public void ShouldPreferLoopbackOverWildcardHttpAddress()
+    {
+        var server = new StubServer(["http://0.0.0.0:5000", "http://127.0.0.1:5174"]);
+
+        McpEndpointResolver.ResolveMcpUrl(server).ShouldBe("http://127.0.0.1:5174/mcp");
+    }
+
+    [Test]
+    public void ShouldPreferLoopbackHttpsOverWildcardHttpAddress()
+    {
+        var server = new StubServer(["http://0.0.0.0:5000", "https://localhost:7174"]);
+
+        McpEndpointResolver.ResolveMcpUrl(server).ShouldBe("https://localhost:7174/mcp");
+    }
+
+    [Test]
     public void ShouldThrowWhenServerHasNoAddress()
     {
         var server = new StubServer([]);

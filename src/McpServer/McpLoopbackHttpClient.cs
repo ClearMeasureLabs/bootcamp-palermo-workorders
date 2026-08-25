@@ -8,9 +8,10 @@ namespace ClearMeasure.Bootcamp.McpServer;
 internal static class McpLoopbackHttpClient
 {
     /// <summary>
-    /// Returns a client that tolerates the untrusted ASP.NET dev certificate for loopback HTTPS,
-    /// while still enforcing hostname validation. Returns null for any other endpoint so callers
-    /// use the shared factory client and normal certificate errors surface.
+    /// Returns a client for loopback HTTPS that accepts any chain-validation failure, which covers
+    /// the untrusted ASP.NET dev certificate, while still requiring a certificate that matches the
+    /// host. Returns null for any other endpoint so callers use the shared factory client and normal
+    /// certificate errors surface.
     /// </summary>
     internal static HttpClient? CreateForDevCertificate(string mcpUrl)
     {

@@ -4,8 +4,9 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 namespace ClearMeasure.Bootcamp.McpServer;
 
 /// <summary>
-/// Resolves the loopback MCP HTTP endpoint from server address features.
-/// Prefers http:// so the in-process ToolProvider avoids HTTPS dev-cert trust failures.
+/// Resolves the MCP endpoint for in-process discovery from server address features.
+/// Prefers loopback and plain http:// so the call stays on the local interface and avoids
+/// HTTPS dev-cert trust failures.
 /// </summary>
 internal static class McpEndpointResolver
 {
@@ -22,10 +23,19 @@ internal static class McpEndpointResolver
                 "Cannot determine server address for MCP loopback connection");
         }
 
-        var address = addresses.FirstOrDefault(a =>
-                          a.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
-                      ?? addresses[0];
-
+        var address = SelectPreferredAddress(addresses);
         return address.TrimEnd('/') + "/mcp";
     }
+
+    private static string SelectPreferredAddress(IReadOnlyList<string> addresses) =>
+        addresses.FirstOrDefault(a => IsHttp(a) && IsLoopback(a))
+        ?? addresses.FirstOrDefault(IsLoopback)
+        ?? addresses.FirstOrDefault(IsHttp)
+        ?? addresses[0];
+
+    private static bool IsHttp(string address) =>
+        address.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsLoopback(string address) =>
+        Uri.TryCreate(address, UriKind.Absolute, out var uri) && uri.IsLoopback;
 }
