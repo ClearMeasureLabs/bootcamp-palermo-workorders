@@ -145,7 +145,7 @@ public class LoginTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task Should_LoginAsTlovejoy_WhenLovejoyClickedBeforeEmployeesLoaded()
     {
-        const int employeeQueryDelayMs = 5_000;
+        const int employeeQueryDelayMs = 1_000;
 
         await Page.RouteAsync("**/*blazor-wasm-single-api*", async route =>
         {
