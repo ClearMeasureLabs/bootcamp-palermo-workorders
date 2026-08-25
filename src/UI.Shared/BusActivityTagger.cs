@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Diagnostics;
+using System.Reflection;
+using ClearMeasure.Bootcamp.Core;
 
 namespace ClearMeasure.Bootcamp.UI.Shared;
 
@@ -9,7 +11,8 @@ internal static class BusActivityTagger
     {
         foreach (var property in message.GetType().GetProperties())
         {
-            if (IsScalarProperty(property.PropertyType))
+            if (IsScalarProperty(property.PropertyType)
+                && property.GetCustomAttribute<ExcludeFromBusActivityAttribute>() == null)
             {
                 var propertyValue = property.GetValue(message);
                 activity.SetTag($"bus.message.{property.Name}", propertyValue?.ToString() ?? string.Empty);

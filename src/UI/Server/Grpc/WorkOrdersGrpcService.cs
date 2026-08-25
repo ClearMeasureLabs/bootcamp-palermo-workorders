@@ -1,3 +1,4 @@
+using System.Globalization;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
 using Grpc.Core;
@@ -60,7 +61,7 @@ internal static class GrpcWorkOrderDateMapper
         message.CompletedDateUtc = ToUtcTimestamp(source.CompletedDate);
         if (source.DueDate.HasValue)
         {
-            message.DueDate = source.DueDate.Value.ToString("yyyy-MM-dd");
+            message.DueDate = source.DueDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         }
     }
 

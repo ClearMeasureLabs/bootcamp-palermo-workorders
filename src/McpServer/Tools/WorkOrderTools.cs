@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
@@ -184,7 +185,7 @@ public class WorkOrderTools
         Status = wo.Status.FriendlyName,
         Creator = wo.Creator?.GetFullName(),
         Assignee = wo.Assignee?.GetFullName(),
-        DueDate = wo.DueDate?.ToString("yyyy-MM-dd")
+        DueDate = wo.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
     };
 
     internal static object FormatWorkOrderDetail(WorkOrder wo) => new
@@ -201,6 +202,6 @@ public class WorkOrderTools
         wo.CreatedDate,
         wo.AssignedDate,
         wo.CompletedDate,
-        DueDate = wo.DueDate?.ToString("yyyy-MM-dd")
+        DueDate = wo.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
     };
 }

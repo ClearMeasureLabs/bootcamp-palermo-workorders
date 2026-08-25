@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.Core;
 using MediatR;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
@@ -8,8 +9,8 @@ namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 public record CreateDatedWorkOrdersCommand(
     string CreatorUsername,
     string AssigneeUsername,
-    string Title,
-    string Description,
+    [property: ExcludeFromBusActivity] string Title,
+    [property: ExcludeFromBusActivity] string Description,
     IReadOnlyList<DateOnly> DueDates) : IRequest<CreateDatedWorkOrdersResult>, IRemotableRequest;
 
 /// <summary>
