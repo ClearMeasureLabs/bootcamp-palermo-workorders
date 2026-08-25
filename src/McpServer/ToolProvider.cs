@@ -1,3 +1,4 @@
+using System.Net.Security;
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.Extensions.AI;
@@ -83,8 +84,8 @@ public class ToolProvider(
 
         var handler = new HttpClientHandler
         {
-            ServerCertificateCustomValidationCallback =
-                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            ServerCertificateCustomValidationCallback = (_, _, _, errors) =>
+                errors is SslPolicyErrors.None or SslPolicyErrors.RemoteCertificateChainErrors
         };
         return new HttpClient(handler);
     }

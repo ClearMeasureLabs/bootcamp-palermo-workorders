@@ -10,7 +10,13 @@ public record CreateDatedWorkOrdersCommand(
     string AssigneeUsername,
     [property: ExcludeFromBusActivity] string Title,
     [property: ExcludeFromBusActivity] string Description,
-    IReadOnlyList<DateOnly> DueDates) : IRequest<CreateDatedWorkOrdersResult>, IRemotableRequest;
+    IReadOnlyList<DateOnly> DueDates) : IRequest<CreateDatedWorkOrdersResult>, IRemotableRequest
+{
+    /// <summary>
+    /// Maximum work orders allowed in one transactional create.
+    /// </summary>
+    public const int MaximumBatchSize = 10;
+}
 
 /// <summary>
 /// Result of a transactional dated work-order create.

@@ -173,6 +173,30 @@ public class CreateDatedWorkOrdersHandlerTests
     }
 
     [Test]
+    public async Task Handle_WhenBatchExceedsLimit_CreatesZero()
+    {
+        new DatabaseTests().Clean();
+
+        var dueDates = Enumerable.Range(0, CreateDatedWorkOrdersCommand.MaximumBatchSize + 1)
+            .Select(i => new DateOnly(2026, 8, 29).AddDays(i))
+            .ToList();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await bus.Send(new CreateDatedWorkOrdersCommand(
+            "tlovejoy",
+            "gwillie",
+            "Mow the grass",
+            "Weekly Saturday mow",
+            dueDates));
+
+        result.Success.ShouldBeFalse();
+        result.Message.ShouldContain("cannot exceed 10");
+        result.WorkOrders.Count.ShouldBe(0);
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        (await context.Set<WorkOrder>().CountAsync()).ShouldBe(0);
+    }
+
+    [Test]
     public async Task Handle_WhenCreatorMissing_CreatesZero()
     {
         new DatabaseTests().Clean();

@@ -24,9 +24,10 @@ public class CreateDatedWorkOrdersHandler(
         CreateDatedWorkOrdersCommand request,
         CancellationToken cancellationToken)
     {
-        if (request.DueDates.Count == 0)
+        var validationFailure = ValidateBatchSize(request.DueDates.Count);
+        if (validationFailure != null)
         {
-            return new CreateDatedWorkOrdersResult(false, "At least one due date is required.", []);
+            return validationFailure;
         }
 
         var assignee = await FindEmployeeAsync(request.AssigneeUsername, cancellationToken);
@@ -97,6 +98,21 @@ public class CreateDatedWorkOrdersHandler(
             true,
             $"Created {created.Count} work orders.",
             created);
+    }
+
+    private static CreateDatedWorkOrdersResult? ValidateBatchSize(int count)
+    {
+        if (count == 0)
+        {
+            return new CreateDatedWorkOrdersResult(false, "At least one due date is required.", []);
+        }
+
+        return count > CreateDatedWorkOrdersCommand.MaximumBatchSize
+            ? new CreateDatedWorkOrdersResult(
+                false,
+                $"A dated work-order batch cannot exceed {CreateDatedWorkOrdersCommand.MaximumBatchSize} dates.",
+                [])
+            : null;
     }
 
     private async Task PublishCreatedEventAsync(int count)
