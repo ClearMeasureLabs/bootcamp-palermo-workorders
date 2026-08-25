@@ -37,6 +37,12 @@ public sealed class StubUserSessionStore : IUserSessionStore
     /// </summary>
     public Exception? ClearException { private get; set; }
 
+    /// <summary>
+    /// When true, <see cref="ClearAsync"/> leaves the username in place and throws
+    /// (simulates a stubborn localStorage key that survives removeItem).
+    /// </summary>
+    public bool KeepUsernameOnClear { get; init; }
+
     /// <inheritdoc />
     public Task<string?> GetAsync()
     {
@@ -80,6 +86,16 @@ public sealed class StubUserSessionStore : IUserSessionStore
         else
         {
             Operations.Add("Clear");
+        }
+
+        if (KeepUsernameOnClear)
+        {
+            Operations.Add("Get");
+            if (!string.IsNullOrEmpty(Username))
+            {
+                throw new InvalidOperationException(
+                    "Failed to clear user session; username still remains after clear.");
+            }
         }
 
         Username = null;

@@ -36,7 +36,7 @@ public class LogoutTests
     }
 
     [Test]
-    public async Task ShouldDisplayLogoutLink()
+    public async Task ShouldDisplayLogoutButton()
     {
         await using var ctx = new BunitContext();
 
@@ -49,11 +49,12 @@ public class LogoutTests
 
         var component = ctx.Render<Logout>();
 
-        var logoutLink = component.Find("a");
-        logoutLink.ShouldNotBeNull();
-        logoutLink.TextContent.ShouldBe("Logout");
-        logoutLink.GetAttribute("href").ShouldBe("#");
-        logoutLink.GetAttribute("class")!.ShouldContain("ms-3");
+        var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
+        logoutButton.TagName.ShouldBe("BUTTON");
+        logoutButton.GetAttribute("type").ShouldBe("button");
+        logoutButton.TextContent.ShouldBe("Logout");
+        logoutButton.GetAttribute("href").ShouldBeNull();
+        logoutButton.GetAttribute("class")!.ShouldContain("ms-3");
     }
 
     [Test]
@@ -70,9 +71,9 @@ public class LogoutTests
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
         var component = ctx.Render<Logout>();
-        var logoutLink = component.Find("a");
+        var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
 
-        await logoutLink.ClickAsync(new());
+        await logoutButton.ClickAsync(new());
 
         spyEventBus.NotifyWasCalled.ShouldBeTrue();
         spyEventBus.LastNotifiedEvent.ShouldBeOfType<UserLoggedOutEvent>();
@@ -91,9 +92,9 @@ public class LogoutTests
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
         var component = ctx.Render<Logout>();
-        var logoutLink = component.Find("a");
+        var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
 
-        await logoutLink.ClickAsync(new());
+        await logoutButton.ClickAsync(new());
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.Uri.ShouldEndWith("/login");
@@ -105,22 +106,51 @@ public class LogoutTests
         await using var ctx = new BunitContext();
 
         var spyEventBus = new SpyUiBus();
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
 
-        ctx.Services.AddSingleton(new CustomAuthenticationStateProvider(new StubUserSessionStore()));
+        ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
         var component = ctx.Render<Logout>();
-        var logoutLink = component.Find("a");
+        var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
 
-        await logoutLink.ClickAsync(new());
+        await logoutButton.ClickAsync(new());
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
 
-        // Verify all actions occurred
         spyEventBus.NotifyWasCalled.ShouldBeTrue();
         spyEventBus.LastNotifiedEvent.ShouldBeOfType<UserLoggedOutEvent>();
         navigationManager.Uri.ShouldEndWith("/login");
+        authProvider.IsAuthenticated().ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task ShouldNotNavigate_WhenLogoutFailsClosed()
+    {
+        await using var ctx = new BunitContext();
+
+        var store = new StubUserSessionStore { KeepUsernameOnClear = true };
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        await authProvider.Login("tlovejoy");
+        var spyEventBus = new SpyUiBus();
+
+        ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUiBus>(spyEventBus);
+        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+
+        var component = ctx.Render<Logout>();
+        var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        var uriBefore = navigationManager.Uri;
+
+        await Should.ThrowAsync<InvalidOperationException>(() => logoutButton.ClickAsync(new()));
+
+        authProvider.IsAuthenticated().ShouldBeTrue();
+        authProvider.GetUsername().ShouldBe("tlovejoy");
+        spyEventBus.NotifyWasCalled.ShouldBeFalse();
+        navigationManager.Uri.ShouldBe(uriBefore);
     }
 }
 

@@ -161,4 +161,81 @@ public class CustomAuthenticationStateProviderTests
         authProvider.GetUsername().ShouldBe("tlovejoy");
         store.Username.ShouldBe("tlovejoy");
     }
+
+    [Test]
+    public async Task ClearAsync_AfterSet_ShouldYieldNullOrEmpty()
+    {
+        var store = new StubUserSessionStore();
+        await store.SetAsync("tlovejoy");
+
+        await store.ClearAsync();
+
+        (await store.GetAsync()).ShouldBeNullOrEmpty();
+    }
+
+    [Test]
+    public async Task ClearAsync_ShouldThrow_WhenUsernameRemainsAfterClear()
+    {
+        var store = new StubUserSessionStore
+        {
+            Username = "tlovejoy",
+            KeepUsernameOnClear = true
+        };
+
+        await Should.ThrowAsync<InvalidOperationException>(store.ClearAsync);
+
+        store.Username.ShouldBe("tlovejoy");
+    }
+
+    [Test]
+    public async Task Logout_ShouldRemainAuthenticatedAndNotNotify_WhenStubbornTlovejoyStoreThrows()
+    {
+        var store = new StubUserSessionStore { KeepUsernameOnClear = true };
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        await authProvider.Login("tlovejoy");
+        store.Operations.Clear();
+        var notified = false;
+        authProvider.AuthenticationStateChanged += _ => notified = true;
+
+        await Should.ThrowAsync<InvalidOperationException>(authProvider.Logout);
+
+        authProvider.IsAuthenticated().ShouldBeTrue();
+        authProvider.GetUsername().ShouldBe("tlovejoy");
+        store.Username.ShouldBe("tlovejoy");
+        notified.ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Logout_ShouldEmptyStoreUnauthenticateAndNotify_WhenClearSucceeds()
+    {
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        await authProvider.Login("tlovejoy");
+        store.Operations.Clear();
+        var notifications = new List<bool>();
+        authProvider.AuthenticationStateChanged += _ =>
+            notifications.Add(authProvider.IsAuthenticated());
+
+        await authProvider.Logout();
+
+        (await store.GetAsync()).ShouldBeNullOrEmpty();
+        authProvider.IsAuthenticated().ShouldBeFalse();
+        notifications.ShouldBe([false]);
+    }
+
+    [Test]
+    public async Task Login_ShouldWriteStore_WhenCalledAfterRestoreOfTlovejoy()
+    {
+        var store = new StubUserSessionStore { Username = "tlovejoy" };
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        var restored = await authProvider.GetAuthenticationStateAsync();
+        restored.User.Identity!.IsAuthenticated.ShouldBeTrue();
+        restored.User.Identity.Name.ShouldBe("tlovejoy");
+
+        await authProvider.Login("tlovejoy");
+
+        (await store.GetAsync()).ShouldBe("tlovejoy");
+        authProvider.IsAuthenticated().ShouldBeTrue();
+        authProvider.GetUsername().ShouldBe("tlovejoy");
+    }
 }

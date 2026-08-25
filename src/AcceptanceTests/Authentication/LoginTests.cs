@@ -192,11 +192,88 @@ public class LoginTests : AcceptanceTestBase
 
         await Click(nameof(Logout.Elements.LogoutLink));
         await Page.WaitForURLAsync("**/login");
+
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText))).ToHaveCountAsync(0);
+        (await GetPersistedUsernameAsync()).ShouldBeNull();
+
         await Page.GotoAsync(ServerFixture.ApplicationBaseUrl + "/");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText))).ToHaveCountAsync(0);
+        (await GetPersistedUsernameAsync()).ShouldBeNull();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_ClearLocalStorage_AndShowLogin_ImmediatelyAfterLogout_BeforeHardNavigation()
+    {
+        await LoginAsLovejoyViaShortcutAsync();
+
+        var logoutControl = Page.GetByTestId(nameof(Logout.Elements.LogoutLink));
+        var tagName = await logoutControl.EvaluateAsync<string>("el => el.tagName.toLowerCase()");
+        tagName.ShouldBe("button");
+        await Expect(logoutControl).ToHaveAttributeAsync("type", "button");
+
+        await Click(nameof(Logout.Elements.LogoutLink));
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText))).ToHaveCountAsync(0);
+        (await GetPersistedUsernameAsync()).ShouldBeNull();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_RemainAnonymous_WhenHardNavigatingHomeAfterHealthcheckAfterLogout()
+    {
+        await LoginAsLovejoyViaShortcutAsync();
+        await Click(nameof(Logout.Elements.LogoutLink));
+        await Page.WaitForURLAsync("**/login");
+        (await GetPersistedUsernameAsync()).ShouldBeNull();
+
+        await Page.GotoAsync(ServerFixture.ApplicationBaseUrl + "/_healthcheck");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GotoAsync(ServerFixture.ApplicationBaseUrl + "/");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText))).ToHaveCountAsync(0);
+        (await GetPersistedUsernameAsync()).ShouldBeNull();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_PersistGwillie_NotTlovejoy_WhenSwitchingUserAfterLogout()
+    {
+        await LoginAsLovejoyViaShortcutAsync();
+        await Click(nameof(Logout.Elements.LogoutLink));
+        await Page.WaitForURLAsync("**/login");
+        (await GetPersistedUsernameAsync()).ShouldBeNull();
+
+        await Page.GotoAsync(ServerFixture.ApplicationBaseUrl + "/");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText))).ToHaveCountAsync(0);
+
+        await Click(nameof(LoginLink.Elements.LoginLink));
+        await Page.WaitForURLAsync("**/login");
+
+        var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        var willieOption = userSelect.Locator("option[value='gwillie']");
+        await WaitForEmployeeOptionsRenderedAsync(willieOption);
+        await Select(nameof(Login.Elements.User), "gwillie");
+        await Click(nameof(Login.Elements.LoginButton));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
+            .ToHaveTextAsync("Welcome gwillie!");
+        (await GetPersistedUsernameAsync()).ShouldBe("gwillie");
+
+        await Page.GotoAsync(ServerFixture.ApplicationBaseUrl + "/");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
+            .ToHaveTextAsync("Welcome gwillie!");
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
+            .Not.ToHaveTextAsync("Welcome tlovejoy!");
+        (await GetPersistedUsernameAsync()).ShouldBe("gwillie");
     }
 
     private async Task LoginAsLovejoyViaShortcutAsync()
@@ -216,6 +293,10 @@ public class LoginTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
             .ToHaveTextAsync("Welcome tlovejoy!");
     }
+
+    private async Task<string?> GetPersistedUsernameAsync() =>
+        await Page.EvaluateAsync<string?>(
+            "() => localStorage.getItem('bootcamp.userSession.username')");
 
     /// <summary>
     /// Regression (#9086): Lovejoy shortcut must await the in-flight EmployeeGetAllQuery

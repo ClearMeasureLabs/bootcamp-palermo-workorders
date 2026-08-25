@@ -32,12 +32,34 @@ public sealed class LocalStorageUserSessionStore : IUserSessionStore
     /// <inheritdoc />
     public async Task SetAsync(string username)
     {
-        await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, username);
+        try
+        {
+            await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, username);
+        }
+        catch (JSException exception)
+        {
+            throw new InvalidOperationException(
+                $"Failed to persist user session to '{StorageKey}'.", exception);
+        }
     }
 
     /// <inheritdoc />
     public async Task ClearAsync()
     {
-        await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
+        try
+        {
+            await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
+            var remaining = await _js.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+            if (!string.IsNullOrEmpty(remaining))
+            {
+                throw new InvalidOperationException(
+                    $"Failed to clear user session; '{StorageKey}' still contains a value.");
+            }
+        }
+        catch (JSException exception)
+        {
+            throw new InvalidOperationException(
+                $"Failed to clear user session from '{StorageKey}'.", exception);
+        }
     }
 }
