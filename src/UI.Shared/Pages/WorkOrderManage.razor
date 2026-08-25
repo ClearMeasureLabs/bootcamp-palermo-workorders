@@ -90,7 +90,29 @@
                 <span class="label">Completed Date:</span>
                 <span data-testid="@Elements.CompletedDate" class="value">@Model.CompletedDate</span>
 
-
+                <div class="due-date-field">
+                    <label for="DueDate" class="label">Due Date</label>
+                    @if (!Model.IsReadOnly)
+                    {
+                        <InputDate TValue="DateOnly?" data-testid="@Elements.DueDate" id="DueDate"
+                                   @bind-Value="Model.DueDateInput"
+                                   class="@($"form-control input-date {Model.DueDateCssClass}")" />
+                        @if (!string.IsNullOrEmpty(Model.DueDateUrgencyText))
+                        {
+                            <span class="visually-hidden">@Model.DueDateUrgencyText</span>
+                        }
+                    }
+                    else
+                    {
+                        <span data-testid="@Elements.DueDateDisplay" class="value @Model.DueDateCssClass">
+                            @Model.DueDateDisplay
+                            @if (!string.IsNullOrEmpty(Model.DueDateUrgencyText))
+                            {
+                                <span class="visually-hidden">@Model.DueDateUrgencyText</span>
+                            }
+                        </span>
+                    }
+                </div>
             </div>
             
             @if (_workOrder != null)
@@ -165,6 +187,8 @@
         AssignedDate,
         CompletedDate,
         CreatedDate,
+        DueDate,
+        DueDateDisplay,
         ReadOnlyMessage,
         CommandButton,
         WorkOrderNumber,

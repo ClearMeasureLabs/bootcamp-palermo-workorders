@@ -45,6 +45,11 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public DateTime? CompletedDate { get; set; }
 
+    /// <summary>
+    /// Optional calendar due date (date-only, no time). Null when unset.
+    /// </summary>
+    public DateOnly? DueDate { get; set; }
+
     private string GetTruncatedString(string? value)
     {
         if (value == null)

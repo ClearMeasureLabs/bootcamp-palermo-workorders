@@ -28,6 +28,7 @@ public class WorkOrderManageRoomFieldTests
 
         ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(workOrderId, creator));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(creator));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());

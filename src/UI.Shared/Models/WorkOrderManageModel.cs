@@ -31,6 +31,26 @@ public class WorkOrderManageModel
 
     public string? CreatedDate { get; set; }
 
+    /// <summary>
+    /// Optional due date bound to the native date picker. Null when unset.
+    /// </summary>
+    public DateOnly? DueDateInput { get; set; }
+
+    /// <summary>
+    /// Display text for due date (MMM d, yyyy) when set.
+    /// </summary>
+    public string? DueDateDisplay { get; set; }
+
+    /// <summary>
+    /// CSS class for due-date urgency on the date cell only.
+    /// </summary>
+    public string DueDateCssClass { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Screen-reader text for due-date urgency ("Due today" / "Overdue").
+    /// </summary>
+    public string? DueDateUrgencyText { get; set; }
+
     [StringLength(WorkOrder.RoomNumberMaxLength, ErrorMessage = "Room cannot exceed 900 characters.")]
     public string? RoomNumber { get; set; }
 }

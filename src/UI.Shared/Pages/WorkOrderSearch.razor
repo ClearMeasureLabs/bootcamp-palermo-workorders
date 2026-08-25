@@ -75,6 +75,7 @@
                         <th>Assignee</th>
                         <th>Status</th>
                         <th>Title</th>
+                        <th>Due Date</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -98,6 +99,15 @@
                                     <span class="status-badge">@order.Status</span>
                                 </td>
                                 <td>@order.Title</td>
+                                <td>
+                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">
+                                        @order.DueDateDisplay
+                                        @if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+                                        {
+                                            <span class="visually-hidden">@order.DueDateUrgencyText</span>
+                                        }
+                                    </span>
+                                </td>
                             </tr>
                         }
                     }
@@ -116,7 +126,8 @@
         AssigneeSelect,
         StatusSelect,
         SearchButton,
-        WorkOrderLink
+        WorkOrderLink,
+        DueDateCell
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();

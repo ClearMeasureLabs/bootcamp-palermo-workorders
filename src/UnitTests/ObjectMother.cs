@@ -40,6 +40,7 @@ public class ObjectMother
             builder.WithConventions()
                 .WithSkip<WorkOrder>(wo => wo.Creator)
                 .WithSkip<WorkOrder>(wo => wo.Assignee)
+                .WithSkip<WorkOrder>(wo => wo.DueDate)
                 .WithSkip<Employee>(wo => wo.Roles)
                 .WithOverride(new BogusOverrides());
         });

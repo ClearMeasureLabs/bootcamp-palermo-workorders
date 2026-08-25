@@ -58,6 +58,10 @@ internal static class GrpcWorkOrderDateMapper
         message.AssignedDateUtc = ToUtcTimestamp(source.AssignedDate);
         message.CreatedDateUtc = ToUtcTimestamp(source.CreatedDate);
         message.CompletedDateUtc = ToUtcTimestamp(source.CompletedDate);
+        if (source.DueDate.HasValue)
+        {
+            message.DueDate = source.DueDate.Value.ToString("yyyy-MM-dd");
+        }
     }
 
     private static Timestamp? ToUtcTimestamp(DateTime? value) =>

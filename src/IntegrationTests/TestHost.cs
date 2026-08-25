@@ -180,10 +180,29 @@ public static class TestHost
                     ([System.ComponentModel.Description("Title")] string title,
                      [System.ComponentModel.Description("Description")] string description,
                      [System.ComponentModel.Description("Creator username")] string creatorUsername,
-                     [System.ComponentModel.Description("Optional room number")] string? roomNumber = null)
-                        => WorkOrderTools.CreateWorkOrder(CreateScopedBus(), CreateScopedNumberGenerator(), title, description, creatorUsername, roomNumber),
+                     [System.ComponentModel.Description("Optional room number")] string? roomNumber = null,
+                     [System.ComponentModel.Description("Optional due date yyyy-MM-dd")] string? dueDate = null)
+                        => WorkOrderTools.CreateWorkOrder(CreateScopedBus(), CreateScopedNumberGenerator(), title, description, creatorUsername, roomNumber, dueDate),
                     "CreateWorkOrder",
                     "Creates a new draft work order."),
+                AIFunctionFactory.Create(
+                    ([System.ComponentModel.Description("Creator username")] string creatorUsername,
+                     [System.ComponentModel.Description("Assignee username")] string assigneeUsername,
+                     [System.ComponentModel.Description("Title")] string title,
+                     [System.ComponentModel.Description("Description")] string description,
+                     [System.ComponentModel.Description("Optional comma-separated due dates yyyy-MM-dd")] string? dueDates = null,
+                     [System.ComponentModel.Description("Saturday count when dueDates omitted")] int saturdayCount = 10)
+                        => WorkOrderTools.CreateDatedWorkOrders(
+                            CreateScopedBus(),
+                            serviceProvider.GetRequiredService<TimeProvider>(),
+                            creatorUsername,
+                            assigneeUsername,
+                            title,
+                            description,
+                            dueDates,
+                            saturdayCount),
+                    "create-dated-work-orders",
+                    "Creates multiple dated assigned work orders in one transaction."),
                 AIFunctionFactory.Create(
                     ([System.ComponentModel.Description("Work order number")] string workOrderNumber,
                      [System.ComponentModel.Description("Command name")] string commandName ,

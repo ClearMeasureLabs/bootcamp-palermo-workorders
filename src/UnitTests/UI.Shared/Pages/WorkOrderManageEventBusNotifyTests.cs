@@ -41,6 +41,7 @@ public class WorkOrderManageEventBusNotifyTests
         var uiBus = new SpyUiBus();
         ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus());
         ctx.Services.AddSingleton<IUiBus>(uiBus);
+        ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(workOrderId));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(creator));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());

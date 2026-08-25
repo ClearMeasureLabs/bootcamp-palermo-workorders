@@ -189,6 +189,7 @@ public class WorkOrderManageDictationTests
 
         ctx.Services.AddSingleton<IBus>(new StubBus(completedWorkOrder));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
@@ -222,6 +223,7 @@ public class WorkOrderManageDictationTests
 
         ctx.Services.AddSingleton<IBus>(new StubBus(null));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());

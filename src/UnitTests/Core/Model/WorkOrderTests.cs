@@ -17,6 +17,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
         Assert.That(workOrder.Assignee, Is.EqualTo(null));
+        Assert.That(workOrder.DueDate, Is.Null);
     }
 
     [Test]

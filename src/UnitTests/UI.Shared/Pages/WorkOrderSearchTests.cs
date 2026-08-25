@@ -20,6 +20,7 @@ public class WorkOrderSearchTests
         // Arrange
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
 
         // Act
         var component = ctx.RenderComponent<WorkOrderSearch>();
@@ -55,6 +56,7 @@ public class WorkOrderSearchTests
 
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
 
         var component = ctx.RenderComponent<WorkOrderSearch>();
 
@@ -81,6 +83,7 @@ public class WorkOrderSearchTests
         var stubBus = new StubBus();
         ctx.Services.AddSingleton<IBus>(stubBus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
 
         // Act
         var component = ctx.RenderComponent<WorkOrderSearch>();
@@ -102,6 +105,7 @@ public class WorkOrderSearchTests
         var stubBus = new StubBus();
         ctx.Services.AddSingleton<IBus>(stubBus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         var uri = navigationManager.GetUriWithQueryParameter("Creator", "somename");
@@ -125,6 +129,7 @@ public class WorkOrderSearchTests
         var stubBus = new StubBus();
         ctx.Services.AddSingleton<IBus>(stubBus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         var uri = navigationManager.GetUriWithQueryParameter("Assignee", "somename");
@@ -148,6 +153,7 @@ public class WorkOrderSearchTests
         var stubBus = new StubBus();
         ctx.Services.AddSingleton<IBus>(stubBus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         var uri = navigationManager.GetUriWithQueryParameter("Status", WorkOrderStatus.Assigned.Key);
@@ -171,6 +177,7 @@ public class WorkOrderSearchTests
         var stubBus = new StubBus();
         ctx.Services.AddSingleton<IBus>(stubBus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
 
         var component = ctx.RenderComponent<WorkOrderSearch>();
 

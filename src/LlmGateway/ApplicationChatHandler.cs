@@ -26,7 +26,15 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
             new(ChatRole.System, "You are a helpful AI assistant for a work order management application. " +
                                  "You can help with general questions, look up work orders, find employees, " +
                                  "and assist with any tasks related to managing work orders."),
-            new(ChatRole.System, "Limit answer to 3 sentences. Be brief"),
+            new(ChatRole.System,
+                "When asked to schedule multiple dated work orders (for example next N Saturdays), " +
+                "call create-dated-work-orders ONCE with creatorUsername set to the logged-in user, " +
+                "the assignee username, title, description, and saturdayCount. " +
+                "Do not call create-work-order repeatedly. " +
+                "If the assignee cannot be found, create nothing. " +
+                "In your reply, list every created work order number and due date (yyyy-MM-dd). " +
+                "Asking twice creates another full set; do not deduplicate."),
+            new(ChatRole.System, "Limit answer to 3 sentences unless listing data. When listing items, include ALL items from the tool response. Be brief otherwise."),
             new(ChatRole.System, $"Currently logged in user is {request.CurrentUsername}"),
         };
 

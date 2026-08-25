@@ -36,6 +36,25 @@ public class WorkOrdersGrpcServiceMappingTests
         mapped.AssignedDateUtc.ShouldNotBeNull();
         mapped.CreatedDateUtc.ShouldNotBeNull();
         mapped.CompletedDateUtc.ShouldNotBeNull();
+        mapped.HasDueDate.ShouldBeFalse();
+    }
+
+    [Test]
+    public void MapWorkOrder_MapsDueDateAsIsoDateString()
+    {
+        var source = new ClearMeasure.Bootcamp.Core.Model.WorkOrder
+        {
+            Number = "WO-3",
+            Title = "T",
+            Description = "D",
+            Status = WorkOrderStatus.Assigned,
+            DueDate = new DateOnly(2026, 8, 29)
+        };
+
+        var mapped = WorkOrdersGrpcService.MapWorkOrder(source);
+
+        mapped.HasDueDate.ShouldBeTrue();
+        mapped.DueDate.ShouldBe("2026-08-29");
     }
 
     [Test]
@@ -54,5 +73,6 @@ public class WorkOrdersGrpcServiceMappingTests
         mapped.AssignedDateUtc.ShouldBeNull();
         mapped.CreatedDateUtc.ShouldBeNull();
         mapped.CompletedDateUtc.ShouldBeNull();
+        mapped.HasDueDate.ShouldBeFalse();
     }
 }

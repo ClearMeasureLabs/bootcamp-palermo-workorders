@@ -1,5 +1,7 @@
+using System.Globalization;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -10,6 +12,8 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 [Authorize]
 public partial class WorkOrderSearch : AppComponentBase
 {
+    [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
+
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
@@ -67,8 +71,21 @@ public partial class WorkOrderSearch : AppComponentBase
         specification.MatchAssignee(assignee);
         specification.MatchStatus(status);
 
-        Model.Results = await Bus.Send(specification);
+        var workOrders = await Bus.Send(specification);
+        Model.Results = workOrders.Select(MapSearchRow).ToArray();
         StateHasChanged();
+    }
+
+    private WorkOrderSearchResultRow MapSearchRow(WorkOrder workOrder)
+    {
+        var urgency = DueDateUrgencyCalculator.Calculate(workOrder, Clock);
+        return new WorkOrderSearchResultRow
+        {
+            WorkOrder = workOrder,
+            DueDateDisplay = workOrder.DueDate?.ToString("MMM d, yyyy", CultureInfo.InvariantCulture),
+            DueDateCssClass = DueDateUrgencyCalculator.CssClass(urgency),
+            DueDateUrgencyText = DueDateUrgencyCalculator.ScreenReaderText(urgency)
+        };
     }
 
     private async Task HandleSearch()

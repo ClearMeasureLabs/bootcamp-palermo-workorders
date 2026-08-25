@@ -43,14 +43,15 @@ public class WorkOrderTools
             new JsonSerializerOptions { WriteIndented = true });
     }
 
-    [McpServerTool(Name = "create-work-order"), Description("Creates a new draft work order. Requires a title, description, and the username of the creator. Optionally accepts a room number for the location.")]
+    [McpServerTool(Name = "create-work-order"), Description("Creates a new draft work order. Requires a title, description, and the username of the creator. Optionally accepts a room number and due date (yyyy-MM-dd).")]
     public static async Task<string> CreateWorkOrder(
         IBus bus,
         IWorkOrderNumberGenerator numberGenerator,
         [Description("Title of the work order")] string title,
         [Description("Description of the work order")] string description,
         [Description("Username of the employee creating the work order")] string creatorUsername,
-        [Description("Optional room number or location for the work order")] string? roomNumber = null)
+        [Description("Optional room number or location for the work order")] string? roomNumber = null,
+        [Description("Optional due date as yyyy-MM-dd")] string? dueDate = null)
     {
         try
         {
@@ -60,6 +61,11 @@ public class WorkOrderTools
                 return $"Employee with username '{creatorUsername}' not found.";
             }
 
+            if (!DatedWorkOrderScheduling.TryParseOptionalDueDate(dueDate, out var parsedDueDate, out var dueDateError))
+            {
+                return dueDateError!;
+            }
+
             var workOrder = new WorkOrder
             {
                 Title = title,
@@ -67,7 +73,8 @@ public class WorkOrderTools
                 Creator = creator,
                 Status = WorkOrderStatus.Draft,
                 Number = numberGenerator.GenerateNumber(),
-                RoomNumber = roomNumber
+                RoomNumber = roomNumber,
+                DueDate = parsedDueDate
             };
 
             var command = new SaveDraftCommand(workOrder, creator);
@@ -79,6 +86,44 @@ public class WorkOrderTools
         catch (Exception ex)
         {
             return $"Error creating work order: {ex.Message}";
+        }
+    }
+
+    [McpServerTool(Name = "create-dated-work-orders"), Description(
+        "Creates multiple dated assigned work orders in ONE transaction. " +
+        "Use this for scheduling (e.g. next N Saturdays). " +
+        "Looks up the assignee first; if missing, creates nothing. " +
+        "Pass dueDates as comma-separated yyyy-MM-dd values, or omit dueDates and set saturdayCount to create consecutive Saturdays in America/Chicago starting with the coming Saturday.")]
+    public static async Task<string> CreateDatedWorkOrders(
+        IBus bus,
+        TimeProvider timeProvider,
+        [Description("Username of the employee creating the work orders (logged-in user)")] string creatorUsername,
+        [Description("Username of the assignee (e.g. gwillie)")] string assigneeUsername,
+        [Description("Title for each work order")] string title,
+        [Description("Description for each work order")] string description,
+        [Description("Optional comma-separated due dates as yyyy-MM-dd")] string? dueDates = null,
+        [Description("When dueDates is omitted, number of consecutive Chicago Saturdays to schedule (default 10)")] int saturdayCount = 10)
+    {
+        try
+        {
+            var (dates, resolveError) = DatedWorkOrderScheduling.ResolveDueDates(timeProvider, dueDates, saturdayCount);
+            if (resolveError != null)
+            {
+                return resolveError;
+            }
+
+            var result = await bus.Send(new CreateDatedWorkOrdersCommand(
+                creatorUsername,
+                assigneeUsername,
+                title,
+                description,
+                dates));
+
+            return DatedWorkOrderScheduling.FormatResult(result);
+        }
+        catch (Exception ex)
+        {
+            return $"Error creating dated work orders: {ex.Message}";
         }
     }
 
@@ -138,7 +183,8 @@ public class WorkOrderTools
         wo.Title,
         Status = wo.Status.FriendlyName,
         Creator = wo.Creator?.GetFullName(),
-        Assignee = wo.Assignee?.GetFullName()
+        Assignee = wo.Assignee?.GetFullName(),
+        DueDate = wo.DueDate?.ToString("yyyy-MM-dd")
     };
 
     internal static object FormatWorkOrderDetail(WorkOrder wo) => new
@@ -154,6 +200,7 @@ public class WorkOrderTools
         AssigneeUsername = wo.Assignee?.UserName,
         wo.CreatedDate,
         wo.AssignedDate,
-        wo.CompletedDate
+        wo.CompletedDate,
+        DueDate = wo.DueDate?.ToString("yyyy-MM-dd")
     };
 }
