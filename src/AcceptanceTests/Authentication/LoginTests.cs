@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -19,6 +20,140 @@ public class LoginTests : AcceptanceTestBase
             State = WaitForSelectorState.Attached,
             Timeout = 90_000
         });
+
+    // #region agent log
+    private static void AgentLog(string hypothesisId, string location, string message, object data)
+    {
+        try
+        {
+            var payload = new Dictionary<string, object?>
+            {
+                ["hypothesisId"] = hypothesisId,
+                ["location"] = location,
+                ["message"] = message,
+                ["data"] = data,
+                ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                ["runId"] = "deterministic-repro-9086"
+            };
+            File.AppendAllText(
+                "/opt/cursor/logs/debug.log",
+                JsonSerializer.Serialize(payload) + "\n");
+        }
+        catch
+        {
+            // Diagnostic only — never fail the test on log I/O.
+        }
+    }
+
+    private async Task<Dictionary<string, string?>> CaptureLoginDiagAsync(string phase)
+    {
+        var diag = Page.GetByTestId(nameof(Login.Elements.LoginDiag));
+        var diagCount = await diag.CountAsync();
+        string? alertText = null;
+        var alert = Page.Locator(".alert-danger");
+        if (await alert.CountAsync() > 0)
+        {
+            alertText = await alert.First.InnerTextAsync();
+        }
+
+        var attrs = new Dictionary<string, string?>
+        {
+            ["phase"] = phase,
+            ["url"] = Page.Url,
+            ["diagCount"] = diagCount.ToString(),
+            ["welcomeCount"] = (await Page.GetByTestId(nameof(Logout.Elements.WelcomeText)).CountAsync()).ToString(),
+            ["loginLinkCount"] = (await Page.GetByTestId(nameof(LoginLink.Elements.LoginLink)).CountAsync()).ToString(),
+            ["alertText"] = alertText,
+            ["employeeOptionCount"] = (await Page.GetByTestId(nameof(Login.Elements.User))
+                .Locator("option[value]:not([value=''])").CountAsync()).ToString()
+        };
+        if (diagCount > 0)
+        {
+            attrs["employeeCount"] = await diag.GetAttributeAsync("data-employee-count");
+            attrs["hasTlovejoy"] = await diag.GetAttributeAsync("data-has-tlovejoy");
+            attrs["loadCompleted"] = await diag.GetAttributeAsync("data-load-completed");
+            attrs["error"] = await diag.GetAttributeAsync("data-error");
+            attrs["authOutcome"] = await diag.GetAttributeAsync("data-auth-outcome");
+            attrs["username"] = await diag.GetAttributeAsync("data-username");
+        }
+
+        return attrs;
+    }
+
+    /// <summary>
+    /// Diagnostic-only (#9086): delay EmployeeGetAllQuery so Lovejoy shortcut can be clicked
+    /// while <c>Employees</c> is still empty — reproduces WelcomeText missing / stay on /login.
+    /// </summary>
+    [Test]
+    [Explicit("Diagnostic reproduction for #9086 — temporary; not a permanent gate")]
+    [Category("Diagnostic9086")]
+    public async Task Should_FailWelcomeText_WhenLovejoyClickedBeforeEmployeesLoaded()
+    {
+        const int employeeQueryDelayMs = 15_000;
+        var delayedEmployeeQueries = 0;
+
+        await Page.RouteAsync("**/*blazor-wasm-single-api*", async route =>
+        {
+            if (!string.Equals(route.Request.Method, "POST", StringComparison.OrdinalIgnoreCase))
+            {
+                await route.ContinueAsync();
+                return;
+            }
+
+            var postData = route.Request.PostData ?? string.Empty;
+            if (postData.Contains("EmployeeGetAllQuery", StringComparison.Ordinal))
+            {
+                Interlocked.Increment(ref delayedEmployeeQueries);
+                await Task.Delay(employeeQueryDelayMs);
+            }
+
+            await route.ContinueAsync();
+        });
+
+        AgentLog("A", "LoginTests.cs:reproEntry", "Deterministic Lovejoy-before-employees repro start", new
+        {
+            employeeQueryDelayMs,
+            baseUrl = ServerFixture.ApplicationBaseUrl,
+            startLocal = ServerFixture.StartLocalServer
+        });
+
+        await Page.GotoAsync("/login");
+        var shortcut = Page.GetByTestId(nameof(Login.Elements.LovejoyShortcut));
+        await shortcut.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000
+        });
+
+        var beforeClick = await CaptureLoginDiagAsync("before-lovejoy-click");
+        AgentLog("A", "LoginTests.cs:beforeClick", "Login diag before Lovejoy click (employees should still be empty)", beforeClick);
+
+        await Click(nameof(Login.Elements.LovejoyShortcut));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.WaitForTimeoutAsync(500);
+
+        var afterClick = await CaptureLoginDiagAsync("after-lovejoy-click");
+        AgentLog("A", "LoginTests.cs:afterClick", "Login diag after Lovejoy click (expect reject / still on login)", afterClick);
+        AgentLog("A", "LoginTests.cs:reproSummary", "Delay and auth summary", new
+        {
+            delayedEmployeeQueries,
+            url = afterClick.GetValueOrDefault("url"),
+            employeeCount = afterClick.GetValueOrDefault("employeeCount"),
+            loadCompleted = afterClick.GetValueOrDefault("loadCompleted"),
+            hasTlovejoy = afterClick.GetValueOrDefault("hasTlovejoy"),
+            authOutcome = afterClick.GetValueOrDefault("authOutcome"),
+            error = afterClick.GetValueOrDefault("error"),
+            alertText = afterClick.GetValueOrDefault("alertText"),
+            welcomeCount = afterClick.GetValueOrDefault("welcomeCount")
+        });
+
+        // Same assertion as CI failure / SaturdayMow line 38 — expected to fail under the delay.
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
+            .ToHaveTextAsync(
+                "Welcome tlovejoy!",
+                new LocatorAssertionsToHaveTextOptions { Timeout = 5_000 });
+    }
+    // #endregion
 
     [Test, Retry(2)]
     public void VerifySetup()
