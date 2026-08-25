@@ -29,6 +29,17 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     [Inject] public SpeechRecognition? SpeechRecognition { get; set; }
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
 
+    private DueDateUrgency CurrentDueDateUrgency =>
+        _workOrder == null
+            ? DueDateUrgency.None
+            : DueDateUrgencyCalculator.Calculate(Model.DueDateInput, _workOrder.Status, Clock);
+
+    private string CurrentDueDateCssClass =>
+        DueDateUrgencyCalculator.CssClass(CurrentDueDateUrgency);
+
+    private string? CurrentDueDateUrgencyText =>
+        DueDateUrgencyCalculator.ScreenReaderText(CurrentDueDateUrgency);
+
     public WorkOrderManageModel Model { get; set; } = new();
     public List<SelectListItem> UserOptions { get; set; } = new();
     public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
@@ -101,8 +112,6 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
     private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)
     {
-        var clock = Clock;
-        var urgency = DueDateUrgencyCalculator.Calculate(workOrder, clock);
         return new WorkOrderManageModel
         {
             WorkOrder = workOrder,
@@ -119,9 +128,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
             DueDateInput = workOrder.DueDate,
-            DueDateDisplay = FormatDueDateDisplay(workOrder.DueDate),
-            DueDateCssClass = DueDateUrgencyCalculator.CssClass(urgency),
-            DueDateUrgencyText = DueDateUrgencyCalculator.ScreenReaderText(urgency)
+            DueDateDisplay = FormatDueDateDisplay(workOrder.DueDate)
         };
     }
 

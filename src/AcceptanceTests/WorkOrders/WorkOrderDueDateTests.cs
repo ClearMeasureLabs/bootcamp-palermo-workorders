@@ -151,8 +151,14 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
 
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description ?? "desc");
-        await Page.GetByTestId(nameof(WorkOrderManage.Elements.DueDate))
-            .FillAsync(dueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+        var dueDateInput = Page.GetByTestId(nameof(WorkOrderManage.Elements.DueDate));
+        await dueDateInput.FillAsync(dueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+        var expectedUrgency = DueDateUrgencyCalculator.Calculate(
+            dueDate,
+            WorkOrderStatus.Draft,
+            TimeProvider.System);
+        await Expect(dueDateInput).ToHaveClassAsync(
+            new Regex(DueDateUrgencyCalculator.CssClass(expectedUrgency)));
 
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);

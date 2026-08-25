@@ -41,16 +41,6 @@ public class WorkOrderManageModel
     /// </summary>
     public string? DueDateDisplay { get; set; }
 
-    /// <summary>
-    /// CSS class for due-date urgency on the date cell only.
-    /// </summary>
-    public string DueDateCssClass { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Screen-reader text for due-date urgency ("Due today" / "Overdue").
-    /// </summary>
-    public string? DueDateUrgencyText { get; set; }
-
     [StringLength(WorkOrder.RoomNumberMaxLength, ErrorMessage = "Room cannot exceed 900 characters.")]
     public string? RoomNumber { get; set; }
 }

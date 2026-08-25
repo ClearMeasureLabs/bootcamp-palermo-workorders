@@ -87,6 +87,25 @@ public class DueDateUrgencyCalculatorTests
     }
 
     [Test]
+    public void Calculate_WhenEditableDueDateChanges_UpdatesUrgency()
+    {
+        var clock = ChicagoNoonOn(2026, 8, 29);
+        var today = ChurchTimeZone.Today(clock);
+
+        var futureUrgency = DueDateUrgencyCalculator.Calculate(
+            today.AddDays(1),
+            WorkOrderStatus.Draft,
+            clock);
+        var todayUrgency = DueDateUrgencyCalculator.Calculate(
+            today,
+            WorkOrderStatus.Draft,
+            clock);
+
+        futureUrgency.ShouldBe(DueDateUrgency.None);
+        todayUrgency.ShouldBe(DueDateUrgency.DueToday);
+    }
+
+    [Test]
     public void ComingSaturday_WhenTodayIsSaturday_ReturnsToday()
     {
         // 2026-08-29 is a Saturday

@@ -13,25 +13,37 @@ public static class DueDateUrgencyCalculator
     public static DueDateUrgency Calculate(WorkOrder workOrder, TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(workOrder);
+        return Calculate(workOrder.DueDate, workOrder.Status, timeProvider);
+    }
+
+    /// <summary>
+    /// Returns urgency for an editable due date and work-order status relative to Chicago "today".
+    /// </summary>
+    public static DueDateUrgency Calculate(
+        DateOnly? dueDate,
+        WorkOrderStatus status,
+        TimeProvider timeProvider)
+    {
+        ArgumentNullException.ThrowIfNull(status);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
-        if (workOrder.DueDate is null)
+        if (dueDate is null)
         {
             return DueDateUrgency.None;
         }
 
-        if (!IsOpen(workOrder.Status))
+        if (!IsOpen(status))
         {
             return DueDateUrgency.None;
         }
 
         var today = ChurchTimeZone.Today(timeProvider);
-        if (workOrder.DueDate.Value == today)
+        if (dueDate.Value == today)
         {
             return DueDateUrgency.DueToday;
         }
 
-        if (workOrder.DueDate.Value < today)
+        if (dueDate.Value < today)
         {
             return DueDateUrgency.Overdue;
         }
