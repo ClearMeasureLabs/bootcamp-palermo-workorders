@@ -27,6 +27,16 @@ public sealed class StubUserSessionStore : IUserSessionStore
     /// </summary>
     public TaskCompletionSource<string?>? PendingGet { private get; set; }
 
+    /// <summary>
+    /// Optional failure raised by <see cref="SetAsync"/>.
+    /// </summary>
+    public Exception? SetException { private get; set; }
+
+    /// <summary>
+    /// Optional failure raised by <see cref="ClearAsync"/>.
+    /// </summary>
+    public Exception? ClearException { private get; set; }
+
     /// <inheritdoc />
     public Task<string?> GetAsync()
     {
@@ -37,6 +47,11 @@ public sealed class StubUserSessionStore : IUserSessionStore
     /// <inheritdoc />
     public Task SetAsync(string username)
     {
+        if (SetException is not null)
+        {
+            throw SetException;
+        }
+
         if (IsAuthenticatedSnapshot is not null)
         {
             Operations.Add(IsAuthenticatedSnapshot() ? "SetWhileAuthenticated" : "SetBeforeAuthenticated");
@@ -53,6 +68,11 @@ public sealed class StubUserSessionStore : IUserSessionStore
     /// <inheritdoc />
     public Task ClearAsync()
     {
+        if (ClearException is not null)
+        {
+            throw ClearException;
+        }
+
         if (IsAuthenticatedSnapshot is not null)
         {
             Operations.Add(IsAuthenticatedSnapshot() ? "ClearWhileAuthenticated" : "ClearWhileUnauthenticated");

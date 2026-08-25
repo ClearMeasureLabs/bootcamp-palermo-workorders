@@ -131,4 +131,34 @@ public class CustomAuthenticationStateProviderTests
         authState.User.Identity!.IsAuthenticated.ShouldBeFalse();
         authProvider.GetUsername().ShouldBeNull();
     }
+
+    [Test]
+    public async Task Login_ShouldRemainUnauthenticated_WhenStoreWriteFails()
+    {
+        var store = new StubUserSessionStore
+        {
+            SetException = new InvalidOperationException("Storage unavailable")
+        };
+        var authProvider = new CustomAuthenticationStateProvider(store);
+
+        await Should.ThrowAsync<InvalidOperationException>(() => authProvider.Login("tlovejoy"));
+
+        authProvider.IsAuthenticated().ShouldBeFalse();
+        authProvider.GetUsername().ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Logout_ShouldRemainAuthenticated_WhenStoreClearFails()
+    {
+        var store = new StubUserSessionStore();
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        await authProvider.Login("tlovejoy");
+        store.ClearException = new InvalidOperationException("Storage unavailable");
+
+        await Should.ThrowAsync<InvalidOperationException>(authProvider.Logout);
+
+        authProvider.IsAuthenticated().ShouldBeTrue();
+        authProvider.GetUsername().ShouldBe("tlovejoy");
+        store.Username.ShouldBe("tlovejoy");
+    }
 }

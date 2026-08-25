@@ -32,24 +32,12 @@ public sealed class LocalStorageUserSessionStore : IUserSessionStore
     /// <inheritdoc />
     public async Task SetAsync(string username)
     {
-        try
-        {
-            await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, username);
-        }
-        catch (JSException)
-        {
-        }
+        await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, username);
     }
 
     /// <inheritdoc />
     public async Task ClearAsync()
     {
-        try
-        {
-            await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
-        }
-        catch (JSException)
-        {
-        }
+        await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
     }
 }
