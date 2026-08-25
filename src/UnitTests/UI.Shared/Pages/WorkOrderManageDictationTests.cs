@@ -12,7 +12,6 @@ using Palermo.BlazorMvc;
 using Shouldly;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
 using Toolbelt.Blazor.SpeechRecognition;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -20,11 +19,11 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageDictationTests
 {
     [Test]
-    public void ShouldRenderDictateTitleButton()
+    public async Task ShouldRenderDictateTitleButton()
     {
-        using var ctx = CreateTestContext();
+        await using var ctx = CreateTestContext();
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.WaitForAssertion(() =>
         {
@@ -37,11 +36,11 @@ public class WorkOrderManageDictationTests
     }
 
     [Test]
-    public void ShouldRenderDictateDescriptionButton()
+    public async Task ShouldRenderDictateDescriptionButton()
     {
-        using var ctx = CreateTestContext();
+        await using var ctx = CreateTestContext();
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.WaitForAssertion(() =>
         {
@@ -54,11 +53,11 @@ public class WorkOrderManageDictationTests
     }
 
     [Test]
-    public void DictateTitleButtonShouldShowListeningStateWhenClicked()
+    public async Task DictateTitleButtonShouldShowListeningStateWhenClicked()
     {
-        using var ctx = CreateTestContext();
+        await using var ctx = CreateTestContext();
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         var dictateButton = component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']");
         dictateButton.Click();
@@ -83,9 +82,9 @@ public class WorkOrderManageDictationTests
     [Test]
     public async Task ShouldAppendFinalTranscriptToTitleWhenDictating()
     {
-        using var ctx = CreateTestContext();
+        await using var ctx = CreateTestContext();
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").Click();
         await component.InvokeAsync(() =>
@@ -100,9 +99,9 @@ public class WorkOrderManageDictationTests
     [Test]
     public async Task ShouldSetDescriptionFromTranscriptWhenFieldIsEmpty()
     {
-        using var ctx = CreateTestContext();
+        await using var ctx = CreateTestContext();
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.Find($"[data-testid='{WorkOrderManage.Elements.DictateDescription}']").Click();
         await component.InvokeAsync(() =>
@@ -117,9 +116,9 @@ public class WorkOrderManageDictationTests
     [Test]
     public async Task ShouldIgnoreInterimResultsWhenDictating()
     {
-        using var ctx = CreateTestContext();
+        await using var ctx = CreateTestContext();
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").Click();
         var interimResult = new SpeechRecognitionEventArgs
@@ -146,9 +145,9 @@ public class WorkOrderManageDictationTests
     [Test]
     public async Task ShouldResetListeningStateWhenRecognitionEnds()
     {
-        using var ctx = CreateTestContext();
+        await using var ctx = CreateTestContext();
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").Click();
 
@@ -168,9 +167,9 @@ public class WorkOrderManageDictationTests
     }
 
     [Test]
-    public void ShouldHideDictateButtonsWhenWorkOrderIsReadOnly()
+    public async Task ShouldHideDictateButtonsWhenWorkOrderIsReadOnly()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
 
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
@@ -198,7 +197,7 @@ public class WorkOrderManageDictationTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "Edit"));
 
-        var component = ctx.RenderComponent<WorkOrderManage>(parameters =>
+        var component = ctx.Render<WorkOrderManage>(parameters =>
             parameters.Add(p => p.Id, "WO-DONE"));
 
         component.WaitForAssertion(() =>
@@ -209,9 +208,9 @@ public class WorkOrderManageDictationTests
         });
     }
 
-    private static TestContext CreateTestContext()
+    private static BunitContext CreateTestContext()
     {
-        var ctx = new TestContext();
+        var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
 
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com")

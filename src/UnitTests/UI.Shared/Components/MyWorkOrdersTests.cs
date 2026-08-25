@@ -11,7 +11,7 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
-using TestContext = Bunit.TestContext;
+using Bunit;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Components;
 
@@ -19,9 +19,9 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Components;
 public class MyWorkOrdersTests
 {
     [Test]
-    public void ShouldInitializeWithZeroCount()
+    public async Task ShouldInitializeWithZeroCount()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         var stubBus = new StubBusWithNoWorkOrders();
@@ -33,16 +33,16 @@ public class MyWorkOrdersTests
         ctx.Services.AddSingleton<IUiBus>(stubUiBus);
 
         // Act
-        var component = ctx.RenderComponent<MyWorkOrders>();
+        var component = ctx.Render<MyWorkOrders>();
 
         // Assert
         component.Instance.Count.ShouldBe(0);
     }
 
     [Test]
-    public void ShouldLoadWorkOrdersForCurrentUserOnInitialization()
+    public async Task ShouldLoadWorkOrdersForCurrentUserOnInitialization()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         var currentUser = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com");
@@ -55,16 +55,16 @@ public class MyWorkOrdersTests
         ctx.Services.AddSingleton<IUiBus>(stubUiBus);
 
         // Act
-        var component = ctx.RenderComponent<MyWorkOrders>();
+        var component = ctx.Render<MyWorkOrders>();
 
         // Assert
         component.Instance.Count.ShouldBe(2);
     }
 
     [Test]
-    public void ShouldHandleWorkOrderChangedEventAndIncrementCount()
+    public async Task ShouldHandleWorkOrderChangedEventAndIncrementCount()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         var currentUser = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com");
@@ -76,7 +76,7 @@ public class MyWorkOrdersTests
         ctx.Services.AddSingleton<IUserSession>(stubUserSession);
         ctx.Services.AddSingleton<IUiBus>(stubUiBus);
 
-        var component = ctx.RenderComponent<MyWorkOrders>();
+        var component = ctx.Render<MyWorkOrders>();
         var initialCount = component.Instance.Count;
 
         // Act
@@ -100,9 +100,9 @@ public class MyWorkOrdersTests
     }
 
     [Test]
-    public void ShouldNotDuplicateWorkOrdersWhenHandlingSameEvent()
+    public async Task ShouldNotDuplicateWorkOrdersWhenHandlingSameEvent()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         var currentUser = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com");
@@ -114,7 +114,7 @@ public class MyWorkOrdersTests
         ctx.Services.AddSingleton<IUserSession>(stubUserSession);
         ctx.Services.AddSingleton<IUiBus>(stubUiBus);
 
-        var component = ctx.RenderComponent<MyWorkOrders>();
+        var component = ctx.Render<MyWorkOrders>();
         var initialCount = component.Instance.Count;
 
         // Act - Handle the same work order event twice
@@ -139,9 +139,9 @@ public class MyWorkOrdersTests
     }
 
     [Test]
-    public void ShouldHandleNullCurrentUser()
+    public async Task ShouldHandleNullCurrentUser()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         // Arrange
         var stubBus = new StubBusWithNoWorkOrders();
@@ -153,7 +153,7 @@ public class MyWorkOrdersTests
         ctx.Services.AddSingleton<IUiBus>(stubUiBus);
 
         // Act
-        var component = ctx.RenderComponent<MyWorkOrders>();
+        var component = ctx.Render<MyWorkOrders>();
 
         // Assert
         component.Instance.Count.ShouldBe(0);

@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -19,9 +18,9 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageSpeechTests
 {
     [Test]
-    public void ShouldRenderSpeakTitleButton()
+    public async Task ShouldRenderSpeakTitleButton()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com")
         {
@@ -40,7 +39,7 @@ public class WorkOrderManageSpeechTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.WaitForAssertion(() =>
         {
@@ -52,9 +51,9 @@ public class WorkOrderManageSpeechTests
     }
 
     [Test]
-    public void ShouldRenderSpeakDescriptionButton()
+    public async Task ShouldRenderSpeakDescriptionButton()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
 
@@ -69,7 +68,7 @@ public class WorkOrderManageSpeechTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.WaitForAssertion(() =>
         {
@@ -81,9 +80,9 @@ public class WorkOrderManageSpeechTests
     }
 
     [Test]
-    public void SpeakTitleButtonShouldInvokeTranslationService()
+    public async Task SpeakTitleButtonShouldInvokeTranslationService()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com")
         {
@@ -104,7 +103,7 @@ public class WorkOrderManageSpeechTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.WaitForAssertion(() =>
         {
@@ -127,9 +126,9 @@ public class WorkOrderManageSpeechTests
     }
 
     [Test]
-    public void SpeakDescriptionButtonShouldInvokeTranslationService()
+    public async Task SpeakDescriptionButtonShouldInvokeTranslationService()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com")
         {
@@ -150,7 +149,7 @@ public class WorkOrderManageSpeechTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.WaitForAssertion(() =>
         {
@@ -168,9 +167,9 @@ public class WorkOrderManageSpeechTests
     }
 
     [Test]
-    public void SpeakTitleButton_WhenTitleEmpty_DoesNotInvokeTranslationService()
+    public async Task SpeakTitleButton_WhenTitleEmpty_DoesNotInvokeTranslationService()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com")
         {
@@ -191,7 +190,7 @@ public class WorkOrderManageSpeechTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.WaitForAssertion(() =>
         {

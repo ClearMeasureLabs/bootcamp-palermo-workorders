@@ -12,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -20,9 +19,9 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageSubmitTests
 {
     [Test]
-    public void ShouldNavigateToSearch_WhenSaveCommandSubmittedForNewWorkOrder()
+    public async Task ShouldNavigateToSearch_WhenSaveCommandSubmittedForNewWorkOrder()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         user.AddRole(new Role("creator", true, false));
         var bus = new StubSubmitBus();
@@ -38,7 +37,7 @@ public class WorkOrderManageSubmitTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.WaitForAssertion(() =>
         {
@@ -60,9 +59,9 @@ public class WorkOrderManageSubmitTests
     }
 
     [Test]
-    public void ShouldLoadExistingWorkOrder_WhenEditModeSubmitted()
+    public async Task ShouldLoadExistingWorkOrder_WhenEditModeSubmitted()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         user.AddRole(new Role("creator", true, false));
         var existing = new WorkOrder
@@ -87,7 +86,7 @@ public class WorkOrderManageSubmitTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo("http://localhost/?Mode=Edit&Id=WO-EDIT");
 
-        var component = ctx.RenderComponent<WorkOrderManage>(parameters => parameters
+        var component = ctx.Render<WorkOrderManage>(parameters => parameters
             .Add(p => p.Id, "WO-EDIT"));
 
         component.WaitForAssertion(() =>

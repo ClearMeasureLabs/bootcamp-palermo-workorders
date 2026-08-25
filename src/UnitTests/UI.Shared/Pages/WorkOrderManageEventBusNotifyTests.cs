@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -31,9 +30,9 @@ public class WorkOrderManageEventBusNotifyTests
     }
 
     [Test]
-    public void ShouldNotRenotifyWorkOrderSelectedOnEveryRerender_WhenWorkOrderIsUnchanged()
+    public async Task ShouldNotRenotifyWorkOrderSelectedOnEveryRerender_WhenWorkOrderIsUnchanged()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         var workOrderId = Guid.NewGuid();
@@ -50,7 +49,7 @@ public class WorkOrderManageEventBusNotifyTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.WaitForAssertion(() => uiBus.NotifiedWorkOrderSelectedCount.ShouldBe(1));
         var countAfterInitialLoad = uiBus.NotifiedWorkOrderSelectedCount;

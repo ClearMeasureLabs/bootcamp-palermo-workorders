@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Palermo.BlazorMvc;
 using Shouldly;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -17,9 +16,9 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class FetchDataTests
 {
     [Test]
-    public void ShouldLoadForecasts_FromBus_OnInitialize()
+    public async Task ShouldLoadForecasts_FromBus_OnInitialize()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var forecasts = new[]
         {
@@ -42,7 +41,7 @@ public class FetchDataTests
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
         ctx.Services.AddLogging();
 
-        var component = ctx.RenderComponent<FetchData>();
+        var component = ctx.Render<FetchData>();
 
         component.WaitForAssertion(() =>
         {

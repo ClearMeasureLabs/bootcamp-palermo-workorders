@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using Bunit;
+using System.ComponentModel.DataAnnotations;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -41,9 +40,9 @@ public class LoginPageTests
     }
 
     [Test]
-    public void ShouldDisplayDropdownWithEmployees()
+    public async Task ShouldDisplayDropdownWithEmployees()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var provider = new CustomAuthenticationStateProvider();
         ctx.Services.AddSingleton(provider);
@@ -51,7 +50,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
 
-        var component = ctx.RenderComponent<Login>();
+        var component = ctx.Render<Login>();
 
         var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
         employeeSelect.ShouldNotBeNull();
@@ -66,9 +65,9 @@ public class LoginPageTests
     }
 
     [Test]
-    public void ShouldDisplayUppercaseLabelsInLoginDropdown_ForMixedAndAllCapsNames()
+    public async Task ShouldDisplayUppercaseLabelsInLoginDropdown_ForMixedAndAllCapsNames()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var provider = new CustomAuthenticationStateProvider();
         ctx.Services.AddSingleton(provider);
@@ -76,7 +75,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
 
-        var component = ctx.RenderComponent<Login>();
+        var component = ctx.Render<Login>();
 
         var hsimpsonOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "hsimpson");
         hsimpsonOption.TextContent.ShouldBe("HOMER SIMPSON");
@@ -86,9 +85,9 @@ public class LoginPageTests
     }
 
     [Test]
-    public void ShouldLoginWithSelectedEmployee()
+    public async Task ShouldLoginWithSelectedEmployee()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var provider = new CustomAuthenticationStateProvider();
         ctx.Services.AddSingleton(provider);
@@ -96,7 +95,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
 
-        var component = ctx.RenderComponent<Login>();
+        var component = ctx.Render<Login>();
 
         var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
         var submitButton = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
@@ -109,9 +108,9 @@ public class LoginPageTests
     }
 
     [Test]
-    public void ShouldDisplayFirstChurchOfShelbyvilleSubtitle()
+    public async Task ShouldDisplayFirstChurchOfShelbyvilleSubtitle()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var provider = new CustomAuthenticationStateProvider();
         ctx.Services.AddSingleton(provider);
@@ -119,16 +118,16 @@ public class LoginPageTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
 
-        var component = ctx.RenderComponent<Login>();
+        var component = ctx.Render<Login>();
 
         var subtitle = component.Find(".login-subtitle");
         subtitle.TextContent.ShouldBe("First Church of Shelbyville");
     }
 
     [Test]
-    public void Should_ShowLovejoyShortcut_WithoutDropdownSelection()
+    public async Task Should_ShowLovejoyShortcut_WithoutDropdownSelection()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var provider = new CustomAuthenticationStateProvider();
         ctx.Services.AddSingleton(provider);
@@ -136,7 +135,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
 
-        var component = ctx.RenderComponent<Login>();
+        var component = ctx.Render<Login>();
 
         var shortcut = component.Find($"[data-testid='{Login.Elements.LovejoyShortcut}']");
         shortcut.ShouldNotBeNull();
@@ -145,9 +144,9 @@ public class LoginPageTests
     }
 
     [Test]
-    public void Should_LoginAsTlovejoy_WhenLovejoyShortcutClicked()
+    public async Task Should_LoginAsTlovejoy_WhenLovejoyShortcutClicked()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var provider = new CustomAuthenticationStateProvider();
         ctx.Services.AddSingleton(provider);
@@ -155,7 +154,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
 
-        var component = ctx.RenderComponent<Login>();
+        var component = ctx.Render<Login>();
 
         var shortcut = component.Find($"[data-testid='{Login.Elements.LovejoyShortcut}']");
         shortcut.Click();
@@ -165,9 +164,9 @@ public class LoginPageTests
     }
 
     [Test]
-    public void Should_KeepDropdownLoginUnchanged_WhenLovejoyShortcutPresent()
+    public async Task Should_KeepDropdownLoginUnchanged_WhenLovejoyShortcutPresent()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var provider = new CustomAuthenticationStateProvider();
         ctx.Services.AddSingleton(provider);
@@ -175,7 +174,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
 
-        var component = ctx.RenderComponent<Login>();
+        var component = ctx.Render<Login>();
 
         component.Find($"[data-testid='{Login.Elements.LovejoyShortcut}']").ShouldNotBeNull();
 

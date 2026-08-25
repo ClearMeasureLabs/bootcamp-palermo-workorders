@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -19,9 +18,9 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageAttachmentsTests
 {
     [Test]
-    public void WorkOrderManage_ShouldRenderAttachmentsSection()
+    public async Task WorkOrderManage_ShouldRenderAttachmentsSection()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         var workOrderId = Guid.NewGuid();
@@ -52,7 +51,7 @@ public class WorkOrderManageAttachmentsTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         component.WaitForAssertion(() =>
         {

@@ -1,4 +1,4 @@
-﻿using Bunit;
+using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Components;
 
@@ -17,9 +16,9 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Components;
 public class LogoutTests
 {
     [Test]
-    public void ShouldDisplayWelcomeMessageWithUsername()
+    public async Task ShouldDisplayWelcomeMessageWithUsername()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var authProvider = new CustomAuthenticationStateProvider();
         authProvider.Login("hsimpson");
@@ -28,7 +27,7 @@ public class LogoutTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
-        var component = ctx.RenderComponent<Logout>();
+        var component = ctx.Render<Logout>();
 
         var welcomeSpan = component.Find("span");
         welcomeSpan.TextContent.ShouldContain("Welcome");
@@ -36,9 +35,9 @@ public class LogoutTests
     }
 
     [Test]
-    public void ShouldDisplayLogoutLink()
+    public async Task ShouldDisplayLogoutLink()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var authProvider = new CustomAuthenticationStateProvider();
         authProvider.Login("hsimpson");
@@ -47,7 +46,7 @@ public class LogoutTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
-        var component = ctx.RenderComponent<Logout>();
+        var component = ctx.Render<Logout>();
 
         var logoutLink = component.Find("a");
         logoutLink.ShouldNotBeNull();
@@ -57,9 +56,9 @@ public class LogoutTests
     }
 
     [Test]
-    public void ShouldNotifyEventBusWithUserLoggedOutEventOnClick()
+    public async Task ShouldNotifyEventBusWithUserLoggedOutEventOnClick()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var authProvider = new CustomAuthenticationStateProvider();
         authProvider.Login("hsimpson");
@@ -69,7 +68,7 @@ public class LogoutTests
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
-        var component = ctx.RenderComponent<Logout>();
+        var component = ctx.Render<Logout>();
         var logoutLink = component.Find("a");
 
         logoutLink.Click();
@@ -79,9 +78,9 @@ public class LogoutTests
     }
 
     [Test]
-    public void ShouldNavigateToLoginPageOnClick()
+    public async Task ShouldNavigateToLoginPageOnClick()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var authProvider = new CustomAuthenticationStateProvider();
         authProvider.Login("hsimpson");
@@ -90,7 +89,7 @@ public class LogoutTests
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
-        var component = ctx.RenderComponent<Logout>();
+        var component = ctx.Render<Logout>();
         var logoutLink = component.Find("a");
 
         logoutLink.Click();
@@ -100,9 +99,9 @@ public class LogoutTests
     }
 
     [Test]
-    public void ShouldPerformAllLogoutActionsInCorrectOrder()
+    public async Task ShouldPerformAllLogoutActionsInCorrectOrder()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var spyEventBus = new SpyUiBus();
 
@@ -110,7 +109,7 @@ public class LogoutTests
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
-        var component = ctx.RenderComponent<Logout>();
+        var component = ctx.Render<Logout>();
         var logoutLink = component.Find("a");
 
         logoutLink.Click();

@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -19,9 +18,9 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageRoomFieldTests
 {
     [Test]
-    public void WorkOrderManage_ShouldRenderRoomAsTextareaWithMaxLength900()
+    public async Task WorkOrderManage_ShouldRenderRoomAsTextareaWithMaxLength900()
     {
-        using var ctx = new TestContext();
+        await using var ctx = new BunitContext();
 
         var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         var workOrderId = Guid.NewGuid();
@@ -37,7 +36,7 @@ public class WorkOrderManageRoomFieldTests
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
 
-        var component = ctx.RenderComponent<WorkOrderManage>();
+        var component = ctx.Render<WorkOrderManage>();
 
         var room = component.WaitForElement($"[data-testid='{WorkOrderManage.Elements.RoomNumber}']");
         room.TagName.ShouldBe("TEXTAREA");

@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
-using TestContext = Bunit.TestContext;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -17,11 +16,11 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class ApplicationChatTests
 {
     [Test]
-    public void ShouldRenderChatShellAndInputElements()
+    public async Task ShouldRenderChatShellAndInputElements()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        var component = ctx.RenderComponent<ApplicationChat>();
+        var component = ctx.Render<ApplicationChat>();
 
         component.Find($"[data-testid='{ApplicationChat.Elements.ChatShell}']").ShouldNotBeNull();
         component.Find($"[data-testid='{ApplicationChat.Elements.ChatContainer}']").ShouldNotBeNull();
@@ -31,11 +30,11 @@ public class ApplicationChatTests
     }
 
     [Test]
-    public void ShouldRenderChatHistoryViewportAfterSendingMessage()
+    public async Task ShouldRenderChatHistoryViewportAfterSendingMessage()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        var component = ctx.RenderComponent<ApplicationChat>();
+        var component = ctx.Render<ApplicationChat>();
         component.Find($"[data-testid='{ApplicationChat.Elements.ChatInput}']").Change("first prompt");
         component.Find($"[data-testid='{ApplicationChat.Elements.SendButton}']").Click();
 
@@ -48,11 +47,11 @@ public class ApplicationChatTests
     }
 
     [Test]
-    public void ShouldKeepPromptInputAvailableAfterManyMessages()
+    public async Task ShouldKeepPromptInputAvailableAfterManyMessages()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        var component = ctx.RenderComponent<ApplicationChat>();
+        var component = ctx.Render<ApplicationChat>();
 
         for (var i = 0; i < 12; i++)
         {
@@ -71,10 +70,10 @@ public class ApplicationChatTests
     }
 
     [Test]
-    public void ShouldSendMessageWhenEnterKeyPressed()
+    public async Task ShouldSendMessageWhenEnterKeyPressed()
     {
-        using var ctx = CreateContext();
-        var component = ctx.RenderComponent<ApplicationChat>();
+        await using var ctx = CreateContext();
+        var component = ctx.Render<ApplicationChat>();
 
         var chatInput = component.Find($"[data-testid='{ApplicationChat.Elements.ChatInput}']");
         chatInput.Change("test prompt via enter");
@@ -88,9 +87,9 @@ public class ApplicationChatTests
         });
     }
 
-    private static TestContext CreateContext()
+    private static BunitContext CreateContext()
     {
-        var ctx = new TestContext();
+        var ctx = new BunitContext();
         ctx.JSInterop.SetupVoid("scrollToBottom", _ => true);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new ApplicationChatStubBus());
