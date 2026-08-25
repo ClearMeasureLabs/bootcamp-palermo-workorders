@@ -6,7 +6,9 @@ namespace ClearMeasure.Bootcamp.Core.Queries;
 /// Remotable application-chat turn. Returns a plain DTO so Blazor WASM remoting
 /// does not deserialize <c>Microsoft.Extensions.AI.ChatResponse</c> (TypeLoadException).
 /// </summary>
-public record ApplicationChatQuery(string Prompt, string CurrentUsername)
+public record ApplicationChatQuery(
+    [property: ExcludeFromBusActivity] string Prompt,
+    string CurrentUsername)
     : IRequest<ApplicationChatResult>, IRemotableRequest
 {
     /// <summary>

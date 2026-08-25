@@ -10,6 +10,8 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 /// </summary>
 internal static class DatedWorkOrderScheduling
 {
+    private const int MaximumBatchSize = 10;
+
     /// <summary>
     /// Builds due dates from an explicit comma-separated list or consecutive Chicago Saturdays.
     /// </summary>
@@ -20,12 +22,15 @@ internal static class DatedWorkOrderScheduling
     {
         if (!string.IsNullOrWhiteSpace(dueDates))
         {
-            return TryParseDueDateList(dueDates);
+            var parsed = TryParseDueDateList(dueDates);
+            return parsed.Dates.Count > MaximumBatchSize
+                ? ([], $"A dated work-order batch cannot exceed {MaximumBatchSize} dates.")
+                : parsed;
         }
 
-        if (saturdayCount <= 0)
+        if (saturdayCount is <= 0 or > MaximumBatchSize)
         {
-            return ([], "saturdayCount must be a positive number.");
+            return ([], $"saturdayCount must be between 1 and {MaximumBatchSize}.");
         }
 
         return (BuildComingSaturdays(timeProvider, saturdayCount), null);

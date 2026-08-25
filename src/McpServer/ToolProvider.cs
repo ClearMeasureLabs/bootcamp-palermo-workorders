@@ -75,7 +75,8 @@ public class ToolProvider(
     /// </summary>
     private HttpClient CreateLoopbackHttpClient(string mcpUrl)
     {
-        if (!mcpUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        var mcpUri = new Uri(mcpUrl);
+        if (mcpUri.Scheme != Uri.UriSchemeHttps || !mcpUri.IsLoopback)
         {
             return httpClientFactory.CreateClient();
         }

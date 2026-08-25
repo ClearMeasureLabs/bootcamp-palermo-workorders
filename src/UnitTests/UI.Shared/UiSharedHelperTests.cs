@@ -1,6 +1,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 using System.Diagnostics;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;
 
@@ -70,11 +71,16 @@ public class BusActivityTaggerTests
             [new DateOnly(2026, 8, 29)]);
 
         BusActivityTagger.AddScalarPropertyTags(command, activity);
+        BusActivityTagger.AddScalarPropertyTags(
+            new ApplicationChatQuery("Sensitive chat prompt", "tlovejoy"),
+            activity);
 
         activity.GetTagItem("bus.message.CreatorUsername").ShouldBe("tlovejoy");
         activity.GetTagItem("bus.message.AssigneeUsername").ShouldBe("gwillie");
         activity.GetTagItem("bus.message.Title").ShouldBeNull();
         activity.GetTagItem("bus.message.Description").ShouldBeNull();
+        activity.GetTagItem("bus.message.Prompt").ShouldBeNull();
+        activity.GetTagItem("bus.message.CurrentUsername").ShouldBe("tlovejoy");
     }
 
     private static ActivitySamplingResult SampleAllData(ref ActivityCreationOptions<ActivityContext> _) =>

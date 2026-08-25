@@ -120,6 +120,34 @@ public class McpCreateDatedWorkOrdersToolTests
     }
 
     [Test]
+    public void ShouldRejectSaturdayCountAboveTransactionalBatchLimit()
+    {
+        var (dates, error) = DatedWorkOrderScheduling.ResolveDueDates(
+            TimeProvider.System,
+            null,
+            11);
+
+        dates.Count.ShouldBe(0);
+        error.ShouldNotBeNull();
+        error.ShouldContain("between 1 and 10");
+    }
+
+    [Test]
+    public void ShouldRejectExplicitDateListAboveTransactionalBatchLimit()
+    {
+        var dueDates = string.Join(',', Enumerable.Repeat("2026-09-01", 11));
+
+        var (dates, error) = DatedWorkOrderScheduling.ResolveDueDates(
+            TimeProvider.System,
+            dueDates,
+            10);
+
+        dates.Count.ShouldBe(0);
+        error.ShouldNotBeNull();
+        error.ShouldContain("cannot exceed 10");
+    }
+
+    [Test]
     public void FormatResult_WhenFailure_ReturnsMessage()
     {
         var text = DatedWorkOrderScheduling.FormatResult(
