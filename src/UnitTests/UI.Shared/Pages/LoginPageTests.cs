@@ -100,8 +100,8 @@ public class LoginPageTests
         var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
         var submitButton = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
 
-        employeeSelect.Change("hsimpson");
-        submitButton.Click();
+        await employeeSelect.ChangeAsync(new() { Value = "hsimpson" });
+        await submitButton.ClickAsync(new());
 
         provider.IsAuthenticated().ShouldBeTrue();
         provider.GetUsername().ShouldBe("hsimpson");
@@ -157,7 +157,7 @@ public class LoginPageTests
         var component = ctx.Render<Login>();
 
         var shortcut = component.Find($"[data-testid='{Login.Elements.LovejoyShortcut}']");
-        shortcut.Click();
+        await shortcut.ClickAsync(new());
 
         provider.IsAuthenticated().ShouldBeTrue();
         provider.GetUsername().ShouldBe("tlovejoy");
@@ -181,8 +181,8 @@ public class LoginPageTests
         var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
         var submitButton = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
 
-        employeeSelect.Change("hsimpson");
-        submitButton.Click();
+        await employeeSelect.ChangeAsync(new() { Value = "hsimpson" });
+        await submitButton.ClickAsync(new());
 
         provider.IsAuthenticated().ShouldBeTrue();
         provider.GetUsername().ShouldBe("hsimpson");

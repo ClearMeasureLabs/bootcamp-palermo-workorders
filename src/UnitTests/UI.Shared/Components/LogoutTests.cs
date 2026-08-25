@@ -71,7 +71,7 @@ public class LogoutTests
         var component = ctx.Render<Logout>();
         var logoutLink = component.Find("a");
 
-        logoutLink.Click();
+        await logoutLink.ClickAsync(new());
 
         spyEventBus.NotifyWasCalled.ShouldBeTrue();
         spyEventBus.LastNotifiedEvent.ShouldBeOfType<UserLoggedOutEvent>();
@@ -92,7 +92,7 @@ public class LogoutTests
         var component = ctx.Render<Logout>();
         var logoutLink = component.Find("a");
 
-        logoutLink.Click();
+        await logoutLink.ClickAsync(new());
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         navigationManager.Uri.ShouldEndWith("/login");
@@ -112,7 +112,7 @@ public class LogoutTests
         var component = ctx.Render<Logout>();
         var logoutLink = component.Find("a");
 
-        logoutLink.Click();
+        await logoutLink.ClickAsync(new());
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
 

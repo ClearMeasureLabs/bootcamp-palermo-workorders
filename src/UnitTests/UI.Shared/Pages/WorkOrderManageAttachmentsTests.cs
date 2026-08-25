@@ -53,7 +53,7 @@ public class WorkOrderManageAttachmentsTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             var section = component.Find($"[data-testid='{WorkOrderManage.Elements.AttachmentsSection}']");
             section.ShouldNotBeNull();

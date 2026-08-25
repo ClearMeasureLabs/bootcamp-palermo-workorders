@@ -25,7 +25,7 @@ public class WorkOrderManageDictationTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             var element = component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']");
             element.ShouldNotBeNull();
@@ -42,7 +42,7 @@ public class WorkOrderManageDictationTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             var element = component.Find($"[data-testid='{WorkOrderManage.Elements.DictateDescription}']");
             element.ShouldNotBeNull();
@@ -60,18 +60,18 @@ public class WorkOrderManageDictationTests
         var component = ctx.Render<WorkOrderManage>();
 
         var dictateButton = component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']");
-        dictateButton.Click();
+        await dictateButton.ClickAsync(new());
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             var element = component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']");
             element.GetAttribute("aria-pressed").ShouldBe("true");
             element.GetAttribute("class").ShouldNotBeNull().ShouldContain("btn-danger");
         });
 
-        component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").Click();
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").ClickAsync(new());
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             var element = component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']");
             element.GetAttribute("aria-pressed").ShouldBe("false");
@@ -86,11 +86,11 @@ public class WorkOrderManageDictationTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").Click();
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").ClickAsync(new());
         await component.InvokeAsync(() =>
             component.Instance.SpeechRecognition!._OnResult(CreateFinalResult("broken window")));
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Instance.Model.Title.ShouldBe("Test title broken window");
         });
@@ -103,11 +103,11 @@ public class WorkOrderManageDictationTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.Find($"[data-testid='{WorkOrderManage.Elements.DictateDescription}']").Click();
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.DictateDescription}']").ClickAsync(new());
         await component.InvokeAsync(() =>
             component.Instance.SpeechRecognition!._OnResult(CreateFinalResult("broken window")));
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Instance.Model.Description.ShouldBe("broken window");
         });
@@ -120,7 +120,7 @@ public class WorkOrderManageDictationTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").Click();
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").ClickAsync(new());
         var interimResult = new SpeechRecognitionEventArgs
         {
             ResultIndex = 0,
@@ -136,7 +136,7 @@ public class WorkOrderManageDictationTests
         await component.InvokeAsync(() =>
             component.Instance.SpeechRecognition!._OnResult(interimResult));
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Instance.Model.Title.ShouldBe("Test title");
         });
@@ -149,9 +149,9 @@ public class WorkOrderManageDictationTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").Click();
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").ClickAsync(new());
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             var element = component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']");
             element.GetAttribute("aria-pressed").ShouldBe("true");
@@ -159,7 +159,7 @@ public class WorkOrderManageDictationTests
 
         await component.InvokeAsync(() => component.Instance.SpeechRecognition!._OnEnd());
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             var element = component.Find($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']");
             element.GetAttribute("aria-pressed").ShouldBe("false");
@@ -200,7 +200,7 @@ public class WorkOrderManageDictationTests
         var component = ctx.Render<WorkOrderManage>(parameters =>
             parameters.Add(p => p.Id, "WO-DONE"));
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakTitle}']").ShouldNotBeNull();
             component.FindAll($"[data-testid='{WorkOrderManage.Elements.DictateTitle}']").ShouldBeEmpty();

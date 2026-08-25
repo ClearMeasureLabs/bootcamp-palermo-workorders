@@ -51,12 +51,12 @@ public class WorkOrderManageEventBusNotifyTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.WaitForAssertion(() => uiBus.NotifiedWorkOrderSelectedCount.ShouldBe(1));
+        await component.WaitForAssertionAsync(() => uiBus.NotifiedWorkOrderSelectedCount.ShouldBe(1));
         var countAfterInitialLoad = uiBus.NotifiedWorkOrderSelectedCount;
 
         var titleInput = component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']");
-        titleInput.Change("First edit forces a re-render");
-        titleInput.Change("Second edit forces another re-render");
+        await titleInput.ChangeAsync(new() { Value = "First edit forces a re-render" });
+        await titleInput.ChangeAsync(new() { Value = "Second edit forces another re-render" });
 
         uiBus.NotifiedWorkOrderSelectedCount.ShouldBe(countAfterInitialLoad,
             "typing into the Title field re-renders the page but must not re-notify " +

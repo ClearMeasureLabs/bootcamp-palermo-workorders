@@ -41,7 +41,7 @@ public class WorkOrderManageSpeechTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             var element = component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakTitle}']");
             element.ShouldNotBeNull();
@@ -70,7 +70,7 @@ public class WorkOrderManageSpeechTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             var element = component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']");
             element.ShouldNotBeNull();
@@ -105,7 +105,7 @@ public class WorkOrderManageSpeechTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             var titleInput = component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']");
             titleInput.ShouldNotBeNull();
@@ -113,12 +113,12 @@ public class WorkOrderManageSpeechTests
 
         // Set the title value
         var titleElement = component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']");
-        titleElement.Change("Test title");
+        await titleElement.ChangeAsync(new() { Value = "Test title" });
 
         var speakButton = component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakTitle}']");
-        speakButton.Click();
+        await speakButton.ClickAsync(new());
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             translationService.LastText.ShouldBe("Test title");
             translationService.LastTargetLanguage.ShouldBe("es-ES");
@@ -151,15 +151,15 @@ public class WorkOrderManageSpeechTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ShouldNotBeNull();
         });
 
-        component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").Change("Test description");
-        component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']").Click();
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ChangeAsync(new() { Value = "Test description" });
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']").ClickAsync(new());
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             translationService.LastText.ShouldBe("Test description");
             translationService.LastTargetLanguage.ShouldBe("fr-FR");
@@ -192,12 +192,12 @@ public class WorkOrderManageSpeechTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakTitle}']").ShouldNotBeNull();
         });
 
-        component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakTitle}']").Click();
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakTitle}']").ClickAsync(new());
 
         translationService.LastText.ShouldBeNull();
     }

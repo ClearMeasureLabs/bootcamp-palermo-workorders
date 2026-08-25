@@ -1,5 +1,4 @@
 using Bunit;
-using Bunit.TestDoubles;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -20,7 +19,7 @@ public class SettingsTests
         await using var ctx = CreateContext();
         var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         module.Setup<string>("getTheme").SetResult("light");
-        module.SetupVoid("syncDomFromTheme", _ => true);
+        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
 
@@ -37,8 +36,8 @@ public class SettingsTests
         await using var ctx = CreateContext();
         var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         module.Setup<string>("getTheme").SetResult("light");
-        module.SetupVoid("syncDomFromTheme", _ => true);
-        module.SetupVoid("setTheme", _ => true);
+        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        module.SetupVoid("setTheme", _ => true).SetVoidResult();
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
         var theme = ctx.Services.GetRequiredService<ThemePreferenceService>();
@@ -47,9 +46,9 @@ public class SettingsTests
         theme.IsDarkMode.ShouldBeFalse();
 
         var sw = component.Find($"[data-testid='{nameof(Settings.Elements.DarkModeSwitch)}']");
-        sw.Change(true);
+        await sw.ChangeAsync(new() { Value = true });
 
-        component.WaitForAssertion(() => theme.IsDarkMode.ShouldBeTrue());
+        await component.WaitForAssertionAsync(() => theme.IsDarkMode.ShouldBeTrue());
         module.VerifyInvoke("setTheme");
     }
 

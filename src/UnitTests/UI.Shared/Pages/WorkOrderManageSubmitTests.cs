@@ -39,18 +39,18 @@ public class WorkOrderManageSubmitTests
 
         var component = ctx.Render<WorkOrderManage>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").ShouldNotBeNull();
         });
 
-        component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").Change("Submit title");
-        component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").Change("Submit description");
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").ChangeAsync(new() { Value = "Submit title" });
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ChangeAsync(new() { Value = "Submit description" });
 
         var saveButton = component.Find($"[data-testid='{WorkOrderManage.Elements.CommandButton}Save']");
-        saveButton.Click();
+        await saveButton.ClickAsync(new());
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             bus.LastCommand.ShouldNotBeNull();
             bus.LastCommand.ShouldBeOfType<SaveDraftCommand>();
@@ -89,16 +89,16 @@ public class WorkOrderManageSubmitTests
         var component = ctx.Render<WorkOrderManage>(parameters => parameters
             .Add(p => p.Id, "WO-EDIT"));
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").GetAttribute("value")
                 .ShouldBe("Existing");
         });
 
         var saveButton = component.Find($"[data-testid='{WorkOrderManage.Elements.CommandButton}Save']");
-        saveButton.Click();
+        await saveButton.ClickAsync(new());
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             bus.WorkOrderByNumberHits.ShouldBeGreaterThan(0);
             bus.LastCommand.ShouldNotBeNull();

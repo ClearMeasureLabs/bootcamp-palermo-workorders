@@ -8,7 +8,6 @@ using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
-using Bunit.TestDoubles;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
@@ -43,22 +42,22 @@ public class MainLayoutTests
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
         var layout = component.FindComponent<MainLayout>();
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
         });
 
-        component.InvokeAsync(() => layout.Instance.OnViewportChanged(false)).GetAwaiter().GetResult();
+        await component.InvokeAsync(() => layout.Instance.OnViewportChanged(false));
 
         var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
-        toggle.Click();
+        await toggle.ClickAsync(new());
 
         toggle.GetAttribute("aria-expanded").ShouldBe("false");
         toggle.GetAttribute("title")!.ShouldContain("Show");
         layout.Find(".modern-app").ClassList.ShouldContain("rail-collapsed");
         layout.Find("#app-navigation-rail").ClassList.ShouldContain("rail-hidden");
 
-        toggle.Click();
+        await toggle.ClickAsync(new());
 
         toggle.GetAttribute("aria-expanded").ShouldBe("true");
         toggle.GetAttribute("title")!.ShouldContain("Hide");
@@ -73,17 +72,17 @@ public class MainLayoutTests
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
         var layout = component.FindComponent<MainLayout>();
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
         });
 
-        component.InvokeAsync(() => layout.Instance.OnViewportChanged(false)).GetAwaiter().GetResult();
+        await component.InvokeAsync(() => layout.Instance.OnViewportChanged(false));
 
         var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
         toggle.InnerHtml.ShouldContain("bi-chevron-double-left");
 
-        toggle.Click();
+        await toggle.ClickAsync(new());
 
         toggle.InnerHtml.ShouldContain("bi-list");
     }
@@ -95,18 +94,18 @@ public class MainLayoutTests
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
         var layout = component.FindComponent<MainLayout>();
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
         });
 
-        component.InvokeAsync(() => layout.Instance.OnViewportChanged(true)).GetAwaiter().GetResult();
+        await component.InvokeAsync(() => layout.Instance.OnViewportChanged(true));
 
         var rail = layout.Find("#app-navigation-rail");
         rail.ClassList.ShouldNotContain("open");
 
         var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
-        toggle.Click();
+        await toggle.ClickAsync(new());
 
         rail.ClassList.ShouldContain("open");
         toggle.GetAttribute("aria-expanded").ShouldBe("true");
@@ -124,7 +123,7 @@ public class MainLayoutTests
         await using var ctx = CreateContext();
         var themeModule = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         themeModule.Setup<string>("getTheme").SetResult("light");
-        themeModule.SetupVoid("syncDomFromTheme", _ => true);
+        themeModule.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
 
         ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
 
@@ -242,7 +241,7 @@ public class MainLayoutTests
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
         var layout = component.FindComponent<MainLayout>();
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
         });
@@ -250,8 +249,8 @@ public class MainLayoutTests
         await component.InvokeAsync(() => layout.Instance.OnViewportChanged(true));
 
         var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
-        toggle.Click();
-        toggle.Click();
+        await toggle.ClickAsync(new());
+        await toggle.ClickAsync(new());
 
         ctx.JSInterop.VerifyFocusAsyncInvoke();
     }

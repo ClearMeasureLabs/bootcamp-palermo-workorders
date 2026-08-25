@@ -43,7 +43,7 @@ public class FetchDataTests
 
         var component = ctx.Render<FetchData>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Instance.Model.ShouldNotBeNull();
             component.Instance.Model!.Length.ShouldBe(2);

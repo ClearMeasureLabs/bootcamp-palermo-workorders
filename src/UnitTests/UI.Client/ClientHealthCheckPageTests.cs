@@ -19,7 +19,7 @@ public class ClientHealthCheckPageTests
 
         var component = ctx.Render<ClientHealthCheck>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{ClientHealthCheck.Elements.Status}']").ShouldNotBeNull();
         });
@@ -33,7 +33,7 @@ public class ClientHealthCheckPageTests
 
         var component = ctx.Render<DetailedClientHealthCheck>();
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
         {
             component.Find($"[data-testid='{DetailedClientHealthCheck.Elements.Status}']").ShouldNotBeNull();
         });

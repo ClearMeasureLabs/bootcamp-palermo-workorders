@@ -178,12 +178,12 @@ public class WorkOrderSearchTests
         var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
 
-        creatorSelect.Change("jpalermo");
-        assigneeSelect.Change("hsimpson");
-        statusSelect.Change(WorkOrderStatus.InProgress.Key);
+        await creatorSelect.ChangeAsync(new() { Value = "jpalermo" });
+        await assigneeSelect.ChangeAsync(new() { Value = "hsimpson" });
+        await statusSelect.ChangeAsync(new() { Value = WorkOrderStatus.InProgress.Key });
 
         var searchButton = component.Find($"#{WorkOrderSearch.Elements.SearchButton}");
-        searchButton.Click();
+        await searchButton.ClickAsync(new());
 
         // Assert
         var workOrderTable = component.Find(".grid-data");
