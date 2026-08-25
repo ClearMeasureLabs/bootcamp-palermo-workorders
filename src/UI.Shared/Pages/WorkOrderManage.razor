@@ -105,13 +105,10 @@
                     else
                     {
                         <span class="label">Due Date</span>
-                        <span data-testid="@Elements.DueDateDisplay" class="value @CurrentDueDateCssClass">
-                            @Model.DueDateDisplay
-                            @if (!string.IsNullOrEmpty(CurrentDueDateUrgencyText))
+                        <span data-testid="@Elements.DueDateDisplay" class="value @CurrentDueDateCssClass">@Model.DueDateDisplay@if (!string.IsNullOrEmpty(CurrentDueDateUrgencyText))
                             {
                                 <span class="visually-hidden">@CurrentDueDateUrgencyText</span>
-                            }
-                        </span>
+                            }</span>
                     }
                 </div>
             </div>

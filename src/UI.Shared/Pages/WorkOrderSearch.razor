@@ -100,13 +100,10 @@
                                 </td>
                                 <td>@order.Title</td>
                                 <td>
-                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">
-                                        @order.DueDateDisplay
-                                        @if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
                                         {
                                             <span class="visually-hidden">@order.DueDateUrgencyText</span>
-                                        }
-                                    </span>
+                                        }</span>
                                 </td>
                             </tr>
                         }
