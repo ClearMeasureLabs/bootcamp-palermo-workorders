@@ -313,7 +313,7 @@ public class McpSaveWorkOrderTests
         var assignedOrder = new WorkOrder
         {
             Creator = creator,
-            Number = "WO-ASSIGNED",
+            Number = "WO-501",
             Title = "Assigned title",
             Description = "Assigned description",
             Instructions = "Assigned instructions",
@@ -332,7 +332,7 @@ public class McpSaveWorkOrderTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.SaveWorkOrder(
             bus,
-            "WO-ASSIGNED",
+            "WO-501",
             "creator1",
             title: "New title");
 
@@ -355,7 +355,7 @@ public class McpSaveWorkOrderTests
         var completeOrder = new WorkOrder
         {
             Creator = creator,
-            Number = "WO-COMPLETE",
+            Number = "WO-502",
             Title = "Complete title",
             Status = WorkOrderStatus.Complete
         };
@@ -370,7 +370,7 @@ public class McpSaveWorkOrderTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.SaveWorkOrder(
             bus,
-            "WO-COMPLETE",
+            "WO-502",
             "creator1",
             title: "New title");
 
@@ -390,7 +390,7 @@ public class McpSaveWorkOrderTests
         var draftOrder = new WorkOrder
         {
             Creator = creator,
-            Number = "WO-DRAFT",
+            Number = "WO-503",
             Title = "Draft title",
             Status = WorkOrderStatus.Draft
         };
@@ -406,7 +406,7 @@ public class McpSaveWorkOrderTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.SaveWorkOrder(
             bus,
-            "WO-DRAFT",
+            "WO-503",
             "other1",
             title: "New title");
 
