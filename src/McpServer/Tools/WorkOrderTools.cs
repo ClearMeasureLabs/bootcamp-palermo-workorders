@@ -44,7 +44,7 @@ public class WorkOrderTools
             new JsonSerializerOptions { WriteIndented = true });
     }
 
-    [McpServerTool(Name = "create-work-order"), Description("Creates a new draft work order. Requires a title, description, and the username of the creator. Optionally accepts a room number and due date (yyyy-MM-dd).")]
+    [McpServerTool(Name = "create-work-order"), Description("Creates a new draft work order. Requires a title, description, and the username of the creator. Optionally accepts a room number, due date (yyyy-MM-dd), and instructions.")]
     public static async Task<string> CreateWorkOrder(
         IBus bus,
         IWorkOrderNumberGenerator numberGenerator,
@@ -52,7 +52,8 @@ public class WorkOrderTools
         [Description("Description of the work order")] string description,
         [Description("Username of the employee creating the work order")] string creatorUsername,
         [Description("Optional room number or location for the work order")] string? roomNumber = null,
-        [Description("Optional due date as yyyy-MM-dd")] string? dueDate = null)
+        [Description("Optional due date as yyyy-MM-dd")] string? dueDate = null,
+        [Description("Optional instructions for the work order")] string? instructions = null)
     {
         try
         {
@@ -71,6 +72,7 @@ public class WorkOrderTools
             {
                 Title = title,
                 Description = description,
+                Instructions = instructions,
                 Creator = creator,
                 Status = WorkOrderStatus.Draft,
                 Number = numberGenerator.GenerateNumber(),
