@@ -42,6 +42,17 @@
                 </button>
             </div>
 
+            @* #region agent log *@
+            <div data-testid="@Elements.LoginDiag"
+                 data-employee-count="@Employees.Length"
+                 data-has-tlovejoy="@(Employees.Any(e => e.UserName == "tlovejoy"))"
+                 data-load-completed="@EmployeesLoadCompleted"
+                 data-error="@(ErrorMessage ?? "")"
+                 data-auth-outcome="@(LastAuthOutcome ?? "")"
+                 data-username="@LoginModelValue.Username"
+                 hidden></div>
+            @* #endregion *@
+
             <div class="church-blessing">
                 "May your service to the church be blessed and your work orders be few."
             </div>
@@ -55,7 +66,10 @@
     {
         User,
         LoginButton,
-        LovejoyShortcut
+        LovejoyShortcut,
+        // #region agent log
+        LoginDiag
+        // #endregion
     }
 
 }

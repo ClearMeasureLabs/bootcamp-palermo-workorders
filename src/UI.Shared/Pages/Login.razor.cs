@@ -17,6 +17,14 @@ public partial class Login : AppComponentBase
     public string? ErrorMessage;
     public Employee[] Employees = Array.Empty<Employee>();
 
+    // #region agent log
+    /// <summary>Debug-only: whether <see cref="LoadEmployees"/> finished (success or failure).</summary>
+    public bool EmployeesLoadCompleted { get; private set; }
+
+    /// <summary>Debug-only: last auth branch taken by Lovejoy/dropdown login.</summary>
+    public string? LastAuthOutcome { get; private set; }
+    // #endregion
+
     protected override async Task OnInitializedAsync()
     {
         await LoadEmployees();
@@ -32,6 +40,12 @@ public partial class Login : AppComponentBase
         {
             ErrorMessage = "Error loading employees: " + ex.Message;
         }
+        // #region agent log
+        finally
+        {
+            EmployeesLoadCompleted = true;
+        }
+        // #endregion
     }
 
     /// <summary>
@@ -66,6 +80,10 @@ public partial class Login : AppComponentBase
         var selectedEmployee = Employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username);
         if (selectedEmployee != null)
         {
+            // #region agent log
+            LastAuthOutcome =
+                $"ok;employees={Employees.Length};hasTlovejoy={Employees.Any(e => e.UserName == TimothyLovejoyUsername)};loadDone={EmployeesLoadCompleted}";
+            // #endregion
             AuthStateProvider!.Login(LoginModelValue.Username);
             EventBus.Notify(new UserLoggedInEvent(LoginModelValue.Username));
             await Bus.Publish(new Core.Model.Events.UserLoggedInEvent(LoginModelValue.Username));
@@ -74,6 +92,10 @@ public partial class Login : AppComponentBase
         else
         {
             ErrorMessage = "Invalid employee selection";
+            // #region agent log
+            LastAuthOutcome =
+                $"reject;employees={Employees.Length};hasTlovejoy={Employees.Any(e => e.UserName == TimothyLovejoyUsername)};loadDone={EmployeesLoadCompleted};username={LoginModelValue.Username}";
+            // #endregion
         }
     }
 
