@@ -120,7 +120,7 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         component.FindAll(".work-order-card").Count.ShouldBe(10);
-        component.Find(".deck-count-badge").TextContent.ShouldBe("10");
+        component.Find($"[data-testid='{WorkOrderSearch.Elements.DeckCount}']").TextContent.ShouldBe("10");
         component.Find(".series-prompt").TextContent.ShouldContain("every Saturday");
     }
 
