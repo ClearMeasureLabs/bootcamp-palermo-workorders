@@ -31,44 +31,56 @@ public class TimestampConverterController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public IActionResult Get([FromQuery] string? unix, [FromQuery] string? iso)
     {
-        var hasUnix = Request.Query.ContainsKey("unix");
-        var hasIso = Request.Query.ContainsKey("iso");
+        var queryError = ValidateQueryKeys(Request.Query);
+        if (queryError != null)
+        {
+            return Problem(detail: queryError, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var parseResult = ParseInstant(Request.Query.ContainsKey("unix"), unix, iso);
+        if (!parseResult.Success)
+        {
+            return Problem(detail: parseResult.Error, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        return Ok(BuildResponse(parseResult.Instant));
+    }
+
+    private static string? ValidateQueryKeys(IQueryCollection query)
+    {
+        var hasUnix = query.ContainsKey("unix");
+        var hasIso = query.ContainsKey("iso");
 
         if (!hasUnix && !hasIso)
         {
-            return Problem(
-                detail: "Provide exactly one of query parameters 'unix' or 'iso'.",
-                statusCode: StatusCodes.Status400BadRequest);
+            return "Provide exactly one of query parameters 'unix' or 'iso'.";
         }
 
         if (hasUnix && hasIso)
         {
-            return Problem(
-                detail: "Provide exactly one of query parameters 'unix' or 'iso', not both.",
-                statusCode: StatusCodes.Status400BadRequest);
+            return "Provide exactly one of query parameters 'unix' or 'iso', not both.";
         }
 
-        DateTimeOffset instant;
-        if (hasUnix)
-        {
-            if (!TryParseUnixSeconds(unix, out instant))
-            {
-                return Problem(
-                    detail: "Query parameter 'unix' must be a 64-bit integer Unix timestamp in seconds.",
-                    statusCode: StatusCodes.Status400BadRequest);
-            }
-        }
-        else if (!TryParseIso(iso, out instant))
-        {
-            return Problem(
-                detail: "Query parameter 'iso' must be a valid ISO-8601 date/time string.",
-                statusCode: StatusCodes.Status400BadRequest);
-        }
-
-        return Ok(BuildResponse(instant));
+        return null;
     }
 
-    internal static bool TryParseUnixSeconds(string? unix, out DateTimeOffset instant)
+    private static ParseInstantResult ParseInstant(bool hasUnix, string? unix, string? iso)
+    {
+        if (hasUnix)
+        {
+            return TryParseUnixSeconds(unix, out var instant)
+                ? ParseInstantResult.FromInstant(instant)
+                : ParseInstantResult.FromError(
+                    "Query parameter 'unix' must be a 64-bit integer Unix timestamp in seconds.");
+        }
+
+        return TryParseIso(iso, out var parsedInstant)
+            ? ParseInstantResult.FromInstant(parsedInstant)
+            : ParseInstantResult.FromError(
+                "Query parameter 'iso' must be a valid ISO-8601 date/time string.");
+    }
+
+    private static bool TryParseUnixSeconds(string? unix, out DateTimeOffset instant)
     {
         instant = default;
         if (string.IsNullOrWhiteSpace(unix))
@@ -92,7 +104,7 @@ public class TimestampConverterController : ControllerBase
         }
     }
 
-    internal static bool TryParseIso(string? iso, out DateTimeOffset instant)
+    private static bool TryParseIso(string? iso, out DateTimeOffset instant)
     {
         instant = default;
         if (string.IsNullOrWhiteSpace(iso))
@@ -113,13 +125,33 @@ public class TimestampConverterController : ControllerBase
         return true;
     }
 
-    internal static TimestampConverterResponse BuildResponse(DateTimeOffset instant)
+    private static TimestampConverterResponse BuildResponse(DateTimeOffset instant)
     {
         var utc = instant.ToUniversalTime();
         return new TimestampConverterResponse(
             Unix: utc.ToUnixTimeSeconds(),
             Iso: utc.ToString(IsoOutputFormat, CultureInfo.InvariantCulture),
             Human: utc.ToString(HumanOutputFormat, CultureInfo.InvariantCulture));
+    }
+
+    private readonly struct ParseInstantResult
+    {
+        private ParseInstantResult(bool success, DateTimeOffset instant, string? error)
+        {
+            Success = success;
+            Instant = instant;
+            Error = error;
+        }
+
+        public bool Success { get; }
+        public DateTimeOffset Instant { get; }
+        public string? Error { get; }
+
+        public static ParseInstantResult FromInstant(DateTimeOffset instant) =>
+            new(true, instant, null);
+
+        public static ParseInstantResult FromError(string error) =>
+            new(false, default, error);
     }
 }
 

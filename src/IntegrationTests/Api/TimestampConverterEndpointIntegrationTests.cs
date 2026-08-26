@@ -93,8 +93,8 @@ public class TimestampConverterEndpointIntegrationTests
 
     private sealed class TimestampConverterDto
     {
-        public long Unix { get; set; }
-        public string? Iso { get; set; }
-        public string? Human { get; set; }
+        public long Unix { get; init; }
+        public string? Iso { get; init; }
+        public string? Human { get; init; }
     }
 }
