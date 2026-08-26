@@ -291,8 +291,8 @@ public class WorkOrderSearchTests : AcceptanceTestBase
 
         var firstWorkOrderLink = Page.Locator(".deck-card").First;
         var href = await firstWorkOrderLink.GetAttributeAsync("href");
-        href.ShouldNotBeNullOrEmpty();
-        var workOrderNumber = href!.Split('/').Last().Split('?').First();
+        ArgumentException.ThrowIfNullOrEmpty(href);
+        var workOrderNumber = href.Split('/').Last().Split('?').First();
 
         await firstWorkOrderLink.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);

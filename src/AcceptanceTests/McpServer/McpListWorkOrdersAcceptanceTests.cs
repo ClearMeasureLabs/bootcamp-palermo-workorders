@@ -190,9 +190,18 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
     private async Task<HashSet<string>> VisibleSearchNumbers()
     {
         var workOrderLinks = Page.Locator($"[data-testid^='{WorkOrderSearch.Elements.WorkOrderLink}']");
-        return (await workOrderLinks.AllTextContentsAsync())
-            .Select(number => number.Trim())
-            .ToHashSet();
+        var prefix = nameof(WorkOrderSearch.Elements.WorkOrderLink);
+        var count = await workOrderLinks.CountAsync();
+        var numbers = new HashSet<string>();
+        for (var i = 0; i < count; i++)
+        {
+            var testId = await workOrderLinks.Nth(i).GetAttributeAsync("data-testid");
+            testId.ShouldNotBeNullOrWhiteSpace();
+            testId.StartsWith(prefix, StringComparison.Ordinal).ShouldBeTrue();
+            numbers.Add(testId[prefix.Length..]);
+        }
+
+        return numbers;
     }
 
     private async Task LoginAsTlovejoyAsync()

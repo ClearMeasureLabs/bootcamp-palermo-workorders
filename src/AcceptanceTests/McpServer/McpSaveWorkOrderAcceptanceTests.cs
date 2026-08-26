@@ -282,11 +282,8 @@ public class McpSaveWorkOrderAcceptanceTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
     }
 
-    private ILocator SearchRowForWorkOrder(string workOrderNumber)
-    {
-        var link = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber);
-        return Page.Locator("tr").Filter(new LocatorFilterOptions { Has = link });
-    }
+    private ILocator SearchRowForWorkOrder(string workOrderNumber) =>
+        Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber);
 
     private static async Task<string> BackgroundColorAsync(ILocator locator)
     {

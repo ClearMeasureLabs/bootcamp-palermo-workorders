@@ -39,6 +39,31 @@ public class SaturdaySeriesDeckTests
     }
 
     [Test]
+    public void IsSaturdaySeries_WhenFewerThanTwoRows_ReturnsFalse()
+    {
+        var rows = BuildSaturdaySeries(1, "Saturday mow", "gwillie", "Willie", "Aker");
+
+        SaturdaySeriesDeck.IsSaturdaySeries(rows).ShouldBeFalse();
+    }
+
+    [Test]
+    public void IsSaturdaySeries_WhenTitleBlank_ReturnsFalse()
+    {
+        var rows = BuildSaturdaySeries(3, "   ", "gwillie", "Willie", "Aker");
+
+        SaturdaySeriesDeck.IsSaturdaySeries(rows).ShouldBeFalse();
+    }
+
+    [Test]
+    public void IsSaturdaySeries_WhenDueDateMissing_ReturnsFalse()
+    {
+        var rows = BuildSaturdaySeries(3, "Saturday mow", "gwillie", "Willie", "Aker");
+        rows[1].WorkOrder.DueDate = null;
+
+        SaturdaySeriesDeck.IsSaturdaySeries(rows).ShouldBeFalse();
+    }
+
+    [Test]
     public void CardDateLabel_WhenNotSeries_UsesDueDateDisplay()
     {
         var row = new WorkOrderSearchResultRow

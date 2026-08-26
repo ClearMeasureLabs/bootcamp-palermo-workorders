@@ -1,5 +1,3 @@
-using ClearMeasure.Bootcamp.Core.Model;
-
 namespace ClearMeasure.Bootcamp.UI.Shared.Models;
 
 /// <summary>
@@ -23,20 +21,7 @@ public static class SaturdaySeriesDeck
             return false;
         }
 
-        foreach (var row in results)
-        {
-            if (!string.Equals(row.Title, title, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            if (row.WorkOrder.DueDate is not { } due || due.DayOfWeek != DayOfWeek.Saturday)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return results.All(row => MatchesSeriesTitleAndSaturday(row, title));
     }
 
     /// <summary>
@@ -67,4 +52,8 @@ public static class SaturdaySeriesDeck
         var count = results.Count;
         return $"Schedule {assignee} for {title} — {count} Saturdays.";
     }
+
+    private static bool MatchesSeriesTitleAndSaturday(WorkOrderSearchResultRow row, string title) =>
+        string.Equals(row.Title, title, StringComparison.Ordinal)
+        && row.WorkOrder.DueDate is { DayOfWeek: DayOfWeek.Saturday };
 }
