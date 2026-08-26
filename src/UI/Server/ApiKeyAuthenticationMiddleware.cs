@@ -84,6 +84,19 @@ internal static class ApiKeyValidationRules
 
 internal static class ApiPublicPathRules
 {
+    private static readonly HashSet<string> PublicLeaves = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "version",
+        "time",
+        "ping",
+        "echo",
+        "tools/random",
+        "tools/timestamp-converter",
+        "tools/guid-generator",
+        "health",
+        "health/detailed"
+    };
+
     internal static bool TryGetLeafSegment(string pathValue, out string leaf)
     {
         leaf = string.Empty;
@@ -108,17 +121,6 @@ internal static class ApiPublicPathRules
             ? string.Join('/', segments.Skip(2))
             : string.Join('/', segments.Skip(1));
     }
-
-    private static readonly HashSet<string> PublicLeaves = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "version",
-        "time",
-        "ping",
-        "echo",
-        "tools/random",
-        "tools/timestamp-converter",
-        "tools/guid-generator"
-    };
 
     internal static bool IsPublicLeaf(string leaf) => PublicLeaves.Contains(leaf);
 }

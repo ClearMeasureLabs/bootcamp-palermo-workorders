@@ -21,6 +21,9 @@ public class MetricsSummaryEndpointIntegrationTests
     {
         _factory = new DetailedHealthWebApplicationFactory();
         _client = _factory.CreateClient();
+        _client.DefaultRequestHeaders.Add(
+            ApiKeyConstants.HeaderName,
+            DetailedHealthWebApplicationFactory.IntegrationApiKey);
     }
 
     [OneTimeTearDown]
@@ -74,8 +77,8 @@ public class MetricsSummaryEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/metrics/summary");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        response.Headers.ETag.ShouldNotBeNull();
-        response.Headers.ETag!.IsWeak.ShouldBeTrue();
+        var etag = response.Headers.ETag.ShouldNotBeNull();
+        etag.IsWeak.ShouldBeTrue();
     }
 
     [Test]

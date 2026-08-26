@@ -101,3 +101,67 @@ public static class ComponentHealthStatus
     public const string Degraded = nameof(Degraded);
     public const string Unhealthy = nameof(Unhealthy);
 }
+
+/// <summary>
+/// Per-component fingerprint for conditional GET (<see cref="ComponentHealthEntry.ExceptionDetail"/> excluded).
+/// </summary>
+internal sealed record DetailedHealthComponentEtagFingerprint
+{
+    public required string Name { get; init; }
+    public required string Status { get; init; }
+    public string? Description { get; init; }
+    public string? ExceptionMessage { get; init; }
+    public IReadOnlyList<KeyValuePair<string, string>>? Data { get; init; }
+}
+
+/// <summary>
+/// Fingerprint payload for conditional GET over <see cref="DetailedHealthReport"/>.
+/// </summary>
+/// <remarks>
+/// Omits <see cref="DetailedHealthReport.CheckedAtUtc"/> and per-component durations. Exception stack traces
+/// (<see cref="ComponentHealthEntry.ExceptionDetail"/>) are omitted so probes can reuse ETags across polls.
+/// Host memory/process metadata is also omitted because those values drift between requests.
+/// </remarks>
+internal sealed record DetailedHealthEtagFingerprint
+{
+    public required string OverallStatus { get; init; }
+    public required IReadOnlyList<DetailedHealthComponentEtagFingerprint> Components { get; init; }
+
+    /// <summary>
+    /// Builds a fingerprint from <paramref name="report"/> omitting volatile fields so repeated polls can yield 304.
+    /// </summary>
+    internal static DetailedHealthEtagFingerprint FromReport(DetailedHealthReport report)
+    {
+        var components = report.Components
+            .OrderBy(c => c.Name, StringComparer.Ordinal)
+            .Select(c => new DetailedHealthComponentEtagFingerprint
+            {
+                Name = c.Name,
+                Status = c.Status,
+                Description = c.Description,
+                ExceptionMessage = c.ExceptionMessage,
+                Data = StableDataEntries(c.Data)
+            })
+            .OrderBy(c => c.Name, StringComparer.Ordinal)
+            .ThenBy(c => c.Status, StringComparer.Ordinal)
+            .ToList();
+
+        return new DetailedHealthEtagFingerprint
+        {
+            OverallStatus = report.OverallStatus,
+            Components = components
+        };
+    }
+
+    private static IReadOnlyList<KeyValuePair<string, string>>? StableDataEntries(
+        IReadOnlyDictionary<string, object>? data)
+    {
+        if (data is null || data.Count == 0)
+            return null;
+
+        return data
+            .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+            .Select(kv => KeyValuePair.Create(kv.Key, kv.Value?.ToString() ?? ""))
+            .ToList();
+    }
+}
