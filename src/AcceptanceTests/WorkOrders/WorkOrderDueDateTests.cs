@@ -116,10 +116,10 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         await CompleteWorkOrderViaBusAsync(todayOrder.Number!);
         await CancelWorkOrderViaBusAsync(overdueOrder.Number!);
 
-        // Full Page.ReloadAsync drops in-memory Blazor auth and lands on /login.
-        // Soft-navigate within the SPA so search re-queries without losing the session.
-        await Click(nameof(NavMenu.Elements.Counter));
-        await Page.WaitForURLAsync("**/counter");
+        // Return to the stock manage layout, then soft-navigate back so search re-queries
+        // without losing the in-memory Blazor authentication session.
+        await Page.GoBackAsync();
+        await Page.WaitForURLAsync("**/workorder/manage/**");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
@@ -181,6 +181,13 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var order = Faker<WorkOrder>();
         order.Title = title;
         order.Number = null;
+
+        if (new Uri(Page.Url).AbsolutePath.Equals("/workorder/search", StringComparison.OrdinalIgnoreCase))
+        {
+            await Page.GoBackAsync();
+            await Page.WaitForURLAsync("**/workorder/manage/**");
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
 
         var newWorkOrder = Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder));
         await Expect(newWorkOrder).ToBeVisibleAsync(
