@@ -266,14 +266,15 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "SearchPageLoaded");
 
-        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrder.Number);
+        var workOrderNumber = workOrder.Number ?? throw new InvalidOperationException("Expected a generated work order number.");
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber);
         await Expect(workOrderLink).ToBeVisibleAsync();
 
         await workOrderLink.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(2, "WorkOrderDetailsPage");
 
-        await Expect(Page).ToHaveURLAsync(new Regex($"/workorder/manage/{Regex.Escape(workOrder.Number)}"));
+        await Expect(Page).ToHaveURLAsync(new Regex($"/workorder/manage/{Regex.Escape(workOrderNumber)}"));
     }
 
     [Test, Retry(2)]
