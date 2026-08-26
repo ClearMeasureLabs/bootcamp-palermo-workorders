@@ -20,10 +20,11 @@
         <EditForm Model="@Model" OnValidSubmit="OnSearch!">
             <div class="filter-chips">
                 <div class="filter-chip">
-                    <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+                    <i class="bi bi-list-task" aria-hidden="true"></i>
                     <label for="@Elements.CreatorSelect">Creator</label>
-                    <InputSelect id="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
-                        <option value="">All</option>
+                    <InputSelect id="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator"
+                                 @bind-Value:after="HandleFilterChange" class="form-control">
+                        <option value="">All Work Orders</option>
                         @foreach (var user in UserOptions)
                         {
                             <option value="@user.Value">@user.Text</option>
@@ -34,8 +35,9 @@
                 <div class="filter-chip">
                     <i class="bi bi-person" aria-hidden="true"></i>
                     <label for="@Elements.AssigneeSelect">Assignee</label>
-                    <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
-                        <option value="">All</option>
+                    <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee"
+                                 @bind-Value:after="HandleFilterChange" class="form-control">
+                        <option value="">Assigned to</option>
                         @foreach (var user in UserOptions)
                         {
                             <option value="@user.Value">@user.Text</option>
@@ -46,8 +48,9 @@
                 <div class="filter-chip">
                     <i class="bi bi-check-circle" aria-hidden="true"></i>
                     <label for="@Elements.StatusSelect">Status</label>
-                    <InputSelect id="@Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
-                        <option value="">All</option>
+                    <InputSelect id="@Elements.StatusSelect" @bind-Value="Model.Filters.Status"
+                                 @bind-Value:after="HandleFilterChange" class="form-control">
+                        <option value="">Status</option>
                         @foreach (var status in StatusOptions)
                         {
                             <option value="@status.Value">@status.Text</option>
@@ -55,10 +58,18 @@
                     </InputSelect>
                 </div>
 
-                <button id="@Elements.SearchButton" type="submit" class="search-chip">
-                    <i class="bi bi-search" aria-hidden="true"></i>
-                    <span>Search</span>
-                </button>
+                <span class="filter-chip filter-placeholder" aria-label="Due Date">
+                    <i class="bi bi-calendar3" aria-hidden="true"></i>
+                    <span>Due Date</span>
+                </span>
+
+                <span class="filter-chip filter-placeholder" aria-label="Location">
+                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                    <span>Location</span>
+                </span>
+
+                <button id="@Elements.SearchButton" type="submit" class="visually-hidden-search"
+                        aria-label="Apply work order filters">Apply filters</button>
             </div>
         </EditForm>
     </div>
@@ -149,6 +160,14 @@
     public List<SelectListItem> UserOptions { get; set; } = new();
     public List<SelectListItem> StatusOptions { get; set; } = new();
     public Func<Task>? OnSearch { get; set; }
+
+    private async Task HandleFilterChange()
+    {
+        if (OnSearch is not null)
+        {
+            await OnSearch();
+        }
+    }
 
     private bool IsSaturdaySeries()
     {

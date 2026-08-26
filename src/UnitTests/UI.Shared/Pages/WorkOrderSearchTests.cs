@@ -32,20 +32,23 @@ public class WorkOrderSearchTests
         creatorSelect.ShouldNotBeNull();
         assigneeSelect.ShouldNotBeNull();
         statusSelect.ShouldNotBeNull();
+        component.FindAll(".filter-chip").Count.ShouldBe(5);
+        component.Find($"#{WorkOrderSearch.Elements.SearchButton}").ClassList
+            .ShouldContain("visually-hidden-search");
 
         // Verify user options are loaded (5 employees + "All" option = 6 options)
         var creatorOptions = creatorSelect.QuerySelectorAll("option");
         creatorOptions.Length.ShouldBe(6);
-        creatorOptions[0].TextContent.ShouldBe("All");
+        creatorOptions[0].TextContent.ShouldBe("All Work Orders");
 
         var assigneeOptions = assigneeSelect.QuerySelectorAll("option");
         assigneeOptions.Length.ShouldBe(6);
-        assigneeOptions[0].TextContent.ShouldBe("All");
+        assigneeOptions[0].TextContent.ShouldBe("Assigned to");
 
         // Verify status options are loaded (4 statuses + "All" option = 5 options)
         var statusOptions = statusSelect.QuerySelectorAll("option");
         statusOptions.Length.ShouldBe(6);
-        statusOptions[0].TextContent.ShouldBe("All");
+        statusOptions[0].TextContent.ShouldBe("Status");
     }
 
     [Test]
@@ -217,9 +220,6 @@ public class WorkOrderSearchTests
         await creatorSelect.ChangeAsync(new() { Value = "jpalermo" });
         await assigneeSelect.ChangeAsync(new() { Value = "hsimpson" });
         await statusSelect.ChangeAsync(new() { Value = WorkOrderStatus.InProgress.Key });
-
-        var searchButton = component.Find($"#{WorkOrderSearch.Elements.SearchButton}");
-        await searchButton.ClickAsync(new());
 
         // Assert
         var workOrderDeck = component.Find(".work-order-deck");

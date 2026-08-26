@@ -64,26 +64,26 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(statusSelect).ToBeVisibleAsync();
 
         // Employee count varies due to parallel test execution creating users dynamically.
-        // Assert minimum count (base data has ~18 employees) plus "All" option.
+        // Assert minimum count (base data has ~18 employees) plus the unfiltered option.
         const int minimumBaseEmployees = 18;
         var creatorOptions = creatorSelect.Locator("option");
-        await Expect(creatorOptions.First).ToHaveTextAsync("All");
+        await Expect(creatorOptions.First).ToHaveTextAsync("All Work Orders");
         // Wait for employee data to finish loading via auto-retrying assertion
         await Expect(creatorOptions.Filter(new() { HasText = "Timothy Lovejoy" })).ToHaveCountAsync(1);
         var creatorOptionCount = await creatorOptions.CountAsync();
         creatorOptionCount.ShouldBeGreaterThanOrEqualTo(minimumBaseEmployees + 1);
 
         var assigneeOptions = assigneeSelect.Locator("option");
-        await Expect(assigneeOptions.First).ToHaveTextAsync("All");
+        await Expect(assigneeOptions.First).ToHaveTextAsync("Assigned to");
         // Wait for employee data to finish loading via auto-retrying assertion
         await Expect(assigneeOptions.Filter(new() { HasText = "Timothy Lovejoy" })).ToHaveCountAsync(1);
         var assigneeOptionCount = await assigneeOptions.CountAsync();
         assigneeOptionCount.ShouldBeGreaterThanOrEqualTo(minimumBaseEmployees + 1);
 
-        // Verify status options are loaded (5 statuses + "All" option = 6 options)
+        // Verify status options are loaded (5 statuses + the unfiltered option = 6 options)
         var statusOptions = statusSelect.Locator("option");
         await Expect(statusOptions).ToHaveCountAsync(WorkOrderStatus.GetAllItems().Length + 1);
-        await Expect(statusOptions.First).ToHaveTextAsync("All");
+        await Expect(statusOptions.First).ToHaveTextAsync("Status");
     }
 
     [Test, Retry(2)]
@@ -249,14 +249,11 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
-        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
-
         await creatorSelect.SelectOptionAsync(creator.UserName);
         await assigneeSelect.SelectOptionAsync(assignee.UserName);
         await statusSelect.SelectOptionAsync(status.Key);
         await TakeScreenshotAsync(2, "FiltersSet");
 
-        await searchButton.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(3, "SearchCompleted");
 
@@ -317,17 +314,13 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
-        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
-
         // First set a filter
         await creatorSelect.SelectOptionAsync(creator.UserName);
-        await searchButton.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "FilterSet");
 
         // Then clear it by selecting "All"
         await creatorSelect.SelectOptionAsync("");
-        await searchButton.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(2, "FilterCleared");
 
@@ -363,13 +356,10 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
-        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
-
         await creatorSelect.SelectOptionAsync(creator.UserName);
         await assigneeSelect.SelectOptionAsync(assignee.UserName);
         await statusSelect.SelectOptionAsync(status.Key);
 
-        await searchButton.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "AfterSearch");
 

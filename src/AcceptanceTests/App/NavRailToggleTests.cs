@@ -52,22 +52,18 @@ public class NavRailToggleTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task ShouldExpandContentArea_WhenNavHidden_OnWorkOrderPage()
+    public async Task ShouldUseDedicatedChrome_WhenViewingWorkOrderSearch()
     {
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var urlBefore = Page.Url;
-        var searchButton = Page.Locator($"#{nameof(WorkOrderSearch.Elements.SearchButton)}");
-        await Expect(searchButton).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
-
-        await Click(nameof(MainLayout.Elements.NavRailToggle));
-
-        (await Page.Locator(".modern-app").GetAttributeAsync("class"))!.ShouldContain("rail-collapsed");
-        await Expect(searchButton).ToBeVisibleAsync();
-        Page.Url.ShouldBe(urlBefore);
+        await Expect(Page.GetByTestId("SearchBoardBrand")).ToBeVisibleAsync();
+        await Expect(Page.Locator(".modern-app")).ToHaveCountAsync(0);
+        await Expect(Page.Locator("#app-navigation-rail")).ToHaveCountAsync(0);
+        await Expect(Page.Locator(".filter-chip")).ToHaveCountAsync(5);
+        await Expect(Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}")).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]
