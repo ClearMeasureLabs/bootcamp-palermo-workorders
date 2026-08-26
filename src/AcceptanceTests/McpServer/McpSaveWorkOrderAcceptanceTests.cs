@@ -284,8 +284,7 @@ public class McpSaveWorkOrderAcceptanceTests : AcceptanceTestBase
 
     private ILocator SearchRowForWorkOrder(string workOrderNumber)
     {
-        var link = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber);
-        return Page.Locator("tr").Filter(new LocatorFilterOptions { Has = link });
+        return Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderCard) + workOrderNumber);
     }
 
     private static async Task<string> BackgroundColorAsync(ILocator locator)

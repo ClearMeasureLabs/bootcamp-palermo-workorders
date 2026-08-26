@@ -87,17 +87,14 @@
                                     <span><i class="bi bi-person" aria-hidden="true"></i> @DisplayAssignee(order)</span>
                                 </div>
                             </div>
-                            @if (!string.IsNullOrEmpty(order.DueDateDisplay))
-                            {
-                                <span data-testid="@(Elements.DueDateCell + order.Number)"
-                                      class="due-pill @order.DueDateCssClass">
-                                    <span class="due-label">Due</span> @order.DueDateDisplay
-                                    @if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
-                                    {
-                                        <span class="visually-hidden">@order.DueDateUrgencyText</span>
-                                    }
-                                </span>
-                            }
+                            <span data-testid="@(Elements.DueDateCell + order.Number)"
+                                  class="due-pill @order.DueDateCssClass">@if (!string.IsNullOrEmpty(order.DueDateDisplay))
+                            {<span class="due-label">Due</span> @order.DueDateDisplay
+                                @if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+                                {
+                                    <span class="visually-hidden">@order.DueDateUrgencyText</span>
+                                }
+                            }</span>
                             <a class="manage-link"
                                data-testid="@workOrderLinkTestId"
                                href="/workorder/manage/@order.Number?mode=Edit"
