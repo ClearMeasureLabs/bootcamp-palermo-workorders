@@ -47,13 +47,17 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         var lovejoyNumbers = await CallListWorkOrders(
             new Dictionary<string, object?> { ["creatorUsername"] = "tlovejoy" });
         lovejoyNumbers.ShouldContain(seededNumbers.LovejoyDraft);
-        await AssertSearchMatches(lovejoyNumbers, creatorUsername: "tlovejoy");
+        await AssertSearchMatches(
+            [seededNumbers.LovejoyDraft],
+            creatorUsername: "tlovejoy");
 
         var willieNumbers = await CallListWorkOrders(
             new Dictionary<string, object?> { ["assigneeUsername"] = "gwillie" });
         willieNumbers.ShouldContain(seededNumbers.WillieAssigned);
         willieNumbers.ShouldContain(seededNumbers.WillieInProgress);
-        await AssertSearchMatches(willieNumbers, assigneeUsername: "gwillie");
+        await AssertSearchMatches(
+            [seededNumbers.WillieAssigned, seededNumbers.WillieInProgress],
+            assigneeUsername: "gwillie");
 
         var willieInProgressNumbers = await CallListWorkOrders(
             new Dictionary<string, object?>
@@ -64,7 +68,7 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         willieInProgressNumbers.ShouldContain(seededNumbers.WillieInProgress);
         willieInProgressNumbers.ShouldNotContain(seededNumbers.WillieAssigned);
         await AssertSearchMatches(
-            willieInProgressNumbers,
+            [seededNumbers.WillieInProgress],
             assigneeUsername: "gwillie",
             status: "InProgress");
 
@@ -78,13 +82,20 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         lovejoyDraftNumbers.ShouldNotContain(seededNumbers.WillieAssigned);
         lovejoyDraftNumbers.ShouldNotContain(seededNumbers.LovejoyComplete);
         await AssertSearchMatches(
-            lovejoyDraftNumbers,
+            [seededNumbers.LovejoyDraft],
             creatorUsername: "tlovejoy",
             status: "Draft");
 
         var allNumbers = await CallListWorkOrders([]);
         allNumbers.ShouldNotBeEmpty();
-        await AssertSearchMatches(allNumbers);
+        allNumbers.ShouldContain(seededNumbers.LovejoyDraft);
+        await AssertSearchMatches(
+        [
+            seededNumbers.LovejoyDraft,
+            seededNumbers.WillieAssigned,
+            seededNumbers.WillieInProgress,
+            seededNumbers.LovejoyComplete
+        ]);
 
         var searchNumbersBeforeUnknown = await VisibleSearchNumbers();
         var unknownNumbers = await CallListWorkOrders(
@@ -161,8 +172,32 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
             .ToHashSet();
     }
 
+    private static Dictionary<string, object?> BuildListWorkOrdersArguments(
+        string? creatorUsername,
+        string? assigneeUsername,
+        string? status)
+    {
+        var arguments = new Dictionary<string, object?>();
+        if (!string.IsNullOrEmpty(creatorUsername))
+        {
+            arguments["creatorUsername"] = creatorUsername;
+        }
+
+        if (!string.IsNullOrEmpty(assigneeUsername))
+        {
+            arguments["assigneeUsername"] = assigneeUsername;
+        }
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            arguments["status"] = status;
+        }
+
+        return arguments;
+    }
+
     private async Task AssertSearchMatches(
-        HashSet<string> expectedNumbers,
+        IReadOnlyCollection<string> requiredNumbers,
         string? creatorUsername = null,
         string? assigneeUsername = null,
         string? status = null)
@@ -170,22 +205,46 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        var filterArguments = BuildListWorkOrdersArguments(creatorUsername, assigneeUsername, status);
 
         await creatorSelect.SelectOptionAsync(creatorUsername ?? string.Empty);
         await assigneeSelect.SelectOptionAsync(assigneeUsername ?? string.Empty);
         await statusSelect.SelectOptionAsync(status ?? string.Empty);
-        await Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}").ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var workOrderLinks = Page.Locator($"[data-testid^='{WorkOrderSearch.Elements.WorkOrderLink}']");
-        await Expect(workOrderLinks).ToHaveCountAsync(expectedNumbers.Count);
-        foreach (var number in expectedNumbers)
+        foreach (var number in requiredNumbers)
         {
             await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + number))
                 .ToBeVisibleAsync();
         }
 
-        (await VisibleSearchNumbers()).ShouldBeSet(expectedNumbers);
+        // Re-query MCP after the portal settles so parity is not based on a stale pre-search
+        // snapshot while Parallelizable siblings mutate the shared database.
+        HashSet<string>? portalNumbers = null;
+        HashSet<string>? mcpNumbers = null;
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            mcpNumbers = await CallListWorkOrders(filterArguments);
+            portalNumbers = await VisibleSearchNumbers();
+            if (portalNumbers.SetEquals(mcpNumbers) && requiredNumbers.All(portalNumbers.Contains))
+            {
+                return;
+            }
+
+            await searchButton.ClickAsync();
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
+        requiredNumbers.All(portalNumbers!.Contains).ShouldBeTrue(
+            $"Portal missing required numbers. Required={FormatSet(requiredNumbers)}; Portal={FormatSet(portalNumbers!)}");
+        portalNumbers!.ShouldBeSet(mcpNumbers!);
     }
+
+    private static string FormatSet(IEnumerable<string> numbers) =>
+        string.Join(", ", numbers.OrderBy(number => number));
 
     private async Task<HashSet<string>> VisibleSearchNumbers()
     {
