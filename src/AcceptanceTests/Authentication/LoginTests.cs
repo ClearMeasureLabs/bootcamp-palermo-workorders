@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -73,6 +74,27 @@ public class LoginTests : AcceptanceTestBase
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
         await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_ShowBlinkingLoginLink_WhenAnonymous()
+    {
+        await Page.GotoAsync("/");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var logoutLink = Page.GetByTestId(nameof(Logout.Elements.LogoutLink));
+        if (await logoutLink.CountAsync() > 0)
+        {
+            await logoutLink.ClickAsync();
+            await Page.WaitForURLAsync("**/");
+        }
+
+        var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await Expect(loginLink).ToBeVisibleAsync();
+        await Expect(loginLink).ToHaveClassAsync(new Regex("login-link-blink"));
+        await Expect(loginLink).ToHaveAttributeAsync("href", "/login");
+        await Expect(loginLink).ToHaveTextAsync("Login");
     }
 
     [Test, Retry(2)]
@@ -102,6 +124,7 @@ public class LoginTests : AcceptanceTestBase
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
         await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
     }
 
     [Test, Retry(2)]
