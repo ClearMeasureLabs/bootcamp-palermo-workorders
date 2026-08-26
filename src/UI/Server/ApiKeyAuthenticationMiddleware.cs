@@ -114,5 +114,6 @@ internal static class ApiPublicPathRules
         || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("echo", StringComparison.OrdinalIgnoreCase)
-        || leaf.Equals("tools/random", StringComparison.OrdinalIgnoreCase);
+        || leaf.Equals("tools/random", StringComparison.OrdinalIgnoreCase)
+        || leaf.Equals("tools/guid-generator", StringComparison.OrdinalIgnoreCase);
 }
