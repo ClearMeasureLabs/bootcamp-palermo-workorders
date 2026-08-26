@@ -81,10 +81,7 @@
                         <i class="bi bi-chevron-left" aria-hidden="true"></i>
                     </button>
                     <div class="work-order-rail" data-testid="WorkOrderRail" aria-label="Work order results">
-                    @{
-                        var visibleStart = GetVisibleStartIndex();
-                        var visibleEnd = Math.Min(Model.Results.Length, visibleStart + MaximumVisibleCards);
-                        for (var index = visibleStart; index < visibleEnd; index++)
+                        @for (var index = 0; index < Model.Results.Length; index++)
                         {
                             var order = Model.Results[index];
                             var isSelected = index == SelectedResultIndex;
@@ -108,7 +105,7 @@
                                 <span class="card-rule"></span>
                                 <span data-testid="@(Elements.DueDateCell + order.Number)"
                                       class="card-due-date @order.DueDateCssClass">
-                                    @(order.DueDateDisplay ?? "No due date")
+                                    @order.DueDateDisplay
                                     @if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
                                         {
                                             <span class="visually-hidden">@order.DueDateUrgencyText</span>
@@ -127,7 +124,6 @@
                                 }
                             </a>
                         }
-                    }
                     </div>
                     <button type="button"
                             class="rail-arrow rail-arrow-next"
@@ -164,14 +160,7 @@
     public List<SelectListItem> StatusOptions { get; set; } = new();
     public Func<Task>? OnSearch { get; set; }
 
-    private const int MaximumVisibleCards = 5;
     private int SelectedResultIndex { get; set; }
-
-    private int GetVisibleStartIndex()
-    {
-        var centeredStart = SelectedResultIndex - MaximumVisibleCards / 2;
-        return Math.Clamp(centeredStart, 0, Math.Max(0, Model.Results.Length - MaximumVisibleCards));
-    }
 
     private void SelectPrevious()
     {

@@ -162,7 +162,7 @@
 .work-order-rail {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: clamp(0.65rem, 1.2vw, 1rem);
     min-height: 25rem;
     padding: 1rem 0.45rem;
