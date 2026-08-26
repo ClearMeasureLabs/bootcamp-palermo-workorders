@@ -85,8 +85,56 @@ public class LoginTests : AcceptanceTestBase
         var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
         await Expect(loginLink).ToBeVisibleAsync();
         await Expect(loginLink).ToHaveClassAsync(new Regex("login-link-blink"));
+        await Expect(loginLink).ToHaveAttributeAsync("id", "login-link-blink");
         await Expect(loginLink).ToHaveAttributeAsync("href", "/login");
         await Expect(loginLink).ToHaveTextAsync("Login");
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_ExposeBlinkIdOnSameHeaderAnchorAsTestId_WhenAnonymous()
+    {
+        await EnsureAnonymousHomeAsync();
+
+        var byId = Page.Locator("#login-link-blink");
+        await Expect(byId).ToHaveCountAsync(1);
+        await Expect(byId).ToBeVisibleAsync();
+        await Expect(byId).ToHaveAttributeAsync("data-testid", nameof(LoginLink.Elements.LoginLink));
+        await Expect(byId).ToHaveClassAsync(new Regex("login-link-blink"));
+        await Expect(byId).ToHaveAttributeAsync("href", "/login");
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_AnimateLoginLinkOpacity_WhenAnonymous()
+    {
+        await EnsureAnonymousHomeAsync();
+
+        var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await Expect(loginLink).ToBeVisibleAsync();
+
+        var animationName = await loginLink.EvaluateAsync<string>(
+            "element => getComputedStyle(element).animationName");
+        animationName.ShouldStartWith("login-link-blink-pulse");
+
+        var observedOpacities = new List<double>();
+        for (var sample = 0; sample < 30; sample++)
+        {
+            observedOpacities.Add(await loginLink.EvaluateAsync<double>(
+                "element => parseFloat(getComputedStyle(element).opacity)"));
+            await Task.Delay(100);
+        }
+
+        observedOpacities.Min().ShouldBeLessThan(0.75);
+        observedOpacities.Max().ShouldBeGreaterThan(0.9);
+        observedOpacities.Min().ShouldBeGreaterThanOrEqualTo(0.5);
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_HideBlinkId_WhenLoggedIn()
+    {
+        await LoginAsCurrentUser();
+
+        await Expect(Page.Locator("#login-link-blink")).ToHaveCountAsync(0);
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]

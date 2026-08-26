@@ -1,18 +1,30 @@
-a.login-link-blink {
+/*
+	The scoped bundle emits this file before MainLayout.razor.css, and
+	`.auth-section ::deep a` matches the header Login anchor at the same
+	specificity, so it would win every tie. Qualifying with `.auth-section`
+	outranks it and keeps the pulse (not the header's muted gray and
+	`transition: all`) in control of color and opacity.
+
+	`:global(...)` is copied verbatim into the bundle and is not a real CSS
+	pseudo-class, so browsers drop any rule that uses it. Ancestor selectors
+	are written plainly instead; Razor only appends the scope identifier to
+	the last compound selector.
+*/
+a.login-link-blink,
+.auth-section a.login-link-blink {
 	--login-blink-bright: #2b6cb0;
 	--login-blink-dim: #4a5568;
 	font-weight: 600;
 	color: var(--login-blink-bright);
 	opacity: 1;
-	animation: login-link-blink-pulse 1.5s ease-in-out infinite;
-	/* Override MainLayout .modern-app * { transition: all } so keyframes own color */
 	transition: background-color 0.3s ease;
-	overflow: visible;
+	animation: login-link-blink-pulse 1.5s ease-in-out infinite;
 }
 
-:global(html[data-theme="dark"]) a.login-link-blink {
+html[data-theme="dark"] a.login-link-blink,
+html[data-theme="dark"] .auth-section a.login-link-blink {
 	--login-blink-bright: #90cdf4;
-	--login-blink-dim: #e2e8f0;
+	--login-blink-dim: #a0aec0;
 }
 
 @keyframes login-link-blink-pulse {
@@ -23,14 +35,14 @@ a.login-link-blink {
 	}
 
 	50% {
-		/* Color-only pulse — keep full opacity for readable contrast on the light auth pill */
-		opacity: 1;
+		opacity: 0.55;
 		color: var(--login-blink-dim);
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	a.login-link-blink {
+	a.login-link-blink,
+	.auth-section a.login-link-blink {
 		animation: none;
 		opacity: 1;
 		color: var(--login-blink-bright);
@@ -39,9 +51,8 @@ a.login-link-blink {
 		text-underline-offset: 0.2em;
 	}
 
-	/* Beat MainLayout .auth-section ::deep a:hover (removes underline / overwrites color) */
-	:global(.auth-section) a.login-link-blink:hover,
-	:global(.auth-section) a.login-link-blink:focus {
+	.auth-section a.login-link-blink:hover,
+	.auth-section a.login-link-blink:focus {
 		color: var(--login-blink-bright);
 		text-decoration: underline;
 		text-underline-offset: 0.2em;
