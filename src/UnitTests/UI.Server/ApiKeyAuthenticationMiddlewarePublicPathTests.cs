@@ -15,6 +15,8 @@ public class ApiKeyAuthenticationMiddlewarePublicPathTests
     [TestCase("/api/v1.0/tools/random", true)]
     [TestCase("/api/tools/timestamp-converter", true)]
     [TestCase("/api/v1.0/tools/timestamp-converter", true)]
+    [TestCase("/api/status/environment", false)]
+    [TestCase("/api/v1.0/status/environment", false)]
     [TestCase("/api/health", false)]
     [TestCase("/mcp", false)]
     public void IsPublicVersionOrTimePath_ReturnsExpected(string path, bool expectedPublic)
