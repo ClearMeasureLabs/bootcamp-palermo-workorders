@@ -1,7 +1,8 @@
 <div class="search-page">
     <div class="search-container">
         <div class="search-header">
-            <h2>Work Order Search</h2>
+            <p class="search-eyebrow">Tuesday morning work queue</p>
+            <h2>My Work Orders</h2>
             <div class="search-subtitle">Find and manage church maintenance requests</div>
         </div>
 
@@ -10,7 +11,7 @@
                 <div class="filters-grid">
                     <div class="filter-group">
                         <label class="filter-label" for="@Elements.CreatorSelect">Creator</label>
-                        <InputSelect id="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
+                        <InputSelect id="@Elements.CreatorSelect" data-testid="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
                             <option value="">All</option>
                             @foreach (var user in UserOptions)
                             {
@@ -21,7 +22,7 @@
 
                     <div class="filter-group">
                         <label class="filter-label" for="@Elements.AssigneeSelect">Assignee</label>
-                        <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
+                        <InputSelect id="@Elements.AssigneeSelect" data-testid="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
                             <option value="">All</option>
                             @foreach (var user in UserOptions)
                             {
@@ -32,7 +33,7 @@
 
                     <div class="filter-group">
                         <label class="filter-label" for="@Elements.StatusSelect">Status</label>
-                        <InputSelect id="@Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
+                        <InputSelect id="@Elements.StatusSelect" data-testid="@Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
                             <option value="">All</option>
                             @foreach (var status in StatusOptions)
                             {
@@ -42,7 +43,7 @@
                     </div>
 
                     <div class="filter-group">
-                        <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
+                        <button id="@Elements.SearchButton" data-testid="@Elements.SearchButton" type="submit" class="btn btn-primary">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
                     </div>
@@ -50,9 +51,13 @@
             </EditForm>
         </div>
 
-        <div class="results-card">
+        <section class="results-card" aria-labelledby="search-results-heading">
             <div class="results-header">
-                <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length work orders)
+                <div>
+                    <span class="results-kicker">Current queue</span>
+                    <h3 id="search-results-heading">Search Results</h3>
+                </div>
+                <span class="results-count">@Model.Results.Length work orders</span>
             </div>
 
             @if (Model.Results.Length == 0)
@@ -67,51 +72,52 @@
             }
             else
             {
-                <table class="grid-data">
-                    <thead>
-                    <tr>
-                        <th>WO #</th>
-                        <th>Creator</th>
-                        <th>Assignee</th>
-                        <th>Status</th>
-                        <th>Title</th>
-                        <th>Due Date</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @{
-                        var i = 0;
-                        foreach (var order in Model.Results)
-                        {
-                            var rowClass = i++ % 2 == 0 ? "odd" : "even";
-                            <tr class="@rowClass">
-                                <td>
-                                    @{
-                                        var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
-                                    }
-                                    <a data-testid="@workOrderLinkTestId" href="/workorder/manage/@order.Number?mode=Edit">
-                                        @order.Number
-                                    </a>
-                                </td>
-                                <td>@order.Creator?.GetFullName()</td>
-                                <td>@order.Assignee?.GetFullName()</td>
-                                <td>
+                <div class="work-order-stack" data-testid="WorkOrderStack">
+                    @foreach (var order in Model.Results)
+                    {
+                        var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
+                        var workOrderCardTestId = Elements.WorkOrderCard + order.Number;
+                        var isSelected = SelectedWorkOrderNumber == order.Number;
+                        <article class="work-order-card @(isSelected ? "selected" : null)"
+                                 data-testid="@workOrderCardTestId"
+                                 aria-selected="@isSelected"
+                                 @onclick="() => SelectedWorkOrderNumber = order.Number">
+                            <div class="card-accent" aria-hidden="true"></div>
+                            <div class="card-main">
+                                <div class="card-heading">
+                                    <div>
+                                        <span class="work-order-number">@order.Number</span>
+                                        <h4>@order.Title</h4>
+                                    </div>
                                     <span class="status-badge">@order.Status</span>
-                                </td>
-                                <td>@order.Title</td>
-                                <td>
-                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
-                                        {
-                                            <span class="visually-hidden">@order.DueDateUrgencyText</span>
-                                        }</span>
-                                </td>
-                            </tr>
-                        }
+                                </div>
+                                <div class="card-meta">
+                                    <span><i class="bi bi-person" aria-hidden="true"></i> @DisplayAssignee(order)</span>
+                                    <span><i class="bi bi-person-plus" aria-hidden="true"></i> Created by @order.Creator?.GetFullName()</span>
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(order.DueDateDisplay))
+                            {
+                                <span data-testid="@(Elements.DueDateCell + order.Number)"
+                                      class="due-pill @order.DueDateCssClass">
+                                    <span class="due-label">Due</span> @order.DueDateDisplay
+                                    @if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+                                    {
+                                        <span class="visually-hidden">@order.DueDateUrgencyText</span>
+                                    }
+                                </span>
+                            }
+                            <a class="manage-link"
+                               data-testid="@workOrderLinkTestId"
+                               href="/workorder/manage/@order.Number?mode=Edit"
+                               aria-label="Manage work order @order.Number">
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            </a>
+                        </article>
                     }
-                    </tbody>
-                </table>
+                </div>
             }
-        </div>
+        </section>
     </div>
 </div>
 
@@ -124,11 +130,18 @@
         StatusSelect,
         SearchButton,
         WorkOrderLink,
-        DueDateCell
+        DueDateCell,
+        WorkOrderCard
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();
     public List<SelectListItem> UserOptions { get; set; } = new();
     public List<SelectListItem> StatusOptions { get; set; } = new();
     public Func<Task>? OnSearch { get; set; }
+    private string? SelectedWorkOrderNumber { get; set; }
+
+    private static string DisplayAssignee(WorkOrderSearchResultRow order)
+    {
+        return order.Assignee?.GetFullName() ?? "Unassigned";
+    }
 }

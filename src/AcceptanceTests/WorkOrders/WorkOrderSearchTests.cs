@@ -87,7 +87,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
+    public async Task ShouldLoadWorkOrderStackWithAllFiltersSetToAllOnInitialLoad()
     {
         // Arrange
         var creator = Faker<Employee>();
@@ -112,16 +112,16 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await TakeScreenshotAsync(1, "InitialLoad");
 
         // Assert
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var workOrderStack = Page.GetByTestId("WorkOrderStack");
+        await Expect(workOrderStack).ToBeVisibleAsync();
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        var rowCount = await workOrderRows.CountAsync();
-        await Expect(workOrderRows).ToHaveCountAsync(rowCount);
+        var workOrderCards = workOrderStack.Locator(".work-order-card");
+        var cardCount = await workOrderCards.CountAsync();
+        await Expect(workOrderCards).ToHaveCountAsync(cardCount);
     }
 
     [Test, Retry(2)]
-    public async Task ShouldLoadWorkOrderTableWithCreatorFilterFromQueryString()
+    public async Task ShouldLoadWorkOrderStackWithCreatorFilterFromQueryString()
     {
         // Arrange
         var creator = CurrentUser;
@@ -142,17 +142,17 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         await Expect(creatorSelect).ToHaveValueAsync(creator.UserName);
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var workOrderStack = Page.GetByTestId("WorkOrderStack");
+        await Expect(workOrderStack).ToBeVisibleAsync();
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        var rowCount = await workOrderRows.CountAsync();
-        rowCount.ShouldBeGreaterThanOrEqualTo(1);
-        await Expect(workOrderRows.First.Locator("td:nth-child(2)")).ToContainTextAsync(creator.GetFullName());
+        var workOrderCards = workOrderStack.Locator(".work-order-card");
+        var cardCount = await workOrderCards.CountAsync();
+        cardCount.ShouldBeGreaterThanOrEqualTo(1);
+        await Expect(workOrderCards.First).ToContainTextAsync($"Created by {creator.GetFullName()}");
     }
 
     [Test, Retry(2)]
-    public async Task ShouldLoadWorkOrderTableWithAssigneeFilterFromQueryString()
+    public async Task ShouldLoadWorkOrderStackWithAssigneeFilterFromQueryString()
     {
         // Arrange
         var creator = Faker<Employee>();
@@ -177,17 +177,17 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         await Expect(assigneeSelect).ToHaveValueAsync(assignee.UserName);
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var workOrderStack = Page.GetByTestId("WorkOrderStack");
+        await Expect(workOrderStack).ToBeVisibleAsync();
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        var rowCount = await workOrderRows.CountAsync();
-        rowCount.ShouldBeGreaterThanOrEqualTo(1);
-        await Expect(workOrderRows.First.Locator("td:nth-child(3)")).ToContainTextAsync(assignee.GetFullName());
+        var workOrderCards = workOrderStack.Locator(".work-order-card");
+        var cardCount = await workOrderCards.CountAsync();
+        cardCount.ShouldBeGreaterThanOrEqualTo(1);
+        await Expect(workOrderCards.First).ToContainTextAsync(assignee.GetFullName());
     }
 
     [Test, Retry(2)]
-    public async Task ShouldLoadWorkOrderTableWithStatusFilterFromQueryString()
+    public async Task ShouldLoadWorkOrderStackWithStatusFilterFromQueryString()
     {
         // Arrange
         var creator = Faker<Employee>();
@@ -210,12 +210,12 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
         await Expect(statusSelect).ToHaveValueAsync(status.Key);
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var workOrderStack = Page.GetByTestId("WorkOrderStack");
+        await Expect(workOrderStack).ToBeVisibleAsync();
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        await Expect(workOrderRows).ToHaveCountAsync(await workOrderRows.CountAsync());
-        await Expect(workOrderRows.First.Locator("td:nth-child(4)")).ToContainTextAsync(status.FriendlyName);
+        var workOrderCards = workOrderStack.Locator(".work-order-card");
+        await Expect(workOrderCards).ToHaveCountAsync(await workOrderCards.CountAsync());
+        await Expect(workOrderCards.First.Locator(".status-badge")).ToContainTextAsync(status.FriendlyName);
     }
 
     [Test, Retry(2)]
@@ -256,14 +256,11 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await TakeScreenshotAsync(3, "SearchCompleted");
 
         // Assert
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var workOrderStack = Page.GetByTestId("WorkOrderStack");
+        await Expect(workOrderStack).ToBeVisibleAsync();
 
-        // Wait for the table body to update with filtered results
-        await workOrderTable.Locator("tbody").WaitForAsync();
-        
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        await Expect(workOrderRows).ToHaveCountAsync(1);
+        var workOrderCards = workOrderStack.Locator(".work-order-card");
+        await Expect(workOrderCards).ToHaveCountAsync(1);
     }
 
     [Test, Retry(2)]
@@ -284,14 +281,15 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "SearchPageLoaded");
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var workOrderStack = Page.GetByTestId("WorkOrderStack");
+        await Expect(workOrderStack).ToBeVisibleAsync();
 
-        var firstWorkOrderLink = workOrderTable.Locator("tbody tr").First.Locator("td").First.Locator("a");
-        var workOrderNumber = await firstWorkOrderLink.TextContentAsync();
+        var firstCard = workOrderStack.Locator(".work-order-card").First;
+        var workOrderNumber = (await firstCard.Locator(".work-order-number").TextContentAsync())?.Trim();
 
         if (!string.IsNullOrEmpty(workOrderNumber))
         {
+            var firstWorkOrderLink = Page.GetByTestId(WorkOrderSearch.Elements.WorkOrderLink + workOrderNumber);
             await firstWorkOrderLink.ClickAsync();
             await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
             await TakeScreenshotAsync(2, "WorkOrderDetailsPage");
@@ -299,6 +297,22 @@ public class WorkOrderSearchTests : AcceptanceTestBase
             // Assert
             await Expect(Page).ToHaveURLAsync(new Regex($"/workorder/manage/{Regex.Escape(workOrderNumber)}"));
         }
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldSelectCardWithoutOpeningFocusPane()
+    {
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var workOrderStack = Page.GetByTestId("WorkOrderStack");
+        var firstCard = workOrderStack.Locator(".work-order-card").First;
+
+        await firstCard.ClickAsync();
+
+        await Expect(firstCard).ToHaveAttributeAsync("aria-selected", "true");
+        await Expect(firstCard).ToHaveCSSAsync("border-color", "rgb(0, 133, 202)");
+        await Expect(Page.Locator(".focus-pane")).ToHaveCountAsync(0);
     }
 
     [Test, Retry(2)]
@@ -336,8 +350,8 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         // Assert
         await Expect(creatorSelect).ToHaveValueAsync("");
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var workOrderStack = Page.GetByTestId("WorkOrderStack");
+        await Expect(workOrderStack).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]

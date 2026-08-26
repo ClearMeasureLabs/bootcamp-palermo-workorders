@@ -74,7 +74,7 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
+    public async Task ShouldLoadWorkOrderStackWithAllFiltersSetToAllOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -88,15 +88,15 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        workOrderTable.ShouldNotBeNull();
+        var workOrderStack = component.Find(".work-order-stack");
+        workOrderStack.ShouldNotBeNull();
 
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderCards = workOrderStack.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithCreatorFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderStackWithCreatorFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -114,13 +114,13 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderStack = component.Find(".work-order-stack");
+        var workOrderCards = workOrderStack.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithAssigneeFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderStackWithAssigneeFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -138,13 +138,13 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderStack = component.Find(".work-order-stack");
+        var workOrderCards = workOrderStack.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithStatusFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderStackWithStatusFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -162,9 +162,9 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderStack = component.Find(".work-order-stack");
+        var workOrderCards = workOrderStack.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
@@ -193,10 +193,30 @@ public class WorkOrderSearchTests
         await searchButton.ClickAsync(new());
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        workOrderTable.ShouldNotBeNull();
+        var workOrderStack = component.Find(".work-order-stack");
+        workOrderStack.ShouldNotBeNull();
 
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderCards = workOrderStack.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
+    }
+
+    [Test]
+    public async Task ShouldSelectCardWithoutOpeningFocusPane()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+        var cards = component.FindAll(".work-order-card");
+
+        await cards[0].ClickAsync(new());
+
+        cards = component.FindAll(".work-order-card");
+        cards[0].ClassList.ShouldContain("selected");
+        cards[0].GetAttribute("aria-selected").ShouldBe("true");
+        component.FindAll(".focus-pane").Count.ShouldBe(0);
     }
 }
