@@ -3,8 +3,9 @@ a.login-link-blink {
 	--login-blink-dim: #4a5568;
 	font-weight: 600;
 	color: var(--login-blink-bright);
+	opacity: 1;
 	animation: login-link-blink-pulse 1.5s ease-in-out infinite;
-	/* Override MainLayout .modern-app * { transition: all } so keyframes own opacity/color */
+	/* Override MainLayout .modern-app * { transition: all } so keyframes own color */
 	transition: background-color 0.3s ease;
 	overflow: visible;
 }
@@ -22,7 +23,8 @@ a.login-link-blink {
 	}
 
 	50% {
-		opacity: 0.55;
+		/* Color-only pulse — keep full opacity for readable contrast on the light auth pill */
+		opacity: 1;
 		color: var(--login-blink-dim);
 	}
 }
@@ -35,5 +37,14 @@ a.login-link-blink {
 		font-weight: 700;
 		text-decoration: underline;
 		text-underline-offset: 0.2em;
+	}
+
+	/* Beat MainLayout .auth-section ::deep a:hover (removes underline / overwrites color) */
+	:global(.auth-section) a.login-link-blink:hover,
+	:global(.auth-section) a.login-link-blink:focus {
+		color: var(--login-blink-bright);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+		opacity: 1;
 	}
 }
