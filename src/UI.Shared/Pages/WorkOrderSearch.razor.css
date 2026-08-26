@@ -281,13 +281,6 @@
     opacity: 0.45;
 }
 
-.card-due-date.due-date-today,
-.card-due-date.due-date-overdue {
-    padding: 0;
-    background: transparent;
-    color: #24446d;
-}
-
 .urgency-label,
 .status-badge {
     display: inline-flex;
@@ -305,11 +298,15 @@
 .due-date-today {
     background-color: #fef08a;
     color: #713f12;
+    padding: 0.2rem 0.45rem;
+    border-radius: 0.45rem;
 }
 
 .due-date-overdue {
     background-color: #fecaca;
     color: #991b1b;
+    padding: 0.2rem 0.45rem;
+    border-radius: 0.45rem;
 }
 
 .status-badge {
