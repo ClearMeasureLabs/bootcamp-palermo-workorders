@@ -80,7 +80,7 @@
                         var isSelected = SelectedWorkOrderNumber == order.Number;
                         <article class="work-order-card @(isSelected ? "selected" : null)"
                                  data-testid="@workOrderCardTestId"
-                                 aria-selected="@isSelected"
+                                 aria-selected="@(isSelected ? "true" : "false")"
                                  @onclick="() => SelectedWorkOrderNumber = order.Number">
                             <div class="card-accent" aria-hidden="true"></div>
                             <div class="card-main">
