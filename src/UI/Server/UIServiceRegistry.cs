@@ -71,5 +71,6 @@ public class UiServiceRegistry : ServiceRegistry
             .AddCheck<ProcessThreadCountHealthCheck>("ProcessThreadCount");
 
         this.AddSingleton<IDetailedHealthReportProvider, DetailedHealthReportProvider>();
+        this.AddSingleton<IHttpRequestMetricsCounter, HttpRequestMetricsCounter>();
     }
 }
