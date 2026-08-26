@@ -1,0 +1,33 @@
+{
+  "name": "tdd-mcp-customer-training-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Customer-training Remotion video: Grok Bot on live TDD MCP (#9105). Independent Node/npm project; does not touch ChurchBulletin.sln.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "capture": "ts-node --project tsconfig.capture.json capture/run-all.ts",
+    "narration": "node scripts/generate-narration.cjs",
+    "render": "remotion render src/index.ts TddMcpCustomerTraining out/customer-training-grok-tdd-mcp.mp4",
+    "studio": "remotion studio src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.capture.json"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.340",
+    "@remotion/media-utils": "4.0.340",
+    "@remotion/transitions": "4.0.340",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.340"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.9",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "msedge-tts": "^2.0.7",
+    "playwright": "1.54.0",
+    "ts-node": "10.9.2",
+    "typescript": "5.5.4"
+  }
+}
