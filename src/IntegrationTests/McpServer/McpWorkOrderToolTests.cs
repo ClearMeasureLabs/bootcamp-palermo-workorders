@@ -592,7 +592,7 @@ public class McpWorkOrderToolTests
             CreateWorkOrder("LJWIP", lovejoy, willie, WorkOrderStatus.InProgress),
             CreateWorkOrder("OTWIP", otherCreator, willie, WorkOrderStatus.InProgress),
             CreateWorkOrder("LJCOMP", lovejoy, otherAssignee, WorkOrderStatus.Complete),
-            CreateWorkOrder("OTASSIGN", otherCreator, otherAssignee, WorkOrderStatus.Assigned)
+            CreateWorkOrder("OTASN", otherCreator, otherAssignee, WorkOrderStatus.Assigned)
         };
 
         await using var context = TestHost.GetRequiredService<DbContext>();
