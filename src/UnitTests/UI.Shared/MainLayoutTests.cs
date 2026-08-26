@@ -132,7 +132,7 @@ public class MainLayoutTests
     }
 
     [Test]
-    public async Task ShouldRenderLoginLink_InHeader_WhenUserIsNotAuthenticated()
+    public async Task ShouldRenderLoginLink_WithBlinkClass_WhenUserIsNotAuthenticated()
     {
         await using var ctx = CreateContext();
 
@@ -140,9 +140,23 @@ public class MainLayoutTests
         var layout = component.FindComponent<MainLayout>();
 
         var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
-        loginAnchor.GetAttribute("href").ShouldBe("/login");
         loginAnchor.GetAttribute("data-testid").ShouldBe(nameof(LoginLink.Elements.LoginLink));
         loginAnchor.ClassList.ShouldContain("login-link-blink");
+        loginAnchor.TextContent.Trim().ShouldBe("Login");
+        loginAnchor.GetAttribute("href").ShouldBe("/login");
+    }
+
+    [Test]
+    public async Task ShouldPreserveLoginLinkHref_WhenBlinkClassApplied()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.ClassList.ShouldContain("login-link-blink");
+        loginAnchor.GetAttribute("href").ShouldBe("/login");
     }
 
     [Test]
@@ -158,16 +172,15 @@ public class MainLayoutTests
     }
 
     [Test]
-    public async Task ShouldPreserveLoginLinkInteraction_Unchanged()
+    public async Task ShouldNotExposeBlinkClass_WhenUserIsAuthenticated()
     {
-        await using var ctx = CreateContext();
+        await using var ctx = CreateContext(authenticateAsUser: "hsimpson");
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
         var layout = component.FindComponent<MainLayout>();
 
-        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
-        loginAnchor.GetAttribute("href").ShouldBe("/login");
-        loginAnchor.ClassList.ShouldContain("login-link-blink");
+        layout.FindAll(".login-link-blink").Count.ShouldBe(0);
+        layout.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']").ShouldNotBeNull();
     }
 
     [Test]
