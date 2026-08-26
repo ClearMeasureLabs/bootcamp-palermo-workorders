@@ -20,7 +20,7 @@ public class WorkOrderManageInstructionsFieldTests
     [Test]
     public async Task WorkOrderManage_ShouldRenderInstructionsAsTextareaWithMaxLength4000()
     {
-        await using var ctx = CreateNewModeContext(out _);
+        await using var ctx = CreateNewModeContext();
 
         var component = ctx.Render<WorkOrderManage>();
 
@@ -33,7 +33,7 @@ public class WorkOrderManageInstructionsFieldTests
     [Test]
     public async Task WorkOrderManage_ShouldPlaceInstructionsBetweenDescriptionAndRoom()
     {
-        await using var ctx = CreateNewModeContext(out _);
+        await using var ctx = CreateNewModeContext();
 
         var component = ctx.Render<WorkOrderManage>();
 
@@ -89,10 +89,10 @@ public class WorkOrderManageInstructionsFieldTests
         component.Instance.Model.Instructions.ShouldBe("Saved guidance for viewers");
     }
 
-    private static BunitContext CreateNewModeContext(out Employee creator)
+    private static BunitContext CreateNewModeContext()
     {
         var ctx = new BunitContext();
-        creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         var workOrderId = Guid.NewGuid();
 
         ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus());
@@ -110,15 +110,8 @@ public class WorkOrderManageInstructionsFieldTests
         return ctx;
     }
 
-    private class StubWorkOrderManageBus : Bus
+    private class StubWorkOrderManageBus(WorkOrder? workOrderByNumber = null) : Bus(null!)
     {
-        private readonly WorkOrder? _workOrderByNumber;
-
-        public StubWorkOrderManageBus(WorkOrder? workOrderByNumber = null) : base(null!)
-        {
-            _workOrderByNumber = workOrderByNumber;
-        }
-
         public override Task Publish(INotification notification) => Task.CompletedTask;
 
         public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
@@ -134,9 +127,9 @@ public class WorkOrderManageInstructionsFieldTests
                 return Task.FromResult((TResponse)(object)Array.Empty<WorkOrderAttachment>());
             }
 
-            if (request is WorkOrderByNumberQuery && _workOrderByNumber != null)
+            if (request is WorkOrderByNumberQuery && workOrderByNumber != null)
             {
-                return Task.FromResult((TResponse)(object)_workOrderByNumber);
+                return Task.FromResult((TResponse)(object)workOrderByNumber);
             }
 
             throw new NotImplementedException($"Unhandled request type: {request.GetType().Name}");
