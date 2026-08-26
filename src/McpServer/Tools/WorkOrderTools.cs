@@ -161,23 +161,10 @@ public class WorkOrderTools
             return $"Employee with username '{executingUsername}' not found.";
         }
 
-        var saveCommand = new SaveDraftCommand(workOrder, executingUser);
-        if (!saveCommand.IsValid())
+        var validationError = ValidateSave(workOrder, executingUser, title, dueDate);
+        if (validationError != null)
         {
-            return FormatInvalidSaveCommand(workOrder);
-        }
-
-        if (title != null && string.IsNullOrWhiteSpace(title))
-        {
-            return "The Title field is required.";
-        }
-
-        if (dueDate != null
-            && !string.IsNullOrWhiteSpace(dueDate)
-            && !DateOnly.TryParseExact(dueDate.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture,
-                DateTimeStyles.None, out _))
-        {
-            return $"Invalid due date '{dueDate}'. Use yyyy-MM-dd.";
+            return validationError;
         }
 
         ApplySavePatches(workOrder, title, description, instructions, roomNumber, dueDate);
@@ -225,6 +212,39 @@ public class WorkOrderTools
         }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
     }
 
+    private static string? ValidateSave(
+        WorkOrder workOrder,
+        Employee executingUser,
+        string? title,
+        string? dueDate)
+    {
+        if (!new SaveDraftCommand(workOrder, executingUser).IsValid())
+        {
+            return FormatInvalidSaveCommand(workOrder);
+        }
+
+        if (IsBlankPatch(title))
+        {
+            return "The Title field is required.";
+        }
+
+        if (IsInvalidDueDatePatch(dueDate))
+        {
+            return $"Invalid due date '{dueDate}'. Use yyyy-MM-dd.";
+        }
+
+        return null;
+    }
+
+    private static bool IsBlankPatch(string? value) => value != null && string.IsNullOrWhiteSpace(value);
+
+    private static bool IsInvalidDueDatePatch(string? dueDate) =>
+        dueDate != null && !string.IsNullOrWhiteSpace(dueDate) && !TryParseDueDatePatch(dueDate, out _);
+
+    private static bool TryParseDueDatePatch(string dueDate, out DateOnly parsedDueDate) =>
+        DateOnly.TryParseExact(dueDate.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture,
+            DateTimeStyles.None, out parsedDueDate);
+
     private static void ApplySavePatches(
         WorkOrder workOrder,
         string? title,
@@ -233,42 +253,66 @@ public class WorkOrderTools
         string? roomNumber,
         string? dueDate)
     {
+        ApplyTitlePatch(workOrder, title);
+        ApplyDescriptionPatch(workOrder, description);
+        ApplyInstructionsPatch(workOrder, instructions);
+        ApplyRoomNumberPatch(workOrder, roomNumber);
+        ApplyDueDatePatch(workOrder, dueDate);
+    }
+
+    private static void ApplyTitlePatch(WorkOrder workOrder, string? title)
+    {
         if (title != null)
         {
             workOrder.Title = title;
         }
+    }
 
+    private static void ApplyDescriptionPatch(WorkOrder workOrder, string? description)
+    {
         if (description != null)
         {
-            workOrder.Description = string.IsNullOrWhiteSpace(description) ? string.Empty : description;
-        }
-
-        if (instructions != null)
-        {
-            workOrder.Instructions = string.IsNullOrWhiteSpace(instructions) ? string.Empty : instructions;
-        }
-
-        if (roomNumber != null)
-        {
-            workOrder.RoomNumber = string.IsNullOrWhiteSpace(roomNumber)
-                ? string.Empty
-                : TruncateRoomNumber(roomNumber);
-        }
-
-        if (dueDate != null)
-        {
-            if (string.IsNullOrWhiteSpace(dueDate))
-            {
-                workOrder.DueDate = null;
-            }
-            else
-            {
-                DateOnly.TryParseExact(dueDate.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out var parsedDueDate);
-                workOrder.DueDate = parsedDueDate;
-            }
+            workOrder.Description = BlankToEmpty(description);
         }
     }
+
+    private static void ApplyInstructionsPatch(WorkOrder workOrder, string? instructions)
+    {
+        if (instructions != null)
+        {
+            workOrder.Instructions = BlankToEmpty(instructions);
+        }
+    }
+
+    private static void ApplyRoomNumberPatch(WorkOrder workOrder, string? roomNumber)
+    {
+        if (roomNumber != null)
+        {
+            workOrder.RoomNumber = TruncateRoomNumber(BlankToEmpty(roomNumber));
+        }
+    }
+
+    private static void ApplyDueDatePatch(WorkOrder workOrder, string? dueDate)
+    {
+        if (dueDate != null)
+        {
+            workOrder.DueDate = ParseDueDatePatch(dueDate);
+        }
+    }
+
+    private static DateOnly? ParseDueDatePatch(string dueDate)
+    {
+        if (string.IsNullOrWhiteSpace(dueDate))
+        {
+            return null;
+        }
+
+        TryParseDueDatePatch(dueDate, out var parsedDueDate);
+        return parsedDueDate;
+    }
+
+    private static string BlankToEmpty(string value) =>
+        string.IsNullOrWhiteSpace(value) ? string.Empty : value;
 
     private static string TruncateRoomNumber(string roomNumber) =>
         roomNumber.Length <= WorkOrder.RoomNumberMaxLength
