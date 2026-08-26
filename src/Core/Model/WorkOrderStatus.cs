@@ -95,11 +95,15 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
 
     public static WorkOrderStatus FromCode(string code)
     {
+        // SQL Server nchar(3) can surface trailing pads; trim before Code match.
+        var normalized = code.Trim();
         var items = GetAllItems();
         var match =
-            Array.Find(items, instance => instance.Code == code)!;
+            Array.Find(items, instance => instance.Code == normalized);
 
-        return match;
+        return match ?? throw new ArgumentOutOfRangeException(
+            nameof(code),
+            $"Code '{code}' is not a valid code for {nameof(WorkOrderStatus)}");
     }
 
     public static WorkOrderStatus FromKey(string? key)

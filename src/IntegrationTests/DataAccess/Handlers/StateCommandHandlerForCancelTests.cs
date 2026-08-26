@@ -41,6 +41,7 @@ public class StateCommandHandlerForCancelTests : IntegratedTestBase
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBeNull();
         order.AssignedDate.ShouldBeNull();
+        order.Status.ShouldBe(WorkOrderStatus.Cancelled);
     }
 
     [Test]

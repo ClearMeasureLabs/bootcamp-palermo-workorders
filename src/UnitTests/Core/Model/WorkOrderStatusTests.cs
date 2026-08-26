@@ -38,6 +38,23 @@ public class WorkOrderStatusTests
     }
 
     [Test]
+    public void FromCode_ShouldMatchExactAndNcharPaddedCodes()
+    {
+        WorkOrderStatus.FromCode("ASD").ShouldBe(WorkOrderStatus.Assigned);
+        WorkOrderStatus.FromCode("ASD ").ShouldBe(WorkOrderStatus.Assigned);
+        WorkOrderStatus.FromCode(" CNL").ShouldBe(WorkOrderStatus.Cancelled);
+        WorkOrderStatus.FromCode("CNL").ShouldBe(WorkOrderStatus.Cancelled);
+        WorkOrderStatus.FromCode("DRT").ShouldBe(WorkOrderStatus.Draft);
+        WorkOrderStatus.FromCode("DRT  ").ShouldBe(WorkOrderStatus.Draft);
+    }
+
+    [Test]
+    public void FromCode_ShouldRejectUnknownCode()
+    {
+        Should.Throw<ArgumentOutOfRangeException>(() => WorkOrderStatus.FromCode("BAD"));
+    }
+
+    [Test]
     public void ShouldBeRemotable()
     {
         RemotableRequestTests.AssertRemotable(WorkOrderStatus.Draft);
