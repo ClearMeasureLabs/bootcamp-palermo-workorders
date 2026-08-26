@@ -82,7 +82,7 @@
     text-transform: uppercase;
 }
 
-.form-control {
+.search-filters-card ::deep .form-control {
     width: 100%;
     min-height: 2.75rem;
     padding: 0.55rem 2.5rem 0.55rem 0.9rem;
@@ -93,15 +93,15 @@
     transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
-.form-control:hover,
-.form-control:focus {
+.search-filters-card ::deep .form-control:hover,
+.search-filters-card ::deep .form-control:focus {
     border-color: #8ed8f8;
     outline: none;
     background-color: #005b9f;
     box-shadow: 0 0 0 0.2rem rgba(0, 133, 202, 0.28);
 }
 
-.form-control option {
+.search-filters-card ::deep .form-control option {
     color: #0b3150;
     background: #fff;
 }
@@ -154,19 +154,6 @@
     font-family: Georgia, 'Times New Roman', serif;
     font-size: 1.7rem;
     font-weight: 400;
-}
-
-.results-count {
-    display: inline-flex;
-    width: 2.65rem;
-    height: 2.65rem;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(142, 216, 248, 0.5);
-    border-radius: 50%;
-    color: #fff;
-    background: rgba(0, 133, 202, 0.6);
-    font-weight: 700;
 }
 
 .series-prompt {
@@ -226,10 +213,10 @@
     display: flex;
     position: relative;
     z-index: calc(10 + var(--deck-order));
-    width: 12.5rem;
-    min-width: 12.5rem;
-    height: 25rem;
-    padding: 1rem;
+    width: 10.75rem;
+    min-width: 10.75rem;
+    height: 23rem;
+    padding: 0.85rem;
     border: 1px solid #a8c2d2;
     border-radius: 1.2rem;
     color: #123d64;
@@ -246,7 +233,7 @@
 }
 
 .work-order-card + .work-order-card {
-    margin-left: -4.8rem;
+    margin-left: -6.45rem;
 }
 
 .work-order-card:hover,
@@ -279,7 +266,7 @@
 
 .status-badge {
     overflow: hidden;
-    max-width: 6.5rem;
+    max-width: 5.2rem;
     padding: 0.22rem 0.48rem;
     border: 1px solid #a9cddd;
     border-radius: 999px;
@@ -293,9 +280,9 @@
 }
 
 .card-date {
-    margin-top: 1.2rem;
+    margin-top: 1rem;
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: 1.55rem;
+    font-size: 1.4rem;
     font-weight: 700;
 }
 
@@ -323,8 +310,8 @@
 
 .card-icon {
     display: inline-flex;
-    width: 3rem;
-    height: 3rem;
+    width: 2.7rem;
+    height: 2.7rem;
     margin: 0 auto 0.8rem;
     align-items: center;
     justify-content: center;
@@ -341,7 +328,7 @@
     margin: 0 0 0.9rem;
     color: #173f60;
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     line-height: 1.4;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
@@ -486,7 +473,7 @@
     }
 
     .work-order-card + .work-order-card {
-        margin-left: -5.7rem;
+        margin-left: -6.6rem;
     }
 }
 
@@ -518,7 +505,7 @@
 @media (prefers-reduced-motion: reduce) {
     .work-order-card,
     .btn-primary,
-    .form-control {
+    .search-filters-card ::deep .form-control {
         transition: none;
     }
 }
