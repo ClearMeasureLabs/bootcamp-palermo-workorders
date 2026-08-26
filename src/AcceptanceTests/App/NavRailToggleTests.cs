@@ -63,6 +63,7 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Expect(Page.GetByTestId("DailyBoardLayout")).ToBeVisibleAsync();
         await Expect(Page.Locator("#app-navigation-rail")).ToHaveCountAsync(0);
         await Expect(Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle))).ToHaveCountAsync(0);
+        await Expect(Page.GetByTestId(nameof(MainLayout.Elements.CopyrightFooter))).ToHaveCountAsync(0);
         await Expect(Page.Locator(".daily-board-brand")).ToContainTextAsync("Church Work Orders");
     }
 
