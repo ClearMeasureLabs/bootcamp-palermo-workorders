@@ -161,7 +161,7 @@ public class StateCommandHandlerSaveThenAssignPersistenceTests : IntegratedTestB
         var bus = TestHost.GetRequiredService<IBus>();
         var byNumber = await bus.Send(new WorkOrderByNumberQuery("SVASG1"));
         byNumber.ShouldNotBeNull();
-        byNumber!.Status.ShouldBe(WorkOrderStatus.Assigned);
+        byNumber.Status.ShouldBe(WorkOrderStatus.Assigned);
         byNumber.AssignedDate.ShouldNotBeNull();
         byNumber.Assignee!.UserName.ShouldBe("gwillie");
 

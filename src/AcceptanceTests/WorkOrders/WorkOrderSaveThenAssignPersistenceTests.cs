@@ -1,6 +1,5 @@
 using System.Text.Json;
 using ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
-using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared;
@@ -15,6 +14,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 /// #9118 UX contract — Lovejoy Save then Assign stays Assigned after reload / Willie login /
 /// get-work-order (Assign Update already persisted ASD; Cancel must not leave a Willie+CNL shape).
 /// </summary>
+[NonParallelizable]
 public class WorkOrderSaveThenAssignPersistenceTests : AcceptanceTestBase
 {
     private static McpTestHelper? _helper;
