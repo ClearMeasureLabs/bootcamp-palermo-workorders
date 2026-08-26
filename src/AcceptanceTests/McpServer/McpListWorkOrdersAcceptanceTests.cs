@@ -223,12 +223,10 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
 
         // Re-query MCP after the portal settles so parity is not based on a stale pre-search
         // snapshot while Parallelizable siblings mutate the shared database.
-        HashSet<string>? portalNumbers = null;
-        HashSet<string>? mcpNumbers = null;
+        var portalNumbers = await VisibleSearchNumbers();
+        var mcpNumbers = await CallListWorkOrders(filterArguments);
         for (var attempt = 0; attempt < 10; attempt++)
         {
-            mcpNumbers = await CallListWorkOrders(filterArguments);
-            portalNumbers = await VisibleSearchNumbers();
             if (portalNumbers.SetEquals(mcpNumbers) && requiredNumbers.All(portalNumbers.Contains))
             {
                 return;
@@ -236,11 +234,13 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
 
             await searchButton.ClickAsync();
             await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            mcpNumbers = await CallListWorkOrders(filterArguments);
+            portalNumbers = await VisibleSearchNumbers();
         }
 
-        requiredNumbers.All(portalNumbers!.Contains).ShouldBeTrue(
-            $"Portal missing required numbers. Required={FormatSet(requiredNumbers)}; Portal={FormatSet(portalNumbers!)}");
-        portalNumbers!.ShouldBeSet(mcpNumbers!);
+        requiredNumbers.All(portalNumbers.Contains).ShouldBeTrue(
+            $"Portal missing required numbers. Required={FormatSet(requiredNumbers)}; Portal={FormatSet(portalNumbers)}");
+        portalNumbers.ShouldBeSet(mcpNumbers);
     }
 
     private static string FormatSet(IEnumerable<string> numbers) =>
