@@ -10,7 +10,7 @@ public class NavRailToggleTests : AcceptanceTestBase
     public async Task ShouldHideAndShowNavigationRail_OnWideViewport_AfterLogin()
     {
         await LoginAsCurrentUser();
-        await Click(nameof(NavMenu.Elements.Search));
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var urlBefore = Page.Url;
@@ -34,7 +34,7 @@ public class NavRailToggleTests : AcceptanceTestBase
     public async Task ShouldKeepAriaExpandedInSyncWithNavVisibility()
     {
         await LoginAsCurrentUser();
-        await Click(nameof(NavMenu.Elements.Search));
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
@@ -55,8 +55,8 @@ public class NavRailToggleTests : AcceptanceTestBase
     public async Task ShouldUseDedicatedChrome_WhenViewingWorkOrderSearch()
     {
         await LoginAsCurrentUser();
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForURLAsync("**/workorder/search");
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page.GetByTestId("SearchBoardBrand")).ToBeVisibleAsync();
