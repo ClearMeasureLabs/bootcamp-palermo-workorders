@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
@@ -80,27 +81,34 @@ public class McpGetWorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
 
         await NavigateToManageEditAsync(workOrderNumber);
 
+        // AutoReformatAgent can add trailing punctuation after create. Re-read MCP
+        // detail for the Manage match so UI and get-work-order stay aligned.
+        getResult = await GetWorkOrderAsync(workOrderNumber);
+        using var liveDocument = JsonDocument.Parse(getResult);
+        var live = liveDocument.RootElement;
+
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title)))
-            .ToHaveValueAsync(RequiredString(detail, "Title"));
+            .ToHaveValueAsync(RequiredString(live, "Title"));
+        var expectedDescription = RequiredString(live, "Description").TrimEnd();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
-            .ToHaveValueAsync(RequiredString(detail, "Description"));
+            .ToHaveValueAsync(new Regex("^" + Regex.Escape(expectedDescription.TrimEnd('.')) + @"\.?$"));
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions)))
-            .ToHaveValueAsync(RequiredString(detail, "Instructions"));
+            .ToHaveValueAsync(RequiredString(live, "Instructions"));
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber)))
-            .ToHaveValueAsync(RequiredString(detail, "RoomNumber"));
+            .ToHaveValueAsync(RequiredString(live, "RoomNumber"));
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.DueDate)))
-            .ToHaveValueAsync(RequiredString(detail, "DueDate"));
+            .ToHaveValueAsync(RequiredString(live, "DueDate"));
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
-            .ToHaveTextAsync(RequiredString(detail, "Status"));
+            .ToHaveTextAsync(RequiredString(live, "Status"));
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee)))
             .ToHaveValueAsync(string.Empty);
 
-        var creator = RequiredString(detail, "Creator");
+        var creator = RequiredString(live, "Creator");
         var creatorGroup = Page.Locator(".form-group").Filter(new LocatorFilterOptions { HasText = "Creator:" });
         await Expect(creatorGroup.GetByText(creator, new LocatorGetByTextOptions { Exact = true }))
             .ToBeVisibleAsync();
 
-        var createdDate = detail.GetProperty("CreatedDate").GetDateTime();
+        var createdDate = live.GetProperty("CreatedDate").GetDateTime();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))
             .ToHaveTextAsync(createdDate.ToString("G", CultureInfo.CurrentCulture));
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.AssignedDate)))
