@@ -73,17 +73,20 @@ public class NavRailToggleTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task ShouldOpenAndCloseMobileOverlay_WhenNarrowViewport()
     {
+        // Fixture boots at 800×600; reload after narrowing so first viewport sync hides the rail.
+        await Page.SetViewportSizeAsync(375, 667);
+        await Page.ReloadAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Click(nameof(MainLayout.Elements.NavRailToggle));
-
-        await Page.SetViewportSizeAsync(375, 667);
-
         var rail = Page.Locator("#app-navigation-rail");
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
+        await Expect(toggle).ToBeVisibleAsync();
+        (await rail.GetAttributeAsync("class"))!.ShouldNotContain("open");
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         (await rail.GetAttributeAsync("class"))!.ShouldContain("open");

@@ -104,12 +104,15 @@ public class MainLayoutTests
 
         var rail = layout.Find("#app-navigation-rail");
         rail.ClassList.ShouldNotContain("open");
+        layout.Find(".modern-app").ClassList.ShouldNotContain("rail-collapsed");
 
         var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        toggle.InnerHtml.ShouldContain("bi-list");
         await toggle.ClickAsync(new());
 
         rail.ClassList.ShouldContain("open");
         toggle.GetAttribute("aria-expanded").ShouldBe("true");
+        toggle.InnerHtml.ShouldContain("bi-chevron-double-left");
     }
 
     [Test]
