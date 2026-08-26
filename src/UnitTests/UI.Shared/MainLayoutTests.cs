@@ -142,8 +142,39 @@ public class MainLayoutTests
         var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
         loginAnchor.GetAttribute("data-testid").ShouldBe(nameof(LoginLink.Elements.LoginLink));
         loginAnchor.ClassList.ShouldContain("login-link-blink");
+        loginAnchor.GetAttribute("id").ShouldBe("login-link-blink");
         loginAnchor.TextContent.Trim().ShouldBe("Login");
         loginAnchor.GetAttribute("href").ShouldBe("/login");
+    }
+
+    [Test]
+    public async Task ShouldExposeBlinkIdOnSameAnchorAsBlinkClassAndTestId_WhenUserIsNotAuthenticated()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var anchorsById = layout.FindAll("#login-link-blink");
+        anchorsById.Count.ShouldBe(1);
+
+        var loginAnchor = anchorsById[0];
+        loginAnchor.TagName.ShouldBe("A");
+        loginAnchor.ClassList.ShouldContain("login-link-blink");
+        loginAnchor.GetAttribute("data-testid").ShouldBe(nameof(LoginLink.Elements.LoginLink));
+        loginAnchor.GetAttribute("href").ShouldBe("/login");
+    }
+
+    [Test]
+    public async Task ShouldNotExposeBlinkId_WhenUserIsAuthenticated()
+    {
+        await using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.FindAll("#login-link-blink").Count.ShouldBe(0);
+        layout.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']").ShouldNotBeNull();
     }
 
     [Test]
