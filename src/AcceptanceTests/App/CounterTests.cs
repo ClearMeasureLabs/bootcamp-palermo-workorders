@@ -12,9 +12,10 @@ public class CounterTests : AcceptanceTestBase
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Counter));
         await Page.WaitForURLAsync("**/counter");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        // SPA URL can update before Blazor paints; wait on the value node instead of NetworkIdle.
 
         var valueLocator = Page.GetByTestId(nameof(Counter.Elements.CounterValue));
+        await valueLocator.WaitForAsync();
         await Expect(valueLocator).ToBeVisibleAsync();
         await Expect(valueLocator).ToHaveTextAsync("0");
     }
