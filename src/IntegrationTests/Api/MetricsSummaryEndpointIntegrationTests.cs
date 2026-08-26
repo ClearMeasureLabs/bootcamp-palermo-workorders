@@ -1,9 +1,15 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
+using ClearMeasure.Bootcamp.UI.Shared;
+using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 
+/// <summary>
+/// Integration coverage for <c>GET /api/metrics/summary</c> and versioned route (issue #9158).
+/// </summary>
 [TestFixture]
 public class MetricsSummaryEndpointIntegrationTests
 {
@@ -60,6 +66,53 @@ public class MetricsSummaryEndpointIntegrationTests
         var secondTotal = await ReadTotalAsync(second);
 
         secondTotal.ShouldBeGreaterThan(firstTotal);
+    }
+
+    [Test]
+    public async Task Should_IncludeWeakEtag_When_GetMetricsSummary()
+    {
+        var response = await _client!.GetAsync("/api/metrics/summary");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.ETag.ShouldNotBeNull();
+        response.Headers.ETag!.IsWeak.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task Should_Return304_When_IfNoneMatchIsAny()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/metrics/summary");
+        request.Headers.IfNoneMatch.Add(EntityTagHeaderValue.Any);
+
+        var response = await _client!.SendAsync(request);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotModified);
+        (await response.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
+        response.Headers.ETag.ShouldNotBeNull();
+    }
+
+    [Test]
+    public async Task Should_EnforceApiKey_When_MiddlewareEnabledAndMetricsProtected()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unauth = await client.GetAsync("/api/metrics/summary");
+        unauth.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        var unauthVersioned = await client.GetAsync("/api/v1.0/metrics/summary");
+        unauthVersioned.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        using var withKey = factory.CreateClient();
+        withKey.DefaultRequestHeaders.Add(
+            ApiKeyConstants.HeaderName,
+            ApiKeyProtectedWebApplicationFactory.TestApiKey);
+
+        var ok = await withKey.GetAsync("/api/metrics/summary");
+        ok.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var okVersioned = await withKey.GetAsync("/api/v1.0/metrics/summary");
+        okVersioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     private static void AssertRequiredProperties(JsonElement root)

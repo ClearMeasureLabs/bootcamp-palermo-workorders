@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
-/// Exposes a JSON summary of process runtime metrics for operators and integrations.
+/// Exposes a JSON summary of process runtime metrics for operators and integrations
+/// (<c>GET /api/metrics/summary</c> and versioned equivalent; issue #9158).
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
