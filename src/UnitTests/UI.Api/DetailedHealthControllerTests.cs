@@ -56,8 +56,8 @@ public class DetailedHealthControllerTests
         var payload = JsonSerializer.Deserialize<DetailedHealthReport>(
             content.Content,
             ConditionalGetEtag.JsonSerializerOptions);
-        payload.ShouldNotBeNull();
-        payload!.OverallStatus.ShouldBe(ComponentHealthStatus.Healthy);
+        payload = payload.ShouldNotBeNull();
+        payload.OverallStatus.ShouldBe(ComponentHealthStatus.Healthy);
         payload.Components.Count.ShouldBe(1);
         payload.Components[0].Name.ShouldBe("API");
         payload.Components[0].Status.ShouldBe(ComponentHealthStatus.Healthy);

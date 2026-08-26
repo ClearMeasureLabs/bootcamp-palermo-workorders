@@ -50,8 +50,7 @@ public class DetailedHealthEtagFingerprintTests
         fingerprint.Components[0].Description.ShouldBe("ok");
         fingerprint.Components[1].Name.ShouldBe("DataAccess");
         fingerprint.Components[1].ExceptionMessage.ShouldBe("slow");
-        fingerprint.Components[1].Data.ShouldNotBeNull();
-        var data = fingerprint.Components[1].Data!;
+        var data = fingerprint.Components[1].Data.ShouldNotBeNull();
         data[0].Key.ShouldBe("Provider");
         data[0].Value.ShouldBe("SqlServer");
     }

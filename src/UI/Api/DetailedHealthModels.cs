@@ -105,12 +105,14 @@ public static class ComponentHealthStatus
 /// <summary>
 /// Per-component fingerprint for conditional GET (<see cref="ComponentHealthEntry.ExceptionDetail"/> excluded).
 /// </summary>
-internal sealed record DetailedHealthComponentEtagFingerprint(
-    string Name,
-    string Status,
-    string? Description,
-    string? ExceptionMessage,
-    IReadOnlyList<KeyValuePair<string, string>>? Data);
+internal sealed record DetailedHealthComponentEtagFingerprint
+{
+    public required string Name { get; init; }
+    public required string Status { get; init; }
+    public string? Description { get; init; }
+    public string? ExceptionMessage { get; init; }
+    public IReadOnlyList<KeyValuePair<string, string>>? Data { get; init; }
+}
 
 /// <summary>
 /// Fingerprint payload for conditional GET over <see cref="DetailedHealthReport"/>.
@@ -120,10 +122,11 @@ internal sealed record DetailedHealthComponentEtagFingerprint(
 /// (<see cref="ComponentHealthEntry.ExceptionDetail"/>) are omitted so probes can reuse ETags across polls.
 /// Host memory/process metadata is also omitted because those values drift between requests.
 /// </remarks>
-internal sealed record DetailedHealthEtagFingerprint(
-    string OverallStatus,
-    IReadOnlyList<DetailedHealthComponentEtagFingerprint> Components)
+internal sealed record DetailedHealthEtagFingerprint
 {
+    public required string OverallStatus { get; init; }
+    public required IReadOnlyList<DetailedHealthComponentEtagFingerprint> Components { get; init; }
+
     /// <summary>
     /// Builds a fingerprint from <paramref name="report"/> omitting volatile fields so repeated polls can yield 304.
     /// </summary>
@@ -131,15 +134,21 @@ internal sealed record DetailedHealthEtagFingerprint(
     {
         var components = report.Components
             .OrderBy(c => c.Name, StringComparer.Ordinal)
-            .Select(c => new DetailedHealthComponentEtagFingerprint(
-                c.Name,
-                c.Status,
-                c.Description,
-                c.ExceptionMessage,
-                StableDataEntries(c.Data)))
+            .Select(c => new DetailedHealthComponentEtagFingerprint
+            {
+                Name = c.Name,
+                Status = c.Status,
+                Description = c.Description,
+                ExceptionMessage = c.ExceptionMessage,
+                Data = StableDataEntries(c.Data)
+            })
             .ToList();
 
-        return new DetailedHealthEtagFingerprint(report.OverallStatus, components);
+        return new DetailedHealthEtagFingerprint
+        {
+            OverallStatus = report.OverallStatus,
+            Components = components
+        };
     }
 
     private static IReadOnlyList<KeyValuePair<string, string>>? StableDataEntries(
