@@ -37,7 +37,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.SearchButton.ToString()))
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.SearchButton)))
             .ToHaveClassAsync(new Regex("active"));
         await Expect(Page.Locator(".search-filters-card")).ToHaveCountAsync(0);
         await Expect(Page.Locator(".legacy-search-controls")).ToBeHiddenAsync();
@@ -49,11 +49,11 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.InProgressFilter.ToString()))
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.InProgressFilter)))
             .ToHaveAttributeAsync("href", "/workorder/search?Status=InProgress");
-        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.OnHoldFilter.ToString()))
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.OnHoldFilter)))
             .ToHaveAttributeAsync("href", "/workorder/search?Status=Assigned");
-        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.CompletedFilter.ToString()))
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.CompletedFilter)))
             .ToHaveAttributeAsync("href", "/workorder/search?Status=Complete");
     }
 
@@ -173,7 +173,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await TakeScreenshotAsync(1, "StatusFiltered");
 
         await Expect(Page).ToHaveURLAsync(new Regex($"Status={Regex.Escape(status.Key)}"));
-        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.OnHoldFilter.ToString()))
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.OnHoldFilter)))
             .ToHaveClassAsync(new Regex("active"));
 
         var workOrderStack = Page.GetByTestId("WorkOrderStack");
@@ -198,13 +198,13 @@ public class WorkOrderSearchTests : AcceptanceTestBase
 
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Page.GetByTestId(WorkOrderSearch.Elements.CompletedFilter.ToString()).ClickAsync();
+        await Page.GetByTestId(nameof(WorkOrderSearch.Elements.CompletedFilter)).ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page).ToHaveURLAsync(new Regex("Status=Complete"));
-        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.CompletedFilter.ToString()))
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.CompletedFilter)))
             .ToHaveClassAsync(new Regex("active"));
-        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.WorkOrderLink + order.Number))
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number))
             .ToBeAttachedAsync();
     }
 
@@ -234,7 +234,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
 
         if (!string.IsNullOrEmpty(workOrderNumber))
         {
-            var firstWorkOrderLink = Page.GetByTestId(WorkOrderSearch.Elements.WorkOrderLink + workOrderNumber);
+            var firstWorkOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber);
             await firstWorkOrderLink.ClickAsync();
             await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
             await TakeScreenshotAsync(2, "WorkOrderDetailsPage");
@@ -266,15 +266,15 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Page.GetByTestId(WorkOrderSearch.Elements.InProgressFilter.ToString()).ClickAsync();
+        await Page.GetByTestId(nameof(WorkOrderSearch.Elements.InProgressFilter)).ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(Page).ToHaveURLAsync(new Regex("Status=InProgress"));
 
-        await Page.GetByTestId(WorkOrderSearch.Elements.SearchButton.ToString()).ClickAsync();
+        await Page.GetByTestId(nameof(WorkOrderSearch.Elements.SearchButton)).ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page).ToHaveURLAsync(new Regex("/workorder/search$"));
-        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.SearchButton.ToString()))
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.SearchButton)))
             .ToHaveClassAsync(new Regex("active"));
     }
 
@@ -284,10 +284,10 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Page.GetByTestId(WorkOrderSearch.Elements.CompletedFilter.ToString()).ClickAsync();
+        await Page.GetByTestId(nameof(WorkOrderSearch.Elements.CompletedFilter)).ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.CompletedFilter.ToString()))
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.CompletedFilter)))
             .ToHaveClassAsync(new Regex("active"));
     }
 
@@ -324,7 +324,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.AllWorkOrdersInProgress));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(Page).ToHaveURLAsync(new Regex($"Status={Regex.Escape(order1.Status.Key)}"));
-        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.InProgressFilter.ToString()))
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.InProgressFilter)))
             .ToHaveClassAsync(new Regex("active"));
     }
 }
