@@ -74,25 +74,12 @@ public class StateCommandHandler(
         var existing = await dbContext.Set<WorkOrder>()
             .SingleAsync(workOrder => workOrder.Id == order.Id, cancellationToken);
 
-        ApplyScalarValues(existing, order);
+        dbContext.Entry(existing).CurrentValues.SetValues(order);
+        // Attachments remain database-owned; remoted commands do not carry a complete collection.
         await ApplyRelationshipsAsync(existing, order, cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return existing;
-    }
-
-    private static void ApplyScalarValues(WorkOrder target, WorkOrder source)
-    {
-        target.Number = source.Number;
-        target.Title = source.Title;
-        target.Description = source.Description;
-        target.Instructions = source.Instructions;
-        target.RoomNumber = source.RoomNumber;
-        target.Status = source.Status;
-        target.AssignedDate = source.AssignedDate;
-        target.CreatedDate = source.CreatedDate;
-        target.CompletedDate = source.CompletedDate;
-        target.DueDate = source.DueDate;
     }
 
     private async Task ApplyRelationshipsAsync(

@@ -33,12 +33,24 @@ public class StateCommandHandlerSaveThenAssignPersistenceTests : IntegratedTestB
         order.Creator = creator;
         order.Assignee = assignee;
         order.AssignedDate = TestHost.TestTime.DateTime;
+        var attachmentId = Guid.NewGuid();
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             context.Add(creator);
             context.Add(assignee);
             context.Add(order);
+            await context.SaveChangesAsync();
+            context.Add(new WorkOrderAttachment
+            {
+                Id = attachmentId,
+                WorkOrderId = order.Id,
+                FileName = "before-cancel.txt",
+                ContentType = "text/plain",
+                FileSize = 12,
+                UploadedById = creator.Id,
+                UploadedDate = TestHost.TestTime.DateTime
+            });
             await context.SaveChangesAsync();
         }
 
@@ -62,6 +74,8 @@ public class StateCommandHandlerSaveThenAssignPersistenceTests : IntegratedTestB
         reloaded.Status.Code.ShouldBe("CNL");
         reloaded.AssignedDate.ShouldBeNull();
         reloaded.Assignee.ShouldBeNull();
+        (await fresh.Set<WorkOrderAttachment>()
+            .AnyAsync(attachment => attachment.Id == attachmentId)).ShouldBeTrue();
     }
 
     [Test]

@@ -49,6 +49,12 @@ public class WorkOrderStatusTests
     }
 
     [Test]
+    public void FromCode_ShouldRejectUnknownCode()
+    {
+        Should.Throw<ArgumentOutOfRangeException>(() => WorkOrderStatus.FromCode("BAD"));
+    }
+
+    [Test]
     public void ShouldBeRemotable()
     {
         RemotableRequestTests.AssertRemotable(WorkOrderStatus.Draft);
