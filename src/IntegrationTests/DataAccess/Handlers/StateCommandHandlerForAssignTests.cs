@@ -39,6 +39,7 @@ public class StateCommandHandlerForAssignTests : IntegratedTestBase
         order.Description.ShouldBe(order.Description);
         order.Creator.ShouldBe(currentUser);
         order.Assignee.ShouldBe(assignee);
+        order.Status.ShouldBe(WorkOrderStatus.Assigned);
         order.AssignedDate.ShouldBe(TestHost.TestTime.DateTime);
     }
 
