@@ -5,15 +5,13 @@ namespace ClearMeasure.Bootcamp.UI.Api;
 /// </summary>
 public static class FeatureFlagsCatalog
 {
-    private static readonly IReadOnlyDictionary<string, bool> Flags =
+    /// <summary>
+    /// All known feature flags and whether each is currently enabled.
+    /// </summary>
+    public static IReadOnlyDictionary<string, bool> All { get; } =
         new Dictionary<string, bool>(StringComparer.Ordinal)
         {
             ["SampleFeatureA"] = true,
             ["SampleFeatureB"] = false
         };
-
-    /// <summary>
-    /// All known feature flags and whether each is currently enabled.
-    /// </summary>
-    public static IReadOnlyDictionary<string, bool> All => Flags;
 }
