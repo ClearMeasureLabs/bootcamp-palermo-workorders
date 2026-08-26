@@ -42,7 +42,7 @@ public class EnvironmentStatusController : ControllerBase
         return ConditionalGetEtag.JsonContent(payload);
     }
 
-    internal static EnvironmentStatusResponse BuildResponse()
+    private static EnvironmentStatusResponse BuildResponse()
     {
         var names = new List<string>();
         var variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
