@@ -50,9 +50,9 @@
     font-weight: 700;
 }
 
-.form-control {
+.filter-chip ::deep .form-control {
     width: auto;
-    max-width: 12rem;
+    max-width: 8.5rem;
     min-height: 2.35rem;
     padding: 0.35rem 2rem 0.35rem 0.65rem;
     border: 0;
@@ -64,12 +64,12 @@
     box-shadow: none;
 }
 
-.form-control option {
+.filter-chip ::deep .form-control option {
     background: #003b70;
     color: #ffffff;
 }
 
-.form-control:focus {
+.filter-chip ::deep .form-control:focus {
     background: transparent !important;
     box-shadow: inset 0 -2px 0 #37c3f7;
 }
@@ -272,8 +272,7 @@
     opacity: 0.45;
 }
 
-.urgency-label,
-.status-badge {
+.urgency-label {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -299,11 +298,6 @@
     color: #991b1b;
     padding: 0.2rem 0.45rem;
     border-radius: 0.45rem;
-}
-
-.status-badge {
-    background: rgba(0, 133, 202, 0.1);
-    color: #005f9e;
 }
 
 .rail-arrow {
@@ -402,7 +396,7 @@
         display: none;
     }
 
-    .form-control {
+    .filter-chip ::deep .form-control {
         flex: 1;
         max-width: none;
     }
