@@ -119,7 +119,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         // Return to the stock manage layout, then soft-navigate back so search re-queries
         // without losing the in-memory Blazor authentication session.
         await Page.GoBackAsync();
-        await Page.WaitForURLAsync("**/workorder/manage/**");
+        await Page.WaitForURLAsync("**/workorder/manage**");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
@@ -185,7 +185,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         if (new Uri(Page.Url).AbsolutePath.Equals("/workorder/search", StringComparison.OrdinalIgnoreCase))
         {
             await Page.GoBackAsync();
-            await Page.WaitForURLAsync("**/workorder/manage/**");
+            await Page.WaitForURLAsync("**/workorder/manage**");
             await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         }
 
