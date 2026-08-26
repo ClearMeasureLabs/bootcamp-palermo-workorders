@@ -159,6 +159,7 @@ public static class ServerApplication
     {
         app.UseSerilogShutdown();
         app.MapDefaultEndpoints();
+        app.UseMiddleware<HttpRequestMetricsMiddleware>();
         app.UseCorrelationId();
         app.UseWhen(
             context => ProblemDetailsPaths.IsMachineOriented(context.Request.Path),
