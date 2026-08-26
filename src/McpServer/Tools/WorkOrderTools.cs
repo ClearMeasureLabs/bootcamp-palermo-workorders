@@ -130,6 +130,50 @@ public class WorkOrderTools
         }
     }
 
+    [McpServerTool(Name = "save-work-order"), Description(
+        "Saves title, description, instructions, room, and due date on an existing draft work order without changing status. " +
+        "Requires the work order number and executing username (the creator). " +
+        "Optional patches: omit a field to leave it unchanged; empty description/instructions/room persists empty; empty due date clears.")]
+    public static async Task<string> SaveWorkOrder(
+        IBus bus,
+        [Description("The work order number")] string workOrderNumber,
+        [Description("Username of the employee executing the save (must be the creator)")] string executingUsername,
+        [Description("Optional title patch")] string? title = null,
+        [Description("Optional description patch")] string? description = null,
+        [Description("Optional instructions patch")] string? instructions = null,
+        [Description("Optional room number patch")] string? roomNumber = null,
+        [Description("Optional due date patch as yyyy-MM-dd; empty clears")] string? dueDate = null)
+    {
+        if (string.IsNullOrWhiteSpace(workOrderNumber))
+        {
+            return "Work order number is required.";
+        }
+
+        var workOrder = await bus.Send(new WorkOrderByNumberQuery(workOrderNumber));
+        if (workOrder == null)
+        {
+            return $"No work order found with number '{workOrderNumber}'.";
+        }
+
+        var executingUser = await FindEmployeeByUsername(bus, executingUsername);
+        if (executingUser == null)
+        {
+            return $"Employee with username '{executingUsername}' not found.";
+        }
+
+        var validationError = ValidateSave(workOrder, executingUser, title, dueDate);
+        if (validationError != null)
+        {
+            return validationError;
+        }
+
+        ApplySavePatches(workOrder, title, description, instructions, roomNumber, dueDate);
+
+        var result = await bus.Send(new SaveDraftCommand(workOrder, executingUser));
+        return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
+            new JsonSerializerOptions { WriteIndented = true });
+    }
+
     [McpServerTool(Name = "execute-work-order-command"), Description("Executes a state command on a work order. Available commands: DraftToAssignedCommand (requires assigneeUsername), AssignedToInProgressCommand, InProgressToAssignedCommand, Shelve, InProgressToCompleteCommand, AssignedToCancelledCommand.")]
     public static Task<string> ExecuteWorkOrderCommand(
         IBus bus,
@@ -167,6 +211,116 @@ public class WorkOrderTools
             a.UploadedDate
         }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
     }
+
+    private static string? ValidateSave(
+        WorkOrder workOrder,
+        Employee executingUser,
+        string? title,
+        string? dueDate)
+    {
+        if (!new SaveDraftCommand(workOrder, executingUser).IsValid())
+        {
+            return FormatInvalidSaveCommand(workOrder);
+        }
+
+        if (IsBlankPatch(title))
+        {
+            return "The Title field is required.";
+        }
+
+        if (IsInvalidDueDatePatch(dueDate))
+        {
+            return $"Invalid due date '{dueDate}'. Use yyyy-MM-dd.";
+        }
+
+        return null;
+    }
+
+    private static bool IsBlankPatch(string? value) => value != null && string.IsNullOrWhiteSpace(value);
+
+    private static bool IsInvalidDueDatePatch(string? dueDate) =>
+        dueDate != null && !string.IsNullOrWhiteSpace(dueDate) && !TryParseDueDatePatch(dueDate, out _);
+
+    private static bool TryParseDueDatePatch(string dueDate, out DateOnly parsedDueDate) =>
+        DateOnly.TryParseExact(dueDate.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture,
+            DateTimeStyles.None, out parsedDueDate);
+
+    private static void ApplySavePatches(
+        WorkOrder workOrder,
+        string? title,
+        string? description,
+        string? instructions,
+        string? roomNumber,
+        string? dueDate)
+    {
+        ApplyTitlePatch(workOrder, title);
+        ApplyDescriptionPatch(workOrder, description);
+        ApplyInstructionsPatch(workOrder, instructions);
+        ApplyRoomNumberPatch(workOrder, roomNumber);
+        ApplyDueDatePatch(workOrder, dueDate);
+    }
+
+    private static void ApplyTitlePatch(WorkOrder workOrder, string? title)
+    {
+        if (title != null)
+        {
+            workOrder.Title = title;
+        }
+    }
+
+    private static void ApplyDescriptionPatch(WorkOrder workOrder, string? description)
+    {
+        if (description != null)
+        {
+            workOrder.Description = BlankToEmpty(description);
+        }
+    }
+
+    private static void ApplyInstructionsPatch(WorkOrder workOrder, string? instructions)
+    {
+        if (instructions != null)
+        {
+            workOrder.Instructions = BlankToEmpty(instructions);
+        }
+    }
+
+    private static void ApplyRoomNumberPatch(WorkOrder workOrder, string? roomNumber)
+    {
+        if (roomNumber != null)
+        {
+            workOrder.RoomNumber = TruncateRoomNumber(BlankToEmpty(roomNumber));
+        }
+    }
+
+    private static void ApplyDueDatePatch(WorkOrder workOrder, string? dueDate)
+    {
+        if (dueDate != null)
+        {
+            workOrder.DueDate = ParseDueDatePatch(dueDate);
+        }
+    }
+
+    private static DateOnly? ParseDueDatePatch(string dueDate)
+    {
+        if (string.IsNullOrWhiteSpace(dueDate))
+        {
+            return null;
+        }
+
+        TryParseDueDatePatch(dueDate, out var parsedDueDate);
+        return parsedDueDate;
+    }
+
+    private static string BlankToEmpty(string value) =>
+        string.IsNullOrWhiteSpace(value) ? string.Empty : value;
+
+    private static string TruncateRoomNumber(string roomNumber) =>
+        roomNumber.Length <= WorkOrder.RoomNumberMaxLength
+            ? roomNumber
+            : roomNumber[..WorkOrder.RoomNumberMaxLength];
+
+    private static string FormatInvalidSaveCommand(WorkOrder workOrder) =>
+        $"Command '{SaveDraftCommand.Name}' cannot be executed. Work order is in '{workOrder.Status.FriendlyName}' status but the command requires '{WorkOrderStatus.Draft.FriendlyName}' status.";
 
     private static async Task<Employee?> FindEmployeeByUsername(IBus bus, string username)
     {
