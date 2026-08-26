@@ -3,12 +3,16 @@ using System.Text.Json;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.Api;
 
+/// <summary>
+/// Full-system acceptance for issue #9158: <c>GET /api/metrics/summary</c> runtime metrics JSON.
+/// </summary>
 [TestFixture]
 public class MetricsSummaryAcceptanceTests : AcceptanceTestBase
 {
     protected override bool RequiresBrowser => false;
 
     [Test]
+    [Description("Issue #9158: GET /api/metrics/summary returns 200 with required metrics JSON fields")]
     public async Task Api_MetricsSummary_Returns200AndRequiredJsonFields()
     {
         if (!ServerFixture.StartLocalServer)
@@ -17,6 +21,7 @@ public class MetricsSummaryAcceptanceTests : AcceptanceTestBase
         var client = TestHttpClientFactory.CreateInsecureClient();
         using var response = await client.GetAsync($"{ServerFixture.ApplicationBaseUrl}/api/metrics/summary");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.ETag.ShouldNotBeNull();
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
