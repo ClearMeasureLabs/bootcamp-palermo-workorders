@@ -242,13 +242,25 @@
 
 .manage-link {
     display: grid;
-    width: 3.5rem;
+    width: 4.25rem;
     min-height: 5.85rem;
     place-items: center;
+    align-content: center;
+    gap: 0.35rem;
     border-left: 1px solid #e2ded4;
     color: var(--ink);
     font-size: 1.35rem;
     text-decoration: none;
+}
+
+.manage-link .work-order-number {
+    max-width: 100%;
+    overflow: hidden;
+    color: #53718d;
+    font-size: 0.68rem;
+    line-height: 1.1;
+    text-align: center;
+    text-overflow: ellipsis;
 }
 
 .manage-link:hover,
