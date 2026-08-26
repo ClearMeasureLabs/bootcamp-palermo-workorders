@@ -15,6 +15,13 @@
                                 <option value="@user.Value">@user.Text</option>
                             }
                         </InputSelect>
+                        @if (!string.IsNullOrWhiteSpace(Model.Filters.Creator))
+                        {
+                            <button type="button" class="filter-clear" data-testid="ClearCreatorFilter"
+                                    aria-label="Clear creator filter" @onclick="ClearCreatorFilter">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        }
                     </div>
 
                     <div class="filter-chip">
@@ -26,6 +33,13 @@
                                 <option value="@user.Value">@user.Text</option>
                             }
                         </InputSelect>
+                        @if (!string.IsNullOrWhiteSpace(Model.Filters.Assignee))
+                        {
+                            <button type="button" class="filter-clear" data-testid="ClearAssigneeFilter"
+                                    aria-label="Clear assignee filter" @onclick="ClearAssigneeFilter">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        }
                     </div>
 
                     <div class="filter-chip">
@@ -37,6 +51,13 @@
                                 <option value="@status.Value">@status.Text</option>
                             }
                         </InputSelect>
+                        @if (!string.IsNullOrWhiteSpace(Model.Filters.Status))
+                        {
+                            <button type="button" class="filter-clear" data-testid="ClearStatusFilter"
+                                    aria-label="Clear status filter" @onclick="ClearStatusFilter">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        }
                     </div>
 
                     <div class="filter-action">
@@ -128,9 +149,19 @@
                         <i class="bi bi-chevron-right" aria-hidden="true"></i>
                     </button>
                 </div>
-                <div class="rail-position" aria-live="polite">
-                    <span class="position-dot is-active"></span>
-                    <span>Work order @(SelectedResultIndex + 1) of @Model.Results.Length</span>
+                <div class="rail-position" aria-label="Select a work order">
+                    @for (var index = 0; index < Model.Results.Length; index++)
+                    {
+                        var dotIndex = index;
+                        var dotClass = dotIndex == SelectedResultIndex ? "position-dot is-active" : "position-dot";
+                        <button type="button" class="@dotClass"
+                                aria-label="Select work order @(dotIndex + 1)"
+                                aria-current="@(dotIndex == SelectedResultIndex ? "true" : null)"
+                                @onclick="() => SelectResult(dotIndex)"></button>
+                    }
+                    <span class="visually-hidden" aria-live="polite">
+                        Work order @(SelectedResultIndex + 1) of @Model.Results.Length
+                    </span>
                 </div>
             }
         </div>
@@ -164,5 +195,28 @@
     private void SelectNext()
     {
         SelectedResultIndex = Math.Min(Model.Results.Length - 1, SelectedResultIndex + 1);
+    }
+
+    private void SelectResult(int index)
+    {
+        SelectedResultIndex = Math.Clamp(index, 0, Model.Results.Length - 1);
+    }
+
+    private async Task ClearCreatorFilter()
+    {
+        Model.Filters.Creator = null;
+        await OnSearch!();
+    }
+
+    private async Task ClearAssigneeFilter()
+    {
+        Model.Filters.Assignee = null;
+        await OnSearch!();
+    }
+
+    private async Task ClearStatusFilter()
+    {
+        Model.Filters.Status = null;
+        await OnSearch!();
     }
 }

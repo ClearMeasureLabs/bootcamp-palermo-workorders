@@ -220,4 +220,22 @@ public class WorkOrderSearchTests
         var newlySelected = component.Find("[data-rail-card][data-selected='true']");
         newlySelected.GetAttribute("data-testid").ShouldBe("WorkOrderLinkWO-001");
     }
+
+    [Test]
+    public async Task ShouldClearSelectedCreatorFilterFromChip()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+        var creatorSelect = component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.ChangeAsync(new() { Value = "jpalermo" });
+
+        await component.Find("[data-testid='ClearCreatorFilter']").ClickAsync(new());
+
+        component.Instance.Model.Filters.Creator.ShouldBeNullOrEmpty();
+    }
 }

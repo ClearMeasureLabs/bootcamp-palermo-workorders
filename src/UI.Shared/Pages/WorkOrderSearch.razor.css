@@ -79,6 +79,30 @@
     box-shadow: inset 0 -2px 0 #37c3f7;
 }
 
+.filter-clear {
+    display: grid;
+    width: 2.15rem;
+    height: 2.15rem;
+    margin-right: 0.2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #37c3f7;
+    font-size: 0.8rem;
+    place-items: center;
+}
+
+.filter-clear:hover {
+    background: rgba(0, 133, 202, 0.22);
+    color: #ffffff;
+}
+
+.filter-clear:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 1px;
+}
+
 .filter-action {
     display: flex;
 }
@@ -144,14 +168,15 @@
 }
 
 .rail-shell {
-    display: grid;
-    grid-template-columns: 3rem minmax(0, 1fr) 3rem;
+    display: flex;
     align-items: center;
     gap: 0.4rem;
 }
 
 .work-order-rail {
     display: flex;
+    flex: 1;
+    min-width: 0;
     align-items: center;
     justify-content: flex-start;
     gap: clamp(0.65rem, 1.2vw, 1rem);
@@ -160,8 +185,11 @@
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     scroll-snap-type: x mandatory;
-    scrollbar-color: #0085ca transparent;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+}
+
+.work-order-rail::-webkit-scrollbar {
+    display: none;
 }
 
 .work-order-card {
@@ -333,18 +361,30 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.55rem;
-    min-height: 1.5rem;
-    color: #bde8fa;
-    font-size: 0.78rem;
+    gap: 0.65rem;
+    min-height: 1.75rem;
 }
 
 .position-dot {
+    display: block;
     width: 0.5rem;
     height: 0.5rem;
+    padding: 0;
+    border: 0;
     border-radius: 50%;
-    background: #0085ca;
+    background: rgba(0, 133, 202, 0.42);
+    transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.position-dot.is-active {
+    background: #37c3f7;
     box-shadow: 0 0 0.8rem rgba(0, 133, 202, 0.9);
+    transform: scale(1.15);
+}
+
+.position-dot:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 3px;
 }
 
 .empty-results {
@@ -429,7 +469,6 @@
     }
 
     .rail-shell {
-        grid-template-columns: 2.4rem minmax(0, 1fr) 2.4rem;
         gap: 0;
     }
 
