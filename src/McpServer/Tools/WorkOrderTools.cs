@@ -373,6 +373,7 @@ public class WorkOrderTools
         wo.Number,
         wo.Title,
         wo.Description,
+        Instructions = wo.Instructions ?? "",
         Status = wo.Status.FriendlyName,
         wo.RoomNumber,
         Creator = wo.Creator?.GetFullName(),
