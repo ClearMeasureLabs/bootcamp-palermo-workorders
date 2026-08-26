@@ -93,24 +93,26 @@ internal static class ApiPublicPathRules
             return false;
         }
 
+        leaf = ResolveApiLeaf(segments);
+        return leaf.Length > 0;
+    }
+
+    private static string ResolveApiLeaf(string[] segments)
+    {
         if (segments.Length == 2)
         {
-            leaf = segments[1];
-            return true;
+            return segments[1];
         }
 
-        if (!segments[1].StartsWith('v'))
-        {
-            return false;
-        }
-
-        leaf = segments[2];
-        return true;
+        return segments[1].StartsWith('v')
+            ? string.Join('/', segments.Skip(2))
+            : string.Join('/', segments.Skip(1));
     }
 
     internal static bool IsPublicLeaf(string leaf) =>
         leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
         || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase)
-        || leaf.Equals("echo", StringComparison.OrdinalIgnoreCase);
+        || leaf.Equals("echo", StringComparison.OrdinalIgnoreCase)
+        || leaf.Equals("tools/random", StringComparison.OrdinalIgnoreCase);
 }
