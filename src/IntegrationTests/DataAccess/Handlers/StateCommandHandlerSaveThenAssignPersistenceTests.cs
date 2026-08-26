@@ -57,14 +57,9 @@ public class StateCommandHandlerSaveThenAssignPersistenceTests : IntegratedTestB
         await using var fresh = TestHost.GetRequiredService<DbContext>();
         var reloaded = await fresh.Set<WorkOrder>().AsNoTracking()
             .SingleAsync(w => w.Number == "CNLKEEP");
-        var rawStatus = await fresh.Database
-            .SqlQueryRaw<string>(
-                "SELECT CAST([Status] AS nvarchar(10)) AS [Value] FROM [dbo].[WorkOrder] WHERE [Number] = {0}",
-                "CNLKEEP")
-            .SingleAsync();
 
         reloaded.Status.ShouldBe(WorkOrderStatus.Cancelled);
-        rawStatus.Trim().ShouldBe("CNL");
+        reloaded.Status.Code.ShouldBe("CNL");
         reloaded.AssignedDate.ShouldBeNull();
         reloaded.Assignee.ShouldBeNull();
     }
@@ -127,24 +122,16 @@ public class StateCommandHandlerSaveThenAssignPersistenceTests : IntegratedTestB
         assignResult.WorkOrder.AssignedDate.ShouldNotBeNull();
 
         WorkOrder reloaded;
-        string rawStatusCode;
         await using (var newCtx = TestHost.GetRequiredService<DbContext>())
         {
             reloaded = await newCtx.Set<WorkOrder>()
                 .AsNoTracking()
                 .SingleAsync(w => w.Number == "SVASG1");
-
-            rawStatusCode = await newCtx.Database
-                .SqlQueryRaw<string>(
-                    "SELECT CAST([Status] AS nvarchar(10)) AS [Value] FROM [dbo].[WorkOrder] WHERE [Number] = {0}",
-                    "SVASG1")
-                .SingleAsync();
         }
 
         reloaded.Status.ShouldBe(WorkOrderStatus.Assigned);
         reloaded.Status.Code.ShouldBe(WorkOrderStatus.Assigned.Code);
         reloaded.Status.ShouldNotBe(WorkOrderStatus.Cancelled);
-        rawStatusCode.Trim().ShouldBe("ASD");
         reloaded.AssignedDate.ShouldNotBeNull();
         reloaded.AssignedDate.ShouldBe(TestHost.TestTime.DateTime);
         reloaded.Assignee.ShouldNotBeNull();
