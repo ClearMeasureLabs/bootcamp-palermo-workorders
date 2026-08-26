@@ -74,7 +74,7 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
+    public async Task ShouldLoadWorkOrderDeckWithAllFiltersSetToAllOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -88,15 +88,44 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        workOrderTable.ShouldNotBeNull();
+        var workOrderDeck = component.Find(".work-order-deck");
+        workOrderDeck.ShouldNotBeNull();
+        component.FindAll("table.grid-data").ShouldBeEmpty();
 
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderCards = workOrderDeck.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithCreatorFilterOnInitialLoad()
+    public async Task ShouldShowCountBadgeOnSaturdaySeriesDeck()
+    {
+        await using var ctx = new BunitContext();
+        var assignee = new Employee("gwillie", "Willie", "MacDougal", "willie@example.com");
+        var firstSaturday = new DateOnly(2026, 8, 29);
+        var workOrders = Enumerable.Range(1, 10)
+            .Select(index => new WorkOrder
+            {
+                Number = $"WO-{index:000}",
+                Title = "Saturday mow",
+                Status = WorkOrderStatus.Assigned,
+                Assignee = assignee,
+                DueDate = firstSaturday.AddDays((index - 1) * 7)
+            })
+            .ToArray();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus(workOrders));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.FindAll(".work-order-card").Count.ShouldBe(10);
+        component.Find(".deck-count-badge").TextContent.ShouldBe("10");
+        component.Find(".series-prompt").TextContent.ShouldContain("every Saturday");
+    }
+
+    [Test]
+    public async Task ShouldLoadWorkOrderDeckWithCreatorFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -114,13 +143,13 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderDeck = component.Find(".work-order-deck");
+        var workOrderCards = workOrderDeck.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithAssigneeFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderDeckWithAssigneeFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -138,13 +167,13 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderDeck = component.Find(".work-order-deck");
+        var workOrderCards = workOrderDeck.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithStatusFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderDeckWithStatusFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -162,9 +191,9 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderDeck = component.Find(".work-order-deck");
+        var workOrderCards = workOrderDeck.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
@@ -193,10 +222,10 @@ public class WorkOrderSearchTests
         await searchButton.ClickAsync(new());
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        workOrderTable.ShouldNotBeNull();
+        var workOrderDeck = component.Find(".work-order-deck");
+        workOrderDeck.ShouldNotBeNull();
 
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderCards = workOrderDeck.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
     }
 }

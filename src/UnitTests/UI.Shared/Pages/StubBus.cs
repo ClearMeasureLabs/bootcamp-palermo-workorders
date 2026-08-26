@@ -5,7 +5,7 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
-public class StubBus() : Bus(null!)
+public class StubBus(WorkOrder[]? workOrders = null) : Bus(null!)
 {
     public override Task Publish(INotification notification)
     {
@@ -51,24 +51,25 @@ public class StubBus() : Bus(null!)
     }
 
     private Func<WorkOrder[]> WorkOrderSpecificationQueryResponse => () =>
-    [
-        new WorkOrder
-        {
-            Number = "WO-001",
-            Title = "Fix broken door",
-            Status = WorkOrderStatus.Draft,
-            Creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com"),
-            Assignee = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com")
-        },
-        new WorkOrder
-        {
-            Number = "WO-002",
-            Title = "Replace light bulb",
-            Status = WorkOrderStatus.Assigned,
-            Creator = new Employee("mburns", "Montgomery", "Burns", "burns@example.com"),
-            Assignee = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com")
-        }
-    ];
+        workOrders ??
+        [
+            new WorkOrder
+            {
+                Number = "WO-001",
+                Title = "Fix broken door",
+                Status = WorkOrderStatus.Draft,
+                Creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com"),
+                Assignee = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com")
+            },
+            new WorkOrder
+            {
+                Number = "WO-002",
+                Title = "Replace light bulb",
+                Status = WorkOrderStatus.Assigned,
+                Creator = new Employee("mburns", "Montgomery", "Burns", "burns@example.com"),
+                Assignee = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com")
+            }
+        ];
 
     private static Task EmployeeByUserNameQueryResponse<TResponse>()
     {

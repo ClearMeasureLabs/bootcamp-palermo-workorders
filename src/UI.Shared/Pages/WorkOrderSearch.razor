@@ -1,7 +1,8 @@
 <div class="search-page">
     <div class="search-container">
         <div class="search-header">
-            <h2>Work Order Search</h2>
+            <div class="search-kicker">Church work orders</div>
+            <h2>Daily work deck</h2>
             <div class="search-subtitle">Find and manage church maintenance requests</div>
         </div>
 
@@ -50,9 +51,13 @@
             </EditForm>
         </div>
 
-        <div class="results-card">
+        <section class="results-card" aria-labelledby="search-results-heading">
             <div class="results-header">
-                <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length work orders)
+                <div>
+                    <span class="results-eyebrow">Work orders</span>
+                    <h3 id="search-results-heading">Search results</h3>
+                </div>
+                <span class="results-count">@Model.Results.Length</span>
             </div>
 
             @if (Model.Results.Length == 0)
@@ -67,51 +72,77 @@
             }
             else
             {
-                <table class="grid-data">
-                    <thead>
-                    <tr>
-                        <th>WO #</th>
-                        <th>Creator</th>
-                        <th>Assignee</th>
-                        <th>Status</th>
-                        <th>Title</th>
-                        <th>Due Date</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @{
-                        var i = 0;
-                        foreach (var order in Model.Results)
-                        {
-                            var rowClass = i++ % 2 == 0 ? "odd" : "even";
-                            <tr class="@rowClass">
-                                <td>
-                                    @{
-                                        var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
-                                    }
-                                    <a data-testid="@workOrderLinkTestId" href="/workorder/manage/@order.Number?mode=Edit">
-                                        @order.Number
-                                    </a>
-                                </td>
-                                <td>@order.Creator?.GetFullName()</td>
-                                <td>@order.Assignee?.GetFullName()</td>
-                                <td>
-                                    <span class="status-badge">@order.Status</span>
-                                </td>
-                                <td>@order.Title</td>
-                                <td>
-                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
-                                        {
-                                            <span class="visually-hidden">@order.DueDateUrgencyText</span>
-                                        }</span>
-                                </td>
-                            </tr>
-                        }
+                var isSaturdaySeries = IsSaturdaySeries();
+                @if (isSaturdaySeries)
+                {
+                    <div class="series-prompt">
+                        <span class="series-prompt-icon"><i class="bi bi-stars" aria-hidden="true"></i></span>
+                        <span>@SeriesPrompt()</span>
+                    </div>
+                }
+
+                <div class="deck-stage">
+                    @if (isSaturdaySeries)
+                    {
+                        <span class="deck-count-badge" aria-label="@Model.Results.Length work orders">@Model.Results.Length</span>
                     }
-                    </tbody>
-                </table>
+                    <div class="work-order-deck">
+                        @{
+                            var deckMidpoint = (Model.Results.Length - 1) / 2.0;
+                            var deckIndex = 0;
+                            foreach (var order in Model.Results)
+                            {
+                                var deckPosition = deckIndex - deckMidpoint;
+                                var deckCurve = Math.Abs(deckPosition);
+                                var cardStyle = FormattableString.Invariant(
+                                    $"--deck-position: {deckPosition}; --deck-curve: {deckCurve}; --deck-order: {deckIndex};");
+                                var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
+                                deckIndex++;
+
+                                <article class="work-order-card" style="@cardStyle">
+                                    <div class="card-topline">
+                                        <a class="work-order-number"
+                                           data-testid="@workOrderLinkTestId"
+                                           href="/workorder/manage/@order.Number?mode=Edit">
+                                            @order.Number
+                                        </a>
+                                        <span class="status-badge">@order.Status</span>
+                                    </div>
+
+                                    <div class="card-date">
+                                        @(order.WorkOrder.DueDate?.ToString("ddd d") ?? "No due date")
+                                    </div>
+                                    <div class="card-rule" aria-hidden="true"><span></span></div>
+                                    <div class="card-icon" aria-hidden="true">
+                                        <i class="bi bi-tools"></i>
+                                    </div>
+                                    <h4>@order.Title</h4>
+
+                                    <dl class="card-details">
+                                        <div>
+                                            <dt>Assigned to</dt>
+                                            <dd class="work-order-assignee">@(order.Assignee?.GetFullName() ?? "Unassigned")</dd>
+                                        </div>
+                                        <div>
+                                            <dt>Created by</dt>
+                                            <dd class="work-order-creator">@(order.Creator?.GetFullName() ?? "Unknown")</dd>
+                                        </div>
+                                    </dl>
+
+                                    <div class="card-footer">
+                                        <span data-testid="@(Elements.DueDateCell + order.Number)"
+                                              class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+                                            {
+                                                <span class="visually-hidden">@order.DueDateUrgencyText</span>
+                                            }</span>
+                                    </div>
+                                </article>
+                            }
+                        }
+                    </div>
+                </div>
             }
-        </div>
+        </section>
     </div>
 </div>
 
@@ -131,4 +162,18 @@
     public List<SelectListItem> UserOptions { get; set; } = new();
     public List<SelectListItem> StatusOptions { get; set; } = new();
     public Func<Task>? OnSearch { get; set; }
+
+    private bool IsSaturdaySeries()
+    {
+        return Model.Results.Length > 1
+               && Model.Results.All(order => order.WorkOrder.DueDate?.DayOfWeek == DayOfWeek.Saturday)
+               && Model.Results.Select(order => order.Title).Distinct(StringComparer.OrdinalIgnoreCase).Count() == 1;
+    }
+
+    private string SeriesPrompt()
+    {
+        var first = Model.Results[0];
+        var assignee = first.Assignee?.GetFullName() ?? "the team";
+        return $"Schedule {assignee} for {first.Title?.ToLowerInvariant()} every Saturday.";
+    }
 }
