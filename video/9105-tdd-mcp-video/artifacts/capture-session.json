@@ -1,0 +1,21 @@
+{
+  "capturedAt": "2026-08-26T14:51:14.923Z",
+  "toolNames": [
+    "create-dated-work-orders",
+    "create-work-order",
+    "execute-work-order-command",
+    "get-employee",
+    "get-work-order",
+    "list-employees",
+    "list-work-order-attachments",
+    "list-work-orders",
+    "save-work-order"
+  ],
+  "hasCreateDatedWorkOrders": true,
+  "batchNumbers": [
+    "6B0CA82",
+    "95FB34B",
+    "B7C4EA3"
+  ],
+  "batchResult": "Created 3 work orders:\n6B0CA82 due 2026-08-29\n95FB34B due 2026-09-05\nB7C4EA3 due 2026-09-12"
+}
