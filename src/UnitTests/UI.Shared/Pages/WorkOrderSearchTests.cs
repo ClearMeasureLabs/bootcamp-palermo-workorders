@@ -221,7 +221,7 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public async Task ShouldExposeWorkOrderNumberTextOnManageLinksForParityScrape()
+    public async Task ShouldExposeWorkOrderNumberAsManageLinkText()
     {
         await using var ctx = new BunitContext();
 
@@ -235,10 +235,12 @@ public class WorkOrderSearchTests
         manageLinks.Count.ShouldBe(2);
         foreach (var link in manageLinks)
         {
-            var number = link.QuerySelector(".work-order-number");
-            number.ShouldNotBeNull();
-            number!.TextContent.Trim().ShouldNotBeNullOrWhiteSpace();
-            link.TextContent.Trim().ShouldContain(number.TextContent.Trim());
+            var numberSpan = link.QuerySelector(".work-order-number");
+            numberSpan.ShouldNotBeNull();
+            var number = numberSpan!.TextContent.Trim();
+            number.ShouldNotBeNullOrWhiteSpace();
+            link.TextContent.Trim().ShouldContain(number);
+            link.GetAttribute("data-testid").ShouldBe(WorkOrderSearch.Elements.WorkOrderLink + number);
         }
     }
 }
