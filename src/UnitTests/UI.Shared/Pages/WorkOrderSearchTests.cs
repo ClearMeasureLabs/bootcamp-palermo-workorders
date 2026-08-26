@@ -219,4 +219,22 @@ public class WorkOrderSearchTests
         cards[0].GetAttribute("aria-selected").ShouldBe("true");
         component.FindAll(".focus-pane").Count.ShouldBe(0);
     }
+
+    [Test]
+    public async Task ShouldExposeWorkOrderNumberOnManageLinkForSearchParity()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        foreach (var number in new[] { "WO-001", "WO-002" })
+        {
+            var link = component.Find($"[data-testid='{WorkOrderSearch.Elements.WorkOrderLink}{number}']");
+            link.TextContent.ShouldContain(number);
+        }
+    }
 }
