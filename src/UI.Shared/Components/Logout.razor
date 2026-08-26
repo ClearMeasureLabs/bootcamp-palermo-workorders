@@ -1,16 +1,25 @@
 @inject CustomAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 
-<span data-testid="@Elements.WelcomeText">
-    Welcome
-    @{
-        var userIdentity = AuthStateProvider.GetUsername();
-    }
-    @userIdentity!
-</span>
+@if (ShowWelcome)
+{
+    <span data-testid="@Elements.WelcomeText">
+        Welcome
+        @{
+            var userIdentity = AuthStateProvider.GetUsername();
+        }
+        @userIdentity!
+    </span>
+}
 <button type="button" data-testid="@Elements.LogoutLink" @onclick="HandleLogout" class="btn btn-link ms-3 p-0 align-baseline">Logout</button>
 
 @code {
+
+    /// <summary>
+    /// Gets or sets whether the component renders its default welcome message.
+    /// </summary>
+    [Parameter]
+    public bool ShowWelcome { get; set; } = true;
 
     private async Task HandleLogout()
     {

@@ -1,0 +1,35 @@
+@inherits Palermo.BlazorMvc.MvcLayoutComponentBase
+
+<div class="search-board-layout">
+    <header class="board-topbar">
+        <div class="board-brand" data-testid="SearchBoardBrand">
+            <div>Church</div>
+            <div>Work Orders</div>
+            <div class="brand-ornament" aria-hidden="true">
+                <span></span>
+                <i class="bi bi-cross"></i>
+                <span></span>
+            </div>
+        </div>
+
+        <AuthorizeView>
+            <Authorized Context="authenticationState">
+                <div class="board-user">
+                    <span>
+                        Welcome, <strong>@authenticationState.User.Identity?.Name</strong>.
+                    </span>
+                    <Logout ShowWelcome="false"/>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="board-user">
+                    <LoginLink/>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </header>
+
+    <main class="board-main">
+        @Body
+    </main>
+</div>

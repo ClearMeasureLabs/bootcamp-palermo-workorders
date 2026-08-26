@@ -1,148 +1,134 @@
+@layout SearchBoardLayout
+
 <div class="search-page">
-    <div class="search-container">
-        <div class="search-header">
-            <div class="search-kicker">Church work orders</div>
-            <h2>Daily work deck</h2>
-            <div class="search-subtitle">Find and manage church maintenance requests</div>
-        </div>
+    @{
+        var isSaturdaySeries = IsSaturdaySeries();
+    }
 
-        <div class="search-filters-card">
-            <EditForm Model="@Model" OnValidSubmit="OnSearch!">
-                <div class="filters-grid">
-                    <div class="filter-group">
-                        <label class="filter-label" for="@Elements.CreatorSelect">Creator</label>
-                        <InputSelect id="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
-                            <option value="">All</option>
-                            @foreach (var user in UserOptions)
-                            {
-                                <option value="@user.Value">@user.Text</option>
-                            }
-                        </InputSelect>
-                    </div>
-
-                    <div class="filter-group">
-                        <label class="filter-label" for="@Elements.AssigneeSelect">Assignee</label>
-                        <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
-                            <option value="">All</option>
-                            @foreach (var user in UserOptions)
-                            {
-                                <option value="@user.Value">@user.Text</option>
-                            }
-                        </InputSelect>
-                    </div>
-
-                    <div class="filter-group">
-                        <label class="filter-label" for="@Elements.StatusSelect">Status</label>
-                        <InputSelect id="@Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
-                            <option value="">All</option>
-                            @foreach (var status in StatusOptions)
-                            {
-                                <option value="@status.Value">@status.Text</option>
-                            }
-                        </InputSelect>
-                    </div>
-
-                    <div class="filter-group">
-                        <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
-                            <i class="bi bi-search" aria-hidden="true"></i> Search
-                        </button>
-                    </div>
-                </div>
-            </EditForm>
-        </div>
-
-        <section class="results-card" aria-labelledby="search-results-heading">
-            <div class="results-header">
-                <div>
-                    <span class="results-eyebrow">Work orders</span>
-                    <h3 id="search-results-heading">Search results</h3>
-                </div>
+    <div class="board-controls">
+        @if (isSaturdaySeries)
+        {
+            <div class="series-prompt" data-testid="@nameof(Elements.SeriesPrompt)">
+                <span class="series-prompt-icon"><i class="bi bi-stars" aria-hidden="true"></i></span>
+                <span class="series-prompt-text">@SeriesPrompt()</span>
+                <span class="series-count" data-testid="@nameof(Elements.DeckCount)"
+                      aria-label="@Model.Results.Length work orders">@Model.Results.Length</span>
             </div>
+        }
 
-            @if (Model.Results.Length == 0)
-            {
-                <div class="empty-results">
-                    <div class="empty-results-icon">
-                        <i class="bi bi-inbox" aria-hidden="true"></i>
-                    </div>
-                    <p>No work orders found matching your search criteria.</p>
-                    <p>Try adjusting your filters or create a new work order.</p>
-                </div>
-            }
-            else
-            {
-                var isSaturdaySeries = IsSaturdaySeries();
-                @if (isSaturdaySeries)
-                {
-                    <div class="series-prompt">
-                        <span class="series-prompt-icon"><i class="bi bi-stars" aria-hidden="true"></i></span>
-                        <span>@SeriesPrompt()</span>
-                    </div>
-                }
-
-                <div class="deck-stage">
-                    @if (isSaturdaySeries)
-                    {
-                        <span class="deck-count-badge" aria-label="@Model.Results.Length work orders">@Model.Results.Length</span>
-                    }
-                    <div class="work-order-deck">
-                        @{
-                            var deckMidpoint = (Model.Results.Length - 1) / 2.0;
-                            var deckIndex = 0;
-                            foreach (var order in Model.Results)
-                            {
-                                var deckPosition = deckIndex - deckMidpoint;
-                                var deckCurve = Math.Abs(deckPosition);
-                                var cardStyle = FormattableString.Invariant(
-                                    $"--deck-position: {deckPosition}; --deck-curve: {deckCurve}; --deck-order: {deckIndex};");
-                                var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
-                                deckIndex++;
-
-                                <article class="work-order-card" style="@cardStyle">
-                                    <div class="card-topline">
-                                        <a class="work-order-number"
-                                           data-testid="@workOrderLinkTestId"
-                                           href="/workorder/manage/@order.Number?mode=Edit">
-                                            @order.Number
-                                        </a>
-                                        <span class="status-badge">@order.Status</span>
-                                    </div>
-
-                                    <div class="card-date">
-                                        @(order.WorkOrder.DueDate?.ToString("ddd d") ?? "No due date")
-                                    </div>
-                                    <div class="card-rule" aria-hidden="true"><span></span></div>
-                                    <div class="card-icon" aria-hidden="true">
-                                        <i class="bi bi-tools"></i>
-                                    </div>
-                                    <h4>@order.Title</h4>
-
-                                    <dl class="card-details">
-                                        <div>
-                                            <dt>Assigned to</dt>
-                                            <dd class="work-order-assignee">@(order.Assignee?.GetFullName() ?? "Unassigned")</dd>
-                                        </div>
-                                        <div>
-                                            <dt>Created by</dt>
-                                            <dd class="work-order-creator">@(order.Creator?.GetFullName() ?? "Unknown")</dd>
-                                        </div>
-                                    </dl>
-
-                                    <div class="card-footer">
-                                        <span data-testid="@(Elements.DueDateCell + order.Number)"
-                                              class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
-                                            {
-                                                <span class="visually-hidden">@order.DueDateUrgencyText</span>
-                                            }</span>
-                                    </div>
-                                </article>
-                            }
+        <div class="filter-label-heading">Filter by:</div>
+        <EditForm Model="@Model" OnValidSubmit="OnSearch!">
+            <div class="filter-chips">
+                <div class="filter-chip">
+                    <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+                    <label for="@Elements.CreatorSelect">Creator</label>
+                    <InputSelect id="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
+                        <option value="">All</option>
+                        @foreach (var user in UserOptions)
+                        {
+                            <option value="@user.Value">@user.Text</option>
                         }
-                    </div>
+                    </InputSelect>
                 </div>
-            }
-        </section>
+
+                <div class="filter-chip">
+                    <i class="bi bi-person" aria-hidden="true"></i>
+                    <label for="@Elements.AssigneeSelect">Assignee</label>
+                    <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
+                        <option value="">All</option>
+                        @foreach (var user in UserOptions)
+                        {
+                            <option value="@user.Value">@user.Text</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="filter-chip">
+                    <i class="bi bi-check-circle" aria-hidden="true"></i>
+                    <label for="@Elements.StatusSelect">Status</label>
+                    <InputSelect id="@Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
+                        <option value="">All</option>
+                        @foreach (var status in StatusOptions)
+                        {
+                            <option value="@status.Value">@status.Text</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <button id="@Elements.SearchButton" type="submit" class="search-chip">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <span>Search</span>
+                </button>
+            </div>
+        </EditForm>
     </div>
+
+    <section class="deck-stage" aria-label="Work order search results">
+        @if (Model.Results.Length == 0)
+        {
+            <div class="empty-results">
+                <i class="bi bi-inbox" aria-hidden="true"></i>
+                <p>No work orders found.</p>
+            </div>
+        }
+        else
+        {
+            <div class="work-order-deck">
+                @{
+                    var deckMidpoint = (Model.Results.Length - 1) / 2.0;
+                    var deckIndex = 0;
+                    foreach (var order in Model.Results)
+                    {
+                        var deckPosition = deckIndex - deckMidpoint;
+                        var deckCurve = Math.Abs(deckPosition);
+                        var cardStyle = FormattableString.Invariant(
+                            $"--deck-position: {deckPosition}; --deck-curve: {deckCurve}; --deck-order: {deckIndex};");
+                        var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
+                        deckIndex++;
+
+                        <article class="work-order-card" style="@cardStyle">
+                            <div class="card-topline">
+                                <a class="work-order-number"
+                                   data-testid="@workOrderLinkTestId"
+                                   href="/workorder/manage/@order.Number?mode=Edit">
+                                    @order.Number
+                                </a>
+                                <span class="status-badge">@order.Status</span>
+                            </div>
+
+                            <div class="card-date">
+                                @(order.WorkOrder.DueDate?.ToString("ddd d") ?? "No due date")
+                            </div>
+                            <div class="card-rule" aria-hidden="true"><span></span></div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="bi bi-tools"></i>
+                            </div>
+                            <h2>@order.Title</h2>
+
+                            <dl class="card-details">
+                                <div>
+                                    <dt>Assigned to</dt>
+                                    <dd class="work-order-assignee">@(order.Assignee?.GetFullName() ?? "Unassigned")</dd>
+                                </div>
+                                <div>
+                                    <dt>Created by</dt>
+                                    <dd class="work-order-creator">@(order.Creator?.GetFullName() ?? "Unknown")</dd>
+                                </div>
+                            </dl>
+
+                            <div class="card-footer">
+                                <span data-testid="@(Elements.DueDateCell + order.Number)"
+                                      class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+                                    {
+                                        <span class="visually-hidden">@order.DueDateUrgencyText</span>
+                                    }</span>
+                            </div>
+                        </article>
+                    }
+                }
+            </div>
+        }
+    </section>
 </div>
 
 @code {
@@ -154,7 +140,9 @@
         StatusSelect,
         SearchButton,
         WorkOrderLink,
-        DueDateCell
+        DueDateCell,
+        SeriesPrompt,
+        DeckCount
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();
@@ -172,7 +160,12 @@
     private string SeriesPrompt()
     {
         var first = Model.Results[0];
-        var assignee = first.Assignee?.GetFullName() ?? "the team";
-        return $"Schedule {assignee} for {first.Title?.ToLowerInvariant()} every Saturday.";
+        var assignee = first.Assignee?.FirstName ?? "the team";
+        var title = first.Title ?? "complete the work";
+        var action = title.StartsWith("Saturday ", StringComparison.OrdinalIgnoreCase)
+            ? title["Saturday ".Length..]
+            : title;
+        var count = Model.Results.Length == 10 ? "ten" : Model.Results.Length.ToString();
+        return $"Schedule {assignee} to {action.ToLowerInvariant()} every Saturday for {count} weeks.";
     }
 }

@@ -115,6 +115,10 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var workOrderDeck = Page.Locator(".work-order-deck");
         await Expect(workOrderDeck).ToBeVisibleAsync();
         await Expect(Page.Locator("table.grid-data")).ToHaveCountAsync(0);
+        await Expect(Page.GetByTestId("SearchBoardBrand")).ToContainTextAsync("Church");
+        await Expect(Page.GetByTestId("SearchBoardBrand")).ToContainTextAsync("Work Orders");
+        await Expect(Page.Locator("#app-navigation-rail")).ToHaveCountAsync(0);
+        await Expect(Page.Locator(".modern-header")).ToHaveCountAsync(0);
 
         var workOrderCards = workOrderDeck.Locator(".work-order-card");
         var cardCount = await workOrderCards.CountAsync();
@@ -406,14 +410,20 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(assigneeSelect).ToHaveValueAsync("");
         await Expect(statusSelect).ToHaveValueAsync("");
 
+        await Page.GoBackAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.MyWorkOrders));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(creatorSelect).ToHaveValueAsync(CurrentUser.UserName, new() { Timeout = 30_000 });
 
+        await Page.GoBackAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.WorkOrdersAssignedToMe));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(assigneeSelect).ToHaveValueAsync(CurrentUser.UserName, new() { Timeout = 30_000 });
 
+        await Page.GoBackAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.AllWorkOrdersInProgress));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key, new() { Timeout = 30_000 });

@@ -36,6 +36,24 @@ public class LogoutTests
     }
 
     [Test]
+    public async Task ShouldHideWelcomeMessageWhenDisabled()
+    {
+        await using var ctx = new BunitContext();
+
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
+        ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+
+        var component = ctx.Render<Logout>(parameters => parameters
+            .Add(logout => logout.ShowWelcome, false));
+
+        component.FindAll($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']").ShouldBeEmpty();
+        component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']").ShouldNotBeNull();
+    }
+
+    [Test]
     public async Task ShouldDisplayLogoutButton()
     {
         await using var ctx = new BunitContext();
