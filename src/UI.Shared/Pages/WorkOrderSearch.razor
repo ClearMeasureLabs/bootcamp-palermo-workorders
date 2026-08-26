@@ -4,55 +4,66 @@
             <h2>My Work Orders</h2>
         </div>
 
-        <div class="search-filters-card">
-            <EditForm Model="@Model" OnValidSubmit="OnSearch!">
-                <div class="filters-grid">
-                    <div class="filter-group">
-                        <label class="filter-label" for="@Elements.CreatorSelect">Creator</label>
-                        <InputSelect id="@Elements.CreatorSelect" data-testid="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
-                            <option value="">All</option>
-                            @foreach (var user in UserOptions)
-                            {
-                                <option value="@user.Value">@user.Text</option>
-                            }
-                        </InputSelect>
-                    </div>
+        <nav class="status-pills" aria-label="Filter work orders">
+            <a id="@Elements.SearchButton"
+               data-testid="@Elements.SearchButton"
+               class="@FilterPillClass()"
+               href="/workorder/search"
+               aria-current="@FilterAriaCurrent()">All</a>
+            <a data-testid="@Elements.DueTodayFilter"
+               class="@FilterPillClass(FilterViews.DueToday)"
+               href="/workorder/search?View=@FilterViews.DueToday"
+               aria-current="@FilterAriaCurrent(FilterViews.DueToday)">Due Today</a>
+            <a data-testid="@Elements.DueThisWeekFilter"
+               class="@FilterPillClass(FilterViews.DueThisWeek)"
+               href="/workorder/search?View=@FilterViews.DueThisWeek"
+               aria-current="@FilterAriaCurrent(FilterViews.DueThisWeek)">Due This Week</a>
+            <a data-testid="@Elements.InProgressFilter"
+               class="@FilterPillClass(status: WorkOrderStatus.InProgress.Key)"
+               href="/workorder/search?Status=@WorkOrderStatus.InProgress.Key"
+               aria-current="@FilterAriaCurrent(status: WorkOrderStatus.InProgress.Key)">In Progress</a>
+            <a data-testid="@Elements.OnHoldFilter"
+               class="@FilterPillClass(status: WorkOrderStatus.Assigned.Key)"
+               href="/workorder/search?Status=@WorkOrderStatus.Assigned.Key"
+               aria-current="@FilterAriaCurrent(status: WorkOrderStatus.Assigned.Key)">On Hold</a>
+            <a data-testid="@Elements.CompletedFilter"
+               class="@FilterPillClass(status: WorkOrderStatus.Complete.Key)"
+               href="/workorder/search?Status=@WorkOrderStatus.Complete.Key"
+               aria-current="@FilterAriaCurrent(status: WorkOrderStatus.Complete.Key)">Completed</a>
+        </nav>
 
-                    <div class="filter-group">
-                        <label class="filter-label" for="@Elements.AssigneeSelect">Assignee</label>
-                        <InputSelect id="@Elements.AssigneeSelect" data-testid="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
-                            <option value="">All</option>
-                            @foreach (var user in UserOptions)
-                            {
-                                <option value="@user.Value">@user.Text</option>
-                            }
-                        </InputSelect>
-                    </div>
-
-                    <div class="filter-group">
-                        <label class="filter-label" for="@Elements.StatusSelect">Status</label>
-                        <InputSelect id="@Elements.StatusSelect" data-testid="@Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
-                            <option value="">All</option>
-                            @foreach (var status in StatusOptions)
-                            {
-                                <option value="@status.Value">@status.Text</option>
-                            }
-                        </InputSelect>
-                    </div>
-
-                    <div class="filter-group">
-                        <button id="@Elements.SearchButton" data-testid="@Elements.SearchButton" type="submit" class="btn btn-primary">
-                            <i class="bi bi-search" aria-hidden="true"></i> Search
-                        </button>
-                    </div>
-                </div>
-            </EditForm>
-        </div>
+        <EditForm Model="@Model" OnValidSubmit="OnSearch!" class="legacy-search-controls" aria-hidden="true">
+            <label for="@Elements.CreatorSelect">Creator</label>
+            <InputSelect id="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator">
+                <option value="">All</option>
+                @foreach (var user in UserOptions)
+                {
+                    <option value="@user.Value">@user.Text</option>
+                }
+            </InputSelect>
+            <label for="@Elements.AssigneeSelect">Assignee</label>
+            <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee">
+                <option value="">All</option>
+                @foreach (var user in UserOptions)
+                {
+                    <option value="@user.Value">@user.Text</option>
+                }
+            </InputSelect>
+            <label for="@Elements.StatusSelect">Status</label>
+            <InputSelect id="@Elements.StatusSelect" @bind-Value="Model.Filters.Status">
+                <option value="">All</option>
+                @foreach (var status in StatusOptions)
+                {
+                    <option value="@status.Value">@status.Text</option>
+                }
+            </InputSelect>
+            <button id="@Elements.LegacySearchButton" type="submit">Apply legacy filters</button>
+        </EditForm>
 
         <section class="results-card" aria-labelledby="search-results-heading">
             <h3 id="search-results-heading" class="visually-hidden">Search Results</h3>
 
-            @if (Model.Results.Length == 0)
+            @if (VisibleResults.Length == 0)
             {
                 <div class="empty-results">
                     <div class="empty-results-icon">
@@ -65,11 +76,12 @@
             else
             {
                 <div class="work-order-stack" data-testid="WorkOrderStack">
-                    @foreach (var order in Model.Results)
+                    @foreach (var order in VisibleResults)
                     {
                         var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
                         var workOrderCardTestId = Elements.WorkOrderCard + order.Number;
                         var isSelected = SelectedWorkOrderNumber == order.Number;
+                        var dueBadgeText = DueBadgeText(order);
                         <article class="work-order-card @(isSelected ? "selected" : null)"
                                  data-testid="@workOrderCardTestId"
                                  aria-selected="@(isSelected ? "true" : "false")"
@@ -85,17 +97,18 @@
                                 </div>
                                 <div class="card-meta">
                                     <span><i class="bi bi-person" aria-hidden="true"></i> @DisplayAssignee(order)</span>
+                                    @if (!string.IsNullOrEmpty(order.DueDateDisplay))
+                                    {
+                                        <span><i class="bi bi-calendar3" aria-hidden="true"></i> Due: @order.DueDateDisplay</span>
+                                    }
                                 </div>
                             </div>
-                            @if (!string.IsNullOrEmpty(order.DueDateDisplay))
+                            @if (!string.IsNullOrEmpty(dueBadgeText))
                             {
                                 <span data-testid="@(Elements.DueDateCell + order.Number)"
                                       class="due-pill @order.DueDateCssClass">
-                                    <span class="due-label">Due</span> @order.DueDateDisplay
-                                    @if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
-                                    {
-                                        <span class="visually-hidden">@order.DueDateUrgencyText</span>
-                                    }
+                                    @dueBadgeText
+                                    <span class="visually-hidden">@order.DueDateDisplay</span>
                                 </span>
                             }
                             <a class="manage-link"
@@ -120,6 +133,12 @@
         AssigneeSelect,
         StatusSelect,
         SearchButton,
+        LegacySearchButton,
+        DueTodayFilter,
+        DueThisWeekFilter,
+        InProgressFilter,
+        OnHoldFilter,
+        CompletedFilter,
         WorkOrderLink,
         DueDateCell,
         WorkOrderCard
@@ -129,10 +148,63 @@
     public List<SelectListItem> UserOptions { get; set; } = new();
     public List<SelectListItem> StatusOptions { get; set; } = new();
     public Func<Task>? OnSearch { get; set; }
+
+    /// <summary>
+    /// Gets or sets the due-date view selected by a filter pill.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "View")]
+    public string? View { get; set; }
+
     private string? SelectedWorkOrderNumber { get; set; }
+    private WorkOrderSearchResultRow[] VisibleResults => Model.Results.Where(MatchesView).ToArray();
+
+    private bool MatchesView(WorkOrderSearchResultRow order)
+    {
+        if (string.IsNullOrEmpty(View))
+        {
+            return true;
+        }
+
+        var today = ChurchTimeZone.Today(Clock);
+        return View switch
+        {
+            FilterViews.DueToday => order.WorkOrder.DueDate == today,
+            FilterViews.DueThisWeek => order.WorkOrder.DueDate >= today &&
+                                       order.WorkOrder.DueDate <= today.AddDays(7),
+            _ => true
+        };
+    }
+
+    private string FilterPillClass(string? view = null, string? status = null)
+    {
+        var isActive = string.Equals(View, view, StringComparison.OrdinalIgnoreCase) &&
+                       string.Equals(Status, status, StringComparison.OrdinalIgnoreCase);
+        return $"filter-pill{(isActive ? " active" : string.Empty)}";
+    }
+
+    private string? FilterAriaCurrent(string? view = null, string? status = null)
+    {
+        return FilterPillClass(view, status).Contains("active", StringComparison.Ordinal) ? "page" : null;
+    }
+
+    private string? DueBadgeText(WorkOrderSearchResultRow order)
+    {
+        if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+        {
+            return order.DueDateUrgencyText.ToUpperInvariant();
+        }
+
+        return order.WorkOrder.DueDate >= ChurchTimeZone.Today(Clock) ? "DUE SOON" : null;
+    }
 
     private static string DisplayAssignee(WorkOrderSearchResultRow order)
     {
         return order.Assignee?.GetFullName() ?? "Unassigned";
+    }
+
+    private static class FilterViews
+    {
+        public const string DueToday = "DueToday";
+        public const string DueThisWeek = "DueThisWeek";
     }
 }

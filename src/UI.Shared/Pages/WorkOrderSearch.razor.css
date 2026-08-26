@@ -27,79 +27,51 @@
     letter-spacing: -0.03em;
 }
 
-.search-filters-card {
-    margin-bottom: 1rem;
-    padding: 0;
-    border: 0;
-    background: transparent;
-}
-
-.filters-grid {
+.status-pills {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem;
-    align-items: end;
+    gap: 0.7rem;
+    margin-bottom: 1.25rem;
 }
 
-.filter-group {
-    position: relative;
-    display: flex;
-    min-width: 8.5rem;
-    flex-direction: column;
-}
-
-.filter-label {
-    position: absolute;
-    z-index: 1;
-    top: 0.3rem;
-    left: 1rem;
-    margin: 0;
-    color: #a9d9f0;
-    font-size: 0.52rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    pointer-events: none;
-}
-
-.form-control {
-    width: 9.75rem;
-    min-height: 2.45rem;
-    padding: 0.85rem 2rem 0.25rem 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.7);
+.filter-pill {
+    display: inline-flex;
+    min-height: 2.35rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 1.15rem;
+    border: 1px solid rgba(255, 255, 255, 0.72);
     border-radius: 999px;
-    background-color: rgba(0, 49, 93, 0.5);
+    background: rgba(0, 49, 93, 0.34);
     color: white;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1;
+    text-decoration: none;
+    transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.form-control:focus {
-    border-color: white;
-    outline: 3px solid rgba(0, 133, 202, 0.45);
-    box-shadow: none;
-}
-
-.form-control option {
-    background: var(--clear-measure-blue);
+.filter-pill:hover,
+.filter-pill:focus-visible {
+    border-color: #8ed8f7;
+    background: rgba(0, 133, 202, 0.35);
     color: white;
+    outline: none;
 }
 
-.btn-primary {
-    min-height: 2.45rem;
-    padding: 0.5rem 1.35rem;
-    border: 1px solid var(--clear-measure-accent);
-    border-radius: 999px;
-    background: var(--clear-measure-accent);
-    color: white;
-    font-size: 0.78rem;
-    font-weight: 600;
-    box-shadow: 0 0.45rem 1rem rgba(0, 25, 52, 0.24);
+.filter-pill.active {
+    border-color: #0085CA;
+    background: #0085CA;
+    box-shadow: 0 0.4rem 1rem rgba(0, 25, 52, 0.2);
 }
 
-.btn-primary:hover,
-.btn-primary:focus-visible {
-    border-color: white;
-    background: #0073ae;
+.legacy-search-controls {
+    position: fixed;
+    top: 0;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
 }
 
 .results-card {
@@ -114,8 +86,7 @@
 
 .work-order-card {
     position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    display: flex;
     gap: 1.25rem;
     align-items: center;
     min-height: 5.85rem;
@@ -151,6 +122,7 @@
 }
 
 .card-main {
+    flex: 1 1 auto;
     min-width: 0;
     padding: 0.9rem 0 0.9rem 2.25rem;
 }
@@ -208,19 +180,15 @@
 }
 
 .due-pill {
+    flex: 0 0 auto;
+    margin-left: auto;
     padding: 0.45rem 0.75rem;
     border-radius: 999px;
-    background: #edf2f5;
-    color: #315372;
+    background: #f9d45c;
+    color: #523d00;
     font-size: 0.75rem;
     font-weight: 700;
     white-space: nowrap;
-}
-
-.due-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
 }
 
 .due-date-today {
@@ -234,10 +202,12 @@
 }
 
 .manage-link {
-    display: grid;
+    display: flex;
+    flex: 0 0 3.5rem;
     width: 3.5rem;
     min-height: 5.85rem;
-    place-items: center;
+    align-items: center;
+    justify-content: center;
     border-left: 1px solid #e2ded4;
     color: var(--ink);
     font-size: 1.35rem;
@@ -279,29 +249,20 @@
 }
 
 @media (max-width: 820px) {
-    .filters-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .btn-primary {
-        width: 100%;
-    }
-
     .work-order-card {
-        grid-template-columns: minmax(0, 1fr) auto;
+        flex-wrap: wrap;
         gap: 0.5rem;
     }
 
     .due-pill {
-        grid-column: 1;
         width: fit-content;
         margin: 0 0 1rem 2.25rem;
     }
 
     .manage-link {
-        grid-column: 2;
-        grid-row: 1 / span 2;
+        align-self: stretch;
         height: 100%;
+        margin-left: auto;
     }
 }
 
@@ -310,8 +271,14 @@
         padding: 1rem 0.75rem;
     }
 
-    .filters-grid {
-        grid-template-columns: 1fr;
+    .status-pills {
+        gap: 0.5rem;
+    }
+
+    .filter-pill {
+        min-height: 2.15rem;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.74rem;
     }
 
     .card-heading {

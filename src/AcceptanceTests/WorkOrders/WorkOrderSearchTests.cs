@@ -13,77 +13,48 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task Should_PreserveMixedCaseNames_InWorkOrderSearchDropdowns()
+    public async Task ShouldRenderStatusPillsInMockOrder()
     {
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
-        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
-
-        await Expect(creatorSelect.Locator("option").Filter(new() { HasText = "Timothy Lovejoy" })).ToHaveCountAsync(1);
-        await Expect(assigneeSelect.Locator("option").Filter(new() { HasText = "Timothy Lovejoy" })).ToHaveCountAsync(1);
-
-        var creatorTexts = await creatorSelect.Locator("option").AllInnerTextsAsync();
-        var assigneeTexts = await assigneeSelect.Locator("option").AllInnerTextsAsync();
-
-        creatorTexts.ShouldNotContain("TIMOTHY LOVEJOY JR");
-        assigneeTexts.ShouldNotContain("TIMOTHY LOVEJOY JR");
+        var pills = Page.Locator(".filter-pill");
+        await Expect(pills).ToHaveCountAsync(6);
+        (await pills.AllInnerTextsAsync()).ShouldBe(
+        [
+            "All",
+            "Due Today",
+            "Due This Week",
+            "In Progress",
+            "On Hold",
+            "Completed"
+        ]);
     }
 
     [Test, Retry(2)]
-    public async Task ShouldAssociateFilterLabelsWithSelectIds()
+    public async Task ShouldRenderAllPillActiveWithoutChurchSearchForm()
     {
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Expect(Page.Locator($"label[for='{WorkOrderSearch.Elements.CreatorSelect}']")).ToBeAttachedAsync();
-        await Expect(Page.Locator($"label[for='{WorkOrderSearch.Elements.AssigneeSelect}']")).ToBeAttachedAsync();
-        await Expect(Page.Locator($"label[for='{WorkOrderSearch.Elements.StatusSelect}']")).ToBeAttachedAsync();
-
-        await Expect(Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}")).ToBeVisibleAsync();
-        await Expect(Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}")).ToBeVisibleAsync();
-        await Expect(Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}")).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.SearchButton.ToString()))
+            .ToHaveClassAsync(new Regex("active"));
+        await Expect(Page.Locator(".search-filters-card")).ToHaveCountAsync(0);
+        await Expect(Page.Locator(".legacy-search-controls")).ToBeHiddenAsync();
     }
 
     [Test, Retry(2)]
-    public async Task ShouldLoadDropDownsInitiallyOnLoad()
+    public async Task ShouldMapStatusPillsToStatusQueryParameters()
     {
-        // Act
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await TakeScreenshotAsync(1, "PageLoaded");
 
-        // Assert
-        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
-        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
-        var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
-
-        await Expect(creatorSelect).ToBeVisibleAsync();
-        await Expect(assigneeSelect).ToBeVisibleAsync();
-        await Expect(statusSelect).ToBeVisibleAsync();
-
-        // Employee count varies due to parallel test execution creating users dynamically.
-        // Assert minimum count (base data has ~18 employees) plus "All" option.
-        const int minimumBaseEmployees = 18;
-        var creatorOptions = creatorSelect.Locator("option");
-        await Expect(creatorOptions.First).ToHaveTextAsync("All");
-        // Wait for employee data to finish loading via auto-retrying assertion
-        await Expect(creatorOptions.Filter(new(){ HasText = "Timothy Lovejoy"})).ToHaveCountAsync(1);
-        var creatorOptionCount = await creatorOptions.CountAsync();
-        creatorOptionCount.ShouldBeGreaterThanOrEqualTo(minimumBaseEmployees + 1);
-
-        var assigneeOptions = assigneeSelect.Locator("option");
-        await Expect(assigneeOptions.First).ToHaveTextAsync("All");
-        // Wait for employee data to finish loading via auto-retrying assertion
-        await Expect(assigneeOptions.Filter(new(){ HasText = "Timothy Lovejoy"})).ToHaveCountAsync(1);
-        var assigneeOptionCount = await assigneeOptions.CountAsync();
-        assigneeOptionCount.ShouldBeGreaterThanOrEqualTo(minimumBaseEmployees + 1);
-
-        // Verify status options are loaded (5 statuses + "All" option = 6 options)
-        var statusOptions = statusSelect.Locator("option");
-        await Expect(statusOptions).ToHaveCountAsync(WorkOrderStatus.GetAllItems().Length + 1);
-        await Expect(statusOptions.First).ToHaveTextAsync("All");
+        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.InProgressFilter.ToString()))
+            .ToHaveAttributeAsync("href", "/workorder/search?Status=InProgress");
+        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.OnHoldFilter.ToString()))
+            .ToHaveAttributeAsync("href", "/workorder/search?Status=Assigned");
+        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.CompletedFilter.ToString()))
+            .ToHaveAttributeAsync("href", "/workorder/search?Status=Complete");
     }
 
     [Test, Retry(2)]
@@ -138,9 +109,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "CreatorFiltered");
 
-        // Assert
-        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
-        await Expect(creatorSelect).ToHaveValueAsync(creator.UserName);
+        await Expect(Page).ToHaveURLAsync(new Regex($"Creator={Regex.Escape(creator.UserName)}"));
 
         var workOrderStack = Page.GetByTestId("WorkOrderStack");
         await Expect(workOrderStack).ToBeVisibleAsync();
@@ -172,9 +141,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "AssigneeFiltered");
 
-        // Assert
-        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
-        await Expect(assigneeSelect).ToHaveValueAsync(assignee.UserName);
+        await Expect(Page).ToHaveURLAsync(new Regex($"Assignee={Regex.Escape(assignee.UserName)}"));
 
         var workOrderStack = Page.GetByTestId("WorkOrderStack");
         await Expect(workOrderStack).ToBeVisibleAsync();
@@ -205,61 +172,40 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "StatusFiltered");
 
-        // Assert
-        var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
-        await Expect(statusSelect).ToHaveValueAsync(status.Key);
+        await Expect(Page).ToHaveURLAsync(new Regex($"Status={Regex.Escape(status.Key)}"));
+        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.OnHoldFilter.ToString()))
+            .ToHaveClassAsync(new Regex("active"));
 
         var workOrderStack = Page.GetByTestId("WorkOrderStack");
         await Expect(workOrderStack).ToBeVisibleAsync();
 
         var workOrderCards = workOrderStack.Locator(".work-order-card");
         await Expect(workOrderCards).ToHaveCountAsync(await workOrderCards.CountAsync());
-        await Expect(workOrderCards.First.Locator(".status-badge")).ToContainTextAsync(status.FriendlyName);
     }
 
     [Test, Retry(2)]
-    public async Task ShouldSearchWithAllThreeFiltersSelected()
+    public async Task ShouldFilterCompletedWorkOrdersWithStatusPill()
     {
-        // Arrange
         var creator = Faker<Employee>();
-        var assignee = Faker<Employee>();
-        var status = Faker<WorkOrderStatus>();
         var order = Faker<WorkOrder>();
         order.Creator = creator;
-        order.Assignee = assignee;
-        order.Status = status;
+        order.Status = WorkOrderStatus.Complete;
 
         await using var context = TestHost.NewDbContext();
         context.Add(creator);
-        context.Add(assignee);
         context.Add(order);
         await context.SaveChangesAsync();
 
-        // Act
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await TakeScreenshotAsync(1, "BeforeFiltering");
-
-        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
-        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
-        var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
-        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
-
-        await creatorSelect.SelectOptionAsync(creator.UserName);
-        await assigneeSelect.SelectOptionAsync(assignee.UserName);
-        await statusSelect.SelectOptionAsync(status.Key);
-        await TakeScreenshotAsync(2, "FiltersSet");
-
-        await searchButton.ClickAsync();
+        await Page.GetByTestId(WorkOrderSearch.Elements.CompletedFilter.ToString()).ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await TakeScreenshotAsync(3, "SearchCompleted");
 
-        // Assert
-        var workOrderStack = Page.GetByTestId("WorkOrderStack");
-        await Expect(workOrderStack).ToBeVisibleAsync();
-
-        var workOrderCards = workOrderStack.Locator(".work-order-card");
-        await Expect(workOrderCards).ToHaveCountAsync(1);
+        await Expect(Page).ToHaveURLAsync(new Regex("Status=Complete"));
+        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.CompletedFilter.ToString()))
+            .ToHaveClassAsync(new Regex("active"));
+        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.WorkOrderLink + order.Number))
+            .ToBeAttachedAsync();
     }
 
     [Test, Retry(2)]
@@ -315,83 +261,34 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task ShouldClearFiltersWhenSelectingAllOption()
+    public async Task ShouldClearStatusFilterWhenSelectingAllPill()
     {
-        // Arrange
-        var creator = Faker<Employee>();
-        var order = Faker<WorkOrder>();
-        order.Creator = creator;
-
-        await using var context = TestHost.NewDbContext();
-        context.Add(creator);
-        context.Add(order);
-        await context.SaveChangesAsync();
-
-        // Act
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
-        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
-
-        // First set a filter
-        await creatorSelect.SelectOptionAsync(creator.UserName);
-        await searchButton.ClickAsync();
+        await Page.GetByTestId(WorkOrderSearch.Elements.InProgressFilter.ToString()).ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await TakeScreenshotAsync(1, "FilterSet");
+        await Expect(Page).ToHaveURLAsync(new Regex("Status=InProgress"));
 
-        // Then clear it by selecting "All"
-        await creatorSelect.SelectOptionAsync("");
-        await searchButton.ClickAsync();
+        await Page.GetByTestId(WorkOrderSearch.Elements.SearchButton.ToString()).ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await TakeScreenshotAsync(2, "FilterCleared");
 
-        // Assert
-        await Expect(creatorSelect).ToHaveValueAsync("");
-
-        var workOrderStack = Page.GetByTestId("WorkOrderStack");
-        await Expect(workOrderStack).ToBeVisibleAsync();
+        await Expect(Page).ToHaveURLAsync(new Regex("/workorder/search$"));
+        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.SearchButton.ToString()))
+            .ToHaveClassAsync(new Regex("active"));
     }
 
     [Test, Retry(2)]
-    public async Task ShouldMaintainSelectedFiltersAfterSearch()
+    public async Task ShouldMaintainSelectedStatusPillAfterNavigation()
     {
-        // Arrange
-        var creator = Faker<Employee>();
-        var assignee = Faker<Employee>();
-        var status = Faker<WorkOrderStatus>();
-        var order = Faker<WorkOrder>();
-        order.Creator = creator;
-        order.Assignee = assignee;
-        order.Status = status;
-
-        await using var context = TestHost.NewDbContext();
-        context.Add(creator);
-        context.Add(assignee);
-        context.Add(order);
-        await context.SaveChangesAsync();
-
-        // Act
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
-        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
-        var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
-        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
-
-        await creatorSelect.SelectOptionAsync(creator.UserName);
-        await assigneeSelect.SelectOptionAsync(assignee.UserName);
-        await statusSelect.SelectOptionAsync(status.Key);
-
-        await searchButton.ClickAsync();
+        await Page.GetByTestId(WorkOrderSearch.Elements.CompletedFilter.ToString()).ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await TakeScreenshotAsync(1, "AfterSearch");
 
-        // Assert
-        await Expect(creatorSelect).ToHaveValueAsync(creator.UserName);
-        await Expect(assigneeSelect).ToHaveValueAsync(assignee.UserName);
-        await Expect(statusSelect).ToHaveValueAsync(status.Key);
+        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.CompletedFilter.ToString()))
+            .ToHaveClassAsync(new Regex("active"));
     }
 
     [Test, Retry(2)]
@@ -416,25 +313,18 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        // Assert
-        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
-        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
-        var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
-
-        await Expect(creatorSelect).ToHaveValueAsync("");
-        await Expect(assigneeSelect).ToHaveValueAsync("");
-        await Expect(statusSelect).ToHaveValueAsync("");
-
         await Click(nameof(NavMenu.Elements.MyWorkOrders));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Expect(creatorSelect).ToHaveValueAsync(CurrentUser.UserName, new() { Timeout = 30_000 });
+        await Expect(Page).ToHaveURLAsync(new Regex($"Creator={Regex.Escape(CurrentUser.UserName)}"));
 
         await Click(nameof(NavMenu.Elements.WorkOrdersAssignedToMe));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Expect(assigneeSelect).ToHaveValueAsync(CurrentUser.UserName, new() { Timeout = 30_000 });
+        await Expect(Page).ToHaveURLAsync(new Regex($"Assignee={Regex.Escape(CurrentUser.UserName)}"));
 
         await Click(nameof(NavMenu.Elements.AllWorkOrdersInProgress));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key, new() { Timeout = 30_000 });
+        await Expect(Page).ToHaveURLAsync(new Regex($"Status={Regex.Escape(order1.Status.Key)}"));
+        await Expect(Page.GetByTestId(WorkOrderSearch.Elements.InProgressFilter.ToString()))
+            .ToHaveClassAsync(new Regex("active"));
     }
 }

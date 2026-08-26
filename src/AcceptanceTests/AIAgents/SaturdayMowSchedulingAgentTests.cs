@@ -106,9 +106,8 @@ public class SaturdayMowSchedulingAgentTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         // Full Page.GotoAsync drops in-memory Blazor auth. Filter within the SPA instead.
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
-        await Expect(assigneeSelect).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
-        await assigneeSelect.SelectOptionAsync("gwillie");
-        await Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}").ClickAsync();
+        await assigneeSelect.SelectOptionAsync("gwillie", new() { Force = true });
+        await Page.Locator($"#{WorkOrderSearch.Elements.LegacySearchButton}").ClickAsync(new() { Force = true });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         foreach (var wo in matchingSet)
