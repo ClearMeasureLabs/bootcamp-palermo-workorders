@@ -109,11 +109,16 @@ internal static class ApiPublicPathRules
             : string.Join('/', segments.Skip(1));
     }
 
-    internal static bool IsPublicLeaf(string leaf) =>
-        leaf.Equals("version", StringComparison.OrdinalIgnoreCase)
-        || leaf.Equals("time", StringComparison.OrdinalIgnoreCase)
-        || leaf.Equals("ping", StringComparison.OrdinalIgnoreCase)
-        || leaf.Equals("echo", StringComparison.OrdinalIgnoreCase)
-        || leaf.Equals("tools/random", StringComparison.OrdinalIgnoreCase)
-        || leaf.Equals("tools/timestamp-converter", StringComparison.OrdinalIgnoreCase);
+    private static readonly HashSet<string> PublicLeaves = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "version",
+        "time",
+        "ping",
+        "echo",
+        "tools/random",
+        "tools/timestamp-converter",
+        "tools/guid-generator"
+    };
+
+    internal static bool IsPublicLeaf(string leaf) => PublicLeaves.Contains(leaf);
 }
