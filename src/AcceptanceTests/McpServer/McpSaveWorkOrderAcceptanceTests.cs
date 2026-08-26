@@ -89,8 +89,8 @@ public class McpSaveWorkOrderAcceptanceTests : AcceptanceTestBase
 
         await NavigateToSearchAsync();
 
-        var row = SearchRowForWorkOrder(workOrderNumber);
-        await Expect(row).ToContainTextAsync("Saturday mow");
+        var card = SearchCardForWorkOrder(workOrderNumber);
+        await Expect(card).ToContainTextAsync("Saturday mow");
 
         var dueDateCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + workOrderNumber);
         await Expect(dueDateCell).ToBeAttachedAsync();
@@ -282,10 +282,9 @@ public class McpSaveWorkOrderAcceptanceTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
     }
 
-    private ILocator SearchRowForWorkOrder(string workOrderNumber)
+    private ILocator SearchCardForWorkOrder(string workOrderNumber)
     {
-        var link = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber);
-        return Page.Locator("tr").Filter(new LocatorFilterOptions { Has = link });
+        return Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber);
     }
 
     private static async Task<string> BackgroundColorAsync(ILocator locator)

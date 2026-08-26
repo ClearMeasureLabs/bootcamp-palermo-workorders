@@ -118,6 +118,8 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
 
         // Full Page.ReloadAsync drops in-memory Blazor auth and lands on /login.
         // Soft-navigate within the SPA so search re-queries without losing the session.
+        await Page.Locator(".daily-board-brand").ClickAsync();
+        await Page.WaitForURLAsync(ServerFixture.ApplicationBaseUrl + "/");
         await Click(nameof(NavMenu.Elements.Counter));
         await Page.WaitForURLAsync("**/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -181,6 +183,12 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var order = Faker<WorkOrder>();
         order.Title = title;
         order.Number = null;
+
+        if (Page.Url.Contains("/workorder/search", StringComparison.OrdinalIgnoreCase))
+        {
+            await Page.Locator(".daily-board-brand").ClickAsync();
+            await Page.WaitForURLAsync(ServerFixture.ApplicationBaseUrl + "/");
+        }
 
         var newWorkOrder = Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder));
         await Expect(newWorkOrder).ToBeVisibleAsync(

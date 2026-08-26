@@ -30,7 +30,6 @@ public class CopyrightFooterTests : AcceptanceTestBase
     public async Task ShouldShowCopyrightFooter_OnAuthenticatedRoute_AfterLogin()
     {
         await LoginAsCurrentUser();
-        await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var footer = Page.GetByTestId(nameof(MainLayout.Elements.CopyrightFooter));

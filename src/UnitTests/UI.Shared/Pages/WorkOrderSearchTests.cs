@@ -74,7 +74,7 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
+    public async Task ShouldLoadWorkOrderRailWithAllFiltersSetToAllOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -88,15 +88,17 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        workOrderTable.ShouldNotBeNull();
+        var workOrderRail = component.Find("[data-testid='WorkOrderRail']");
+        workOrderRail.ShouldNotBeNull();
 
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderCards = workOrderRail.QuerySelectorAll("[data-rail-card]");
+        workOrderCards.Length.ShouldBe(2);
+        component.Find("[data-testid='SeriesPrompt']").TextContent
+            .ShouldContain("Schedule Willie to mow every Saturday for ten weeks.");
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithCreatorFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderRailWithCreatorFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -114,13 +116,13 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderRail = component.Find("[data-testid='WorkOrderRail']");
+        var workOrderCards = workOrderRail.QuerySelectorAll("[data-rail-card]");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithAssigneeFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderRailWithAssigneeFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -138,13 +140,13 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderRail = component.Find("[data-testid='WorkOrderRail']");
+        var workOrderCards = workOrderRail.QuerySelectorAll("[data-rail-card]");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithStatusFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderRailWithStatusFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
@@ -162,9 +164,9 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderRail = component.Find("[data-testid='WorkOrderRail']");
+        var workOrderCards = workOrderRail.QuerySelectorAll("[data-rail-card]");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
@@ -193,10 +195,29 @@ public class WorkOrderSearchTests
         await searchButton.ClickAsync(new());
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        workOrderTable.ShouldNotBeNull();
+        var workOrderRail = component.Find("[data-testid='WorkOrderRail']");
+        workOrderRail.ShouldNotBeNull();
 
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderCards = workOrderRail.QuerySelectorAll("[data-rail-card]");
+        workOrderCards.Length.ShouldBe(2);
+    }
+
+    [Test]
+    public async Task ShouldChangeSelectedCardWhenPreviousArrowClicked()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+        var initiallySelected = component.Find("[data-rail-card][data-selected='true']");
+        initiallySelected.GetAttribute("data-testid").ShouldBe("WorkOrderLinkWO-002");
+
+        await component.Find("[data-testid='RailPrevious']").ClickAsync(new());
+
+        var newlySelected = component.Find("[data-rail-card][data-selected='true']");
+        newlySelected.GetAttribute("data-testid").ShouldBe("WorkOrderLinkWO-001");
     }
 }

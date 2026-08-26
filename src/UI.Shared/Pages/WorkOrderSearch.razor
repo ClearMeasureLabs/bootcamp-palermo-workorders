@@ -1,16 +1,14 @@
 <div class="search-page">
     <div class="search-container">
-        <div class="search-header">
-            <h2>Work Order Search</h2>
-            <div class="search-subtitle">Find and manage church maintenance requests</div>
-        </div>
-
         <div class="search-filters-card">
             <EditForm Model="@Model" OnValidSubmit="OnSearch!">
-                <div class="filters-grid">
-                    <div class="filter-group">
+                <div class="filter-chips">
+                    <span class="filter-funnel" aria-hidden="true">
+                        <i class="bi bi-funnel"></i>
+                    </span>
+                    <div class="filter-chip">
                         <label class="filter-label" for="@Elements.CreatorSelect">Creator</label>
-                        <InputSelect id="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
+                        <InputSelect id="@Elements.CreatorSelect" data-testid="@Elements.CreatorSelect" @bind-Value="Model.Filters.Creator" class="form-control">
                             <option value="">All</option>
                             @foreach (var user in UserOptions)
                             {
@@ -19,9 +17,9 @@
                         </InputSelect>
                     </div>
 
-                    <div class="filter-group">
+                    <div class="filter-chip">
                         <label class="filter-label" for="@Elements.AssigneeSelect">Assignee</label>
-                        <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
+                        <InputSelect id="@Elements.AssigneeSelect" data-testid="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
                             <option value="">All</option>
                             @foreach (var user in UserOptions)
                             {
@@ -30,9 +28,9 @@
                         </InputSelect>
                     </div>
 
-                    <div class="filter-group">
+                    <div class="filter-chip">
                         <label class="filter-label" for="@Elements.StatusSelect">Status</label>
-                        <InputSelect id="@Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
+                        <InputSelect id="@Elements.StatusSelect" data-testid="@Elements.StatusSelect" @bind-Value="Model.Filters.Status" class="form-control">
                             <option value="">All</option>
                             @foreach (var status in StatusOptions)
                             {
@@ -41,8 +39,8 @@
                         </InputSelect>
                     </div>
 
-                    <div class="filter-group">
-                        <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
+                    <div class="filter-action">
+                        <button id="@Elements.SearchButton" data-testid="@Elements.SearchButton" type="submit" class="btn btn-primary">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
                     </div>
@@ -50,11 +48,15 @@
             </EditForm>
         </div>
 
-        <div class="results-card">
-            <div class="results-header">
-                <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length work orders)
-            </div>
+        <div class="series-prompt" data-testid="SeriesPrompt">
+            <span class="series-prompt-label">
+                <i class="bi bi-stars" aria-hidden="true"></i>
+                <strong>AI</strong>
+            </span>
+            <span class="series-prompt-text">Schedule Willie to mow every Saturday for ten weeks.</span>
+        </div>
 
+        <div class="results-card">
             @if (Model.Results.Length == 0)
             {
                 <div class="empty-results">
@@ -67,49 +69,69 @@
             }
             else
             {
-                <table class="grid-data">
-                    <thead>
-                    <tr>
-                        <th>WO #</th>
-                        <th>Creator</th>
-                        <th>Assignee</th>
-                        <th>Status</th>
-                        <th>Title</th>
-                        <th>Due Date</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @{
-                        var i = 0;
-                        foreach (var order in Model.Results)
+                <div class="rail-shell">
+                    <button type="button"
+                            class="rail-arrow rail-arrow-previous"
+                            data-testid="RailPrevious"
+                            aria-label="Show previous work order"
+                            disabled="@(SelectedResultIndex == 0)"
+                            @onclick="SelectPrevious">
+                        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <div class="work-order-rail" data-testid="WorkOrderRail" aria-label="Work order results">
+                        @for (var index = 0; index < Model.Results.Length; index++)
                         {
-                            var rowClass = i++ % 2 == 0 ? "odd" : "even";
-                            <tr class="@rowClass">
-                                <td>
-                                    @{
-                                        var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
-                                    }
-                                    <a data-testid="@workOrderLinkTestId" href="/workorder/manage/@order.Number?mode=Edit">
-                                        @order.Number
-                                    </a>
-                                </td>
-                                <td>@order.Creator?.GetFullName()</td>
-                                <td>@order.Assignee?.GetFullName()</td>
-                                <td>
-                                    <span class="status-badge">@order.Status</span>
-                                </td>
-                                <td>@order.Title</td>
-                                <td>
-                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+                            var order = Model.Results[index];
+                            var isSelected = index == SelectedResultIndex;
+                            var cardClass = isSelected ? "work-order-card is-selected" : "work-order-card";
+                            var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
+                            <a class="@cardClass"
+                               data-testid="@workOrderLinkTestId"
+                               data-rail-card
+                               data-selected="@isSelected.ToString().ToLowerInvariant()"
+                               aria-current="@(isSelected ? "true" : null)"
+                               href="/workorder/manage/@order.Number?mode=Edit">
+                                <span class="card-calendar" aria-hidden="true">
+                                    <i class="bi bi-calendar3"></i>
+                                </span>
+                                <span class="card-number">@order.Number</span>
+                                <span class="card-title">@(order.Title ?? "Untitled work order")</span>
+                                <span class="card-assignee">
+                                    <i class="bi bi-person-circle" aria-hidden="true"></i>
+                                    @(order.Assignee?.GetFullName() ?? "Unassigned")
+                                </span>
+                                <span class="card-rule"></span>
+                                <span data-testid="@(Elements.DueDateCell + order.Number)"
+                                      class="card-due-date @order.DueDateCssClass">
+                                    @order.DueDateDisplay
+                                    @if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
                                         {
                                             <span class="visually-hidden">@order.DueDateUrgencyText</span>
-                                        }</span>
-                                </td>
-                            </tr>
+                                    }
+                                </span>
+                                @if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+                                {
+                                    <span class="urgency-label @order.DueDateCssClass" aria-hidden="true">
+                                        <i class="bi @(order.DueDateCssClass == "due-date-overdue" ? "bi-exclamation-circle" : "bi-clock")"></i>
+                                        @(order.DueDateCssClass == "due-date-overdue" ? "Overdue" : "Due today")
+                                    </span>
+                                }
+                            </a>
                         }
-                    }
-                    </tbody>
-                </table>
+                    </div>
+                    <button type="button"
+                            class="rail-arrow rail-arrow-next"
+                            data-testid="RailNext"
+                            aria-label="Show next work order"
+                            disabled="@(SelectedResultIndex >= Model.Results.Length - 1)"
+                            @onclick="SelectNext">
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="rail-position" aria-live="polite">
+                    <span class="position-dot is-active"></span>
+                    <span>Work order @(SelectedResultIndex + 1) of @Model.Results.Length</span>
+                </div>
             }
         </div>
     </div>
@@ -131,4 +153,16 @@
     public List<SelectListItem> UserOptions { get; set; } = new();
     public List<SelectListItem> StatusOptions { get; set; } = new();
     public Func<Task>? OnSearch { get; set; }
+
+    private int SelectedResultIndex { get; set; }
+
+    private void SelectPrevious()
+    {
+        SelectedResultIndex = Math.Max(0, SelectedResultIndex - 1);
+    }
+
+    private void SelectNext()
+    {
+        SelectedResultIndex = Math.Min(Model.Results.Length - 1, SelectedResultIndex + 1);
+    }
 }

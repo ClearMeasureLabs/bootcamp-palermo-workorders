@@ -1,3 +1,126 @@
+.daily-board-app {
+    min-height: 100vh;
+    background: #004b87;
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.daily-board-header {
+    display: flex;
+    min-height: 5.25rem;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid rgba(0, 133, 202, 0.35);
+    background: linear-gradient(100deg, #002a52, #003c70 58%, #002a52);
+    align-items: center;
+    justify-content: space-between;
+}
+
+.daily-board-brand {
+    display: inline-flex;
+    gap: 1.15rem;
+    color: #ffffff;
+    font-size: clamp(1.35rem, 2.5vw, 1.8rem);
+    font-weight: 700;
+    text-decoration: none;
+    align-items: center;
+}
+
+.daily-board-brand:hover {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.daily-board-logo {
+    display: grid;
+    width: 3rem;
+    height: 3rem;
+    border: 2px solid #0085ca;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    place-items: center;
+}
+
+.daily-board-user,
+.daily-board-login {
+    position: relative;
+    display: flex;
+    min-height: 3rem;
+    align-items: center;
+}
+
+.daily-board-user ::deep span {
+    margin-right: 3.6rem;
+    color: #ffffff;
+    font-size: 0.98rem;
+}
+
+.daily-board-user ::deep button {
+    position: absolute;
+    right: 0;
+    width: 2.65rem;
+    height: 2.65rem;
+    margin: 0 !important;
+    overflow: hidden;
+    border: 2px solid #0085ca;
+    border-radius: 50%;
+    color: transparent !important;
+    font-size: 0;
+}
+
+.daily-board-user ::deep button:hover {
+    background: rgba(0, 133, 202, 0.2);
+}
+
+.daily-board-user ::deep button:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 3px;
+}
+
+.daily-board-user-icon {
+    position: absolute;
+    right: 0.7rem;
+    color: #ffffff;
+    font-size: 1.2rem;
+    pointer-events: none;
+}
+
+.daily-board-login ::deep a {
+    color: #ffffff;
+}
+
+.daily-board-main {
+    min-height: calc(100vh - 5.25rem);
+    background: #004b87;
+}
+
+@media (max-width: 640px) {
+    .daily-board-header {
+        min-height: 4.5rem;
+        padding: 0 0.85rem;
+    }
+
+    .daily-board-logo {
+        width: 2.55rem;
+        height: 2.55rem;
+        font-size: 1rem;
+    }
+
+    .daily-board-brand {
+        gap: 0.7rem;
+        font-size: 1.15rem;
+    }
+
+    .daily-board-user ::deep span {
+        margin-right: 3rem;
+        font-size: 0;
+    }
+
+    .daily-board-user ::deep span::after {
+        content: "Welcome";
+        font-size: 0.82rem;
+    }
+}
+
 /* Modern App Container */
 .modern-app {
     display: flex;
