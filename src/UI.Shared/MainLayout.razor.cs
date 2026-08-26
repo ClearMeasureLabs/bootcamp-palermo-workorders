@@ -34,6 +34,7 @@ public partial class MainLayout : IAsyncDisposable
     private DotNetObjectReference<MainLayout>? _dotNetRef;
     private IJSObjectReference? _jsModule;
     private IJSObjectReference? _navToggleHelper;
+    private bool _isDisposed;
     private bool _isNarrowViewport;
     private bool _viewportSynced;
     private bool _navVisible = true;
@@ -69,13 +70,23 @@ public partial class MainLayout : IAsyncDisposable
 
         try
         {
-            _dotNetRef = DotNetObjectReference.Create(this);
             _jsModule = await Js.InvokeAsync<IJSObjectReference>("import",
                 "./_content/ClearMeasure.Bootcamp.UI.Shared/js/mainLayoutNav.js");
+            if (_isDisposed)
+            {
+                await _jsModule.DisposeAsync();
+                _jsModule = null;
+                return;
+            }
+
+            _dotNetRef = DotNetObjectReference.Create(this);
             _navToggleHelper = await _jsModule.InvokeAsync<IJSObjectReference>("initNavToggle", _dotNetRef,
                 NavRailBreakpointMediaQuery);
         }
         catch (JSDisconnectedException)
+        {
+        }
+        catch (ObjectDisposedException) when (_isDisposed)
         {
         }
 
@@ -110,6 +121,8 @@ public partial class MainLayout : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        _isDisposed = true;
+
         if (_navToggleHelper is not null)
         {
             try

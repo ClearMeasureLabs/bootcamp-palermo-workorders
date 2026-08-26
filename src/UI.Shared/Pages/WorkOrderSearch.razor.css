@@ -10,7 +10,7 @@
 .board-controls {
     position: relative;
     z-index: 80;
-    width: 31%;
+    width: 29%;
     min-width: 18rem;
     padding-top: 1.2rem;
 }
@@ -167,7 +167,7 @@
 
 .deck-stage {
     position: relative;
-    width: 69%;
+    width: 71%;
     min-width: 0;
     min-height: 31rem;
     padding-top: 0.25rem;
@@ -179,16 +179,17 @@
     padding: 0.8rem 1.8rem 6rem;
     align-items: flex-start;
     justify-content: center;
+    transform: translateX(-1.5rem);
 }
 
 .work-order-card {
     display: flex;
     position: relative;
     z-index: calc(10 + var(--deck-order));
-    width: 9.4rem;
-    min-width: 9.4rem;
-    height: 27rem;
-    padding: 0.75rem;
+    width: 10.6rem;
+    min-width: 10.6rem;
+    height: 30rem;
+    padding: 0.85rem;
     border: 1px solid #8aabc0;
     border-radius: 1.15rem;
     color: #123d64;
@@ -205,7 +206,7 @@
 }
 
 .work-order-card + .work-order-card {
-    margin-left: -6.1rem;
+    margin-left: -6.7rem;
 }
 
 .work-order-card:hover,
@@ -410,6 +411,7 @@
         padding-right: 4rem;
         padding-left: 4rem;
         justify-content: flex-start;
+        transform: none;
     }
 }
 
