@@ -1,0 +1,100 @@
+@startuml logical-c4
+' Logical (Onion) architecture derived from current .csproj ProjectReference graph.
+' Source of truth: src/**/*.csproj (verified 2026-08-25)
+
+!include <C4/C4_Component>
+LAYOUT_TOP_DOWN()
+skinparam dpi 140
+skinparam wrapWidth 220
+skinparam nodesep 40
+skinparam ranksep 50
+
+title Church Bulletin Work Orders - Logical Architecture (Onion)
+
+AddElementTag("core", $bgColor="#D5F5E3", $borderColor="#196F3D", $legendText="Core - no project refs")
+AddElementTag("infra", $bgColor="#D6EAF8", $borderColor="#1A5276", $legendText="Infrastructure - refs Core only")
+AddElementTag("shared", $bgColor="#FCF3CF", $borderColor="#9A7D0A", $legendText="Shared UI / LLM adapters")
+AddElementTag("host", $bgColor="#FADBD8", $borderColor="#922B21", $legendText="Composition roots / hosts")
+AddElementTag("orch", $bgColor="#E8DAEF", $borderColor="#6C3483", $legendText="Orchestration")
+AddElementTag("ext", $bgColor="#F2F3F4", $borderColor="#566573", $legendText="External systems")
+
+Person(user, "Church staff", "Browser user of work-order portal")
+Person(agent, "AI / MCP client", "Tool consumer via Model Context Protocol")
+
+System_Boundary(solution, "ChurchBulletin.sln - Onion layers") {
+
+  Boundary(ring_hosts, "Outer - Hosts / Composition Roots") {
+    Component(uiServer, "UI.Server", "ASP.NET Core 10", "Hosts Blazor WASM, UI.Api, gRPC WorkOrders, in-process MCP /mcp, NServiceBus endpoint UI.Server", $tags="host")
+    Component(worker, "Worker", ".NET Worker", "NServiceBus endpoint WorkOrderProcessing; refs DataAccess + LlmGateway", $tags="host")
+    Component(mcpServer, "McpServer", "ASP.NET / MCP", "Standalone MCP host; also referenced in-process by UI.Server", $tags="host")
+    Component(uiClient, "UI.Client", "Blazor WASM", "Browser UI; refs Core + UI.Shared", $tags="host")
+    Component(uiApi, "UI.Api", "ASP.NET library", "API controllers; refs Core only", $tags="host")
+  }
+
+  Boundary(ring_shared, "Outer-mid - Shared UI and adapters") {
+    Component(uiShared, "UI.Shared", "Razor Class Library", "Shared Blazor pages/components; refs Core + LlmGateway", $tags="shared")
+    Component(llm, "LlmGateway", "Class Library", "Azure OpenAI / Ollama via Microsoft.Extensions.AI; refs Core only", $tags="infra")
+    Component(svcDefaults, "ServiceDefaults", "Aspire shared", "OpenTelemetry, health, Serilog defaults (no Core ref)", $tags="shared")
+  }
+
+  Boundary(ring_infra, "Infrastructure - depends inward only") {
+    Component(dataAccess, "DataAccess", "EF Core 10", "DataContext, *Map, MediatR handlers, NServiceBus persistence; refs Core ONLY", $tags="infra")
+    Component(database, "Database", "DbUp console", "Sequential SQL migrations (scripts/Update); no onion project refs", $tags="infra")
+  }
+
+  Boundary(ring_core, "Core - innermost (zero project references)") {
+    Component(core, "Core", "Domain", "Model (WorkOrder, Employee, Status, Role), Queries, StateCommands, IBus, Validation", $tags="core")
+  }
+
+  Boundary(ring_orch, "Local orchestration") {
+    Component(appHost, "AppHost", "Aspire", "Orchestrates UI.Server + Worker for local/dev", $tags="orch")
+  }
+}
+
+System_Ext(sql, "SQL Server / Azure SQL", "ChurchBulletin DB + nServiceBus schema", $tags="ext")
+System_Ext(openai, "Azure OpenAI / Ollama", "LLM chat and reformat agents", $tags="ext")
+
+Rel(user, uiClient, "Uses portal", "HTTPS")
+Rel(uiClient, uiServer, "API / static / SignalR", "HTTPS")
+Rel(agent, uiServer, "MCP tools", "HTTP /mcp")
+Rel(agent, mcpServer, "MCP tools (standalone)", "stdio / HTTP")
+
+Rel(uiServer, uiClient, "hosts WASM")
+Rel(uiServer, uiApi, "mounts controllers")
+Rel(uiServer, mcpServer, "hosts MCP in-process")
+Rel(uiServer, uiShared, "shared UI")
+Rel(uiServer, dataAccess, "handlers / EF")
+Rel(uiServer, llm, "LLM calls")
+Rel(uiServer, core, "domain + queries")
+Rel(uiServer, svcDefaults, "telemetry")
+
+Rel(uiClient, uiShared, "components")
+Rel(uiClient, core, "domain types")
+Rel(uiApi, core, "queries / commands")
+Rel(uiShared, core, "domain types")
+Rel(uiShared, llm, "AI UI helpers")
+
+Rel(mcpServer, dataAccess, "handlers / EF")
+Rel(mcpServer, llm, "LLM tools")
+Rel(mcpServer, core, "domain")
+Rel(mcpServer, uiShared, "shared types")
+Rel(mcpServer, svcDefaults, "telemetry")
+
+Rel(worker, dataAccess, "handlers / EF")
+Rel(worker, llm, "optional chat")
+Rel(worker, svcDefaults, "telemetry")
+
+Rel(dataAccess, core, "implements queries/commands")
+Rel(llm, core, "domain contracts")
+
+Rel(dataAccess, sql, "EF Core TDS")
+Rel(database, sql, "DbUp migrate")
+Rel(worker, sql, "NSB + persistence")
+Rel(uiServer, sql, "EF + NSB transport")
+Rel(llm, openai, "chat completions")
+
+Rel(appHost, uiServer, "runs")
+Rel(appHost, worker, "runs")
+
+SHOW_LEGEND()
+@enduml
