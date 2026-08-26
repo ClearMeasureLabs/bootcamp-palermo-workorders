@@ -17,7 +17,7 @@ public partial class NavMenu : AppComponentBase,
 
     [Inject] public IUserSession? UserSession { get; set; }
 
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = null!;
 
     private bool _collapseNavMenu = true;
 
@@ -33,19 +33,26 @@ public partial class NavMenu : AppComponentBase,
     private string B3WorkOrderNavClass(B3WorkOrderFilter filter)
     {
         var relativeUri = Navigation.ToBaseRelativePath(Navigation.Uri);
-        var isActive = filter switch
+        return IsB3WorkOrderFilterActive(filter, relativeUri)
+            ? "nav-link active"
+            : "nav-link";
+    }
+
+    /// <summary>
+    /// Resolves which B3 work-order filter link is active for the current relative URI.
+    /// </summary>
+    internal static bool IsB3WorkOrderFilterActive(B3WorkOrderFilter filter, string relativeUri)
+    {
+        var hasAssignee = relativeUri.Contains("Assignee=", StringComparison.OrdinalIgnoreCase);
+        var hasStatus = relativeUri.Contains("Status=", StringComparison.OrdinalIgnoreCase);
+        return filter switch
         {
-            B3WorkOrderFilter.Mine =>
-                !relativeUri.Contains("Assignee=", StringComparison.OrdinalIgnoreCase) &&
-                !relativeUri.Contains("Status=", StringComparison.OrdinalIgnoreCase),
-            B3WorkOrderFilter.AssignedToMe =>
-                relativeUri.Contains("Assignee=", StringComparison.OrdinalIgnoreCase),
+            B3WorkOrderFilter.Mine => !hasAssignee && !hasStatus,
+            B3WorkOrderFilter.AssignedToMe => hasAssignee,
             B3WorkOrderFilter.InProgress =>
                 relativeUri.Contains($"Status={WorkOrderStatus.InProgress.Key}", StringComparison.OrdinalIgnoreCase),
-            _ => throw new ArgumentOutOfRangeException(nameof(filter), filter, null)
+            _ => false
         };
-
-        return $"nav-link{(isActive ? " active" : string.Empty)}";
     }
 
     protected override async Task OnInitializedAsync()
@@ -73,7 +80,10 @@ public partial class NavMenu : AppComponentBase,
         StateHasChanged();
     }
 
-    private enum B3WorkOrderFilter
+    /// <summary>
+    /// B3 sidebar filter targets for work-order search links.
+    /// </summary>
+    internal enum B3WorkOrderFilter
     {
         Mine,
         AssignedToMe,

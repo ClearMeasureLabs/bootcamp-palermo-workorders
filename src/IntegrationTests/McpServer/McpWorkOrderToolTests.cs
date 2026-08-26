@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
@@ -64,10 +66,145 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
-    public async Task ShouldGetWorkOrderByNumber()
+    public async Task ShouldFilterWorkOrdersByCreatorUsername()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(bus, creatorUsername: "tlovejoy");
+
+        ExtractNumbers(result).ShouldBeSet(
+            "LJDRAFT",
+            "LJWA",
+            "LJWIP",
+            "LJCOMP");
+    }
+
+    [Test]
+    public async Task ShouldFilterWorkOrdersByAssigneeUsername()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(bus, assigneeUsername: "gwillie");
+
+        ExtractNumbers(result).ShouldBeSet(
+            "LJWA",
+            "LJWIP",
+            "OTWIP");
+    }
+
+    [Test]
+    public async Task ShouldAndAssigneeAndStatusFilters()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(
+            bus,
+            status: "InProgress",
+            assigneeUsername: "gwillie");
+
+        ExtractNumbers(result).ShouldBeSet(
+            "LJWIP",
+            "OTWIP");
+    }
+
+    [Test]
+    public async Task ShouldAndCreatorAndStatusFiltersForLovejoyDrafts()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(
+            bus,
+            status: "Draft",
+            creatorUsername: "tlovejoy");
+
+        ExtractNumbers(result).ShouldBeSet("LJDRAFT");
+    }
+
+    [Test]
+    public async Task ShouldAndCreatorAssigneeAndStatusFilters()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(
+            bus,
+            status: "InProgress",
+            creatorUsername: "tlovejoy",
+            assigneeUsername: "gwillie");
+
+        ExtractNumbers(result).ShouldBeSet("LJWIP");
+    }
+
+    [Test]
+    public async Task ShouldTreatOmittedEmptyAndWhitespaceFiltersAsDisabled()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var omitted = ExtractNumbers(await WorkOrderTools.ListWorkOrders(bus));
+        var blank = ExtractNumbers(await WorkOrderTools.ListWorkOrders(bus, " ", string.Empty, "   "));
+
+        omitted.Length.ShouldBe(7);
+        blank.ShouldBeSet(omitted);
+    }
+
+    [Test]
+    public async Task ShouldReturnEmptyForUnknownCreatorOrAssigneeWithoutCreatingEmployee()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+        int employeeCount;
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            employeeCount = await context.Set<Employee>().CountAsync();
+        }
+
+        var unknownCreator = await WorkOrderTools.ListWorkOrders(
+            bus,
+            status: "Assigned",
+            creatorUsername: "not-a-person");
+        var unknownAssignee = await WorkOrderTools.ListWorkOrders(
+            bus,
+            status: "Draft",
+            creatorUsername: "tlovejoy",
+            assigneeUsername: "not-a-person");
+
+        unknownCreator.ShouldBe("[]");
+        unknownAssignee.ShouldBe("[]");
+        await using var verificationContext = TestHost.GetRequiredService<DbContext>();
+        (await verificationContext.Set<Employee>().CountAsync()).ShouldBe(employeeCount);
+    }
+
+    [Test]
+    public async Task ShouldPreserveInvalidStatusFailure()
+    {
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        await Should.ThrowAsync<ArgumentOutOfRangeException>(
+            () => WorkOrderTools.ListWorkOrders(bus, status: "NotAStatus"));
+    }
+
+    [Test]
+    public async Task ShouldGetWorkOrderByNumberWithCompleteDetailShape()
     {
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
-        var order = new WorkOrder { Creator = employee, Number = "WO-100", Title = "Test order", Description = "A description", RoomNumber = "101" };
+        var createdDate = new DateTime(2026, 8, 25, 14, 30, 0, DateTimeKind.Utc);
+        var order = new WorkOrder
+        {
+            Creator = employee,
+            Number = "WO-100",
+            Title = "Test order",
+            Description = "A description",
+            Instructions = "preschool quiet",
+            RoomNumber = "101",
+            DueDate = new DateOnly(2026, 9, 12),
+            Status = WorkOrderStatus.Draft,
+            CreatedDate = createdDate
+        };
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
@@ -79,10 +216,52 @@ public class McpWorkOrderToolTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.GetWorkOrder(bus, "WO-100");
 
-        result.ShouldContain("WO-100");
-        result.ShouldContain("Test order");
-        result.ShouldContain("A description");
-        result.ShouldContain("101");
+        using var document = JsonDocument.Parse(result);
+        var detail = document.RootElement;
+        detail.GetProperty("Number").GetString().ShouldBe("WO-100");
+        detail.GetProperty("Title").GetString().ShouldBe("Test order");
+        detail.GetProperty("Description").GetString().ShouldBe("A description");
+        detail.GetProperty("Instructions").GetString().ShouldBe("preschool quiet");
+        detail.GetProperty("RoomNumber").GetString().ShouldBe("101");
+        detail.GetProperty("DueDate").GetString().ShouldBe("2026-09-12");
+        detail.GetProperty("Status").GetString().ShouldBe("Draft");
+        detail.GetProperty("Creator").GetString().ShouldBe("John Doe");
+        detail.GetProperty("CreatorUsername").GetString().ShouldBe("user1");
+        detail.GetProperty("Assignee").ValueKind.ShouldBe(JsonValueKind.Null);
+        detail.GetProperty("AssigneeUsername").ValueKind.ShouldBe(JsonValueKind.Null);
+        detail.GetProperty("CreatedDate").GetDateTime().ShouldBe(createdDate);
+        detail.GetProperty("AssignedDate").ValueKind.ShouldBe(JsonValueKind.Null);
+        detail.GetProperty("CompletedDate").ValueKind.ShouldBe(JsonValueKind.Null);
+    }
+
+    [Test]
+    public async Task ShouldGetWorkOrderWithEmptyInstructionsPropertyWhenInstructionsOmitted()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var order = new WorkOrder
+        {
+            Creator = employee,
+            Number = "WO-101",
+            Title = "No special instructions",
+            Status = WorkOrderStatus.Draft
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.GetWorkOrder(bus, "WO-101");
+
+        using var document = JsonDocument.Parse(result);
+        var instructions = document.RootElement.GetProperty("Instructions");
+        instructions.ValueKind.ShouldBe(JsonValueKind.String);
+        instructions.GetString().ShouldBe(string.Empty);
+        result.ShouldContain("\"Instructions\": \"\"");
+        result.ShouldNotContain("\"Instructions\": \"null\"");
     }
 
     [Test]
@@ -91,7 +270,45 @@ public class McpWorkOrderToolTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.GetWorkOrder(bus, "NONEXISTENT");
 
-        result.ShouldContain("No work order found");
+        result.ShouldBe("No work order found with number 'NONEXISTENT'.");
+    }
+
+    [Test]
+    public async Task ShouldKeepListWorkOrderSummaryWithoutInstructions()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var order = new WorkOrder
+        {
+            Creator = employee,
+            Number = "WO-102",
+            Title = "Summary shape",
+            Instructions = "detail only"
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ListWorkOrders(bus);
+
+        using var document = JsonDocument.Parse(result);
+        var summary = document.RootElement.EnumerateArray().Single();
+        summary.TryGetProperty("Instructions", out _).ShouldBeFalse();
+    }
+
+    [Test]
+    public void ShouldKeepWorkOrderToolArgumentListsUnchanged()
+    {
+        ParameterNames(nameof(WorkOrderTools.CreateWorkOrder)).ShouldBe(
+            ["bus", "numberGenerator", "title", "description", "creatorUsername", "roomNumber", "dueDate", "instructions"]);
+        ParameterNames(nameof(WorkOrderTools.SaveWorkOrder)).ShouldBe(
+            ["bus", "workOrderNumber", "executingUsername", "title", "description", "instructions", "roomNumber", "dueDate"]);
+        ParameterNames(nameof(WorkOrderTools.CreateDatedWorkOrders)).ShouldBe(
+            ["bus", "timeProvider", "creatorUsername", "assigneeUsername", "title", "description", "dueDates", "saturdayCount"]);
     }
 
     [Test]
@@ -437,5 +654,70 @@ public class McpWorkOrderToolTests
         }
 
         wo.Status.ShouldBe(WorkOrderStatus.Complete);
+    }
+
+    private static async Task SeedFilterWorkOrders()
+    {
+        var lovejoy = new Employee("tlovejoy", "Timothy", "Lovejoy Jr", "lovejoy@test.com");
+        var otherCreator = new Employee("other-creator", "Other", "Creator", "creator@test.com");
+        var willie = new Employee("gwillie", "Groundskeeper", "Willie", "willie@test.com");
+        var otherAssignee = new Employee("other-assignee", "Other", "Assignee", "assignee@test.com");
+        var workOrders = new[]
+        {
+            CreateWorkOrder("LJDRAFT", lovejoy, null, WorkOrderStatus.Draft),
+            CreateWorkOrder("OTDRAFT", otherCreator, null, WorkOrderStatus.Draft),
+            CreateWorkOrder("LJWA", lovejoy, willie, WorkOrderStatus.Assigned),
+            CreateWorkOrder("LJWIP", lovejoy, willie, WorkOrderStatus.InProgress),
+            CreateWorkOrder("OTWIP", otherCreator, willie, WorkOrderStatus.InProgress),
+            CreateWorkOrder("LJCOMP", lovejoy, otherAssignee, WorkOrderStatus.Complete),
+            CreateWorkOrder("OTASN", otherCreator, otherAssignee, WorkOrderStatus.Assigned)
+        };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.AddRange(lovejoy, otherCreator, willie, otherAssignee);
+        context.Set<WorkOrder>().AddRange(workOrders);
+        await context.SaveChangesAsync();
+    }
+
+    private static WorkOrder CreateWorkOrder(
+        string number,
+        Employee creator,
+        Employee? assignee,
+        WorkOrderStatus status) =>
+        new()
+        {
+            Number = number,
+            Title = number,
+            Description = "Filter test",
+            Instructions = "Summary must not expose this",
+            Creator = creator,
+            Assignee = assignee,
+            Status = status
+        };
+
+    private static string[] ExtractNumbers(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.EnumerateArray()
+            .Select(item => item.GetProperty("Number").GetString()!)
+            .ToArray();
+    }
+
+    private static string?[] ParameterNames(string methodName)
+    {
+        var method = typeof(WorkOrderTools).GetMethod(methodName, BindingFlags.Public | BindingFlags.Static)
+                     ?? throw new InvalidOperationException($"Method '{methodName}' was not found.");
+
+        return method.GetParameters()
+            .Select(parameter => parameter.Name)
+            .ToArray();
+    }
+}
+
+internal static class WorkOrderNumberAssertions
+{
+    public static void ShouldBeSet(this IEnumerable<string> actual, params string[] expected)
+    {
+        actual.OrderBy(number => number).ShouldBe(expected.OrderBy(number => number));
     }
 }

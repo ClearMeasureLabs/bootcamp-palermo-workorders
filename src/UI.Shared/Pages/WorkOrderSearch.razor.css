@@ -214,6 +214,16 @@
     text-decoration: none;
 }
 
+.manage-link .work-order-number {
+    max-width: 100%;
+    overflow: hidden;
+    color: #53718d;
+    font-size: 0.68rem;
+    line-height: 1.1;
+    text-align: center;
+    text-overflow: ellipsis;
+}
+
 .manage-link:hover,
 .manage-link:focus-visible {
     background: #edf8fd;

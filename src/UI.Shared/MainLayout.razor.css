@@ -753,7 +753,14 @@
 }
 
 .b3-nav-toggle {
-    display: none;
+    position: absolute;
+    z-index: 30;
+    top: 1rem;
+    left: 1rem;
+    display: inline-flex;
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 49, 93, 0.76);
+    color: white;
 }
 
 @media (max-width: 768px) {
@@ -767,14 +774,8 @@
     }
 
     .b3-nav-toggle {
-        position: absolute;
-        z-index: 30;
         top: 1rem;
         left: 1rem;
-        display: inline-flex;
-        border-color: rgba(255, 255, 255, 0.5);
-        background: rgba(0, 49, 93, 0.76);
-        color: white;
     }
 
     .b3-top-user {

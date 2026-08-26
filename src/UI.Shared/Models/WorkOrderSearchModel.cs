@@ -22,7 +22,6 @@ public class WorkOrderSearchResultRow
 {
     public required WorkOrder WorkOrder { get; init; }
     public string Number => WorkOrder.Number ?? string.Empty;
-    public Employee? Creator => WorkOrder.Creator;
     public Employee? Assignee => WorkOrder.Assignee;
     public WorkOrderStatus Status => WorkOrder.Status;
     public string? Title => WorkOrder.Title;

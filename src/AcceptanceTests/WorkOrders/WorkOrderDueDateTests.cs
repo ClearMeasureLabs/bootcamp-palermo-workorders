@@ -116,13 +116,13 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         await CompleteWorkOrderViaBusAsync(todayOrder.Number!);
         await CancelWorkOrderViaBusAsync(overdueOrder.Number!);
 
-        // Full Page.ReloadAsync drops in-memory Blazor auth and lands on /login.
         // Soft-navigate within the SPA so search re-queries without losing the session.
-        await Click(nameof(NavMenu.Elements.Counter));
-        await Page.WaitForURLAsync("**/counter");
+        // B3 search chrome omits Counter; bounce via AI Agent then My Work Orders.
+        await Click(nameof(NavMenu.Elements.AiAgent));
+        await Page.WaitForURLAsync("**/ai-agent");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForURLAsync("**/workorder/search");
+        await Click(nameof(NavMenu.Elements.MyWorkOrders));
+        await Page.WaitForURLAsync("**/workorder/search**");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         todayCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + todayOrder.Number);
