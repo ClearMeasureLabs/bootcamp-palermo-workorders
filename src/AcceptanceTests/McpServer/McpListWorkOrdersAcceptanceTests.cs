@@ -101,7 +101,10 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + seededNumbers.LovejoyDraft);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)))
             .ToHaveTextAsync(seededNumbers.LovejoyDraft);
-        await Expect(Page.GetByText("Timothy Lovejoy Jr", new() { Exact = true })).ToBeVisibleAsync();
+        var creator = Page.Locator(".form-group")
+            .Filter(new LocatorFilterOptions { HasText = "Creator:" })
+            .Locator(".value");
+        await Expect(creator).ToHaveTextAsync("Timothy Lovejoy Jr");
     }
 
     private async Task<ParityWorkOrderNumbers> SeedParityWorkOrders()
