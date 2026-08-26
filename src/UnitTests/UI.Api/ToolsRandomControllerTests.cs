@@ -34,7 +34,7 @@ public class ToolsRandomControllerTests
         content.ContentType.ShouldNotBeNull();
         content.ContentType.ShouldContain("text/plain");
         content.Content.ShouldNotBeNull();
-        content.Content.Length.ShouldBeGreaterThan(0);
+        content.Content.Length.ShouldBe(12);
         content.Content.ShouldMatch("^[a-zA-Z0-9]+$");
     }
 

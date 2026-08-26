@@ -90,6 +90,7 @@ public class ToolsRandomEndpointIntegrationTests
                 int.TryParse(body, out _).ShouldBeTrue();
                 break;
             case "string":
+                body.Length.ShouldBe(12);
                 AlphanumericRegex.IsMatch(body).ShouldBeTrue();
                 break;
             case "uuid":
