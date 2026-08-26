@@ -27,6 +27,20 @@ public class WorkOrderDueDateStyleTests
         css.ShouldContain("#fecaca");
     }
 
+    [Test]
+    public void ShouldUseClearMeasureBlueCanvasWithoutPurpleOrGrid()
+    {
+        var css = ReadScopedCss("WorkOrderSearch.razor.css");
+
+        css.ShouldContain("#004B87");
+        css.ShouldContain("#0085CA");
+        css.ShouldContain(".saturday-deck");
+        css.ShouldContain(".deck-card");
+        css.ShouldNotContain("#7b68ee");
+        css.ShouldNotContain(".grid-data");
+        css.ShouldNotContain(".filters-grid");
+    }
+
     private static string ReadScopedCss(string fileName)
     {
         var path = Path.GetFullPath(Path.Combine(

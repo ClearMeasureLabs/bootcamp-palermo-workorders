@@ -16,15 +16,12 @@ public class WorkOrderSearchTests
     {
         await using var ctx = new BunitContext();
 
-        // Arrange
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
 
-        // Act
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Assert
         var creatorSelect = component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
@@ -33,7 +30,6 @@ public class WorkOrderSearchTests
         assigneeSelect.ShouldNotBeNull();
         statusSelect.ShouldNotBeNull();
 
-        // Verify user options are loaded (5 employees + "All" option = 6 options)
         var creatorOptions = creatorSelect.QuerySelectorAll("option");
         creatorOptions.Length.ShouldBe(6);
         creatorOptions[0].TextContent.ShouldBe("All");
@@ -42,7 +38,6 @@ public class WorkOrderSearchTests
         assigneeOptions.Length.ShouldBe(6);
         assigneeOptions[0].TextContent.ShouldBe("All");
 
-        // Verify status options are loaded (4 statuses + "All" option = 5 options)
         var statusOptions = statusSelect.QuerySelectorAll("option");
         statusOptions.Length.ShouldBe(6);
         statusOptions[0].TextContent.ShouldBe("All");
@@ -74,33 +69,30 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
+    public async Task ShouldLoadWorkOrderDeckWithAllFiltersSetToAllOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
-        // Arrange
         var stubBus = new StubBus();
         ctx.Services.AddSingleton<IBus>(stubBus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
 
-        // Act
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Assert
-        var workOrderTable = component.Find(".grid-data");
-        workOrderTable.ShouldNotBeNull();
+        component.FindAll("table.grid-data").Count.ShouldBe(0);
+        var deck = component.Find($"[data-testid='{WorkOrderSearch.Elements.ResultsDeck}']");
+        deck.ShouldNotBeNull();
 
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var cards = component.FindAll(".deck-card");
+        cards.Count.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithCreatorFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderDeckWithCreatorFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
-        // Arrange
         var stubBus = new StubBus();
         ctx.Services.AddSingleton<IBus>(stubBus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -110,21 +102,17 @@ public class WorkOrderSearchTests
         var uri = navigationManager.GetUriWithQueryParameter("Creator", "somename");
         navigationManager.NavigateTo(uri);
 
-        // Act
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var cards = component.FindAll(".deck-card");
+        cards.Count.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithAssigneeFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderDeckWithAssigneeFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
-        // Arrange
         var stubBus = new StubBus();
         ctx.Services.AddSingleton<IBus>(stubBus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -134,21 +122,17 @@ public class WorkOrderSearchTests
         var uri = navigationManager.GetUriWithQueryParameter("Assignee", "somename");
         navigationManager.NavigateTo(uri);
 
-        // Act
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var cards = component.FindAll(".deck-card");
+        cards.Count.ShouldBe(2);
     }
 
     [Test]
-    public async Task ShouldLoadWorkOrderTableWithStatusFilterOnInitialLoad()
+    public async Task ShouldLoadWorkOrderDeckWithStatusFilterOnInitialLoad()
     {
         await using var ctx = new BunitContext();
 
-        // Arrange
         var stubBus = new StubBus();
         ctx.Services.AddSingleton<IBus>(stubBus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -158,13 +142,10 @@ public class WorkOrderSearchTests
         var uri = navigationManager.GetUriWithQueryParameter("Status", WorkOrderStatus.Assigned.Key);
         navigationManager.NavigateTo(uri);
 
-        // Act
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var cards = component.FindAll(".deck-card");
+        cards.Count.ShouldBe(2);
     }
 
     [Test]
@@ -172,7 +153,6 @@ public class WorkOrderSearchTests
     {
         await using var ctx = new BunitContext();
 
-        // Arrange
         var stubBus = new StubBus();
         ctx.Services.AddSingleton<IBus>(stubBus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -180,7 +160,6 @@ public class WorkOrderSearchTests
 
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Act
         var creatorSelect = component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
@@ -192,11 +171,30 @@ public class WorkOrderSearchTests
         var searchButton = component.Find($"#{WorkOrderSearch.Elements.SearchButton}");
         await searchButton.ClickAsync(new());
 
-        // Assert
-        var workOrderTable = component.Find(".grid-data");
-        workOrderTable.ShouldNotBeNull();
+        var deck = component.Find($"[data-testid='{WorkOrderSearch.Elements.ResultsDeck}']");
+        deck.ShouldNotBeNull();
 
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var cards = component.FindAll(".deck-card");
+        cards.Count.ShouldBe(2);
+    }
+
+    [Test]
+    public async Task ShouldRenderB1CanvasWithoutSpreadsheetGrid()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.Find($"[data-testid='{WorkOrderSearch.Elements.B1DeckPage}']").ShouldNotBeNull();
+        component.FindAll("table").Count.ShouldBe(0);
+        component.FindAll(".filters-grid").Count.ShouldBe(0);
+        component.Find(".filters-chip-strip").ShouldNotBeNull();
+        component.Find($"[data-testid='{WorkOrderSearch.Elements.WorkOrderLink}WO-001']")
+            .GetAttribute("href")
+            .ShouldBe("/workorder/manage/WO-001?mode=Edit");
     }
 }

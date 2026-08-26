@@ -87,7 +87,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
+    public async Task ShouldLoadWorkOrderDeckWithAllFiltersSetToAllOnInitialLoad()
     {
         // Arrange
         var creator = Faker<Employee>();
@@ -112,16 +112,17 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await TakeScreenshotAsync(1, "InitialLoad");
 
         // Assert
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var deck = Page.Locator($"[data-testid='{WorkOrderSearch.Elements.ResultsDeck}']");
+        await Expect(deck).ToBeVisibleAsync();
+        await Expect(Page.Locator("table.grid-data")).ToHaveCountAsync(0);
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        var rowCount = await workOrderRows.CountAsync();
-        await Expect(workOrderRows).ToHaveCountAsync(rowCount);
+        var cards = Page.Locator(".deck-card");
+        var cardCount = await cards.CountAsync();
+        await Expect(cards).ToHaveCountAsync(cardCount);
     }
 
     [Test, Retry(2)]
-    public async Task ShouldLoadWorkOrderTableWithCreatorFilterFromQueryString()
+    public async Task ShouldLoadWorkOrderDeckWithCreatorFilterFromQueryString()
     {
         // Arrange
         var creator = CurrentUser;
@@ -142,17 +143,18 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         await Expect(creatorSelect).ToHaveValueAsync(creator.UserName);
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var deck = Page.Locator($"[data-testid='{WorkOrderSearch.Elements.ResultsDeck}']");
+        await Expect(deck).ToBeVisibleAsync();
+        await Expect(Page.Locator("table.grid-data")).ToHaveCountAsync(0);
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        var rowCount = await workOrderRows.CountAsync();
-        rowCount.ShouldBeGreaterThanOrEqualTo(1);
-        await Expect(workOrderRows.First.Locator("td:nth-child(2)")).ToContainTextAsync(creator.GetFullName());
+        var cards = Page.Locator(".deck-card");
+        var cardCount = await cards.CountAsync();
+        cardCount.ShouldBeGreaterThanOrEqualTo(1);
+        await Expect(Page.GetByTestId($"{WorkOrderSearch.Elements.WorkOrderLink}{order.Number}")).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]
-    public async Task ShouldLoadWorkOrderTableWithAssigneeFilterFromQueryString()
+    public async Task ShouldLoadWorkOrderDeckWithAssigneeFilterFromQueryString()
     {
         // Arrange
         var creator = Faker<Employee>();
@@ -177,17 +179,19 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         await Expect(assigneeSelect).ToHaveValueAsync(assignee.UserName);
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var deck = Page.Locator($"[data-testid='{WorkOrderSearch.Elements.ResultsDeck}']");
+        await Expect(deck).ToBeVisibleAsync();
+        await Expect(Page.Locator("table.grid-data")).ToHaveCountAsync(0);
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        var rowCount = await workOrderRows.CountAsync();
-        rowCount.ShouldBeGreaterThanOrEqualTo(1);
-        await Expect(workOrderRows.First.Locator("td:nth-child(3)")).ToContainTextAsync(assignee.GetFullName());
+        var cards = Page.Locator(".deck-card");
+        var cardCount = await cards.CountAsync();
+        cardCount.ShouldBeGreaterThanOrEqualTo(1);
+        await Expect(Page.GetByTestId($"{WorkOrderSearch.Elements.WorkOrderLink}{order.Number}")).ToBeVisibleAsync();
+        await Expect(cards.Filter(new() { HasText = assignee.GetFullName() }).First).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]
-    public async Task ShouldLoadWorkOrderTableWithStatusFilterFromQueryString()
+    public async Task ShouldLoadWorkOrderDeckWithStatusFilterFromQueryString()
     {
         // Arrange
         var creator = Faker<Employee>();
@@ -210,12 +214,12 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
         await Expect(statusSelect).ToHaveValueAsync(status.Key);
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var deck = Page.Locator($"[data-testid='{WorkOrderSearch.Elements.ResultsDeck}']");
+        await Expect(deck).ToBeVisibleAsync();
+        await Expect(Page.Locator("table.grid-data")).ToHaveCountAsync(0);
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        await Expect(workOrderRows).ToHaveCountAsync(await workOrderRows.CountAsync());
-        await Expect(workOrderRows.First.Locator("td:nth-child(4)")).ToContainTextAsync(status.FriendlyName);
+        var cards = Page.Locator(".deck-card");
+        await Expect(cards.Filter(new() { HasText = status.FriendlyName }).First).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]
@@ -256,14 +260,12 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await TakeScreenshotAsync(3, "SearchCompleted");
 
         // Assert
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var deck = Page.Locator($"[data-testid='{WorkOrderSearch.Elements.ResultsDeck}']");
+        await Expect(deck).ToBeVisibleAsync();
+        await Expect(Page.Locator("table.grid-data")).ToHaveCountAsync(0);
 
-        // Wait for the table body to update with filtered results
-        await workOrderTable.Locator("tbody").WaitForAsync();
-        
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        await Expect(workOrderRows).ToHaveCountAsync(1);
+        var cards = Page.Locator(".deck-card");
+        await Expect(cards).ToHaveCountAsync(1);
     }
 
     [Test, Retry(2)]
@@ -284,21 +286,19 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "SearchPageLoaded");
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var deck = Page.Locator($"[data-testid='{WorkOrderSearch.Elements.ResultsDeck}']");
+        await Expect(deck).ToBeVisibleAsync();
 
-        var firstWorkOrderLink = workOrderTable.Locator("tbody tr").First.Locator("td").First.Locator("a");
-        var workOrderNumber = await firstWorkOrderLink.TextContentAsync();
+        var firstWorkOrderLink = Page.Locator(".deck-card").First;
+        var href = await firstWorkOrderLink.GetAttributeAsync("href");
+        href.ShouldNotBeNullOrEmpty();
+        var workOrderNumber = href!.Split('/').Last().Split('?').First();
 
-        if (!string.IsNullOrEmpty(workOrderNumber))
-        {
-            await firstWorkOrderLink.ClickAsync();
-            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-            await TakeScreenshotAsync(2, "WorkOrderDetailsPage");
+        await firstWorkOrderLink.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(2, "WorkOrderDetailsPage");
 
-            // Assert
-            await Expect(Page).ToHaveURLAsync(new Regex($"/workorder/manage/{Regex.Escape(workOrderNumber)}"));
-        }
+        await Expect(Page).ToHaveURLAsync(new Regex($"/workorder/manage/{Regex.Escape(workOrderNumber)}"));
     }
 
     [Test, Retry(2)]
@@ -336,8 +336,9 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         // Assert
         await Expect(creatorSelect).ToHaveValueAsync("");
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var deck = Page.Locator($"[data-testid='{WorkOrderSearch.Elements.ResultsDeck}']");
+        await Expect(deck).ToBeVisibleAsync();
+        await Expect(Page.Locator("table.grid-data")).ToHaveCountAsync(0);
     }
 
     [Test, Retry(2)]
@@ -379,6 +380,20 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(creatorSelect).ToHaveValueAsync(creator.UserName);
         await Expect(assigneeSelect).ToHaveValueAsync(assignee.UserName);
         await Expect(statusSelect).ToHaveValueAsync(status.Key);
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldRenderB1FannedDeckWithoutSpreadsheet()
+    {
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "B1Deck");
+
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.B1DeckPage))).ToBeVisibleAsync();
+        await Expect(Page.Locator("table.grid-data")).ToHaveCountAsync(0);
+        await Expect(Page.Locator(".filters-grid")).ToHaveCountAsync(0);
+        await Expect(Page.Locator(".filters-chip-strip")).ToBeVisibleAsync();
+        await Expect(Page.Locator(".saturday-deck, .empty-results")).ToHaveCountAsync(1);
     }
 
     [Test, Retry(2)]
