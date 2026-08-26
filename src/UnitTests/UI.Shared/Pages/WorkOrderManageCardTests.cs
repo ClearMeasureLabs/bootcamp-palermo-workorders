@@ -86,7 +86,7 @@ public class WorkOrderManageCardTests
     private static string ReadScopedCss(string fileName)
     {
         var path = Path.GetFullPath(Path.Combine(
-            TestContext.CurrentContext.TestDirectory,
+            NUnit.Framework.TestContext.CurrentContext.TestDirectory,
             "..", "..", "..", "..", "UI.Shared", "Pages", fileName));
 
         File.Exists(path).ShouldBeTrue($"Expected scoped stylesheet at {path}");
