@@ -13,7 +13,11 @@ public class ApiKeyAuthenticationMiddlewarePublicPathTests
     [TestCase("/api/v1.0/ping", true)]
     [TestCase("/api/tools/random", true)]
     [TestCase("/api/v1.0/tools/random", true)]
-    [TestCase("/api/health", false)]
+    [TestCase("/api/health", true)]
+    [TestCase("/api/health/detailed", true)]
+    [TestCase("/api/v1.0/health", true)]
+    [TestCase("/api/v1.0/health/detailed", true)]
+    [TestCase("/api/workorders", false)]
     [TestCase("/mcp", false)]
     public void IsPublicVersionOrTimePath_ReturnsExpected(string path, bool expectedPublic)
     {
@@ -24,10 +28,36 @@ public class ApiKeyAuthenticationMiddlewarePublicPathTests
     [TestCase("/api/v1.0/time", "time")]
     [TestCase("/api/tools/random", "tools/random")]
     [TestCase("/api/v1.0/tools/random", "tools/random")]
+    [TestCase("/api/health", "health")]
+    [TestCase("/api/health/detailed", "health/detailed")]
+    [TestCase("/api/v1.0/health/detailed", "health/detailed")]
     public void TryGetLeafSegment_ReturnsLeaf(string path, string expectedLeaf)
     {
         ApiPublicPathRules.TryGetLeafSegment(path, out var leaf).ShouldBeTrue();
         leaf.ShouldBe(expectedLeaf);
+    }
+
+    [Test]
+    public void ApiPublicPathRules_Should_TreatDetailedHealthAsPublic()
+    {
+        string[] publicHealthPaths =
+        [
+            "/api/health",
+            "/api/health/detailed",
+            "/api/v1.0/health",
+            "/api/v1.0/health/detailed"
+        ];
+
+        foreach (var path in publicHealthPaths)
+        {
+            ApiPublicPathRules.TryGetLeafSegment(path, out var leaf).ShouldBeTrue(path);
+            ApiPublicPathRules.IsPublicLeaf(leaf).ShouldBeTrue(path);
+            ApiKeyAuthenticationMiddleware.IsPublicVersionOrTimePath(path).ShouldBeTrue(path);
+            ApiKeyAuthenticationMiddleware.ShouldValidate(
+                path,
+                new ApiKeyAuthenticationOptions { Enabled = true, ValidationKey = "secret" })
+                .ShouldBeFalse(path);
+        }
     }
 
     [Test]
