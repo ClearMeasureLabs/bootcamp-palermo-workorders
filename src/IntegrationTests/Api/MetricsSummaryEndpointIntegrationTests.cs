@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -15,6 +16,9 @@ public class MetricsSummaryEndpointIntegrationTests
     {
         _factory = new DetailedHealthWebApplicationFactory();
         _client = _factory.CreateClient();
+        _client.DefaultRequestHeaders.Add(
+            ApiKeyConstants.HeaderName,
+            DetailedHealthWebApplicationFactory.IntegrationApiKey);
     }
 
     [OneTimeTearDown]
