@@ -73,10 +73,10 @@ public class McpWorkOrderToolTests
         var result = await WorkOrderTools.ListWorkOrders(bus, creatorUsername: "tlovejoy");
 
         ExtractNumbers(result).ShouldBeSet(
-            "WO-LOVEJOY-DRAFT",
-            "WO-LOVEJOY-WILLIE-ASSIGNED",
-            "WO-LOVEJOY-WILLIE-INPROGRESS",
-            "WO-LOVEJOY-COMPLETE");
+            "LJDRAFT",
+            "LJWA",
+            "LJWIP",
+            "LJCOMP");
     }
 
     [Test]
@@ -88,9 +88,9 @@ public class McpWorkOrderToolTests
         var result = await WorkOrderTools.ListWorkOrders(bus, assigneeUsername: "gwillie");
 
         ExtractNumbers(result).ShouldBeSet(
-            "WO-LOVEJOY-WILLIE-ASSIGNED",
-            "WO-LOVEJOY-WILLIE-INPROGRESS",
-            "WO-OTHER-WILLIE-INPROGRESS");
+            "LJWA",
+            "LJWIP",
+            "OTWIP");
     }
 
     [Test]
@@ -105,8 +105,8 @@ public class McpWorkOrderToolTests
             assigneeUsername: "gwillie");
 
         ExtractNumbers(result).ShouldBeSet(
-            "WO-LOVEJOY-WILLIE-INPROGRESS",
-            "WO-OTHER-WILLIE-INPROGRESS");
+            "LJWIP",
+            "OTWIP");
     }
 
     [Test]
@@ -120,7 +120,7 @@ public class McpWorkOrderToolTests
             status: "Draft",
             creatorUsername: "tlovejoy");
 
-        ExtractNumbers(result).ShouldBeSet("WO-LOVEJOY-DRAFT");
+        ExtractNumbers(result).ShouldBeSet("LJDRAFT");
     }
 
     [Test]
@@ -135,7 +135,7 @@ public class McpWorkOrderToolTests
             creatorUsername: "tlovejoy",
             assigneeUsername: "gwillie");
 
-        ExtractNumbers(result).ShouldBeSet("WO-LOVEJOY-WILLIE-INPROGRESS");
+        ExtractNumbers(result).ShouldBeSet("LJWIP");
     }
 
     [Test]
@@ -586,18 +586,18 @@ public class McpWorkOrderToolTests
         var otherAssignee = new Employee("other-assignee", "Other", "Assignee", "assignee@test.com");
         var workOrders = new[]
         {
-            CreateWorkOrder("WO-LOVEJOY-DRAFT", lovejoy, null, WorkOrderStatus.Draft),
-            CreateWorkOrder("WO-OTHER-DRAFT", otherCreator, null, WorkOrderStatus.Draft),
-            CreateWorkOrder("WO-LOVEJOY-WILLIE-ASSIGNED", lovejoy, willie, WorkOrderStatus.Assigned),
-            CreateWorkOrder("WO-LOVEJOY-WILLIE-INPROGRESS", lovejoy, willie, WorkOrderStatus.InProgress),
-            CreateWorkOrder("WO-OTHER-WILLIE-INPROGRESS", otherCreator, willie, WorkOrderStatus.InProgress),
-            CreateWorkOrder("WO-LOVEJOY-COMPLETE", lovejoy, otherAssignee, WorkOrderStatus.Complete),
-            CreateWorkOrder("WO-OTHER-ASSIGNED", otherCreator, otherAssignee, WorkOrderStatus.Assigned)
+            CreateWorkOrder("LJDRAFT", lovejoy, null, WorkOrderStatus.Draft),
+            CreateWorkOrder("OTDRAFT", otherCreator, null, WorkOrderStatus.Draft),
+            CreateWorkOrder("LJWA", lovejoy, willie, WorkOrderStatus.Assigned),
+            CreateWorkOrder("LJWIP", lovejoy, willie, WorkOrderStatus.InProgress),
+            CreateWorkOrder("OTWIP", otherCreator, willie, WorkOrderStatus.InProgress),
+            CreateWorkOrder("LJCOMP", lovejoy, otherAssignee, WorkOrderStatus.Complete),
+            CreateWorkOrder("OTASSIGN", otherCreator, otherAssignee, WorkOrderStatus.Assigned)
         };
 
         await using var context = TestHost.GetRequiredService<DbContext>();
         context.AddRange(lovejoy, otherCreator, willie, otherAssignee);
-        context.AddRange(workOrders);
+        context.Set<WorkOrder>().AddRange(workOrders);
         await context.SaveChangesAsync();
     }
 

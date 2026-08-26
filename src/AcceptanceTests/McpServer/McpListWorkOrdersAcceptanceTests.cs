@@ -1,5 +1,4 @@
 using System.Text.Json;
-using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
