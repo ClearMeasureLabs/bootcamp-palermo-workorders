@@ -141,6 +141,22 @@ public class MainLayoutTests
 
         var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
         loginAnchor.GetAttribute("href").ShouldBe("/login");
+        loginAnchor.ClassList.ShouldContain("login-link-blink");
+    }
+
+    [Test]
+    public async Task ShouldRenderLoginLink_WithBlinkClass_WhenUserIsNotAuthenticated()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var loginAnchor = layout.Find($"a[data-testid='{nameof(LoginLink.Elements.LoginLink)}']");
+        loginAnchor.ClassList.ShouldContain("login-link-blink");
+        loginAnchor.GetAttribute("href").ShouldBe("/login");
+        loginAnchor.GetAttribute("data-testid").ShouldBe(nameof(LoginLink.Elements.LoginLink));
+        loginAnchor.TextContent.Trim().ShouldBe("Login");
     }
 
     [Test]
