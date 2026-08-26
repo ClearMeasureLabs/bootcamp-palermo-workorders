@@ -113,22 +113,28 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         var willie = await context.Set<Employee>().SingleAsync(employee => employee.UserName == "gwillie");
         var otherCreator = await context.Set<Employee>().SingleAsync(employee => employee.UserName == "nflanders");
         var otherAssignee = await context.Set<Employee>().SingleAsync(employee => employee.UserName == "mflanders");
-        var prefix = $"MCP-{TestTag}";
         var numbers = new ParityWorkOrderNumbers(
-            $"{prefix}-LD",
-            $"{prefix}-WA",
-            $"{prefix}-WI",
-            $"{prefix}-LC");
+            Number("LJD"),
+            Number("WA"),
+            Number("WI"),
+            Number("LJC"));
 
         context.AddRange(
             CreateWorkOrder(numbers.LovejoyDraft, lovejoy, otherAssignee, WorkOrderStatus.Draft),
-            CreateWorkOrder($"{prefix}-OD", otherCreator, otherAssignee, WorkOrderStatus.Draft),
+            CreateWorkOrder(Number("OD"), otherCreator, otherAssignee, WorkOrderStatus.Draft),
             CreateWorkOrder(numbers.WillieAssigned, lovejoy, willie, WorkOrderStatus.Assigned),
             CreateWorkOrder(numbers.WillieInProgress, lovejoy, willie, WorkOrderStatus.InProgress),
-            CreateWorkOrder($"{prefix}-OWI", otherCreator, willie, WorkOrderStatus.InProgress),
+            CreateWorkOrder(Number("OWI"), otherCreator, willie, WorkOrderStatus.InProgress),
             CreateWorkOrder(numbers.LovejoyComplete, lovejoy, otherAssignee, WorkOrderStatus.Complete));
         await context.SaveChangesAsync();
         return numbers;
+    }
+
+    private string Number(string role)
+    {
+        var number = $"{TestTag[..4]}{role}";
+        number.Length.ShouldBeLessThanOrEqualTo(7);
+        return number;
     }
 
     private static WorkOrder CreateWorkOrder(
