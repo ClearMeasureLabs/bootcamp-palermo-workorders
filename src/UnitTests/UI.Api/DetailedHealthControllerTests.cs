@@ -50,9 +50,11 @@ public class DetailedHealthControllerTests
 
         var content = result.ShouldBeOfType<ContentResult>();
         content.StatusCode.ShouldBe(StatusCodes.Status200OK);
+        content.ContentType.ShouldNotBeNull();
         content.ContentType.ShouldContain("application/json");
+        content.Content.ShouldNotBeNull();
         var payload = JsonSerializer.Deserialize<DetailedHealthReport>(
-            content.Content!,
+            content.Content,
             ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
         payload!.OverallStatus.ShouldBe(ComponentHealthStatus.Healthy);
