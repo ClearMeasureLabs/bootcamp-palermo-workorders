@@ -193,15 +193,19 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         var workOrderLinks = Page.Locator($"[data-testid^='{prefix}']");
         var count = await workOrderLinks.CountAsync();
         var numbers = new HashSet<string>(StringComparer.Ordinal);
-        for (var i = 0; i < count; i++)
+        for (var index = 0; index < count; index++)
         {
-            var testId = await workOrderLinks.Nth(i).GetAttributeAsync("data-testid");
+            var testId = await workOrderLinks.Nth(index).GetAttributeAsync("data-testid");
             if (string.IsNullOrEmpty(testId) || !testId.StartsWith(prefix, StringComparison.Ordinal))
             {
                 continue;
             }
 
-            numbers.Add(testId[prefix.Length..]);
+            var number = testId[prefix.Length..].Trim();
+            if (number.Length > 0)
+            {
+                numbers.Add(number);
+            }
         }
 
         return numbers;
