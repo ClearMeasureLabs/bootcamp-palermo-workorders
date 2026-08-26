@@ -13,15 +13,39 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class WorkOrderTools
 {
-    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status. Valid statuses: Draft, Assigned, InProgress, Complete.")]
+    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, and assignee username. Valid statuses: Draft, Assigned, InProgress, Complete.")]
     public static async Task<string> ListWorkOrders(
         IBus bus,
-        [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null)
+        [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null,
+        [Description("Optional creator username filter")] string? creatorUsername = null,
+        [Description("Optional assignee username filter")] string? assigneeUsername = null)
     {
         var query = new WorkOrderSpecificationQuery();
-        if (!string.IsNullOrEmpty(status))
+        if (!string.IsNullOrWhiteSpace(status))
         {
             query.MatchStatus(WorkOrderStatus.FromKey(status));
+        }
+
+        if (!string.IsNullOrWhiteSpace(creatorUsername))
+        {
+            var creator = await FindEmployeeByUsername(bus, creatorUsername);
+            if (creator == null)
+            {
+                return "[]";
+            }
+
+            query.MatchCreator(creator);
+        }
+
+        if (!string.IsNullOrWhiteSpace(assigneeUsername))
+        {
+            var assignee = await FindEmployeeByUsername(bus, assigneeUsername);
+            if (assignee == null)
+            {
+                return "[]";
+            }
+
+            query.MatchAssignee(assignee);
         }
 
         var workOrders = await bus.Send(query);

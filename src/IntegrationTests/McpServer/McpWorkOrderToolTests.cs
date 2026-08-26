@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
@@ -61,6 +62,144 @@ public class McpWorkOrderToolTests
 
         result.ShouldContain("WO-002");
         result.ShouldNotContain("WO-001");
+    }
+
+    [Test]
+    public async Task ShouldFilterWorkOrdersByCreatorUsername()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(bus, creatorUsername: "tlovejoy");
+
+        ExtractNumbers(result).ShouldBeSet(
+            "WO-LOVEJOY-DRAFT",
+            "WO-LOVEJOY-WILLIE-ASSIGNED",
+            "WO-LOVEJOY-WILLIE-INPROGRESS",
+            "WO-LOVEJOY-COMPLETE");
+    }
+
+    [Test]
+    public async Task ShouldFilterWorkOrdersByAssigneeUsername()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(bus, assigneeUsername: "gwillie");
+
+        ExtractNumbers(result).ShouldBeSet(
+            "WO-LOVEJOY-WILLIE-ASSIGNED",
+            "WO-LOVEJOY-WILLIE-INPROGRESS",
+            "WO-OTHER-WILLIE-INPROGRESS");
+    }
+
+    [Test]
+    public async Task ShouldAndAssigneeAndStatusFilters()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(
+            bus,
+            status: "InProgress",
+            assigneeUsername: "gwillie");
+
+        ExtractNumbers(result).ShouldBeSet(
+            "WO-LOVEJOY-WILLIE-INPROGRESS",
+            "WO-OTHER-WILLIE-INPROGRESS");
+    }
+
+    [Test]
+    public async Task ShouldAndCreatorAndStatusFiltersForLovejoyDrafts()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(
+            bus,
+            status: "Draft",
+            creatorUsername: "tlovejoy");
+
+        ExtractNumbers(result).ShouldBeSet("WO-LOVEJOY-DRAFT");
+    }
+
+    [Test]
+    public async Task ShouldAndCreatorAssigneeAndStatusFilters()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(
+            bus,
+            status: "InProgress",
+            creatorUsername: "tlovejoy",
+            assigneeUsername: "gwillie");
+
+        ExtractNumbers(result).ShouldBeSet("WO-LOVEJOY-WILLIE-INPROGRESS");
+    }
+
+    [Test]
+    public async Task ShouldTreatOmittedEmptyAndWhitespaceFiltersAsDisabled()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var omitted = ExtractNumbers(await WorkOrderTools.ListWorkOrders(bus));
+        var blank = ExtractNumbers(await WorkOrderTools.ListWorkOrders(bus, " ", string.Empty, "   "));
+
+        omitted.Length.ShouldBe(7);
+        blank.ShouldBeSet(omitted);
+    }
+
+    [Test]
+    public async Task ShouldReturnEmptyForUnknownCreatorOrAssigneeWithoutCreatingEmployee()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+        int employeeCount;
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            employeeCount = await context.Set<Employee>().CountAsync();
+        }
+
+        var unknownCreator = await WorkOrderTools.ListWorkOrders(
+            bus,
+            status: "Assigned",
+            creatorUsername: "not-a-person");
+        var unknownAssignee = await WorkOrderTools.ListWorkOrders(
+            bus,
+            status: "Draft",
+            creatorUsername: "tlovejoy",
+            assigneeUsername: "not-a-person");
+
+        unknownCreator.ShouldBe("[]");
+        unknownAssignee.ShouldBe("[]");
+        await using var verificationContext = TestHost.GetRequiredService<DbContext>();
+        (await verificationContext.Set<Employee>().CountAsync()).ShouldBe(employeeCount);
+    }
+
+    [Test]
+    public async Task ShouldPreserveInvalidStatusFailure()
+    {
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        await Should.ThrowAsync<ArgumentOutOfRangeException>(
+            () => WorkOrderTools.ListWorkOrders(bus, status: "NotAStatus"));
+    }
+
+    [Test]
+    public async Task ShouldKeepListWorkOrderSummaryWithoutInstructions()
+    {
+        await SeedFilterWorkOrders();
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var result = await WorkOrderTools.ListWorkOrders(bus, creatorUsername: "tlovejoy");
+
+        using var document = JsonDocument.Parse(result);
+        document.RootElement.EnumerateArray()
+            .SelectMany(item => item.EnumerateObject())
+            .Select(property => property.Name)
+            .ShouldNotContain("Instructions");
     }
 
     [Test]
@@ -437,5 +576,60 @@ public class McpWorkOrderToolTests
         }
 
         wo.Status.ShouldBe(WorkOrderStatus.Complete);
+    }
+
+    private static async Task SeedFilterWorkOrders()
+    {
+        var lovejoy = new Employee("tlovejoy", "Timothy", "Lovejoy Jr", "lovejoy@test.com");
+        var otherCreator = new Employee("other-creator", "Other", "Creator", "creator@test.com");
+        var willie = new Employee("gwillie", "Groundskeeper", "Willie", "willie@test.com");
+        var otherAssignee = new Employee("other-assignee", "Other", "Assignee", "assignee@test.com");
+        var workOrders = new[]
+        {
+            CreateWorkOrder("WO-LOVEJOY-DRAFT", lovejoy, null, WorkOrderStatus.Draft),
+            CreateWorkOrder("WO-OTHER-DRAFT", otherCreator, null, WorkOrderStatus.Draft),
+            CreateWorkOrder("WO-LOVEJOY-WILLIE-ASSIGNED", lovejoy, willie, WorkOrderStatus.Assigned),
+            CreateWorkOrder("WO-LOVEJOY-WILLIE-INPROGRESS", lovejoy, willie, WorkOrderStatus.InProgress),
+            CreateWorkOrder("WO-OTHER-WILLIE-INPROGRESS", otherCreator, willie, WorkOrderStatus.InProgress),
+            CreateWorkOrder("WO-LOVEJOY-COMPLETE", lovejoy, otherAssignee, WorkOrderStatus.Complete),
+            CreateWorkOrder("WO-OTHER-ASSIGNED", otherCreator, otherAssignee, WorkOrderStatus.Assigned)
+        };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.AddRange(lovejoy, otherCreator, willie, otherAssignee);
+        context.AddRange(workOrders);
+        await context.SaveChangesAsync();
+    }
+
+    private static WorkOrder CreateWorkOrder(
+        string number,
+        Employee creator,
+        Employee? assignee,
+        WorkOrderStatus status) =>
+        new()
+        {
+            Number = number,
+            Title = number,
+            Description = "Filter test",
+            Instructions = "Summary must not expose this",
+            Creator = creator,
+            Assignee = assignee,
+            Status = status
+        };
+
+    private static string[] ExtractNumbers(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.EnumerateArray()
+            .Select(item => item.GetProperty("Number").GetString()!)
+            .ToArray();
+    }
+}
+
+internal static class WorkOrderNumberAssertions
+{
+    public static void ShouldBeSet(this IEnumerable<string> actual, params string[] expected)
+    {
+        actual.OrderBy(number => number).ShouldBe(expected.OrderBy(number => number));
     }
 }
