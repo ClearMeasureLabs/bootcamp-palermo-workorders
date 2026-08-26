@@ -1,9 +1,7 @@
 <div class="search-page">
     <div class="search-container">
         <div class="search-header">
-            <p class="search-eyebrow">Tuesday morning work queue</p>
             <h2>My Work Orders</h2>
-            <div class="search-subtitle">Find and manage church maintenance requests</div>
         </div>
 
         <div class="search-filters-card">
@@ -52,13 +50,7 @@
         </div>
 
         <section class="results-card" aria-labelledby="search-results-heading">
-            <div class="results-header">
-                <div>
-                    <span class="results-kicker">Current queue</span>
-                    <h3 id="search-results-heading">Search Results</h3>
-                </div>
-                <span class="results-count">@Model.Results.Length work orders</span>
-            </div>
+            <h3 id="search-results-heading" class="visually-hidden">Search Results</h3>
 
             @if (Model.Results.Length == 0)
             {
@@ -86,14 +78,13 @@
                             <div class="card-main">
                                 <div class="card-heading">
                                     <div>
-                                        <span class="work-order-number">@order.Number</span>
+                                        <span class="work-order-number visually-hidden">@order.Number</span>
                                         <h4>@order.Title</h4>
                                     </div>
-                                    <span class="status-badge">@order.Status</span>
+                                    <span class="status-badge visually-hidden">@order.Status</span>
                                 </div>
                                 <div class="card-meta">
                                     <span><i class="bi bi-person" aria-hidden="true"></i> @DisplayAssignee(order)</span>
-                                    <span><i class="bi bi-person-plus" aria-hidden="true"></i> Created by @order.Creator?.GetFullName()</span>
                                 </div>
                             </div>
                             @if (!string.IsNullOrEmpty(order.DueDateDisplay))

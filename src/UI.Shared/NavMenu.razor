@@ -1,3 +1,60 @@
+@if (IsWorkOrderSearchChrome)
+{
+    <div class="b3-nav" data-testid="B3JobsNavigation">
+        <nav aria-label="Work order navigation">
+            <div class="nav-item">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <i class="bi bi-house-door nav-icon" aria-hidden="true"></i>
+                    <span class="nav-text">Home</span>
+                </NavLink>
+            </div>
+            @if (CurrentUser != null && CurrentUser.CanCreateWorkOrder())
+            {
+                <div class="nav-item">
+                    <NavLink data-testid="@Elements.NewWorkOrder" class="nav-link" href="workorder/manage?mode=New">
+                        <i class="bi bi-file-earmark-plus nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">New Work Order</span>
+                    </NavLink>
+                </div>
+            }
+            @if (CurrentUser != null)
+            {
+                <div class="nav-item">
+                    <a data-testid="@Elements.MyWorkOrders"
+                       class="@B3WorkOrderNavClass(B3WorkOrderFilter.Mine)"
+                       href="@($"workorder/search?Creator={CurrentUser.UserName}")">
+                        <i class="bi bi-clipboard2 nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">My Work Orders</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a data-testid="@Elements.WorkOrdersAssignedToMe"
+                       class="@B3WorkOrderNavClass(B3WorkOrderFilter.AssignedToMe)"
+                       href="@($"workorder/search?Assignee={CurrentUser.UserName}")">
+                        <i class="bi bi-person nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">Assigned to Me</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a data-testid="@Elements.AllWorkOrdersInProgress"
+                       class="@B3WorkOrderNavClass(B3WorkOrderFilter.InProgress)"
+                       href="@($"workorder/search?Status={WorkOrderStatus.InProgress.Key}")">
+                        <i class="bi bi-clock-history nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">In Progress</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <NavLink data-testid="@Elements.AiAgent" class="nav-link" href="ai-agent">
+                        <i class="bi bi-stars nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">AI Agent</span>
+                    </NavLink>
+                </div>
+            }
+        </nav>
+    </div>
+}
+else
+{
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Menu</a>
@@ -92,6 +149,7 @@
         }
     </nav>
 </div>
+}
 @code
 {
     public enum Elements

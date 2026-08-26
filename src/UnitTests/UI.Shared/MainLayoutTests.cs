@@ -37,6 +37,33 @@ public class MainLayoutTests
     }
 
     [Test]
+    public async Task ShouldRenderB3ChromeOnWorkOrderSearchRoute()
+    {
+        await using var ctx = CreateContext(authenticateAsUser: "tlovejoy");
+        var navigation = ctx.Services.GetRequiredService<NavigationManager>();
+        navigation.NavigateTo("/workorder/search");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.Find(".modern-app").ClassList.ShouldContain("b3-stack-chrome");
+        layout.Find(".clear-measure-brand").TextContent.ShouldContain("Clear");
+        layout.Find(".clear-measure-brand").TextContent.ShouldContain("Measure");
+        layout.FindAll(".modern-header").Count.ShouldBe(0);
+        layout.FindAll($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']").Count.ShouldBe(0);
+        var jobsNavigation = layout.Find("[data-testid='B3JobsNavigation']");
+        jobsNavigation.TextContent.ShouldContain("Home");
+        jobsNavigation.TextContent.ShouldContain("New Work Order");
+        jobsNavigation.TextContent.ShouldContain("My Work Orders");
+        jobsNavigation.TextContent.ShouldContain("Assigned to Me");
+        jobsNavigation.TextContent.ShouldContain("In Progress");
+        jobsNavigation.TextContent.ShouldContain("AI Agent");
+        layout.Markup.ShouldNotContain(">Counter<");
+        layout.Markup.ShouldNotContain(">Fetch data<");
+        layout.Markup.ShouldNotContain(">Settings<");
+    }
+
+    [Test]
     public async Task ShouldToggleNavRailCollapseAndUpdateAriaOnWideLayout()
     {
         await using var ctx = CreateContext();
@@ -268,7 +295,14 @@ public class MainLayoutTests
 
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
-        ctx.Services.AddSingleton<IUserSession>(new StubUserSession());
+        Employee? sessionUser = null;
+        if (authenticateAsUser != null)
+        {
+            sessionUser = new Employee(authenticateAsUser, "Timothy", "Lovejoy", "tlovejoy@example.com");
+            sessionUser.AddRole(new Role("Minister", true, true));
+        }
+
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(sessionUser));
         ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
         var customAuth = new CustomAuthenticationStateProvider(new StubUserSessionStore());
@@ -281,8 +315,8 @@ public class MainLayoutTests
         return ctx;
     }
 
-    private sealed class StubUserSession : IUserSession
+    private sealed class StubUserSession(Employee? employee) : IUserSession
     {
-        public Task<Employee?> GetCurrentUserAsync() => Task.FromResult<Employee?>(null);
+        public Task<Employee?> GetCurrentUserAsync() => Task.FromResult(employee);
     }
 }

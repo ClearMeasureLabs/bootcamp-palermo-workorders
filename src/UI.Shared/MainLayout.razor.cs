@@ -1,5 +1,6 @@
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.JSInterop;
 
 namespace ClearMeasure.Bootcamp.UI.Shared;
@@ -30,6 +31,9 @@ public partial class MainLayout : IAsyncDisposable
     [Inject]
     private ThemePreferenceService Theme { get; set; } = default!;
 
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
     private IJSObjectReference? _jsModule;
@@ -38,14 +42,24 @@ public partial class MainLayout : IAsyncDisposable
     private bool _viewportSynced;
     private bool _navVisible = true;
 
-    private string AppContainerClass => NavRailCss.AppContainerClass(_isNarrowViewport, _navVisible);
+    private string AppContainerClass =>
+        $"{NavRailCss.AppContainerClass(_isNarrowViewport, _navVisible)}{(IsWorkOrderSearchPage ? " b3-stack-chrome" : string.Empty)}";
 
     private string SidebarClass => NavRailCss.SidebarClass(_isNarrowViewport, _navVisible);
+
+    private bool IsWorkOrderSearchPage =>
+        Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0]
+            .Equals("workorder/search", StringComparison.OrdinalIgnoreCase);
 
     private string NavToggleTitle =>
         _navVisible ? "Hide navigation panel" : "Show navigation panel";
 
     private string NavToggleAriaExpanded => _navVisible ? "true" : "false";
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
 
     [JSInvokable]
     public Task OnViewportChanged(bool isNarrow)
@@ -108,8 +122,20 @@ public partial class MainLayout : IAsyncDisposable
         }
     }
 
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private static string UserInitial(string? userName)
+    {
+        return string.IsNullOrWhiteSpace(userName) ? "?" : userName[..1].ToUpperInvariant();
+    }
+
     public async ValueTask DisposeAsync()
     {
+        Navigation.LocationChanged -= HandleLocationChanged;
+
         if (_navToggleHelper is not null)
         {
             try

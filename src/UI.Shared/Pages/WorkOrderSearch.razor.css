@@ -4,83 +4,73 @@
     --cream: #fffaf0;
     --ink: #0c3158;
     min-height: 100vh;
-    padding: clamp(1.25rem, 3vw, 3rem);
-    background:
-        radial-gradient(circle at 88% 12%, rgba(0, 133, 202, 0.35), transparent 24rem),
-        linear-gradient(145deg, #003b70, var(--clear-measure-blue));
+    padding: clamp(2rem, 4vw, 3.25rem) clamp(1.25rem, 3.5vw, 3rem);
+    background: transparent;
 }
 
 .search-container {
-    max-width: 1180px;
+    width: 100%;
+    max-width: none;
     margin: 0 auto;
 }
 
 .search-header {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.85rem;
     color: white;
-}
-
-.search-eyebrow {
-    margin: 0 0 0.25rem;
-    color: #9bd9f5;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
 }
 
 .search-header h2 {
     margin: 0;
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: clamp(2.25rem, 5vw, 3.75rem);
+    font-size: clamp(2.25rem, 4.5vw, 3.2rem);
     font-weight: 500;
     letter-spacing: -0.03em;
 }
 
-.search-subtitle {
-    margin-top: 0.35rem;
-    color: #d8effb;
-}
-
 .search-filters-card {
-    margin-bottom: 1.5rem;
-    padding: 0.85rem;
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    border-radius: 1rem;
-    background: rgba(0, 49, 91, 0.48);
-    backdrop-filter: blur(10px);
+    margin-bottom: 1rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
 }
 
 .filters-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(150px, 1fr)) auto;
-    gap: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
     align-items: end;
 }
 
 .filter-group {
+    position: relative;
     display: flex;
-    min-width: 0;
+    min-width: 8.5rem;
     flex-direction: column;
 }
 
 .filter-label {
-    margin: 0 0 0.35rem 0.75rem;
-    color: #d8effb;
-    font-size: 0.72rem;
+    position: absolute;
+    z-index: 1;
+    top: 0.3rem;
+    left: 1rem;
+    margin: 0;
+    color: #a9d9f0;
+    font-size: 0.52rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    pointer-events: none;
 }
 
 .form-control {
-    width: 100%;
-    min-height: 2.75rem;
-    padding: 0.6rem 2.2rem 0.6rem 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.52);
+    width: 9.75rem;
+    min-height: 2.45rem;
+    padding: 0.85rem 2rem 0.25rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 999px;
-    background-color: rgba(0, 59, 112, 0.75);
+    background-color: rgba(0, 49, 93, 0.5);
     color: white;
+    font-size: 0.78rem;
 }
 
 .form-control:focus {
@@ -95,13 +85,14 @@
 }
 
 .btn-primary {
-    min-height: 2.75rem;
-    padding: 0.6rem 1.5rem;
+    min-height: 2.45rem;
+    padding: 0.5rem 1.35rem;
     border: 1px solid var(--clear-measure-accent);
     border-radius: 999px;
     background: var(--clear-measure-accent);
     color: white;
-    font-weight: 700;
+    font-size: 0.78rem;
+    font-weight: 600;
     box-shadow: 0 0.45rem 1rem rgba(0, 25, 52, 0.24);
 }
 
@@ -113,35 +104,6 @@
 
 .results-card {
     background: transparent;
-}
-
-.results-header {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
-    color: white;
-}
-
-.results-header h3 {
-    margin: 0;
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 1.6rem;
-    font-weight: 500;
-}
-
-.results-kicker {
-    display: block;
-    color: #9bd9f5;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.results-count {
-    color: #d8effb;
-    font-size: 0.85rem;
 }
 
 .work-order-stack {
@@ -156,7 +118,7 @@
     grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 1.25rem;
     align-items: center;
-    min-height: 7rem;
+    min-height: 5.85rem;
     overflow: hidden;
     border: 2px solid transparent;
     border-radius: 0.6rem;
@@ -190,7 +152,7 @@
 
 .card-main {
     min-width: 0;
-    padding: 1rem 0 1rem 2.25rem;
+    padding: 0.9rem 0 0.9rem 2.25rem;
 }
 
 .card-heading {
@@ -201,7 +163,7 @@
 }
 
 .card-heading h4 {
-    margin: 0.1rem 0 0.65rem;
+    margin: 0 0 0.55rem;
     overflow: hidden;
     color: var(--ink);
     font-family: Georgia, 'Times New Roman', serif;
@@ -274,7 +236,7 @@
 .manage-link {
     display: grid;
     width: 3.5rem;
-    min-height: 7rem;
+    min-height: 5.85rem;
     place-items: center;
     border-left: 1px solid #e2ded4;
     color: var(--ink);

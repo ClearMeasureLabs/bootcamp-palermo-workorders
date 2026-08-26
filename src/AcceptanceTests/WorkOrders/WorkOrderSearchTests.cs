@@ -148,7 +148,6 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var workOrderCards = workOrderStack.Locator(".work-order-card");
         var cardCount = await workOrderCards.CountAsync();
         cardCount.ShouldBeGreaterThanOrEqualTo(1);
-        await Expect(workOrderCards.First).ToContainTextAsync($"Created by {creator.GetFullName()}");
     }
 
     [Test, Retry(2)]

@@ -3,67 +3,120 @@
 <div class="@AppContainerClass">
     <aside id="app-navigation-rail" class="@SidebarClass">
         <div class="sidebar-header">
-            <div class="church-brand">
-                <div class="church-icon">
-                    <i class="bi bi-building" aria-hidden="true"></i>
+            @if (IsWorkOrderSearchPage)
+            {
+                <a class="clear-measure-brand" href="/">
+                    <span class="clear-measure-mark" aria-hidden="true">
+                        <span class="cross-vertical"></span>
+                        <span class="cross-horizontal"></span>
+                    </span>
+                    <span class="clear-measure-name">Clear<br/>Measure</span>
+                </a>
+            }
+            else
+            {
+                <div class="church-brand">
+                    <div class="church-icon">
+                        <i class="bi bi-building" aria-hidden="true"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h4>First Church</h4>
+                        <span>Springfield</span>
+                    </div>
                 </div>
-                <div class="brand-text">
-                    <h4>First Church</h4>
-                    <span>Springfield</span>
-                </div>
-            </div>
+            }
         </div>
         <nav class="sidebar-nav">
-            <NavMenu/>
+            <NavMenu IsWorkOrderSearchChrome="@IsWorkOrderSearchPage"/>
         </nav>
         <div class="sidebar-footer">
-            <HealthCheckLink/>
+            @if (IsWorkOrderSearchPage)
+            {
+                <AuthorizeView Context="sidebarAuth">
+                    <Authorized>
+                        <div class="sidebar-user">
+                            <span class="sidebar-avatar">@UserInitial(sidebarAuth.User.Identity?.Name)</span>
+                            <span class="sidebar-welcome">
+                                <small>Welcome,</small>
+                                <strong>@sidebarAuth.User.Identity?.Name</strong>
+                            </span>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+            }
+            else
+            {
+                <HealthCheckLink/>
+            }
         </div>
     </aside>
 
     <div class="main-container">
-        <header class="modern-header">
-            <div class="header-content">
-                <div class="header-leading">
-                    <button type="button"
-                            class="nav-rail-toggle"
-                            data-testid="@nameof(Elements.NavRailToggle)"
-                            @ref="_navToggleButtonRef"
-                            @onclick="ToggleNavRailAsync"
-                            aria-controls="app-navigation-rail"
-                            aria-expanded="@NavToggleAriaExpanded"
-                            title="@NavToggleTitle"
-                            aria-label="@NavToggleTitle">
-                        @if (_navVisible)
-                        {
-                            <i class="bi bi-chevron-double-left" aria-hidden="true"></i>
-                        }
-                        else
-                        {
-                            <i class="bi bi-list" aria-hidden="true"></i>
-                        }
-                    </button>
-                    <div class="header-title">
-                        <h3>Work Order Management</h3>
-                        <span class="subtitle">Church Bulletin</span>
+        @if (IsWorkOrderSearchPage)
+        {
+            <button type="button"
+                    class="nav-rail-toggle b3-nav-toggle"
+                    data-testid="@nameof(Elements.NavRailToggle)"
+                    @ref="_navToggleButtonRef"
+                    @onclick="ToggleNavRailAsync"
+                    aria-controls="app-navigation-rail"
+                    aria-expanded="@NavToggleAriaExpanded"
+                    title="@NavToggleTitle"
+                    aria-label="@NavToggleTitle">
+                <i class="bi bi-list" aria-hidden="true"></i>
+            </button>
+            <AuthorizeView Context="headerAuth">
+                <Authorized>
+                    <div class="b3-top-user">Welcome, @headerAuth.User.Identity?.Name</div>
+                </Authorized>
+            </AuthorizeView>
+        }
+        else
+        {
+            <header class="modern-header">
+                <div class="header-content">
+                    <div class="header-leading">
+                        <button type="button"
+                                class="nav-rail-toggle"
+                                data-testid="@nameof(Elements.NavRailToggle)"
+                                @ref="_navToggleButtonRef"
+                                @onclick="ToggleNavRailAsync"
+                                aria-controls="app-navigation-rail"
+                                aria-expanded="@NavToggleAriaExpanded"
+                                title="@NavToggleTitle"
+                                aria-label="@NavToggleTitle">
+                            @if (_navVisible)
+                            {
+                                <i class="bi bi-chevron-double-left" aria-hidden="true"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-list" aria-hidden="true"></i>
+                            }
+                        </button>
+                        <div class="header-title">
+                            <h3>Work Order Management</h3>
+                            <span class="subtitle">Church Bulletin</span>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <AuthorizeView>
+                            <Authorized>
+                                <div class="user-section">
+                                    <Logout/>
+                                </div>
+                            </Authorized>
+                            <NotAuthorized>
+                                <div class="auth-section">
+                                    <LoginLink/>
+                                </div>
+                            </NotAuthorized>
+                        </AuthorizeView>
                     </div>
                 </div>
-                <div class="header-actions">
-                    <AuthorizeView>
-                        <Authorized>
-                            <div class="user-section">
-                                <Logout/>
-                            </div>
-                        </Authorized>
-                        <NotAuthorized>
-                            <div class="auth-section">
-                                <LoginLink/>
-                            </div>
-                        </NotAuthorized>
-                    </AuthorizeView>
-                </div>
-            </div>
-        </header>
+            </header>
+        }
 
         <main class="modern-main">
             <div class="content-wrapper">
@@ -71,19 +124,22 @@
             </div>
         </main>
 
-        <footer class="site-footer" data-testid="@nameof(Elements.CopyrightFooter)">
-            <div class="site-footer-inner">
-                <span class="site-footer-line">
-                    © @CopyrightYear
-                    <a class="site-footer-link"
-                       href="https://clearmeasure.com/"
-                       target="_blank"
-                       rel="noopener noreferrer">ClearMeasure Labs</a>
-                </span>
-                <span class="site-footer-note" data-testid="@nameof(Elements.FooterNote)">
-                    Submit a new work order any time — requests are typically reviewed within one business day.
-                </span>
-            </div>
-        </footer>
+        @if (!IsWorkOrderSearchPage)
+        {
+            <footer class="site-footer" data-testid="@nameof(Elements.CopyrightFooter)">
+                <div class="site-footer-inner">
+                    <span class="site-footer-line">
+                        © @CopyrightYear
+                        <a class="site-footer-link"
+                           href="https://clearmeasure.com/"
+                           target="_blank"
+                           rel="noopener noreferrer">ClearMeasure Labs</a>
+                    </span>
+                    <span class="site-footer-note" data-testid="@nameof(Elements.FooterNote)">
+                        Submit a new work order any time — requests are typically reviewed within one business day.
+                    </span>
+                </div>
+            </footer>
+        }
     </div>
 </div>
