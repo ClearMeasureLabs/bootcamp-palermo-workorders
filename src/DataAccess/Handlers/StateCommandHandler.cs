@@ -10,8 +10,8 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
 /// <summary>
 /// Persists work-order state commands. Existing rows are loaded and updated in place so
-/// EF change tracking compares against database originals (Clear+Attach+Update left
-/// shadow FKs like AssigneeId unmodified when the navigation was null on the detached graph).
+/// EF compares against database originals. Clear+Attach+Update left shadow FKs such as
+/// AssigneeId unmodified when Cancel nulled the navigation on a detached graph (#9118).
 /// </summary>
 public class StateCommandHandler(
     DbContext dbContext,

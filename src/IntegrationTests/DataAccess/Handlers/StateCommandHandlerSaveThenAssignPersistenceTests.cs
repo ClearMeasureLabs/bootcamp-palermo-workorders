@@ -12,11 +12,63 @@ using System.Text.Json;
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 
 /// <summary>
-/// Live Lovejoy path: Save Draft first (Id assigned), then Assign (Update).
-/// Reload must be through a new DbContext / WorkOrderByNumberQuery / get-work-order.
+/// #9118 contracts: Cancel on an existing Assigned row must clear assignee (the live defect);
+/// Save→Assign Update path already wrote ASD correctly and must not regress under load-and-apply.
 /// </summary>
 public class StateCommandHandlerSaveThenAssignPersistenceTests : IntegratedTestBase
 {
+    [Test]
+    public async Task ShouldClearAssigneeAndDate_WhenCancelOnExistingAssignedRowAfterRemoting()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = Faker<Employee>();
+        creator.UserName = "tlovejoy";
+        var assignee = Faker<Employee>();
+        assignee.UserName = "gwillie";
+        var order = Faker<WorkOrder>();
+        order.Id = Guid.Empty;
+        order.Number = "CNLKEEP";
+        order.Status = WorkOrderStatus.Assigned;
+        order.Creator = creator;
+        order.Assignee = assignee;
+        order.AssignedDate = TestHost.TestTime.DateTime;
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(assignee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        WorkOrder forCancel;
+        await using (var loadCtx = TestHost.GetRequiredService<DbContext>())
+        {
+            forCancel = await loadCtx.Set<WorkOrder>().AsNoTracking()
+                .SingleAsync(w => w.Number == "CNLKEEP");
+        }
+
+        var handler = TestHost.GetRequiredService<StateCommandHandler>();
+        var command = RemotableRequestTests.SimulateRemoteObject(
+            new AssignedToCancelledCommand(forCancel, creator));
+        await handler.Handle(command);
+
+        await using var fresh = TestHost.GetRequiredService<DbContext>();
+        var reloaded = await fresh.Set<WorkOrder>().AsNoTracking()
+            .SingleAsync(w => w.Number == "CNLKEEP");
+        var rawStatus = await fresh.Database
+            .SqlQueryRaw<string>(
+                "SELECT CAST([Status] AS nvarchar(10)) AS [Value] FROM [dbo].[WorkOrder] WHERE [Number] = {0}",
+                "CNLKEEP")
+            .SingleAsync();
+
+        reloaded.Status.ShouldBe(WorkOrderStatus.Cancelled);
+        rawStatus.Trim().ShouldBe("CNL");
+        reloaded.AssignedDate.ShouldBeNull();
+        reloaded.Assignee.ShouldBeNull();
+    }
+
     [Test]
     public async Task ShouldPersistAssignedStatusAndDate_WhenSaveDraftThenRemotedAssign_OnExistingId()
     {
@@ -150,56 +202,6 @@ public class StateCommandHandlerSaveThenAssignPersistenceTests : IntegratedTestB
         order.AssignedDate.ShouldBe(TestHost.TestTime.DateTime);
         order.Assignee.ShouldBe(assignee);
         order.Creator.ShouldBe(currentUser);
-    }
-
-    [Test]
-    public async Task ShouldStillCancelAssignedRowClearingAssigneeAndDate()
-    {
-        new DatabaseTests().Clean();
-
-        var creator = Faker<Employee>();
-        var assignee = Faker<Employee>();
-        var order = Faker<WorkOrder>();
-        order.Id = Guid.Empty;
-        order.Number = "CNLKEEP";
-        order.Status = WorkOrderStatus.Assigned;
-        order.Creator = creator;
-        order.Assignee = assignee;
-        order.AssignedDate = TestHost.TestTime.DateTime;
-
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(creator);
-            context.Add(assignee);
-            context.Add(order);
-            await context.SaveChangesAsync();
-        }
-
-        WorkOrder forCancel;
-        await using (var loadCtx = TestHost.GetRequiredService<DbContext>())
-        {
-            forCancel = await loadCtx.Set<WorkOrder>().AsNoTracking()
-                .SingleAsync(w => w.Number == "CNLKEEP");
-        }
-
-        var handler = TestHost.GetRequiredService<StateCommandHandler>();
-        var command = RemotableRequestTests.SimulateRemoteObject(
-            new AssignedToCancelledCommand(forCancel, creator));
-        await handler.Handle(command);
-
-        await using var fresh = TestHost.GetRequiredService<DbContext>();
-        var reloaded = await fresh.Set<WorkOrder>().AsNoTracking()
-            .SingleAsync(w => w.Number == "CNLKEEP");
-        var rawStatus = await fresh.Database
-            .SqlQueryRaw<string>(
-                "SELECT CAST([Status] AS nvarchar(10)) AS [Value] FROM [dbo].[WorkOrder] WHERE [Number] = {0}",
-                "CNLKEEP")
-            .SingleAsync();
-
-        reloaded.Status.ShouldBe(WorkOrderStatus.Cancelled);
-        rawStatus.Trim().ShouldBe("CNL");
-        reloaded.AssignedDate.ShouldBeNull();
-        reloaded.Assignee.ShouldBeNull();
     }
 
     [Test]

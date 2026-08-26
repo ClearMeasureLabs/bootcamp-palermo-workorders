@@ -12,7 +12,8 @@ using Login = ClearMeasure.Bootcamp.UI.Shared.Pages.Login;
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
 /// <summary>
-/// #9118 — Save then Assign must stay Assigned after hard reload, Willie login, search, and get-work-order.
+/// #9118 UX contract — Lovejoy Save then Assign stays Assigned after reload / Willie login /
+/// get-work-order (Assign Update already persisted ASD; Cancel must not leave a Willie+CNL shape).
 /// </summary>
 public class WorkOrderSaveThenAssignPersistenceTests : AcceptanceTestBase
 {

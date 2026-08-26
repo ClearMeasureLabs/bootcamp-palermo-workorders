@@ -9,7 +9,9 @@ using Shouldly;
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 
 /// <summary>
-/// Documents Clear+Attach+Update shadow-FK failure mode and verifies load-and-apply fix.
+/// #9118 — Clear+Attach+Update left shadow AssigneeId unmodified when Cancel nulled the
+/// navigation on a detached graph (live: CNL + null AssignedDate + Willie retained).
+/// Load-and-apply must clear assignee against database originals.
 /// </summary>
 public class StateCommandHandlerUpdatePathTrackerTests : IntegratedTestBase
 {
@@ -46,7 +48,7 @@ public class StateCommandHandlerUpdatePathTrackerTests : IntegratedTestBase
         var remoted = RemotableRequestTests.SimulateRemoteObject(
             new AssignedToCancelledCommand(forCancel, creator));
 
-        // Evidence of the old Clear+Attach+Update failure: AssigneeId.IsModified stayed false.
+        // Parent Clear+Attach+Update failure mode: AssigneeId.IsModified stays false.
         remoted.Execute(new StateCommandContext { CurrentDateTime = TestHost.TestTime.DateTime });
         await using (var probe = TestHost.GetRequiredService<DbContext>())
         {
@@ -55,10 +57,9 @@ public class StateCommandHandlerUpdatePathTrackerTests : IntegratedTestBase
             probe.Update(remoted.WorkOrder);
             var assigneeFk = probe.Entry(remoted.WorkOrder).Property("AssigneeId");
             assigneeFk.IsModified.ShouldBeFalse(
-                "Clear+Attach+Update leaves AssigneeId unmodified when nav is null — root cause of live Cancel leaving assignee");
+                "Clear+Attach+Update leaves AssigneeId unmodified when nav is null — live Cancel left Willie");
         }
 
-        // Handler load-and-apply path must clear assignee against DB originals.
         var freshCommand = RemotableRequestTests.SimulateRemoteObject(
             new AssignedToCancelledCommand(forCancel, creator));
         var handler = TestHost.GetRequiredService<StateCommandHandler>();
@@ -67,56 +68,13 @@ public class StateCommandHandlerUpdatePathTrackerTests : IntegratedTestBase
         await using var fresh = TestHost.GetRequiredService<DbContext>();
         var reloaded = await fresh.Set<WorkOrder>().AsNoTracking()
             .SingleAsync(w => w.Number == "TRKCNL");
-        reloaded.Status.ShouldBe(WorkOrderStatus.Cancelled);
-        reloaded.AssignedDate.ShouldBeNull();
-        reloaded.Assignee.ShouldBeNull();
-    }
-
-    [Test]
-    public async Task ShouldPersistAssignedStatus_WhenClearAttachUpdateWouldMarkStatusModified()
-    {
-        new DatabaseTests().Clean();
-
-        var creator = Faker<Employee>();
-        var assignee = Faker<Employee>();
-        var draft = Faker<WorkOrder>();
-        draft.Id = Guid.Empty;
-        draft.Number = "TRKASD";
-        draft.Status = WorkOrderStatus.Draft;
-        draft.Creator = creator;
-        draft.Assignee = assignee;
-        draft.AssignedDate = null;
-
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(creator);
-            context.Add(assignee);
-            context.Add(draft);
-            await context.SaveChangesAsync();
-        }
-
-        WorkOrder forAssign;
-        await using (var loadCtx = TestHost.GetRequiredService<DbContext>())
-        {
-            forAssign = await loadCtx.Set<WorkOrder>().AsNoTracking()
-                .SingleAsync(w => w.Number == "TRKASD");
-        }
-
-        var handler = TestHost.GetRequiredService<StateCommandHandler>();
-        var command = RemotableRequestTests.SimulateRemoteObject(
-            new DraftToAssignedCommand(forAssign, creator));
-        await handler.Handle(command);
-
-        await using var fresh = TestHost.GetRequiredService<DbContext>();
-        var reloaded = await fresh.Set<WorkOrder>().AsNoTracking()
-            .SingleAsync(w => w.Number == "TRKASD");
         var raw = await fresh.Database.SqlQueryRaw<string>(
             "SELECT CAST([Status] AS nvarchar(10)) AS [Value] FROM [dbo].[WorkOrder] WHERE [Number] = {0}",
-            "TRKASD").SingleAsync();
+            "TRKCNL").SingleAsync();
 
-        reloaded.Status.ShouldBe(WorkOrderStatus.Assigned);
-        raw.Trim().ShouldBe("ASD");
-        reloaded.AssignedDate.ShouldNotBeNull();
-        reloaded.Assignee!.UserName.ShouldBe(assignee.UserName);
+        reloaded.Status.ShouldBe(WorkOrderStatus.Cancelled);
+        raw.Trim().ShouldBe("CNL");
+        reloaded.AssignedDate.ShouldBeNull();
+        reloaded.Assignee.ShouldBeNull();
     }
 }
