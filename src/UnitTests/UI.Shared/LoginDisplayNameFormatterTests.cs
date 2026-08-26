@@ -35,4 +35,11 @@ public class LoginDisplayNameFormatterTests
     {
         LoginDisplayNameFormatter.FormatForLoginDropdown("  \t ").ShouldBe("  \t ".ToUpperInvariant());
     }
+
+    [Test]
+    public void FormatForLoginDropdown_HyphenAndApostrophe_ReturnsUppercase()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown("Mary-Jane O'Brien")
+            .ShouldBe("MARY-JANE O'BRIEN");
+    }
 }
