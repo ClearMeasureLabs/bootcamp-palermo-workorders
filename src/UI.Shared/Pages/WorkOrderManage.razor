@@ -11,17 +11,17 @@
         <ValidationSummary/>
 
         <div class="form-container">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label class="form-label">Creator:</label>
-                    <div>
+            <div class="focus-card">
+                <div class="form-section">
+                    <label class="form-label">Creator</label>
+                    <div class="form-section-content">
                         <span class="value">@Model.CreatorFullName</span>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="AssignedToUserName" class="form-label">Assigned To:</label>
-                    <div>
+                <div class="form-section">
+                    <label for="AssignedToUserName" class="form-label">Assigned To</label>
+                    <div class="form-section-content">
                         @if (!Model.IsReadOnly)
                         {
                             <InputSelect data-testid="@Elements.Assignee" id="AssignedToUserName"
@@ -41,9 +41,9 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="Title" class="form-label">Title:</label>
-                    <div>
+                <div class="form-section">
+                    <label for="Title" class="form-label">Title</label>
+                    <div class="form-section-content">
                         <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
                         <button type="button" data-testid="@Elements.SpeakTitle" class="btn btn-sm btn-outline-secondary" aria-label="Speak title" title="Speak title" @onclick="SpeakTitleAsync">&#x1F50A;</button>
                         @if (!Model.IsReadOnly)
@@ -53,9 +53,9 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="Description" class="form-label">Description:</label>
-                    <div>
+                <div class="form-section">
+                    <label for="Description" class="form-label">Description</label>
+                    <div class="form-section-content">
                         <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
                         <button type="button" data-testid="@Elements.SpeakDescription" class="btn btn-sm btn-outline-secondary" aria-label="Speak description" title="Speak description" @onclick="SpeakDescriptionAsync">&#x1F50A;</button>
                         @if (!Model.IsReadOnly)
@@ -65,18 +65,44 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="Instructions" class="form-label">Instructions:</label>
-                    <div>
+                <div class="form-section">
+                    <label for="Instructions" class="form-label">Instructions</label>
+                    <div class="form-section-content">
                         <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" maxlength="@WorkOrder.InstructionsMaxLength" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="RoomNumber" class="form-label">Room:</label>
-                    <div>
+                <div class="form-section">
+                    <label for="RoomNumber" class="form-label">Room</label>
+                    <div class="form-section-content">
                         <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly"/>
                     </div>
+                </div>
+
+                <div class="form-section due-date-section">
+                    @if (!Model.IsReadOnly)
+                    {
+                        <label for="DueDate" class="form-label">Due Date</label>
+                        <div class="form-section-content due-date-field">
+                            <InputDate TValue="DateOnly?" data-testid="@Elements.DueDate" id="DueDate"
+                                       @bind-Value="Model.DueDateInput"
+                                       class="@($"form-control input-date {CurrentDueDateCssClass}")" />
+                            @if (!string.IsNullOrEmpty(CurrentDueDateUrgencyText))
+                            {
+                                <span class="visually-hidden">@CurrentDueDateUrgencyText</span>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="form-label">Due Date</span>
+                        <div class="form-section-content">
+                            <span data-testid="@Elements.DueDateDisplay" class="value @CurrentDueDateCssClass">@Model.DueDateDisplay@if (!string.IsNullOrEmpty(CurrentDueDateUrgencyText))
+                                {
+                                    <span class="visually-hidden">@CurrentDueDateUrgencyText</span>
+                                }</span>
+                        </div>
+                    }
                 </div>
             </div>
 
@@ -89,28 +115,6 @@
 
                 <span class="label">Completed Date:</span>
                 <span data-testid="@Elements.CompletedDate" class="value">@Model.CompletedDate</span>
-
-                <div class="due-date-field">
-                    @if (!Model.IsReadOnly)
-                    {
-                        <label for="DueDate" class="label">Due Date</label>
-                        <InputDate TValue="DateOnly?" data-testid="@Elements.DueDate" id="DueDate"
-                                   @bind-Value="Model.DueDateInput"
-                                   class="@($"form-control input-date {CurrentDueDateCssClass}")" />
-                        @if (!string.IsNullOrEmpty(CurrentDueDateUrgencyText))
-                        {
-                            <span class="visually-hidden">@CurrentDueDateUrgencyText</span>
-                        }
-                    }
-                    else
-                    {
-                        <span class="label">Due Date</span>
-                        <span data-testid="@Elements.DueDateDisplay" class="value @CurrentDueDateCssClass">@Model.DueDateDisplay@if (!string.IsNullOrEmpty(CurrentDueDateUrgencyText))
-                            {
-                                <span class="visually-hidden">@CurrentDueDateUrgencyText</span>
-                            }</span>
-                    }
-                </div>
             </div>
             
             @if (_workOrder != null)

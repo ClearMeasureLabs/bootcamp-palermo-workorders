@@ -88,11 +88,11 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        workOrderTable.ShouldNotBeNull();
+        var cardList = component.Find(".work-order-card-list");
+        cardList.ShouldNotBeNull();
 
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderCards = cardList.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
     }
 
     [Test]
@@ -114,8 +114,8 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
+        var workOrderTable = component.Find(".work-order-card-list");
+        var workOrderRows = workOrderTable.QuerySelectorAll(".work-order-card");
         workOrderRows.Length.ShouldBe(2);
     }
 
@@ -138,8 +138,8 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
+        var workOrderTable = component.Find(".work-order-card-list");
+        var workOrderRows = workOrderTable.QuerySelectorAll(".work-order-card");
         workOrderRows.Length.ShouldBe(2);
     }
 
@@ -162,8 +162,8 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
+        var workOrderTable = component.Find(".work-order-card-list");
+        var workOrderRows = workOrderTable.QuerySelectorAll(".work-order-card");
         workOrderRows.Length.ShouldBe(2);
     }
 
@@ -193,10 +193,52 @@ public class WorkOrderSearchTests
         await searchButton.ClickAsync(new());
 
         // Assert
-        var workOrderTable = component.Find(".grid-data");
-        workOrderTable.ShouldNotBeNull();
+        var cardList = component.Find(".work-order-card-list");
+        cardList.ShouldNotBeNull();
 
-        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        var workOrderCards = cardList.QuerySelectorAll(".work-order-card");
+        workOrderCards.Length.ShouldBe(2);
+    }
+
+    [Test]
+    public async Task ShouldRenderSearchResultsAsCardStack_WhenWorkOrdersReturned()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.Markup.ShouldNotContain("grid-data");
+        var cardList = component.Find(".work-order-card-list");
+        cardList.ShouldNotBeNull();
+
+        var cards = cardList.QuerySelectorAll(".work-order-card");
+        cards.Length.ShouldBeGreaterThan(0);
+
+        foreach (var card in cards)
+        {
+            card.QuerySelector("[data-testid^='WorkOrderLink']").ShouldNotBeNull();
+            card.QuerySelector("[data-testid^='DueDateCell']").ShouldNotBeNull();
+        }
+    }
+
+    [Test]
+    public async Task ShouldRenderFilterControlsAsChips_WhenSearchPageLoads()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.Find(".filters-grid").ShouldNotBeNull();
+        AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.CreatorSelect);
+        AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.AssigneeSelect);
+        AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.StatusSelect);
     }
 }

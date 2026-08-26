@@ -67,49 +67,31 @@
             }
             else
             {
-                <table class="grid-data">
-                    <thead>
-                    <tr>
-                        <th>WO #</th>
-                        <th>Creator</th>
-                        <th>Assignee</th>
-                        <th>Status</th>
-                        <th>Title</th>
-                        <th>Due Date</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @{
-                        var i = 0;
-                        foreach (var order in Model.Results)
-                        {
-                            var rowClass = i++ % 2 == 0 ? "odd" : "even";
-                            <tr class="@rowClass">
-                                <td>
-                                    @{
-                                        var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
-                                    }
-                                    <a data-testid="@workOrderLinkTestId" href="/workorder/manage/@order.Number?mode=Edit">
-                                        @order.Number
-                                    </a>
-                                </td>
-                                <td>@order.Creator?.GetFullName()</td>
-                                <td>@order.Assignee?.GetFullName()</td>
-                                <td>
-                                    <span class="status-badge">@order.Status</span>
-                                </td>
-                                <td>@order.Title</td>
-                                <td>
-                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
-                                        {
-                                            <span class="visually-hidden">@order.DueDateUrgencyText</span>
-                                        }</span>
-                                </td>
-                            </tr>
-                        }
+                <div class="work-order-card-list">
+                    @foreach (var order in Model.Results)
+                    {
+                        var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
+                        <article class="work-order-card">
+                            <div class="work-order-card-header">
+                                <a data-testid="@workOrderLinkTestId" class="work-order-card-number" href="/workorder/manage/@order.Number?mode=Edit">
+                                    @order.Number
+                                </a>
+                                <h3 class="work-order-card-title">@order.Title</h3>
+                            </div>
+                            <div class="work-order-card-meta">
+                                <span class="work-order-card-meta-item">Creator: @order.Creator?.GetFullName()</span>
+                                <span class="work-order-card-meta-item">Assignee: @order.Assignee?.GetFullName()</span>
+                                <span class="status-badge">@order.Status</span>
+                            </div>
+                            <div class="work-order-card-due">
+                                <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+                                    {
+                                        <span class="visually-hidden">@order.DueDateUrgencyText</span>
+                                    }</span>
+                            </div>
+                        </article>
                     }
-                    </tbody>
-                </table>
+                </div>
             }
         </div>
     </div>

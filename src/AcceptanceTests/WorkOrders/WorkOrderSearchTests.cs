@@ -1,4 +1,7 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -112,12 +115,12 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await TakeScreenshotAsync(1, "InitialLoad");
 
         // Assert
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var cardList = Page.Locator(".work-order-card-list");
+        await Expect(cardList).ToBeVisibleAsync();
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        var rowCount = await workOrderRows.CountAsync();
-        await Expect(workOrderRows).ToHaveCountAsync(rowCount);
+        var workOrderCards = cardList.Locator(".work-order-card");
+        var cardCount = await workOrderCards.CountAsync();
+        await Expect(workOrderCards).ToHaveCountAsync(cardCount);
     }
 
     [Test, Retry(2)]
@@ -142,13 +145,13 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         await Expect(creatorSelect).ToHaveValueAsync(creator.UserName);
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var cardList = Page.Locator(".work-order-card-list");
+        await Expect(cardList).ToBeVisibleAsync();
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        var rowCount = await workOrderRows.CountAsync();
-        rowCount.ShouldBeGreaterThanOrEqualTo(1);
-        await Expect(workOrderRows.First.Locator("td:nth-child(2)")).ToContainTextAsync(creator.GetFullName());
+        var workOrderCards = cardList.Locator(".work-order-card");
+        var cardCount = await workOrderCards.CountAsync();
+        cardCount.ShouldBeGreaterThanOrEqualTo(1);
+        await Expect(workOrderCards.First).ToContainTextAsync(creator.GetFullName());
     }
 
     [Test, Retry(2)]
@@ -177,13 +180,13 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         await Expect(assigneeSelect).ToHaveValueAsync(assignee.UserName);
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var cardList = Page.Locator(".work-order-card-list");
+        await Expect(cardList).ToBeVisibleAsync();
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        var rowCount = await workOrderRows.CountAsync();
-        rowCount.ShouldBeGreaterThanOrEqualTo(1);
-        await Expect(workOrderRows.First.Locator("td:nth-child(3)")).ToContainTextAsync(assignee.GetFullName());
+        var workOrderCards = cardList.Locator(".work-order-card");
+        var cardCount = await workOrderCards.CountAsync();
+        cardCount.ShouldBeGreaterThanOrEqualTo(1);
+        await Expect(workOrderCards.First).ToContainTextAsync(assignee.GetFullName());
     }
 
     [Test, Retry(2)]
@@ -210,12 +213,12 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
         await Expect(statusSelect).ToHaveValueAsync(status.Key);
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var cardList = Page.Locator(".work-order-card-list");
+        await Expect(cardList).ToBeVisibleAsync();
 
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        await Expect(workOrderRows).ToHaveCountAsync(await workOrderRows.CountAsync());
-        await Expect(workOrderRows.First.Locator("td:nth-child(4)")).ToContainTextAsync(status.FriendlyName);
+        var workOrderCards = cardList.Locator(".work-order-card");
+        await Expect(workOrderCards).ToHaveCountAsync(await workOrderCards.CountAsync());
+        await Expect(workOrderCards.First).ToContainTextAsync(status.FriendlyName);
     }
 
     [Test, Retry(2)]
@@ -256,14 +259,13 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await TakeScreenshotAsync(3, "SearchCompleted");
 
         // Assert
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var cardList = Page.Locator(".work-order-card-list");
+        await Expect(cardList).ToBeVisibleAsync();
 
-        // Wait for the table body to update with filtered results
-        await workOrderTable.Locator("tbody").WaitForAsync();
-        
-        var workOrderRows = workOrderTable.Locator("tbody tr");
-        await Expect(workOrderRows).ToHaveCountAsync(1);
+        await cardList.Locator(".work-order-card").First.WaitForAsync();
+
+        var workOrderCards = cardList.Locator(".work-order-card");
+        await Expect(workOrderCards).ToHaveCountAsync(1);
     }
 
     [Test, Retry(2)]
@@ -284,10 +286,10 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "SearchPageLoaded");
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var cardList = Page.Locator(".work-order-card-list");
+        await Expect(cardList).ToBeVisibleAsync();
 
-        var firstWorkOrderLink = workOrderTable.Locator("tbody tr").First.Locator("td").First.Locator("a");
+        var firstWorkOrderLink = cardList.Locator(".work-order-card").First.Locator("a.work-order-card-number");
         var workOrderNumber = await firstWorkOrderLink.TextContentAsync();
 
         if (!string.IsNullOrEmpty(workOrderNumber))
@@ -336,8 +338,8 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         // Assert
         await Expect(creatorSelect).ToHaveValueAsync("");
 
-        var workOrderTable = Page.Locator(".grid-data");
-        await Expect(workOrderTable).ToBeVisibleAsync();
+        var cardList = Page.Locator(".work-order-card-list");
+        await Expect(cardList).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]
@@ -423,5 +425,130 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.AllWorkOrdersInProgress));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key, new() { Timeout = 30_000 });
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_ShowSearchResultsAsCards_NotGridTable()
+    {
+        var creator = Faker<Employee>();
+        var workOrder = Faker<WorkOrder>();
+        workOrder.Creator = creator;
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(workOrder);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.Locator(".work-order-card-list")).ToBeVisibleAsync();
+        await Expect(Page.Locator("table.grid-data")).ToHaveCountAsync(0);
+
+        var linkTestId = nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrder.Number;
+        await Page.GetByTestId(linkTestId).ClickAsync();
+        await Page.WaitForURLAsync(new Regex($"/workorder/manage/{Regex.Escape(workOrder.Number!)}"));
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_ShowDueDateUrgencyPillsOnSearchCards()
+    {
+        var today = ChurchTimeZone.Today(TimeProvider.System);
+        var overdue = today.AddDays(-2);
+
+        var todayOrder = await SeedDraftWithDueDateAsync($"[{TestTag}] card due today", today);
+        var overdueOrder = await SeedDraftWithDueDateAsync($"[{TestTag}] card overdue", overdue);
+        var emptyOrder = await SeedDraftWithDueDateAsync($"[{TestTag}] card empty due", null);
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var todayCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + todayOrder.Number);
+        var overdueCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + overdueOrder.Number);
+        var emptyCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + emptyOrder.Number);
+
+        await Expect(todayCell).ToHaveClassAsync(new Regex("due-date-today"));
+        await Expect(overdueCell).ToHaveClassAsync(new Regex("due-date-overdue"));
+        await Expect(emptyCell).Not.ToHaveClassAsync(new Regex("due-date-today|due-date-overdue"));
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_ShowManageFocusCardWithStackedSections()
+    {
+        var order = await SeedDraftWithDueDateAsync($"[{TestTag}] focus card", null);
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await ClickWorkOrderNumberFromSearchPage(order);
+
+        await Expect(Page.Locator(".focus-card")).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name)).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + DraftToAssignedCommand.Name)).ToBeVisibleAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_FilterSearchThenOpenCardAndSave()
+    {
+        var creator = CurrentUser;
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.Title = $"[{TestTag}] filter card save";
+
+        await using var context = TestHost.NewDbContext();
+        context.Attach(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}").SelectOptionAsync(creator.UserName);
+        await Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}").ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var updatedTitle = $"{order.Title} updated";
+        await ClickWorkOrderNumberFromSearchPage(order);
+        await Input(nameof(WorkOrderManage.Elements.Title), updatedTitle);
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+
+        await Expect(Page.Locator(".work-order-card-list")).ToBeVisibleAsync();
+        await Expect(Page.Locator(".work-order-card-list")).ToContainTextAsync(updatedTitle);
+    }
+
+    private async Task<WorkOrder> SeedDraftWithDueDateAsync(string title, DateOnly? dueDate)
+    {
+        var order = Faker<WorkOrder>();
+        order.Title = title;
+        order.Number = null;
+        order.DueDate = dueDate;
+        order.Creator = CurrentUser;
+
+        await using var context = TestHost.NewDbContext();
+        context.Attach(CurrentUser);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        order.Number = await woNumberLocator.InnerTextAsync();
+
+        await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
+        await Input(nameof(WorkOrderManage.Elements.Description), order.Description ?? "desc");
+
+        if (dueDate.HasValue)
+        {
+            await Page.GetByTestId(nameof(WorkOrderManage.Elements.DueDate))
+                .FillAsync(dueDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+        }
+
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        return order;
     }
 }
