@@ -91,6 +91,7 @@ internal static class ApiPublicPathRules
         "ping",
         "echo",
         "tools/random",
+        "tools/hash",
         "tools/timestamp-converter",
         "tools/guid-generator",
         "health",
