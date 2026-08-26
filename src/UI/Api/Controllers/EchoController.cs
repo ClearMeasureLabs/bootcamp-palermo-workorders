@@ -36,7 +36,7 @@ public class EchoController : ControllerBase
     /// <summary>
     /// Builds an <see cref="EchoResponse"/> from the current HTTP context.
     /// </summary>
-    internal static EchoResponse BuildEchoResponse(HttpContext httpContext)
+    private static EchoResponse BuildEchoResponse(HttpContext httpContext)
     {
         var request = httpContext.Request;
         var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

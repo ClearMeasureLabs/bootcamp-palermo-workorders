@@ -11,15 +11,23 @@ public class EchoControllerTests
     [Test]
     public void Get_Should_ReflectMethodPathQueryAndHeaders()
     {
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Method = "GET";
-        httpContext.Request.Scheme = "https";
-        httpContext.Request.Host = new HostString("localhost:7174");
-        httpContext.Request.Path = "/api/echo";
-        httpContext.Request.QueryString = new QueryString("?foo=bar&x=1");
-        httpContext.Request.Protocol = "HTTP/2";
+        var httpContext = new DefaultHttpContext
+        {
+            Request =
+            {
+                Method = "GET",
+                Scheme = "https",
+                Host = new HostString("localhost:7174"),
+                Path = "/api/echo",
+                QueryString = new QueryString("?foo=bar&x=1"),
+                Protocol = "HTTP/2"
+            },
+            Connection =
+            {
+                RemoteIpAddress = System.Net.IPAddress.Parse("127.0.0.1")
+            }
+        };
         httpContext.Request.Headers["X-Debug"] = "trace-1";
-        httpContext.Connection.RemoteIpAddress = System.Net.IPAddress.Parse("127.0.0.1");
 
         var controller = new EchoController
         {
@@ -43,9 +51,14 @@ public class EchoControllerTests
     [Test]
     public void Get_Should_RedactSensitiveHeaders()
     {
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Method = "GET";
-        httpContext.Request.Path = "/api/echo";
+        var httpContext = new DefaultHttpContext
+        {
+            Request =
+            {
+                Method = "GET",
+                Path = "/api/echo"
+            }
+        };
         httpContext.Request.Headers["Authorization"] = "Bearer secret-token";
         httpContext.Request.Headers["X-Api-Key"] = "api-key-value";
         httpContext.Request.Headers["Cookie"] = "session=abc";
