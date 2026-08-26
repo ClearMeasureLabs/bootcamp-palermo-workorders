@@ -221,7 +221,7 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public async Task ShouldExposeWorkOrderNumberOnManageLinkForSearchParity()
+    public async Task ShouldExposeWorkOrderNumberAsManageLinkText()
     {
         await using var ctx = new BunitContext();
 
@@ -230,11 +230,14 @@ public class WorkOrderSearchTests
         ctx.Services.AddSingleton(TimeProvider.System);
 
         var component = ctx.Render<WorkOrderSearch>();
+        var manageLinks = component.FindAll(".manage-link");
 
-        foreach (var number in new[] { "WO-001", "WO-002" })
+        manageLinks.Count.ShouldBe(2);
+        foreach (var link in manageLinks)
         {
-            var link = component.Find($"[data-testid='{WorkOrderSearch.Elements.WorkOrderLink}{number}']");
-            link.TextContent.ShouldContain(number);
+            var number = link.TextContent.Trim();
+            number.ShouldNotBeNullOrWhiteSpace();
+            link.GetAttribute("data-testid").ShouldBe(WorkOrderSearch.Elements.WorkOrderLink + number);
         }
     }
 }
