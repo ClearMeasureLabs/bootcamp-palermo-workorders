@@ -85,6 +85,10 @@ public class LoginPageTests
 
         var jdoeOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "jdoe");
         jdoeOption.TextContent.ShouldBe("MARY JANE SIMPSON");
+
+        var mburnsOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "mburns");
+        mburnsOption.TextContent.ShouldBe("MONTGOMERY BURNS");
+        mburnsOption.GetAttribute("value").ShouldBe("mburns");
     }
 
     [Test]
