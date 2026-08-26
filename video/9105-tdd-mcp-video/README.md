@@ -59,3 +59,7 @@ Attachments: **list-only**. There is no file picker (#9104 Done as no-op). Captu
 ## Cloud VM note
 
 If live Playwright capture against TDD cannot run in the cloud agent (egress / browser), the package still lands with capture scripts, narration, composition, and README. Re-run `npm run capture` from a machine that can reach the TDD host, then `npm run render`. Do **not** stub fake MCP responses into the tape.
+
+## Verify gate
+
+`npm run verify` checks composition size (1280×800 @ 30fps), church-language narration, and the committed customer-training mp4.
