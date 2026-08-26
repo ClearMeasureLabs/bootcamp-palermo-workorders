@@ -23,6 +23,15 @@ public class ToolsRandomController : ControllerBase
 
     private const int AlphanumericLength = 12;
 
+    private static readonly Dictionary<string, Func<string>> Generators =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["number"] = () => Random.Shared.Next().ToString(CultureInfo.InvariantCulture),
+            ["string"] = GenerateAlphanumeric,
+            ["uuid"] = static () => Guid.NewGuid().ToString("D"),
+            ["color"] = static () => $"#{Random.Shared.Next(0x1000000):X6}"
+        };
+
     /// <summary>
     /// Returns a random value as plain text for the requested <paramref name="type"/>.
     /// Supported types: <c>number</c>, <c>string</c>, <c>uuid</c>, <c>color</c>.
@@ -41,17 +50,7 @@ public class ToolsRandomController : ControllerBase
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var normalized = type.Trim().ToLowerInvariant();
-        var content = normalized switch
-        {
-            "number" => Random.Shared.Next().ToString(CultureInfo.InvariantCulture),
-            "string" => GenerateAlphanumeric(),
-            "uuid" => Guid.NewGuid().ToString("D"),
-            "color" => $"#{Random.Shared.Next(0x1000000):X6}",
-            _ => null
-        };
-
-        if (content is null)
+        if (!Generators.TryGetValue(type.Trim(), out var generator))
         {
             return Problem(
                 detail: $"Unknown type '{type}'. Supported values: number, string, uuid, color.",
@@ -60,7 +59,7 @@ public class ToolsRandomController : ControllerBase
 
         return new ContentResult
         {
-            Content = content,
+            Content = generator(),
             ContentType = "text/plain; charset=utf-8",
             StatusCode = StatusCodes.Status200OK
         };
