@@ -1,0 +1,36 @@
+a.login-link-blink {
+	animation: login-link-blink-pulse 0.7s steps(2, end) infinite;
+	background-color: #f6e05e !important;
+	color: #1a202c !important;
+	font-weight: 700 !important;
+	transition: none !important;
+	outline: 3px solid #c53030;
+	outline-offset: 2px;
+}
+
+@keyframes login-link-blink-pulse {
+	0%,
+	100% {
+		opacity: 1;
+		background-color: #f6e05e;
+		color: #1a202c;
+		outline-color: #c53030;
+	}
+
+	50% {
+		opacity: 0.15;
+		background-color: #fc8181;
+		color: #742a2a;
+		outline-color: #f6e05e;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	a.login-link-blink {
+		animation: none;
+		opacity: 1;
+		background-color: #f6e05e !important;
+		color: #1a202c !important;
+		outline: 3px solid #c53030;
+	}
+}
