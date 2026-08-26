@@ -73,6 +73,7 @@ public partial class WorkOrderSearch : AppComponentBase
 
         var workOrders = await Bus.Send(specification);
         Model.Results = workOrders.Select(MapSearchRow).ToArray();
+        SelectedResultIndex = Model.Results.Length == 0 ? 0 : Model.Results.Length / 2;
         StateHasChanged();
     }
 
