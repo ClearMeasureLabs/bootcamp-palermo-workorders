@@ -6,8 +6,10 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
 [TestFixture]
 public class ApiKeyAuthenticationMiddlewareTests
 {
-    [TestCase("/api/health", false)]
-    [TestCase("/api/v1.0/health", false)]
+    [TestCase("/api/health", true)]
+    [TestCase("/api/health/detailed", true)]
+    [TestCase("/api/v1.0/health", true)]
+    [TestCase("/api/v1.0/health/detailed", true)]
     [TestCase("/api/diagnostics", false)]
     [TestCase("/api/v1.0/diagnostics", false)]
     [TestCase("/api/version", true)]
@@ -19,6 +21,8 @@ public class ApiKeyAuthenticationMiddlewareTests
     [TestCase("/api/echo", true)]
     [TestCase("/api/v1.0/echo", true)]
     [TestCase("/api/WeatherForecast", false)]
+    [TestCase("/api/status/environment", false)]
+    [TestCase("/api/v1.0/status/environment", false)]
     public void ShouldValidate_ReturnsExpected_When_PathAndOptions(string path, bool expectPublicSkip)
     {
         var options = new ApiKeyAuthenticationOptions { Enabled = true, ValidationKey = "secret" };

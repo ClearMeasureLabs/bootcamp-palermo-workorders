@@ -1,36 +1,61 @@
-a.login-link-blink {
-	animation: login-link-blink-pulse 0.7s steps(2, end) infinite;
-	background-color: #f6e05e !important;
-	color: #1a202c !important;
-	font-weight: 700 !important;
-	transition: none !important;
-	outline: 3px solid #c53030;
-	outline-offset: 2px;
+/*
+	The scoped bundle emits this file before MainLayout.razor.css, and
+	`.auth-section ::deep a` matches the header Login anchor at the same
+	specificity, so it would win every tie. Qualifying with `.auth-section`
+	outranks it and keeps the pulse (not the header's muted gray and
+	`transition: all`) in control of color and opacity.
+
+	`:global(...)` is copied verbatim into the bundle and is not a real CSS
+	pseudo-class, so browsers drop any rule that uses it. Ancestor selectors
+	are written plainly instead; Razor only appends the scope identifier to
+	the last compound selector.
+*/
+a.login-link-blink,
+.auth-section a.login-link-blink {
+	--login-blink-bright: #2b6cb0;
+	--login-blink-dim: #4a5568;
+	font-weight: 600;
+	color: var(--login-blink-bright);
+	opacity: 1;
+	transition: background-color 0.3s ease;
+	animation: login-link-blink-pulse 1.5s ease-in-out infinite;
+}
+
+html[data-theme="dark"] a.login-link-blink,
+html[data-theme="dark"] .auth-section a.login-link-blink {
+	--login-blink-bright: #90cdf4;
+	--login-blink-dim: #a0aec0;
 }
 
 @keyframes login-link-blink-pulse {
 	0%,
 	100% {
 		opacity: 1;
-		background-color: #f6e05e;
-		color: #1a202c;
-		outline-color: #c53030;
+		color: var(--login-blink-bright);
 	}
 
 	50% {
-		opacity: 0.15;
-		background-color: #fc8181;
-		color: #742a2a;
-		outline-color: #f6e05e;
+		opacity: 0.55;
+		color: var(--login-blink-dim);
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	a.login-link-blink {
+	a.login-link-blink,
+	.auth-section a.login-link-blink {
 		animation: none;
 		opacity: 1;
-		background-color: #f6e05e !important;
-		color: #1a202c !important;
-		outline: 3px solid #c53030;
+		color: var(--login-blink-bright);
+		font-weight: 700;
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+
+	.auth-section a.login-link-blink:hover,
+	.auth-section a.login-link-blink:focus {
+		color: var(--login-blink-bright);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+		opacity: 1;
 	}
 }

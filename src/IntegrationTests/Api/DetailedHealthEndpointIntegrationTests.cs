@@ -364,4 +364,40 @@ public class DetailedHealthEndpointIntegrationTests
                 || c.Status == ComponentHealthStatus.Unhealthy).ShouldBeTrue();
         }
     }
+
+    [Test]
+    public async Task Should_Return200AndJson_When_GetVersionedDetailedHealth()
+    {
+        var response = await _client!.GetAsync("/api/v1.0/health/detailed");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        mediaType.ShouldNotBeNull();
+        mediaType.ShouldContain("application/json");
+
+        var report = await response.Content.ReadFromJsonAsync<DetailedHealthReport>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        report.ShouldNotBeNull();
+        report.OverallStatus.ShouldNotBeNullOrWhiteSpace();
+        report.Components.Count.ShouldBeGreaterThan(0);
+        foreach (var c in report.Components)
+        {
+            c.Name.ShouldNotBeNullOrWhiteSpace();
+            c.Status.ShouldNotBeNullOrWhiteSpace();
+        }
+    }
+
+    [Test]
+    public async Task Should_SupportConditionalGet_When_ETagMatches()
+    {
+        var first = await _client!.GetAsync("/api/health/detailed");
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var etag = first.Headers.ETag.ShouldNotBeNull();
+
+        using var second = new HttpRequestMessage(HttpMethod.Get, "/api/health/detailed");
+        second.Headers.IfNoneMatch.Add(etag);
+        var notModified = await _client.SendAsync(second);
+        notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
+        (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
+    }
 }

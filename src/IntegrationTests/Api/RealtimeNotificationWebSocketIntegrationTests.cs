@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core.Messaging;
 using ClearMeasure.Bootcamp.Core.Model.Events;
 using ClearMeasure.Bootcamp.UI.Client;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
+using ClearMeasure.Bootcamp.UI.Shared;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -27,6 +28,9 @@ public class RealtimeNotificationWebSocketIntegrationTests
     {
         _factory = new DetailedHealthWebApplicationFactory();
         _client = _factory.CreateClient();
+        _client.DefaultRequestHeaders.Add(
+            ApiKeyConstants.HeaderName,
+            DetailedHealthWebApplicationFactory.IntegrationApiKey);
     }
 
     [OneTimeTearDown]

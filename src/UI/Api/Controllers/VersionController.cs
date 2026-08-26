@@ -29,9 +29,11 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
         var assembly = Assembly.GetExecutingAssembly();
         var assemblyVersion = assembly.GetName().Version?.ToString();
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var buildConfiguration = ResolveBuildConfiguration(assembly);
         var payload = new VersionMetadataResponse(
             AssemblyVersion: assemblyVersion,
             InformationalVersion: informationalVersion,
+            BuildConfiguration: buildConfiguration,
             Environment: hostEnvironment.EnvironmentName,
             MachineName: Environment.MachineName,
             FrameworkDescription: RuntimeInformation.FrameworkDescription);
@@ -41,6 +43,19 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
             return StatusCode(StatusCodes.Status304NotModified);
         return ConditionalGetEtag.JsonContent(payload);
     }
+
+    private static string ResolveBuildConfiguration(Assembly assembly)
+    {
+        var fromAttribute = assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()?.Configuration;
+        if (!string.IsNullOrWhiteSpace(fromAttribute))
+            return fromAttribute;
+
+#if DEBUG
+        return "Debug";
+#else
+        return "Release";
+#endif
+    }
 }
 
 /// <summary>
@@ -49,6 +64,7 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
 public record VersionMetadataResponse(
     string? AssemblyVersion,
     string? InformationalVersion,
+    string BuildConfiguration,
     string? Environment,
     string MachineName,
     string FrameworkDescription);
