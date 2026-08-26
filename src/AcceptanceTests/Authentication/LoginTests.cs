@@ -78,23 +78,51 @@ public class LoginTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task Should_ShowBlinkingLoginLink_WhenAnonymous()
+    public async Task Should_ShowLoginLinkWithBlinkClass_WhenAnonymous()
     {
-        await Page.GotoAsync("/");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        var logoutLink = Page.GetByTestId(nameof(Logout.Elements.LogoutLink));
-        if (await logoutLink.CountAsync() > 0)
-        {
-            await logoutLink.ClickAsync();
-            await Page.WaitForURLAsync("**/");
-        }
+        await EnsureAnonymousHomeAsync();
 
         var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
         await Expect(loginLink).ToBeVisibleAsync();
         await Expect(loginLink).ToHaveClassAsync(new Regex("login-link-blink"));
         await Expect(loginLink).ToHaveAttributeAsync("href", "/login");
         await Expect(loginLink).ToHaveTextAsync("Login");
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_NavigateToLogin_WhenBlinkingLoginClicked()
+    {
+        await EnsureAnonymousHomeAsync();
+
+        var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await Expect(loginLink).ToHaveClassAsync(new Regex("login-link-blink"));
+
+        await Click(nameof(LoginLink.Elements.LoginLink));
+        await Page.WaitForURLAsync("**/login");
+        await Expect(Page.GetByTestId(nameof(Login.Elements.User))).ToBeVisibleAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_HideBlinkingLogin_WhenLoggedIn()
+    {
+        await LoginAsCurrentUser();
+
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
+        await Expect(Page.Locator(".login-link-blink")).ToHaveCountAsync(0);
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText))).ToBeVisibleAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_RestoreBlinkingLogin_WhenLoggedOut()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(Logout.Elements.LogoutLink));
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToBeVisibleAsync();
+
+        var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
+        await Expect(loginLink).ToHaveClassAsync(new Regex("login-link-blink"));
+        await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText))).ToHaveCountAsync(0);
     }
 
     [Test, Retry(2)]
@@ -315,6 +343,21 @@ public class LoginTests : AcceptanceTestBase
 
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
             .ToHaveTextAsync("Welcome tlovejoy!");
+    }
+
+    private async Task EnsureAnonymousHomeAsync()
+    {
+        await Page.GotoAsync("/");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var logoutLink = Page.GetByTestId(nameof(Logout.Elements.LogoutLink));
+        if (await logoutLink.CountAsync() > 0)
+        {
+            await logoutLink.ClickAsync();
+            await Page.WaitForURLAsync("**/");
+        }
+
+        await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToBeVisibleAsync();
     }
 
     private async Task<string?> GetPersistedUsernameAsync() =>
