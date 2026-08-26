@@ -41,6 +41,8 @@ npm run capture
 npm run render
 # Copy deliverable:
 cp out/customer-training-grok-tdd-mcp.mp4 artifacts/customer-training-grok-tdd-mcp.mp4
+# Package gates (dims, church-language narration, artifact):
+npm run verify
 ```
 
 ## Scene order
