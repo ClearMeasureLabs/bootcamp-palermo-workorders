@@ -49,9 +49,17 @@ public class DetailedHealthApiAcceptanceTests : AcceptanceTestBase
         var client = TestHttpClientFactory.CreateInsecureClient();
         using var response = await client.GetAsync($"{ServerFixture.ApplicationBaseUrl}/api/v1.0/health/detailed");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
 
-        var body = await response.Content.ReadAsStringAsync();
-        body.ShouldContain("overallStatus");
-        body.ShouldContain("components");
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        var root = doc.RootElement;
+
+        root.TryGetProperty("overallStatus", out var overallStatus).ShouldBeTrue();
+        overallStatus.GetString().ShouldNotBeNullOrWhiteSpace();
+
+        root.TryGetProperty("components", out var components).ShouldBeTrue();
+        components.ValueKind.ShouldBe(JsonValueKind.Array);
+        components.GetArrayLength().ShouldBeGreaterThan(0);
     }
 }
