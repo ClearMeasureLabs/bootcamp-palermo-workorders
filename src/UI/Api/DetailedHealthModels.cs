@@ -142,6 +142,8 @@ internal sealed record DetailedHealthEtagFingerprint
                 ExceptionMessage = c.ExceptionMessage,
                 Data = StableDataEntries(c.Data)
             })
+            .OrderBy(c => c.Name, StringComparer.Ordinal)
+            .ThenBy(c => c.Status, StringComparer.Ordinal)
             .ToList();
 
         return new DetailedHealthEtagFingerprint

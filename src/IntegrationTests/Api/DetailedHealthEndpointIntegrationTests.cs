@@ -392,11 +392,10 @@ public class DetailedHealthEndpointIntegrationTests
     {
         var first = await _client!.GetAsync("/api/health/detailed");
         first.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var etag = first.Headers.ETag;
-        etag.ShouldNotBeNull();
+        var etag = first.Headers.ETag.ShouldNotBeNull();
 
         using var second = new HttpRequestMessage(HttpMethod.Get, "/api/health/detailed");
-        second.Headers.IfNoneMatch.Add(etag!);
+        second.Headers.IfNoneMatch.Add(etag);
         var notModified = await _client.SendAsync(second);
         notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
         (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
