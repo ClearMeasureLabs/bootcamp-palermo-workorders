@@ -406,15 +406,18 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(assigneeSelect).ToHaveValueAsync("");
         await Expect(statusSelect).ToHaveValueAsync("");
 
-        await Click(nameof(NavMenu.Elements.MyWorkOrders));
+        await Page.GotoAsync(
+            $"{ServerFixture.ApplicationBaseUrl}/workorder/search?Creator={Uri.EscapeDataString(CurrentUser.UserName)}");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(creatorSelect).ToHaveValueAsync(CurrentUser.UserName, new() { Timeout = 30_000 });
 
-        await Click(nameof(NavMenu.Elements.WorkOrdersAssignedToMe));
+        await Page.GotoAsync(
+            $"{ServerFixture.ApplicationBaseUrl}/workorder/search?Assignee={Uri.EscapeDataString(CurrentUser.UserName)}");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(assigneeSelect).ToHaveValueAsync(CurrentUser.UserName, new() { Timeout = 30_000 });
 
-        await Click(nameof(NavMenu.Elements.AllWorkOrdersInProgress));
+        await Page.GotoAsync(
+            $"{ServerFixture.ApplicationBaseUrl}/workorder/search?Status={Uri.EscapeDataString(order1.Status.Key)}");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key, new() { Timeout = 30_000 });
     }

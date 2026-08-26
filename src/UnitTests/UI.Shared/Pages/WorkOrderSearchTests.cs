@@ -93,6 +93,8 @@ public class WorkOrderSearchTests
 
         var workOrderCards = workOrderRail.QuerySelectorAll("[data-rail-card]");
         workOrderCards.Length.ShouldBe(2);
+        component.Find("[data-testid='SeriesPrompt']").TextContent
+            .ShouldContain("Schedule Willie to mow every Saturday for ten weeks.");
     }
 
     [Test]

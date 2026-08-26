@@ -10,7 +10,6 @@ public class NavRailToggleTests : AcceptanceTestBase
     public async Task ShouldHideAndShowNavigationRail_OnWideViewport_AfterLogin()
     {
         await LoginAsCurrentUser();
-        await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var urlBefore = Page.Url;
@@ -34,7 +33,6 @@ public class NavRailToggleTests : AcceptanceTestBase
     public async Task ShouldKeepAriaExpandedInSyncWithNavVisibility()
     {
         await LoginAsCurrentUser();
-        await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
@@ -52,30 +50,26 @@ public class NavRailToggleTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task ShouldExpandContentArea_WhenNavHidden_OnWorkOrderPage()
+    public async Task ShouldUseDedicatedChromeWithoutNavigationRail_OnWorkOrderSearch()
     {
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var urlBefore = Page.Url;
         var searchButton = Page.Locator($"#{nameof(WorkOrderSearch.Elements.SearchButton)}");
         await Expect(searchButton).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
 
-        await Click(nameof(MainLayout.Elements.NavRailToggle));
-
-        (await Page.Locator(".modern-app").GetAttributeAsync("class"))!.ShouldContain("rail-collapsed");
-        await Expect(searchButton).ToBeVisibleAsync();
-        Page.Url.ShouldBe(urlBefore);
+        await Expect(Page.GetByTestId("DailyBoardLayout")).ToBeVisibleAsync();
+        await Expect(Page.Locator("#app-navigation-rail")).ToHaveCountAsync(0);
+        await Expect(Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle))).ToHaveCountAsync(0);
+        await Expect(Page.Locator(".daily-board-brand")).ToContainTextAsync("Church Work Orders");
     }
 
     [Test, Retry(2)]
     public async Task ShouldOpenAndCloseMobileOverlay_WhenNarrowViewport()
     {
         await LoginAsCurrentUser();
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));

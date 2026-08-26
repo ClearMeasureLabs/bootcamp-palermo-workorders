@@ -8,6 +8,7 @@ using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
@@ -19,6 +20,24 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared;
 [TestFixture]
 public class MainLayoutTests
 {
+    [Test]
+    public async Task ShouldRenderDedicatedDailyBoardChromeOnWorkOrderSearch()
+    {
+        await using var ctx = CreateContext(authenticateAsUser: "tlovejoy");
+        var navigation = ctx.Services.GetRequiredService<NavigationManager>();
+        navigation.NavigateTo("/workorder/search");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.Find("[data-testid='DailyBoardLayout']").ShouldNotBeNull();
+        layout.Find(".daily-board-brand").TextContent.ShouldContain("Church Work Orders");
+        layout.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']").TextContent.ShouldContain("tlovejoy");
+        layout.FindAll("#app-navigation-rail").Count.ShouldBe(0);
+        layout.FindAll(".modern-header").Count.ShouldBe(0);
+        layout.FindAll($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']").Count.ShouldBe(0);
+    }
+
     [Test]
     public async Task ShouldRenderNavRailToggleWithExpandedStateByDefault()
     {

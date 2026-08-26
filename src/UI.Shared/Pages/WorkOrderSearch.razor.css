@@ -1,73 +1,51 @@
 .search-page {
-    min-height: 100vh;
-    padding: 2rem clamp(1rem, 3vw, 3rem) 4rem;
+    min-height: calc(100vh - 5.25rem);
+    padding: 1.55rem clamp(1rem, 2.2vw, 1.75rem) 2.5rem;
     background:
-        radial-gradient(circle at 50% 48%, rgba(0, 133, 202, 0.44), transparent 36rem),
+        radial-gradient(circle at 50% 54%, rgba(0, 133, 202, 0.4), transparent 35rem),
         #004b87;
     color: #ffffff;
 }
 
 .search-container {
-    width: min(100%, 1280px);
+    width: min(100%, 1440px);
     margin: 0 auto;
 }
 
-.search-header {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 2rem;
-    margin-bottom: 1.5rem;
-}
-
-.search-eyebrow {
-    margin: 0 0 0.2rem;
-    color: #62c7f3;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-}
-
-.search-header h2 {
-    margin: 0;
-    color: #ffffff;
-    font-size: clamp(1.9rem, 4vw, 3rem);
-    font-weight: 750;
-    letter-spacing: -0.035em;
-}
-
-.search-subtitle {
-    padding-bottom: 0.45rem;
-    color: #d7effb;
-    font-size: 1rem;
-}
-
 .search-filters-card {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.15rem;
 }
 
 .filter-chips {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.65rem;
+}
+
+.filter-funnel {
+    display: grid;
+    width: 2.1rem;
+    height: 2.45rem;
+    color: #37c3f7;
+    font-size: 1.45rem;
+    place-items: center;
 }
 
 .filter-chip {
     display: flex;
     align-items: center;
-    min-height: 2.65rem;
+    min-height: 2.45rem;
     padding-left: 1rem;
     overflow: hidden;
-    border: 1px solid #24b7ef;
+    border: 1px solid #16b9f0;
     border-radius: 999px;
-    background: rgba(0, 39, 77, 0.72);
+    background: rgba(0, 35, 70, 0.7);
     box-shadow: 0 0.5rem 1.5rem rgba(0, 25, 58, 0.18);
 }
 
 .filter-label {
-    color: #62c7f3;
+    color: #37c3f7;
     font-size: 0.88rem;
     font-weight: 700;
 }
@@ -75,10 +53,10 @@
 .form-control {
     width: auto;
     max-width: 12rem;
-    min-height: 2.55rem;
+    min-height: 2.35rem;
     padding: 0.35rem 2rem 0.35rem 0.65rem;
     border: 0;
-    background-color: transparent;
+    background: transparent !important;
     color: #ffffff;
     font-size: 0.94rem;
     font-weight: 600;
@@ -92,7 +70,8 @@
 }
 
 .form-control:focus {
-    box-shadow: inset 0 -2px 0 #62c7f3;
+    background: transparent !important;
+    box-shadow: inset 0 -2px 0 #37c3f7;
 }
 
 .filter-action {
@@ -100,7 +79,7 @@
 }
 
 .btn-primary {
-    min-height: 2.65rem;
+    min-height: 2.45rem;
     padding: 0.55rem 1.3rem;
     border: 1px solid #0085ca;
     border-radius: 999px;
@@ -110,6 +89,37 @@
     font-weight: 700;
     box-shadow: 0 0.5rem 1.5rem rgba(0, 30, 64, 0.25);
     transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.series-prompt {
+    display: flex;
+    min-height: 3.2rem;
+    margin-bottom: 1.35rem;
+    padding: 0 1rem;
+    overflow: hidden;
+    border: 1px solid rgba(0, 133, 202, 0.8);
+    border-radius: 0.8rem;
+    background: rgba(0, 42, 84, 0.46);
+    color: #ffffff;
+    align-items: center;
+}
+
+.series-prompt-label {
+    display: inline-flex;
+    gap: 0.55rem;
+    padding-right: 1.15rem;
+    border-right: 1px solid rgba(55, 195, 247, 0.4);
+    color: #37c3f7;
+    align-items: center;
+}
+
+.series-prompt-label i {
+    font-size: 1.35rem;
+}
+
+.series-prompt-text {
+    padding-left: 1.25rem;
+    font-size: 0.98rem;
 }
 
 .btn-primary:hover {
@@ -125,31 +135,7 @@
 }
 
 .results-card {
-    padding: 1rem 0 1.25rem;
-    border: 1px solid rgba(98, 199, 243, 0.45);
-    border-radius: 1rem;
-    background: rgba(0, 44, 86, 0.28);
-    box-shadow: 0 1.5rem 3rem rgba(0, 22, 52, 0.24);
-}
-
-.results-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0 1.35rem 0.9rem;
-    color: #ffffff;
-    font-weight: 700;
-}
-
-.results-header i {
-    margin-right: 0.45rem;
-    color: #62c7f3;
-}
-
-.results-count {
-    color: #bde8fa;
-    font-size: 0.88rem;
-    font-weight: 600;
+    padding: 0;
 }
 
 .rail-shell {
@@ -164,8 +150,8 @@
     align-items: center;
     justify-content: flex-start;
     gap: clamp(0.65rem, 1.2vw, 1rem);
-    min-height: 25rem;
-    padding: 1rem 0.45rem;
+    min-height: 23rem;
+    padding: 0.75rem 0.45rem 1rem;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     scroll-snap-type: x mandatory;
@@ -175,12 +161,12 @@
 
 .work-order-card {
     display: flex;
-    flex: 0 0 clamp(9.5rem, 16vw, 11.5rem);
-    min-height: 19.5rem;
-    padding: 1.25rem 1rem;
+    flex: 0 0 clamp(9.8rem, 15.5vw, 12.2rem);
+    min-height: 19.75rem;
+    padding: 1.35rem 1rem 1.1rem;
     border: 2px solid rgba(255, 255, 255, 0.7);
-    border-radius: 1.4rem;
-    background: linear-gradient(145deg, #fffdf7, #f3efe4);
+    border-radius: 1.45rem;
+    background: linear-gradient(145deg, #fffdf8, #f4f0e6);
     color: #082f68;
     text-align: center;
     text-decoration: none;
@@ -200,11 +186,11 @@
 
 .work-order-card.is-selected {
     z-index: 1;
-    flex-basis: clamp(12rem, 20vw, 14rem);
-    min-height: 22.25rem;
+    flex-basis: clamp(13rem, 19vw, 15.25rem);
+    min-height: 22.45rem;
     border-color: #ffffff;
     transform: translateY(-0.15rem);
-    box-shadow: 0 0 0 2px #0085ca, 0 1.5rem 2.6rem rgba(0, 27, 60, 0.48), inset 0 -0.25rem 0 rgba(8, 47, 104, 0.08);
+    box-shadow: 0 0 0 2px #0085ca, 0 0 1.5rem rgba(0, 133, 202, 0.95), 0 1.5rem 2.6rem rgba(0, 27, 60, 0.48), inset 0 -0.25rem 0 rgba(8, 47, 104, 0.08);
 }
 
 .work-order-card.is-selected:hover {
@@ -230,16 +216,18 @@
 }
 
 .card-number {
-    color: #0085ca;
-    font-size: 0.72rem;
+    order: 1;
+    margin: 0.15rem 0 0.5rem;
+    color: #082f68;
+    font-size: 1.65rem;
     font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    letter-spacing: -0.03em;
 }
 
 .card-title {
     display: -webkit-box;
-    margin: 0.45rem 0 0.6rem;
+    order: 2;
+    margin: 0 0 0.7rem;
     overflow: hidden;
     font-size: 1.12rem;
     font-weight: 800;
@@ -249,7 +237,7 @@
 }
 
 .is-selected .card-title {
-    font-size: 1.4rem;
+    font-size: 1.48rem;
 }
 
 .card-assignee {
@@ -257,6 +245,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
+    order: 3;
     color: #24446d;
     font-size: 0.86rem;
 }
@@ -266,12 +255,14 @@
 }
 
 .card-rule {
+    order: 4;
     width: 100%;
     margin: auto 0 0.85rem;
     border-top: 1px solid rgba(8, 47, 104, 0.16);
 }
 
 .card-due-date {
+    order: 5;
     min-height: 1.5rem;
     color: #24446d;
     font-size: 0.82rem;
@@ -293,6 +284,7 @@
     border-radius: 0.65rem;
     font-size: 0.78rem;
     font-weight: 750;
+    order: 6;
 }
 
 .due-date-today {
@@ -342,7 +334,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.45rem;
+    gap: 0.55rem;
     min-height: 1.5rem;
     color: #bde8fa;
     font-size: 0.78rem;
@@ -385,12 +377,6 @@
 }
 
 @media (max-width: 900px) {
-    .search-header {
-        align-items: start;
-        flex-direction: column;
-        gap: 0.3rem;
-    }
-
     .work-order-rail {
         justify-content: start;
     }
@@ -398,16 +384,22 @@
 
 @media (max-width: 640px) {
     .search-page {
-        padding: 1.25rem 0.75rem 2.5rem;
+        min-height: calc(100vh - 4.5rem);
+        padding: 1rem 0.75rem 2rem;
     }
 
     .filter-chips {
         align-items: stretch;
-        flex-direction: column;
+        gap: 0.55rem;
     }
 
     .filter-chip {
+        flex: 1 1 13rem;
         justify-content: space-between;
+    }
+
+    .filter-funnel {
+        display: none;
     }
 
     .form-control {
@@ -420,7 +412,17 @@
     }
 
     .filter-action {
-        width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .series-prompt {
+        align-items: flex-start;
+        padding: 0.8rem;
+    }
+
+    .series-prompt-text {
+        padding-left: 0.8rem;
+        font-size: 0.86rem;
     }
 
     .results-card {

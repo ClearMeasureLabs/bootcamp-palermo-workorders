@@ -30,6 +30,9 @@ public partial class MainLayout : IAsyncDisposable
     [Inject]
     private ThemePreferenceService Theme { get; set; } = default!;
 
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
     private IJSObjectReference? _jsModule;
@@ -37,6 +40,16 @@ public partial class MainLayout : IAsyncDisposable
     private bool _isNarrowViewport;
     private bool _viewportSynced;
     private bool _navVisible = true;
+
+    private bool IsSearchDailyBoard
+    {
+        get
+        {
+            var relativeUri = Navigation.ToBaseRelativePath(Navigation.Uri);
+            var path = relativeUri.Split('?', '#')[0].TrimEnd('/');
+            return path.Equals("workorder/search", StringComparison.OrdinalIgnoreCase);
+        }
+    }
 
     private string AppContainerClass => NavRailCss.AppContainerClass(_isNarrowViewport, _navVisible);
 

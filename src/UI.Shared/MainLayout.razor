@@ -1,6 +1,35 @@
 @inherits Palermo.BlazorMvc.MvcLayoutComponentBase
 
-<div class="@AppContainerClass">
+@if (IsSearchDailyBoard)
+{
+    <div class="daily-board-app" data-testid="DailyBoardLayout">
+        <header class="daily-board-header">
+            <a class="daily-board-brand" href="/" aria-label="Church Work Orders home">
+                <span class="daily-board-logo" aria-hidden="true">CM</span>
+                <span>Church Work Orders</span>
+            </a>
+            <AuthorizeView>
+                <Authorized>
+                    <div class="daily-board-user">
+                        <Logout/>
+                        <i class="bi bi-person daily-board-user-icon" aria-hidden="true"></i>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <div class="daily-board-login">
+                        <LoginLink/>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
+        </header>
+        <main class="daily-board-main">
+            @Body
+        </main>
+    </div>
+}
+else
+{
+    <div class="@AppContainerClass">
     <aside id="app-navigation-rail" class="@SidebarClass">
         <div class="sidebar-header">
             <div class="church-brand">
@@ -86,4 +115,5 @@
             </div>
         </footer>
     </div>
-</div>
+    </div>
+}
