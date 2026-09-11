@@ -13,8 +13,86 @@ env:
   MINOR_VERSION: 4
 
 jobs:
+  # Docs-only skip (Scorecard semantics):
+  # - Non-master: diff against git merge-base origin/master HEAD (what the PR would
+  #   merge, not only the last push).
+  # - Master: diff against github.event.before when that SHA is valid.
+  # - Fail OPEN (code=true): missing base, first push (all-zero before), or git diff
+  #   failure — never skip Integration/Private Build because detection was unsure.
+  # - Docs-only (code=false) is an allowlist: docs/**, *.md, LICENSE*, issue
+  #   templates. src/, *.csproj, *.sln*, build scripts, Dockerfile, qodana*,
+  #   .github/workflows/**, .github/scripts/**, arch/**, NuGet/SDK config, etc.
+  #   remain code=true.
+  changes:
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.detect.outputs.code }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Run path-classifier tests
+        run: bash .github/scripts/detect-code-changes.tests.sh
+
+      - name: Detect code changes
+        id: detect
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          ZERO_SHA='0000000000000000000000000000000000000000'
+          changed_list="${RUNNER_TEMP:-/tmp}/changed-paths.txt"
+
+          fail_open() {
+            echo "$1"
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "code=true"
+            exit 0
+          }
+
+          if [ "${GITHUB_REF}" = "refs/heads/master" ] || [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            if [ -z "${EVENT_BEFORE:-}" ] || [ "${EVENT_BEFORE}" = "${ZERO_SHA}" ]; then
+              fail_open "Master/main first push or missing event.before; fail-open code=true."
+            fi
+            if ! git cat-file -e "${EVENT_BEFORE}^{commit}" 2>/dev/null; then
+              fail_open "event.before ${EVENT_BEFORE} is not in this clone; fail-open code=true."
+            fi
+            BASE="${EVENT_BEFORE}"
+          else
+            git fetch --no-tags origin master:refs/remotes/origin/master || git fetch --no-tags origin main:refs/remotes/origin/main || true
+            if git rev-parse --verify origin/master >/dev/null 2>&1; then
+              default_base=origin/master
+            elif git rev-parse --verify origin/main >/dev/null 2>&1; then
+              default_base=origin/main
+            else
+              fail_open "Neither origin/master nor origin/main is available; fail-open code=true."
+            fi
+            if ! BASE="$(git merge-base "${default_base}" HEAD)"; then
+              fail_open "git merge-base ${default_base} HEAD failed; fail-open code=true."
+            fi
+          fi
+
+          echo "Diff base: ${BASE}"
+          echo "HEAD: $(git rev-parse HEAD)"
+
+          # --no-renames: a code-to-docs rename still lists the removed code path.
+          if ! git diff --name-only --no-renames "${BASE}" HEAD > "${changed_list}"; then
+            fail_open "git diff failed; fail-open code=true."
+          fi
+
+          echo "Changed paths:"
+          cat "${changed_list}"
+
+          bash .github/scripts/detect-code-changes.sh --from-list "${changed_list}"
+
   build-linux:
     name: Integration Build (SQL container)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
       # Cancelled when new commits arrive on the same non-master branch/PR; on master,
@@ -167,6 +245,8 @@ jobs:
 
   build-sqlite:
     name: Integration Build (SQLite)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: build-sqlite-${{ github.ref }}
@@ -226,6 +306,8 @@ jobs:
 
   integration-build-arm:
     name: Integration Build (ARM SQLite)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04-arm
     concurrency:
       group: build-arm-${{ github.ref }}
@@ -285,6 +367,8 @@ jobs:
 
   code-analysis:
     name: Code Analysis
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: code-analysis-${{ github.ref }}
@@ -323,6 +407,8 @@ jobs:
 
   qodana:
     name: Qodana (Community .NET)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: qodana-${{ github.ref }}
@@ -356,6 +442,8 @@ jobs:
 
   build-windows:
     name: Integration Build (Windows LocalDB)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: windows-latest
     concurrency:
       group: build-windows-${{ github.ref }}
@@ -414,8 +502,8 @@ jobs:
 
   docker-build-image-for-churchbulletin-ui:
     name: Publish Release Candidate
-    needs: [build-linux]
-    if: success() 
+    needs: [changes, build-linux]
+    if: success() && needs.changes.outputs.code == 'true' 
     runs-on: ubuntu-latest
     concurrency:
       # Cancelled when a newer job arrives on the same non-master branch/PR; on master,
@@ -552,8 +640,8 @@ jobs:
 
   publish-github-packages:
     name: Publish to GitHub Packages
-    needs: [build-linux]
-    if: success()
+    needs: [changes, build-linux]
+    if: success() && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -586,12 +674,12 @@ jobs:
 
   publish-octopus:
     name: Publish to Octopus Deploy
-    needs: [build-linux]
+    needs: [changes, build-linux]
     # Only publish to Octopus from the default branch. Deployments (deploy.yml)
     # only ever run from master, so PR/feature-branch builds do not need Octopus
     # packages. Scoping this here keeps the job off PR branches so it is never a
     # blocking check for a pull request.
-    if: success() && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    if: success() && needs.changes.outputs.code == 'true' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     # Non-fatal: an Octopus publishing failure must not fail the overall build.
     continue-on-error: true
     runs-on: ubuntu-latest
@@ -656,7 +744,8 @@ jobs:
 
   security-scan:
     name: Security Scan
-    if: false
+    needs: changes
+    if: false && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: security-scan-${{ github.ref }}
@@ -756,7 +845,8 @@ jobs:
 
   acceptance-tests:
     name: Acceptance Tests
-    if: success()
+    needs: changes
+    if: success() && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: acceptance-tests-${{ github.ref }}
@@ -823,7 +913,8 @@ jobs:
 
   acceptance-tests-arm:
     name: Acceptance Tests (ARM SQLite)
-    if: success()
+    needs: changes
+    if: success() && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04-arm
     concurrency:
       group: acceptance-tests-arm-${{ github.ref }}
@@ -889,4 +980,59 @@ jobs:
           name: test-results-acceptance-arm
           path: build/test/**/*.trx
           retention-days: 2
+
+  build-result:
+    name: Build result
+    needs:
+      - changes
+      - build-linux
+      - build-sqlite
+      - integration-build-arm
+      - code-analysis
+      - qodana
+      - build-windows
+      - acceptance-tests
+      - acceptance-tests-arm
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate gated jobs
+        env:
+          CODE: ${{ needs.changes.outputs.code }}
+          LINUX: ${{ needs.build-linux.result }}
+          SQLITE: ${{ needs.build-sqlite.result }}
+          ARM: ${{ needs.integration-build-arm.result }}
+          ANALYSIS: ${{ needs.code-analysis.result }}
+          QODANA: ${{ needs.qodana.result }}
+          WINDOWS: ${{ needs.build-windows.result }}
+          ACCEPTANCE: ${{ needs.acceptance-tests.result }}
+          ACCEPTANCE_ARM: ${{ needs.acceptance-tests-arm.result }}
+        run: |
+          set -euo pipefail
+          if [ "${CODE}" != "true" ]; then
+            echo "Docs-only change set; heavy jobs skipped."
+            exit 0
+          fi
+          failed=0
+          check() {
+            local name="$1"
+            local result="$2"
+            echo "${name}: ${result}"
+            if [ "${result}" != "success" ]; then
+              failed=1
+            fi
+          }
+          check "Integration Build (SQL container)" "${LINUX}"
+          check "Integration Build (SQLite)" "${SQLITE}"
+          check "Integration Build (ARM SQLite)" "${ARM}"
+          check "Code Analysis" "${ANALYSIS}"
+          check "Qodana (Community .NET)" "${QODANA}"
+          check "Integration Build (Windows LocalDB)" "${WINDOWS}"
+          check "Acceptance Tests" "${ACCEPTANCE}"
+          check "Acceptance Tests (ARM SQLite)" "${ACCEPTANCE_ARM}"
+          if [ "${failed}" -ne 0 ]; then
+            echo "A required Build job did not succeed."
+            exit 1
+          fi
+          echo "All required Build jobs succeeded."
 
