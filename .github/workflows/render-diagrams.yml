@@ -2,6 +2,10 @@ name: Render diagrams (check)
 
 on:
   pull_request:
+    paths:
+      - 'arch/**'
+      - '.github/workflows/render-diagrams.yml'
+      - '.github/scripts/normalize_svg.py'
 
 jobs:
   render-diagrams:

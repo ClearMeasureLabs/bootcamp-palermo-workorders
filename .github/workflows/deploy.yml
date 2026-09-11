@@ -26,11 +26,50 @@ env:
   MINOR_VERSION: 4
 
 jobs:
-  deploy-to-tdd:
-    name: TDD
+  # Docs-only Build runs on master can conclude success with only the "Detect
+  # code changes" job (no Integration Build artifacts). Do not create an Octopus
+  # release or deploy from that path.
+  resolve-deploy-gate:
+    name: Deploy gate
     if: >-
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      should_deploy: ${{ steps.gate.outputs.should_deploy }}
+    steps:
+      - name: Require Integration Build artifacts
+        id: gate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          RUN_ID="${{ github.event.workflow_run.id }}"
+          echo "Inspecting artifacts for Build run ${RUN_ID}"
+          should_deploy=false
+          while IFS= read -r name || [ -n "${name}" ]; do
+            [ -z "${name}" ] && continue
+            echo "artifact: ${name}"
+            if [ "${name}" = "churchbulletin-nuget-packages" ]; then
+              should_deploy=true
+              break
+            fi
+          done < <(gh api "repos/${{ github.repository }}/actions/runs/${RUN_ID}/artifacts" --jq '.artifacts[].name')
+          echo "should_deploy=${should_deploy}"
+          echo "should_deploy=${should_deploy}" >> "$GITHUB_OUTPUT"
+          if [ "${should_deploy}" != "true" ]; then
+            echo "No churchbulletin-nuget-packages artifact (docs-only or incomplete Build). Skipping Deploy."
+          fi
+
+  deploy-to-tdd:
+    name: TDD
+    needs: [resolve-deploy-gate]
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      needs.resolve-deploy-gate.outputs.should_deploy == 'true'
     concurrency:
       # All TDD deploys share one group (single environment), but only branch runs
       # can be cancelled. Master/main deploys are never cancelled -- they queue instead.
