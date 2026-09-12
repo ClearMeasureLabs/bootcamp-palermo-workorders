@@ -490,3 +490,4 @@ AISF parallel check p2b-2
 AISF parallel check p4-1
 AISF parallel check p4-2
 AISF parallel check p4-3
+AISF parallel check p4-4
