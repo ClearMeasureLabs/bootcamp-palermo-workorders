@@ -1,7 +1,7 @@
 # Ready To Move
 
-The `Ready To Move` label advances a work item one column on the project board and is consumed when the move happens — it is removed automatically after the item moves.
+The `Ready To Move` label advances a work item one column on the project board. It is consumed when the move happens — once applied and processed, the label is removed automatically.
 
-AI agents signal completion through the callback API (`/complete`) rather than by applying the label themselves. The factory applies the label on behalf of the agent once the completion call is received and validated.
+AI agents signal completion through the callback API (`/complete`) rather than by applying this label themselves. The factory processes the callback and handles any necessary board movement.
 
-The label cannot move an item out of a column that is owned by an AI worker. For those columns, the AI worker controls egress, so applying `Ready To Move` has no effect — only the worker's own completion signal can advance the item.
+The label cannot move an item out of a column that is owned by an AI worker. For AI-owned columns, the AI worker controls when items leave — the label has no effect on egress from those columns.
