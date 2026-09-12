@@ -491,4 +491,5 @@ AISF parallel check p4-1
 AISF parallel check p4-2
 AISF parallel check p4-3
 AISF parallel check p4-4
+AISF parallel check p6-2
 AISF parallel check p6-5
