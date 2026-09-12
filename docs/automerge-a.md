@@ -1,3 +1,3 @@
 # Automerge A
 
-This file documents the automerge-a workflow, which automatically merges qualifying pull requests that pass all required checks.
+This file documents the automerge-a feature, which enables automatic merging of pull requests that meet all required criteria.
