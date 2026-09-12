@@ -487,4 +487,5 @@ Deployment run 20260729-203926 is verified in the UAT environment before release
 AISF parallel check p2-1
 AISF parallel check p2b-1
 AISF parallel check p2b-2
+AISF parallel check p4-2
 AISF parallel check p4-3
