@@ -485,3 +485,4 @@ Deployment run 20260729-172838 is verified in the UAT environment before release
 Deployment run 20260729-203926 is verified in the UAT environment before release.
 AISF parallel check p2-1
 AISF parallel check p2-2
+AISF parallel check p2b-1
