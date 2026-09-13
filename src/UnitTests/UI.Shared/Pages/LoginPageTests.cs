@@ -698,6 +698,43 @@ public class LoginPageTests
         button.HasAttribute("disabled").ShouldBeFalse();
     }
 
+    [Test]
+    public async Task WelcomeMessage_ShouldBeAbsent_OnInitialRender()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        component.FindAll("small.text-success").ShouldBeEmpty();
+    }
+
+    [Test]
+    public async Task WelcomeMessage_ShouldShowFirstName_WhenMemberSelected()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
+        await employeeSelect.ChangeAsync(new() { Value = "hsimpson" });
+
+        var welcomeMessage = component.Find("small.text-success");
+        welcomeMessage.ShouldNotBeNull();
+        welcomeMessage.TextContent.ShouldBe("Welcome back, HOMER!");
+    }
+
     private sealed class GatedEmployeeStubBus : StubBus
     {
         private readonly TaskCompletionSource _gate =
