@@ -114,6 +114,27 @@ The repository supports three common local development workflows. Pick the one t
      ```
   The build scripts will use SQLite when Docker is not available.
 
+### Run locally with SQLite
+
+Use this path when Docker is not available and you want to run the application (not just the build).
+
+1. Set environment variables:
+   ```bash
+   export DATABASE_ENGINE=SQLite
+   export ConnectionStrings__SqlConnectionString=""
+   ```
+2. Seed reference data:
+   ```bash
+   dotnet test src/IntegrationTests --filter "ZDataLoader"
+   ```
+3. Run the UI:
+   ```bash
+   cd src/UI/Server
+   dotnet run --no-launch-profile --urls "https://localhost:7174;http://localhost:5174"
+   ```
+
+See `CLAUDE.md` for the full environment-variable reference.
+
 Health and URLs
 - The application starts at https://localhost:7174 by default.
 - Health check endpoint: https://localhost:7174/_healthcheck
