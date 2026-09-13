@@ -661,6 +661,43 @@ public class LoginPageTests
         versionString.ShouldNotBeNullOrWhiteSpace();
     }
 
+    [Test]
+    public async Task EnterThePortalButton_ShouldBeDisabled_OnInitialRender()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var button = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
+        button.HasAttribute("disabled").ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task EnterThePortalButton_ShouldBeEnabled_AfterMemberSelected()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
+        await employeeSelect.ChangeAsync(new() { Value = "hsimpson" });
+
+        var button = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
+        button.HasAttribute("disabled").ShouldBeFalse();
+    }
+
     private sealed class GatedEmployeeStubBus : StubBus
     {
         private readonly TaskCompletionSource _gate =
