@@ -398,6 +398,23 @@ public class LoginPageTests
         link.ShouldNotBeNull();
     }
 
+    [Test]
+    public async Task ShouldDisplayCurrentYearFooter()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var footer = component.Find("small.text-muted");
+        footer.TextContent.ShouldBe("First Church of Shelbyville · " + DateTime.Now.Year);
+    }
+
     private sealed class GatedEmployeeStubBus : StubBus
     {
         private readonly TaskCompletionSource _gate =
