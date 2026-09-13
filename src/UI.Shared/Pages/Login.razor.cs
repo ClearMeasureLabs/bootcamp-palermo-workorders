@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Hosting;
 using ClearMeasure.Bootcamp.Core.Queries;
 
 namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -13,12 +14,15 @@ public partial class Login : AppComponentBase
 {
     [Inject] public CustomAuthenticationStateProvider? AuthStateProvider { get; set; }
     [Inject] public NavigationManager? NavigationManager { get; set; }
+    [Inject] public IHostEnvironment? HostEnvironment { get; set; }
 
     public readonly LoginModel LoginModelValue = new();
     public string? ErrorMessage;
     public Employee[] Employees = Array.Empty<Employee>();
     // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access
     public string AppVersion { get; private set; } = string.Empty;
+    // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access
+    public string AppEnvironment { get; private set; } = string.Empty;
     // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access
     public string? WelcomeFirstName =>
         Employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username)?.FirstName;
@@ -31,6 +35,9 @@ public partial class Login : AppComponentBase
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
             ?? typeof(Login).Assembly.GetName().Version?.ToString()
             ?? string.Empty;
+        AppEnvironment = string.IsNullOrWhiteSpace(HostEnvironment?.EnvironmentName)
+            ? "unknown"
+            : HostEnvironment.EnvironmentName;
         _employeesLoadTask = LoadEmployees();
         return _employeesLoadTask;
     }
