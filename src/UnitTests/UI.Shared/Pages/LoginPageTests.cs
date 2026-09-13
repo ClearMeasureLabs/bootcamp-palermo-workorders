@@ -347,6 +347,57 @@ public class LoginPageTests
         link.ShouldNotBeNull();
     }
 
+    [Test]
+    public async Task Should_RenderOfficePhoneLink_WithCorrectText()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var link = component.Find("a[href='tel:+15550102468']");
+        link.TextContent.ShouldBe("(555) 010-2468");
+    }
+
+    [Test]
+    public async Task Should_RenderOfficePhoneLink_WithCorrectHref()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var link = component.Find("a[href='tel:+15550102468']");
+        link.GetAttribute("href").ShouldBe("tel:+15550102468");
+    }
+
+    [Test]
+    public async Task Should_RenderOfficePhoneLink_InsideSmallTag()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var link = component.Find("small > a[href='tel:+15550102468']");
+        link.ShouldNotBeNull();
+    }
+
     private sealed class GatedEmployeeStubBus : StubBus
     {
         private readonly TaskCompletionSource _gate =
