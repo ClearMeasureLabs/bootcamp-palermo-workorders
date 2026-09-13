@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Api;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -390,14 +391,48 @@ public class DetailedHealthEndpointIntegrationTests
     [Test]
     public async Task Should_SupportConditionalGet_When_ETagMatches()
     {
-        var first = await _client!.GetAsync("/api/health/detailed");
+        // Use a dedicated factory with a fixed-report stub so the ETag hash is
+        // identical on both requests regardless of host-metric drift or test order.
+        var fixedReport = new DetailedHealthReport
+        {
+            OverallStatus = ComponentHealthStatus.Healthy,
+            CheckedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            ProcessId = 1,
+            OsDescription = "Test OS",
+            FrameworkDescription = "Test Framework",
+            GcMemoryMb = 100,
+            WorkingSetMb = 200,
+            ProcessorCount = 4,
+            Is64BitProcess = true,
+            TimeZoneId = "UTC",
+            ProcessPriority = "Normal",
+            Components =
+            [
+                new ComponentHealthEntry { Name = "API", Status = ComponentHealthStatus.Healthy }
+            ]
+        };
+
+        await using var isolatedFactory = _factory!.WithWebHostBuilder(builder =>
+            builder.ConfigureServices(services =>
+                services.AddSingleton<IDetailedHealthReportProvider>(
+                    new FixedDetailedHealthReportProvider(fixedReport))));
+
+        using var isolatedClient = isolatedFactory.CreateClient();
+
+        var first = await isolatedClient.GetAsync("/api/health/detailed");
         first.StatusCode.ShouldBe(HttpStatusCode.OK);
         var etag = first.Headers.ETag.ShouldNotBeNull();
 
         using var second = new HttpRequestMessage(HttpMethod.Get, "/api/health/detailed");
         second.Headers.IfNoneMatch.Add(etag);
-        var notModified = await _client.SendAsync(second);
+        var notModified = await isolatedClient.SendAsync(second);
         notModified.StatusCode.ShouldBe(HttpStatusCode.NotModified);
         (await notModified.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
+    }
+
+    private sealed class FixedDetailedHealthReportProvider(DetailedHealthReport report) : IDetailedHealthReportProvider
+    {
+        public Task<DetailedHealthReport> GetReportAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(report);
     }
 }
