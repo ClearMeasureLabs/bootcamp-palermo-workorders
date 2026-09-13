@@ -2,3 +2,9 @@ node_modules/
 out/*
 !out/room-number-900.mp4
 !out/instructions-field.mp4
+
+# Factory-generated demo videos are published as release assets, never committed.
+*-demo-video/
+# Retained hand-authored demo projects stay tracked.
+!8338-demo-video/
+!9105-tdd-mcp-video/
