@@ -448,7 +448,7 @@ public class LoginPageTests
         var component = ctx.Render<Login>();
 
         var button = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
-        button.GetAttribute("class").ShouldContain("w-100");
+        button.GetAttribute("class")!.ShouldContain("w-100");
     }
 
     [Test]
@@ -465,7 +465,7 @@ public class LoginPageTests
         var component = ctx.Render<Login>();
 
         var button = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
-        button.GetAttribute("class").ShouldContain("btn-primary");
+        button.GetAttribute("class")!.ShouldContain("btn-primary");
     }
 
     [Test]
