@@ -411,8 +411,10 @@ public class LoginPageTests
 
         var component = ctx.Render<Login>();
 
-        var footer = component.Find("small.text-muted");
-        footer.TextContent.ShouldBe("First Church of Shelbyville · " + DateTime.Now.Year);
+        var footerDiv = component.FindAll("div.text-center")
+            .Last(d => d.QuerySelector("small.text-muted") != null);
+        footerDiv.QuerySelector("small.text-muted")!.TextContent
+            .ShouldBe("First Church of Shelbyville · " + DateTime.Now.Year);
     }
 
     private sealed class GatedEmployeeStubBus : StubBus
