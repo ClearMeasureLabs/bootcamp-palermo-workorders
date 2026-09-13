@@ -511,8 +511,13 @@ jobs:
       group: build-${{ github.ref }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
-      contents: read
-      packages: read
+      # write: on master this job also publishes the image to GitHub Packages (ghcr.io) and cuts
+      # the rc-<version> prerelease that the AI Software Factory reads to stand up UX Testing
+      # environments. Pull-request builds still only read.
+      contents: write
+      packages: write
+      # read: the release notes list the pull requests merged in the commit (commits/{sha}/pulls).
+      pull-requests: read
     
     steps:
       # Checkout code
@@ -637,6 +642,60 @@ jobs:
           IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}
           docker push churchbulletingithubacr.azurecr.io/churchbulletin.ui:latest
+
+      # The release candidate must also live in GitHub, not only in Azure: the AI Software
+      # Factory pulls it into on-demand UX Testing environments with a GitHub token, and a
+      # tester reading the work item should find the exact image behind a release. Master only —
+      # PR builds are not candidates.
+      - name: Publish release candidate image to GitHub Packages
+        if: github.ref == 'refs/heads/master'
+        env:
+          GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/churchbulletin.ui
+        run: |
+          set -euo pipefail
+          IMAGE_TAG="${{ env.BUILD_BUILDNUMBER }}"
+          GHCR_IMAGE="$(echo "$GHCR_IMAGE" | tr '[:upper:]' '[:lower:]')"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker tag "churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}" "${GHCR_IMAGE}:${IMAGE_TAG}"
+          docker tag "churchbulletingithubacr.azurecr.io/churchbulletin.ui:${IMAGE_TAG}" "${GHCR_IMAGE}:latest"
+          docker push "${GHCR_IMAGE}:${IMAGE_TAG}"
+          docker push "${GHCR_IMAGE}:latest"
+          echo "GHCR_IMAGE_REF=${GHCR_IMAGE}:${IMAGE_TAG}" >> "$GITHUB_ENV"
+
+      # One prerelease per candidate, tagged rc-<version> at the built commit. Its body is a
+      # machine-readable record (image references, commit, merged pull requests) so that tools —
+      # and people — can go from a work item's merge commit to the candidate that carries it.
+      - name: Create release candidate prerelease
+        if: github.ref == 'refs/heads/master'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ env.BUILD_BUILDNUMBER }}"
+          TAG="rc-${VERSION}"
+          SHA="${{ github.sha }}"
+          PRS="$(gh api "repos/${{ github.repository }}/commits/${SHA}/pulls" --jq '.[] | "- #\(.number) \(.title)"' 2>/dev/null || true)"
+          [ -n "$PRS" ] || PRS="- (no pull request recorded for this commit)"
+          {
+            echo "Release candidate **${VERSION}** built from \`${SHA}\`."
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| version | ${VERSION} |"
+            echo "| commit | ${SHA} |"
+            echo "| image (GitHub) | \`${GHCR_IMAGE_REF}\` |"
+            echo "| image (Azure) | \`churchbulletingithubacr.azurecr.io/churchbulletin.ui:${VERSION}\` |"
+            echo "| build run | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |"
+            echo
+            echo "**Pull requests in this commit:**"
+            echo "$PRS"
+          } > rc-notes.md
+          if gh release view "$TAG" -R "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Release $TAG already exists (re-run); updating notes."
+            gh release edit "$TAG" -R "${{ github.repository }}" --notes-file rc-notes.md --prerelease
+          else
+            gh release create "$TAG" -R "${{ github.repository }}" --target "$SHA"               --title "Release candidate ${VERSION}" --notes-file rc-notes.md --prerelease
+          fi
 
   publish-github-packages:
     name: Publish to GitHub Packages
