@@ -21,6 +21,7 @@
                         }
                     </InputSelect>
                     <ValidationMessage For="@(() => LoginModelValue.Username)"/>
+                    <small class="form-text text-muted">Not listed? Ask the church office to add you.</small>
                 </div>
 
                 @if (!string.IsNullOrEmpty(ErrorMessage))
