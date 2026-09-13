@@ -5,3 +5,6 @@ out/*
 
 # Factory-generated demo videos are published as release assets, never committed.
 *-demo-video/
+# Retained hand-authored demo projects stay tracked.
+!8338-demo-video/
+!9105-tdd-mcp-video/
