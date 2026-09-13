@@ -379,6 +379,20 @@ public class LoginTests : AcceptanceTestBase
         (await GetPersistedUsernameAsync()).ShouldBe("gwillie");
     }
 
+    [Test, Retry(2)]
+    public async Task Should_ShowHelperTextBelowMemberDropdown()
+    {
+        await Page.GotoAsync("/login");
+
+        var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        var homerOption = userSelect.Locator("option[value='hsimpson']");
+        await WaitForEmployeeOptionsRenderedAsync(homerOption);
+
+        var helperText = Page.Locator("small.form-text.text-muted");
+        await Expect(helperText).ToBeVisibleAsync();
+        await Expect(helperText).ToHaveTextAsync("Not listed? Ask the church office to add you.");
+    }
+
     private async Task LoginAsLovejoyViaShortcutAsync()
     {
         await Page.GotoAsync("/login");

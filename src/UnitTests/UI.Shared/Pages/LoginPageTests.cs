@@ -244,6 +244,24 @@ public class LoginPageTests
         provider.GetUsername().ShouldBe("hsimpson");
     }
 
+    [Test]
+    public async Task Should_ShowHelperTextUnderMemberDropdown()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var helperText = component.Find("small.form-text.text-muted");
+        helperText.ShouldNotBeNull();
+        helperText.TextContent.ShouldBe("Not listed? Ask the church office to add you.");
+    }
+
     private sealed class GatedEmployeeStubBus : StubBus
     {
         private readonly TaskCompletionSource _gate =
