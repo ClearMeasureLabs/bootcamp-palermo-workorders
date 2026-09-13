@@ -572,6 +572,57 @@ public class LoginPageTests
         label.TextContent.ShouldBe("Remember my selection");
     }
 
+    [Test]
+    public async Task Should_RenderNeedHelpLink_WithCorrectText()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var link = component.Find("a[href='https://www.clear-measure.com']");
+        link.TextContent.ShouldBe("Need help?");
+    }
+
+    [Test]
+    public async Task Should_RenderNeedHelpLink_WithTargetBlank()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var link = component.Find("a[href='https://www.clear-measure.com']");
+        link.GetAttribute("target").ShouldBe("_blank");
+    }
+
+    [Test]
+    public async Task Should_RenderNeedHelpLink_WithRelNoopener()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var link = component.Find("a[href='https://www.clear-measure.com']");
+        link.GetAttribute("rel").ShouldBe("noopener noreferrer");
+    }
+
     private sealed class GatedEmployeeStubBus : StubBus
     {
         private readonly TaskCompletionSource _gate =
