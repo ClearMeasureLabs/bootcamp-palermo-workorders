@@ -19,6 +19,9 @@ public partial class Login : AppComponentBase
     public Employee[] Employees = Array.Empty<Employee>();
     // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access
     public string AppVersion { get; private set; } = string.Empty;
+    // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access
+    public string? WelcomeFirstName =>
+        Employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username)?.FirstName;
 
     private Task _employeesLoadTask = Task.CompletedTask;
 
