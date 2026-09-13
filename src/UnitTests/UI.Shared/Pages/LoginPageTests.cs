@@ -447,7 +447,8 @@ public class LoginPageTests
         var component = ctx.Render<Login>();
 
         var footerDiv = component.FindAll("div.text-center")
-            .Last(d => d.QuerySelector("small.text-muted") != null);
+            .First(d => d.QuerySelector("small.text-muted")?.TextContent
+                .Contains("First Church of Shelbyville") == true);
         footerDiv.QuerySelector("small.text-muted")!.TextContent
             .ShouldBe("First Church of Shelbyville · " + DateTime.Now.Year);
     }
@@ -621,6 +622,43 @@ public class LoginPageTests
 
         var link = component.Find("a[href='https://www.clear-measure.com']");
         link.GetAttribute("rel").ShouldBe("noopener noreferrer");
+    }
+
+    [Test]
+    public async Task Should_ShowVersionLabel_WithVersionPrefix()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var versionLabel = component.FindAll("small.text-muted")
+            .First(s => s.TextContent.StartsWith("Version "));
+        versionLabel.TextContent.ShouldStartWith("Version ");
+    }
+
+    [Test]
+    public async Task Should_ShowVersionLabel_WithNonEmptyVersionString()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var versionLabel = component.FindAll("small.text-muted")
+            .First(s => s.TextContent.StartsWith("Version "));
+        var versionString = versionLabel.TextContent["Version ".Length..];
+        versionString.ShouldNotBeNullOrWhiteSpace();
     }
 
     private sealed class GatedEmployeeStubBus : StubBus

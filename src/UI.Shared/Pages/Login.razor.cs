@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
@@ -16,11 +17,16 @@ public partial class Login : AppComponentBase
     public readonly LoginModel LoginModelValue = new();
     public string? ErrorMessage;
     public Employee[] Employees = Array.Empty<Employee>();
+    public string AppVersion { get; private set; } = string.Empty;
 
     private Task _employeesLoadTask = Task.CompletedTask;
 
     protected override Task OnInitializedAsync()
     {
+        AppVersion = typeof(Login).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? typeof(Login).Assembly.GetName().Version?.ToString()
+            ?? string.Empty;
         _employeesLoadTask = LoadEmployees();
         return _employeesLoadTask;
     }
