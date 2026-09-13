@@ -26,6 +26,11 @@
                     <small class="form-text text-muted">Not listed? Ask the church office to add you.</small>
                 </div>
 
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="rememberMySelection" data-testid="@Elements.RememberMySelection" />
+                    <label class="form-check-label" for="rememberMySelection">Remember my selection</label>
+                </div>
+
                 @if (!string.IsNullOrEmpty(ErrorMessage))
                 {
                     <div class="alert alert-danger">@ErrorMessage</div>
@@ -70,7 +75,8 @@
     {
         User,
         LoginButton,
-        LovejoyShortcut
+        LovejoyShortcut,
+        RememberMySelection
     }
 
 }
