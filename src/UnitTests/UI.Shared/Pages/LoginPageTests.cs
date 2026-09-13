@@ -326,9 +326,48 @@ public class LoginPageTests
 
         var component = ctx.Render<Login>();
 
-        var helperText = component.Find("small.form-text.text-muted");
+        var helperText = component.FindAll("small.form-text.text-muted")
+            .Single(s => s.TextContent == "Not listed? Ask the church office to add you.");
         helperText.ShouldNotBeNull();
         helperText.TextContent.ShouldBe("Not listed? Ask the church office to add you.");
+    }
+
+    [Test]
+    public async Task Should_ShowMemberCount_WhenEmployeesLoaded()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var memberCount = component.FindAll("small.form-text.text-muted")
+            .Single(s => s.TextContent.Contains("members available"));
+        memberCount.TextContent.ShouldBe("5 members available");
+    }
+
+    [Test]
+    public async Task Should_NotShowMemberCount_BeforeEmployeesLoaded()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        var gatedBus = new GatedEmployeeStubBus();
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(gatedBus);
+
+        var component = ctx.Render<Login>();
+
+        var memberCountElements = component.FindAll("small.form-text.text-muted")
+            .Where(s => s.TextContent.Contains("members available"))
+            .ToList();
+        memberCountElements.ShouldBeEmpty();
     }
 
     [Test]
