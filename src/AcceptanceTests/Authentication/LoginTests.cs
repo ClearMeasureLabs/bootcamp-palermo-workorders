@@ -388,7 +388,7 @@ public class LoginTests : AcceptanceTestBase
         var homerOption = userSelect.Locator("option[value='hsimpson']");
         await WaitForEmployeeOptionsRenderedAsync(homerOption);
 
-        var helperText = Page.Locator("small.form-text.text-muted");
+        var helperText = Page.Locator("small.form-text.text-muted", new PageLocatorOptions { HasTextString = "Not listed?" });
         await Expect(helperText).ToBeVisibleAsync();
         await Expect(helperText).ToHaveTextAsync("Not listed? Ask the church office to add you.");
     }
