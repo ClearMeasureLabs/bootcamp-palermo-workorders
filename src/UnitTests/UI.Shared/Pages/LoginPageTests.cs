@@ -520,6 +520,58 @@ public class LoginPageTests
         button.TextContent.Trim().ShouldBe("Enter the Portal");
     }
 
+    [Test]
+    public async Task Should_RenderRememberMySelectionCheckbox()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var checkbox = component.Find("input[type='checkbox'][id='rememberMySelection']");
+        checkbox.ShouldNotBeNull();
+    }
+
+    [Test]
+    public async Task Should_RenderRememberMySelectionCheckbox_UncheckedByDefault()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var checkbox = component.Find("input[type='checkbox'][id='rememberMySelection']");
+        checkbox.HasAttribute("checked").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Should_AssociateRememberMySelectionLabel_ViaForId()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var label = component.Find("label[for='rememberMySelection']");
+        label.ShouldNotBeNull();
+        label.TextContent.ShouldBe("Remember my selection");
+    }
+
     private sealed class GatedEmployeeStubBus : StubBus
     {
         private readonly TaskCompletionSource _gate =
