@@ -115,6 +115,23 @@ public class LoginPageTests
     }
 
     [Test]
+    public async Task ShouldDisplayWelcomeToTheChurchPortalHeading()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var heading = component.Find("h3");
+        heading.TextContent.ShouldBe("Welcome to the Church Portal");
+    }
+
+    [Test]
     public async Task ShouldDisplayFirstChurchOfShelbyvilleSubtitle()
     {
         await using var ctx = new BunitContext();
