@@ -4,7 +4,7 @@ Brand images used by every AI Factory demo video rendered for this repository.
 
 | File | What it is | Where it goes in a video |
 |------|------------|--------------------------|
-| `ai-factory-bot.png` | AI Factory bot mark (474×248, transparent) | **Top-left corner** of every content frame |
+| `ai-factory-bot.png` | AI Factory bot mark (99×136, transparent) | **Top-left corner** of every content frame |
 | `clear-measure-logo.png` | Clear Measure logo, "Empowering Software Delivery" (1966×618, transparent background) | **Top-right corner** of every content frame |
 
 ## Placement rules
