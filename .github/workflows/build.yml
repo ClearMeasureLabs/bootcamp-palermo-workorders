@@ -516,6 +516,8 @@ jobs:
       # environments. Pull-request builds still only read.
       contents: write
       packages: write
+      # read: the release notes list the pull requests merged in the commit (commits/{sha}/pulls).
+      pull-requests: read
     
     steps:
       # Checkout code
