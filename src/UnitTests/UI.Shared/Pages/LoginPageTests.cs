@@ -434,6 +434,74 @@ public class LoginPageTests
             .ShouldBe("First Church of Shelbyville · " + DateTime.Now.Year);
     }
 
+    [Test]
+    public async Task EnterThePortalButton_ShouldHaveFullWidthClass()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var button = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
+        button.GetAttribute("class").ShouldContain("w-100");
+    }
+
+    [Test]
+    public async Task EnterThePortalButton_ShouldPreserveBtnPrimaryClass()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var button = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
+        button.GetAttribute("class").ShouldContain("btn-primary");
+    }
+
+    [Test]
+    public async Task EnterThePortalButton_ShouldPreserveSubmitType()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var button = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
+        button.GetAttribute("type").ShouldBe("submit");
+    }
+
+    [Test]
+    public async Task EnterThePortalButton_ShouldPreserveButtonText()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var button = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
+        button.TextContent.Trim().ShouldBe("Enter the Portal");
+    }
+
     private sealed class GatedEmployeeStubBus : StubBus
     {
         private readonly TaskCompletionSource _gate =
