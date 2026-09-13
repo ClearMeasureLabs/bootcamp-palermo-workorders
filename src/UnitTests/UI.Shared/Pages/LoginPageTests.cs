@@ -245,6 +245,23 @@ public class LoginPageTests
     }
 
     [Test]
+    public async Task ShouldHaveAutofocusOnMemberDropdown()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
+        employeeSelect.HasAttribute("autofocus").ShouldBeTrue();
+    }
+
+    [Test]
     public async Task Should_ShowHelperTextUnderMemberDropdown()
     {
         await using var ctx = new BunitContext();
