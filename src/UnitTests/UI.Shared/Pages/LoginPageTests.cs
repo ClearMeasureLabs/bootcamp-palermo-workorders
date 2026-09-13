@@ -275,7 +275,25 @@ public class LoginPageTests
         var component = ctx.Render<Login>();
 
         var heading = component.Find("h2");
-        heading.TextContent.ShouldBe("Sign in");
+        heading.TextContent.Trim().ShouldBe("Sign in");
+    }
+
+    [Test]
+    public async Task ShouldDisplayLockIconInSignInHeading()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var icon = component.Find("h2 > i.bi-lock");
+        icon.ShouldNotBeNull();
+        icon.GetAttribute("aria-hidden").ShouldBe("true");
     }
 
     [Test]
