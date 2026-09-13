@@ -262,6 +262,23 @@ public class LoginPageTests
     }
 
     [Test]
+    public async Task ShouldDisplaySignInHeading()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Login>();
+
+        var heading = component.Find("h2");
+        heading.TextContent.ShouldBe("Sign in");
+    }
+
+    [Test]
     public async Task Should_ShowHelperTextUnderMemberDropdown()
     {
         await using var ctx = new BunitContext();
