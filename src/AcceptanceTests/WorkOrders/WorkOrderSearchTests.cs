@@ -515,12 +515,14 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await statusSortBtn.ClickAsync();
         await TakeScreenshotAsync(3, "SortedAscending");
 
+        await Expect(statusSortBtn).ToHaveTextAsync("Status ▲");
         var firstCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(4)");
         await Expect(firstCell).ToContainTextAsync(WorkOrderStatus.Assigned.FriendlyName);
 
         await statusSortBtn.ClickAsync();
         await TakeScreenshotAsync(4, "SortedDescending");
 
+        await Expect(statusSortBtn).ToHaveTextAsync("Status ▼");
         await Expect(firstCell).ToContainTextAsync(WorkOrderStatus.InProgress.FriendlyName);
     }
 
@@ -558,12 +560,14 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await dueDateSortBtn.ClickAsync();
         await TakeScreenshotAsync(3, "SortedAscending");
 
+        await Expect(dueDateSortBtn).ToHaveTextAsync("Due Date ▲");
         var firstRow = Page.Locator(".grid-data tbody tr").First;
         await Expect(firstRow.Locator("td:nth-child(6)")).ToContainTextAsync("Jan");
 
         await dueDateSortBtn.ClickAsync();
         await TakeScreenshotAsync(4, "SortedDescending");
 
+        await Expect(dueDateSortBtn).ToHaveTextAsync("Due Date ▼");
         await Expect(firstRow.Locator("td:nth-child(6)")).ToContainTextAsync("Dec");
     }
 }
