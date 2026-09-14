@@ -481,4 +481,89 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(statusSelect).ToHaveValueAsync(order1.Status.Key, new() { Timeout = 30_000 });
     }
+    [Test, Retry(2)]
+    public async Task SortByStatusHeader_SortsResultsAscending_ThenDescendingOnSecondClick()
+    {
+        // Arrange
+        var creator = Faker<Employee>();
+        var order1 = Faker<WorkOrder>();
+        var order2 = Faker<WorkOrder>();
+        order1.Creator = creator;
+        order2.Creator = creator;
+        order1.Status = WorkOrderStatus.InProgress;
+        order2.Status = WorkOrderStatus.Assigned;
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order1);
+        context.Add(order2);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "Loaded");
+
+        // Filter by creator so only these two work orders are in the result set
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(2, "Filtered");
+
+        var statusSortBtn = Page.Locator($"#{WorkOrderSearch.Elements.SortByStatusButton}");
+        await statusSortBtn.ClickAsync();
+        await TakeScreenshotAsync(3, "SortedAscending");
+
+        var firstCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(4)");
+        await Expect(firstCell).ToContainTextAsync(WorkOrderStatus.Assigned.FriendlyName);
+
+        await statusSortBtn.ClickAsync();
+        await TakeScreenshotAsync(4, "SortedDescending");
+
+        await Expect(firstCell).ToContainTextAsync(WorkOrderStatus.InProgress.FriendlyName);
+    }
+
+    [Test, Retry(2)]
+    public async Task SortByDueDateHeader_SortsResultsAscending_ThenDescendingOnSecondClick()
+    {
+        // Arrange
+        var creator = Faker<Employee>();
+        var order1 = Faker<WorkOrder>();
+        var order2 = Faker<WorkOrder>();
+        order1.Creator = creator;
+        order2.Creator = creator;
+        order1.DueDate = new DateOnly(2099, 1, 1);
+        order2.DueDate = new DateOnly(2099, 12, 31);
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order1);
+        context.Add(order2);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "Loaded");
+
+        // Filter by creator so only these two work orders are in the result set
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(2, "Filtered");
+
+        var dueDateSortBtn = Page.Locator($"#{WorkOrderSearch.Elements.SortByDueDateButton}");
+        await dueDateSortBtn.ClickAsync();
+        await TakeScreenshotAsync(3, "SortedAscending");
+
+        var firstRow = Page.Locator(".grid-data tbody tr").First;
+        await Expect(firstRow.Locator("td:nth-child(6)")).ToContainTextAsync("Jan");
+
+        await dueDateSortBtn.ClickAsync();
+        await TakeScreenshotAsync(4, "SortedDescending");
+
+        await Expect(firstRow.Locator("td:nth-child(6)")).ToContainTextAsync("Dec");
+    }
 }
