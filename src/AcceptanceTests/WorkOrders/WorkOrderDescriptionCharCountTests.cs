@@ -33,7 +33,6 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
         await descriptionField.FillAsync("0123456789");
-        await descriptionField.BlurAsync();
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("3990 characters remaining");
@@ -55,7 +54,6 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
 
         var fullText = new string('A', WorkOrder.DescriptionMaxLength);
         await descriptionField.FillAsync(fullText);
-        await descriptionField.BlurAsync();
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("0 characters remaining");
