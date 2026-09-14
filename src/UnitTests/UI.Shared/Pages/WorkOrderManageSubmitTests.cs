@@ -46,7 +46,6 @@ public class WorkOrderManageSubmitTests
         });
 
         await component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").ChangeAsync(new() { Value = "Submit title" });
-        await component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ChangeAsync(new() { Value = "Submit description" });
 
         var saveButton = component.Find($"[data-testid='{WorkOrderManage.Elements.CommandButton}Save']");
         await saveButton.ClickAsync(new());
@@ -162,7 +161,7 @@ public class WorkOrderManageSubmitTests
                 Status = WorkOrderStatus.Draft,
                 Creator = creator,
                 Title = "",
-                Description = ""
+                Description = "Initial description"
             };
         }
     }
