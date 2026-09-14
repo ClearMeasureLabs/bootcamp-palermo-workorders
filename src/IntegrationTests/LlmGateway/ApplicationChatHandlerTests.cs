@@ -4,7 +4,6 @@ using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.McpServer.Tools;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -378,16 +377,5 @@ public class ApplicationChatHandlerTests : LlmTestBase
         public object? GetService(Type serviceType, object? serviceKey = null) => null;
 
         public void Dispose() { }
-    }
-
-    private sealed class StubBus : IBus
-    {
-        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request) =>
-            throw new NotImplementedException();
-
-        public Task<object?> Send(object request) =>
-            throw new NotImplementedException();
-
-        public Task Publish(INotification notification) => Task.CompletedTask;
     }
 }
