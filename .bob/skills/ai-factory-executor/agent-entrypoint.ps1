@@ -180,7 +180,57 @@ function Start-ServeApp {
     # provider is chosen by connection-string prefix (server=... -> SQL Server).
     $conn = Get-ServeConnectionString
     if (-not $conn) {
-        Write-Failure "No SQL Server connection string - cannot serve with sample data (is DinD/SQL-Container mode active?)."
+        # SQLite mode: no SQL Server available. Mirror the startup used by
+        # ServerFixture.ApplySqliteServerEnvironment: --no-launch-profile,
+        # dummy APPLICATIONINSIGHTS_CONNECTION_STRING, empty AI_OpenAI_* vars.
+        Write-Info "No SQL Server connection string - serving in SQLite mode (mirrors CI acceptance-test startup)."
+
+        # Resolve the SQLite DB path from the environment (set earlier in the
+        # entrypoint when DATABASE_ENGINE=SQLite), defaulting to ChurchBulletin.db.
+        $sqliteConn = if ($env:ConnectionStrings__SqlConnectionString) {
+            $env:ConnectionStrings__SqlConnectionString
+        } else {
+            "Data Source=/workspace/ChurchBulletin.db"
+        }
+        # Ensure the path is absolute (mirrors ServerFixture.ResolveSqliteConnectionString).
+        if ($sqliteConn -match '^Data Source=(.+)$') {
+            $dbPath = $Matches[1].Trim().TrimEnd(';')
+            if (-not [System.IO.Path]::IsPathRooted($dbPath)) {
+                $dbPath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("/workspace", $dbPath))
+                $sqliteConn = "Data Source=$dbPath"
+            }
+        }
+
+        $serveScript = "/tmp/serve-app.ps1"
+        Set-Content -Path $serveScript -Value @"
+`$env:ASPNETCORE_ENVIRONMENT = 'Development'
+`$env:APPLICATIONINSIGHTS_CONNECTION_STRING = 'InstrumentationKey=00000000-0000-0000-0000-000000000000'
+`$env:AI_OpenAI_ApiKey = ''
+`$env:AI_OpenAI_Url = ''
+`$env:AI_OpenAI_Model = ''
+`$env:ConnectionStrings__SqlConnectionString = '$sqliteConn'
+Set-Location /workspace
+dotnet run --project src/UI/Server --no-build --configuration Release --no-launch-profile --urls http://0.0.0.0:$script:ServePort *>> $script:AppLog
+"@
+        tmux kill-session -t app 2>$null
+        tmux new-session -d -s app "pwsh -NoProfile -File $serveScript"
+        Write-Info "App starting on 0.0.0.0:$script:ServePort (Release --no-build, Development, SQLite)"
+
+        $healthy = $false
+        for ($i = 0; $i -lt 36; $i++) {
+            try {
+                $r = Invoke-WebRequest -UseBasicParsing "http://localhost:$script:ServePort/" -TimeoutSec 4
+                if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { $healthy = $true; break }
+            } catch { }
+            Start-Sleep -Seconds 5
+        }
+        if ($healthy) {
+            Write-Success "App answered on :$script:ServePort (SQLite)"
+            Write-StructuredLog -Level "INFO" -Message "Serve app up (SQLite)" -Data @{ port = $script:ServePort; issue_number = $Issue }
+        } else {
+            Write-Info "App not yet answering on :$script:ServePort (SQLite) - recent app.log:"
+            Get-Content $script:AppLog -Tail 25 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  [app] $_" }
+        }
         return
     }
 
