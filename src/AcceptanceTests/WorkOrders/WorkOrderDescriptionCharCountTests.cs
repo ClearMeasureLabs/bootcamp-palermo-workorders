@@ -33,9 +33,11 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
-        // PressSequentially types character-by-character, firing real keyboard and input events
-        // that Blazor's oninput binding processes — caption updates without requiring blur.
-        await descriptionField.PressSequentiallyAsync("0123456789");
+        // Use EvaluateAsync to set the value and fire the input event atomically —
+        // same pattern as the ShowsWarning test and WorkOrderSaveDraftTests; reliable on ARM Chromium.
+        await descriptionField.EvaluateAsync(
+            "(el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); }",
+            "0123456789");
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("3990 characters remaining");
