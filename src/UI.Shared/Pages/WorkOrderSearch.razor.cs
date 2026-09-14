@@ -92,4 +92,17 @@ public partial class WorkOrderSearch : AppComponentBase
     {
         await SearchWorkOrders();
     }
+
+    private bool HasActiveFilters =>
+        !string.IsNullOrEmpty(Model.Filters.Creator) ||
+        !string.IsNullOrEmpty(Model.Filters.Assignee) ||
+        !string.IsNullOrEmpty(Model.Filters.Status);
+
+    private async Task HandleClearFilters()
+    {
+        Model.Filters.Creator = string.Empty;
+        Model.Filters.Assignee = string.Empty;
+        Model.Filters.Status = string.Empty;
+        await SearchWorkOrders();
+    }
 }

@@ -199,4 +199,73 @@ public class WorkOrderSearchTests
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
         workOrderRows.Length.ShouldBe(2);
     }
+
+    [Test]
+    public async Task ClearFiltersButton_ShouldBeDisabled_WhenAllFiltersAreEmpty()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        clearButton.HasAttribute("disabled").ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task ClearFiltersButton_ShouldBeEnabled_WhenAtLeastOneFilterIsSet()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var creatorSelect = component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.ChangeAsync(new() { Value = "jpalermo" });
+
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        clearButton.HasAttribute("disabled").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task ClickingClearFiltersButton_ShouldResetAllFiltersToEmpty_AndTriggerSearch()
+    {
+        await using var ctx = new BunitContext();
+
+        var stubBus = new StubBus();
+        ctx.Services.AddSingleton<IBus>(stubBus);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // Set all three filters
+        var creatorSelect = component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
+        var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
+
+        await creatorSelect.ChangeAsync(new() { Value = "jpalermo" });
+        await assigneeSelect.ChangeAsync(new() { Value = "hsimpson" });
+        await statusSelect.ChangeAsync(new() { Value = WorkOrderStatus.InProgress.Key });
+
+        var sendCountBeforeClear = stubBus.SendCallCount;
+
+        // Click clear
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        await clearButton.ClickAsync(new());
+
+        // Assert selects reset
+        component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}").GetAttribute("value").ShouldBeNullOrEmpty();
+        component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}").GetAttribute("value").ShouldBeNullOrEmpty();
+        component.Find($"#{WorkOrderSearch.Elements.StatusSelect}").GetAttribute("value").ShouldBeNullOrEmpty();
+
+        // Assert search was re-run (at least one more Send call after clearing)
+        stubBus.SendCallCount.ShouldBeGreaterThan(sendCountBeforeClear);
+    }
 }
