@@ -7,6 +7,8 @@ using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using Palermo.BlazorMvc;
 using Shouldly;
 using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
@@ -52,6 +54,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -77,6 +80,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -101,6 +105,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -124,6 +129,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -141,6 +147,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -158,6 +165,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -177,6 +185,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -198,7 +207,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(gatedBus);
-
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
         var component = ctx.Render<Login>();
 
         component.FindAll("option")
@@ -229,6 +238,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -254,6 +264,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -271,6 +282,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -288,6 +300,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -306,6 +319,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -323,6 +337,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -341,6 +356,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -358,6 +374,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -375,6 +392,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -392,6 +410,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -409,6 +428,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -426,6 +446,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -443,6 +464,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -463,6 +485,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -480,6 +503,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -497,6 +521,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -514,6 +539,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -531,6 +557,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -548,6 +575,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -565,6 +593,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -583,6 +612,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -600,6 +630,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -617,6 +648,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -634,12 +666,14 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
         var versionLabel = component.FindAll("small.text-muted")
             .First(s => s.TextContent.StartsWith("Version "));
         versionLabel.TextContent.ShouldStartWith("Version ");
+        versionLabel.TextContent.ShouldContain(" · Environment ");
     }
 
     [Test]
@@ -652,6 +686,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -659,6 +694,9 @@ public class LoginPageTests
             .First(s => s.TextContent.StartsWith("Version "));
         var versionString = versionLabel.TextContent["Version ".Length..];
         versionString.ShouldNotBeNullOrWhiteSpace();
+        var envSegment = versionLabel.TextContent.Split(" · Environment ", 2);
+        envSegment.Length.ShouldBe(2);
+        envSegment[1].ShouldNotBeNullOrWhiteSpace();
     }
 
     [Test]
@@ -671,6 +709,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -688,6 +727,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -708,6 +748,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -724,6 +765,7 @@ public class LoginPageTests
         ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
 
         var component = ctx.Render<Login>();
 
@@ -733,6 +775,52 @@ public class LoginPageTests
         var welcomeMessage = component.Find("small.text-success");
         welcomeMessage.ShouldNotBeNull();
         welcomeMessage.TextContent.ShouldBe("Welcome back, HOMER!");
+    }
+
+    [Test]
+    public async Task Should_ShowVersionLabel_WithEnvironmentSegment()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
+
+        var component = ctx.Render<Login>();
+
+        var versionLabel = component.FindAll("small.text-muted")
+            .First(s => s.TextContent.StartsWith("Version "));
+        versionLabel.TextContent.ShouldContain("Environment Testing");
+    }
+
+    [Test]
+    public async Task Should_ShowVersionLabel_WithFallback_WhenEnvironmentNameIsBlank()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment(""));
+
+        var component = ctx.Render<Login>();
+
+        var versionLabel = component.FindAll("small.text-muted")
+            .First(s => s.TextContent.StartsWith("Version "));
+        versionLabel.TextContent.ShouldContain("Environment unknown");
+    }
+
+    private sealed class FakeHostEnvironment(string environmentName) : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = environmentName;
+        public string ApplicationName { get; set; } = "TestApp";
+        public string ContentRootPath { get; set; } = string.Empty;
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
     private sealed class GatedEmployeeStubBus : StubBus
