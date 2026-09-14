@@ -4,6 +4,12 @@ A work order management application built with .NET 10.0 implementing Onion Arch
 
 This codebase serves as both a working application and a teaching reference for software architecture. The 51 architectural patterns cataloged below are all demonstrated in the source code.
 
+## Getting Started
+
+1. Install the .NET 10 SDK.
+2. Run `dotnet build` from the repository root.
+3. Run the AppHost project `src/ChurchBulletin.AppHost` to start the application.
+
 ## Solution Structure
 
 ```
