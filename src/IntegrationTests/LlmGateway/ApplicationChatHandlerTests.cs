@@ -50,7 +50,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     [Test]
     public async Task Handle_WhenChatClientThrows_ReturnsFriendlyMessage()
     {
-        var factory = new ThrowingChatClientFactory(new ClientResultException("content_filter", null!, null!));
+        var factory = new ThrowingChatClientFactory(new ClientResultException("content_filter", null, null));
         var toolProvider = TestHost.GetRequiredService<IToolProvider>();
         var handler = new ApplicationChatHandler(factory, toolProvider, NullLogger<ApplicationChatHandler>.Instance);
         var query = new ApplicationChatQuery("bad prompt", "tlovejoy");

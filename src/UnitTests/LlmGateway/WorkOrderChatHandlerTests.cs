@@ -51,7 +51,7 @@ public class WorkOrderChatHandlerTests
     [Test]
     public async Task Handle_WhenClientThrowsClientResultException_ReturnsFriendlyMessage()
     {
-        var factory = new ThrowingChatClientFactory(new ClientResultException("content_filter", null!, null!));
+        var factory = new ThrowingChatClientFactory(new ClientResultException("content_filter", null, null));
         var tool = new WorkOrderTool(new StubBus());
         var handler = new WorkOrderChatHandler(factory, tool, NullLogger<WorkOrderChatHandler>.Instance);
         var workOrder = new WorkOrder { Number = "WO-99", Title = "Test" };

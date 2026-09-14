@@ -105,7 +105,7 @@ public class ApplicationChatHandlerTests
     [Test]
     public async Task Handle_WhenClientThrowsClientResultException_ReturnsFriendlyMessage()
     {
-        var factory = new ThrowingChatClientFactory(new ClientResultException("content_filter", null!, null!));
+        var factory = new ThrowingChatClientFactory(new ClientResultException("content_filter", null, null));
         var handler = new ApplicationChatHandler(factory, new StubToolProvider(), NullLogger<ApplicationChatHandler>.Instance);
         var query = new ApplicationChatQuery("bad prompt", "tlovejoy");
 
