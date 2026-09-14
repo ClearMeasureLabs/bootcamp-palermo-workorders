@@ -9,7 +9,7 @@ export function syncDomFromTheme(theme) {
 }
 
 /**
- * @returns {'dark'|'light'} Stored preference if set; otherwise follows prefers-color-scheme (does not write storage).
+ * @returns {'dark'|'light'} Stored preference if set; otherwise returns 'light'.
  */
 export function getTheme() {
     try {
@@ -20,10 +20,7 @@ export function getTheme() {
     } catch {
         // ignore
     }
-    const prefersDark = typeof window !== 'undefined'
-        && window.matchMedia
-        && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return prefersDark ? 'dark' : 'light';
+    return 'light';
 }
 
 /**
