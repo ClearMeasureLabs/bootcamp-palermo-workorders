@@ -21,7 +21,7 @@ public class IndexPageTests
 
         var banner = component.Find($"[data-testid='{nameof(IndexPage.Elements.GreetingBanner)}']");
         banner.ShouldNotBeNull();
-        banner.TextContent.ShouldContain("Welcome to the AI Software Factory!");
+        banner.TextContent.ShouldContain("Welcome to the AI Software Factory! Have a blessed day.");
 
         var emoji = component.Find($"[data-testid='{nameof(IndexPage.Elements.GreetingBannerEmoji)}']");
         emoji.GetAttribute("aria-hidden").ShouldBe("true");
