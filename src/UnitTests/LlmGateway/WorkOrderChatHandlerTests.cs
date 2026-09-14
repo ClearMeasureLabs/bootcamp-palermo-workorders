@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
+using System.ClientModel;
 
 namespace ClearMeasure.Bootcamp.UnitTests.LlmGateway;
 
@@ -37,6 +38,20 @@ public class WorkOrderChatHandlerTests
     public async Task Handle_WhenClientThrowsHttpRequestException_ReturnsFriendlyMessage()
     {
         var factory = new ThrowingChatClientFactory(new HttpRequestException("content_filter"));
+        var tool = new WorkOrderTool(new StubBus());
+        var handler = new WorkOrderChatHandler(factory, tool, NullLogger<WorkOrderChatHandler>.Instance);
+        var workOrder = new WorkOrder { Number = "WO-99", Title = "Test" };
+        var query = new WorkOrderChatQuery("bad prompt", workOrder);
+
+        var response = await handler.Handle(query, CancellationToken.None);
+
+        response.Text.ShouldBe(WorkOrderChatHandler.FriendlyProviderErrorMessage);
+    }
+
+    [Test]
+    public async Task Handle_WhenClientThrowsClientResultException_ReturnsFriendlyMessage()
+    {
+        var factory = new ThrowingChatClientFactory(new ClientResultException("content_filter", null!, null!));
         var tool = new WorkOrderTool(new StubBus());
         var handler = new WorkOrderChatHandler(factory, tool, NullLogger<WorkOrderChatHandler>.Instance);
         var workOrder = new WorkOrder { Number = "WO-99", Title = "Test" };

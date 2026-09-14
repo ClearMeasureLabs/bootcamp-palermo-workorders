@@ -88,7 +88,7 @@ public class ApplicationChatAgentTests : AcceptanceTestBase
                 $"Expected description to mention edging or prayer garden: {createdWo.Description}");
     }
 
-    [Test, Ignore("Requires server-side LLM stub that throws HttpRequestException; infrastructure not yet wired")]
+    [Test, Ignore("Requires server-side LLM stub that throws ClientResultException via DI override in a separate server process; infrastructure not yet wired")]
     public async Task ShouldShowFriendlyMessageWhenProviderRefuses()
     {
         await LoginAsCurrentUser();

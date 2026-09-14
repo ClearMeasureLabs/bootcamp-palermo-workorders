@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
+using System.ClientModel;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
@@ -34,9 +35,10 @@ public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workO
             ChatResponse response = await client.GetResponseAsync(chatMessages, _chatOptions, cancellationToken);
             return response;
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or ClientResultException)
         {
-            logger.LogWarning(ex, "LLM provider refused or timed out: {Reason}", ex.Message);
+            logger.LogWarning(ex, "LLM provider refused or timed out: {StatusCode} {Reason}",
+                (ex as ClientResultException)?.Status, ex.Message);
             return new ChatResponse([new ChatMessage(ChatRole.Assistant, FriendlyProviderErrorMessage)]);
         }
     }
