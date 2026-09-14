@@ -139,6 +139,26 @@
     letter-spacing: 0.5px;
 }
 
+.sort-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0;
+}
+
+.sort-btn:hover {
+    color: #7b68ee;
+}
+
+.sort-btn.sort-active {
+    color: #7b68ee;
+}
+
 .due-date-today {
     background-color: #fef08a;
     color: #854d0e;

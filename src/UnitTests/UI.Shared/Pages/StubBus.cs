@@ -5,7 +5,7 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
-public class StubBus() : Bus(null!)
+public class StubBus(WorkOrder[]? workOrderResults = null) : Bus(null!)
 {
     public int SendCallCount { get; private set; }
 
@@ -29,7 +29,7 @@ public class StubBus() : Bus(null!)
 
         if (request is WorkOrderSpecificationQuery)
         {
-            return Task.FromResult<TResponse>((TResponse)(object)WorkOrderSpecificationQueryResponse());
+            return Task.FromResult<TResponse>((TResponse)(object)(workOrderResults ?? WorkOrderSpecificationQueryResponse()));
         }
 
         if (request is WorkOrderAttachmentsQuery)
@@ -53,7 +53,7 @@ public class StubBus() : Bus(null!)
         throw new NotImplementedException();
     }
 
-    private Func<WorkOrder[]> WorkOrderSpecificationQueryResponse => () =>
+    private static Func<WorkOrder[]> WorkOrderSpecificationQueryResponse => () =>
     [
         new WorkOrder
         {
