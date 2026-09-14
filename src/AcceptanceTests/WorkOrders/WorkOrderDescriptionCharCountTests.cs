@@ -32,7 +32,12 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
 
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
+
+        // FillAsync sets the value but may not fire the DOM 'input' event in a way that
+        // Blazor's oninput binding processes. Dispatch the event explicitly so that Blazor
+        // updates Model.Description and re-renders the caption without requiring blur.
         await descriptionField.FillAsync("0123456789");
+        await descriptionField.EvaluateAsync("el => el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))");
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("3990 characters remaining");
@@ -52,8 +57,12 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
+        // FillAsync sets the value but may not fire the DOM 'input' event in a way that
+        // Blazor's oninput binding processes. Dispatch the event explicitly so that Blazor
+        // updates Model.Description and re-renders the caption without requiring blur.
         var fullText = new string('A', WorkOrder.DescriptionMaxLength);
         await descriptionField.FillAsync(fullText);
+        await descriptionField.EvaluateAsync("el => el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))");
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("0 characters remaining");
