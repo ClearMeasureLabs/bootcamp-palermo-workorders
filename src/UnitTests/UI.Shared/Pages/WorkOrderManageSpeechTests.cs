@@ -144,7 +144,7 @@ public class WorkOrderManageSpeechTests
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
-        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilderWithDescription("Test description"));
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(translationService);
         ctx.Services.AddSpeechSynthesis();
@@ -157,10 +157,10 @@ public class WorkOrderManageSpeechTests
 
         await component.WaitForAssertionAsync(() =>
         {
-            component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']").ShouldNotBeNull();
+            component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ShouldNotBeNull();
         });
 
-
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ChangeAsync(new() { Value = "Test description" });
         await component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']").ClickAsync(new());
 
         await component.WaitForAssertionAsync(() =>
@@ -243,23 +243,6 @@ public class WorkOrderManageSpeechTests
             };
         }
     }
-
-    private class StubWorkOrderBuilderWithDescription(string description) : IWorkOrderBuilder
-    {
-        public WorkOrder CreateNewWorkOrder(Employee creator)
-        {
-            return new WorkOrder
-            {
-                Id = Guid.NewGuid(),
-                Number = "WO-TEST",
-                Status = WorkOrderStatus.Draft,
-                Creator = creator,
-                Title = "Test title",
-                Description = description
-            };
-        }
-    }
-
 
     private class StubWorkOrderBuilderEmptyTitle : IWorkOrderBuilder
     {

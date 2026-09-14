@@ -3,6 +3,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.LlmGateway;
 using MediatR;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.LlmGateway;
@@ -16,7 +17,7 @@ public class WorkOrderChatHandlerTests
         var bus = new StubBus();
         var factory = new StubChatClientFactory(bus, "stub-reply");
         var tool = new WorkOrderTool(bus);
-        var handler = new WorkOrderChatHandler(factory, tool);
+        var handler = new WorkOrderChatHandler(factory, tool, NullLogger<WorkOrderChatHandler>.Instance);
         var workOrder = new WorkOrder { Number = "WO-42", Title = "Paint" };
         var query = new WorkOrderChatQuery("What is status?", workOrder);
 
@@ -30,6 +31,59 @@ public class WorkOrderChatHandlerTests
         factory.LastOptions.ShouldNotBeNull();
         factory.LastOptions!.Tools.ShouldNotBeNull();
         factory.LastOptions.Tools!.Count.ShouldBe(2);
+    }
+
+    [Test]
+    public async Task Handle_WhenClientThrowsHttpRequestException_ReturnsFriendlyMessage()
+    {
+        var factory = new ThrowingChatClientFactory(new HttpRequestException("content_filter"));
+        var tool = new WorkOrderTool(new StubBus());
+        var handler = new WorkOrderChatHandler(factory, tool, NullLogger<WorkOrderChatHandler>.Instance);
+        var workOrder = new WorkOrder { Number = "WO-99", Title = "Test" };
+        var query = new WorkOrderChatQuery("bad prompt", workOrder);
+
+        var response = await handler.Handle(query, CancellationToken.None);
+
+        response.Text.ShouldBe(WorkOrderChatHandler.FriendlyProviderErrorMessage);
+    }
+
+    [Test]
+    public async Task Handle_WhenClientThrowsTaskCanceledException_ReturnsFriendlyMessage()
+    {
+        var factory = new ThrowingChatClientFactory(new TaskCanceledException("timeout"));
+        var tool = new WorkOrderTool(new StubBus());
+        var handler = new WorkOrderChatHandler(factory, tool, NullLogger<WorkOrderChatHandler>.Instance);
+        var workOrder = new WorkOrder { Number = "WO-99", Title = "Test" };
+        var query = new WorkOrderChatQuery("slow prompt", workOrder);
+
+        var response = await handler.Handle(query, CancellationToken.None);
+
+        response.Text.ShouldBe(WorkOrderChatHandler.FriendlyProviderErrorMessage);
+    }
+
+    private sealed class ThrowingChatClientFactory(Exception exception) : ChatClientFactory(null!)
+    {
+        public override Task<IChatClient> GetChatClient() =>
+            Task.FromResult<IChatClient>(new ThrowingChatClient(exception));
+    }
+
+    private sealed class ThrowingChatClient(Exception exception) : IChatClient
+    {
+        public Task<ChatResponse> GetResponseAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null,
+            CancellationToken cancellationToken = default) =>
+            throw exception;
+
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+
+        public void Dispose() { }
     }
 
     private sealed class StubChatClientFactory(IBus bus, string reply) : ChatClientFactory(bus)
