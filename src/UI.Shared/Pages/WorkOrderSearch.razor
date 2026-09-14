@@ -78,13 +78,13 @@
                         <th>Assignee</th>
                         <th>
                             <button id="@Elements.SortByStatusButton" class="sort-btn @(_sortColumn == "Status" ? "sort-active" : "")" @onclick='() => SortBy("Status")'>
-                                Status@if (_sortColumn == "Status") { <span>@(_sortAscending ? "▲" : "▼")</span> }
+                                Status @if (_sortColumn == "Status") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                             </button>
                         </th>
                         <th>Title</th>
                         <th>
                             <button id="@Elements.SortByDueDateButton" class="sort-btn @(_sortColumn == "DueDate" ? "sort-active" : "")" @onclick='() => SortBy("DueDate")'>
-                                Due Date@if (_sortColumn == "DueDate") { <span>@(_sortAscending ? "▲" : "▼")</span> }
+                                Due Date @if (_sortColumn == "DueDate") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                             </button>
                         </th>
                     </tr>
