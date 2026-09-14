@@ -70,6 +70,8 @@ public class UiServiceRegistry : ServiceRegistry
             .AddCheck<NeedsRebootHealthCheck>("NeedsReboot")
             .AddCheck<ProcessThreadCountHealthCheck>("ProcessThreadCount");
 
+        this.AddSingleton<ILlmHealthCheckCache>(_ => new LlmHealthCheckCache());
+
         this.AddSingleton<IDetailedHealthReportProvider, DetailedHealthReportProvider>();
         this.AddSingleton<IHttpRequestMetricsCounter, HttpRequestMetricsCounter>();
     }

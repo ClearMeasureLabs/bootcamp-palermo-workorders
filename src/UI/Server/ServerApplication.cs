@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.McpServer.Tools;
@@ -95,6 +96,8 @@ public static class ServerApplication
         builder.Services.AddRequestDecompression();
         builder.Services.Configure<RequestBodyBufferingOptions>(
             builder.Configuration.GetSection(RequestBodyBufferingOptions.SectionName));
+        builder.Services.Configure<LlmHealthCheckOptions>(
+            builder.Configuration.GetSection("LlmHealthCheck"));
         builder.Services.AddServerCors(builder.Configuration);
         builder.Services.AddOutputCache(options =>
         {
