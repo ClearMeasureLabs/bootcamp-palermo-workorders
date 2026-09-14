@@ -4,8 +4,10 @@ using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.McpServer.Tools;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
@@ -43,6 +45,19 @@ public class ApplicationChatHandlerTests : LlmTestBase
             .Include(wo => wo.Assignee)
             .Include(wo => wo.Creator)
             .SingleOrDefaultAsync(wo => wo.Number == workOrderNumber, cancellationToken);
+    }
+
+    [Test]
+    public async Task Handle_WhenChatClientThrows_ReturnsFriendlyMessage()
+    {
+        var factory = new ThrowingChatClientFactory(new HttpRequestException("content_filter"));
+        var toolProvider = TestHost.GetRequiredService<IToolProvider>();
+        var handler = new ApplicationChatHandler(factory, toolProvider, NullLogger<ApplicationChatHandler>.Instance);
+        var query = new ApplicationChatQuery("bad prompt", "tlovejoy");
+
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        result.Text.ShouldContain("couldn't process that request");
     }
 
     [Test]
@@ -338,5 +353,41 @@ public class ApplicationChatHandlerTests : LlmTestBase
             workOrder.Assignee?.FirstName.ShouldBe("Groundskeeper Willie");
             workOrder.Creator?.FirstName.ShouldBe("Timothy");
         }
+    }
+
+    private sealed class ThrowingChatClientFactory(Exception exception) : ChatClientFactory(null!)
+    {
+        public override Task<IChatClient> GetChatClient() =>
+            Task.FromResult<IChatClient>(new ThrowingChatClient(exception));
+    }
+
+    private sealed class ThrowingChatClient(Exception exception) : IChatClient
+    {
+        public Task<ChatResponse> GetResponseAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null,
+            CancellationToken cancellationToken = default) =>
+            throw exception;
+
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+
+        public void Dispose() { }
+    }
+
+    private sealed class StubBus : IBus
+    {
+        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request) =>
+            throw new NotImplementedException();
+
+        public Task<object?> Send(object request) =>
+            throw new NotImplementedException();
+
+        public Task Publish(INotification notification) => Task.CompletedTask;
     }
 }

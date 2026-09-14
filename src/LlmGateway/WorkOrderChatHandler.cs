@@ -1,10 +1,14 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workOrderTool) : IRequestHandler<WorkOrderChatQuery, ChatResponse>
+public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workOrderTool, ILogger<WorkOrderChatHandler> logger) : IRequestHandler<WorkOrderChatQuery, ChatResponse>
 {
+    internal const string FriendlyProviderErrorMessage =
+        "I couldn't process that request. Please rephrase and try again.";
+
     private readonly ChatOptions _chatOptions = new()
     {
         Tools = [
@@ -22,11 +26,18 @@ public class WorkOrderChatHandler(ChatClientFactory factory, WorkOrderTool workO
             new(ChatRole.System, $"Work Order number is {request.CurrentWorkOrder.Number}"),
             new(ChatRole.System, $"Limit answer to 3 sentences unless listing data. When listing items, include ALL items from the tool response. Be brief otherwise."),
             new(ChatRole.User, prompt)
-            
         };
 
         IChatClient client = await factory.GetChatClient();
-        ChatResponse response = await client.GetResponseAsync(chatMessages, _chatOptions, cancellationToken);
-        return response;
+        try
+        {
+            ChatResponse response = await client.GetResponseAsync(chatMessages, _chatOptions, cancellationToken);
+            return response;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            logger.LogWarning(ex, "LLM provider refused or timed out: {Reason}", ex.Message);
+            return new ChatResponse([new ChatMessage(ChatRole.Assistant, FriendlyProviderErrorMessage)]);
+        }
     }
 }

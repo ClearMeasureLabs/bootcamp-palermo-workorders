@@ -87,4 +87,30 @@ public class ApplicationChatAgentTests : AcceptanceTestBase
             .ShouldBeTrue(
                 $"Expected description to mention edging or prayer garden: {createdWo.Description}");
     }
+
+    [Test, Ignore("Requires server-side LLM stub that throws HttpRequestException; infrastructure not yet wired")]
+    public async Task ShouldShowFriendlyMessageWhenProviderRefuses()
+    {
+        await LoginAsCurrentUser();
+
+        await Click(nameof(NavMenu.Elements.AiAgent));
+        await Page.WaitForURLAsync("**/ai-agent");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // When the LLM provider refuses, ApplicationChatHandler returns the friendly message
+        // rather than propagating an exception that produces a 500 and an error banner.
+        const string prompt = "Test prompt that triggers a provider refusal";
+        await Input(nameof(ApplicationChat.Elements.ChatInput), prompt);
+        await Click(nameof(ApplicationChat.Elements.SendButton));
+
+        var aiMessage = Page.GetByTestId(nameof(ApplicationChat.Elements.AiMessage) + "1");
+        await aiMessage.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+
+        var messageText = await aiMessage.InnerTextAsync();
+        messageText.ShouldContain("couldn't process that request");
+
+        // No error banner should be visible
+        var errorBanner = Page.Locator(".error, [role='alert']");
+        await Expect(errorBanner).ToHaveCountAsync(0);
+    }
 }
