@@ -12,6 +12,9 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 [Authorize]
 public partial class WorkOrderSearch : AppComponentBase
 {
+    private string? _sortColumn;
+    private bool _sortAscending = true;
+
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
 
     [SupplyParameterFromQuery] public string? Creator { get; set; }
@@ -73,7 +76,40 @@ public partial class WorkOrderSearch : AppComponentBase
 
         var workOrders = await Bus.Send(specification);
         Model.Results = workOrders.Select(MapSearchRow).ToArray();
+        ApplySort();
         StateHasChanged();
+    }
+
+    public void SortBy(string column)
+    {
+        if (column == _sortColumn)
+            _sortAscending = !_sortAscending;
+        else
+        {
+            _sortColumn = column;
+            _sortAscending = true;
+        }
+
+        ApplySort();
+        StateHasChanged();
+    }
+
+    private void ApplySort()
+    {
+        if (_sortColumn == null) return;
+
+        Model.Results = _sortColumn switch
+        {
+            "Status" => _sortAscending
+                ? Model.Results.OrderBy(r => r.Status.FriendlyName).ToArray()
+                : Model.Results.OrderByDescending(r => r.Status.FriendlyName).ToArray(),
+            "DueDate" => _sortAscending
+                ? Model.Results.OrderBy(r => r.WorkOrder.DueDate.HasValue ? 0 : 1)
+                               .ThenBy(r => r.WorkOrder.DueDate).ToArray()
+                : Model.Results.OrderBy(r => r.WorkOrder.DueDate.HasValue ? 0 : 1)
+                               .ThenByDescending(r => r.WorkOrder.DueDate).ToArray(),
+            _ => Model.Results
+        };
     }
 
     private WorkOrderSearchResultRow MapSearchRow(WorkOrder workOrder)

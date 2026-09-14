@@ -234,6 +234,174 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task SortByStatus_Ascending_SortsResultsByStatusFriendlyName()
+    {
+        await using var ctx = new BunitContext();
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+        };
+        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByStatusButton}");
+        await sortBtn.ClickAsync(new());
+
+        var cells = component.FindAll("tbody tr td:nth-child(4)");
+        cells[0].TextContent.Trim().ShouldBe(WorkOrderStatus.Assigned.FriendlyName);
+        cells[1].TextContent.Trim().ShouldBe(WorkOrderStatus.Draft.FriendlyName);
+        cells[2].TextContent.Trim().ShouldBe(WorkOrderStatus.InProgress.FriendlyName);
+    }
+
+    [Test]
+    public async Task SortByStatus_ClickingAgain_ReversesToDescending()
+    {
+        await using var ctx = new BunitContext();
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+        };
+        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByStatusButton}");
+        await sortBtn.ClickAsync(new());
+        await sortBtn.ClickAsync(new());
+
+        var cells = component.FindAll("tbody tr td:nth-child(4)");
+        cells[0].TextContent.Trim().ShouldBe(WorkOrderStatus.InProgress.FriendlyName);
+        cells[1].TextContent.Trim().ShouldBe(WorkOrderStatus.Draft.FriendlyName);
+        cells[2].TextContent.Trim().ShouldBe(WorkOrderStatus.Assigned.FriendlyName);
+    }
+
+    [Test]
+    public async Task SortByDueDate_Ascending_SortsResultsByDueDate_NullsLast()
+    {
+        await using var ctx = new BunitContext();
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, DueDate = null },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 6, 1) },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 3, 1) },
+        };
+        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByDueDateButton}");
+        await sortBtn.ClickAsync(new());
+
+        var tds = component.FindAll("tbody tr");
+        tds[0].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-002");
+        tds[1].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-001");
+        tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
+    }
+
+    [Test]
+    public async Task SortByDueDate_ClickingAgain_ReversesToDescending_NullsLast()
+    {
+        await using var ctx = new BunitContext();
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, DueDate = null },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 6, 1) },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 3, 1) },
+        };
+        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByDueDateButton}");
+        await sortBtn.ClickAsync(new());
+        await sortBtn.ClickAsync(new());
+
+        var tds = component.FindAll("tbody tr");
+        tds[0].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-001");
+        tds[1].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-002");
+        tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
+    }
+
+    [Test]
+    public async Task SortByDifferentColumn_ResetsDirectionToAscending()
+    {
+        await using var ctx = new BunitContext();
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress, DueDate = new DateOnly(2025, 6, 1) },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned, DueDate = new DateOnly(2025, 3, 1) },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 9, 1) },
+        };
+        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // Click Status twice → descending
+        var statusBtn = component.Find($"#{WorkOrderSearch.Elements.SortByStatusButton}");
+        await statusBtn.ClickAsync(new());
+        await statusBtn.ClickAsync(new());
+
+        // Now click DueDate → should reset to ascending
+        var dueDateBtn = component.Find($"#{WorkOrderSearch.Elements.SortByDueDateButton}");
+        await dueDateBtn.ClickAsync(new());
+
+        var tds = component.FindAll("tbody tr");
+        tds[0].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-001");
+        tds[1].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
+        tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-002");
+    }
+
+    [Test]
+    public async Task SortIndicatorGlyph_ShowsAscendingGlyph_WhenColumnFirstClicked()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByStatusButton}");
+        await sortBtn.ClickAsync(new());
+
+        sortBtn.TextContent.ShouldContain("▲");
+        sortBtn.TextContent.ShouldNotContain("▼");
+    }
+
+    [Test]
+    public async Task SortIndicatorGlyph_ShowsDescendingGlyph_WhenSameColumnClickedAgain()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByStatusButton}");
+        await sortBtn.ClickAsync(new());
+        await sortBtn.ClickAsync(new());
+
+        sortBtn.TextContent.ShouldContain("▼");
+        sortBtn.TextContent.ShouldNotContain("▲");
+    }
+
+    [Test]
     public async Task ClickingClearFiltersButton_ShouldResetAllFiltersToEmpty_AndTriggerSearch()
     {
         await using var ctx = new BunitContext();
