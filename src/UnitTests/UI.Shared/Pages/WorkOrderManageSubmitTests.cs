@@ -46,7 +46,7 @@ public class WorkOrderManageSubmitTests
         });
 
         await component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").ChangeAsync(new() { Value = "Submit title" });
-        await component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ChangeAsync(new() { Value = "Submit description" });
+        await component.InvokeAsync(() => component.Instance.Model.Description = "Submit description");
 
         var saveButton = component.Find($"[data-testid='{WorkOrderManage.Elements.CommandButton}Save']");
         await saveButton.ClickAsync(new());

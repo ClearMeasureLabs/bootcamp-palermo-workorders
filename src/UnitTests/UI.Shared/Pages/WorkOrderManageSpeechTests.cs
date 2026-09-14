@@ -160,7 +160,7 @@ public class WorkOrderManageSpeechTests
             component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ShouldNotBeNull();
         });
 
-        await component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ChangeAsync(new() { Value = "Test description" });
+        await component.InvokeAsync(() => component.Instance.Model.Description = "Test description");
         await component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']").ClickAsync(new());
 
         await component.WaitForAssertionAsync(() =>
