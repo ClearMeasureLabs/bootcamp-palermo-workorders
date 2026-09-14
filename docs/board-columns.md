@@ -15,3 +15,7 @@ The project board columns, in order:
 ## Docs-only changes
 
 A merge that changes only documentation publishes no release candidate. The factory moves such a card straight from Functional Testing to Done, because there is nothing to deploy or UX-test.
+
+## Production incidents
+
+When the health check reports unhealthy, the factory files a Production Incident into Release Queue and works it immediately.
