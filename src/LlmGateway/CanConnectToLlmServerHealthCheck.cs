@@ -1,11 +1,14 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
 public class CanConnectToLlmServerHealthCheck(
     ChatClientFactory chatClientFactory,
+    ILlmHealthCheckCache cache,
+    IOptions<LlmHealthCheckOptions> options,
     ILogger<CanConnectToLlmServerHealthCheck> logger) : IHealthCheck
 {
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
@@ -15,6 +18,11 @@ public class CanConnectToLlmServerHealthCheck(
         if (!availability.IsAvailable)
         {
             return LogUnavailable(availability);
+        }
+
+        if (cache.TryGet(options.Value.CacheDuration, out var cached, out var ageSeconds))
+        {
+            return LlmHealthEvaluator.Annotate(cached, true, ageSeconds);
         }
 
         return await ProbeOrFailAsync(cancellationToken);
@@ -47,7 +55,14 @@ public class CanConnectToLlmServerHealthCheck(
             cancellationToken: cancellationToken);
 
         LogProbeOutcome(response);
-        return LlmHealthEvaluator.FromChatResponse(response);
+        var result = LlmHealthEvaluator.FromChatResponse(response);
+
+        if (result.Status != HealthStatus.Unhealthy)
+        {
+            cache.Set(result, DateTimeOffset.UtcNow);
+        }
+
+        return LlmHealthEvaluator.Annotate(result, false, 0);
     }
 
     private void LogProbeOutcome(ChatResponse response)
