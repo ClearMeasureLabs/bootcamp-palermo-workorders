@@ -101,11 +101,16 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
+        // Hide nav while wide so _navVisible=false; sidebar gets rail-hidden class
+        await Click(nameof(MainLayout.Elements.NavRailToggle));
+        var rail = Page.Locator("#app-navigation-rail");
+        await Expect(rail).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("rail-hidden"),
+            new LocatorAssertionsToHaveClassOptions { Timeout = 5_000 });
+
         await Page.SetViewportSizeAsync(375, 667);
-        // Wait for Blazor to process OnViewportChanged — observable signal: toggle becomes aria-expanded=false
-        var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
-        await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false",
-            new LocatorAssertionsToHaveAttributeOptions { Timeout = 5_000 });
+        // Wait for Blazor to process OnViewportChanged — narrow mode drops rail-hidden
+        await Expect(rail).Not.ToHaveClassAsync(new System.Text.RegularExpressions.Regex("rail-hidden"),
+            new LocatorAssertionsToHaveClassOptions { Timeout = 5_000 });
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
 
@@ -121,13 +126,17 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Page.SetViewportSizeAsync(375, 667);
-        // Wait for Blazor to process OnViewportChanged — observable signal: toggle becomes aria-expanded=false
-        var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
-        await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false",
-            new LocatorAssertionsToHaveAttributeOptions { Timeout = 5_000 });
-
+        // Hide nav while wide so _navVisible=false; sidebar gets rail-hidden class
+        await Click(nameof(MainLayout.Elements.NavRailToggle));
         var rail = Page.Locator("#app-navigation-rail");
+        await Expect(rail).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("rail-hidden"),
+            new LocatorAssertionsToHaveClassOptions { Timeout = 5_000 });
+
+        await Page.SetViewportSizeAsync(375, 667);
+        // Wait for Blazor to process OnViewportChanged — narrow mode drops rail-hidden
+        await Expect(rail).Not.ToHaveClassAsync(new System.Text.RegularExpressions.Regex("rail-hidden"),
+            new LocatorAssertionsToHaveClassOptions { Timeout = 5_000 });
+
         await Click(nameof(MainLayout.Elements.NavRailToggle));
 
         var backdrop = Page.Locator(".nav-backdrop");
