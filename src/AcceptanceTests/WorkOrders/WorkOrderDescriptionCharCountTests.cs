@@ -33,11 +33,8 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
-        // Use EvaluateAsync to set the value and fire the input event atomically —
-        // same pattern as the ShowsWarning test and WorkOrderSaveDraftTests; reliable on ARM Chromium.
-        await descriptionField.EvaluateAsync(
-            "(el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); }",
-            "0123456789");
+        // FillAsync fires native input events via CDP; the caption must update without BlurAsync.
+        await descriptionField.FillAsync("0123456789");
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("3990 characters remaining");
@@ -57,13 +54,10 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
-        // Set the full 4000-char value and fire input+change atomically in a single JS call.
-        // This mirrors the pattern in WorkOrderSaveDraftTests and is reliable on ARM Chromium
-        // because Blazor WASM reads event.target.value when it receives the input event.
+        // FillAsync fires native input events via CDP; the caption must update without BlurAsync.
+        // maxlength on the textarea prevents FillAsync from exceeding the limit.
         var fullText = new string('A', WorkOrder.DescriptionMaxLength);
-        await descriptionField.EvaluateAsync(
-            "(el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
-            fullText);
+        await descriptionField.FillAsync(fullText);
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("0 characters remaining");
