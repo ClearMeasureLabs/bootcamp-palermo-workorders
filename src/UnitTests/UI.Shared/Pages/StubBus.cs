@@ -7,6 +7,8 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class StubBus() : Bus(null!)
 {
+    public int SendCallCount { get; private set; }
+
     public override Task Publish(INotification notification)
     {
         return Task.CompletedTask;
@@ -14,6 +16,7 @@ public class StubBus() : Bus(null!)
 
     public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
     {
+        SendCallCount++;
         if (request is EmployeeGetAllQuery)
         {
             return (Task<TResponse>)EmployeeGetAllQueryResponse<TResponse>();

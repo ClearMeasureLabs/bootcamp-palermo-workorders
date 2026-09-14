@@ -382,6 +382,63 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldClearAllFilters_WhenClearFiltersButtonClicked()
+    {
+        // Arrange
+        var creator = CurrentUser;
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.Title = $"[{TestTag}] clear filters test";
+
+        await using var context = TestHost.NewDbContext();
+        context.Attach(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
+        var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
+        var clearButton = Page.Locator($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+
+        // Set a filter
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        await TakeScreenshotAsync(1, "FilterSet");
+
+        // Assert button is enabled
+        await Expect(clearButton).ToBeEnabledAsync();
+
+        // Click clear
+        await clearButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(2, "FiltersCleared");
+
+        // Assert all selects reset
+        await Expect(creatorSelect).ToHaveValueAsync("");
+        await Expect(assigneeSelect).ToHaveValueAsync("");
+        await Expect(statusSelect).ToHaveValueAsync("");
+
+        // Assert results table still visible
+        await Expect(Page.Locator(".grid-data")).ToBeVisibleAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task ClearFiltersButton_ShouldBeDisabled_WhenNoFiltersAreActive()
+    {
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "PageLoaded");
+
+        // Assert
+        var clearButton = Page.Locator($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        await Expect(clearButton).ToBeDisabledAsync();
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldReloadParamsFromQueryStringWithNavigation()
     {
         // Arrange
