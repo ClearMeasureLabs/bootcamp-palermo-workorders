@@ -4,3 +4,4 @@
 - **Production incident** — a work item raised automatically when the health check fails.
 - **Escaped defect** — a bug found in production that testing did not catch.
 - **Rework** — a work item that moves backwards on the board.
+- **Release candidate** — a versioned build published from master that UX Testing environments deploy.
