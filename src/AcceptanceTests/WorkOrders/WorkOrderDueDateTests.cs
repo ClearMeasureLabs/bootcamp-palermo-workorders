@@ -118,8 +118,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
 
         // Full Page.ReloadAsync drops in-memory Blazor auth and lands on /login.
         // Soft-navigate within the SPA so search re-queries without losing the session.
-        await Click(nameof(NavMenu.Elements.Counter));
-        await Page.WaitForURLAsync("**/counter");
+        await Page.GotoAsync("/counter");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");

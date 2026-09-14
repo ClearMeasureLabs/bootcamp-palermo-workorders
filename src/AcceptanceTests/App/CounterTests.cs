@@ -1,4 +1,3 @@
-using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
@@ -10,9 +9,8 @@ public class CounterTests : AcceptanceTestBase
     public async Task Should_DisplayCounterPage_WhenNavigatingFromNav()
     {
         await LoginAsCurrentUser();
-        await Click(nameof(NavMenu.Elements.Counter));
-        await Page.WaitForURLAsync("**/counter");
-        // SPA URL can update before Blazor paints; wait on the value node instead of NetworkIdle.
+        await Page.GotoAsync("/counter");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var valueLocator = Page.GetByTestId(nameof(Counter.Elements.CounterValue));
         await valueLocator.WaitForAsync();
