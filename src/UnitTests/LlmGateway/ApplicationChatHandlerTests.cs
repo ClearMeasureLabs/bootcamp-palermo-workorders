@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
+using System.ClientModel;
 
 namespace ClearMeasure.Bootcamp.UnitTests.LlmGateway;
 
@@ -95,6 +96,18 @@ public class ApplicationChatHandlerTests
         var factory = new ThrowingChatClientFactory(new TaskCanceledException("timeout"));
         var handler = new ApplicationChatHandler(factory, new StubToolProvider(), NullLogger<ApplicationChatHandler>.Instance);
         var query = new ApplicationChatQuery("slow prompt", "tlovejoy");
+
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        result.Text.ShouldBe(ApplicationChatHandler.FriendlyProviderErrorMessage);
+    }
+
+    [Test]
+    public async Task Handle_WhenClientThrowsClientResultException_ReturnsFriendlyMessage()
+    {
+        var factory = new ThrowingChatClientFactory(new ClientResultException("content_filter"));
+        var handler = new ApplicationChatHandler(factory, new StubToolProvider(), NullLogger<ApplicationChatHandler>.Instance);
+        var query = new ApplicationChatQuery("bad prompt", "tlovejoy");
 
         var result = await handler.Handle(query, CancellationToken.None);
 

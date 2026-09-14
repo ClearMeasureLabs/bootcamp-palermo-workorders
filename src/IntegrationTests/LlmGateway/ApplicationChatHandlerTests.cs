@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
+using System.ClientModel;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
@@ -49,7 +50,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
     [Test]
     public async Task Handle_WhenChatClientThrows_ReturnsFriendlyMessage()
     {
-        var factory = new ThrowingChatClientFactory(new HttpRequestException("content_filter"));
+        var factory = new ThrowingChatClientFactory(new ClientResultException("content_filter"));
         var toolProvider = TestHost.GetRequiredService<IToolProvider>();
         var handler = new ApplicationChatHandler(factory, toolProvider, NullLogger<ApplicationChatHandler>.Instance);
         var query = new ApplicationChatQuery("bad prompt", "tlovejoy");
