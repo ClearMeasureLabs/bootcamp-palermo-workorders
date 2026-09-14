@@ -1,8 +1,6 @@
-using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
-using MediatR;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
@@ -141,14 +139,4 @@ public class ApplicationChatHandlerTests
         public Task<IList<AITool>> GetToolsAsync() => Task.FromResult<IList<AITool>>([]);
     }
 
-    private sealed class StubBus : IBus
-    {
-        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request) =>
-            throw new NotImplementedException();
-
-        public Task<object?> Send(object request) =>
-            throw new NotImplementedException();
-
-        public Task Publish(INotification notification) => Task.CompletedTask;
-    }
 }
