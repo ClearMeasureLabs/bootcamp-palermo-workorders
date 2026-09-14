@@ -80,7 +80,7 @@ public partial class WorkOrderSearch : AppComponentBase
         StateHasChanged();
     }
 
-    public void SortBy(string column)
+    private void SortBy(string column)
     {
         if (column == _sortColumn)
             _sortAscending = !_sortAscending;
@@ -97,19 +97,24 @@ public partial class WorkOrderSearch : AppComponentBase
     private void ApplySort()
     {
         if (_sortColumn == null) return;
+        if (_sortColumn == "Status") ApplySortByStatus();
+        else if (_sortColumn == "DueDate") ApplySortByDueDate();
+    }
 
-        Model.Results = _sortColumn switch
-        {
-            "Status" => _sortAscending
-                ? Model.Results.OrderBy(r => r.Status.FriendlyName).ToArray()
-                : Model.Results.OrderByDescending(r => r.Status.FriendlyName).ToArray(),
-            "DueDate" => _sortAscending
-                ? Model.Results.OrderBy(r => r.WorkOrder.DueDate.HasValue ? 0 : 1)
-                               .ThenBy(r => r.WorkOrder.DueDate).ToArray()
-                : Model.Results.OrderBy(r => r.WorkOrder.DueDate.HasValue ? 0 : 1)
-                               .ThenByDescending(r => r.WorkOrder.DueDate).ToArray(),
-            _ => Model.Results
-        };
+    private void ApplySortByStatus()
+    {
+        Model.Results = _sortAscending
+            ? Model.Results.OrderBy(r => r.Status.FriendlyName).ToArray()
+            : Model.Results.OrderByDescending(r => r.Status.FriendlyName).ToArray();
+    }
+
+    private void ApplySortByDueDate()
+    {
+        Model.Results = _sortAscending
+            ? Model.Results.OrderBy(r => r.WorkOrder.DueDate.HasValue ? 0 : 1)
+                           .ThenBy(r => r.WorkOrder.DueDate).ToArray()
+            : Model.Results.OrderBy(r => r.WorkOrder.DueDate.HasValue ? 0 : 1)
+                           .ThenByDescending(r => r.WorkOrder.DueDate).ToArray();
     }
 
     private WorkOrderSearchResultRow MapSearchRow(WorkOrder workOrder)
