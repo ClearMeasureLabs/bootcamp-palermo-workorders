@@ -2,6 +2,7 @@ using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.LlmGateway;
@@ -77,10 +78,65 @@ public class ApplicationChatHandlerTests
     }
 
     [Test]
+    public async Task Handle_WhenClientThrowsHttpRequestException_ReturnsFriendlyMessage()
+    {
+        var factory = new ThrowingChatClientFactory(new HttpRequestException("content_filter"));
+        var handler = new ApplicationChatHandler(factory, new StubToolProvider(), NullLogger<ApplicationChatHandler>.Instance);
+        var query = new ApplicationChatQuery("bad prompt", "tlovejoy");
+
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        result.Text.ShouldBe(ApplicationChatHandler.FriendlyProviderErrorMessage);
+    }
+
+    [Test]
+    public async Task Handle_WhenClientThrowsTaskCanceledException_ReturnsFriendlyMessage()
+    {
+        var factory = new ThrowingChatClientFactory(new TaskCanceledException("timeout"));
+        var handler = new ApplicationChatHandler(factory, new StubToolProvider(), NullLogger<ApplicationChatHandler>.Instance);
+        var query = new ApplicationChatQuery("slow prompt", "tlovejoy");
+
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        result.Text.ShouldBe(ApplicationChatHandler.FriendlyProviderErrorMessage);
+    }
+
+    [Test]
     public void ApplicationChatResult_ShouldRoundTripThroughWebServiceMessage()
     {
         var dto = new ApplicationChatResult("WO-1 due 2026-08-29\nWO-2 due 2026-09-05");
         var rehydrated = RemotableRequestTests.SimulateRemoteObject(dto);
         rehydrated.Text.ShouldBe(dto.Text);
     }
+
+    private sealed class ThrowingChatClientFactory(Exception exception) : ChatClientFactory(null!)
+    {
+        public override Task<IChatClient> GetChatClient() =>
+            Task.FromResult<IChatClient>(new ThrowingChatClient(exception));
+    }
+
+    private sealed class ThrowingChatClient(Exception exception) : IChatClient
+    {
+        public Task<ChatResponse> GetResponseAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null,
+            CancellationToken cancellationToken = default) =>
+            throw exception;
+
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+
+        public void Dispose() { }
+    }
+
+    private sealed class StubToolProvider : IToolProvider
+    {
+        public Task<IList<AITool>> GetToolsAsync() => Task.FromResult<IList<AITool>>([]);
+    }
+
 }

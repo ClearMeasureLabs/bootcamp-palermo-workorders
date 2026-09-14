@@ -1,12 +1,16 @@
-﻿using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.Core.Queries;
 using MediatR;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider toolProvider)
+public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider toolProvider, ILogger<ApplicationChatHandler> logger)
     : IRequestHandler<ApplicationChatQuery, ApplicationChatResult>
 {
+    internal const string FriendlyProviderErrorMessage =
+        "I couldn't process that request. Please rephrase and try again.";
+
     public async Task<ApplicationChatResult> Handle(ApplicationChatQuery request, CancellationToken cancellationToken)
     {
         var tools = await toolProvider.GetToolsAsync();
@@ -14,8 +18,16 @@ public class ApplicationChatHandler(ChatClientFactory factory, IToolProvider too
         var chatMessages = BuildChatMessages(request);
 
         IChatClient client = await factory.GetChatClient();
-        ChatResponse response = await client.GetResponseAsync(chatMessages, chatOptions, cancellationToken);
-        return ToResult(response);
+        try
+        {
+            ChatResponse response = await client.GetResponseAsync(chatMessages, chatOptions, cancellationToken);
+            return ToResult(response);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            logger.LogWarning(ex, "LLM provider refused or timed out: {Reason}", ex.Message);
+            return new ApplicationChatResult(FriendlyProviderErrorMessage);
+        }
     }
 
     /// <summary>
