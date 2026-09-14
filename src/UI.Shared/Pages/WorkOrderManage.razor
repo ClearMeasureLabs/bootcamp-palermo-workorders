@@ -56,11 +56,16 @@
                 <div class="form-group">
                     <label for="Description" class="form-label">Description:</label>
                     <div>
-                        <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" disabled="@Model.IsReadOnly"/>
+                        <InputTextArea data-testid="@Elements.Description" id="Description" @bind-Value="Model.Description" class="form-control input-textarea" maxlength="@WorkOrder.DescriptionMaxLength" disabled="@Model.IsReadOnly"/>
                         <button type="button" data-testid="@Elements.SpeakDescription" class="btn btn-sm btn-outline-secondary" aria-label="Speak description" title="Speak description" @onclick="SpeakDescriptionAsync">&#x1F50A;</button>
                         @if (!Model.IsReadOnly)
                         {
                             <button type="button" data-testid="@Elements.DictateDescription" class="@DictateButtonClass(DictationTarget.Description)" aria-label="Dictate description" title="Dictate description" aria-pressed="@DictateAriaPressed(DictationTarget.Description)" @onclick="DictateDescriptionAsync">&#x1F3A4;</button>
+                            var remaining = WorkOrder.DescriptionMaxLength - (Model.Description?.Length ?? 0);
+                            <small data-testid="@Elements.DescriptionCharCount"
+                                   class="@(remaining == 0 ? "text-danger" : "text-muted")">
+                                @remaining characters remaining
+                            </small>
                         }
                     </div>
                 </div>
@@ -201,6 +206,7 @@
         SpeakTitle,
         SpeakDescription,
         DictateTitle,
-        DictateDescription
+        DictateDescription,
+        DescriptionCharCount
     }
 }
