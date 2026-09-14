@@ -33,11 +33,9 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
-        // FillAsync sets the value but may not fire the DOM 'input' event in a way that
-        // Blazor's oninput binding processes. Dispatch the event explicitly so that Blazor
-        // updates Model.Description and re-renders the caption without requiring blur.
-        await descriptionField.FillAsync("0123456789");
-        await descriptionField.EvaluateAsync("el => el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))");
+        // PressSequentially types character-by-character, firing real keyboard and input events
+        // that Blazor's oninput binding processes — caption updates without requiring blur.
+        await descriptionField.PressSequentiallyAsync("0123456789");
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("3990 characters remaining");
@@ -57,12 +55,10 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
-        // FillAsync sets the value but may not fire the DOM 'input' event in a way that
-        // Blazor's oninput binding processes. Dispatch the event explicitly so that Blazor
-        // updates Model.Description and re-renders the caption without requiring blur.
+        // FillAsync sets the full 4000-char value; Blazor oninput fires via the DOM input event.
+        // Assert caption directly without blur — this is the regression guard for the bug.
         var fullText = new string('A', WorkOrder.DescriptionMaxLength);
         await descriptionField.FillAsync(fullText);
-        await descriptionField.EvaluateAsync("el => el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))");
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("0 characters remaining");
