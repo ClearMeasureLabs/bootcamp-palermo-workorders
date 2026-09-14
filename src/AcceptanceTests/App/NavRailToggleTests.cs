@@ -144,7 +144,8 @@ public class NavRailToggleTests : AcceptanceTestBase
 
         await backdrop.ClickAsync();
 
-        (await rail.GetAttributeAsync("class"))!.ShouldNotContain("open");
+        await Expect(rail).Not.ToHaveClassAsync(new System.Text.RegularExpressions.Regex("open"),
+            new LocatorAssertionsToHaveClassOptions { Timeout = 5_000 });
         await Expect(backdrop).ToBeHiddenAsync();
     }
 
