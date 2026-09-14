@@ -97,16 +97,15 @@ public class NavRailToggleTests : AcceptanceTestBase
     public async Task ShouldShowBackdrop_WhenNavOpenOnMobile()
     {
         await LoginAsCurrentUser();
-        await Page.SetViewportSizeAsync(375, 667);
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var rail = Page.Locator("#app-navigation-rail");
-        // Ensure nav is closed first (narrow viewport auto-hides it)
-        var railClass = await rail.GetAttributeAsync("class");
-        if (railClass != null && railClass.Contains("open"))
-        {
-            await Click(nameof(MainLayout.Elements.NavRailToggle));
-        }
+        await Page.SetViewportSizeAsync(375, 667);
+        // Wait for Blazor to process OnViewportChanged — observable signal: toggle becomes aria-expanded=false
+        var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
+        await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false",
+            new LocatorAssertionsToHaveAttributeOptions { Timeout = 5_000 });
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
 
@@ -118,17 +117,17 @@ public class NavRailToggleTests : AcceptanceTestBase
     public async Task ShouldDismissNavByTappingBackdrop_OnMobile()
     {
         await LoginAsCurrentUser();
-        await Page.SetViewportSizeAsync(375, 667);
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var rail = Page.Locator("#app-navigation-rail");
-        // Ensure nav is closed first
-        var railClass = await rail.GetAttributeAsync("class");
-        if (railClass != null && railClass.Contains("open"))
-        {
-            await Click(nameof(MainLayout.Elements.NavRailToggle));
-        }
+        await Page.SetViewportSizeAsync(375, 667);
+        // Wait for Blazor to process OnViewportChanged — observable signal: toggle becomes aria-expanded=false
+        var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
+        await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false",
+            new LocatorAssertionsToHaveAttributeOptions { Timeout = 5_000 });
 
+        var rail = Page.Locator("#app-navigation-rail");
         await Click(nameof(MainLayout.Elements.NavRailToggle));
 
         var backdrop = Page.Locator(".nav-backdrop");
