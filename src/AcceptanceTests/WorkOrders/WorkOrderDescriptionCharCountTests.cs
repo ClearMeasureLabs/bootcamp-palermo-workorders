@@ -55,10 +55,11 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
-        // FillAsync sets the full 4000-char value; Blazor oninput fires via the DOM input event.
-        // Assert caption directly without blur — this is the regression guard for the bug.
+        // FillAsync sets the full 4000-char value atomically; on ARM Chromium the synthetic DOM
+        // input event may not reach Blazor's oninput handler, so we dispatch it explicitly.
         var fullText = new string('A', WorkOrder.DescriptionMaxLength);
         await descriptionField.FillAsync(fullText);
+        await descriptionField.EvaluateAsync("el => el.dispatchEvent(new Event('input', { bubbles: true }))");
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("0 characters remaining");
