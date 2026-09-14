@@ -160,6 +160,7 @@ public class WorkOrderManageSpeechTests
             component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']").ShouldNotBeNull();
         });
 
+
         await component.Find($"[data-testid='{WorkOrderManage.Elements.SpeakDescription}']").ClickAsync(new());
 
         await component.WaitForAssertionAsync(() =>
@@ -258,6 +259,7 @@ public class WorkOrderManageSpeechTests
             };
         }
     }
+
 
     private class StubWorkOrderBuilderEmptyTitle : IWorkOrderBuilder
     {
