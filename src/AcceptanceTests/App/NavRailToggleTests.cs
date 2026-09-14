@@ -94,6 +94,53 @@ public class NavRailToggleTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldShowBackdrop_WhenNavOpenOnMobile()
+    {
+        await LoginAsCurrentUser();
+        await Page.SetViewportSizeAsync(375, 667);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var rail = Page.Locator("#app-navigation-rail");
+        // Ensure nav is closed first (narrow viewport auto-hides it)
+        var railClass = await rail.GetAttributeAsync("class");
+        if (railClass != null && railClass.Contains("open"))
+        {
+            await Click(nameof(MainLayout.Elements.NavRailToggle));
+        }
+
+        await Click(nameof(MainLayout.Elements.NavRailToggle));
+
+        var backdrop = Page.Locator(".nav-backdrop");
+        await Expect(backdrop).ToBeVisibleAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldDismissNavByTappingBackdrop_OnMobile()
+    {
+        await LoginAsCurrentUser();
+        await Page.SetViewportSizeAsync(375, 667);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var rail = Page.Locator("#app-navigation-rail");
+        // Ensure nav is closed first
+        var railClass = await rail.GetAttributeAsync("class");
+        if (railClass != null && railClass.Contains("open"))
+        {
+            await Click(nameof(MainLayout.Elements.NavRailToggle));
+        }
+
+        await Click(nameof(MainLayout.Elements.NavRailToggle));
+
+        var backdrop = Page.Locator(".nav-backdrop");
+        await Expect(backdrop).ToBeVisibleAsync();
+
+        await backdrop.ClickAsync();
+
+        (await rail.GetAttributeAsync("class"))!.ShouldNotContain("open");
+        await Expect(backdrop).ToBeHiddenAsync();
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldShowNavRailToggle_OnAnonymousLandingPage()
     {
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
