@@ -142,7 +142,9 @@ public class NavRailToggleTests : AcceptanceTestBase
         var backdrop = Page.Locator(".nav-backdrop");
         await Expect(backdrop).ToBeVisibleAsync();
 
-        await backdrop.ClickAsync();
+        // Click the backdrop at a position that is NOT covered by the sidebar (width ≤ 280px).
+        // The viewport is 375 px wide; clicking at x=340 lands on the backdrop outside the sidebar.
+        await backdrop.ClickAsync(new LocatorClickOptions { Position = new Position { X = 340, Y = 333 } });
 
         await Expect(rail).Not.ToHaveClassAsync(new System.Text.RegularExpressions.Regex("open"),
             new LocatorAssertionsToHaveClassOptions { Timeout = 5_000 });
