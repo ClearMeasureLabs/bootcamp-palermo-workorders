@@ -55,11 +55,13 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
-        // FillAsync sets the full 4000-char value atomically; on ARM Chromium the synthetic DOM
-        // input event may not reach Blazor's oninput handler, so we dispatch it explicitly.
+        // Set the full 4000-char value and fire input+change atomically in a single JS call.
+        // This mirrors the pattern in WorkOrderSaveDraftTests and is reliable on ARM Chromium
+        // because Blazor WASM reads event.target.value when it receives the input event.
         var fullText = new string('A', WorkOrder.DescriptionMaxLength);
-        await descriptionField.FillAsync(fullText);
-        await descriptionField.EvaluateAsync("el => el.dispatchEvent(new Event('input', { bubbles: true }))");
+        await descriptionField.EvaluateAsync(
+            "(el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+            fullText);
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
         await Expect(caption).ToHaveTextAsync("0 characters remaining");
