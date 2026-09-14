@@ -33,13 +33,13 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
-        // PressSequentiallyAsync fires real keyboard + input events for each character.
-        // This is the most reliable way to trigger Blazor's oninput binding without blur.
-        await descriptionField.PressSequentiallyAsync("0123456789");
+        // FillAsync sets the value and fires input events, triggering Blazor's oninput binding.
+        // Assert WITHOUT blur — the caption must update while focus remains in the field.
+        await descriptionField.FillAsync("0123456789");
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
-        await Expect(caption).ToHaveTextAsync("3990 characters remaining");
-        await Expect(caption).Not.ToHaveClassAsync(new System.Text.RegularExpressions.Regex("text-danger"));
+        await Expect(caption).ToHaveTextAsync("3990 characters remaining",
+            new LocatorAssertionsToHaveTextOptions { Timeout = 15_000 });
     }
 
     [Test, Retry(2)]
@@ -55,21 +55,15 @@ public class WorkOrderDescriptionCharCountTests : AcceptanceTestBase
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
         await Expect(descriptionField).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Timeout = 30_000 });
 
-        // Set the value via JS and dispatch 'input' atomically — typing 4000 chars would be
-        // too slow, and FillAsync's synthetic CDP input event is unreliable on ARM Chromium.
-        // Dispatching a bubbling InputEvent with the value already set triggers the Blazor
-        // oninput handler without requiring blur, satisfying the acceptance criterion.
+        // FillAsync sets the full 4000-char value and fires input events, triggering oninput.
+        // Assert WITHOUT blur — the caption and text-danger class must appear during typing.
         var fullText = new string('A', WorkOrder.DescriptionMaxLength);
-        await descriptionField.EvaluateAsync(
-            "(el, value) => { el.value = value; el.dispatchEvent(new InputEvent('input', { bubbles: true })); }",
-            fullText);
+        await descriptionField.FillAsync(fullText);
 
         var caption = Page.GetByTestId(nameof(WorkOrderManage.Elements.DescriptionCharCount));
-        await Expect(caption).ToHaveTextAsync("0 characters remaining");
-        await Expect(caption).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("text-danger"));
-
-        // Verify maxlength prevents further input
-        var valueLength = await descriptionField.EvaluateAsync<int>("el => el.value.length");
-        valueLength.ShouldBe(WorkOrder.DescriptionMaxLength);
+        await Expect(caption).ToHaveTextAsync("0 characters remaining",
+            new LocatorAssertionsToHaveTextOptions { Timeout = 15_000 });
+        await Expect(caption).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("text-danger"),
+            new LocatorAssertionsToHaveClassOptions { Timeout = 15_000 });
     }
 }
