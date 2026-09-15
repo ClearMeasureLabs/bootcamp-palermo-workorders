@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text.Json;
-using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
