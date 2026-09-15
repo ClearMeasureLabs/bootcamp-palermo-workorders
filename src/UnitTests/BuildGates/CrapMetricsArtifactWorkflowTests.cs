@@ -45,6 +45,7 @@ public class CrapMetricsArtifactWorkflowTests
         uploadBlock.ShouldContain("crap-metrics/crap-by-file.json");
         uploadBlock.ShouldContain("crap-metrics/crap-by-file.csv");
         uploadBlock.ShouldContain("crap-metrics/crap-production-violations.json");
+        uploadBlock.ShouldContain("retention-days: 30");
     }
 
     [Test]

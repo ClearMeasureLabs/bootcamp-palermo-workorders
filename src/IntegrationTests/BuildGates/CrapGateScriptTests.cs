@@ -22,6 +22,16 @@ public class CrapGateScriptTests
         exitCode.ShouldBe(1);
     }
 
+    [TestCase("crap-production-violations-negative.json")]
+    [TestCase("crap-production-violations-malformed.json")]
+    [TestCase("crap-production-violations-inconsistent.json")]
+    public void AssertCrapGate_WhenViolationCountIsInvalid_ExitsTwo(string fixtureFileName)
+    {
+        var exitCode = RunAssertScript(fixtureFileName);
+
+        exitCode.ShouldBe(2);
+    }
+
     [Test]
     public void FlattenCobertura_WhenAsyncStateMachine_CopiesHitsOntoOriginalMethod()
     {
