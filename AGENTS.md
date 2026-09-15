@@ -116,3 +116,17 @@ If all listed files exist and compile cleanly, the only remaining tasks are qual
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
+
+### "Feature Already Implemented" Work Items
+
+When a work item's Technical Design section says **"The feature is fully implemented"** and lists checked-off files, verify those files exist (`find /workspace/src -name "FileName.cs"`), confirm they match the spec, run `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` (0 warnings required) and `dotnet test src/UnitTests --filter "FullyQualifiedName~ClassName"`, then proceed directly to the self-tuning/commit/PR steps. Do NOT re-create files that already exist and match the spec — doing so wastes tokens and risks introducing divergence.
+
+### API-Layer-Only Features (Pure Utility Endpoints)
+
+For endpoints in `src/UI/Api/Controllers/` that have no Core/Domain/DataAccess changes:
+- Mirror the dual `[Route]` pattern: `"api/tools/<name>"` + `$"{ApiRoutes.VersionedApiPrefix}/tools/<name>"` (see `ToolsGuidGeneratorController`, `ToolsHashController`, `ToolsRandomController`).
+- Use `[ApiVersion("1.0")]`, `[AllowAnonymous]`, `[EnableRateLimiting(ApiRateLimiting.PolicyName)]`.
+- Return plain text via `ContentResult` with `ContentType = "text/plain; charset=utf-8"`.
+- Return structured errors via `Problem(detail: "...", statusCode: 400)`.
+- No DI needed for stateless generators — use `Random.Shared` (thread-safe) and static helpers.
+- Build verification: `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` — 0 warnings required.
