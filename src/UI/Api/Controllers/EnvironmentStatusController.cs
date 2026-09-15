@@ -22,6 +22,7 @@ public class EnvironmentStatusController : ControllerBase
     private static readonly string[] ReportedEnvironmentVariableNames =
     [
         "ASPNETCORE_ENVIRONMENT",
+        "APPLICATIONINSIGHTS_CONNECTION_STRING",
         "DOTNET_ENVIRONMENT",
         "DOTNET_ROOT",
         "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT",
