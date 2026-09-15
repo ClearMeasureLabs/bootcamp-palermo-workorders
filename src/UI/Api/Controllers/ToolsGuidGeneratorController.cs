@@ -37,11 +37,9 @@ public class ToolsGuidGeneratorController : ControllerBase
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var guids = new string[count];
-        for (var i = 0; i < count; i++)
-        {
-            guids[i] = Guid.NewGuid().ToString("D");
-        }
+        var guids = Enumerable.Range(0, count)
+            .Select(_ => Guid.NewGuid().ToString("D"))
+            .ToArray();
 
         return Ok(guids);
     }
