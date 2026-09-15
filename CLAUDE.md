@@ -145,7 +145,7 @@ Utility and diagnostic endpoints in `src/UI/Api/Controllers/` — all anonymous,
 | `/api/tools/timestamp-converter` | GET | Convert Unix timestamps to/from ISO-8601 |
 | `/api/version` | GET | Assembly version, informational version, build config, env, machine name, framework; also at `/api/v1.0/version` |
 
-All routes also available under the versioned prefix `/api/v1.0/`.
+All routes also available under the versioned prefix `/api/v1.0/`. Tools routes also accessible at `/api/v1.0/tools/`.
 
 ## DI and Service Wiring
 
