@@ -35,22 +35,22 @@ only be fixed by refactoring.
 |---------|-------|
 | Tool | `crap4dotnet` 0.1.1 (`dotnet-crap`), `dotnet-script` 2.0.0 |
 | Coverage collection | `coverlet.collector` via `build.ps1` (`UnitTests`, `IntegrationTest`, `AcceptanceTests`) with `coverlet.runsettings` (Include `[ClearMeasure.Bootcamp.*]*,[Worker]*,[ChurchBulletin.ServiceDefaults]*`) |
-| Async state-machine flattening | `.cursor/skills/crap-score-cleanup/scripts/flatten-cobertura.csx` |
-| Analysis + rollup | `run-crap-audit.ps1` → `dotnet-crap analyze` → `rollup-file-scores.csx` (line-range coverage overlay, production scoping, file rollups) |
-| Gate | `assert-crap-gate.ps1`; threshold in `.cursor/skills/crap-score-cleanup/crap-gate-threshold.json` (`productionThreshold: 6`) |
+| Async state-machine flattening | `scripts/crap/flatten-cobertura.csx` |
+| Analysis + rollup | `scripts/crap/run-crap-audit.ps1` → `dotnet-crap analyze` → `rollup-file-scores.csx` (line-range coverage overlay, production scoping, file rollups) |
+| Gate | `assert-crap-gate.ps1`; threshold in `scripts/crap/crap-gate-threshold.json` (`productionThreshold: 6`) |
 | Local gate | `PrivateBuild.ps1` runs the audit with `-SkipTests -FailOnViolations -Quiet` |
 | CI gate | `.github/workflows/build.yml`, job **Integration Build (SQL container)**: step *Enforce CRAP (production)*, then *Publish CRAP summary to job summary* (`if: always()`) |
-| Outputs (gitignored) | `crap-metrics/crap-report.json`, `crap-by-file.{json,csv}`, `crap-summary.md`, `crap-production-violations.json` |
+| Outputs | `crap-metrics/` (gitignored locally); published in CI as artifact `crap-metrics-linux` and the job summary |
 | Scope | Production only. Excluded: `UnitTests`, `IntegrationTests`, `AcceptanceTests`, `**/Generated/**`, `*.g.cs`, `*.Designer.cs` |
 
 ### Run it
 
 ```powershell
 # full pipeline (compile, unit, integration, acceptance, then audit)
-pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1
+pwsh scripts/crap/run-crap-audit.ps1
 
 # reuse coverage already under build/test and enforce the gate
-pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -SkipTests -FailOnViolations
+pwsh scripts/crap/run-crap-audit.ps1 -SkipTests -FailOnViolations
 ```
 
 Prerequisites on Linux: .NET 10 SDK **and** the .NET 8 runtime (`dotnet-crap` 0.1.1 targets

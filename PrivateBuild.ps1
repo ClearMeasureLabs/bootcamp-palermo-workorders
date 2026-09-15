@@ -19,8 +19,8 @@ if (-not [string]::IsNullOrEmpty($databaseName)) {
 }
 Build @buildArgs
 
-$crapAudit = Join-Path $PSScriptRoot ".cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1"
-$crapThresholdConfig = Join-Path $PSScriptRoot ".cursor/skills/crap-score-cleanup/crap-gate-threshold.json"
+$crapAudit = Join-Path $PSScriptRoot "scripts/crap/run-crap-audit.ps1"
+$crapThresholdConfig = Join-Path $PSScriptRoot "scripts/crap/crap-gate-threshold.json"
 if (-not (Test-Path -LiteralPath $crapThresholdConfig)) {
     throw "CRAP gate threshold file not found: $crapThresholdConfig"
 }
