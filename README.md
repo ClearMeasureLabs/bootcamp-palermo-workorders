@@ -171,6 +171,19 @@ gRPC (work orders)
 - Generated C# (checked in): src/UI/Server/Generated/Protos/
 - To regenerate the C# files after editing .proto, run the Grpc.Tools generation on an x64 machine and replace the checked-in generated files (Grpc.Tools can be unstable on ARM).
 
+## API Tools Endpoints
+
+The `UI/Api` project exposes several stateless utility endpoints under `/api/tools/`. All are `[AllowAnonymous]` and covered by the sliding-window rate limiter.
+
+Method | Route | Description |
+|--------|-------|-------------|
+`GET`  | `/api/tools/random?type={type}` | Returns a random value as plain text (`number`, `string`, `uuid`, `color`) |
+`POST` | `/api/tools/guid-generator?count={n}` | Returns a JSON array of `n` new GUIDs in D-format (`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`). `count` defaults to 1, max 100. |
+`POST` | `/api/tools/hash` | Returns a SHA-256 hash |
+`GET`  | `/api/tools/timestamp-converter` | Converts timestamps |
+
+Versioned equivalents are available under `/api/v1.0/tools/...`.
+
 ---
 
 # Architecture Patterns Reference
