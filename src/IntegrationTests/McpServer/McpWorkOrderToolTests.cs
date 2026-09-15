@@ -153,9 +153,8 @@ public class McpWorkOrderToolTests
     {
         await SeedFilterWorkOrders();
         var bus = TestHost.GetRequiredService<IBus>();
-        int employeeCount;
         await using var context = TestHost.GetRequiredService<DbContext>();
-        employeeCount = await context.Set<Employee>().CountAsync();
+        var employeeCount = await context.Set<Employee>().CountAsync();
 
         var unknownCreator = await WorkOrderTools.ListWorkOrders(
             bus,
@@ -360,9 +359,8 @@ public class McpWorkOrderToolTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-002", "AssignedToCancelledCommand", "user1");
 
-        WorkOrder wo;
         await using var context2 = TestHost.GetRequiredService<DbContext>();
-        wo = context2.Set<WorkOrder>().Single(wo => wo.Number == "WO-002");
+        var wo = context2.Set<WorkOrder>().Single(wo => wo.Number == "WO-002");
 
         wo.Status.ShouldBe(WorkOrderStatus.Cancelled);
         result.ShouldContain("Cancelled");
@@ -391,9 +389,8 @@ public class McpWorkOrderToolTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-778", "InProgressToAssignedCommand", "gwillie");
 
-        WorkOrder wo;
         await using var context2 = TestHost.GetRequiredService<DbContext>();
-        wo = context2.Set<WorkOrder>().Single(wo => wo.Number == "WO-778");
+        var wo = context2.Set<WorkOrder>().Single(wo => wo.Number == "WO-778");
 
         wo.Status.ShouldBe(WorkOrderStatus.Assigned);
         result.ShouldContain("Assigned");
@@ -447,9 +444,8 @@ public class McpWorkOrderToolTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-779", "Shelve", "gwillie");
 
-        WorkOrder? wo;
         await using var context2 = TestHost.GetRequiredService<DbContext>();
-        wo = await context2.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-779");
+        var wo = await context2.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-779");
 
         wo.Status.ShouldBe(WorkOrderStatus.Assigned);
         result.ShouldContain("Assigned");
@@ -494,9 +490,8 @@ public class McpWorkOrderToolTests
 
         beginResult.ShouldContain("In Progress");
 
-        WorkOrder? wo;
         await using var context2 = TestHost.GetRequiredService<DbContext>();
-        wo = await context2.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-402");
+        var wo = await context2.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-402");
 
         wo.Status.ShouldBe(WorkOrderStatus.InProgress);
         wo.Assignee!.UserName.ShouldBe("worker1");
@@ -605,9 +600,8 @@ public class McpWorkOrderToolTests
 
         result.ShouldContain("Complete");
 
-        WorkOrder? wo;
         await using var context2 = TestHost.GetRequiredService<DbContext>();
-        wo = await context2.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-505");
+        var wo = await context2.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-505");
 
         wo.Status.ShouldBe(WorkOrderStatus.Complete);
     }

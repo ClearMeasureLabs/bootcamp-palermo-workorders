@@ -30,8 +30,8 @@ public class RequestDecompressionWebTests
     {
         const string payload = "{\"hello\":\"world\"}";
         await using var compressed = new MemoryStream();
+        await using (var gzip = new GZipStream(compressed, CompressionLevel.SmallestSize, leaveOpen: true))
         {
-            await using var gzip = new GZipStream(compressed, CompressionLevel.SmallestSize, leaveOpen: true);
             await gzip.WriteAsync(Encoding.UTF8.GetBytes(payload));
         }
 
@@ -52,8 +52,8 @@ public class RequestDecompressionWebTests
     {
         const string payload = "plain-text-payload";
         await using var compressed = new MemoryStream();
+        await using (var zlib = new ZLibStream(compressed, CompressionLevel.SmallestSize, leaveOpen: true))
         {
-            await using var zlib = new ZLibStream(compressed, CompressionLevel.SmallestSize, leaveOpen: true);
             await zlib.WriteAsync(Encoding.UTF8.GetBytes(payload));
         }
 
