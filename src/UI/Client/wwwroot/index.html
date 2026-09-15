@@ -7,9 +7,7 @@
             try {
                 var k = 'churchbulletin-theme';
                 var v = localStorage.getItem(k);
-                var theme = (v === 'dark' || v === 'light')
-                    ? v
-                    : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                var theme = (v === 'dark' || v === 'light') ? v : 'light';
                 document.documentElement.setAttribute('data-theme', theme);
                 document.documentElement.setAttribute('data-bs-theme', theme);
             } catch (e) { }
