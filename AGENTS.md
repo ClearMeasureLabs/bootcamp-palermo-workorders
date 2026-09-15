@@ -94,3 +94,4 @@ When appending issue bodies via `python3` or other subprocesses: **export** any 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
+- When a work item says "Status: Already Implemented" / "No further work needed", the feature code is already on `master`. Make the minimal required diff (e.g. add the endpoint to `CLAUDE.md` documentation), run `dotnet build` + `dotnet test src/UnitTests` to confirm no regressions, then commit and push. Do NOT delete existing `CLAUDE.md` sections — only add or update content relevant to the work item.

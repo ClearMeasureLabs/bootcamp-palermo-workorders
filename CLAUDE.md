@@ -133,9 +133,9 @@ DbUp scripts in `src/Database/scripts/Update/`, numbered sequentially (`###_Desc
 
 **AcceptanceTests** — NUnit 4.3.2, NUnit3TestAdapter 5.0.0, microsoft.playwright.nunit 1.54.0, Azure.AI.OpenAI 2.1.0, ModelContextProtocol 1.0.0, Microsoft.Extensions.AI 9.7.0, Microsoft.Extensions.AI.OpenAI 9.7.1-preview.1.25365.4
 
-## API Tools Endpoints
+## API Endpoints
 
-Utility endpoints in `src/UI/Api/Controllers/` — all anonymous, rate-limited, no DB access:
+Utility and diagnostic endpoints in `src/UI/Api/Controllers/` — all anonymous, rate-limited, no DB access:
 
 | Route | Method | Description |
 |-------|--------|-------------|
@@ -143,8 +143,9 @@ Utility endpoints in `src/UI/Api/Controllers/` — all anonymous, rate-limited, 
 | `/api/tools/guid-generator` | POST | Generate 1–100 UUIDs; optional `count` query param |
 | `/api/tools/random` | POST | Random integer in `[min, max]` |
 | `/api/tools/timestamp-converter` | GET | Convert Unix timestamps to/from ISO-8601 |
+| `/api/version` | GET | Assembly version, informational version, build config, env, machine name, framework; also at `/api/v1.0/version` |
 
-All routes also available under the versioned prefix `/api/v1.0/tools/`.
+All routes also available under the versioned prefix `/api/v1.0/`. Tools routes also accessible at `/api/v1.0/tools/`.
 
 ## DI and Service Wiring
 
