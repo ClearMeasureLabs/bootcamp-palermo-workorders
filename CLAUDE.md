@@ -151,6 +151,10 @@ Format: `{username}/{branch-description}`. AI agents use the username of the acc
 
 CRAP gate (crap4dotnet): `pwsh scripts/crap/run-crap-audit.ps1 -SkipTests -FailOnViolations`. Threshold in `scripts/crap/crap-gate-threshold.json`; reports land in `crap-metrics/` (gitignored) and CI publishes them as the `crap-metrics-linux` artifact plus job summary. See `docs/crap-score-audit.md`.
 
+**On Linux (no Docker/PowerShell):** use `dotnet restore src/ChurchBulletin.sln` then `dotnet build src/ChurchBulletin.sln -c Release --no-restore` and `dotnet test src/UnitTests/UnitTests.csproj --no-build -c Release`. Integration and acceptance tests require SQL Server (Docker container) and must be skipped when Docker is unavailable.
+
+**Pre-existing implementation work items:** Some work items (marked "already fully implemented" or "pre-existing work") only require verification that the code exists and compiles/tests pass — no new files needed. Run unit tests to confirm before opening the PR.
+
 ## Feature Loop
 
 Work items live on the ClearMeasureLabs project board: https://github.com/orgs/ClearMeasureLabs/projects/1
