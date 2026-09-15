@@ -25,7 +25,7 @@ public class FeatureFlagsApiAcceptanceTests : AcceptanceTestBase
         doc.RootElement.ValueKind.ShouldBe(JsonValueKind.Object);
         var dict = JsonSerializer.Deserialize<Dictionary<string, bool>>(doc.RootElement.GetRawText());
         dict.ShouldNotBeNull();
-        dict!.Count.ShouldBeGreaterThan(0);
+        dict.Count.ShouldBeGreaterThan(0);
     }
 
     [Test]
@@ -45,6 +45,6 @@ public class FeatureFlagsApiAcceptanceTests : AcceptanceTestBase
         doc.RootElement.ValueKind.ShouldBe(JsonValueKind.Object);
         var dict = JsonSerializer.Deserialize<Dictionary<string, bool>>(doc.RootElement.GetRawText());
         dict.ShouldNotBeNull();
-        dict!.Count.ShouldBeGreaterThan(0);
+        dict.Count.ShouldBeGreaterThan(0);
     }
 }
