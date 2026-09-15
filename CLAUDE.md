@@ -151,6 +151,12 @@ Format: `{username}/{branch-description}`. AI agents use the username of the acc
 
 CRAP gate (crap4dotnet): `pwsh scripts/crap/run-crap-audit.ps1 -SkipTests -FailOnViolations`. Threshold in `scripts/crap/crap-gate-threshold.json`; reports land in `crap-metrics/` (gitignored) and CI publishes them as the `crap-metrics-linux` artifact plus job summary. See `docs/crap-score-audit.md`.
 
+## Known Environment Issues (Linux CI / Cloud VMs)
+
+- **`FlattenCobertura_*` integration tests** (`CrapGateScriptTests`) fail with "Permission denied" on Linux environments where `dotnet-script` 2.0.0 is installed but .NET 8 runtime is absent (only .NET 10 is available). These tests call `scripts/crap/flatten-cobertura.csx` via `dotnet-script`, which requires .NET 8. This is a pre-existing environment constraint — not caused by feature work. Do not attempt to fix these failures in feature PRs.
+
+- **"Already fully implemented" work items**: When a work item's Technical Design section says the feature is "already fully implemented," the code lives on the `master` branch. The AI agent's branch was cut from an older commit. After merging `origin/master` into the feature branch (step in commit/push instructions), those files will be present. The PR diff will show only the agent's own additions (self-tuning, migration verification, etc.).
+
 ## Feature Loop
 
 Work items live on the ClearMeasureLabs project board: https://github.com/orgs/ClearMeasureLabs/projects/1
