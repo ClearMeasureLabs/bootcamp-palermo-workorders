@@ -251,6 +251,36 @@ public class MainLayoutTests
     }
 
     [Test]
+    public async Task ShouldRenderSoftwareVersion_WithinSiteFooter()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var versionSpan = layout.Find($"[data-testid='{nameof(MainLayout.Elements.SoftwareVersion)}']");
+        versionSpan.TextContent.Trim().ShouldNotBeEmpty();
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        footer.QuerySelector($"[data-testid='{nameof(MainLayout.Elements.SoftwareVersion)}']").ShouldNotBeNull();
+    }
+
+    [Test]
+    public async Task ShouldRenderSoftwareVersion_WhenUserIsAuthenticated()
+    {
+        await using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var versionSpan = layout.Find($"[data-testid='{nameof(MainLayout.Elements.SoftwareVersion)}']");
+        versionSpan.ShouldNotBeNull();
+
+        var footer = layout.Find($"[data-testid='{nameof(MainLayout.Elements.CopyrightFooter)}']");
+        footer.QuerySelector($"[data-testid='{nameof(MainLayout.Elements.SoftwareVersion)}']").ShouldNotBeNull();
+    }
+
+    [Test]
     public async Task ShouldRenderFooterNote_WithinSiteFooter()
     {
         await using var ctx = CreateContext();

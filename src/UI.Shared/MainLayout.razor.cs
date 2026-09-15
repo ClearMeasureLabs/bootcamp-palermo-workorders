@@ -1,3 +1,4 @@
+using System.Reflection;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -16,13 +17,20 @@ public partial class MainLayout : IAsyncDisposable
     {
         NavRailToggle,
         CopyrightFooter,
-        FooterNote
+        FooterNote,
+        SoftwareVersion
     }
 
     /// <summary>
     /// Calendar year shown in the site copyright line (UTC, matches acceptance tests).
     /// </summary>
     protected int CopyrightYear => DateTime.UtcNow.Year;
+
+    /// <summary>
+    /// Informational version of the running entry assembly, e.g. "1.2.3+abc1234".
+    /// </summary>
+    protected string AppVersion =>
+        Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
 
     [Inject]
     private IJSRuntime Js { get; set; } = default!;
