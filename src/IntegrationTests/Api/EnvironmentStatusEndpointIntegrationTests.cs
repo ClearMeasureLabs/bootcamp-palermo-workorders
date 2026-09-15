@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -81,6 +82,32 @@ public class EnvironmentStatusEndpointIntegrationTests
             EnvironmentStatusController.RedactionProbeVariableName);
         payload.EnvironmentVariables[EnvironmentStatusController.RedactionProbeVariableName]
             .ShouldBe(EnvironmentStatusController.RedactedValue);
+    }
+
+    [Test]
+    public async Task Should_IncludeWeakEtag_When_GetEnvironmentStatus()
+    {
+        var response = await _client!.GetAsync("/api/status/environment");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var etag = response.Headers.ETag.ShouldNotBeNull();
+        etag.IsWeak.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task Should_Return304_When_IfNoneMatchMatchesEtag()
+    {
+        var first = await _client!.GetAsync("/api/status/environment");
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var etag = first.Headers.ETag.ShouldNotBeNull();
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/status/environment");
+        request.Headers.IfNoneMatch.Add(etag);
+        var second = await _client.SendAsync(request);
+
+        second.StatusCode.ShouldBe(HttpStatusCode.NotModified);
+        (await second.Content.ReadAsByteArrayAsync()).Length.ShouldBe(0);
+        second.Headers.ETag.ShouldNotBeNull();
     }
 
     [Test]
