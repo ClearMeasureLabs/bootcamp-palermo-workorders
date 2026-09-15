@@ -89,8 +89,34 @@ If Docker is unavailable, set `DATABASE_ENGINE=SQLite` before running the build 
 
 When appending issue bodies via `python3` or other subprocesses: **export** any variable the child reads (`export VAR=...`), or embed the text in the script. Unexported shell variables appear **empty** in the child, which can produce a successful API response with **blank** content. See **GitHub REST API — Issue body updates** in `.cursor/rules/cloud-agent-instructions.mdc`.
 
+### AI Factory API — useful endpoints
+
+- `GET  $AI_FACTORY_API_URL/api/tools/workitems/$ISSUE_NUMBER` — returns title, body (requirements + design), status, labels.
+- `POST $AI_FACTORY_API_URL/api/tools/workitems/$ISSUE_NUMBER/pullrequests` — open a PR (`headBranch`, `baseBranch`, `title`, `body`, `draft`).
+- `POST $AI_FACTORY_API_URL/api/tools/workitems/$ISSUE_NUMBER/complete` — signal the factory (`comment`, `succeeded`).
+- The `/comments` sub-resource is **POST-only** (405 on GET). To read rejection reasons, check the work-item `body` field or the `EXISTING_PR_*` context variables supplied in the task message.
+
+### Quality gates without Docker
+
+When Docker is unavailable (no `docker` binary or daemon), skip integration tests and run only unit tests:
+```bash
+cd /workspace && dotnet restore src/ChurchBulletin.sln && dotnet build src/ChurchBulletin.sln --no-restore && dotnet test src/UnitTests/UnitTests.csproj --no-build
+```
+848+ unit tests cover the full domain and API layer without a database. Integration tests require a running SQL Server container.
+
+### Adding a new API utility endpoint (tools pattern)
+
+New stateless utility endpoints in `src/UI/Api/Controllers/` follow this checklist:
+1. Extend `ControllerBase` with `[ApiController]`, `[ApiVersion("1.0")]`, dual `[Route]` (`api/tools/{name}` + `ApiRoutes.VersionedApiPrefix`/tools/{name}`), `[EnableRateLimiting(ApiRateLimiting.PolicyName)]`.
+2. Use `[AllowAnonymous]` for utility endpoints (no domain auth required).
+3. Return `IActionResult`; validate inputs; use `Problem(...)` for 400.
+4. No MediatR/IBus needed for pure in-process utilities.
+5. Add 5 unit tests in `src/UnitTests/UI.Api/{Controller}Tests.cs` (default, explicit, boundary, and two out-of-range 400s).
+6. Add integration tests in `src/IntegrationTests/Api/{Controller}IntegrationTests.cs` covering unversioned POST, versioned POST, out-of-range cases, and `[AllowAnonymous]` via `ApiKeyProtectedWebApplicationFactory`.
+
 ### Gotchas
 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
+- **FIX-FORWARD sessions:** When a PR is sent back from Functional Testing with no `EXISTING_PR_REJECTION` or `EXISTING_PR_FAILED_CHECKS`, the root cause is usually a missing or empty `/complete` call from the previous session. Verify the existing files compile and tests pass, then push a no-op commit (or a self-tune AGENTS.md commit) and call `/complete` again.
