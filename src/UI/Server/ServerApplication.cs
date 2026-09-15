@@ -1,3 +1,4 @@
+using System.Reflection;
 using Asp.Versioning;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.LlmGateway;
@@ -221,6 +222,12 @@ public static class ServerApplication
             NeedsRebootHealthCheck.NeedsReboot = value;
             return Results.Text($"NeedsReboot set to {value}");
         });
+        app.MapGet("/_version", () =>
+        {
+            var version = Assembly.GetExecutingAssembly()
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            return Results.Json(new { version });
+        }).CacheOutput(OutputCachePolicyNames.VersionMetadata);
         app.MapHealthChecks("_healthcheck");
         app.MapHealthChecks("_healthcheck/detailed", new HealthCheckOptions
         {
