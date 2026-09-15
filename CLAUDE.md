@@ -146,6 +146,22 @@ Utility endpoints in `src/UI/Api/Controllers/` — all anonymous, rate-limited, 
 
 All routes also available under the versioned prefix `/api/v1.0/tools/`.
 
+## Feature Flags
+
+Runtime feature flag status endpoint — read-only, no DB access, no MediatR:
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/features/flags` | GET | Returns `{ "FlagName": bool, ... }` for all flags |
+
+Also available as `/api/v1.0/features/flags`.
+
+**Catalog:** `src/UI/Api/FeatureFlagsCatalog.cs` — static `IReadOnlyDictionary<string,bool>`. Add/remove flags there only.
+**Controller:** `src/UI/Api/Controllers/FeatureFlagsController.cs` — calls `ConditionalGetEtag.JsonContent(FeatureFlagsCatalog.All)`.
+**Helper:** `src/UI/Api/ConditionalGetEtag.cs` — serializes with `JsonSerializerDefaults.Web` and returns `ContentResult`; reuse for any read-only GET that returns JSON.
+
+Pattern: no `IBus`, no query, no handler — pure static data. API-key middleware guards automatically. Rate-limited by `ApiRateLimiting.PolicyName`.
+
 ## DI and Service Wiring
 
 Lamar container configured in `src/UI/Server/UIServiceRegistry.cs`. Assembly scanning auto-registers MediatR handlers and services. The `IBus` interface wraps MediatR's `IMediator`.
