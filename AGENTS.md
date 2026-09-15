@@ -94,3 +94,28 @@ When appending issue bodies via `python3` or other subprocesses: **export** any 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
+
+### Already-implemented work items
+
+When the Technical Design section says the implementation is **already complete** (all checklist items checked, files listed), do NOT re-implement. Instead:
+
+1. Verify every listed file exists with `ls <file1> <file2> ...`.
+2. Run `dotnet build` on the affected project(s) with `-warnaserror` — zero warnings required.
+3. Run the scoped integration tests: `dotnet test src/IntegrationTests --filter "FullyQualifiedName~<FeatureName>" --no-build`.
+4. If files are missing or tests fail, implement only the missing pieces; do not rewrite what is present.
+5. If everything is green, proceed directly to the self-tuning step, then commit + push.
+
+This avoids wasted tokens re-reading and re-writing code that already exists and passes CI.
+
+### Quick targeted integration test (no DB required)
+
+When you only need to validate the HTTP layer without SQL Server:
+
+```bash
+dotnet test src/IntegrationTests/IntegrationTests.csproj \
+  --filter "FullyQualifiedName~<SomeName>" \
+  --no-build
+```
+
+The `WebApplicationFactory`-based tests use an in-process host and do not need a real database.
+
