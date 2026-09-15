@@ -94,3 +94,7 @@ When appending issue bodies via `python3` or other subprocesses: **export** any 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
+- **Solution file name:** The solution is `src/ChurchBulletin.sln` — NOT `WorkOrders.sln` or any variation of the repo name. Always reference `src/ChurchBulletin.sln` in `dotnet build`/`dotnet test` commands.
+- **API controllers in `UI.Api`:** New controllers placed in `src/UI/Api/Controllers/` are automatically registered via `AddApplicationPart(typeof(DetailedHealthController).Assembly)` already wired in `ServerApplication.cs` — no additional registration needed.
+- **`TimeProvider.System` registration:** Already registered in `ServerApplication.cs` (`builder.Services.AddSingleton(TimeProvider.System)`). Do NOT add it again in `UIServiceRegistry.cs`.
+- **`IHttpRequestMetricsCounter` registration:** Registered as singleton in `UIServiceRegistry.cs`. Middleware (`HttpRequestMetricsMiddleware`) is already wired in `ServerApplication.ConfigurePipeline`. No additional setup needed for new controllers that inject it.
