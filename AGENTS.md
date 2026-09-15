@@ -89,6 +89,28 @@ If Docker is unavailable, set `DATABASE_ENGINE=SQLite` before running the build 
 
 When appending issue bodies via `python3` or other subprocesses: **export** any variable the child reads (`export VAR=...`), or embed the text in the script. Unexported shell variables appear **empty** in the child, which can produce a successful API response with **blank** content. See **GitHub REST API — Issue body updates** in `.cursor/rules/cloud-agent-instructions.mdc`.
 
+### Quick dotnet build / test (without full PrivateBuild.ps1)
+
+When a full PowerShell build is unnecessary (e.g. for a pre-built or docs-only feature), run the targeted sequence:
+
+```bash
+cd /workspace/src && dotnet restore ChurchBulletin.sln   # always restore first — obj/project.assets.json may be missing
+dotnet build UI/Api/UI.Api.csproj -warnaserror
+dotnet test UnitTests/UnitTests.csproj --no-build --filter "FullyQualifiedName~<ClassName>"
+```
+
+The solution file is at `src/ChurchBulletin.sln`. Run `dotnet restore` from `/workspace/src` with the `.sln` path; running it from `/workspace` fails because no `.sln` is at the root.
+
+### "Feature already implemented" work items
+
+When the work item body says the feature is **already fully implemented**, verify with:
+
+```bash
+find /workspace/src -name "<ExpectedFile>.cs" 2>/dev/null
+```
+
+If all listed files exist and compile cleanly, the only remaining tasks are quality gates, self-tuning, merge, and PR — no code to write.
+
 ### Gotchas
 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
