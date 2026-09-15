@@ -89,6 +89,21 @@ If Docker is unavailable, set `DATABASE_ENGINE=SQLite` before running the build 
 
 When appending issue bodies via `python3` or other subprocesses: **export** any variable the child reads (`export VAR=...`), or embed the text in the script. Unexported shell variables appear **empty** in the child, which can produce a successful API response with **blank** content. See **GitHub REST API — Issue body updates** in `.cursor/rules/cloud-agent-instructions.mdc`.
 
+### Quality gates (quick)
+
+When you only touched UI.Shared (Blazor components, CSS, JS helpers), the fastest correctness check is:
+
+```bash
+dotnet build src/ChurchBulletin.sln --no-restore
+dotnet test src/UnitTests/UnitTests.csproj --no-restore -v minimal
+```
+
+Both must exit 0 with 0 warnings before committing. The full `PrivateBuild.ps1` is only needed when you touch data-access, migrations, or integration paths.
+
+### Pre-flight: check whether the feature is already implemented
+
+Some AI Factory work items have **Technical Design: "feature already fully implemented"** in the body. Before writing any code, read the work item body. If it says the feature is already in place, verify by reading the listed files, then skip straight to running the quality gates and creating the PR.
+
 ### Gotchas
 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
