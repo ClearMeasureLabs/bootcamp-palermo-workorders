@@ -26,13 +26,11 @@ public class McpWorkOrderToolTests
         var order1 = new WorkOrder { Creator = employee, Number = "WO-001", Title = "Fix sink" };
         var order2 = new WorkOrder { Creator = employee, Number = "WO-002", Title = "Paint wall" };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            context.Add(order1);
-            context.Add(order2);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(order1);
+        context.Add(order2);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ListWorkOrders(bus);
@@ -50,13 +48,11 @@ public class McpWorkOrderToolTests
         var draftOrder = new WorkOrder { Creator = employee, Number = "WO-001", Title = "Draft order", Status = WorkOrderStatus.Draft };
         var assignedOrder = new WorkOrder { Creator = employee, Number = "WO-002", Title = "Assigned order", Status = WorkOrderStatus.Assigned };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            context.Add(draftOrder);
-            context.Add(assignedOrder);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(draftOrder);
+        context.Add(assignedOrder);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ListWorkOrders(bus, "Assigned");
@@ -158,10 +154,8 @@ public class McpWorkOrderToolTests
         await SeedFilterWorkOrders();
         var bus = TestHost.GetRequiredService<IBus>();
         int employeeCount;
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            employeeCount = await context.Set<Employee>().CountAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        employeeCount = await context.Set<Employee>().CountAsync();
 
         var unknownCreator = await WorkOrderTools.ListWorkOrders(
             bus,
@@ -206,12 +200,10 @@ public class McpWorkOrderToolTests
             CreatedDate = createdDate
         };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            context.Add(order);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(order);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.GetWorkOrder(bus, "WO-100");
@@ -246,12 +238,10 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.Draft
         };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            context.Add(order);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(order);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.GetWorkOrder(bus, "WO-101");
@@ -285,12 +275,10 @@ public class McpWorkOrderToolTests
             Instructions = "detail only"
         };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            context.Add(order);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(order);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ListWorkOrders(bus);
@@ -316,11 +304,9 @@ public class McpWorkOrderToolTests
     {
         var employee = new Employee("creator1", "Jane", "Smith", "jane@test.com");
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var numberGenerator = new WorkOrderNumberGenerator();
@@ -347,12 +333,10 @@ public class McpWorkOrderToolTests
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
         var order = new WorkOrder { Creator = employee, Number = "WO-300", Title = "Test" };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            context.Add(order);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(order);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-300", "FakeCommand", "user1");
@@ -368,21 +352,17 @@ public class McpWorkOrderToolTests
         //var order = new WorkOrder { Creator = employee, Number = "WO-300", Title = "Test" };
         var assignedOrder = new WorkOrder { Creator = employee, Number = "WO-002", Title = "Assigned order", Status = WorkOrderStatus.Assigned };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            context.Add(assignedOrder);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(assignedOrder);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-002", "AssignedToCancelledCommand", "user1");
 
         WorkOrder wo;
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            wo = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-002");
-        }
+        await using var context2 = TestHost.GetRequiredService<DbContext>();
+        wo = context2.Set<WorkOrder>().Single(wo => wo.Number == "WO-002");
 
         wo.Status.ShouldBe(WorkOrderStatus.Cancelled);
         result.ShouldContain("Cancelled");
@@ -402,22 +382,18 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.InProgress
         };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(creator);
-            context.Add(assignee);
-            context.Add(inProgressOrder);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(assignee);
+        context.Add(inProgressOrder);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-778", "InProgressToAssignedCommand", "gwillie");
 
         WorkOrder wo;
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            wo = context.Set<WorkOrder>().Single(wo => wo.Number == "WO-778");
-        }
+        await using var context2 = TestHost.GetRequiredService<DbContext>();
+        wo = context2.Set<WorkOrder>().Single(wo => wo.Number == "WO-778");
 
         wo.Status.ShouldBe(WorkOrderStatus.Assigned);
         result.ShouldContain("Assigned");
@@ -436,12 +412,10 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.Draft
         };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(creator);
-            context.Add(draftOrder);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(draftOrder);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-400", "DraftToAssignedCommand", "creator1");
@@ -464,22 +438,18 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.InProgress
         };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(creator);
-            context.Add(assignee);
-            context.Add(inProgressOrder);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(assignee);
+        context.Add(inProgressOrder);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-779", "Shelve", "gwillie");
 
         WorkOrder? wo;
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            wo = await context.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-779");
-        }
+        await using var context2 = TestHost.GetRequiredService<DbContext>();
+        wo = await context2.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-779");
 
         wo.Status.ShouldBe(WorkOrderStatus.Assigned);
         result.ShouldContain("Assigned");
@@ -500,13 +470,11 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.Draft
         };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(creator);
-            context.Add(assignee);
-            context.Add(draftOrder);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(assignee);
+        context.Add(draftOrder);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var assignResult = await WorkOrderTools.ExecuteWorkOrderCommand(
@@ -527,10 +495,8 @@ public class McpWorkOrderToolTests
         beginResult.ShouldContain("In Progress");
 
         WorkOrder? wo;
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            wo = await context.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-402");
-        }
+        await using var context2 = TestHost.GetRequiredService<DbContext>();
+        wo = await context2.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-402");
 
         wo.Status.ShouldBe(WorkOrderStatus.InProgress);
         wo.Assignee!.UserName.ShouldBe("worker1");
@@ -551,12 +517,10 @@ public class McpWorkOrderToolTests
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
         var order = new WorkOrder { Creator = employee, Number = "WO-501", Title = "Test", Status = WorkOrderStatus.Assigned };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            context.Add(order);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(order);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-501", "AssignedToCancelledCommand", "ghost");
@@ -577,12 +541,10 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.Draft
         };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(creator);
-            context.Add(draftOrder);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(draftOrder);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(
@@ -601,12 +563,10 @@ public class McpWorkOrderToolTests
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
         var draftOrder = new WorkOrder { Creator = employee, Number = "WO-504", Title = "Draft", Status = WorkOrderStatus.Draft };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(employee);
-            context.Add(draftOrder);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(draftOrder);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-504", "AssignedToCancelledCommand", "user1");
@@ -630,13 +590,11 @@ public class McpWorkOrderToolTests
             Status = WorkOrderStatus.InProgress
         };
 
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(creator);
-            context.Add(assignee);
-            context.Add(inProgressOrder);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        context.Add(assignee);
+        context.Add(inProgressOrder);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(
@@ -648,10 +606,8 @@ public class McpWorkOrderToolTests
         result.ShouldContain("Complete");
 
         WorkOrder? wo;
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            wo = await context.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-505");
-        }
+        await using var context2 = TestHost.GetRequiredService<DbContext>();
+        wo = await context2.Set<WorkOrder>().SingleAsync(w => w.Number == "WO-505");
 
         wo.Status.ShouldBe(WorkOrderStatus.Complete);
     }

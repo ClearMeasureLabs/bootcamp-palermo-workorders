@@ -59,25 +59,23 @@ public class GrpcWorkOrderIntegrationTests
     [Test]
     public async Task Should_ReturnExpectedPayload_When_UnaryGrpcCallSucceeded()
     {
-        using (var scope = _factory!.Services.CreateScope())
+        using var scope = _factory!.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+        await db.Database.EnsureCreatedAsync();
+        var creator = new Employee("grpc-creator", "G", "Rpc", "g@t.test");
+        db.Add(creator);
+        var order = new DomainWorkOrder
         {
-            var db = scope.ServiceProvider.GetRequiredService<DataContext>();
-            await db.Database.EnsureCreatedAsync();
-            var creator = new Employee("grpc-creator", "G", "Rpc", "g@t.test");
-            db.Add(creator);
-            var order = new DomainWorkOrder
-            {
-                Number = "GRPC-001",
-                Title = "Test title",
-                Description = "Test description",
-                RoomNumber = "101",
-                Status = WorkOrderStatus.Draft,
-                Creator = creator,
-                CreatedDate = new DateTime(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc)
-            };
-            db.Add(order);
-            await db.SaveChangesAsync();
-        }
+            Number = "GRPC-001",
+            Title = "Test title",
+            Description = "Test description",
+            RoomNumber = "101",
+            Status = WorkOrderStatus.Draft,
+            Creator = creator,
+            CreatedDate = new DateTime(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc)
+        };
+        db.Add(order);
+        await db.SaveChangesAsync();
 
         using var channel = CreateGrpcChannel();
         var client = new WorkOrders.WorkOrdersClient(channel);
