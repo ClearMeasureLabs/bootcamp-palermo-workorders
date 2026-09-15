@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Reflection;
 using AutoBogus;
 using AutoBogus.Conventions;
@@ -9,14 +9,14 @@ namespace ClearMeasure.Bootcamp.UnitTests;
 
 public class ObjectMother
 {
-    private static volatile bool _configured;
-    public static object Lock = new();
+    private static bool _configured;
+    private static readonly Lock Sync = new();
 
     private static void EnsureConfigured()
     {
         if (!_configured)
         {
-            lock (Lock)
+            lock (Sync)
             {
                 if (!_configured)
                 {

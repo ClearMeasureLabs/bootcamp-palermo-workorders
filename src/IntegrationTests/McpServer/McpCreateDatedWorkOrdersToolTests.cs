@@ -72,11 +72,9 @@ public class McpCreateDatedWorkOrdersToolTests
     public async Task CreateDatedWorkOrders_WhenAssigneeMissing_CreatesNothing()
     {
         var creator = new Employee("tlovejoy", "Timothy", "Lovejoy", "t@test.com");
-        await using (var context = TestHost.GetRequiredService<DbContext>())
-        {
-            context.Add(creator);
-            await context.SaveChangesAsync();
-        }
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(creator);
+        await context.SaveChangesAsync();
 
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.CreateDatedWorkOrders(

@@ -20,16 +20,14 @@ public class SqlExecuter
     {
         var connection = _facade.GetDbConnection();
         connection.Open();
-        using (var command = connection.CreateCommand())
+        using var command = connection.CreateCommand();
+        command.CommandType = CommandType.Text;
+        command.CommandText =
+            commandText;
+        var reader = command.ExecuteReader();
+        while (reader.Read())
         {
-            command.CommandType = CommandType.Text;
-            command.CommandText =
-                commandText;
-            var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                readerAction(reader);
-            }
+            readerAction(reader);
         }
 
         connection.Close();
