@@ -34,7 +34,7 @@ dotnet test src/AcceptanceTests --configuration Debug
 dotnet test src/AcceptanceTests --configuration Debug --filter "FullyQualifiedName~TestClassName.TestMethodName"
 ```
 
-**Run locally:** `cd src/UI/Server && dotnet run` → `https://localhost:7174` (health: `/_healthcheck`)
+**Run locally:** `cd src/UI/Server && dotnet run` → `https://localhost:7174` (health: `/_healthcheck`, echo: `/api/echo`)
 
 ## Onion Architecture (Strict)
 
