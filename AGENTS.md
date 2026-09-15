@@ -94,3 +94,10 @@ When appending issue bodies via `python3` or other subprocesses: **export** any 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
+
+### AI Agent Build Tips
+
+- **Always `dotnet restore` before `dotnet build --no-restore`** — a freshly cloned or newly branched workspace will not have `obj/project.assets.json` files and the build will fail with NETSDK1004.
+- **The single solution file is `src/ChurchBulletin.sln`** — there is no `UI.Api.sln`; passing the wrong solution name silently fails.
+- **`UI.Api` tools endpoints pattern** — new stateless `POST /api/tools/<name>` endpoints live entirely in `src/UI/Api/Controllers/` as a single-file controller + inline `record` types. Follow `ToolsGuidGeneratorController` or `ToolsHashController`: dual `[Route]` attributes (`api/tools/…` and `api/v1.0/tools/…`), `[AllowAnonymous]`, `[EnableRateLimiting(ApiRateLimiting.PolicyName)]`, no MediatR/IBus.
+- **Stale-branch check** — if `git diff HEAD origin/master --name-only` lists files you just created, those files are already on master (merged by a prior session or concurrent item). Verify with `git show origin/master:<path>` before duplicating work.
