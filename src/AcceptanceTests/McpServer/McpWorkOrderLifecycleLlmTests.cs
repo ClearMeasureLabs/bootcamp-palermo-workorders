@@ -32,7 +32,7 @@ public class McpWorkOrderLifecycleLlmTests : AcceptanceTestBase
         await SkipIfNoChatClient();
     }
 
-    [Test, Retry(2)]
+    [Test, LlmTest]
     public async Task ShouldCompleteFullLifecycleViaLlm()
     {
         var bus = TestHost.GetRequiredService<IBus>();
@@ -74,7 +74,7 @@ public class McpWorkOrderLifecycleLlmTests : AcceptanceTestBase
             .ShouldBeTrue($"Expected 'complete' status in response: {response.Text}");
     }
 
-    [Test, Retry(2)]
+    [Test, LlmTest]
     public async Task ShouldCreateAndAssignWorkOrderViaLlm()
     {
         var bus = TestHost.GetRequiredService<IBus>();

@@ -10,7 +10,7 @@ public class WorkOrderAiChatTests : AcceptanceTestBase
         await SkipIfNoChatClient();
     }
 
-    [Test, Retry(2)]
+    [Test, LlmTest]
     public async Task ShouldSendChatMessageAndReceiveResponse()
     {
         await LoginAsCurrentUser();
@@ -39,7 +39,7 @@ public class WorkOrderAiChatTests : AcceptanceTestBase
         chatHistoryText.ShouldContain(prompt);
     }
 
-    [Test, Retry(2)]
+    [Test, LlmTest]
     public async Task ShouldRespondToChat()
     {
         await LoginAsCurrentUser();

@@ -12,7 +12,7 @@ public class AiAgentPageTests : AcceptanceTestBase
         await SkipIfNoChatClient();
     }
 
-    [Test, Retry(2)]
+    [Test, LlmTest]
     public async Task ShouldKeepPromptVisibleWhenResizingWithLongConversation()
     {
         await LoginAsCurrentUser();

@@ -13,6 +13,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
 {
     [Test]
+    [LlmTest]
     public async Task CheckHealthAsync_WithCurrentConfiguration_ReturnsResult()
     {
         var healthCheck = TestHost.GetRequiredService<CanConnectToLlmServerHealthCheck>();

@@ -32,7 +32,7 @@ public class McpServerLlmAcceptanceTests : AcceptanceTestBase
         await SkipIfNoChatClient();
     }
 
-    [Test, Retry(2)]
+    [Test, LlmTest]
     public async Task ShouldListWorkOrdersViaLlm()
     {
         var response = await _helper!.SendPrompt(
@@ -42,7 +42,7 @@ public class McpServerLlmAcceptanceTests : AcceptanceTestBase
         response.Text.ShouldNotBeNullOrEmpty();
     }
 
-    [Test, Retry(2)]
+    [Test, LlmTest]
     public async Task ShouldGetWorkOrderByNumberViaLlm()
     {
         var bus = TestHost.GetRequiredService<IBus>();
@@ -57,7 +57,7 @@ public class McpServerLlmAcceptanceTests : AcceptanceTestBase
         response.Text.ShouldContain(knownOrder.Title!);
     }
 
-    [Test, Retry(2)]
+    [Test, LlmTest]
     public async Task ShouldCreateWorkOrderViaLlm()
     {
         var bus = TestHost.GetRequiredService<IBus>();
@@ -75,7 +75,7 @@ public class McpServerLlmAcceptanceTests : AcceptanceTestBase
             .ShouldBeTrue($"Expected creation confirmation in response: {response.Text}");
     }
 
-    [Test, Retry(2)]
+    [Test, LlmTest]
     public async Task ShouldListEmployeesViaLlm()
     {
         var bus = TestHost.GetRequiredService<IBus>();

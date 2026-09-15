@@ -23,7 +23,7 @@ public class SaturdayMowSchedulingAgentTests : AcceptanceTestBase
     }
 
     [Test]
-    [Retry(2)]
+    [LlmTest]
     public async Task ShouldCreateTenSaturdayMowsForWillieViaAiAgent()
     {
         await Page.GotoAsync("/login");
