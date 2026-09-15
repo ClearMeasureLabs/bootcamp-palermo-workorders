@@ -11,6 +11,9 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 /// <summary>
 /// Exposes build and deployment metadata for operators and integrations.
 /// </summary>
+/// <remarks>
+/// Implements <c>GET /api/version</c> and <c>GET /api/v1.0/version</c> as specified in work item #9449.
+/// </remarks>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/version")]
