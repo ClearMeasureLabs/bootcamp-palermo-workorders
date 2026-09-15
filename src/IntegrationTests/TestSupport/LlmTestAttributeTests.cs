@@ -99,25 +99,16 @@ public class LlmTestAttributeTests
         return new LlmTestAttribute(tryCount).Wrap(stub).Execute(context);
     }
 
-    private sealed class StubTestCommand : TestCommand
+    private sealed class StubTestCommand(Func<int, ResultState> outcome, string message = "")
+        : TestCommand(new TestMethod(new MethodWrapper(typeof(Probe), nameof(Probe.Body))))
     {
-        private readonly Func<int, ResultState> _outcome;
-        private readonly string _message;
-
-        public StubTestCommand(Func<int, ResultState> outcome, string message = "")
-            : base(new TestMethod(new MethodWrapper(typeof(Probe), nameof(Probe.Body))))
-        {
-            _outcome = outcome;
-            _message = message;
-        }
-
         public int Executions { get; private set; }
 
         public override TestResult Execute(TestExecutionContext context)
         {
             Executions++;
             var result = Test.MakeTestResult();
-            result.SetResult(_outcome(Executions), _message);
+            result.SetResult(outcome(Executions), message);
             return result;
         }
     }

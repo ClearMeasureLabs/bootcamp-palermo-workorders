@@ -11,16 +11,13 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.TestSupport;
 /// rate-limit skip), and Inconclusive outcomes stop the retry loop and are reported unchanged.
 /// Use together with <c>[Test]</c> in place of <c>[Retry(n)]</c>.
 /// </summary>
-[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+[AttributeUsage(AttributeTargets.Method, Inherited = false)]
 public sealed class LlmTestAttribute : NUnitAttribute, IRepeatTest
 {
-    /// <summary>
-    /// Attempts made before the test is downgraded to a warning.
-    /// </summary>
-    public const int DefaultTryCount = 3;
+    private const int DefaultTryCount = 3;
 
     /// <summary>
-    /// Creates the attribute with <see cref="DefaultTryCount"/> attempts.
+    /// Creates the attribute with the default of three attempts.
     /// </summary>
     public LlmTestAttribute()
         : this(DefaultTryCount)
@@ -55,19 +52,11 @@ public sealed class LlmTestAttribute : NUnitAttribute, IRepeatTest
     /// <summary>
     /// Runs the inner command up to a fixed number of times and converts a final failure into a warning.
     /// </summary>
-    internal sealed class RetryThenWarnCommand : DelegatingTestCommand
+    private sealed class RetryThenWarnCommand(TestCommand innerCommand, int tryCount) : DelegatingTestCommand(innerCommand)
     {
-        private readonly int _tryCount;
-
-        public RetryThenWarnCommand(TestCommand innerCommand, int tryCount)
-            : base(innerCommand)
-        {
-            _tryCount = tryCount;
-        }
-
         public override TestResult Execute(TestExecutionContext context)
         {
-            var remaining = _tryCount;
+            var remaining = tryCount;
 
             while (remaining-- > 0)
             {
@@ -77,7 +66,6 @@ public sealed class LlmTestAttribute : NUnitAttribute, IRepeatTest
                 }
                 catch (Exception ex)
                 {
-                    context.CurrentResult ??= context.CurrentTest.MakeTestResult();
                     context.CurrentResult.RecordException(ex);
                 }
 
@@ -103,7 +91,7 @@ public sealed class LlmTestAttribute : NUnitAttribute, IRepeatTest
         private void DowngradeToWarning(TestResult result)
         {
             var message =
-                $"LLM-dependent test did not pass after {_tryCount} attempt(s); reported as a warning instead of a failure. " +
+                $"LLM-dependent test did not pass after {tryCount} attempt(s); reported as a warning instead of a failure. " +
                 $"Last outcome: {result.ResultState.Status}. {result.Message}";
             result.SetResult(ResultState.Warning, message, result.StackTrace);
         }
