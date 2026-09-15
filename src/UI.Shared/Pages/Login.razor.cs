@@ -3,6 +3,7 @@ using System.Reflection;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Hosting;
 using ClearMeasure.Bootcamp.Core.Queries;
@@ -15,6 +16,7 @@ public partial class Login : AppComponentBase
     [Inject] public CustomAuthenticationStateProvider? AuthStateProvider { get; set; }
     [Inject] public NavigationManager? NavigationManager { get; set; }
     [Inject] public IHostEnvironment? HostEnvironment { get; set; }
+    [Inject] public ThemePreferenceService? Theme { get; set; }
 
     public readonly LoginModel LoginModelValue = new();
     public string? ErrorMessage;
@@ -63,6 +65,7 @@ public partial class Login : AppComponentBase
     }
 
     private const string TimothyLovejoyUsername = "tlovejoy";
+    private const string HnattUsername = "hnatt";
 
     private async Task LoginAsTimothyLovejoy()
     {
@@ -88,6 +91,8 @@ public partial class Login : AppComponentBase
         if (selectedEmployee != null)
         {
             await AuthStateProvider!.Login(LoginModelValue.Username);
+            if (LoginModelValue.Username == HnattUsername)
+                await Theme!.SetDarkModeAsync(false);
             EventBus.Notify(new UserLoggedInEvent(LoginModelValue.Username));
             await Bus.Publish(new Core.Model.Events.UserLoggedInEvent(LoginModelValue.Username));
             NavigationManager!.NavigateTo("/");

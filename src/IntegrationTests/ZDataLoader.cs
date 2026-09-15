@@ -207,6 +207,11 @@ public class ZDataLoader
         msAlbright.AddRole(choir);
         db.Add(msAlbright);
 
+        // Herbie Natt - Parishioner who prefers light mode
+        var herbieNatt = new Employee("hnatt", "Herbie", "Natt", "hnatt@shelbyville.org");
+        herbieNatt.AddRole(parishioner);
+        db.Add(herbieNatt);
+
         db.SaveChanges();
 
         // Create Christmas Concert Work Orders
