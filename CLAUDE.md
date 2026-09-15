@@ -133,6 +133,20 @@ DbUp scripts in `src/Database/scripts/Update/`, numbered sequentially (`###_Desc
 
 **AcceptanceTests** — NUnit 4.3.2, NUnit3TestAdapter 5.0.0, microsoft.playwright.nunit 1.54.0, Azure.AI.OpenAI 2.1.0, ModelContextProtocol 1.0.0, Microsoft.Extensions.AI 9.7.0, Microsoft.Extensions.AI.OpenAI 9.7.1-preview.1.25365.4
 
+## API Tools Endpoints
+
+Utility endpoints in `src/UI/Api/Controllers/` — all anonymous, rate-limited, no DB access:
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/tools/hash` | POST | SHA-256 of `text` (UTF-8); optional MD5/SHA-1 via `includeMd5`/`includeSha1` flags |
+| `/api/tools/guid-generator` | POST | Generate 1–100 UUIDs; optional `count` query param |
+| `/api/tools/random` | POST | Random integer in `[min, max]` |
+| `/api/tools/timestamp-converter` | GET | Convert Unix timestamps to/from ISO-8601 |
+
+All routes also available under the versioned prefix `/api/v1.0/tools/`.
+
+
 ## DI and Service Wiring
 
 Lamar container configured in `src/UI/Server/UIServiceRegistry.cs`. Assembly scanning auto-registers MediatR handlers and services. The `IBus` interface wraps MediatR's `IMediator`.
