@@ -94,3 +94,13 @@ When appending issue bodies via `python3` or other subprocesses: **export** any 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
+
+### Already-Implemented / Documentation-Only Work Items
+
+Some AI Factory work items describe features that are **already fully implemented** in the codebase. The Technical Design section will explicitly say "Status: Already Implemented" and the Test Design will say "No automated tests are required." In these cases:
+
+- **Do NOT write any new code or tests** — the diff must be documentation-only (e.g. AGENTS.md self-tuning update).
+- Skip local build validation entirely (no code changed = no build needed).
+- Proceed directly to: self-tune step → merge base → commit → push → open PR → call `/complete`.
+- The PR body should clearly state "No code changes required — feature already implemented."
+- A pure self-tuning commit (AGENTS.md only) satisfies the requirement to push something; the factory needs at least one commit to advance the item.
