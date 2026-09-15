@@ -30,6 +30,22 @@ public class EnvironmentStatusControllerTests
     }
 
     [Test]
+    public void Get_Should_Return304_When_IfNoneMatchMatchesPayloadEtag()
+    {
+        var controller = CreateController();
+        var first = controller.Get();
+        first.ShouldBeOfType<ContentResult>();
+        var etag = controller.Response.Headers.ETag.ToString();
+        etag.ShouldNotBeNullOrEmpty();
+
+        controller.Request.Headers.IfNoneMatch = etag;
+        var second = controller.Get();
+
+        var status = second.ShouldBeOfType<StatusCodeResult>();
+        status.StatusCode.ShouldBe(StatusCodes.Status304NotModified);
+    }
+
+    [Test]
     public void Get_Should_OmitEnvironmentVariableValues_When_SecretEnvVarPresent()
     {
         using var probe = RedactionProbe.Install(SecretValue);
