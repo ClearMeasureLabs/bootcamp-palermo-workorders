@@ -63,4 +63,16 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await Expect(footerNote).ToBeVisibleAsync();
         await Expect(footerNote).ToContainTextAsync("Submit a new work order any time");
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowSoftwareVersion_OnLandingPage_WhenAnonymous()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var versionSpan = Page.GetByTestId(nameof(MainLayout.Elements.SoftwareVersion));
+        await versionSpan.WaitForAsync();
+        await Expect(versionSpan).ToBeVisibleAsync();
+        var text = await versionSpan.InnerTextAsync();
+        text.Trim().ShouldNotBeEmpty();
+    }
 }
