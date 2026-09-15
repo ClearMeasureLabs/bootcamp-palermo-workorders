@@ -56,14 +56,17 @@ pwsh scripts/crap/run-crap-audit.ps1 -SkipTests -FailOnViolations
 Prerequisites on Linux: .NET 10 SDK **and** the .NET 8 runtime (`dotnet-crap` 0.1.1 targets
 `net8.0`), plus `pwsh`.
 
-### Recommended follow-ups
+### Follow-ups
 
-1. Note the .NET 8 runtime prerequisite in the skill's Step 1 (the tool fails to launch on an
-   SDK-10-only machine).
-2. Publish `crap-metrics/` as a build artifact in addition to the job summary so baselines can
-   be diffed with `dotnet-crap diff`.
-3. Add a trend line: store `crap-summary.md` per run and compare average CRAP and CRAPpy count.
-4. Compare with the Scorecard repo's thresholds and scoping once that repo is reachable.
+Done in this change:
+
+- .NET 8 runtime prerequisite documented in `docs/crap-score-audit.md` (the tool fails to launch on an SDK-10-only machine).
+- `crap-metrics/` published as the `crap-metrics-linux` build artifact in addition to the job summary, so baselines can be diffed with `dotnet-crap diff`.
+
+Remaining:
+
+1. Add a trend line: store `crap-summary.md` per run and compare average CRAP and CRAPpy count.
+2. Compare with the Scorecard repo's thresholds and scoping once that repo is reachable.
 
 ## 4. Baseline measurement
 

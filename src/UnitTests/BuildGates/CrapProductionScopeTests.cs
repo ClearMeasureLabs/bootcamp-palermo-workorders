@@ -64,4 +64,16 @@ public class CrapProductionScopeTests
         CrapProductionScope.IsProductionFile("").ShouldBeFalse();
         CrapProductionScope.IsProductionFile("/repo/tools/Foo.cs").ShouldBeFalse();
     }
+
+    [Test]
+    public void IsProductionFile_WhenRelativeSrcPath_ReturnsTrue()
+    {
+        CrapProductionScope.IsProductionFile("src/Core/Model/WorkOrder.cs").ShouldBeTrue();
+    }
+
+    [Test]
+    public void IsProductionFile_WhenRelativeUnitTestsPath_ReturnsFalse()
+    {
+        CrapProductionScope.IsProductionFile("src/UnitTests/Core/WorkOrderTests.cs").ShouldBeFalse();
+    }
 }

@@ -101,7 +101,8 @@ static string NormalizePath(string path) =>
 
 static bool IsProductionFile(string path)
 {
-    var p = NormalizePath(path).ToLowerInvariant();
+    // Anchor with a leading slash so relative paths ("src/Core/X.cs") match the same rules as absolute ones.
+    var p = "/" + NormalizePath(path).ToLowerInvariant().TrimStart('/');
     if (p.Contains("/unittests/") || p.Contains("/integrationtests/") || p.Contains("/acceptancetests/"))
         return false;
     if (p.Contains("/generated/") || p.EndsWith(".g.cs") || p.EndsWith(".designer.cs"))

@@ -42,6 +42,8 @@ public class CrapMetricsArtifactWorkflowTests
         uploadBlock.ShouldContain("name: crap-metrics-linux");
         uploadBlock.ShouldContain("crap-metrics/crap-summary.md");
         uploadBlock.ShouldContain("crap-metrics/crap-report.json");
+        uploadBlock.ShouldContain("crap-metrics/crap-by-file.json");
+        uploadBlock.ShouldContain("crap-metrics/crap-by-file.csv");
         uploadBlock.ShouldContain("crap-metrics/crap-production-violations.json");
     }
 
