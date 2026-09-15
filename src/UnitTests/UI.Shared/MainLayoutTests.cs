@@ -303,6 +303,88 @@ public class MainLayoutTests
         ctx.JSInterop.VerifyFocusAsyncInvoke();
     }
 
+    [Test]
+    public async Task ShouldRenderBackdrop_WhenNarrowAndNavOpen()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        await component.WaitForAssertionAsync(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        await component.InvokeAsync(() => layout.Instance.OnViewportChanged(true));
+
+        var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        await toggle.ClickAsync(new());
+
+        layout.FindAll(".nav-backdrop").Count.ShouldBe(1);
+        layout.Find("#app-navigation-rail").ClassList.ShouldContain("open");
+    }
+
+    [Test]
+    public async Task ShouldNotRenderBackdrop_WhenNarrowAndNavClosed()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        await component.WaitForAssertionAsync(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        await component.InvokeAsync(() => layout.Instance.OnViewportChanged(true));
+
+        // Nav auto-hides on first narrow signal — backdrop should not be present
+        layout.FindAll(".nav-backdrop").Count.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task ShouldNotRenderBackdrop_OnWideViewport()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        await component.WaitForAssertionAsync(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        await component.InvokeAsync(() => layout.Instance.OnViewportChanged(false));
+
+        layout.FindAll(".nav-backdrop").Count.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task ShouldDismissNavWhenBackdropClicked()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        await component.WaitForAssertionAsync(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']").ShouldNotBeNull();
+        });
+
+        await component.InvokeAsync(() => layout.Instance.OnViewportChanged(true));
+
+        var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
+        await toggle.ClickAsync(new());
+
+        layout.FindAll(".nav-backdrop").Count.ShouldBe(1);
+
+        var backdrop = layout.Find(".nav-backdrop");
+        await backdrop.ClickAsync(new());
+
+        layout.Find("#app-navigation-rail").ClassList.ShouldNotContain("open");
+        layout.FindAll(".nav-backdrop").Count.ShouldBe(0);
+    }
+
     private static BunitContext CreateContext(string? authenticateAsUser = null)
     {
         var ctx = new BunitContext();

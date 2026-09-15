@@ -21,6 +21,11 @@
         </div>
     </aside>
 
+    @if (_isNarrowViewport && _navVisible)
+    {
+        <div class="nav-backdrop" @onclick="ToggleNavRailAsync"></div>
+    }
+
     <div class="main-container">
         <header class="modern-header">
             <div class="header-content">
