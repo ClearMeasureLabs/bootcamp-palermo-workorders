@@ -67,6 +67,32 @@ public class LlmTestAttributeTests
     }
 
     [Test]
+    public void Execute_WhenInnerThrowsEveryTime_RetriesAllAttemptsAndReportsWarning()
+    {
+        var stub = new StubTestCommand(_ => throw new InvalidOperationException("model unavailable"));
+
+        var result = Run(stub, 3);
+
+        result.ResultState.ShouldBe(ResultState.Warning);
+        result.Message.ShouldContain("did not pass after 3 attempt(s)");
+        result.Message.ShouldContain("model unavailable");
+        stub.Executions.ShouldBe(3);
+    }
+
+    [Test]
+    public void Execute_WhenInnerThrowsThenPasses_RetriesAndPasses()
+    {
+        var stub = new StubTestCommand(attempt => attempt == 1
+            ? throw new InvalidOperationException("transient")
+            : ResultState.Success);
+
+        var result = Run(stub, 3);
+
+        result.ResultState.ShouldBe(ResultState.Success);
+        stub.Executions.ShouldBe(2);
+    }
+
+    [Test]
     public void Execute_WhenInnerIsIgnored_StopsWithoutRetryAndKeepsIgnored()
     {
         var stub = new StubTestCommand(_ => ResultState.Ignored, "rate limited");
