@@ -7,6 +7,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 public class TranslationServiceTests : LlmTestBase
 {
     [Test]
+    [LlmTest]
     public async Task ShouldTranslateTextToSpanish()
     {
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
@@ -19,6 +20,7 @@ public class TranslationServiceTests : LlmTestBase
     }
 
     [Test]
+    [LlmTest]
     public async Task ShouldTranslateTextToGerman()
     {
         var factory = TestHost.GetRequiredService<ChatClientFactory>();

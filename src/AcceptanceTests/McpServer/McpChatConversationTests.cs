@@ -33,7 +33,7 @@ public class McpChatConversationTests : AcceptanceTestBase
 		await SkipIfNoChatClient();
 	}
 
-	[Test, Retry(2)]
+	[Test, LlmTest]
 	public async Task ShouldCreateAndAssignWorkOrderFromConversationalPrompt()
 	{
 		var response = await _helper!.SendPrompt(
