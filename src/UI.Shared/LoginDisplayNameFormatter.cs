@@ -8,6 +8,8 @@ public static class LoginDisplayNameFormatter
     /// <summary>
     /// Returns the full name in uppercase so locally stored mixed-case names match mainframe all-caps names in the login drop-down.
     /// </summary>
+    /// <param name="fullName">The employee's full name, or <c>null</c>.</param>
+    /// <returns>The uppercased name, or <see cref="string.Empty"/> when <paramref name="fullName"/> is null or empty.</returns>
     public static string FormatForLoginDropdown(string? fullName)
     {
         if (string.IsNullOrEmpty(fullName))
