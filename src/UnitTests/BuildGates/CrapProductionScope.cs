@@ -3,7 +3,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.BuildGates;
 /// <summary>
 /// Production-file filter for the CRAP production gate
 /// (<c>crap-gate-threshold.json</c>). Keep in sync with
-/// <c>IsProductionFile</c> in <c>.cursor/skills/crap-score-cleanup/scripts/rollup-file-scores.csx</c>.
+/// <c>IsProductionFile</c> in <c>scripts/crap/rollup-file-scores.csx</c>.
 /// </summary>
 public static class CrapProductionScope
 {
@@ -18,7 +18,7 @@ public static class CrapProductionScope
             return false;
         }
 
-        var normalized = path.Replace('\\', '/').ToLowerInvariant();
+        var normalized = "/" + path.Replace('\\', '/').ToLowerInvariant().TrimStart('/');
         if (IsExcludedTestPath(normalized) || IsGeneratedPath(normalized))
         {
             return false;

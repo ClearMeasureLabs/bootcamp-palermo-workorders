@@ -20,9 +20,9 @@ public class CrapGateThresholdTests
         var privateBuild = File.ReadAllText(FindRepoFile("PrivateBuild.ps1"));
         var workflow = File.ReadAllText(FindRepoFile(Path.Combine(".github", "workflows", "build.yml")));
         var auditScript = File.ReadAllText(FindRepoFile(Path.Combine(
-            ".cursor", "skills", "crap-score-cleanup", "scripts", "run-crap-audit.ps1")));
-        var skill = File.ReadAllText(FindRepoFile(Path.Combine(
-            ".cursor", "skills", "crap-score-cleanup", "SKILL.md")));
+            "scripts", "crap", "run-crap-audit.ps1")));
+        var auditDoc = File.ReadAllText(FindRepoFile(Path.Combine(
+            "docs", "crap-score-audit.md")));
         var config = File.ReadAllText(FindRepoFile(CrapGateThreshold.RelativeConfigPath));
         using var configDoc = System.Text.Json.JsonDocument.Parse(config);
         configDoc.RootElement.GetProperty("productionThreshold").GetInt32().ShouldBe(threshold);
@@ -35,9 +35,9 @@ public class CrapGateThresholdTests
         auditScript.ShouldContain("crap-gate-threshold.json");
         auditScript.ShouldContain("Get-ProductionCrapGateThreshold");
         auditScript.ShouldNotContain($"[int]$Threshold = {threshold}");
-        skill.ShouldContain("crap-gate-threshold.json");
-        skill.ShouldContain("productionThreshold");
-        skill.ShouldNotContain($"-Threshold {threshold}");
+        auditDoc.ShouldContain("crap-gate-threshold.json");
+        auditDoc.ShouldContain("productionThreshold");
+        auditDoc.ShouldNotContain($"-Threshold {threshold}");
     }
 
     private static string FindRepoFile(string relativePath)

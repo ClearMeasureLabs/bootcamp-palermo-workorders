@@ -11,7 +11,7 @@
 
 .PARAMETER Threshold
   CRAP threshold for "CRAPpy" methods. When omitted, reads productionThreshold from
-  ../crap-gate-threshold.json (single source of truth for the CI/PrivateBuild gate).
+  crap-gate-threshold.json beside this script (single source of truth for the CI/PrivateBuild gate).
 
 .PARAMETER SkipTests
   Skip test run; reuse existing Cobertura files under OutputDir/TestResults.
@@ -22,7 +22,7 @@
 
 .PARAMETER RepoRoot
   Repository root containing src/ChurchBulletin.sln. Defaults to the directory that
-  contains the skill (three levels above scripts/). When using a git worktree, pass
+  is two levels above scripts/crap/. When using a git worktree, pass
   the worktree path explicitly or run the script from that directory.
 
 .PARAMETER Configuration
@@ -70,7 +70,7 @@ function Invoke-QuietExternal {
 }
 
 function Get-ProductionCrapGateThreshold {
-    $configPath = Join-Path $PSScriptRoot ".." "crap-gate-threshold.json"
+    $configPath = Join-Path $PSScriptRoot "crap-gate-threshold.json"
     if (-not (Test-Path -LiteralPath $configPath)) {
         Write-Error "CRAP gate threshold file not found: $configPath"
     }
@@ -95,7 +95,7 @@ if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
         $RepoRoot = $cwdRoot
     }
     else {
-        $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../../..")).Path
+        $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
     }
 }
 else {

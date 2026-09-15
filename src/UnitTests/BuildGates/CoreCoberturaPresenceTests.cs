@@ -80,7 +80,7 @@ public class CoreCoberturaPresenceTests
     public void AssertCoreCoberturaScript_WhenRead_FailsWhenCoreMissing()
     {
         var path = FindRepoFile(Path.Combine(
-            ".cursor", "skills", "crap-score-cleanup", "scripts", "assert-core-cobertura.ps1"));
+            "scripts", "crap", "assert-core-cobertura.ps1"));
         var source = File.ReadAllText(path);
 
         source.ShouldContain("ClearMeasure.Bootcamp.Core");

@@ -22,7 +22,7 @@ if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
         $RepoRoot = $cwdRoot
     }
     else {
-        $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../../..")).Path
+        $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
     }
 }
 else {

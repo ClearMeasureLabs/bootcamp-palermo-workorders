@@ -149,6 +149,8 @@ Format: `{username}/{branch-description}`. AI agents use the username of the acc
 | Before PR | `.\acceptancetests.ps1` |
 | Docs-only changes | Skip builds |
 
+CRAP gate (crap4dotnet): `pwsh scripts/crap/run-crap-audit.ps1 -SkipTests -FailOnViolations`. Threshold in `scripts/crap/crap-gate-threshold.json`; reports land in `crap-metrics/` (gitignored) and CI publishes them as the `crap-metrics-linux` artifact plus job summary. See `docs/crap-score-audit.md`.
+
 ## Feature Loop
 
 Work items live on the ClearMeasureLabs project board: https://github.com/orgs/ClearMeasureLabs/projects/1

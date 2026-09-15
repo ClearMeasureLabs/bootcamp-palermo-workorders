@@ -1,14 +1,6 @@
----
-name: crap-score-cleanup
-description: >
-  Computes Bob Martin CRAP (Change Risk Anti-Patterns) scores for every source file
-  in the .NET solution by combining cyclomatic complexity with Cobertura test coverage.
-  Produces method-level and file-level ranked reports for cleanup subagents. Use when
-  the user asks for CRAP scores, risky untested code, change-risk hotspots, or wants
-  a codebase-wide cleanup prioritized by complexity × lack of coverage.
----
+# CRAP Score Audit (crap4dotnet)
 
-# CRAP Score Cleanup
+Scripts live in `scripts/crap/`. This is a build-tooling script set, not an agent skill.
 
 Quantify change risk across the entire codebase, rank files and methods, and drive
 focused cleanup (refactor complex methods, add tests, or both).
@@ -38,7 +30,7 @@ must be refactored.
 
 ## Production gate threshold (single source of truth)
 
-**Authoritative file:** `.cursor/skills/crap-score-cleanup/crap-gate-threshold.json`
+**Authoritative file:** `scripts/crap/crap-gate-threshold.json`
 
 ```json
 { "productionThreshold": <integer> }
@@ -60,13 +52,13 @@ To lower the gate in a later epic step, change **only** `productionThreshold` (p
 From the repo root:
 
 ```powershell
-pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1
+pwsh scripts/crap/run-crap-audit.ps1
 ```
 
 **CI / private-build gate (production only):** after unit + integration coverage exists under `build/test`, fail the build when any in-scope production method has CRAP greater than the shared `productionThreshold` (test projects and generated code are excluded):
 
 ```powershell
-pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -SkipTests -FailOnViolations
+pwsh scripts/crap/run-crap-audit.ps1 -SkipTests -FailOnViolations
 ```
 
 `PrivateBuild.ps1` and the Linux integration-build job in `.github/workflows/build.yml` run this automatically. Coverlet records async methods on compiler-generated state-machine types; the audit flattens those hits onto the original methods (`flatten-cobertura.csx`) before `dotnet-crap`, then overlays line coverage in `rollup-file-scores.csx`. `dotnet-crap` may still exit non-zero because of CRAPpy *test* methods; the gate uses `crap-metrics/crap-production-violations.json` (from `assert-crap-gate.ps1`) and only fails on production violations.
@@ -82,7 +74,7 @@ The **Integration Build (SQL container)** job (`build-linux` in `.github/workflo
 | Location | Job summary (`$GITHUB_STEP_SUMMARY` / `$env:GITHUB_STEP_SUMMARY`) |
 | File | `crap-metrics/crap-summary.md` (raw Markdown appended) |
 
-**Read:** open the workflow run → **Integration Build (SQL container)** → job **Summary**. The CRAP markdown renders there. Reports are not published as a zip artifact. `crap-metrics/` remains gitignored and is not committed.
+**Read:** open the workflow run → **Integration Build (SQL container)** → job **Summary**. The CRAP markdown renders there. The same reports are also published as the `crap-metrics-linux` build artifact by the **Upload CRAP metrics** step (`actions/upload-artifact`, `if: always()`, 30-day retention): `crap-report.json`, `crap-by-file.json`, `crap-by-file.csv`, `crap-summary.md`, `crap-production-violations.json`. Download it from the run's **Artifacts** section to diff baselines with `dotnet-crap diff`. `crap-metrics/` remains gitignored and is not committed.
 
 Outputs land in `crap-metrics/`:
 
@@ -105,6 +97,9 @@ Coverage comes from UnitTests + IntegrationTests + AcceptanceTests Cobertura mer
 dotnet tool install -g crap4dotnet --version 0.1.1
 dotnet tool install -g dotnet-script --version 2.0.0
 ```
+
+`crap4dotnet` 0.1.1 targets `net8.0`, so the .NET 8 runtime must be present alongside the .NET 10 SDK
+(GitHub-hosted Ubuntu runners include it). `run-crap-audit.ps1` installs or updates both tools automatically.
 
 Optional HTML report:
 
@@ -132,7 +127,7 @@ those methods at cov ≈ 0 and can fail the production CRAP gate.
 ```powershell
 Select-String -Path build/test/**/coverage.cobertura.xml -Pattern 'package name="ClearMeasure.Bootcamp.Core"' | Select-Object -First 5
 # Or hard-check (also run by run-crap-audit.ps1):
-pwsh .cursor/skills/crap-score-cleanup/scripts/assert-core-cobertura.ps1
+pwsh scripts/crap/assert-core-cobertura.ps1
 ```
 
 Expect a Cobertura `<package name="ClearMeasure.Bootcamp.Core">` (filenames are often relative to `src/Core/`, e.g. `Model\Employee.cs`) with `hits` &gt; 0. The audit fails if production Core coverage is missing.
@@ -152,7 +147,7 @@ Recommended preflight on a clean checkout:
 git worktree add ../clean-audit origin/master
 cd ../clean-audit
 .\AcceptanceTests.ps1   # must report Passed with 0 Failed
-pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1
+pwsh scripts/crap/run-crap-audit.ps1
 ```
 
 Do not use `dotnet-crap --run-tests` directly — it aborts on any test failure. The script
@@ -178,7 +173,7 @@ dotnet-crap @args
 ### Step 4 — Roll up to file scores
 
 ```powershell
-dotnet script .cursor/skills/crap-score-cleanup/scripts/rollup-file-scores.csx `
+dotnet script scripts/crap/rollup-file-scores.csx `
   crap-metrics/crap-report.json crap-metrics
 ```
 
@@ -234,7 +229,7 @@ Acceptance: re-run run-crap-audit.ps1; targeted files no longer CRAPpy
 4. Re-run audit on changed files only:
 
 ```powershell
-pwsh .cursor/skills/crap-score-cleanup/scripts/run-crap-audit.ps1 -SkipTests
+pwsh scripts/crap/run-crap-audit.ps1 -SkipTests
 dotnet-crap diff crap-metrics/crap-report-before.json crap-metrics/crap-report.json
 ```
 
@@ -266,7 +261,7 @@ Only valid when `CC < T + 1` (at 100% coverage CRAP = CC, so CC > T requires ref
 | Method name mismatch in Cobertura | crap4dotnet matches by line range; trust its output |
 | CRAP on test helpers | Filter to `src/Core`, `src/DataAccess`, `src/UI`, `src/LlmGateway`, `src/McpServer`, `src/Worker` for product cleanup |
 
-## Related skills
+## Related tooling
 
 - `roslynator-analysis` — static analyzer findings (orthogonal to CRAP)
 - `codebase-cartography-audit` — LOC + McCabe CC without coverage

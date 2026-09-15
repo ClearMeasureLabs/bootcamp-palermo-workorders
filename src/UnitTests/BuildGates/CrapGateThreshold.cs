@@ -11,7 +11,7 @@ public static class CrapGateThreshold
     /// Relative path from the repository root to the gate threshold config.
     /// </summary>
     public const string RelativeConfigPath =
-        ".cursor/skills/crap-score-cleanup/crap-gate-threshold.json";
+        "scripts/crap/crap-gate-threshold.json";
 
     /// <summary>
     /// Reads <c>productionThreshold</c> from <see cref="RelativeConfigPath"/>.

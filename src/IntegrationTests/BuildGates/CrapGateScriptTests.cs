@@ -22,11 +22,21 @@ public class CrapGateScriptTests
         exitCode.ShouldBe(1);
     }
 
+    [TestCase("crap-production-violations-negative.json")]
+    [TestCase("crap-production-violations-malformed.json")]
+    [TestCase("crap-production-violations-inconsistent.json")]
+    public void AssertCrapGate_WhenViolationCountIsInvalid_ExitsTwo(string fixtureFileName)
+    {
+        var exitCode = RunAssertScript(fixtureFileName);
+
+        exitCode.ShouldBe(2);
+    }
+
     [Test]
     public void FlattenCobertura_WhenAsyncStateMachine_CopiesHitsOntoOriginalMethod()
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, ".cursor", "skills", "crap-score-cleanup", "scripts",
+        var script = Path.Combine(repoRoot, "scripts", "crap",
             "flatten-cobertura.csx");
         var fixture = Path.Combine(TestContext.CurrentContext.TestDirectory, "BuildGates", "Fixtures",
             "cobertura-async-state-machine.xml");
@@ -47,7 +57,7 @@ public class CrapGateScriptTests
     public void FlattenCobertura_WhenOnlyStateMachineClassExists_SynthesizesParentMethod()
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, ".cursor", "skills", "crap-score-cleanup", "scripts",
+        var script = Path.Combine(repoRoot, "scripts", "crap",
             "flatten-cobertura.csx");
         var fixture = Path.Combine(TestContext.CurrentContext.TestDirectory, "BuildGates", "Fixtures",
             "cobertura-orphan-async-state-machine.xml");
@@ -141,7 +151,7 @@ public class CrapGateScriptTests
     private static int RunAssertScript(string fixtureFileName)
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, ".cursor", "skills", "crap-score-cleanup", "scripts",
+        var script = Path.Combine(repoRoot, "scripts", "crap",
             "assert-crap-gate.ps1");
         var fixture = Path.Combine(TestContext.CurrentContext.TestDirectory, "BuildGates", "Fixtures",
             fixtureFileName);

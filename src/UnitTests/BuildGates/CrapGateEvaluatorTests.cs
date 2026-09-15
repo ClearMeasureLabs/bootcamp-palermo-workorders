@@ -127,7 +127,7 @@ public class CrapGateEvaluatorTests
         while (dir != null)
         {
             var candidate = Path.Combine(dir.FullName,
-                ".cursor", "skills", "crap-score-cleanup", "scripts", "run-crap-audit.ps1");
+                "scripts", "crap", "run-crap-audit.ps1");
             if (File.Exists(candidate))
             {
                 var source = File.ReadAllText(candidate);
@@ -151,7 +151,7 @@ public class CrapGateEvaluatorTests
         while (dir != null)
         {
             var candidate = Path.Combine(dir.FullName,
-                ".cursor", "skills", "crap-score-cleanup", "scripts", "flatten-cobertura.csx");
+                "scripts", "crap", "flatten-cobertura.csx");
             if (File.Exists(candidate))
             {
                 var source = File.ReadAllText(candidate);
@@ -173,7 +173,7 @@ public class CrapGateEvaluatorTests
         while (dir != null)
         {
             var candidate = Path.Combine(dir.FullName,
-                ".cursor", "skills", "crap-score-cleanup", "scripts", "rollup-file-scores.csx");
+                "scripts", "crap", "rollup-file-scores.csx");
             if (File.Exists(candidate))
             {
                 return candidate;
