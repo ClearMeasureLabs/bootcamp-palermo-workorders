@@ -7,6 +7,7 @@ using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests;
 
+// ReSharper disable once ClassNeverInstantiated.Global -- instantiated by test infrastructure (NUnit / reflection)
 public class ObjectMother
 {
     private static readonly Lazy<bool> Configured = new(() =>

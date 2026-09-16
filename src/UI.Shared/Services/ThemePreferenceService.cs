@@ -16,6 +16,7 @@ public sealed class ThemePreferenceService : IAsyncDisposable
 
     public ThemePreferenceService(IJSRuntime js) => _js = js;
 
+    // ReSharper disable once EventNeverSubscribedTo.Global -- public Blazor state-change event; consumers subscribe at runtime
     public event Action? OnChange;
 
     public bool IsDarkMode => _isDarkMode;

@@ -35,6 +35,7 @@ public class MetricEntry
     /// <summary>
     /// Initializes a new instance of the <see cref="MetricEntry"/> class.
     /// </summary>
+    // ReSharper disable once UnusedMember.Global -- used by OpenTelemetry JSON deserialization
     public MetricEntry()
     {
     }

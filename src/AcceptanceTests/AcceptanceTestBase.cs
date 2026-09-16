@@ -65,6 +65,7 @@ public abstract class AcceptanceTestBase
     /// <summary>
     /// Gets or sets the current user for the current test.
     /// </summary>
+    // ReSharper disable once UnusedMember.Global -- setter used by object initializers in test setup helpers
     public Employee CurrentUser
     {
         get => State.CurrentUser;

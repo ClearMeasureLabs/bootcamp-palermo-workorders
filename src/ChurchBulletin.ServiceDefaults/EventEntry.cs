@@ -37,6 +37,7 @@ public class EventEntry
     /// <summary>
     /// Initializes a new instance of the <see cref="EventEntry"/> class.
     /// </summary>
+    // ReSharper disable once UnusedMember.Global -- used by OpenTelemetry JSON deserialization
     public EventEntry()
     {
     }

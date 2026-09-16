@@ -8,5 +8,5 @@ public class EmployeeSpecification
     {
     }
 
-    public bool CanFulfill { get; set; }
+    public bool CanFulfill { get; }
 }

@@ -157,3 +157,25 @@ Qodana runs in CI with `failThreshold: 0`. Common P2 findings to pre-empt:
 - After all changes: `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` must pass with 0 warnings, followed by the full `UnitTests` run.
 
 After any rename that touches test methods, verify no callers outside the file reference the old name (use `grep -r "OldName" src/`).
+
+### Qodana P4: Dead / Unused Symbol Suppressions (`ClassNeverInstantiated.Global`, `UnusedMember.*`, etc.)
+
+When Qodana flags symbols as dead but they are required by DI, reflection, NServiceBus, or interface contracts, prefer a single-line suppression over deletion. Use this decision tree:
+
+1. **DI-registered validators** (FluentValidation `AbstractValidator<T>` subclasses): suppress `ClassNeverInstantiated.Global` — FluentValidation assembly-scans and DI resolves them.
+2. **Assembly-anchor marker classes** (`WebApplicationFactory<TEntryPoint>`): suppress `ClassNeverInstantiated.Global`.
+3. **NServiceBus message handlers** (`IHandleMessages<T>`): suppress `ClassNeverInstantiated.Global` — NServiceBus pipeline instantiates via reflection.
+4. **OTel / JSON deserialization constructors** (default constructors on `EventEntry`, `MetricEntry`, etc.): suppress `UnusedMember.Global`.
+5. **Blazor state-notification events** (`event Action? OnChange`): suppress `EventNeverSubscribedTo.Global` — consumers subscribe at runtime.
+6. **Interface members flagged as `UnusedMemberInSuper.Global`**: suppress on the interface (not each implementor) — these are called via interface dispatch.
+7. **Abstract test-base members overridden by all subclasses**: suppress `UnusedMember.Global` on the abstract declaration.
+8. **IUiBus `Notify(object)` in test stubs**: suppress `UnusedMember.Global` — interface contract requires the method even though `Notify<T>` is the runtime call path.
+9. **`UnusedAutoPropertyAccessor.Global` / setter never externally assigned**: change `{ get; set; }` → `{ get; }` when the class controls all mutation (private constructor + static singleton).
+
+**fingerprint removal**: always use the full `equalIndicator/v1` value (64+ hex chars) from `qodana.sarif.json` — the Python `-c` truncation trick at 40 chars will produce partial matches that don't filter. Use `fp=r.get(...,'')` and print untruncated.
+
+**Suppression format** (project convention):
+```csharp
+// ReSharper disable once ClassNeverInstantiated.Global -- registered by DI (FluentValidation assembly scan)
+public sealed class MyValidator : AbstractValidator<MyType>;
+```

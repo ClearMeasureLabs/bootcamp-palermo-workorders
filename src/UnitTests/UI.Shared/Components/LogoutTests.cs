@@ -159,6 +159,7 @@ public class SpyUiBus : IUiBus
     public bool NotifyWasCalled { get; private set; }
     public object? LastNotifiedEvent { get; private set; }
 
+    // ReSharper disable once UnusedMember.Global -- required by IUiBus interface; generic Notify<T> is called at runtime
     public void Notify(object eventObject)
     {
         NotifyWasCalled = true;
