@@ -101,6 +101,14 @@ dotnet test UnitTests/UnitTests.csproj --no-build --filter "FullyQualifiedName~<
 
 The solution file is at `src/ChurchBulletin.sln`. Run `dotnet restore` from `/workspace/src` with the `.sln` path; running it from `/workspace` fails because no `.sln` is at the root.
 
+### Documentation-Only Work Items
+
+When the work item's Technical Design says **README edits only** (or any docs-only change with no code, tests, or build scripts touched):
+- Make the minimal text change requested.
+- Skip `dotnet build` / `dotnet test` — there is nothing to compile and the quality gate is irrelevant.
+- Still merge `origin/master` before committing and verify `git diff --name-only origin/master...HEAD` lists only the documentation file(s).
+- Do NOT add test files even if the Test Design section suggests them; docs-only diffs must stay docs-only.
+
 ### "Feature already implemented" work items
 
 When the work item body says the feature is **already fully implemented**, verify with:
