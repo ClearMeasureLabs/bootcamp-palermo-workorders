@@ -7,7 +7,7 @@ using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests;
 
-public class ObjectMother
+public static class ObjectMother
 {
     private static readonly Lazy<bool> Configured = new(() =>
     {

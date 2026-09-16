@@ -82,8 +82,6 @@ exclude:
   # Qodana C6 (#9039): UnusedType.Global — these 10 FluentValidation AbstractValidator types are
   # discovered via assembly-scan/DI reflection, not by direct reference. Enforced with file-level
   # `// ReSharper disable once` directives (path exclude below is documentation-only, see #8986/C2).
-  # ServerHealthCheckQueryValidator.cs and IntegrationTests/Handlers/TracerBulletReplyHandler.cs are
-  # deliberately NOT listed here and stay in the qodana.sarif.json baseline.
   - name: UnusedType.Global
     paths:
       - src/Core/Validation/AssignedToCancelledCommandValidator.cs

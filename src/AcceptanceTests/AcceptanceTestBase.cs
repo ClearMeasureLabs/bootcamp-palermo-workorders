@@ -22,7 +22,7 @@ public class TestState
     public required IPage Page { get; init; }
     public required IBrowserContext BrowserContext { get; init; }
     public required IBrowser Browser { get; init; }
-    public Employee CurrentUser { get; set; } = null!;
+    public Employee CurrentUser { get; init; } = null!;
     public required string TestTag { get; init; }
 }
 
@@ -63,13 +63,9 @@ public abstract class AcceptanceTestBase
     protected IPage Page => State.Page;
     
     /// <summary>
-    /// Gets or sets the current user for the current test.
+    /// Gets the current user for the current test.
     /// </summary>
-    public Employee CurrentUser
-    {
-        get => State.CurrentUser;
-        set => State.CurrentUser = value;
-    }
+    protected Employee CurrentUser => State.CurrentUser;
     
     /// <summary>
     /// Unique tag for this test instance to isolate test data in parallel execution.

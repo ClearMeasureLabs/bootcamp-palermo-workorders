@@ -3,6 +3,7 @@ using FluentValidation;
 
 namespace ClearMeasure.Bootcamp.Core.Validation;
 
+// ReSharper disable once ClassNeverInstantiated.Global -- registered by DI (FluentValidation assembly scan)
 public sealed class WebServiceMessageValidator : AbstractValidator<WebServiceMessage>
 {
     public WebServiceMessageValidator()

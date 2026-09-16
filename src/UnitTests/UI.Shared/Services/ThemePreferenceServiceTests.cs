@@ -112,24 +112,6 @@ public class ThemePreferenceServiceTests
                 object?[]? args) =>
                 InvokeAsync<TValue>(identifier, args);
 
-            public ValueTask InvokeVoidAsync(string identifier, object?[]? args)
-            {
-                switch (identifier)
-                {
-                    case "syncDomFromTheme":
-                        _theme = (string)args![0]!;
-                        return ValueTask.CompletedTask;
-                    case "setTheme":
-                        _parent.LastSetThemeArg = (bool)args![0]!;
-                        _parent.SetThemeCalls++;
-                        _theme = _parent.LastSetThemeArg.Value ? "dark" : "light";
-                        return ValueTask.CompletedTask;
-                    default:
-                        throw new InvalidOperationException($"Unexpected module InvokeVoidAsync: {identifier}");
-                }
-            }
-
-
             public ValueTask DisposeAsync() => ValueTask.CompletedTask;
         }
     }
