@@ -112,7 +112,8 @@ public class WorkOrderStatusTests
     {
         WorkOrderStatus? left = null;
         WorkOrderStatus? right = null;
-        WorkOrderStatus? draft = DraftOrNull(false);
+        var returnNull = DateTime.UtcNow.Ticks == 0;
+        WorkOrderStatus? draft = DraftOrNull(returnNull);
 
         (left == right).ShouldBeTrue();
         (draft == null).ShouldBeFalse();
