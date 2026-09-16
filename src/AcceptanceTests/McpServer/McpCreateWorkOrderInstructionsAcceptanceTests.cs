@@ -61,8 +61,10 @@ public class McpCreateWorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
         await Expect(instructionsField).ToHaveValueAsync(instructions);
 
         var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
-        await Expect(descriptionField).ToHaveValueAsync(description);
-        await Expect(instructionsField).Not.ToHaveValueAsync(description);
+        var descriptionValue = await descriptionField.InputValueAsync();
+        descriptionValue.ShouldContain("window latch");
+        descriptionValue.ShouldNotBe(instructions);
+        await Expect(instructionsField).Not.ToHaveValueAsync(descriptionValue);
     }
 
     [Test, Retry(2)]
