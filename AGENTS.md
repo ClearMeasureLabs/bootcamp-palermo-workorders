@@ -209,6 +209,20 @@ When Qodana flags symbols as dead but they are required by DI, reflection, NServ
 public sealed class MyValidator : AbstractValidator<MyType>;
 ```
 
+### Diagnosing Qodana CI Failures Without Access to CI Logs
+
+When Qodana (Community .NET) fails in CI and you cannot view the CI job logs:
+
+1. **Read `qodana.sarif.json.bak`** — this file contains a backup of a previous Qodana scan output (85 entries). Compare its findings against the current `qodana.sarif.json` baseline (typically 1-5 entries) to understand which findings were previously present and already addressed.
+
+2. **The `.bak` is from a historical scan** — findings it lists for existing files are already handled (suppressed or fixed on master). Focus on NEW files added by your branch.
+
+3. **The 4 `ConvertToPrimaryConstructor` entries** for `DatabaseEmptier.cs`, `SqlExecuter.cs`, `Bus.cs`, `Error.cshtml.cs` were in the master baseline and suppressed by adding `// ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail`. These were removed from the baseline when suppressed.
+
+4. **Acceptance test failures alongside Qodana** — when both fail in the same CI run, the acceptance tests may be independently flaky (Docker timing, network, runner issues). The Qodana failure is the actionable item; acceptance test failures that occur only when Qodana also fails may resolve on re-run.
+
+5. **New files generate new Qodana findings** — for every new `.cs` file added, verify there are no `ConvertToPrimaryConstructor`, `AutoPropertyCanBeMadeGetOnly.Global`, `PropertyCanBeMadeInitOnly.Global`, or `FieldCanBeMadeReadOnly` findings. For form models (`*ManageModel.cs`), the `// ReSharper disable PropertyCanBeMadeInitOnly.Global` file-level suppression is required at the top.
+
 ### Qodana Baseline Refresh Workflow (for remediation work items)
 
 When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCHANGED findings"):
