@@ -33,7 +33,7 @@ public class TranslationServiceTests : LlmTestBase
     }
 
     [Test]
-    public async Task ShouldReturnOriginalTextForEnUS()
+    public async Task ShouldReturnOriginalTextForEnUs()
     {
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
         var service = new TranslationService(factory);

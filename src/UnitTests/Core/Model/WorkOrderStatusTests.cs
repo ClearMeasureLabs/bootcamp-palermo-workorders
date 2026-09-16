@@ -112,14 +112,14 @@ public class WorkOrderStatusTests
     {
         WorkOrderStatus? left = null;
         WorkOrderStatus? right = null;
-        WorkOrderStatus? draft = NullableDraft();
+        WorkOrderStatus draft = NullableDraft();
 
         (left == right).ShouldBeTrue();
         (draft == null).ShouldBeFalse();
         (null == draft).ShouldBeFalse();
     }
 
-    private static WorkOrderStatus? NullableDraft() => WorkOrderStatus.Draft;
+    private static WorkOrderStatus NullableDraft() => WorkOrderStatus.Draft;
 
     [Test]
     public void WhenComparingRoundTrippedJsonStatusShouldReturnCanonicalInstanceEqualByValue()
