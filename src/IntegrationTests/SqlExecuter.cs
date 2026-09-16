@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 
-// ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
 public class SqlExecuter
 {
     private readonly DatabaseFacade _facade;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public SqlExecuter(DatabaseFacade facade)
     {
         _facade = facade;
