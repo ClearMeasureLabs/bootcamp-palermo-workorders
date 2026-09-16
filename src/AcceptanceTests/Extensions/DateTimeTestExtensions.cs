@@ -7,6 +7,7 @@ public static class DateTimeTestExtensions
 {
     private static readonly Func<string, DateTime?>[] ParseStrategies =
     [
+        TryParseMmDdYyyy,
         TryParseGFormat,
         TryParseCurrentCulture,
         TryParseIso12Hour,
@@ -76,6 +77,11 @@ public static class DateTimeTestExtensions
             .Replace('\u202F', ' ')
             .Replace('\u00A0', ' ')
             .Trim();
+
+    private static DateTime? TryParseMmDdYyyy(string normalized) =>
+        DateTime.TryParseExact(normalized, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt)
+            ? dt
+            : null;
 
     private static DateTime? TryParseGFormat(string normalized) =>
         DateTime.TryParseExact(normalized, "G", CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var dt)

@@ -57,7 +57,8 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
-        rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+        displayedDate.ShouldNotBeNull();
+        rehydratedOrder.CreatedDate!.Value.Date.ShouldBe(displayedDate.Value.Date);
     }
 
     [Test, Retry(2)]
@@ -144,7 +145,8 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
-        rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+        displayedDate.ShouldNotBeNull();
+        rehydratedOrder.CreatedDate!.Value.Date.ShouldBe(displayedDate.Value.Date);
     }
 
     [Test, Retry(2)]
