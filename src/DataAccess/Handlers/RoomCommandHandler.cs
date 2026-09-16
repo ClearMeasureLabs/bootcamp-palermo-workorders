@@ -15,11 +15,16 @@ public class RoomCommandHandler(DbContext dbContext)
         if (room.Id == Guid.Empty)
         {
             room.Id = Guid.NewGuid();
+        }
+
+        var existing = await dbContext.FindAsync<Room>([room.Id], cancellationToken);
+        if (existing == null)
+        {
             dbContext.Add(room);
         }
         else
         {
-            dbContext.Update(room);
+            dbContext.Entry(existing).CurrentValues.SetValues(room);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);

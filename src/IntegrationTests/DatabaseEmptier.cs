@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 
+// ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
 public sealed class DatabaseEmptier
 {
     private static readonly string[] IgnoredTables = ["[dbo].[sysdiagrams]", "[dbo].[SchemaVersions]"];

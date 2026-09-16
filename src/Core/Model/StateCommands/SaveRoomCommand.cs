@@ -1,3 +1,5 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global -- System.Text.Json set-by-convention requires mutable setters
+
 using ClearMeasure.Bootcamp.Core.Model;
 using MediatR;
 

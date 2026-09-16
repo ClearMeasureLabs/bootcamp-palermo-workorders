@@ -6,6 +6,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Pages;
 
 [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
 [IgnoreAntiforgeryToken]
+// ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
 public class ErrorModel : PageModel
 {
     public string? RequestId { get; set; }

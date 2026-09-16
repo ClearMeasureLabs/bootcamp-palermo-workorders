@@ -4,6 +4,7 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.UI.Shared;
 
+// ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
 public class Bus : IBus
 {
     private static readonly ActivitySource ActivitySource = new("ChurchBulletin.Application.Bus", "1.0.0");
