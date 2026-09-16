@@ -85088,6 +85088,214 @@
               ".NET 10.0"
             ]
           }
+        },
+        {
+          "ruleId": "PropertyCanBeMadeInitOnly.Local",
+          "ruleIndex": 2545,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Property can be made init-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 96,
+                  "startColumn": 38,
+                  "endLine": 96,
+                  "endColumn": 41,
+                  "charOffset": 3459,
+                  "charLength": 3,
+                  "snippet": {
+                    "text": "set"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 95,
+                  "startColumn": 1,
+                  "endLine": 97,
+                  "endColumn": 41,
+                  "charOffset": 3416,
+                  "charLength": 96,
+                  "snippet": {
+                    "text": "    {\n        public string Content { get; set; } = \"\";\n        public bool IsUser { get; set; }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "40B9E8683CEE394E8F3E718353CAC0DC3256EE23D528CCD4B3D3AE509F18011C"
+          },
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PropertyCanBeMadeInitOnly.Local",
+          "ruleIndex": 2545,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Property can be made init-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 97,
+                  "startColumn": 35,
+                  "endLine": 97,
+                  "endColumn": 38,
+                  "charOffset": 3506,
+                  "charLength": 3,
+                  "snippet": {
+                    "text": "set"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 96,
+                  "startColumn": 1,
+                  "endLine": 98,
+                  "endColumn": 6,
+                  "charOffset": 3422,
+                  "charLength": 96,
+                  "snippet": {
+                    "text": "        public string Content { get; set; } = \"\";\n        public bool IsUser { get; set; }\n    }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "61FD1B77B4022F3D4E185A9B72FDE95B90B5BC4F1AF002A1001A26E95E1B08D0"
+          },
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PropertyCanBeMadeInitOnly.Local",
+          "ruleIndex": 2545,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Property can be made init-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 96,
+                  "startColumn": 38,
+                  "endLine": 96,
+                  "endColumn": 41,
+                  "charOffset": 3459,
+                  "charLength": 3,
+                  "snippet": {
+                    "text": "set"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 95,
+                  "startColumn": 1,
+                  "endLine": 97,
+                  "endColumn": 41,
+                  "charOffset": 3416,
+                  "charLength": 96,
+                  "snippet": {
+                    "text": "    {\n        public string Content { get; set; } = \"\";\n        public bool IsUser { get; set; }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "40B9E8683CEE394E8F3E718353CAC0DC3256EE23D528CCD4B3D3AE509F18011C"
+          },
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PropertyCanBeMadeInitOnly.Local",
+          "ruleIndex": 2545,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Property can be made init-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 97,
+                  "startColumn": 35,
+                  "endLine": 97,
+                  "endColumn": 38,
+                  "charOffset": 3506,
+                  "charLength": 3,
+                  "snippet": {
+                    "text": "set"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 96,
+                  "startColumn": 1,
+                  "endLine": 98,
+                  "endColumn": 6,
+                  "charOffset": 3422,
+                  "charLength": 96,
+                  "snippet": {
+                    "text": "        public string Content { get; set; } = \"\";\n        public bool IsUser { get; set; }\n    }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "61FD1B77B4022F3D4E185A9B72FDE95B90B5BC4F1AF002A1001A26E95E1B08D0"
+          },
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
         }
       ],
       "automationDetails": {
