@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
@@ -112,13 +113,16 @@ public class WorkOrderStatusTests
     {
         WorkOrderStatus? left = null;
         WorkOrderStatus? right = null;
-        WorkOrderStatus? draft = DraftOrNull(false);
+        WorkOrderStatus? draft = DraftOrNull(ReturnNullForNullOperandTest);
 
         (left == right).ShouldBeTrue();
         (draft == null).ShouldBeFalse();
         (null == draft).ShouldBeFalse();
     }
 
+    private static bool ReturnNullForNullOperandTest;
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static WorkOrderStatus? DraftOrNull(bool returnNull) =>
         returnNull ? null : WorkOrderStatus.Draft;
 

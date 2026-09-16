@@ -107,6 +107,7 @@ public class WorkOrderManageEventBusNotifyTests
 
     private class StubWorkOrderManageBus : Bus
     {
+        // ReSharper disable once ConvertToPrimaryConstructor -- left as classic ctor by Qodana policy
         public StubWorkOrderManageBus() : base(null!)
         {
         }

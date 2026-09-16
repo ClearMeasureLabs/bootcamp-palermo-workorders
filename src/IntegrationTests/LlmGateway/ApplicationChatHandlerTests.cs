@@ -267,7 +267,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
                 }
             }
 
-            await AssertWorkOrderStateAsync(workOrder, WorkOrderStatus.Assigned);
+            AssertWorkOrderState(workOrder, WorkOrderStatus.Assigned);
         }
 
         async Task EnsureInProgressAsync()
@@ -307,7 +307,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
                 }
             }
 
-            await AssertWorkOrderStateAsync(workOrder, WorkOrderStatus.InProgress);
+            AssertWorkOrderState(workOrder, WorkOrderStatus.InProgress);
         }
 
         async Task EnsureAssignedAfterShelveAsync()
@@ -343,10 +343,10 @@ public class ApplicationChatHandlerTests : LlmTestBase
                     TimeSpan.FromSeconds(30));
             }
 
-            await AssertWorkOrderStateAsync(workOrder, WorkOrderStatus.Assigned);
+            AssertWorkOrderState(workOrder, WorkOrderStatus.Assigned);
         }
 
-        async Task AssertWorkOrderStateAsync(WorkOrder? workOrder, WorkOrderStatus status)
+        void AssertWorkOrderState(WorkOrder? workOrder, WorkOrderStatus status)
         {
             workOrder.ShouldNotBeNull($"No work order found with number '{workOrderNumber}'");
             workOrder.Status.ShouldBe(status);

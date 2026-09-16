@@ -60,6 +60,7 @@ public class RemotableRequestTests
         return rehydratedQuery;
     }
 
+    // ReSharper disable once MemberCanBePrivate.Global -- called from IntegrationTests across assemblies
     public static object SimulateRemoteObject(object theObject)
     {
         var json = new WebServiceMessage(theObject).GetJson();
