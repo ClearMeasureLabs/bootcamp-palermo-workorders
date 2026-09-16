@@ -66,7 +66,15 @@ public class EmployeeTests
             LastName = "Joe"
         };
 
-        Assert.That(employee.GetFullName(), Is.EqualTo("Bob Joe"));
+        employee.FullName.ShouldBe("Bob Joe");
+    }
+
+    [Test]
+    public void FullName_Property_ReturnsFirstNameSpaceLastName()
+    {
+        var employee = new Employee("jdoe", "Jane", "Doe", "jdoe@example.com");
+
+        employee.FullName.ShouldBe("Jane Doe");
     }
 
     [Test]

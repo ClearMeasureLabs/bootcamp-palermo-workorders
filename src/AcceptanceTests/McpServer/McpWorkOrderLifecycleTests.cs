@@ -66,7 +66,7 @@ public class McpWorkOrderLifecycleTests : AcceptanceTestBase
             });
 
         assignResult.ShouldContain("Assigned");
-        assignResult.ShouldContain(assignee.GetFullName());
+        assignResult.ShouldContain(assignee.FullName);
 
         // Step 3: Begin work (Assigned -> InProgress)
         var beginResult = await _helper.CallToolDirectly("execute-work-order-command",
@@ -100,8 +100,8 @@ public class McpWorkOrderLifecycleTests : AcceptanceTestBase
 
         getResult.ShouldContain("Complete");
         getResult.ShouldContain("Lifecycle test work order");
-        getResult.ShouldContain(creator.GetFullName());
-        getResult.ShouldContain(assignee.GetFullName());
+        getResult.ShouldContain(creator.FullName);
+        getResult.ShouldContain(assignee.FullName);
     }
 
 }

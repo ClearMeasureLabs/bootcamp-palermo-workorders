@@ -36,7 +36,7 @@
                         }
                         else
                         {
-                            <span data-testid="@Elements.AssigneeFullName" class="value">@Model.WorkOrder?.Assignee?.GetFullName()</span>
+                            <span data-testid="@Elements.AssigneeFullName" class="value">@Model.WorkOrder?.Assignee?.FullName</span>
                         }
                     </div>
                 </div>
@@ -144,7 +144,7 @@
                                     <td data-testid="@Elements.AttachmentFileName">@attachment.FileName</td>
                                     <td data-testid="@Elements.AttachmentContentType">@attachment.ContentType</td>
                                     <td data-testid="@Elements.AttachmentFileSize">@attachment.FileSize</td>
-                                    <td data-testid="@Elements.AttachmentUploadedBy">@attachment.UploadedBy?.GetFullName()</td>
+                                    <td data-testid="@Elements.AttachmentUploadedBy">@attachment.UploadedBy?.FullName</td>
                                     <td data-testid="@Elements.AttachmentUploadedDate">@attachment.UploadedDate.ToString("G")</td>
                                 </tr>
                             }
