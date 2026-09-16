@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -60,5 +61,18 @@ public class ToolsWordCountEndpointIntegrationTests
 
         var nullText = await _client!.PostAsJsonAsync(path, new { text = (string?)null });
         nullText.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task Should_Return200WithoutApiKey_When_MiddlewareEnabled()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unversioned = await client.PostAsJsonAsync("/api/tools/word-count", new { text = "test" });
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var versioned = await client.PostAsJsonAsync("/api/v1.0/tools/word-count", new { text = "test" });
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 }
