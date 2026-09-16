@@ -19,7 +19,7 @@ public class RoomCommandHandlerTests
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             var handler = new RoomCommandHandler(context);
-            await handler.Handle(new SaveRoomCommand(room));
+            await handler.Handle(new SaveRoomCommand(room), CancellationToken.None);
         }
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
@@ -47,7 +47,7 @@ public class RoomCommandHandlerTests
         {
             var updated = new Room { Id = room.Id, Name = "Updated Name" };
             var handler = new RoomCommandHandler(context);
-            await handler.Handle(new SaveRoomCommand(updated));
+            await handler.Handle(new SaveRoomCommand(updated), CancellationToken.None);
         }
 
         await using (var context = TestHost.GetRequiredService<DbContext>())
@@ -74,7 +74,7 @@ public class RoomCommandHandlerTests
         await using (var context = TestHost.GetRequiredService<DbContext>())
         {
             var handler = new RoomCommandHandler(context);
-            await handler.Handle(new DeleteRoomCommand(room.Id));
+            await handler.Handle(new DeleteRoomCommand(room.Id), CancellationToken.None);
         }
 
         await using (var context = TestHost.GetRequiredService<DbContext>())

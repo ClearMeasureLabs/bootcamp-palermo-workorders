@@ -29,7 +29,7 @@ public class RoomQueryHandlerTests
 
         var dataContext = TestHost.GetRequiredService<DataContext>();
         var handler = new RoomQueryHandler(dataContext);
-        var rooms = await handler.Handle(new RoomGetAllQuery());
+        var rooms = await handler.Handle(new RoomGetAllQuery(), CancellationToken.None);
 
         rooms.Length.ShouldBe(3);
         rooms[0].Name.ShouldBe("Alpha Room");
