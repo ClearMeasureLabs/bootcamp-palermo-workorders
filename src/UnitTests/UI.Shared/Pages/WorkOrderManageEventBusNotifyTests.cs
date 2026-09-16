@@ -107,7 +107,7 @@ public class WorkOrderManageEventBusNotifyTests
 
     private class StubWorkOrderManageBus : Bus
     {
-        // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
+        // ReSharper disable once ConvertToPrimaryConstructor -- left as classic ctor by Qodana policy
         public StubWorkOrderManageBus() : base(null!)
         {
         }

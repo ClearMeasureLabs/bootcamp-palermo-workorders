@@ -80851,54 +80851,213 @@
           }
         },
         {
-          "ruleId": "CSharpWarnings::CS0618",
-          "ruleIndex": 131,
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
           "kind": "fail",
-          "level": "warning",
+          "level": "note",
           "message": {
-            "text": "CS0618: Property 'Microsoft.AspNetCore.Components.Routing.Router.NotFound()' is obsolete: 'NotFound is deprecated. Use NotFoundPage instead.'"
+            "text": "Convert into primary constructor"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "UI/Client/App.razor",
+                  "uri": "IntegrationTests/DatabaseEmptier.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 13
+                  "index": 23
                 },
                 "region": {
-                  "startLine": 17,
-                  "startColumn": 9,
-                  "endLine": 22,
-                  "endColumn": 20,
-                  "charOffset": 994,
-                  "charLength": 231,
+                  "startLine": 12,
+                  "startColumn": 12,
+                  "endLine": 12,
+                  "endColumn": 27,
+                  "charOffset": 381,
+                  "charLength": 15,
                   "snippet": {
-                    "text": "<NotFound>\n            <PageTitle>Not found</PageTitle>\n            <LayoutView Layout=\"@typeof(MainLayout)\">\n                <p role=\"alert\">Sorry, there's nothing at this address.</p>\n            </LayoutView>\n        </NotFound>"
+                    "text": "DatabaseEmptier"
                   }
                 },
                 "contextRegion": {
-                  "startLine": 16,
+                  "startLine": 11,
                   "startColumn": 1,
-                  "endLine": 23,
-                  "endColumn": 14,
-                  "charOffset": 884,
-                  "charLength": 355,
+                  "endLine": 13,
+                  "endColumn": 6,
+                  "charOffset": 369,
+                  "charLength": 58,
                   "snippet": {
-                    "text": "           release fixes that regression; then this comment and the obsolete usage can be removed. *@\n        <NotFound>\n            <PageTitle>Not found</PageTitle>\n            <LayoutView Layout=\"@typeof(MainLayout)\">\n                <p role=\"alert\">Sorry, there's nothing at this address.</p>\n            </LayoutView>\n        </NotFound>\n    </Router>"
+                    "text": "\n    public DatabaseEmptier(DatabaseFacade database)\n    {"
                   }
                 }
               }
             }
           ],
           "partialFingerprints": {
-            "equalIndicator/v1": "91D3E906EEF0BCBF232514B6F05A59278DDF82DF9461FEF40D8DB8C634A631F6"
+            "equalIndicator/v1": "D4B2A153FDA327C5324DDFB0EFDF0E8EB705BC0CEF4F78AC53A659DC88310C7A"
           },
           "baselineState": "unchanged",
           "properties": {
-            "qodanaSeverity": "High",
+            "qodanaSeverity": "Moderate",
             "tags": [
-              "Razor Component",
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "IntegrationTests/SqlExecuter.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 24
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 12,
+                  "endLine": 13,
+                  "endColumn": 23,
+                  "charOffset": 309,
+                  "charLength": 11,
+                  "snippet": {
+                    "text": "SqlExecuter"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 12,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 6,
+                  "charOffset": 297,
+                  "charLength": 52,
+                  "snippet": {
+                    "text": "\n    public SqlExecuter(DatabaseFacade facade)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "DF33D195F44539293337899A398B0518566F51493EB336A03A4E218031B9B5B3"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Bus.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 26
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 12,
+                  "endLine": 13,
+                  "endColumn": 15,
+                  "charOffset": 309,
+                  "charLength": 3,
+                  "snippet": {
+                    "text": "Bus"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 12,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 6,
+                  "charOffset": 297,
+                  "charLength": 41,
+                  "snippet": {
+                    "text": "\n    public Bus(IMediator mediator)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "AE3C33E137F924EB024CD21FBEAEF3405C722A172F9F9659CA26E76BBE927822"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Api/Pages/Error.cshtml.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 2
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 16,
+                  "endLine": 17,
+                  "endColumn": 26,
+                  "charOffset": 503,
+                  "charLength": 10,
+                  "snippet": {
+                    "text": "ErrorModel"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 18,
+                  "endColumn": 10,
+                  "charOffset": 487,
+                  "charLength": 64,
+                  "snippet": {
+                    "text": "\n        public ErrorModel(ILogger<ErrorModel> logger)\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "9AC88E7A258291A678814140BF9B126EA3FFFA7D8AC035BEC85654FF33F8C39B"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
               ".NET 10.0"
             ]
           }

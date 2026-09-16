@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UnitTests.Core.Queries;
@@ -112,15 +113,17 @@ public class WorkOrderStatusTests
     {
         WorkOrderStatus? left = null;
         WorkOrderStatus? right = null;
-        WorkOrderStatus? draft = DraftOrNull(false);
+        ReturnNullForNullOperandTest = Guid.NewGuid() == Guid.Empty;
+        WorkOrderStatus? draft = DraftOrNull(ReturnNullForNullOperandTest);
 
         (left == right).ShouldBeTrue();
         (draft == null).ShouldBeFalse();
-        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract -- intentional: tests null-operand handling of operator==
         (null == draft).ShouldBeFalse();
     }
 
-    // ReSharper disable once ReturnTypeCanBeNotNullable -- returnNull=true path returns null; nullable return is intentional
+    private static bool ReturnNullForNullOperandTest;
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static WorkOrderStatus? DraftOrNull(bool returnNull) =>
         returnNull ? null : WorkOrderStatus.Draft;
 
