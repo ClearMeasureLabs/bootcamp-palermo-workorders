@@ -63,14 +63,9 @@ public abstract class AcceptanceTestBase
     protected IPage Page => State.Page;
     
     /// <summary>
-    /// Gets or sets the current user for the current test.
+    /// Gets the current user for the current test.
     /// </summary>
-    // ReSharper disable once UnusedMember.Global -- setter used by object initializers in test setup helpers
-    public Employee CurrentUser
-    {
-        get => State.CurrentUser;
-        set => State.CurrentUser = value;
-    }
+    public Employee CurrentUser => State.CurrentUser;
     
     /// <summary>
     /// Unique tag for this test instance to isolate test data in parallel execution.

@@ -3,6 +3,7 @@ using ClearMeasure.Bootcamp.Core.Model.Messages;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
+using ClearMeasure.Bootcamp.IntegrationTests.Handlers;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Server;
@@ -126,6 +127,7 @@ public static class TestHost
                 // Worker hosts its own endpoint; scanning Worker.dll here discovers
                 // AiBotWorkOrderSaga without saga persistence and breaks TestHost startup.
                 endpointConfiguration.AssemblyScanner().ExcludeAssemblies("Worker.dll");
+                endpointConfiguration.ExecuteTheseHandlersFirst(typeof(TracerBulletReplyHandler));
 
                 return endpointConfiguration;
             })

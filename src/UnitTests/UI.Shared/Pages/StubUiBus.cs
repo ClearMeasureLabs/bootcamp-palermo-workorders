@@ -4,10 +4,9 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class StubUiBus : IUiBus
 {
-    // ReSharper disable once UnusedMember.Global -- required by IUiBus interface; generic Notify<T> is called at runtime
-    public void Notify(object eventObject)
+    public void Notify(object _)
     {
-        // Mock implementation - do nothing
+        // Stub implementation — do nothing
     }
 
     public void Register(IListener listener)
