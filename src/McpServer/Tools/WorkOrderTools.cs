@@ -230,7 +230,7 @@ public class WorkOrderTools
             a.FileName,
             a.ContentType,
             a.FileSize,
-            UploadedBy = a.UploadedBy?.GetFullName(),
+            UploadedBy = a.UploadedBy?.FullName,
             UploadedByUsername = a.UploadedBy?.UserName,
             a.UploadedDate
         }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
@@ -363,8 +363,8 @@ public class WorkOrderTools
         wo.Number,
         wo.Title,
         Status = wo.Status.FriendlyName,
-        Creator = wo.Creator?.GetFullName(),
-        Assignee = wo.Assignee?.GetFullName(),
+        Creator = wo.Creator?.FullName,
+        Assignee = wo.Assignee?.FullName,
         DueDate = wo.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
     };
 
@@ -376,9 +376,9 @@ public class WorkOrderTools
         Instructions = wo.Instructions ?? "",
         Status = wo.Status.FriendlyName,
         wo.RoomNumber,
-        Creator = wo.Creator?.GetFullName(),
+        Creator = wo.Creator?.FullName,
         CreatorUsername = wo.Creator?.UserName,
-        Assignee = wo.Assignee?.GetFullName(),
+        Assignee = wo.Assignee?.FullName,
         AssigneeUsername = wo.Assignee?.UserName,
         wo.CreatedDate,
         wo.AssignedDate,

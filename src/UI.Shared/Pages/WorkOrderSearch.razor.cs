@@ -31,7 +31,7 @@ public partial class WorkOrderSearch : AppComponentBase
         OnSearch = HandleSearch;
 
         var employees = await Bus.Send(new EmployeeGetAllQuery());
-        UserOptions = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
+        UserOptions = employees.Select(e => new SelectListItem(e.UserName, e.FullName)).ToList();
         StatusOptions = WorkOrderStatus.GetAllItems().Select(s => new SelectListItem(s.Key, s.FriendlyName)).ToList();
         Model = new WorkOrderSearchModel();
 
