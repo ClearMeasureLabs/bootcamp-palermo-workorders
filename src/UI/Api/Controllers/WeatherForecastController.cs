@@ -18,6 +18,9 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
     ];
 
+    /// <summary>
+    /// Returns a JSON array of five sample weather-forecast entries (output-cached).
+    /// </summary>
     [HttpGet]
     [OutputCache(PolicyName = OutputCachePolicyNames.WeatherSample)]
     public IActionResult Get()
