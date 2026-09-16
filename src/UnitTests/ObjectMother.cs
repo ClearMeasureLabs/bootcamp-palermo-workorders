@@ -9,22 +9,15 @@ namespace ClearMeasure.Bootcamp.UnitTests;
 
 public class ObjectMother
 {
-    private static bool _configured;
-    private static readonly Lock Sync = new();
+    private static readonly Lazy<bool> Configured = new(() =>
+    {
+        ConfigureBogus();
+        return true;
+    });
 
     private static void EnsureConfigured()
     {
-        if (!_configured)
-        {
-            lock (Sync)
-            {
-                if (!_configured)
-                {
-                    ConfigureBogus();
-                    _configured = true;
-                }
-            }
-        }
+        _ = Configured.Value;
     }
 
     public static TK Faker<TK>()
