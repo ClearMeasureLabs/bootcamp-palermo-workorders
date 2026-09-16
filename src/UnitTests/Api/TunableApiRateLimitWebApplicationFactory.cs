@@ -12,6 +12,7 @@ public sealed class TunableApiRateLimitWebApplicationFactory : WebApplicationFac
 {
     private readonly IReadOnlyDictionary<string, string?> _overrides;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public TunableApiRateLimitWebApplicationFactory(IReadOnlyDictionary<string, string?> overrides)
     {
         _overrides = overrides;

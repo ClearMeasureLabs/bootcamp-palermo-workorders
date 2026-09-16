@@ -80798,54 +80798,1166 @@
       ],
       "results": [
         {
-          "ruleId": "Html.AttributeValueNotResolved",
-          "ruleIndex": 2330,
+          "ruleId": "ArrangeNamespaceBody",
+          "ruleIndex": 32,
           "kind": "fail",
-          "level": "warning",
+          "level": "note",
           "message": {
-            "text": "Cannot resolve attribute value 'switch'"
+            "text": "Convert to file-scoped namespace"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "UI.Shared/Pages/Settings.razor",
-                  "uriBaseId": "solutionDir",
-                  "index": 43
+                  "uri": "AcceptanceTests/Extensions/DateTimeTestExtensions.cs",
+                  "uriBaseId": "solutionDir"
                 },
                 "region": {
-                  "startLine": 16,
-                  "startColumn": 34,
-                  "endLine": 16,
-                  "endColumn": 40,
-                  "charOffset": 683,
-                  "charLength": 6,
+                  "startLine": 5,
+                  "startColumn": 1,
+                  "endLine": 5,
+                  "endColumn": 2,
+                  "charOffset": 126,
+                  "charLength": 1,
                   "snippet": {
-                    "text": "switch"
+                    "text": "{"
                   }
                 },
                 "contextRegion": {
-                  "startLine": 15,
+                  "startLine": 4,
                   "startColumn": 1,
-                  "endLine": 17,
-                  "endColumn": 49,
-                  "charOffset": 607,
-                  "charLength": 132,
+                  "endLine": 6,
+                  "endColumn": 47,
+                  "charOffset": 67,
+                  "charLength": 107,
                   "snippet": {
-                    "text": "                           type=\"checkbox\"\n                           role=\"switch\"\n                           id=\"dark-mode-switch\""
+                    "text": "namespace ClearMeasure.Bootcamp.AcceptanceTests.Extensions\n{\n    public static class DateTimeTestExtensions"
                   }
                 }
               }
             }
           ],
           "partialFingerprints": {
-            "equalIndicator/v1": "59F63DCBEA067860CBE63B8A40DF77B4D706A32C5A49612CE749520A8C96A8F5"
+            "equalIndicator/v1": "22B24BC734AA92D13FE00462153D524FD70FE8585F75BC0432D8A23E0E5ABF8A"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ArrangeNamespaceBody",
+          "ruleIndex": 32,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert to file-scoped namespace"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "DataAccess/Handlers/WorkOrderSearchHandler.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 1
+                },
+                "region": {
+                  "startLine": 8,
+                  "startColumn": 1,
+                  "endLine": 8,
+                  "endColumn": 2,
+                  "charOffset": 236,
+                  "charLength": 1,
+                  "snippet": {
+                    "text": "{"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 7,
+                  "startColumn": 1,
+                  "endLine": 9,
+                  "endColumn": 121,
+                  "charOffset": 184,
+                  "charLength": 174,
+                  "snippet": {
+                    "text": "namespace ClearMeasure.Bootcamp.DataAccess.Handlers\n{\n    public class WorkOrderSearchHandler(DataContext context) : IRequestHandler<WorkOrderSpecificationQuery, WorkOrder[]>"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "ABE202AC485B9A6459E7C41FC56275DE072B52A86AC5442A88876430EC46576E"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ArrangeNamespaceBody",
+          "ruleIndex": 32,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert to file-scoped namespace"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Api/Pages/Error.cshtml.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 2
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 1,
+                  "endLine": 6,
+                  "endColumn": 2,
+                  "charOffset": 147,
+                  "charLength": 1,
+                  "snippet": {
+                    "text": "{"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 5,
+                  "startColumn": 1,
+                  "endLine": 7,
+                  "endColumn": 89,
+                  "charOffset": 102,
+                  "charLength": 135,
+                  "snippet": {
+                    "text": "namespace ClearMeasure.Bootcamp.UI.Api.Pages\n{\n    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "FDA0B2AFDEF41A78645D6CA7BE2B8006C3F4BE19B54596DC3F8D02A9D7CCB092"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AsyncMethodWithoutAwait",
+          "ruleIndex": 64,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "This async method lacks 'await' operators and will run synchronously. Consider using 'await' for non-blocking API calls, or remove the 'async' modifier to avoid generating a state machine for this method."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "AcceptanceTests/McpServer/McpServerAcceptanceTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 3
+                },
+                "region": {
+                  "startLine": 35,
+                  "startColumn": 12,
+                  "endLine": 35,
+                  "endColumn": 17,
+                  "charOffset": 852,
+                  "charLength": 5,
+                  "snippet": {
+                    "text": "async"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 34,
+                  "startColumn": 1,
+                  "endLine": 36,
+                  "endColumn": 6,
+                  "charOffset": 830,
+                  "charLength": 66,
+                  "snippet": {
+                    "text": "    [Test]\n    public async Task ShouldDiscoverAllMcpTools()\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "FD011DD03EF1E92331B8EF439293944A1A110ED104B87466958D4063449A5461"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AsyncMethodWithoutAwait",
+          "ruleIndex": 64,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "This async method lacks 'await' operators and will run synchronously. Consider using 'await' for non-blocking API calls, or remove the 'async' modifier to avoid generating a state machine for this method."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "IntegrationTests/LlmGateway/ApplicationChatHandlerTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 4
+                },
+                "region": {
+                  "startLine": 334,
+                  "startColumn": 9,
+                  "endLine": 334,
+                  "endColumn": 14,
+                  "charOffset": 14502,
+                  "charLength": 5,
+                  "snippet": {
+                    "text": "async"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 333,
+                  "startColumn": 1,
+                  "endLine": 335,
+                  "endColumn": 10,
+                  "charOffset": 14493,
+                  "charLength": 101,
+                  "snippet": {
+                    "text": "\n        async Task AssertWorkOrderStateAsync(WorkOrder? workOrder, WorkOrderStatus status)\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "3B01FE43DE3728856EDF1191336A154C9B767066078C82FE223DD0078DE8CE70"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "IntegrationTests/TestHost.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 6
+                },
+                "region": {
+                  "startLine": 23,
+                  "startColumn": 50,
+                  "endLine": 23,
+                  "endColumn": 54,
+                  "charOffset": 808,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "set;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 22,
+                  "startColumn": 1,
+                  "endLine": 24,
+                  "endColumn": 49,
+                  "charOffset": 757,
+                  "charLength": 149,
+                  "snippet": {
+                    "text": "{\n    public static DateTimeOffset TestTime { get; set; } = new(2000, 1, 1, 1, 1, 1, TimeSpan.Zero);\n    private static bool _dependenciesRegistered;"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "1CB00CB956C4B7E79F7E40EE70C4CC9198B937B2B43097E9BEBF5A16C1E03399"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Models/WorkOrderSearchModel.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 7
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 41,
+                  "endLine": 7,
+                  "endColumn": 45,
+                  "charOffset": 168,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "set;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 6,
+                  "startColumn": 1,
+                  "endLine": 8,
+                  "endColumn": 51,
+                  "charOffset": 126,
+                  "charLength": 108,
+                  "snippet": {
+                    "text": "{\n    public SearchFilters Filters { get; set; } = new();\n    public WorkOrder[] Results { get; set; } = [];"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "079BBE3461F6858D56119640262F53BD7CCB1C41470F2ECA4BCFC1C5E7D13497"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Pages/SelectListItem.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 8
+                },
+                "region": {
+                  "startLine": 5,
+                  "startColumn": 32,
+                  "endLine": 5,
+                  "endColumn": 37,
+                  "charOffset": 138,
+                  "charLength": 5,
+                  "snippet": {
+                    "text": "init;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 4,
+                  "startColumn": 1,
+                  "endLine": 6,
+                  "endColumn": 46,
+                  "charOffset": 105,
+                  "charLength": 95,
+                  "snippet": {
+                    "text": "{\n    public string Value { get; init; } = value;\n    public string Text { get; init; } = text;"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "13E661A1FDD5F667752B0A139063619C4CB8545AC01B22482FBABB23E24C7EA6"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Pages/SelectListItem.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 8
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 31,
+                  "endLine": 6,
+                  "endColumn": 36,
+                  "charOffset": 185,
+                  "charLength": 5,
+                  "snippet": {
+                    "text": "init;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 5,
+                  "startColumn": 1,
+                  "endLine": 7,
+                  "endColumn": 2,
+                  "charOffset": 107,
+                  "charLength": 95,
+                  "snippet": {
+                    "text": "    public string Value { get; init; } = value;\n    public string Text { get; init; } = text;\n}"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "374CAC7E93FD41DBCA374DA8DDD3AEF6FBF127BE11B3E175FE5BA7E132DAAC82"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/ApiRateLimitingOptions.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 9
+                },
+                "region": {
+                  "startLine": 38,
+                  "startColumn": 43,
+                  "endLine": 38,
+                  "endColumn": 47,
+                  "charOffset": 1243,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "set;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 37,
+                  "startColumn": 1,
+                  "endLine": 39,
+                  "endColumn": 2,
+                  "charOffset": 1182,
+                  "charLength": 84,
+                  "snippet": {
+                    "text": "    /// </summary>\n    public string ApiKeyHeaderName { get; set; } = \"X-API-Key\";\n}"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "50E382838BDB115630921085782BB27781F39CBDCE4B1DE6067B7ADA47B58405"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/ApiRequestTimeoutOptions.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 10
+                },
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 32,
+                  "endLine": 11,
+                  "endColumn": 36,
+                  "charOffset": 411,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "set;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 10,
+                  "startColumn": 1,
+                  "endLine": 12,
+                  "endColumn": 1,
+                  "charOffset": 289,
+                  "charLength": 137,
+                  "snippet": {
+                    "text": "    /// <summary>When false, API routes do not receive a request timeout policy.</summary>\n    public bool Enabled { get; set; } = true;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "E9B1F35D57AFE440856EAE4A5DA1922E5FE91AC7F73DDA662AAFC64C038FCDB1"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/ApiRequestTimeoutOptions.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 10
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 38,
+                  "endLine": 14,
+                  "endColumn": 42,
+                  "charOffset": 579,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "set;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 13,
+                  "startColumn": 1,
+                  "endLine": 15,
+                  "endColumn": 2,
+                  "charOffset": 427,
+                  "charLength": 167,
+                  "snippet": {
+                    "text": "    /// <summary>Timeout duration for API requests when <see cref=\"Enabled\"/> is true. Must be positive.</summary>\n    public int TimeoutSeconds { get; set; } = 120;\n}"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "0970A6C68645F2198F84DB34646802A72BBA0AF037350EC4988E160099FC536E"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/Middleware/IdempotencyOptions.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 11
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 41,
+                  "endLine": 13,
+                  "endColumn": 45,
+                  "charOffset": 417,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "set;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 12,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 1,
+                  "charOffset": 358,
+                  "charLength": 75,
+                  "snippet": {
+                    "text": "    /// </summary>\n    public int CacheEntrySeconds { get; set; } = 86400;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "F8111764F2D49906568ABBCCE034834271D09FCB1CB189C2291E8888FB394C9C"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/Middleware/IdempotencyOptions.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 11
+                },
+                "region": {
+                  "startLine": 18,
+                  "startColumn": 36,
+                  "endLine": 18,
+                  "endColumn": 40,
+                  "charOffset": 616,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "set;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 19,
+                  "endColumn": 2,
+                  "charOffset": 562,
+                  "charLength": 69,
+                  "snippet": {
+                    "text": "    /// </summary>\n    public int MaxKeyLength { get; set; } = 256;\n}"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "2EB7ADADBB084560A973B618473A16CE58EF00F36AAE6E775100C100FDDC79BF"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/RequestBodyBufferingOptions.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 12
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 32,
+                  "endLine": 13,
+                  "endColumn": 36,
+                  "charOffset": 474,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "set;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 12,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 1,
+                  "charOffset": 424,
+                  "charLength": 65,
+                  "snippet": {
+                    "text": "    /// </summary>\n    public bool Enabled { get; set; } = true;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "C9B76325C2622B5FE9B5DB652636F234283AA4DE6C6F7154C14B8752AFBC4255"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "AutoPropertyCanBeMadeGetOnly.Global",
+          "ruleIndex": 70,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Auto-property can be made get-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/RequestBodyBufferingOptions.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 12
+                },
+                "region": {
+                  "startLine": 19,
+                  "startColumn": 40,
+                  "endLine": 19,
+                  "endColumn": 44,
+                  "charOffset": 842,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "set;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 18,
+                  "startColumn": 1,
+                  "endLine": 20,
+                  "endColumn": 2,
+                  "charOffset": 784,
+                  "charLength": 81,
+                  "snippet": {
+                    "text": "    /// </summary>\n    public long BufferThreshold { get; set; } = 1024 * 1024;\n}"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "26AEA17D73DBB6CC04AD7178FF824C1121AEE1E1B9CFE2A0835F333E8029E17E"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract",
+          "ruleIndex": 358,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Expression is always false according to nullable reference types' annotations"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/Core/Model/WorkOrderStatusTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 18
+                },
+                "region": {
+                  "startLine": 102,
+                  "startColumn": 10,
+                  "endLine": 102,
+                  "endColumn": 23,
+                  "charOffset": 3300,
+                  "charLength": 13,
+                  "snippet": {
+                    "text": "null == draft"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 101,
+                  "startColumn": 1,
+                  "endLine": 103,
+                  "endColumn": 6,
+                  "charOffset": 3250,
+                  "charLength": 87,
+                  "snippet": {
+                    "text": "        (draft == null).ShouldBeFalse();\n        (null == draft).ShouldBeFalse();\n    }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "9C08E4EFCA61394540D9B7049A0FABED9B4B3D26352F486B62018BE06A1F854D"
           },
           "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "High",
             "tags": [
-              "Razor Component",
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "AcceptanceTests/BlazorWasmWarmUp.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 19
+                },
+                "region": {
+                  "startLine": 19,
+                  "startColumn": 12,
+                  "endLine": 19,
+                  "endColumn": 28,
+                  "charOffset": 863,
+                  "charLength": 16,
+                  "snippet": {
+                    "text": "BlazorWasmWarmUp"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 18,
+                  "startColumn": 1,
+                  "endLine": 20,
+                  "endColumn": 6,
+                  "charOffset": 851,
+                  "charLength": 74,
+                  "snippet": {
+                    "text": "\n    public BlazorWasmWarmUp(IPlaywright playwright, string baseUrl)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "66B59EF9591468DA0A0FC7E01A9A471A9673C8EC00C18500278888DAC56AFAD1"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ChurchBulletin.ServiceDefaults/CorrelationIdMiddleware.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 20
+                },
+                "region": {
+                  "startLine": 15,
+                  "startColumn": 12,
+                  "endLine": 15,
+                  "endColumn": 35,
+                  "charOffset": 436,
+                  "charLength": 23,
+                  "snippet": {
+                    "text": "CorrelationIdMiddleware"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 14,
+                  "startColumn": 1,
+                  "endLine": 16,
+                  "endColumn": 6,
+                  "charOffset": 424,
+                  "charLength": 104,
+                  "snippet": {
+                    "text": "\n    public CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "76986C0E6F7A6690D808BAEB5693FA3BC4B8F071E3146E0A72B1E9991EC31F01"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryLoggerProvider.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 21
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 12,
+                  "endLine": 13,
+                  "endColumn": 40,
+                  "charOffset": 394,
+                  "charLength": 28,
+                  "snippet": {
+                    "text": "LocalTelemetryLoggerProvider"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 12,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 6,
+                  "charOffset": 382,
+                  "charLength": 83,
+                  "snippet": {
+                    "text": "\n    public LocalTelemetryLoggerProvider(LocalTelemetryFileWriter fileWriter)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "AA6FA15076813A12C87D39BC2D32F6F3598DAC4A0CBC85086841AAD7C6433281"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryLoggerProvider.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 21
+                },
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 16,
+                  "endLine": 33,
+                  "endColumn": 36,
+                  "charOffset": 1034,
+                  "charLength": 20,
+                  "snippet": {
+                    "text": "LocalTelemetryLogger"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 32,
+                  "startColumn": 1,
+                  "endLine": 34,
+                  "endColumn": 10,
+                  "charOffset": 1018,
+                  "charLength": 143,
+                  "snippet": {
+                    "text": "\n        public LocalTelemetryLogger(LocalTelemetryFileWriter fileWriter, string categoryName, IExternalScopeProvider? scopeProvider)\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "22264A557546BC906AE4A20C10F4B54E114C0B8A194141FFC35A3EC0325D1B88"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Core/Model/Employee.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 22
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 12,
+                  "endLine": 13,
+                  "endColumn": 20,
+                  "charOffset": 270,
+                  "charLength": 8,
+                  "snippet": {
+                    "text": "Employee"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 12,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 6,
+                  "charOffset": 258,
+                  "charLength": 99,
+                  "snippet": {
+                    "text": "\n    public Employee(string userName, string firstName, string lastName, string emailAddress)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "E636E8287731B455853FE20F9AE673DDB980959377473EBA56BE32BFEA7AA4D8"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
               ".NET 10.0"
             ]
           }
@@ -80968,6 +82080,59 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
+                  "uri": "IntegrationTests/TestDatabaseConfiguration.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 25
+                },
+                "region": {
+                  "startLine": 10,
+                  "startColumn": 12,
+                  "endLine": 10,
+                  "endColumn": 37,
+                  "charOffset": 258,
+                  "charLength": 25,
+                  "snippet": {
+                    "text": "TestDatabaseConfiguration"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 9,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 6,
+                  "charOffset": 246,
+                  "charLength": 73,
+                  "snippet": {
+                    "text": "\n    public TestDatabaseConfiguration(IConfiguration configuration)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "40B68AA8E2581924DFD881440A25B4F9D0BA2F2F0C43901536D0185617513F23"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
                   "uri": "UI.Shared/Bus.cs",
                   "uriBaseId": "solutionDir",
                   "index": 26
@@ -80999,6 +82164,59 @@
           ],
           "partialFingerprints": {
             "equalIndicator/v1": "AE3C33E137F924EB024CD21FBEAEF3405C722A172F9F9659CA26E76BBE927822"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Services/ThemePreferenceService.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 27
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 12,
+                  "endLine": 17,
+                  "endColumn": 34,
+                  "charOffset": 524,
+                  "charLength": 22,
+                  "snippet": {
+                    "text": "ThemePreferenceService"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 18,
+                  "endColumn": 1,
+                  "charOffset": 512,
+                  "charLength": 63,
+                  "snippet": {
+                    "text": "\n    public ThemePreferenceService(IJSRuntime js) => _js = js;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "54C43425F161BFABE19C39E8D271ED0FE830329FB9390EA56B33E6ECA9ACDB5A"
           },
           "baselineState": "unchanged",
           "properties": {
@@ -81058,6 +82276,3023 @@
             "qodanaSeverity": "Moderate",
             "tags": [
               "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/ApiRequestTimeoutsExtensions.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 28
+                },
+                "region": {
+                  "startLine": 31,
+                  "startColumn": 16,
+                  "endLine": 31,
+                  "endColumn": 55,
+                  "charOffset": 1499,
+                  "charLength": 39,
+                  "snippet": {
+                    "text": "ConfigureApiRequestTimeoutPolicyOptions"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 30,
+                  "startColumn": 1,
+                  "endLine": 32,
+                  "endColumn": 10,
+                  "charOffset": 1483,
+                  "charLength": 112,
+                  "snippet": {
+                    "text": "\n        public ConfigureApiRequestTimeoutPolicyOptions(IOptions<ApiRequestTimeoutOptions> apiOptions)\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "1E373124B04AFB72CB24392BA9EDA3E711B349404E0B8EAD3BF599418197BBB4"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/AutoReformatAgentService.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 29
+                },
+                "region": {
+                  "startLine": 19,
+                  "startColumn": 12,
+                  "endLine": 19,
+                  "endColumn": 36,
+                  "charOffset": 657,
+                  "charLength": 24,
+                  "snippet": {
+                    "text": "AutoReformatAgentService"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 18,
+                  "startColumn": 1,
+                  "endLine": 20,
+                  "endColumn": 42,
+                  "charOffset": 645,
+                  "charLength": 79,
+                  "snippet": {
+                    "text": "\n    public AutoReformatAgentService(\n        IServiceProvider serviceProvider,"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "D4D110E290E401D4EB6FC246163857DCF3ECB76EBE5F4676BC3568BCBA23CE74"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/Middleware/IdempotencyMiddleware.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 30
+                },
+                "region": {
+                  "startLine": 39,
+                  "startColumn": 12,
+                  "endLine": 39,
+                  "endColumn": 33,
+                  "charOffset": 1393,
+                  "charLength": 21,
+                  "snippet": {
+                    "text": "IdempotencyMiddleware"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 38,
+                  "startColumn": 1,
+                  "endLine": 40,
+                  "endColumn": 30,
+                  "charOffset": 1381,
+                  "charLength": 64,
+                  "snippet": {
+                    "text": "\n    public IdempotencyMiddleware(\n        RequestDelegate next,"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "2335AACABD36BADBFB17CB703A1CBE0869F413A51DCEFF7B60E867C17EDE72CC"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/Api/RateLimitedApiWebApplicationFactory.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 31
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 12,
+                  "endLine": 16,
+                  "endColumn": 47,
+                  "charOffset": 538,
+                  "charLength": 35,
+                  "snippet": {
+                    "text": "RateLimitedApiWebApplicationFactory"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 15,
+                  "startColumn": 1,
+                  "endLine": 17,
+                  "endColumn": 6,
+                  "charOffset": 526,
+                  "charLength": 89,
+                  "snippet": {
+                    "text": "\n    public RateLimitedApiWebApplicationFactory(string? sqlConnectionString = null)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "ECD51152A3E6F733C7D63898A265E4C177537645E573CE7E962D0068F5E14451"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/Api/TunableApiRateLimitWebApplicationFactory.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 32
+                },
+                "region": {
+                  "startLine": 15,
+                  "startColumn": 12,
+                  "endLine": 15,
+                  "endColumn": 52,
+                  "charOffset": 525,
+                  "charLength": 40,
+                  "snippet": {
+                    "text": "TunableApiRateLimitWebApplicationFactory"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 14,
+                  "startColumn": 1,
+                  "endLine": 16,
+                  "endColumn": 6,
+                  "charOffset": 513,
+                  "charLength": 106,
+                  "snippet": {
+                    "text": "\n    public TunableApiRateLimitWebApplicationFactory(IReadOnlyDictionary<string, string?> overrides)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "DCD529CC55B3C1B901EB7E7DDC6F5EC2FF36DA7D0E1FCE1CBE5E568EE3808B04"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/Core/Services/WorkOrderBuilderTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 33
+                },
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 12,
+                  "endLine": 33,
+                  "endColumn": 40,
+                  "charOffset": 1063,
+                  "charLength": 28,
+                  "snippet": {
+                    "text": "WorkOrderNumberGeneratorStub"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 32,
+                  "startColumn": 1,
+                  "endLine": 34,
+                  "endColumn": 6,
+                  "charOffset": 1051,
+                  "charLength": 69,
+                  "snippet": {
+                    "text": "\n    public WorkOrderNumberGeneratorStub(string numberToReturn)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "8AB5A221828884AF1B033455E6C3BC4CED8E6D46358117F3A1B10FDC4F546624"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Client/PublisherGatewayTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 34
+                },
+                "region": {
+                  "startLine": 114,
+                  "startColumn": 16,
+                  "endLine": 114,
+                  "endColumn": 36,
+                  "charOffset": 4754,
+                  "charLength": 20,
+                  "snippet": {
+                    "text": "StubPublisherGateway"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 113,
+                  "startColumn": 1,
+                  "endLine": 115,
+                  "endColumn": 10,
+                  "charOffset": 4738,
+                  "charLength": 73,
+                  "snippet": {
+                    "text": "\n        public StubPublisherGateway() : base(new HttpClient())\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "06FDFCB791DAB6EED0163CA5D94B8D0C3C7E100023DAC7CFB64E791A3A2DBE9A"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Client/PublisherGatewayTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 34
+                },
+                "region": {
+                  "startLine": 114,
+                  "startColumn": 16,
+                  "endLine": 114,
+                  "endColumn": 36,
+                  "charOffset": 4754,
+                  "charLength": 20,
+                  "snippet": {
+                    "text": "StubPublisherGateway"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 113,
+                  "startColumn": 1,
+                  "endLine": 115,
+                  "endColumn": 10,
+                  "charOffset": 4738,
+                  "charLength": 73,
+                  "snippet": {
+                    "text": "\n        public StubPublisherGateway() : base(new HttpClient())\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "06FDFCB791DAB6EED0163CA5D94B8D0C3C7E100023DAC7CFB64E791A3A2DBE9A"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Server/ApiResponseCompressionWebTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 36
+                },
+                "region": {
+                  "startLine": 47,
+                  "startColumn": 16,
+                  "endLine": 47,
+                  "endColumn": 36,
+                  "charOffset": 1691,
+                  "charLength": 20,
+                  "snippet": {
+                    "text": "DecompressionHandler"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 46,
+                  "startColumn": 1,
+                  "endLine": 48,
+                  "endColumn": 10,
+                  "charOffset": 1670,
+                  "charLength": 138,
+                  "snippet": {
+                    "text": "    {\n        public DecompressionHandler() : base(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None })\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "AAC9975654E4D9AF56D622AFBB89490607C095693BE3D71AF9CE7DF3585CE824"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Shared/Pages/WorkOrderManageEventBusNotifyTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 38
+                },
+                "region": {
+                  "startLine": 110,
+                  "startColumn": 16,
+                  "endLine": 110,
+                  "endColumn": 38,
+                  "charOffset": 3887,
+                  "charLength": 22,
+                  "snippet": {
+                    "text": "StubWorkOrderManageBus"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 109,
+                  "startColumn": 1,
+                  "endLine": 111,
+                  "endColumn": 10,
+                  "charOffset": 3866,
+                  "charLength": 69,
+                  "snippet": {
+                    "text": "    {\n        public StubWorkOrderManageBus() : base(null!)\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "B11FD700F64938B73178853442B49C2D295BD93AF1ADE6CF997EF14583C37C1F"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Shared/Pages/WorkOrderManageEventBusNotifyTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 38
+                },
+                "region": {
+                  "startLine": 110,
+                  "startColumn": 16,
+                  "endLine": 110,
+                  "endColumn": 38,
+                  "charOffset": 3887,
+                  "charLength": 22,
+                  "snippet": {
+                    "text": "StubWorkOrderManageBus"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 109,
+                  "startColumn": 1,
+                  "endLine": 111,
+                  "endColumn": 10,
+                  "charOffset": 3866,
+                  "charLength": 69,
+                  "snippet": {
+                    "text": "    {\n        public StubWorkOrderManageBus() : base(null!)\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "B11FD700F64938B73178853442B49C2D295BD93AF1ADE6CF997EF14583C37C1F"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Shared/Services/ThemePreferenceServiceTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 41
+                },
+                "region": {
+                  "startLine": 83,
+                  "startColumn": 20,
+                  "endLine": 83,
+                  "endColumn": 35,
+                  "charOffset": 2794,
+                  "charLength": 15,
+                  "snippet": {
+                    "text": "StubThemeModule"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 82,
+                  "startColumn": 1,
+                  "endLine": 84,
+                  "endColumn": 14,
+                  "charOffset": 2774,
+                  "charLength": 90,
+                  "snippet": {
+                    "text": "\n            public StubThemeModule(string theme, StubThemeJsRuntime parent)\n            {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "CD4E9FF5695591BA976D552E08FBC264A4CCFAA637E6B0AE0C5A5F81C8C4C7D8"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Worker/Handlers/TracerBulletHandler.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 42
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 12,
+                  "endLine": 14,
+                  "endColumn": 31,
+                  "charOffset": 512,
+                  "charLength": 19,
+                  "snippet": {
+                    "text": "TracerBulletHandler"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 13,
+                  "startColumn": 1,
+                  "endLine": 15,
+                  "endColumn": 6,
+                  "charOffset": 500,
+                  "charLength": 74,
+                  "snippet": {
+                    "text": "\n    public TracerBulletHandler(ILogger<TracerBulletHandler> logger)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "813FC8993E63827C75FA7C9E44B48CB5F44DA9A882652A4CF4DD1CF14C4ED4F2"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "FieldCanBeMadeReadOnly.Global",
+          "ruleIndex": 2313,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Field can be made readonly"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/ObjectMother.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 15
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 26,
+                  "endLine": 13,
+                  "endColumn": 30,
+                  "charOffset": 297,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "Lock"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 12,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 1,
+                  "charOffset": 226,
+                  "charLength": 85,
+                  "snippet": {
+                    "text": "    private static volatile bool _configured;\n    public static object Lock = new();\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "BE89DF51B23C78EE1D01FEFF481EB1FAD4B4908666949F5DA87492B6A3E6607A"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "Html.AttributeValueNotResolved",
+          "ruleIndex": 2330,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Cannot resolve attribute value 'switch'"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Pages/Settings.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 43
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 34,
+                  "endLine": 16,
+                  "endColumn": 40,
+                  "charOffset": 683,
+                  "charLength": 6,
+                  "snippet": {
+                    "text": "switch"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 15,
+                  "startColumn": 1,
+                  "endLine": 17,
+                  "endColumn": 49,
+                  "charOffset": 607,
+                  "charLength": 132,
+                  "snippet": {
+                    "text": "                           type=\"checkbox\"\n                           role=\"switch\"\n                           id=\"dark-mode-switch\""
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "59F63DCBEA067860CBE63B8A40DF77B4D706A32C5A49612CE749520A8C96A8F5"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "InconsistentNaming",
+          "ruleIndex": 2347,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Name 'PreferredLanguageShouldDefaultToEnUS' does not match rule 'non_field_members_should_be_pascal_case'. Suggested name is 'PreferredLanguageShouldDefaultToEnUs'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/Core/Model/EmployeeTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 44
+                },
+                "region": {
+                  "startLine": 185,
+                  "startColumn": 17,
+                  "endLine": 185,
+                  "endColumn": 53,
+                  "charOffset": 5884,
+                  "charLength": 36,
+                  "snippet": {
+                    "text": "PreferredLanguageShouldDefaultToEnUS"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 184,
+                  "startColumn": 1,
+                  "endLine": 186,
+                  "endColumn": 6,
+                  "charOffset": 5857,
+                  "charLength": 71,
+                  "snippet": {
+                    "text": "    [Test]\n    public void PreferredLanguageShouldDefaultToEnUS()\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "4E6DEEBDDC4701ECC4D8B109E4B823608D44F1642CE32EDBD1DD1C87A5878D11"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "InconsistentNaming",
+          "ruleIndex": 2347,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Name 'PreferredLanguageShouldDefaultToEnUSWithConstructor' does not match rule 'non_field_members_should_be_pascal_case'. Suggested name is 'PreferredLanguageShouldDefaultToEnUsWithConstructor'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/Core/Model/EmployeeTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 44
+                },
+                "region": {
+                  "startLine": 192,
+                  "startColumn": 17,
+                  "endLine": 192,
+                  "endColumn": 68,
+                  "charOffset": 6072,
+                  "charLength": 51,
+                  "snippet": {
+                    "text": "PreferredLanguageShouldDefaultToEnUSWithConstructor"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 191,
+                  "startColumn": 1,
+                  "endLine": 193,
+                  "endColumn": 6,
+                  "charOffset": 6045,
+                  "charLength": 86,
+                  "snippet": {
+                    "text": "    [Test]\n    public void PreferredLanguageShouldDefaultToEnUSWithConstructor()\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "7CE34135B9A0E3B08EB01B3850FAD0B51901416BCE354955CA47EC3DA8064E00"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "InconsistentNaming",
+          "ruleIndex": 2347,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Name 'ShouldReturnOriginalTextForEnUS' does not match rule 'non_field_members_should_be_pascal_case'. Suggested name is 'ShouldReturnOriginalTextForEnUs'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "IntegrationTests/LlmGateway/TranslationServiceTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 45
+                },
+                "region": {
+                  "startLine": 34,
+                  "startColumn": 23,
+                  "endLine": 34,
+                  "endColumn": 54,
+                  "charOffset": 1050,
+                  "charLength": 31,
+                  "snippet": {
+                    "text": "ShouldReturnOriginalTextForEnUS"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 33,
+                  "startColumn": 1,
+                  "endLine": 35,
+                  "endColumn": 6,
+                  "charOffset": 1017,
+                  "charLength": 72,
+                  "snippet": {
+                    "text": "    [Test]\n    public async Task ShouldReturnOriginalTextForEnUS()\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "457469265BCAFED55C55342099A9B4BF27E720DCD5A3C58DAD43E1E3F049DAC6"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "InconsistentNaming",
+          "ruleIndex": 2347,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Name 'ShouldReturnOriginalTextWhenTargetLanguageIsEnUS' does not match rule 'non_field_members_should_be_pascal_case'. Suggested name is 'ShouldReturnOriginalTextWhenTargetLanguageIsEnUs'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/LlmGateway/TranslationServiceTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 46
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 23,
+                  "endLine": 13,
+                  "endColumn": 71,
+                  "charOffset": 283,
+                  "charLength": 48,
+                  "snippet": {
+                    "text": "ShouldReturnOriginalTextWhenTargetLanguageIsEnUS"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 12,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 6,
+                  "charOffset": 250,
+                  "charLength": 89,
+                  "snippet": {
+                    "text": "    [Test]\n    public async Task ShouldReturnOriginalTextWhenTargetLanguageIsEnUS()\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "E7417ED56B1E5D7B53B4D2D04959D5632141B968E1708DCECA735EF59A882BDE"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "InconsistentlySynchronizedField",
+          "ruleIndex": 2349,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "The field is sometimes used inside synchronized block and sometimes used without synchronization"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/ObjectMother.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 15
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 14,
+                  "endLine": 17,
+                  "endColumn": 25,
+                  "charOffset": 374,
+                  "charLength": 11,
+                  "snippet": {
+                    "text": "_configured"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 18,
+                  "endColumn": 10,
+                  "charOffset": 355,
+                  "charLength": 41,
+                  "snippet": {
+                    "text": "    {\n        if (!_configured)\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "B1557A0A11A568F1684B5A3B9E62288AA34C76476C54BA40FFB97858D4DDA36A"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "FieldCanBeMadeReadOnly.Global",
+          "ruleIndex": 2313,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Field can be made readonly"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/ObjectMother.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 15
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 26,
+                  "endLine": 13,
+                  "endColumn": 30,
+                  "charOffset": 297,
+                  "charLength": 4,
+                  "snippet": {
+                    "text": "Lock"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 12,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 1,
+                  "charOffset": 226,
+                  "charLength": 85,
+                  "snippet": {
+                    "text": "    private static volatile bool _configured;\n    public static object Lock = new();\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "BE89DF51B23C78EE1D01FEFF481EB1FAD4B4908666949F5DA87492B6A3E6607A"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "MemberCanBePrivate.Global",
+          "ruleIndex": 2398,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Method 'Parse' can be made private"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Core/Import/WorkOrderBulkImportCsvParser.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 51
+                },
+                "region": {
+                  "startLine": 22,
+                  "startColumn": 5,
+                  "endLine": 22,
+                  "endColumn": 13,
+                  "charOffset": 800,
+                  "charLength": 8,
+                  "snippet": {
+                    "text": "internal"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 21,
+                  "startColumn": 1,
+                  "endLine": 23,
+                  "endColumn": 6,
+                  "charOffset": 795,
+                  "charLength": 129,
+                  "snippet": {
+                    "text": "\n    internal static WorkOrderBulkImportParseResult Parse(TextReader reader, CancellationToken cancellationToken = default)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "C8A6E8CE4C69FDFBB64D256D21B5123C164B20EE405355526BD5272D83811E17"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "MemberCanBePrivate.Global",
+          "ruleIndex": 2398,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Method 'SimulateRemoteObject' can be made private"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/Core/Queries/RemotableRequestTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 52
+                },
+                "region": {
+                  "startLine": 63,
+                  "startColumn": 5,
+                  "endLine": 63,
+                  "endColumn": 11,
+                  "charOffset": 2184,
+                  "charLength": 6,
+                  "snippet": {
+                    "text": "public"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 62,
+                  "startColumn": 1,
+                  "endLine": 64,
+                  "endColumn": 6,
+                  "charOffset": 2179,
+                  "charLength": 70,
+                  "snippet": {
+                    "text": "\n    public static object SimulateRemoteObject(object theObject)\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "D612AFC175C7C863217B0D8B45FCBB27944843B8F0E65FFCB80B6C66A258AE28"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "MergeIntoPattern",
+          "ruleIndex": 2410,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Merge into pattern"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "IntegrationTests/LlmGateway/LlmTestBase.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 57
+                },
+                "region": {
+                  "startLine": 52,
+                  "startColumn": 48,
+                  "endLine": 52,
+                  "endColumn": 50,
+                  "charOffset": 1447,
+                  "charLength": 2,
+                  "snippet": {
+                    "text": "&&"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 51,
+                  "startColumn": 1,
+                  "endLine": 53,
+                  "endColumn": 14,
+                  "charOffset": 1390,
+                  "charLength": 124,
+                  "snippet": {
+                    "text": "        {\n            if (e is HttpRequestException http && http.StatusCode == HttpStatusCode.TooManyRequests)\n            {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "F6F8309290ACA10D81C10A56F8F5857BDA8291079EA4BFB9DE128389D1B9B1BD"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "MergeIntoPattern",
+          "ruleIndex": 2410,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Merge into pattern"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Pages/Settings.razor.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 58
+                },
+                "region": {
+                  "startLine": 26,
+                  "startColumn": 41,
+                  "endLine": 26,
+                  "endColumn": 43,
+                  "charOffset": 619,
+                  "charLength": 2,
+                  "snippet": {
+                    "text": "&&"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 25,
+                  "startColumn": 1,
+                  "endLine": 27,
+                  "endColumn": 47,
+                  "charOffset": 573,
+                  "charLength": 98,
+                  "snippet": {
+                    "text": "    {\n        var enabled = e.Value is bool b && b;\n        await Theme.SetDarkModeAsync(enabled);"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "AED99BFAF22463C8E0A1E862FEEDB076CD581E5898E4E940F84975DA05DFDA93"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "MergeIntoPattern",
+          "ruleIndex": 2410,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Merge into pattern"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/CorsExtensions.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 59
+                },
+                "region": {
+                  "startLine": 43,
+                  "startColumn": 32,
+                  "endLine": 43,
+                  "endColumn": 34,
+                  "charOffset": 1832,
+                  "charLength": 2,
+                  "snippet": {
+                    "text": "&&"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 42,
+                  "startColumn": 1,
+                  "endLine": 44,
+                  "endColumn": 6,
+                  "charOffset": 1713,
+                  "charLength": 162,
+                  "snippet": {
+                    "text": "        var options = services.GetRequiredService<IOptions<ServerCorsOptions>>().Value;\n        return options.Enabled && options.AllowedOrigins.Length > 0;\n    }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "6D3DD104D9B8B9DECCB10A0616E9FB39C2966C408FD431A95AEEE8BB4DEA3016"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "MethodSupportsCancellation",
+          "ruleIndex": 2416,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Method has overload with cancellation support"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/ServiceDefaults/ServiceDefaultsTelemetryTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 63
+                },
+                "region": {
+                  "startLine": 57,
+                  "startColumn": 24,
+                  "endLine": 57,
+                  "endColumn": 29,
+                  "charOffset": 1921,
+                  "charLength": 5,
+                  "snippet": {
+                    "text": "Delay"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 56,
+                  "startColumn": 1,
+                  "endLine": 58,
+                  "endColumn": 10,
+                  "charOffset": 1888,
+                  "charLength": 53,
+                  "snippet": {
+                    "text": "        {\n            await Task.Delay(25);\n        }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "C4EC39C3AC1F76B8CC316C2F306E724D5E0C9B27BFFA64FDBDE2C9DB0524F485"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "MethodSupportsCancellation",
+          "ruleIndex": 2416,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Method has overload with cancellation support"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Server/AutoReformatAgentServiceTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 64
+                },
+                "region": {
+                  "startLine": 97,
+                  "startColumn": 20,
+                  "endLine": 97,
+                  "endColumn": 25,
+                  "charOffset": 3794,
+                  "charLength": 5,
+                  "snippet": {
+                    "text": "Delay"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 96,
+                  "startColumn": 1,
+                  "endLine": 98,
+                  "endColumn": 33,
+                  "charOffset": 3724,
+                  "charLength": 113,
+                  "snippet": {
+                    "text": "        var start = service.StartAsync(cts.Token);\n        await Task.Delay(50);\n        await cts.CancelAsync();"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "F5B3BE4953229B16064B958A6F606E1145B7050C3AE77F498A30C73C02121EC2"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "MethodSupportsCancellation",
+          "ruleIndex": 2416,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Method has overload with cancellation support"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Server/AutoReformatAgentServiceTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 64
+                },
+                "region": {
+                  "startLine": 118,
+                  "startColumn": 20,
+                  "endLine": 118,
+                  "endColumn": 25,
+                  "charOffset": 4701,
+                  "charLength": 5,
+                  "snippet": {
+                    "text": "Delay"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 117,
+                  "startColumn": 1,
+                  "endLine": 119,
+                  "endColumn": 57,
+                  "charOffset": 4637,
+                  "charLength": 131,
+                  "snippet": {
+                    "text": "        await service.StartAsync(cts.Token);\n        await Task.Delay(50);\n        await service.StopAsync(CancellationToken.None);"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "5FCB80F7D1981C007134E9A4229D86928D330483CEDD2963522FF823C0B640CA"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ParameterOnlyUsedForPreconditionCheck.Local",
+          "ruleIndex": 2503,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Parameter 'failOnGetResponse' is only used for precondition check(s)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/LlmGateway/TracingChatClientTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 65
+                },
+                "region": {
+                  "startLine": 158,
+                  "startColumn": 14,
+                  "endLine": 158,
+                  "endColumn": 31,
+                  "charOffset": 5404,
+                  "charLength": 17,
+                  "snippet": {
+                    "text": "failOnGetResponse"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 157,
+                  "startColumn": 1,
+                  "endLine": 159,
+                  "endColumn": 6,
+                  "charOffset": 5354,
+                  "charLength": 96,
+                  "snippet": {
+                    "text": "        bool failOnMoveNext = false,\n        bool failOnGetResponse = false) : IChatClient\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "035461E432DA4B8EF4D45776C488C0067A194A776FB6427DABDF0B68F21AD19A"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ParameterOnlyUsedForPreconditionCheck.Local",
+          "ruleIndex": 2503,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Parameter 'failOnMoveNext' is only used for precondition check(s)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/LlmGateway/TracingChatClientTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 65
+                },
+                "region": {
+                  "startLine": 157,
+                  "startColumn": 14,
+                  "endLine": 157,
+                  "endColumn": 28,
+                  "charOffset": 5367,
+                  "charLength": 14,
+                  "snippet": {
+                    "text": "failOnMoveNext"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 156,
+                  "startColumn": 1,
+                  "endLine": 158,
+                  "endColumn": 54,
+                  "charOffset": 5315,
+                  "charLength": 129,
+                  "snippet": {
+                    "text": "        ChatResponse? response = null,\n        bool failOnMoveNext = false,\n        bool failOnGetResponse = false) : IChatClient"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "3A657004A2526CBC6BBBC57C1338685A0C19C4CFA5BF40CB7A5252216496868D"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ParameterOnlyUsedForPreconditionCheck.Local",
+          "ruleIndex": 2503,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Parameter 'throwOnSend' is only used for precondition check(s)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Client/ClientHealthCheckTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 66
+                },
+                "region": {
+                  "startLine": 90,
+                  "startColumn": 89,
+                  "endLine": 90,
+                  "endColumn": 100,
+                  "charOffset": 3324,
+                  "charLength": 11,
+                  "snippet": {
+                    "text": "throwOnSend"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 89,
+                  "startColumn": 1,
+                  "endLine": 91,
+                  "endColumn": 6,
+                  "charOffset": 3235,
+                  "charLength": 122,
+                  "snippet": {
+                    "text": "\n    private sealed class StubHealthBus(HealthStatus status = HealthStatus.Healthy, bool throwOnSend = false) : IBus\n    {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "38C612CBFC40A616A9FFBB44A7A5A57EDDFA19E5193A4A76115FC50921EFDC74"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PartialTypeWithSinglePart",
+          "ruleIndex": 2508,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Partial class with single part"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "LlmGateway/TranslationService.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 67
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 8,
+                  "endLine": 6,
+                  "endColumn": 15,
+                  "charOffset": 127,
+                  "charLength": 7,
+                  "snippet": {
+                    "text": "partial"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 5,
+                  "startColumn": 1,
+                  "endLine": 7,
+                  "endColumn": 2,
+                  "charOffset": 119,
+                  "charLength": 101,
+                  "snippet": {
+                    "text": "\npublic partial class TranslationService(ChatClientFactory chatClientFactory) : ITranslationService\n{"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "AFCD1D5F8EEACAD59266CCCCDDCD9D301FA912EF3BBC574CD09392D9EC2A3BFB"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PreferConcreteValueOverDefault",
+          "ruleIndex": 2540,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Use 'null' instead of 'default'"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/MainLayout.razor.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 68
+                },
+                "region": {
+                  "startLine": 28,
+                  "startColumn": 43,
+                  "endLine": 28,
+                  "endColumn": 50,
+                  "charOffset": 835,
+                  "charLength": 7,
+                  "snippet": {
+                    "text": "default"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 27,
+                  "startColumn": 1,
+                  "endLine": 29,
+                  "endColumn": 1,
+                  "charOffset": 780,
+                  "charLength": 65,
+                  "snippet": {
+                    "text": "    [Inject]\n    private IJSRuntime Js { get; set; } = default!;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "8F5692CFEB87039EE7AFB43C3432F11D12E73E58407B71495FC914E03EBFD7B5"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PreferConcreteValueOverDefault",
+          "ruleIndex": 2540,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Use 'null' instead of 'default'"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/MainLayout.razor.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 68
+                },
+                "region": {
+                  "startLine": 31,
+                  "startColumn": 58,
+                  "endLine": 31,
+                  "endColumn": 65,
+                  "charOffset": 916,
+                  "charLength": 7,
+                  "snippet": {
+                    "text": "default"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 30,
+                  "startColumn": 1,
+                  "endLine": 32,
+                  "endColumn": 1,
+                  "charOffset": 846,
+                  "charLength": 80,
+                  "snippet": {
+                    "text": "    [Inject]\n    private ThemePreferenceService Theme { get; set; } = default!;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "6F0C8A73F749A3CAC64FB280EF1F421E66086D238C2D9037E060DD4AD03ACC00"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PreferConcreteValueOverDefault",
+          "ruleIndex": 2540,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Use 'null' instead of 'default'"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/MainLayout.razor.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 68
+                },
+                "region": {
+                  "startLine": 31,
+                  "startColumn": 58,
+                  "endLine": 31,
+                  "endColumn": 65,
+                  "charOffset": 916,
+                  "charLength": 7,
+                  "snippet": {
+                    "text": "default"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 30,
+                  "startColumn": 1,
+                  "endLine": 32,
+                  "endColumn": 1,
+                  "charOffset": 846,
+                  "charLength": 80,
+                  "snippet": {
+                    "text": "    [Inject]\n    private ThemePreferenceService Theme { get; set; } = default!;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "6F0C8A73F749A3CAC64FB280EF1F421E66086D238C2D9037E060DD4AD03ACC00"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "RedundantStringInterpolation",
+          "ruleIndex": 2650,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Redundant string interpolation"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "LlmGateway/WorkOrderChatHandler.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 80
+                },
+                "region": {
+                  "startLine": 23,
+                  "startColumn": 34,
+                  "endLine": 23,
+                  "endColumn": 35,
+                  "charOffset": 907,
+                  "charLength": 1,
+                  "snippet": {
+                    "text": "$"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 22,
+                  "startColumn": 1,
+                  "endLine": 24,
+                  "endColumn": 39,
+                  "charOffset": 781,
+                  "charLength": 300,
+                  "snippet": {
+                    "text": "            new(ChatRole.System, $\"Work Order number is {request.CurrentWorkOrder.Number}\"),\n            new(ChatRole.System, $\"Limit answer to 3 sentences unless listing data. When listing items, include ALL items from the tool response. Be brief otherwise.\"),\n            new(ChatRole.User, prompt)"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "4EFF23A7BACCB3AD73459B3A76791D98D0159A5CC7CA9C99274783E87C3787CF"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "RedundantTypeArgumentsInsideNameof",
+          "ruleIndex": 2658,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Type arguments inside 'nameof' are redundant"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Server/Middleware/WebServiceMessageValidationMiddleware.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 81
+                },
+                "region": {
+                  "startLine": 176,
+                  "startColumn": 77,
+                  "endLine": 176,
+                  "endColumn": 83,
+                  "charOffset": 6210,
+                  "charLength": 6,
+                  "snippet": {
+                    "text": "object"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 175,
+                  "startColumn": 1,
+                  "endLine": 177,
+                  "endColumn": 89,
+                  "charOffset": 6133,
+                  "charLength": 184,
+                  "snippet": {
+                    "text": "\n        var resultProperty = validateTask.GetType().GetProperty(nameof(Task<object>.Result))!;\n        var validationResult = (ValidationResult)resultProperty.GetValue(validateTask)!;"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "2212A3A452F908BDDDB02ADCD6A566DEF79C8DA7AF1D74553848E1B0C676F9A7"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "RedundantVerbatimStringPrefix",
+          "ruleIndex": 2666,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Redundant verbatim string prefix"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "LlmGateway/TranslationGuard.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 83
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 21,
+                  "endLine": 7,
+                  "endColumn": 22,
+                  "charOffset": 153,
+                  "charLength": 1,
+                  "snippet": {
+                    "text": "@"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 6,
+                  "startColumn": 1,
+                  "endLine": 8,
+                  "endColumn": 47,
+                  "charOffset": 131,
+                  "charLength": 109,
+                  "snippet": {
+                    "text": "{\n    [GeneratedRegex(@\"^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{1,8})*$\")]\n    private static partial Regex Bcp47Regex();"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "63C1F73C0375B4960FE238A326F64B0CE03F72AA1B4F75E082B2AA553A5CCA3B"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ReturnTypeCanBeNotNullable",
+          "ruleIndex": 2741,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Return type of 'NullableDraft' can be made non-nullable"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/Core/Model/WorkOrderStatusTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 18
+                },
+                "region": {
+                  "startLine": 105,
+                  "startColumn": 35,
+                  "endLine": 105,
+                  "endColumn": 36,
+                  "charOffset": 3373,
+                  "charLength": 1,
+                  "snippet": {
+                    "text": "?"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 104,
+                  "startColumn": 1,
+                  "endLine": 106,
+                  "endColumn": 1,
+                  "charOffset": 3338,
+                  "charLength": 79,
+                  "snippet": {
+                    "text": "\n    private static WorkOrderStatus? NullableDraft() => WorkOrderStatus.Draft;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "9C1010A1FF667602A676ECEB140E78D96980975E9D43C014DF6D45549FAAE7F0"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "TooWideLocalVariableScope",
+          "ruleIndex": 2834,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Local variable 'update' can be declared in inner scope"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "LlmGateway/TracingChatClient.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 84
+                },
+                "region": {
+                  "startLine": 62,
+                  "startColumn": 28,
+                  "endLine": 62,
+                  "endColumn": 34,
+                  "charOffset": 2419,
+                  "charLength": 6,
+                  "snippet": {
+                    "text": "update"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 61,
+                  "startColumn": 1,
+                  "endLine": 63,
+                  "endColumn": 1,
+                  "charOffset": 2391,
+                  "charLength": 36,
+                  "snippet": {
+                    "text": "\n        ChatResponseUpdate update;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "0F35946B77EB1D27EB629F86FD9D2E13E6DE9B8A70CA86B67375956F3867696D"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "UseNameOfInsteadOfToString",
+          "ruleIndex": 2973,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Use 'nameof' expression to reference 'Elements.ChatHistory' name"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 57,
+                  "endLine": 12,
+                  "endColumn": 68,
+                  "charOffset": 434,
+                  "charLength": 11,
+                  "snippet": {
+                    "text": ".ToString()"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 11,
+                  "startColumn": 1,
+                  "endLine": 13,
+                  "endColumn": 67,
+                  "charOffset": 364,
+                  "charLength": 172,
+                  "snippet": {
+                    "text": "            {\n                <div data-testid=\"@(Elements.ChatHistory.ToString())\" class=\"chat-history\">\n                    @for (int i = 0; i < _chatMessages.Count; i++)"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "676B4B3011283B9A87C9A0590689956289AC427DF60F559C7DFA9F592C6F1A00"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "UseNameOfInsteadOfToString",
+          "ruleIndex": 2973,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Use 'nameof' expression to reference 'Elements.ChatInput' name"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 34,
+                  "startColumn": 54,
+                  "endLine": 34,
+                  "endColumn": 65,
+                  "charOffset": 1456,
+                  "charLength": 11,
+                  "snippet": {
+                    "text": ".ToString()"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 33,
+                  "startColumn": 1,
+                  "endLine": 35,
+                  "endColumn": 52,
+                  "charOffset": 1355,
+                  "charLength": 166,
+                  "snippet": {
+                    "text": "                    @onkeydown=\"OnKeyDownAsync\"\n                    data-testid=\"@(Elements.ChatInput.ToString())\"\n                    class=\"form-control chat-input\""
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "F29D80D65CE83B2DA47B7EE59D39CE8328B055B6AC2D3D6804D10A144F295DAC"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "UseNameOfInsteadOfToString",
+          "ruleIndex": 2973,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Use 'nameof' expression to reference 'Elements.LoadingIndicator' name"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 26,
+                  "startColumn": 62,
+                  "endLine": 26,
+                  "endColumn": 73,
+                  "charOffset": 1134,
+                  "charLength": 11,
+                  "snippet": {
+                    "text": ".ToString()"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 25,
+                  "startColumn": 1,
+                  "endLine": 27,
+                  "endColumn": 51,
+                  "charOffset": 1059,
+                  "charLength": 161,
+                  "snippet": {
+                    "text": "            {\n                <div data-testid=\"@(Elements.LoadingIndicator.ToString())\" class=\"chat-loading\">\n                    <span>AI is thinking...</span>"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "0E33F8D9B993265744A5E0829683B6E92D943CE112E91CD83C2E84688C4D12F2"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "UseNameOfInsteadOfToString",
+          "ruleIndex": 2973,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Use 'nameof' expression to reference 'Elements.SendButton' name"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 38,
+                  "startColumn": 59,
+                  "endLine": 38,
+                  "endColumn": 70,
+                  "charOffset": 1700,
+                  "charLength": 11,
+                  "snippet": {
+                    "text": ".ToString()"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 37,
+                  "startColumn": 1,
+                  "endLine": 39,
+                  "endColumn": 64,
+                  "charOffset": 1604,
+                  "charLength": 173,
+                  "snippet": {
+                    "text": "                <button type=\"button\"\n                        data-testid=\"@(Elements.SendButton.ToString())\"\n                        class=\"btn btn-secondary chat-send-btn\""
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "FCF57C8346DEF85C2CC907BE9C22FEBAFE664B325DC34F049C6168B9C1D1B2A5"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "UsingStatementResourceInitialization",
+          "ruleIndex": 3002,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Initialize object properties inside the 'using' statement to ensure that the object is disposed if an exception is thrown during initialization"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/ServiceDefaults/ServiceDefaultsTelemetryTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 63
+                },
+                "region": {
+                  "startLine": 65,
+                  "startColumn": 30,
+                  "endLine": 65,
+                  "endColumn": 33,
+                  "charOffset": 2218,
+                  "charLength": 3,
+                  "snippet": {
+                    "text": "new"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 64,
+                  "startColumn": 1,
+                  "endLine": 66,
+                  "endColumn": 10,
+                  "charOffset": 2188,
+                  "charLength": 60,
+                  "snippet": {
+                    "text": "\n        using var listener = new ActivityListener\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "54DD5F5AB0209E31E1C408C463E08BE75A9D5307CC393EB78A9078BE02023241"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "VariableHidesOuterVariable",
+          "ruleIndex": 3102,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Parameter 'wo' hides outer local variable with the same name"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "IntegrationTests/McpServer/McpWorkOrderToolTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 95
+                },
+                "region": {
+                  "startLine": 202,
+                  "startColumn": 50,
+                  "endLine": 202,
+                  "endColumn": 52,
+                  "charOffset": 7366,
+                  "charLength": 2,
+                  "snippet": {
+                    "text": "wo"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 201,
+                  "startColumn": 1,
+                  "endLine": 203,
+                  "endColumn": 10,
+                  "charOffset": 7307,
+                  "charLength": 98,
+                  "snippet": {
+                    "text": "        {\n            wo = context.Set<WorkOrder>().Single(wo => wo.Number == \"WO-778\");\n        }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "4DFBB51273FADFE69F027E132CE4D199F4BF911697AF366F9796AAF13A890DB3"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "CSharpWarnings::CS0618",
+          "ruleIndex": 131,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "CS0618: Property 'Microsoft.AspNetCore.Components.Routing.Router.NotFound()' is obsolete: 'NotFound is deprecated. Use NotFoundPage instead.'"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Client/App.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 13
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 9,
+                  "endLine": 22,
+                  "endColumn": 20,
+                  "charOffset": 994,
+                  "charLength": 231,
+                  "snippet": {
+                    "text": "<NotFound>\n            <PageTitle>Not found</PageTitle>\n            <LayoutView Layout=\"@typeof(MainLayout)\">\n                <p role=\"alert\">Sorry, there's nothing at this address.</p>\n            </LayoutView>\n        </NotFound>"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 23,
+                  "endColumn": 14,
+                  "charOffset": 884,
+                  "charLength": 355,
+                  "snippet": {
+                    "text": "           release fixes that regression; then this comment and the obsolete usage can be removed. *@\n        <NotFound>\n            <PageTitle>Not found</PageTitle>\n            <LayoutView Layout=\"@typeof(MainLayout)\">\n                <p role=\"alert\">Sorry, there's nothing at this address.</p>\n            </LayoutView>\n        </NotFound>\n    </Router>"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "91D3E906EEF0BCBF232514B6F05A59278DDF82DF9461FEF40D8DB8C634A631F6"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Server/RealtimeNotificationHubTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 37
+                },
+                "region": {
+                  "startLine": 37,
+                  "startColumn": 16,
+                  "endLine": 37,
+                  "endColumn": 34,
+                  "charOffset": 1153,
+                  "charLength": 18,
+                  "snippet": {
+                    "text": "RecordingWebSocket"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 36,
+                  "startColumn": 1,
+                  "endLine": 38,
+                  "endColumn": 1,
+                  "charOffset": 1132,
+                  "charLength": 80,
+                  "snippet": {
+                    "text": "    {\n        public RecordingWebSocket(WebSocketState state) => State = state;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "7277BB582B5EF5BC9FB5951FF1D4390D9BCA7C766E010154A6EF328C9E7424F3"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UnitTests/UI.Shared/Pages/WorkOrderManageEventBusNotifyTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 38
+                },
+                "region": {
+                  "startLine": 110,
+                  "startColumn": 16,
+                  "endLine": 110,
+                  "endColumn": 38,
+                  "charOffset": 3887,
+                  "charLength": 22,
+                  "snippet": {
+                    "text": "StubWorkOrderManageBus"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 109,
+                  "startColumn": 1,
+                  "endLine": 111,
+                  "endColumn": 10,
+                  "charOffset": 3866,
+                  "charLength": 69,
+                  "snippet": {
+                    "text": "    {\n        public StubWorkOrderManageBus() : base(null!)\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "B11FD700F64938B73178853442B49C2D295BD93AF1ADE6CF997EF14583C37C1F"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "VariableHidesOuterVariable",
+          "ruleIndex": 3102,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Parameter 'wo' hides outer local variable with the same name"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "IntegrationTests/McpServer/McpWorkOrderToolTests.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 95
+                },
+                "region": {
+                  "startLine": 167,
+                  "startColumn": 50,
+                  "endLine": 167,
+                  "endColumn": 52,
+                  "charOffset": 6123,
+                  "charLength": 2,
+                  "snippet": {
+                    "text": "wo"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 166,
+                  "startColumn": 1,
+                  "endLine": 168,
+                  "endColumn": 10,
+                  "charOffset": 6064,
+                  "charLength": 98,
+                  "snippet": {
+                    "text": "        {\n            wo = context.Set<WorkOrder>().Single(wo => wo.Number == \"WO-002\");\n        }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "3AF2371A3CA5427C8CDA90DE0EA6DFA9C0FCAD9E77FBAA6FC427135FCBCF87A3"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "RedundantUsingDirective",
+          "ruleIndex": 2663,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Using directive is not required by the code and can be safely removed"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ChurchBulletin.ServiceDefaults/LocalTelemetryFileWriter.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 82
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 1,
+                  "endLine": 9,
+                  "endColumn": 24,
+                  "charOffset": 261,
+                  "charLength": 23,
+                  "snippet": {
+                    "text": "using System.Threading;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 8,
+                  "startColumn": 1,
+                  "endLine": 10,
+                  "endColumn": 1,
+                  "charOffset": 223,
+                  "charLength": 62,
+                  "snippet": {
+                    "text": "using System.Text.Json.Serialization;\nusing System.Threading;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "634C048FCE94037EA2AB536E1850EA7DBD47A14022EF0DFBA92055FDEC21413B"
+          },
+          "baselineState": "new",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "RedundantUsingDirective",
+          "ruleIndex": 2663,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Using directive is not required by the code and can be safely removed"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "IntegrationTests/TestHost.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 6
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 17,
+                  "endColumn": 24,
+                  "charOffset": 652,
+                  "charLength": 23,
+                  "snippet": {
+                    "text": "using System.Threading;"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 18,
+                  "endColumn": 1,
+                  "charOffset": 624,
+                  "charLength": 52,
+                  "snippet": {
+                    "text": "using NServiceBus.Features;\nusing System.Threading;\n"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "5FD7AFE92CB09D6B52040191EB7C8F5ECC6CEC275028AFE4C9606CCF1B264F5A"
+          },
+          "baselineState": "new",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PropertyCanBeMadeInitOnly.Local",
+          "ruleIndex": 2545,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Property can be made init-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 96,
+                  "startColumn": 38,
+                  "endLine": 96,
+                  "endColumn": 41,
+                  "charOffset": 3459,
+                  "charLength": 3,
+                  "snippet": {
+                    "text": "set"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 95,
+                  "startColumn": 1,
+                  "endLine": 97,
+                  "endColumn": 41,
+                  "charOffset": 3416,
+                  "charLength": 96,
+                  "snippet": {
+                    "text": "    {\n        public string Content { get; set; } = \"\";\n        public bool IsUser { get; set; }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "40B9E8683CEE394E8F3E718353CAC0DC3256EE23D528CCD4B3D3AE509F18011C"
+          },
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PropertyCanBeMadeInitOnly.Local",
+          "ruleIndex": 2545,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Property can be made init-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 97,
+                  "startColumn": 35,
+                  "endLine": 97,
+                  "endColumn": 38,
+                  "charOffset": 3506,
+                  "charLength": 3,
+                  "snippet": {
+                    "text": "set"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 96,
+                  "startColumn": 1,
+                  "endLine": 98,
+                  "endColumn": 6,
+                  "charOffset": 3422,
+                  "charLength": 96,
+                  "snippet": {
+                    "text": "        public string Content { get; set; } = \"\";\n        public bool IsUser { get; set; }\n    }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "61FD1B77B4022F3D4E185A9B72FDE95B90B5BC4F1AF002A1001A26E95E1B08D0"
+          },
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PropertyCanBeMadeInitOnly.Local",
+          "ruleIndex": 2545,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Property can be made init-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 96,
+                  "startColumn": 38,
+                  "endLine": 96,
+                  "endColumn": 41,
+                  "charOffset": 3459,
+                  "charLength": 3,
+                  "snippet": {
+                    "text": "set"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 95,
+                  "startColumn": 1,
+                  "endLine": 97,
+                  "endColumn": 41,
+                  "charOffset": 3416,
+                  "charLength": 96,
+                  "snippet": {
+                    "text": "    {\n        public string Content { get; set; } = \"\";\n        public bool IsUser { get; set; }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "40B9E8683CEE394E8F3E718353CAC0DC3256EE23D528CCD4B3D3AE509F18011C"
+          },
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
+        },
+        {
+          "ruleId": "PropertyCanBeMadeInitOnly.Local",
+          "ruleIndex": 2545,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Property can be made init-only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI.Shared/Components/WorkOrderChat.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 78
+                },
+                "region": {
+                  "startLine": 97,
+                  "startColumn": 35,
+                  "endLine": 97,
+                  "endColumn": 38,
+                  "charOffset": 3506,
+                  "charLength": 3,
+                  "snippet": {
+                    "text": "set"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 96,
+                  "startColumn": 1,
+                  "endLine": 98,
+                  "endColumn": 6,
+                  "charOffset": 3422,
+                  "charLength": 96,
+                  "snippet": {
+                    "text": "        public string Content { get; set; } = \"\";\n        public bool IsUser { get; set; }\n    }"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "61FD1B77B4022F3D4E185A9B72FDE95B90B5BC4F1AF002A1001A26E95E1B08D0"
+          },
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "Razor Component",
               ".NET 10.0"
             ]
           }

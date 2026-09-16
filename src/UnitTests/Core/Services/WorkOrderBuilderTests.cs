@@ -30,6 +30,7 @@ public class WorkOrderNumberGeneratorStub : IWorkOrderNumberGenerator
 {
     private readonly string _numberToReturn;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public WorkOrderNumberGeneratorStub(string numberToReturn)
     {
         _numberToReturn = numberToReturn;

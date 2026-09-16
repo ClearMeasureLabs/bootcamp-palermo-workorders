@@ -28,6 +28,7 @@ public static class ApiRequestTimeoutsExtensions
     {
         private readonly IOptions<ApiRequestTimeoutOptions> _apiOptions;
 
+        // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
         public ConfigureApiRequestTimeoutPolicyOptions(IOptions<ApiRequestTimeoutOptions> apiOptions)
         {
             _apiOptions = apiOptions;

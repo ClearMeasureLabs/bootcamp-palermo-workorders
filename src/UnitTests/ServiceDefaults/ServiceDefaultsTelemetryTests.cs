@@ -54,7 +54,7 @@ public class LocalTelemetryFileWriterTests
         var deadline = DateTime.UtcNow.AddSeconds(5);
         while (DateTime.UtcNow < deadline && Directory.GetFiles(directory, "*.jsonl").Length == 0)
         {
-            await Task.Delay(25);
+            await Task.Delay(25, CancellationToken.None);
         }
 
         Directory.Exists(directory).ShouldBeTrue();
@@ -62,11 +62,9 @@ public class LocalTelemetryFileWriterTests
 
         writer.WriteLogEntry(LogLevel.Error, "cat", "msg", new InvalidOperationException("write-me"));
 
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = _ => true,
-            Sample = SampleAllDataAndRecorded
-        };
+        using var listener = new ActivityListener();
+        listener.ShouldListenTo = _ => true;
+        listener.Sample = SampleAllDataAndRecorded;
         ActivitySource.AddActivityListener(listener);
         using var source = new ActivitySource("telemetry-test");
         using (var activity = source.CreateActivity("sample", ActivityKind.Internal)?.Start())

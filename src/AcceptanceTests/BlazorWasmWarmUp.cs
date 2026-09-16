@@ -16,6 +16,7 @@ public class BlazorWasmWarmUp
     private readonly IPlaywright _playwright;
     private readonly string _baseUrl;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public BlazorWasmWarmUp(IPlaywright playwright, string baseUrl)
     {
         _playwright = playwright;

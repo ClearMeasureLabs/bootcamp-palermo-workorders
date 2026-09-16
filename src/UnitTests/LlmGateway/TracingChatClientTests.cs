@@ -151,6 +151,7 @@ public class TracingChatClientTests
         }
     }
 
+    // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local -- constructor args used as flags in method guards
     private sealed class StubChatClient(
         IReadOnlyList<ChatResponseUpdate>? updates = null,
         ChatResponse? response = null,
@@ -194,4 +195,5 @@ public class TracingChatClientTests
 
         public object? GetService(Type serviceType, object? serviceKey = null) => null;
     }
+    // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local
 }

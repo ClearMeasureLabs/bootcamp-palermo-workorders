@@ -187,3 +187,50 @@ When Qodana flags symbols as dead but they are required by DI, reflection, NServ
 // ReSharper disable once ClassNeverInstantiated.Global -- registered by DI (FluentValidation assembly scan)
 public sealed class MyValidator : AbstractValidator<MyType>;
 ```
+
+### Qodana Baseline Refresh Workflow (for remediation work items)
+
+When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCHANGED findings"):
+
+1. **Audit what's actually absent vs present before touching code.** The baseline may be stale — check each finding's `charOffset + snippet` against current source files before deciding what to fix vs just remove:
+   ```python
+   python3 << 'EOF'
+   import json, os
+   with open('/workspace/qodana.sarif.json') as f: data = json.load(f)
+   for r in data['runs'][0]['results']:
+       for loc in r.get('locations',[]):
+           pl = loc['physicalLocation']
+           uri, offset, snippet = pl['artifactLocation']['uri'], pl['region'].get('charOffset',-1), pl['region'].get('snippet',{}).get('text','')
+           path = os.path.join('/workspace/src', uri)
+           if os.path.exists(path) and offset >= 0:
+               with open(path) as f: content = f.read()
+               status = 'PRESENT' if content[offset:offset+len(snippet)]==snippet else 'ABSENT'
+               print(f"{status}|{r['ruleId']}|{uri}:{pl['region'].get('startLine','?')}")
+   EOF
+   ```
+   ABSENT entries must be **removed from the baseline** (not just left). ABSENT in baseline = penalty identical to NEW.
+
+2. **For each PRESENT finding, choose fix or suppress:**
+   - **Fix** if trivial (remove async, add CancellationToken.None, narrow scope, remove redundant prefix).
+   - **Suppress** with `// ReSharper disable once <RuleId> -- <reason>` when the finding is by-design (ConvertToPrimaryConstructor, ParameterOnlyUsedForPreconditionCheck.Local, IOptions binding setters, etc.).
+   - **Removing an entry from baseline without fixing or suppressing is wrong** — the next Qodana run will report it as NEW.
+
+3. **After all code changes, rebuild the baseline** using only fingerprints that remain genuinely present AND not suppressed:
+   ```python
+   # Remove fps from baseline by building an explicit remove set
+   remove_fps = { '<fp1>', '<fp2>', ... }  # all absent + all fixed/suppressed
+   kept = [r for r in data['runs'][0]['results']
+           if r.get('partialFingerprints',{}).get('equalIndicator/v1','') not in remove_fps]
+   data['runs'][0]['results'] = kept
+   with open('/workspace/qodana.sarif.json', 'w') as f: json.dump(data, f, indent=2)
+   ```
+   Do **not** compare against modified source files — compute the remove set from the pre-change audit + your own change list.
+
+4. **`Html.AttributeValueNotResolved` at `Settings.razor:16`** is in the baseline AND excluded in `qodana.yaml`. Qodana CDnet respects `exclude` blocks in baseline comparison, so this entry is safe to leave in baseline.
+
+5. **`ConvertToPrimaryConstructor` is an epic guardrail** — do NOT convert; suppress with `// ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion`.
+
+6. **`AutoPropertyCanBeMadeGetOnly.Global` on IOptions classes** — properties need `set` for IConfiguration binding. Suppress: `// ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- required for IOptions<T> configuration binding`.
+
+7. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
+

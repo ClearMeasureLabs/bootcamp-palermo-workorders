@@ -16,6 +16,7 @@ public class AutoReformatAgentService : BackgroundService
     private readonly IConfiguration _configuration;
     private readonly TimeProvider _timeProvider;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public AutoReformatAgentService(
         IServiceProvider serviceProvider,
         ILogger<AutoReformatAgentService> logger,

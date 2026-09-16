@@ -111,6 +111,7 @@ public class PublisherGatewayTests
 
         public WebServiceMessage? LastMessage { get; private set; }
 
+        // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
         public StubPublisherGateway() : base(new HttpClient())
         {
         }

@@ -1,7 +1,9 @@
 ﻿@using ClearMeasure.Bootcamp.UI.Shared.Authentication
 <ApplicationInsightsInit IsWasmStandalone="true" />
 <CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="[typeof(MainLayout).Assembly]">
+    <Router AppAssembly="@typeof(App).Assembly"
+            AdditionalAssemblies="[typeof(MainLayout).Assembly]"
+            NotFoundPage="typeof(Pages.NotFound)">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
                 <NotAuthorized>
@@ -10,16 +12,5 @@
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
         </Found>
-        @* Router.NotFound is obsolete (CS0618) in favor of NotFoundPage; deliberately retained here.
-           Qodana Phase 1 triage (#8321): migrating to NotFoundPage was attempted on this .NET 10
-           release and broke standalone WebAssembly boot. Do not migrate until a future .NET
-           release fixes that regression; then this comment and the obsolete usage can be removed. *@
-        @* qodana: suppressed CS0618 - intentional, see comment above *@
-        <NotFound>
-            <PageTitle>Not found</PageTitle>
-            <LayoutView Layout="@typeof(MainLayout)">
-                <p role="alert">Sorry, there's nothing at this address.</p>
-            </LayoutView>
-        </NotFound>
     </Router>
 </CascadingAuthenticationState>

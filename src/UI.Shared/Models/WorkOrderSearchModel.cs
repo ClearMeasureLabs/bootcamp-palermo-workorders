@@ -4,7 +4,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Models;
 
 public class WorkOrderSearchModel
 {
-    public SearchFilters Filters { get; set; } = new();
+    public SearchFilters Filters { get; } = new();
     public WorkOrderSearchResultRow[] Results { get; set; } = [];
 
     public class SearchFilters

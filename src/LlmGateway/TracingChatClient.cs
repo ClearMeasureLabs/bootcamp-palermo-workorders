@@ -59,14 +59,13 @@ public class TracingChatClient(IChatClient innerClient) : DelegatingChatClient(i
         ChatResponseUpdate? lastUpdate = null;
         var responseText = new System.Text.StringBuilder();
 
-        ChatResponseUpdate update;
-
         await using var enumerator = base
             .GetStreamingResponseAsync(messageList, options, cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
 
         while (true)
         {
+            ChatResponseUpdate update;
             try
             {
                 if (!await enumerator.MoveNextAsync())

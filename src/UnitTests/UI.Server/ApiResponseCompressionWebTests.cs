@@ -44,6 +44,7 @@ public class ApiResponseCompressionWebTests
     /// </summary>
     private sealed class DecompressionHandler : DelegatingHandler
     {
+        // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
         public DecompressionHandler() : base(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None })
         {
         }

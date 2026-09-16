@@ -36,6 +36,7 @@ public sealed class IdempotencyMiddleware
     private readonly IOptionsMonitor<IdempotencyOptions> _optionsMonitor;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _keyLocks = new(StringComparer.Ordinal);
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public IdempotencyMiddleware(
         RequestDelegate next,
         IMemoryCache cache,

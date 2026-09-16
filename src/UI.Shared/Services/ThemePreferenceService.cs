@@ -14,6 +14,7 @@ public sealed class ThemePreferenceService : IAsyncDisposable
     private bool _isDarkMode;
     private bool _initialized;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public ThemePreferenceService(IJSRuntime js) => _js = js;
 
     // ReSharper disable once EventNeverSubscribedTo.Global -- public Blazor state-change event; consumers subscribe at runtime

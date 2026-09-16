@@ -7,6 +7,7 @@ public class TestDatabaseConfiguration : IDatabaseConfiguration
 {
     private readonly IConfiguration _configuration;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public TestDatabaseConfiguration(IConfiguration configuration)
     {
         _configuration = configuration;

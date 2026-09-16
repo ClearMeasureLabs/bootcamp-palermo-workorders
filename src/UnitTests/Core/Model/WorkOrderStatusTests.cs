@@ -115,7 +115,9 @@ public class WorkOrderStatusTests
         WorkOrderStatus? draft = DraftOrNull(false);
 
         (left == right).ShouldBeTrue();
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract -- exercises WorkOrderStatus? operator== with non-null value; analyzer proves non-null despite runtime-null branch in DraftOrNull
         (draft == null).ShouldBeFalse();
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract -- same
         (null == draft).ShouldBeFalse();
     }
 

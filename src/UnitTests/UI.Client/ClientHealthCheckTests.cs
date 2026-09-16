@@ -87,6 +87,7 @@ public class ClientHealthCheckTests
         result.Description.ShouldBe("UI.Client is healthy");
     }
 
+    // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local -- constructor args used as flags in method guards
     private sealed class StubHealthBus(HealthStatus status = HealthStatus.Healthy, bool throwOnSend = false) : IBus
     {
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
@@ -103,4 +104,5 @@ public class ClientHealthCheckTests
 
         public Task Publish(INotification notification) => throw new NotSupportedException();
     }
+    // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local
 }

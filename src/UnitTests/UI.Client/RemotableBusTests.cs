@@ -171,6 +171,7 @@ public class RemotableBusTests
 
         public object? LastRequest { get; private set; }
 
+        // ReSharper disable once ConvertToPrimaryConstructor -- left as classic ctor by Qodana policy
         public StubPublisherGateway() : base(new HttpClient())
         {
         }
