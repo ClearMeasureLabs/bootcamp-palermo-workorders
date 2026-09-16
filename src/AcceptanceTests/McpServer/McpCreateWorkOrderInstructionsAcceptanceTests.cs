@@ -41,7 +41,7 @@ public class McpCreateWorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
     {
         await LoginAsTlovejoyAsync();
 
-        const string description = "Repair fellowship hall window latch";
+        const string description = "Repair the fellowship hall window latch.";
         var instructions = $"[{TestTag}] Enter through north door; ladder in east shed";
         var createResult = await _helper!.CallToolDirectly("create-work-order",
             new Dictionary<string, object?>
