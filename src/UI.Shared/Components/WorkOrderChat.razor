@@ -46,6 +46,8 @@
 }
 
 @code {
+// ReSharper disable PropertyCanBeMadeInitOnly.Global -- Qodana P5 (#9440): set-by-convention; Blazor component parameters require mutable setters
+// ReSharper disable PropertyCanBeMadeInitOnly.Local -- Qodana P5 (#9440): inner class properties set via object initializer syntax; init-only not appropriate
     private WorkOrder? _currentWorkOrder;
     private string _prompt = "";
     private bool _isLoading;

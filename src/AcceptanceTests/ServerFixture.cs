@@ -1,3 +1,5 @@
+// ReSharper disable MethodHasAsyncOverload -- Qodana P5 (#9440): Playwright/NUnit sync APIs are idiomatic; no async overload available
+
 using System.Diagnostics;
 using System.Net;
 using ClearMeasure.Bootcamp.Core;
