@@ -8,7 +8,8 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
-/// Converts Unix seconds and ISO-8601 strings for operators and integrations.
+/// Converts between Unix epoch seconds and ISO-8601 strings for operators and integrations.
+/// Accepts exactly one of <c>?unix=&lt;seconds&gt;</c> or <c>?iso=&lt;ISO-8601&gt;</c>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -158,4 +159,7 @@ public class TimestampConverterController : ControllerBase
 /// <summary>
 /// JSON payload for <c>GET /api/tools/timestamp-converter</c>.
 /// </summary>
+/// <param name="Unix">Unix epoch seconds (UTC).</param>
+/// <param name="Iso">ISO-8601 UTC string, second precision (e.g. <c>2023-11-14T22:13:20Z</c>).</param>
+/// <param name="Human">Human-readable UTC display (e.g. <c>Tuesday, 14 November 2023 22:13:20 UTC</c>).</param>
 public record TimestampConverterResponse(long Unix, string Iso, string Human);

@@ -89,8 +89,44 @@ If Docker is unavailable, set `DATABASE_ENGINE=SQLite` before running the build 
 
 When appending issue bodies via `python3` or other subprocesses: **export** any variable the child reads (`export VAR=...`), or embed the text in the script. Unexported shell variables appear **empty** in the child, which can produce a successful API response with **blank** content. See **GitHub REST API — Issue body updates** in `.cursor/rules/cloud-agent-instructions.mdc`.
 
+### Quick dotnet build / test (without full PrivateBuild.ps1)
+
+When a full PowerShell build is unnecessary (e.g. for a pre-built or docs-only feature), run the targeted sequence:
+
+```bash
+cd /workspace/src && dotnet restore ChurchBulletin.sln   # always restore first — obj/project.assets.json may be missing
+dotnet build UI/Api/UI.Api.csproj -warnaserror
+dotnet test UnitTests/UnitTests.csproj --no-build --filter "FullyQualifiedName~<ClassName>"
+```
+
+The solution file is at `src/ChurchBulletin.sln`. Run `dotnet restore` from `/workspace/src` with the `.sln` path; running it from `/workspace` fails because no `.sln` is at the root.
+
+### "Feature already implemented" work items
+
+When the work item body says the feature is **already fully implemented**, verify with:
+
+```bash
+find /workspace/src -name "<ExpectedFile>.cs" 2>/dev/null
+```
+
+If all listed files exist and compile cleanly, the only remaining tasks are quality gates, self-tuning, merge, and PR — no code to write.
+
 ### Gotchas
 
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
+
+### "Feature Already Implemented" Work Items
+
+When a work item's Technical Design section says **"The feature is fully implemented"** and lists checked-off files, verify those files exist (`find /workspace/src -name "FileName.cs"`), confirm they match the spec, run `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` (0 warnings required) and `dotnet test src/UnitTests --filter "FullyQualifiedName~ClassName"`, then proceed directly to the self-tuning/commit/PR steps. Do NOT re-create files that already exist and match the spec — doing so wastes tokens and risks introducing divergence.
+
+### API-Layer-Only Features (Pure Utility Endpoints)
+
+For endpoints in `src/UI/Api/Controllers/` that have no Core/Domain/DataAccess changes:
+- Mirror the dual `[Route]` pattern: `"api/tools/<name>"` + `$"{ApiRoutes.VersionedApiPrefix}/tools/<name>"` (see `ToolsGuidGeneratorController`, `ToolsHashController`, `ToolsRandomController`).
+- Use `[ApiVersion("1.0")]`, `[AllowAnonymous]`, `[EnableRateLimiting(ApiRateLimiting.PolicyName)]`.
+- Return plain text via `ContentResult` with `ContentType = "text/plain; charset=utf-8"`.
+- Return structured errors via `Problem(detail: "...", statusCode: 400)`.
+- No DI needed for stateless generators — use `Random.Shared` (thread-safe) and static helpers.
+- Build verification: `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` — 0 warnings required.

@@ -1,3 +1,4 @@
+using System.Reflection;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -16,7 +17,8 @@ public partial class MainLayout : IAsyncDisposable
     {
         NavRailToggle,
         CopyrightFooter,
-        FooterNote
+        FooterNote,
+        SoftwareVersion
     }
 
     /// <summary>
@@ -24,11 +26,17 @@ public partial class MainLayout : IAsyncDisposable
     /// </summary>
     protected int CopyrightYear => DateTime.UtcNow.Year;
 
-    [Inject]
-    private IJSRuntime Js { get; set; } = default!;
+    /// <summary>
+    /// Informational version of the running entry assembly, e.g. "1.2.3+abc1234".
+    /// </summary>
+    protected string AppVersion =>
+        Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
 
     [Inject]
-    private ThemePreferenceService Theme { get; set; } = default!;
+    private IJSRuntime Js { get; set; } = null!;
+
+    [Inject]
+    private ThemePreferenceService Theme { get; set; } = null!;
 
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;

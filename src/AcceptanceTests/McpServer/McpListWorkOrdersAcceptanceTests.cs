@@ -102,11 +102,9 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
             new Dictionary<string, object?> { ["creatorUsername"] = "not-a-person" });
         unknownNumbers.ShouldBeEmpty();
         (await VisibleSearchNumbers()).ShouldBeSet(searchNumbersBeforeUnknown);
-        await using (var context = TestHost.NewDbContext())
-        {
-            (await context.Set<Employee>().AnyAsync(employee => employee.UserName == "not-a-person"))
-                .ShouldBeFalse();
-        }
+        await using var context = TestHost.NewDbContext();
+        (await context.Set<Employee>().AnyAsync(employee => employee.UserName == "not-a-person"))
+            .ShouldBeFalse();
 
         await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + seededNumbers.LovejoyDraft);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)))

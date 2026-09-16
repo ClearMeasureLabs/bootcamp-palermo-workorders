@@ -41,7 +41,7 @@ public class RemotableBus(HttpClient httpClient, string apiUrl) : IBus
             throw new NotSupportedException($"Message type {notification.GetType().Name} is not supported. Only IRemotableEvent is supported.");
         }
 
-        await PostMessage(remotableEvent);
+        _ = await PostMessage(remotableEvent);
     }
 
     private async Task<WebServiceMessage?> PostMessage(object payload)

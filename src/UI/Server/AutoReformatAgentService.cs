@@ -55,7 +55,7 @@ public class AutoReformatAgentService : BackgroundService
     {
         try
         {
-            await ReformatWorkOrdersAsync();
+            await ReformatWorkOrdersAsync(stoppingToken);
             await Task.Delay(TimeSpan.FromSeconds(5), _timeProvider, stoppingToken);
             return true;
         }
@@ -71,7 +71,7 @@ public class AutoReformatAgentService : BackgroundService
         }
     }
 
-    internal async Task ReformatWorkOrdersAsync()
+    internal async Task ReformatWorkOrdersAsync(CancellationToken cancellationToken = default)
     {
         var bus = _serviceScope.ServiceProvider.GetRequiredService<IBus>();
         var agent = _serviceScope.ServiceProvider.GetRequiredService<WorkOrderReformatAgent>();
@@ -83,7 +83,7 @@ public class AutoReformatAgentService : BackgroundService
 
             foreach (var workOrder in draftWorkOrders)
             {
-                await TryReformatSingleWorkOrderAsync(agent, workOrder);
+                await TryReformatSingleWorkOrderAsync(agent, workOrder, cancellationToken);
             }
         }
         catch (Exception ex)
@@ -99,14 +99,14 @@ public class AutoReformatAgentService : BackgroundService
         return await bus.Send(specification);
     }
 
-    private async Task TryReformatSingleWorkOrderAsync(WorkOrderReformatAgent agent, WorkOrder workOrder)
+    private async Task TryReformatSingleWorkOrderAsync(WorkOrderReformatAgent agent, WorkOrder workOrder, CancellationToken cancellationToken)
     {
         try
         {
             var result = await agent.ReformatWorkOrderAsync(workOrder);
             if (result != null)
             {
-                await ApplyReformatAsync(workOrder, result);
+                await ApplyReformatAsync(workOrder, result, cancellationToken);
             }
         }
         catch (Exception ex)
@@ -115,7 +115,7 @@ public class AutoReformatAgentService : BackgroundService
         }
     }
 
-    private async Task ApplyReformatAsync(WorkOrder workOrder, ReformatResult result)
+    private async Task ApplyReformatAsync(WorkOrder workOrder, ReformatResult result, CancellationToken cancellationToken)
     {
         using var scope = _serviceScope.ServiceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<DbContext>();
@@ -127,7 +127,7 @@ public class AutoReformatAgentService : BackgroundService
 
             dbContext.Attach(workOrder);
             dbContext.Update(workOrder);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("Successfully reformatted WorkOrder {WorkOrderNumber}", workOrder.Number);
         }
