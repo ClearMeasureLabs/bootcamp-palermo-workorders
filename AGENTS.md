@@ -130,3 +130,17 @@ For endpoints in `src/UI/Api/Controllers/` that have no Core/Domain/DataAccess c
 - Return structured errors via `Problem(detail: "...", statusCode: 400)`.
 - No DI needed for stateless generators — use `Random.Shared` (thread-safe) and static helpers.
 - Build verification: `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` — 0 warnings required.
+
+### Qodana Static Analysis — Known Conventions
+
+Qodana runs in CI with `failThreshold: 0`. Common P2 findings to pre-empt:
+
+**InconsistentNaming (`non_field_members_should_use_upper_camel_case`)**
+- Abbreviations in PascalCase method names must capitalize only the first letter: `EnUs` not `EnUS`, `Id` not `ID` (unless the framework demands it), etc.
+- Affects test method names too — rename consistently across all test files.
+
+**Nullability (`ReturnTypeCanBeNotNullable`, `ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract`)**
+- If a private/helper method always returns a non-null value, declare its return type as non-nullable (`T` not `T?`).
+- Update the corresponding local variable declarations to match.
+
+After any rename that touches test methods, verify no callers outside the file reference the old name (use `grep -r "OldName" src/`).
