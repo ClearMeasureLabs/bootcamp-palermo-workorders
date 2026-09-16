@@ -1,4 +1,4 @@
-// ReSharper disable MethodHasAsyncOverload -- Qodana P5 (#9440): Playwright/NUnit sync APIs are idiomatic; no async overload available
+// ReSharper disable MethodHasAsyncOverload -- Qodana P5 (#9440): synchronous TestContext.Out.WriteLine diagnostics/setup are intentional
 
 using System.Diagnostics;
 using System.Net;

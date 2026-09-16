@@ -79,8 +79,8 @@ exclude:
     paths:
       - src/AcceptanceTests/AcceptanceTestBase.cs
       - src/AcceptanceTests/BlazorWasmWarmUp.cs
-      # Qodana P5 (#9440): additional acceptance-test bootstrap/helper files using Playwright/NUnit
-      # sync APIs idiomatically; no async overload available. Enforced with file-level directives.
+      # Qodana P5 (#9440): TestContext.Out.WriteLine in these files has WriteLineAsync, but
+      # synchronous acceptance-test diagnostics/setup are intentional. File-level directives enforce.
       - src/AcceptanceTests/ServerFixture.cs
       - src/AcceptanceTests/ProcessCleanupHelper.cs
       - src/AcceptanceTests/McpServer/McpTestHelper.cs
@@ -97,12 +97,12 @@ exclude:
       - src/Core/Model/WorkOrder.cs
       - src/Core/Model/WorkOrderAttachment.cs
       - src/Core/Model/WorkOrderStatus.cs
-      - src/LlmGateway/ApplicationChatQuery.cs
+      - src/Core/Queries/ApplicationChatQuery.cs
       - src/UI.Shared/Models/WorkOrderManageModel.cs
-      - src/UI.Shared/Components/WorkOrderChat.razor
   - name: PropertyCanBeMadeInitOnly.Local
     paths:
       - src/UI.Shared/Components/WorkOrderChat.razor
+      - src/UI.Shared/Pages/ApplicationChat.razor
   # Qodana C6 (#9039): UnusedType.Global — these 10 FluentValidation AbstractValidator types are
   # discovered via assembly-scan/DI reflection, not by direct reference. Enforced with file-level
   # `// ReSharper disable once` directives (path exclude below is documentation-only, see #8986/C2).
