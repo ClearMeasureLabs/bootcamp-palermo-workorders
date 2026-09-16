@@ -13,6 +13,7 @@ public sealed class RateLimitedApiWebApplicationFactory : WebApplicationFactory<
 {
     private readonly string _sqlConnectionString;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public RateLimitedApiWebApplicationFactory(string? sqlConnectionString = null)
     {
         _sqlConnectionString = sqlConnectionString ?? WebApplicationTestingDatabase.SqliteSharedMemoryConnectionString;

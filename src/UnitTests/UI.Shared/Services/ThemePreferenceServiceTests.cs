@@ -80,6 +80,7 @@ public class ThemePreferenceServiceTests
             private readonly StubThemeJsRuntime _parent;
             private string _theme;
 
+            // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
             public StubThemeModule(string theme, StubThemeJsRuntime parent)
             {
                 _theme = theme;

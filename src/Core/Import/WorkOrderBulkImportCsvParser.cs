@@ -19,7 +19,7 @@ public static class WorkOrderBulkImportCsvParser
         return Parse(reader, cancellationToken);
     }
 
-    internal static WorkOrderBulkImportParseResult Parse(TextReader reader, CancellationToken cancellationToken = default)
+    private static WorkOrderBulkImportParseResult Parse(TextReader reader, CancellationToken cancellationToken = default)
     {
         var lineNumber = 0;
         string? headerLine = CsvLineReader.ReadLogicalLine(reader, ref lineNumber, cancellationToken);

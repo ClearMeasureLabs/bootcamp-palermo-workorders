@@ -10,11 +10,13 @@ public sealed class RequestBodyBufferingOptions
     /// <summary>
     /// When false, <see cref="RequestBodyBufferingExtensions.UseRequestBodyBuffering"/> does not enable body buffering.
     /// </summary>
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- required for IOptions<T> configuration binding
     public bool Enabled { get; set; } = true;
 
     /// <summary>
     /// In-memory threshold (bytes) passed to <c>EnableBuffering(bufferThreshold, bufferLimit)</c> before the framework may spill to disk.
     /// Values above <see cref="int.MaxValue"/> are clamped. Values below 1 are treated as 1. Body read limit uses <c>long.MaxValue</c>.
     /// </summary>
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- required for IOptions<T> configuration binding
     public long BufferThreshold { get; set; } = 1024 * 1024;
 }

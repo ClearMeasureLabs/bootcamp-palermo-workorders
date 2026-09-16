@@ -34,6 +34,7 @@ public class RealtimeNotificationHubTests
 
     private sealed class RecordingWebSocket : WebSocket
     {
+        // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
         public RecordingWebSocket(WebSocketState state) => State = state;
 
         public List<byte[]> SentPayloads { get; } = [];

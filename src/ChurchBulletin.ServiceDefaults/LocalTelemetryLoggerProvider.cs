@@ -10,6 +10,7 @@ public class LocalTelemetryLoggerProvider : ILoggerProvider, ISupportExternalSco
     private readonly LocalTelemetryFileWriter _fileWriter;
     private IExternalScopeProvider? _scopeProvider;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public LocalTelemetryLoggerProvider(LocalTelemetryFileWriter fileWriter)
     {
         _fileWriter = fileWriter;
@@ -30,6 +31,7 @@ public class LocalTelemetryLoggerProvider : ILoggerProvider, ISupportExternalSco
         private readonly string _categoryName;
         private readonly IExternalScopeProvider? _scopeProvider;
 
+        // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
         public LocalTelemetryLogger(LocalTelemetryFileWriter fileWriter, string categoryName, IExternalScopeProvider? scopeProvider)
         {
             _fileWriter = fileWriter;

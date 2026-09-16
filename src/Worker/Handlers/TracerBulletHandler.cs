@@ -11,6 +11,7 @@ public class TracerBulletHandler : IHandleMessages<TracerBulletCommand>
 {
     private readonly ILogger<TracerBulletHandler> _logger;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public TracerBulletHandler(ILogger<TracerBulletHandler> logger)
     {
         _logger = logger;

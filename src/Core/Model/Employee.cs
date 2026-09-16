@@ -10,6 +10,7 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
         LastName = null!;
     }
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public Employee(string userName, string firstName, string lastName, string emailAddress)
     {
         UserName = userName;
