@@ -1,3 +1,5 @@
+// ReSharper disable MethodHasAsyncOverload -- Qodana P5 (#9440): synchronous TestContext.Out.WriteLine diagnostics/setup are intentional
+
 using ClearMeasure.Bootcamp.LlmGateway;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;

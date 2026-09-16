@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿// ReSharper disable PropertyCanBeMadeInitOnly.Global -- Qodana P5 (#9440): NHibernate proxy / System.Text.Json set-by-convention requires mutable setters
+
+using System.Text.Json;
 
 namespace ClearMeasure.Bootcamp.Core.Messaging;
 
