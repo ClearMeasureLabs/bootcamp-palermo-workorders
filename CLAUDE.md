@@ -190,6 +190,35 @@ CRAP gate (crap4dotnet): `pwsh scripts/crap/run-crap-audit.ps1 -SkipTests -FailO
 
 **Qodana static analysis:** findings are tracked in `qodana.sarif.json`. When fixing Qodana P1 mechanical cleanups, read the SARIF to get the exact snippet context — SARIF line numbers may differ from the current file when the file has changed since the baseline scan. Use `python3 -c "import json; ..."` to extract the `contextRegion.snippet` for each finding. After all fixes, run `dotnet build ... -warnaserror` (0 warnings required) before committing.
 
+**Qodana baseline refresh:** After a remediation batch is merged and CI has run a full Qodana scan, download the new `qodana.sarif.json` artifact from the CI run and replace the file at the repo root. Do NOT manually edit the fingerprints — always replace from a real scan output. Removing a finding from the baseline WITHOUT fixing it causes `failThreshold: 0` to fire (ABSENT counts as a new finding). Safe workflow: fix code → commit → CI green → download artifact → replace `qodana.sarif.json` → commit baseline.
+
+**Left-baselined by design (~75 findings):** The following inspection IDs are intentionally retained in `qodana.sarif.json`. Fixing them would require mass rewrites with negative ROI. Do NOT remove these baseline entries without first fixing the underlying code.
+
+| Inspection ID | Count | Reason left |
+|---|---|---|
+| `ConvertToPrimaryConstructor` | 26 | Mass rewrite; style only; breaks constructor-injection readability |
+| `AutoPropertyCanBeMadeGetOnly.Global` | 11 | NHibernate / STJ / test-object-init requires mutable setters |
+| `UseNameOfInsteadOfToString` | 4 | Minor; fix batch TBD |
+| `PropertyCanBeMadeInitOnly.Local` | 4 | NHibernate/STJ set-by-convention requires mutable setters |
+| `MergeIntoPattern` | 3 | Style; low value |
+| `MethodSupportsCancellation` | 3 | Requires API-surface change; deferred |
+| `ParameterOnlyUsedForPreconditionCheck.Local` | 3 | Style; low value |
+| `PreferConcreteValueOverDefault` | 3 | Style; low value |
+| `ArrangeNamespaceBody` | 3 | Formatter style; no semantic change |
+| `AsyncMethodWithoutAwait` | 2 | Override stubs required by interface contracts |
+| `FieldCanBeMadeReadOnly.Global` | 2 | Reflection/NHibernate access |
+| `RedundantUsingDirective` | 2 | Already excluded in prior batches; residual |
+| `VariableHidesOuterVariable` | 2 | Style; low value |
+| `InconsistentlySynchronizedField` | 1 | Deferred to concurrency review |
+| `PartialTypeWithSinglePart` | 1 | Blazor codegen pattern |
+| `RedundantStringInterpolation` | 1 | Style; trivial |
+| `RedundantTypeArgumentsInsideNameof` | 1 | Style; trivial |
+| `RedundantVerbatimStringPrefix` | 1 | Style; trivial |
+| `TooWideLocalVariableScope` | 1 | Style; low value |
+| `UsingStatementResourceInitialization` | 1 | Style; low value |
+
+The remaining baselined findings (`InconsistentNaming` ×4, `MemberCanBePrivate.Global` ×2, `ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract` ×1, `Html.AttributeValueNotResolved` ×1, `ReturnTypeCanBeNotNullable` ×1, `CSharpWarnings::CS0618` ×1) are targeted in dedicated sibling work items and will be removed from the baseline when those fixes are merged.
+
 ## Feature Loop
 
 Work items live on the ClearMeasureLabs project board: https://github.com/orgs/ClearMeasureLabs/projects/1
