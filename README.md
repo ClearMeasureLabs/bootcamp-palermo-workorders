@@ -10,6 +10,7 @@ This codebase serves as both a working application and a teaching reference for 
 2. Run `dotnet build` from the repository root.
 3. Run the AppHost project `src/ChurchBulletin.AppHost` to start the application.
 4. Read `docs/glossary-ops.md` for the operations terms used on the board.
+5. For a full local Bootcamp run, see [Quick start — Run locally](#quick-start--run-locally) below.
 
 ## Solution Structure
 
