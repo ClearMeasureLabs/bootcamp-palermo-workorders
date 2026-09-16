@@ -6,7 +6,7 @@ namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 public abstract record StateCommandBase(WorkOrder WorkOrder, Employee CurrentUser) : IStateCommand
 {
     public abstract WorkOrderStatus GetBeginStatus();
-    public abstract WorkOrderStatus GetEndStatus();
+    protected abstract WorkOrderStatus GetEndStatus();
     protected abstract bool UserCanExecute(Employee currentUser);
     public abstract string TransitionVerbPresentTense { get; }
     public abstract string TransitionVerbPastTense { get; }

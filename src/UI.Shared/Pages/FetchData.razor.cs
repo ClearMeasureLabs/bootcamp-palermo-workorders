@@ -9,7 +9,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 [Route("/fetchdata")]
 public partial class FetchData : AppComponentBase
 {
-    public WeatherForecast[]? Model { get; set; }
+    public WeatherForecast[]? Model { get; private set; }
 
     [Inject] public IBus? ApplicationBus { get; set; }
 

@@ -17,16 +17,16 @@ public class ServerFixture
             Path.DirectorySeparatorChar + "Release" + Path.DirectorySeparatorChar)
             ? "Release"
             : "Debug";
-    public static bool StartLocalServer { get; set; } = true;
-    public static int SlowMo { get; set; }
+    public static bool StartLocalServer { get; private set; } = true;
+    public static int SlowMo { get; private set; }
     public static string ApplicationBaseUrl { get; private set; } = string.Empty;
     private Process? _serverProcess;
     private Process? _workerProcess;
-    public static bool StartWorker { get; set; } = true;
+    private static bool StartWorker { get; set; } = true;
     public static bool WorkerStarted { get; private set; }
-    public static bool SkipScreenshotsForSpeed { get; set; } = true;
-    public static bool HeadlessTestBrowser { get; set; } = true;
-    public static bool DatabaseInitialized { get; private set; }
+    public static bool SkipScreenshotsForSpeed { get; private set; } = true;
+    public static bool HeadlessTestBrowser { get; private set; } = true;
+    private static bool DatabaseInitialized { get; set; }
     private static readonly Lock DatabaseLock = new();
     
     /// <summary>
@@ -496,7 +496,7 @@ public class ServerFixture
         response.EnsureSuccessStatusCode();
     }
 
-    internal static void InitializeDatabaseOnce()
+    private static void InitializeDatabaseOnce()
     {
         if (DatabaseInitialized) return;
 

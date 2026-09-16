@@ -15,7 +15,7 @@ public record AssignedToCancelledCommand(WorkOrder WorkOrder, Employee CurrentUs
         return WorkOrderStatus.Assigned;
     }
 
-    public override WorkOrderStatus GetEndStatus()
+    protected override WorkOrderStatus GetEndStatus()
     {
         return WorkOrderStatus.Cancelled;
     }

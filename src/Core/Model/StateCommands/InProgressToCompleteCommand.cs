@@ -15,7 +15,7 @@ CurrentUser)
         return WorkOrderStatus.InProgress;
     }
 
-    public override WorkOrderStatus GetEndStatus()
+    protected override WorkOrderStatus GetEndStatus()
     {
         return WorkOrderStatus.Complete;
     }

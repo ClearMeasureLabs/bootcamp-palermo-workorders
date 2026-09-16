@@ -143,4 +143,17 @@ Qodana runs in CI with `failThreshold: 0`. Common P2 findings to pre-empt:
 - If a private/helper method always returns a non-null value, declare its return type as non-nullable (`T` not `T?`).
 - Update the corresponding local variable declarations to match.
 
+**Visibility / MemberCanBePrivate (`MemberCanBePrivate.Global`, `MemberCanBeProtected.Global`)**
+- Before narrowing any property or method, run these **four** checks, in order:
+  1. **Blazor `[Parameter]`** — any property decorated with `[Parameter]` or `[SupplyParameterFromQuery]` must stay `public`.  Razor templates in the same partial class can access `private` members fine; only cross-component parameters need `public`.
+  2. **JSON serialization** — `System.Text.Json` (used by `WebServiceMessage` remoting) cannot populate `private set` properties during deserialization. Any property on a class that participates in the remoting round-trip (`IRemotableRequest`) must keep `public set`. Verify with the `ShouldSerialize` / `AssertRemotable` unit test in `RemotableRequestTests`.
+  3. **Cross-assembly callers** — `grep -r "MemberName" src/` before narrowing. A `public static` test-helper called from `IntegrationTests` or other test projects must stay `public`; a helper only used within the same class can be `private`.
+  4. **Object-initializer setters** — `new SomeType { Property = value }` syntax requires at minimum `internal set` (or `public set`); `private set` breaks this. Search for `{ Property =` across the solution before narrowing.
+- For members that cannot be narrowed due to the above constraints, add a single-line suppression: `// ReSharper disable once MemberCanBePrivate.Global -- <reason>`.
+- **Private field naming**: When narrowing a `public` field to `private`, rename it to `_camelCase` (underscore prefix) to satisfy `InconsistentNaming`. Update ALL references in both the `.cs` file and the `.razor` template (they are the same partial class and share the name).
+- **Private auto-property setters**: When narrowing visibility, if the setter is never assigned after construction, change `{ get; set; }` to `{ get; }` to avoid `AutoPropertyCanBeMadeGetOnly.Local`. If the property was previously `protected virtual` (`.Global` in baseline), also remove that baseline entry — it becomes absent and fails the gate.
+- **`virtual` keyword**: Removing `virtual` from a `protected virtual` member is often required when narrowing to `private` — `private virtual` is illegal and `private` overrides are invisible to subclasses.
+- **After all visibility changes**: Update `qodana.sarif.json` baseline to remove entries for every finding that is now fixed or suppressed. Absent findings (in baseline but not in scan) count against `failThreshold: 0` just like new findings. Remove them using a Python script that filters by `partialFingerprints.equalIndicator/v1`. Keep only findings that are genuinely still present in the code (e.g., cross-assembly public helpers that cannot be narrowed).
+- After all changes: `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` must pass with 0 warnings, followed by the full `UnitTests` run.
+
 After any rename that touches test methods, verify no callers outside the file reference the old name (use `grep -r "OldName" src/`).
