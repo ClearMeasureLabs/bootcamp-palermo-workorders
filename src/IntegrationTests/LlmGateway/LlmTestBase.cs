@@ -47,7 +47,7 @@ public abstract class LlmTestBase : IntegratedTestBase
 
     private static bool IsAzureOpenAiRateLimited(Exception ex)
     {
-        for (var e = ex; e != null; e = e.InnerException)
+        for (var e = ex; e is not null; e = e.InnerException)
         {
             if (e is HttpRequestException { StatusCode: HttpStatusCode.TooManyRequests })
             {

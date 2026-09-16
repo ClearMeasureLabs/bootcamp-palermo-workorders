@@ -9,7 +9,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 public partial class Settings : AppComponentBase
 {
     [Inject]
-    private ThemePreferenceService Theme { get; set; } = default!;
+    private ThemePreferenceService Theme { get; set; } = null!;
 
     public enum Elements
     {
