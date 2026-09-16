@@ -1,5 +1,7 @@
 // ReSharper disable PropertyCanBeMadeInitOnly.Global -- Qodana P5 (#9440): NHibernate proxy / System.Text.Json set-by-convention requires mutable setters
 
+using ClearMeasure.Bootcamp.Core.Services;
+
 namespace ClearMeasure.Bootcamp.Core.Model;
 
 public class WorkOrder : EntityBase<WorkOrder>
@@ -99,6 +101,19 @@ public class WorkOrder : EntityBase<WorkOrder>
     {
         return Status == WorkOrderStatus.Draft;
     }
+
+    /// <summary>
+    /// Returns the urgency classification for this work order's due date relative to today
+    /// in America/Chicago.
+    /// </summary>
+    public DueDateUrgency GetDueDateUrgency() =>
+        DueDateUrgencyCalculator.Calculate(this, TimeProvider.System);
+
+    /// <summary>
+    /// Returns <c>true</c> when this work order's due date has passed and the work order
+    /// is still open.
+    /// </summary>
+    public bool IsOverdue() => GetDueDateUrgency() == DueDateUrgency.Overdue;
 
     public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();
 }

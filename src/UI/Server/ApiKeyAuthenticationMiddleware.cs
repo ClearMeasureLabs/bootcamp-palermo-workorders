@@ -94,6 +94,9 @@ internal static class ApiPublicPathRules
         "tools/hash",
         "tools/timestamp-converter",
         "tools/guid-generator",
+        "tools/word-count",
+        "tools/work-order-statuses",
+        "tools/due-date-check",
         "health",
         "health/detailed"
     };
