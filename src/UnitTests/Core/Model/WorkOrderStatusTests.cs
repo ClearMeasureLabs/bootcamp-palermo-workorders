@@ -116,9 +116,11 @@ public class WorkOrderStatusTests
 
         (left == right).ShouldBeTrue();
         (draft == null).ShouldBeFalse();
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract -- intentional: tests null-operand handling of operator==
         (null == draft).ShouldBeFalse();
     }
 
+    // ReSharper disable once ReturnTypeCanBeNotNullable -- returnNull=true path returns null; nullable return is intentional
     private static WorkOrderStatus? DraftOrNull(bool returnNull) =>
         returnNull ? null : WorkOrderStatus.Draft;
 

@@ -107,6 +107,7 @@ public class WorkOrderManageEventBusNotifyTests
 
     private class StubWorkOrderManageBus : Bus
     {
+        // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
         public StubWorkOrderManageBus() : base(null!)
         {
         }

@@ -80849,6 +80849,59 @@
               ".NET 10.0"
             ]
           }
+        },
+        {
+          "ruleId": "CSharpWarnings::CS0618",
+          "ruleIndex": 131,
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "CS0618: Property 'Microsoft.AspNetCore.Components.Routing.Router.NotFound()' is obsolete: 'NotFound is deprecated. Use NotFoundPage instead.'"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Client/App.razor",
+                  "uriBaseId": "solutionDir",
+                  "index": 13
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 9,
+                  "endLine": 22,
+                  "endColumn": 20,
+                  "charOffset": 994,
+                  "charLength": 231,
+                  "snippet": {
+                    "text": "<NotFound>\n            <PageTitle>Not found</PageTitle>\n            <LayoutView Layout=\"@typeof(MainLayout)\">\n                <p role=\"alert\">Sorry, there's nothing at this address.</p>\n            </LayoutView>\n        </NotFound>"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 23,
+                  "endColumn": 14,
+                  "charOffset": 884,
+                  "charLength": 355,
+                  "snippet": {
+                    "text": "           release fixes that regression; then this comment and the obsolete usage can be removed. *@\n        <NotFound>\n            <PageTitle>Not found</PageTitle>\n            <LayoutView Layout=\"@typeof(MainLayout)\">\n                <p role=\"alert\">Sorry, there's nothing at this address.</p>\n            </LayoutView>\n        </NotFound>\n    </Router>"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "91D3E906EEF0BCBF232514B6F05A59278DDF82DF9461FEF40D8DB8C634A631F6"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "High",
+            "tags": [
+              "Razor Component",
+              ".NET 10.0"
+            ]
+          }
         }
       ],
       "automationDetails": {

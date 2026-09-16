@@ -20,6 +20,7 @@ namespace ClearMeasure.Bootcamp.IntegrationTests;
 
 public static class TestHost
 {
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- mutable by design; integration tests may override this time for determinism
     public static DateTimeOffset TestTime { get; set; } = new(2000, 1, 1, 1, 1, 1, TimeSpan.Zero);
     private static bool _dependenciesRegistered;
     private static readonly Lock DependenciesRegistrationLock = new();

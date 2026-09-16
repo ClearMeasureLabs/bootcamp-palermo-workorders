@@ -2,6 +2,6 @@
 
 public class SelectListItem(string value, string text)
 {
-    public string Value { get; init; } = value;
-    public string Text { get; init; } = text;
+    public string Value { get; } = value;
+    public string Text { get; } = text;
 }
