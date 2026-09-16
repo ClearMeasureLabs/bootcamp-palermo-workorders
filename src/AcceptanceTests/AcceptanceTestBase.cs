@@ -35,8 +35,8 @@ public abstract class AcceptanceTestBase
 {
     private static readonly ConcurrentDictionary<string, TestState> TestStates = new();
     
-    protected virtual bool? Headless { get; set; } = ServerFixture.HeadlessTestBrowser;
-    protected bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
+    private bool? Headless { get; set; } = ServerFixture.HeadlessTestBrowser;
+    private bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
     protected IBus Bus => TestHost.GetRequiredService<IBus>();
 
     protected static async Task SkipIfNoChatClient()
