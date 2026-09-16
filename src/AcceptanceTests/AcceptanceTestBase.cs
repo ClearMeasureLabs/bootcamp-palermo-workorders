@@ -37,7 +37,7 @@ public abstract class AcceptanceTestBase
     
     protected virtual bool? Headless { get; set; } = ServerFixture.HeadlessTestBrowser;
     protected virtual bool SkipScreenshotsForSpeed { get; set; } = ServerFixture.SkipScreenshotsForSpeed;
-    public IBus Bus => TestHost.GetRequiredService<IBus>();
+    protected IBus Bus => TestHost.GetRequiredService<IBus>();
 
     protected static async Task SkipIfNoChatClient()
     {

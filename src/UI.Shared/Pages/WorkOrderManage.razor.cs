@@ -41,14 +41,14 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         DueDateUrgencyCalculator.ScreenReaderText(CurrentDueDateUrgency);
 
     public WorkOrderManageModel Model { get; set; } = new();
-    public List<SelectListItem> UserOptions { get; set; } = new();
-    public IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
-    public string? SelectedCommand { get; set; }
+    private List<SelectListItem> UserOptions { get; set; } = new();
+    private IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
+    private string? SelectedCommand { get; set; }
 
     [Parameter] public string? Id { get; set; }
 
     [SupplyParameterFromQuery] public string? Mode { get; set; }
-    public EditMode CurrentMode => Mode?.ToLower() == "edit" ? EditMode.Edit : EditMode.New;
+    private EditMode CurrentMode => Mode?.ToLower() == "edit" ? EditMode.Edit : EditMode.New;
 
     protected override async Task OnInitializedAsync()
     {

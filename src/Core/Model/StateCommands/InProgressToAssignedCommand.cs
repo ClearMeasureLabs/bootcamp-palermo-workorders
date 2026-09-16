@@ -10,7 +10,7 @@ public record InProgressToAssignedCommand(WorkOrder WorkOrder, Employee CurrentU
         return WorkOrderStatus.InProgress;
     }
 
-    public override WorkOrderStatus GetEndStatus()
+    protected override WorkOrderStatus GetEndStatus()
     {
         return WorkOrderStatus.Assigned;
     }

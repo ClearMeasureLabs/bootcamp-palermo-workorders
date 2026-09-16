@@ -143,4 +143,13 @@ Qodana runs in CI with `failThreshold: 0`. Common P2 findings to pre-empt:
 - If a private/helper method always returns a non-null value, declare its return type as non-nullable (`T` not `T?`).
 - Update the corresponding local variable declarations to match.
 
+**Visibility / MemberCanBePrivate (`MemberCanBePrivate.Global`, `MemberCanBeProtected.Global`)**
+- Before narrowing any property or method, run these **four** checks, in order:
+  1. **Blazor `[Parameter]`** — any property decorated with `[Parameter]` or `[SupplyParameterFromQuery]` must stay `public`.  Razor templates in the same partial class can access `private` members fine; only cross-component parameters need `public`.
+  2. **JSON serialization** — `System.Text.Json` (used by `WebServiceMessage` remoting) cannot populate `private set` properties during deserialization. Any property on a class that participates in the remoting round-trip (`IRemotableRequest`) must keep `public set`. Verify with the `ShouldSerialize` / `AssertRemotable` unit test in `RemotableRequestTests`.
+  3. **Cross-assembly callers** — `grep -r "MemberName" src/` before narrowing. A `public static` test-helper called from `IntegrationTests` or other test projects must stay `public`; a helper only used within the same class can be `private`.
+  4. **Object-initializer setters** — `new SomeType { Property = value }` syntax requires at minimum `internal set` (or `public set`); `private set` breaks this. Search for `{ Property =` across the solution before narrowing.
+- For members that cannot be narrowed due to the above constraints, add a single-line suppression: `// ReSharper disable once MemberCanBePrivate.Global -- <reason>`.
+- After all changes: `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` must pass with 0 warnings, followed by the full `UnitTests` run.
+
 After any rename that touches test methods, verify no callers outside the file reference the old name (use `grep -r "OldName" src/`).

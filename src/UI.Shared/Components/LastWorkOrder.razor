@@ -11,7 +11,7 @@
 
 @code {
 
-    public WorkOrder? WorkOrderLastChanged { get; set; }
+    private WorkOrder? WorkOrderLastChanged { get; set; }
 
     public void Handle(WorkOrderChangedEvent theEvent)
     {

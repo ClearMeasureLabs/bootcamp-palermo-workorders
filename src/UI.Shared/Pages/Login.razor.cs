@@ -17,8 +17,8 @@ public partial class Login : AppComponentBase
     [Inject] public IHostEnvironment? HostEnvironment { get; set; }
 
     public readonly LoginModel LoginModelValue = new();
-    public string? ErrorMessage;
-    public Employee[] Employees = Array.Empty<Employee>();
+    private string? ErrorMessage;
+    private Employee[] Employees = Array.Empty<Employee>();
     // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access
     public string AppVersion { get; private set; } = string.Empty;
     // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access

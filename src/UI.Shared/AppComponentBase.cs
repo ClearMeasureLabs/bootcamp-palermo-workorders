@@ -6,7 +6,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared;
 
 public class AppComponentBase : MvcComponentBase
 {
-    public IUiBus EventBus => base.Bus;
+    protected IUiBus EventBus => base.Bus;
 
     [Inject] public new IBus Bus { get; set; } = null!;
 }
