@@ -113,6 +113,7 @@ public class WorkOrderStatusTests
     {
         WorkOrderStatus? left = null;
         WorkOrderStatus? right = null;
+        ReturnNullForNullOperandTest = Guid.NewGuid() == Guid.Empty;
         WorkOrderStatus? draft = DraftOrNull(ReturnNullForNullOperandTest);
 
         (left == right).ShouldBeTrue();
