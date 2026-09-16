@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -65,5 +66,18 @@ public class ToolsDueDateCheckEndpointIntegrationTests
         var response = await _client!.GetAsync(url);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task Should_Return200WithoutApiKey_When_MiddlewareEnabled()
+    {
+        await using var factory = new ApiKeyProtectedWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var unversioned = await client.GetAsync("/api/tools/due-date-check?date=2000-01-01");
+        unversioned.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var versioned = await client.GetAsync("/api/v1.0/tools/due-date-check?date=2000-01-01");
+        versioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 }

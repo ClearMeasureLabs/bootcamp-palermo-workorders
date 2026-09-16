@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Mime;
 using Asp.Versioning;
 using ClearMeasure.Bootcamp.Core.Model;
@@ -16,7 +17,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [Route("api/tools/due-date-check")]
 [Route($"{ApiRoutes.VersionedApiPrefix}/tools/due-date-check")]
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
-public class ToolsDueDateCheckController : ControllerBase
+public class ToolsDueDateCheckController(TimeProvider timeProvider) : ControllerBase
 {
     /// <summary>
     /// Returns the <see cref="DueDateUrgency"/> for the supplied <paramref name="date"/> relative
@@ -37,7 +38,7 @@ public class ToolsDueDateCheckController : ControllerBase
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
-        if (!DateOnly.TryParseExact(date.Trim(), "yyyy-MM-dd", out var parsedDate))
+        if (!DateOnly.TryParseExact(date.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
         {
             return Problem(
                 detail: $"Invalid date '{date}'. Expected format: YYYY-MM-DD (e.g. 2025-01-15).",
@@ -47,7 +48,7 @@ public class ToolsDueDateCheckController : ControllerBase
         var urgency = DueDateUrgencyCalculator.Calculate(
             parsedDate,
             WorkOrderStatus.Draft,
-            TimeProvider.System);
+            timeProvider);
 
         return Ok(new DueDateCheckResponse(urgency.ToString()));
     }

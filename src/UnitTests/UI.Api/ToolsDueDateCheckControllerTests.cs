@@ -29,6 +29,22 @@ public class ToolsDueDateCheckControllerTests
     }
 
     [Test]
+    public void Get_Should_ReturnDueToday_When_DateIsToday()
+    {
+        // Use a fixed clock so the test is deterministic (avoids midnight boundary flicker).
+        var today = new DateOnly(2025, 6, 15);
+        var fixedNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        var fixedClock = new FixedTimeProvider(fixedNow);
+        var controller = CreateController(fixedClock);
+
+        var result = controller.Get(today.ToString("yyyy-MM-dd"));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<DueDateCheckResponse>();
+        payload.Urgency.ShouldBe("DueToday");
+    }
+
+    [Test]
     public void Get_Should_Return400_When_DateMissing()
     {
         var nullResult = CreateController().Get(null);
@@ -64,9 +80,17 @@ public class ToolsDueDateCheckControllerTests
         objectResult.Value.ShouldBeOfType<ProblemDetails>();
     }
 
-    private static ToolsDueDateCheckController CreateController() =>
-        new()
+    private static ToolsDueDateCheckController CreateController(TimeProvider? timeProvider = null) =>
+        new(timeProvider ?? TimeProvider.System)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
+}
+
+/// <summary>
+/// Stub <see cref="TimeProvider"/> that returns a fixed UTC instant for deterministic tests.
+/// </summary>
+file sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
+{
+    public override DateTimeOffset GetUtcNow() => utcNow;
 }
