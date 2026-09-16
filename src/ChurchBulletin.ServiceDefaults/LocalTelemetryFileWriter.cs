@@ -6,7 +6,6 @@ using System.Diagnostics.Metrics;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
 
 namespace ChurchBulletin.ServiceDefaults;
 

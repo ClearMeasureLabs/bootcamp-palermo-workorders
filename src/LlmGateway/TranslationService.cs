@@ -3,7 +3,7 @@ using Microsoft.Extensions.AI;
 
 namespace ClearMeasure.Bootcamp.LlmGateway;
 
-public partial class TranslationService(ChatClientFactory chatClientFactory) : ITranslationService
+public class TranslationService(ChatClientFactory chatClientFactory) : ITranslationService
 {
     public async Task<string> TranslateAsync(string text, string targetLanguageCode)
     {

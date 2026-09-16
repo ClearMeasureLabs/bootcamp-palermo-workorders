@@ -33,10 +33,10 @@ public partial class MainLayout : IAsyncDisposable
         Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
 
     [Inject]
-    private IJSRuntime Js { get; set; } = default!;
+    private IJSRuntime Js { get; set; } = null!;
 
     [Inject]
-    private ThemePreferenceService Theme { get; set; } = default!;
+    private ThemePreferenceService Theme { get; set; } = null!;
 
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;

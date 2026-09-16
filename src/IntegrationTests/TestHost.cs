@@ -14,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NServiceBus.Features;
-using System.Threading;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests;
 

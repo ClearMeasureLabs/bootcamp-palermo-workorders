@@ -360,7 +360,7 @@ public class McpWorkOrderToolTests
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-002", "AssignedToCancelledCommand", "user1");
 
         await using var context2 = TestHost.GetRequiredService<DbContext>();
-        var wo = context2.Set<WorkOrder>().Single(wo => wo.Number == "WO-002");
+        var wo = context2.Set<WorkOrder>().Single(w => w.Number == "WO-002");
 
         wo.Status.ShouldBe(WorkOrderStatus.Cancelled);
         result.ShouldContain("Cancelled");
@@ -390,7 +390,7 @@ public class McpWorkOrderToolTests
         var result = await WorkOrderTools.ExecuteWorkOrderCommand(bus, "WO-778", "InProgressToAssignedCommand", "gwillie");
 
         await using var context2 = TestHost.GetRequiredService<DbContext>();
-        var wo = context2.Set<WorkOrder>().Single(wo => wo.Number == "WO-778");
+        var wo = context2.Set<WorkOrder>().Single(w => w.Number == "WO-778");
 
         wo.Status.ShouldBe(WorkOrderStatus.Assigned);
         result.ShouldContain("Assigned");
