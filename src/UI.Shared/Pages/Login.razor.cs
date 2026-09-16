@@ -17,15 +17,15 @@ public partial class Login : AppComponentBase
     [Inject] public IHostEnvironment? HostEnvironment { get; set; }
 
     public readonly LoginModel LoginModelValue = new();
-    private string? ErrorMessage;
-    private Employee[] Employees = Array.Empty<Employee>();
+    private string? _errorMessage;
+    private Employee[] _employees = Array.Empty<Employee>();
     // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access
     public string AppVersion { get; private set; } = string.Empty;
     // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access
     public string AppEnvironment { get; private set; } = string.Empty;
     // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access
     public string? WelcomeFirstName =>
-        Employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username)?.FirstName;
+        _employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username)?.FirstName;
 
     private Task _employeesLoadTask = Task.CompletedTask;
 
@@ -46,11 +46,11 @@ public partial class Login : AppComponentBase
     {
         try
         {
-            Employees = await Bus.Send(new EmployeeGetAllQuery());
+            _employees = await Bus.Send(new EmployeeGetAllQuery());
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Error loading employees: " + ex.Message;
+            _errorMessage = "Error loading employees: " + ex.Message;
         }
     }
 
@@ -75,7 +75,7 @@ public partial class Login : AppComponentBase
     {
         if (string.IsNullOrEmpty(LoginModelValue.Username))
         {
-            ErrorMessage = "Please select an employee";
+            _errorMessage = "Please select an employee";
             return;
         }
 
@@ -84,7 +84,7 @@ public partial class Login : AppComponentBase
 
     private async Task AuthenticateAndNavigate()
     {
-        var selectedEmployee = Employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username);
+        var selectedEmployee = _employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username);
         if (selectedEmployee != null)
         {
             await AuthStateProvider!.Login(LoginModelValue.Username);
@@ -94,7 +94,7 @@ public partial class Login : AppComponentBase
         }
         else
         {
-            ErrorMessage = "Invalid employee selection";
+            _errorMessage = "Invalid employee selection";
         }
     }
 

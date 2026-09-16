@@ -17,7 +17,7 @@
                     <label for="@Elements.User">Select Church Member</label>
                     <InputSelect id="@Elements.User" data-testid="@Elements.User" @bind-Value="LoginModelValue.Username" class="form-control" autofocus>
                         <option value="">-- Select a parishioner or staff member --</option>
-                        @foreach (var employee in Employees)
+                        @foreach (var employee in _employees)
                         {
                             <option value="@employee.UserName">@GetLoginDropdownDisplayName(employee)</option>
                         }
@@ -31,9 +31,9 @@
                     <label class="form-check-label" for="rememberMySelection">Remember my selection</label>
                 </div>
 
-                @if (!string.IsNullOrEmpty(ErrorMessage))
+                @if (!string.IsNullOrEmpty(_errorMessage))
                 {
-                    <div class="alert alert-danger">@ErrorMessage</div>
+                    <div class="alert alert-danger">@_errorMessage</div>
                 }
 
                 @if (!string.IsNullOrEmpty(WelcomeFirstName))
