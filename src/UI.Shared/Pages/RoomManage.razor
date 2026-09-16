@@ -1,0 +1,69 @@
+@page "/rooms"
+@page "/rooms/manage"
+
+<h2>Rooms</h2>
+
+<button data-testid="@Elements.NewRoomButton" class="btn btn-primary mb-3" @onclick="ShowNewRoomForm">New Room</button>
+
+@if (_showForm)
+{
+    <EditForm Model="@_formModel" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+        <div class="form-group mb-3">
+            <label for="RoomName" class="form-label">Name:</label>
+            <InputText data-testid="@Elements.NameInput" id="RoomName" @bind-Value="_formModel.Name" class="form-control"/>
+        </div>
+        <button data-testid="@Elements.SaveButton" type="submit" class="btn btn-primary">Save</button>
+        <button data-testid="@Elements.CancelButton" type="button" class="btn btn-secondary ms-2" @onclick="CancelForm">Cancel</button>
+    </EditForm>
+}
+
+@if (_confirmDeleteId.HasValue)
+{
+    <div class="alert alert-warning" data-testid="@Elements.DeleteConfirmation">
+        <p>Are you sure you want to delete this room?</p>
+        <button data-testid="@Elements.ConfirmDeleteButton" class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
+        <button data-testid="@Elements.CancelDeleteButton" class="btn btn-secondary ms-2" @onclick="CancelDelete">Cancel</button>
+    </div>
+}
+
+<table class="table" data-testid="@Elements.RoomsTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var room in _rooms)
+        {
+            <tr data-testid="@Elements.RoomRow">
+                <td data-testid="@Elements.RoomName">@room.Name</td>
+                <td>
+                    <button data-testid="@Elements.EditButton" class="btn btn-sm btn-outline-primary me-2" @onclick="@(() => ShowEditRoomForm(room))">Edit</button>
+                    <button data-testid="@Elements.DeleteButton" class="btn btn-sm btn-outline-danger" @onclick="@(() => ShowDeleteConfirmation(room.Id))">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code
+{
+    public enum Elements
+    {
+        NewRoomButton,
+        NameInput,
+        SaveButton,
+        CancelButton,
+        RoomsTable,
+        RoomRow,
+        RoomName,
+        EditButton,
+        DeleteButton,
+        DeleteConfirmation,
+        ConfirmDeleteButton,
+        CancelDeleteButton
+    }
+}

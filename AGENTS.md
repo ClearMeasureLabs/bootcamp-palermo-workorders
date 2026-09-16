@@ -125,6 +125,27 @@ If all listed files exist and compile cleanly, the only remaining tasks are qual
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
 
+### MediatR void commands — use `IRequest<Unit>` not `IRequest`
+
+`IBus` only exposes `Send<TResponse>(IRequest<TResponse>)` and `Send(object)`. A command that inherits bare `IRequest` (void) dispatches through `Send(object)`, which calls `_mediator.Send(object)`. In unit-test stubs that inherit `Bus(null!)` this path crashes because `_mediator` is null.
+
+**Always use `IRequest<Unit>` for commands with no meaningful return value** and return `Unit.Value` from the handler. The handler interface becomes `IRequestHandler<TCommand, Unit>`. This routes through `Send<Unit>` in all contexts, including bUnit stubs.
+
+```csharp
+// Core command
+public class DeleteRoomCommand : IRequest<Unit> { ... }
+
+// DataAccess handler
+public class RoomCommandHandler : IRequestHandler<DeleteRoomCommand, Unit>
+{
+    public async Task<Unit> Handle(DeleteRoomCommand request, CancellationToken ct)
+    {
+        // ... delete logic ...
+        return Unit.Value;
+    }
+}
+```
+
 ### "Feature Already Implemented" Work Items
 
 When a work item's Technical Design section says **"The feature is fully implemented"** and lists checked-off files, verify those files exist (`find /workspace/src -name "FileName.cs"`), confirm they match the spec, run `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` (0 warnings required) and `dotnet test src/UnitTests --filter "FullyQualifiedName~ClassName"`, then proceed directly to the self-tuning/commit/PR steps. Do NOT re-create files that already exist and match the spec — doing so wastes tokens and risks introducing divergence.
