@@ -112,7 +112,7 @@ public class WorkOrderStatusTests
     {
         WorkOrderStatus? left = null;
         WorkOrderStatus? right = null;
-        WorkOrderStatus draft = NullableDraft();
+        WorkOrderStatus? draft = NullableDraft();
 
         (left == right).ShouldBeTrue();
         (draft == null).ShouldBeFalse();
