@@ -138,7 +138,7 @@ public class LoginPageTests
     }
 
     [Test]
-    public async Task ShouldDisplayFirstChurchOfShelbyvilleSubtitle()
+    public async Task ShouldDisplayFirstChurchOfSpringfieldSubtitle()
     {
         await using var ctx = new BunitContext();
 
@@ -152,7 +152,7 @@ public class LoginPageTests
         var component = ctx.Render<Login>();
 
         var subtitle = component.Find(".login-subtitle");
-        subtitle.TextContent.ShouldBe("First Church of Shelbyville");
+        subtitle.TextContent.ShouldBe("First Church of Springfield");
     }
 
     [Test]
@@ -470,9 +470,9 @@ public class LoginPageTests
 
         var footerDiv = component.FindAll("div.text-center")
             .First(d => d.QuerySelector("small.text-muted")?.TextContent
-                .Contains("First Church of Shelbyville") == true);
+                .Contains("First Church of Springfield") == true);
         footerDiv.QuerySelector("small.text-muted")!.TextContent
-            .ShouldBe("First Church of Shelbyville · " + DateTime.Now.Year);
+            .ShouldBe("First Church of Springfield · " + DateTime.Now.Year);
     }
 
     [Test]
