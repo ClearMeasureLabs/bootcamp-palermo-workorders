@@ -36,7 +36,7 @@ public class StateCommandHandler(
 
         var loweredTransitionVerb = request.TransitionVerbPastTense.ToLower();
         var workOrderNumber = persisted.Number;
-        var fullName = request.CurrentUser.GetFullName();
+        var fullName = request.CurrentUser.FullName;
 
         var debugMessage = $"{fullName} has {loweredTransitionVerb} work order {workOrderNumber}";
         logger.LogDebug(debugMessage);

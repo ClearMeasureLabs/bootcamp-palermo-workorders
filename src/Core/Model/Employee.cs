@@ -44,14 +44,14 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
         return compareResult;
     }
 
-    public string GetFullName()
-    {
-        return $"{FirstName} {LastName}";
-    }
+    /// <summary>
+    /// Gets the employee's full name as "FirstName LastName".
+    /// </summary>
+    public string FullName => $"{FirstName} {LastName}";
 
     public override string ToString()
     {
-        return GetFullName();
+        return FullName;
     }
 
     public bool CanCreateWorkOrder() => Roles.Any(role => role.CanCreateWorkOrder);

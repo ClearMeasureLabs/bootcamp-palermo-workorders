@@ -59,7 +59,7 @@ public partial class Login : AppComponentBase
     /// </summary>
     private static string GetLoginDropdownDisplayName(Employee employee)
     {
-        return LoginDisplayNameFormatter.FormatForLoginDropdown(employee.GetFullName());
+        return LoginDisplayNameFormatter.FormatForLoginDropdown(employee.FullName);
     }
 
     private const string TimothyLovejoyUsername = "tlovejoy";

@@ -148,7 +148,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var workOrderRows = workOrderTable.Locator("tbody tr");
         var rowCount = await workOrderRows.CountAsync();
         rowCount.ShouldBeGreaterThanOrEqualTo(1);
-        await Expect(workOrderRows.First.Locator("td:nth-child(2)")).ToContainTextAsync(creator.GetFullName());
+        await Expect(workOrderRows.First.Locator("td:nth-child(2)")).ToContainTextAsync(creator.FullName);
     }
 
     [Test, Retry(2)]
@@ -183,7 +183,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var workOrderRows = workOrderTable.Locator("tbody tr");
         var rowCount = await workOrderRows.CountAsync();
         rowCount.ShouldBeGreaterThanOrEqualTo(1);
-        await Expect(workOrderRows.First.Locator("td:nth-child(3)")).ToContainTextAsync(assignee.GetFullName());
+        await Expect(workOrderRows.First.Locator("td:nth-child(3)")).ToContainTextAsync(assignee.FullName);
     }
 
     [Test, Retry(2)]

@@ -48,6 +48,6 @@ public class WorkOrderAttachmentTests : AcceptanceTestBase
         await Expect(fileSizeCell).ToContainTextAsync("2048");
 
         var uploaderCell = Page.GetByTestId(nameof(WorkOrderManage.Elements.AttachmentUploadedBy));
-        await Expect(uploaderCell).ToContainTextAsync(CurrentUser.GetFullName());
+        await Expect(uploaderCell).ToContainTextAsync(CurrentUser.FullName);
     }
 }
