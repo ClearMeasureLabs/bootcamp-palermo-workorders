@@ -4,7 +4,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class StubUiBus : IUiBus
 {
-    public void Notify(object _)
+    void IUiBus.Notify(object _)
     {
         // Stub implementation — do nothing
     }
