@@ -173,7 +173,7 @@ internal static class WebServiceMessagePayloadValidator
 
         await validateTask.ConfigureAwait(false);
 
-        var resultProperty = validateTask.GetType().GetProperty(nameof(Task<object>.Result))!;
+        var resultProperty = validateTask.GetType().GetProperty(nameof(Task<>.Result))!;
         var validationResult = (ValidationResult)resultProperty.GetValue(validateTask)!;
 
         return validationResult.IsValid

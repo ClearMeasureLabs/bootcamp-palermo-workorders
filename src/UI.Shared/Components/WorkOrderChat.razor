@@ -9,7 +9,7 @@
         <div class="chat-container">
             @if (_chatMessages.Any())
             {
-                <div data-testid="@(Elements.ChatHistory.ToString())" class="chat-history">
+                <div data-testid="@nameof(Elements.ChatHistory)" class="chat-history">
                     @for (int i = 0; i < _chatMessages.Count; i++)
                     {
                         var message = _chatMessages[i];
@@ -23,7 +23,7 @@
 
             @if (_isLoading)
             {
-                <div data-testid="@(Elements.LoadingIndicator.ToString())" class="chat-loading">
+                <div data-testid="@nameof(Elements.LoadingIndicator)" class="chat-loading">
                     <span>AI is thinking...</span>
                 </div>
             }
@@ -31,11 +31,11 @@
             <div class="chat-input-container">
                 <InputText @bind-Value="_prompt"
                     @onkeydown="OnKeyDownAsync"
-                    data-testid="@(Elements.ChatInput.ToString())"
+                    data-testid="@nameof(Elements.ChatInput)"
                     class="form-control chat-input"
                     placeholder="Ask the AI assistant about this work order..."/>
                 <button type="button"
-                        data-testid="@(Elements.SendButton.ToString())"
+                        data-testid="@nameof(Elements.SendButton)"
                         class="btn btn-secondary chat-send-btn"
                         @onclick="SendMessage">
                     Send

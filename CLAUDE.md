@@ -94,6 +94,13 @@ DbUp scripts in `src/Database/scripts/Update/`, numbered sequentially (`###_Desc
 - PascalCase for classes/methods, camelCase for variables
 - XML documentation on public APIs
 - Nullable reference types enabled
+- File-scoped namespaces (`namespace Foo.Bar;`) — no block namespace braces
+- Use `null!` instead of `default!` for `[Inject]` and similar fields
+- Lambda parameters must not shadow outer-scope variables — rename to avoid `VariableHidesOuterVariable`
+- Remove `$` prefix from string literals that contain no `{}` interpolation
+- Use `nameof(…)` instead of `.ToString()` on enum values in Razor/HTML attributes
+- Pattern-match merge: prefer `x is T { Prop: value }` over `x is T y && y.Prop == value`
+- `nameof(T<>.Member)` is valid in C# 13+ — no need for a concrete type argument inside `nameof`
 
 **Response style:**
 - No anthropomorphizing — no "I", "me", "you", "we", "us"
@@ -179,6 +186,8 @@ Format: `{username}/{branch-description}`. AI agents use the username of the acc
 | Docs-only changes | Skip builds |
 
 CRAP gate (crap4dotnet): `pwsh scripts/crap/run-crap-audit.ps1 -SkipTests -FailOnViolations`. Threshold in `scripts/crap/crap-gate-threshold.json`; reports land in `crap-metrics/` (gitignored) and CI publishes them as the `crap-metrics-linux` artifact plus job summary. See `docs/crap-score-audit.md`.
+
+**Qodana static analysis:** findings are tracked in `qodana.sarif.json`. When fixing Qodana P1 mechanical cleanups, read the SARIF to get the exact snippet context — SARIF line numbers may differ from the current file when the file has changed since the baseline scan. Use `python3 -c "import json; ..."` to extract the `contextRegion.snippet` for each finding. After all fixes, run `dotnet build ... -warnaserror` (0 warnings required) before committing.
 
 ## Feature Loop
 
