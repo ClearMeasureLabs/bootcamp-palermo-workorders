@@ -13,6 +13,10 @@ public class DetailedHealthController(
     TimeProvider timeProvider,
     IDetailedHealthReportProvider detailedHealthReportProvider) : ControllerBase
 {
+    /// <summary>
+    /// Lightweight liveness/readiness probe used by the load balancer and container orchestrator.
+    /// Returns a simple timestamp JSON payload. Performs no deep dependency checks.
+    /// </summary>
     [HttpGet]
     public IActionResult Get()
     {
@@ -20,6 +24,10 @@ public class DetailedHealthController(
         return ConditionalJson(payload);
     }
 
+    /// <summary>
+    /// Runs all registered <see cref="Microsoft.Extensions.Diagnostics.HealthChecks.IHealthCheck"/> implementations.
+    /// Intended for monitoring dashboards; not suitable for the load-balancer probe path.
+    /// </summary>
     [HttpGet("detailed")]
     public async Task<IActionResult> GetDetailed(CancellationToken cancellationToken)
     {
