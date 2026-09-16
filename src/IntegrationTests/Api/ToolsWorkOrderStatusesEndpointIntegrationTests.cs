@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
@@ -38,7 +37,7 @@ public class ToolsWorkOrderStatusesEndpointIntegrationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var statuses = await response.Content.ReadFromJsonAsync<JsonElement[]>(JsonOptions);
         statuses.ShouldNotBeNull();
-        statuses!.Length.ShouldBe(5);
+        statuses.Length.ShouldBe(5);
 
         var keys = statuses.Select(s => s.GetProperty("key").GetString()).ToArray();
         keys.ShouldContain("Draft");
@@ -57,7 +56,7 @@ public class ToolsWorkOrderStatusesEndpointIntegrationTests
         var statuses = await response.Content.ReadFromJsonAsync<JsonElement[]>(JsonOptions);
         statuses.ShouldNotBeNull();
 
-        foreach (var status in statuses!)
+        foreach (var status in statuses)
         {
             status.TryGetProperty("code", out _).ShouldBeTrue();
             status.TryGetProperty("key", out _).ShouldBeTrue();
@@ -75,7 +74,7 @@ public class ToolsWorkOrderStatusesEndpointIntegrationTests
         var statuses = await response.Content.ReadFromJsonAsync<JsonElement[]>(JsonOptions);
         statuses.ShouldNotBeNull();
 
-        var sortByValues = statuses!.Select(s => s.GetProperty("sortBy").GetByte()).ToList();
+        var sortByValues = statuses.Select(s => s.GetProperty("sortBy").GetByte()).ToList();
         sortByValues.ShouldBe(sortByValues.OrderBy(x => x).ToList());
     }
 }

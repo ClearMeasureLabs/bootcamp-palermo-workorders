@@ -38,7 +38,7 @@ public class ToolsWorkOrderStatusesControllerTests
         var statuses = ok.Value.ShouldBeOfType<WorkOrderStatusDto[]>();
         var draft = statuses.FirstOrDefault(s => s.Key == "Draft");
         draft.ShouldNotBeNull();
-        draft!.Code.ShouldBe("DRT");
+        draft.Code.ShouldBe("DRT");
         draft.FriendlyName.ShouldBe("Draft");
         draft.SortBy.ShouldBe((byte)1);
     }
