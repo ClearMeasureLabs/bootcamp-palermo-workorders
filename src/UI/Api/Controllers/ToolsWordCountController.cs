@@ -39,7 +39,8 @@ public class ToolsWordCountController : ControllerBase
             ? 0
             : text.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries).Length;
         var characterCount = text.Length;
-        var lineCount = text.Split('\n').Length;
+        // Normalize CRLF to LF, then split on LF to count lines (handles CR, LF, and CRLF).
+        var lineCount = text.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n').Length;
 
         return Ok(new WordCountResponse(wordCount, characterCount, lineCount));
     }
