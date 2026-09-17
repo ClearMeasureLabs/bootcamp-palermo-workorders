@@ -73,6 +73,18 @@ public static class DueDateUrgencyCalculator
             _ => null
         };
 
+    /// <summary>
+    /// Badge label for the urgency pill shown in the work order list.
+    /// Returns null when no badge should be rendered (no due date).
+    /// </summary>
+    public static string? BadgeText(DueDateUrgency urgency, DateOnly? dueDate) =>
+        urgency switch
+        {
+            DueDateUrgency.Overdue => "Overdue",
+            DueDateUrgency.DueToday => "Due Today",
+            _ => dueDate.HasValue ? "On Track" : null
+        };
+
     private static bool IsOpen(WorkOrderStatus status) =>
         status == WorkOrderStatus.Draft
         || status == WorkOrderStatus.Assigned
