@@ -17,13 +17,14 @@ public class WorkOrderSearchTests
 {
     private const string CurrentUsername = "jpalermo";
 
-    private static BunitContext CreateContext(IBus? bus = null, string loggedInAs = CurrentUsername)
+    private static BunitContext CreateContext(IBus? bus = null, string loggedInAs = CurrentUsername,
+        WorkOrderSearchState? searchState = null)
     {
         var ctx = new BunitContext();
         ctx.Services.AddSingleton(bus ?? new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
-        ctx.Services.AddSingleton<WorkOrderSearchState>();
+        ctx.Services.AddSingleton(searchState ?? new WorkOrderSearchState());
 
         var store = new StubUserSessionStore { Username = loggedInAs };
         var authProvider = new CustomAuthenticationStateProvider(store);
@@ -475,6 +476,28 @@ public class WorkOrderSearchTests
         cells[0].TextContent.Trim().ShouldBe("C");
         cells[1].TextContent.Trim().ShouldBe("B");
         cells[2].TextContent.Trim().ShouldBe("A");
+    }
+
+    [Test]
+    public async Task AssignedToMeCheckbox_WhenSessionStateIsTrue_RestoresCheckboxAndFiltersOnLoad()
+    {
+        // Pre-populate the search state so InitializeAsync restores the AssignedToMe=true branch
+        var state = new WorkOrderSearchState { AssignedToMe = true };
+        var stubBus = new StubBusWithAssigneeCapture();
+        await using var ctx = CreateContext(stubBus, searchState: state);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // Checkbox should be checked (restored from session state)
+        var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        checkbox.HasAttribute("checked").ShouldBeTrue();
+
+        // Assignee select should be disabled
+        var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
+        assigneeSelect.HasAttribute("disabled").ShouldBeTrue();
+
+        // The query sent to the bus should have the current user's username as assignee
+        stubBus.LastAssigneeQueried.ShouldBe(CurrentUsername);
     }
 
     [Test]
