@@ -78,9 +78,24 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="RoomNumber" class="form-label">Room:</label>
+                    <label for="RoomId" class="form-label">Room:</label>
                     <div>
-                        <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly"/>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <InputSelect data-testid="@Elements.RoomNumber" id="RoomId"
+                                         @bind-Value="Model.RoomId"
+                                         class="form-control input-select">
+                                @foreach (var room in RoomOptions)
+                                {
+                                    <option value="@room.Value">@room.Text</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => Model.RoomId)" />
+                        }
+                        else
+                        {
+                            <span data-testid="@Elements.RoomNumber" class="value">@Model.WorkOrder?.Room?.DisplayName</span>
+                        }
                     </div>
                 </div>
             </div>

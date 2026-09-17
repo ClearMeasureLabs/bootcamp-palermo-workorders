@@ -18,14 +18,14 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageRoomFieldTests
 {
     [Test]
-    public async Task WorkOrderManage_ShouldRenderRoomAsTextareaWithMaxLength900()
+    public async Task WorkOrderManage_ShouldRenderRoomAsInputSelect()
     {
         await using var ctx = new BunitContext();
 
         var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         var workOrderId = Guid.NewGuid();
 
-        ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus());
+        ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus(Array.Empty<Room>()));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(workOrderId, creator));
@@ -41,17 +41,47 @@ public class WorkOrderManageRoomFieldTests
 
         var room = await component.WaitForElementAsync(
             $"[data-testid='{WorkOrderManage.Elements.RoomNumber}']");
-        room.TagName.ShouldBe("TEXTAREA");
-        room.GetAttribute("maxlength").ShouldBe(WorkOrder.RoomNumberMaxLength.ToString());
+        room.TagName.ShouldBe("SELECT");
     }
 
-    private class StubWorkOrderManageBus : Bus
+    [Test]
+    public async Task WorkOrderManage_ShouldPopulateRoomDropdownFromQuery()
+    {
+        await using var ctx = new BunitContext();
+
+        var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        var workOrderId = Guid.NewGuid();
+
+        var room1 = new Room("101", "Conference Room A") { Id = Guid.NewGuid() };
+        var room2 = new Room("202", "Sanctuary") { Id = Guid.NewGuid() };
+
+        ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus(new[] { room1, room2 }));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(workOrderId, creator));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(creator));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        var select = await component.WaitForElementAsync(
+            $"[data-testid='{WorkOrderManage.Elements.RoomNumber}']");
+        select.TagName.ShouldBe("SELECT");
+
+        var options = select.QuerySelectorAll("option");
+        var optionTexts = options.Select(o => o.TextContent).ToList();
+        optionTexts.ShouldContain(room1.DisplayName);
+        optionTexts.ShouldContain(room2.DisplayName);
+    }
+
+    private class StubWorkOrderManageBus(Room[] rooms) : Bus(null!)
     {
         // ReSharper disable once ConvertToPrimaryConstructor -- left as classic ctor by Qodana policy
-        public StubWorkOrderManageBus() : base(null!)
-        {
-        }
-
         public override Task Publish(INotification notification) => Task.CompletedTask;
 
         public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
@@ -60,6 +90,11 @@ public class WorkOrderManageRoomFieldTests
             {
                 var employees = Array.Empty<Employee>();
                 return Task.FromResult((TResponse)(object)employees);
+            }
+
+            if (request is RoomGetAllQuery)
+            {
+                return Task.FromResult((TResponse)(object)rooms);
             }
 
             if (request is WorkOrderAttachmentsQuery)

@@ -9,6 +9,28 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Models;
 public class WorkOrderManageModelRoomNumberTests
 {
     [Test]
+    public void ShouldRequireRoomId()
+    {
+        var model = ValidModel();
+        model.RoomId = null;
+
+        var results = Validate(model);
+
+        results.ShouldContain(r => r.MemberNames.Contains(nameof(WorkOrderManageModel.RoomId)));
+    }
+
+    [Test]
+    public void ShouldAcceptValidRoomId()
+    {
+        var model = ValidModel();
+        model.RoomId = Guid.NewGuid();
+
+        var results = Validate(model);
+
+        results.ShouldNotContain(r => r.MemberNames.Contains(nameof(WorkOrderManageModel.RoomId)));
+    }
+
+    [Test]
     public void ShouldAllowMissingRoomNumber()
     {
         var model = ValidModel();
@@ -16,7 +38,7 @@ public class WorkOrderManageModelRoomNumberTests
 
         var results = Validate(model);
 
-        results.ShouldBeEmpty();
+        results.ShouldNotContain(r => r.MemberNames.Contains(nameof(WorkOrderManageModel.RoomNumber)));
     }
 
     [Test]
@@ -27,7 +49,7 @@ public class WorkOrderManageModelRoomNumberTests
 
         var results = Validate(model);
 
-        results.ShouldBeEmpty();
+        results.ShouldNotContain(r => r.MemberNames.Contains(nameof(WorkOrderManageModel.RoomNumber)));
     }
 
     [Test]
@@ -52,7 +74,8 @@ public class WorkOrderManageModelRoomNumberTests
         return new WorkOrderManageModel
         {
             Title = "Title",
-            Description = "Description"
+            Description = "Description",
+            RoomId = Guid.NewGuid()
         };
     }
 

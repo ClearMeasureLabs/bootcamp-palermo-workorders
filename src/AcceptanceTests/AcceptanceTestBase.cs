@@ -347,6 +347,17 @@ public abstract class AcceptanceTestBase
         await locator.SelectOptionAsync(value ?? "");
     }
 
+    /// <summary>
+    /// Returns the Guid of the first available Room, ordered by Number.
+    /// Seeded by migration 031_AddRoomIdToWorkOrder.sql.
+    /// </summary>
+    protected async Task<string> GetFirstRoomIdAsync()
+    {
+        var rooms = await Bus.Send(new RoomGetAllQuery());
+        rooms.ShouldNotBeEmpty("At least one Room must be seeded by the 031 migration");
+        return rooms[0].Id.ToString();
+    }
+
     protected async Task<WorkOrder> CreateAndSaveNewWorkOrder()
     {
         var order = Faker<WorkOrder>();
@@ -355,7 +366,6 @@ public abstract class AcceptanceTestBase
         var testTitle = order.Title;
         var testDescription = order.Description;
         var testInstructions = order.Instructions;
-        var testRoomNumber = order.RoomNumber;
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
@@ -372,7 +382,8 @@ public abstract class AcceptanceTestBase
         {
             await Input(nameof(WorkOrderManage.Elements.Instructions), testInstructions);
         }
-        await Input(nameof(WorkOrderManage.Elements.RoomNumber), testRoomNumber);
+        var firstRoomId = await GetFirstRoomIdAsync();
+        await Select(nameof(WorkOrderManage.Elements.RoomNumber), firstRoomId);
         await TakeScreenshotAsync(2, "FormFilled");
 
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;

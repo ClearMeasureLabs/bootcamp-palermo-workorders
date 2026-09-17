@@ -69,7 +69,8 @@ public class WorkOrderManageModelInstructionsTests
         return new WorkOrderManageModel
         {
             Title = "Title",
-            Description = "Description"
+            Description = "Description",
+            RoomId = Guid.NewGuid()
         };
     }
 

@@ -76,6 +76,11 @@ public class WorkOrderManageAttachmentsTests
                 return Task.FromResult<TResponse>((TResponse)(object)employees);
             }
 
+            if (request is RoomGetAllQuery)
+            {
+                return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<Room>());
+            }
+
             if (request is WorkOrderAttachmentsQuery)
             {
                 return Task.FromResult<TResponse>((TResponse)(object)attachments);

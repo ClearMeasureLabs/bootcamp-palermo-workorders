@@ -37,6 +37,8 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public string? RoomNumber { get; set; }
 
+    public Room? Room { get; set; }
+
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 
     public Employee? Creator { get; set; }

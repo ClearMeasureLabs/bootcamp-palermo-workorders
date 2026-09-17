@@ -36,9 +36,16 @@ public class WorkOrderMap : IEntityFrameworkMapping
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(e => e.Room)
+                .WithMany()
+                .HasForeignKey("RoomId")
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Configure navigation properties for eager loading
             entity.Navigation(e => e.Creator).AutoInclude();
             entity.Navigation(e => e.Assignee).AutoInclude();
+            entity.Navigation(e => e.Room).AutoInclude();
 
             // Configure Status with converter
             entity.Property(e => e.Status)

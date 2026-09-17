@@ -234,3 +234,19 @@ When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCH
 
 7. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
 
+
+### Room Entity and WorkOrder Room Dropdown
+
+The Room entity (#9506/#9525) is a first-class entity with `Id`, `Number`, `Name`, and a computed `DisplayName` (`"101 – Conference Room A"`). The WorkOrder has a nullable `Room?` navigation property (FK = `RoomId`). Seeded rooms are created by migration `031_AddRoomIdToWorkOrder.sql`.
+
+**When adding a new dropdown-backed entity to the WorkOrder manage form:**
+1. Add the entity model, map, query, handler, and validator following the Room pattern.
+2. Add `[Required] public Guid? PropId { get; set; }` to `WorkOrderManageModel` — nullable so existing records load; `[Required]` fires on new saves.
+3. In `WorkOrderManage.razor.cs`: add `private List<SelectListItem> XOptions { get; set; } = new()` and `private async Task LoadXOptions()` following `LoadRoomOptions()`.
+4. In `WorkOrderManage.razor`: use `<InputSelect @bind-Value="Model.XId">` + `<ValidationMessage For="@(() => Model.XId)">` (editable) and a `<span>` (read-only), following the Room block.
+5. Update `HandleSubmit` to resolve the selected ID to the entity.
+6. **Every bUnit stub bus that renders WorkOrderManage MUST handle `RoomGetAllQuery`** — add `if (request is RoomGetAllQuery) return Task.FromResult((TResponse)(object)Array.Empty<Room>())` (or a populated array if the test clicks Submit).
+7. **WorkOrderManageSubmitTests** stubs need a real room in their `RoomGetAllQuery` response AND must programmatically `ChangeAsync` the room select before clicking Save — otherwise `[Required]` blocks submission.
+8. **Acceptance tests** use `await Select(nameof(WorkOrderManage.Elements.RoomNumber), firstRoomId)` — call `await GetFirstRoomIdAsync()` (defined in `AcceptanceTestBase`) which reads from the seeded room table.
+9. Existing `Input(Elements.RoomNumber, ...)` calls in acceptance tests must become `Select(Elements.RoomNumber, guid)` — `Input` uses `FillAsync` which does not work on `<select>`.
+
