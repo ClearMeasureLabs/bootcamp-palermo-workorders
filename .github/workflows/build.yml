@@ -920,7 +920,7 @@ jobs:
   acceptance-tests:
     name: Acceptance Tests
     needs: changes
-    if: success() && needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: acceptance-tests-${{ github.ref }}
@@ -988,7 +988,7 @@ jobs:
   acceptance-tests-arm:
     name: Acceptance Tests (ARM SQLite)
     needs: changes
-    if: success() && needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04-arm
     concurrency:
       group: acceptance-tests-arm-${{ github.ref }}
