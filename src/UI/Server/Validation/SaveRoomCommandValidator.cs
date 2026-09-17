@@ -14,13 +14,13 @@ public sealed class SaveRoomCommandValidator : AbstractValidator<SaveRoomCommand
 {
     public SaveRoomCommandValidator()
     {
-        RuleFor(c => c.Room).NotNull();
-
-        When(c => c.Room is not null, () =>
-        {
-            RuleFor(c => c.Room.Name)
-                .NotEmpty()
-                .MaximumLength(Room.NameMaxLength);
-        });
+        RuleFor(c => c.Room)
+            .NotNull()
+            .DependentRules(() =>
+            {
+                RuleFor(c => c.Room.Name)
+                    .NotEmpty()
+                    .MaximumLength(Room.NameMaxLength);
+            });
     }
 }

@@ -9,12 +9,12 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Server.Validation;
 [TestFixture]
 public class SaveRoomCommandValidatorTests
 {
-    private SaveRoomCommandValidator validator = null!;
+    private SaveRoomCommandValidator _validator = null!;
 
     [SetUp]
     public void SetUp()
     {
-        validator = new SaveRoomCommandValidator();
+        _validator = new SaveRoomCommandValidator();
     }
 
     [Test]
@@ -22,7 +22,7 @@ public class SaveRoomCommandValidatorTests
     {
         var command = new SaveRoomCommand(new Room { Id = Guid.NewGuid(), Name = "Room A" });
 
-        var result = validator.TestValidate(command);
+        var result = _validator.TestValidate(command);
 
         result.IsValid.ShouldBeTrue();
     }
@@ -32,7 +32,7 @@ public class SaveRoomCommandValidatorTests
     {
         var command = new SaveRoomCommand(null!);
 
-        var result = validator.TestValidate(command);
+        var result = _validator.TestValidate(command);
 
         result.ShouldHaveValidationErrorFor(c => c.Room);
     }
@@ -42,7 +42,7 @@ public class SaveRoomCommandValidatorTests
     {
         var command = new SaveRoomCommand(new Room { Id = Guid.NewGuid(), Name = string.Empty });
 
-        var result = validator.TestValidate(command);
+        var result = _validator.TestValidate(command);
 
         result.ShouldHaveValidationErrorFor(c => c.Room.Name);
     }
@@ -53,7 +53,7 @@ public class SaveRoomCommandValidatorTests
         var name = new string('A', Room.NameMaxLength + 1);
         var command = new SaveRoomCommand(new Room { Id = Guid.NewGuid(), Name = name });
 
-        var result = validator.TestValidate(command);
+        var result = _validator.TestValidate(command);
 
         result.ShouldHaveValidationErrorFor(c => c.Room.Name);
     }

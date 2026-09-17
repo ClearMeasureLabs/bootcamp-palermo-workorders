@@ -8,12 +8,12 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Server.Validation;
 [TestFixture]
 public class DeleteRoomCommandValidatorTests
 {
-    private DeleteRoomCommandValidator validator = null!;
+    private DeleteRoomCommandValidator _validator = null!;
 
     [SetUp]
     public void SetUp()
     {
-        validator = new DeleteRoomCommandValidator();
+        _validator = new DeleteRoomCommandValidator();
     }
 
     [Test]
@@ -21,7 +21,7 @@ public class DeleteRoomCommandValidatorTests
     {
         var command = new DeleteRoomCommand(Guid.NewGuid());
 
-        var result = validator.TestValidate(command);
+        var result = _validator.TestValidate(command);
 
         result.IsValid.ShouldBeTrue();
     }
@@ -31,7 +31,7 @@ public class DeleteRoomCommandValidatorTests
     {
         var command = new DeleteRoomCommand(Guid.Empty);
 
-        var result = validator.TestValidate(command);
+        var result = _validator.TestValidate(command);
 
         result.ShouldHaveValidationErrorFor(c => c.RoomId);
     }
