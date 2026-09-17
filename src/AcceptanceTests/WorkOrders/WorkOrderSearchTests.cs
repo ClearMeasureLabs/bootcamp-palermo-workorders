@@ -527,6 +527,90 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task SortByTitleHeader_SortsResultsAscending_ThenDescendingOnSecondClick()
+    {
+        // Arrange
+        var creator = Faker<Employee>();
+        var order1 = Faker<WorkOrder>();
+        var order2 = Faker<WorkOrder>();
+        order1.Creator = creator;
+        order2.Creator = creator;
+        order1.Title = "Alpha";
+        order2.Title = "Zebra";
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order1);
+        context.Add(order2);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var titleSortBtn = Page.Locator($"#{WorkOrderSearch.Elements.SortByTitleButton}");
+        await titleSortBtn.ClickAsync();
+        await TakeScreenshotAsync(1, "SortedAscending");
+
+        await Expect(titleSortBtn).ToHaveTextAsync("Title ▲");
+        var firstTitleCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(5)");
+        await Expect(firstTitleCell).ToContainTextAsync("Alpha");
+
+        await titleSortBtn.ClickAsync();
+        await TakeScreenshotAsync(2, "SortedDescending");
+
+        await Expect(titleSortBtn).ToHaveTextAsync("Title ▼");
+        await Expect(firstTitleCell).ToContainTextAsync("Zebra");
+    }
+
+    [Test, Retry(2)]
+    public async Task SortByRoomHeader_SortsResultsAscending_ThenDescendingOnSecondClick()
+    {
+        // Arrange
+        var creator = Faker<Employee>();
+        var order1 = Faker<WorkOrder>();
+        var order2 = Faker<WorkOrder>();
+        order1.Creator = creator;
+        order2.Creator = creator;
+        order1.RoomNumber = "Atrium";
+        order2.RoomNumber = "Zeppelin";
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order1);
+        context.Add(order2);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var roomSortBtn = Page.Locator($"#{WorkOrderSearch.Elements.SortByRoomButton}");
+        await roomSortBtn.ClickAsync();
+        await TakeScreenshotAsync(1, "SortedAscending");
+
+        await Expect(roomSortBtn).ToHaveTextAsync("Room ▲");
+        var firstRoomCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(7)");
+        await Expect(firstRoomCell).ToContainTextAsync("Atrium");
+
+        await roomSortBtn.ClickAsync();
+        await TakeScreenshotAsync(2, "SortedDescending");
+
+        await Expect(roomSortBtn).ToHaveTextAsync("Room ▼");
+        await Expect(firstRoomCell).ToContainTextAsync("Zeppelin");
+    }
+
+    [Test, Retry(2)]
     public async Task SortByDueDateHeader_SortsResultsAscending_ThenDescendingOnSecondClick()
     {
         // Arrange
