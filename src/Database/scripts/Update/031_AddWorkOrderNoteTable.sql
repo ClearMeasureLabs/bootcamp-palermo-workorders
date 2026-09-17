@@ -1,0 +1,21 @@
+BEGIN TRANSACTION
+GO
+PRINT N'Creating [dbo].[WorkOrderNote]'
+GO
+CREATE TABLE [dbo].[WorkOrderNote]
+(
+	[Id]			UNIQUEIDENTIFIER	NOT NULL,
+	[WorkOrderId]	UNIQUEIDENTIFIER	NOT NULL,
+	[AuthorId]		UNIQUEIDENTIFIER	NOT NULL,
+	[Text]			NVARCHAR(MAX)		NOT NULL,
+	[CreatedAt]		DATETIME2			NOT NULL,
+	CONSTRAINT [PK_WorkOrderNote] PRIMARY KEY CLUSTERED ([Id]),
+	CONSTRAINT [FK_WorkOrderNote_WorkOrder] FOREIGN KEY ([WorkOrderId]) REFERENCES [dbo].[WorkOrder] ([Id]) ON DELETE CASCADE,
+	CONSTRAINT [FK_WorkOrderNote_Employee] FOREIGN KEY ([AuthorId]) REFERENCES [dbo].[Employee] ([Id])
+)
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO

@@ -127,6 +127,11 @@ public class WorkOrderManageSubmitTests
                 return Task.FromResult((TResponse)(object)Array.Empty<WorkOrderAttachment>());
             }
 
+            if (request is WorkOrderNotesQuery)
+            {
+                return Task.FromResult((TResponse)(object)Array.Empty<WorkOrderNote>());
+            }
+
             if (request is WorkOrderByNumberQuery)
             {
                 WorkOrderByNumberHits++;

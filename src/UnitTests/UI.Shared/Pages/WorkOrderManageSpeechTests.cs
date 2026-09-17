@@ -225,6 +225,11 @@ public class WorkOrderManageSpeechTests
                 return Task.FromResult<TResponse>((TResponse)(object)attachments);
             }
 
+            if (request is WorkOrderNotesQuery)
+            {
+                return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderNote>());
+            }
+
             throw new NotImplementedException($"Unhandled request type: {request.GetType().Name}");
         }
     }

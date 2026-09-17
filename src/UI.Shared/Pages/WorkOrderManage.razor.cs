@@ -19,6 +19,9 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private WorkOrder? _workOrder;
     private WorkOrder? _lastNotifiedWorkOrder;
     private WorkOrderAttachment[] _attachments = [];
+    private WorkOrderNote[] _notes = [];
+    private string _noteText = string.Empty;
+    private string? _noteValidationMessage;
     private string _preferredLanguage = "en-US";
     private DictationTarget _dictationTarget = DictationTarget.None;
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
@@ -107,7 +110,23 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         if (workOrder.Id != Guid.Empty)
         {
             _attachments = await Bus.Send(new WorkOrderAttachmentsQuery(workOrder.Id));
+            _notes = await Bus.Send(new WorkOrderNotesQuery(workOrder.Id));
         }
+    }
+
+    private async Task AddNoteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_noteText))
+        {
+            _noteValidationMessage = "Note text is required";
+            return;
+        }
+
+        _noteValidationMessage = null;
+        var currentUser = (await UserSession!.GetCurrentUserAsync())!;
+        await Bus.Send(new AddWorkOrderNoteCommand(_workOrder!, currentUser, _noteText));
+        _noteText = string.Empty;
+        _notes = await Bus.Send(new WorkOrderNotesQuery(_workOrder!.Id));
     }
 
     private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)

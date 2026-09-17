@@ -152,6 +152,35 @@
                     </table>
                 </div>
             }
+
+            <div class="notes-section" data-testid="@Elements.NotesSection">
+                <h4>Notes</h4>
+                @if (!Model.IsReadOnly)
+                {
+                    <div>
+                        <textarea data-testid="@Elements.NoteTextInput"
+                                  class="form-control"
+                                  placeholder="Add a note..."
+                                  @bind="_noteText"
+                                  rows="3"></textarea>
+                        @if (_noteValidationMessage != null)
+                        {
+                            <span data-testid="@Elements.NoteValidationMessage" class="text-danger">@_noteValidationMessage</span>
+                        }
+                        <button type="button" data-testid="@Elements.AddNoteButton" class="btn btn-secondary mt-1" @onclick="AddNoteAsync">Add Note</button>
+                    </div>
+                }
+                @foreach (var note in _notes)
+                {
+                    var chicagoZone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+                    var localTime = TimeZoneInfo.ConvertTimeFromUtc(note.CreatedAt, chicagoZone);
+                    <div data-testid="@Elements.NoteRow" class="note-row mt-2">
+                        <span data-testid="@Elements.NoteAuthor" class="fw-bold">@note.Author?.GetFullName()</span>
+                        <span data-testid="@Elements.NoteTimestamp" class="text-muted ms-2">@localTime.ToString("MMM d, yyyy h:mm tt zzz")</span>
+                        <div data-testid="@Elements.NoteText">@note.Text</div>
+                    </div>
+                }
+            </div>
         </div>
 
         <div class="action-section">
@@ -207,6 +236,14 @@
         SpeakDescription,
         DictateTitle,
         DictateDescription,
-        DescriptionCharCount
+        DescriptionCharCount,
+        NotesSection,
+        NoteTextInput,
+        AddNoteButton,
+        NoteRow,
+        NoteAuthor,
+        NoteTimestamp,
+        NoteText,
+        NoteValidationMessage
     }
 }
