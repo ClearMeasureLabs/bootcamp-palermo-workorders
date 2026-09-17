@@ -617,8 +617,10 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var otherEmployee = Faker<Employee>();
         var myOrder = Faker<WorkOrder>();
         var otherOrder = Faker<WorkOrder>();
+        myOrder.Creator = CurrentUser;
         myOrder.Assignee = CurrentUser;
         myOrder.Title = $"[{TestTag}] my order";
+        otherOrder.Creator = otherEmployee;
         otherOrder.Assignee = otherEmployee;
         otherOrder.Title = $"[{TestTag}] other order";
 
@@ -657,8 +659,10 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var otherEmployee = Faker<Employee>();
         var myOrder = Faker<WorkOrder>();
         var otherOrder = Faker<WorkOrder>();
+        myOrder.Creator = CurrentUser;
         myOrder.Assignee = CurrentUser;
         myOrder.Title = $"[{TestTag}] my order";
+        otherOrder.Creator = otherEmployee;
         otherOrder.Assignee = otherEmployee;
         otherOrder.Title = $"[{TestTag}] other order";
 
@@ -690,6 +694,48 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         // Assert Assignee dropdown is re-enabled
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         await Expect(assigneeSelect).ToBeEnabledAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task AssignedToMe_ToggleStatePersistedWithinSession()
+    {
+        // Arrange: seed a work order assigned to current user
+        var myOrder = Faker<WorkOrder>();
+        myOrder.Creator = CurrentUser;
+        myOrder.Assignee = CurrentUser;
+        myOrder.Title = $"[{TestTag}] persisted order";
+
+        await using var context = TestHost.NewDbContext();
+        context.Attach(CurrentUser);
+        context.Add(myOrder);
+        await context.SaveChangesAsync();
+
+        // Navigate to search and check the toggle
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var checkbox = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        await checkbox.CheckAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "ToggleChecked");
+
+        // Navigate away to a work order detail and back
+        var workOrderLink = Page.Locator(".grid-data tbody tr").First.Locator("td").First.Locator("a");
+        await workOrderLink.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(2, "WorkOrderDetail");
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(3, "BackOnSearch");
+
+        // Assert: checkbox is still checked (state persisted via WorkOrderSearchState)
+        var checkboxAfterNav = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        await Expect(checkboxAfterNav).ToBeCheckedAsync();
+
+        // Assert: results still scoped to current user
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable.Locator("tbody tr").Filter(new() { HasText = myOrder.Title })).ToHaveCountAsync(1);
     }
 
     [Test, Retry(2)]

@@ -3,6 +3,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -19,6 +20,7 @@ public partial class WorkOrderSearch : AppComponentBase
 
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+    [Inject] private WorkOrderSearchState SearchState { get; set; } = null!;
 
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
@@ -38,7 +40,15 @@ public partial class WorkOrderSearch : AppComponentBase
         StatusOptions = WorkOrderStatus.GetAllItems().Select(s => new SelectListItem(s.Key, s.FriendlyName)).ToList();
         Model = new WorkOrderSearchModel();
 
-        // Apply any query parameters
+        // Restore session-persistent "Assigned to me" state
+        _assignedToMe = SearchState.AssignedToMe;
+        if (_assignedToMe)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            Model.Filters.Assignee = authState.User.Identity?.Name ?? string.Empty;
+        }
+
+        // Apply any query parameters (query params take precedence over session state)
         if (!string.IsNullOrEmpty(Creator))
         {
             Model.Filters.Creator = Creator;
@@ -60,6 +70,7 @@ public partial class WorkOrderSearch : AppComponentBase
 
     private async Task HandleAssignedToMeChanged()
     {
+        SearchState.AssignedToMe = _assignedToMe;
         if (_assignedToMe)
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -178,6 +189,7 @@ public partial class WorkOrderSearch : AppComponentBase
     private async Task HandleClearFilters()
     {
         _assignedToMe = false;
+        SearchState.AssignedToMe = false;
         Model.Filters.Creator = string.Empty;
         Model.Filters.Assignee = string.Empty;
         Model.Filters.Status = string.Empty;
