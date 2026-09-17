@@ -756,7 +756,7 @@ public class LoginPageTests
     }
 
     [Test]
-    public async Task WelcomeMessage_ShouldShowFirstName_WhenMemberSelected()
+    public async Task WelcomeMessage_ShouldShowFullName_WhenMemberSelected()
     {
         await using var ctx = new BunitContext();
 
@@ -774,7 +774,7 @@ public class LoginPageTests
 
         var welcomeMessage = component.Find("small.text-success");
         welcomeMessage.ShouldNotBeNull();
-        welcomeMessage.TextContent.ShouldBe("Welcome back, HOMER!");
+        welcomeMessage.TextContent.ShouldBe("Welcome back, HOMER SIMPSON!");
     }
 
     [Test]
