@@ -10,8 +10,8 @@ namespace ClearMeasure.Bootcamp.UnitTests.Core.Handlers;
 [TestFixture]
 public class WorkOrderCountByStatusQueryHandlerTests
 {
-    private string? _dbPath;
-    private DataContext? _context;
+    private string _dbPath = null!;
+    private DataContext _context = null!;
 
     [SetUp]
     public void SetUp()
@@ -24,12 +24,9 @@ public class WorkOrderCountByStatusQueryHandlerTests
     [TearDown]
     public async Task TearDown()
     {
-        if (_context != null)
-        {
-            await _context.DisposeAsync();
-        }
+        await _context.DisposeAsync();
 
-        if (_dbPath != null && File.Exists(_dbPath))
+        if (File.Exists(_dbPath))
         {
             File.Delete(_dbPath);
         }
