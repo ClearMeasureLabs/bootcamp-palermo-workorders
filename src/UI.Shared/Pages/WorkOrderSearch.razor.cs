@@ -41,6 +41,15 @@ public partial class WorkOrderSearch : AppComponentBase
         StatusOptions = WorkOrderStatus.GetAllItems().Select(s => new SelectListItem(s.Key, s.FriendlyName)).ToList();
         Model = new WorkOrderSearchModel();
 
+        await RestoreAssignedToMeStateAsync();
+        ApplyQueryParameterOverrides();
+
+        // Perform initial search
+        await SearchWorkOrders();
+    }
+
+    private async Task RestoreAssignedToMeStateAsync()
+    {
         // Restore session-persistent "Assigned to me" state
         _assignedToMe = SearchState.AssignedToMe;
         if (_assignedToMe)
@@ -48,7 +57,10 @@ public partial class WorkOrderSearch : AppComponentBase
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             Model.Filters.Assignee = authState.User.Identity?.Name ?? string.Empty;
         }
+    }
 
+    private void ApplyQueryParameterOverrides()
+    {
         // Apply any query parameters (query params take precedence over session state)
         if (!string.IsNullOrEmpty(Creator))
         {
@@ -69,9 +81,6 @@ public partial class WorkOrderSearch : AppComponentBase
         {
             Model.Filters.OverdueOnly = OverdueOnly;
         }
-
-        // Perform initial search
-        await SearchWorkOrders();
     }
 
     private async Task HandleAssignedToMeChanged()
