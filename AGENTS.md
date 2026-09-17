@@ -234,3 +234,23 @@ When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCH
 
 7. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
 
+### Blazor Page Code-behind Pattern
+
+When adding logic to an existing `.razor` page that has only an `@code` block:
+- Create a `.razor.cs` partial class alongside the `.razor` file (e.g., `Index.razor.cs`)
+- The partial class declares `public partial class PageName : AppComponentBase, IListener<Event>`
+- **Do NOT add `@inherits AppComponentBase` to the `.razor` file** — it's already in `src/UI.Shared/_Imports.razor` globally
+- **Do NOT add `[Route(...)]` to the `.razor.cs`** if the route is already defined via `@page "/"` in the razor template
+- The `AuthorizeView` component needs `IAuthorizationPolicyProvider` and `Task<AuthenticationState>` in bunit tests — use `ctx.AddAuthorization()` (bunit helper) not `ctx.Services.AddAuthorization()`
+- When adding new `IBus.Send(...)` calls to a page, add the corresponding handler to `StubBus.cs` in `UnitTests/UI.Shared/Pages/` to prevent `NotImplementedException` in existing bunit tests
+
+### EF Core Handler Gotchas
+
+- **`GroupBy` on value-converter properties** (like `wo.Status.Key`) **cannot be translated** to SQL. Use `.Select(wo => wo.Status).ToListAsync()` and group in memory instead.
+- **SQLite in-memory unit tests**: `Data Source=:memory:` is a new DB per connection — `EnsureCreated()` schema is lost as soon as the context is disposed. Use a **temp file DB** (`Path.GetTempPath() + Guid.NewGuid() + ".db"`) in `[SetUp]` and delete it in `[TearDown]`.
+- `IDatabaseConfiguration` has two members: `GetConnectionString()` and `ResetConnectionPool()` — implement both in any test stub.
+- The `WorkOrderStatusConverter` stores `Code` (e.g., `DRT`) not `Key` (e.g., `Draft`) in the database. `WorkOrderStatus.FromCode(code)` converts back.
+
+### StubBus Maintenance
+
+`src/UnitTests/UI.Shared/Pages/StubBus.cs` is the shared stub used by all bunit page tests. Whenever a new `IRequest<TResponse>` type is added to a page's `OnInitializedAsync`, add a matching `if (request is NewQueryType) { ... return ...; }` branch before the `throw new NotImplementedException()` to prevent existing page tests from failing.

@@ -14,6 +14,7 @@ public class ErrorModel : PageModel
 
     private readonly ILogger<ErrorModel> _logger;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public ErrorModel(ILogger<ErrorModel> logger)
     {
         _logger = logger;

@@ -9,6 +9,7 @@ public sealed class DatabaseEmptier
     private static string? _deleteSql;
     private readonly DatabaseFacade _database;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public DatabaseEmptier(DatabaseFacade database)
     {
         _database = database;

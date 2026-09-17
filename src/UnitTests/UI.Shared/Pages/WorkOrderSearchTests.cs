@@ -538,7 +538,6 @@ public class WorkOrderSearchTests
         cells[1].TextContent.Trim().ShouldBe("B");
         cells[2].TextContent.Trim().ShouldBe("A");
     }
-
     [Test]
     public async Task ShouldApply_OverdueRow_CssClass_WhenWorkOrderIsOverdue()
     {

@@ -10,6 +10,7 @@ public class Bus : IBus
 
     private readonly IMediator _mediator;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public Bus(IMediator mediator)
     {
         _mediator = mediator;
