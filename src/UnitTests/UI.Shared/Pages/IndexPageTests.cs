@@ -16,6 +16,7 @@ public class IndexPageTests
         await using var ctx = new BunitContext();
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.AddAuthorization();
 
         var component = ctx.Render<IndexPage>();
 
