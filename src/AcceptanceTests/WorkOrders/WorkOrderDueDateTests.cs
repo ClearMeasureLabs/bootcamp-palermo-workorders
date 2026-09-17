@@ -136,6 +136,48 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldShowUrgencyBadgeTextOnSearchList()
+    {
+        await LoginAsCurrentUser();
+        var today = ChurchTimeZone.Today(TimeProvider.System);
+        var future = today.AddDays(7);
+        var overdue = today.AddDays(-2);
+
+        var overdueOrder = await CreateDraftWithDueDateAsync($"[{TestTag}] badge overdue", overdue);
+        var todayOrder = await CreateDraftWithDueDateAsync($"[{TestTag}] badge due today", today);
+        var futureOrder = await CreateDraftWithDueDateAsync($"[{TestTag}] badge on track", future);
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var overdueLocator = Page.GetByTestId(nameof(WorkOrderSearch.Elements.UrgencyBadge) + overdueOrder.Number);
+        var todayLocator = Page.GetByTestId(nameof(WorkOrderSearch.Elements.UrgencyBadge) + todayOrder.Number);
+        var futureLocator = Page.GetByTestId(nameof(WorkOrderSearch.Elements.UrgencyBadge) + futureOrder.Number);
+
+        await Expect(overdueLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        await Expect(todayLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        await Expect(futureLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+
+        await Expect(overdueLocator).ToHaveTextAsync("Overdue");
+        await Expect(todayLocator).ToHaveTextAsync("Due Today");
+        await Expect(futureLocator).ToHaveTextAsync("On Track");
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowNoBadgeWhenNoDueDate()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateDraftNoDueDateAsync($"[{TestTag}] badge no due date");
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var badgeLocator = Page.GetByTestId(nameof(WorkOrderSearch.Elements.UrgencyBadge) + order.Number);
+        await Expect(badgeLocator).Not.ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldPaintDueDateControlYellowTodayAndRedOverdue()
     {
         await LoginAsCurrentUser();
@@ -201,6 +243,31 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
             TimeProvider.System);
         await Expect(dueDateInput).ToHaveClassAsync(
             new Regex(DueDateUrgencyCalculator.CssClass(expectedUrgency)));
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        return order;
+    }
+
+    private async Task<WorkOrder> CreateDraftNoDueDateAsync(string title)
+    {
+        var order = Faker<WorkOrder>();
+        order.Title = title;
+        order.Number = null;
+
+        var newWorkOrder = Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder));
+        await Expect(newWorkOrder).ToBeVisibleAsync(
+            new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        order.Number = await woNumberLocator.InnerTextAsync();
+
+        await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
+        await Input(nameof(WorkOrderManage.Elements.Description), order.Description ?? "desc");
 
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);

@@ -175,6 +175,21 @@
     display: inline-block;
 }
 
+.urgency-badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.urgency-badge.on-track {
+    background-color: #bbf7d0;
+    color: #14532d;
+}
+
 .visually-hidden {
     position: absolute;
     width: 1px;

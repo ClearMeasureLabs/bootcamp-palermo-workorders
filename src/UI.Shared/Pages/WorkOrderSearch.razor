@@ -1,3 +1,5 @@
+@using ClearMeasure.Bootcamp.Core.Model
+@using ClearMeasure.Bootcamp.Core.Services
 <div class="search-page">
     <div class="search-container">
         <div class="search-header">
@@ -111,10 +113,15 @@
                                 </td>
                                 <td>@order.Title</td>
                                 <td>
-                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
-                                        {
-                                            <span class="visually-hidden">@order.DueDateUrgencyText</span>
-                                        }</span>
+                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay</span>
+                                    @{ var badgeText = DueDateUrgencyCalculator.BadgeText(order.Urgency, order.WorkOrder.DueDate); }
+                                    @if (badgeText is not null)
+                                    {
+                                        var badgeCss = string.IsNullOrEmpty(order.DueDateCssClass) ? "on-track" : order.DueDateCssClass;
+                                        <span class="urgency-badge @badgeCss"
+                                              data-testid="@(Elements.UrgencyBadge + order.Number)"
+                                              aria-label="@badgeText">@badgeText</span>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -137,6 +144,7 @@
         ClearFiltersButton,
         WorkOrderLink,
         DueDateCell,
+        UrgencyBadge,
         SortByStatusButton,
         SortByDueDateButton
     }
