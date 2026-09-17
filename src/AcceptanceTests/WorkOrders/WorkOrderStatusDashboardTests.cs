@@ -17,7 +17,7 @@ public class WorkOrderStatusDashboardTests : AcceptanceTestBase
         await dashboard.WaitForAsync();
         await Expect(dashboard).ToBeVisibleAsync();
 
-        foreach (var status in Core.Model.WorkOrderStatus.GetAllItems())
+        foreach (var status in WorkOrderStatus.GetAllItems())
         {
             var countLocator = Page.GetByTestId(nameof(IndexPage.Elements.StatusCardCount) + status.Key);
             await countLocator.WaitForAsync();

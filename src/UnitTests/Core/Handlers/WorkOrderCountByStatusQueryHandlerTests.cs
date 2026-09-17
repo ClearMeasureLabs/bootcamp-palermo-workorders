@@ -3,6 +3,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
+using Microsoft.Data.Sqlite;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Handlers;
@@ -17,7 +18,7 @@ public class WorkOrderCountByStatusQueryHandlerTests
     public void SetUp()
     {
         _dbPath = Path.Combine(Path.GetTempPath(), $"wocbs_test_{Guid.NewGuid():N}.db");
-        _context = new DataContext(new FileDbConfig($"Data Source={_dbPath}"), null);
+        _context = new DataContext(new FileDbConfig($"Data Source={_dbPath}"));
         _context.Database.EnsureCreated();
     }
 
@@ -26,9 +27,23 @@ public class WorkOrderCountByStatusQueryHandlerTests
     {
         await _context.DisposeAsync();
 
+        SqliteConnection.ClearAllPools();
+
         if (File.Exists(_dbPath))
         {
-            File.Delete(_dbPath);
+            const int maxAttempts = 5;
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    File.Delete(_dbPath);
+                    break;
+                }
+                catch (IOException) when (attempt < maxAttempts)
+                {
+                    Thread.Sleep(50);
+                }
+            }
         }
     }
 

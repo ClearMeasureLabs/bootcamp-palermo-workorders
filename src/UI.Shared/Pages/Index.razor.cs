@@ -7,7 +7,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 public partial class Index : AppComponentBase, IListener<WorkOrderChangedEvent>
 {
     private Dictionary<string, int> _statusCounts = new();
-    private static readonly WorkOrderStatus[] _statusItems = WorkOrderStatus.GetAllItems();
+    private static readonly WorkOrderStatus[] StatusItems = WorkOrderStatus.GetAllItems();
 
     protected override async Task OnInitializedAsync()
     {

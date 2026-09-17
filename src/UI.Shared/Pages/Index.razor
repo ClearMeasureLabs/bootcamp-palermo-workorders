@@ -54,9 +54,9 @@
     <AuthorizeView>
         <Authorized>
             <div class="status-dashboard" data-testid="@nameof(Elements.StatusDashboard)">
-                @foreach (var status in _statusItems)
+                @foreach (var status in StatusItems)
                 {
-                    var count = _statusCounts.TryGetValue(status.Key, out var c) ? c : 0;
+                    var count = _statusCounts.GetValueOrDefault(status.Key);
                     <div class="status-card" data-testid="@(nameof(Elements.StatusCard) + status.Key)">
                         <div class="status-card-count" data-testid="@(nameof(Elements.StatusCardCount) + status.Key)">@count</div>
                         <div class="status-card-label">@status.FriendlyName</div>
