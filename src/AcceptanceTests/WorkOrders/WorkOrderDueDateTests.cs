@@ -272,8 +272,8 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description ?? "desc");
 
-        var saveButtonTestId2 = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
-        await Click(saveButtonTestId2);
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
         await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
         return order;
     }

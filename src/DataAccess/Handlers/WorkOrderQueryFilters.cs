@@ -32,8 +32,7 @@ internal static class WorkOrderQueryFilters
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
             query = query.Where(wo =>
-                wo.DueDate != null &&
-                wo.DueDate.Value < today &&
+                wo.DueDate < today &&
                 (wo.Status == WorkOrderStatus.Draft ||
                  wo.Status == WorkOrderStatus.Assigned ||
                  wo.Status == WorkOrderStatus.InProgress));
