@@ -246,5 +246,3 @@ When calling `Assembly.GetEntryAssembly()?.GetCustomAttributes<T>()`, the result
 ### EnvironmentStatusResponse Record — Adding Fields
 
 When adding new positional parameters to the `EnvironmentStatusResponse` record, update **both** `BuildResponse()` (add named arguments) **and** the record declaration. The Qodana E2E etag test (`ConditionalGetEtag`) re-serialises the full payload, so any added field flows through without changes to the etag helpers.
-
-
