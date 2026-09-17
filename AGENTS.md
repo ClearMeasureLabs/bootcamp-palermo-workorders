@@ -234,7 +234,3 @@ When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCH
 
 7. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
 
-
-### UI.Shared Login Tests — StubBus fixture data
-
-`src/UnitTests/UI.Shared/Pages/StubBus.cs` supplies fake employees for all `LoginPageTests` and `WorkOrderManage*` tests. Key names are stored **all-caps** (`"HOMER"`, `"SIMPSON"`) so `GetFullName()` returns `"HOMER SIMPSON"`. Any test asserting a welcome message or formatted employee name must match these cased values — do **not** assume mixed-case. When adding or updating such assertions, read `StubBus.EmployeeGetAllQueryResponse` first.
