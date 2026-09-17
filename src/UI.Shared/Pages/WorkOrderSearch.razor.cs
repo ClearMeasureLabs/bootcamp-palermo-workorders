@@ -3,8 +3,10 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -14,8 +16,11 @@ public partial class WorkOrderSearch : AppComponentBase
 {
     private string? _sortColumn;
     private bool _sortAscending = true;
+    private bool _assignedToMe;
 
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+    [Inject] private WorkOrderSearchState SearchState { get; set; } = null!;
 
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
@@ -36,7 +41,27 @@ public partial class WorkOrderSearch : AppComponentBase
         StatusOptions = WorkOrderStatus.GetAllItems().Select(s => new SelectListItem(s.Key, s.FriendlyName)).ToList();
         Model = new WorkOrderSearchModel();
 
-        // Apply any query parameters
+        await RestoreAssignedToMeStateAsync();
+        ApplyQueryParameterOverrides();
+
+        // Perform initial search
+        await SearchWorkOrders();
+    }
+
+    private async Task RestoreAssignedToMeStateAsync()
+    {
+        // Restore session-persistent "Assigned to me" state
+        _assignedToMe = SearchState.AssignedToMe;
+        if (_assignedToMe)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            Model.Filters.Assignee = authState.User.Identity?.Name ?? string.Empty;
+        }
+    }
+
+    private void ApplyQueryParameterOverrides()
+    {
+        // Apply any query parameters (query params take precedence over session state)
         if (!string.IsNullOrEmpty(Creator))
         {
             Model.Filters.Creator = Creator;
@@ -56,10 +81,25 @@ public partial class WorkOrderSearch : AppComponentBase
         {
             Model.Filters.OverdueOnly = OverdueOnly;
         }
+    }
 
-        // Perform initial search
+    private async Task HandleAssignedToMeChanged()
+    {
+        SearchState.AssignedToMe = _assignedToMe;
+        if (_assignedToMe)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var username = authState.User.Identity?.Name;
+            Model.Filters.Assignee = username ?? string.Empty;
+        }
+        else
+        {
+            Model.Filters.Assignee = string.Empty;
+        }
+
         await SearchWorkOrders();
     }
+
 
     private async Task SearchWorkOrders()
     {
@@ -162,10 +202,13 @@ public partial class WorkOrderSearch : AppComponentBase
         !string.IsNullOrEmpty(Model.Filters.Creator) ||
         !string.IsNullOrEmpty(Model.Filters.Assignee) ||
         !string.IsNullOrEmpty(Model.Filters.Status) ||
-        Model.Filters.OverdueOnly;
+        Model.Filters.OverdueOnly ||
+        _assignedToMe;
 
     private async Task HandleClearFilters()
     {
+        _assignedToMe = false;
+        SearchState.AssignedToMe = false;
         Model.Filters.Creator = string.Empty;
         Model.Filters.Assignee = string.Empty;
         Model.Filters.Status = string.Empty;

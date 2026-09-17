@@ -21,13 +21,18 @@
 
                     <div class="filter-group">
                         <label class="filter-label" for="@Elements.AssigneeSelect">Assignee</label>
-                        <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control">
+                        <InputSelect id="@Elements.AssigneeSelect" @bind-Value="Model.Filters.Assignee" class="form-control" disabled="@_assignedToMe">
                             <option value="">All</option>
                             @foreach (var user in UserOptions)
                             {
                                 <option value="@user.Value">@user.Text</option>
                             }
                         </InputSelect>
+                    </div>
+
+                    <div class="filter-group">
+                        <InputCheckbox id="@Elements.AssignedToMeCheckbox" @bind-Value="_assignedToMe" @bind-Value:after="HandleAssignedToMeChanged" />
+                        <label class="filter-label" for="@Elements.AssignedToMeCheckbox">Assigned to me</label>
                     </div>
 
                     <div class="filter-group">
@@ -172,7 +177,8 @@
         SortByStatusButton,
         SortByDueDateButton,
         SortByTitleButton,
-        SortByRoomButton
+        SortByRoomButton,
+        AssignedToMeCheckbox
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();

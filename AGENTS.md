@@ -125,6 +125,38 @@ If all listed files exist and compile cleanly, the only remaining tasks are qual
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
 
+### bUnit test patterns for WorkOrderSearch
+
+When adding a new `[Inject]` property to `WorkOrderSearch` (or any `AppComponentBase` component), **all** bUnit tests for that component must register the matching service or they will throw at render time. For `AuthenticationStateProvider`, use `CustomAuthenticationStateProvider` with a `StubUserSessionStore`:
+
+```csharp
+var store = new StubUserSessionStore { Username = "someuser" };
+var authProvider = new CustomAuthenticationStateProvider(store);
+authProvider.Login("someuser").GetAwaiter().GetResult();
+ctx.Services.AddSingleton<AuthenticationStateProvider>(authProvider);
+```
+
+**Prefer a `CreateContext()` factory helper** in the test class over repeating the service registrations in every test. Pass the `IBus` override as a parameter when a test needs a custom stub:
+
+```csharp
+private static BunitContext CreateContext(IBus? bus = null, string loggedInAs = "defaultuser")
+{
+    var ctx = new BunitContext();
+    ctx.Services.AddSingleton(bus ?? new StubBus());
+    ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+    ctx.Services.AddSingleton(TimeProvider.System);
+    // ... add AuthenticationStateProvider
+    return ctx;
+}
+```
+
+**bUnit checkbox state:** Use `element.HasAttribute("checked")` to assert whether a checkbox is checked — `IElement` does not have an `IsChecked()` method.
+
+**`@bind-Value:after` callback pattern:** Use `@bind-Value:after="HandlerMethod"` on an `<InputCheckbox>` to trigger async side-effects after the binding updates. The handler runs after the value is bound, so it sees the new value and can drive secondary effects (like updating a related filter).
+
+**`[Inject]` property visibility in Blazor components:** Declare `[Inject]` properties as `private` (not `public`) unless they need to be accessed from tests or cross-component. Blazor DI injects into `private` properties just as well as `public`. Using `private` prevents Qodana `MemberCanBePrivate.Global` findings. Example: `[Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;`. The `WorkOrderManage.razor.cs` uses this pattern with `[Inject] private NavigationManager`.
+
+
 ### "Feature Already Implemented" Work Items
 
 When a work item's Technical Design section says **"The feature is fully implemented"** and lists checked-off files, verify those files exist (`find /workspace/src -name "FileName.cs"`), confirm they match the spec, run `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` (0 warnings required) and `dotnet test src/UnitTests --filter "FullyQualifiedName~ClassName"`, then proceed directly to the self-tuning/commit/PR steps. Do NOT re-create files that already exist and match the spec — doing so wastes tokens and risks introducing divergence.

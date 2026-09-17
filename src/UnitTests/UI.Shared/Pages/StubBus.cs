@@ -98,3 +98,18 @@ public class StubBus(WorkOrder[]? workOrderResults = null) : Bus(null!)
         return Task.FromResult<TResponse>((TResponse)(object)employees);
     }
 }
+
+public class StubBusWithAssigneeCapture : StubBus
+{
+    public string? LastAssigneeQueried { get; private set; }
+
+    public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
+    {
+        if (request is EmployeeByUserNameQuery q)
+        {
+            LastAssigneeQueried = q.Username;
+        }
+
+        return base.Send(request);
+    }
+}
