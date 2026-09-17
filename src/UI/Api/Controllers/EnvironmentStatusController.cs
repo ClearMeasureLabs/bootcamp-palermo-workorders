@@ -64,7 +64,7 @@ public class EnvironmentStatusController : ControllerBase
             ?.InformationalVersion ?? "unknown";
         var gitSha = Assembly.GetEntryAssembly()
             ?.GetCustomAttributes<AssemblyMetadataAttribute>()
-            ?.FirstOrDefault(a => a.Key == "SourceRevisionId")
+            .FirstOrDefault(a => a.Key == "SourceRevisionId")
             ?.Value ?? "unknown";
         var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
             ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")

@@ -171,4 +171,5 @@ public partial class MainLayout : IAsyncDisposable
 /// Minimal DTO for deserializing the <c>/api/status/environment</c> response fields
 /// needed by the footer. Other fields are ignored.
 /// </summary>
+// ReSharper disable once NotAccessedPositionalProperty.Local -- Version slot ignored at runtime; record shape allows JSON deserialization to populate it silently
 internal sealed record EnvironmentStatusDto(string? Version, string? GitSha, string? EnvironmentName);
