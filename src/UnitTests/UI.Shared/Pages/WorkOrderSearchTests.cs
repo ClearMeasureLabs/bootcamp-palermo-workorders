@@ -538,4 +538,108 @@ public class WorkOrderSearchTests
         cells[1].TextContent.Trim().ShouldBe("B");
         cells[2].TextContent.Trim().ShouldBe("A");
     }
+    [Test]
+    public async Task ShouldApply_OverdueRow_CssClass_WhenWorkOrderIsOverdue()
+    {
+        await using var ctx = new BunitContext();
+
+        // An overdue work order: past due date + open status
+        var overdueOrder = new WorkOrder
+        {
+            Number = "WO-OVR",
+            Title = "Overdue",
+            Status = WorkOrderStatus.InProgress,
+            DueDate = new DateOnly(2000, 1, 1)
+        };
+
+        ctx.Services.AddSingleton<IBus>(new StubBus([overdueOrder]));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var rows = component.FindAll("tbody tr");
+        rows.Count.ShouldBe(1);
+        rows[0].ClassName!.ShouldContain("overdue-row");
+    }
+
+    [Test]
+    public async Task ShouldNotApply_OverdueRow_CssClass_WhenWorkOrderIsNotOverdue()
+    {
+        await using var ctx = new BunitContext();
+
+        var nonOverdueOrder = new WorkOrder
+        {
+            Number = "WO-FUT",
+            Title = "Future",
+            Status = WorkOrderStatus.InProgress,
+            DueDate = new DateOnly(2099, 12, 31)
+        };
+
+        ctx.Services.AddSingleton<IBus>(new StubBus([nonOverdueOrder]));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var rows = component.FindAll("tbody tr");
+        rows.Count.ShouldBe(1);
+        rows[0].ClassName!.ShouldNotContain("overdue-row");
+    }
+
+    [Test]
+    public async Task ShouldReport_HasActiveFilters_True_WhenOverdueOnlyIsSet()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // Toggle the checkbox
+        var toggle = component.Find($"#{WorkOrderSearch.Elements.OverdueOnlyToggle}");
+        await toggle.ChangeAsync(new() { Value = true });
+
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        clearButton.HasAttribute("disabled").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task ShouldReset_OverdueOnly_OnClearFilters()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+        var instance = component.Instance;
+
+        // Set the toggle
+        var toggle = component.Find($"#{WorkOrderSearch.Elements.OverdueOnlyToggle}");
+        await toggle.ChangeAsync(new() { Value = true });
+        instance.Model.Filters.OverdueOnly.ShouldBeTrue();
+
+        // Clear filters
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        await clearButton.ClickAsync(new());
+
+        instance.Model.Filters.OverdueOnly.ShouldBeFalse();
+    }
+
+    [Test]
+    public void ShouldRemotableRequest_RoundTrip_OverdueOnly()
+    {
+        var query = new ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery();
+        query.MatchOverdueOnly(true);
+
+        var json = System.Text.Json.JsonSerializer.Serialize(query);
+        var rehydrated = System.Text.Json.JsonSerializer.Deserialize<ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery>(json);
+
+        rehydrated.ShouldNotBeNull();
+        rehydrated.OverdueOnly.ShouldBeTrue();
+    }
 }
