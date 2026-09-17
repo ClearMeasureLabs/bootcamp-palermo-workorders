@@ -526,6 +526,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(firstCell).ToContainTextAsync(WorkOrderStatus.InProgress.FriendlyName);
     }
 
+    [Test, Retry(2)]
     public async Task SortByTitleHeader_SortsResultsAscending_ThenDescendingOnSecondClick()
     {
         // Arrange

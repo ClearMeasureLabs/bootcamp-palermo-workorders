@@ -385,6 +385,7 @@ public class WorkOrderSearchTests
         stubBus.SendCallCount.ShouldBeGreaterThan(sendCountBeforeClear);
     }
 
+    [Test]
     public async Task SortByTitle_Ascending_SortsResultsByTitle()
     {
         var rows = new[]
