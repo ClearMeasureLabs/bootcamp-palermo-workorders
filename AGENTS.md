@@ -234,7 +234,6 @@ When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCH
 
 7. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
 
-
 ### Blazor Page Code-behind Pattern
 
 When adding logic to an existing `.razor` page that has only an `@code` block:

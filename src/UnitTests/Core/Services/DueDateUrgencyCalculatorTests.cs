@@ -106,6 +106,34 @@ public class DueDateUrgencyCalculatorTests
     }
 
     [Test]
+    public void BadgeText_WhenOverdue_ReturnsOverdue()
+    {
+        DueDateUrgencyCalculator.BadgeText(DueDateUrgency.Overdue, new DateOnly(2026, 8, 1))
+            .ShouldBe("Overdue");
+    }
+
+    [Test]
+    public void BadgeText_WhenDueToday_ReturnsDueToday()
+    {
+        DueDateUrgencyCalculator.BadgeText(DueDateUrgency.DueToday, new DateOnly(2026, 8, 29))
+            .ShouldBe("Due Today");
+    }
+
+    [Test]
+    public void BadgeText_WhenNoneWithFutureDate_ReturnsOnTrack()
+    {
+        DueDateUrgencyCalculator.BadgeText(DueDateUrgency.None, new DateOnly(2026, 9, 30))
+            .ShouldBe("On Track");
+    }
+
+    [Test]
+    public void BadgeText_WhenNoneWithNullDate_ReturnsNull()
+    {
+        DueDateUrgencyCalculator.BadgeText(DueDateUrgency.None, null)
+            .ShouldBeNull();
+    }
+
+    [Test]
     public void ComingSaturday_WhenTodayIsSaturday_ReturnsToday()
     {
         // 2026-08-29 is a Saturday
