@@ -547,6 +547,7 @@ public class WorkOrderSearchTests
 
         // Clear button should be disabled (no active filters)
         clearButton.HasAttribute("disabled").ShouldBeTrue();
+    }
 
     [Test]
     public async Task ShouldApply_OverdueRow_CssClass_WhenWorkOrderIsOverdue()

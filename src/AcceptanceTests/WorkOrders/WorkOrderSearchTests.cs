@@ -780,6 +780,8 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await TakeScreenshotAsync(4, "SortedDescending");
 
         await Expect(dueDateSortBtn).ToHaveTextAsync("Due Date ▼");
+        await Expect(firstRow.Locator("td:nth-child(6)")).ToContainTextAsync("Dec");
+    }
 
     [Test, Retry(2)]
     public async Task Should_ShowOverdueOnly_WhenToggleIsChecked()
