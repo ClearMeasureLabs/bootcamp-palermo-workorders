@@ -37,6 +37,7 @@ public class DataContext : DbContext
         new EmployeeMap().Map(modelBuilder);
         new RoleMap().Map(modelBuilder);
         new WorkOrderAttachmentMap().Map(modelBuilder);
+        new WorkOrderNoteMap().Map(modelBuilder);
     }
 
     public sealed override string ToString()

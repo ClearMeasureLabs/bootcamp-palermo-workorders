@@ -127,6 +127,11 @@ public class WorkOrderManageEventBusNotifyTests
                 return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderAttachment>());
             }
 
+            if (request is WorkOrderNotesQuery)
+            {
+                return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderNote>());
+            }
+
             throw new NotImplementedException($"Unhandled request type: {request.GetType().Name}");
         }
     }

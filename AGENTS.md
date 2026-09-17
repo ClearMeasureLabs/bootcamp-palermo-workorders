@@ -234,3 +234,20 @@ When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCH
 
 7. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
 
+
+### bUnit Stubs for WorkOrderManage
+
+When adding a new `IRequest<T>` query that is sent inside `LoadWorkOrder()` in `WorkOrderManage.razor.cs`, **all** stub `Bus` implementations in `src/UnitTests/UI.Shared/Pages/` must handle the new query type or they will throw `NotImplementedException` and fail. The affected files are:
+
+- `StubBus.cs` (shared stub — add handler here first)
+- `WorkOrderManageAttachmentsTests.cs` (local `StubWorkOrderManageBus`)
+- `WorkOrderManageDescriptionCharCountTests.cs` (local `StubWorkOrderManageBus`)
+- `WorkOrderManageDictationTests.cs` (local `StubWorkOrderManageBus`)
+- `WorkOrderManageEventBusNotifyTests.cs` (local `StubWorkOrderManageBus`)
+- `WorkOrderManageInstructionsFieldTests.cs` (local `StubWorkOrderManageBus`)
+- `WorkOrderManageRoomFieldTests.cs` (local `StubWorkOrderManageBus`)
+- `WorkOrderManageSpeechTests.cs` (local `StubWorkOrderManageBus`)
+- `WorkOrderManageSubmitTests.cs` (local `StubWorkOrderManageBus`)
+
+Pattern: add `if (request is NewQueryType) { return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<NewEntityType>()); }` before the `throw` in each stub. All files already import `ClearMeasure.Bootcamp.Core.Queries` and `ClearMeasure.Bootcamp.Core.Model`.
+

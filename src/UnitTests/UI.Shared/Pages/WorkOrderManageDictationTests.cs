@@ -269,6 +269,11 @@ public class WorkOrderManageDictationTests
                 return Task.FromResult<TResponse>((TResponse)(object)attachments);
             }
 
+            if (request is WorkOrderNotesQuery)
+            {
+                return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderNote>());
+            }
+
             if (request is WorkOrderByNumberQuery && workOrderByNumber != null)
             {
                 return Task.FromResult<TResponse>((TResponse)(object)workOrderByNumber);
