@@ -18,7 +18,7 @@ public partial class WorkOrderSearch : AppComponentBase
     private bool _assignedToMe;
 
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
-    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
 
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
