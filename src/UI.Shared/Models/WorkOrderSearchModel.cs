@@ -30,4 +30,5 @@ public class WorkOrderSearchResultRow
     public string? DueDateDisplay { get; init; }
     public string DueDateCssClass { get; init; } = string.Empty;
     public string? DueDateUrgencyText { get; init; }
+    public DueDateUrgency Urgency { get; init; }
 }

@@ -136,6 +136,14 @@
                                         {
                                             <span class="visually-hidden">@order.DueDateUrgencyText</span>
                                         }</span>
+                                    @{ var badgeText = DueDateUrgencyCalculator.BadgeText(order.Urgency, order.WorkOrder.DueDate); }
+                                    @if (badgeText is not null)
+                                    {
+                                        var badgeCss = string.IsNullOrEmpty(order.DueDateCssClass) ? "on-track" : order.DueDateCssClass;
+                                        <span class="urgency-badge @badgeCss"
+                                              data-testid="@(Elements.UrgencyBadge + order.Number)"
+                                              aria-label="@badgeText">@badgeText</span>
+                                    }
                                 </td>
                                 <td>@order.WorkOrder.RoomNumber</td>
                             </tr>
@@ -160,6 +168,7 @@
         ClearFiltersButton,
         WorkOrderLink,
         DueDateCell,
+        UrgencyBadge,
         SortByStatusButton,
         SortByDueDateButton,
         SortByTitleButton,
