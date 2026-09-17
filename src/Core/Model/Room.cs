@@ -6,15 +6,10 @@ public class Room : EntityBase<Room>
 {
     public const int NameMaxLength = 200;
 
-    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
-    public Room()
-    {
-        Name = null!;
-    }
-
     public override Guid Id { get; set; }
 
     [System.ComponentModel.DataAnnotations.Required]
     [System.ComponentModel.DataAnnotations.MaxLength(NameMaxLength)]
-    public string Name { get; set; }
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
+    public string Name { get; set; } = null!;
 }
