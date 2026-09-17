@@ -6,6 +6,7 @@ public class Room : EntityBase<Room>
 {
     public const int NameMaxLength = 200;
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
     public Room()
     {
         Name = null!;

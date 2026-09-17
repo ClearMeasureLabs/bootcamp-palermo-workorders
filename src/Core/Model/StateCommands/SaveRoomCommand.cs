@@ -1,12 +1,12 @@
 // ReSharper disable PropertyCanBeMadeInitOnly.Global -- System.Text.Json set-by-convention requires mutable setters
 
-using ClearMeasure.Bootcamp.Core.Model;
 using MediatR;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
 public class SaveRoomCommand : IRequest<Room>
 {
+    // ReSharper disable once UnusedMember.Global -- required for System.Text.Json deserialization (set-by-convention)
     public SaveRoomCommand()
     {
         Room = null!;
@@ -18,5 +18,6 @@ public class SaveRoomCommand : IRequest<Room>
         Room = room;
     }
 
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- System.Text.Json set-by-convention requires mutable setter
     public Room Room { get; set; }
 }

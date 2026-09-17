@@ -6,6 +6,7 @@ namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
 public class DeleteRoomCommand : IRequest<Unit>
 {
+    // ReSharper disable once UnusedMember.Global -- required for System.Text.Json deserialization (set-by-convention)
     public DeleteRoomCommand()
     {
     }
@@ -16,5 +17,6 @@ public class DeleteRoomCommand : IRequest<Unit>
         RoomId = roomId;
     }
 
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- System.Text.Json set-by-convention requires mutable setter
     public Guid RoomId { get; set; }
 }
