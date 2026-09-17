@@ -395,3 +395,14 @@
 :global(html[data-theme="dark"]) .grid-data td {
     color: #e2e8f0;
 }
+
+.overdue-row {
+    background-color: #fff0f0;
+}
+
+.overdue-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+}
