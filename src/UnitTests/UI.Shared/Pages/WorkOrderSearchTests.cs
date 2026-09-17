@@ -33,13 +33,13 @@ public class WorkOrderSearchTests
         assigneeSelect.ShouldNotBeNull();
         statusSelect.ShouldNotBeNull();
 
-        // Verify user options are loaded (5 employees + "All" option = 6 options)
+        // Verify user options are loaded (6 employees + "All" option = 7 options)
         var creatorOptions = creatorSelect.QuerySelectorAll("option");
-        creatorOptions.Length.ShouldBe(6);
+        creatorOptions.Length.ShouldBe(7);
         creatorOptions[0].TextContent.ShouldBe("All");
 
         var assigneeOptions = assigneeSelect.QuerySelectorAll("option");
-        assigneeOptions.Length.ShouldBe(6);
+        assigneeOptions.Length.ShouldBe(7);
         assigneeOptions[0].TextContent.ShouldBe("All");
 
         // Verify status options are loaded (4 statuses + "All" option = 5 options)
