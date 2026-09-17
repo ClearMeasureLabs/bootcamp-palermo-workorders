@@ -81008,6 +81008,59 @@
               ".NET 10.0"
             ]
           }
+        },
+        {
+          "ruleId": "ConvertToPrimaryConstructor",
+          "ruleIndex": 394,
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Convert into primary constructor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UI/Api/Pages/Error.cshtml.cs",
+                  "uriBaseId": "solutionDir",
+                  "index": 2
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 16,
+                  "endLine": 17,
+                  "endColumn": 26,
+                  "charOffset": 503,
+                  "charLength": 10,
+                  "snippet": {
+                    "text": "ErrorModel"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 18,
+                  "endColumn": 10,
+                  "charOffset": 487,
+                  "charLength": 64,
+                  "snippet": {
+                    "text": "\n        public ErrorModel(ILogger<ErrorModel> logger)\n        {"
+                  }
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v1": "9AC88E7A258291A678814140BF9B126EA3FFFA7D8AC035BEC85654FF33F8C39B"
+          },
+          "baselineState": "unchanged",
+          "properties": {
+            "qodanaSeverity": "Moderate",
+            "tags": [
+              "C#",
+              ".NET 10.0"
+            ]
+          }
         }
       ],
       "automationDetails": {

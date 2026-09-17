@@ -254,4 +254,3 @@ When adding logic to an existing `.razor` page that has only an `@code` block:
 ### StubBus Maintenance
 
 `src/UnitTests/UI.Shared/Pages/StubBus.cs` is the shared stub used by all bunit page tests. Whenever a new `IRequest<TResponse>` type is added to a page's `OnInitializedAsync`, add a matching `if (request is NewQueryType) { ... return ...; }` branch before the `throw new NotImplementedException()` to prevent existing page tests from failing.
-
