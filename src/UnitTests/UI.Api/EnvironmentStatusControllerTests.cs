@@ -76,7 +76,7 @@ public class EnvironmentStatusControllerTests
         var result = CreateController().Get();
 
         var payload = AssertOkPayload(result);
-        payload.Version.ShouldNotBeNullOrEmpty();
+        payload.Version.ShouldNotBeEmpty();
     }
 
     [Test]
@@ -85,7 +85,7 @@ public class EnvironmentStatusControllerTests
         var result = CreateController().Get();
 
         var payload = AssertOkPayload(result);
-        payload.GitSha.ShouldNotBeNull();
+        payload.GitSha.ShouldNotBeEmpty();
     }
 
     private static EnvironmentStatusController CreateController() =>

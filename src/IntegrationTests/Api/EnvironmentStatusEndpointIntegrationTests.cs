@@ -150,9 +150,9 @@ public class EnvironmentStatusEndpointIntegrationTests
         var payload = await response.Content.ReadFromJsonAsync<EnvironmentStatusResponse>(
             ConditionalGetEtag.JsonSerializerOptions);
         payload.ShouldNotBeNull();
-        payload.Version.ShouldNotBeNull();
-        payload.GitSha.ShouldNotBeNull();
-        payload.EnvironmentName.ShouldNotBeNull();
+        payload.Version.ShouldNotBeEmpty();
+        payload.GitSha.ShouldNotBeEmpty();
+        payload.EnvironmentName.ShouldNotBeEmpty();
     }
 
     [Test]
