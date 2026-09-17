@@ -47,6 +47,14 @@
                     </div>
 
                     <div class="filter-group">
+                        <label class="filter-label" for="@Elements.OverdueOnlyToggle">Overdue</label>
+                        <div class="overdue-toggle-wrapper">
+                            <InputCheckbox id="@Elements.OverdueOnlyToggle" @bind-Value="Model.Filters.OverdueOnly" />
+                            <label for="@Elements.OverdueOnlyToggle">Show overdue only</label>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
                         <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
@@ -109,6 +117,10 @@
                         foreach (var order in Model.Results)
                         {
                             var rowClass = i++ % 2 == 0 ? "odd" : "even";
+                            if (order.WorkOrder.IsOverdue())
+                            {
+                                rowClass += " overdue-row";
+                            }
                             <tr class="@rowClass">
                                 <td>
                                     @{
@@ -125,7 +137,10 @@
                                 </td>
                                 <td>@order.Title</td>
                                 <td>
-                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay</span>
+                                    <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
+                                        {
+                                            <span class="visually-hidden">@order.DueDateUrgencyText</span>
+                                        }</span>
                                     @{ var badgeText = DueDateUrgencyCalculator.BadgeText(order.Urgency, order.WorkOrder.DueDate); }
                                     @if (badgeText is not null)
                                     {
@@ -153,6 +168,7 @@
         CreatorSelect,
         AssigneeSelect,
         StatusSelect,
+        OverdueOnlyToggle,
         SearchButton,
         ClearFiltersButton,
         WorkOrderLink,

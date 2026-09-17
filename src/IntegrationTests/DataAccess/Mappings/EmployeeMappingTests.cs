@@ -1,4 +1,4 @@
-using ClearMeasure.Bootcamp.Core.Model;
+﻿using ClearMeasure.Bootcamp.Core.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Mappings;

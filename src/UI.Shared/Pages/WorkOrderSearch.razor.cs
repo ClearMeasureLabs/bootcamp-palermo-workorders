@@ -25,6 +25,7 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
+    [SupplyParameterFromQuery] public bool OverdueOnly { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -62,6 +63,11 @@ public partial class WorkOrderSearch : AppComponentBase
         if (!string.IsNullOrEmpty(Status))
         {
             Model.Filters.Status = Status;
+        }
+
+        if (OverdueOnly)
+        {
+            Model.Filters.OverdueOnly = OverdueOnly;
         }
 
         // Perform initial search
@@ -103,6 +109,7 @@ public partial class WorkOrderSearch : AppComponentBase
         specification.MatchCreator(creator);
         specification.MatchAssignee(assignee);
         specification.MatchStatus(status);
+        specification.MatchOverdueOnly(Model.Filters.OverdueOnly);
 
         var workOrders = await Bus.Send(specification);
         Model.Results = workOrders.Select(MapSearchRow).ToArray();
@@ -171,6 +178,7 @@ public partial class WorkOrderSearch : AppComponentBase
             WorkOrder = workOrder,
             DueDateDisplay = workOrder.DueDate?.ToString("MMM d, yyyy", CultureInfo.InvariantCulture),
             DueDateCssClass = DueDateUrgencyCalculator.CssClass(urgency),
+            DueDateUrgencyText = DueDateUrgencyCalculator.ScreenReaderText(urgency),
             Urgency = urgency
         };
     }
@@ -184,6 +192,7 @@ public partial class WorkOrderSearch : AppComponentBase
         !string.IsNullOrEmpty(Model.Filters.Creator) ||
         !string.IsNullOrEmpty(Model.Filters.Assignee) ||
         !string.IsNullOrEmpty(Model.Filters.Status) ||
+        Model.Filters.OverdueOnly ||
         _assignedToMe;
 
     private async Task HandleClearFilters()
@@ -193,6 +202,7 @@ public partial class WorkOrderSearch : AppComponentBase
         Model.Filters.Creator = string.Empty;
         Model.Filters.Assignee = string.Empty;
         Model.Filters.Status = string.Empty;
+        Model.Filters.OverdueOnly = false;
         await SearchWorkOrders();
     }
 }
