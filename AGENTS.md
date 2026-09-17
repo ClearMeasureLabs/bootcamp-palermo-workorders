@@ -230,7 +230,9 @@ When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCH
 
 5. **`ConvertToPrimaryConstructor` is an epic guardrail** — do NOT convert; suppress with `// ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion`.
 
-6. **`AutoPropertyCanBeMadeGetOnly.Global` on IOptions classes** — properties need `set` for IConfiguration binding. Suppress: `// ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- required for IOptions<T> configuration binding`.
+6. **ABSENT `ConvertToPrimaryConstructor` entries** — if the baseline contains `ConvertToPrimaryConstructor` fingerprints but the corresponding code no longer triggers the rule (constructor already changed / regular constructor form kept), those entries will be ABSENT and must be removed from the baseline. Run the ABSENT audit script and remove them.
 
-7. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
+7. **`AutoPropertyCanBeMadeGetOnly.Global` on IOptions classes** — properties need `set` for IConfiguration binding. Suppress: `// ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- required for IOptions<T> configuration binding`.
+
+8. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
 

@@ -241,8 +241,11 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
             dueDate,
             WorkOrderStatus.Draft,
             TimeProvider.System);
-        await Expect(dueDateInput).ToHaveClassAsync(
-            new Regex(DueDateUrgencyCalculator.CssClass(expectedUrgency)));
+        var expectedCssClass = DueDateUrgencyCalculator.CssClass(expectedUrgency);
+        if (!string.IsNullOrEmpty(expectedCssClass))
+        {
+            await Expect(dueDateInput).ToHaveClassAsync(new Regex(expectedCssClass));
+        }
 
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
