@@ -234,3 +234,32 @@ When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCH
 
 7. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
 
+
+### bUnit Test Patterns
+
+**Checkbox toggling in bUnit** — use `ChangeAsync(new() { Value = true })`, not `IsChecked = true` (which doesn't exist on `ChangeEventArgs`):
+```csharp
+var checkbox = component.Find("#MyCheckbox");
+await checkbox.ChangeAsync(new() { Value = true });
+```
+
+**`element.ClassName` is `string?`** — suppress the nullable warning with `!` when you know the element has a class attribute, or use `ShouldNotBeNull()` first:
+```csharp
+rows[0].ClassName!.ShouldContain("some-css-class");
+```
+
+**`WorkOrderSpecificationQuery` in `UnitTests/UI.Shared/Pages/`** — fully qualify or add `using ClearMeasure.Bootcamp.Core.Queries;` since that namespace isn't imported in those test files by default.
+
+### EF-Translatable Filters in WorkOrderQueryFilters
+
+When adding EF-Core `Where` predicates that involve `WorkOrderStatus`, use direct equality comparisons against the static singletons (`WorkOrderStatus.Draft`, `WorkOrderStatus.Assigned`, etc.) — EF knows how to translate these via the `WorkOrderStatusConverter`. Do **not** access `.Code` on the entity inside a LINQ expression (`wo.Status.Code`) — that property access is not translatable to SQL.
+
+```csharp
+// CORRECT — translatable
+query = query.Where(wo =>
+    wo.Status == WorkOrderStatus.Draft ||
+    wo.Status == WorkOrderStatus.Assigned);
+
+// WRONG — not translatable, crashes at runtime
+query = query.Where(wo => OpenCodes.Contains(wo.Status.Code));
+```

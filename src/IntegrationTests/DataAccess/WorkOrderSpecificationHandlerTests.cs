@@ -252,4 +252,43 @@ public class WorkOrderSpecificationHandlerTests
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
     }
+
+    [Test]
+    public async Task ShouldReturnOnlyOverdueWorkOrders_WhenOverdueOnlyFilterIsTrue()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var overdueOrder = new WorkOrder
+        {
+            Creator = employee,
+            Number = "OVER-001",
+            Status = WorkOrderStatus.InProgress,
+            DueDate = new DateOnly(2000, 1, 1)
+        };
+        var futureOrder = new WorkOrder
+        {
+            Creator = employee,
+            Number = "FUTR-001",
+            Status = WorkOrderStatus.InProgress,
+            DueDate = new DateOnly(2099, 12, 31)
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(overdueOrder);
+            context.Add(futureOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchOverdueOnly(true);
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Number.ShouldBe(overdueOrder.Number);
+    }
 }

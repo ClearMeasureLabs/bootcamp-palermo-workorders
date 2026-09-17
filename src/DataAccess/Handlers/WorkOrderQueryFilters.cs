@@ -10,7 +10,8 @@ internal static class WorkOrderQueryFilters
         IQueryable<WorkOrder> query,
         Employee? assignee,
         Employee? creator,
-        WorkOrderStatus? status)
+        WorkOrderStatus? status,
+        bool overdueOnly = false)
     {
         if (assignee != null)
         {
@@ -27,6 +28,17 @@ internal static class WorkOrderQueryFilters
             query = query.Where(wo => wo.Status == status);
         }
 
+        if (overdueOnly)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+            query = query.Where(wo =>
+                wo.DueDate != null &&
+                wo.DueDate.Value < today &&
+                (wo.Status == WorkOrderStatus.Draft ||
+                 wo.Status == WorkOrderStatus.Assigned ||
+                 wo.Status == WorkOrderStatus.InProgress));
+        }
+
         return query;
     }
 
@@ -38,5 +50,5 @@ internal static class WorkOrderQueryFilters
     public static IQueryable<WorkOrder> Apply(
         IQueryable<WorkOrder> query,
         WorkOrderSpecificationQuery specification) =>
-        Apply(query, specification.Assignee, specification.Creator, specification.Status);
+        Apply(query, specification.Assignee, specification.Creator, specification.Status, specification.OverdueOnly);
 }

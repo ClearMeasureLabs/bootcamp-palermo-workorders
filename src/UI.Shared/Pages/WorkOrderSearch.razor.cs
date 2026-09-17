@@ -20,6 +20,7 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
+    [SupplyParameterFromQuery] public bool OverdueOnly { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -51,6 +52,11 @@ public partial class WorkOrderSearch : AppComponentBase
             Model.Filters.Status = Status;
         }
 
+        if (OverdueOnly)
+        {
+            Model.Filters.OverdueOnly = OverdueOnly;
+        }
+
         // Perform initial search
         await SearchWorkOrders();
     }
@@ -73,6 +79,7 @@ public partial class WorkOrderSearch : AppComponentBase
         specification.MatchCreator(creator);
         specification.MatchAssignee(assignee);
         specification.MatchStatus(status);
+        specification.MatchOverdueOnly(Model.Filters.OverdueOnly);
 
         var workOrders = await Bus.Send(specification);
         Model.Results = workOrders.Select(MapSearchRow).ToArray();
@@ -137,13 +144,15 @@ public partial class WorkOrderSearch : AppComponentBase
     private bool HasActiveFilters =>
         !string.IsNullOrEmpty(Model.Filters.Creator) ||
         !string.IsNullOrEmpty(Model.Filters.Assignee) ||
-        !string.IsNullOrEmpty(Model.Filters.Status);
+        !string.IsNullOrEmpty(Model.Filters.Status) ||
+        Model.Filters.OverdueOnly;
 
     private async Task HandleClearFilters()
     {
         Model.Filters.Creator = string.Empty;
         Model.Filters.Assignee = string.Empty;
         Model.Filters.Status = string.Empty;
+        Model.Filters.OverdueOnly = false;
         await SearchWorkOrders();
     }
 }

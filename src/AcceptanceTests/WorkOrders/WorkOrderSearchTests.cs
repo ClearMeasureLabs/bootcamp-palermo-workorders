@@ -570,4 +570,54 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(dueDateSortBtn).ToHaveTextAsync("Due Date ▼");
         await Expect(firstRow.Locator("td:nth-child(6)")).ToContainTextAsync("Dec");
     }
+
+    [Test, Retry(2)]
+    public async Task Should_ShowOverdueOnly_WhenToggleIsChecked()
+    {
+        // Arrange
+        var creator = Faker<Employee>();
+        var overdueOrder = Faker<WorkOrder>();
+        overdueOrder.Creator = creator;
+        overdueOrder.Status = WorkOrderStatus.InProgress;
+        overdueOrder.DueDate = new DateOnly(2000, 1, 1);
+
+        var futureOrder = Faker<WorkOrder>();
+        futureOrder.Creator = creator;
+        futureOrder.Status = WorkOrderStatus.InProgress;
+        futureOrder.DueDate = new DateOnly(2099, 12, 31);
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(overdueOrder);
+        context.Add(futureOrder);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Filter to this creator so only our two orders appear
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "BothOrders");
+
+        // Check both rows visible
+        var tableRows = Page.Locator(".grid-data tbody tr");
+        await Expect(tableRows).ToHaveCountAsync(2);
+
+        // Toggle "Show overdue only"
+        var toggle = Page.Locator($"#{WorkOrderSearch.Elements.OverdueOnlyToggle}");
+        await toggle.CheckAsync();
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(2, "OverdueOnly");
+
+        // Assert only the overdue row is visible
+        await Expect(tableRows).ToHaveCountAsync(1);
+        var onlyRow = tableRows.First;
+        await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
+    }
 }
