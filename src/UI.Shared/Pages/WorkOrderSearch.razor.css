@@ -175,6 +175,21 @@
     display: inline-block;
 }
 
+.urgency-badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.urgency-badge.on-track {
+    background-color: #bbf7d0;
+    color: #14532d;
+}
+
 .visually-hidden {
     position: absolute;
     width: 1px;
@@ -379,4 +394,15 @@
 
 :global(html[data-theme="dark"]) .grid-data td {
     color: #e2e8f0;
+}
+
+.overdue-row {
+    background-color: #fff0f0;
+}
+
+.overdue-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
 }

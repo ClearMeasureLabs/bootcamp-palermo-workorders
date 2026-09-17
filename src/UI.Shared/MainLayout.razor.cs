@@ -18,7 +18,8 @@ public partial class MainLayout : IAsyncDisposable
         NavRailToggle,
         CopyrightFooter,
         FooterNote,
-        SoftwareVersion
+        SoftwareVersion,
+        DarkModeToggle
     }
 
     /// <summary>
@@ -55,6 +56,8 @@ public partial class MainLayout : IAsyncDisposable
 
     private string NavToggleAriaExpanded => _navVisible ? "true" : "false";
 
+    private string DarkModeToggleTitle => Theme.IsDarkMode ? "Switch to light mode" : "Switch to dark mode";
+
     [JSInvokable]
     public Task OnViewportChanged(bool isNarrow)
     {
@@ -90,12 +93,17 @@ public partial class MainLayout : IAsyncDisposable
         try
         {
             await Theme.InitializeAsync();
+            Theme.OnChange += OnThemeChanged;
             await InvokeAsync(StateHasChanged);
         }
         catch (JSDisconnectedException)
         {
         }
     }
+
+    private void OnThemeChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task ToggleDarkModeAsync() => await Theme.SetDarkModeAsync(!Theme.IsDarkMode);
 
     private async Task ToggleNavRailAsync()
     {
@@ -118,6 +126,8 @@ public partial class MainLayout : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        Theme.OnChange -= OnThemeChanged;
+
         if (_navToggleHelper is not null)
         {
             try

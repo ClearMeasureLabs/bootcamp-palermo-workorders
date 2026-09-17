@@ -97,7 +97,7 @@ jobs:
     concurrency:
       # Cancelled when new commits arrive on the same non-master branch/PR; on master,
       # cancel-in-progress is disabled below so builds queue instead of being dropped.
-      group: build-${{ github.ref }}
+      group: build-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
@@ -264,7 +264,7 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
-      group: build-sqlite-${{ github.ref }}
+      group: build-sqlite-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
@@ -325,7 +325,7 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04-arm
     concurrency:
-      group: build-arm-${{ github.ref }}
+      group: build-arm-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
@@ -386,7 +386,7 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
-      group: code-analysis-${{ github.ref }}
+      group: code-analysis-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
@@ -426,7 +426,7 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
-      group: qodana-${{ github.ref }}
+      group: qodana-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
@@ -461,7 +461,7 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     runs-on: windows-latest
     concurrency:
-      group: build-windows-${{ github.ref }}
+      group: build-windows-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
@@ -523,7 +523,7 @@ jobs:
     concurrency:
       # Cancelled when a newer job arrives on the same non-master branch/PR; on master,
       # cancel-in-progress is disabled below so publishing queues instead of being dropped.
-      group: build-${{ github.ref }}
+      group: build-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       # write: on master this job also publishes the image to GitHub Packages (ghcr.io) and cuts
@@ -822,7 +822,7 @@ jobs:
     if: false && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     concurrency:
-      group: security-scan-${{ github.ref }}
+      group: security-scan-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
@@ -920,10 +920,11 @@ jobs:
   acceptance-tests:
     name: Acceptance Tests
     needs: changes
-    if: success() && needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     concurrency:
-      group: acceptance-tests-${{ github.ref }}
+      group: acceptance-tests-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read
@@ -988,10 +989,11 @@ jobs:
   acceptance-tests-arm:
     name: Acceptance Tests (ARM SQLite)
     needs: changes
-    if: success() && needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
     concurrency:
-      group: acceptance-tests-arm-${{ github.ref }}
+      group: acceptance-tests-arm-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     permissions:
       contents: read

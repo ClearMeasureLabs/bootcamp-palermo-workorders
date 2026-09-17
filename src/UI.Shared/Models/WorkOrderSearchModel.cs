@@ -12,6 +12,7 @@ public class WorkOrderSearchModel
         public string? Creator { get; set; }
         public string? Assignee { get; set; }
         public string? Status { get; set; }
+        public bool OverdueOnly { get; set; }
     }
 }
 
@@ -29,4 +30,5 @@ public class WorkOrderSearchResultRow
     public string? DueDateDisplay { get; init; }
     public string DueDateCssClass { get; init; } = string.Empty;
     public string? DueDateUrgencyText { get; init; }
+    public DueDateUrgency Urgency { get; init; }
 }

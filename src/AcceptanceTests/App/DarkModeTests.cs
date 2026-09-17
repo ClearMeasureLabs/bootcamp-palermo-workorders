@@ -75,6 +75,34 @@ public class DarkModeTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task DarkMode_NavBarToggle_ShouldSwitchThemeAndPersist()
+    {
+        await Page.GotoAsync("/");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Page.GetByTestId(nameof(MainLayout.Elements.DarkModeToggle)).WaitForAsync();
+
+        var initial = await Page.EvaluateAsync<string>(
+            "() => document.documentElement.getAttribute('data-theme') ?? 'light'");
+
+        await Page.GetByTestId(nameof(MainLayout.Elements.DarkModeToggle)).ClickAsync();
+        await Page.WaitForFunctionAsync(
+            "(t) => document.documentElement.getAttribute('data-theme') !== t",
+            initial);
+
+        var afterToggle = await Page.EvaluateAsync<string>(
+            "() => document.documentElement.getAttribute('data-theme')");
+        afterToggle.ShouldNotBe(initial);
+
+        await Page.ReloadAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var afterReload = await Page.EvaluateAsync<string>(
+            "() => document.documentElement.getAttribute('data-theme')");
+        afterReload.ShouldBe(afterToggle);
+    }
+
+    [Test, Retry(2)]
     public async Task Settings_ShouldRequireAuth()
     {
         await Page.GotoAsync("/settings");

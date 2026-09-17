@@ -33,4 +33,25 @@ public class EmployeeMappingTests
             Assert.That(rehydratedEmployee.Roles.Count, Is.EqualTo(2));
         }
     }
+
+    [Test]
+    public void ShouldPersistLastNameUpTo120Characters()
+    {
+        new DatabaseTests().Clean();
+
+        var longLastName = new string('A', 120);
+        var emp = new Employee("user120", "First", longLastName, "email120@example.com");
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            Assert.That(rehydrated.LastName, Is.EqualTo(longLastName));
+        }
+    }
 }
