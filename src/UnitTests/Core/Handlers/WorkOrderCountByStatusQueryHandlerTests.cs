@@ -11,14 +11,13 @@ namespace ClearMeasure.Bootcamp.UnitTests.Core.Handlers;
 [TestFixture]
 public class WorkOrderCountByStatusQueryHandlerTests
 {
-    private string _dbPath = null!;
     private DataContext _context = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _dbPath = Path.Combine(Path.GetTempPath(), $"wocbs_test_{Guid.NewGuid():N}.db");
-        _context = new DataContext(new FileDbConfig($"Data Source={_dbPath}"));
+        var dbPath = Path.Combine(Path.GetTempPath(), $"wocbs_test_{Guid.NewGuid():N}.db");
+        _context = new DataContext(new FileDbConfig($"Data Source={dbPath}"));
         _context.Database.EnsureCreated();
     }
 
@@ -26,25 +25,7 @@ public class WorkOrderCountByStatusQueryHandlerTests
     public async Task TearDown()
     {
         await _context.DisposeAsync();
-
         SqliteConnection.ClearAllPools();
-
-        if (File.Exists(_dbPath))
-        {
-            const int maxAttempts = 5;
-            for (int attempt = 1; attempt <= maxAttempts; attempt++)
-            {
-                try
-                {
-                    File.Delete(_dbPath);
-                    break;
-                }
-                catch (IOException) when (attempt < maxAttempts)
-                {
-                    Thread.Sleep(50);
-                }
-            }
-        }
     }
 
     [Test]
