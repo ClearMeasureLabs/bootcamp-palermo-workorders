@@ -104,6 +104,6 @@ public class StubBusWithAssigneeCapture : StubBus
             LastAssigneeQueried = q.Username;
         }
 
-        return base.Send<TResponse>(request);
+        return base.Send(request);
     }
 }
