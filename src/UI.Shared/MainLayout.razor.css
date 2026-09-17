@@ -441,6 +441,50 @@
     }
 }
 
+/* Dark mode toggle button */
+.dark-mode-toggle {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    color: #2d3748;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dark-mode-toggle:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.dark-mode-toggle:focus {
+    outline: 2px solid #4a5568;
+    outline-offset: 2px;
+}
+
+.dark-mode-toggle i {
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+:global(html[data-theme="dark"]) .dark-mode-toggle {
+    border-color: #4a5568;
+    background: linear-gradient(135deg, #374151 0%, #2d3748 100%);
+    color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .dark-mode-toggle:hover {
+    background: #4a5568;
+    border-color: #718096;
+}
+
 /* Focus states for accessibility */
 .user-section ::deep a:focus,
 .auth-section ::deep a:focus {

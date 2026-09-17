@@ -417,6 +417,88 @@ public class MainLayoutTests
         layout.FindAll(".nav-backdrop").Count.ShouldBe(0);
     }
 
+
+    [Test]
+    public async Task DarkModeToggle_ShouldRender_WithSunIcon_WhenLightMode()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var button = layout.Find($"[data-testid='{nameof(MainLayout.Elements.DarkModeToggle)}']");
+        button.ShouldNotBeNull();
+        button.InnerHtml.ShouldContain("bi-sun");
+    }
+
+    [Test]
+    public async Task DarkModeToggle_ShouldRender_WithMoonIcon_WhenDarkMode()
+    {
+        await using var ctx = CreateContext();
+        var themeModule = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
+        themeModule.Setup<string>("getTheme").SetResult("dark");
+        themeModule.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        themeModule.SetupVoid("setTheme", _ => true).SetVoidResult();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        await component.WaitForAssertionAsync(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.DarkModeToggle)}']").InnerHtml.ShouldContain("bi-moon");
+        });
+    }
+
+    [Test]
+    public async Task DarkModeToggle_Click_ShouldFlipIsDarkMode()
+    {
+        await using var ctx = CreateContext();
+        var themeModule = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
+        themeModule.Setup<string>("getTheme").SetResult("light");
+        themeModule.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        themeModule.SetupVoid("setTheme", _ => true).SetVoidResult();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+        await component.WaitForAssertionAsync(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.DarkModeToggle)}']").ShouldNotBeNull();
+        });
+
+        var button = layout.Find($"[data-testid='{nameof(MainLayout.Elements.DarkModeToggle)}']");
+        button.InnerHtml.ShouldContain("bi-sun");
+
+        await button.ClickAsync(new());
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            layout.Find($"[data-testid='{nameof(MainLayout.Elements.DarkModeToggle)}']").InnerHtml.ShouldContain("bi-moon");
+        });
+        ctx.Services.GetRequiredService<ThemePreferenceService>().IsDarkMode.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task DarkModeToggle_ShouldBeVisible_WhenUserIsNotAuthenticated()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.Find($"[data-testid='{nameof(MainLayout.Elements.DarkModeToggle)}']").ShouldNotBeNull();
+    }
+
+    [Test]
+    public async Task DarkModeToggle_ShouldBeVisible_WhenUserIsAuthenticated()
+    {
+        await using var ctx = CreateContext(authenticateAsUser: "hsimpson");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.Find($"[data-testid='{nameof(MainLayout.Elements.DarkModeToggle)}']").ShouldNotBeNull();
+    }
+
+
     [Test]
     public async Task ShouldRenderGitSha_WithCorrectHref_WhenEndpointReturnsValidSha()
     {
@@ -525,7 +607,9 @@ public class MainLayoutTests
         public Task<Employee?> GetCurrentUserAsync() => Task.FromResult<Employee?>(null);
     }
 
+    // ReSharper disable NotAccessedPositionalProperty.Local -- properties consumed via JSON serialization reflection
     private sealed record EnvironmentStatusStub(string Version, string GitSha, string EnvironmentName);
+    // ReSharper restore NotAccessedPositionalProperty.Local
 
     private sealed class StubEnvironmentStatusHandler(EnvironmentStatusStub? stub) : HttpMessageHandler
     {

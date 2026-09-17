@@ -54,6 +54,21 @@
                     </div>
                 </div>
                 <div class="header-actions">
+                    <button type="button"
+                            class="dark-mode-toggle"
+                            data-testid="@nameof(Elements.DarkModeToggle)"
+                            @onclick="ToggleDarkModeAsync"
+                            title="@DarkModeToggleTitle"
+                            aria-label="@DarkModeToggleTitle">
+                        @if (Theme.IsDarkMode)
+                        {
+                            <i class="bi bi-moon" aria-hidden="true"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-sun" aria-hidden="true"></i>
+                        }
+                    </button>
                     <AuthorizeView>
                         <Authorized>
                             <div class="user-section">

@@ -152,6 +152,7 @@ public class EnvironmentStatusEndpointIntegrationTests
         payload.ShouldNotBeNull();
         payload.Version.ShouldNotBeNull();
         payload.GitSha.ShouldNotBeNull();
+        payload.EnvironmentName.ShouldNotBeNull();
     }
 
     [Test]
