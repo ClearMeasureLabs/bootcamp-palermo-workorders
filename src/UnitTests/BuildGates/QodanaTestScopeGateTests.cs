@@ -56,6 +56,7 @@ public class QodanaTestScopeGateTests
 
         config.ShouldContain("resharper_redundant_using_directive_highlighting = none");
         config.ShouldContain("resharper_redundant_nullable_warning_suppression_highlighting = none");
+        config.ShouldContain("root = false");
     }
 
     private static string FindRepoFile(string relativePath)

@@ -1,5 +1,4 @@
 using Shouldly;
-using System.Linq; // #9519 scratch probe: deliberately redundant, removed in a follow-up commit.
 
 namespace ClearMeasure.Bootcamp.UnitTests.BuildGates;
 
