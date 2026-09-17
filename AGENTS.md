@@ -218,11 +218,11 @@ When Qodana (Community .NET) fails in CI and you cannot view the CI job logs:
 
 2. **The `.bak` is from a historical scan** — findings it lists for existing files are already handled (suppressed or fixed on master). Focus on NEW files added by your branch.
 
-3. **The 4 `ConvertToPrimaryConstructor` entries** for `DatabaseEmptier.cs`, `SqlExecuter.cs`, `Bus.cs`, `Error.cshtml.cs` were in the master baseline and suppressed by adding `// ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail`. These were removed from the baseline when suppressed.
+3. **The 4 `ConvertToPrimaryConstructor` entries** for `DatabaseEmptier.cs`, `SqlExecuter.cs`, `Bus.cs`, `Error.cshtml.cs` are in the master baseline WITHOUT suppression comments. `// ReSharper disable once ConvertToPrimaryConstructor` does **NOT** suppress these in qodana-cdnet — the findings still appear in the scan. Do NOT add suppression comments to these files and do NOT remove their baseline entries. Keep `qodana.sarif.json` matching master for these 4 entries.
 
 4. **Acceptance test failures alongside Qodana** — when both fail in the same CI run, the acceptance tests may be independently flaky (Docker timing, network, runner issues). The Qodana failure is the actionable item; acceptance test failures that occur only when Qodana also fails may resolve on re-run.
 
-5. **New files generate new Qodana findings** — for every new `.cs` file added, verify there are no `ConvertToPrimaryConstructor`, `AutoPropertyCanBeMadeGetOnly.Global`, `PropertyCanBeMadeInitOnly.Global`, or `FieldCanBeMadeReadOnly` findings. For form models (`*ManageModel.cs`), the `// ReSharper disable PropertyCanBeMadeInitOnly.Global` file-level suppression is required at the top.
+5. **New files generate new Qodana findings** — for every new `.cs` file added, verify there are no `ConvertToPrimaryConstructor`, `AutoPropertyCanBeMadeGetOnly.Global`, `PropertyCanBeMadeInitOnly.Global`, or `FieldCanBeMadeReadOnly` findings. For form models (`*ManageModel.cs`), the `// ReSharper disable PropertyCanBeMadeInitOnly.Global` file-level suppression is required at the top. **For new stub bus classes in unit tests, use primary constructor syntax** (`class StubBus(MyParam param) : Bus(null!)`) instead of classic constructor to avoid `ConvertToPrimaryConstructor` findings — the suppression comment does not work for these.
 
 ### Qodana Baseline Refresh Workflow (for remediation work items)
 
@@ -264,7 +264,7 @@ When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCH
 
 4. **`Html.AttributeValueNotResolved` at `Settings.razor:16`** is in the baseline AND excluded in `qodana.yaml`. Qodana CDnet respects `exclude` blocks in baseline comparison, so this entry is safe to leave in baseline.
 
-5. **`ConvertToPrimaryConstructor` is an epic guardrail** — do NOT convert; suppress with `// ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion`.
+5. **`ConvertToPrimaryConstructor` is an epic guardrail** — for **existing** code: do NOT convert classic constructors to primary constructors; the finding stays in the `qodana.sarif.json` baseline (the `// ReSharper disable once` annotation does NOT suppress this in qodana-cdnet, so the baseline entry must remain). For **new** stub/helper classes: write them using primary constructor syntax from the start to avoid generating the finding at all.
 
 6. **`AutoPropertyCanBeMadeGetOnly.Global` on IOptions classes** — properties need `set` for IConfiguration binding. Suppress: `// ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- required for IOptions<T> configuration binding`.
 

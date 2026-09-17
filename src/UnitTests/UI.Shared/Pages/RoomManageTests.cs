@@ -160,15 +160,9 @@ public class RoomManageTests
         });
     }
 
-    private sealed class StubRoomBus : Bus
+    private sealed class StubRoomBus(Room[] initialRooms) : Bus(null!)
     {
-        private Room[] _rooms;
-
-        // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
-        public StubRoomBus(Room[] rooms) : base(null!)
-        {
-            _rooms = rooms;
-        }
+        private Room[] _rooms = initialRooms;
 
         public SaveRoomCommand? LastSaveCommand { get; private set; }
         public DeleteRoomCommand? LastDeleteCommand { get; private set; }
