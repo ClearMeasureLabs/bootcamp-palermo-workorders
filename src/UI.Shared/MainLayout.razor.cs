@@ -1,5 +1,5 @@
-using System.Net.Http.Json;
 using System.Reflection;
+using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -85,18 +85,22 @@ public partial class MainLayout : IAsyncDisposable
     {
         try
         {
-            var status = await Http.GetFromJsonAsync<EnvironmentStatusDto>("/api/status/environment");
-            if (status is not null)
+            var response = await Http.GetAsync("/api/status/environment");
+            if (response.IsSuccessStatusCode)
             {
-                _gitSha = status.GitSha ?? "unknown";
-                _environmentName = status.EnvironmentName ?? "unknown";
+                await using var stream = await response.Content.ReadAsStreamAsync();
+                using var doc = await JsonDocument.ParseAsync(stream);
+                if (doc.RootElement.TryGetProperty("gitSha", out var sha))
+                    _gitSha = sha.GetString() ?? "unknown";
+                if (doc.RootElement.TryGetProperty("environmentName", out var env))
+                    _environmentName = env.GetString() ?? "unknown";
             }
         }
         catch (HttpRequestException)
         {
             // graceful fallback — fields remain "unknown"
         }
-        catch (System.Text.Json.JsonException)
+        catch (JsonException)
         {
             // graceful fallback — malformed response, fields remain "unknown"
         }
@@ -177,10 +181,3 @@ public partial class MainLayout : IAsyncDisposable
     }
 }
 
-/// <summary>
-/// Minimal DTO for deserializing the <c>/api/status/environment</c> response fields
-/// needed by the footer. Other fields are ignored.
-/// </summary>
-// ReSharper disable once ClassNeverInstantiated.Local -- created via reflection by System.Text.Json (GetFromJsonAsync<T>); no explicit new() call
-// ReSharper disable once NotAccessedPositionalProperty.Local -- Version slot ignored at runtime; record shape allows JSON deserialization to populate it silently
-internal sealed record EnvironmentStatusDto(string? Version, string? GitSha, string? EnvironmentName);
