@@ -89,7 +89,6 @@ DbUp scripts in `src/Database/scripts/Update/`, numbered sequentially (`###_Desc
 - Test data generation: AutoBogus
 - UI component tests: bUnit
 - Acceptance tests: Playwright with helpers from `AcceptanceTestBase` (`LoginAsCurrentUser()`, `Click()`, `Input()`, `Select()`)
-- **Playwright `ToHaveClassAsync` / empty regex gotcha:** `DueDateUrgencyCalculator.CssClass(None)` returns `string.Empty`. Passing `new Regex("")` to `ToHaveClassAsync` is undefined in Playwright; always guard: `if (!string.IsNullOrEmpty(cssClass)) await Expect(el).ToHaveClassAsync(new Regex(cssClass));`.
 - Live-LLM tests: mark with `[LlmTest]` (from `IntegrationTests/TestSupport`) instead of `[Retry(n)]`. The test gets 3 attempts; if none pass it is reported as a **warning**, not a build failure. Rate-limit `Assert.Ignore` and `Inconclusive` results pass through unchanged.
 
 **Code style:**

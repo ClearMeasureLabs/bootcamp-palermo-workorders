@@ -20,7 +20,7 @@ $projectConfig = $env:BuildConfiguration
 $framework = "net10.0"
 $version = $env:BUILD_BUILDNUMBER
 
-$verbosity = "normal"
+$verbosity = "minimal"
 
 $build_dir = Join-Path $base_dir "build"
 $test_dir = Join-Path $build_dir "test"
@@ -375,7 +375,7 @@ Function AcceptanceTests {
 	$runSettingsPath = Join-Path $acceptanceTestProjectPath "AcceptanceTests.runsettings"
 	try {
 		exec {
-		& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v normal --logger:trx `
+		& dotnet test /p:CopyLocalLockFileAssemblies=true -nologo -v minimal --logger:trx `
 				--results-directory $(Join-Path $test_dir "AcceptanceTests") --no-build `
 				--no-restore --configuration $projectConfig `
 				--settings:$runSettingsPath `
