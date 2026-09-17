@@ -438,6 +438,108 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task SortByTitle_Ascending_SortsResultsByTitle()
+    {
+        await using var ctx = new BunitContext();
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+        };
+        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByTitleButton}");
+        await sortBtn.ClickAsync(new());
+
+        var cells = component.FindAll("tbody tr td:nth-child(5)");
+        cells[0].TextContent.Trim().ShouldBe("A");
+        cells[1].TextContent.Trim().ShouldBe("B");
+        cells[2].TextContent.Trim().ShouldBe("C");
+    }
+
+    [Test]
+    public async Task SortByTitle_ClickingAgain_ReversesToDescending()
+    {
+        await using var ctx = new BunitContext();
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+        };
+        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByTitleButton}");
+        await sortBtn.ClickAsync(new());
+        await sortBtn.ClickAsync(new());
+
+        var cells = component.FindAll("tbody tr td:nth-child(5)");
+        cells[0].TextContent.Trim().ShouldBe("C");
+        cells[1].TextContent.Trim().ShouldBe("B");
+        cells[2].TextContent.Trim().ShouldBe("A");
+    }
+
+    [Test]
+    public async Task SortByRoom_Ascending_SortsResultsByRoomNumber()
+    {
+        await using var ctx = new BunitContext();
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, RoomNumber = "C" },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, RoomNumber = "A" },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, RoomNumber = "B" },
+        };
+        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
+        await sortBtn.ClickAsync(new());
+
+        var cells = component.FindAll("tbody tr td:nth-child(7)");
+        cells[0].TextContent.Trim().ShouldBe("A");
+        cells[1].TextContent.Trim().ShouldBe("B");
+        cells[2].TextContent.Trim().ShouldBe("C");
+    }
+
+    [Test]
+    public async Task SortByRoom_ClickingAgain_ReversesToDescending()
+    {
+        await using var ctx = new BunitContext();
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, RoomNumber = "C" },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, RoomNumber = "A" },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, RoomNumber = "B" },
+        };
+        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
+        await sortBtn.ClickAsync(new());
+        await sortBtn.ClickAsync(new());
+
+        var cells = component.FindAll("tbody tr td:nth-child(7)");
+        cells[0].TextContent.Trim().ShouldBe("C");
+        cells[1].TextContent.Trim().ShouldBe("B");
+        cells[2].TextContent.Trim().ShouldBe("A");
+    }
+
+    [Test]
     public async Task ShouldApply_OverdueRow_CssClass_WhenWorkOrderIsOverdue()
     {
         await using var ctx = new BunitContext();

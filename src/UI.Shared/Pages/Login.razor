@@ -36,9 +36,9 @@
                     <div class="alert alert-danger">@_errorMessage</div>
                 }
 
-                @if (!string.IsNullOrEmpty(WelcomeFirstName))
+                @if (!string.IsNullOrEmpty(WelcomeFullName))
                 {
-                    <small class="text-success">Welcome back, @WelcomeFirstName!</small>
+                    <small class="text-success">Welcome back, @WelcomeFullName!</small>
                 }
                 <div>
                     <button data-testid="@Elements.LoginButton" type="submit" class="btn btn-primary w-100" disabled="@(string.IsNullOrEmpty(LoginModelValue.Username))">Enter the Portal</button>
