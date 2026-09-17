@@ -75,4 +75,35 @@ public class CopyrightFooterTests : AcceptanceTestBase
         var text = await versionSpan.InnerTextAsync();
         text.Trim().ShouldNotBeEmpty();
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowGitSha_InFooter_OnLandingPage()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var gitSha = Page.GetByTestId(nameof(MainLayout.Elements.GitSha));
+        await gitSha.WaitForAsync();
+        await Expect(gitSha).ToBeVisibleAsync();
+
+        // When the build has a git SHA, the element is an anchor with an href to the commit.
+        // In local dev without SourceRevisionId the element falls back to a span showing "unknown".
+        var href = await gitSha.GetAttributeAsync("href");
+        if (href is not null)
+        {
+            href.ShouldContain("github.com/ClearMeasureLabs/bootcamp-palermo-workorders/commit/");
+        }
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowEnvironmentName_InFooter_OnLandingPage()
+    {
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var envName = Page.GetByTestId(nameof(MainLayout.Elements.EnvironmentName));
+        await envName.WaitForAsync();
+        await Expect(envName).ToBeVisibleAsync();
+
+        var text = await envName.InnerTextAsync();
+        text.Trim().ShouldNotBeEmpty();
+    }
 }

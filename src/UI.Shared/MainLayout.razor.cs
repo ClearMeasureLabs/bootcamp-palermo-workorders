@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -19,7 +20,9 @@ public partial class MainLayout : IAsyncDisposable
         CopyrightFooter,
         FooterNote,
         SoftwareVersion,
-        DarkModeToggle
+        DarkModeToggle,
+        GitSha,
+        EnvironmentName
     }
 
     /// <summary>
@@ -39,6 +42,9 @@ public partial class MainLayout : IAsyncDisposable
     [Inject]
     private ThemePreferenceService Theme { get; set; } = null!;
 
+    [Inject]
+    private HttpClient Http { get; set; } = null!;
+
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
     private IJSObjectReference? _jsModule;
@@ -46,6 +52,8 @@ public partial class MainLayout : IAsyncDisposable
     private bool _isNarrowViewport;
     private bool _viewportSynced;
     private bool _navVisible = true;
+    private string _gitSha = "unknown";
+    private string _environmentName = "unknown";
 
     private string AppContainerClass => NavRailCss.AppContainerClass(_isNarrowViewport, _navVisible);
 
@@ -71,6 +79,43 @@ public partial class MainLayout : IAsyncDisposable
         _isNarrowViewport = isNarrow;
         StateHasChanged();
         return Task.CompletedTask;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await Http.GetAsync("/api/status/environment");
+            if (response.IsSuccessStatusCode)
+            {
+                (_gitSha, _environmentName) = await ParseEnvironmentStatusAsync(response);
+            }
+        }
+        catch (HttpRequestException)
+        {
+            // graceful fallback — fields remain "unknown"
+        }
+        catch (JsonException)
+        {
+            // graceful fallback — malformed response, fields remain "unknown"
+        }
+    }
+
+    /// <summary>
+    /// Extracted from <see cref="OnInitializedAsync"/> to keep that method's cyclomatic
+    /// complexity (and therefore its CRAP score) low; the property-presence branching lives
+    /// here instead, fully exercised by <c>MainLayoutTests</c>.
+    /// </summary>
+    private static async Task<(string GitSha, string EnvironmentName)> ParseEnvironmentStatusAsync(
+        HttpResponseMessage response)
+    {
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        var gitSha = doc.RootElement.TryGetProperty("gitSha", out var sha) ? sha.GetString() ?? "unknown" : "unknown";
+        var environmentName = doc.RootElement.TryGetProperty("environmentName", out var env)
+            ? env.GetString() ?? "unknown"
+            : "unknown";
+        return (gitSha, environmentName);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -147,3 +192,4 @@ public partial class MainLayout : IAsyncDisposable
         _dotNetRef?.Dispose();
     }
 }
+
