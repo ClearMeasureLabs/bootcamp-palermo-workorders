@@ -234,7 +234,6 @@ When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCH
 
 7. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
 
-
 ### bUnit Test Patterns
 
 **Checkbox toggling in bUnit** — use `ChangeAsync(new() { Value = true })`, not `IsChecked = true` (which doesn't exist on `ChangeEventArgs`):
