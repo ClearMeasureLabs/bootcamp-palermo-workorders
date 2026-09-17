@@ -30,15 +30,21 @@ internal static class WorkOrderQueryFilters
 
         if (overdueOnly)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
-            query = query.Where(wo =>
-                wo.DueDate < today &&
-                (wo.Status == WorkOrderStatus.Draft ||
-                 wo.Status == WorkOrderStatus.Assigned ||
-                 wo.Status == WorkOrderStatus.InProgress));
+            query = ApplyOverdueFilter(query);
         }
 
         return query;
+    }
+
+    private static IQueryable<WorkOrder> ApplyOverdueFilter(IQueryable<WorkOrder> query)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var draft = WorkOrderStatus.Draft;
+        var assigned = WorkOrderStatus.Assigned;
+        var inProgress = WorkOrderStatus.InProgress;
+        return query.Where(wo =>
+            wo.DueDate < today &&
+            (wo.Status == draft || wo.Status == assigned || wo.Status == inProgress));
     }
 
     public static IQueryable<WorkOrder> Apply(
