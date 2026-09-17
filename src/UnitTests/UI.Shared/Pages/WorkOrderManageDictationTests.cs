@@ -263,6 +263,11 @@ public class WorkOrderManageDictationTests
                 return Task.FromResult<TResponse>((TResponse)(object)employees);
             }
 
+            if (request is RoomGetAllQuery)
+            {
+                return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<Room>());
+            }
+
             if (request is WorkOrderAttachmentsQuery)
             {
                 var attachments = Array.Empty<WorkOrderAttachment>();

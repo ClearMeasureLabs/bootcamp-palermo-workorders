@@ -82,8 +82,9 @@ public class McpSaveWorkOrderAcceptanceTests : AcceptanceTestBase
             .ToHaveValueAsync(string.Empty);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions)))
             .ToHaveValueAsync(instructions);
+        // MCP-created work orders use roomNumber (text) not the Room FK; the dropdown has no match — empty is expected
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber)))
-            .ToHaveValueAsync(room);
+            .ToHaveValueAsync(string.Empty);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
             .ToHaveTextAsync("Draft");
 

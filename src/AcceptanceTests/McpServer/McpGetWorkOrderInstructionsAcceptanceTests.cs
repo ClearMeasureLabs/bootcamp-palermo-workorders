@@ -94,8 +94,9 @@ public class McpGetWorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
             .ToHaveValueAsync(new Regex("^" + Regex.Escape(expectedDescription.TrimEnd('.')) + @"\.?$"));
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions)))
             .ToHaveValueAsync(RequiredString(live, "Instructions"));
+        // MCP-created work orders use roomNumber (text) not the Room FK; the dropdown has no match — empty is expected
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber)))
-            .ToHaveValueAsync(RequiredString(live, "RoomNumber"));
+            .ToHaveValueAsync(string.Empty);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.DueDate)))
             .ToHaveValueAsync(RequiredString(live, "DueDate"));
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))

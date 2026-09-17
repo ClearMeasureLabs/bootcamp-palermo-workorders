@@ -47,6 +47,7 @@ public class WorkOrderManageSubmitTests
 
         await component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").ChangeAsync(new() { Value = "Submit title" });
         await component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ChangeAsync(new() { Value = "Submit description" });
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.RoomNumber}']").ChangeAsync(new() { Value = StubSubmitBus.TestRoom.Id.ToString() });
 
         var saveButton = component.Find($"[data-testid='{WorkOrderManage.Elements.CommandButton}Save']");
         await saveButton.ClickAsync(new());
@@ -72,7 +73,8 @@ public class WorkOrderManageSubmitTests
             Title = "Existing",
             Description = "Desc",
             Status = WorkOrderStatus.Draft,
-            Creator = user
+            Creator = user,
+            Room = StubSubmitBus.TestRoom
         };
         var bus = new StubSubmitBus(existing);
 
@@ -110,6 +112,8 @@ public class WorkOrderManageSubmitTests
 
     private sealed class StubSubmitBus(WorkOrder? existing = null) : Bus(null!)
     {
+        public static readonly Room TestRoom = new Room("101", "Test Room") { Id = Guid.Parse("11111111-1111-1111-1111-111111111111") };
+        private static readonly Room[] _rooms = [TestRoom];
         public object? LastCommand { get; private set; }
         public int WorkOrderByNumberHits { get; private set; }
 
@@ -120,6 +124,11 @@ public class WorkOrderManageSubmitTests
             if (request is EmployeeGetAllQuery)
             {
                 return Task.FromResult((TResponse)(object)Array.Empty<Employee>());
+            }
+
+            if (request is RoomGetAllQuery)
+            {
+                return Task.FromResult((TResponse)(object)_rooms);
             }
 
             if (request is WorkOrderAttachmentsQuery)

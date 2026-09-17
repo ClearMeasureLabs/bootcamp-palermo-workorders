@@ -53,7 +53,6 @@ public class WorkOrderSaveThenAssignPersistenceTests : AcceptanceTestBase
         var title = $"mow front grass {token}";
         const string description = "edge the walk";
         const string instructions = "do a good job";
-        const string room = "front lawn";
 
         var inProgressNumber = await SeedNearbyInProgressAsync();
 
@@ -68,11 +67,12 @@ public class WorkOrderSaveThenAssignPersistenceTests : AcceptanceTestBase
         var workOrderNumber = (await woNumberLocator.InnerTextAsync()).Trim();
         workOrderNumber.Length.ShouldBeLessThanOrEqualTo(7);
 
+        var firstRoomId = await GetFirstRoomIdAsync();
         await Select(nameof(WorkOrderManage.Elements.Assignee), "gwillie");
         await Input(nameof(WorkOrderManage.Elements.Title), title);
         await Input(nameof(WorkOrderManage.Elements.Description), description);
         await Input(nameof(WorkOrderManage.Elements.Instructions), instructions);
-        await Input(nameof(WorkOrderManage.Elements.RoomNumber), room);
+        await Select(nameof(WorkOrderManage.Elements.RoomNumber), firstRoomId);
 
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name);
         await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
@@ -126,7 +126,7 @@ public class WorkOrderSaveThenAssignPersistenceTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync(title);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToHaveValueAsync(description);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToHaveValueAsync(instructions);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber))).ToHaveValueAsync(room);
+        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber))).ToHaveValueAsync(firstRoomId);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Assignee))).ToHaveValueAsync("gwillie");
 
         await Click(nameof(NavMenu.Elements.Search));

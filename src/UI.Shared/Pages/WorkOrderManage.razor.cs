@@ -42,6 +42,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
     public WorkOrderManageModel Model { get; set; } = new();
     private List<SelectListItem> UserOptions { get; set; } = new();
+    private List<SelectListItem> RoomOptions { get; set; } = new();
     private IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     private string? SelectedCommand { get; set; }
 
@@ -59,8 +60,8 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         }
 
         await LoadUserOptions();
+        await LoadRoomOptions();
         await LoadWorkOrder();
-
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
@@ -124,6 +125,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             Description = workOrder.Description,
             Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
+            RoomId = workOrder.Room?.Id,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
@@ -141,6 +143,14 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         var items = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
         items.Insert(0, new SelectListItem("", ""));
         UserOptions = items;
+    }
+
+    private async Task LoadRoomOptions()
+    {
+        var rooms = await Bus.Send(new RoomGetAllQuery());
+        var items = rooms.Select(r => new SelectListItem(r.Id.ToString(), r.DisplayName)).ToList();
+        items.Insert(0, new SelectListItem("", ""));
+        RoomOptions = items;
     }
 
     private async Task HandleSubmit()
@@ -163,8 +173,16 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             assignee = await Bus.Send(new EmployeeByUserNameQuery(Model.AssignedToUserName));
         }
 
+        Room? room = null;
+        if (Model.RoomId.HasValue)
+        {
+            room = await Bus.Send(new RoomGetAllQuery())
+                .ContinueWith(t => t.Result.FirstOrDefault(r => r.Id == Model.RoomId.Value), TaskScheduler.Default);
+        }
+
         workOrder.Number = Model.WorkOrderNumber;
         workOrder.Assignee = assignee;
+        workOrder.Room = room;
         workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
         workOrder.Instructions = Model.Instructions;

@@ -45,4 +45,7 @@ public class WorkOrderManageModel
 
     [StringLength(WorkOrder.RoomNumberMaxLength, ErrorMessage = "Room cannot exceed 900 characters.")]
     public string? RoomNumber { get; set; }
+
+    [Required(ErrorMessage = "Room is required.")]
+    public Guid? RoomId { get; set; }
 }

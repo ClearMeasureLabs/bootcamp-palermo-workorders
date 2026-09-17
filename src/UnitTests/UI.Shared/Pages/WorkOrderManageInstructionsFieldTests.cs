@@ -122,6 +122,11 @@ public class WorkOrderManageInstructionsFieldTests
                 return Task.FromResult((TResponse)(object)employees);
             }
 
+            if (request is RoomGetAllQuery)
+            {
+                return Task.FromResult((TResponse)(object)Array.Empty<Room>());
+            }
+
             if (request is WorkOrderAttachmentsQuery)
             {
                 return Task.FromResult((TResponse)(object)Array.Empty<WorkOrderAttachment>());
