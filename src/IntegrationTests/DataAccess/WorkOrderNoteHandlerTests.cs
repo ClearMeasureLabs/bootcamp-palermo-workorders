@@ -58,16 +58,41 @@ public class WorkOrderNoteHandlerTests : IntegratedTestBase
             await context.SaveChangesAsync();
         }
 
-        var bus = TestHost.GetRequiredService<IBus>();
-        var note1 = await bus.Send(new AddWorkOrderNoteCommand(workOrder, author, "First note"));
-        await Task.Delay(10);
-        var note2 = await bus.Send(new AddWorkOrderNoteCommand(workOrder, author, "Second note"));
+        // Insert notes directly with explicit distinct timestamps so the ordering test
+        // is deterministic regardless of the stubbed TimeProvider (which returns a fixed time).
+        var olderTime = new DateTime(2000, 1, 1, 1, 0, 0, DateTimeKind.Utc);
+        var newerTime = new DateTime(2000, 1, 1, 2, 0, 0, DateTimeKind.Utc);
 
+        Guid note1Id, note2Id;
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var note1 = new WorkOrderNote
+            {
+                WorkOrderId = workOrder.Id,
+                AuthorId = author.Id,
+                Text = "First note",
+                CreatedAt = olderTime
+            };
+            var note2 = new WorkOrderNote
+            {
+                WorkOrderId = workOrder.Id,
+                AuthorId = author.Id,
+                Text = "Second note",
+                CreatedAt = newerTime
+            };
+            context.Add(note1);
+            context.Add(note2);
+            await context.SaveChangesAsync();
+            note1Id = note1.Id;
+            note2Id = note2.Id;
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
         var notes = await bus.Send(new WorkOrderNotesQuery(workOrder.Id));
 
         notes.Length.ShouldBe(2);
-        notes[0].Id.ShouldBe(note2.Id);
-        notes[1].Id.ShouldBe(note1.Id);
+        notes[0].Id.ShouldBe(note2Id);
+        notes[1].Id.ShouldBe(note1Id);
         notes[0].Author.ShouldNotBeNull();
         notes[0].Author!.Id.ShouldBe(author.Id);
     }

@@ -251,3 +251,13 @@ When adding a new `IRequest<T>` query that is sent inside `LoadWorkOrder()` in `
 
 Pattern: add `if (request is NewQueryType) { return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<NewEntityType>()); }` before the `throw` in each stub. All files already import `ClearMeasure.Bootcamp.Core.Queries` and `ClearMeasure.Bootcamp.Core.Model`.
 
+
+### Integration Tests: StubTimeProvider returns a FIXED time
+
+`TestHost` injects a `StubTimeProvider` that always returns `2000-01-01T01:01:01Z` (see `TestHost.TestTime`). **All calls to `time.GetUtcNow()` in command handlers return the same value during a test session.** This means:
+
+- Any integration test that inserts two entities via `IBus` and then asserts order by a timestamp field will fail non-deterministically because both timestamps are identical.
+- **Fix:** Insert entities directly via `DbContext` with explicitly distinct `DateTime` values (e.g. `new DateTime(2000, 1, 1, 1, 0, 0, DateTimeKind.Utc)` vs `new DateTime(2000, 1, 1, 2, 0, 0, DateTimeKind.Utc)`) instead of going through the command handler for the ordering test.
+- The `AddXxxCommand` handler path is fine for single-insert tests that only assert non-default timestamps.
+
+
