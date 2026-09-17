@@ -4,7 +4,7 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 
-public class DeleteRoomCommand : IRequest<Unit>
+public class DeleteRoomCommand : IRequest<Unit>, IRemotableRequest
 {
     // ReSharper disable once UnusedMember.Global -- required for System.Text.Json deserialization (set-by-convention)
     public DeleteRoomCommand()

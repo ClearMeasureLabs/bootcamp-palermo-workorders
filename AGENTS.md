@@ -124,7 +124,7 @@ If all listed files exist and compile cleanly, the only remaining tasks are qual
 - NServiceBus runs in trial mode (no license). This produces a warning at startup but does not block functionality.
 - The HTTPS dev certificate is untrusted. Browser interactions require clicking through the security warning.
 - The `appsettings.Development.json` has a LocalDB connection string; on Linux, always override via the `ConnectionStrings__SqlConnectionString` environment variable or use the build scripts which handle this automatically.
-- **Unrelated history merges**: AI Factory branches are sometimes created as "root commits" (no common ancestor with master). `git merge origin/master` will fail with "refusing to merge unrelated histories". Use `git merge --allow-unrelated-histories origin/master` instead. Resolve add/add conflicts by keeping the feature-branch version for new files (Room*.cs, etc.) and merging both sides for shared files (AGENTS.md — keep both sections; `qodana.sarif.json` — keep HEAD baseline entries; `DataContext.cs` — keep HEAD with the new mapping; `NavMenu.razor` — keep HEAD with new nav items). After resolving, run `git add` on conflict files and then `git commit`.
+- **Unrelated history merges**: AI Factory branches are sometimes created as "root commits" (no common ancestor with master). `git merge origin/master` will fail with "refusing to merge unrelated histories". Use `git merge --allow-unrelated-histories origin/master` instead. After resolving any add/add conflicts, run `git add` on conflict files and then `git commit`.
 
 ### MediatR void commands — use `IRequest<Unit>` not `IRequest`
 
