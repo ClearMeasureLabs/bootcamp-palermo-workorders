@@ -156,6 +156,7 @@ private static BunitContext CreateContext(IBus? bus = null, string loggedInAs = 
 
 **`[Inject]` property visibility in Blazor components:** Declare `[Inject]` properties as `private` (not `public`) unless they need to be accessed from tests or cross-component. Blazor DI injects into `private` properties just as well as `public`. Using `private` prevents Qodana `MemberCanBePrivate.Global` findings. Example: `[Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;`. The `WorkOrderManage.razor.cs` uses this pattern with `[Inject] private NavigationManager`.
 
+
 ### "Feature Already Implemented" Work Items
 
 When a work item's Technical Design section says **"The feature is fully implemented"** and lists checked-off files, verify those files exist (`find /workspace/src -name "FileName.cs"`), confirm they match the spec, run `dotnet build src/ChurchBulletin.sln --configuration Release -warnaserror` (0 warnings required) and `dotnet test src/UnitTests --filter "FullyQualifiedName~ClassName"`, then proceed directly to the self-tuning/commit/PR steps. Do NOT re-create files that already exist and match the spec — doing so wastes tokens and risks introducing divergence.

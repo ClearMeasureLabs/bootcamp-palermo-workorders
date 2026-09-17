@@ -1,0 +1,9 @@
+# Style-only inspections that fire on new test files (never correctness/security).
+# See #9519: qodana-cdnet does not honor qodana.yaml path excludes, so scope is
+# enforced here via directory-scoped .editorconfig severity, cascading from
+# src/.editorconfig for everything else in this folder.
+root = false
+
+[*.cs]
+resharper_redundant_using_directive_highlighting = none
+resharper_redundant_nullable_warning_suppression_highlighting = none
