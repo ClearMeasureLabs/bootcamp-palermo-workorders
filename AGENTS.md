@@ -263,3 +263,15 @@ query = query.Where(wo =>
 // WRONG — not translatable, crashes at runtime
 query = query.Where(wo => OpenCodes.Contains(wo.Status.Code));
 ```
+
+### WorkOrder.Number max length = 7 characters
+
+`WorkOrder.Number` is mapped with `.HasMaxLength(7)` in `WorkOrderMap`. Integration tests that seed `WorkOrder` entities must use numbers **≤7 characters** (e.g. `"123"`, `"OVR-001"`, `"FUT-001"`). Using 8-character numbers like `"OVER-001"` or `"FUTR-001"` causes SQL Server to throw a truncation error and fail the test.
+
+```csharp
+// CORRECT
+Number = "OVR-001"  // 7 chars
+
+// WRONG — causes SqlException: String or binary data would be truncated
+Number = "OVER-001" // 8 chars
+```

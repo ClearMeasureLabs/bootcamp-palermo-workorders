@@ -262,14 +262,14 @@ public class WorkOrderSpecificationHandlerTests
         var overdueOrder = new WorkOrder
         {
             Creator = employee,
-            Number = "OVER-001",
+            Number = "OVR-001",
             Status = WorkOrderStatus.InProgress,
             DueDate = new DateOnly(2000, 1, 1)
         };
         var futureOrder = new WorkOrder
         {
             Creator = employee,
-            Number = "FUTR-001",
+            Number = "FUT-001",
             Status = WorkOrderStatus.InProgress,
             DueDate = new DateOnly(2099, 12, 31)
         };
@@ -289,6 +289,6 @@ public class WorkOrderSpecificationHandlerTests
         var orders = await repository.Handle(specification);
 
         orders.Length.ShouldBe(1);
-        orders[0].Number.ShouldBe(overdueOrder.Number);
+        orders[0].Number.ShouldBe("OVR-001");
     }
 }
