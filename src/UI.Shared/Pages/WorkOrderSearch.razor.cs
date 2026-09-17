@@ -91,6 +91,7 @@ public partial class WorkOrderSearch : AppComponentBase
         await SearchWorkOrders();
     }
 
+
     private async Task SearchWorkOrders()
     {
         var creator = !string.IsNullOrWhiteSpace(Model.Filters.Creator)
