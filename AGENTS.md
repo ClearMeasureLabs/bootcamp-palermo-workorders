@@ -234,15 +234,3 @@ When working on a Qodana baseline remediation batch (e.g., #9432 "remediate UNCH
 
 7. **`ParameterOnlyUsedForPreconditionCheck.Local` on test stubs** — constructor parameters used as `if (flag) throw` guards. Use `// ReSharper disable/restore ParameterOnlyUsedForPreconditionCheck.Local` around the class.
 
-
-### Blazor Component HttpClient in bUnit Tests
-
-When a `MainLayout` or Blazor shared-layout component is extended to inject `HttpClient` for runtime API calls, the bUnit `CreateContext` helper **must** register an `HttpClient` with a stub `HttpMessageHandler` — otherwise all tests in that fixture fail with a missing-service exception. Add a `StubHttpMessageHandler` inner class to return controlled JSON or an error status code, and register it as `ctx.Services.AddSingleton<HttpClient>(new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") })`.
-
-### GetCustomAttributes<T>() Nullable Chain
-
-When calling `Assembly.GetEntryAssembly()?.GetCustomAttributes<T>()`, the result is `IEnumerable<T>?`. Chain `.FirstOrDefault()` with the null-conditional operator: `?.FirstOrDefault(...)?.Value ?? "fallback"`. Without the `?.` before `FirstOrDefault`, the compiler emits CS8604 or the chain silently returns null in a non-nullable context.
-
-### EnvironmentStatusResponse Record — Adding Fields
-
-When adding new positional parameters to the `EnvironmentStatusResponse` record, update **both** `BuildResponse()` (add named arguments) **and** the record declaration. The Qodana E2E etag test (`ConditionalGetEtag`) re-serialises the full payload, so any added field flows through without changes to the etag helpers.

@@ -99,6 +99,8 @@ public partial class WorkOrderSearch : AppComponentBase
         if (_sortColumn == null) return;
         if (_sortColumn == "Status") ApplySortByStatus();
         else if (_sortColumn == "DueDate") ApplySortByDueDate();
+        else if (_sortColumn == "Title") ApplySortByTitle();
+        else if (_sortColumn == "Room") ApplySortByRoom();
     }
 
     private void ApplySortByStatus()
@@ -115,6 +117,20 @@ public partial class WorkOrderSearch : AppComponentBase
                            .ThenBy(r => r.WorkOrder.DueDate).ToArray()
             : Model.Results.OrderBy(r => r.WorkOrder.DueDate.HasValue ? 0 : 1)
                            .ThenByDescending(r => r.WorkOrder.DueDate).ToArray();
+    }
+
+    private void ApplySortByTitle()
+    {
+        Model.Results = _sortAscending
+            ? Model.Results.OrderBy(r => r.Title).ToArray()
+            : Model.Results.OrderByDescending(r => r.Title).ToArray();
+    }
+
+    private void ApplySortByRoom()
+    {
+        Model.Results = _sortAscending
+            ? Model.Results.OrderBy(r => r.WorkOrder.RoomNumber).ToArray()
+            : Model.Results.OrderByDescending(r => r.WorkOrder.RoomNumber).ToArray();
     }
 
     private WorkOrderSearchResultRow MapSearchRow(WorkOrder workOrder)
