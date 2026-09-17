@@ -527,6 +527,88 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task AssignedToMe_WhenChecked_ShowsOnlyCurrentUsersWorkOrders()
+    {
+        // Arrange: create two employees each with a distinct assigned work order
+        var otherEmployee = Faker<Employee>();
+        var myOrder = Faker<WorkOrder>();
+        var otherOrder = Faker<WorkOrder>();
+        myOrder.Assignee = CurrentUser;
+        myOrder.Title = $"[{TestTag}] my order";
+        otherOrder.Assignee = otherEmployee;
+        otherOrder.Title = $"[{TestTag}] other order";
+
+        await using var context = TestHost.NewDbContext();
+        context.Attach(CurrentUser);
+        context.Add(otherEmployee);
+        context.Add(myOrder);
+        context.Add(otherOrder);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "BeforeToggle");
+
+        var checkbox = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        await checkbox.CheckAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(2, "AfterToggle");
+
+        // Assert: only my order appears
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable).ToBeVisibleAsync();
+        await Expect(workOrderTable.Locator("tbody tr").Filter(new() { HasText = myOrder.Title })).ToHaveCountAsync(1);
+        await Expect(workOrderTable.Locator("tbody tr").Filter(new() { HasText = otherOrder.Title })).ToHaveCountAsync(0);
+
+        // Assert: Assignee dropdown is disabled
+        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
+        await Expect(assigneeSelect).ToBeDisabledAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task AssignedToMe_WhenUnchecked_RestoresFullList()
+    {
+        // Arrange
+        var otherEmployee = Faker<Employee>();
+        var myOrder = Faker<WorkOrder>();
+        var otherOrder = Faker<WorkOrder>();
+        myOrder.Assignee = CurrentUser;
+        myOrder.Title = $"[{TestTag}] my order";
+        otherOrder.Assignee = otherEmployee;
+        otherOrder.Title = $"[{TestTag}] other order";
+
+        await using var context = TestHost.NewDbContext();
+        context.Attach(CurrentUser);
+        context.Add(otherEmployee);
+        context.Add(myOrder);
+        context.Add(otherOrder);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var checkbox = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        await checkbox.CheckAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "ToggleOn");
+
+        // Uncheck
+        await checkbox.UncheckAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(2, "ToggleOff");
+
+        // Assert both orders reappear
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable.Locator("tbody tr").Filter(new() { HasText = myOrder.Title })).ToHaveCountAsync(1);
+        await Expect(workOrderTable.Locator("tbody tr").Filter(new() { HasText = otherOrder.Title })).ToHaveCountAsync(1);
+
+        // Assert Assignee dropdown is re-enabled
+        var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
+        await Expect(assigneeSelect).ToBeEnabledAsync();
+    }
+
+    [Test, Retry(2)]
     public async Task SortByDueDateHeader_SortsResultsAscending_ThenDescendingOnSecondClick()
     {
         // Arrange

@@ -5,6 +5,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -14,8 +15,10 @@ public partial class WorkOrderSearch : AppComponentBase
 {
     private string? _sortColumn;
     private bool _sortAscending = true;
+    private bool _assignedToMe;
 
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
+    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
 
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
@@ -52,6 +55,22 @@ public partial class WorkOrderSearch : AppComponentBase
         }
 
         // Perform initial search
+        await SearchWorkOrders();
+    }
+
+    private async Task HandleAssignedToMeChanged()
+    {
+        if (_assignedToMe)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var username = authState.User.Identity?.Name;
+            Model.Filters.Assignee = username ?? string.Empty;
+        }
+        else
+        {
+            Model.Filters.Assignee = string.Empty;
+        }
+
         await SearchWorkOrders();
     }
 
@@ -137,10 +156,12 @@ public partial class WorkOrderSearch : AppComponentBase
     private bool HasActiveFilters =>
         !string.IsNullOrEmpty(Model.Filters.Creator) ||
         !string.IsNullOrEmpty(Model.Filters.Assignee) ||
-        !string.IsNullOrEmpty(Model.Filters.Status);
+        !string.IsNullOrEmpty(Model.Filters.Status) ||
+        _assignedToMe;
 
     private async Task HandleClearFilters()
     {
+        _assignedToMe = false;
         Model.Filters.Creator = string.Empty;
         Model.Filters.Assignee = string.Empty;
         Model.Filters.Status = string.Empty;

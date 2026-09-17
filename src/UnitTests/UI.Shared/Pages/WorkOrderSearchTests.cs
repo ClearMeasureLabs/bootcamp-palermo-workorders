@@ -1,8 +1,11 @@
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
@@ -11,15 +14,27 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class WorkOrderSearchTests
 {
+    private const string CurrentUsername = "jpalermo";
+
+    private static BunitContext CreateContext(IBus? bus = null, string loggedInAs = CurrentUsername)
+    {
+        var ctx = new BunitContext();
+        ctx.Services.AddSingleton(bus ?? new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+
+        var store = new StubUserSessionStore { Username = loggedInAs };
+        var authProvider = new CustomAuthenticationStateProvider(store);
+        authProvider.Login(loggedInAs).GetAwaiter().GetResult();
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(authProvider);
+
+        return ctx;
+    }
+
     [Test]
     public async Task ShouldLoadDropDownsInitiallyOnLoad()
     {
-        await using var ctx = new BunitContext();
-
-        // Arrange
-        ctx.Services.AddSingleton<IBus>(new StubBus());
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         // Act
         var component = ctx.Render<WorkOrderSearch>();
@@ -51,11 +66,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task ShouldAssociateFilterLabelsWithMatchingSelectIds()
     {
-        await using var ctx = new BunitContext();
-
-        ctx.Services.AddSingleton<IBus>(new StubBus());
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -76,13 +87,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task ShouldLoadWorkOrderTableWithAllFiltersSetToAllOnInitialLoad()
     {
-        await using var ctx = new BunitContext();
-
-        // Arrange
-        var stubBus = new StubBus();
-        ctx.Services.AddSingleton<IBus>(stubBus);
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         // Act
         var component = ctx.Render<WorkOrderSearch>();
@@ -98,13 +103,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task ShouldLoadWorkOrderTableWithCreatorFilterOnInitialLoad()
     {
-        await using var ctx = new BunitContext();
-
-        // Arrange
-        var stubBus = new StubBus();
-        ctx.Services.AddSingleton<IBus>(stubBus);
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         var uri = navigationManager.GetUriWithQueryParameter("Creator", "somename");
@@ -122,13 +121,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task ShouldLoadWorkOrderTableWithAssigneeFilterOnInitialLoad()
     {
-        await using var ctx = new BunitContext();
-
-        // Arrange
-        var stubBus = new StubBus();
-        ctx.Services.AddSingleton<IBus>(stubBus);
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         var uri = navigationManager.GetUriWithQueryParameter("Assignee", "somename");
@@ -146,13 +139,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task ShouldLoadWorkOrderTableWithStatusFilterOnInitialLoad()
     {
-        await using var ctx = new BunitContext();
-
-        // Arrange
-        var stubBus = new StubBus();
-        ctx.Services.AddSingleton<IBus>(stubBus);
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
         var uri = navigationManager.GetUriWithQueryParameter("Status", WorkOrderStatus.Assigned.Key);
@@ -170,13 +157,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task AfterInitialLoadSelectingAllThreeOptionsShouldLoadWorkOrders()
     {
-        await using var ctx = new BunitContext();
-
-        // Arrange
-        var stubBus = new StubBus();
-        ctx.Services.AddSingleton<IBus>(stubBus);
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -203,11 +184,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task ClearFiltersButton_ShouldBeDisabled_WhenAllFiltersAreEmpty()
     {
-        await using var ctx = new BunitContext();
-
-        ctx.Services.AddSingleton<IBus>(new StubBus());
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -218,11 +195,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task ClearFiltersButton_ShouldBeEnabled_WhenAtLeastOneFilterIsSet()
     {
-        await using var ctx = new BunitContext();
-
-        ctx.Services.AddSingleton<IBus>(new StubBus());
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -236,16 +209,13 @@ public class WorkOrderSearchTests
     [Test]
     public async Task SortByStatus_Ascending_SortsResultsByStatusFriendlyName()
     {
-        await using var ctx = new BunitContext();
         var rows = new[]
         {
             new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress },
             new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned },
             new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
         };
-        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext(new StubBus(rows));
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -261,16 +231,13 @@ public class WorkOrderSearchTests
     [Test]
     public async Task SortByStatus_ClickingAgain_ReversesToDescending()
     {
-        await using var ctx = new BunitContext();
         var rows = new[]
         {
             new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress },
             new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned },
             new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
         };
-        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext(new StubBus(rows));
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -287,16 +254,13 @@ public class WorkOrderSearchTests
     [Test]
     public async Task SortByDueDate_Ascending_SortsResultsByDueDate_NullsLast()
     {
-        await using var ctx = new BunitContext();
         var rows = new[]
         {
             new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, DueDate = null },
             new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 6, 1) },
             new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 3, 1) },
         };
-        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext(new StubBus(rows));
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -312,16 +276,13 @@ public class WorkOrderSearchTests
     [Test]
     public async Task SortByDueDate_ClickingAgain_ReversesToDescending_NullsLast()
     {
-        await using var ctx = new BunitContext();
         var rows = new[]
         {
             new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, DueDate = null },
             new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 6, 1) },
             new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 3, 1) },
         };
-        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext(new StubBus(rows));
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -338,16 +299,13 @@ public class WorkOrderSearchTests
     [Test]
     public async Task SortByDifferentColumn_ResetsDirectionToAscending()
     {
-        await using var ctx = new BunitContext();
         var rows = new[]
         {
             new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress, DueDate = new DateOnly(2025, 6, 1) },
             new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned, DueDate = new DateOnly(2025, 3, 1) },
             new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 9, 1) },
         };
-        ctx.Services.AddSingleton<IBus>(new StubBus(rows));
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext(new StubBus(rows));
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -369,10 +327,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task SortIndicatorGlyph_ShowsAscendingGlyph_WhenColumnFirstClicked()
     {
-        await using var ctx = new BunitContext();
-        ctx.Services.AddSingleton<IBus>(new StubBus());
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -386,10 +341,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task SortIndicatorGlyph_ShowsDescendingGlyph_WhenSameColumnClickedAgain()
     {
-        await using var ctx = new BunitContext();
-        ctx.Services.AddSingleton<IBus>(new StubBus());
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext();
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -404,12 +356,8 @@ public class WorkOrderSearchTests
     [Test]
     public async Task ClickingClearFiltersButton_ShouldResetAllFiltersToEmpty_AndTriggerSearch()
     {
-        await using var ctx = new BunitContext();
-
         var stubBus = new StubBus();
-        ctx.Services.AddSingleton<IBus>(stubBus);
-        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        await using var ctx = CreateContext(stubBus);
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -435,5 +383,77 @@ public class WorkOrderSearchTests
 
         // Assert search was re-run (at least one more Send call after clearing)
         stubBus.SendCallCount.ShouldBeGreaterThan(sendCountBeforeClear);
+    }
+
+    [Test]
+    public async Task AssignedToMeCheckbox_ShouldBeRendered()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        checkbox.ShouldNotBeNull();
+        checkbox.HasAttribute("checked").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task AssignedToMeCheckbox_WhenChecked_SetsAssigneeToCurrentUser()
+    {
+        var stubBus = new StubBusWithAssigneeCapture();
+        await using var ctx = CreateContext(stubBus);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        await checkbox.ChangeAsync(new() { Value = true });
+
+        // Assignee select should be disabled
+        var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
+        assigneeSelect.HasAttribute("disabled").ShouldBeTrue();
+
+        // The query sent to the bus should have the current user's username as assignee
+        stubBus.LastAssigneeQueried.ShouldBe(CurrentUsername);
+    }
+
+    [Test]
+    public async Task AssignedToMeCheckbox_WhenUnchecked_ClearsAssigneeFilter()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        // Check then uncheck
+        await checkbox.ChangeAsync(new() { Value = true });
+        await checkbox.ChangeAsync(new() { Value = false });
+
+        // Assignee dropdown should be re-enabled
+        var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
+        assigneeSelect.HasAttribute("disabled").ShouldBeFalse();
+
+        // Assignee filter should be cleared
+        assigneeSelect.GetAttribute("value").ShouldBeNullOrEmpty();
+    }
+
+    [Test]
+    public async Task ClearFiltersButton_WhenClicked_ResetsAssignedToMeCheckbox()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        await checkbox.ChangeAsync(new() { Value = true });
+
+        // Clear filters
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        await clearButton.ClickAsync(new());
+
+        // Checkbox should be unchecked
+        component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}").HasAttribute("checked").ShouldBeFalse();
+
+        // Clear button should be disabled (no active filters)
+        clearButton.HasAttribute("disabled").ShouldBeTrue();
     }
 }
