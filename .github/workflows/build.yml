@@ -922,6 +922,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     concurrency:
       group: acceptance-tests-${{ github.ref }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
@@ -990,6 +991,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
     concurrency:
       group: acceptance-tests-arm-${{ github.ref }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
