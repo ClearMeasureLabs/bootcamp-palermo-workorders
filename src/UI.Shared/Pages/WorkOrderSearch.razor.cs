@@ -129,15 +129,15 @@ public partial class WorkOrderSearch : AppComponentBase
     private void ApplySortByTitle()
     {
         Model.Results = _sortAscending
-            ? Model.Results.OrderBy(r => r.Title).ToArray()
-            : Model.Results.OrderByDescending(r => r.Title).ToArray();
+            ? Model.Results.OrderBy(r => r.Title, StringComparer.CurrentCultureIgnoreCase).ToArray()
+            : Model.Results.OrderByDescending(r => r.Title, StringComparer.CurrentCultureIgnoreCase).ToArray();
     }
 
     private void ApplySortByRoom()
     {
         Model.Results = _sortAscending
-            ? Model.Results.OrderBy(r => r.WorkOrder.RoomNumber).ToArray()
-            : Model.Results.OrderByDescending(r => r.WorkOrder.RoomNumber).ToArray();
+            ? Model.Results.OrderBy(r => r.WorkOrder.RoomNumber, StringComparer.CurrentCultureIgnoreCase).ToArray()
+            : Model.Results.OrderByDescending(r => r.WorkOrder.RoomNumber, StringComparer.CurrentCultureIgnoreCase).ToArray();
     }
 
     private WorkOrderSearchResultRow MapSearchRow(WorkOrder workOrder)
