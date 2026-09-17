@@ -24,10 +24,7 @@ public class WorkOrderCountByStatusQueryHandler(DataContext context) :
 
         foreach (var status in statuses)
         {
-            if (result.ContainsKey(status.Key))
-            {
-                result[status.Key]++;
-            }
+            result[status.Key]++;
         }
 
         return result;
