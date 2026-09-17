@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
@@ -58,12 +59,26 @@ public class EnvironmentStatusController : ControllerBase
             variables[name] = RedactedValue;
         }
 
+        var version = Assembly.GetEntryAssembly()
+            ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? "unknown";
+        var gitSha = Assembly.GetEntryAssembly()
+            ?.GetCustomAttributes<AssemblyMetadataAttribute>()
+            ?.FirstOrDefault(a => a.Key == "SourceRevisionId")
+            ?.Value ?? "unknown";
+        var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+            ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+            ?? "unknown";
+
         return new EnvironmentStatusResponse(
             OsDescription: RuntimeInformation.OSDescription,
             ProcessorCount: Environment.ProcessorCount,
             ClrVersion: Environment.Version.ToString(),
             EnvironmentVariableNames: names,
-            EnvironmentVariables: variables);
+            EnvironmentVariables: variables,
+            Version: version,
+            GitSha: gitSha,
+            EnvironmentName: environmentName);
     }
 }
 
@@ -75,4 +90,7 @@ public record EnvironmentStatusResponse(
     int ProcessorCount,
     string ClrVersion,
     IReadOnlyList<string> EnvironmentVariableNames,
-    IReadOnlyDictionary<string, string> EnvironmentVariables);
+    IReadOnlyDictionary<string, string> EnvironmentVariables,
+    string Version,
+    string GitSha,
+    string EnvironmentName);

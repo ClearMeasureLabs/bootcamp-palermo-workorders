@@ -70,6 +70,24 @@ public class EnvironmentStatusControllerTests
         content.Content!.ShouldNotContain(SecretValue);
     }
 
+    [Test]
+    public void Get_Should_ReturnVersion_WhenAssemblyAttributePresent()
+    {
+        var result = CreateController().Get();
+
+        var payload = AssertOkPayload(result);
+        payload.Version.ShouldNotBeNullOrEmpty();
+    }
+
+    [Test]
+    public void Get_Should_ReturnGitSha_WhenAssemblyMetadataAttributePresent()
+    {
+        var result = CreateController().Get();
+
+        var payload = AssertOkPayload(result);
+        payload.GitSha.ShouldNotBeNull();
+    }
+
     private static EnvironmentStatusController CreateController() =>
         new()
         {

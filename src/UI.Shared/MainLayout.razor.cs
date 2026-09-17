@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using System.Reflection;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
@@ -18,7 +19,9 @@ public partial class MainLayout : IAsyncDisposable
         NavRailToggle,
         CopyrightFooter,
         FooterNote,
-        SoftwareVersion
+        SoftwareVersion,
+        GitSha,
+        EnvironmentName
     }
 
     /// <summary>
@@ -38,6 +41,9 @@ public partial class MainLayout : IAsyncDisposable
     [Inject]
     private ThemePreferenceService Theme { get; set; } = null!;
 
+    [Inject]
+    private HttpClient Http { get; set; } = null!;
+
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
     private IJSObjectReference? _jsModule;
@@ -45,6 +51,8 @@ public partial class MainLayout : IAsyncDisposable
     private bool _isNarrowViewport;
     private bool _viewportSynced;
     private bool _navVisible = true;
+    private string _gitSha = "unknown";
+    private string _environmentName = "unknown";
 
     private string AppContainerClass => NavRailCss.AppContainerClass(_isNarrowViewport, _navVisible);
 
@@ -68,6 +76,27 @@ public partial class MainLayout : IAsyncDisposable
         _isNarrowViewport = isNarrow;
         StateHasChanged();
         return Task.CompletedTask;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var status = await Http.GetFromJsonAsync<EnvironmentStatusDto>("/api/status/environment");
+            if (status is not null)
+            {
+                _gitSha = status.GitSha ?? "unknown";
+                _environmentName = status.EnvironmentName ?? "unknown";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            // graceful fallback — fields remain "unknown"
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // graceful fallback — malformed response, fields remain "unknown"
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -137,3 +166,9 @@ public partial class MainLayout : IAsyncDisposable
         _dotNetRef?.Dispose();
     }
 }
+
+/// <summary>
+/// Minimal DTO for deserializing the <c>/api/status/environment</c> response fields
+/// needed by the footer. Other fields are ignored.
+/// </summary>
+internal sealed record EnvironmentStatusDto(string? Version, string? GitSha, string? EnvironmentName);

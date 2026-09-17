@@ -1,5 +1,7 @@
-using Bunit;
 using System.Globalization;
+using System.Net;
+using System.Text.Json;
+using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Services;
@@ -415,7 +417,74 @@ public class MainLayoutTests
         layout.FindAll(".nav-backdrop").Count.ShouldBe(0);
     }
 
-    private static BunitContext CreateContext(string? authenticateAsUser = null)
+    [Test]
+    public async Task ShouldRenderGitSha_WithCorrectHref_WhenEndpointReturnsValidSha()
+    {
+        await using var ctx = CreateContext(gitSha: "abc1234def5678901");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var anchor = layout.Find($"[data-testid='{nameof(MainLayout.Elements.GitSha)}']");
+        anchor.TagName.ShouldBe("A");
+        var href = anchor.GetAttribute("href");
+        href.ShouldNotBeNull();
+        href!.ShouldContain("github.com/ClearMeasureLabs/bootcamp-palermo-workorders/commit/abc1234def5678901");
+    }
+
+    [Test]
+    public async Task ShouldTruncateGitSha_ToSevenChars_ForDisplayText()
+    {
+        await using var ctx = CreateContext(gitSha: "abc1234def5678901");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var anchor = layout.Find($"[data-testid='{nameof(MainLayout.Elements.GitSha)}']");
+        anchor.TextContent.Trim().ShouldBe("abc1234");
+    }
+
+    [Test]
+    public async Task ShouldRenderEnvironmentName_FromEndpointResponse()
+    {
+        await using var ctx = CreateContext(environmentName: "Staging");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var span = layout.Find($"[data-testid='{nameof(MainLayout.Elements.EnvironmentName)}']");
+        span.TextContent.Trim().ShouldBe("Staging");
+    }
+
+    [Test]
+    public async Task ShouldRenderUnknown_ForGitSha_WhenEndpointThrows()
+    {
+        await using var ctx = CreateContext(simulateHttpError: true);
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var element = layout.Find($"[data-testid='{nameof(MainLayout.Elements.GitSha)}']");
+        element.TextContent.Trim().ShouldBe("unknown");
+    }
+
+    [Test]
+    public async Task ShouldRenderUnknown_ForEnvironmentName_WhenEndpointThrows()
+    {
+        await using var ctx = CreateContext(simulateHttpError: true);
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var span = layout.Find($"[data-testid='{nameof(MainLayout.Elements.EnvironmentName)}']");
+        span.TextContent.Trim().ShouldBe("unknown");
+    }
+
+    private static BunitContext CreateContext(
+        string? authenticateAsUser = null,
+        string? gitSha = null,
+        string? environmentName = null,
+        bool simulateHttpError = false)
     {
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
@@ -437,11 +506,40 @@ public class MainLayoutTests
         }
 
         ctx.Services.AddSingleton(customAuth);
+
+        var handler = new StubEnvironmentStatusHandler(
+            simulateHttpError ? null : new EnvironmentStatusStub(
+                Version: "1.0.0",
+                GitSha: gitSha ?? "unknown",
+                EnvironmentName: environmentName ?? "unknown"));
+        ctx.Services.AddSingleton<HttpClient>(new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost/")
+        });
+
         return ctx;
     }
 
     private sealed class StubUserSession : IUserSession
     {
         public Task<Employee?> GetCurrentUserAsync() => Task.FromResult<Employee?>(null);
+    }
+
+    private sealed record EnvironmentStatusStub(string Version, string GitSha, string EnvironmentName);
+
+    private sealed class StubEnvironmentStatusHandler(EnvironmentStatusStub? stub) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (stub is null)
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError));
+
+            var json = JsonSerializer.Serialize(stub, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+            });
+        }
     }
 }

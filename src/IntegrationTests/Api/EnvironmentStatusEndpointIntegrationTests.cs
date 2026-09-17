@@ -141,6 +141,31 @@ public class EnvironmentStatusEndpointIntegrationTests
         okVersioned.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
+    [Test]
+    public async Task Should_ExposeVersionAndGitSha_When_GetEnvironmentStatus()
+    {
+        var response = await _client!.GetAsync("/api/status/environment");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var payload = await response.Content.ReadFromJsonAsync<EnvironmentStatusResponse>(
+            ConditionalGetEtag.JsonSerializerOptions);
+        payload.ShouldNotBeNull();
+        payload.Version.ShouldNotBeNull();
+        payload.GitSha.ShouldNotBeNull();
+    }
+
+    [Test]
+    public async Task Should_IncludeVersionAndGitShaJsonProperties_InResponseShape()
+    {
+        var response = await _client!.GetAsync("/api/status/environment");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        doc.RootElement.TryGetProperty("version", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("gitSha", out _).ShouldBeTrue();
+    }
+
     private static async Task AssertOkJsonShape(HttpResponseMessage response)
     {
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
