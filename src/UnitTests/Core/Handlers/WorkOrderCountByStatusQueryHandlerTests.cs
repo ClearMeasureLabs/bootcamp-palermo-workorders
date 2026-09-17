@@ -36,7 +36,7 @@ public class WorkOrderCountByStatusQueryHandlerTests
     public async Task ShouldReturnCorrectCountsForEachStatus()
     {
         var creator = new Employee("user1", "First", "Last", "email@test.com");
-        _context!.Add(creator);
+        _context.Add(creator);
         AddWorkOrder(_context, creator, "WO-1", WorkOrderStatus.Draft);
         AddWorkOrder(_context, creator, "WO-2", WorkOrderStatus.Draft);
         AddWorkOrder(_context, creator, "WO-3", WorkOrderStatus.Assigned);
@@ -59,7 +59,7 @@ public class WorkOrderCountByStatusQueryHandlerTests
     public async Task ShouldDefaultMissingStatusesToZero()
     {
         var creator = new Employee("user2", "First", "Last", "email@test.com");
-        _context!.Add(creator);
+        _context.Add(creator);
         AddWorkOrder(_context, creator, "WO-1", WorkOrderStatus.Complete);
         await _context.SaveChangesAsync();
 
