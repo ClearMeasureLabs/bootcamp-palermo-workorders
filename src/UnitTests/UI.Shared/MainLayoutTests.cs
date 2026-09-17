@@ -511,7 +511,7 @@ public class MainLayoutTests
         anchor.TagName.ShouldBe("A");
         var href = anchor.GetAttribute("href");
         href.ShouldNotBeNull();
-        href!.ShouldContain("github.com/ClearMeasureLabs/bootcamp-palermo-workorders/commit/abc1234def5678901");
+        href.ShouldContain("github.com/ClearMeasureLabs/bootcamp-palermo-workorders/commit/abc1234def5678901");
     }
 
     [Test]
@@ -562,11 +562,48 @@ public class MainLayoutTests
         span.TextContent.Trim().ShouldBe("unknown");
     }
 
+    [Test]
+    public async Task ShouldRenderUnknown_ForGitSha_WhenResponseOmitsGitShaProperty()
+    {
+        await using var ctx = CreateContext(rawJsonBody: "{\"version\":\"1.0.0\"}");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var element = layout.Find($"[data-testid='{nameof(MainLayout.Elements.GitSha)}']");
+        element.TextContent.Trim().ShouldBe("unknown");
+    }
+
+    [Test]
+    public async Task ShouldRenderUnknown_ForEnvironmentName_WhenResponseOmitsEnvironmentNameProperty()
+    {
+        await using var ctx = CreateContext(rawJsonBody: "{\"version\":\"1.0.0\"}");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var span = layout.Find($"[data-testid='{nameof(MainLayout.Elements.EnvironmentName)}']");
+        span.TextContent.Trim().ShouldBe("unknown");
+    }
+
+    [Test]
+    public async Task ShouldRenderUnknown_ForGitSha_WhenResponseBodyIsMalformedJson()
+    {
+        await using var ctx = CreateContext(rawJsonBody: "{not valid json");
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var element = layout.Find($"[data-testid='{nameof(MainLayout.Elements.GitSha)}']");
+        element.TextContent.Trim().ShouldBe("unknown");
+    }
+
     private static BunitContext CreateContext(
         string? authenticateAsUser = null,
         string? gitSha = null,
         string? environmentName = null,
-        bool simulateHttpError = false)
+        bool simulateHttpError = false,
+        string? rawJsonBody = null)
     {
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
@@ -593,8 +630,9 @@ public class MainLayoutTests
             simulateHttpError ? null : new EnvironmentStatusStub(
                 Version: "1.0.0",
                 GitSha: gitSha ?? "unknown",
-                EnvironmentName: environmentName ?? "unknown"));
-        ctx.Services.AddSingleton<HttpClient>(new HttpClient(handler)
+                EnvironmentName: environmentName ?? "unknown"),
+            rawJsonBody);
+        ctx.Services.AddSingleton(new HttpClient(handler)
         {
             BaseAddress = new Uri("http://localhost/")
         });
@@ -611,11 +649,19 @@ public class MainLayoutTests
     private sealed record EnvironmentStatusStub(string Version, string GitSha, string EnvironmentName);
     // ReSharper restore NotAccessedPositionalProperty.Local
 
-    private sealed class StubEnvironmentStatusHandler(EnvironmentStatusStub? stub) : HttpMessageHandler
+    private sealed class StubEnvironmentStatusHandler(EnvironmentStatusStub? stub, string? rawJsonBody = null) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            if (rawJsonBody is not null)
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(rawJsonBody, System.Text.Encoding.UTF8, "application/json")
+                });
+            }
+
             if (stub is null)
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError));
 
