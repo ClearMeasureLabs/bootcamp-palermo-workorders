@@ -1,4 +1,4 @@
-﻿using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Mappings;
@@ -31,6 +31,27 @@ public class EmployeeMappingTests
                 .Single(e => e.Id == emp1.Id);
 
             Assert.That(rehydratedEmployee.Roles.Count, Is.EqualTo(2));
+        }
+    }
+
+    [Test]
+    public void ShouldPersistLastNameUpTo120Characters()
+    {
+        new DatabaseTests().Clean();
+
+        var longLastName = new string('A', 120);
+        var emp = new Employee("user120", "First", longLastName, "email120@example.com");
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            Assert.That(rehydrated.LastName, Is.EqualTo(longLastName));
         }
     }
 }
