@@ -88,12 +88,7 @@ public partial class MainLayout : IAsyncDisposable
             var response = await Http.GetAsync("/api/status/environment");
             if (response.IsSuccessStatusCode)
             {
-                await using var stream = await response.Content.ReadAsStreamAsync();
-                using var doc = await JsonDocument.ParseAsync(stream);
-                if (doc.RootElement.TryGetProperty("gitSha", out var sha))
-                    _gitSha = sha.GetString() ?? "unknown";
-                if (doc.RootElement.TryGetProperty("environmentName", out var env))
-                    _environmentName = env.GetString() ?? "unknown";
+                (_gitSha, _environmentName) = await ParseEnvironmentStatusAsync(response);
             }
         }
         catch (HttpRequestException)
@@ -104,6 +99,23 @@ public partial class MainLayout : IAsyncDisposable
         {
             // graceful fallback — malformed response, fields remain "unknown"
         }
+    }
+
+    /// <summary>
+    /// Extracted from <see cref="OnInitializedAsync"/> to keep that method's cyclomatic
+    /// complexity (and therefore its CRAP score) low; the property-presence branching lives
+    /// here instead, fully exercised by <c>MainLayoutTests</c>.
+    /// </summary>
+    private static async Task<(string GitSha, string EnvironmentName)> ParseEnvironmentStatusAsync(
+        HttpResponseMessage response)
+    {
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        var gitSha = doc.RootElement.TryGetProperty("gitSha", out var sha) ? sha.GetString() ?? "unknown" : "unknown";
+        var environmentName = doc.RootElement.TryGetProperty("environmentName", out var env)
+            ? env.GetString() ?? "unknown"
+            : "unknown";
+        return (gitSha, environmentName);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
