@@ -33,22 +33,23 @@ public class AcceptanceTestsGateDecouplingTests
         jobStart.ShouldBeGreaterThan(-1);
         var buildResultJob = yaml.Substring(jobStart);
 
-        var gatedJobs = new[]
+        var gatedJobs = new (string Job, string EnvVar)[]
         {
-            "build-linux",
-            "build-sqlite",
-            "integration-build-arm",
-            "code-analysis",
-            "qodana",
-            "build-windows",
-            "acceptance-tests",
-            "acceptance-tests-arm",
+            ("build-linux", "LINUX"),
+            ("build-sqlite", "SQLITE"),
+            ("integration-build-arm", "ARM"),
+            ("code-analysis", "ANALYSIS"),
+            ("qodana", "QODANA"),
+            ("build-windows", "WINDOWS"),
+            ("acceptance-tests", "ACCEPTANCE"),
+            ("acceptance-tests-arm", "ACCEPTANCE_ARM"),
         };
 
-        foreach (var job in gatedJobs)
+        foreach (var (job, envVar) in gatedJobs)
         {
             buildResultJob.ShouldContain($"- {job}");
-            buildResultJob.ShouldContain($"needs.{job}.result");
+            buildResultJob.ShouldContain($"{envVar}: ${{{{ needs.{job}.result }}}}");
+            buildResultJob.ShouldContain($"\"${{{envVar}}}\"");
         }
 
         buildResultJob.ShouldContain("if: always() && !cancelled()");
