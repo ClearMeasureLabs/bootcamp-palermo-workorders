@@ -81,10 +81,19 @@
                                 Status @if (_sortColumn == "Status") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                             </button>
                         </th>
-                        <th>Title</th>
+                        <th>
+                            <button id="@Elements.SortByTitleButton" class="sort-btn @(_sortColumn == "Title" ? "sort-active" : "")" @onclick='() => SortBy("Title")'>
+                                Title @if (_sortColumn == "Title") { <span>@(_sortAscending ? "▲" : "▼")</span> }
+                            </button>
+                        </th>
                         <th>
                             <button id="@Elements.SortByDueDateButton" class="sort-btn @(_sortColumn == "DueDate" ? "sort-active" : "")" @onclick='() => SortBy("DueDate")'>
                                 Due Date @if (_sortColumn == "DueDate") { <span>@(_sortAscending ? "▲" : "▼")</span> }
+                            </button>
+                        </th>
+                        <th>
+                            <button id="@Elements.SortByRoomButton" class="sort-btn @(_sortColumn == "Room" ? "sort-active" : "")" @onclick='() => SortBy("Room")'>
+                                Room @if (_sortColumn == "Room") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                             </button>
                         </th>
                     </tr>
@@ -116,6 +125,7 @@
                                             <span class="visually-hidden">@order.DueDateUrgencyText</span>
                                         }</span>
                                 </td>
+                                <td>@order.WorkOrder.RoomNumber</td>
                             </tr>
                         }
                     }
@@ -138,7 +148,9 @@
         WorkOrderLink,
         DueDateCell,
         SortByStatusButton,
-        SortByDueDateButton
+        SortByDueDateButton,
+        SortByTitleButton,
+        SortByRoomButton
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();
