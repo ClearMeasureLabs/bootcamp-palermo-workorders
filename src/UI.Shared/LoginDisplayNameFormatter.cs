@@ -14,11 +14,11 @@ public static class LoginDisplayNameFormatter
         if (string.IsNullOrWhiteSpace(fullName))
             return string.Empty;
 
-        var parts = fullName.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        var parts = fullName.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 0)
             return string.Empty;
 
-        var lastName = parts[parts.Length - 1].ToUpperInvariant();
+        var lastName = parts[^1].ToUpperInvariant();
 
         // Build the first name initial from all leading parts (FirstName, middle names, etc.)
         var firstNameParts = parts.Take(parts.Length - 1).ToArray();
