@@ -17,6 +17,7 @@ public sealed class CreateDatedWorkOrdersCommandValidator : AbstractValidator<Cr
         RuleFor(x => x.AssigneeUsername).NotEmpty();
         RuleFor(x => x.Title).NotEmpty();
         RuleFor(x => x.DueDates)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty()
             .Must(dates => dates.Count <= CreateDatedWorkOrdersCommand.MaximumBatchSize)
             .WithMessage($"At most {CreateDatedWorkOrdersCommand.MaximumBatchSize} due dates are allowed.");

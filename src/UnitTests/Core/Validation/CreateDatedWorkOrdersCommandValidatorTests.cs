@@ -49,6 +49,16 @@ public class CreateDatedWorkOrdersCommandValidatorTests
     }
 
     [Test]
+    public void ShouldFail_WhenDueDatesIsNull()
+    {
+        var command = new CreateDatedWorkOrdersCommand("tlovejoy", "gwillie", "Mow", "Mow the lawn", null!);
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.DueDates);
+    }
+
+    [Test]
     public void ShouldFail_WhenDueDatesExceedsMaximumBatchSize()
     {
         var dueDates = Enumerable.Range(0, CreateDatedWorkOrdersCommand.MaximumBatchSize + 1)
