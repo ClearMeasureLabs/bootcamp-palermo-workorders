@@ -16,15 +16,9 @@ public static class LoginDisplayNameFormatter
         var lastNameUpper = lastName.ToUpperInvariant();
 
         // Extract first initial from firstName, falling back to first char of lastName
-        char initial = ' ';
-        if (!string.IsNullOrEmpty(firstName))
-        {
-            initial = firstName.ToUpperInvariant()[0];
-        }
-        else
-        {
-            initial = lastNameUpper[0];
-        }
+        char initial = !string.IsNullOrEmpty(firstName)
+            ? firstName.ToUpperInvariant()[0]
+            : lastNameUpper[0];
 
         return $"{lastNameUpper}, {initial}.";
     }
