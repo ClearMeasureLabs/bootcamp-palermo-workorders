@@ -6,13 +6,26 @@ namespace ClearMeasure.Bootcamp.UI.Shared;
 public static class LoginDisplayNameFormatter
 {
     /// <summary>
-    /// Returns the full name in uppercase so locally stored mixed-case names match mainframe all-caps names in the login drop-down.
+    /// Formats the employee name as <c>LASTNAME, FIRST_INITIAL.</c> (uppercase) for the login dropdown.
     /// </summary>
-    public static string FormatForLoginDropdown(string? fullName)
+    public static string FormatForLoginDropdown(string? firstName, string? lastName)
     {
-        if (string.IsNullOrEmpty(fullName))
+        if (string.IsNullOrEmpty(lastName))
             return string.Empty;
 
-        return fullName.ToUpperInvariant();
+        var lastNameUpper = lastName.ToUpperInvariant();
+
+        // Extract first initial from firstName, falling back to first char of lastName
+        char initial = ' ';
+        if (!string.IsNullOrEmpty(firstName))
+        {
+            initial = firstName.ToUpperInvariant()[0];
+        }
+        else
+        {
+            initial = lastNameUpper[0];
+        }
+
+        return $"{lastNameUpper}, {initial}.";
     }
 }
