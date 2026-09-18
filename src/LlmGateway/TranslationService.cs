@@ -12,16 +12,6 @@ public class TranslationService(ChatClientFactory chatClientFactory) : ITranslat
             return text;
         }
 
-        IChatClient chatClient;
-        try
-        {
-            chatClient = await chatClientFactory.GetChatClient();
-        }
-        catch
-        {
-            return text;
-        }
-
         var systemPrompt =
             $"Translate the following text into the language identified by BCP 47 code '{targetLanguageCode}'. Return ONLY the translated text, nothing else.";
 
@@ -31,9 +21,16 @@ public class TranslationService(ChatClientFactory chatClientFactory) : ITranslat
             new(ChatRole.User, text)
         };
 
-        var response = await chatClient.GetResponseAsync(messages);
-        var translatedText = response.Text.Trim();
-
-        return string.IsNullOrWhiteSpace(translatedText) ? text : translatedText;
+        try
+        {
+            var chatClient = await chatClientFactory.GetChatClient();
+            var response = await chatClient.GetResponseAsync(messages);
+            var translatedText = response.Text.Trim();
+            return string.IsNullOrWhiteSpace(translatedText) ? text : translatedText;
+        }
+        catch
+        {
+            return text;
+        }
     }
 }

@@ -29,22 +29,15 @@ public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
     }
 
     [Test]
-    public async Task CheckHealthAsync_WithMissingApiKey_ReturnsHealthyWithInfo()
+    public async Task IsChatClientAvailable_WithMissingApiKey_UsesLocalOllama()
     {
         var factory = CreateFactoryWithConfig(apiKey: null, url: "https://placeholder.openai.azure.com", model: "gpt-4o");
-        var healthCheck = CreateHealthCheck(factory);
-        var context = new HealthCheckContext
-        {
-            Registration = new HealthCheckRegistration("LlmGateway", healthCheck, null, null)
-        };
 
-        var result = await healthCheck.CheckHealthAsync(context);
+        var availability = await factory.IsChatClientAvailable();
 
-        result.Status.ShouldBe(HealthStatus.Healthy);
-        result.Description.ShouldNotBeNullOrEmpty();
-        result.Description.ShouldContain("AI_OpenAI_ApiKey");
-        result.Description.ShouldContain("not enabled in this environment");
-        Console.WriteLine($"Status: {result.Status}, Description: {result.Description}");
+        availability.IsAvailable.ShouldBeTrue();
+        availability.Message.ShouldContain("Ollama");
+        availability.Message.ShouldContain(OllamaChatDefaults.DefaultModelId);
     }
 
     [Test]
