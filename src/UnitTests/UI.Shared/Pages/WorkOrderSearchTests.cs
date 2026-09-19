@@ -668,7 +668,7 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public async Task ShouldRemotableRequest_RoundTrip_OverdueOnly()
+    public void ShouldRemotableRequest_RoundTrip_OverdueOnly()
     {
         var query = new ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery();
         query.MatchOverdueOnly(true);
