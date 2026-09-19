@@ -121,6 +121,36 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ResultsTable_ShouldRenderVisuallyHiddenCaption()
+    {
+        // Arrange
+        var creator = Faker<Employee>();
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable.Locator("tbody tr").Filter(new() { HasText = order.Title })).ToHaveCountAsync(1);
+
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.ResultsTableCaption))).ToHaveTextAsync("Work order search results");
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldLoadWorkOrderTableWithCreatorFilterFromQueryString()
     {
         // Arrange

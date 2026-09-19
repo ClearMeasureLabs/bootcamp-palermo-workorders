@@ -84,6 +84,7 @@
             else
             {
                 <table class="grid-data">
+                    <caption class="visually-hidden" data-testid="@Elements.ResultsTableCaption">Work order search results</caption>
                     <thead>
                     <tr>
                         <th>WO #</th>
@@ -178,7 +179,8 @@
         SortByDueDateButton,
         SortByTitleButton,
         SortByRoomButton,
-        AssignedToMeCheckbox
+        AssignedToMeCheckbox,
+        ResultsTableCaption
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();

@@ -104,6 +104,21 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ResultsTable_ShouldContainVisuallyHiddenCaption()
+    {
+        await using var ctx = CreateContext();
+
+        // Act
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // Assert
+        var caption = component.Find(".grid-data caption");
+        caption.ShouldNotBeNull();
+        caption.TextContent.ShouldBe("Work order search results");
+        caption.GetAttribute("data-testid").ShouldBe("ResultsTableCaption");
+    }
+
+    [Test]
     public async Task ShouldLoadWorkOrderTableWithCreatorFilterOnInitialLoad()
     {
         await using var ctx = CreateContext();
