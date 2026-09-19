@@ -192,6 +192,7 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        clearButton.GetAttribute("aria-label").ShouldBe("Clear all search filters");
         clearButton.HasAttribute("disabled").ShouldBeTrue();
     }
 

@@ -58,7 +58,7 @@
                         <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
-                        <button id="@Elements.ClearFiltersButton" type="button" class="btn btn-secondary" disabled="@(!HasActiveFilters)" @onclick="HandleClearFilters">
+                        <button id="@Elements.ClearFiltersButton" type="button" class="btn btn-secondary" disabled="@(!HasActiveFilters)" @onclick="HandleClearFilters" aria-label="Clear all search filters">
                             Clear filters
                         </button>
                     </div>
