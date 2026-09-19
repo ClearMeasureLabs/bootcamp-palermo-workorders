@@ -121,7 +121,7 @@
                             {
                                 rowClass += " overdue-row";
                             }
-                            <tr class="@rowClass">
+                            <tr class="@rowClass" aria-label="@(order.WorkOrder.IsOverdue() ? "Overdue work order" : null)">
                                 <td>
                                     @{
                                         var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;

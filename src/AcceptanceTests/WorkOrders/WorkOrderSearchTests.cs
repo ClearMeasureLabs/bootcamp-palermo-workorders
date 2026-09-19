@@ -831,5 +831,6 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(tableRows).ToHaveCountAsync(1);
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
+        await Expect(onlyRow).ToHaveAttributeAsync("aria-label", "Overdue work order");
     }
 }

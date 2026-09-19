@@ -590,6 +590,7 @@ public class WorkOrderSearchTests
         var rows = component.FindAll("tbody tr");
         rows.Count.ShouldBe(1);
         rows[0].ClassName!.ShouldContain("overdue-row");
+        rows[0].GetAttribute("aria-label").ShouldBe("Overdue work order");
     }
 
     [Test]
@@ -610,6 +611,7 @@ public class WorkOrderSearchTests
         var rows = component.FindAll("tbody tr");
         rows.Count.ShouldBe(1);
         rows[0].ClassName!.ShouldNotContain("overdue-row");
+        rows[0].GetAttribute("aria-label").ShouldBeNull();
     }
 
     [Test]
