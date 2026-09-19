@@ -127,7 +127,7 @@
                                         var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
                                     }
                                     <a data-testid="@workOrderLinkTestId" href="/workorder/manage/@order.Number?mode=Edit">
-                                        @order.Number
+                                        @WorkOrderNumberFormatter.Format(order.Number)
                                     </a>
                                 </td>
                                 <td>@order.Creator?.GetFullName()</td>

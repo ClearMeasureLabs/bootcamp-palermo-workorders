@@ -288,16 +288,22 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(workOrderTable).ToBeVisibleAsync();
 
         var firstWorkOrderLink = workOrderTable.Locator("tbody tr").First.Locator("td").First.Locator("a");
-        var workOrderNumber = await firstWorkOrderLink.TextContentAsync();
+        var linkText = await firstWorkOrderLink.TextContentAsync();
 
-        if (!string.IsNullOrEmpty(workOrderNumber))
+        if (!string.IsNullOrEmpty(linkText))
         {
+            // Assert: link text is "WO-<raw>" (formatter applied)
+            linkText.ShouldStartWith("WO-");
+
+            // Strip prefix to get the raw number for the URL assertion
+            var rawNumber = linkText.StartsWith("WO-") ? linkText.Substring(3) : linkText;
+
             await firstWorkOrderLink.ClickAsync();
             await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
             await TakeScreenshotAsync(2, "WorkOrderDetailsPage");
 
             // Assert
-            await Expect(Page).ToHaveURLAsync(new Regex($"/workorder/manage/{Regex.Escape(workOrderNumber)}"));
+            await Expect(Page).ToHaveURLAsync(new Regex($"/workorder/manage/{Regex.Escape(rawNumber)}"));
         }
     }
 

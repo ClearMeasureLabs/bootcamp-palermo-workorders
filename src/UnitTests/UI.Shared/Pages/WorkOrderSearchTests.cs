@@ -214,9 +214,9 @@ public class WorkOrderSearchTests
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress },
-            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned },
-            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "003", Title = "C", Status = WorkOrderStatus.InProgress },
+            new WorkOrder { Number = "001", Title = "A", Status = WorkOrderStatus.Assigned },
+            new WorkOrder { Number = "002", Title = "B", Status = WorkOrderStatus.Draft },
         };
         await using var ctx = CreateContext(new StubBus(rows));
 
@@ -236,9 +236,9 @@ public class WorkOrderSearchTests
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress },
-            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned },
-            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "003", Title = "C", Status = WorkOrderStatus.InProgress },
+            new WorkOrder { Number = "001", Title = "A", Status = WorkOrderStatus.Assigned },
+            new WorkOrder { Number = "002", Title = "B", Status = WorkOrderStatus.Draft },
         };
         await using var ctx = CreateContext(new StubBus(rows));
 
@@ -259,9 +259,9 @@ public class WorkOrderSearchTests
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, DueDate = null },
-            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 6, 1) },
-            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 3, 1) },
+            new WorkOrder { Number = "003", Title = "C", Status = WorkOrderStatus.Draft, DueDate = null },
+            new WorkOrder { Number = "001", Title = "A", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 6, 1) },
+            new WorkOrder { Number = "002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 3, 1) },
         };
         await using var ctx = CreateContext(new StubBus(rows));
 
@@ -281,9 +281,9 @@ public class WorkOrderSearchTests
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, DueDate = null },
-            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 6, 1) },
-            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 3, 1) },
+            new WorkOrder { Number = "003", Title = "C", Status = WorkOrderStatus.Draft, DueDate = null },
+            new WorkOrder { Number = "001", Title = "A", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 6, 1) },
+            new WorkOrder { Number = "002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 3, 1) },
         };
         await using var ctx = CreateContext(new StubBus(rows));
 
@@ -304,9 +304,9 @@ public class WorkOrderSearchTests
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress, DueDate = new DateOnly(2025, 6, 1) },
-            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned, DueDate = new DateOnly(2025, 3, 1) },
-            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 9, 1) },
+            new WorkOrder { Number = "003", Title = "C", Status = WorkOrderStatus.InProgress, DueDate = new DateOnly(2025, 6, 1) },
+            new WorkOrder { Number = "001", Title = "A", Status = WorkOrderStatus.Assigned, DueDate = new DateOnly(2025, 3, 1) },
+            new WorkOrder { Number = "002", Title = "B", Status = WorkOrderStatus.Draft, DueDate = new DateOnly(2025, 9, 1) },
         };
         await using var ctx = CreateContext(new StubBus(rows));
 
@@ -393,9 +393,9 @@ public class WorkOrderSearchTests
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft },
-            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft },
-            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "003", Title = "C", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "001", Title = "A", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "002", Title = "B", Status = WorkOrderStatus.Draft },
         };
         await using var ctx = CreateContext(new StubBus(rows));
 
@@ -415,9 +415,9 @@ public class WorkOrderSearchTests
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft },
-            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft },
-            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "003", Title = "C", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "001", Title = "A", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "002", Title = "B", Status = WorkOrderStatus.Draft },
         };
         await using var ctx = CreateContext(new StubBus(rows));
 
@@ -438,9 +438,9 @@ public class WorkOrderSearchTests
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, RoomNumber = "C" },
-            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, RoomNumber = "A" },
-            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, RoomNumber = "B" },
+            new WorkOrder { Number = "003", Title = "C", Status = WorkOrderStatus.Draft, RoomNumber = "C" },
+            new WorkOrder { Number = "001", Title = "A", Status = WorkOrderStatus.Draft, RoomNumber = "A" },
+            new WorkOrder { Number = "002", Title = "B", Status = WorkOrderStatus.Draft, RoomNumber = "B" },
         };
         await using var ctx = CreateContext(new StubBus(rows));
 
@@ -460,9 +460,9 @@ public class WorkOrderSearchTests
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, RoomNumber = "C" },
-            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, RoomNumber = "A" },
-            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, RoomNumber = "B" },
+            new WorkOrder { Number = "003", Title = "C", Status = WorkOrderStatus.Draft, RoomNumber = "C" },
+            new WorkOrder { Number = "001", Title = "A", Status = WorkOrderStatus.Draft, RoomNumber = "A" },
+            new WorkOrder { Number = "002", Title = "B", Status = WorkOrderStatus.Draft, RoomNumber = "B" },
         };
         await using var ctx = CreateContext(new StubBus(rows));
 
@@ -577,7 +577,7 @@ public class WorkOrderSearchTests
         // An overdue work order: past due date + open status
         var overdueOrder = new WorkOrder
         {
-            Number = "WO-OVR",
+            Number = "OVR",
             Title = "Overdue",
             Status = WorkOrderStatus.InProgress,
             DueDate = new DateOnly(2000, 1, 1)
@@ -597,7 +597,7 @@ public class WorkOrderSearchTests
     {
         var nonOverdueOrder = new WorkOrder
         {
-            Number = "WO-FUT",
+            Number = "FUT",
             Title = "Future",
             Status = WorkOrderStatus.InProgress,
             DueDate = new DateOnly(2099, 12, 31)
