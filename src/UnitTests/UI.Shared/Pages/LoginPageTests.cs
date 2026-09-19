@@ -85,13 +85,13 @@ public class LoginPageTests
         var component = ctx.Render<Login>();
 
         var hsimpsonOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "hsimpson");
-        hsimpsonOption.TextContent.ShouldBe("HOMER SIMPSON");
+        hsimpsonOption.TextContent.ShouldBe("SIMPSON, H.");
 
         var jdoeOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "jdoe");
-        jdoeOption.TextContent.ShouldBe("MARY JANE SIMPSON");
+        jdoeOption.TextContent.ShouldBe("SIMPSON, M.");
 
         var mburnsOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "mburns");
-        mburnsOption.TextContent.ShouldBe("MONTGOMERY BURNS");
+        mburnsOption.TextContent.ShouldBe("BURNS, M.");
         mburnsOption.GetAttribute("value").ShouldBe("mburns");
     }
 
