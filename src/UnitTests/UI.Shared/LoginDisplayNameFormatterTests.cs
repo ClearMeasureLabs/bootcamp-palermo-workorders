@@ -7,39 +7,73 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared;
 public class LoginDisplayNameFormatterTests
 {
     [Test]
-    public void FormatForLoginDropdown_MixedCase_ReturnsUppercase()
+    public void FormatForLoginDropdown_MixedCase_ReturnsLastInitialFormat()
     {
-        LoginDisplayNameFormatter.FormatForLoginDropdown("mary jane SIMPSON").ShouldBe("MARY JANE SIMPSON");
+        LoginDisplayNameFormatter.FormatForLoginDropdown("mary", "jane SIMPSON")
+            .ShouldBe("JANE SIMPSON, M.");
     }
 
     [Test]
-    public void FormatForLoginDropdown_AlreadyUppercase_Unchanged()
+    public void FormatForLoginDropdown_AlreadyUppercase_ReturnsLastInitialFormat()
     {
-        LoginDisplayNameFormatter.FormatForLoginDropdown("HOMER SIMPSON").ShouldBe("HOMER SIMPSON");
+        LoginDisplayNameFormatter.FormatForLoginDropdown("Homer", "SIMPSON")
+            .ShouldBe("SIMPSON, H.");
     }
 
     [Test]
-    public void FormatForLoginDropdown_Null_ReturnsEmpty()
+    public void FormatForLoginDropdown_NullLastName_ReturnsEmpty()
     {
-        LoginDisplayNameFormatter.FormatForLoginDropdown(null).ShouldBe(string.Empty);
+        LoginDisplayNameFormatter.FormatForLoginDropdown("Homer", null)
+            .ShouldBe(string.Empty);
     }
 
     [Test]
-    public void FormatForLoginDropdown_Empty_ReturnsEmpty()
+    public void FormatForLoginDropdown_EmptyLastName_ReturnsEmpty()
     {
-        LoginDisplayNameFormatter.FormatForLoginDropdown(string.Empty).ShouldBe(string.Empty);
+        LoginDisplayNameFormatter.FormatForLoginDropdown("Homer", string.Empty)
+            .ShouldBe(string.Empty);
     }
 
     [Test]
-    public void FormatForLoginDropdown_WhitespaceOnly_PreservesLengthAndCaseMapsToUpperInvariant()
+    public void FormatForLoginDropdown_NullFirstName_ReturnsLastNameOnly()
     {
-        LoginDisplayNameFormatter.FormatForLoginDropdown("  \t ").ShouldBe("  \t ".ToUpperInvariant());
+        LoginDisplayNameFormatter.FormatForLoginDropdown(null, "SIMPSON")
+            .ShouldBe("SIMPSON");
     }
 
     [Test]
-    public void FormatForLoginDropdown_HyphenAndApostrophe_ReturnsUppercase()
+    public void FormatForLoginDropdown_EmptyFirstName_ReturnsLastNameOnly()
     {
-        LoginDisplayNameFormatter.FormatForLoginDropdown("Mary-Jane O'Brien")
-            .ShouldBe("MARY-JANE O'BRIEN");
+        LoginDisplayNameFormatter.FormatForLoginDropdown(string.Empty, "SIMPSON")
+            .ShouldBe("SIMPSON");
+    }
+
+    [Test]
+    public void FormatForLoginDropdown_BothNull_ReturnsEmpty()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown(null, null)
+            .ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void FormatForLoginDropdown_CompoundLastName_PreservesAllParts()
+    {
+        // Compound last names like "Lovejoy Jr" must give "LOVEJOY JR, T."
+        LoginDisplayNameFormatter.FormatForLoginDropdown("Timothy", "Lovejoy Jr")
+            .ShouldBe("LOVEJOY JR, T.");
+    }
+
+    [Test]
+    public void FormatForLoginDropdown_HyphenAndApostrophe_LastNameOnly()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown("Mary", "O'Brien")
+            .ShouldBe("O'BRIEN, M.");
+    }
+
+    [Test]
+    public void FormatForLoginDropdown_HyphenAndApostrophe_FirstNameOnly()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown("Mary-Jane", "Smith")
+            .ShouldBe("SMITH, M.");
     }
 }

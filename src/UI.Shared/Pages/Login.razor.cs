@@ -55,11 +55,11 @@ public partial class Login : AppComponentBase
     }
 
     /// <summary>
-    /// Display-only formatting for the login member select: uppercase to match mainframe all-caps; does not alter stored names.
+    /// Display-only formatting for the login member select: "LAST, I." format; does not alter stored names.
     /// </summary>
     private static string GetLoginDropdownDisplayName(Employee employee)
     {
-        return LoginDisplayNameFormatter.FormatForLoginDropdown(employee.GetFullName());
+        return LoginDisplayNameFormatter.FormatForLoginDropdown(employee.FirstName, employee.LastName);
     }
 
     private const string TimothyLovejoyUsername = "tlovejoy";
