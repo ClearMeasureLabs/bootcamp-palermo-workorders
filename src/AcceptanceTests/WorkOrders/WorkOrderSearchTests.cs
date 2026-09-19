@@ -802,8 +802,14 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         context.Add(order3);
         await context.SaveChangesAsync();
 
-        // Act
+        // Act: navigate to search and filter by creator so the result set is exactly these 3
         await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await TakeScreenshotAsync(1, "ResultsCount");
 
