@@ -219,6 +219,33 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldDisplayStatusFriendlyNameInStatusBadge()
+    {
+        // Arrange: seed a Draft work order
+        var creator = Faker<Employee>();
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.Status = WorkOrderStatus.Draft;
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act: navigate to search page
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "StatusBadge");
+
+        // Assert: the .status-badge span inside td:nth-child(4) shows "Draft"
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable).ToBeVisibleAsync();
+        var workOrderRows = workOrderTable.Locator("tbody tr");
+        await Expect(workOrderRows).ToHaveCountAsync(await workOrderRows.CountAsync());
+        await Expect(workOrderRows.First.Locator("td:nth-child(4)")).ToContainTextAsync("Draft");
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldSearchWithAllThreeFiltersSelected()
     {
         // Arrange
