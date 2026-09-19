@@ -90,22 +90,22 @@
                            <th>Creator</th>
                            <th>Assignee</th>
                            <th>
-                               <button id="@Elements.SortByStatusButton" class="sort-btn @(_sortColumn == "Status" ? "sort-active" : "")" @onclick='() => SortBy("Status")'>
+                               <button id="@Elements.SortByStatusButton" class="sort-btn @(_sortColumn == "Status" ? "sort-active" : "")" @onclick='() => SortBy("Status")' aria-current="@(_sortColumn == "Status" ? "true" : null)">
                                    Status @if (_sortColumn == "Status") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                                </button>
                            </th>
                            <th>
-                               <button id="@Elements.SortByTitleButton" class="sort-btn @(_sortColumn == "Title" ? "sort-active" : "")" @onclick='() => SortBy("Title")'>
+                               <button id="@Elements.SortByTitleButton" class="sort-btn @(_sortColumn == "Title" ? "sort-active" : "")" @onclick='() => SortBy("Title")' aria-current="@(_sortColumn == "Title" ? "true" : null)">
                                    Title @if (_sortColumn == "Title") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                                </button>
                            </th>
                            <th>
-                               <button id="@Elements.SortByDueDateButton" class="sort-btn @(_sortColumn == "DueDate" ? "sort-active" : "")" @onclick='() => SortBy("DueDate")'>
+                               <button id="@Elements.SortByDueDateButton" class="sort-btn @(_sortColumn == "DueDate" ? "sort-active" : "")" @onclick='() => SortBy("DueDate")' aria-current="@(_sortColumn == "DueDate" ? "true" : null)">
                                    Due Date @if (_sortColumn == "DueDate") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                                </button>
                            </th>
                            <th>
-                               <button id="@Elements.SortByRoomButton" class="sort-btn @(_sortColumn == "Room" ? "sort-active" : "")" @onclick='() => SortBy("Room")'>
+                               <button id="@Elements.SortByRoomButton" class="sort-btn @(_sortColumn == "Room" ? "sort-active" : "")" @onclick='() => SortBy("Room")' aria-current="@(_sortColumn == "Room" ? "true" : null)">
                                    Room @if (_sortColumn == "Room") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                                </button>
                            </th>

@@ -832,4 +832,52 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
     }
+
+    [Test, Retry(2)]
+    public async Task SortButtons_AriaCurrent_ActiveButtonHasTrue_InactiveHaveNone()
+    {
+        // Arrange: seed 2 work orders with different statuses
+        var creator = Faker<Employee>();
+        var order1 = Faker<WorkOrder>();
+        var order2 = Faker<WorkOrder>();
+        order1.Creator = creator;
+        order2.Creator = creator;
+        order1.Status = WorkOrderStatus.Assigned;
+        order2.Status = WorkOrderStatus.InProgress;
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order1);
+        context.Add(order2);
+        await context.SaveChangesAsync();
+
+        // Act: navigate to search page
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Filter by creator so only these two orders appear
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Click the Status sort button
+        var statusSortBtn = Page.Locator($"#{WorkOrderSearch.Elements.SortByStatusButton}");
+        await statusSortBtn.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert: active button has aria-current="true"
+        (await statusSortBtn.GetAttributeAsync("aria-current"))?.ShouldBe("true");
+
+        // Assert: inactive buttons have no aria-current attribute (null)
+        var titleSortBtn = Page.Locator($"#{WorkOrderSearch.Elements.SortByTitleButton}");
+        (await titleSortBtn.GetAttributeAsync("aria-current"))?.ShouldBeNull();
+
+        var dueDateSortBtn = Page.Locator($"#{WorkOrderSearch.Elements.SortByDueDateButton}");
+        (await dueDateSortBtn.GetAttributeAsync("aria-current"))?.ShouldBeNull();
+
+        var roomSortBtn = Page.Locator($"#{WorkOrderSearch.Elements.SortByRoomButton}");
+        (await roomSortBtn.GetAttributeAsync("aria-current"))?.ShouldBeNull();
+    }
 }

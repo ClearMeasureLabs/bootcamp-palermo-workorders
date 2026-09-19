@@ -659,4 +659,29 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task SortByStatus_AriaCurrent_ActiveButtonHasTrue_InactiveHaveNone()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // Click Status sort to make it the active column
+        var statusBtn = component.Find($"#{WorkOrderSearch.Elements.SortByStatusButton}");
+        await statusBtn.ClickAsync(new());
+
+        // Active button should have aria-current="true"
+        statusBtn.GetAttribute("aria-current")?.ShouldBe("true");
+
+        // Inactive buttons should have no aria-current attribute
+        var titleBtn = component.Find($"#{WorkOrderSearch.Elements.SortByTitleButton}");
+        titleBtn.GetAttribute("aria-current")?.ShouldBeNull();
+
+        var dueDateBtn = component.Find($"#{WorkOrderSearch.Elements.SortByDueDateButton}");
+        dueDateBtn.GetAttribute("aria-current")?.ShouldBeNull();
+
+        var roomBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
+        roomBtn.GetAttribute("aria-current")?.ShouldBeNull();
+    }
 }
