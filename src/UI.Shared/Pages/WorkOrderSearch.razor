@@ -130,7 +130,7 @@
                                         @order.Number
                                     </a>
                                 </td>
-                                <td>@order.Creator?.GetFullName()</td>
+                                <td>@CreatorDisplayFormatter.Format(order.Creator?.LastName, order.Creator?.FirstName)</td>
                                 <td>@order.Assignee?.GetFullName()</td>
                                 <td>
                                     <span class="status-badge">@order.Status</span>
