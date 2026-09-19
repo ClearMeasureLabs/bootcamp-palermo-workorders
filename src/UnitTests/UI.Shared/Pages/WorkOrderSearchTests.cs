@@ -478,6 +478,73 @@ public class WorkOrderSearchTests
         cells[2].TextContent.Trim().ShouldBe("A");
     }
     [Test]
+    public async Task SortByStatus_ActiveButton_HasAriaCurrentTrue_SiblingsAbsent()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var statusBtn = component.Find($"#{WorkOrderSearch.Elements.SortByStatusButton}");
+        await statusBtn.ClickAsync(new());
+
+        statusBtn.HasAttribute("aria-current").ShouldBeTrue();
+        statusBtn.GetAttribute("aria-current").ShouldBe("true");
+
+        component.Find($"#{WorkOrderSearch.Elements.SortByTitleButton}").HasAttribute("aria-current").ShouldBeFalse();
+        component.Find($"#{WorkOrderSearch.Elements.SortByDueDateButton}").HasAttribute("aria-current").ShouldBeFalse();
+        component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}").HasAttribute("aria-current").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task SortByTitle_ActiveButton_HasAriaCurrentTrue_StatusAbsent()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var titleBtn = component.Find($"#{WorkOrderSearch.Elements.SortByTitleButton}");
+        await titleBtn.ClickAsync(new());
+
+        titleBtn.HasAttribute("aria-current").ShouldBeTrue();
+        titleBtn.GetAttribute("aria-current").ShouldBe("true");
+
+        component.Find($"#{WorkOrderSearch.Elements.SortByStatusButton}").HasAttribute("aria-current").ShouldBeFalse();
+        component.Find($"#{WorkOrderSearch.Elements.SortByDueDateButton}").HasAttribute("aria-current").ShouldBeFalse();
+        component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}").HasAttribute("aria-current").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task SortByDueDate_ActiveButton_HasAriaCurrentTrue_SiblingsAbsent()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var dueDateBtn = component.Find($"#{WorkOrderSearch.Elements.SortByDueDateButton}");
+        await dueDateBtn.ClickAsync(new());
+
+        dueDateBtn.HasAttribute("aria-current").ShouldBeTrue();
+        dueDateBtn.GetAttribute("aria-current").ShouldBe("true");
+
+        component.Find($"#{WorkOrderSearch.Elements.SortByStatusButton}").HasAttribute("aria-current").ShouldBeFalse();
+        component.Find($"#{WorkOrderSearch.Elements.SortByTitleButton}").HasAttribute("aria-current").ShouldBeFalse();
+        component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}").HasAttribute("aria-current").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task InitialRender_NoAriaCurrentOnAnySortButton()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.Find($"#{WorkOrderSearch.Elements.SortByStatusButton}").HasAttribute("aria-current").ShouldBeFalse();
+        component.Find($"#{WorkOrderSearch.Elements.SortByTitleButton}").HasAttribute("aria-current").ShouldBeFalse();
+        component.Find($"#{WorkOrderSearch.Elements.SortByDueDateButton}").HasAttribute("aria-current").ShouldBeFalse();
+        component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}").HasAttribute("aria-current").ShouldBeFalse();
+    }
+
+    [Test]
     public async Task AssignedToMeCheckbox_WhenSessionStateIsTrue_RestoresCheckboxAndFiltersOnLoad()
     {
         // Pre-populate the search state so InitializeAsync restores the AssignedToMe=true branch

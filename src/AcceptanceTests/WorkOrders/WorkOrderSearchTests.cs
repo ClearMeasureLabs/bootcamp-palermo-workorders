@@ -527,6 +527,46 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task SortByStatusHeader_ActiveSortButton_HasAriaCurrentTrue()
+    {
+        // Arrange
+        var creator = Faker<Employee>();
+        var order1 = Faker<WorkOrder>();
+        var order2 = Faker<WorkOrder>();
+        order1.Creator = creator;
+        order2.Creator = creator;
+        order1.Status = WorkOrderStatus.InProgress;
+        order2.Status = WorkOrderStatus.Assigned;
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order1);
+        context.Add(order2);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "Loaded");
+
+        // Filter by creator so only these two work orders are in the result set
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(2, "Filtered");
+
+        var statusSortBtn = Page.Locator($"#{WorkOrderSearch.Elements.SortByStatusButton}");
+        await statusSortBtn.ClickAsync();
+        await TakeScreenshotAsync(3, "SortedAscending");
+
+        // Assert
+        await Expect(statusSortBtn).ToHaveAttributeAsync("aria-current", "true");
+        var titleSortBtn = Page.Locator($"#{WorkOrderSearch.Elements.SortByTitleButton}");
+        (await titleSortBtn.GetAttributeAsync("aria-current")).ShouldBeNullOrEmpty();
+    }
+
+    [Test, Retry(2)]
     public async Task SortByTitleHeader_SortsResultsAscending_ThenDescendingOnSecondClick()
     {
         // Arrange
