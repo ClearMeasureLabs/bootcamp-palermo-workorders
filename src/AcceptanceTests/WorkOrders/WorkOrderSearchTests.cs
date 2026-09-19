@@ -569,6 +569,35 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldExposeFullTitleInTitleCellTitleAttribute()
+    {
+        // Arrange
+        const string longTitle = "Replace the HVAC air handler in the fellowship hall — unit 4, second floor, north corridor, near the loading dock";
+        var order = Faker<WorkOrder>();
+        order.Creator = CurrentUser;
+        order.Title = $"[{TestTag}] {longTitle}";
+
+        await using var context = TestHost.NewDbContext();
+        context.Attach(CurrentUser);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(CurrentUser.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert
+        var cell = Page.Locator(".grid-data tbody tr").Filter(new() { HasText = order.Title }).First.Locator("td:nth-child(5)");
+        await Expect(cell).ToHaveAttributeAsync("title", order.Title);
+    }
+
+    [Test, Retry(2)]
     public async Task SortByRoomHeader_SortsResultsAscending_ThenDescendingOnSecondClick()
     {
         // Arrange

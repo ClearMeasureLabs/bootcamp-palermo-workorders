@@ -135,7 +135,7 @@
                                 <td>
                                     <span class="status-badge">@order.Status</span>
                                 </td>
-                                <td>@order.Title</td>
+                                <td title="@order.Title">@order.Title</td>
                                 <td>
                                     <span data-testid="@(Elements.DueDateCell + order.Number)" class="@order.DueDateCssClass">@order.DueDateDisplay@if (!string.IsNullOrEmpty(order.DueDateUrgencyText))
                                         {

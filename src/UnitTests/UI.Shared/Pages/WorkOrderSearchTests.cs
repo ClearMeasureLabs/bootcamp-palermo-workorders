@@ -434,6 +434,53 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task TitleCell_TitleAttribute_EqualsFullTitle()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = "Fix the lobby door", Status = WorkOrderStatus.Draft },
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var cells = component.FindAll("tbody tr td:nth-child(5)");
+        cells[0].GetAttribute("title").ShouldBe("Fix the lobby door");
+    }
+
+    [Test]
+    public async Task TitleCell_TitleAttribute_PreservesLongTitle()
+    {
+        const string longTitle = "Replace the HVAC air handler in the fellowship hall — unit 4, second floor, north corridor, near the loading dock";
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = longTitle, Status = WorkOrderStatus.Draft },
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        longTitle.Length.ShouldBeGreaterThan(100);
+        var cells = component.FindAll("tbody tr td:nth-child(5)");
+        cells[0].GetAttribute("title").ShouldBe(longTitle);
+    }
+
+    [Test]
+    public async Task TitleCell_VisibleText_Unchanged()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = "Fix the lobby door", Status = WorkOrderStatus.Draft },
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var cells = component.FindAll("tbody tr td:nth-child(5)");
+        cells[0].TextContent.Trim().ShouldBe("Fix the lobby door");
+    }
+
+    [Test]
     public async Task SortByRoom_Ascending_SortsResultsByRoomNumber()
     {
         var rows = new[]
