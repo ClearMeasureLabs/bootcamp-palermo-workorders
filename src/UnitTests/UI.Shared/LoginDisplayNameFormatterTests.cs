@@ -7,15 +7,15 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared;
 public class LoginDisplayNameFormatterTests
 {
     [Test]
-    public void FormatForLoginDropdown_MixedCase_ReturnsUppercase()
+    public void FormatForLoginDropdown_MixedCase_ReturnsLastNameInitial()
     {
-        LoginDisplayNameFormatter.FormatForLoginDropdown("mary jane SIMPSON").ShouldBe("MARY JANE SIMPSON");
+        LoginDisplayNameFormatter.FormatForLoginDropdown("mary jane SIMPSON").ShouldBe("SIMPSON, M.");
     }
 
     [Test]
-    public void FormatForLoginDropdown_AlreadyUppercase_Unchanged()
+    public void FormatForLoginDropdown_AlreadyUppercase_ReturnsLastNameInitial()
     {
-        LoginDisplayNameFormatter.FormatForLoginDropdown("HOMER SIMPSON").ShouldBe("HOMER SIMPSON");
+        LoginDisplayNameFormatter.FormatForLoginDropdown("HOMER SIMPSON").ShouldBe("SIMPSON, H.");
     }
 
     [Test]
@@ -31,15 +31,27 @@ public class LoginDisplayNameFormatterTests
     }
 
     [Test]
-    public void FormatForLoginDropdown_WhitespaceOnly_PreservesLengthAndCaseMapsToUpperInvariant()
+    public void FormatForLoginDropdown_WhitespaceOnly_ReturnsEmpty()
     {
-        LoginDisplayNameFormatter.FormatForLoginDropdown("  \t ").ShouldBe("  \t ".ToUpperInvariant());
+        LoginDisplayNameFormatter.FormatForLoginDropdown("  \t ").ShouldBe(string.Empty);
     }
 
     [Test]
-    public void FormatForLoginDropdown_HyphenAndApostrophe_ReturnsUppercase()
+    public void FormatForLoginDropdown_HyphenAndApostrophe_ReturnsLastNameInitial()
     {
         LoginDisplayNameFormatter.FormatForLoginDropdown("Mary-Jane O'Brien")
-            .ShouldBe("MARY-JANE O'BRIEN");
+            .ShouldBe("O'BRIEN, M.");
+    }
+
+    [Test]
+    public void FormatForLoginDropdown_SingleWord_ReturnsLastNameOnly()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown("SMITH").ShouldBe("SMITH");
+    }
+
+    [Test]
+    public void FormatForLoginDropdown_EmptyFirstName_ReturnsLastNameOnly()
+    {
+        LoginDisplayNameFormatter.FormatForLoginDropdown(" SIMPSON").ShouldBe("SIMPSON");
     }
 }

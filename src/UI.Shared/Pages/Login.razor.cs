@@ -25,7 +25,10 @@ public partial class Login : AppComponentBase
     public string AppEnvironment { get; private set; } = string.Empty;
     // ReSharper disable once MemberCanBePrivate.Global -- Razor template binding requires public access
     public string? WelcomeFullName =>
-        _employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username)?.GetFullName();
+        _employees.FirstOrDefault(e => e.UserName == LoginModelValue.Username)?.GetFullName()
+        is var fullName && !string.IsNullOrEmpty(fullName)
+            ? LoginDisplayNameFormatter.FormatForLoginDropdown(fullName)
+            : null;
 
     private Task _employeesLoadTask = Task.CompletedTask;
 
