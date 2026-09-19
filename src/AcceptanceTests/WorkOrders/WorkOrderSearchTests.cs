@@ -414,6 +414,9 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         // Assert aria-label
         await Expect(clearButton).ToHaveAttributeAsync("aria-label", "Clear all search filters");
 
+        // Assert visible text
+        await Expect(clearButton).ToHaveTextAsync("Clear filters");
+
         // Click clear
         await clearButton.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
