@@ -97,6 +97,7 @@ public class WorkOrderSearchTests
 
         // Assert
         var workOrderTable = component.Find(".grid-data");
+        workOrderTable.QuerySelector("caption")?.TextContent.ShouldBe("Work order search results");
         workOrderTable.ShouldNotBeNull();
 
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");

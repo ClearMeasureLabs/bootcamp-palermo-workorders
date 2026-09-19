@@ -114,6 +114,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         // Assert
         var workOrderTable = Page.Locator(".grid-data");
         await Expect(workOrderTable).ToBeVisibleAsync();
+        await Expect(workOrderTable.Locator("caption")).ToHaveTextAsync("Work order search results");
 
         var workOrderRows = workOrderTable.Locator("tbody tr");
         var rowCount = await workOrderRows.CountAsync();
