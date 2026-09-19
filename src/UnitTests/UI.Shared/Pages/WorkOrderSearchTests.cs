@@ -100,7 +100,7 @@ public class WorkOrderSearchTests
         workOrderTable.ShouldNotBeNull();
 
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        workOrderRows.Length.ShouldBe(3);
     }
 
     [Test]
@@ -118,7 +118,7 @@ public class WorkOrderSearchTests
         // Assert
         var workOrderTable = component.Find(".grid-data");
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        workOrderRows.Length.ShouldBe(3);
     }
 
     [Test]
@@ -136,7 +136,7 @@ public class WorkOrderSearchTests
         // Assert
         var workOrderTable = component.Find(".grid-data");
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        workOrderRows.Length.ShouldBe(3);
     }
 
     [Test]
@@ -154,7 +154,7 @@ public class WorkOrderSearchTests
         // Assert
         var workOrderTable = component.Find(".grid-data");
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        workOrderRows.Length.ShouldBe(3);
     }
 
     [Test]
@@ -181,7 +181,7 @@ public class WorkOrderSearchTests
         workOrderTable.ShouldNotBeNull();
 
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
-        workOrderRows.Length.ShouldBe(2);
+        workOrderRows.Length.ShouldBe(3);
     }
 
     [Test]
@@ -658,5 +658,17 @@ public class WorkOrderSearchTests
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task ShouldDisplayUnassigned_ForNullAssignee()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // The third row (WO-003) has Assignee = null
+        var cells = component.FindAll("tbody tr td:nth-child(3)");
+        cells[2].TextContent.Trim().ShouldBe("Unassigned");
     }
 }

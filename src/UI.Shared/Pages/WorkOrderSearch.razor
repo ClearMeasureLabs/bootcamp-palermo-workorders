@@ -131,7 +131,7 @@
                                     </a>
                                 </td>
                                 <td>@order.Creator?.GetFullName()</td>
-                                <td>@order.Assignee?.GetFullName()</td>
+                                <td>@AssigneeDisplayFormatter.Format(order.Assignee?.GetFullName())</td>
                                 <td>
                                     <span class="status-badge">@order.Status</span>
                                 </td>

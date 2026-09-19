@@ -832,4 +832,35 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldDisplayUnassigned_ForNullAssignee()
+    {
+        // Arrange: seed a work order with no assignee
+        var creator = Faker<Employee>();
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.Assignee = null;
+        order.Title = $"[{TestTag}] unassigned order";
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Filter by creator so only our unassigned order appears
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert: assignee cell shows "Unassigned"
+        var assigneeCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(3)");
+        await Expect(assigneeCell).ToContainTextAsync("Unassigned");
+    }
 }

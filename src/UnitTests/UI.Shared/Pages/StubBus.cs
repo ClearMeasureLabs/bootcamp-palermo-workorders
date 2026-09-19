@@ -76,6 +76,14 @@ public class StubBus(WorkOrder[]? workOrderResults = null) : Bus(null!)
             Status = WorkOrderStatus.Assigned,
             Creator = new Employee("mburns", "Montgomery", "Burns", "burns@example.com"),
             Assignee = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com")
+        },
+        new WorkOrder
+        {
+            Number = "WO-003",
+            Title = "Unassigned task",
+            Status = WorkOrderStatus.Draft,
+            Creator = new Employee("tlovejoy", "Timothy", "Lovejoy", "reverend@firstchurchspringfield.org"),
+            Assignee = null
         }
     ];
 
