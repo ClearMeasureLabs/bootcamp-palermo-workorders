@@ -42,11 +42,11 @@ public class LoginTests : AcceptanceTestBase
 
         var placeholderOption = userSelect.Locator("option[value='']");
         await Expect(placeholderOption).ToHaveTextAsync("-- Select a parishioner or staff member --");
-        await Expect(homerOption).ToHaveTextAsync("HOMER SIMPSON");
+        await Expect(homerOption).ToHaveTextAsync("SIMPSON, H.");
 
         // Seeded mixed-case FirstName/LastName must display ALL CAPS (login select only).
         var flandersOption = userSelect.Locator("option[value='nflanders']");
-        await Expect(flandersOption).ToHaveTextAsync("NED FLANDERS");
+        await Expect(flandersOption).ToHaveTextAsync("FLANDERS, N.");
     }
 
     [Test, Retry(2)]
@@ -70,7 +70,7 @@ public class LoginTests : AcceptanceTestBase
         var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
         var homerOption = userSelect.Locator("option[value='hsimpson']");
         await WaitForEmployeeOptionsRenderedAsync(homerOption);
-        await Expect(homerOption).ToHaveTextAsync("HOMER SIMPSON");
+        await Expect(homerOption).ToHaveTextAsync("SIMPSON, H.");
 
         await Select(nameof(Login.Elements.User), "hsimpson");
         await Click(nameof(Login.Elements.LoginButton));
