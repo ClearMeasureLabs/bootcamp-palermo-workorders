@@ -832,4 +832,30 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldDisplayEmDash_WhenCreatorIsNull()
+    {
+        // Arrange: seed a work order with Creator = null
+        var order = Faker<WorkOrder>();
+        order.Creator = null;
+        order.Title = $"[{TestTag}] null creator order";
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "NullCreatorSearch");
+
+        // Assert: the seeded row's Creator column (td:nth-child(2)) contains the em dash
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable).ToBeVisibleAsync();
+        var targetRow = workOrderTable.Locator("tbody tr").Filter(new() { HasText = order.Title });
+        await Expect(targetRow).ToHaveCountAsync(1);
+        await Expect(targetRow.Locator("td:nth-child(2)"))
+            .ToContainTextAsync("\u2014");
+    }
 }
