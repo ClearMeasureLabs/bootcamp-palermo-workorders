@@ -1,6 +1,7 @@
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
@@ -658,5 +659,32 @@ public class WorkOrderSearchTests
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
+    }
+}
+
+public class AssigneeDisplayFormatterTests
+{
+    [Test]
+    public void NullInput_ReturnsUnassigned()
+    {
+        AssigneeDisplayFormatter.Format(null).ShouldBe("Unassigned");
+    }
+
+    [Test]
+    public void EmptyString_ReturnsUnassigned()
+    {
+        AssigneeDisplayFormatter.Format("").ShouldBe("Unassigned");
+    }
+
+    [Test]
+    public void WhitespaceOnly_ReturnsUnassigned()
+    {
+        AssigneeDisplayFormatter.Format("  ").ShouldBe("Unassigned");
+    }
+
+    [Test]
+    public void ValidName_ReturnsNameUnchanged()
+    {
+        AssigneeDisplayFormatter.Format("Homer Simpson").ShouldBe("Homer Simpson");
     }
 }
