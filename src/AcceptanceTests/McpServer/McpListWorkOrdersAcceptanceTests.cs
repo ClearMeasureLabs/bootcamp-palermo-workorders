@@ -248,7 +248,11 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
     {
         var workOrderLinks = Page.Locator($"[data-testid^='{WorkOrderSearch.Elements.WorkOrderLink}']");
         return (await workOrderLinks.AllTextContentsAsync())
-            .Select(number => number.Trim())
+            .Select(number =>
+            {
+                var text = number.Trim();
+                return text.StartsWith("WO-", StringComparison.Ordinal) ? text.Substring(3) : text;
+            })
             .ToHashSet();
     }
 
