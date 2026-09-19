@@ -739,6 +739,38 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldShowEmptySearchMessage_WhenCreatorFilterMatchesNoOrders()
+    {
+        // Arrange: create a work order whose creator is NOT the current user
+        var otherEmployee = Faker<Employee>();
+        var order = Faker<WorkOrder>();
+        order.Creator = otherEmployee;
+        order.Title = $"[{TestTag}] other creator order";
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(otherEmployee);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act: navigate to search, filter by CurrentUser (who has no orders)
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(CurrentUser.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "EmptyResults");
+
+        // Assert: empty results message is the new constant
+        var emptyResults = Page.Locator(".empty-results");
+        await Expect(emptyResults).ToBeVisibleAsync();
+        var firstParagraph = emptyResults.Locator("p:nth-of-type(1)");
+        await Expect(firstParagraph).ToHaveTextAsync("No matching work orders");
+    }
+
+    [Test, Retry(2)]
     public async Task SortByDueDateHeader_SortsResultsAscending_ThenDescendingOnSecondClick()
     {
         // Arrange

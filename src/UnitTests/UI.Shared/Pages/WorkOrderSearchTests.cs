@@ -648,7 +648,27 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public void ShouldRemotableRequest_RoundTrip_OverdueOnly()
+    public void ShouldHave_EmptySearchMessage_Primary()
+    {
+        ClearMeasure.Bootcamp.UI.Shared.Models.EmptySearchMessage.Primary.ShouldBe("No matching work orders");
+    }
+
+    [Test]
+    public async Task ShouldShowEmptySearchMessage_WhenNoResults()
+    {
+        await using var ctx = CreateContext(new StubBus([]));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var emptyResults = component.Find(".empty-results");
+        emptyResults.ShouldNotBeNull();
+        var paragraphs = emptyResults.QuerySelectorAll("p");
+        paragraphs.Count.ShouldBe(2);
+        paragraphs[0].TextContent.ShouldBe("No matching work orders");
+    }
+
+    [Test]
+    public async Task ShouldRemotableRequest_RoundTrip_OverdueOnly()
     {
         var query = new ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery();
         query.MatchOverdueOnly(true);
