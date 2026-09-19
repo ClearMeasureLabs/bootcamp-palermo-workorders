@@ -150,7 +150,7 @@
                                               aria-label="@badgeText">@badgeText</span>
                                     }
                                 </td>
-                                <td>@order.WorkOrder.RoomNumber</td>
+                                <td data-testid="roomCell-@order.Number">@RoomNumberDisplayFormatter.Format(order.WorkOrder.RoomNumber)</td>
                             </tr>
                         }
                     }

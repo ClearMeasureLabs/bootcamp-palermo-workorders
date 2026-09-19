@@ -659,4 +659,19 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task RoomCell_ShowsTrimmedRoomNumber()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = "Test", Status = WorkOrderStatus.Draft, RoomNumber = " R200 " }
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var cell = component.Find("td[data-testid='roomCell-WO-001']");
+        cell.TextContent.Trim().ShouldBe("R200");
+    }
 }

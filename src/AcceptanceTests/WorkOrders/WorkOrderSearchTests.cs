@@ -611,6 +611,36 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task RoomCell_ShowsTrimmedRoomNumber()
+    {
+        // Arrange: seed a work order with a room number that has surrounding whitespace
+        var creator = Faker<Employee>();
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.RoomNumber = " Atrium ";
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Filter to this creator so only our order appears
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert: room cell shows trimmed value (not " Atrium ")
+        var roomCell = Page.Locator("td[data-testid^='roomCell-']");
+        await Expect(roomCell).ToHaveTextAsync("Atrium");
+    }
+
+    [Test, Retry(2)]
     public async Task AssignedToMe_WhenChecked_ShowsOnlyCurrentUsersWorkOrders()
     {
         // Arrange: create two employees each with a distinct assigned work order
