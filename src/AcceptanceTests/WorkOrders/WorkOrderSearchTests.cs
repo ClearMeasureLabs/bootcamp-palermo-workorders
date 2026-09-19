@@ -832,4 +832,27 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowEmptyResultsMessages_WhenCreatorHasNoWorkOrders()
+    {
+        // Arrange
+        var creator = Faker<Employee>();
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}").SelectOptionAsync(creator.UserName);
+        await Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}").ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "EmptyResults");
+
+        // Assert
+        await Expect(Page.Locator(".empty-results p").Nth(0)).ToHaveTextAsync("No work orders found matching your search criteria.");
+        await Expect(Page.Locator(".empty-results p").Nth(1)).ToHaveTextAsync("Try different filters");
+    }
 }

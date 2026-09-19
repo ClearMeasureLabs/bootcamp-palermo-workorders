@@ -659,4 +659,17 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task EmptyResults_ShouldShowPrimaryAndSecondaryMessages_WhenNoWorkOrdersMatch()
+    {
+        await using var ctx = CreateContext(new StubBus(Array.Empty<WorkOrder>()));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var ps = component.Find(".empty-results").QuerySelectorAll("p");
+        ps.Length.ShouldBe(2);
+        ps[0].TextContent.ShouldBe("No work orders found matching your search criteria.");
+        ps[1].TextContent.ShouldBe("Try different filters");
+    }
 }
