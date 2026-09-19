@@ -784,6 +784,41 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task SearchButton_ShouldHaveCorrectText_AndTriggerSearch()
+    {
+        // Arrange: seed one work order with a known title
+        var creator = Faker<Employee>();
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.Title = "[Test] Search button label test";
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act: navigate to Search page
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert: button has correct visible text
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await Expect(searchButton).ToBeVisibleAsync();
+        await Expect(searchButton).ToHaveTextAsync(new Regex("Search work orders"));
+
+        // Click the search button
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert: results table is visible and contains at least one row
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable).ToBeVisibleAsync();
+        var workOrderRows = workOrderTable.Locator("tbody tr");
+        var rowCount = await workOrderRows.CountAsync();
+        rowCount.ShouldBeGreaterThanOrEqualTo(1);
+    }
+
+    [Test, Retry(2)]
     public async Task Should_ShowOverdueOnly_WhenToggleIsChecked()
     {
         // Arrange
