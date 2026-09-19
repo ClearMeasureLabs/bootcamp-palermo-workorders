@@ -659,4 +659,50 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task AssigneeCell_HasDataTestId_WithCorrectText()
+    {
+        var rows = new[]
+        {
+            new WorkOrder
+            {
+                Number = "WO-123",
+                Title = "Test",
+                Status = WorkOrderStatus.Draft,
+                Creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com"),
+                Assignee = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com")
+            }
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var td = component.Find("td[data-testid='assignee-cell-WO-123']");
+        td.ShouldNotBeNull();
+        td.TextContent.Trim().ShouldBe("Homer Simpson");
+    }
+
+    [Test]
+    public async Task AssigneeCell_HasDataTestId_WithEmptyText_WhenAssigneeIsNull()
+    {
+        var rows = new[]
+        {
+            new WorkOrder
+            {
+                Number = "WO-124",
+                Title = "Test",
+                Status = WorkOrderStatus.Draft,
+                Creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com"),
+                Assignee = null
+            }
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var td = component.Find("td[data-testid='assignee-cell-WO-124']");
+        td.ShouldNotBeNull();
+        td.TextContent.Trim().ShouldBe("");
+    }
 }

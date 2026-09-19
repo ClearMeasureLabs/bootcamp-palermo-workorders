@@ -832,4 +832,32 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
     }
+
+    [Test, Retry(2)]
+    public async Task AssigneeCell_HasDataTestId_AndShowsCorrectText()
+    {
+        // Arrange: seed a work order with a known assignee
+        var creator = Faker<Employee>();
+        var assignee = Faker<Employee>();
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.Assignee = assignee;
+        order.Title = $"[{TestTag}] assignee cell test";
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(assignee);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert: the assignee cell has the expected data-testid and shows the correct text
+        var testId = $"assignee-cell-{order.Number}";
+        var assigneeCell = Page.GetByTestId(testId);
+        await Expect(assigneeCell).ToBeVisibleAsync();
+        await Expect(assigneeCell).ToHaveTextAsync(assignee.GetFullName());
+    }
 }
