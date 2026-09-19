@@ -784,6 +784,34 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task Should_ShowResultsCountFormatter_WithThreeWorkOrders()
+    {
+        // Arrange: seed exactly 3 work orders
+        var creator = Faker<Employee>();
+        var order1 = Faker<WorkOrder>();
+        var order2 = Faker<WorkOrder>();
+        var order3 = Faker<WorkOrder>();
+        order1.Creator = creator;
+        order2.Creator = creator;
+        order3.Creator = creator;
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order1);
+        context.Add(order2);
+        context.Add(order3);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "ResultsCount");
+
+        // Assert: results header shows formatted count
+        await Expect(Page.Locator(".results-header")).ToContainTextAsync("3 work orders found");
+    }
+
+    [Test, Retry(2)]
     public async Task Should_ShowOverdueOnly_WhenToggleIsChecked()
     {
         // Arrange
