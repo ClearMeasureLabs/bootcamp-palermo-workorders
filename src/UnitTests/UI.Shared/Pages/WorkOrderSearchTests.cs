@@ -648,6 +648,17 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ResultsHeader_ShouldHaveAriaLivePolite()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var resultsHeader = component.Find(".results-header");
+        resultsHeader.GetAttribute("aria-live").ShouldBe("polite");
+    }
+
+    [Test]
     public void ShouldRemotableRequest_RoundTrip_OverdueOnly()
     {
         var query = new ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery();

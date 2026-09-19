@@ -832,4 +832,27 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
     }
+
+    [Test, Retry(2)]
+    public async Task ResultsHeader_ShouldHaveAriaLivePolite()
+    {
+        // Arrange: seed one work order
+        var creator = Faker<Employee>();
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert
+        var resultsHeader = Page.Locator(".results-header");
+        var ariaLive = await resultsHeader.GetAttributeAsync("aria-live");
+        ariaLive.ShouldBe("polite");
+    }
 }
