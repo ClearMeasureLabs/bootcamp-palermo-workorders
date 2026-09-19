@@ -832,4 +832,66 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldDisplayEmDash_WhenRoomNumberIsNull()
+    {
+        // Arrange: seed a work order with null RoomNumber
+        var creator = CurrentUser;
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.Title = $"[{TestTag}] null room test";
+        order.RoomNumber = null;
+
+        await using var context = TestHost.NewDbContext();
+        context.Attach(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Filter to this creator so only our order appears
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert: td:nth-child(7) contains em dash (U+2014)
+        var roomCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(7)");
+        await Expect(roomCell).ToContainTextAsync("\u2014");
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldDisplayEmDash_WhenRoomNumberIsEmpty()
+    {
+        // Arrange: seed a work order with empty RoomNumber
+        var creator = CurrentUser;
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.Title = $"[{TestTag}] empty room test";
+        order.RoomNumber = "";
+
+        await using var context = TestHost.NewDbContext();
+        context.Attach(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Filter to this creator so only our order appears
+        var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
+        await creatorSelect.SelectOptionAsync(creator.UserName);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert: td:nth-child(7) contains em dash (U+2014)
+        var roomCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(7)");
+        await Expect(roomCell).ToContainTextAsync("\u2014");
+    }
 }

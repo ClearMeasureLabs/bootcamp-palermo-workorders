@@ -1,6 +1,7 @@
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
@@ -658,5 +659,29 @@ public class WorkOrderSearchTests
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
+    }
+
+    [Test]
+    public void Format_Null_ReturnsEmDash()
+    {
+        RoomNumberDisplayFormatter.Format(null).ShouldBe("\u2014");
+    }
+
+    [Test]
+    public void Format_EmptyString_ReturnsEmDash()
+    {
+        RoomNumberDisplayFormatter.Format("").ShouldBe("\u2014");
+    }
+
+    [Test]
+    public void Format_Whitespace_ReturnsEmDash()
+    {
+        RoomNumberDisplayFormatter.Format("   ").ShouldBe("\u2014");
+    }
+
+    [Test]
+    public void Format_ValidRoom_ReturnsInput()
+    {
+        RoomNumberDisplayFormatter.Format("Atrium").ShouldBe("Atrium");
     }
 }
