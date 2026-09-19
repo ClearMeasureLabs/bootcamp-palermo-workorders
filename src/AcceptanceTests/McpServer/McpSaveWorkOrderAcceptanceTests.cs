@@ -94,7 +94,7 @@ public class McpSaveWorkOrderAcceptanceTests : AcceptanceTestBase
 
         var dueDateCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + workOrderNumber);
         await Expect(dueDateCell).ToBeAttachedAsync();
-        await Expect(dueDateCell).ToHaveTextAsync(string.Empty);
+        await Expect(dueDateCell).ToHaveTextAsync("\u2014");
         await Expect(dueDateCell).Not.ToHaveClassAsync(new Regex("due-date-today|due-date-overdue"));
     }
 

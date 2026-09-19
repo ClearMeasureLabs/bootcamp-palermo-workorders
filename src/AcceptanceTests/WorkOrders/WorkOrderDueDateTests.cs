@@ -47,7 +47,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         // Empty <span> has no layout box; Playwright treats that as not visible. Assert attached + blank.
         var dueDateCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + order.Number);
         await Expect(dueDateCell).ToBeAttachedAsync();
-        await Expect(dueDateCell).ToHaveTextAsync(string.Empty);
+        await Expect(dueDateCell).ToHaveTextAsync("\u2014");
 
         var rehydrated = await Bus.Send(new WorkOrderByNumberQuery(order.Number!));
         rehydrated.ShouldNotBeNull();
