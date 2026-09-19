@@ -820,7 +820,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var tableRows = Page.Locator(".grid-data tbody tr");
         await Expect(tableRows).ToHaveCountAsync(2);
 
-        // Toggle "Show overdue only"
+        // Toggle "Show overdue"
         var toggle = Page.Locator($"#{WorkOrderSearch.Elements.OverdueOnlyToggle}");
         await toggle.CheckAsync();
         await searchButton.ClickAsync();
@@ -831,5 +831,9 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(tableRows).ToHaveCountAsync(1);
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
+
+        // Assert the label text is "Show overdue"
+        var label = Page.Locator($"label[for='{WorkOrderSearch.Elements.OverdueOnlyToggle}']");
+        await Expect(label).ToHaveTextAsync("Show overdue");
     }
 }
