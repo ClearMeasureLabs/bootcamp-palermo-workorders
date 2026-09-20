@@ -292,6 +292,9 @@ public class WorkOrderSearchTests : AcceptanceTestBase
 
         if (!string.IsNullOrEmpty(workOrderNumber))
         {
+            await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber))
+                .ToHaveAttributeAsync("aria-label", $"Open work order {workOrderNumber}");
+
             await firstWorkOrderLink.ClickAsync();
             await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
             await TakeScreenshotAsync(2, "WorkOrderDetailsPage");

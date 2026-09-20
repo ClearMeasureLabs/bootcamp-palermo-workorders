@@ -648,6 +648,32 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ShouldRenderWorkOrderLinkWithAriaLabel()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var link = component.Find($"[data-testid='{WorkOrderSearch.Elements.WorkOrderLink}WO-001']");
+        link.ShouldNotBeNull();
+        link.GetAttribute("aria-label").ShouldBe("Open work order WO-001");
+    }
+
+    [Test]
+    public async Task ShouldRenderAriaLabelForMultipleWorkOrders()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var link1 = component.Find($"[data-testid='{WorkOrderSearch.Elements.WorkOrderLink}WO-001']");
+        var link2 = component.Find($"[data-testid='{WorkOrderSearch.Elements.WorkOrderLink}WO-002']");
+
+        link1.GetAttribute("aria-label").ShouldBe("Open work order WO-001");
+        link2.GetAttribute("aria-label").ShouldBe("Open work order WO-002");
+    }
+
+    [Test]
     public void ShouldRemotableRequest_RoundTrip_OverdueOnly()
     {
         var query = new ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery();

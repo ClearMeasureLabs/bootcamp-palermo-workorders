@@ -126,7 +126,7 @@
                                     @{
                                         var workOrderLinkTestId = Elements.WorkOrderLink + order.Number;
                                     }
-                                    <a data-testid="@workOrderLinkTestId" href="/workorder/manage/@order.Number?mode=Edit">
+                                    <a data-testid="@workOrderLinkTestId" aria-label="Open work order @order.Number" href="/workorder/manage/@order.Number?mode=Edit">
                                         @order.Number
                                     </a>
                                 </td>
