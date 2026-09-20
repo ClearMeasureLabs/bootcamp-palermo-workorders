@@ -192,4 +192,32 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
             new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldRejectBlankTitleWithValidationMessage()
+    {
+        await LoginAsCurrentUser();
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await WaitForNewWorkOrderFormReadyAsync();
+
+        var order = new WorkOrder();
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        order.Number = await woNumberLocator.InnerTextAsync();
+
+        await Input(nameof(WorkOrderManage.Elements.Description), "Submit description");
+
+        var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+        await Click(saveButtonTestId);
+
+        await Expect(Page.GetByText("The Title field is required.")).ToBeVisibleAsync(
+            new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        var savedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number));
+        savedOrder.ShouldBeNull();
+    }
 }
