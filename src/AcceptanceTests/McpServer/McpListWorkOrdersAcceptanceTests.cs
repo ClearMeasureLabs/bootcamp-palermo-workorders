@@ -112,7 +112,7 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         var creator = Page.Locator(".form-group")
             .Filter(new LocatorFilterOptions { HasText = "Creator:" })
             .Locator(".value");
-        await Expect(creator).ToHaveTextAsync("Timothy Lovejoy Jr");
+        await Expect(creator).ToHaveTextAsync(LoginDisplayNameFormatter.FormatForLoginDropdown("Timothy Lovejoy Jr"));
     }
 
     private async Task<ParityWorkOrderNumbers> SeedParityWorkOrders()
