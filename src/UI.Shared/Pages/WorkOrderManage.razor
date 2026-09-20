@@ -15,7 +15,7 @@
                 <div class="form-group">
                     <label class="form-label">Creator:</label>
                     <div>
-                        <span class="value">@Model.CreatorFullName</span>
+                        <span data-testid="@Elements.Creator" class="value">@Model.CreatorFullName</span>
                     </div>
                 </div>
 
@@ -183,6 +183,7 @@
     {
         Assignee,
         Title,
+        Creator,
         AssigneeFullName,
         RoomNumber,
         Description,
