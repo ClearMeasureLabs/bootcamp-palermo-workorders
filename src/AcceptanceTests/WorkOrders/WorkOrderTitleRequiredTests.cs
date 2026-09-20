@@ -23,6 +23,7 @@ public class WorkOrderTitleRequiredTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task ShouldSaveWorkOrderWithNonBlankTitle()
     {
+        await LoginAsCurrentUser();
         var order = await CreateAndSaveNewWorkOrder();
         order.Title.ShouldNotBeNullOrWhiteSpace();
         await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number)).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
