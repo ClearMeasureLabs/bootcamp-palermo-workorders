@@ -22,7 +22,12 @@ public class WorkOrderCancelTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync(order.Title);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToHaveValueAsync(order.Description);
         await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToCancelledCommand.Name);
-        order = await ClickWorkOrderNumberFromSearchPage(order);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Cancelled orders are hidden from default search, so navigate directly to the manage page
+        await Page.GotoAsync($"/workorder/manage/{order.Number}?mode=Edit");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveValueAsync(order.Title!);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToHaveValueAsync(order.Description!);
