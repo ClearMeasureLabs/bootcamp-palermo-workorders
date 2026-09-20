@@ -15,7 +15,7 @@
                 <div class="form-group">
                     <label class="form-label">Creator:</label>
                     <div>
-                        <span class="value">@Model.CreatorFullName</span>
+                        <span class="value" data-testid="@Elements.Creator">@Model.CreatorFullName</span>
                     </div>
                 </div>
 
@@ -196,6 +196,7 @@
         CommandButton,
         WorkOrderNumber,
         Status,
+        Creator,
         AttachmentsSection,
         AttachmentRow,
         AttachmentFileName,
