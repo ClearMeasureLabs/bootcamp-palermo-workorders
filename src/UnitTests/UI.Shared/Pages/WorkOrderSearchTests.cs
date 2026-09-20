@@ -76,6 +76,13 @@ public class WorkOrderSearchTests
         AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.CreatorSelect);
         AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.AssigneeSelect);
         AssertLabelForMatchesSelectId(component, WorkOrderSearch.Elements.StatusSelect);
+
+        // Room filter is an InputText, not a select, so verify label + input directly
+        var roomInput = component.Find($"#{WorkOrderSearch.Elements.RoomFilter}");
+        roomInput.ShouldNotBeNull();
+        var roomLabel = component.Find($"label[for='{WorkOrderSearch.Elements.RoomFilter}']");
+        roomLabel.ShouldNotBeNull();
+        roomLabel.TextContent.Trim().ShouldBe("Room");
     }
 
     private static void AssertLabelForMatchesSelectId(IRenderedComponent<WorkOrderSearch> component, WorkOrderSearch.Elements element)
@@ -140,6 +147,27 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ShouldLoadWorkOrderTableWithRoomFilterOnInitialLoad()
+    {
+        await using var ctx = CreateContext();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        var uri = navigationManager.GetUriWithQueryParameter("Room", "101");
+        navigationManager.NavigateTo(uri);
+
+        // Act
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // Assert
+        var roomInput = component.Find($"#{WorkOrderSearch.Elements.RoomFilter}");
+        roomInput.GetAttribute("value").ShouldBe("101");
+
+        var workOrderTable = component.Find(".grid-data");
+        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
+        workOrderRows.Length.ShouldBe(2);
+    }
+
+    [Test]
     public async Task ShouldLoadWorkOrderTableWithStatusFilterOnInitialLoad()
     {
         await using var ctx = CreateContext();
@@ -182,6 +210,32 @@ public class WorkOrderSearchTests
 
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
         workOrderRows.Length.ShouldBe(2);
+    }
+
+    [Test]
+    public async Task AfterInitialLoadSettingRoomFilterAndClickingSearchShouldLoadWorkOrders()
+    {
+        var stubBus = new StubBusWithRoomCapture();
+        await using var ctx = CreateContext(stubBus);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // Act
+        var roomInput = component.Find($"#{WorkOrderSearch.Elements.RoomFilter}");
+        await roomInput.ChangeAsync(new() { Value = "101" });
+
+        var searchButton = component.Find($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync(new());
+
+        // Assert
+        var workOrderTable = component.Find(".grid-data");
+        workOrderTable.ShouldNotBeNull();
+
+        var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
+        workOrderRows.Length.ShouldBe(2);
+
+        // The query sent to the bus should carry the room filter
+        stubBus.LastRoomQueried.ShouldBe("101");
     }
 
     [Test]
@@ -357,6 +411,20 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ClearFiltersButton_ShouldBeEnabled_WhenRoomFilterIsSet()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var roomInput = component.Find($"#{WorkOrderSearch.Elements.RoomFilter}");
+        await roomInput.ChangeAsync(new() { Value = "101" });
+
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        clearButton.HasAttribute("disabled").ShouldBeFalse();
+    }
+
+    [Test]
     public async Task ClickingClearFiltersButton_ShouldResetAllFiltersToEmpty_AndTriggerSearch()
     {
         var stubBus = new StubBus();
@@ -383,6 +451,7 @@ public class WorkOrderSearchTests
         component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}").GetAttribute("value").ShouldBeNullOrEmpty();
         component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}").GetAttribute("value").ShouldBeNullOrEmpty();
         component.Find($"#{WorkOrderSearch.Elements.StatusSelect}").GetAttribute("value").ShouldBeNullOrEmpty();
+        component.Find($"#{WorkOrderSearch.Elements.RoomFilter}").GetAttribute("value").ShouldBeNullOrEmpty();
 
         // Assert search was re-run (at least one more Send call after clearing)
         stubBus.SendCallCount.ShouldBeGreaterThan(sendCountBeforeClear);
@@ -658,5 +727,18 @@ public class WorkOrderSearchTests
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldRemotableRequest_RoundTrip_RoomNumber()
+    {
+        var query = new ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery();
+        query.MatchRoom("101");
+
+        var json = System.Text.Json.JsonSerializer.Serialize(query);
+        var rehydrated = System.Text.Json.JsonSerializer.Deserialize<ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery>(json);
+
+        rehydrated.ShouldNotBeNull();
+        rehydrated.RoomNumber.ShouldBe("101");
     }
 }

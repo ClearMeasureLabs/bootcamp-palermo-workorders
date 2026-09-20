@@ -290,4 +290,81 @@ public class WorkOrderSpecificationHandlerTests
         orders.Length.ShouldBe(1);
         orders[0].Number.ShouldBe("OVR-001");
     }
+
+    [Test]
+    public async Task ShouldSearchBySpecificationWithRoomNumber()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var order1 = new WorkOrder
+        {
+            Creator = employee,
+            Number = "123",
+            RoomNumber = "101"
+        };
+        var order2 = new WorkOrder
+        {
+            Creator = employee,
+            Number = "456",
+            RoomNumber = "202"
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order1);
+            context.Add(order2);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchRoom("101");
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Id.ShouldBe(order1.Id);
+    }
+
+    [Test]
+    public async Task ShouldSearchBySpecificationWithRoomNumberAndStatus()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var order1 = new WorkOrder
+        {
+            Creator = employee,
+            Number = "123",
+            RoomNumber = "101",
+            Status = WorkOrderStatus.Assigned
+        };
+        var order2 = new WorkOrder
+        {
+            Creator = employee,
+            Number = "456",
+            RoomNumber = "101",
+            Status = WorkOrderStatus.Draft
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order1);
+            context.Add(order2);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchRoom("101");
+        specification.MatchStatus(WorkOrderStatus.Assigned);
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Id.ShouldBe(order1.Id);
+    }
 }

@@ -45,6 +45,10 @@
                             }
                         </InputSelect>
                     </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="@Elements.RoomFilter">Room</label>
+                        <InputText id="@Elements.RoomFilter" data-testid="@Elements.RoomFilter" @bind-Value="Model.Filters.Room" class="form-control" placeholder="e.g. 101" />
+                    </div>
 
                     <div class="filter-group">
                         <label class="filter-label" for="@Elements.OverdueOnlyToggle">Overdue</label>
@@ -168,6 +172,7 @@
         CreatorSelect,
         AssigneeSelect,
         StatusSelect,
+        RoomFilter,
         OverdueOnlyToggle,
         SearchButton,
         ClearFiltersButton,

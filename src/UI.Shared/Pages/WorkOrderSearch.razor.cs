@@ -25,6 +25,7 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
+    [SupplyParameterFromQuery] public string? Room { get; set; }
     [SupplyParameterFromQuery] public bool OverdueOnly { get; set; }
 
     protected override async Task OnParametersSetAsync()
@@ -77,6 +78,11 @@ public partial class WorkOrderSearch : AppComponentBase
             Model.Filters.Status = Status;
         }
 
+        if (!string.IsNullOrEmpty(Room))
+        {
+            Model.Filters.Room = Room;
+        }
+
         if (OverdueOnly)
         {
             Model.Filters.OverdueOnly = OverdueOnly;
@@ -119,6 +125,7 @@ public partial class WorkOrderSearch : AppComponentBase
         specification.MatchCreator(creator);
         specification.MatchAssignee(assignee);
         specification.MatchStatus(status);
+        specification.MatchRoom(Model.Filters.Room);
         specification.MatchOverdueOnly(Model.Filters.OverdueOnly);
 
         var workOrders = await Bus.Send(specification);
@@ -202,6 +209,7 @@ public partial class WorkOrderSearch : AppComponentBase
         !string.IsNullOrEmpty(Model.Filters.Creator) ||
         !string.IsNullOrEmpty(Model.Filters.Assignee) ||
         !string.IsNullOrEmpty(Model.Filters.Status) ||
+        !string.IsNullOrEmpty(Model.Filters.Room) ||
         Model.Filters.OverdueOnly ||
         _assignedToMe;
 
@@ -212,6 +220,7 @@ public partial class WorkOrderSearch : AppComponentBase
         Model.Filters.Creator = string.Empty;
         Model.Filters.Assignee = string.Empty;
         Model.Filters.Status = string.Empty;
+        Model.Filters.Room = string.Empty;
         Model.Filters.OverdueOnly = false;
         await SearchWorkOrders();
     }

@@ -832,4 +832,43 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldFilterByRoomNumber_WhenRoomFilterIsSet()
+    {
+        // Arrange
+        var creator = Faker<Employee>();
+        var order1 = Faker<WorkOrder>();
+        var order2 = Faker<WorkOrder>();
+        order1.Creator = creator;
+        order2.Creator = creator;
+        order1.RoomNumber = "101";
+        order2.RoomNumber = "202";
+        order1.Title = $"[{TestTag}] room 101 order";
+        order2.Title = $"[{TestTag}] room 202 order";
+
+        await using var context = TestHost.NewDbContext();
+        context.Add(creator);
+        context.Add(order1);
+        context.Add(order2);
+        await context.SaveChangesAsync();
+
+        // Act
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var roomFilter = Page.Locator("[data-testid='RoomFilter']");
+        await roomFilter.FillAsync("101");
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await TakeScreenshotAsync(1, "RoomFiltered");
+
+        // Assert
+        var workOrderTable = Page.Locator(".grid-data");
+        await Expect(workOrderTable).ToBeVisibleAsync();
+
+        await Expect(workOrderTable.Locator("tbody tr").Filter(new() { HasText = order1.Title })).ToHaveCountAsync(1);
+        await Expect(workOrderTable.Locator("tbody tr").Filter(new() { HasText = order2.Title })).ToHaveCountAsync(0);
+    }
 }

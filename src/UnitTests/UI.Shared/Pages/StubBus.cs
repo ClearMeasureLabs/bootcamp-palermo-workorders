@@ -113,3 +113,18 @@ public class StubBusWithAssigneeCapture : StubBus
         return base.Send(request);
     }
 }
+
+public class StubBusWithRoomCapture : StubBus
+{
+    public string? LastRoomQueried { get; private set; }
+
+    public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
+    {
+        if (request is WorkOrderSpecificationQuery q)
+        {
+            LastRoomQueried = q.RoomNumber;
+        }
+
+        return base.Send(request);
+    }
+}

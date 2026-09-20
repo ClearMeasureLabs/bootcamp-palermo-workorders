@@ -11,7 +11,8 @@ internal static class WorkOrderQueryFilters
         Employee? assignee,
         Employee? creator,
         WorkOrderStatus? status,
-        bool overdueOnly = false)
+        bool overdueOnly = false,
+        string? room = null)
     {
         if (assignee != null)
         {
@@ -31,6 +32,11 @@ internal static class WorkOrderQueryFilters
         if (overdueOnly)
         {
             query = ApplyOverdueFilter(query);
+        }
+
+        if (!string.IsNullOrWhiteSpace(room))
+        {
+            query = query.Where(wo => wo.RoomNumber == room);
         }
 
         return query;
@@ -55,5 +61,5 @@ internal static class WorkOrderQueryFilters
     public static IQueryable<WorkOrder> Apply(
         IQueryable<WorkOrder> query,
         WorkOrderSpecificationQuery specification) =>
-        Apply(query, specification.Assignee, specification.Creator, specification.Status, specification.OverdueOnly);
+        Apply(query, specification.Assignee, specification.Creator, specification.Status, specification.OverdueOnly, specification.RoomNumber);
 }
