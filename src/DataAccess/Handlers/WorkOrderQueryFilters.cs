@@ -27,6 +27,10 @@ internal static class WorkOrderQueryFilters
         {
             query = query.Where(wo => wo.Status == status);
         }
+        else
+        {
+            query = query.Where(wo => wo.Status != WorkOrderStatus.Cancelled);
+        }
 
         if (overdueOnly)
         {
