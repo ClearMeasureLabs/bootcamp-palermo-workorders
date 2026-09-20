@@ -36,7 +36,7 @@
                         }
                         else
                         {
-                            <span data-testid="@Elements.AssigneeFullName" class="value">@Model.WorkOrder?.Assignee?.GetFullName()</span>
+                            <span data-testid="@Elements.AssigneeFullName" class="value">@AssigneeDisplayNameFormatter.FormatForDisplay(Model.WorkOrder?.Assignee)</span>
                         }
                     </div>
                 </div>
