@@ -60,6 +60,45 @@ public class WorkOrderManageSubmitTests
     }
 
     [Test]
+    public async Task ShouldNotSubmit_WhenTitleBlank()
+    {
+        await using var ctx = new BunitContext();
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        user.AddRole(new Role("creator", true, false));
+        var bus = new StubSubmitBus();
+
+        ctx.Services.AddSingleton<IBus>(bus);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").ShouldNotBeNull();
+        });
+
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ChangeAsync(new() { Value = "Submit description" });
+
+        var saveButton = component.Find($"[data-testid='{WorkOrderManage.Elements.CommandButton}Save']");
+        await saveButton.ClickAsync(new());
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            bus.LastCommand.ShouldBeNull();
+            navigationManager.Uri.ShouldNotContain("/workorder/search");
+        });
+    }
+
+    [Test]
     public async Task ShouldLoadExistingWorkOrder_WhenEditModeSubmitted()
     {
         await using var ctx = new BunitContext();
