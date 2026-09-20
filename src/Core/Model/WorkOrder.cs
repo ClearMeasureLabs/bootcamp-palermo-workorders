@@ -7,6 +7,11 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 public class WorkOrder : EntityBase<WorkOrder>
 {
     /// <summary>
+    /// Maximum length of <see cref="Title"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int TitleMaxLength = 320;
+
+    /// <summary>
     /// Maximum length of <see cref="RoomNumber"/> accepted by persistence and the work-order form.
     /// </summary>
     public const int RoomNumberMaxLength = 900;

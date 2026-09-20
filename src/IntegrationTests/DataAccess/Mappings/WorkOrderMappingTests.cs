@@ -242,7 +242,7 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = new string('A', 8), // Exceeds 7 char limit (WorkOrderMap)
-            Title = new string('B', 301), // Exceeds 300 char limit
+            Title = new string('B', WorkOrder.TitleMaxLength + 1), // Exceeds max length limit
             Description = "valid",
             RoomNumber = new string('D', WorkOrder.RoomNumberMaxLength + 1),
             Creator = creator,
@@ -268,7 +268,7 @@ public class WorkOrderMappingTests
         var workOrder = new WorkOrder
         {
             Number = "number",
-            Title = new string('B', 300),
+            Title = new string('B', WorkOrder.TitleMaxLength),
             Description = "description",
             RoomNumber = "room number",
             Creator = creator,
@@ -281,7 +281,7 @@ public class WorkOrderMappingTests
 
         context.SaveChanges();
 
-        workOrder.Title.Length.ShouldBe(300);
+        workOrder.Title.Length.ShouldBe(WorkOrder.TitleMaxLength);
     }
 
     [Test]

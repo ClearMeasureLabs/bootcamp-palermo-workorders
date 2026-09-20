@@ -44,7 +44,7 @@
                 <div class="form-group">
                     <label for="Title" class="form-label">Title:</label>
                     <div>
-                        <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" maxlength="@WorkOrder.TitleMaxLength" disabled="@Model.IsReadOnly"/>
                         <button type="button" data-testid="@Elements.SpeakTitle" class="btn btn-sm btn-outline-secondary" aria-label="Speak title" title="Speak title" @onclick="SpeakTitleAsync">&#x1F50A;</button>
                         @if (!Model.IsReadOnly)
                         {

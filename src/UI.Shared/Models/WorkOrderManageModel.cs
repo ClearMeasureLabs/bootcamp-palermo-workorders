@@ -18,6 +18,7 @@ public class WorkOrderManageModel
 
     public string? AssignedToUserName { get; set; }
 
+    [StringLength(WorkOrder.TitleMaxLength, ErrorMessage = "Title cannot exceed 320 characters.")]
     [Required] public string? Title { get; set; }
 
     [Required] public string? Description { get; set; }

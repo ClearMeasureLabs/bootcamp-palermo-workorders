@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Validation;
 using FluentValidation.TestHelper;
@@ -36,6 +37,17 @@ public class CreateDatedWorkOrdersCommandValidatorTests
         var result = _validator.TestValidate(command);
 
         result.ShouldHaveValidationErrorFor(x => x.CreatorUsername);
+    }
+
+    [Test]
+    public void ShouldFail_WhenTitleExceedsMaxLength()
+    {
+        var command = new CreateDatedWorkOrdersCommand("tlovejoy", "gwillie", new string('T', WorkOrder.TitleMaxLength + 1), "Mow the lawn",
+            [new DateOnly(2026, 9, 19)]);
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.Title);
     }
 
     [Test]
