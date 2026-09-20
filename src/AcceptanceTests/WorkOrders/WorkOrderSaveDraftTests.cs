@@ -61,6 +61,21 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldDisplayCreatorInMixedCaseOnSearchScreenAfterSave()
+    {
+        await LoginAsCurrentUser();
+        var order = await CreateAndSaveNewWorkOrder();
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creatorCell = Page.Locator($".grid-data tbody tr:has(a[data-testid='{nameof(WorkOrderSearch.Elements.WorkOrderLink)}{order.Number}']) td:nth-child(2)");
+        await Expect(creatorCell).ToContainTextAsync(CurrentUser.GetFullName());
+
+        var creatorText = await creatorCell.InnerTextAsync();
+        creatorText.ShouldNotBe(CurrentUser.GetFullName().ToUpperInvariant());
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldSaveWorkOrderWithBlankInstructions()
     {
         await LoginAsCurrentUser();
