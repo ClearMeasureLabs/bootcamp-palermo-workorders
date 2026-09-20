@@ -45,4 +45,7 @@ public class WorkOrderManageModel
 
     [StringLength(WorkOrder.RoomNumberMaxLength, ErrorMessage = "Room cannot exceed 900 characters.")]
     public string? RoomNumber { get; set; }
+
+    [StringLength(WorkOrder.PriorityNoteMaxLength, ErrorMessage = "Priority note cannot exceed 200 characters.")]
+    public string? PriorityNote { get; set; }
 }

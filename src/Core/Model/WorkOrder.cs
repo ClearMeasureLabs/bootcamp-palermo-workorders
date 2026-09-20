@@ -21,6 +21,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public const int InstructionsMaxLength = 4000;
 
+    /// <summary>
+    /// Maximum length of <see cref="PriorityNote"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int PriorityNoteMaxLength = 200;
+
     public string? Title { get; set; } = "";
 
     public string? Description
@@ -36,6 +41,8 @@ public class WorkOrder : EntityBase<WorkOrder>
     } = "";
 
     public string? RoomNumber { get; set; }
+
+    public string? PriorityNote { get; set; }
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 

@@ -21,6 +21,7 @@ public class WorkOrderMappingTests
             Description = "Replace broken light bulbs in conference room",
             Instructions = "Lock out panel before work.",
             RoomNumber = "CR-101",
+            PriorityNote = "Priority: urgent",
             Status = WorkOrderStatus.Draft,
             Creator = creator
         };
@@ -46,6 +47,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
         rehydratedWorkOrder.Instructions.ShouldBe("Lock out panel before work.");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
+        rehydratedWorkOrder.PriorityNote.ShouldBe("Priority: urgent");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
         rehydratedWorkOrder.Creator!.Id.ShouldBe(creator.Id);
@@ -317,6 +319,41 @@ public class WorkOrderMappingTests
 
         rehydratedWorkOrder.RoomNumber.ShouldBe(room);
         rehydratedWorkOrder.RoomNumber!.Length.ShouldBe(WorkOrder.RoomNumberMaxLength);
+    }
+
+    [Test]
+    public void ShouldSupportMaxLengthPriorityNote()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var note = new string('P', WorkOrder.PriorityNoteMaxLength);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-PN9",
+            Title = "Max length priority note",
+            Description = "description",
+            PriorityNote = note,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.PriorityNote.ShouldBe(note);
+        rehydratedWorkOrder.PriorityNote!.Length.ShouldBe(WorkOrder.PriorityNoteMaxLength);
     }
 
     [Test]

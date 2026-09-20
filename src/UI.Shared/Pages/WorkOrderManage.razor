@@ -83,6 +83,13 @@
                         <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="PriorityNote" class="form-label">Priority Note:</label>
+                    <div>
+                        <InputTextArea data-testid="@Elements.PriorityNote" id="PriorityNote" @bind-Value="Model.PriorityNote" class="form-control input-textarea" maxlength="@WorkOrder.PriorityNoteMaxLength" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
             </div>
 
             <div class="readonly-info">
@@ -185,6 +192,7 @@
         Title,
         AssigneeFullName,
         RoomNumber,
+        PriorityNote,
         Description,
         Instructions,
         AssignedDate,
