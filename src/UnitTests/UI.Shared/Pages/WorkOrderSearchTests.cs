@@ -613,6 +613,64 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task PastDue_OpenWorkOrder_RowIsMarkedOverdue()
+    {
+        // Given an open work order with a due date before today
+        var overdueOrder = new WorkOrder
+        {
+            Number = "WO-PAST",
+            Title = "Past due",
+            Status = WorkOrderStatus.InProgress,
+            DueDate = new DateOnly(2000, 1, 1)
+        };
+
+        await using var ctx = CreateContext(new StubBus([overdueOrder]));
+
+        // When I view the work order list
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // Then that row is marked as overdue in a way a user can see
+        var rows = component.FindAll("tbody tr");
+        rows.Count.ShouldBe(1);
+        rows[0].ClassName!.ShouldContain("overdue-row");
+
+        var dueDateCell = component.Find("[data-testid='DueDateCellWO-PAST']");
+        dueDateCell.ClassName!.ShouldContain("due-date-overdue");
+
+        var badge = component.Find("[data-testid='UrgencyBadgeWO-PAST']");
+        badge.TextContent.Trim().ShouldBe("Overdue");
+    }
+
+    [Test]
+    public async Task FutureDue_OpenWorkOrder_RowIsNotMarkedOverdue()
+    {
+        // Given an open work order with a due date after today
+        var futureOrder = new WorkOrder
+        {
+            Number = "WO-FUT2",
+            Title = "Future due",
+            Status = WorkOrderStatus.InProgress,
+            DueDate = new DateOnly(2099, 12, 31)
+        };
+
+        await using var ctx = CreateContext(new StubBus([futureOrder]));
+
+        // When I view the work order list
+        var component = ctx.Render<WorkOrderSearch>();
+
+        // Then that row is not marked overdue
+        var rows = component.FindAll("tbody tr");
+        rows.Count.ShouldBe(1);
+        rows[0].ClassName!.ShouldNotContain("overdue-row");
+
+        var dueDateCell = component.Find("[data-testid='DueDateCellWO-FUT2']");
+        dueDateCell.ClassName!.ShouldNotContain("due-date-overdue");
+
+        var badge = component.Find("[data-testid='UrgencyBadgeWO-FUT2']");
+        badge.TextContent.Trim().ShouldBe("On Track");
+    }
+
+    [Test]
     public async Task ShouldReport_HasActiveFilters_True_WhenOverdueOnlyIsSet()
     {
         await using var ctx = CreateContext();
