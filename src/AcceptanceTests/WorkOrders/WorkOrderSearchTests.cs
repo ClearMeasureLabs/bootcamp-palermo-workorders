@@ -290,6 +290,9 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var firstWorkOrderLink = workOrderTable.Locator("tbody tr").First.Locator("td").First.Locator("a");
         var workOrderNumber = await firstWorkOrderLink.TextContentAsync();
 
+        var link = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + workOrderNumber);
+        await Expect(link).ToHaveAttributeAsync("aria-label", $"Open work order {workOrderNumber}");
+
         if (!string.IsNullOrEmpty(workOrderNumber))
         {
             await firstWorkOrderLink.ClickAsync();

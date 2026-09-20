@@ -648,6 +648,43 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ShouldRenderWorkOrderLinkWithAriaLabel()
+    {
+        var rows = new[] { new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft } };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var link = component.Find("a[data-testid='WorkOrderLinkWO-001']");
+        link.GetAttribute("aria-label").ShouldBe("Open work order WO-001");
+        link.TextContent.Trim().ShouldBe("WO-001");
+        link.GetAttribute("href").ShouldBe("/workorder/manage/WO-001?mode=Edit");
+    }
+
+    [Test]
+    public async Task ShouldRenderAriaLabelForMultipleWorkOrders()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var link1 = component.Find("a[data-testid='WorkOrderLinkWO-001']");
+        link1.GetAttribute("aria-label").ShouldBe("Open work order WO-001");
+        link1.TextContent.Trim().ShouldBe("WO-001");
+        link1.GetAttribute("href").ShouldBe("/workorder/manage/WO-001?mode=Edit");
+
+        var link2 = component.Find("a[data-testid='WorkOrderLinkWO-002']");
+        link2.GetAttribute("aria-label").ShouldBe("Open work order WO-002");
+        link2.TextContent.Trim().ShouldBe("WO-002");
+        link2.GetAttribute("href").ShouldBe("/workorder/manage/WO-002?mode=Edit");
+    }
+
+    [Test]
     public void ShouldRemotableRequest_RoundTrip_OverdueOnly()
     {
         var query = new ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery();
