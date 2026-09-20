@@ -23,14 +23,9 @@ internal static class WorkOrderQueryFilters
             query = query.Where(wo => wo.Creator == creator);
         }
 
-        if (status != null)
-        {
-            query = query.Where(wo => wo.Status == status);
-        }
-        else
-        {
-            query = query.Where(wo => wo.Status != WorkOrderStatus.Cancelled);
-        }
+        query = status != null
+            ? query.Where(wo => wo.Status == status)
+            : query.Where(wo => wo.Status != WorkOrderStatus.Cancelled);
 
         if (overdueOnly)
         {
