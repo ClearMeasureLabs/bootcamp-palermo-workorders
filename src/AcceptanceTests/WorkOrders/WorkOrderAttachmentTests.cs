@@ -49,5 +49,8 @@ public class WorkOrderAttachmentTests : AcceptanceTestBase
 
         var uploaderCell = Page.GetByTestId(nameof(WorkOrderManage.Elements.AttachmentUploadedBy));
         await Expect(uploaderCell).ToContainTextAsync(CurrentUser.GetFullName());
+
+        var uploadedDateCell = Page.GetByTestId(nameof(WorkOrderManage.Elements.AttachmentUploadedDate));
+        await Expect(uploadedDateCell).ToBeVisibleAsync();
     }
 }

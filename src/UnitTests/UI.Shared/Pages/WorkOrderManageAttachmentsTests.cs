@@ -1,3 +1,4 @@
+using System.Globalization;
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
@@ -20,7 +21,11 @@ public class WorkOrderManageAttachmentsTests
     [Test]
     public async Task WorkOrderManage_ShouldRenderAttachmentsSection()
     {
-        await using var ctx = new BunitContext();
+        var originalCulture = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
+        try
+        {
+            await using var ctx = new BunitContext();
 
         var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         var workOrderId = Guid.NewGuid();
@@ -62,6 +67,23 @@ public class WorkOrderManageAttachmentsTests
 
         var fileNameCell = component.Find($"[data-testid='{WorkOrderManage.Elements.AttachmentFileName}']");
         fileNameCell.TextContent.ShouldBe("damage-photo.jpg");
+
+        var contentTypeCell = component.Find($"[data-testid='{WorkOrderManage.Elements.AttachmentContentType}']");
+        contentTypeCell.TextContent.ShouldBe("image/jpeg");
+
+        var fileSizeCell = component.Find($"[data-testid='{WorkOrderManage.Elements.AttachmentFileSize}']");
+        fileSizeCell.TextContent.ShouldBe("2048");
+
+        var uploadedByCell = component.Find($"[data-testid='{WorkOrderManage.Elements.AttachmentUploadedBy}']");
+        uploadedByCell.TextContent.ShouldBe("Jeffrey Palermo");
+
+        var uploadedDateCell = component.Find($"[data-testid='{WorkOrderManage.Elements.AttachmentUploadedDate}']");
+        uploadedDateCell.TextContent.ShouldBe("3/1/2025 10:00:00 AM");
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = originalCulture;
+        }
     }
 
     private class StubWorkOrderManageBus(WorkOrderAttachment[] attachments) : Bus(null!)
