@@ -598,12 +598,36 @@ public class MainLayoutTests
         element.TextContent.Trim().ShouldBe("unknown");
     }
 
+    [Test]
+    public async Task ShouldRenderOpenWorkOrderCountBadge_WhenAuthenticated()
+    {
+        await using var ctx = CreateContext(authenticateAsUser: "hsimpson", openWorkOrderCount: 7);
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var badge = layout.Find($"[data-testid='{nameof(MainLayout.Elements.OpenWorkOrderCountBadge)}']");
+        badge.TextContent.Trim().ShouldBe("7");
+    }
+
+    [Test]
+    public async Task ShouldNotRenderOpenWorkOrderCountBadge_WhenUnauthenticated()
+    {
+        await using var ctx = CreateContext(openWorkOrderCount: 7);
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.FindAll($"[data-testid='{nameof(MainLayout.Elements.OpenWorkOrderCountBadge)}']").Count.ShouldBe(0);
+    }
+
     private static BunitContext CreateContext(
         string? authenticateAsUser = null,
         string? gitSha = null,
         string? environmentName = null,
         bool simulateHttpError = false,
-        string? rawJsonBody = null)
+        string? rawJsonBody = null,
+        int openWorkOrderCount = 0)
     {
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
@@ -614,7 +638,7 @@ public class MainLayoutTests
         }
 
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus(openWorkOrderCount: openWorkOrderCount));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession());
         ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
@@ -625,6 +649,7 @@ public class MainLayoutTests
         }
 
         ctx.Services.AddSingleton(customAuth);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(customAuth);
 
         var handler = new StubEnvironmentStatusHandler(
             simulateHttpError ? null : new EnvironmentStatusStub(

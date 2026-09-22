@@ -231,6 +231,29 @@
     gap: 1rem;
 }
 
+.open-work-order-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.6rem;
+    border-radius: 10px;
+    border: 1px solid #cbd5e0;
+    background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+    color: #2d3748;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+:global(html[data-theme="dark"]) .open-work-order-count-badge {
+    border-color: #4a5568;
+    background: linear-gradient(135deg, #374151 0%, #2d3748 100%);
+    color: #e2e8f0;
+}
+
 .user-section, .auth-section {
     display: flex;
     align-items: center;
