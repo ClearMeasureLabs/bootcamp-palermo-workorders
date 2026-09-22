@@ -1,7 +1,10 @@
 using System.Reflection;
 using System.Text.Json;
+using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 
 namespace ClearMeasure.Bootcamp.UI.Shared;
@@ -22,7 +25,8 @@ public partial class MainLayout : IAsyncDisposable
         SoftwareVersion,
         DarkModeToggle,
         GitSha,
-        EnvironmentName
+        EnvironmentName,
+        OpenWorkOrderCountBadge
     }
 
     /// <summary>
@@ -45,6 +49,12 @@ public partial class MainLayout : IAsyncDisposable
     [Inject]
     private HttpClient Http { get; set; } = null!;
 
+    [Inject]
+    private IBus ApplicationBus { get; set; } = null!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+
     private ElementReference _navToggleButtonRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
     private IJSObjectReference? _jsModule;
@@ -54,6 +64,7 @@ public partial class MainLayout : IAsyncDisposable
     private bool _navVisible = true;
     private string _gitSha = "unknown";
     private string _environmentName = "unknown";
+    private int? _openWorkOrderCount;
 
     private string AppContainerClass => NavRailCss.AppContainerClass(_isNarrowViewport, _navVisible);
 
@@ -99,6 +110,17 @@ public partial class MainLayout : IAsyncDisposable
         {
             // graceful fallback — malformed response, fields remain "unknown"
         }
+
+        await LoadOpenWorkOrderCountIfAuthenticatedAsync();
+    }
+
+    private async Task LoadOpenWorkOrderCountIfAuthenticatedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+            return;
+
+        _openWorkOrderCount = await ApplicationBus.Send(new OpenWorkOrderCountQuery());
     }
 
     /// <summary>

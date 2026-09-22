@@ -71,6 +71,15 @@
                     </button>
                     <AuthorizeView>
                         <Authorized>
+                            @if (_openWorkOrderCount is { } openCount)
+                            {
+                                <span class="open-work-order-count-badge"
+                                      data-testid="@nameof(Elements.OpenWorkOrderCountBadge)"
+                                      title="Open work orders"
+                                      aria-label="@($"Open work orders: {openCount}")">
+                                    @openCount
+                                </span>
+                            }
                             <div class="user-section">
                                 <Logout/>
                             </div>

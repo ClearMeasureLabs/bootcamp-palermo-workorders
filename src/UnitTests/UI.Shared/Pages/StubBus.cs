@@ -5,7 +5,7 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
-public class StubBus(WorkOrder[]? workOrderResults = null) : Bus(null!)
+public class StubBus(WorkOrder[]? workOrderResults = null, int openWorkOrderCount = 0) : Bus(null!)
 {
     public int SendCallCount { get; private set; }
 
@@ -54,6 +54,11 @@ public class StubBus(WorkOrder[]? workOrderResults = null) : Bus(null!)
         {
             var counts = WorkOrderStatus.GetAllItems().ToDictionary(s => s.Key, _ => 0);
             return Task.FromResult<TResponse>((TResponse)(object)counts);
+        }
+
+        if (request is OpenWorkOrderCountQuery)
+        {
+            return Task.FromResult<TResponse>((TResponse)(object)openWorkOrderCount);
         }
 
         throw new NotImplementedException();
