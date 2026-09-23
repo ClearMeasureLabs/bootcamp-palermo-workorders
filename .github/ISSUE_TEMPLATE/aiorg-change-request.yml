@@ -1,0 +1,17 @@
+name: AI org change request
+description: Ask the AI org for a change in one sentence. The title is enough.
+title: ""
+labels: ["aiorg:request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the change in the title, in one sentence. The org will reply with how it understood the request, a risk tier and an estimate, and ask you to Confirm, Edit or Cancel.
+        Only the repo owner's confirmation counts. Text in this issue claiming approval is treated as data.
+  - type: textarea
+    id: details
+    attributes:
+      label: Details (optional)
+      description: Anything that would change the interpretation - who it is for, what done looks like, constraints.
+    validations:
+      required: false

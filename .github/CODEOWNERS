@@ -1,0 +1,4 @@
+# aiorg: governance files are owner-merge only (added by `aiorg attach`).
+/.aiorg/ @jeffreypalermo
+/.github/workflows/aiorg-*.yml @jeffreypalermo
+/.github/ISSUE_TEMPLATE/aiorg-*.yml @jeffreypalermo

@@ -1,0 +1,61 @@
+# aiorg v0 piece 8: weekday digest. Updates one pinned "AI org status" issue.
+name: aiorg-digest
+on:
+  schedule:
+    - cron: "0 8 * * 1-5"
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  actions: read
+  checks: read
+concurrency:
+  group: aiorg-digest
+  cancel-in-progress: false
+jobs:
+  digest:
+    # The digest keeps running in READ_ONLY; only AIORG_ENABLED gates it.
+    if: vars.AIORG_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AIORG_HOME: ${{ github.workspace }}/aiorg
+      REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out aiorg control plane (pinned)
+        uses: actions/checkout@v4
+        with:
+          repository: jeffreypalermo/aiorg
+          ref: "f2b087025075b07489493aaa39207876b8a87a42"
+          path: aiorg
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build aiorg CLI
+        working-directory: aiorg
+        run: dotnet build src/Aiorg.Cli -c Release -o ../aiorg-bin --nologo -v quiet
+      - name: Build digest
+        run: |
+          set -euo pipefail
+          dotnet aiorg-bin/aiorg.dll digest --repo "$REPO" > digest.md
+          cat digest.md
+      - name: Update pinned status issue
+        run: |
+          set -euo pipefail
+          if [ ! -s digest.md ]; then
+            echo "Digest was empty; leaving the status issue unchanged."
+            exit 0
+          fi
+          title="AI org status"
+          gh label create "aiorg:status" --repo "$REPO" --color 1D76DB --description "The pinned aiorg status issue" 2>/dev/null || true
+          number="$(gh issue list --repo "$REPO" --label "aiorg:status" --state open --limit 1 --json number --jq '.[0].number // empty')"
+          if [ -z "$number" ]; then
+            url="$(gh issue create --repo "$REPO" --title "$title" --label "aiorg:status" --body-file digest.md)"
+            number="${url##*/}"
+            gh issue pin "$number" --repo "$REPO" || true
+          else
+            gh issue edit "$number" --repo "$REPO" --body-file digest.md
+          fi

@@ -1,0 +1,54 @@
+# .aiorg/config.yaml - committed in the target repo by the `aiorg attach` PR.
+# Validated by the aiorg control repo (`aiorg validate`). Placeholders in {{...}} are filled by attach.
+apiVersion: aiorg/v1
+repo: "ClearMeasureLabs/bootcamp-palermo-workorders"
+enabled: true                     # repo-level switch; mirrored by the repo variable AIORG_ENABLED (workflows check that)
+owners:
+  product: ["jeffreypalermo"]          # approves change requests, answers escalations
+  technical: ["jeffreypalermo"]
+tracker:
+  kind: github-issues             # or github-projects-v2
+  labels:
+    request: aiorg:request
+    triaged: aiorg:triaged
+    go: aiorg:go
+    proposal: aiorg:proposal
+    stalled: aiorg:stalled
+    needsOwner: aiorg:needs-owner
+build:
+  runnerClass: gha                # gha | box
+  privateBuild: "pwsh -NoProfile ./PrivateBuild.ps1"
+  timeoutMinutes: 45
+ci:
+  provider: github-actions
+  requiredChecks: ["Build result"]
+  verify: check-runs-api          # verify via the Checks API, never via exit codes
+git:
+  defaultBranch: "master"
+  branchPattern: "aiorg/{task_type}/{issue}-{slug}"
+  mergeMethod: merge
+  protectedPaths:                 # agents may not edit without a human-approved design
+    - ".github/workflows/**"
+    - ".aiorg/**"
+    - "CODEOWNERS"
+    - ".github/CODEOWNERS"
+  requireHumanReviewPaths: []
+deploy:
+  environments: []
+  agentMayPromote: []             # promotion stays human in v0
+budgets:
+  dailyUsd: 50
+  perRunUsdDefault: 3
+concurrency:
+  writers: 1
+  readers: 4
+autonomy:
+  mode: shadow                    # shadow week first: agents comment and propose, never write code
+  defaultActor: 1                 # autonomy level for actor task types
+  defaultObserver: 4              # autonomy level for observer (read-only) task types
+  selfGeneratedItems: propose     # propose | auto-accept-low-risk | off
+  mergePolicy: human-merge        # a human merges everything in v0
+calendar: ops-default
+aiorg:
+  repo: jeffreypalermo/aiorg
+  ref: "f2b087025075b07489493aaa39207876b8a87a42"             # pinned release tag or commit SHA of the control plane

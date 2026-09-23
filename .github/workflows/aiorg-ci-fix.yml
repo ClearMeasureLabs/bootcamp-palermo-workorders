@@ -1,0 +1,37 @@
+# aiorg v0 piece 4: when CI fails on an aiorg/* branch, post a request for the CI fixer on the PR.
+# Capped at 3 requests per PR; after that the PR is labeled aiorg:needs-owner instead.
+name: aiorg-ci-fix
+on:
+  check_suite:
+    types: [completed]
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+concurrency:
+  group: aiorg-ci-fix-${{ github.event.check_suite.head_sha }}
+  cancel-in-progress: false
+jobs:
+  request-fix:
+    if: vars.AIORG_ENABLED == 'true' && github.event.check_suite.conclusion == 'failure' && startsWith(github.event.check_suite.head_branch, 'aiorg/') && github.event.check_suite.pull_requests[0] != null
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.check_suite.pull_requests[0].number }}
+      HEAD_SHA: ${{ github.event.check_suite.head_sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Post CI-fix request (bounded)
+        run: |
+          set -euo pipefail
+          marker='<!-- aiorg:ci-fix-request -->'
+          count="$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate --jq "[.[] | select(.body | contains(\"$marker\"))] | length" | awk '{s+=$1} END {print s+0}')"
+          if [ "$count" -ge 3 ]; then
+            gh label create "aiorg:needs-owner" --repo "$REPO" --color B60205 --description "Waiting on the owner" 2>/dev/null || true
+            gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "aiorg:needs-owner"
+            echo "CI-fix request cap reached for PR $PR_NUMBER; escalated to owner."
+            exit 0
+          fi
+          body="$(printf '%s\n@claude fix the failing checks on this PR (head %s). Verify with the Checks API, not exit codes. Do not skip, delete or weaken tests. Attempt %s of 3.\n' "$marker" "$HEAD_SHA" "$((count + 1))")"
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body "$body"

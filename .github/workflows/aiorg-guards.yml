@@ -1,0 +1,62 @@
+# aiorg oracle wall: a PR may not delete, skip or weaken tests to go green.
+# Posts commit status aiorg/test-diff. Deterministic; no model involved.
+name: aiorg-guards
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+  statuses: write
+concurrency:
+  group: aiorg-pr-${{ github.event.pull_request.number }}-guards
+  cancel-in-progress: true
+jobs:
+  test-diff:
+    if: vars.AIORG_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AIORG_HOME: ${{ github.workspace }}/.aiorg-cli
+      REPO: ${{ github.repository }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check out aiorg control plane (pinned)
+        uses: actions/checkout@v4
+        with:
+          repository: jeffreypalermo/aiorg
+          ref: "f2b087025075b07489493aaa39207876b8a87a42"
+          path: .aiorg-cli
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build aiorg CLI
+        working-directory: .aiorg-cli
+        run: dotnet build src/Aiorg.Cli -c Release -o ../.aiorg-cli-bin --nologo -v quiet
+      - name: Mark status pending
+        run: |
+          gh api "repos/$REPO/statuses/$HEAD_SHA" -f state=pending -f context=aiorg/test-diff \
+            -f description="Checking test changes" -f target_url="$RUN_URL" > /dev/null || true
+      - name: Guard test diff
+        run: |
+          set -uo pipefail
+          dotnet .aiorg-cli-bin/aiorg.dll guard test-diff --base "$BASE_SHA" --head "$HEAD_SHA" --json > guard.json
+          code=$?
+          cat guard.json
+          if [ "$code" -eq 0 ]; then
+            state=success; desc="No tests deleted, skipped or weakened"
+          elif [ "$code" -eq 1 ]; then
+            state=failure; desc="Test changes need owner review"
+          else
+            state=error; desc="aiorg guard failed to run (exit $code)"
+          fi
+          gh api "repos/$REPO/statuses/$HEAD_SHA" -f state="$state" -f context=aiorg/test-diff \
+            -f description="$desc" -f target_url="$RUN_URL" > /dev/null || echo "could not post status" >&2
+          exit "$code"

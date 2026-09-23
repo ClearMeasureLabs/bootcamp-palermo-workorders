@@ -1,0 +1,68 @@
+# aiorg v0 piece 5: every 15 minutes, find stalled aiorg lanes and label them aiorg:stalled.
+name: aiorg-watchdog
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  checks: read
+  actions: read
+concurrency:
+  group: aiorg-watchdog
+  cancel-in-progress: false
+jobs:
+  watchdog:
+    if: vars.AIORG_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AIORG_HOME: ${{ github.workspace }}/aiorg
+      REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out aiorg control plane (pinned)
+        uses: actions/checkout@v4
+        with:
+          repository: jeffreypalermo/aiorg
+          ref: "f2b087025075b07489493aaa39207876b8a87a42"
+          path: aiorg
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build aiorg CLI
+        working-directory: aiorg
+        run: dotnet build src/Aiorg.Cli -c Release -o ../aiorg-bin --nologo -v quiet
+      - name: Run watchdog
+        id: watchdog
+        run: |
+          set -uo pipefail
+          dotnet aiorg-bin/aiorg.dll watchdog --repo "$REPO" --json > watchdog.json
+          code=$?
+          cat watchdog.json
+          if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then
+            echo "watchdog failed with exit $code" >&2
+            exit "$code"
+          fi
+          echo "exit=$code" >> "$GITHUB_OUTPUT"
+      - name: Label stalled items
+        if: steps.watchdog.outputs.exit == '2'
+        run: |
+          set -euo pipefail
+          gh label create "aiorg:stalled" --repo "$REPO" --color FBCA04 --description "aiorg lane is stalled" 2>/dev/null || true
+          jq -r '(if type == "array" then . else (.stalls // []) end)[]
+            | select((.number // .pr // 0) > 0)
+            | [(.number // .pr), ((.kind // "STALLED") | gsub("[^A-Za-z0-9_ .:/-]"; "") | .[0:80]), ((.instruction // "") | gsub("[\r`\t]"; "") | .[0:500])]
+            | @tsv' watchdog.json > stalls.tsv
+          while IFS=$'\t' read -r number reason instruction; do
+            [ -n "$number" ] || continue
+            labels="$(gh issue view "$number" --repo "$REPO" --json labels --jq '[.labels[].name] | join(",")')"
+            case ",$labels," in
+              *",aiorg:stalled,"*) echo "#$number already labeled"; continue ;;
+            esac
+            gh issue edit "$number" --repo "$REPO" --add-label "aiorg:stalled"
+            gh issue comment "$number" --repo "$REPO" --body "$(printf 'aiorg watchdog: this lane is stalled (%s).\n\n%s\n' "$reason" "$instruction")"
+          done < stalls.tsv

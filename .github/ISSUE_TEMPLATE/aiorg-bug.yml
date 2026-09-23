@@ -1,0 +1,25 @@
+name: Bug report (AI org)
+description: Report a defect. The AI org triages it and may propose a fix for the owner to approve.
+title: ""
+labels: ["aiorg:request", "type/bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce (optional)
+    validations:
+      required: false
+  - type: input
+    id: where
+    attributes:
+      label: Where (optional)
+      description: Page, endpoint, environment or version.
+    validations:
+      required: false
