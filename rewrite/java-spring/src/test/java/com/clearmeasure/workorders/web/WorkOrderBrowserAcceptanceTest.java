@@ -13,7 +13,10 @@ import java.nio.file.StandardCopyOption;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Real Chromium acceptance run. Video is written as a build artifact for PR review. */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
+    "server.error.include-message=always", "server.error.include-exception=true", "server.error.include-stacktrace=always",
+    "logging.level.org.springframework.web=DEBUG"
+})
 class WorkOrderBrowserAcceptanceTest {
     @LocalServerPort int port;
 
@@ -38,6 +41,7 @@ class WorkOrderBrowserAcceptanceTest {
                 () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save draft")).click());
             assertEquals(302, saveResponse.status(), "The HTML form should save and redirect to the order list");
             page.waitForURL("**/");
+            page.screenshot(new Page.ScreenshotOptions().setPath(videoDir.resolve("after-save.png")));
             String renderedList = page.locator("body").innerText();
             assertTrue(renderedList.contains("Acceptance repair"),
                 "The redirect should render the created work order. URL=" + page.url() + " body=" + renderedList);
