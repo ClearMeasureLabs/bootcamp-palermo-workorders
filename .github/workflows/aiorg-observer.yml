@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
+      AIORG_HOME: ${{ github.workspace }}/aiorg
       REPO: ${{ github.repository }}
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -26,11 +27,21 @@ jobs:
         with:
           fetch-depth: 50
           persist-credentials: false
-      - name: Record start time and ensure label
-        run: |
-          set -euo pipefail
-          echo "AIORG_OBSERVER_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
-          gh label create "aiorg:proposal" --repo "$REPO" --color 0E8A16 --description "Proposed by the aiorg observer; owner adds aiorg:go to accept" 2>/dev/null || true
+      - name: Check out aiorg control plane (pinned)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: jeffreypalermo/aiorg
+          ref: "23c89d483adca8d894142408433fa8b3dfe01d3f"
+          path: aiorg
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build aiorg CLI
+        working-directory: aiorg
+        run: dotnet build src/Aiorg.Cli -c Release -o ../aiorg-bin --nologo -v quiet
+      - name: Ensure the aiorg labels exist
+        run: dotnet aiorg-bin/aiorg.dll labels sync --repo "$REPO"
       - uses: anthropics/claude-code-action@8cf3482550831fb35a4fc3fbf7ca139cf8028b4c # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -50,14 +61,6 @@ jobs:
             --model claude-sonnet-5
             --max-turns 40
             --allowedTools "Read,Grep,Glob,Bash(git log:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh issue list:*),Bash(gh issue create:*)"
-      - name: Enforce the 3-proposal cap
+      - name: Enforce the cap of 3 proposals per run
         if: always()
-        run: |
-          set -euo pipefail
-          gh issue list --repo "$REPO" --label "aiorg:proposal" --state open --limit 50 \
-            --search "created:>=$AIORG_OBSERVER_START" --json number,createdAt \
-            --jq 'sort_by(.createdAt) | .[3:] | .[].number' > extra.txt
-          while read -r n; do
-            [ -n "$n" ] || continue
-            gh issue close "$n" --repo "$REPO" --reason "not planned" --comment "aiorg observer: over the nightly cap of 3 proposals; closed automatically."
-          done < extra.txt
+        run: dotnet aiorg-bin/aiorg.dll observer cap --repo "$REPO" --cap 3 --within-hours 1

@@ -18,26 +18,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
+      AIORG_HOME: ${{ github.workspace }}/aiorg
       REPO: ${{ github.repository }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Create or update aiorg labels
-        run: |
-          set -euo pipefail
-          while IFS='|' read -r name color description; do
-            [ -n "$name" ] || continue
-            gh label create "$name" --repo "$REPO" --color "$color" --description "$description" --force
-          done <<'LABELS'
-          aiorg:request|0E8A16|Owner change request for the AI org
-          aiorg:triaged|C2E0C6|Classified by the aiorg triage reader
-          aiorg:proposal|D4C5F9|Self-generated proposal awaiting the owner
-          aiorg:go|0E8A16|Owner approved: the org may start work
-          aiorg:needs-owner|D93F0B|Waiting on an owner decision
-          aiorg:stalled|FBCA04|aiorg lane is stalled
-          aiorg:status|BFD4F2|Pinned AI org status issue
-          risk:T0|EDEDED|Risk tier T0: docs and test-only
-          risk:T1|C5DEF5|Risk tier T1: small change in one area
-          risk:T2|FEF2C0|Risk tier T2: multi-module or UI flow
-          risk:T3|F9D0C4|Risk tier T3: auth, API, dependency or pipeline
-          risk:T4|B60205|Risk tier T4: destructive or infrastructure
-          LABELS
+      - name: Check out aiorg control plane (pinned)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: jeffreypalermo/aiorg
+          ref: "23c89d483adca8d894142408433fa8b3dfe01d3f"
+          path: aiorg
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build aiorg CLI
+        working-directory: aiorg
+        run: dotnet build src/Aiorg.Cli -c Release -o ../aiorg-bin --nologo -v quiet
+      - name: Create or correct the aiorg labels
+        run: dotnet aiorg-bin/aiorg.dll labels sync --repo "$REPO"

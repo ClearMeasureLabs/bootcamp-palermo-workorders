@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "6914742196a333066c88b52dd4f567d106423efc"
+          ref: "23c89d483adca8d894142408433fa8b3dfe01d3f"
           path: aiorg
           persist-credentials: false
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
@@ -36,33 +36,5 @@ jobs:
       - name: Build aiorg CLI
         working-directory: aiorg
         run: dotnet build src/Aiorg.Cli -c Release -o ../aiorg-bin --nologo -v quiet
-      - name: Run watchdog
-        id: watchdog
-        run: |
-          set -uo pipefail
-          dotnet aiorg-bin/aiorg.dll watchdog --repo "$REPO" --json > watchdog.json
-          code=$?
-          cat watchdog.json
-          if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then
-            echo "watchdog failed with exit $code" >&2
-            exit "$code"
-          fi
-          echo "exit=$code" >> "$GITHUB_OUTPUT"
-      - name: Label stalled items
-        if: steps.watchdog.outputs.exit == '2'
-        run: |
-          set -euo pipefail
-          gh label create "aiorg:stalled" --repo "$REPO" --color FBCA04 --description "aiorg lane is stalled" 2>/dev/null || true
-          jq -r '(if type == "array" then . else (.stalls // []) end)[]
-            | select((.number // .pr // 0) > 0)
-            | [(.number // .pr), ((.kind // "STALLED") | gsub("[^A-Za-z0-9_ .:/-]"; "") | .[0:80]), ((.instruction // "") | gsub("[\r`\t]"; "") | .[0:500])]
-            | @tsv' watchdog.json > stalls.tsv
-          while IFS=$'\t' read -r number reason instruction; do
-            [ -n "$number" ] || continue
-            labels="$(gh issue view "$number" --repo "$REPO" --json labels --jq '[.labels[].name] | join(",")')"
-            case ",$labels," in
-              *",aiorg:stalled,"*) echo "#$number already labeled"; continue ;;
-            esac
-            gh issue edit "$number" --repo "$REPO" --add-label "aiorg:stalled"
-            gh issue comment "$number" --repo "$REPO" --body "$(printf 'aiorg watchdog: this lane is stalled (%s).\n\n%s\n' "$reason" "$instruction")"
-          done < stalls.tsv
+      - name: Detect stalled lanes, label and explain each once
+        run: dotnet aiorg-bin/aiorg.dll watchdog --repo "$REPO" --apply
