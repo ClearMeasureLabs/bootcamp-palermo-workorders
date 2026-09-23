@@ -37,7 +37,14 @@ jobs:
       - name: Render acceptance capture with Remotion
         if: success()
         working-directory: rewrite/java-spring/video
-        run: npm install --no-audit --no-fund && mkdir -p public && cp ../target/playwright-recordings/acceptance.webm public/acceptance.webm && npm run render
+        run: |
+          npm install --no-audit --no-fund
+          test -s ../target/playwright-recordings/acceptance.webm
+          mkdir -p public
+          cp ../target/playwright-recordings/acceptance.webm public/acceptance.webm
+          test -s public/acceptance.webm
+          npm run render
+          test -s out/acceptance.mp4
       - name: Upload acceptance browser recording and Remotion video
         if: always()
         uses: actions/upload-artifact@v4
