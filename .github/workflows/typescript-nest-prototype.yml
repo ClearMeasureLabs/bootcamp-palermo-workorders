@@ -1,0 +1,37 @@
+name: TypeScript NestJS prototype
+on:
+  pull_request:
+    paths:
+      - 'prototypes/typescript-nest/**'
+      - '.github/workflows/typescript-nest-prototype.yml'
+  push:
+    branches: [prototype/typescript-nest]
+    paths:
+      - 'prototypes/typescript-nest/**'
+      - '.github/workflows/typescript-nest-prototype.yml'
+jobs:
+  prototype:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/typescript-nest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: prototypes/typescript-nest/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run private-build
+      - run: npm run acceptance
+      - run: npm ci --prefix remotion
+      - run: npm exec --prefix remotion -- remotion browser ensure
+      - run: npm run render --prefix remotion
+      - uses: actions/upload-artifact@v4
+        with:
+          name: typescript-nest-acceptance-video
+          path: |
+            prototypes/typescript-nest/artifacts/acceptance-video.webm
+            prototypes/typescript-nest/remotion/artifacts/typescript-nest-acceptance.mp4

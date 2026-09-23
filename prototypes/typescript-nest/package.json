@@ -1,0 +1,41 @@
+{
+  "name": "typescript-nest",
+  "version": "1.0.0",
+  "description": "NestJS and Prisma rewrite spike for Palermo Work Orders",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "test": "node scripts/run-tests.mjs",
+    "acceptance": "node scripts/acceptance.mjs",
+    "private-build": "node scripts/private-build.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@nestjs/common": "^11.2.6",
+    "@nestjs/core": "^11.2.6",
+    "@nestjs/platform-express": "^11.2.6",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "sql.js": "^1.14.2"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.2.6",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.2",
+    "@types/sql.js": "^1.4.11",
+    "@types/supertest": "^7.2.1",
+    "jest": "^30.5.2",
+    "playwright": "^1.63.0",
+    "supertest": "^7.3.0",
+    "ts-jest": "^29.4.13",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
