@@ -1,4 +1,5 @@
 name: TypeScript NestJS prototype
+# npm --prefix commands lock paths independently of GitHub runner cwd.
 on:
   pull_request:
     paths:
