@@ -1,7 +1,8 @@
 # aiorg oracle wall: a PR may not delete, skip or weaken tests to go green.
 # Posts the check run aiorg/test-diff (the config verifies via the Checks API); make it a required
-# check in branch protection. Every 15 minutes it also re-runs the guard on PR heads that still carry
-# the kill-switch placeholder, so switching aiorg back on never leaves an unguarded pass behind.
+# check in branch protection. Every 15 minutes it also runs the guard on open PR heads that have no
+# aiorg/test-diff yet or still carry the kill-switch placeholder, so neither attaching nor switching
+# aiorg back on leaves a PR blocked or passed unguarded.
 # pull_request_target runs this file from the base branch, so a PR cannot edit or remove the guard
 # that judges it. The PR's commits are fetched as git objects and diffed; nothing from the PR runs.
 name: aiorg-guards
@@ -15,8 +16,9 @@ permissions:
   checks: write
   pull-requests: read
 concurrency:
-  group: aiorg-pr-${{ github.event.pull_request.number }}-guards
-  cancel-in-progress: true
+  # One group per PR (a new push cancels the stale run); scheduled revalidation queues, never cancels.
+  group: ${{ github.event_name == 'schedule' && 'aiorg-guards-revalidate' || format('aiorg-pr-{0}-guards', github.event.pull_request.number) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request_target' }}
 jobs:
   test-diff:
     if: vars.AIORG_ENABLED == 'true' && github.event_name == 'pull_request_target'
@@ -39,7 +41,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "c47ac8d919ca38ffcdf2d58a6b670da3ce8d19e1"
+          ref: "430cfaee11de1717188701f1d068d700f9b1e77c"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: .aiorg-cli
@@ -72,7 +74,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "c47ac8d919ca38ffcdf2d58a6b670da3ce8d19e1"
+          ref: "430cfaee11de1717188701f1d068d700f9b1e77c"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: .aiorg-cli
@@ -103,7 +105,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "c47ac8d919ca38ffcdf2d58a6b670da3ce8d19e1"
+          ref: "430cfaee11de1717188701f1d068d700f9b1e77c"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: .aiorg-cli
@@ -114,5 +116,5 @@ jobs:
       - name: Build aiorg CLI
         working-directory: .aiorg-cli
         run: dotnet build src/Aiorg.Cli -c Release -o ../.aiorg-cli-bin --nologo -v quiet
-      - name: Re-run the guard where the kill-switch placeholder remains
+      - name: Run the guard where aiorg/test-diff is missing or is the kill-switch placeholder
         run: dotnet .aiorg-cli-bin/aiorg.dll guard revalidate --repo "$REPO" --target-url "$RUN_URL"

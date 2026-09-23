@@ -1,6 +1,7 @@
 # aiorg v0 piece 4: when CI fails on an aiorg/* branch, post a request for the CI fixer on the PR.
 # Capped at 3 requests per PR; after that the PR is labeled aiorg:needs-owner instead.
 # workflow_run, not check_suite: GitHub never sends check_suite events for suites Actions creates.
+# A push-triggered run has no pull_requests in its payload, so the CLI resolves the PR from the commit.
 name: aiorg-ci-fix
 on:
   workflow_run:
@@ -15,13 +16,12 @@ concurrency:
   cancel-in-progress: false
 jobs:
   request-fix:
-    if: vars.AIORG_ENABLED == 'true' && github.event.workflow_run.conclusion == 'failure' && startsWith(github.event.workflow_run.head_branch, 'aiorg/') && github.event.workflow_run.pull_requests[0] != null
+    if: vars.AIORG_ENABLED == 'true' && github.event.workflow_run.conclusion == 'failure' && startsWith(github.event.workflow_run.head_branch, 'aiorg/')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
       AIORG_HOME: ${{ github.workspace }}/aiorg
       REPO: ${{ github.repository }}
-      PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "c47ac8d919ca38ffcdf2d58a6b670da3ce8d19e1"
+          ref: "430cfaee11de1717188701f1d068d700f9b1e77c"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: aiorg
@@ -41,4 +41,4 @@ jobs:
         working-directory: aiorg
         run: dotnet build src/Aiorg.Cli -c Release -o ../aiorg-bin --nologo -v quiet
       - name: Post CI-fix request (at most 3 per PR, then aiorg:needs-owner)
-        run: dotnet aiorg-bin/aiorg.dll ci-fix request --repo "$REPO" --pr "$PR_NUMBER" --head "$HEAD_SHA" --cap 3
+        run: dotnet aiorg-bin/aiorg.dll ci-fix request --repo "$REPO" --head "$HEAD_SHA" --cap 3
