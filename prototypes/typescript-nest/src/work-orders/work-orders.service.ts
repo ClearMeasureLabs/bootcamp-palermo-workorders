@@ -5,6 +5,7 @@ import path from 'node:path';
 
 export type CreateWorkOrder = { title: string; description?: string; instructions?: string; roomNumber?: string; dueDate?: string };
 type Employee = { username: string; firstName: string; lastName: string; canCreate: number; canFulfill: number };
+type Attachment = { id: string; workOrderId: string; fileName: string; contentType: string; fileSize: number; uploadedBy: string; uploadedByName: string; uploadedDate: string };
 type WorkOrder = { id: string; number: string; title: string; description: string; instructions: string; roomNumber: string|null; dueDate: string|null; urgency: string; dueDateBadge: string|null; status: string; creator: string; assignee: string|null; createdAt: string; updatedAt: string; assignedAt: string|null; completedAt: string|null };
 type StoredWorkOrder = Omit<WorkOrder, 'urgency'|'dueDateBadge'>;
 
@@ -29,6 +30,7 @@ export class WorkOrdersService implements OnModuleInit {
     )`);
     this.applyDetailsMigration();
     this.applyIdentityMigration();
+    this.applyAttachmentMigration();
     this.persist();
   }
 
@@ -52,6 +54,30 @@ export class WorkOrdersService implements OnModuleInit {
     const order = this.one('SELECT * FROM WorkOrder WHERE id = ?', id);
     if (!order) throw new NotFoundException(`Work order ${id} was not found`);
     return this.present(order);
+  }
+
+  attachments(id: string, token?: string): Attachment[] {
+    this.requireSession(token);
+    if (!this.one('SELECT id FROM WorkOrder WHERE id=?', id)) throw new NotFoundException(`Work order ${id} was not found`);
+    return this.all<Attachment>(`SELECT a.id,a.workOrderId,a.fileName,a.contentType,a.fileSize,a.uploadedBy,
+      e.firstName || ' ' || e.lastName AS uploadedByName,a.uploadedDate
+      FROM WorkOrderAttachment a JOIN Employee e ON e.username=a.uploadedBy WHERE a.workOrderId=? ORDER BY a.uploadedDate,a.id`, id);
+  }
+
+  addAttachment(id: string, input: { fileName: string; contentType?: string; fileSize: number }, token?: string): Attachment {
+    const actor = this.requireSession(token);
+    if (!this.one('SELECT id FROM WorkOrder WHERE id=?', id)) throw new NotFoundException(`Work order ${id} was not found`);
+    if (!input.fileName?.trim()) throw new BadRequestException('File name is required');
+    if (input.fileName.length > 500) throw new BadRequestException('File name must be 500 characters or fewer');
+    const contentType = input.contentType ?? '';
+    if (contentType.length > 200) throw new BadRequestException('Content type must be 200 characters or fewer');
+    if (!Number.isSafeInteger(input.fileSize) || input.fileSize < 0) throw new BadRequestException('File size must be a non-negative integer');
+    const attachment: Attachment = { id: crypto.randomUUID(), workOrderId: id, fileName: input.fileName, contentType,
+      fileSize: input.fileSize, uploadedBy: actor.username, uploadedByName: `${actor.firstName} ${actor.lastName}`, uploadedDate: new Date().toISOString() };
+    this.db.run('INSERT INTO WorkOrderAttachment(id,workOrderId,fileName,contentType,fileSize,uploadedBy,uploadedDate) VALUES (?,?,?,?,?,?,?)',
+      [attachment.id, id, attachment.fileName, contentType, input.fileSize, actor.username, attachment.uploadedDate]);
+    this.persist();
+    return attachment;
   }
 
   async create(input: CreateWorkOrder, token?: string): Promise<WorkOrder> {
@@ -161,6 +187,16 @@ export class WorkOrdersService implements OnModuleInit {
       for (const roleName of roleNames) this.db.run('INSERT OR IGNORE INTO EmployeeRole(username,roleName) VALUES (?,?)', [username, roleName]);
     }
     this.db.run("INSERT OR IGNORE INTO SchemaMigration(version, appliedAt) VALUES (3, datetime('now'))");
+  }
+
+  private applyAttachmentMigration(): void {
+    this.db.run(`CREATE TABLE IF NOT EXISTS WorkOrderAttachment (
+      id TEXT PRIMARY KEY, workOrderId TEXT NOT NULL REFERENCES WorkOrder(id) ON DELETE CASCADE,
+      fileName TEXT NOT NULL CHECK(length(fileName)<=500), contentType TEXT NOT NULL CHECK(length(contentType)<=200),
+      fileSize INTEGER NOT NULL CHECK(fileSize>=0), uploadedBy TEXT NOT NULL REFERENCES Employee(username), uploadedDate TEXT NOT NULL
+    )`);
+    this.db.run('CREATE INDEX IF NOT EXISTS IX_WorkOrderAttachment_WorkOrderId ON WorkOrderAttachment(workOrderId,uploadedDate)');
+    this.db.run("INSERT OR IGNORE INTO SchemaMigration(version, appliedAt) VALUES (4, datetime('now'))");
   }
 
   private employee(username: string): Employee | undefined {

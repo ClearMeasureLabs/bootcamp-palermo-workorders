@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common';
-import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
 import { CreateWorkOrder, WorkOrdersService } from './work-orders.service';
 
 class CreateWorkOrderDto implements CreateWorkOrder {
@@ -15,6 +15,12 @@ class TransitionDto {
   @IsString() @IsOptional() assignee?: string;
 }
 
+class AddAttachmentMetadataDto {
+  @IsString() @MinLength(1) @MaxLength(500) fileName!: string;
+  @IsString() @IsOptional() @MaxLength(200) contentType?: string;
+  @IsInt() @Min(0) fileSize!: number;
+}
+
 @Controller('work-orders')
 export class WorkOrdersController {
   constructor(private readonly workOrders: WorkOrdersService) {}
@@ -23,6 +29,10 @@ export class WorkOrdersController {
     return this.workOrders.list(bearer(authorization), { status, assignee, q });
   }
   @Get(':id') get(@Param('id') id: string, @Headers('authorization') authorization?: string) { return this.workOrders.get(id, bearer(authorization)); }
+  @Get(':id/attachments') attachments(@Param('id') id: string, @Headers('authorization') authorization?: string) { return this.workOrders.attachments(id, bearer(authorization)); }
+  @Post(':id/attachments') addAttachment(@Param('id') id: string, @Body() dto: AddAttachmentMetadataDto, @Headers('authorization') authorization?: string) {
+    return this.workOrders.addAttachment(id, dto, bearer(authorization));
+  }
   @Post() create(@Body() dto: CreateWorkOrderDto, @Headers('authorization') authorization?: string) { return this.workOrders.create(dto, bearer(authorization)); }
   @Post(':id/transitions') transition(@Param('id') id: string, @Body() dto: TransitionDto, @Headers('authorization') authorization?: string) {
     return this.workOrders.transition(id, dto.status, dto.assignee, bearer(authorization));

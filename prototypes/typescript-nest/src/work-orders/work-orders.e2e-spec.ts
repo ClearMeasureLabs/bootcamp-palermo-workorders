@@ -2,6 +2,10 @@ import 'reflect-metadata';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { rmSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
 import { AppModule } from '../app.module';
 
 describe('Work order lifecycle (HTTP + SQLite)', () => {
@@ -9,7 +13,10 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
   let creatorAuth: string;
   let workerAuth: string;
   let readOnlyAuth: string;
+  let testDatabase: string;
   beforeAll(async () => {
+    testDatabase = path.join(os.tmpdir(), `typescript-nest-test-${crypto.randomUUID()}.db`);
+    process.env.DATABASE_URL = `file:${testDatabase}`;
     const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = module.createNestApplication();
     app.setGlobalPrefix('api');
@@ -19,7 +26,7 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
     workerAuth = await login(app, 'demo.tech');
     readOnlyAuth = await login(app, 'nflanders');
   });
-  afterAll(async () => { await app.close(); });
+  afterAll(async () => { await app.close(); rmSync(testDatabase, { force: true }); });
 
   it('creates, assigns, begins and completes a work order, rejecting invalid moves', async () => {
     const dateParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
@@ -72,6 +79,22 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
     const session = await request(app.getHttpServer()).post('/api/auth/login').send({ username: 'hsimpson' }).expect(201);
     await request(app.getHttpServer()).post('/api/auth/logout').set('authorization', `Bearer ${session.body.token}`).expect(201);
     await request(app.getHttpServer()).get('/api/auth/me').set('authorization', `Bearer ${session.body.token}`).expect(401);
+  });
+
+  it('adds and displays persisted attachment metadata without storing a binary file', async () => {
+    const created = await request(app.getHttpServer()).post('/api/work-orders').set('authorization', creatorAuth).send({ title: 'attachment metadata' }).expect(201);
+    await request(app.getHttpServer()).get(`/api/work-orders/${created.body.id}/attachments`).expect(401);
+    const added = await request(app.getHttpServer()).post(`/api/work-orders/${created.body.id}/attachments`).set('authorization', creatorAuth)
+      .send({ fileName: 'damage-photo.jpg', contentType: 'image/jpeg', fileSize: 2048 }).expect(201);
+    expect(added.body).toMatchObject({ workOrderId: created.body.id, fileName: 'damage-photo.jpg', contentType: 'image/jpeg', fileSize: 2048, uploadedBy: 'hsimpson', uploadedByName: 'Homer Simpson' });
+    expect(new Date(added.body.uploadedDate).toISOString()).toBe(added.body.uploadedDate);
+    expect((await request(app.getHttpServer()).get(`/api/work-orders/${created.body.id}/attachments`).set('authorization', creatorAuth).expect(200)).body).toEqual([added.body]);
+    await request(app.getHttpServer()).post(`/api/work-orders/${created.body.id}/attachments`).set('authorization', creatorAuth).send({ fileName: ' ' , fileSize: 0 }).expect(400);
+    await request(app.getHttpServer()).post(`/api/work-orders/${created.body.id}/attachments`).set('authorization', creatorAuth).send({ fileName: 'bad-size', fileSize: -1 }).expect(400);
+    const workerAdded = await request(app.getHttpServer()).post(`/api/work-orders/${created.body.id}/attachments`).set('authorization', workerAuth)
+      .send({ fileName: 'service-report.pdf', contentType: 'application/pdf', fileSize: 90 }).expect(201);
+    expect(workerAdded.body).toMatchObject({ uploadedBy: 'demo.tech', fileName: 'service-report.pdf' });
+    expect((await request(app.getHttpServer()).get(`/api/work-orders/${created.body.id}/attachments`).set('authorization', creatorAuth).expect(200)).body).toHaveLength(2);
   });
 });
 

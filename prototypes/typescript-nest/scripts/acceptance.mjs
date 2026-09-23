@@ -23,7 +23,7 @@ try {
   const recording = page.video();
   await page.goto(`http://127.0.0.1:${port}`);
   await page.getByText('Service: ok').waitFor();
-  await page.locator('#employee-select option[value="hsimpson"]').waitFor();
+  await page.locator('#employee-select option[value="hsimpson"]').waitFor({ state: 'attached' });
   await page.getByTestId('login-user').selectOption('hsimpson');
   await page.getByTestId('login').click();
   await page.getByText('Welcome hsimpson!').waitFor();
@@ -36,6 +36,14 @@ try {
   await page.getByTestId('due-date').fill(chicagoToday);
   await page.getByTestId('save-draft').click();
   await page.getByText('Draft saved').waitFor();
+  const newOrder = page.locator('#orders article').first();
+  await newOrder.getByTestId('attachment-file-name').fill('damage-photo.jpg');
+  await newOrder.getByTestId('attachment-content-type').fill('image/jpeg');
+  await newOrder.getByTestId('attachment-file-size').fill('2048');
+  await newOrder.getByTestId('add-attachment').click();
+  await page.getByText('Attachment metadata added').waitFor();
+  await page.getByTestId('attachment-row').getByText('damage-photo.jpg').waitFor();
+  await page.getByTestId('attachment-row').getByText('Homer Simpson').waitFor();
   await page.getByTestId('due-date-value').getByText('Due Today').waitFor();
   await page.getByRole('button', { name: 'Assign' }).last().click();
   await page.getByText('Work order assigned').waitFor();
