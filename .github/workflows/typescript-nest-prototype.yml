@@ -1,4 +1,4 @@
-name: TypeScript NestJS prototype # explicit working directories per command for npm's app and Remotion locks
+name: TypeScript NestJS prototype
 on:
   pull_request:
     paths:
@@ -22,20 +22,13 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: prototypes/typescript-nest/package-lock.json
-      - run: npm ci
-        working-directory: prototypes/typescript-nest
-      - run: npx playwright install --with-deps chromium
-        working-directory: prototypes/typescript-nest
-      - run: npm run private-build
-        working-directory: prototypes/typescript-nest
-      - run: npm run acceptance
-        working-directory: prototypes/typescript-nest
-      - run: npm ci
-        working-directory: prototypes/typescript-nest/remotion
-      - run: npm exec -- remotion browser ensure
-        working-directory: prototypes/typescript-nest/remotion
-      - run: npm run render
-        working-directory: prototypes/typescript-nest/remotion
+      - run: npm ci --prefix prototypes/typescript-nest
+      - run: npm exec --prefix prototypes/typescript-nest -- playwright install --with-deps chromium
+      - run: npm run private-build --prefix prototypes/typescript-nest
+      - run: npm run acceptance --prefix prototypes/typescript-nest
+      - run: npm ci --prefix prototypes/typescript-nest/remotion
+      - run: npm exec --prefix prototypes/typescript-nest/remotion -- remotion browser ensure
+      - run: npm run render --prefix prototypes/typescript-nest/remotion
       - uses: actions/upload-artifact@v4
         with:
           name: typescript-nest-acceptance-video
