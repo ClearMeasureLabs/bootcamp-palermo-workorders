@@ -26,9 +26,10 @@ try:
     os.environ["DJANGO_DB_PATH"] = dbfile.name
     django.setup()
     from django.core.management import call_command
-    from workorders.models import Employee, WorkOrder
+    from workorders.models import Employee, Role, WorkOrder
     call_command("migrate", verbosity=0)
-    Employee.objects.create(username="acceptance-tech", first_name="Casey", last_name="Tech")
+    employee = Employee.objects.create(username="acceptance-tech", first_name="Casey", last_name="Tech")
+    employee.roles.add(Role.objects.create(name="Acceptance Creator", can_create_work_order=True))
     today = timezone.localdate(timezone.now(), ZoneInfo("America/Chicago"))
     WorkOrder.objects.create(title="Acceptance: open overdue", due_date=today - timedelta(days=2))
     WorkOrder.objects.create(title="Acceptance: closed overdue", due_date=today - timedelta(days=2), status=WorkOrder.Status.COMPLETE)
@@ -49,11 +50,16 @@ try:
         page = context.new_page()
         page.goto(f"http://127.0.0.1:{port}/")
         page.get_by_role("heading", name="Work orders").wait_for()
+        page.get_by_role("link", name="Log in").click()
+        page.get_by_label("Select Church Member").select_option("acceptance-tech")
+        page.get_by_role("button", name="Enter the Portal").click()
+        page.get_by_text("CASEY TECH").wait_for()
+        page.reload()
+        page.get_by_text("CASEY TECH").wait_for()
         page.get_by_role("link", name="New work order").click()
         page.get_by_label("Title").fill("Acceptance: repair sink")
         page.get_by_label("Room number").fill("R" * 900)
         page.get_by_label("Due date").fill(today.isoformat())
-        page.get_by_label("Creator").select_option(label="Casey Tech")
         page.get_by_role("button", name="Create work order").click()
         heading = page.get_by_role("heading", name="Acceptance: repair sink")
         heading.wait_for()
@@ -79,6 +85,10 @@ try:
         room_error = page.locator("#id_room_number_error")
         room_error.wait_for()
         assert "Ensure this value has at most 900 characters" in room_error.inner_text()
+        page.get_by_role("button", name="Log out").click()
+        page.get_by_role("heading", name="Log in").wait_for()
+        page.goto(f"http://127.0.0.1:{port}/")
+        assert page.get_by_role("link", name="New work order").count() == 0
         page.screenshot(path=str(ARTIFACTS / "acceptance-result.png"), full_page=True)
         context.close()
         browser.close()

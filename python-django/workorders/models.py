@@ -1,11 +1,33 @@
 from django.db import models
 from django.utils import timezone
+
+
+class Role(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    can_create_work_order = models.BooleanField(default=False)
+    can_fulfill_work_order = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+
 class Employee(models.Model):
     username = models.CharField(max_length=100, unique=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(blank=True)
     active = models.BooleanField(default=True)
+    roles = models.ManyToManyField(Role, blank=True, related_name="employees")
+
+    def can_create_work_order(self):
+        return self.roles.filter(can_create_work_order=True).exists()
+
+    def can_fulfill_work_order(self):
+        return self.roles.filter(can_fulfill_work_order=True).exists()
+
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
     def __str__(self): return f"{self.first_name} {self.last_name}"
 class WorkOrder(models.Model):
     class Status(models.TextChoices):

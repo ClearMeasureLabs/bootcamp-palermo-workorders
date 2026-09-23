@@ -514,9 +514,11 @@ python-django/scripts/private_build.sh,.sh,Django rewrite,python-django/scripts/
 python-django/workorders/__init__.py,.py,Django rewrite,python-django/workorders/__init__.py,implemented or rewrite tooling
 python-django/workorders/admin.py,.py,Django rewrite,python-django/workorders/admin.py,implemented or rewrite tooling
 python-django/workorders/apps.py,.py,Django rewrite,python-django/workorders/apps.py,implemented or rewrite tooling
+python-django/workorders/context_processors.py,.py,Django rewrite,python-django/workorders/context_processors.py,implemented or rewrite tooling
 python-django/workorders/forms.py,.py,Django rewrite,python-django/workorders/forms.py,implemented or rewrite tooling
 python-django/workorders/migrations/0001_initial.py,.py,Django rewrite,python-django/workorders/migrations/0001_initial.py,implemented or rewrite tooling
 python-django/workorders/migrations/0002_alter_workorder_room_number.py,.py,Django rewrite,python-django/workorders/migrations/0002_alter_workorder_room_number.py,implemented or rewrite tooling
+python-django/workorders/migrations/0003_role_employee_roles.py,.py,Django rewrite,python-django/workorders/migrations/0003_role_employee_roles.py,implemented or rewrite tooling
 python-django/workorders/migrations/__init__.py,.py,Django rewrite,python-django/workorders/migrations/__init__.py,implemented or rewrite tooling
 python-django/workorders/models.py,.py,Django rewrite,python-django/workorders/models.py,implemented or rewrite tooling
 python-django/workorders/services.py,.py,Django rewrite,python-django/workorders/services.py,implemented or rewrite tooling
@@ -524,6 +526,7 @@ python-django/workorders/templates/workorders/base.html,.html,Django rewrite,pyt
 python-django/workorders/templates/workorders/detail.html,.html,Django rewrite,python-django/workorders/templates/workorders/detail.html,implemented or rewrite tooling
 python-django/workorders/templates/workorders/form.html,.html,Django rewrite,python-django/workorders/templates/workorders/form.html,implemented or rewrite tooling
 python-django/workorders/templates/workorders/list.html,.html,Django rewrite,python-django/workorders/templates/workorders/list.html,implemented or rewrite tooling
+python-django/workorders/templates/workorders/login.html,.html,Django rewrite,python-django/workorders/templates/workorders/login.html,implemented or rewrite tooling
 python-django/workorders/tests.py,.py,Django rewrite,python-django/workorders/tests.py,implemented or rewrite tooling
 python-django/workorders/urls.py,.py,Django rewrite,python-django/workorders/urls.py,implemented or rewrite tooling
 python-django/workorders/views.py,.py,Django rewrite,python-django/workorders/views.py,implemented or rewrite tooling
