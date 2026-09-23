@@ -1,4 +1,6 @@
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared;
+using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
@@ -108,5 +110,39 @@ public class DarkModeTests : AcceptanceTestBase
         await Page.GotoAsync("/settings");
         await Page.WaitForURLAsync("**/login");
         await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex(".*/login.*"));
+    }
+
+    [Test, Retry(2)]
+    public async Task DarkMode_ShouldDefaultToLight_WhenHnattLogsIn()
+    {
+        using (var context = TestHost.NewDbContext())
+        {
+            if (!context.Set<Employee>().Any(e => e.UserName == "hnatt"))
+            {
+                var parishioner = context.Set<Role>().FirstOrDefault(r => r.Name == "Parishioner")
+                    ?? new Role("Parishioner", false, false);
+                var herbieNatt = new Employee("hnatt", "Herbie", "Natt", "hnatt@shelbyville.org");
+                herbieNatt.AddRole(parishioner);
+                context.Add(herbieNatt);
+                context.SaveChanges();
+            }
+        }
+
+        await Page.EvaluateAsync("() => localStorage.setItem('churchbulletin-theme', 'dark')");
+
+        await Click(nameof(LoginLink.Elements.LoginLink));
+        await Page.WaitForURLAsync("**/login");
+        await Expect(Page.GetByTestId(nameof(Login.Elements.User))).ToBeVisibleAsync();
+
+        await Select(nameof(Login.Elements.User), "hnatt");
+        await Click(nameof(Login.Elements.LoginButton));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-theme') === 'light'");
+
+        var theme = await Page.EvaluateAsync<string>(
+            "() => document.documentElement.getAttribute('data-theme')");
+        theme.ShouldBe("light");
     }
 }

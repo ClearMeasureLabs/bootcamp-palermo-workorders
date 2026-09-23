@@ -4,11 +4,13 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.JSInterop;
 using Palermo.BlazorMvc;
 using Shouldly;
 using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
@@ -48,6 +50,8 @@ public class LoginPageTests
     public async Task ShouldDisplayDropdownWithEmployees()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -64,7 +68,7 @@ public class LoginPageTests
         component.Find($"label[for='{Login.Elements.User}']").ShouldNotBeNull();
 
         var options = component.FindAll("option");
-        options.Count.ShouldBe(6);
+        options.Count.ShouldBe(7);
 
         options[0].GetAttribute("value").ShouldBe(string.Empty);
         options[0].TextContent.ShouldBe("-- Select a parishioner or staff member --");
@@ -74,6 +78,8 @@ public class LoginPageTests
     public async Task ShouldDisplayUppercaseLabelsInLoginDropdown_ForMixedAndAllCapsNames()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -99,6 +105,8 @@ public class LoginPageTests
     public async Task ShouldLoginWithSelectedEmployee()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -123,6 +131,8 @@ public class LoginPageTests
     public async Task ShouldDisplayWelcomeToTheChurchPortalHeading()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -141,6 +151,8 @@ public class LoginPageTests
     public async Task ShouldDisplayFirstChurchOfSpringfieldSubtitle()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -159,6 +171,8 @@ public class LoginPageTests
     public async Task Should_ShowLovejoyShortcut_WithoutDropdownSelection()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -179,6 +193,8 @@ public class LoginPageTests
     public async Task Should_LoginAsTlovejoy_WhenLovejoyShortcutClicked()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -200,6 +216,8 @@ public class LoginPageTests
     public async Task Should_LoginAsTlovejoy_WhenLovejoyClickedBeforeEmployeesLoaded()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         var gatedBus = new GatedEmployeeStubBus();
@@ -232,6 +250,8 @@ public class LoginPageTests
     public async Task Should_KeepDropdownLoginUnchanged_WhenLovejoyShortcutPresent()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -258,6 +278,8 @@ public class LoginPageTests
     public async Task ShouldHaveAutofocusOnMemberDropdown()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -276,6 +298,8 @@ public class LoginPageTests
     public async Task ShouldDisplaySignInHeading()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -294,6 +318,8 @@ public class LoginPageTests
     public async Task ShouldDisplayLockIconInSignInHeading()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -313,6 +339,8 @@ public class LoginPageTests
     public async Task ShouldDisplayChooseYourNameSubtitle()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -331,6 +359,8 @@ public class LoginPageTests
     public async Task Should_ShowHelperTextUnderMemberDropdown()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -350,6 +380,8 @@ public class LoginPageTests
     public async Task Should_RenderForgotLoginLink_WithCorrectText()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -368,6 +400,8 @@ public class LoginPageTests
     public async Task Should_RenderForgotLoginLink_WithCorrectHref()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -386,6 +420,8 @@ public class LoginPageTests
     public async Task Should_RenderForgotLoginLink_InsideSmallTag()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -404,6 +440,8 @@ public class LoginPageTests
     public async Task Should_RenderOfficePhoneLink_WithCorrectText()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -422,6 +460,8 @@ public class LoginPageTests
     public async Task Should_RenderOfficePhoneLink_WithCorrectHref()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -440,6 +480,8 @@ public class LoginPageTests
     public async Task Should_RenderOfficePhoneLink_InsideSmallTag()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -458,6 +500,8 @@ public class LoginPageTests
     public async Task ShouldDisplayCurrentYearFooter()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -479,6 +523,8 @@ public class LoginPageTests
     public async Task EnterThePortalButton_ShouldHaveFullWidthClass()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -497,6 +543,8 @@ public class LoginPageTests
     public async Task EnterThePortalButton_ShouldPreserveBtnPrimaryClass()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -515,6 +563,8 @@ public class LoginPageTests
     public async Task EnterThePortalButton_ShouldPreserveSubmitType()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -533,6 +583,8 @@ public class LoginPageTests
     public async Task EnterThePortalButton_ShouldPreserveButtonText()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -551,6 +603,8 @@ public class LoginPageTests
     public async Task Should_RenderRememberMySelectionCheckbox()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -569,6 +623,8 @@ public class LoginPageTests
     public async Task Should_RenderRememberMySelectionCheckbox_UncheckedByDefault()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -587,6 +643,8 @@ public class LoginPageTests
     public async Task Should_AssociateRememberMySelectionLabel_ViaForId()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -606,6 +664,8 @@ public class LoginPageTests
     public async Task Should_RenderNeedHelpLink_WithCorrectText()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -624,6 +684,8 @@ public class LoginPageTests
     public async Task Should_RenderNeedHelpLink_WithTargetBlank()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -642,6 +704,8 @@ public class LoginPageTests
     public async Task Should_RenderNeedHelpLink_WithRelNoopener()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -660,6 +724,8 @@ public class LoginPageTests
     public async Task Should_ShowVersionLabel_WithVersionPrefix()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -680,6 +746,8 @@ public class LoginPageTests
     public async Task Should_ShowVersionLabel_WithNonEmptyVersionString()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -703,6 +771,8 @@ public class LoginPageTests
     public async Task EnterThePortalButton_ShouldBeDisabled_OnInitialRender()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -721,6 +791,8 @@ public class LoginPageTests
     public async Task EnterThePortalButton_ShouldBeEnabled_AfterMemberSelected()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -742,6 +814,8 @@ public class LoginPageTests
     public async Task WelcomeMessage_ShouldBeAbsent_OnInitialRender()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -759,6 +833,8 @@ public class LoginPageTests
     public async Task WelcomeMessage_ShouldShowFullName_WhenMemberSelected()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -781,6 +857,8 @@ public class LoginPageTests
     public async Task Should_ShowVersionLabel_WithEnvironmentSegment()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -800,6 +878,8 @@ public class LoginPageTests
     public async Task Should_ShowVersionLabel_WithFallback_WhenEnvironmentNameIsBlank()
     {
         await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddScoped<ThemePreferenceService>();
 
         var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
         ctx.Services.AddSingleton(provider);
@@ -823,6 +903,62 @@ public class LoginPageTests
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
+    [Test]
+    public async Task Should_SetLightMode_WhenHnattLogsIn()
+    {
+        await using var ctx = new BunitContext();
+        var themeJs = new StubThemeJsRuntime { InitialTheme = "dark" };
+        ctx.Services.AddSingleton<IJSRuntime>(themeJs);
+        ctx.Services.AddScoped<ThemePreferenceService>();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
+
+        var component = ctx.Render<Login>();
+
+        var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
+        var submitButton = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
+
+        await employeeSelect.ChangeAsync(new() { Value = "hnatt" });
+        await submitButton.ClickAsync(new());
+
+        var theme = ctx.Services.GetRequiredService<ThemePreferenceService>();
+        theme.IsDarkMode.ShouldBeFalse();
+        themeJs.SetThemeCalls.ShouldBe(1);
+        themeJs.LastSetThemeArg.ShouldNotBeNull();
+        themeJs.LastSetThemeArg!.Value.ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Should_NotSetTheme_WhenOtherUserLogsIn()
+    {
+        await using var ctx = new BunitContext();
+        var themeJs = new StubThemeJsRuntime { InitialTheme = "dark" };
+        ctx.Services.AddSingleton<IJSRuntime>(themeJs);
+        ctx.Services.AddScoped<ThemePreferenceService>();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
+
+        var component = ctx.Render<Login>();
+
+        var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
+        var submitButton = component.Find($"[data-testid='{Login.Elements.LoginButton}']");
+
+        await employeeSelect.ChangeAsync(new() { Value = "hsimpson" });
+        await submitButton.ClickAsync(new());
+
+        themeJs.SetThemeCalls.ShouldBe(0);
+    }
+
     private sealed class GatedEmployeeStubBus : StubBus
     {
         private readonly TaskCompletionSource _gate =
@@ -838,6 +974,85 @@ public class LoginPageTests
             }
 
             return await base.Send(request);
+        }
+    }
+
+    private sealed class StubThemeJsRuntime : IJSRuntime
+    {
+        public string InitialTheme { get; init; } = "light";
+        public int SetThemeCalls { get; private set; }
+        public bool? LastSetThemeArg { get; private set; }
+
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+        {
+            if (identifier == "import" && typeof(TValue) == typeof(IJSObjectReference))
+            {
+                var module = new StubThemeModule(InitialTheme, this);
+                return ValueTask.FromResult((TValue)(object)module);
+            }
+
+            throw new InvalidOperationException($"Unexpected InvokeAsync: {identifier}");
+        }
+
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
+            object?[]? args) =>
+            InvokeAsync<TValue>(identifier, args);
+
+        private sealed class StubThemeModule : IJSObjectReference
+        {
+            private readonly StubThemeJsRuntime _parent;
+            private string _theme;
+
+            public StubThemeModule(string theme, StubThemeJsRuntime parent)
+            {
+                _theme = theme;
+                _parent = parent;
+            }
+
+            public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+            {
+                if (identifier == "getTheme" && typeof(TValue) == typeof(string))
+                    return ValueTask.FromResult((TValue)(object)_theme);
+
+                if (identifier == "syncDomFromTheme")
+                {
+                    _theme = (string)args![0]!;
+                    return ValueTask.FromResult(default(TValue)!);
+                }
+
+                if (identifier == "setTheme")
+                {
+                    _parent.LastSetThemeArg = (bool)args![0]!;
+                    _parent.SetThemeCalls++;
+                    _theme = _parent.LastSetThemeArg.Value ? "dark" : "light";
+                    return ValueTask.FromResult(default(TValue)!);
+                }
+
+                throw new InvalidOperationException($"Unexpected module InvokeAsync: {identifier}");
+            }
+
+            public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
+                object?[]? args) =>
+                InvokeAsync<TValue>(identifier, args);
+
+            public ValueTask InvokeVoidAsync(string identifier, object?[]? args)
+            {
+                switch (identifier)
+                {
+                    case "syncDomFromTheme":
+                        _theme = (string)args![0]!;
+                        return ValueTask.CompletedTask;
+                    case "setTheme":
+                        _parent.LastSetThemeArg = (bool)args![0]!;
+                        _parent.SetThemeCalls++;
+                        _theme = _parent.LastSetThemeArg.Value ? "dark" : "light";
+                        return ValueTask.CompletedTask;
+                    default:
+                        throw new InvalidOperationException($"Unexpected module InvokeVoidAsync: {identifier}");
+                }
+            }
+
+            public ValueTask DisposeAsync() => ValueTask.CompletedTask;
         }
     }
 }
