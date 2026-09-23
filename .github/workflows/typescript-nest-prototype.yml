@@ -41,4 +41,4 @@ jobs:
           name: typescript-nest-acceptance-video
           path: |
             prototypes/typescript-nest/artifacts/acceptance-video.webm
-            prototypes/typescript-nest/remotion/artifacts/typescript-nest-acceptance.mp4
+            prototypes/typescript-nest/artifacts/typescript-nest-acceptance.mp4
