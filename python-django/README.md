@@ -1,6 +1,6 @@
 # Django work order prototype
 
-This is an isolated Python/Django implementation track inside the original repository. It currently implements the primary work-order list, creation, search, detail, status lifecycle and history, employee references, and health endpoint. It is a prototype; see `../docs/django-rewrite-catalog.md` for the source-system inventory and explicit parity gaps.
+This is an isolated Python/Django implementation track inside the original repository. It currently implements the primary work-order list, creation, search, detail, status lifecycle and history, employee references, health endpoint, read-time due-date urgency, overdue filtering, and the 900-character room-number limit. It is a prototype; see `../docs/django-rewrite-catalog.md` for the source-system inventory and explicit parity gaps, and `../docs/django-source-inventory.csv` for the complete path-by-path repository catalog.
 
 ## Run
 

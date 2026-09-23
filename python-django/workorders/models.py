@@ -18,7 +18,7 @@ class WorkOrder(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(max_length=4000, blank=True)
     instructions = models.TextField(max_length=4000, blank=True)
-    room_number = models.CharField(max_length=100, blank=True)
+    room_number = models.CharField(max_length=900, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     creator = models.ForeignKey(Employee, null=True, blank=True, related_name="created_orders", on_delete=models.SET_NULL)
     assignee = models.ForeignKey(Employee, null=True, blank=True, related_name="assigned_orders", on_delete=models.SET_NULL)

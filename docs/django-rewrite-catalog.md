@@ -4,7 +4,7 @@ This branch is a fast-running prototype of the core work-order workflow. It does
 
 ## Source repository inventory
 
-At the inspected `master` revision the repository contains 1,362 tracked files: 765 under `src/`, 100 feature proposals, 79 architecture artifacts, 30 operations and stability docs, 22 codebase audit artifacts, 19 GitHub workflows/scripts, 18 labs, 16 OpenSpec documents, and 91 video project files, plus configuration and tooling. `git ls-files` is the definitive complete path inventory. Current app and validation code is chiefly under `src/`, `scripts/`, `.github/`, `arch/`, `docs/`, `labs/`, `openspec/`, and `feature-proposals/`.
+The checked-in [`django-source-inventory.csv`](django-source-inventory.csv) lists every repository file path discovered by `git ls-files`, with its type, source area, intended Python destination, and port status. Regenerate it after repository changes with `python python-django/scripts/generate_source_inventory.py`. At the original inspected `master` revision the repository contained 1,362 tracked files: 765 under `src/`, 100 feature proposals, 79 architecture artifacts, 30 operations and stability docs, 22 codebase audit artifacts, 19 GitHub workflows/scripts, 18 labs, 16 OpenSpec documents, and 91 video project files, plus configuration and tooling. The CSV is the file-by-file catalog; the area table below summarizes the mapping.
 
 | Existing code area | What it contains | Django track mapping |
 |---|---|---|
@@ -65,7 +65,7 @@ Database choice depends on platform and Docker availability. Linux with a Docker
 
 ## Implemented and missing parity
 
-Implemented: employee and work-order persistence, generated `WO-000001` style numbers, creation form, work-order list, text/room/number search, status filter/count cards, detail page, guarded status transitions, timestamps and transition event history, JSON health response, schema migration, domain/request tests, and a Playwright browser acceptance workflow. SQLite provides a no-service local run.
+Implemented: employee and work-order persistence, generated `WO-000001` style numbers, creation form, work-order list, text/room/number search, status filter/count cards, detail page, guarded status transitions, timestamps and transition event history, JSON health response, schema migrations, domain/request tests, and a Playwright browser acceptance workflow. Due-date urgency now follows the Chicago calendar date at read time, showing due-today/overdue color and badges and supporting an overdue-only list filter; urgency is not persisted, completed/cancelled orders are not urgent, and a missing due date has no badge. Room numbers now accept up to 900 characters, matching the source model. SQLite provides a no-service local run.
 
 Not implemented yet: authentication/authorization and roles, edit/reassignment rules, attachment storage, bulk CSV import/export, complex query/filter/sort/pagination parity, dashboards/reports, localization and speech, chat/translation, MCP, gRPC, API versioning/key auth/idempotency/rate limits, realtime notifications, worker/AI automation, detailed health/metrics, SQL Server/Azure infrastructure, packaging, production release/deploy, and the full 100-proposal acceptance backlog. Existing .NET workflows still exercise the original app and do not prove Python parity.
 

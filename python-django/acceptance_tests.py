@@ -4,7 +4,10 @@ import subprocess
 import sys
 import tempfile
 import time
+from datetime import timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
+from django.utils import timezone
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent
@@ -23,9 +26,12 @@ try:
     os.environ["DJANGO_DB_PATH"] = dbfile.name
     django.setup()
     from django.core.management import call_command
-    from workorders.models import Employee
+    from workorders.models import Employee, WorkOrder
     call_command("migrate", verbosity=0)
     Employee.objects.create(username="acceptance-tech", first_name="Casey", last_name="Tech")
+    today = timezone.localdate(timezone.now(), ZoneInfo("America/Chicago"))
+    WorkOrder.objects.create(title="Acceptance: open overdue", due_date=today - timedelta(days=2))
+    WorkOrder.objects.create(title="Acceptance: closed overdue", due_date=today - timedelta(days=2), status=WorkOrder.Status.COMPLETE)
     for _ in range(60):
         if server.poll() is not None:
             raise RuntimeError("Django test server exited before becoming ready")
@@ -45,13 +51,32 @@ try:
         page.get_by_role("heading", name="Work orders").wait_for()
         page.get_by_role("link", name="New work order").click()
         page.get_by_label("Title").fill("Acceptance: repair sink")
-        page.get_by_label("Room number").fill("204")
+        page.get_by_label("Room number").fill("R" * 900)
+        page.get_by_label("Due date").fill(today.isoformat())
         page.get_by_label("Creator").select_option(label="Casey Tech")
         page.get_by_role("button", name="Create work order").click()
-        page.get_by_role("heading", name="WO-000001 · Acceptance: repair sink").wait_for()
+        heading = page.get_by_role("heading", name="Acceptance: repair sink")
+        heading.wait_for()
+        number = heading.inner_text().split(" · ", 1)[0]
         page.get_by_label("New status").select_option("Assigned")
         page.get_by_role("button", name="Update status").click()
-        page.get_by_text("Work order WO-000001 moved to Assigned.").wait_for()
+        page.get_by_text(f"Work order {number} moved to Assigned.").wait_for()
+        page.goto(f"http://127.0.0.1:{port}/")
+        due_cell = page.get_by_test_id(f"due-date-{number}")
+        assert "due-date-today" in (due_cell.get_attribute("class") or "")
+        assert page.get_by_test_id(f"urgency-badge-{number}").inner_text() == "Due Today"
+        page.get_by_label("Show overdue only").check()
+        page.get_by_role("button", name="Search").click()
+        page.get_by_text("Acceptance: open overdue").wait_for()
+        assert page.get_by_text("Acceptance: closed overdue").count() == 0
+        assert page.get_by_text("Acceptance: repair sink").count() == 0
+        page.goto(f"http://127.0.0.1:{port}/work-orders/new/")
+        page.get_by_label("Title").fill("Acceptance: invalid room")
+        room = page.get_by_label("Room number")
+        room.evaluate("element => element.removeAttribute('maxlength')")
+        room.fill("X" * 901)
+        page.get_by_role("button", name="Create work order").click()
+        page.get_by_text("Ensure this value has at most 900 characters.").wait_for()
         page.screenshot(path=str(ARTIFACTS / "acceptance-result.png"), full_page=True)
         context.close()
         browser.close()

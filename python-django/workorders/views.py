@@ -6,15 +6,23 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from .forms import WorkOrderForm
 from .models import WorkOrder
-from .services import transition
+from .services import OPEN_STATUSES, chicago_today, due_date_badge, due_date_urgency, transition
 def work_order_list(request):
     orders = WorkOrder.objects.select_related("assignee", "creator").order_by("-created_at")
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "")
+    overdue_only = request.GET.get("overdue") == "1"
+    today = chicago_today()
     if query: orders = orders.filter(Q(number__icontains=query) | Q(title__icontains=query) | Q(room_number__icontains=query))
     if status in WorkOrder.Status.values: orders = orders.filter(status=status)
+    if overdue_only: orders = orders.filter(due_date__lt=today, status__in=OPEN_STATUSES)
+    orders = list(orders)
+    for order in orders:
+        order.due_urgency = due_date_urgency(order, today)
+        order.due_badge = due_date_badge(order, today)
+        order.due_css_class = {"DueToday": "due-date-today", "Overdue": "due-date-overdue"}.get(order.due_urgency, "")
     counts = {s: WorkOrder.objects.filter(status=s).count() for s, _ in WorkOrder.Status.choices}
-    return render(request, "workorders/list.html", {"orders": orders, "query": query, "selected_status": status, "statuses": WorkOrder.Status.choices, "counts": counts})
+    return render(request, "workorders/list.html", {"orders": orders, "query": query, "selected_status": status, "statuses": WorkOrder.Status.choices, "counts": counts, "overdue_only": overdue_only})
 def work_order_create(request):
     form = WorkOrderForm(request.POST or None)
     if form.is_valid():
