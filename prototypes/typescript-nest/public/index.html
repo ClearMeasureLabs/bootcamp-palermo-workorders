@@ -106,7 +106,7 @@
       const body={status};if(action==='assign')body.assignee=document.querySelector('#assignee-select').value;
       const response=await apiFetch(`${api}/${button.dataset.id}/transitions`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
       const label={InProgress:'in progress',Assigned:'shelved',Cancelled:'cancelled',Complete:'complete'}[status];
-      message.textContent=response.ok?`Work order ${label}`:await responseMessage(response);await refresh();
+      message.textContent=response.ok?`Work order ${action==='assign'?'assigned':label}`:await responseMessage(response);await refresh();
     });
     document.querySelector('#orders').addEventListener('submit',async e=>{
       const form=e.target.closest('form[data-attachment-order]');if(!form)return;e.preventDefault();
