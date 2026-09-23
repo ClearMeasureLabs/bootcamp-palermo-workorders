@@ -7,6 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "test": "node scripts/run-tests.mjs",
+    "source-inventory": "node scripts/generate-source-inventory.mjs",
     "acceptance": "node scripts/acceptance.mjs",
     "private-build": "node scripts/private-build.mjs"
   },
@@ -20,6 +21,7 @@
     "@nestjs/platform-express": "^11.2.6",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "express": "^5.2.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "sql.js": "^1.14.2"
