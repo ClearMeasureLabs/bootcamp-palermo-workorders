@@ -5,7 +5,6 @@ import com.clearmeasure.workorders.domain.WorkOrderStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 
 @Controller
@@ -19,12 +18,12 @@ public class WorkOrderPageController {
     }
     @PostMapping("/work-orders") public String create(@RequestParam String title, @RequestParam(required=false) String description,
         @RequestParam(required=false) String roomNumber, @RequestParam(required=false) String creatorName,
-        @RequestParam(required=false) LocalDate dueDate, RedirectAttributes redirect) {
-        service.create(title, description, roomNumber, creatorName, dueDate); redirect.addFlashAttribute("message", "Work order created"); return "redirect:/";
+        @RequestParam(required=false) LocalDate dueDate) {
+        service.create(title, description, roomNumber, creatorName, dueDate); return "redirect:/";
     }
     @PostMapping("/work-orders/{number}/{action}") public String action(@PathVariable String number, @PathVariable String action,
-        @RequestParam(required=false) String assignee, RedirectAttributes redirect) {
+        @RequestParam(required=false) String assignee) {
         switch (action) { case "assign" -> service.assign(number, assignee); case "begin" -> service.begin(number); case "complete" -> service.complete(number); case "cancel" -> service.cancel(number); default -> throw new IllegalArgumentException("Unknown action"); }
-        redirect.addFlashAttribute("message", "Work order " + number + " updated"); return "redirect:/";
+        return "redirect:/";
     }
 }
