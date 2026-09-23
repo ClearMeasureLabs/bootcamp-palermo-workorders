@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "23c89d483adca8d894142408433fa8b3dfe01d3f"
+          ref: "c7f85bebfbd916a79182e8693da1c61d21abc534"
           path: .aiorg-cli
           persist-credentials: false
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
@@ -47,3 +47,31 @@ jobs:
         run: >-
           dotnet .aiorg-cli-bin/aiorg.dll guard test-diff --base "$BASE_SHA" --head "$HEAD_SHA" --pr "$PR_NUMBER"
           --post-status --repo "$REPO" --target-url "$RUN_URL" --json
+  test-diff-off:
+    # Kill switch on (AIORG_ENABLED is not true): nothing runs, but a required aiorg/test-diff must not
+    # block every merge, so this posts a passing status that says the guard did not run.
+    if: vars.AIORG_ENABLED != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AIORG_HOME: ${{ github.workspace }}/.aiorg-cli
+      REPO: ${{ github.repository }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out aiorg control plane (pinned)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: jeffreypalermo/aiorg
+          ref: "c7f85bebfbd916a79182e8693da1c61d21abc534"
+          path: .aiorg-cli
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build aiorg CLI
+        working-directory: .aiorg-cli
+        run: dotnet build src/Aiorg.Cli -c Release -o ../.aiorg-cli-bin --nologo -v quiet
+      - name: Post the disabled aiorg/test-diff status
+        run: dotnet .aiorg-cli-bin/aiorg.dll guard test-diff --base "$BASE_SHA" --head "$HEAD_SHA" --disabled --post-status --repo "$REPO"
