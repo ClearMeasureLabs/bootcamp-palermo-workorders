@@ -9,6 +9,7 @@
   "scripts": {
     "capture": "ts-node --project tsconfig.capture.json capture/run-all.ts",
     "narration": "node scripts/generate-narration.cjs",
+    "verify": "node scripts/verify-package.cjs",
     "render": "remotion render src/index.ts TddMcpCustomerTraining out/customer-training-grok-tdd-mcp.mp4",
     "studio": "remotion studio src/index.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.capture.json"
