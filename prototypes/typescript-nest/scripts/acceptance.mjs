@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
-import { copyFileSync, mkdirSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
 const port = Number(process.env.PORT || 3311);
@@ -34,13 +34,14 @@ try {
   await page.getByText('Complete', { exact: true }).last().waitFor();
   console.log('Acceptance passed: create → assign → in progress → complete');
   await context.close();
-  const recordingPath = await recording?.path();
-  if (recordingPath) {
-    copyFileSync(recordingPath, path.join(artifacts, 'acceptance-video.webm'));
-    const remotionPublic = path.resolve('remotion/public');
-    mkdirSync(remotionPublic, { recursive: true });
-    copyFileSync(recordingPath, path.join(remotionPublic, 'acceptance-video.webm'));
-  }
+  if (!recording) throw new Error('Playwright did not create a video recorder for the acceptance page');
+  const recordingPath = await recording.path();
+  if (!existsSync(recordingPath)) throw new Error(`Playwright recording is missing: ${recordingPath}`);
+  copyFileSync(recordingPath, path.join(artifacts, 'acceptance-video.webm'));
+  const remotionPublic = path.resolve('remotion/public');
+  mkdirSync(remotionPublic, { recursive: true });
+  copyFileSync(recordingPath, path.join(remotionPublic, 'acceptance-video.webm'));
+  console.log(`Recorded Playwright acceptance video: ${recordingPath}`);
 } finally {
   await browser?.close();
   server.kill('SIGTERM');
