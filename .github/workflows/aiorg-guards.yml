@@ -4,7 +4,8 @@
 # aiorg/test-diff yet or still carry the kill-switch placeholder, so neither attaching nor switching
 # aiorg back on leaves a PR blocked or passed unguarded.
 # pull_request_target runs this file from the base branch, so a PR cannot edit or remove the guard
-# that judges it. The PR's commits are fetched as git objects and diffed; nothing from the PR runs.
+# that judges it; only PRs into the default branch are judged, so a PR into another branch cannot bring
+# its own copy. The PR's commits are fetched as git objects and diffed; nothing from the PR runs.
 name: aiorg-guards
 on:
   pull_request_target:
@@ -21,7 +22,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request_target' }}
 jobs:
   test-diff:
-    if: vars.AIORG_ENABLED == 'true' && github.event_name == 'pull_request_target'
+    if: vars.AIORG_ENABLED == 'true' && github.event_name == 'pull_request_target' && github.event.pull_request.base.ref == github.event.repository.default_branch
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -41,7 +42,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "430cfaee11de1717188701f1d068d700f9b1e77c"
+          ref: "76b64ed897f555edf2881c859a2f7fb23a9196d4"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: .aiorg-cli
@@ -60,7 +61,7 @@ jobs:
     # Kill switch on (AIORG_ENABLED is not true): nothing runs, but a required aiorg/test-diff must not
     # block every merge, so this posts a neutral check that says the guard did not run. The revalidate
     # job re-runs the guard on these heads once aiorg is back on.
-    if: vars.AIORG_ENABLED != 'true' && github.event_name == 'pull_request_target'
+    if: vars.AIORG_ENABLED != 'true' && github.event_name == 'pull_request_target' && github.event.pull_request.base.ref == github.event.repository.default_branch
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -74,7 +75,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "430cfaee11de1717188701f1d068d700f9b1e77c"
+          ref: "76b64ed897f555edf2881c859a2f7fb23a9196d4"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: .aiorg-cli
@@ -105,7 +106,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "430cfaee11de1717188701f1d068d700f9b1e77c"
+          ref: "76b64ed897f555edf2881c859a2f7fb23a9196d4"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: .aiorg-cli
