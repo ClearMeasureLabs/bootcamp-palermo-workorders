@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "c19ca4f33015256602fb19d01f83719186688d2c"
+          ref: "f31ab24f92db1d87f1d4a3b1d64a56fc9bf41ff1"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: aiorg
@@ -57,10 +57,14 @@ jobs:
             - Testing policy: new behavior has tests; no tests deleted, skipped or weakened to make CI pass (flag it loudly).
             - Protected paths in .aiorg/config.yaml (git.protectedPaths) changed? Flag for owner review.
             - Secrets, credentials, PII in logs: flag as blocking.
-            Post one review with `dotnet aiorg-bin/aiorg.dll review comment ${{ github.event.pull_request.number }} --body "<text>"` summarizing findings (blocking first) and inline comments where useful.
+            Write one review to `aiorg-out/review.md` summarizing findings (blocking first), citing file:line. A later step posts it as a COMMENT review; you cannot post anything yourself.
             Never approve, never request changes, never push commits, never merge.
           # Budget: sonnet, 30 turns, ~$2 per review.
           claude_args: >-
             --model claude-sonnet-5
             --max-turns 30
-            --allowedTools "Read,Grep,Glob,Bash(gh pr view ${{ github.event.pull_request.number }}:*),Bash(gh pr diff ${{ github.event.pull_request.number }}:*),Bash(dotnet aiorg-bin/aiorg.dll review comment ${{ github.event.pull_request.number }}:*),mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Read,Grep,Glob,Bash(gh pr view ${{ github.event.pull_request.number }}:*),Bash(gh pr diff ${{ github.event.pull_request.number }}:*),Edit(aiorg-out/**)"
+      - name: Post the review output (COMMENT only)
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: dotnet aiorg-bin/aiorg.dll review apply --pr "$PR_NUMBER" --dir aiorg-out
