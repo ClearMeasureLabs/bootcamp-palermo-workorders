@@ -32,10 +32,11 @@ class WorkOrderBrowserAcceptanceTest {
             page.getByLabel("Room").fill("A-17");
             page.getByLabel("Creator").fill("Acceptance tester");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save draft")).click();
-            assertTrue(page.getByText("Acceptance repair").isVisible());
+            page.getByText("Acceptance repair").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
             page.getByPlaceholder("Assignee").fill("Facilities team");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Assign")).click();
-            assertTrue(page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).getByText("ASSIGNED").isVisible());
+            page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).getByText("ASSIGNED")
+                .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
             context.close(); // flushes the recorded webm to disk
             capturedVideo = video.path();
             browser.close();
