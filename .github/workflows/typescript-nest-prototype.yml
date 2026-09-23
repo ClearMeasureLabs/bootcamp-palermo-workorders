@@ -1,4 +1,4 @@
-name: TypeScript NestJS prototype # use npm install from checked out package roots
+name: TypeScript NestJS prototype # capture, require, and render the browser recording
 # npm --prefix commands lock paths independently of GitHub runner cwd.
 on:
   pull_request:
