@@ -17,7 +17,6 @@ a.login-link-blink,
 	font-weight: 600;
 	color: var(--login-blink-bright);
 	opacity: 1;
-	transition: background-color 0.3s ease;
 	animation: login-link-blink-pulse 1.5s ease-in-out infinite;
 }
 
