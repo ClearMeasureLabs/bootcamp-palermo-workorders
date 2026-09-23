@@ -35,6 +35,7 @@ class WorkOrderBrowserAcceptanceTest {
             page.getByLabel("Title").fill("Acceptance repair");
             page.getByLabel("Room").fill("A-17");
             page.getByLabel("Creator").fill("Acceptance tester");
+            page.getByLabel("Instructions").fill("Bring a ladder and lockout kit");
             page.getByLabel("Due date").fill("2026-10-01");
             Response saveResponse = page.waitForResponse(
                 response -> response.url().endsWith("/work-orders") && response.request().method().equals("POST"),
@@ -45,6 +46,13 @@ class WorkOrderBrowserAcceptanceTest {
             String renderedList = page.locator("body").innerText();
             assertTrue(renderedList.contains("Acceptance repair"),
                 "The redirect should render the created work order. URL=" + page.url() + " body=" + renderedList);
+            String number = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"))
+                .locator("td").first().innerText();
+            APIResponse apiRead = page.request().get("http://localhost:" + port + "/api/work-orders/" + number);
+            assertEquals(200, apiRead.status());
+            assertTrue(apiRead.text().contains("Bring a ladder and lockout kit"), "Instructions should persist from the browser form");
+            assertTrue(renderedList.contains("Due Today") || renderedList.contains("On Track") || renderedList.contains("Overdue"),
+                "A dated open order should show an urgency badge");
             page.getByPlaceholder("Assignee").fill("Facilities team");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Assign")).click();
             page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).getByText("ASSIGNED")

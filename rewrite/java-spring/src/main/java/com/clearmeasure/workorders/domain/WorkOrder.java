@@ -1,8 +1,12 @@
 package com.clearmeasure.workorders.domain;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Entity
@@ -53,9 +57,15 @@ public class WorkOrder {
 
     public WorkOrder(String number, String title, String description, String roomNumber,
                      String creatorName, LocalDate dueDate) {
+        this(number, title, description, "", roomNumber, creatorName, dueDate);
+    }
+
+    public WorkOrder(String number, String title, String description, String instructions, String roomNumber,
+                     String creatorName, LocalDate dueDate) {
         this.number = number;
         this.title = title;
         this.description = description == null ? "" : description;
+        this.instructions = instructions == null ? "" : instructions;
         this.roomNumber = roomNumber;
         this.creatorName = creatorName;
         this.dueDate = dueDate;
@@ -104,4 +114,33 @@ public class WorkOrder {
     public OffsetDateTime getAssignedAt() { return assignedAt; }
     public OffsetDateTime getCompletedAt() { return completedAt; }
     public LocalDate getDueDate() { return dueDate; }
+    @JsonProperty("urgency")
+    public DueDateUrgency getUrgency() {
+        return DueDateUrgencyCalculator.calculate(dueDate, status, Clock.system(ZoneId.of("America/Chicago")));
+    }
+    @JsonIgnore
+    public String getDueDateCssClass() {
+        return switch (getUrgency()) {
+            case DUE_TODAY -> "due-date-today";
+            case OVERDUE -> "due-date-overdue";
+            case NONE -> "";
+        };
+    }
+    @JsonIgnore
+    public String getUrgencyBadgeText() {
+        if (dueDate == null) return "";
+        return switch (getUrgency()) {
+            case DUE_TODAY -> "Due Today";
+            case OVERDUE -> "Overdue";
+            case NONE -> "On Track";
+        };
+    }
+    @JsonIgnore
+    public String getUrgencyBadgeCssClass() {
+        return switch (getUrgency()) {
+            case DUE_TODAY -> "urgency-due-today";
+            case OVERDUE -> "urgency-overdue";
+            case NONE -> "urgency-on-track";
+        };
+    }
 }

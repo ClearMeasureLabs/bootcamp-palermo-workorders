@@ -2,6 +2,10 @@ package com.clearmeasure.workorders.domain;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.LocalDate;
 
 class WorkOrderLifecycleTest {
     @Test void followsDraftAssignedInProgressCompleteLifecycle() {
@@ -20,5 +24,18 @@ class WorkOrderLifecycleTest {
         assertThrows(IllegalArgumentException.class, () -> order.assign("  "));
         order.assign("Lee");
         assertThrows(IllegalStateException.class, order::complete);
+    }
+
+    @Test void computesUrgencyUsingChicagoDateOnlyForOpenOrders() {
+        Clock beforeChicagoMidnight = Clock.fixed(Instant.parse("2026-09-23T04:30:00Z"), ZoneId.of("America/Chicago"));
+        assertEquals(LocalDate.of(2026, 9, 22), LocalDate.now(beforeChicagoMidnight));
+        assertEquals(DueDateUrgency.DUE_TODAY, DueDateUrgencyCalculator.calculate(
+            LocalDate.of(2026, 9, 22), WorkOrderStatus.IN_PROGRESS, beforeChicagoMidnight));
+        assertEquals(DueDateUrgency.OVERDUE, DueDateUrgencyCalculator.calculate(
+            LocalDate.of(2026, 9, 21), WorkOrderStatus.DRAFT, beforeChicagoMidnight));
+        assertEquals(DueDateUrgency.NONE, DueDateUrgencyCalculator.calculate(
+            LocalDate.of(2026, 9, 22), WorkOrderStatus.COMPLETE, beforeChicagoMidnight));
+        assertEquals(DueDateUrgency.NONE, DueDateUrgencyCalculator.calculate(
+            null, WorkOrderStatus.DRAFT, beforeChicagoMidnight));
     }
 }

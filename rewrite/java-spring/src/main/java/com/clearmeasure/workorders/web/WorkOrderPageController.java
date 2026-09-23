@@ -12,14 +12,17 @@ public class WorkOrderPageController {
     private final WorkOrderService service;
     public WorkOrderPageController(WorkOrderService service) { this.service = service; }
 
-    @GetMapping("/") public String home(@RequestParam(required=false) WorkOrderStatus status, Model model) {
-        model.addAttribute("orders", service.list(status)); model.addAttribute("statuses", WorkOrderStatus.values()); model.addAttribute("selectedStatus", status);
+    @GetMapping("/") public String home(@RequestParam(required=false) WorkOrderStatus status,
+        @RequestParam(defaultValue = "false") boolean overdueOnly, Model model) {
+        model.addAttribute("orders", service.list(status, overdueOnly)); model.addAttribute("statuses", WorkOrderStatus.values());
+        model.addAttribute("selectedStatus", status); model.addAttribute("overdueOnly", overdueOnly);
         return "work-orders";
     }
     @PostMapping("/work-orders") public String create(@RequestParam String title, @RequestParam(required=false) String description,
+        @RequestParam(required=false) String instructions,
         @RequestParam(required=false) String roomNumber, @RequestParam(required=false) String creatorName,
         @RequestParam(required=false) LocalDate dueDate) {
-        service.create(title, description, roomNumber, creatorName, dueDate); return "redirect:/";
+        service.create(title, description, instructions, roomNumber, creatorName, dueDate); return "redirect:/";
     }
     @PostMapping("/work-orders/{number}/{action}") public String action(@PathVariable String number, @PathVariable String action,
         @RequestParam(required=false) String assignee) {

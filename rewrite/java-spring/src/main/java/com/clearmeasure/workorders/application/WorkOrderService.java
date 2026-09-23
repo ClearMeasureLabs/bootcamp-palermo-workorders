@@ -5,6 +5,7 @@ import com.clearmeasure.workorders.domain.WorkOrderStatus;
 import com.clearmeasure.workorders.persistence.WorkOrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -12,16 +13,18 @@ import java.util.List;
 @Transactional
 public class WorkOrderService {
     private final WorkOrderRepository repository;
-    public WorkOrderService(WorkOrderRepository repository) { this.repository = repository; }
+    private final Clock clock;
+    public WorkOrderService(WorkOrderRepository repository, Clock clock) { this.repository = repository; this.clock = clock; }
 
-    public WorkOrder create(String title, String description, String room, String creator, LocalDate dueDate) {
+    public WorkOrder create(String title, String description, String instructions, String room, String creator, LocalDate dueDate) {
         if (title == null || title.isBlank()) throw new IllegalArgumentException("Title is required");
         String number = "WO-" + System.currentTimeMillis();
-        return repository.save(new WorkOrder(number, title.trim(), description, room, creator, dueDate));
+        return repository.save(new WorkOrder(number, title.trim(), description, instructions, room, creator, dueDate));
     }
     @Transactional(readOnly = true)
-    public List<WorkOrder> list(WorkOrderStatus status) {
-        return status == null ? repository.findAllByOrderByCreatedAtDesc() : repository.findByStatusOrderByCreatedAtDesc(status);
+    public List<WorkOrder> list(WorkOrderStatus status, boolean overdueOnly) {
+        return repository.findMatching(status, overdueOnly, LocalDate.now(clock),
+            List.of(WorkOrderStatus.DRAFT, WorkOrderStatus.ASSIGNED, WorkOrderStatus.IN_PROGRESS));
     }
     @Transactional(readOnly = true)
     public WorkOrder get(String number) { return repository.findByNumber(number).orElseThrow(() -> new WorkOrderNotFoundException(number)); }

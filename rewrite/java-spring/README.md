@@ -20,10 +20,12 @@ Open <http://localhost:8080>. Persistent local H2 data is stored under `rewrite/
 
 - Create work orders as drafts, list and filter by state, and read an order by number.
 - Lifecycle transitions: draft → assigned → in progress → complete; open work orders may be cancelled.
-- Validation for required title/assignee and field length limits.
+- Validation for required title/assignee and field length limits; draft creation persists description, instructions (4000 characters), room (900 characters), creator, and optional date-only due date.
+- Read-time due-date urgency in the `America/Chicago` calendar zone, with due-today/overdue styling and badges for open orders; completed/cancelled orders have no urgency and no-date orders have no badge.
+- Optional overdue-only filter in the HTML list and JSON API; filtering is executed in the database and excludes closed orders.
 - Browser UI for create, status filtering, assignment, start, completion, and cancellation.
 - JSON API at `/api/work-orders` with create/list/get and lifecycle actions.
-- H2-backed persistence and unit, Spring MVC integration, and Chromium/Playwright browser acceptance with a recorded browser video.
+- H2-backed persistence with versioned Flyway migrations and Hibernate schema validation, plus unit, Spring MVC integration, and Chromium/Playwright browser acceptance with a recorded browser video.
 
 ## Inventory of source behavior reviewed
 
@@ -39,15 +41,15 @@ The source tree is substantially larger than a CRUD work-order app. Its top-leve
 - `arch/`, `codebase-audit-report/`, `labs/`: PlantUML/Mermaid architecture and workflows, audit metrics, teaching labs and walkthroughs.
 - `.github/workflows/`, `azure-pipelines.yml`/pipeline files, `PrivateBuild.ps1`, `build.ps1`, `BuildFunctions.ps1`, `AcceptanceTests.ps1`: CI/deployment, private environment setup, build database selection, acceptance launch and cleanup.
 
-Runtime behavior and feature cases found in source/tests include login/logout, work-order draft/save/search/filter, assignment, begin, completion, cancellation, shelving, due dates/overdue/dashboard counts, instructions/room number limits, attachments, CSV bulk import, dictation/speech, AI chat/reformat agents, employee/role settings, status counts, health/readiness/metrics, API versioning/rate limits/idempotency/ETags, realtime notifications, gRPC and MCP operations, background AI saga, dated batches, database migration/rebuild, deployment verification and observability. The current Java prototype only covers the core create/list/filter/read/lifecycle slice; parity is not claimed for these other capabilities.
+Runtime behavior and feature cases found in source/tests include login/logout, work-order draft/save/search/filter, assignment, begin, completion, cancellation, shelving, due dates/overdue/dashboard counts, instructions/room number limits, attachments, CSV bulk import, dictation/speech, AI chat/reformat agents, employee/role settings, status counts, health/readiness/metrics, API versioning/rate limits/idempotency/ETags, realtime notifications, gRPC and MCP operations, background AI saga, dated batches, database migration/rebuild, deployment verification and observability. `SOURCE_INVENTORY.csv` lists every first-party C#, Razor, SQL, protobuf, and server-rendered/web source file with its intended Java destination and current port status. Regenerate it from the repository root with `python3 rewrite/java-spring/scripts/generate_source_inventory.py`. The current Java prototype covers a narrow create/list/filter/read/lifecycle slice and due-date urgency; parity is not claimed for the remaining capabilities.
 
 ## Private build, ops and test mapping
 
 | Current capability/tool | Java-native direction | Prototype status |
 |---|---|---|
 | `PrivateBuild.ps1` + `build.ps1` create DB environment, restore, compile, unit/integration, CRAP gate | Maven `clean verify`, Spring Boot/JPA schema initialization, Testcontainers PostgreSQL for CI | Local H2 setup and Maven verify script added; Testcontainers and static complexity gate still open |
-| SQL Server LocalDB, Docker SQL Server, SQLite fallback | PostgreSQL for production; H2 for fast local; Testcontainers PostgreSQL for realistic CI; SQL Server JDBC only if SQL Server remains a deployment constraint | H2 local only; no SQL Server schema migration parity |
-| EF Core and ordered SQL scripts / Database console | Spring Data JPA + Flyway versioned migrations | JPA/H2 implemented; Flyway and ported migrations not yet implemented |
+| SQL Server LocalDB, Docker SQL Server, SQLite fallback | PostgreSQL for production; H2 for fast local; Testcontainers PostgreSQL for realistic CI; SQL Server JDBC only if SQL Server remains a deployment constraint | H2 local and PostgreSQL driver configured; no SQL Server schema migration parity or PostgreSQL Testcontainers gate |
+| EF Core and ordered SQL scripts / Database console | Spring Data JPA + Flyway versioned migrations | Flyway V1 schema, V2 legacy instructions-column guard, and Hibernate `validate` implemented for H2/PostgreSQL; the original migration history and upgrade/rebuild tooling are not ported |
 | MediatR CQRS and Lamar DI | Spring application services, Spring DI, optionally Spring Modulith for module/event boundaries | Service and constructor injection implemented; async events not yet ported |
 | NUnit + Shouldly + bUnit | JUnit 5 + AssertJ + Spring MVC Test; Thymeleaf UI does not need Blazor component harness | JUnit/Spring MockMvc tests added |
 | Playwright NUnit browser tests, `AcceptanceTests.ps1 -Headful` | Playwright for Java + JUnit 5; browser installation via Playwright CLI; headful mode via `headless=false` | The acceptance test creates a work order through the browser form, then exercises assignment in Chromium and records video; Remotion MP4 rendering is wired in CI; execution still needs verification |
