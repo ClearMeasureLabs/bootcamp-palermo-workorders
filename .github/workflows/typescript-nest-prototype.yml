@@ -20,6 +20,12 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: prototypes/typescript-nest/package-lock.json
+      - run: |
+          pwd
+          ls -la prototypes/typescript-nest
+          cd prototypes/typescript-nest
+          pwd
+          npm config get package-lock
       - run: cd prototypes/typescript-nest && npm ci
       - run: cd prototypes/typescript-nest && npx playwright install --with-deps chromium
       - run: cd prototypes/typescript-nest && npm run private-build
