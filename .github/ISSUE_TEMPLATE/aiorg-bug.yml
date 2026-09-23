@@ -1,7 +1,7 @@
 name: Bug report (AI org)
 description: Report a defect. The AI org triages it and may propose a fix for the owner to approve.
 title: ""
-labels: ["aiorg:request", "type/bug"]
+labels: ["aiorg:request"]  # created by the aiorg-labels workflow; triage adds the type label
 body:
   - type: textarea
     id: what

@@ -21,7 +21,7 @@ build:
   timeoutMinutes: 45
 ci:
   provider: github-actions
-  requiredChecks: ["Build result"]
+  requiredChecks: ["Build result", "aiorg/test-diff"]
   verify: check-runs-api          # verify via the Checks API, never via exit codes
 git:
   defaultBranch: "master"
@@ -51,4 +51,4 @@ autonomy:
 calendar: ops-default
 aiorg:
   repo: jeffreypalermo/aiorg
-  ref: "f2b087025075b07489493aaa39207876b8a87a42"             # pinned release tag or commit SHA of the control plane
+  ref: "6914742196a333066c88b52dd4f567d106423efc"             # pinned release tag or commit SHA of the control plane

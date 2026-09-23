@@ -22,7 +22,7 @@ jobs:
       REPO: ${{ github.repository }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 50
           persist-credentials: false
@@ -31,7 +31,7 @@ jobs:
           set -euo pipefail
           echo "AIORG_OBSERVER_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
           gh label create "aiorg:proposal" --repo "$REPO" --color 0E8A16 --description "Proposed by the aiorg observer; owner adds aiorg:go to accept" 2>/dev/null || true
-      - uses: anthropics/claude-code-action@v1
+      - uses: anthropics/claude-code-action@8cf3482550831fb35a4fc3fbf7ca139cf8028b4c # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}

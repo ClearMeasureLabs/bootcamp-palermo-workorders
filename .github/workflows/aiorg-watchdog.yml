@@ -24,13 +24,13 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out aiorg control plane (pinned)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "f2b087025075b07489493aaa39207876b8a87a42"
+          ref: "6914742196a333066c88b52dd4f567d106423efc"
           path: aiorg
           persist-credentials: false
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: "10.0.x"
       - name: Build aiorg CLI

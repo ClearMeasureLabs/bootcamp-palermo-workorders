@@ -1,8 +1,10 @@
 # aiorg oracle wall: a PR may not delete, skip or weaken tests to go green.
-# Posts commit status aiorg/test-diff. Deterministic; no model involved.
+# Posts commit status aiorg/test-diff; make it a required check in branch protection.
+# pull_request_target runs this file from the base branch, so a PR cannot edit or remove the guard
+# that judges it. The PR's commits are fetched as git objects and diffed; nothing from the PR runs.
 name: aiorg-guards
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
 permissions:
   contents: read
@@ -20,26 +22,32 @@ jobs:
       REPO: ${{ github.repository }}
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: Check out aiorg control plane (pinned)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "f2b087025075b07489493aaa39207876b8a87a42"
+          ref: "6914742196a333066c88b52dd4f567d106423efc"
           path: .aiorg-cli
           persist-credentials: false
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: "10.0.x"
       - name: Build aiorg CLI
         working-directory: .aiorg-cli
         run: dotnet build src/Aiorg.Cli -c Release -o ../.aiorg-cli-bin --nologo -v quiet
+      - name: Fetch the PR's commits as data (never checked out or run)
+        run: |
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" \
+            fetch --no-tags --quiet origin "refs/pull/$PR_NUMBER/head"
       - name: Mark status pending
         run: |
           gh api "repos/$REPO/statuses/$HEAD_SHA" -f state=pending -f context=aiorg/test-diff \

@@ -1,0 +1,43 @@
+# aiorg: create the labels the org routes on (idempotent). Issue forms and triage only apply labels
+# that exist, so run this once after enabling (Actions > aiorg-labels > Run workflow); it also runs
+# when .aiorg/config.yaml changes on the default branch.
+name: aiorg-labels
+on:
+  workflow_dispatch:
+  push:
+    paths: [".aiorg/config.yaml"]
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: aiorg-labels
+  cancel-in-progress: false
+jobs:
+  labels:
+    if: vars.AIORG_ENABLED == 'true' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Create or update aiorg labels
+        run: |
+          set -euo pipefail
+          while IFS='|' read -r name color description; do
+            [ -n "$name" ] || continue
+            gh label create "$name" --repo "$REPO" --color "$color" --description "$description" --force
+          done <<'LABELS'
+          aiorg:request|0E8A16|Owner change request for the AI org
+          aiorg:triaged|C2E0C6|Classified by the aiorg triage reader
+          aiorg:proposal|D4C5F9|Self-generated proposal awaiting the owner
+          aiorg:go|0E8A16|Owner approved: the org may start work
+          aiorg:needs-owner|D93F0B|Waiting on an owner decision
+          aiorg:stalled|FBCA04|aiorg lane is stalled
+          aiorg:status|BFD4F2|Pinned AI org status issue
+          risk:T0|EDEDED|Risk tier T0: docs and test-only
+          risk:T1|C5DEF5|Risk tier T1: small change in one area
+          risk:T2|FEF2C0|Risk tier T2: multi-module or UI flow
+          risk:T3|F9D0C4|Risk tier T3: auth, API, dependency or pipeline
+          risk:T4|B60205|Risk tier T4: destructive or infrastructure
+          LABELS
