@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "f31ab24f92db1d87f1d4a3b1d64a56fc9bf41ff1"
+          ref: "c47ac8d919ca38ffcdf2d58a6b670da3ce8d19e1"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: aiorg
@@ -44,6 +44,8 @@ jobs:
       - name: Build aiorg CLI
         working-directory: aiorg
         run: dotnet build src/Aiorg.Cli -c Release -o ../aiorg-bin --nologo -v quiet
+      - name: Create the model output folder (Write cannot create directories)
+        run: dotnet aiorg-bin/aiorg.dll outputs init --dir aiorg-out
       - uses: anthropics/claude-code-action@8cf3482550831fb35a4fc3fbf7ca139cf8028b4c # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
