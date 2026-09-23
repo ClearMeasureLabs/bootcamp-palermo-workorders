@@ -38,7 +38,9 @@ class WorkOrderBrowserAcceptanceTest {
                 () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save draft")).click());
             assertEquals(302, saveResponse.status(), "The HTML form should save and redirect to the order list");
             page.waitForURL("**/");
-            page.getByText("Acceptance repair").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
+            String renderedList = page.locator("body").innerText();
+            assertTrue(renderedList.contains("Acceptance repair"),
+                "The redirect should render the created work order. URL=" + page.url() + " body=" + renderedList);
             page.getByPlaceholder("Assignee").fill("Facilities team");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Assign")).click();
             page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).getByText("ASSIGNED")
