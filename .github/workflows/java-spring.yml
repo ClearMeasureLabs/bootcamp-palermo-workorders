@@ -1,0 +1,49 @@
+name: Java Spring Boot prototype
+on:
+  pull_request:
+    paths:
+      - 'rewrite/java-spring/**'
+      - '.github/workflows/java-spring.yml'
+  push:
+    branches: [prototype/java-spring]
+    paths:
+      - 'rewrite/java-spring/**'
+      - '.github/workflows/java-spring.yml'
+jobs:
+  java-spring-verify:
+    name: Java Spring Maven verify
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rewrite/java-spring
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Install Playwright Chromium
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.classpathScope=test -Dexec.args='install --with-deps chromium' org.codehaus.mojo:exec-maven-plugin:3.5.0:java
+      - name: Build, unit/integration test, and headful browser acceptance test
+        env:
+          PLAYWRIGHT_HEADFUL: 'true'
+        run: xvfb-run -a mvn --batch-mode --no-transfer-progress clean verify
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: rewrite/java-spring/video/package-lock.json
+      - name: Render acceptance capture with Remotion
+        if: success()
+        working-directory: rewrite/java-spring/video
+        run: npm ci && npm run render
+      - name: Upload acceptance browser recording and Remotion video
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-spring-acceptance-video
+          path: |
+            rewrite/java-spring/target/playwright-recordings/**
+            rewrite/java-spring/video/out/acceptance.mp4
+          if-no-files-found: warn
