@@ -80,6 +80,28 @@ The build scripts auto-detect the database engine. On Linux with Docker, SQL Ser
 
 If Docker is unavailable, set `DATABASE_ENGINE=SQLite` before running the build scripts. The app and integration tests will use SQLite via EF Core's `EnsureCreated`. Some integration tests tagged `SqlServerOnly` will be skipped.
 
+### Unit-test-only validation (no Docker / SQL needed)
+
+For work items that touch only pure-logic code (formatters, validators, domain logic with no DB interaction), the full `PrivateBuild.ps1` is overkill. Use the faster path:
+
+```bash
+dotnet build src/UnitTests/UnitTests.csproj -c Release --nologo -v quiet
+dotnet test  src/UnitTests/UnitTests.csproj --no-build -c Release --nologo
+```
+
+This compiles and runs all 800+ unit tests in under 2 minutes without needing Docker, SQL Server, or PowerShell. Use `--filter "FullyQualifiedName~<Class>"` to focus on the affected tests first, then run the full suite to confirm no regressions.
+
+### Docker not installed
+
+If `dockerd` is missing (`sudo: dockerd: command not found`), Docker is simply not installed in the current environment. Fall back to SQLite mode:
+
+```bash
+export DATABASE_ENGINE=SQLite
+pwsh -NoProfile -ExecutionPolicy Bypass -File ./PrivateBuild.ps1
+```
+
+Integration tests tagged `SqlServerOnly` will be skipped. This is expected and acceptable for CI environments without Docker.
+
 ### Optional Services
 
 - **Ollama** (localhost:11434): Local LLM for AI agent features. Not required; errors in logs about Ollama connection refused are expected and harmless.
