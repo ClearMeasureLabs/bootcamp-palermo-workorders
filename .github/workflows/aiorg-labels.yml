@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "a4ce96e803667edb8f4342262d25c770d8fac1bc"
+          ref: "59481de15a9d106122ee196ba08e9267b0a162d4"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: aiorg

@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "a4ce96e803667edb8f4342262d25c770d8fac1bc"
+          ref: "59481de15a9d106122ee196ba08e9267b0a162d4"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: aiorg
@@ -41,12 +41,15 @@ jobs:
         run: dotnet build src/Aiorg.Cli -c Release -o ../aiorg-bin --nologo -v quiet
       - name: Create the model output folder (Write cannot create directories)
         run: dotnet aiorg-bin/aiorg.dll outputs init --dir aiorg-out
+      - name: Install pinned Claude Code (SHA-256 verified; the action's curl | bash installer never runs)
+        run: dotnet aiorg-bin/aiorg.dll claude install --dir claude-bin
       - name: Fetch the issue and the repository labels for the model (aiorg-in/)
         env:
           ISSUE: ${{ github.event.issue.number }}
         run: dotnet aiorg-bin/aiorg.dll context issue --issue "$ISSUE" --dir aiorg-in
       - uses: anthropics/claude-code-action@8cf3482550831fb35a4fc3fbf7ca139cf8028b4c # v1
         with:
+          path_to_claude_code_executable: ${{ github.workspace }}/claude-bin/claude
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
           # Only the issue NUMBER is passed. Title/body are fetched by the agent and treated as data.
