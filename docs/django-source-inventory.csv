@@ -519,6 +519,7 @@ python-django/workorders/forms.py,.py,Django rewrite,python-django/workorders/fo
 python-django/workorders/migrations/0001_initial.py,.py,Django rewrite,python-django/workorders/migrations/0001_initial.py,implemented or rewrite tooling
 python-django/workorders/migrations/0002_alter_workorder_room_number.py,.py,Django rewrite,python-django/workorders/migrations/0002_alter_workorder_room_number.py,implemented or rewrite tooling
 python-django/workorders/migrations/0003_role_employee_roles.py,.py,Django rewrite,python-django/workorders/migrations/0003_role_employee_roles.py,implemented or rewrite tooling
+python-django/workorders/migrations/0004_alter_workorder_number.py,.py,Django rewrite,python-django/workorders/migrations/0004_alter_workorder_number.py,implemented or rewrite tooling
 python-django/workorders/migrations/__init__.py,.py,Django rewrite,python-django/workorders/migrations/__init__.py,implemented or rewrite tooling
 python-django/workorders/models.py,.py,Django rewrite,python-django/workorders/models.py,implemented or rewrite tooling
 python-django/workorders/services.py,.py,Django rewrite,python-django/workorders/services.py,implemented or rewrite tooling
@@ -970,142 +971,142 @@ src/UI.Shared/UI.Shared.csproj,.csproj,src/UI.Shared,python-django/workorders/te
 src/UI.Shared/_Imports.razor,.razor,src/UI.Shared,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
 src/UI.Shared/wwwroot/js/mainLayoutNav.js,.js,src/UI.Shared,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
 src/UI.Shared/wwwroot/js/theme.js,.js,src/UI.Shared,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
-src/UI/Api/ApiRateLimiting.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/ApiRoutes.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/ConditionalGetEtag.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/DetailedHealthController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/DiagnosticController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/DiagnosticsController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/EchoController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/EnvironmentStatusController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/FeatureFlagsController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/MetricsController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/PingController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/TimeController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/TimestampConverterController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/ToolsDueDateCheckController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/ToolsGuidGeneratorController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/ToolsHashController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/ToolsRandomController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/ToolsWordCountController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/ToolsWorkOrderStatusesController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/VersionController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/WeatherForecastController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/WhatDoIHaveController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Controllers/WorkOrdersBulkImportController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/DetailedHealthModels.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/DiagnosticsFeatureFlagsOptions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/DiagnosticsModels.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/FeatureFlagsCatalog.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/HealthCheck.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/HealthReportBuilder.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/IDetailedHealthReportProvider.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/IHttpRequestMetricsCounter.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/MetricsSummaryBuilder.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/MetricsSummaryResponse.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/OutputCachePolicyNames.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Pages/Error.cshtml,.cshtml,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Pages/Error.cshtml.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Program.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/Properties/launchSettings.json,.json,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/SimpleHealthResponseBuilder.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/UI.Api.csproj,.csproj,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/WorkOrderBulkImportModels.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Api/WorkOrderBulkImportProcessor.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/App.razor,.razor,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/HealthChecks/HealthCheckTracer.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/HealthChecks/RemotableBusHealthCheck.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/HealthChecks/ServerHealthCheck.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/HealthChecks/ServerHealthCheckQuery.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/IPublisherGateway.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/Pages/ClientHealthCheck.razor,.razor,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/Pages/DetailedClientHealthCheck.razor,.razor,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/Pages/NotFound.razor,.razor,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/Program.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/Properties/launchSettings.json,.json,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/PublisherGateway.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/RemotableBus.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/UI.Client.csproj,.csproj,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/UIClientServiceRegistry.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/UserSession.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/WasmHostEnvironment.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/_Imports.razor,.razor,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/appsettings.json,.json,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/app.css,.css,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/bootstrap/bootstrap.min.css,.css,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/bootstrap/bootstrap.min.css.map,.map,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/open-iconic/FONT-LICENSE,[no extension],src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/open-iconic/ICON-LICENSE,[no extension],src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/open-iconic/README.md,.md,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/open-iconic/font/css/open-iconic-bootstrap.min.css,.css,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/open-iconic/font/fonts/open-iconic.eot,.eot,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/open-iconic/font/fonts/open-iconic.otf,.otf,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/open-iconic/font/fonts/open-iconic.svg,.svg,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/open-iconic/font/fonts/open-iconic.ttf,.ttf,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/css/open-iconic/font/fonts/open-iconic.woff,.woff,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/favicon.png,.png,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/icon-192.png,.png,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/index.html,.html,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Client/wwwroot/js/chat.js,.js,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ApiControllerMapping.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ApiKeyAuthenticationMiddleware.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ApiKeyAuthenticationOptions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ApiRateLimitPartitionResolver.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ApiRateLimitingExtensions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ApiRateLimitingOptions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ApiRequestTimeoutOptions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ApiRequestTimeoutsExtensions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/AutoReformatAgentService.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/CallHealthCheckEndpoint.ps1,.ps1,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ChatClientConfigQueryHandler.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/CheckVersion.ps1,.ps1,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Controllers/SingleApiController.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/CorsExtensions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/DatabaseConfiguration.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/DetailedHealthCheckResponseWriter.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/DetailedHealthReportProvider.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Generated/Protos/Workorders.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Generated/Protos/WorkordersGrpc.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/GlobalUsings.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Grpc/WorkOrdersGrpcService.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Handlers/ServerHealthCheckHandler.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/HttpRequestMetricsCounter.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Is64BitProcessHealthCheck.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/License.xml,.xml,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Middleware/HttpRequestMetricsMiddleware.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Middleware/IdempotencyMiddleware.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Middleware/IdempotencyOptions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Middleware/IdempotencyResponseCache.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Middleware/WebServiceMessageValidationMiddleware.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/NeedsRebootHealthCheck.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Notifications/RealtimeNotificationHub.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Notifications/RealtimeNotificationWebSocketMiddleware.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Notifications/ServerRealtimeBus.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ProblemDetailsExceptionHandler.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ProblemDetailsStatusCodePagesExtensions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ProcessThreadCountHealthCheck.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Program.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Properties/launchSettings.json,.json,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Protos/workorders.proto,.proto,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/RateLimiting/RateLimitingMiddleware.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/RateLimiting/RateLimitingPipeline.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/RequestBodyBufferingExtensions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/RequestBodyBufferingOptions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ScaleInfrastructure.ps1,.ps1,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ServerApplication.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/ServerCorsOptions.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Testing/IdempotencyProbeState.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/TestingDatabaseStartupFilter.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/UI.Server.csproj,.csproj,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/UIServiceRegistry.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/UiServerWebApplicationMarker.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Validation/EmployeeGetAllQueryValidator.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/Validation/ServerHealthCheckQueryValidator.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/WebApplicationTestingDatabase.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/WorkOrderReformatAgent.cs,.cs,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/appsettings.Development.json,.json,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/appsettings.Testing.json,.json,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
-src/UI/Server/appsettings.json,.json,src/UI,No Python counterpart yet; see docs/django-rewrite-catalog.md,deferred
+src/UI/Api/ApiRateLimiting.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/ApiRoutes.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/ConditionalGetEtag.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/DetailedHealthController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/DiagnosticController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/DiagnosticsController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/EchoController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/EnvironmentStatusController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/FeatureFlagsController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/MetricsController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/PingController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/TimeController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/TimestampConverterController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/ToolsDueDateCheckController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/ToolsGuidGeneratorController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/ToolsHashController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/ToolsRandomController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/ToolsWordCountController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/ToolsWorkOrderStatusesController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/VersionController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/WeatherForecastController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/WhatDoIHaveController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Controllers/WorkOrdersBulkImportController.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/DetailedHealthModels.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/DiagnosticsFeatureFlagsOptions.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/DiagnosticsModels.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/FeatureFlagsCatalog.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/HealthCheck.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/HealthReportBuilder.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/IDetailedHealthReportProvider.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/IHttpRequestMetricsCounter.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/MetricsSummaryBuilder.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/MetricsSummaryResponse.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/OutputCachePolicyNames.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Pages/Error.cshtml,.cshtml,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Pages/Error.cshtml.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Program.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/Properties/launchSettings.json,.json,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/SimpleHealthResponseBuilder.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/UI.Api.csproj,.csproj,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/WorkOrderBulkImportModels.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Api/WorkOrderBulkImportProcessor.cs,.cs,src/UI/Api,Django views or Django REST Framework API (not implemented),deferred
+src/UI/Client/App.razor,.razor,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/HealthChecks/HealthCheckTracer.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/HealthChecks/RemotableBusHealthCheck.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/HealthChecks/ServerHealthCheck.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/HealthChecks/ServerHealthCheckQuery.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/IPublisherGateway.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/Pages/ClientHealthCheck.razor,.razor,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/Pages/DetailedClientHealthCheck.razor,.razor,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/Pages/NotFound.razor,.razor,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/Program.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/Properties/launchSettings.json,.json,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/PublisherGateway.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/RemotableBus.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/UI.Client.csproj,.csproj,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/UIClientServiceRegistry.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/UserSession.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/WasmHostEnvironment.cs,.cs,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/_Imports.razor,.razor,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/appsettings.json,.json,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/app.css,.css,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/bootstrap/bootstrap.min.css,.css,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/bootstrap/bootstrap.min.css.map,.map,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/open-iconic/FONT-LICENSE,[no extension],src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/open-iconic/ICON-LICENSE,[no extension],src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/open-iconic/README.md,.md,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/open-iconic/font/css/open-iconic-bootstrap.min.css,.css,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/open-iconic/font/fonts/open-iconic.eot,.eot,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/open-iconic/font/fonts/open-iconic.otf,.otf,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/open-iconic/font/fonts/open-iconic.svg,.svg,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/open-iconic/font/fonts/open-iconic.ttf,.ttf,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/css/open-iconic/font/fonts/open-iconic.woff,.woff,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/favicon.png,.png,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/icon-192.png,.png,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/index.html,.html,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Client/wwwroot/js/chat.js,.js,src/UI/Client,python-django/workorders/templates/workorders/; forms.py; views.py,partial; continue porting
+src/UI/Server/ApiControllerMapping.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ApiKeyAuthenticationMiddleware.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ApiKeyAuthenticationOptions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ApiRateLimitPartitionResolver.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ApiRateLimitingExtensions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ApiRateLimitingOptions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ApiRequestTimeoutOptions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ApiRequestTimeoutsExtensions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/AutoReformatAgentService.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/CallHealthCheckEndpoint.ps1,.ps1,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ChatClientConfigQueryHandler.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/CheckVersion.ps1,.ps1,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Controllers/SingleApiController.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/CorsExtensions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/DatabaseConfiguration.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/DetailedHealthCheckResponseWriter.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/DetailedHealthReportProvider.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Generated/Protos/Workorders.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Generated/Protos/WorkordersGrpc.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/GlobalUsings.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Grpc/WorkOrdersGrpcService.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Handlers/ServerHealthCheckHandler.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/HttpRequestMetricsCounter.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Is64BitProcessHealthCheck.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/License.xml,.xml,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Middleware/HttpRequestMetricsMiddleware.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Middleware/IdempotencyMiddleware.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Middleware/IdempotencyOptions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Middleware/IdempotencyResponseCache.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Middleware/WebServiceMessageValidationMiddleware.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/NeedsRebootHealthCheck.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Notifications/RealtimeNotificationHub.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Notifications/RealtimeNotificationWebSocketMiddleware.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Notifications/ServerRealtimeBus.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ProblemDetailsExceptionHandler.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ProblemDetailsStatusCodePagesExtensions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ProcessThreadCountHealthCheck.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Program.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Properties/launchSettings.json,.json,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Protos/workorders.proto,.proto,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/RateLimiting/RateLimitingMiddleware.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/RateLimiting/RateLimitingPipeline.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/RequestBodyBufferingExtensions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/RequestBodyBufferingOptions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ScaleInfrastructure.ps1,.ps1,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ServerApplication.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/ServerCorsOptions.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Testing/IdempotencyProbeState.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/TestingDatabaseStartupFilter.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/UI.Server.csproj,.csproj,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/UIServiceRegistry.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/UiServerWebApplicationMarker.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Validation/EmployeeGetAllQueryValidator.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/Validation/ServerHealthCheckQueryValidator.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/WebApplicationTestingDatabase.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/WorkOrderReformatAgent.cs,.cs,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/appsettings.Development.json,.json,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/appsettings.Testing.json,.json,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
+src/UI/Server/appsettings.json,.json,src/UI/Server,python-django/config/; views.py; middleware or protocol-specific service,partial; continue porting
 src/UnitTests/.editorconfig,[no extension],src/UnitTests,python-django/workorders/tests.py; python-django/acceptance_tests.py,partial; continue porting
 src/UnitTests/Api/ApiRateLimitingWebTests.cs,.cs,src/UnitTests,python-django/workorders/tests.py; python-django/acceptance_tests.py,partial; continue porting
 src/UnitTests/Api/ConditionalGetEtagTests.cs,.cs,src/UnitTests,python-django/workorders/tests.py; python-django/acceptance_tests.py,partial; continue porting
@@ -1397,4 +1398,3 @@ video/src/roomNumberVideo.tsx,.tsx,video,"Documentation, experiments, or media; 
 video/src/scenes.tsx,.tsx,video,"Documentation, experiments, or media; retain in original repository",not a shipped application feature
 video/src/theme.ts,.ts,video,"Documentation, experiments, or media; retain in original repository",not a shipped application feature
 video/src/workOrderAcceptance.tsx,.tsx,video,"Documentation, experiments, or media; retain in original repository",not a shipped application feature
-video/tsconfig.json,.json,video,"Documentation, experiments, or media; retain in original repository",not a shipped application feature

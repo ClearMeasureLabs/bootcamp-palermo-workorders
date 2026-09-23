@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 
@@ -36,7 +36,7 @@ class WorkOrder(models.Model):
         IN_PROGRESS = "InProgress", "In Progress"
         COMPLETE = "Complete", "Complete"
         CANCELLED = "Cancelled", "Cancelled"
-    number = models.CharField(max_length=30, unique=True, blank=True)
+    number = models.CharField(max_length=30, unique=True, blank=True, null=True)
     title = models.CharField(max_length=200)
     description = models.TextField(max_length=4000, blank=True)
     instructions = models.TextField(max_length=4000, blank=True)
@@ -50,10 +50,14 @@ class WorkOrder(models.Model):
     due_date = models.DateField(null=True, blank=True)
     def save(self, *args, **kwargs):
         creating = self.pk is None
-        super().save(*args, **kwargs)
         if creating and not self.number:
-            self.number = f"WO-{self.pk:06d}"
-            super().save(update_fields=["number"])
+            using = kwargs.get("using") or self._state.db
+            with transaction.atomic(using=using):
+                super().save(*args, **kwargs)
+                self.number = f"WO-{self.pk:06d}"
+                super().save(update_fields=["number"], using=using)
+        else:
+            super().save(*args, **kwargs)
     def __str__(self): return f"{self.number}: {self.title}"
 class WorkOrderEvent(models.Model):
     work_order = models.ForeignKey(WorkOrder, related_name="events", on_delete=models.CASCADE)

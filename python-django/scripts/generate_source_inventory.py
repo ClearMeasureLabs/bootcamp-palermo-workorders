@@ -12,6 +12,15 @@ def classify(path: str) -> tuple[str, str, str, str]:
     parts = Path(path).parts
     suffix = Path(path).suffix.lower() or "[no extension]"
     if len(parts) >= 2 and parts[0] == "src":
+        if len(parts) >= 3 and parts[1] == "UI":
+            area = f"src/UI/{parts[2]}"
+            if parts[2] in {"Client", "Shared"}:
+                destination, status = "python-django/workorders/templates/workorders/; forms.py; views.py", "partial; continue porting"
+            elif parts[2] == "Api":
+                destination, status = "Django views or Django REST Framework API (not implemented)", "deferred"
+            else:
+                destination, status = "python-django/config/; views.py; middleware or protocol-specific service", "partial; continue porting"
+            return suffix, area, destination, status
         area = f"src/{parts[1]}"
         if parts[1] == "Core":
             destination, status = "python-django/workorders/models.py; services.py; forms.py", "partial; continue porting"

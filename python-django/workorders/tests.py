@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError
 from datetime import date, datetime, timedelta, timezone as datetime_timezone
 from unittest.mock import patch
+from django.contrib import admin
 from .models import Employee, Role, WorkOrder, WorkOrderEvent
 from .services import available_transitions, chicago_today, due_date_badge, due_date_urgency, transition
 
@@ -28,6 +29,33 @@ class WorkOrderDomainTests(TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, WorkOrder.Status.DRAFT)
         self.assertEqual(WorkOrderEvent.objects.count(), 0)
+
+    def test_transition_reloads_state_and_rolls_back_when_history_write_fails(self):
+        stale_order = WorkOrder.objects.get(pk=self.order.pk)
+        transition(self.order, WorkOrder.Status.ASSIGNED, self.employee)
+        with self.assertRaises(ValidationError):
+            transition(stale_order, WorkOrder.Status.ASSIGNED, self.employee)
+        order = WorkOrder.objects.get(pk=self.order.pk)
+        with patch("workorders.services.WorkOrderEvent.objects.create", side_effect=RuntimeError("event insert failed")):
+            with self.assertRaises(RuntimeError):
+                transition(order, WorkOrder.Status.IN_PROGRESS, self.employee)
+        order.refresh_from_db()
+        self.assertEqual(order.status, WorkOrder.Status.ASSIGNED)
+        self.assertEqual(order.events.count(), 1)
+
+    def test_transition_rejects_oversized_note_without_persisting_change(self):
+        with self.assertRaises(ValidationError):
+            transition(self.order, WorkOrder.Status.ASSIGNED, self.employee, "N" * 501)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, WorkOrder.Status.DRAFT)
+
+    def test_assigned_cancellation_clears_assignment_metadata(self):
+        transition(self.order, WorkOrder.Status.ASSIGNED, self.employee)
+        transition(self.order, WorkOrder.Status.CANCELLED, self.employee)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, WorkOrder.Status.CANCELLED)
+        self.assertIsNone(self.order.assignee)
+        self.assertIsNone(self.order.assigned_at)
     def test_due_date_urgency_is_read_time_and_respects_status(self):
         today = date(2026, 9, 23)
         self.order.due_date = today - timedelta(days=1)
@@ -62,6 +90,20 @@ class WorkOrderWebTests(TestCase):
         response = self.client.get(reverse("health"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "Healthy")
+
+    @patch("workorders.views.connection.ensure_connection", side_effect=OSError("database is down"))
+    def test_health_reports_database_failure(self, _ensure_connection):
+        response = self.client.get(reverse("health"))
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["database"], "unavailable")
+
+    def test_admin_cannot_edit_lifecycle_or_mutate_history(self):
+        work_order_admin = admin.site._registry[WorkOrder]
+        event_admin = admin.site._registry[WorkOrderEvent]
+        self.assertIn("status", work_order_admin.get_readonly_fields(None))
+        self.assertIn("assignee", work_order_admin.get_readonly_fields(None))
+        self.assertFalse(event_admin.has_add_permission(None))
+        self.assertFalse(event_admin.has_delete_permission(None))
     def test_create_search_filter_detail_and_status_transition(self):
         self.login_as(self.creator)
         response = self.client.post(reverse("work_order_create"), {"title": "Replace light", "description": "Hallway", "instructions": "Use ladder", "room_number": "101", "assignee": self.assignee.pk, "due_date": ""})
@@ -133,10 +175,12 @@ class WorkOrderWebTests(TestCase):
         self.login_as(self.creator)
         self.assertEqual(available_transitions(order, self.creator), [WorkOrder.Status.ASSIGNED, WorkOrder.Status.CANCELLED])
         transition(order, WorkOrder.Status.ASSIGNED, self.creator)
+        order.refresh_from_db()
         self.assertEqual(available_transitions(order, self.assignee), [WorkOrder.Status.IN_PROGRESS])
         with self.assertRaises(ValidationError):
             transition(order, WorkOrder.Status.IN_PROGRESS, self.creator)
         transition(order, WorkOrder.Status.IN_PROGRESS, self.assignee)
+        order.refresh_from_db()
         self.assertEqual(available_transitions(order, self.creator), [])
         self.assertEqual(available_transitions(order, self.assignee), [WorkOrder.Status.ASSIGNED, WorkOrder.Status.COMPLETE])
     @patch("workorders.views.chicago_today", return_value=date(2026, 9, 23))

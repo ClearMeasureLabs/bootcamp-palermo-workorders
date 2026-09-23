@@ -1,5 +1,6 @@
 """Browser acceptance run. Set HEADFUL=1 for a visible Chromium window."""
 import os
+import secrets
 import subprocess
 import sys
 import tempfile
@@ -17,19 +18,25 @@ dbfile = tempfile.NamedTemporaryFile(prefix="workorders-acceptance-", suffix=".s
 dbfile.close()
 env = os.environ.copy()
 env["DJANGO_DB_PATH"] = dbfile.name
+env.setdefault("DJANGO_SECRET_KEY", secrets.token_urlsafe(48))
+env.setdefault("DJANGO_DEBUG", "0")
 env["DJANGO_ALLOWED_HOSTS"] = "127.0.0.1,localhost"
 port = os.getenv("ACCEPTANCE_PORT", "8765")
-server = subprocess.Popen([sys.executable, "manage.py", "runserver", f"127.0.0.1:{port}", "--noreload"], cwd=ROOT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+server_log = (ARTIFACTS / "django-server.log").open("w", encoding="utf-8")
+server = subprocess.Popen([sys.executable, "manage.py", "runserver", f"127.0.0.1:{port}", "--noreload"], cwd=ROOT, env=env, stdout=server_log, stderr=subprocess.STDOUT)
 try:
     import django
     os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings"
     os.environ["DJANGO_DB_PATH"] = dbfile.name
+    os.environ.setdefault("DJANGO_SECRET_KEY", env["DJANGO_SECRET_KEY"])
+    os.environ.setdefault("DJANGO_DEBUG", env["DJANGO_DEBUG"])
     django.setup()
     from django.core.management import call_command
     from workorders.models import Employee, Role, WorkOrder
     call_command("migrate", verbosity=0)
     employee = Employee.objects.create(username="acceptance-tech", first_name="Casey", last_name="Tech")
     employee.roles.add(Role.objects.create(name="Acceptance Creator", can_create_work_order=True))
+    Employee.objects.create(username="tlovejoy", first_name="Timothy", last_name="Lovejoy")
     today = timezone.localdate(timezone.now(), ZoneInfo("America/Chicago"))
     WorkOrder.objects.create(title="Acceptance: open overdue", due_date=today - timedelta(days=2))
     WorkOrder.objects.create(title="Acceptance: closed overdue", due_date=today - timedelta(days=2), status=WorkOrder.Status.COMPLETE)
@@ -89,6 +96,12 @@ try:
         page.get_by_role("heading", name="Log in").wait_for()
         page.goto(f"http://127.0.0.1:{port}/")
         assert page.get_by_role("link", name="New work order").count() == 0
+        page.get_by_role("link", name="Log in").click()
+        page.get_by_role("button", name="Log in as Timothy Lovejoy").click()
+        page.get_by_text("TIMOTHY LOVEJOY").wait_for()
+        page.reload()
+        page.get_by_text("TIMOTHY LOVEJOY").wait_for()
+        page.get_by_role("button", name="Log out").click()
         page.screenshot(path=str(ARTIFACTS / "acceptance-result.png"), full_page=True)
         context.close()
         browser.close()
@@ -96,5 +109,6 @@ try:
 finally:
     server.terminate()
     server.wait(timeout=10)
+    server_log.close()
     try: os.unlink(dbfile.name)
     except OSError: pass

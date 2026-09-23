@@ -9,11 +9,15 @@ cd python-django
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
+export DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+export DJANGO_DEBUG=1
 python manage.py migrate
 python manage.py runserver
 ```
 
 Open http://127.0.0.1:8000/. SQLite is the default local database. `DJANGO_DB_PATH` selects a different SQLite file. Use PostgreSQL in a production deployment via Django's native PostgreSQL backend and `psycopg`; SQL Server and the original Azure deployment packaging have not been ported yet.
+
+Set a secret key before running management commands or the server; settings fail closed when it is missing. `DJANGO_DEBUG` defaults to `0`; enable it explicitly only during local development.
 
 ## Checks and full-system acceptance
 

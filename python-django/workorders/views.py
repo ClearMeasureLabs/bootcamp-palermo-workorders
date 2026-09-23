@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db import connection
+from django.db.models import Count, Q
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -51,7 +52,8 @@ def work_order_list(request):
         order.due_urgency = due_date_urgency(order, today)
         order.due_badge = due_date_badge(order, today)
         order.due_css_class = {"DueToday": "due-date-today", "Overdue": "due-date-overdue"}.get(order.due_urgency, "")
-    counts = {s: WorkOrder.objects.filter(status=s).count() for s, _ in WorkOrder.Status.choices}
+    counts = {status: 0 for status, _ in WorkOrder.Status.choices}
+    counts.update(WorkOrder.objects.values("status").annotate(total=Count("id")).values_list("status", "total"))
     return render(request, "workorders/list.html", {"orders": orders, "query": query, "selected_status": status, "statuses": WorkOrder.Status.choices, "counts": counts, "overdue_only": overdue_only, "current_employee": actor})
 def work_order_create(request):
     actor = current_employee(request)
@@ -80,4 +82,9 @@ def work_order_transition(request, pk):
     except ValidationError as error:
         messages.error(request, " ".join(error.messages))
     return redirect("work_order_detail", pk=order.pk)
-def health(request): return JsonResponse({"status": "Healthy", "service": "workorders", "database": "configured"})
+def health(request):
+    try:
+        connection.ensure_connection()
+    except Exception:
+        return JsonResponse({"status": "Unhealthy", "service": "workorders", "database": "unavailable"}, status=503)
+    return JsonResponse({"status": "Healthy", "service": "workorders", "database": "connected"})

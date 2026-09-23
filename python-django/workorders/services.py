@@ -2,6 +2,7 @@ from datetime import date
 from zoneinfo import ZoneInfo
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils import timezone
 from .models import Employee, WorkOrder, WorkOrderEvent
 TRANSITIONS = {WorkOrder.Status.DRAFT: {WorkOrder.Status.ASSIGNED, WorkOrder.Status.CANCELLED}, WorkOrder.Status.ASSIGNED: {WorkOrder.Status.IN_PROGRESS, WorkOrder.Status.CANCELLED}, WorkOrder.Status.IN_PROGRESS: {WorkOrder.Status.ASSIGNED, WorkOrder.Status.COMPLETE}, WorkOrder.Status.COMPLETE: set(), WorkOrder.Status.CANCELLED: set()}
@@ -55,15 +56,25 @@ def available_transitions(work_order: WorkOrder, actor: Employee | None) -> list
 
 
 def transition(work_order: WorkOrder, target: str, actor: Employee | None, note: str = "") -> WorkOrder:
-    if target not in TRANSITIONS.get(work_order.status, set()):
-        raise ValidationError(f"Cannot change status from {work_order.get_status_display()} to {target}.")
-    actor_field = ACTOR_FOR_TRANSITION.get((work_order.status, target))
-    if actor is None or actor_field is None or actor.pk != getattr(work_order, f"{actor_field}_id"):
-        raise ValidationError("You are not allowed to perform this work order action.")
-    previous = work_order.status
-    work_order.status = target
-    if target == WorkOrder.Status.ASSIGNED: work_order.assigned_at = timezone.now()
-    if target == WorkOrder.Status.COMPLETE: work_order.completed_at = timezone.now()
-    work_order.save()
-    WorkOrderEvent.objects.create(work_order=work_order, from_status=previous, to_status=target, note=note)
-    return work_order
+    if len(note) > WorkOrderEvent._meta.get_field("note").max_length:
+        raise ValidationError("Transition note must be 500 characters or fewer.")
+    with transaction.atomic():
+        current = WorkOrder.objects.select_for_update().get(pk=work_order.pk)
+        if target not in TRANSITIONS.get(current.status, set()):
+            target_label = dict(WorkOrder.Status.choices).get(target, target)
+            raise ValidationError(f"Cannot change status from {current.get_status_display()} to {target_label}.")
+        actor_field = ACTOR_FOR_TRANSITION.get((current.status, target))
+        if actor is None or actor_field is None or actor.pk != getattr(current, f"{actor_field}_id"):
+            raise ValidationError("You are not allowed to perform this work order action.")
+        previous = current.status
+        current.status = target
+        if target == WorkOrder.Status.ASSIGNED:
+            current.assigned_at = timezone.now()
+        if target == WorkOrder.Status.COMPLETE:
+            current.completed_at = timezone.now()
+        if target == WorkOrder.Status.CANCELLED and previous == WorkOrder.Status.ASSIGNED:
+            current.assigned_at = None
+            current.assignee = None
+        current.save()
+        WorkOrderEvent.objects.create(work_order=current, from_status=previous, to_status=target, note=note)
+        return current
