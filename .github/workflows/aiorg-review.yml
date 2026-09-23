@@ -21,11 +21,29 @@ jobs:
     environment: aiorg
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      AIORG_HOME: ${{ github.workspace }}/aiorg
+      GH_TOKEN: ${{ github.token }}
     steps:
       # Base branch only (the default for pull_request_target): trusted CLAUDE.md and config.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Check out aiorg control plane (pinned)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: jeffreypalermo/aiorg
+          ref: "c19ca4f33015256602fb19d01f83719186688d2c"
+          # A read-only token for the aiorg repository when it is private; the default token when public.
+          token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
+          path: aiorg
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build aiorg CLI
+        working-directory: aiorg
+        run: dotnet build src/Aiorg.Cli -c Release -o ../aiorg-bin --nologo -v quiet
       - uses: anthropics/claude-code-action@8cf3482550831fb35a4fc3fbf7ca139cf8028b4c # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -39,10 +57,10 @@ jobs:
             - Testing policy: new behavior has tests; no tests deleted, skipped or weakened to make CI pass (flag it loudly).
             - Protected paths in .aiorg/config.yaml (git.protectedPaths) changed? Flag for owner review.
             - Secrets, credentials, PII in logs: flag as blocking.
-            Post one review with `gh pr review ${{ github.event.pull_request.number }} --comment` summarizing findings (blocking first) and inline comments where useful.
+            Post one review with `dotnet aiorg-bin/aiorg.dll review comment ${{ github.event.pull_request.number }} --body "<text>"` summarizing findings (blocking first) and inline comments where useful.
             Never approve, never request changes, never push commits, never merge.
           # Budget: sonnet, 30 turns, ~$2 per review.
           claude_args: >-
             --model claude-sonnet-5
             --max-turns 30
-            --allowedTools "Read,Grep,Glob,Bash(gh pr view ${{ github.event.pull_request.number }}:*),Bash(gh pr diff ${{ github.event.pull_request.number }}:*),Bash(gh pr review ${{ github.event.pull_request.number }}:*),mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Read,Grep,Glob,Bash(gh pr view ${{ github.event.pull_request.number }}:*),Bash(gh pr diff ${{ github.event.pull_request.number }}:*),Bash(dotnet aiorg-bin/aiorg.dll review comment ${{ github.event.pull_request.number }}:*),mcp__github_inline_comment__create_inline_comment"

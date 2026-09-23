@@ -1,6 +1,6 @@
 # aiorg: create the labels the org routes on (idempotent). Issue forms and triage only apply labels
-# that exist, so run this once after enabling (Actions > aiorg-labels > Run workflow); it also runs
-# when .aiorg/config.yaml changes on the default branch.
+# that exist. Runs daily and when .aiorg/config.yaml changes on the default branch; for labels right
+# after enabling, push a change to .aiorg/config.yaml. No manual trigger (ADR 0014).
 name: aiorg-labels
 on:
   schedule:
@@ -28,7 +28,9 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "c7f85bebfbd916a79182e8693da1c61d21abc534"
+          ref: "c19ca4f33015256602fb19d01f83719186688d2c"
+          # A read-only token for the aiorg repository when it is private; the default token when public.
+          token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: aiorg
           persist-credentials: false
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
