@@ -40,7 +40,7 @@ Database choice depends on platform and Docker availability. Linux with a Docker
 
 ### Python private build in this branch
 
-`python-django/PrivateBuild.ps1` and `python-django/scripts/private_build.sh` create/use a Python virtual environment, install pinned-major dependencies, remove and recreate a clean SQLite database, run Django configuration checks, apply migrations, and execute the Django test suite. Pass `-Acceptance` to the PowerShell entry point or set `RUN_ACCEPTANCE=1` for the shell script to install Chromium and run the full browser flow. This is a separate prototype build contract; it does not replace or claim to satisfy the root .NET private build.
+`python-django/PrivateBuild.ps1` and `python-django/scripts/private_build.sh` create/use a Python virtual environment, install compatible Django/Playwright dependencies, remove and recreate a clean SQLite database, run Django configuration checks, apply migrations, and execute the Django test suite. Pass `-Acceptance` to the PowerShell entry point or set `RUN_ACCEPTANCE=1` for the shell script to install Chromium and run the full browser flow. `python-django/AcceptanceTests.ps1` is the matching standalone PowerShell acceptance wrapper and supports `-Headful`. The root `PrivateBuild.ps1` and `AcceptanceTests.ps1` remain .NET-specific and unchanged on this prototype branch; running them at repository root still exercises the original system. This separate prototype build contract does not replace or claim to satisfy the root .NET private build.
 
 ## Native tools by responsibility
 
