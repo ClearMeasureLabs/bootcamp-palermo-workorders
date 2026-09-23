@@ -51,4 +51,4 @@ autonomy:
 calendar: ops-default
 aiorg:
   repo: jeffreypalermo/aiorg
-  ref: "1c7bfb15e8313920f65ea6fd79ab13161baeecce"             # pinned release tag or commit SHA of the control plane
+  ref: "a4ce96e803667edb8f4342262d25c770d8fac1bc"             # pinned release tag or commit SHA of the control plane
