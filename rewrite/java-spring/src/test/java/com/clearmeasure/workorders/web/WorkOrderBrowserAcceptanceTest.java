@@ -32,7 +32,12 @@ class WorkOrderBrowserAcceptanceTest {
             page.getByLabel("Title").fill("Acceptance repair");
             page.getByLabel("Room").fill("A-17");
             page.getByLabel("Creator").fill("Acceptance tester");
-            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save draft")).click();
+            page.getByLabel("Due date").fill("2026-10-01");
+            Response saveResponse = page.waitForResponse(
+                response -> response.url().endsWith("/work-orders") && response.request().method().equals("POST"),
+                () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save draft")).click());
+            assertEquals(302, saveResponse.status(), "The HTML form should save and redirect to the order list");
+            page.waitForURL("**/");
             page.getByText("Acceptance repair").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
             page.getByPlaceholder("Assignee").fill("Facilities team");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Assign")).click();
