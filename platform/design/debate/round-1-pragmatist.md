@@ -13,7 +13,7 @@
 - **The vendor already drew the Codefresh line.** Codefresh CI continues and GitOps Cloud is no longer available [R1]; promotions are disabled in GitOps Runtimes after 0.24.0 [R2]; the runtime's Argo CD fork sat at 3.1.5 in November 2025 [R3] while upstream is 3.5.3 [R4]. Full Codefresh means full Codefresh CI; full Argo CD means upstream Argo CD driven by Octopus's Argo CD integration [R7].
 - **Strangler, not big bang.** The GitHub Actions → Octopus → Azure Container Apps (ACA) path stays live and untouched. The new path (new Octopus space, version major 3, its own TDD/UAT databases, AKS) takes over one environment at a time, only after measurable exit criteria pass — the Strangler Fig pattern the README already teaches (pattern 25).
 - **Smallest complete platform, honest about environments and cost.** Two AKS clusters, one Argo CD each, Kustomize, three environments, two lifecycles. Terraform, run only by Octopus runbooks, creates and destroys environments in two layers: an admin-applied *foundation* holding every role assignment (the Contributor provisioning principal cannot create them [R37]) and a Contributor-applied *environment* layer. Previews stay inside the non-prod cluster and never touch subscription credentials.
-- **Teachable, with an unchanged inner loop.** `PrivateBuild.ps1`, `AcceptanceTests.ps1` and the Aspire AppHost remain the developer loop; pipelines are thin wrappers over `build.ps1`; every existing CI gate keeps running; labs 18–22 turn the platform into curriculum.
+- **Teachable, with an unchanged inner loop.** `PrivateBuild.ps1`, `AcceptanceTests.ps1` and the Aspire AppHost stay the developer loop; pipelines wrap `build.ps1`; every CI gate keeps running; labs 18–22 teach the rest.
 
 ## 2. Responsibility matrix
 
@@ -27,9 +27,9 @@
 | Release versioning & record | c computes `3.0.<commit height>`; sole Default-channel creator | — | **O** release record: packages, build info, commits, process snapshot | — |
 | Environment promotion | — (removed [R2]) | — (auto-sync never promotes) | **O** lifecycles, channels | — |
 | Approvals/gates | — (no `approval` steps) | — (no sync windows) | **O** manual interventions, freezes, RBAC | GitHub review + `build-result` |
-| Kubernetes reconciliation | — (no `deploy`/helm steps) | **O** auto-sync + self-heal | c commits tags, triggers sync, waits healthy [R7][R9] | — |
+| Kubernetes reconciliation | — (no `deploy`/helm steps [R22]) | **O** auto-sync + self-heal | c commits tags, triggers sync, waits healthy [R7][R9] | — |
 | Non-Kubernetes targets | — | — | **O** Azure SQL, Key Vault, legacy ACA | — |
-| Database migrations | c packages DbUp | — (PreSync in previews only) | **O** DbUp on a Kubernetes worker [R28], before the tag commit | — |
+| Database migrations | c packages DbUp | — (PreSync [R18] in previews only) | **O** DbUp on a Kubernetes worker [R28], before the tag commit | — |
 | Config & secrets | c CI-only, OIDC | c ConfigMaps, `SecretProviderClass` | c environment-scoped deploy variables | **O** Key Vault + CSI driver + workload identity [R49] |
 | Progressive delivery | — | deferred (Rollouts) | c blocking health gate | rolling update + readiness |
 | Rollback | — | — (UI rollback blocked by auto-sync [R17]) | **O** redeploy previous release | schema forward-only |
@@ -40,7 +40,7 @@
 **Overlaps resolved.**
 
 - *Codefresh promotions vs Octopus lifecycles vs Argo CD auto-sync.* Promotions are gone [R2]. Lifecycles decide *when* a version may enter an environment; auto-sync decides only *how fast* Git becomes cluster state, and only Octopus writes `envs/**`.
-- *Codefresh GitOps Runtime vs upstream Argo CD.* Upstream. The runtime bundles Argo CD, Rollouts, Workflows and Events [R6], hosted runtimes are deprecated [R5], and the fork trails upstream by four minor versions. Its bring-your-own-Argo mode [R50] would only add a second console over the same instance.
+- *Codefresh GitOps Runtime vs upstream Argo CD.* Upstream. The runtime bundles Argo CD, Rollouts, Workflows and Events [R6], hosted runtimes are deprecated [R5], and the fork trails upstream by four minor versions; the existing-Argo CD (BYOA) mode [R50] only adds a second console.
 - *Octopus Argo CD integration vs Codefresh promotion.* Octopus: image-tag and manifest steps, Trigger Sync, and verification "Argo CD Application is healthy" (2026.1+) or "Pull request merged" (2026.2+) [R7] — the vendor's recommended path [R1].
 - *Freezes.* Octopus deployment freezes only [R32]; Argo CD sync windows [R48] unused. Two freeze calendars would disagree.
 - *Release creation.* Only Codefresh `octopusdeploy-create-release` [R13]; external feed triggers [R27] off. A second creation path repeats the version collisions in `arch/DeployFailure-2026-08-21.md`.
@@ -68,7 +68,7 @@
 | Ingress | Gateway API via the AKS application routing add-on; ingress-nginx is retired [R46] | same |
 | Data | new TDD and UAT databases, never shared with legacy (NServiceBus queues and DbUp journals would collide) | one Prod database, shared with legacy only during cutover |
 
-Two clusters because the Codefresh runner runs privileged docker-in-docker pods (never beside prod) and one Argo CD per cluster avoids remote cluster-admin credentials.
+Two clusters because the Codefresh runner creates docker-in-docker build pods [R54] (normally privileged) that never belong beside prod, and one Argo CD per cluster avoids remote cluster-admin credentials.
 
 **Octopus (`<octopus-space>`).** Environments `tdd`, `uat`, `prod`. Lifecycles [R33]: `workorders-default` (TDD automatic → UAT manual → Prod manual) and `workorders-hotfix` (UAT → Prod). Channels: `Default` (Codefresh creates releases) and `Hotfix` (release manager creates `<image version>-hotfix.<n>` over an already-built image — the auditable replacement for `force_skip_tdd` in `deploy.yml`). Tenants: none. Platform Hub: deferred; its permissions are system-team only [R25] and the platform service account is Space Manager.
 
@@ -81,11 +81,11 @@ Two clusters because the Codefresh runner runs privileged docker-in-docker pods 
   - `foundation` — applied rarely by an Owner, User Access Administrator or RBAC Administrator: per-environment resource groups; user-assigned identities (AKS control plane, kubelet, app, migration worker, Codefresh push); **every role assignment** (AcrPull, AcrPush, Key Vault Secrets User at resource-group scope, Managed Identity Operator on the kubelet identity, subnet Network Contributor); Terraform state; CanNotDelete locks on prod, which Contributor cannot remove [R38].
   - `environment` — applied by the Contributor principal via Octopus: AKS with pre-created identities (never `--attach-acr`), Azure SQL, Key Vault in RBAC mode (inherits resource-group assignments), Application Insights, DNS, and federated credentials on the pre-created identities (allowed for Contributor [R39]).
   - Destroy removes resources inside a resource group, never the group (that deletes its role assignments). Prod has no destroy runbook.
-- *Credential:* the client-secret principal lives only in Octopus, as an Azure account scoped to provisioning runbooks, with an expiry-check runbook (legacy lost 13 days to one expired or rotated Octopus API key — EP18 in `arch/DeployFailure-2026-08-21.md`). Phase 3 swaps it for a federated-credential Azure account [R30], a one-time Entra/Owner action. Codefresh gets only AcrPush via its own OIDC token [R14]; Argo CD needs no Azure credential.
+- *Credential:* the client-secret principal lives only in Octopus (an Azure account scoped to provisioning runbooks) with an expiry-check runbook — legacy lost 13 days to one expired or rotated API key (EP18, `arch/DeployFailure-2026-08-21.md`). Phase 3 swaps it for a federated-credential account [R30], a one-time Entra/Owner action. Codefresh gets only AcrPush via OIDC [R14]; Argo CD needs no Azure credential.
 
-**Ephemeral environments: verdict.** Default-on, Azure-backed PR environments are not worth it: CI already runs the full Playwright suite against a real server on every push (x64 and ARM), a SQL Server container needs about 2 GB per namespace, the AI factory opens many PRs, and each Azure-backed environment would need the Contributor principal. Opt-in previews are worth it in phase 5: label `preview` → Codefresh builds `workorders/pr-ui:<full sha>` → ApplicationSet PR generator → namespace with a SQL Server container seeded by DbUp `rebuild` (Create, Update, Everytime, TestData) → deleted when the PR closes [R19]. That serves the pre-merge "Functional Testing" board column. Octopus ephemeral environments [R24] are not adopted: they cannot join lifecycles and would be a second preview model.
+**Ephemeral environments: verdict.** Default-on, Azure-backed PR environments are not worth it: CI already runs the full Playwright suite on every push, a SQL Server container needs about 2 GB per namespace, the AI factory opens many PRs, and each Azure-backed environment would need the Contributor principal. Phase 5 adds opt-in previews: label `preview` → Codefresh builds `workorders/pr-ui:<full sha>` → ApplicationSet PR generator → namespace with a SQL Server container seeded by DbUp `rebuild` (includes TestData) → deleted on PR close [R19]. That serves the pre-merge "Functional Testing" column. Octopus ephemeral environments [R24] cannot join lifecycles and would be a second preview model.
 
-**Cost.** New fixed cost is mostly two AKS clusters (ACA bills by consumption), runner nodes, per-environment SQL, licences and log ingestion (prices [UNVERIFIED]). Levers: autoscaler minimum 0 on `apps` and `ci`; no nightly stop for non-prod, because CI and TDD serve the AI factory around the clock; classroom clusters (phase 5) use scheduled stop/start runbooks on AKS Standard — clusters using node auto-provisioning, which AKS Automatic always uses, cannot be stopped [R40].
+**Cost.** New fixed cost is mostly two AKS clusters (ACA bills by consumption), runner nodes, per-environment SQL, licences and log ingestion (prices [UNVERIFIED]). Levers: autoscaler minimum 0 on `apps` and `ci`; no nightly non-prod stop, because CI and TDD serve the AI factory around the clock; phase-5 classroom clusters stop on schedule on AKS Standard — node auto-provisioning, always on in AKS Automatic, prevents stopping [R40].
 
 ## 4. End-to-end flow
 
@@ -136,8 +136,8 @@ sequenceDiagram
 2. **Build of record (Codefresh, `master`).** Classify paths with `.github/scripts/detect-code-changes.sh` (same allowlist as GitHub Actions; docs-only stops here) → `VERSION=3.0.$(git rev-list --count HEAD)` → `build.ps1 Build` against a SQL Server service container [R23] → CRAP gate → `Package-Everything` → images `workorders/ui` and `workorders/worker` tagged VERSION → SBOM, signature, ACR tag lock.
 3. **Codefresh → Octopus.** `obtain-oidc-id-token` (audience = service-account id) → `octopusdeploy-login` → `octopusdeploy-push-package` → `octopusdeploy-push-build-information` → `octopusdeploy-create-release` with VERSION and the commit, so the config-as-code process snapshot matches the commit [R13][R15]. Codefresh stops here.
 4. **TDD (automatic phase).** (a) DbUp `update` on the non-prod Kubernetes worker; (b) "Update Argo CD Application Image Tags" commits `newTag` to `apps/workorders/envs/tdd` through the Octopus GitHub App [R31], with Trigger Sync and verification "Argo CD Application is healthy" [R7]; (c) Argo CD syncs and reports through the outbound gRPC gateway [R11]; (d) health gate: `/_healthcheck` must be `Healthy`, `/api/version` must equal VERSION; (e) acceptance package on the worker with `StartLocalServer=false`, the TDD URL and TDD connection string (tests query the database through `IBus`), TRX attached [R36]; (f) commit status `platform/tdd`, distinct from legacy "Deploy to TDD" until cutover.
-5. **UAT.** Release manager deploys; manual intervention (UAT approvers); steps a–d; `Degraded` tolerated until #9016 closes — one environment-scoped variable replaces today's scattered policy (#9017).
-6. **Prod.** Freeze checked; manual intervention; steps a–d via the prod gateway; Insights records the deployment.
+5. **UAT.** Manual intervention (UAT approvers), then steps a–d; `Degraded` tolerated until #9016 closes, via one environment-scoped variable (#9017).
+6. **Prod.** Freeze checked; manual intervention; steps a–d via the prod gateway; Insights records it.
 
 **Every existing gate survives.**
 
@@ -309,7 +309,7 @@ images:
 | D13 | Previews | Deferred; opt-in label, in-cluster SQL | Azure-backed PR environments; Octopus ephemeral environments | Cost, credentials, second model |
 | D14 | Progressive delivery | Rolling update + readiness + health gate | Rollouts canary on day one | One replica, no Prometheus [R44]; the database is the real risk |
 
-**Cut or deferred.** Codefresh GitOps Runtime, Products, Promotion Flows. Argo CD Image Updater — a second writer of `newTag` [R45]. Argo CD sync windows. Octopus tenants (no customers; cohort lab later). Platform Hub (one project). External feed triggers. A Helm chart (the Octopus step updates Kustomize `newTag` [R8]). Octopus Kubernetes agent as a deployment target (keep the worker). Service mesh, hub-and-spoke Argo CD, Argo CD self-management, Crossplane.
+**Cut or deferred.** Codefresh GitOps Runtime and Promotion Flows; Image Updater (second `newTag` writer [R45]); sync windows; tenants; Platform Hub; feed triggers; an app Helm chart; the Kubernetes agent as a deployment target (keep the worker); service mesh; hub-and-spoke or self-managed Argo CD; Crossplane.
 
 ## 7. Risks, and what the other roles are likely to get wrong
 
@@ -325,13 +325,13 @@ images:
 | Preview tag drift: `CF_SHORT_REVISION` is 7 characters [R20], `{{.head_short_sha}}` 8 [R19] | Full SHA on both sides, checked |
 | Docs drift (Lab 09 describes a disabled scan and an outdated concurrency block) | Walkthroughs asserted by `consistency.sh` |
 
-**Octopus architect** will likely want Octopus to apply Kubernetes directly, plus Platform Hub, tenants and feed triggers on day one. Octopus's own integration makes Argo CD the applier [R7]; Platform Hub needs system-team permissions and pays off only with a second project; tenants model customers, not environments; feed triggers are a second release path.
+**Octopus architect** will likely want Octopus to apply Kubernetes directly, plus Platform Hub, tenants and feed triggers on day one. Octopus's own integration makes Argo CD the applier [R7]; Platform Hub needs system-team permissions and a second project to pay off; tenants model customers; feed triggers are a second release path.
 
-**GitOps architect** will likely want PR promotion between folders, PreSync migrations, Image Updater, Rollouts and self-managed Argo CD. Octopus already commits by pull request and waits for "Pull request merged" [R7], so PR promotion is a setting; Image Updater races Octopus for one field; PreSync moves migration logs and DDL credentials away from the approval record; Rollouts analysis needs traffic and a supported provider the app lacks [R44].
+**GitOps architect** will likely want folder-to-folder PR promotion, PreSync migrations, Image Updater, Rollouts and self-managed Argo CD. Octopus already commits by pull request and waits for "Pull request merged" [R7]; Image Updater races Octopus for one field; PreSync moves migration logs and DDL credentials away from the approval record; Rollouts analysis needs traffic and a provider the app lacks [R44].
 
-**Codefresh engineer** will likely want a GitOps Runtime with Products, Environments, Promotion Flows and DORA dashboards, and every gate in Codefresh. Promotions are disabled [R2], GitOps Cloud is unavailable [R1], the fork lags [R3][R4], and the Windows LocalDB gate cannot move [R21]. Codefresh's real value — fast, OIDC-native CI with first-class Octopus steps [R13] — deserves to be excellent rather than stretched.
+**Codefresh engineer** will likely want a GitOps Runtime with Products, Promotion Flows and DORA dashboards, and every gate in Codefresh. Promotions are disabled [R2], GitOps Cloud is gone [R1], the fork lags [R3][R4], and the Windows LocalDB gate cannot move [R21]. Codefresh's real value — fast, OIDC-native CI with first-class Octopus steps [R13] — deserves to be excellent, not stretched.
 
-**SRE/security lead** will likely demand enforced signatures, digest pinning, private endpoints, SLOs and zero secrets on day one. Agree on direction, sequence it: audit before enforce; the Octopus step writes tags, not digests [R8], so pair ACR tag locks [R41] with signature verification; accept the client-secret principal for bootstrap only, with a dated exit.
+**SRE/security lead** will likely demand enforced signatures, digest pinning, private endpoints and zero secrets on day one. Right direction, wrong order: audit before enforce; the Octopus step writes tags, not digests [R8], so pair ACR tag locks [R41] with signature verification; the client-secret principal is bootstrap-only, with a dated exit.
 
 ## 8. Implementation highlights
 
@@ -348,9 +348,9 @@ images:
 
 **A day in the life.**
 
-- *Developer.* Runs the AppHost, writes migration `032_*.sql` as in Lab 04, runs `./PrivateBuild.ps1` — nothing new. After merge, Octopus (read-only) shows release `3.0.N` with its commits; TDD turns green and the TDD footer shows the same version, git SHA and environment. A red TDD names the failing step — migration, sync health, health gate or acceptance — with TRX attached. Never opens Argo CD, the GitOps repo or Azure.
-- *Release manager.* Lives in Octopus: what is where, release notes from build information, deploy and approve. Prod ships on weekdays per `docs/release-cadence.md`, enforced as a recurring weekend freeze [R32]; hotfixes use the Hotfix channel on a built image; freeze overrides record a reason. Monthly Insights review [R34].
-- *On-call.* Paged on an unhealthy `/_healthcheck`. Octopus first (what changed, who approved), Argo CD read-only second (sync, health, events), logs in Azure Monitor. Bad release → Octopus redeploy of the previous release (a Git commit; schema stays forward-only). Infrastructure fault → runbooks. Never `kubectl set image`, never Argo CD UI rollback (blocked anyway [R17]).
+- *Developer.* Runs the AppHost, writes migration `032_*.sql` as in Lab 04, runs `./PrivateBuild.ps1` — nothing new. After merge, Octopus (read-only) shows release `3.0.N` with its commits; the TDD footer shows the same version, git SHA and environment. A red TDD names the failing step, with TRX attached. Never opens Argo CD, the GitOps repo or Azure.
+- *Release manager.* Lives in Octopus: what is where, release notes, deploy, approve. Weekday-only Prod releases (`docs/release-cadence.md`) become a recurring weekend freeze [R32]; hotfixes use the Hotfix channel on a built image; overrides record a reason. Monthly Insights review [R34].
+- *On-call.* Paged on an unhealthy `/_healthcheck`: Octopus first (what changed, who approved), Argo CD read-only second, logs in Azure Monitor. Bad release → redeploy the previous release in Octopus (a Git commit; schema stays forward-only). Infrastructure fault → runbooks. Never `kubectl set image` or Argo CD UI rollback (blocked anyway [R17]).
 
 **Proposed labs** (Sections 06–07). Each has an offline variant that reads `platform/` and predicts every hand-off; students hold read-only SSO roles and no deploy or Azure credentials.
 
@@ -363,7 +363,7 @@ images:
 | 22 | On-call: runbooks, health gates, DORA | Operate/Report, 40 min | 10 |
 | 17+ | Capstone stretch: Cancelled status to UAT | Build | 17 |
 
-**Cross-slice consistency checks** (`platform/checks/consistency.sh`, pragmatist-owned): Octopus environment and project slugs equal the `argo.octopus.com/*` annotations and overlay names; Codefresh image names equal Octopus package references and Kustomize `images[].name`; no `:latest` in desired state (legacy pushes `latest` from every branch); release version = image tag = `/api/version` = footer; manifest keys match what the code reads (`ConnectionStrings__SqlConnectionString`, `ApplicationInsights__ConnectionString`, `RemotableBus__ApiUrl`, `ASPNETCORE_ENVIRONMENT`), probes `/alive` and `/_healthcheck` on 8080; full SHA for previews; no `azurerm_role_assignment` outside `foundation/`; no prod destroy runbook; closing keywords in commits that should link work items [R35].
+**Cross-slice consistency checks** (`platform/checks/consistency.sh`, pragmatist-owned): Octopus slugs equal the `argo.octopus.com/*` annotations and overlay names; Codefresh image names equal Octopus package references and Kustomize `images[].name`; no `:latest` in desired state (legacy pushes `latest` from every branch); release version = image tag = `/api/version` = footer; manifest keys match what the code reads (`ConnectionStrings__SqlConnectionString`, `ApplicationInsights__ConnectionString`, `RemotableBus__ApiUrl`, `ASPNETCORE_ENVIRONMENT`); probes `/alive` and `/_healthcheck` on 8080; full SHA for previews; role assignments only in `foundation/`; no prod destroy runbook; closing keywords for work-item links [R35].
 
 ```bash
 # platform/checks/tool-boundaries.sh — sketch; fails when a tool leaves its lane
@@ -408,9 +408,11 @@ exit "$fail"
 | R15 | Octopus OIDC, any verifiable issuer | https://octopus.com/docs/api/authentication/openid-connect |
 | R16 | ACA: no Kubernetes API | https://learn.microsoft.com/en-us/azure/container-apps/compare-options |
 | R17 | Auto-sync blocks rollback | https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/ |
+| R18 | Hook types incl. PreSync | https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/ |
 | R19 | PR generator, 8-char short SHA | https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Pull-Request/ |
 | R20 | Codefresh variables, 7-char SHA | https://codefresh.io/docs/docs/pipelines/variables/ |
 | R21 | Codefresh Windows: incubation | https://codefresh.io/docs/docs/incubation/windows/ |
+| R22 | Codefresh `deploy`, `approval`, `launch-composition` step types | https://codefresh.io/docs/docs/pipelines/steps/ |
 | R23 | Service containers | https://codefresh.io/docs/docs/pipelines/service-containers/ |
 | R24 | Octopus ephemeral environments | https://octopus.com/docs/projects/ephemeral-environments |
 | R25 | Platform Hub permissions | https://octopus.com/docs/platform-hub |
@@ -442,5 +444,4 @@ exit "$fail"
 | R51 | Octopus Terraform provider | https://registry.terraform.io/providers/OctopusDeploy/octopusdeploy/latest/docs |
 | R52 | Pipeline spec, `codefresh create pipeline -f` | https://codefresh.io/docs/docs/integrations/codefresh-api/ |
 | R53 | Git triggers set commit status | https://codefresh.io/docs/docs/pipelines/triggers/git-triggers/ |
-
-Also verified: Codefresh `deploy`, `approval`, `launch-composition` step types (https://codefresh.io/docs/docs/pipelines/steps/); Argo CD PreSync hooks (https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/).
+| R54 | Runner creates engine and DinD pods | https://codefresh.io/docs/docs/installation/runner/runner-architecture/ |
