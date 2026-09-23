@@ -1,17 +1,118 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Work Orders</title>
-<style>body{font:16px system-ui;max-width:900px;margin:2rem auto;padding:0 1rem;color:#1e293b}h1{color:#123b5d}form,.card{border:1px solid #cbd5e1;border-radius:8px;padding:1rem;margin:1rem 0}label{display:block;margin:.6rem 0}input,textarea,button{font:inherit;padding:.5rem}input,textarea{width:96%}button{cursor:pointer;background:#155e75;color:white;border:0;border-radius:4px;margin:.25rem}.status{font-weight:bold;color:#0e7490}.due-date-today{background:#fef08a}.due-date-overdue{background:#fecaca}.urgency{font-weight:bold;border-radius:4px;padding:.15rem .4rem}</style></head>
-<body><h1>Work Orders</h1><p id="health">Checking service…</p>
-<form id="create-form"><h2>Save a draft</h2><label>Title <input name="title" required minlength="1" data-testid="title"></label><label>Description <textarea name="description" data-testid="description"></textarea></label><label>Instructions <textarea name="instructions" data-testid="instructions" maxlength="4000"></textarea></label><label>Room <input name="roomNumber" data-testid="room" maxlength="900"></label><label>Due date <input name="dueDate" type="date" data-testid="due-date"></label><button data-testid="save-draft">Save draft</button></form>
-<section><h2>Work order list</h2><form id="search-form"><label>Search <input name="q" data-testid="search-text"></label><label>Assignee username <input name="assignee" data-testid="search-assignee"></label><button data-testid="search">Search</button><button type="reset" data-testid="clear-search">Clear</button></form><div id="orders"></div></section><p id="message" role="status"></p>
-<script>
-const api='/api/work-orders'; const message=document.querySelector('#message');
-async function refresh(){const filters=new URLSearchParams(new FormData(document.querySelector('#search-form')));const items=await (await fetch(`${api}?${filters}`)).json();document.querySelector('#orders').innerHTML=items.map(o=>`<article class="card" data-testid="order-${o.id}"><h3>${esc(o.number)} — ${esc(o.title)}</h3><p>${esc(o.description)}</p>${o.instructions?`<p><strong>Instructions:</strong> ${esc(o.instructions)}</p>`:''}<p>Room ${esc(o.roomNumber||'—')} · <span class="status">${esc(o.status)}</span> · Assignee ${esc(o.assignee||'—')}</p>${o.dueDate?`<p class="${o.urgency==='DueToday'?'due-date-today':o.urgency==='Overdue'?'due-date-overdue':''}" data-testid="due-date-value">Due ${esc(o.dueDate)} <span class="urgency">${esc(o.dueDateBadge)}</span></p>`:''}<div>${o.status==='Draft'?`<button data-action="assign" data-id="${o.id}">Assign</button>`:''}${o.status==='Assigned'?`<button data-action="begin" data-id="${o.id}">Begin</button>`:''}${o.status==='InProgress'?`<button data-action="complete" data-id="${o.id}">Complete</button>`:''}</div></article>`).join('')||'<p>No work orders found.</p>';}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-document.querySelector('#create-form').addEventListener('submit',async e=>{e.preventDefault();let data=Object.fromEntries(new FormData(e.target));const r=await fetch(api,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});if(!r.ok){message.textContent=(await r.json()).message;return;}message.textContent='Draft saved';e.target.reset();await refresh();});
-document.querySelector('#search-form').addEventListener('submit',async e=>{e.preventDefault();await refresh();});
-document.querySelector('#search-form').addEventListener('reset',()=>setTimeout(refresh,0));
-document.querySelector('#orders').addEventListener('click',async e=>{const b=e.target.closest('button[data-action]');if(!b)return;let status={assign:'Assigned',begin:'InProgress',complete:'Complete'}[b.dataset.action];let body={status};if(status==='Assigned')body.assignee='demo.tech';let r=await fetch(`${api}/${b.dataset.id}/transitions`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const label=status==='InProgress'?'in progress':status.toLowerCase();message.textContent=r.ok?`Work order ${label}`:(await r.json()).message;await refresh();});
-fetch('/api/health').then(r=>r.json()).then(v=>document.querySelector('#health').textContent=`Service: ${v.status}`).catch(()=>document.querySelector('#health').textContent='Service unavailable'); refresh();
-</script></body></html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Work Orders</title>
+  <style>
+    [hidden]{display:none!important}body{font:16px system-ui;max-width:900px;margin:2rem auto;padding:0 1rem;color:#1e293b}h1{color:#123b5d}form,.card{border:1px solid #cbd5e1;border-radius:8px;padding:1rem;margin:1rem 0}label{display:block;margin:.6rem 0}input,textarea,select,button{font:inherit;padding:.5rem}input,textarea,select{max-width:100%}button{cursor:pointer;background:#155e75;color:white;border:0;border-radius:4px;margin:.25rem}.status{font-weight:bold;color:#0e7490}.due-date-today{background:#fef08a}.due-date-overdue{background:#fecaca}.urgency{font-weight:bold;border-radius:4px;padding:.15rem .4rem}.toolbar{display:flex;justify-content:space-between;align-items:center}.hint{color:#475569}
+  </style>
+</head>
+<body>
+  <h1>Work Orders</h1><p id="health">Checking service…</p>
+  <section id="login-view">
+    <h2>Sign in</h2><p class="hint">Demo login: select an employee. No password is required in this prototype; the API checks that the username exists and applies its saved roles.</p>
+    <label for="employee-select">Employee</label><select id="employee-select" data-testid="login-user"><option value="">-- Select a parishioner or staff member --</option></select>
+    <button id="login-button" data-testid="login">Login</button>
+    <button id="lovejoy-shortcut" data-testid="lovejoy-shortcut">Continue as Timothy Lovejoy</button>
+    <p id="login-error" class="error" role="alert"></p>
+  </section>
+  <main id="app-view" hidden>
+    <div class="toolbar"><p id="welcome"></p><button id="logout-button" data-testid="logout">Logout</button></div>
+    <label>Assign to <select id="assignee-select" data-testid="assign-to"></select></label>
+    <form id="create-form" hidden>
+      <h2>Save a draft</h2>
+      <label>Title <input name="title" required minlength="1" data-testid="title"></label>
+      <label>Description <textarea name="description" data-testid="description"></textarea></label>
+      <label>Instructions <textarea name="instructions" data-testid="instructions" maxlength="4000"></textarea></label>
+      <label>Room <input name="roomNumber" data-testid="room" maxlength="900"></label>
+      <label>Due date <input name="dueDate" type="date" data-testid="due-date"></label>
+      <button data-testid="save-draft">Save draft</button>
+    </form>
+    <section>
+      <h2>Work order list</h2>
+      <form id="search-form">
+        <label>Search <input name="q" data-testid="search-text"></label>
+        <label>Assignee username <input name="assignee" data-testid="search-assignee"></label>
+        <button data-testid="search">Search</button><button type="reset" data-testid="clear-search">Clear</button>
+      </form>
+      <div id="orders"></div>
+    </section>
+  </main>
+  <p id="message" role="status"></p>
+  <script>
+    const api='/api/work-orders';
+    const tokenKey='palermo.workorders.session';
+    const message=document.querySelector('#message');
+    let token=localStorage.getItem(tokenKey);
+    let currentUser=null;
+    let assignees=[];
+
+    function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+    function apiFetch(url,options={}){
+      const headers=new Headers(options.headers??{});
+      if(token)headers.set('authorization',`Bearer ${token}`);
+      return fetch(url,{...options,headers});
+    }
+    async function responseMessage(response){const body=await response.json();return Array.isArray(body.message)?body.message.join(', '):body.message??'Request failed';}
+    async function showSession(user){
+      currentUser=user;
+      document.querySelector('#login-view').hidden=true;
+      document.querySelector('#app-view').hidden=false;
+      document.querySelector('#welcome').textContent=`Welcome ${user.username}!`;
+      document.querySelector('#create-form').hidden=!user.canCreate;
+      assignees=await (await fetch('/api/employees?canFulfill=true')).json();
+      document.querySelector('#assignee-select').innerHTML=assignees.map(e=>`<option value="${esc(e.username)}">${esc(e.displayName)} (${esc(e.username)})</option>`).join('');
+      document.querySelector('#assignee-select').value=assignees.some(e=>e.username==='demo.tech')?'demo.tech':assignees[0]?.username??'';
+      await refresh();
+    }
+    function clearSession(){token=null;currentUser=null;localStorage.removeItem(tokenKey);document.querySelector('#app-view').hidden=true;document.querySelector('#login-view').hidden=false;}
+    async function login(username){
+      document.querySelector('#login-error').textContent='';
+      const response=await fetch('/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username})});
+      if(!response.ok){document.querySelector('#login-error').textContent=await responseMessage(response);return;}
+      const result=await response.json();token=result.token;localStorage.setItem(tokenKey,token);await showSession(result.user);
+    }
+    async function refresh(){
+      const filters=new URLSearchParams(new FormData(document.querySelector('#search-form')));
+      const response=await apiFetch(`${api}?${filters}`);
+      if(response.status===401){clearSession();return;}
+      const items=await response.json();
+      document.querySelector('#orders').innerHTML=items.map(o=>{
+        const isCreator=o.creator.toLowerCase()===currentUser.username.toLowerCase();
+        const isAssignee=o.assignee?.toLowerCase()===currentUser.username.toLowerCase();
+        const assign=o.status==='Draft'&&isCreator?`<button data-action="assign" data-id="${esc(o.id)}">Assign</button>`:'';
+        const begin=o.status==='Assigned'&&isAssignee?`<button data-action="begin" data-id="${esc(o.id)}">Begin</button><button data-action="shelve" data-id="${esc(o.id)}">Shelve</button>`:'';
+        const complete=o.status==='InProgress'&&isAssignee?`<button data-action="complete" data-id="${esc(o.id)}">Complete</button><button data-action="shelve" data-id="${esc(o.id)}">Shelve</button>`:'';
+        const cancel=o.status==='Assigned'&&isCreator?`<button data-action="cancel" data-id="${esc(o.id)}">Cancel</button>`:'';
+        return `<article class="card" data-testid="order-${esc(o.id)}"><h3>${esc(o.number)} — ${esc(o.title)}</h3><p>${esc(o.description)}</p>${o.instructions?`<p><strong>Instructions:</strong> ${esc(o.instructions)}</p>`:''}<p>Room ${esc(o.roomNumber||'—')} · <span class="status">${esc(o.status)}</span> · Assignee ${esc(o.assignee||'—')}</p>${o.dueDate?`<p class="${o.urgency==='DueToday'?'due-date-today':o.urgency==='Overdue'?'due-date-overdue':''}" data-testid="due-date-value">Due ${esc(o.dueDate)} <span class="urgency">${esc(o.dueDateBadge)}</span></p>`:''}<div>${assign}${begin}${complete}${cancel}</div></article>`;
+      }).join('')||'<p>No work orders found.</p>';
+    }
+
+    document.querySelector('#login-button').addEventListener('click',()=>login(document.querySelector('#employee-select').value));
+    document.querySelector('#lovejoy-shortcut').addEventListener('click',()=>login('tlovejoy'));
+    document.querySelector('#logout-button').addEventListener('click',async()=>{await apiFetch('/api/auth/logout',{method:'POST'});clearSession();message.textContent='Signed out';});
+    document.querySelector('#create-form').addEventListener('submit',async e=>{
+      e.preventDefault();const data=Object.fromEntries(new FormData(e.target));
+      const response=await apiFetch(api,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});
+      if(!response.ok){message.textContent=await responseMessage(response);return;}
+      message.textContent='Draft saved';e.target.reset();await refresh();
+    });
+    document.querySelector('#search-form').addEventListener('submit',async e=>{e.preventDefault();await refresh();});
+    document.querySelector('#search-form').addEventListener('reset',()=>setTimeout(refresh,0));
+    document.querySelector('#orders').addEventListener('click',async e=>{
+      const button=e.target.closest('button[data-action]');if(!button)return;
+      const action=button.dataset.action;
+      const status={assign:'Assigned',begin:'InProgress',complete:'Complete',cancel:'Cancelled',shelve:'Assigned'}[action];
+      const body={status};if(action==='assign')body.assignee=document.querySelector('#assignee-select').value;
+      const response=await apiFetch(`${api}/${button.dataset.id}/transitions`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+      const label={InProgress:'in progress',Assigned:'shelved',Cancelled:'cancelled',Complete:'complete'}[status];
+      message.textContent=response.ok?`Work order ${label}`:await responseMessage(response);await refresh();
+    });
+
+    fetch('/api/health').then(r=>r.json()).then(v=>document.querySelector('#health').textContent=`Service: ${v.status}`).catch(()=>document.querySelector('#health').textContent='Service unavailable');
+    fetch('/api/employees').then(r=>r.json()).then(employees=>{
+      document.querySelector('#employee-select').insertAdjacentHTML('beforeend',employees.map(e=>`<option value="${esc(e.username)}">${esc(e.displayName)}</option>`).join(''));
+    });
+    if(token){apiFetch('/api/auth/me').then(async response=>{if(response.ok)await showSession(await response.json());else clearSession();}).catch(clearSession);}
+  </script>
+</body>
+</html>

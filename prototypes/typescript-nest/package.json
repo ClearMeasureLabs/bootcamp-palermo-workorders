@@ -1,7 +1,7 @@
 {
   "name": "typescript-nest",
   "version": "1.0.0",
-  "description": "NestJS and Prisma rewrite spike for Palermo Work Orders",
+  "description": "NestJS and sql.js rewrite spike for Palermo Work Orders",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
