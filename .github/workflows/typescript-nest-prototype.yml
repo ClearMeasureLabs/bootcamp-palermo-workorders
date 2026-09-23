@@ -23,12 +23,19 @@ jobs:
           cache: npm
           cache-dependency-path: prototypes/typescript-nest/package-lock.json
       - run: npm ci
+        working-directory: prototypes/typescript-nest
       - run: npx playwright install --with-deps chromium
+        working-directory: prototypes/typescript-nest
       - run: npm run private-build
+        working-directory: prototypes/typescript-nest
       - run: npm run acceptance
-      - run: npm ci --prefix remotion
-      - run: npm exec --prefix remotion -- remotion browser ensure
-      - run: npm run render --prefix remotion
+        working-directory: prototypes/typescript-nest
+      - run: npm ci
+        working-directory: prototypes/typescript-nest/remotion
+      - run: npm exec -- remotion browser ensure
+        working-directory: prototypes/typescript-nest/remotion
+      - run: npm run render
+        working-directory: prototypes/typescript-nest/remotion
       - uses: actions/upload-artifact@v4
         with:
           name: typescript-nest-acceptance-video

@@ -55,6 +55,8 @@ The product flows found in the domain, UI and acceptance tests include: create/s
 
 `src/` contains a NestJS health endpoint and work-order API/service; `sql.js` creates and persists a local SQLite database on service startup and after writes; `public/index.html` is a minimal real browser UI. API behavior includes draft creation, list/detail, filtering by status, validated state changes, required assignee at assignment, and assigned/completed timestamps. `src/work-orders/work-orders.e2e-spec.ts` exercises the HTTP API against SQLite. `scripts/acceptance.mjs` starts the service, records a Playwright browser video, and runs a real browser flow from create through complete. `scripts/private-build.mjs` is this prototype's private-build analogue: clean local SQLite environment, locked dependency install, TypeScript compile and automated test.
 
+The matching PowerShell entry points are prototype-local: `PrivateBuild.ps1` invokes the native npm private build and `AcceptanceTests.ps1` invokes the browser acceptance flow (`-Headful` requests a visible browser when the host has a display). They do not replace the repository-root .NET `PrivateBuild.ps1` and `AcceptanceTests.ps1`.
+
 ```sh
 cd prototypes/typescript-nest
 npm ci
