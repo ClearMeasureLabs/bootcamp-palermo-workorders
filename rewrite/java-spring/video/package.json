@@ -2,7 +2,7 @@
   "name": "workorders-java-acceptance-video",
   "private": true,
   "scripts": {
-    "render": "remotion render src/index.ts AcceptanceRecording out/acceptance.mp4 --public-dir ../target/playwright-recordings --codec h264"
+    "render": "remotion render src/index.ts AcceptanceRecording out/acceptance.mp4 --codec h264"
   },
   "dependencies": {
     "@remotion/cli": "4.0.410",
