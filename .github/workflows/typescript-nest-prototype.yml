@@ -1,4 +1,4 @@
-name: TypeScript NestJS prototype
+name: TypeScript NestJS prototype # explicit working directories per command for npm's app and Remotion locks
 on:
   pull_request:
     paths:
