@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "76b64ed897f555edf2881c859a2f7fb23a9196d4"
+          ref: "1c7bfb15e8313920f65ea6fd79ab13161baeecce"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: .aiorg-cli
@@ -59,35 +59,16 @@ jobs:
           --post-check --repo "$REPO" --target-url "$RUN_URL" --json
   test-diff-off:
     # Kill switch on (AIORG_ENABLED is not true): nothing runs, but a required aiorg/test-diff must not
-    # block every merge, so this posts a neutral check that says the guard did not run. The revalidate
-    # job re-runs the guard on these heads once aiorg is back on.
+    # block every merge. This job's own check run is named aiorg/test-diff and passes without checking
+    # out the control plane, so it depends on no token. The revalidate job runs the real guard on these
+    # heads once aiorg is back on.
+    name: aiorg/test-diff
     if: vars.AIORG_ENABLED != 'true' && github.event_name == 'pull_request_target' && github.event.pull_request.base.ref == github.event.repository.default_branch
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      AIORG_HOME: ${{ github.workspace }}/.aiorg-cli
-      REPO: ${{ github.repository }}
-      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-      BASE_SHA: ${{ github.event.pull_request.base.sha }}
-      GH_TOKEN: ${{ github.token }}
+    timeout-minutes: 5
     steps:
-      - name: Check out aiorg control plane (pinned)
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          repository: jeffreypalermo/aiorg
-          ref: "76b64ed897f555edf2881c859a2f7fb23a9196d4"
-          # A read-only token for the aiorg repository when it is private; the default token when public.
-          token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
-          path: .aiorg-cli
-          persist-credentials: false
-      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
-        with:
-          dotnet-version: "10.0.x"
-      - name: Build aiorg CLI
-        working-directory: .aiorg-cli
-        run: dotnet build src/Aiorg.Cli -c Release -o ../.aiorg-cli-bin --nologo -v quiet
-      - name: Post the kill-switch aiorg/test-diff check (neutral, guard not run)
-        run: dotnet .aiorg-cli-bin/aiorg.dll guard test-diff --base "$BASE_SHA" --head "$HEAD_SHA" --disabled --post-check --repo "$REPO"
+      - name: Guard not run (aiorg is off)
+        run: dotnet --version
   revalidate:
     if: vars.AIORG_ENABLED == 'true' && github.event_name == 'schedule'
     runs-on: ubuntu-latest
@@ -106,7 +87,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: jeffreypalermo/aiorg
-          ref: "76b64ed897f555edf2881c859a2f7fb23a9196d4"
+          ref: "1c7bfb15e8313920f65ea6fd79ab13161baeecce"
           # A read-only token for the aiorg repository when it is private; the default token when public.
           token: ${{ secrets.AIORG_READ_TOKEN || github.token }}
           path: .aiorg-cli
