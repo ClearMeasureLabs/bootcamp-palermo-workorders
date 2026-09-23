@@ -40,6 +40,7 @@ class WorkOrderBrowserAcceptanceTest {
             page.locator("#username").selectOption("hsimpson");
             page.getByTestId("login-button").click();
             page.waitForURL("**/");
+            assertEquals(baseUrl + "/", page.url(), "Login redirect should not expose a session id in the URL");
             assertTrue(page.getByTestId("welcome-text").innerText().contains("hsimpson"));
             page.getByLabel("Title").fill("Acceptance repair");
             page.getByLabel("Room").fill("A-17");
