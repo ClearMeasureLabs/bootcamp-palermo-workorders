@@ -10,6 +10,8 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Real Chromium acceptance run. Video is written as a build artifact for PR review. */
@@ -20,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class WorkOrderBrowserAcceptanceTest {
     @LocalServerPort int port;
 
-    @Test void browserCreatesAndAssignsWorkOrderWhileRecordingVideo() throws Exception {
+    @Test void browserUsesDemoSessionAndEnforcesAssignedEmployeeLifecycleWhileRecordingVideo() throws Exception {
         Path videoDir = Path.of("target", "playwright-recordings");
         Files.createDirectories(videoDir);
         boolean headful = Boolean.parseBoolean(System.getenv().getOrDefault("PLAYWRIGHT_HEADFUL", "false"));
@@ -31,12 +33,18 @@ class WorkOrderBrowserAcceptanceTest {
                 .setRecordVideoDir(videoDir).setRecordVideoSize(1280, 720));
             Page page = context.newPage();
             Video video = page.video();
-            page.navigate("http://localhost:" + port + "/");
+            String baseUrl = "http://localhost:" + port;
+            page.navigate(baseUrl + "/login");
+            assertEquals("HOMER SIMPSON", page.locator("#username option[value='hsimpson']").innerText());
+            assertTrue(page.getByTestId("lovejoy-shortcut").isVisible());
+            page.locator("#username").selectOption("hsimpson");
+            page.getByTestId("login-button").click();
+            page.waitForURL("**/");
+            assertTrue(page.getByTestId("welcome-text").innerText().contains("hsimpson"));
             page.getByLabel("Title").fill("Acceptance repair");
             page.getByLabel("Room").fill("A-17");
-            page.getByLabel("Creator").fill("Acceptance tester");
             page.getByLabel("Instructions").fill("Bring a ladder and lockout kit");
-            page.getByLabel("Due date").fill("2026-10-01");
+            page.getByLabel("Due date").fill(LocalDate.now(ZoneId.of("America/Chicago")).plusDays(7).toString());
             Response saveResponse = page.waitForResponse(
                 response -> response.url().endsWith("/work-orders") && response.request().method().equals("POST"),
                 () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save draft")).click());
@@ -46,17 +54,32 @@ class WorkOrderBrowserAcceptanceTest {
             String renderedList = page.locator("body").innerText();
             assertTrue(renderedList.contains("Acceptance repair"),
                 "The redirect should render the created work order. URL=" + page.url() + " body=" + renderedList);
-            String number = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"))
-                .locator("td").first().innerText();
-            APIResponse apiRead = page.request().get("http://localhost:" + port + "/api/work-orders/" + number);
+            Locator orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
+            String number = orderRow.locator("td").first().innerText();
+            APIResponse apiRead = page.request().get(baseUrl + "/api/work-orders/" + number);
             assertEquals(200, apiRead.status());
             assertTrue(apiRead.text().contains("Bring a ladder and lockout kit"), "Instructions should persist from the browser form");
             assertTrue(renderedList.contains("Due Today") || renderedList.contains("On Track") || renderedList.contains("Overdue"),
                 "A dated open order should show an urgency badge");
-            page.getByPlaceholder("Assignee").fill("Facilities team");
+            assertEquals(403, page.request().post(baseUrl + "/api/work-orders/" + number + "/begin").status(),
+                "The creator cannot begin work assigned to another employee");
+            orderRow.locator("select[name='assignee']").selectOption("tlovejoy");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Assign")).click();
-            page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).getByText("ASSIGNED")
+            orderRow.getByText("ASSIGNED")
                 .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
+            page.getByTestId("logout-link").click();
+            page.waitForURL("**/login");
+            page.getByTestId("lovejoy-shortcut").click();
+            page.waitForURL("**/");
+            page.reload();
+            page.waitForURL("**/");
+            assertTrue(page.getByTestId("welcome-text").innerText().contains("tlovejoy"),
+                "The server session should persist across hard navigation");
+            orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
+            orderRow.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Begin")).click();
+            orderRow.getByText("IN_PROGRESS").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
+            orderRow.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Complete")).click();
+            orderRow.getByText("COMPLETE").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
             context.close(); // flushes the recorded webm to disk
             capturedVideo = video.path();
             browser.close();

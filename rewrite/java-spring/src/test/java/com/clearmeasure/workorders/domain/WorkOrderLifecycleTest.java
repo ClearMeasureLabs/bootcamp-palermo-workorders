@@ -38,4 +38,15 @@ class WorkOrderLifecycleTest {
         assertEquals(DueDateUrgency.NONE, DueDateUrgencyCalculator.calculate(
             null, WorkOrderStatus.DRAFT, beforeChicagoMidnight));
     }
+
+    @Test void lifecycleActorMustMatchTheStoredCreatorOrAssignee() {
+        WorkOrder order = new WorkOrder("WO-3", "Repair", "", "", "204", "Homer Simpson", "hsimpson", null);
+        order.assign("tlovejoy");
+        assertThrows(SecurityException.class, () -> order.begin("hsimpson"));
+        order.begin("tlovejoy");
+        assertThrows(SecurityException.class, () -> order.cancel("tlovejoy"));
+        order.cancel("hsimpson");
+        assertEquals(WorkOrderStatus.CANCELLED, order.getStatus());
+        assertNull(order.getAssigneeUsername());
+    }
 }

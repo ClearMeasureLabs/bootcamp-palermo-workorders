@@ -34,8 +34,14 @@ public class WorkOrder {
     @Column(name = "creator_name", length = 160)
     private String creatorName;
 
+    @Column(name = "creator_username", length = 100)
+    private String creatorUsername;
+
     @Column(name = "assignee_name", length = 160)
     private String assigneeName;
+
+    @Column(name = "assignee_username", length = 100)
+    private String assigneeUsername;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 24)
@@ -62,12 +68,18 @@ public class WorkOrder {
 
     public WorkOrder(String number, String title, String description, String instructions, String roomNumber,
                      String creatorName, LocalDate dueDate) {
+        this(number, title, description, instructions, roomNumber, creatorName, creatorName, dueDate);
+    }
+
+    public WorkOrder(String number, String title, String description, String instructions, String roomNumber,
+                     String creatorName, String creatorUsername, LocalDate dueDate) {
         this.number = number;
         this.title = title;
         this.description = description == null ? "" : description;
         this.instructions = instructions == null ? "" : instructions;
         this.roomNumber = roomNumber;
         this.creatorName = creatorName;
+        this.creatorUsername = creatorUsername;
         this.dueDate = dueDate;
         this.status = WorkOrderStatus.DRAFT;
     }
@@ -76,6 +88,16 @@ public class WorkOrder {
         requireStatus(WorkOrderStatus.DRAFT);
         if (assignee == null || assignee.isBlank()) throw new IllegalArgumentException("Assignee is required");
         this.assigneeName = assignee.trim();
+        this.assigneeUsername = assignee.trim();
+        this.assignedAt = OffsetDateTime.now();
+        this.status = WorkOrderStatus.ASSIGNED;
+    }
+
+    public void assign(Employee assignee) {
+        requireStatus(WorkOrderStatus.DRAFT);
+        if (assignee == null) throw new IllegalArgumentException("Assignee is required");
+        this.assigneeName = assignee.getDisplayName();
+        this.assigneeUsername = assignee.getUsername();
         this.assignedAt = OffsetDateTime.now();
         this.status = WorkOrderStatus.ASSIGNED;
     }
@@ -85,16 +107,45 @@ public class WorkOrder {
         this.status = WorkOrderStatus.IN_PROGRESS;
     }
 
+    public void begin(String actorUsername) {
+        requireActor(assigneeUsername, actorUsername);
+        begin();
+    }
+
     public void complete() {
         requireStatus(WorkOrderStatus.IN_PROGRESS);
         this.status = WorkOrderStatus.COMPLETE;
         this.completedAt = OffsetDateTime.now();
     }
 
+    public void complete(String actorUsername) {
+        requireActor(assigneeUsername, actorUsername);
+        complete();
+    }
+
     public void cancel() {
         if (status == WorkOrderStatus.COMPLETE || status == WorkOrderStatus.CANCELLED)
             throw new IllegalStateException("Closed work orders cannot be cancelled");
         this.status = WorkOrderStatus.CANCELLED;
+    }
+
+    public void cancel(String actorUsername) {
+        requireActor(creatorUsername, actorUsername);
+        cancel();
+        this.assignedAt = null;
+        this.assigneeName = null;
+        this.assigneeUsername = null;
+    }
+
+    public void shelve(String actorUsername) {
+        requireActor(assigneeUsername, actorUsername);
+        requireStatus(WorkOrderStatus.IN_PROGRESS);
+        this.status = WorkOrderStatus.ASSIGNED;
+    }
+
+    private static void requireActor(String expected, String actual) {
+        if (expected == null || !expected.equals(actual))
+            throw new SecurityException("The signed-in employee cannot perform this action");
     }
 
     private void requireStatus(WorkOrderStatus expected) {
@@ -108,7 +159,9 @@ public class WorkOrder {
     public String getInstructions() { return instructions; }
     public String getRoomNumber() { return roomNumber; }
     public String getCreatorName() { return creatorName; }
+    public String getCreatorUsername() { return creatorUsername; }
     public String getAssigneeName() { return assigneeName; }
+    public String getAssigneeUsername() { return assigneeUsername; }
     public WorkOrderStatus getStatus() { return status; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getAssignedAt() { return assignedAt; }
