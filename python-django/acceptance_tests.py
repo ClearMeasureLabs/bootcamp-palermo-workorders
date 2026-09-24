@@ -65,7 +65,7 @@ try:
         page.screenshot(path=str(ARTIFACTS / "search-1365x900.png"))
         page.reload()
         page.locator(".header-actions .welcome").wait_for()
-        page.get_by_role("link", name="New work order").click()
+        page.locator(".sidebar-nav a[href='/work-orders/new/']").click()
         page.get_by_label("Title").fill("Acceptance: repair sink")
         page.get_by_label("Room number").fill("Fellowship Hall")
         page.get_by_label("Due date").fill(today.isoformat())
