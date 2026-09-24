@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 # workorders/db-migrator: the DbUp console ChurchBulletin.Database (app:src/Database)
 # plus its SQL scripts (contract §7.5). Used by the phase-6 preview Sync-hook Job
 # (`rebuild`, then `seed` after WI-07; ADR-C4). Named environments migrate through

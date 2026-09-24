@@ -6,11 +6,14 @@
 # published and nothing is written back.
 #
 # One step per scripts/checks/validate-all.sh sub-command, each on a pinned public
-# tool image (digests are placeholders until the first run). CI=true turns a
+# tool image that ships bash 5 (the check scripts need bash 4 or later); digests
+# are placeholders until the first run. CI=true, set on every step, turns a
 # missing tool into a failure instead of a skip. The `mermaid` sub-command is
 # local only (it needs a Node validator) and is not run here.
-# On `main`, the boundaries step also runs the bot-path audit (§6.2); it needs
-# PLATFORM_BOT_AUTHORS, a pipeline variable set in the spec.
+# On `main`, the boundaries step also runs the bot-path audit (§6.2). It reads
+# PLATFORM_BOT_AUTHORS, a pipeline variable of the spec that Codefresh puts into
+# every step's environment. It is deliberately not re-mapped as ${{...}} here: an
+# unset variable would then arrive as literal text and match no commit.
 version: "1.0"
 mode: parallel
 fail_fast: false
@@ -81,15 +84,19 @@ steps:
   terraform:
     title: terraform fmt -check
     stage: checks
-    image: "hashicorp/terraform:1.16.4@sha256:<terraform-1.16.4-digest>"
+    # Debian with bash, curl and python3; the official Terraform image is Alpine
+    # without bash, so the release binary is installed and checksum-verified here.
+    image: "python:3.13-bookworm@sha256:<python-3.13-bookworm-digest>"
     fail_fast: false
     strict_fail_fast: true
     when: *after_clone
     environment:
       - CI=true
     commands:
-      # Alpine-based image: add bash and GNU find for validate-all.sh.
-      - apk add --no-cache bash findutils
+      - curl -fsSL -o /tmp/terraform.zip https://releases.hashicorp.com/terraform/1.16.4/terraform_1.16.4_linux_amd64.zip
+      - echo "<terraform-1.16.4-linux-amd64-sha256>  /tmp/terraform.zip" | sha256sum -c -
+      - python3 -m zipfile -e /tmp/terraform.zip /usr/local/bin/
+      - chmod 0755 /usr/local/bin/terraform
       - bash scripts/checks/validate-all.sh terraform
 
   boundaries:
@@ -103,6 +110,11 @@ steps:
     environment:
       - CI=true
     commands:
+      # An unreplaced placeholder would match no commit and pass the audit vacuously.
+      - |-
+        case "${PLATFORM_BOT_AUTHORS:-}" in
+          '<'*'>') echo "boundaries: PLATFORM_BOT_AUTHORS still holds its placeholder" >&2; exit 1 ;;
+        esac
       - bash scripts/checks/validate-all.sh boundaries
 
   consistency:
@@ -131,6 +143,6 @@ steps:
     when: *after_clone
     environment:
       - CI=true
+    # The image ships bash and git (Alpine; gitleaks v8.28.0 Dockerfile).
     commands:
-      - command -v bash >/dev/null 2>&1 || apk add --no-cache bash
       - bash scripts/checks/validate-all.sh secrets

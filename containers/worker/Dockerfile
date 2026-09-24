@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 # workorders/worker: the NServiceBus endpoint WorkOrderProcessing (app:src/Worker, F5),
 # deployed as Deployment `worker` (contract §7.4, §7.5). It has no HTTP endpoint and
 # no probes until WI-04; it requires RemotableBus__ApiUrl and the SQL connection

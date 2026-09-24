@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 # platform/ci-dotnet: one toolchain image for
 #   - every Codefresh gate in workorders/ci and workorders/release, and
 #   - the Octopus steps migrate-database and acceptance-tests
