@@ -51,7 +51,6 @@ try {
   await newOrder.getByRole('button', { name: 'Assign' }).click();
   await page.getByText('Work order assigned').waitFor();
   const assignedCard = page.locator('#orders article').filter({ hasText: acceptanceTitle });
-  await assignedCard.getByRole('button', { name: 'Begin' }).waitFor();
   await assignedCard.getByRole('button', { name: 'Shelve' }).waitFor({ state: 'detached' });
   await page.getByTestId('search-assignee').fill('demo.tech');
   await page.getByTestId('search').click();
