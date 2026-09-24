@@ -25,10 +25,15 @@ public class WorkOrderController {
     }
 
     @GetMapping public List<WorkOrder> list(@RequestParam(required = false) WorkOrderStatus status,
-                                            @RequestParam(defaultValue = "false") boolean overdueOnly) {
+                                            @RequestParam(defaultValue = "false") boolean overdueOnly,
+                                            HttpSession session) {
+        sessions.requireCurrent(session);
         return service.list(status, overdueOnly);
     }
-    @GetMapping("/{number}") public WorkOrder get(@PathVariable String number) { return service.get(number); }
+    @GetMapping("/{number}") public WorkOrder get(@PathVariable String number, HttpSession session) {
+        sessions.requireCurrent(session);
+        return service.get(number);
+    }
     @PostMapping @ResponseStatus(HttpStatus.CREATED)
     public WorkOrder create(@Valid @RequestBody CreateWorkOrder request, HttpSession session) {
         Employee actor = sessions.requireCurrent(session);

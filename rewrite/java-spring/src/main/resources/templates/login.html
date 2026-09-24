@@ -15,6 +15,7 @@
     <p class="note">Demo sign-in uses an employee selection and does not ask for a password.</p>
     <p class="error" th:if="${error}" th:text="${error}"></p>
     <form method="post" action="/login">
+        <input type="hidden" name="_csrf" th:value="${csrfToken}">
         <label for="username">Select employee
             <select id="username" name="username" data-testid="username-select" required>
                 <option value="">-- Select a parishioner or staff member --</option>
@@ -25,6 +26,7 @@
         <button type="submit" data-testid="login-button">Enter the Portal</button>
     </form>
     <form method="post" action="/login/lovejoy">
+        <input type="hidden" name="_csrf" th:value="${csrfToken}">
         <button type="submit" data-testid="lovejoy-shortcut">Log in as Timothy Lovejoy</button>
     </form>
 </main></body>

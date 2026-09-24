@@ -26,6 +26,10 @@ public class WorkOrderService {
 
     public WorkOrder create(String title, String description, String instructions, String room, Employee creator, LocalDate dueDate) {
         if (title == null || title.isBlank()) throw new IllegalArgumentException("Title is required");
+        requireMaxLength("Title", title, 240);
+        requireMaxLength("Description", description, 4000);
+        requireMaxLength("Instructions", instructions, 4000);
+        requireMaxLength("Room number", room, 900);
         if (!creator.canCreateWorkOrder()) throw new ForbiddenActionException("Your employee roles cannot create work orders");
         String number = "WO-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
         return repository.save(new WorkOrder(number, title.trim(), description, instructions, room,
@@ -80,5 +84,10 @@ public class WorkOrderService {
     private static void requireAssignee(WorkOrder order, Employee actor) {
         if (!actor.getUsername().equals(order.getAssigneeUsername()))
             throw new ForbiddenActionException("Only the assigned employee can perform this action");
+    }
+
+    private static void requireMaxLength(String field, String value, int maxLength) {
+        if (value != null && value.length() > maxLength)
+            throw new IllegalArgumentException(field + " must be " + maxLength + " characters or fewer");
     }
 }

@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,5 +43,6 @@ public class WorkOrderAttachmentController {
     }
 
     public record AddAttachmentRequest(@NotBlank @Size(max = 500) String fileName,
-                                       @NotBlank @Size(max = 200) String contentType, long fileSize) { }
+                                       @NotBlank @Size(max = 200) String contentType,
+                                       @PositiveOrZero long fileSize) { }
 }

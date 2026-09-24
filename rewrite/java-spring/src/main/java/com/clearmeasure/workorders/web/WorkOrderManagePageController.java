@@ -6,6 +6,7 @@ import com.clearmeasure.workorders.application.WorkOrderService;
 import com.clearmeasure.workorders.domain.Employee;
 import com.clearmeasure.workorders.domain.WorkOrder;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,13 +28,14 @@ public class WorkOrderManagePageController {
     }
 
     @GetMapping("/work-orders/{number}/manage")
-    public String manage(@PathVariable String number, Model model, HttpSession session) {
+    public String manage(@PathVariable String number, Model model, HttpSession session, HttpServletRequest request) {
         Employee actor = sessions.currentOrNull(session);
         if (actor == null) return "redirect:/login";
         WorkOrder workOrder = workOrders.get(number);
         model.addAttribute("workOrder", workOrder);
         model.addAttribute("attachments", attachments.list(number, actor));
         model.addAttribute("currentUser", actor);
+        model.addAttribute("csrfToken", request.getAttribute(CsrfProtectionFilter.REQUEST_ATTRIBUTE));
         return "work-order-manage";
     }
 

@@ -19,6 +19,7 @@
 <section data-testid="attachments-section">
     <h2>Attachments</h2>
     <form method="post" th:action="@{/work-orders/{number}/manage/attachments(number=${workOrder.number})}">
+        <input type="hidden" name="_csrf" th:value="${csrfToken}">
         <label>File name <input name="fileName" maxlength="500" required></label>
         <label>Content type <input name="contentType" maxlength="200" required></label>
         <label>File size in bytes <input name="fileSize" type="number" required></label>

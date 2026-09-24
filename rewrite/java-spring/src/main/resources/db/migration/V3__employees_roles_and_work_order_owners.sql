@@ -79,3 +79,16 @@ insert into employee_roles (employee_id, role_id)
 select e.id, r.id from employees e, roles r
 where e.username = 'msimpson' and r.name = 'Parishioner'
 and not exists (select 1 from employee_roles er where er.employee_id = e.id and er.role_id = r.id);
+
+-- Backfill existing owner display names when they match a seeded demo employee exactly.
+-- Unknown legacy names remain NULL so they cannot be mistaken for an authenticated username.
+update work_orders w
+set creator_username = (select e.username from employees e
+    where lower(trim(e.first_name || ' ' || e.last_name)) = lower(trim(w.creator_name)))
+where w.creator_username is null and exists (select 1 from employees e
+    where lower(trim(e.first_name || ' ' || e.last_name)) = lower(trim(w.creator_name)));
+update work_orders w
+set assignee_username = (select e.username from employees e
+    where lower(trim(e.first_name || ' ' || e.last_name)) = lower(trim(w.assignee_name)))
+where w.assignee_username is null and exists (select 1 from employees e
+    where lower(trim(e.first_name || ' ' || e.last_name)) = lower(trim(w.assignee_name)));

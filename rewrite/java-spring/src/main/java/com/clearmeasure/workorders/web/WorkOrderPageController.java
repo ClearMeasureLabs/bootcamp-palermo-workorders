@@ -5,6 +5,7 @@ import com.clearmeasure.workorders.application.EmployeeSessionService;
 import com.clearmeasure.workorders.domain.Employee;
 import com.clearmeasure.workorders.domain.WorkOrderStatus;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +21,14 @@ public class WorkOrderPageController {
     }
 
     @GetMapping("/") public String home(@RequestParam(required=false) WorkOrderStatus status,
-        @RequestParam(defaultValue = "false") boolean overdueOnly, Model model, HttpSession session) {
+        @RequestParam(defaultValue = "false") boolean overdueOnly, Model model, HttpSession session,
+        HttpServletRequest request) {
+        Employee currentUser = sessions.currentOrNull(session);
+        if (currentUser == null) return "redirect:/login";
         model.addAttribute("orders", service.list(status, overdueOnly)); model.addAttribute("statuses", WorkOrderStatus.values());
         model.addAttribute("selectedStatus", status); model.addAttribute("overdueOnly", overdueOnly);
-        Employee currentUser = sessions.currentOrNull(session);
         model.addAttribute("currentUser", currentUser);
+        model.addAttribute("csrfToken", request.getAttribute(CsrfProtectionFilter.REQUEST_ATTRIBUTE));
         model.addAttribute("fulfillmentEmployees", sessions.fulfillmentChoices());
         return "work-orders";
     }

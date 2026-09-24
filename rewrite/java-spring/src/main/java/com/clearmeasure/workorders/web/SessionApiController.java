@@ -5,6 +5,7 @@ import com.clearmeasure.workorders.application.EmployeeSessionService.EmployeeVi
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/session")
+@Profile({"dev", "test"})
 public class SessionApiController {
     private final EmployeeSessionService sessions;
     public SessionApiController(EmployeeSessionService sessions) { this.sessions = sessions; }

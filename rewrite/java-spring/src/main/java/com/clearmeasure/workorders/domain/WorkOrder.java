@@ -56,6 +56,10 @@ public class WorkOrder {
     @Column(name = "completed_at")
     private OffsetDateTime completedAt;
 
+    @Version
+    @Column(nullable = false)
+    private long version;
+
     @Column(name = "due_date")
     private LocalDate dueDate;
 
@@ -63,12 +67,12 @@ public class WorkOrder {
 
     public WorkOrder(String number, String title, String description, String roomNumber,
                      String creatorName, LocalDate dueDate) {
-        this(number, title, description, "", roomNumber, creatorName, dueDate);
+        this(number, title, description, "", roomNumber, creatorName, (String) null, dueDate);
     }
 
     public WorkOrder(String number, String title, String description, String instructions, String roomNumber,
                      String creatorName, LocalDate dueDate) {
-        this(number, title, description, instructions, roomNumber, creatorName, creatorName, dueDate);
+        this(number, title, description, instructions, roomNumber, creatorName, (String) null, dueDate);
     }
 
     public WorkOrder(String number, String title, String description, String instructions, String roomNumber,
@@ -166,6 +170,7 @@ public class WorkOrder {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getAssignedAt() { return assignedAt; }
     public OffsetDateTime getCompletedAt() { return completedAt; }
+    public long getVersion() { return version; }
     public LocalDate getDueDate() { return dueDate; }
     @JsonProperty("urgency")
     public DueDateUrgency getUrgency() {

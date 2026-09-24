@@ -39,8 +39,9 @@ public class WorkOrderAttachmentService {
         requireParticipant(workOrder, actor);
         if (fileName == null || fileName.isBlank()) throw new IllegalArgumentException("File name is required");
         if (fileName.length() > 500) throw new IllegalArgumentException("File name must be 500 characters or fewer");
-        if (contentType == null) throw new IllegalArgumentException("Content type is required");
+        if (contentType == null || contentType.isBlank()) throw new IllegalArgumentException("Content type is required");
         if (contentType.length() > 200) throw new IllegalArgumentException("Content type must be 200 characters or fewer");
+        if (fileSize < 0) throw new IllegalArgumentException("File size cannot be negative");
         WorkOrderAttachment attachment = attachments.save(new WorkOrderAttachment(UUID.randomUUID(), workOrder.getId(),
             fileName, contentType, fileSize, actor.getId(), OffsetDateTime.ofInstant(clock.instant(), ZoneOffset.UTC)));
         return view(attachment, actor.getDisplayName());
