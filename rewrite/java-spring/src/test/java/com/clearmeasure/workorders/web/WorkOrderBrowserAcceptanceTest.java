@@ -62,6 +62,22 @@ class WorkOrderBrowserAcceptanceTest {
             assertTrue(apiRead.text().contains("Bring a ladder and lockout kit"), "Instructions should persist from the browser form");
             assertTrue(renderedList.contains("Due Today") || renderedList.contains("On Track") || renderedList.contains("Overdue"),
                 "A dated open order should show an urgency badge");
+            orderRow.getByRole(AriaRole.LINK).click();
+            page.waitForURL("**/work-orders/*/manage");
+            assertTrue(page.getByTestId("attachments-section").isVisible());
+            assertEquals(0, page.locator("input[type='file']").count(), "This parity slice records metadata and does not upload binary content");
+            page.getByLabel("File name").fill("damage-photo.jpg");
+            page.getByLabel("Content type").fill("image/jpeg");
+            page.getByLabel("File size in bytes").fill("2048");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add attachment metadata")).click();
+            page.waitForURL("**/work-orders/*/manage");
+            assertEquals("damage-photo.jpg", page.getByTestId("attachment-file-name").innerText());
+            assertEquals("image/jpeg", page.getByTestId("attachment-content-type").innerText());
+            assertEquals("2048", page.getByTestId("attachment-file-size").innerText());
+            assertEquals("Homer Simpson", page.getByTestId("attachment-uploaded-by").innerText());
+            assertTrue(page.getByTestId("attachment-uploaded-date").innerText().endsWith("Z"),
+                "Displayed upload time should be UTC");
+            page.navigate(baseUrl + "/");
             assertEquals(403, page.request().post(baseUrl + "/api/work-orders/" + number + "/begin").status(),
                 "The creator cannot begin work assigned to another employee");
             orderRow.locator("select[name='assignee']").selectOption("tlovejoy");

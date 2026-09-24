@@ -42,7 +42,7 @@ src/AcceptanceTests/TestHttpClientFactory.cs,cs,AcceptanceTests,src/test/java,"p
 src/AcceptanceTests/Usings.cs,cs,AcceptanceTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/AcceptanceTests/WorkOrders/WorkOrderAIChatTests.cs,cs,AcceptanceTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/AcceptanceTests/WorkOrders/WorkOrderAssignTests.cs,cs,AcceptanceTests,src/test/java,"planned; selected domain, API, browser tests ported"
-src/AcceptanceTests/WorkOrders/WorkOrderAttachmentTests.cs,cs,AcceptanceTests,src/test/java,"planned; selected domain, API, browser tests ported"
+src/AcceptanceTests/WorkOrders/WorkOrderAttachmentTests.cs,cs,AcceptanceTests,src/test/java,metadata-only attachment API and browser manage-page coverage ported
 src/AcceptanceTests/WorkOrders/WorkOrderBeginTests.cs,cs,AcceptanceTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/AcceptanceTests/WorkOrders/WorkOrderCancelTests.cs,cs,AcceptanceTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/AcceptanceTests/WorkOrders/WorkOrderCompleteTests.cs,cs,AcceptanceTests,src/test/java,"planned; selected domain, API, browser tests ported"
@@ -96,7 +96,7 @@ src/Core/Model/Events/WorkOrderAssignedToBotEvent.cs,cs,Core,domain,planned; onl
 src/Core/Model/Messages/TracerBulletCommand.cs,cs,Core,domain,planned; only core lifecycle and urgency currently ported
 src/Core/Model/Messages/TracerBulletReplyMessage.cs,cs,Core,domain,planned; only core lifecycle and urgency currently ported
 src/Core/Model/Role.cs,cs,Core,domain,employee and role capability model ported; other source behavior deferred
-src/Core/Model/StateCommands/AddAttachmentMetadataCommand.cs,cs,Core,domain/application,partial; creator/assignee actor checks and listed lifecycle actions ported
+src/Core/Model/StateCommands/AddAttachmentMetadataCommand.cs,cs,Core,domain/application,metadata-only attachment create/list and uploader/date fields ported
 src/Core/Model/StateCommands/AssignedToCancelledCommand.cs,cs,Core,domain/application,partial; creator/assignee actor checks and listed lifecycle actions ported
 src/Core/Model/StateCommands/AssignedToInProgressCommand.cs,cs,Core,domain/application,partial; creator/assignee actor checks and listed lifecycle actions ported
 src/Core/Model/StateCommands/CreateDatedWorkOrdersCommand.cs,cs,Core,domain/application,partial; creator/assignee actor checks and listed lifecycle actions ported
@@ -108,13 +108,13 @@ src/Core/Model/StateCommands/StateCommandBase.cs,cs,Core,domain/application,part
 src/Core/Model/StateCommands/StateCommandResult.cs,cs,Core,domain/application,partial; creator/assignee actor checks and listed lifecycle actions ported
 src/Core/Model/WeatherForecast.cs,cs,Core,domain,planned; only core lifecycle and urgency currently ported
 src/Core/Model/WorkOrder.cs,cs,Core,domain,planned; only core lifecycle and urgency currently ported
-src/Core/Model/WorkOrderAttachment.cs,cs,Core,domain,planned; only core lifecycle and urgency currently ported
+src/Core/Model/WorkOrderAttachment.cs,cs,Core,domain/application,metadata-only attachment create/list and uploader/date fields ported
 src/Core/Model/WorkOrderStatus.cs,cs,Core,domain,planned; only core lifecycle and urgency currently ported
 src/Core/Queries/ApplicationChatQuery.cs,cs,Core,application,planned; selected work-order behavior currently ported
 src/Core/Queries/EmployeeByUserNameQuery.cs,cs,Core,application,employee selection/read ported; remaining employee operations deferred
 src/Core/Queries/EmployeeGetAllQuery.cs,cs,Core,application,employee selection/read ported; remaining employee operations deferred
 src/Core/Queries/ForecastQuery.cs,cs,Core,application,planned; selected work-order behavior currently ported
-src/Core/Queries/WorkOrderAttachmentsQuery.cs,cs,Core,application,planned; selected work-order behavior currently ported
+src/Core/Queries/WorkOrderAttachmentsQuery.cs,cs,Core,domain/application,metadata-only attachment create/list and uploader/date fields ported
 src/Core/Queries/WorkOrderByNumberQuery.cs,cs,Core,application,planned; selected work-order behavior currently ported
 src/Core/Queries/WorkOrderCountByStatusQuery.cs,cs,Core,application,planned; selected work-order behavior currently ported
 src/Core/Queries/WorkOrderSpecificationQuery.cs,cs,Core,application,planned; selected work-order behavior currently ported
@@ -148,14 +148,14 @@ src/Core/Validation/WorkOrderByNumberQueryValidator.cs,cs,Core,application,plann
 src/Core/Validation/WorkOrderCountByStatusQueryValidator.cs,cs,Core,application,planned; selected work-order behavior currently ported
 src/Core/Validation/WorkOrderSpecificationQueryValidator.cs,cs,Core,application,planned; selected work-order behavior currently ported
 src/DataAccess/CanConnectToDatabaseHealthCheck.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
-src/DataAccess/Handlers/AddAttachmentMetadataCommandHandler.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
+src/DataAccess/Handlers/AddAttachmentMetadataCommandHandler.cs,cs,DataAccess,persistence/application,metadata-only attachment add and chronological query ported
 src/DataAccess/Handlers/CreateDatedWorkOrdersHandler.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
 src/DataAccess/Handlers/DatedWorkOrdersCreatedTelemetryHandler.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
 src/DataAccess/Handlers/EmployeeQueryHandler.cs,cs,DataAccess,persistence,employee login selection/query partially ported
 src/DataAccess/Handlers/ForecastQueryHandler.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
 src/DataAccess/Handlers/StateCommandHandler.cs,cs,DataAccess,persistence/application,actor ownership checks ported for selected lifecycle actions
 src/DataAccess/Handlers/TelemetryHandler.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
-src/DataAccess/Handlers/WorkOrderAttachmentsQueryHandler.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
+src/DataAccess/Handlers/WorkOrderAttachmentsQueryHandler.cs,cs,DataAccess,persistence/application,metadata-only attachment add and chronological query ported
 src/DataAccess/Handlers/WorkOrderCountByStatusQueryHandler.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
 src/DataAccess/Handlers/WorkOrderQueryFilters.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
 src/DataAccess/Handlers/WorkOrderQueryHandler.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
@@ -166,7 +166,7 @@ src/DataAccess/Mappings/DataContext.cs,cs,DataAccess,persistence,"planned; JPA p
 src/DataAccess/Mappings/EmployeeMap.cs,cs,DataAccess,persistence,employee/role and capability mappings ported with Flyway V3
 src/DataAccess/Mappings/IEntityFrameworkMapping.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
 src/DataAccess/Mappings/RoleMap.cs,cs,DataAccess,persistence,employee/role and capability mappings ported with Flyway V3
-src/DataAccess/Mappings/WorkOrderAttachmentMap.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
+src/DataAccess/Mappings/WorkOrderAttachmentMap.cs,cs,DataAccess,persistence,"metadata table, uploader and work-order foreign keys ported with Flyway V4"
 src/DataAccess/Mappings/WorkOrderMap.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
 src/DataAccess/Mappings/WorkOrderStatusConverter.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
 src/DataAccess/Messaging/DistributedBus.cs,cs,DataAccess,persistence,"planned; JPA persistence exists, most handlers are deferred"
@@ -484,9 +484,9 @@ src/UI.Shared/Pages/SelectListItem.cs,cs,UI.Shared,web/ui,"planned; initial MVC/
 src/UI.Shared/Pages/Settings.razor,razor,UI.Shared,web/ui,"planned; initial MVC/API slice ported, remaining UI behavior deferred"
 src/UI.Shared/Pages/Settings.razor.cs,cs,UI.Shared,web/ui,"planned; initial MVC/API slice ported, remaining UI behavior deferred"
 src/UI.Shared/Pages/Settings.razor.css,css,UI.Shared,web/ui,"planned; initial MVC/API slice ported, remaining UI behavior deferred"
-src/UI.Shared/Pages/WorkOrderManage.razor,razor,UI.Shared,web/ui,"planned; initial MVC/API slice ported, remaining UI behavior deferred"
-src/UI.Shared/Pages/WorkOrderManage.razor.cs,cs,UI.Shared,web/ui,"planned; initial MVC/API slice ported, remaining UI behavior deferred"
-src/UI.Shared/Pages/WorkOrderManage.razor.css,css,UI.Shared,web/ui,"planned; initial MVC/API slice ported, remaining UI behavior deferred"
+src/UI.Shared/Pages/WorkOrderManage.razor,razor,UI.Shared,web/ui,manage-page attachment metadata display and entry form ported; binary transfer deferred
+src/UI.Shared/Pages/WorkOrderManage.razor.cs,cs,UI.Shared,web/ui,manage-page attachment metadata display and entry form ported; binary transfer deferred
+src/UI.Shared/Pages/WorkOrderManage.razor.css,css,UI.Shared,web/ui,manage-page attachment metadata display and entry form ported; binary transfer deferred
 src/UI.Shared/Pages/WorkOrderSearch.razor,razor,UI.Shared,web/ui,"planned; initial MVC/API slice ported, remaining UI behavior deferred"
 src/UI.Shared/Pages/WorkOrderSearch.razor.cs,cs,UI.Shared,web/ui,"planned; initial MVC/API slice ported, remaining UI behavior deferred"
 src/UI.Shared/Pages/WorkOrderSearch.razor.css,css,UI.Shared,web/ui,"planned; initial MVC/API slice ported, remaining UI behavior deferred"
@@ -528,7 +528,7 @@ src/UnitTests/Core/Import/WorkOrderBulkImportCsvParserTests.cs,cs,UnitTests,src/
 src/UnitTests/Core/Model/EmployeeTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/UnitTests/Core/Model/EntityBaseTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/UnitTests/Core/Model/RoleTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
-src/UnitTests/Core/Model/StateCommands/AddAttachmentMetadataCommandTests.cs,cs,UnitTests,src/test/java,"ownership, role, lifecycle authorization cases partially ported"
+src/UnitTests/Core/Model/StateCommands/AddAttachmentMetadataCommandTests.cs,cs,UnitTests,src/test/java,metadata-only attachment API and browser manage-page coverage ported
 src/UnitTests/Core/Model/StateCommands/AssignedToCancelledCommandTests.cs,cs,UnitTests,src/test/java,"ownership, role, lifecycle authorization cases partially ported"
 src/UnitTests/Core/Model/StateCommands/AssignedToInProgressCommandTests.cs,cs,UnitTests,src/test/java,"ownership, role, lifecycle authorization cases partially ported"
 src/UnitTests/Core/Model/StateCommands/DraftToAssignedCommandTests.cs,cs,UnitTests,src/test/java,"ownership, role, lifecycle authorization cases partially ported"
@@ -536,7 +536,7 @@ src/UnitTests/Core/Model/StateCommands/InProgressToAssignCommandTests.cs,cs,Unit
 src/UnitTests/Core/Model/StateCommands/InProgressToCompleteCommandTests.cs,cs,UnitTests,src/test/java,"ownership, role, lifecycle authorization cases partially ported"
 src/UnitTests/Core/Model/StateCommands/SaveDraftCommandTests.cs,cs,UnitTests,src/test/java,"ownership, role, lifecycle authorization cases partially ported"
 src/UnitTests/Core/Model/StateCommands/StateCommandBaseTests.cs,cs,UnitTests,src/test/java,"ownership, role, lifecycle authorization cases partially ported"
-src/UnitTests/Core/Model/WorkOrderAttachmentTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
+src/UnitTests/Core/Model/WorkOrderAttachmentTests.cs,cs,UnitTests,src/test/java,metadata-only attachment API and browser manage-page coverage ported
 src/UnitTests/Core/Model/WorkOrderStatusTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/UnitTests/Core/Model/WorkOrderTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/UnitTests/Core/Queries/RemotableRequestTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
@@ -656,7 +656,7 @@ src/UnitTests/UI.Shared/Pages/SettingsTests.cs,cs,UnitTests,src/test/java,"plann
 src/UnitTests/UI.Shared/Pages/StubBus.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/UnitTests/UI.Shared/Pages/StubUiBus.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/UnitTests/UI.Shared/Pages/WorkOrderDueDateStyleTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
-src/UnitTests/UI.Shared/Pages/WorkOrderManageAttachmentsTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
+src/UnitTests/UI.Shared/Pages/WorkOrderManageAttachmentsTests.cs,cs,UnitTests,src/test/java,metadata-only attachment API and browser manage-page coverage ported
 src/UnitTests/UI.Shared/Pages/WorkOrderManageDescriptionCharCountTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/UnitTests/UI.Shared/Pages/WorkOrderManageDictationTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"
 src/UnitTests/UI.Shared/Pages/WorkOrderManageEventBusNotifyTests.cs,cs,UnitTests,src/test/java,"planned; selected domain, API, browser tests ported"

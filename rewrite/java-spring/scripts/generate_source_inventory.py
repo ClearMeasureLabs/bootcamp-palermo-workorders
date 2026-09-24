@@ -18,6 +18,9 @@ def destination(path: Path) -> tuple[str, str]:
     if area == "Core":
         if relative in {"Core/Model/Employee.cs", "Core/Model/Role.cs"}:
             return "domain", "employee and role capability model ported; other source behavior deferred"
+        if relative in {"Core/Model/WorkOrderAttachment.cs", "Core/Model/StateCommands/AddAttachmentMetadataCommand.cs",
+                        "Core/Queries/WorkOrderAttachmentsQuery.cs"}:
+            return "domain/application", "metadata-only attachment create/list and uploader/date fields ported"
         if relative.startswith("Core/Model/StateCommands/"):
             return "domain/application", "partial; creator/assignee actor checks and listed lifecycle actions ported"
         if relative.startswith("Core/Model/"):
@@ -32,6 +35,11 @@ def destination(path: Path) -> tuple[str, str]:
     if area == "DataAccess":
         if relative.startswith("DataAccess/Mappings/EmployeeMap.cs") or relative.startswith("DataAccess/Mappings/RoleMap.cs"):
             return "persistence", "employee/role and capability mappings ported with Flyway V3"
+        if relative == "DataAccess/Mappings/WorkOrderAttachmentMap.cs":
+            return "persistence", "metadata table, uploader and work-order foreign keys ported with Flyway V4"
+        if relative in {"DataAccess/Handlers/AddAttachmentMetadataCommandHandler.cs",
+                        "DataAccess/Handlers/WorkOrderAttachmentsQueryHandler.cs"}:
+            return "persistence/application", "metadata-only attachment add and chronological query ported"
         if relative.startswith("DataAccess/Handlers/EmployeeQueryHandler.cs"):
             return "persistence", "employee login selection/query partially ported"
         if relative.startswith("DataAccess/Handlers/StateCommandHandler"):
@@ -40,12 +48,17 @@ def destination(path: Path) -> tuple[str, str]:
     if area == "Database":
         return "src/main/resources/db/migration", "planned; Flyway baseline added, source migration parity deferred"
     if area in {"UnitTests", "IntegrationTests", "AcceptanceTests"}:
+        if relative.endswith(("WorkOrderAttachmentTests.cs", "WorkOrderManageAttachmentsTests.cs",
+                              "AddAttachmentMetadataCommandTests.cs")):
+            return "src/test/java", "metadata-only attachment API and browser manage-page coverage ported"
         if relative.startswith(("AcceptanceTests/Authentication/", "UnitTests/UI.Shared/Pages/Login", "UnitTests/UI.Shared/Components/Logout")):
             return "src/test/java", "login/session/logout behavior partially ported; extra source cases deferred"
         if relative.startswith(("UnitTests/Core/Model/StateCommands/", "IntegrationTests/DataAccess/Handlers/StateCommandHandler")):
             return "src/test/java", "ownership, role, lifecycle authorization cases partially ported"
         return "src/test/java", "planned; selected domain, API, browser tests ported"
     if area.startswith("UI"):
+        if relative.startswith("UI.Shared/Pages/WorkOrderManage"):
+            return "web/ui", "manage-page attachment metadata display and entry form ported; binary transfer deferred"
         if relative.startswith(("UI.Shared/Pages/Login", "UI.Shared/Components/Logout", "UI.Shared/Authentication/")):
             return "web/auth", "username-only demo login, Lovejoy shortcut, logout and server session ported"
         if relative.startswith("UI.Shared/NavMenu.razor"):

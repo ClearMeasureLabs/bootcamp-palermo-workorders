@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title th:text="|Manage ${workOrder.number} · Work Orders|">Manage work order</title>
+    <style>
+        body{font:16px system-ui,sans-serif;margin:2rem auto;max-width:900px;padding:0 1rem;color:#172033}
+        h1{color:#173f73}label{display:grid;gap:.3rem;margin:.7rem 0}input,button{font:inherit;padding:.5rem}
+        table{width:100%;border-collapse:collapse;margin-top:1.5rem}th,td{text-align:left;padding:.6rem;border-bottom:1px solid #cbd5e1}
+        button{cursor:pointer;border:0;border-radius:5px;background:#17559a;color:white}
+    </style>
+</head>
+<body>
+<p><a href="/">Back to work orders</a></p>
+<h1>Manage work order <span th:text="${workOrder.number}"></span></h1>
+<p><strong>Title:</strong> <span th:text="${workOrder.title}"></span></p>
+<p><strong>Room:</strong> <span th:text="${workOrder.roomNumber}"></span></p>
+<p><strong>Instructions:</strong> <span th:text="${workOrder.instructions}"></span></p>
+<section data-testid="attachments-section">
+    <h2>Attachments</h2>
+    <form method="post" th:action="@{/work-orders/{number}/manage/attachments(number=${workOrder.number})}">
+        <label>File name <input name="fileName" maxlength="500" required></label>
+        <label>Content type <input name="contentType" maxlength="200" required></label>
+        <label>File size in bytes <input name="fileSize" type="number" required></label>
+        <button type="submit">Add attachment metadata</button>
+        <p>Stores file details only; this form does not upload file contents.</p>
+    </form>
+    <table><thead><tr><th>File name</th><th>Content type</th><th>Size</th><th>Uploaded by</th><th>Uploaded date (UTC)</th></tr></thead>
+        <tbody>
+        <tr th:each="attachment : ${attachments}" data-testid="attachment-row">
+            <td data-testid="attachment-file-name" th:text="${attachment.fileName}"></td>
+            <td data-testid="attachment-content-type" th:text="${attachment.contentType}"></td>
+            <td data-testid="attachment-file-size" th:text="${attachment.fileSize}"></td>
+            <td data-testid="attachment-uploaded-by" th:text="${attachment.uploadedByName}"></td>
+            <td data-testid="attachment-uploaded-date" th:text="${attachment.uploadedDate}"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(attachments)}"><td colspan="5">No attachment metadata recorded.</td></tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>
