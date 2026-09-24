@@ -26,9 +26,12 @@ class AddAttachmentMetadataDto {
 export class WorkOrdersController {
   constructor(private readonly workOrders: WorkOrdersService) {}
 
-  @Get() list(@Headers('authorization') authorization?: string, @Query('status') status?: string, @Query('assignee') assignee?: string, @Query('q') q?: string) {
-    return this.workOrders.list(bearer(authorization), { status, assignee, q });
+  @Get('status-counts') statusCounts(@Headers('authorization') authorization?: string) { return this.workOrders.statusCounts(bearer(authorization)); }
+  @Get() list(@Headers('authorization') authorization?: string, @Query('status') status?: string, @Query('assignee') assignee?: string,
+    @Query('creator') creator?: string, @Query('q') q?: string, @Query('overdueOnly') overdueOnly?: string) {
+    return this.workOrders.list(bearer(authorization), { status, assignee, creator, q, overdueOnly: overdueOnly === 'true' });
   }
+  @Get(':id/history') history(@Param('id') id: string, @Headers('authorization') authorization?: string) { return this.workOrders.history(id, bearer(authorization)); }
   @Get(':id') get(@Param('id') id: string, @Headers('authorization') authorization?: string) { return this.workOrders.get(id, bearer(authorization)); }
   @Get(':id/attachments') attachments(@Param('id') id: string, @Headers('authorization') authorization?: string) { return this.workOrders.attachments(id, bearer(authorization)); }
   @Post(':id/attachments') addAttachment(@Param('id') id: string, @Body() dto: AddAttachmentMetadataDto, @Headers('authorization') authorization?: string) {

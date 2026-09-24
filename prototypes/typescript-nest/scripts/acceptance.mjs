@@ -27,7 +27,9 @@ try {
   await page.getByTestId('login-user').selectOption('hsimpson');
   await page.getByTestId('login').click();
   await page.getByText('Welcome hsimpson!').waitFor();
-  await page.getByTestId('title').fill(`Acceptance order ${Date.now()}`);
+  await page.getByTestId('status-dashboard').getByRole('button', { name: /Draft/ }).waitFor();
+  const acceptanceTitle = `Acceptance order ${Date.now()}`;
+  await page.getByTestId('title').fill(acceptanceTitle);
   const dateParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
   const chicagoToday = `${dateParts.find(part => part.type === 'year').value}-${dateParts.find(part => part.type === 'month').value}-${dateParts.find(part => part.type === 'day').value}`;
   await page.getByTestId('description').fill('Browser acceptance flow');
@@ -59,6 +61,13 @@ try {
   await page.getByRole('button', { name: 'Complete' }).last().click();
   await page.getByText('Work order complete').waitFor();
   await page.getByText('Complete', { exact: true }).last().waitFor();
+  await page.getByTestId('search-status').selectOption('Complete');
+  await page.getByTestId('search').click();
+  const completedCard = page.locator('#orders article').filter({ hasText: acceptanceTitle });
+  await completedCard.waitFor();
+  await completedCard.getByRole('button', { name: 'History' }).click();
+  await completedCard.getByTestId('event-history').getByText('Created').waitFor();
+  await completedCard.getByTestId('event-history').getByText('Complete').waitFor();
   await page.getByTestId('logout').click();
   await page.getByTestId('login').waitFor();
   console.log('Acceptance passed: demo login → create → assign → assignee login → complete → logout');

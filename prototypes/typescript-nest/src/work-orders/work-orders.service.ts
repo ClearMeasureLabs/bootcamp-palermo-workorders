@@ -6,7 +6,8 @@ import path from 'node:path';
 export type CreateWorkOrder = { title: string; description?: string; instructions?: string; roomNumber?: string; dueDate?: string };
 type Employee = { username: string; firstName: string; lastName: string; canCreate: number; canFulfill: number };
 type Attachment = { id: string; workOrderId: string; fileName: string; contentType: string; fileSize: number; uploadedBy: string; uploadedByName: string; uploadedDate: string };
-type WorkOrder = { id: string; number: string; title: string; description: string; instructions: string; roomNumber: string|null; dueDate: string|null; urgency: string; dueDateBadge: string|null; status: string; creator: string; assignee: string|null; createdAt: string; updatedAt: string; assignedAt: string|null; completedAt: string|null };
+type WorkOrderEvent = { id: string; workOrderId: string; action: string; actor: string; actorName: string; fromStatus: string|null; toStatus: string; occurredAt: string };
+type WorkOrder = { id: string; number: string; title: string; description: string; instructions: string; roomNumber: string|null; dueDate: string|null; urgency: string; dueDateBadge: string|null; status: string; creator: string; assignee: string|null; createdAt: string; updatedAt: string; assignedAt: string|null; completedAt: string|null; attachments?: Attachment[] };
 type StoredWorkOrder = Omit<WorkOrder, 'urgency'|'dueDateBadge'>;
 
 const transitions: Record<string, string[]> = {
@@ -34,19 +35,40 @@ export class WorkOrdersService implements OnModuleInit {
     this.persist();
   }
 
-  async list(token: string | undefined, filters: { status?: string; assignee?: string; q?: string } = {}): Promise<WorkOrder[]> {
+  async list(token: string | undefined, filters: { status?: string; assignee?: string; creator?: string; q?: string; overdueOnly?: boolean } = {}): Promise<WorkOrder[]> {
     this.requireSession(token);
     const predicates: string[] = [];
     const params: string[] = [];
-    if (filters.status) { predicates.push('status = ?'); params.push(filters.status); }
-    if (filters.assignee) { predicates.push('LOWER(COALESCE(assignee,\'\')) = LOWER(?)'); params.push(filters.assignee); }
+    if (filters.status?.trim()) { predicates.push('status = ?'); params.push(this.normalizeStatus(filters.status)); }
+    if (filters.assignee?.trim()) { predicates.push('LOWER(COALESCE(assignee,\'\')) = LOWER(?)'); params.push(filters.assignee.trim()); }
+    if (filters.creator?.trim()) { predicates.push('LOWER(creator) = LOWER(?)'); params.push(filters.creator.trim()); }
+    if (filters.overdueOnly) { predicates.push("dueDate < ? AND status IN ('Draft','Assigned','InProgress')"); params.push(this.chicagoToday()); }
     if (filters.q?.trim()) {
       predicates.push("(number LIKE ? OR title LIKE ? OR description LIKE ? OR instructions LIKE ? OR roomNumber LIKE ? OR assignee LIKE ?)");
       const term = `%${filters.q.trim()}%`;
       params.push(term, term, term, term, term, term);
     }
     const where = predicates.length ? `WHERE ${predicates.join(' AND ')}` : '';
-    return this.all(`SELECT * FROM WorkOrder ${where} ORDER BY createdAt DESC`, ...params).map(order => this.present(order));
+    const orders = this.all(`SELECT * FROM WorkOrder ${where} ORDER BY createdAt DESC`, ...params);
+    const attachments = this.attachmentsFor(orders.map(order => order.id));
+    return orders.map(order => ({ ...this.present(order), attachments: attachments.get(order.id) ?? [] }));
+  }
+
+  statusCounts(token?: string): Record<string, number> {
+    this.requireSession(token);
+    const counts: Record<string, number> = { Draft: 0, Assigned: 0, InProgress: 0, Complete: 0, Cancelled: 0 };
+    for (const row of this.all<{ status: string; count: number }>('SELECT status,COUNT(*) AS count FROM WorkOrder GROUP BY status')) {
+      if (Object.hasOwn(counts, row.status)) counts[row.status] = Number(row.count);
+    }
+    return counts;
+  }
+
+  history(id: string, token?: string): WorkOrderEvent[] {
+    this.requireSession(token);
+    if (!this.one('SELECT id FROM WorkOrder WHERE id=?', id)) throw new NotFoundException(`Work order ${id} was not found`);
+    return this.all<WorkOrderEvent>(`SELECT ev.id,ev.workOrderId,ev.action,ev.actor,
+      e.firstName || ' ' || e.lastName AS actorName,ev.fromStatus,ev.toStatus,ev.occurredAt
+      FROM WorkOrderEvent ev JOIN Employee e ON e.username=ev.actor WHERE ev.workOrderId=? ORDER BY ev.sequence`, id);
   }
 
   async get(id: string, token?: string): Promise<WorkOrder> {
@@ -59,9 +81,7 @@ export class WorkOrdersService implements OnModuleInit {
   attachments(id: string, token?: string): Attachment[] {
     this.requireSession(token);
     if (!this.one('SELECT id FROM WorkOrder WHERE id=?', id)) throw new NotFoundException(`Work order ${id} was not found`);
-    return this.all<Attachment>(`SELECT a.id,a.workOrderId,a.fileName,a.contentType,a.fileSize,a.uploadedBy,
-      e.firstName || ' ' || e.lastName AS uploadedByName,a.uploadedDate
-      FROM WorkOrderAttachment a JOIN Employee e ON e.username=a.uploadedBy WHERE a.workOrderId=? ORDER BY a.uploadedDate,a.id`, id);
+    return this.attachmentsFor([id]).get(id) ?? [];
   }
 
   addAttachment(id: string, input: { fileName: string; contentType?: string; fileSize: number }, token?: string): Attachment {
@@ -76,6 +96,8 @@ export class WorkOrdersService implements OnModuleInit {
       fileSize: input.fileSize, uploadedBy: actor.username, uploadedByName: `${actor.firstName} ${actor.lastName}`, uploadedDate: new Date().toISOString() };
     this.db.run('INSERT INTO WorkOrderAttachment(id,workOrderId,fileName,contentType,fileSize,uploadedBy,uploadedDate) VALUES (?,?,?,?,?,?,?)',
       [attachment.id, id, attachment.fileName, contentType, input.fileSize, actor.username, attachment.uploadedDate]);
+    const order = this.one<StoredWorkOrder>('SELECT * FROM WorkOrder WHERE id=?', id)!;
+    this.insertEvent(id, actor.username, 'Attachment added', order.status, order.status, attachment.uploadedDate);
     this.persist();
     return attachment;
   }
@@ -95,6 +117,7 @@ export class WorkOrdersService implements OnModuleInit {
     };
     this.db.run(`INSERT INTO WorkOrder(id,number,title,description,instructions,roomNumber,dueDate,status,creator,assignee,createdAt,updatedAt,assignedAt,completedAt)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [order.id, order.number, order.title, order.description, order.instructions, order.roomNumber, order.dueDate, order.status, order.creator, order.assignee, order.createdAt, order.updatedAt, order.assignedAt, order.completedAt]);
+    this.insertEvent(order.id, actor.username, 'Created', null, 'Draft', now);
     this.persist();
     return this.present(order);
   }
@@ -124,6 +147,7 @@ export class WorkOrdersService implements OnModuleInit {
       const current = await this.get(id, token);
       throw new BadRequestException(`Invalid transition ${current.status} -> ${target}`);
     }
+    this.insertEvent(id, actor.username, this.transitionAction(order.status, target), order.status, target, now);
     this.persist();
     return this.get(id, token);
   }
@@ -197,6 +221,44 @@ export class WorkOrdersService implements OnModuleInit {
     )`);
     this.db.run('CREATE INDEX IF NOT EXISTS IX_WorkOrderAttachment_WorkOrderId ON WorkOrderAttachment(workOrderId,uploadedDate)');
     this.db.run("INSERT OR IGNORE INTO SchemaMigration(version, appliedAt) VALUES (4, datetime('now'))");
+    this.db.run(`CREATE TABLE IF NOT EXISTS WorkOrderEvent (
+      sequence INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT NOT NULL UNIQUE,
+      workOrderId TEXT NOT NULL REFERENCES WorkOrder(id) ON DELETE CASCADE,
+      actor TEXT NOT NULL REFERENCES Employee(username), action TEXT NOT NULL,
+      fromStatus TEXT, toStatus TEXT NOT NULL, occurredAt TEXT NOT NULL
+    )`);
+    this.db.run('CREATE INDEX IF NOT EXISTS IX_WorkOrderEvent_WorkOrderSequence ON WorkOrderEvent(workOrderId,sequence)');
+    this.db.run("INSERT OR IGNORE INTO SchemaMigration(version, appliedAt) VALUES (5, datetime('now'))");
+  }
+
+  private attachmentsFor(ids: string[]): Map<string, Attachment[]> {
+    const attachments = new Map<string, Attachment[]>();
+    for (let offset = 0; offset < ids.length; offset += 400) {
+      const batch = ids.slice(offset, offset + 400);
+      const rows = this.all<Attachment>(`SELECT a.id,a.workOrderId,a.fileName,a.contentType,a.fileSize,a.uploadedBy,
+        e.firstName || ' ' || e.lastName AS uploadedByName,a.uploadedDate
+        FROM WorkOrderAttachment a JOIN Employee e ON e.username=a.uploadedBy
+        WHERE a.workOrderId IN (${batch.map(() => '?').join(',')}) ORDER BY a.uploadedDate,a.id`, ...batch);
+      for (const row of rows) attachments.set(row.workOrderId, [...(attachments.get(row.workOrderId) ?? []), row]);
+    }
+    return attachments;
+  }
+
+  private insertEvent(workOrderId: string, actor: string, action: string, fromStatus: string|null, toStatus: string, occurredAt: string): void {
+    this.db.run('INSERT INTO WorkOrderEvent(id,workOrderId,actor,action,fromStatus,toStatus,occurredAt) VALUES (?,?,?,?,?,?,?)',
+      [crypto.randomUUID(), workOrderId, actor, action, fromStatus, toStatus, occurredAt]);
+  }
+
+  private transitionAction(from: string, to: string): string {
+    if (to === 'Assigned' && from === 'Draft') return 'Assigned';
+    if (to === 'Assigned') return 'Shelved';
+    return to;
+  }
+
+  private normalizeStatus(status: string): string {
+    const canonical = ['Draft', 'Assigned', 'InProgress', 'Complete', 'Cancelled'].find(candidate => candidate.toLowerCase() === status.trim().toLowerCase());
+    if (!canonical) throw new BadRequestException(`Unknown work-order status: ${status}`);
+    return canonical;
   }
 
   private employee(username: string): Employee | undefined {
@@ -234,6 +296,11 @@ export class WorkOrdersService implements OnModuleInit {
       urgency = order.dueDate === today ? 'DueToday' : order.dueDate < today ? 'Overdue' : 'None';
     }
     return { ...order, urgency, dueDateBadge: order.dueDate ? (urgency === 'DueToday' ? 'Due Today' : urgency === 'Overdue' ? 'Overdue' : 'On Track') : null };
+  }
+
+  private chicagoToday(): string {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+    return `${parts.find(p => p.type === 'year')!.value}-${parts.find(p => p.type === 'month')!.value}-${parts.find(p => p.type === 'day')!.value}`;
   }
 
   private one<T = StoredWorkOrder>(sql: string, ...params: unknown[]): T|undefined { return this.all<T>(sql, ...params)[0]; }

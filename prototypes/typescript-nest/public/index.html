@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Work Orders</title>
   <style>
-    [hidden]{display:none!important}body{font:16px system-ui;max-width:900px;margin:2rem auto;padding:0 1rem;color:#1e293b}h1{color:#123b5d}form,.card{border:1px solid #cbd5e1;border-radius:8px;padding:1rem;margin:1rem 0}label{display:block;margin:.6rem 0}input,textarea,select,button{font:inherit;padding:.5rem}input,textarea,select{max-width:100%}button{cursor:pointer;background:#155e75;color:white;border:0;border-radius:4px;margin:.25rem}.status{font-weight:bold;color:#0e7490}.due-date-today{background:#fef08a}.due-date-overdue{background:#fecaca}.urgency{font-weight:bold;border-radius:4px;padding:.15rem .4rem}.toolbar{display:flex;justify-content:space-between;align-items:center}.hint{color:#475569}
+    [hidden]{display:none!important}body{font:16px system-ui;max-width:900px;margin:2rem auto;padding:0 1rem;color:#1e293b}h1{color:#123b5d}form,.card{border:1px solid #cbd5e1;border-radius:8px;padding:1rem;margin:1rem 0}label{display:block;margin:.6rem 0}input,textarea,select,button{font:inherit;padding:.5rem}input,textarea,select{max-width:100%}button{cursor:pointer;background:#155e75;color:white;border:0;border-radius:4px;margin:.25rem}.status{font-weight:bold;color:#0e7490}.due-date-today{background:#fef08a}.due-date-overdue{background:#fecaca}.urgency{font-weight:bold;border-radius:4px;padding:.15rem .4rem}.toolbar{display:flex;justify-content:space-between;align-items:center}.hint{color:#475569}.status-dashboard{display:flex;flex-wrap:wrap;gap:.4rem}.status-dashboard button{background:#e2e8f0;color:#0f172a}.status-count{font-weight:bold}
   </style>
 </head>
 <body>
@@ -17,6 +17,7 @@
   </section>
   <main id="app-view" hidden>
     <div class="toolbar"><p id="welcome"></p><button id="logout-button" data-testid="logout">Logout</button></div>
+    <section><h2>Status dashboard</h2><div id="status-dashboard" class="status-dashboard" data-testid="status-dashboard"></div></section>
     <label>Assign to <select id="assignee-select" data-testid="assign-to"></select></label>
     <form id="create-form" hidden>
       <h2>Save a draft</h2>
@@ -31,7 +32,10 @@
       <h2>Work order list</h2>
       <form id="search-form">
         <label>Search <input name="q" data-testid="search-text"></label>
+        <label>Creator <select id="creator-select" name="creator" data-testid="search-creator"><option value="">All creators</option></select></label>
         <label>Assignee username <input name="assignee" data-testid="search-assignee"></label>
+        <label>Status <select id="status-select" name="status" data-testid="search-status"><option value="">All statuses</option><option value="Draft">Draft</option><option value="Assigned">Assigned</option><option value="InProgress">In Progress</option><option value="Complete">Complete</option><option value="Cancelled">Cancelled</option></select></label>
+        <label><input type="checkbox" name="overdueOnly" data-testid="search-overdue"> Show overdue only</label>
         <button data-testid="search">Search</button><button type="reset" data-testid="clear-search">Clear</button>
       </form>
       <div id="orders"></div>
@@ -59,9 +63,11 @@
       document.querySelector('#app-view').hidden=false;
       document.querySelector('#welcome').textContent=`Welcome ${user.username}!`;
       document.querySelector('#create-form').hidden=!user.canCreate;
-      assignees=await (await fetch('/api/employees?canFulfill=true')).json();
+      const employees=await (await fetch('/api/employees')).json();
+      assignees=employees.filter(e=>e.canFulfill);
       document.querySelector('#assignee-select').innerHTML=assignees.map(e=>`<option value="${esc(e.username)}">${esc(e.displayName)} (${esc(e.username)})</option>`).join('');
       document.querySelector('#assignee-select').value=assignees.some(e=>e.username==='demo.tech')?'demo.tech':assignees[0]?.username??'';
+      document.querySelector('#creator-select').innerHTML='<option value="">All creators</option>'+employees.map(e=>`<option value="${esc(e.username)}">${esc(e.displayName)}</option>`).join('');
       await refresh();
     }
     function clearSession(){token=null;currentUser=null;localStorage.removeItem(tokenKey);document.querySelector('#app-view').hidden=true;document.querySelector('#login-view').hidden=false;}
@@ -72,11 +78,14 @@
       const result=await response.json();token=result.token;localStorage.setItem(tokenKey,token);await showSession(result.user);
     }
     async function refresh(){
-      const filters=new URLSearchParams(new FormData(document.querySelector('#search-form')));
+      const values=Object.fromEntries(new FormData(document.querySelector('#search-form')));
+      const overdueOnly=values.overdueOnly==='on';delete values.overdueOnly;
+      const filters=new URLSearchParams(values);if(overdueOnly)filters.set('overdueOnly','true');
       const response=await apiFetch(`${api}?${filters}`);
       if(response.status===401){clearSession();return;}
       const items=await response.json();
-      await Promise.all(items.map(async order=>{const attachmentsResponse=await apiFetch(`${api}/${order.id}/attachments`);order.attachments=attachmentsResponse.ok?await attachmentsResponse.json():[];}));
+      const countsResponse=await apiFetch(`${api}/status-counts`);
+      if(countsResponse.ok){const counts=await countsResponse.json();document.querySelector('#status-dashboard').innerHTML=Object.entries(counts).map(([status,count])=>`<button type="button" data-status-filter="${esc(status)}">${esc(status==='InProgress'?'In Progress':status)} <span class="status-count">${esc(count)}</span></button>`).join('');}
       document.querySelector('#orders').innerHTML=items.map(o=>{
         const isCreator=o.creator.toLowerCase()===currentUser.username.toLowerCase();
         const isAssignee=o.assignee?.toLowerCase()===currentUser.username.toLowerCase();
@@ -84,7 +93,7 @@
         const begin=o.status==='Assigned'&&isAssignee?`<button data-action="begin" data-id="${esc(o.id)}">Begin</button><button data-action="shelve" data-id="${esc(o.id)}">Shelve</button>`:'';
         const complete=o.status==='InProgress'&&isAssignee?`<button data-action="complete" data-id="${esc(o.id)}">Complete</button><button data-action="shelve" data-id="${esc(o.id)}">Shelve</button>`:'';
         const cancel=o.status==='Assigned'&&isCreator?`<button data-action="cancel" data-id="${esc(o.id)}">Cancel</button>`:'';
-        return `<article class="card" data-testid="order-${esc(o.id)}"><h3>${esc(o.number)} — ${esc(o.title)}</h3><p>${esc(o.description)}</p>${o.instructions?`<p><strong>Instructions:</strong> ${esc(o.instructions)}</p>`:''}<p>Room ${esc(o.roomNumber||'—')} · <span class="status">${esc(o.status)}</span> · Assignee ${esc(o.assignee||'—')}</p>${o.dueDate?`<p class="${o.urgency==='DueToday'?'due-date-today':o.urgency==='Overdue'?'due-date-overdue':''}" data-testid="due-date-value">Due ${esc(o.dueDate)} <span class="urgency">${esc(o.dueDateBadge)}</span></p>`:''}<div>${assign}${begin}${complete}${cancel}</div><section data-testid="attachments-${esc(o.id)}"><h4>Attachments</h4><ul>${(o.attachments??[]).map(a=>`<li data-testid="attachment-row">${esc(a.fileName)} · ${esc(a.contentType)} · <span>${esc(a.fileSize)}</span> bytes · ${esc(a.uploadedByName)} · ${esc(new Date(a.uploadedDate).toLocaleString())}</li>`).join('')||'<li>No attachments</li>'}</ul><form data-attachment-order="${esc(o.id)}"><label>File name <input name="fileName" required maxlength="500" data-testid="attachment-file-name"></label><label>Content type <input name="contentType" maxlength="200" data-testid="attachment-content-type"></label><label>File size in bytes <input name="fileSize" type="number" min="0" step="1" required data-testid="attachment-file-size"></label><button data-testid="add-attachment">Add attachment metadata</button><p class="hint">Metadata only; this prototype does not upload or store file contents.</p></form></section></article>`;
+        return `<article class="card" data-testid="order-${esc(o.id)}"><h3>${esc(o.number)} — ${esc(o.title)}</h3><p>${esc(o.description)}</p>${o.instructions?`<p><strong>Instructions:</strong> ${esc(o.instructions)}</p>`:''}<p>Room ${esc(o.roomNumber||'—')} · <span class="status">${esc(o.status)}</span> · Assignee ${esc(o.assignee||'—')}</p>${o.dueDate?`<p class="${o.urgency==='DueToday'?'due-date-today':o.urgency==='Overdue'?'due-date-overdue':''}" data-testid="due-date-value">Due ${esc(o.dueDate)} <span class="urgency">${esc(o.dueDateBadge)}</span></p>`:''}<div>${assign}${begin}${complete}${cancel}<button type="button" data-history-id="${esc(o.id)}" data-testid="show-history-${esc(o.id)}">History</button></div><ol id="history-${esc(o.id)}" data-testid="event-history" hidden></ol><section data-testid="attachments-${esc(o.id)}"><h4>Attachments</h4><ul>${(o.attachments??[]).map(a=>`<li data-testid="attachment-row">${esc(a.fileName)} · ${esc(a.contentType)} · <span>${esc(a.fileSize)}</span> bytes · ${esc(a.uploadedByName)} · ${esc(new Date(a.uploadedDate).toLocaleString())}</li>`).join('')||'<li>No attachments</li>'}</ul><form data-attachment-order="${esc(o.id)}"><label>File name <input name="fileName" required maxlength="500" data-testid="attachment-file-name"></label><label>Content type <input name="contentType" maxlength="200" data-testid="attachment-content-type"></label><label>File size in bytes <input name="fileSize" type="number" min="0" step="1" required data-testid="attachment-file-size"></label><button data-testid="add-attachment">Add attachment metadata</button><p class="hint">Metadata only; this prototype does not upload or store file contents.</p></form></section></article>`;
       }).join('')||'<p>No work orders found.</p>';
     }
 
@@ -99,7 +108,10 @@
     });
     document.querySelector('#search-form').addEventListener('submit',async e=>{e.preventDefault();await refresh();});
     document.querySelector('#search-form').addEventListener('reset',()=>setTimeout(refresh,0));
+    document.querySelector('#status-dashboard').addEventListener('click',async e=>{const button=e.target.closest('button[data-status-filter]');if(!button)return;document.querySelector('#status-select').value=button.dataset.statusFilter;await refresh();});
     document.querySelector('#orders').addEventListener('click',async e=>{
+      const historyButton=e.target.closest('button[data-history-id]');
+      if(historyButton){const response=await apiFetch(`${api}/${historyButton.dataset.historyId}/history`);if(!response.ok){message.textContent=await responseMessage(response);return;}const events=await response.json();const panel=document.querySelector(`#history-${CSS.escape(historyButton.dataset.historyId)}`);panel.innerHTML=events.map(event=>`<li>${esc(event.action)} — ${esc(event.actorName)} · ${esc(event.fromStatus??'')} → ${esc(event.toStatus)} · ${esc(new Date(event.occurredAt).toLocaleString())}</li>`).join('');panel.hidden=false;return;}
       const button=e.target.closest('button[data-action]');if(!button)return;
       const action=button.dataset.action;
       const status={assign:'Assigned',begin:'InProgress',complete:'Complete',cancel:'Cancelled',shelve:'Assigned'}[action];

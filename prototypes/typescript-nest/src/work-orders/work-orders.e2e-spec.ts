@@ -48,6 +48,9 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
     const done = await request(app.getHttpServer()).post(`/api/work-orders/${id}/transitions`).set('authorization', workerAuth).send({ status: 'Complete' }).expect(201);
     expect(done.body).toMatchObject({ status: 'Complete', assignee: 'demo.tech', roomNumber: 'B-12', instructions: 'Use side entrance', dueDate: chicagoDate, urgency: 'None' });
     expect(done.body.completedAt).toBeTruthy();
+    const events = await request(app.getHttpServer()).get(`/api/work-orders/${id}/history`).set('authorization', creatorAuth).expect(200);
+    expect(events.body.map((event: { action: string }) => event.action)).toEqual(['Created', 'Assigned', 'InProgress', 'Complete']);
+    expect(events.body[1]).toMatchObject({ actor: 'hsimpson', actorName: 'Homer Simpson', fromStatus: 'Draft', toStatus: 'Assigned' });
   });
 
   it('validates due dates and the original room length limit', async () => {
@@ -83,6 +86,24 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
       .not.toContainEqual(expect.objectContaining({ id: created.body.id }));
   });
 
+  it('filters by creator, status and overdue due date and returns all status counts', async () => {
+    const todayParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+    const today = `${todayParts.find(part => part.type === 'year')!.value}-${todayParts.find(part => part.type === 'month')!.value}-${todayParts.find(part => part.type === 'day')!.value}`;
+    const overdueDate = new Date(`${today}T12:00:00.000Z`); overdueDate.setUTCDate(overdueDate.getUTCDate() - 1);
+    const overdue = overdueDate.toISOString().slice(0, 10);
+    const before = await request(app.getHttpServer()).get('/api/work-orders/status-counts').set('authorization', creatorAuth).expect(200);
+    expect(Object.keys(before.body).sort()).toEqual(['Assigned', 'Cancelled', 'Complete', 'Draft', 'InProgress'].sort());
+    const past = await request(app.getHttpServer()).post('/api/work-orders').set('authorization', creatorAuth).send({ title: 'overdue filter case', dueDate: overdue }).expect(201);
+    await request(app.getHttpServer()).post('/api/work-orders').set('authorization', creatorAuth).send({ title: 'future filter case', dueDate: '2099-12-31' }).expect(201);
+    const filtered = await request(app.getHttpServer()).get('/api/work-orders').set('authorization', creatorAuth)
+      .query({ creator: 'HSIMPSON', status: 'draft', overdueOnly: 'true' }).expect(200);
+    expect(filtered.body.map((order: { id: string }) => order.id)).toEqual([past.body.id]);
+    expect(filtered.body[0].attachments).toEqual([]);
+    expect((await request(app.getHttpServer()).get('/api/work-orders/status-counts').set('authorization', creatorAuth).expect(200)).body.Draft)
+      .toBe(before.body.Draft + 2);
+    await request(app.getHttpServer()).get('/api/work-orders').set('authorization', creatorAuth).query({ status: 'Unknown' }).expect(400);
+  });
+
   it('validates the demo employee picker, role capability, and revocable login session', async () => {
     const employees = await request(app.getHttpServer()).get('/api/employees').expect(200);
     expect(employees.body.find((employee: { username: string }) => employee.username === 'hsimpson').displayName).toBe('HOMER SIMPSON');
@@ -109,6 +130,10 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
       .send({ fileName: 'service-report.pdf', contentType: 'application/pdf', fileSize: 90 }).expect(201);
     expect(workerAdded.body).toMatchObject({ uploadedBy: 'demo.tech', fileName: 'service-report.pdf' });
     expect((await request(app.getHttpServer()).get(`/api/work-orders/${created.body.id}/attachments`).set('authorization', creatorAuth).expect(200)).body).toHaveLength(2);
+    const listed = await request(app.getHttpServer()).get('/api/work-orders').set('authorization', creatorAuth).query({ q: 'attachment metadata' }).expect(200);
+    expect(listed.body[0].attachments.map((attachment: { fileName: string }) => attachment.fileName)).toEqual(['damage-photo.jpg', 'service-report.pdf']);
+    const events = await request(app.getHttpServer()).get(`/api/work-orders/${created.body.id}/history`).set('authorization', creatorAuth).expect(200);
+    expect(events.body.map((event: { action: string }) => event.action)).toEqual(['Created', 'Attachment added', 'Attachment added']);
   });
 });
 
