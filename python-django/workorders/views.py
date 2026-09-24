@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from .forms import AttachmentMetadataForm, WorkOrderForm
 from .models import Employee, WorkOrder
 from .services import OPEN_STATUSES, add_attachment_metadata, available_transitions, chicago_today, due_date_badge, due_date_urgency, transition
+from .operations import operational_api
 
 SESSION_EMPLOYEE_KEY = "workorders_employee_id"
 
@@ -115,3 +116,7 @@ def health(request):
     except Exception:
         return JsonResponse({"status": "Unhealthy", "service": "workorders", "database": "unavailable"}, status=503)
     return JsonResponse({"status": "Healthy", "service": "workorders", "database": "connected"})
+
+
+def api_operations(request, path=""):
+    return operational_api(request, path)

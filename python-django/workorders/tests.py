@@ -272,3 +272,51 @@ class WorkOrderWebTests(TestCase):
         response = self.client.get(reverse("work_order_list"))
         self.assertContains(response, f'data-testid="due-date-{order.number}" class=""></td>')
         self.assertNotContains(response, f'urgency-badge-{order.number}')
+
+    def test_operational_api_health_is_lightweight_and_versioned(self):
+        with patch("workorders.operations.connection.ensure_connection", side_effect=OSError("database down")):
+            response = self.client.get("/api/health/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "Healthy")
+        self.assertIn("currentTimeUtc", response.json())
+        self.assertEqual(self.client.get("/api/v1.0/health/").json()["status"], "Healthy")
+
+    def test_detailed_health_reports_database_component(self):
+        response = self.client.get("/api/health/detailed/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(response.json()["overallStatus"], {"Healthy", "Unhealthy"})
+        self.assertEqual(response.json()["components"][0]["name"], "database")
+
+    def test_feature_flags_diagnostics_and_version_contracts(self):
+        flags = self.client.get("/api/features/flags/")
+        self.assertEqual(flags.json(), {"SampleFeatureA": True, "SampleFeatureB": False})
+        self.assertEqual(self.client.get("/api/v1.0/features/flags/").json(), flags.json())
+        diagnostics = self.client.get("/api/diagnostics/").json()
+        self.assertEqual(diagnostics["featureFlags"], {"sampleFeatureA": False, "sampleFeatureB": False})
+        version = self.client.get("/api/version/").json()
+        self.assertIn("frameworkDescription", version)
+        self.assertEqual(version["informationalVersion"], "unknown")
+
+    @patch.dict("os.environ", {"TEST_ENV_STATUS_SECRET": "must never leak"})
+    def test_environment_status_redacts_selected_values(self):
+        response = self.client.get("/api/status/environment/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("TEST_ENV_STATUS_SECRET", response.json()["environmentVariableNames"])
+        self.assertEqual(response.json()["environmentVariables"]["TEST_ENV_STATUS_SECRET"], "[REDACTED]")
+        self.assertNotIn("must never leak", response.content.decode())
+
+    def test_echo_redacts_sensitive_headers_and_metrics_reports_fields(self):
+        response = self.client.get("/api/echo/?probe=yes", HTTP_AUTHORIZATION="Bearer private", HTTP_X_API_KEY="secret")
+        self.assertEqual(response.json()["queryString"], "?probe=yes")
+        headers = {key.lower(): value for key, value in response.json()["headers"].items()}
+        self.assertEqual(headers["authorization"], "[REDACTED]")
+        self.assertEqual(headers["x-api-key"], "[REDACTED]")
+        metrics = self.client.get("/api/metrics/summary/").json()
+        self.assertGreaterEqual(metrics["totalRequestsServed"], 2)
+        self.assertIn("workingSetBytes", metrics)
+        self.assertIn("gcGen2Collections", metrics)
+
+    def test_operational_api_honors_conditional_get(self):
+        response = self.client.get("/api/features/flags/")
+        unchanged = self.client.get("/api/features/flags/", HTTP_IF_NONE_MATCH=response["ETag"])
+        self.assertEqual(unchanged.status_code, 304)

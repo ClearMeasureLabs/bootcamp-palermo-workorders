@@ -1,6 +1,6 @@
 # Django work order prototype
 
-This is an isolated Python/Django implementation track inside the original repository. It currently implements employee-picker sessions, role-aware create access, creator/assignee transition authorization, metadata-only attachments, the primary work-order list, creation, search, detail, status lifecycle and history, health endpoint, read-time due-date urgency, overdue filtering, and the 900-character room-number limit. It is a prototype; see `../docs/django-rewrite-catalog.md` for the source-system inventory and explicit parity gaps, and `../docs/django-source-inventory.csv` for the complete path-by-path repository catalog.
+This is an isolated Python/Django implementation track inside the original repository. It currently implements employee-picker sessions, role-aware create access, creator/assignee transition authorization, metadata-only attachments, the primary work-order list, creation, search, detail, status lifecycle and history, due-date urgency, overdue filtering, the 900-character room-number limit, and an initial set of operational JSON endpoints. It is a prototype; see `../docs/django-rewrite-catalog.md` for the source-system inventory and explicit parity gaps, and `../docs/django-source-inventory.csv` for the complete path-by-path repository catalog.
 
 ## Run
 
@@ -21,6 +21,8 @@ Open http://127.0.0.1:8000/. SQLite is the default local database. `DJANGO_DB_PA
 Set a secret key before running management commands or the server; settings fail closed when it is missing. `DJANGO_DEBUG` defaults to `0`; enable it explicitly only during local development.
 
 The employee-picker login mirrors the source demo flow and does not verify a password. It is disabled by default; set `DJANGO_ENABLE_DEMO_LOGIN=1` only for local/test environments. A production identity provider is not implemented.
+
+The initial operational API supports `/api/health`, `/api/health/detailed`, `/api/diagnostics`, `/api/status/environment`, `/api/features/flags`, `/api/echo`, `/api/metrics/summary`, and `/api/version`, with `/api/v1.0/` aliases for those source-versioned routes. Environment variable values are redacted. Detailed health currently probes only the Django database; process metrics are Python approximations, and source API key authentication, rate limiting, and output caching are not ported.
 
 ## Checks and full-system acceptance
 

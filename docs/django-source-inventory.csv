@@ -523,6 +523,7 @@ python-django/workorders/migrations/0004_alter_workorder_number.py,.py,Django re
 python-django/workorders/migrations/0005_workorderattachment.py,.py,Django rewrite,python-django/workorders/migrations/0005_workorderattachment.py,implemented or rewrite tooling
 python-django/workorders/migrations/__init__.py,.py,Django rewrite,python-django/workorders/migrations/__init__.py,implemented or rewrite tooling
 python-django/workorders/models.py,.py,Django rewrite,python-django/workorders/models.py,implemented or rewrite tooling
+python-django/workorders/operations.py,.py,Django rewrite,python-django/workorders/operations.py,implemented or rewrite tooling
 python-django/workorders/services.py,.py,Django rewrite,python-django/workorders/services.py,implemented or rewrite tooling
 python-django/workorders/templates/workorders/base.html,.html,Django rewrite,python-django/workorders/templates/workorders/base.html,implemented or rewrite tooling
 python-django/workorders/templates/workorders/detail.html,.html,Django rewrite,python-django/workorders/templates/workorders/detail.html,implemented or rewrite tooling
