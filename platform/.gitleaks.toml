@@ -1,0 +1,30 @@
+# platform/.gitleaks.toml
+#
+# Secret scanning for the workorders environment repository (staged at platform/ in the app
+# repository until ADR-D18 moves it). Run locally and in platform-env/env-checks:
+#
+#   gitleaks dir . --config .gitleaks.toml --redact
+#
+# Policy (design §11.4, §6.2):
+#   - Every default gitleaks rule applies; nothing is disabled.
+#   - The only exception is an obvious placeholder: a finding whose whole secret is an
+#     angle-bracket token such as <AZURE_TENANT_ID> or <sql-admins-{class}>, or a ${...} or
+#     ${{...}} template reference such as ${{VERSION}}. Real values never look like that.
+#   - No path, file, commit or rule is allow-listed. A real finding is fixed by removing the value
+#     and rotating it (docs/runbooks/credential-rotation.md), never by editing this file.
+#
+# Owner: security owners (CODEOWNERS). Format: gitleaks 8.25 or later ([[allowlists]]).
+
+title = "workorders environment repository"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Placeholders only: <...> tokens and ${...} or ${{...}} references"
+condition = "OR"
+regexTarget = "secret"
+regexes = [
+  '''^<[A-Za-z0-9][A-Za-z0-9_.{}*/ -]{0,80}>$''',
+  '''^\$\{\{?[A-Za-z0-9_. -]{1,80}\}?\}$''',
+]
