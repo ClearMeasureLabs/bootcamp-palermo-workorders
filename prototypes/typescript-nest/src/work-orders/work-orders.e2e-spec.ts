@@ -74,6 +74,20 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
     expect(noDueDate.body.dueDate).toBeNull();
   });
 
+  it('allows only the creator to update a draft work order', async () => {
+    const created = await request(app.getHttpServer()).post('/api/work-orders').set('authorization', creatorAuth)
+      .send({ title: 'Draft to edit' }).expect(201);
+    const updated = await request(app.getHttpServer()).patch(`/api/work-orders/${created.body.id}`).set('authorization', creatorAuth)
+      .send({ title: 'Draft edited', description: 'Updated description', instructions: 'Use side entrance', roomNumber: 'A-12', dueDate: '2026-10-09' }).expect(200);
+    expect(updated.body).toMatchObject({ title: 'Draft edited', description: 'Updated description', instructions: 'Use side entrance', roomNumber: 'A-12', dueDate: '2026-10-09' });
+    await request(app.getHttpServer()).patch(`/api/work-orders/${created.body.id}`).set('authorization', readOnlyAuth).send({ title: 'Unauthorized change' }).expect(403);
+    await request(app.getHttpServer()).post(`/api/work-orders/${created.body.id}/transitions`).set('authorization', creatorAuth)
+      .send({ status: 'Assigned', assignee: 'demo.tech' }).expect(201);
+    await request(app.getHttpServer()).patch(`/api/work-orders/${created.body.id}`).set('authorization', creatorAuth).send({ title: 'No longer editable' }).expect(400);
+    const events = await request(app.getHttpServer()).get(`/api/work-orders/${created.body.id}/history`).set('authorization', creatorAuth).expect(200);
+    expect(events.body.map((event: { action: string }) => event.action)).toEqual(['Created', 'Updated', 'Assigned']);
+  });
+
   it('allows only one of two concurrent assignments to advance a draft', async () => {
     const created = await request(app.getHttpServer()).post('/api/work-orders').set('authorization', creatorAuth).send({ title: 'concurrent assignment' }).expect(201);
     const assignments = await Promise.all(['demo.tech', 'gwillie'].map(assignee =>

@@ -36,3 +36,5 @@ jobs:
           path: |
             prototypes/typescript-nest/artifacts/acceptance-video.webm
             prototypes/typescript-nest/artifacts/typescript-nest-acceptance.mp4
+            prototypes/typescript-nest/artifacts/work-order-search-1365x900.png
+            prototypes/typescript-nest/artifacts/work-order-manage-1920x1080.png

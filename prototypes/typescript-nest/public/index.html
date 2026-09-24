@@ -3,23 +3,36 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Work Orders</title>
   <style>
-    [hidden]{display:none!important}body{font:16px system-ui;max-width:900px;margin:2rem auto;padding:0 1rem;color:#1e293b}h1{color:#123b5d}form,.card{border:1px solid #cbd5e1;border-radius:8px;padding:1rem;margin:1rem 0}label{display:block;margin:.6rem 0}input,textarea,select,button{font:inherit;padding:.5rem}input,textarea,select{max-width:100%}button{cursor:pointer;background:#155e75;color:white;border:0;border-radius:4px;margin:.25rem}.status{font-weight:bold;color:#0e7490}.due-date-today{background:#fef08a}.due-date-overdue{background:#fecaca}.urgency{font-weight:bold;border-radius:4px;padding:.15rem .4rem}.toolbar{display:flex;justify-content:space-between;align-items:center}.hint{color:#475569}.status-dashboard{display:flex;flex-wrap:wrap;gap:.4rem}.status-dashboard button{background:#e2e8f0;color:#0f172a}.status-count{font-weight:bold}
+    :root{font-family:Arial,Helvetica,sans-serif;color:#2d3748;background:#edf1f7}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;min-height:100vh;font-size:15px}.sidebar{position:fixed;inset:0 auto 0 0;width:280px;transition:width .2s ease;background:linear-gradient(180deg,#dce5ec,#cad5e2);border-right:1px solid #c6d1dc;z-index:3}.church-brand{height:125px;display:flex;align-items:center;gap:14px;padding:0 28px;border-bottom:10px solid #e7edf2;color:#39475b}.church-brand .church-icon{font-size:30px}.church-brand strong,.church-brand em{display:block}.church-brand strong{font:700 22px Georgia,serif}.church-brand em{font:italic 15px Georgia,serif;color:#667386;margin-top:3px}.menu-heading{height:60px;padding:20px 28px;background:#f6f8fa;border-bottom:1px solid #c6d1dc;font-size:16px;font-weight:600}.sidebar nav{display:flex;flex-direction:column;padding:22px 0}.sidebar nav a{padding:9px 31px;color:#3f63a0;text-decoration:none;font-size:17px;display:flex;align-items:center;gap:12px}.sidebar nav a span{font-size:14px}.sidebar nav a:hover,.sidebar nav a.active{background:#e7edf4}.site-header{height:115px;margin-left:280px;background:#f8fafc;border-bottom:1px solid #dfe5ec;display:flex;align-items:center;gap:16px;padding:0 30px}.collapse{width:42px;height:42px!important;background:#eef2f6!important;color:#44566c!important;font-size:21px!important}.site-title strong,.site-title small{display:block}.site-title strong{font:700 34px Georgia,serif;color:#303b4e}.site-title small{font:italic 14px Georgia,serif;color:#718096;margin-top:3px}.account{margin-left:auto;display:flex;align-items:center;gap:24px;padding:10px 18px;background:#f1f4f7;border:1px solid #e1e6ed;border-radius:14px}.account p{margin:0}.health{font-size:12px;color:#718096}.auth-wrap{margin-left:280px;padding:34px 24px}.page{margin-left:280px;min-height:calc(100vh - 115px);padding:30px 24px 54px;background:linear-gradient(135deg,#f8fafc,#e2e8f0)}#login-view{max-width:520px;margin:35px auto;padding:28px;background:white;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 8px 26px #182b4514}#login-view h2{margin-top:0;font:700 30px Georgia,serif;text-align:center;color:#364152}.hint{color:#718096}.error{color:#a63333}.container{max-width:1200px;margin:auto}.toolbar{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-bottom:13px}#welcome{margin-right:auto;color:#4a5568}.page-title{text-align:center;margin:10px 0 25px}.page-title h1{font:700 36px Georgia,serif;margin:0 0 7px;color:#2d3748;text-shadow:1px 1px 2px #0002}.page-title p{font-size:16px;color:#718096;font-style:italic;margin:0}.section-title{font:700 22px Georgia,serif;margin:0;color:#364152}.status-dashboard{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 19px}.status-dashboard button{background:#e2e8f0;color:#3c4960;border:1px solid #d4dce8;border-radius:8px}.status-count{font-weight:bold}.card,.filters-card,.results-card,.create-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 8px 26px #182b4514;margin:0 0 22px;overflow:hidden}.filters-card{padding:22px}.filters-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:14px 19px;align-items:end}.filter-group{display:flex;flex-direction:column;gap:7px}.filter-label{font-weight:600;color:#4a5568;font-size:14px}label{display:block;margin:0 0 9px;font-size:13px;font-weight:600;color:#4a5568}.control, input,textarea,select{max-width:100%;width:100%;min-height:41px;padding:9px 11px;border:1px solid #cbd5e0;border-radius:8px;background:#f8fafc;color:#2d3748;font:inherit}.control:focus,input:focus,textarea:focus,select:focus{outline:3px solid #7b68ee38;border-color:#7b68ee;background:white}.filters-grid .check{display:flex;align-items:center;gap:8px;min-height:41px}.check input{width:auto;min-height:auto}.check label{margin:0;font-size:14px}.actions{display:flex;align-items:center;gap:8px}.btn,button{border:0;border-radius:8px;padding:10px 17px;font:600 14px Arial,sans-serif;cursor:pointer;background:#155e75;color:white;margin:2px}.btn-primary{background:linear-gradient(135deg,#7b68ee,#4a90e2);box-shadow:0 3px 10px #7b68ee40}.btn-secondary{background:#edf2f7;color:#475569;border:1px solid #d8e0ea}.btn:disabled,button:disabled{opacity:.5;cursor:not-allowed}.create-card summary{padding:15px 21px;font-size:15px;font-weight:600;color:#4a5568;cursor:pointer}.create-card form{padding:0 21px 21px;display:grid;grid-template-columns:1fr 1fr;gap:10px 15px}.create-card h2{grid-column:1/-1;margin:0;font-size:17px}.create-card label textarea{min-height:70px}.create-card label:has([name=description]),.create-card label:has([name=instructions]){grid-column:1/-1}.results-card{margin-top:21px}.results-head{padding:16px 21px;background:linear-gradient(135deg,#7b68ee,#4a90e2);color:white;font-size:17px;font-weight:600;display:flex;justify-content:space-between}.count{font-size:13px;font-weight:400;opacity:.9}.table-wrap{overflow:auto}.grid-data{width:100%;border-collapse:collapse;min-width:880px}.grid-data th{background:#f7f8fc;padding:13px 14px;text-align:left;color:#4a5568;font-size:12px;text-transform:uppercase;letter-spacing:.045em;border-bottom:2px solid #e2e8f0}.grid-data td{padding:13px 14px;border-bottom:1px solid #e8edf3;font-size:14px}.grid-data tbody tr.odd{background:#fff}.grid-data tbody tr.even{background:#fafbfe}.grid-data tbody tr:hover{background:#f1f4ff}.grid-data a{color:#5268c9;text-decoration:none;font-weight:600}.grid-data a:hover{text-decoration:underline}.sort-btn{border:0;background:transparent;color:#4a5568;padding:0;margin:0;font:700 12px Arial,sans-serif;letter-spacing:.045em;text-transform:uppercase}.status{display:inline-block;padding:5px 10px;border-radius:999px;background:#edf2ff;color:#4b58a0;font-size:12px;font-weight:700}.due-date-today{background:#fef08a}.due-date-overdue{background:#fecaca}.urgency{font-weight:700;border-radius:4px;padding:.15rem .4rem}.due-cell{white-space:nowrap}.due-cell .urgency{display:block;font-size:11px;margin-top:4px}.detail-panel{padding:14px 17px;background:#f7f8fc}.detail-panel p{margin:6px 0}.detail-panel section{margin-top:10px}.detail-panel form{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:8px;padding:10px;background:white;border:1px solid #e2e8f0;border-radius:10px}.detail-panel .edit-work-order{margin:12px 0}.detail-panel h4{margin:8px 0}.empty-results{text-align:center;padding:42px 20px;color:#718096}.table-empty{font-size:30px;color:#98a4b5}.message{max-width:1200px;margin:0 auto 12px;color:#267347;font-size:14px}body.menu-collapsed .sidebar{width:82px}body.menu-collapsed .church-brand{padding:0;justify-content:center}body.menu-collapsed .church-brand>span:last-child,body.menu-collapsed .menu-heading,body.menu-collapsed .sidebar nav a span{display:none}body.menu-collapsed .sidebar nav a{justify-content:center;padding:13px 6px}body.menu-collapsed .site-header,body.menu-collapsed .auth-wrap{margin-left:82px}body.menu-collapsed .page{margin-left:82px}@media(max-width:850px){.sidebar{width:82px}.church-brand{padding:0;justify-content:center}.church-brand>span:last-child,.menu-heading,.sidebar nav a span{display:none}.sidebar nav a{justify-content:center;padding:13px 6px}.site-header,.auth-wrap{margin-left:82px}.page{margin-left:82px}.filters-grid{grid-template-columns:repeat(2,minmax(130px,1fr))}}@media(max-width:540px){.site-title strong{font-size:21px}.site-title small{font-size:12px}.site-header{height:86px;padding:0 10px}.account{padding:5px;gap:5px}.sidebar{width:58px}.site-header,.auth-wrap{margin-left:58px}.page{margin-left:58px;padding:20px 12px}.filters-grid,.create-card form,.detail-panel form{grid-template-columns:1fr}.create-card label:has([name=description]),.create-card label:has([name=instructions]){grid-column:auto}.page-title h1{font-size:29px}}
   </style>
 </head>
 <body>
-  <h1>Work Orders</h1><p id="health">Checking service…</p>
-  <section id="login-view">
+  <aside class="sidebar"><div class="church-brand"><span class="church-icon">▦</span><span><strong>First Church</strong><em>Springfield</em></span></div><div class="menu-heading">Menu</div><nav><a href="#search" data-nav="search">⌂ <span>Home</span></a><a href="#counter" data-nav="counter">▦ <span>Counter</span></a><a href="#fetch" data-nav="fetch">☁ <span>Fetch data</span></a><a href="#ai" data-nav="ai">▣ <span>AI Agent</span></a><a href="#create" data-nav="create">▣ <span>New Work Order</span></a><a class="active" href="#search" data-nav="search">⌕ <span>Search</span></a><a href="#settings" data-nav="settings">⚙ <span>Settings</span></a><a href="#my-work-orders" data-nav="my-work-orders">▣ <span>My Work Orders</span></a><a href="#assigned-to-me" data-nav="assigned-to-me">♧ <span>Assigned To Me</span></a><a href="#all-assigned" data-nav="all-assigned">▣ <span>All Assigned</span></a><a href="#in-progress" data-nav="in-progress">⚙ <span>In Progress</span></a></nav></aside>
+  <header class="site-header"><button class="collapse" aria-label="Toggle menu">«</button><div class="site-title"><strong>Work Order Management</strong><small>Church Bulletin</small></div><div class="account" id="account-bar" hidden><p id="welcome"></p><button id="logout-button" data-testid="logout">Logout</button></div><span class="health" id="health">Checking service…</span></header>
+  <div class="auth-wrap"><section id="login-view">
     <h2>Sign in</h2><p class="hint">Demo login: select an employee. No password is required in this prototype; the API checks that the username exists and applies its saved roles.</p>
     <label for="employee-select">Employee</label><select id="employee-select" data-testid="login-user"><option value="">-- Select a parishioner or staff member --</option></select>
     <button id="login-button" data-testid="login">Login</button>
     <button id="lovejoy-shortcut" data-testid="lovejoy-shortcut">Continue as Timothy Lovejoy</button>
     <p id="login-error" class="error" role="alert"></p>
-  </section>
-  <main id="app-view" hidden>
-    <div class="toolbar"><p id="welcome"></p><button id="logout-button" data-testid="logout">Logout</button></div>
-    <section><h2>Status dashboard</h2><div id="status-dashboard" class="status-dashboard" data-testid="status-dashboard"></div></section>
-    <label>Assign to <select id="assignee-select" data-testid="assign-to"></select></label>
-    <form id="create-form" hidden>
+  </section></div>
+  <main id="app-view" class="page" hidden><div class="container">
+    <header class="page-title"><h1>Work Order Search</h1><p>Find and manage church maintenance requests</p></header>
+    <section>
+      <h2 class="section-title">Work Order Search</h2>
+      <form id="search-form" class="filters-card filters-grid">
+        <label class="filter-group"><span class="filter-label">Creator</span><select class="control" id="creator-select" name="creator" data-testid="search-creator"><option value="">All</option></select></label>
+        <label class="filter-group"><span class="filter-label">Assignee</span><select class="control" id="assignee-filter" name="assignee" data-testid="search-assignee"><option value="">All</option></select></label>
+        <div class="filter-group"><span class="filter-label">&nbsp;</span><div class="check"><input type="checkbox" id="assigned-me" data-testid="assigned-to-me"><label for="assigned-me">Assigned to me</label></div></div>
+        <label class="filter-group"><span class="filter-label">Status</span><select class="control" id="status-select" name="status" data-testid="search-status"><option value="">All</option><option value="Draft">Draft</option><option value="Assigned">Assigned</option><option value="InProgress">In Progress</option><option value="Complete">Complete</option><option value="Cancelled">Cancelled</option></select></label>
+        <div class="filter-group"><span class="filter-label">Overdue</span><div class="check"><input type="checkbox" name="overdueOnly" data-testid="search-overdue"><label for="search-overdue">Show overdue only</label></div></div>
+        <div class="actions"><button class="btn-primary" data-testid="search">⌕&nbsp; Search</button><button type="reset" class="btn-secondary" data-testid="clear-search">Clear filters</button></div>
+      </form>
+      <div id="orders"></div>
+    </section>
+    <section><h2 class="section-title">Work Order Status</h2><div id="status-dashboard" class="status-dashboard" data-testid="status-dashboard"></div></section>
+    <label class="filter-group" style="max-width:390px">Assign to <select id="assignee-select" data-testid="assign-to"></select></label>
+    <details class="create-card" id="create" hidden><summary>New work order</summary><form id="create-form" hidden>
       <h2>Save a draft</h2>
       <label>Title <input name="title" required minlength="1" data-testid="title"></label>
       <label>Description <textarea name="description" data-testid="description"></textarea></label>
@@ -27,21 +40,10 @@
       <label>Room <input name="roomNumber" data-testid="room" maxlength="900"></label>
       <label>Due date <input name="dueDate" type="date" data-testid="due-date"></label>
       <button data-testid="save-draft">Save draft</button>
-    </form>
-    <section>
-      <h2>Work order list</h2>
-      <form id="search-form">
-        <label>Search <input name="q" data-testid="search-text"></label>
-        <label>Creator <select id="creator-select" name="creator" data-testid="search-creator"><option value="">All creators</option></select></label>
-        <label>Assignee username <input name="assignee" data-testid="search-assignee"></label>
-        <label>Status <select id="status-select" name="status" data-testid="search-status"><option value="">All statuses</option><option value="Draft">Draft</option><option value="Assigned">Assigned</option><option value="InProgress">In Progress</option><option value="Complete">Complete</option><option value="Cancelled">Cancelled</option></select></label>
-        <label><input type="checkbox" name="overdueOnly" data-testid="search-overdue"> Show overdue only</label>
-        <button data-testid="search">Search</button><button type="reset" data-testid="clear-search">Clear</button>
-      </form>
-      <div id="orders"></div>
-    </section>
-  </main>
-  <p id="message" role="status"></p>
+    </form></details>
+    <label class="filter-group" style="max-width:390px">Assign to <select id="assignee-select" data-testid="assign-to"></select></label>
+  </div></main>
+  <p id="message" class="message" role="status"></p>
   <script>
     const api='/api/work-orders';
     const tokenKey='palermo.workorders.session';
@@ -49,8 +51,12 @@
     let token=localStorage.getItem(tokenKey);
     let currentUser=null;
     let assignees=[];
+    let employeeDirectory=[];
+    let sortColumn='';
+    let sortAscending=true;
 
     function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+    function employeeName(username){return employeeDirectory.find(employee=>employee.username.toLowerCase()===String(username??'').toLowerCase())?.displayName??username??'';}
     function apiFetch(url,options={}){
       const headers=new Headers(options.headers??{});
       if(token)headers.set('authorization',`Bearer ${token}`);
@@ -60,17 +66,20 @@
     async function showSession(user){
       currentUser=user;
       document.querySelector('#login-view').hidden=true;
+      document.querySelector('#account-bar').hidden=false;
       document.querySelector('#app-view').hidden=false;
       document.querySelector('#welcome').textContent=`Welcome ${user.username}!`;
-      document.querySelector('#create-form').hidden=!user.canCreate;
+      document.querySelector('#create').hidden=!user.canCreate;document.querySelector('#create-form').hidden=!user.canCreate;
       const employees=await (await fetch('/api/employees')).json();
+      employeeDirectory=employees;
       assignees=employees.filter(e=>e.canFulfill);
       document.querySelector('#assignee-select').innerHTML=assignees.map(e=>`<option value="${esc(e.username)}">${esc(e.displayName)} (${esc(e.username)})</option>`).join('');
-      document.querySelector('#assignee-select').value=assignees.some(e=>e.username==='demo.tech')?'demo.tech':assignees[0]?.username??'';
+      document.querySelector('#assignee-select').innerHTML=assignees.map(e=>`<option value="${esc(e.username)}">${esc(e.displayName)}</option>`).join('');document.querySelector('#assignee-select').value=assignees.some(e=>e.username==='demo.tech')?'demo.tech':assignees[0]?.username??'';
+      document.querySelector('#assignee-filter').innerHTML='<option value="">All</option>'+assignees.map(e=>`<option value="${esc(e.username)}">${esc(e.displayName)}</option>`).join('');
       document.querySelector('#creator-select').innerHTML='<option value="">All creators</option>'+employees.map(e=>`<option value="${esc(e.username)}">${esc(e.displayName)}</option>`).join('');
       await refresh();
     }
-    function clearSession(){token=null;currentUser=null;localStorage.removeItem(tokenKey);document.querySelector('#app-view').hidden=true;document.querySelector('#login-view').hidden=false;}
+    function clearSession(){token=null;currentUser=null;localStorage.removeItem(tokenKey);document.querySelector('#app-view').hidden=true;document.querySelector('#account-bar').hidden=true;document.querySelector('#login-view').hidden=false;}
     async function login(username){
       document.querySelector('#login-error').textContent='';
       const response=await fetch('/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username})});
@@ -86,17 +95,34 @@
       const items=await response.json();
       const countsResponse=await apiFetch(`${api}/status-counts`);
       if(countsResponse.ok){const counts=await countsResponse.json();document.querySelector('#status-dashboard').innerHTML=Object.entries(counts).map(([status,count])=>`<button type="button" data-status-filter="${esc(status)}">${esc(status==='InProgress'?'In Progress':status)} <span class="status-count">${esc(count)}</span></button>`).join('');}
-      document.querySelector('#orders').innerHTML=items.map(o=>{
+      const sortedItems=sortColumn?[...items].sort((a,b)=>String(a[sortColumn]??'').localeCompare(String(b[sortColumn]??''))*(sortAscending?1:-1)):items;
+      const rows=sortedItems.map((o,index)=>{
         const isCreator=o.creator.toLowerCase()===currentUser.username.toLowerCase();
         const isAssignee=o.assignee?.toLowerCase()===currentUser.username.toLowerCase();
         const assign=o.status==='Draft'&&isCreator?`<button data-action="assign" data-id="${esc(o.id)}">Assign</button>`:'';
         const begin=o.status==='Assigned'&&isAssignee?`<button data-action="begin" data-id="${esc(o.id)}">Begin</button>`:'';
         const complete=o.status==='InProgress'&&isAssignee?`<button data-action="complete" data-id="${esc(o.id)}">Complete</button><button data-action="shelve" data-id="${esc(o.id)}">Shelve</button>`:'';
         const cancel=o.status==='Assigned'&&isCreator?`<button data-action="cancel" data-id="${esc(o.id)}">Cancel</button>`:'';
-        return `<article class="card" data-testid="order-${esc(o.id)}"><h3>${esc(o.number)} — ${esc(o.title)}</h3><p>${esc(o.description)}</p>${o.instructions?`<p><strong>Instructions:</strong> ${esc(o.instructions)}</p>`:''}<p>Room ${esc(o.roomNumber||'—')} · <span class="status">${esc(o.status)}</span> · Assignee ${esc(o.assignee||'—')}</p>${o.dueDate?`<p class="${o.urgency==='DueToday'?'due-date-today':o.urgency==='Overdue'?'due-date-overdue':''}" data-testid="due-date-value">Due ${esc(o.dueDate)} <span class="urgency">${esc(o.dueDateBadge)}</span></p>`:''}<div>${assign}${begin}${complete}${cancel}<button type="button" data-history-id="${esc(o.id)}" data-testid="show-history-${esc(o.id)}">History</button></div><ol id="history-${esc(o.id)}" data-testid="event-history" hidden></ol><section data-testid="attachments-${esc(o.id)}"><h4>Attachments</h4><ul>${(o.attachments??[]).map(a=>`<li data-testid="attachment-row">${esc(a.fileName)} · ${esc(a.contentType)} · <span>${esc(a.fileSize)}</span> bytes · ${esc(a.uploadedByName)} · ${esc(new Date(a.uploadedDate).toLocaleString())}</li>`).join('')||'<li>No attachments</li>'}</ul><form data-attachment-order="${esc(o.id)}"><label>File name <input name="fileName" required maxlength="500" data-testid="attachment-file-name"></label><label>Content type <input name="contentType" maxlength="200" data-testid="attachment-content-type"></label><label>File size in bytes <input name="fileSize" type="number" min="0" step="1" required data-testid="attachment-file-size"></label><button data-testid="add-attachment">Add attachment metadata</button><p class="hint">Metadata only; this prototype does not upload or store file contents.</p></form></section></article>`;
-      }).join('')||'<p>No work orders found.</p>';
+        const badgeClass=o.urgency==='DueToday'?'due-date-today':o.urgency==='Overdue'?'due-date-overdue':'';
+        const canEdit=o.status==='Draft'&&isCreator;
+        return `<tr class="${index%2?'even':'odd'}"><td><a href="#work-order-${esc(o.id)}">${esc(o.number)}</a></td><td>${esc(employeeName(o.creator))}</td><td>${esc(employeeName(o.assignee))}</td><td><span class="status">${esc(o.status==='InProgress'?'In Progress':o.status)}</span></td><td>${esc(o.title)}</td><td class="due-cell">${o.dueDate?`<span class="${badgeClass}" data-testid="due-date-value">${esc(o.dueDate)} <span class="urgency">${esc(o.dueDateBadge)}</span></span>`:'—'}</td><td>${esc(o.roomNumber||'')}</td><td><a href="#work-order-${esc(o.id)}">Manage</a></td></tr>
+        <tr class="${index%2?'even':'odd'}"><td colspan="8"><details class="detail-panel" id="work-order-${esc(o.id)}"><summary>Manage ${esc(o.number)} · ${esc(o.title)}</summary><article data-testid="order-${esc(o.id)}"><p>${esc(o.description)}</p>${o.instructions?`<p><strong>Instructions:</strong> ${esc(o.instructions)}</p>`:''}${canEdit?`<form class="edit-work-order" data-update-order="${esc(o.id)}"><label>Title<input name="title" required maxlength="300" data-testid="edit-title" value="${esc(o.title)}"></label><label>Description<textarea name="description" maxlength="4000" data-testid="edit-description">${esc(o.description)}</textarea></label><label>Instructions<textarea name="instructions" maxlength="4000" data-testid="edit-instructions">${esc(o.instructions||'')}</textarea></label><label>Room<input name="roomNumber" maxlength="900" data-testid="edit-room" value="${esc(o.roomNumber||'')}"></label><label>Due Date<input name="dueDate" type="date" data-testid="edit-due-date" value="${esc(o.dueDate||'')}"></label><button data-testid="save-work-order">Save changes</button></form>`:''}<p>Created ${esc(new Date(o.createdAt).toLocaleString())} · Assigned ${esc(o.assignedAt?new Date(o.assignedAt).toLocaleString():'—')} · Completed ${esc(o.completedAt?new Date(o.completedAt).toLocaleString():'—')}</p><p>Room ${esc(o.roomNumber||'—')} · <span class="status">${esc(o.status)}</span> · Assignee ${esc(employeeName(o.assignee)||'—')}</p>${o.dueDate?`<p class="${badgeClass}" data-testid="due-date-value">Due ${esc(o.dueDate)} <span class="urgency">${esc(o.dueDateBadge)}</span></p>`:''}<div>${assign}${begin}${complete}${cancel}<button type="button" data-history-id="${esc(o.id)}" data-testid="show-history-${esc(o.id)}">History</button></div><ol id="history-${esc(o.id)}" data-testid="event-history" hidden></ol><section data-testid="attachments-${esc(o.id)}"><h4>Attachments</h4><ul>${(o.attachments??[]).map(a=>`<li data-testid="attachment-row">${esc(a.fileName)} · ${esc(a.contentType)} · <span>${esc(a.fileSize)}</span> bytes · ${esc(a.uploadedByName)} · ${esc(new Date(a.uploadedDate).toLocaleString())}</li>`).join('')||'<li>No attachments</li>'}</ul><form data-attachment-order="${esc(o.id)}"><label>File name <input name="fileName" required maxlength="500" data-testid="attachment-file-name"></label><label>Content type <input name="contentType" maxlength="200" data-testid="attachment-content-type"></label><label>File size in bytes <input name="fileSize" type="number" min="0" step="1" required data-testid="attachment-file-size"></label><button data-testid="add-attachment">Add attachment metadata</button><p class="hint">Metadata only; file contents are not stored.</p></form></section></article></details></td></tr>`;
+      }).join('');
+      document.querySelector('#orders').innerHTML=rows?`<section class="results-card"><div class="results-head"><span>☷ &nbsp; Search Results</span><span class="count">(${items.length} work orders)</span></div><div class="table-wrap"><table class="grid-data"><thead><tr><th>WO #</th><th>Creator</th><th>Assignee</th><th><button class="sort-btn" data-sort="status">Status ${sortColumn==='status'?sortAscending?'▲':'▼':''}</button></th><th><button class="sort-btn" data-sort="title">Title ${sortColumn==='title'?sortAscending?'▲':'▼':''}</button></th><th><button class="sort-btn" data-sort="dueDate">Due Date ${sortColumn==='dueDate'?sortAscending?'▲':'▼':''}</button></th><th><button class="sort-btn" data-sort="roomNumber">Room ${sortColumn==='roomNumber'?sortAscending?'▲':'▼':''}</button></th><th>Details</th></tr></thead><tbody>${rows}</tbody></table></div></section>`:'<div class="empty-results"><div class="table-empty">▣</div><p>No work orders found matching your search criteria.</p><p>Try adjusting your filters or create a new work order.</p></div>';
     }
 
+    document.querySelector('.sidebar nav').addEventListener('click',async e=>{
+      const link=e.target.closest('a[data-nav]');if(!link)return;
+      const nav=link.dataset.nav;
+      if(['create','search','my-work-orders','assigned-to-me','all-assigned','in-progress'].includes(nav))e.preventDefault();
+      if(nav==='my-work-orders'){document.querySelector('#creator-select').value=currentUser?.username??'';document.querySelector('#assignee-filter').value='';document.querySelector('#status-select').value='';document.querySelector('#assigned-me').checked=false;await refresh();document.querySelector('#orders').scrollIntoView({behavior:'smooth'});}
+      else if(nav==='assigned-to-me'){document.querySelector('#creator-select').value='';document.querySelector('#assignee-filter').value=currentUser?.username??'';document.querySelector('#status-select').value='';document.querySelector('#assigned-me').checked=true;await refresh();document.querySelector('#orders').scrollIntoView({behavior:'smooth'});}
+      else if(nav==='all-assigned'||nav==='in-progress'){document.querySelector('#creator-select').value='';document.querySelector('#assignee-filter').value='';document.querySelector('#assigned-me').checked=false;document.querySelector('#status-select').value=nav==='all-assigned'?'Assigned':'InProgress';await refresh();document.querySelector('#orders').scrollIntoView({behavior:'smooth'});}
+      else if(nav==='create'){document.querySelector('#create').open=true;document.querySelector('#create').scrollIntoView({behavior:'smooth'});}
+      else if(nav==='search'){document.querySelector('#search-form').scrollIntoView({behavior:'smooth'});}
+      document.querySelectorAll('.sidebar nav a').forEach(item=>item.classList.toggle('active',item===link));
+    });
+    document.querySelector('.collapse').addEventListener('click',()=>document.body.classList.toggle('menu-collapsed'));
     document.querySelector('#login-button').addEventListener('click',()=>login(document.querySelector('#employee-select').value));
     document.querySelector('#lovejoy-shortcut').addEventListener('click',()=>login('tlovejoy'));
     document.querySelector('#logout-button').addEventListener('click',async()=>{await apiFetch('/api/auth/logout',{method:'POST'});clearSession();message.textContent='Signed out';});
@@ -107,9 +133,12 @@
       message.textContent='Draft saved';e.target.reset();await refresh();
     });
     document.querySelector('#search-form').addEventListener('submit',async e=>{e.preventDefault();await refresh();});
+    document.querySelector('#assigned-me').addEventListener('change',e=>{document.querySelector('#assignee-filter').value=e.target.checked?currentUser.username:'';});
     document.querySelector('#search-form').addEventListener('reset',()=>setTimeout(refresh,0));
     document.querySelector('#status-dashboard').addEventListener('click',async e=>{const button=e.target.closest('button[data-status-filter]');if(!button)return;document.querySelector('#status-select').value=button.dataset.statusFilter;await refresh();});
     document.querySelector('#orders').addEventListener('click',async e=>{
+      const sortButton=e.target.closest('button[data-sort]');
+      if(sortButton){const column=sortButton.dataset.sort;sortAscending=sortColumn===column?!sortAscending:true;sortColumn=column;await refresh();return;}
       const historyButton=e.target.closest('button[data-history-id]');
       if(historyButton){const response=await apiFetch(`${api}/${historyButton.dataset.historyId}/history`);if(!response.ok){message.textContent=await responseMessage(response);return;}const events=await response.json();const panel=document.querySelector(`#history-${CSS.escape(historyButton.dataset.historyId)}`);panel.innerHTML=events.map(event=>`<li>${esc(event.action)} — ${esc(event.actorName)} · ${esc(event.fromStatus??'')} → ${esc(event.toStatus)} · ${esc(new Date(event.occurredAt).toLocaleString())}</li>`).join('');panel.hidden=false;return;}
       const button=e.target.closest('button[data-action]');if(!button)return;
@@ -121,6 +150,8 @@
       message.textContent=response.ok?`Work order ${action==='assign'?'assigned':label}`:await responseMessage(response);await refresh();
     });
     document.querySelector('#orders').addEventListener('submit',async e=>{
+      const editForm=e.target.closest('form[data-update-order]');
+      if(editForm){e.preventDefault();const data=Object.fromEntries(new FormData(editForm));const response=await apiFetch(`${api}/${editForm.dataset.updateOrder}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify(data)});message.textContent=response.ok?'Work order saved':await responseMessage(response);await refresh();return;}
       const form=e.target.closest('form[data-attachment-order]');if(!form)return;e.preventDefault();
       const data=Object.fromEntries(new FormData(form));data.fileSize=Number(data.fileSize);
       const response=await apiFetch(`${api}/${form.dataset.attachmentOrder}/attachments`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});

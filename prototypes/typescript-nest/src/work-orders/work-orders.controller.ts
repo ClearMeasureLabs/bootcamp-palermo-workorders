@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Patch, Post, Query } from '@nestjs/common';
 import { Transform } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
 import { CreateWorkOrder, WorkOrdersService } from './work-orders.service';
@@ -14,6 +14,14 @@ class CreateWorkOrderDto implements CreateWorkOrder {
 class TransitionDto {
   @IsString() status!: string;
   @IsString() @IsOptional() assignee?: string;
+}
+
+class UpdateWorkOrderDto {
+  @IsString() @IsOptional() @MaxLength(300) title?: string;
+  @IsString() @IsOptional() @MaxLength(4000) description?: string;
+  @IsString() @IsOptional() @MaxLength(4000) instructions?: string;
+  @IsString() @IsOptional() @MaxLength(900) roomNumber?: string;
+  @Transform(({ value }) => value === '' ? null : value) @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) dueDate?: string|null;
 }
 
 class AddAttachmentMetadataDto {
@@ -38,6 +46,9 @@ export class WorkOrdersController {
     return this.workOrders.addAttachment(id, dto, bearer(authorization));
   }
   @Post() create(@Body() dto: CreateWorkOrderDto, @Headers('authorization') authorization?: string) { return this.workOrders.create(dto, bearer(authorization)); }
+  @Patch(':id') update(@Param('id') id: string, @Body() dto: UpdateWorkOrderDto, @Headers('authorization') authorization?: string) {
+    return this.workOrders.update(id, dto, bearer(authorization));
+  }
   @Post(':id/transitions') transition(@Param('id') id: string, @Body() dto: TransitionDto, @Headers('authorization') authorization?: string) {
     return this.workOrders.transition(id, dto.status, dto.assignee, bearer(authorization));
   }

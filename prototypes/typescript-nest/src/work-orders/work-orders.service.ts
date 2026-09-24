@@ -4,6 +4,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 export type CreateWorkOrder = { title: string; description?: string; instructions?: string; roomNumber?: string; dueDate?: string };
+type UpdateWorkOrder = { title?: string; description?: string; instructions?: string; roomNumber?: string; dueDate?: string|null };
 type Employee = { username: string; firstName: string; lastName: string; canCreate: number; canFulfill: number };
 type Attachment = { id: string; workOrderId: string; fileName: string; contentType: string; fileSize: number; uploadedBy: string; uploadedByName: string; uploadedDate: string };
 type WorkOrderEvent = { id: string; workOrderId: string; action: string; actor: string; actorName: string; fromStatus: string|null; toStatus: string; occurredAt: string };
@@ -76,6 +77,28 @@ export class WorkOrdersService implements OnModuleInit {
     const order = this.one('SELECT * FROM WorkOrder WHERE id = ?', id);
     if (!order) throw new NotFoundException(`Work order ${id} was not found`);
     return this.present(order);
+  }
+
+  async update(id: string, input: UpdateWorkOrder, token?: string): Promise<WorkOrder> {
+    const actor = this.requireSession(token);
+    const order = await this.get(id, token);
+    if (order.creator.toLowerCase() !== actor.username.toLowerCase()) throw new ForbiddenException('Only the work-order creator can edit it');
+    if (order.status !== 'Draft') throw new BadRequestException('Only draft work orders can be edited');
+    if (input.title !== undefined && !input.title.trim()) throw new BadRequestException('Title is required');
+    if (input.dueDate) this.validateDueDate(input.dueDate);
+    const now = new Date().toISOString();
+    this.db.run(`UPDATE WorkOrder SET title=?,description=?,instructions=?,roomNumber=?,dueDate=?,updatedAt=? WHERE id=? AND status='Draft'`, [
+      input.title?.trim() ?? order.title,
+      input.description?.slice(0, 4000) ?? order.description,
+      input.instructions?.slice(0, 4000) ?? order.instructions,
+      input.roomNumber === undefined ? order.roomNumber : input.roomNumber.trim() || null,
+      input.dueDate === undefined ? order.dueDate : input.dueDate || null,
+      now, id,
+    ]);
+    if (this.db.getRowsModified() !== 1) throw new BadRequestException('Only draft work orders can be edited');
+    this.insertEvent(id, actor.username, 'Updated', 'Draft', 'Draft', now);
+    this.persist();
+    return this.get(id, token);
   }
 
   attachments(id: string, token?: string): Attachment[] {
