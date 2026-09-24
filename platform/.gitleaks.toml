@@ -13,7 +13,7 @@
 #   - No path, file, commit or rule is allow-listed. A real finding is fixed by removing the value
 #     and rotating it (docs/runbooks/credential-rotation.md), never by editing this file.
 #
-# Owner: security owners (CODEOWNERS). Format: gitleaks 8.25 or later ([[allowlists]]).
+# Owner: security owners (CODEOWNERS). Format: [[allowlists]], tested with gitleaks 8.28.0.
 
 title = "workorders environment repository"
 

@@ -1,12 +1,15 @@
 # Class nonprod: cluster aks-workorders-nonprod, environments tdd and uat.
-# Copy to nonprod.tfvars (untracked; the runbooks pass it with -var-file) and fill it from the
-# foundation output environment_inputs["nonprod"]. Never commit the copy: the repository is
-# public.
+# Copy to nonprod.tfvars next to this file and fill it from the foundation output
+# environment_inputs["nonprod"]. The Octopus runbooks env-plan / env-apply / env-destroy run
+# Terraform from the environment repository and pass -var-file=nonprod.tfvars, so the copy is
+# committed there. It holds identifiers only, never secrets; commit it only once the environment
+# repository is private (R2). Never commit it to the public app repository.
 #
-# Applied only by the Octopus runbooks env-plan / env-apply / env-destroy in environment
-# infra-nonprod (account #{Azure.LifecycleAccount}). Backend key: environment-nonprod.tfstate.
-# The ephemeral inputs octopus_worker_registration_token and argocd_repo_read_credential come from
-# Octopus sensitive variables on the run that needs them, never from this file.
+# Environment infra-nonprod, account #{Azure.LifecycleAccount}, backend key
+# environment-nonprod.tfstate. The ephemeral inputs come from Octopus sensitive variables as
+# environment variables, never from this file:
+#   TF_VAR_octopus_worker_registration_token   Octopus.WorkerRegistrationToken (worker installs)
+#   TF_VAR_argocd_repo_read_credential         JSON credential for the first Argo CD bootstrap
 
 cluster         = "nonprod"
 tenant_id       = "<AZURE_TENANT_ID>"

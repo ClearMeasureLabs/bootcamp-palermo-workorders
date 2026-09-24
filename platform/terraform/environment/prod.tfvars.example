@@ -1,6 +1,10 @@
 # Class prod: cluster aks-workorders-prod, environment prod.
-# Copy to prod.tfvars (untracked; the runbooks pass it with -var-file) and fill it from the
-# foundation output environment_inputs["prod"]. Never commit the copy: the repository is public.
+# Copy to prod.tfvars next to this file and fill it from the foundation output
+# environment_inputs["prod"]. The runbooks pass -var-file=prod.tfvars from the environment
+# repository, so the copy is committed there: identifiers only, never secrets, and only once the
+# environment repository is private (R2). Never commit it to the public app repository. The
+# ephemeral inputs arrive as TF_VAR_octopus_worker_registration_token and
+# TF_VAR_argocd_repo_read_credential from Octopus sensitive variables.
 #
 # Applied only by env-plan / env-apply in environment infra-prod with azure-oidc-env-lifecycle-prod
 # (OIDC from the first apply; the stored provisioner is never used for prod, ADR-C10). There is no

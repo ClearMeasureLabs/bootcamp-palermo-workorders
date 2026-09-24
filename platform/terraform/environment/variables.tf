@@ -1,6 +1,8 @@
-# Inputs for one cluster class. The runbooks pass <class>.tfvars (copied from
-# <class>.tfvars.example; values from the foundation output environment_inputs[<class>]) plus
-# the sensitive, ephemeral variables at the end of this file from Octopus sensitive variables.
+# Inputs for one cluster class. The runbooks run Terraform from the project Git repository and
+# pass -var-file=#{Environment.Class}.tfvars, so <class>.tfvars (from <class>.tfvars.example and
+# the foundation output environment_inputs[<class>]) is committed next to this file in the
+# environment repository. It holds identifiers only. The sensitive, ephemeral variables at the end
+# of this file come from Octopus sensitive variables as TF_VAR_<name> environment variables.
 
 variable "cluster" {
   description = "Cluster class: nonprod (tdd, uat) or prod (prod). Selects the environments, the SKU tier and argocd/bootstrap/*-<cluster>.yaml."
@@ -289,7 +291,7 @@ variable "tags" {
 # Supply them on each run that installs something, from Octopus sensitive variables.
 
 variable "octopus_worker_registration_token" {
-  description = "Octopus.WorkerRegistrationToken: short-lived bearer token that registers the Kubernetes workers (ADR-D14). Needed only on the run that installs or replaces a worker."
+  description = "Octopus.WorkerRegistrationToken (TF_VAR_octopus_worker_registration_token): short-lived bearer token that registers the Kubernetes workers (ADR-D14). Needed only on the run that installs or replaces a worker; null or empty sends nothing."
   type        = string
   default     = null
   sensitive   = true
@@ -297,8 +299,8 @@ variable "octopus_worker_registration_token" {
 }
 
 variable "argocd_repo_read_credential" {
-  description = "Read-only credential for the environment repo, used once to seed Secret argocd-repo-creds before ESO exists (§5.2): {username, password} for a fine-grained token or {githubAppID, githubAppInstallationID, githubAppPrivateKey} for a GitHub App (R11). Never the stored org-wide PAT."
-  type        = map(string)
+  description = "Read-only credential for the environment repo, used once to seed Secret argocd-repo-creds before ESO exists (§5.2). The same JSON object as Key Vault secret argocd-repo-read-credential: {\"username\": ..., \"password\": ...} for a fine-grained token or {\"githubAppID\": ..., \"githubAppInstallationID\": ..., \"githubAppPrivateKey\": ...} for a GitHub App (R11). Never the stored org-wide PAT. Null or empty skips it."
+  type        = string
   default     = null
   sensitive   = true
   ephemeral   = true

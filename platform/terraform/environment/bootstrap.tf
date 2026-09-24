@@ -3,8 +3,8 @@
 # 1. Argo CD. Terraform installs the argo/argo-cd chart once as release `argocd` and the
 #    argo/argocd-apps chart once as release `argocd-apps` (Application platform-root), with the
 #    values files the gitops-architect package maintains:
-#      argocd/bootstrap/values-<cluster>.yaml     (read by this file and by the self-managing
-#                                                  add-on Application argocd/clusters/<cluster>/addons/argocd.yaml)
+#      argocd/bootstrap/values-<cluster>.yaml    also used by the self-managing add-on
+#                                                Application argocd/clusters/<cluster>/addons/argocd.yaml
 #      argocd/bootstrap/root-app-<cluster>.yaml
 #    After the first sync Argo CD manages itself from Git, so both releases ignore every later
 #    change (ignore_changes = all). Change Argo CD by pull request to argocd/**, never here.
@@ -12,17 +12,18 @@
 #    values.
 #
 # 2. The environment-repo credential. ESO cannot run before Argo CD installs it, so Terraform
-#    seeds Secret argocd/argocd-repo-creds once from the ephemeral variable
-#    argocd_repo_read_credential (write-only data_wo: never in plan or state). ExternalSecret
+#    seeds Secret argocd/argocd-repo-creds once from TF_VAR_argocd_repo_read_credential (ephemeral
+#    variable, JSON; write-only data_wo: never in plan or state). ExternalSecret
 #    argocd-repo-creds (creationPolicy Orphan) then adopts and refreshes it from
 #    <kv-workorders-platform-{cluster}> (argocd/clusters/<cluster>/platform-secrets.yaml).
 #
 # 3. Octopus Kubernetes workers, one release per environment in namespace octopus-worker-<env>
 #    (ADR-D14). Octopus upgrades them afterwards, so the chart version is ignored. The
-#    registration token Octopus.WorkerRegistrationToken arrives through the ephemeral variable
-#    octopus_worker_registration_token and the write-only set_wo argument, so it stays out of
-#    plan and state (it does live in the in-cluster Helm release Secret, as it would with any
-#    install). Re-register a worker by replacing its release:
+#    registration token Octopus.WorkerRegistrationToken arrives as
+#    TF_VAR_octopus_worker_registration_token (ephemeral variable) and reaches Helm through the
+#    write-only set_wo argument, so it stays out of plan and state (it does live in the
+#    in-cluster Helm release Secret, as with any install). Re-register a worker by replacing its
+#    release:
 #      terraform apply -replace='helm_release.octopus_worker["<env>"]' with a fresh token.
 #    Hardening checked against chart kubernetes-agent 3.15.1 (`helm template`, 2026-09-24): with
 #    default values the chart binds a cluster-wide `*` ClusterRole to the auto-upgrader service
@@ -70,7 +71,7 @@ resource "kubernetes_secret_v1" "argocd_repo_creds" {
   # Credential-template fields for the repository prefix; either username/password or the
   # GitHub App fields (argocd/clusters/<cluster>/platform-secrets.yaml).
   data_wo = merge(
-    var.argocd_repo_read_credential == null ? {} : var.argocd_repo_read_credential,
+    try(jsondecode(var.argocd_repo_read_credential), {}),
     {
       type = "git"
       url  = var.env_repo_url
@@ -171,13 +172,14 @@ resource "helm_release" "octopus_worker" {
     }
   })]
 
-  # Registration token: write-only, sent on install (and on -replace).
-  set_wo = var.octopus_worker_registration_token == null ? [] : [
+  # Registration token: write-only, sent on install (and on -replace). Octopus passes an empty
+  # string when Octopus.WorkerRegistrationToken is unset; that sends nothing.
+  set_wo = try(length(var.octopus_worker_registration_token) > 0, false) ? [
     {
       name  = "agent.bearerToken"
       value = var.octopus_worker_registration_token
     },
-  ]
+  ] : []
   set_wo_revision = 1
 
   wait    = true
