@@ -111,10 +111,11 @@ class WorkOrderWebTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn(order.number, self.client.get(reverse("work_order_list") + "?q=WO-").content.decode())
         self.assertEqual(self.client.get(reverse("work_order_detail", args=[order.pk])).status_code, 200)
-        self.client.post(reverse("work_order_transition", args=[order.pk]), {"status": WorkOrder.Status.ASSIGNED})
+        response = self.client.post(reverse("work_order_transition", args=[order.pk]), {"status": WorkOrder.Status.ASSIGNED}, follow=True)
         order.refresh_from_db()
         self.assertEqual(order.status, WorkOrder.Status.ASSIGNED)
         self.assertEqual(order.events.count(), 1)
+        self.assertContains(response, f"Work order {order.number} moved to Assigned.")
     def test_list_search_matches_room_and_title(self):
         WorkOrder.objects.create(title="Inspect boiler", room_number="B-2")
         response = self.client.get(reverse("work_order_list"), {"q": "B-2"})

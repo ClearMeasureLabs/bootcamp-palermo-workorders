@@ -77,7 +77,7 @@ def work_order_detail(request, pk):
 def work_order_transition(request, pk):
     order = get_object_or_404(WorkOrder, pk=pk)
     try:
-        transition(order, request.POST.get("status", ""), current_employee(request), request.POST.get("note", ""))
+        order = transition(order, request.POST.get("status", ""), current_employee(request), request.POST.get("note", ""))
         messages.success(request, f"Work order {order.number} moved to {order.get_status_display()}.")
     except ValidationError as error:
         messages.error(request, " ".join(error.messages))
