@@ -92,9 +92,10 @@ try:
         page.get_by_label("Due date").fill(today.isoformat())
         capture_screenshot(page, "new-work-order-1365x900.png", required=False)
         page.get_by_role("button", name="Create work order").click()
-        heading = page.get_by_role("heading", name="Acceptance: repair sink")
+        heading = page.locator(".manage-header h1")
         heading.wait_for()
-        number = heading.inner_text().split(" · ", 1)[0]
+        assert page.get_by_text("Acceptance: repair sink", exact=True).count() > 0
+        number = heading.inner_text().split("#", 1)[1].split(" ", 1)[0]
         page.get_by_label("File name").fill("damage-photo.jpg")
         page.get_by_label("Content type").fill("image/jpeg")
         page.get_by_label("File size (bytes)").fill("2048")
