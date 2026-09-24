@@ -81,7 +81,7 @@ class WorkOrderBrowserAcceptanceTest {
             assertEquals(403, page.request().post(baseUrl + "/api/work-orders/" + number + "/begin").status(),
                 "The creator cannot begin work assigned to another employee");
             orderRow.locator("select[name='assignee']").selectOption("tlovejoy");
-            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Assign")).click();
+            orderRow.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Assign")).click();
             orderRow.getByText("ASSIGNED")
                 .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
             page.getByTestId("logout-link").click();
