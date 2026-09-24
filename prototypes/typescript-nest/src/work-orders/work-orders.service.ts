@@ -24,6 +24,7 @@ export class WorkOrdersService implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     const SQL = await initSqlJs();
     this.db = new SQL.Database(existsSync(this.filename) ? new Uint8Array(readFileSync(this.filename)) : undefined);
+    this.db.run('PRAGMA foreign_keys=ON');
     this.db.run('CREATE TABLE IF NOT EXISTS SchemaMigration (version INTEGER PRIMARY KEY, appliedAt TEXT NOT NULL)');
     this.db.run(`CREATE TABLE IF NOT EXISTS WorkOrder (
       id TEXT PRIMARY KEY, number TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL,
@@ -34,6 +35,8 @@ export class WorkOrdersService implements OnModuleInit {
     this.applyIdentityMigration();
     this.applyAttachmentMigration();
     this.applyWorkOrderNumberMigration();
+    this.applyStatusCodeMigration();
+    this.applyRelationalIdentityMigration();
     this.persist();
   }
 
@@ -41,10 +44,10 @@ export class WorkOrdersService implements OnModuleInit {
     this.requireSession(token);
     const predicates: string[] = [];
     const params: string[] = [];
-    if (filters.status?.trim()) { predicates.push('status = ?'); params.push(this.normalizeStatus(filters.status)); }
+    if (filters.status?.trim()) { predicates.push('status = ?'); params.push(this.statusCode(this.normalizeStatus(filters.status))); }
     if (filters.assignee?.trim()) { predicates.push('LOWER(COALESCE(assignee,\'\')) = LOWER(?)'); params.push(filters.assignee.trim()); }
     if (filters.creator?.trim()) { predicates.push('LOWER(creator) = LOWER(?)'); params.push(filters.creator.trim()); }
-    if (filters.overdueOnly) { predicates.push("dueDate < ? AND status IN ('Draft','Assigned','InProgress')"); params.push(this.chicagoToday()); }
+    if (filters.overdueOnly) { predicates.push("dueDate < ? AND status IN ('DRT','ASD','IPG')"); params.push(this.chicagoToday()); }
     if (filters.q?.trim()) {
       predicates.push("(number LIKE ? OR title LIKE ? OR description LIKE ? OR instructions LIKE ? OR roomNumber LIKE ? OR assignee LIKE ?)");
       const term = `%${filters.q.trim()}%`;
@@ -60,7 +63,8 @@ export class WorkOrdersService implements OnModuleInit {
     this.requireSession(token);
     const counts: Record<string, number> = { Draft: 0, Assigned: 0, InProgress: 0, Complete: 0, Cancelled: 0 };
     for (const row of this.all<{ status: string; count: number }>('SELECT status,COUNT(*) AS count FROM WorkOrder GROUP BY status')) {
-      if (Object.hasOwn(counts, row.status)) counts[row.status] = Number(row.count);
+      const status = this.displayStatus(row.status);
+      if (Object.hasOwn(counts, status)) counts[status] = Number(row.count);
     }
     return counts;
   }
@@ -88,7 +92,7 @@ export class WorkOrdersService implements OnModuleInit {
     if (input.title !== undefined && !input.title.trim()) throw new BadRequestException('Title is required');
     if (input.dueDate) this.validateDueDate(input.dueDate);
     const now = new Date().toISOString();
-    this.db.run(`UPDATE WorkOrder SET title=?,description=?,instructions=?,roomNumber=?,dueDate=?,updatedAt=? WHERE id=? AND status='Draft'`, [
+    this.db.run(`UPDATE WorkOrder SET title=?,description=?,instructions=?,roomNumber=?,dueDate=?,updatedAt=? WHERE id=? AND status='DRT'`, [
       input.title?.trim() ?? order.title,
       input.description?.slice(0, 4000) ?? order.description,
       input.instructions?.slice(0, 4000) ?? order.instructions,
@@ -118,10 +122,11 @@ export class WorkOrdersService implements OnModuleInit {
     if (!Number.isSafeInteger(input.fileSize) || input.fileSize < 0) throw new BadRequestException('File size must be a non-negative integer');
     const attachment: Attachment = { id: crypto.randomUUID(), workOrderId: id, fileName: input.fileName, contentType,
       fileSize: input.fileSize, uploadedBy: actor.username, uploadedByName: `${actor.firstName} ${actor.lastName}`, uploadedDate: new Date().toISOString() };
-    this.db.run('INSERT INTO WorkOrderAttachment(id,workOrderId,fileName,contentType,fileSize,uploadedBy,uploadedDate) VALUES (?,?,?,?,?,?,?)',
-      [attachment.id, id, attachment.fileName, contentType, input.fileSize, actor.username, attachment.uploadedDate]);
+    this.db.run('INSERT INTO WorkOrderAttachment(id,workOrderId,fileName,contentType,fileSize,uploadedBy,uploadedDate,uploadedById) VALUES (?,?,?,?,?,?,?,(SELECT id FROM Employee WHERE username=?))',
+      [attachment.id, id, attachment.fileName, contentType, input.fileSize, actor.username, attachment.uploadedDate, actor.username]);
     const order = this.one<StoredWorkOrder>('SELECT * FROM WorkOrder WHERE id=?', id)!;
-    this.insertEvent(id, actor.username, 'Attachment added', order.status, order.status, attachment.uploadedDate);
+    const status = this.displayStatus(order.status);
+    this.insertEvent(id, actor.username, 'Attachment added', status, status, attachment.uploadedDate);
     this.persist();
     return attachment;
   }
@@ -138,8 +143,9 @@ export class WorkOrdersService implements OnModuleInit {
       roomNumber: input.roomNumber?.trim() || null, dueDate: input.dueDate || null, status: 'Draft',
       creator: actor.username, assignee: null, createdAt: now, updatedAt: now, assignedAt: null, completedAt: null,
     };
-    this.db.run(`INSERT INTO WorkOrder(id,number,title,description,instructions,roomNumber,dueDate,status,creator,assignee,createdAt,updatedAt,assignedAt,completedAt)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [order.id, order.number, order.title, order.description, order.instructions, order.roomNumber, order.dueDate, order.status, order.creator, order.assignee, order.createdAt, order.updatedAt, order.assignedAt, order.completedAt]);
+    order.status = this.statusCode(order.status);
+    this.db.run(`INSERT INTO WorkOrder(id,number,title,description,instructions,roomNumber,dueDate,status,creator,assignee,createdAt,updatedAt,assignedAt,completedAt,creatorId)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,(SELECT id FROM Employee WHERE username=?))`, [order.id, order.number, order.title, order.description, order.instructions, order.roomNumber, order.dueDate, order.status, order.creator, order.assignee, order.createdAt, order.updatedAt, order.assignedAt, order.completedAt, actor.username]);
     this.insertEvent(order.id, actor.username, 'Created', null, 'Draft', now);
     this.persist();
     return this.present(order);
@@ -165,11 +171,13 @@ export class WorkOrdersService implements OnModuleInit {
       assignee=CASE WHEN ?='Assigned' AND ?='Draft' THEN ? WHEN ?='Cancelled' THEN NULL ELSE assignee END,
       assignedAt=CASE WHEN ?='Assigned' AND ?='Draft' THEN ? WHEN ?='Cancelled' THEN NULL ELSE assignedAt END,
       completedAt=CASE WHEN ?='Complete' THEN ? ELSE completedAt END WHERE id=? AND status=?`,
-      [target, now, target, order.status, assignee?.trim() ?? null, target, target, order.status, now, target, target, now, id, order.status]);
+      [this.statusCode(target), now, target, order.status, assignee?.trim() ?? null, target, target, order.status, now, target, target, now, id, this.statusCode(order.status)]);
     if (this.db.getRowsModified() !== 1) {
       const current = await this.get(id, token);
       throw new BadRequestException(`Invalid transition ${current.status} -> ${target}`);
     }
+    if (isInitialAssignment) this.db.run('UPDATE WorkOrder SET assigneeId=(SELECT id FROM Employee WHERE LOWER(username)=LOWER(?)) WHERE id=?', [assignee!.trim(), id]);
+    if (target === 'Cancelled') this.db.run('UPDATE WorkOrder SET assigneeId=NULL WHERE id=?', [id]);
     this.insertEvent(id, actor.username, this.transitionAction(order.status, target), order.status, target, now);
     this.persist();
     return this.get(id, token);
@@ -178,7 +186,7 @@ export class WorkOrdersService implements OnModuleInit {
   employees(canFulfill?: boolean): Array<{ username: string; displayName: string; canCreate: boolean; canFulfill: boolean }> {
     const employees = this.all<Employee>(`SELECT e.username,e.firstName,e.lastName,
       MAX(r.canCreate) AS canCreate,MAX(r.canFulfill) AS canFulfill
-      FROM Employee e JOIN EmployeeRole er ON er.username=e.username JOIN Role r ON r.name=er.roleName
+      FROM Employee e JOIN EmployeeRoles er ON er.EmployeeId=e.id JOIN Role r ON r.id=er.RoleId
       GROUP BY e.username,e.firstName,e.lastName ORDER BY e.lastName,e.firstName`);
     return employees.filter(employee => canFulfill === undefined || Boolean(employee.canFulfill) === canFulfill)
       .map(employee => ({ username: employee.username, displayName: `${employee.firstName} ${employee.lastName}`.toUpperCase(), canCreate: Boolean(employee.canCreate), canFulfill: Boolean(employee.canFulfill) }));
@@ -215,7 +223,6 @@ export class WorkOrdersService implements OnModuleInit {
   private applyIdentityMigration(): void {
     this.db.run('CREATE TABLE IF NOT EXISTS Role (name TEXT PRIMARY KEY, canCreate INTEGER NOT NULL, canFulfill INTEGER NOT NULL)');
     this.db.run('CREATE TABLE IF NOT EXISTS Employee (username TEXT PRIMARY KEY, firstName TEXT NOT NULL, lastName TEXT NOT NULL)');
-    this.db.run('CREATE TABLE IF NOT EXISTS EmployeeRole (username TEXT NOT NULL, roleName TEXT NOT NULL, PRIMARY KEY(username,roleName))');
     this.db.run('CREATE TABLE IF NOT EXISTS AuthSession (token TEXT PRIMARY KEY, username TEXT NOT NULL, createdAt TEXT NOT NULL)');
     const roles = [
       ['Manager', 1, 0], ['Minister', 1, 1], ['Deacon', 0, 1], ['Groundskeeper', 0, 1], ['Fulfillment', 0, 1], ['Parishioner', 0, 0],
@@ -230,9 +237,8 @@ export class WorkOrdersService implements OnModuleInit {
       ['demo.tech', 'Alex', 'Technician', ['Fulfillment']],
       ['demo.user', 'Demo', 'User', ['Manager']],
     ];
-    for (const [username, firstName, lastName, roleNames] of employees) {
+    for (const [username, firstName, lastName] of employees) {
       this.db.run('INSERT OR IGNORE INTO Employee(username,firstName,lastName) VALUES (?,?,?)', [username, firstName, lastName]);
-      for (const roleName of roleNames) this.db.run('INSERT OR IGNORE INTO EmployeeRole(username,roleName) VALUES (?,?)', [username, roleName]);
     }
     this.db.run("INSERT OR IGNORE INTO SchemaMigration(version, appliedAt) VALUES (3, datetime('now'))");
   }
@@ -269,6 +275,65 @@ export class WorkOrdersService implements OnModuleInit {
     this.db.run("INSERT OR IGNORE INTO SchemaMigration(version, appliedAt) VALUES (6, datetime('now'))");
   }
 
+  private applyStatusCodeMigration(): void {
+    const codes: Record<string, string> = { Draft: 'DRT', Assigned: 'ASD', InProgress: 'IPG', Complete: 'CMP', Cancelled: 'CNL' };
+    for (const [name, code] of Object.entries(codes)) this.db.run('UPDATE WorkOrder SET status=? WHERE status=?', [code, name]);
+    this.db.run(`CREATE TRIGGER IF NOT EXISTS TR_WorkOrder_StatusLength_Insert
+      BEFORE INSERT ON WorkOrder WHEN length(NEW.status)>3
+      BEGIN SELECT RAISE(ABORT, 'WorkOrder.Status must be 3 characters or fewer'); END`);
+    this.db.run(`CREATE TRIGGER IF NOT EXISTS TR_WorkOrder_StatusLength_Update
+      BEFORE UPDATE OF status ON WorkOrder WHEN length(NEW.status)>3
+      BEGIN SELECT RAISE(ABORT, 'WorkOrder.Status must be 3 characters or fewer'); END`);
+    this.db.run("INSERT OR IGNORE INTO SchemaMigration(version, appliedAt) VALUES (7, datetime('now'))");
+  }
+
+  private applyRelationalIdentityMigration(): void {
+    const columns = (table: string) => this.all<{ name: string }>(`PRAGMA table_info(${table})`).map(column => column.name);
+    const addColumn = (table: string, name: string, ddl: string) => { if (!columns(table).includes(name)) this.db.run(`ALTER TABLE ${table} ADD COLUMN ${name} ${ddl}`); };
+    addColumn('Employee', 'id', 'TEXT');
+    addColumn('Employee', 'emailAddress', "TEXT NOT NULL DEFAULT ''");
+    addColumn('Employee', 'preferredLanguage', "TEXT NOT NULL DEFAULT 'en-US'");
+    addColumn('Role', 'id', 'TEXT');
+    this.db.run('CREATE UNIQUE INDEX IF NOT EXISTS UX_Employee_Id ON Employee(id)');
+    this.db.run('CREATE UNIQUE INDEX IF NOT EXISTS UX_Role_Id ON Role(id)');
+    addColumn('WorkOrder', 'creatorId', 'TEXT REFERENCES Employee(id)');
+    addColumn('WorkOrder', 'assigneeId', 'TEXT REFERENCES Employee(id)');
+    addColumn('WorkOrderAttachment', 'uploadedById', 'TEXT REFERENCES Employee(id)');
+    for (const employee of this.all<{ username: string }>("SELECT username FROM Employee WHERE id IS NULL OR id=''")) {
+      this.db.run('UPDATE Employee SET id=? WHERE username=?', [crypto.randomUUID(), employee.username]);
+    }
+    for (const role of this.all<{ name: string }>("SELECT name FROM Role WHERE id IS NULL OR id=''")) {
+      this.db.run('UPDATE Role SET id=? WHERE name=?', [crypto.randomUUID(), role.name]);
+    }
+    this.db.run(`CREATE TABLE IF NOT EXISTS EmployeeRoles (
+      EmployeeId TEXT NOT NULL REFERENCES Employee(id) ON DELETE CASCADE,
+      RoleId TEXT NOT NULL REFERENCES Role(id) ON DELETE CASCADE,
+      PRIMARY KEY(EmployeeId,RoleId))`);
+    if (this.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='EmployeeRole'").length) {
+      for (const link of this.all<{ username: string; roleName: string }>('SELECT username,roleName FROM EmployeeRole')) {
+        this.db.run(`INSERT OR IGNORE INTO EmployeeRoles(EmployeeId,RoleId)
+          SELECT e.id,r.id FROM Employee e JOIN Role r ON r.name=? WHERE e.username=?`, [link.roleName, link.username]);
+      }
+      this.db.run('DROP TABLE EmployeeRole');
+    }
+    const roles: Array<[string,string]> = [
+      ['hsimpson','Manager'],['tlovejoy','Minister'],['nflanders','Deacon'],['nflanders','Parishioner'],
+      ['hlovejoy','Parishioner'],['gwillie','Groundskeeper'],['demo.tech','Fulfillment'],['demo.user','Manager'],
+    ];
+    for (const [username, role] of roles) this.db.run(`INSERT OR IGNORE INTO EmployeeRoles(EmployeeId,RoleId)
+      SELECT e.id,r.id FROM Employee e JOIN Role r ON r.name=? WHERE e.username=?`, [role, username]);
+    this.db.run("UPDATE WorkOrder SET creatorId=(SELECT id FROM Employee WHERE LOWER(username)=LOWER(creator)) WHERE creatorId IS NULL");
+    this.db.run("UPDATE WorkOrder SET assigneeId=(SELECT id FROM Employee WHERE LOWER(username)=LOWER(assignee)) WHERE assignee IS NOT NULL AND assigneeId IS NULL");
+    this.db.run("UPDATE WorkOrderAttachment SET uploadedById=(SELECT id FROM Employee WHERE LOWER(username)=LOWER(uploadedBy)) WHERE uploadedById IS NULL");
+    this.db.run(`CREATE TRIGGER IF NOT EXISTS TR_WorkOrder_CreatorId_Required_Insert BEFORE INSERT ON WorkOrder
+      WHEN NEW.creatorId IS NULL BEGIN SELECT RAISE(ABORT,'CreatorId is required'); END`);
+    this.db.run(`CREATE TRIGGER IF NOT EXISTS TR_WorkOrder_CreatorId_Required_Update BEFORE UPDATE OF creatorId ON WorkOrder
+      WHEN NEW.creatorId IS NULL BEGIN SELECT RAISE(ABORT,'CreatorId is required'); END`);
+    this.db.run(`CREATE TRIGGER IF NOT EXISTS TR_WorkOrderAttachment_UploadedById_Required_Insert BEFORE INSERT ON WorkOrderAttachment
+      WHEN NEW.uploadedById IS NULL BEGIN SELECT RAISE(ABORT,'UploadedById is required'); END`);
+    this.db.run("INSERT OR IGNORE INTO SchemaMigration(version, appliedAt) VALUES (8, datetime('now'))");
+  }
+
   private attachmentsFor(ids: string[]): Map<string, Attachment[]> {
     const attachments = new Map<string, Attachment[]>();
     for (let offset = 0; offset < ids.length; offset += 400) {
@@ -299,10 +364,18 @@ export class WorkOrdersService implements OnModuleInit {
     return canonical;
   }
 
+  private statusCode(status: string): string {
+    return ({ Draft: 'DRT', Assigned: 'ASD', InProgress: 'IPG', Complete: 'CMP', Cancelled: 'CNL' } as Record<string,string>)[status];
+  }
+
+  private displayStatus(code: string): string {
+    return ({ DRT: 'Draft', ASD: 'Assigned', IPG: 'InProgress', CMP: 'Complete', CNL: 'Cancelled' } as Record<string,string>)[code] ?? code;
+  }
+
   private employee(username: string): Employee | undefined {
     return this.one<Employee>(`SELECT e.username,e.firstName,e.lastName,
       MAX(r.canCreate) AS canCreate,MAX(r.canFulfill) AS canFulfill
-      FROM Employee e JOIN EmployeeRole er ON er.username=e.username JOIN Role r ON r.name=er.roleName
+      FROM Employee e JOIN EmployeeRoles er ON er.EmployeeId=e.id JOIN Role r ON r.id=er.RoleId
       WHERE LOWER(e.username)=LOWER(?) GROUP BY e.username,e.firstName,e.lastName`, username);
   }
 
@@ -327,6 +400,7 @@ export class WorkOrdersService implements OnModuleInit {
   }
 
   private present(order: StoredWorkOrder): WorkOrder {
+    order = { ...order, status: this.displayStatus(order.status) };
     let urgency = 'None';
     if (order.dueDate && ['Draft', 'Assigned', 'InProgress'].includes(order.status)) {
       const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());

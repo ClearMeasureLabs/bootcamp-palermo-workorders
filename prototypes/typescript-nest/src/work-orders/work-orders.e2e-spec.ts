@@ -6,7 +6,9 @@ import { rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { Database } from 'sql.js';
 import { AppModule } from '../app.module';
+import { WorkOrdersService } from './work-orders.service';
 
 describe('Work order lifecycle (HTTP + SQLite)', () => {
   let app: INestApplication;
@@ -34,6 +36,23 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
     delete process.env.DEMO_LOGIN_ENABLED;
     try { await request(app.getHttpServer()).post('/api/auth/login').send({ username: 'hsimpson' }).expect(403); }
     finally { process.env.DEMO_LOGIN_ENABLED = original ?? 'true'; }
+  });
+
+  it('applies GUID employee/role links and constrained source status and number storage', async () => {
+    const created = await request(app.getHttpServer()).post('/api/work-orders').set('authorization', creatorAuth)
+      .send({ title: 'Schema migration verification' }).expect(201);
+    const db = (app.get(WorkOrdersService) as unknown as { db: Database }).db;
+    const columns = (table: string) => db.exec(`PRAGMA table_info(${table})`)[0].values.map(row => row[1]);
+    const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table'").flatMap(result => result.values.map(row => row[0]));
+    const workOrder = db.exec('SELECT number,status,creatorId FROM WorkOrder WHERE id=?', [created.body.id])[0].values[0];
+    expect(columns('WorkOrder')).toEqual(expect.arrayContaining(['creatorId','assigneeId']));
+    expect(columns('Employee')).toEqual(expect.arrayContaining(['id','emailAddress','preferredLanguage']));
+    expect(tables).toContain('EmployeeRoles');
+    expect(tables).not.toContain('EmployeeRole');
+    expect(workOrder[0]).toMatch(/^[A-F0-9]{7}$/);
+    expect(workOrder[1]).toBe('DRT');
+    expect(workOrder[2]).toBeTruthy();
+    expect(db.exec('PRAGMA foreign_key_check')).toEqual([]);
   });
 
   it('creates, assigns, begins and completes a work order, rejecting invalid moves', async () => {
