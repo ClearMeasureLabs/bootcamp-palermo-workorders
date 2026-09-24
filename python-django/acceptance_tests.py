@@ -60,6 +60,7 @@ try:
         page = context.new_page()
         page.goto(f"http://127.0.0.1:{port}/")
         page.get_by_role("heading", name="Log in").wait_for()
+        page.screenshot(path=str(ARTIFACTS / "login-1365x900.png"))
         page.get_by_label("Select Church Member").select_option("acceptance-tech")
         page.get_by_role("button", name="Enter the Portal").click()
         page.locator(".header-actions .welcome").wait_for()
@@ -69,7 +70,9 @@ try:
         page.locator(".sidebar-nav a[href='/work-orders/new/']").click()
         page.get_by_label("Title").fill("Acceptance: repair sink")
         page.get_by_label("Room number").fill("Fellowship Hall")
+        page.get_by_label("Assignee").select_option("2")
         page.get_by_label("Due date").fill(today.isoformat())
+        page.screenshot(path=str(ARTIFACTS / "new-work-order-1365x900.png"))
         page.get_by_role("button", name="Create work order").click()
         heading = page.get_by_role("heading", name="Acceptance: repair sink")
         heading.wait_for()
@@ -83,8 +86,7 @@ try:
         assert page.get_by_test_id("AttachmentContentType").inner_text() == "image/jpeg"
         assert page.get_by_test_id("AttachmentFileSize").inner_text() == "2048"
         assert page.get_by_test_id("AttachmentUploadedBy").inner_text() == "Casey Tech"
-        page.get_by_label("New status").select_option("Assigned")
-        page.get_by_role("button", name="Update status").click()
+        page.get_by_role("button", name="Assign").click()
         page.get_by_text(f"Work order {number} moved to Assigned.").wait_for()
         page.screenshot(path=str(ARTIFACTS / "manage-1365x900.png"))
         page.goto(f"http://127.0.0.1:{port}/")
