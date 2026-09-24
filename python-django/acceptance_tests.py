@@ -107,6 +107,9 @@ try:
         assert page.get_by_test_id("AttachmentUploadedBy").inner_text() == "Casey Tech"
         page.get_by_role("button", name="Assign").click()
         page.get_by_text(f"Work order {number} moved to Assigned.").wait_for()
+        page.reload()
+        page.locator(".manage-header h1").wait_for()
+        assert page.get_by_text("Timothy Lovejoy", exact=True).count() > 0
         capture_screenshot(page, "manage-1365x900.png")
         page.goto(f"http://127.0.0.1:{port}/")
         due_cell = page.get_by_test_id(f"DueDateCell{number}")
