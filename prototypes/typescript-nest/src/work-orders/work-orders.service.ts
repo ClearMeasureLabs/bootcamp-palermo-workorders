@@ -33,6 +33,7 @@ export class WorkOrdersService implements OnModuleInit {
     this.applyDetailsMigration();
     this.applyIdentityMigration();
     this.applyAttachmentMigration();
+    this.applyWorkOrderNumberMigration();
     this.persist();
   }
 
@@ -130,10 +131,9 @@ export class WorkOrdersService implements OnModuleInit {
     if (!actor.canCreate) throw new ForbiddenException('Your role cannot create work orders');
     if (!input.title?.trim()) throw new BadRequestException('Title is required');
     this.validateDueDate(input.dueDate);
-    const next = (this.one("SELECT COALESCE(MAX(CAST(SUBSTR(number,4) AS INTEGER)),0)+1 AS next FROM WorkOrder") as unknown as { next: number }).next;
     const now = new Date().toISOString();
     const order: StoredWorkOrder = {
-      id: crypto.randomUUID(), number: `WO-${String(next).padStart(5, '0')}`, title: input.title.trim(),
+      id: crypto.randomUUID(), number: crypto.randomUUID().replaceAll('-', '').slice(0, 7).toUpperCase(), title: input.title.trim(),
       description: (input.description ?? '').slice(0, 4000), instructions: (input.instructions ?? '').slice(0, 4000),
       roomNumber: input.roomNumber?.trim() || null, dueDate: input.dueDate || null, status: 'Draft',
       creator: actor.username, assignee: null, createdAt: now, updatedAt: now, assignedAt: null, completedAt: null,
@@ -253,6 +253,20 @@ export class WorkOrdersService implements OnModuleInit {
     )`);
     this.db.run('CREATE INDEX IF NOT EXISTS IX_WorkOrderEvent_WorkOrderSequence ON WorkOrderEvent(workOrderId,sequence)');
     this.db.run("INSERT OR IGNORE INTO SchemaMigration(version, appliedAt) VALUES (5, datetime('now'))");
+  }
+
+  private applyWorkOrderNumberMigration(): void {
+    const legacy = this.all<{ id: string }>('SELECT id FROM WorkOrder WHERE length(number)>7');
+    for (const row of legacy) {
+      this.db.run('UPDATE WorkOrder SET number=? WHERE id=?', [crypto.randomUUID().replaceAll('-', '').slice(0, 7).toUpperCase(), row.id]);
+    }
+    this.db.run(`CREATE TRIGGER IF NOT EXISTS TR_WorkOrder_NumberLength_Insert
+      BEFORE INSERT ON WorkOrder WHEN length(NEW.number)>7
+      BEGIN SELECT RAISE(ABORT, 'WorkOrder.Number must be 7 characters or fewer'); END`);
+    this.db.run(`CREATE TRIGGER IF NOT EXISTS TR_WorkOrder_NumberLength_Update
+      BEFORE UPDATE OF number ON WorkOrder WHEN length(NEW.number)>7
+      BEGIN SELECT RAISE(ABORT, 'WorkOrder.Number must be 7 characters or fewer'); END`);
+    this.db.run("INSERT OR IGNORE INTO SchemaMigration(version, appliedAt) VALUES (6, datetime('now'))");
   }
 
   private attachmentsFor(ids: string[]): Map<string, Attachment[]> {

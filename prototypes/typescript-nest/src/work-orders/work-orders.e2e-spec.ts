@@ -42,6 +42,7 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
     const created = await request(app.getHttpServer()).post('/api/work-orders').set('authorization', creatorAuth)
       .send({ title: `Plumbing repair ${Date.now()}`, description: 'Repair sink', instructions: 'Use side entrance', roomNumber: 'B-12', dueDate: chicagoDate }).expect(201);
     expect(created.body).toMatchObject({ status: 'Draft', creator: 'hsimpson', instructions: 'Use side entrance', roomNumber: 'B-12', dueDate: chicagoDate, urgency: 'DueToday', dueDateBadge: 'Due Today' });
+    expect(created.body.number).toMatch(/^[A-F0-9]{7}$/);
     const id = created.body.id;
     expect((await request(app.getHttpServer()).get('/api/work-orders').set('authorization', creatorAuth).query({ q: 'side entrance' }).expect(200)).body).toHaveLength(1);
     expect((await request(app.getHttpServer()).get('/api/work-orders').set('authorization', creatorAuth).query({ q: 'B-12' }).expect(200)).body).toHaveLength(1);

@@ -30,7 +30,7 @@ try {
   await page.getByTestId('status-dashboard').getByRole('button', { name: /Draft/ }).waitFor();
   const acceptanceTitle = 'Acceptance parity sample work order';
   await page.getByRole('link', { name: 'New Work Order' }).click();
-  await page.waitForURL('**/workorder/create');
+  await page.waitForURL('**/workorder/manage');
   await page.getByTestId('title').fill(acceptanceTitle);
   const dateParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
   const chicagoToday = `${dateParts.find(part => part.type === 'year').value}-${dateParts.find(part => part.type === 'month').value}-${dateParts.find(part => part.type === 'day').value}`;

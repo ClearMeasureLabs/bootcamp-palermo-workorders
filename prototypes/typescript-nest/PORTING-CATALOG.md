@@ -72,4 +72,38 @@ The Playwright browser recording is written to `artifacts/` and remuxed into `ar
 
 ## Known parity gaps
 
+### Screen and route audit
+
+These are user-facing source pages (`src/UI.Shared/Pages`, `MainLayout.razor`, and `NavMenu.razor`) and current status in the Nest prototype. A route being present does not imply full feature parity.
+
+| Source screen / route | Nest route or behavior | Status | Remaining difference |
+|---|---|---|---|
+| Work Order Search `/workorder/search` | `/workorder/search` | Partial | Search table, creator/assignee/status/overdue filters and status counts exist. Source's search affordances and exact field behavior still need side-by-side verification; pagination and server sorting are absent. |
+| Work Order Manage `/workorder/manage/{id?}` | `/workorder/manage/:id` | Partial | Dedicated details/editor, assignment/lifecycle actions, due date, attachment metadata and history exist. Speech/dictation controls, source validation/layout details, full attachment upload and all manage states are not ported. |
+| New Work Order | `/workorder/manage` (no id) | Partial | Draft create fields and assignment are present; no speech/dictation, localized input behavior, or exact source validation presentation. |
+| Login `/login` | Login view at `/` | Partial | Employee picker and Lovejoy shortcut; demo identity selection has no password or external identity provider. Dedicated `/login` route is not mapped. |
+| Home `/` | Search view | Missing | Source home/Index page behavior is not ported; root currently opens Search. |
+| Counter `/counter` | None | Missing | No counter page or persisted state. |
+| Fetch Data `/fetchdata` | None | Missing | No sample weather-data page or equivalent API. |
+| Application Chat `/ai-agent` | None | Missing | No chat UI, LLM gateway, or work-order tools. |
+| Settings `/settings` | None | Missing | Theme, language, speech, and user preferences are not implemented. |
+| Shared navigation/header | Shared HTML shell | Partial | Church brand rail, header, account state, and navigation exist; several nav entries currently lead to placeholders or work-order filters. Responsive and theme behavior differ from Blazor. |
+
+### Relational schema audit
+
+The following is the current `sql.js` schema compared with the final EF Core relational mappings under `src/DataAccess/Mappings`. The current schema is **not table-for-table equivalent**; the table below is an explicit gap register.
+
+| Current Nest table | Final .NET table | Current difference |
+|---|---|---|
+| `Employee` | `Employee` | Nest uses username text as the primary key and has only first/last name. .NET uses GUID `Id`, `UserName` (100), `FirstName` (100), `LastName` (120), `EmailAddress` (255), and `PreferredLanguage` (10, default `en-US`). |
+| `Role` | `Role` | Nest uses role name text as PK; .NET uses GUID `Id`, `Name` (100), `CanCreateWorkOrder`, and `CanFulfillWorkOrder`. |
+| `EmployeeRole` | `EmployeeRoles` | Nest singular name and username/role-name text keys, with no declared foreign keys. .NET uses the composite employee/role GUID key and both foreign keys. |
+| `WorkOrder` | `WorkOrder` | Nest uses text IDs and username creator/assignee columns. .NET uses GUID `Id`, required GUID `CreatorId`, nullable GUID `AssigneeId`, `Number` max 7, `Title` max 300, `Status` max 3, `RoomNumber` max 900, descriptions/instructions max 4000, and a SQL `date` due date. Nest stores long status names. The v6 prototype migration replaces legacy `WO-00001` values with seven-character uppercase hexadecimal values and enforces the source max length on inserts/updates. |
+| `WorkOrderAttachment` | `WorkOrderAttachment` | Nest stores text IDs and uploader username; .NET uses GUID IDs/FKs, `FileName` max 500, `ContentType` max 200, `FileSize` bigint, and `UploadedDate`. Both currently store metadata only in this prototype. |
+| `SchemaMigration` | No domain table | Nest-only migration bookkeeping table. |
+| `AuthSession` | No mapped domain table | Nest-only session table; sessions are not a source EF entity. |
+| `WorkOrderEvent` | No mapped domain table | Nest-only history table; active source currently has no history entity/query/UI, though an old `AuditEntry` migration was later dropped. |
+
+Migration `022` creates only the `nServiceBus` schema; it does not add domain tables. A separate schema-equivalence migration is still required to replace the Nest text identity/status/number model with GUID keys, relational FKs, the `EmployeeRoles` table, and source column limits while retaining existing records and the intentional Nest-only tables above.
+
 This prototype implements the core lifecycle, work-order search/filtering and status counts, Chicago due-date urgency, employee selection sessions, actor checks, metadata-only attachments, and a new event-history view. Employee directory and roles are seeded demo data with no administrative management, password authentication, external identity provider, or production-grade session-cookie/token protections. Attachment metadata does not upload or persist binary file contents. Search pagination/sorting, bulk import, API key/rate-limit/idempotency contracts, gRPC, MCP, LLM/chat/speech, realtime notifications, distributed worker/outbox, telemetry/exporters, deployment/IaC, and most of the original test inventory are not ported. The event history is added to the prototype: current active source code has no audit history query/UI, though legacy SQL migrations include an AuditEntry table. SQLite and demo identities keep the slice runnable without provisioned services. The existing .NET checks do not validate this prototype; use `typescript-nest-prototype.yml` to gate it. A complete rewrite requires porting and proving each inventory item and replacing the repository root build/deployment contract after acceptance of this prototype.
