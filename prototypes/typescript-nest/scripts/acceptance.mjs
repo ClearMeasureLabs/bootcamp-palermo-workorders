@@ -54,8 +54,7 @@ try {
   await page.waitForURL('**/workorder/manage/*');
   const newOrder = page.locator('#manage-route');
   await newOrder.waitFor();
-  await page.getByTestId('title').waitFor();
-  if (await page.getByTestId('title').inputValue() !== acceptanceTitle) throw new Error('Manage route did not load the newly created work order');
+  await newOrder.locator('.form-grid').getByText(acceptanceTitle, { exact: true }).waitFor();
   await page.screenshot({ path: path.join(artifacts, 'work-order-manage-1365x900.png') });
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.screenshot({ path: path.join(artifacts, 'work-order-manage-1920x1080.png') });
@@ -64,9 +63,9 @@ try {
   await newOrder.getByTestId('attachment-file-size').fill('2048');
   await newOrder.getByTestId('add-attachment').click();
   await page.getByText('Attachment metadata added').waitFor();
-  await page.getByTestId('attachment-row').getByText('damage-photo.jpg').waitFor();
-  await page.getByTestId('attachment-row').getByText('Homer Simpson').waitFor();
-  await page.getByTestId('due-date-value').getByText('Due Today').waitFor();
+  await newOrder.getByTestId('attachment-row').getByText('damage-photo.jpg').waitFor();
+  await newOrder.getByTestId('attachment-row').getByText('Homer Simpson').waitFor();
+  await newOrder.getByTestId('due-date-value').getByText('Due Today').waitFor();
   await newOrder.getByRole('button', { name: 'Assign' }).click();
   await page.getByText('Work order assigned').waitFor();
   const assignedCard = page.locator('#manage-route').filter({ hasText: acceptanceTitle });
@@ -89,7 +88,7 @@ try {
   await page.getByText('Work order in progress').waitFor();
   await workerOrder.getByRole('button', { name: 'Complete' }).click();
   await page.getByText('Work order complete').waitFor();
-  await page.getByText('Complete', { exact: true }).last().waitFor();
+  await workerOrder.locator('.work-order-header').getByText(/Complete/).waitFor();
   await workerOrder.getByRole('link', { name: /Back to Search/ }).click();
   await page.waitForURL('**/workorder/search');
   await page.getByTestId('search-status').selectOption('Complete');
