@@ -85,6 +85,10 @@ class WorkOrderApiTest {
         mvc.perform(withCsrf(session, post("/work-orders").param("title", "Valid title")
                 .param("description", "x".repeat(4001))))
             .andExpect(status().isBadRequest());
+        mvc.perform(withCsrf(session, post("/work-orders").param("title", "T".repeat(300))))
+            .andExpect(status().is3xxRedirection());
+        mvc.perform(withCsrf(session, post("/work-orders").param("title", "T".repeat(301))))
+            .andExpect(status().isBadRequest());
         mvc.perform(get("/")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login"));
     }
 

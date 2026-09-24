@@ -31,7 +31,7 @@ class WorkOrderBrowserAcceptanceTest {
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(!headful));
             BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-                .setRecordVideoDir(videoDir).setRecordVideoSize(1280, 720));
+                .setViewportSize(1920, 1080).setRecordVideoDir(videoDir).setRecordVideoSize(1920, 1080));
             Page page = context.newPage();
             Video video = page.video();
             String baseUrl = "http://localhost:" + port;
@@ -43,6 +43,8 @@ class WorkOrderBrowserAcceptanceTest {
             page.waitForURL("**/");
             assertEquals(baseUrl + "/", page.url(), "Login redirect should not expose a session id in the URL");
             assertTrue(page.getByTestId("welcome-text").innerText().contains("hsimpson"));
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("New Work Order")).click();
+            page.waitForURL("**/work-orders/new");
             page.getByLabel("Title").fill("Acceptance repair");
             page.getByLabel("Room").fill("A-17");
             page.getByLabel("Instructions").fill("Bring a ladder and lockout kit");
@@ -53,6 +55,7 @@ class WorkOrderBrowserAcceptanceTest {
             assertEquals(302, saveResponse.status(), "The HTML form should save and redirect to the order list");
             page.waitForURL("**/");
             page.screenshot(new Page.ScreenshotOptions().setPath(videoDir.resolve("after-save.png")));
+            page.screenshot(new Page.ScreenshotOptions().setPath(videoDir.resolve("search-page.png")));
             String renderedList = page.locator("body").innerText();
             assertTrue(renderedList.contains("Acceptance repair"),
                 "The redirect should render the created work order. URL=" + page.url() + " body=" + renderedList);
@@ -68,6 +71,7 @@ class WorkOrderBrowserAcceptanceTest {
                 "Session cookie alone must not authorize a cross-site mutation");
             orderRow.getByRole(AriaRole.LINK).click();
             page.waitForURL("**/work-orders/*/manage");
+            page.screenshot(new Page.ScreenshotOptions().setPath(videoDir.resolve("manage-page.png")));
             assertTrue(page.getByTestId("attachments-section").isVisible());
             assertEquals(0, page.locator("input[type='file']").count(), "This parity slice records metadata and does not upload binary content");
             page.getByLabel("File name").fill("damage-photo.jpg");
@@ -97,6 +101,19 @@ class WorkOrderBrowserAcceptanceTest {
             page.waitForURL("**/");
             assertTrue(page.getByTestId("welcome-text").innerText().contains("tlovejoy"),
                 "The server session should persist across hard navigation");
+            orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
+            page.getByLabel("Assigned to me").check();
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search")).click();
+            page.waitForURL("**assignedToMe=true**");
+            assertTrue(page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).isVisible(),
+                "Assigned-to-me should return the current employee's orders");
+            page.getByLabel("Assigned to me").uncheck();
+            page.getByLabel("Creator").selectOption("hsimpson");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search")).click();
+            page.waitForURL("**creator=hsimpson**");
+            assertTrue(page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).isVisible(),
+                "Creator filtering should match persisted creator identity");
+            page.navigate(baseUrl + "/");
             orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
             orderRow.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Begin")).click();
             orderRow.getByText("IN_PROGRESS").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));

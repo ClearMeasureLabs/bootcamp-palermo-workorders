@@ -19,7 +19,7 @@ public class WorkOrder {
     @Column(nullable = false, unique = true, length = 24)
     private String number;
 
-    @Column(nullable = false, length = 240)
+    @Column(nullable = false, length = 300)
     private String title;
 
     @Column(length = 4000)

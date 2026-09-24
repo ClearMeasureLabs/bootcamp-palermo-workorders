@@ -20,13 +20,31 @@ public class WorkOrderPageController {
         this.sessions = sessions;
     }
 
+    @GetMapping("/work-orders/new")
+    public String createPage(Model model, HttpSession session, HttpServletRequest request) {
+        Employee currentUser = sessions.currentOrNull(session);
+        if (currentUser == null) return "redirect:/login";
+        if (!currentUser.canCreateWorkOrder()) return "redirect:/";
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("csrfToken", request.getAttribute(CsrfProtectionFilter.REQUEST_ATTRIBUTE));
+        return "work-order-new";
+    }
+
     @GetMapping("/") public String home(@RequestParam(required=false) WorkOrderStatus status,
-        @RequestParam(defaultValue = "false") boolean overdueOnly, Model model, HttpSession session,
+        @RequestParam(defaultValue = "false") boolean overdueOnly,
+        @RequestParam(required = false) String creator,
+        @RequestParam(required = false) String assignee,
+        @RequestParam(defaultValue = "false") boolean assignedToMe, Model model, HttpSession session,
         HttpServletRequest request) {
         Employee currentUser = sessions.currentOrNull(session);
         if (currentUser == null) return "redirect:/login";
-        model.addAttribute("orders", service.list(status, overdueOnly)); model.addAttribute("statuses", WorkOrderStatus.values());
+        if (assignedToMe) assignee = currentUser.getUsername();
+        model.addAttribute("orders", service.list(status, overdueOnly, creator, assignee));
+        model.addAttribute("statuses", WorkOrderStatus.values());
+        model.addAttribute("employees", sessions.employeeChoices());
         model.addAttribute("selectedStatus", status); model.addAttribute("overdueOnly", overdueOnly);
+        model.addAttribute("selectedCreator", creator); model.addAttribute("selectedAssignee", assignee);
+        model.addAttribute("assignedToMe", assignedToMe);
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("csrfToken", request.getAttribute(CsrfProtectionFilter.REQUEST_ATTRIBUTE));
         model.addAttribute("fulfillmentEmployees", sessions.fulfillmentChoices());

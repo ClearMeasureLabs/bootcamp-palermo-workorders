@@ -32,6 +32,9 @@ public class Employee {
     @Column(name = "email_address", nullable = false, length = 255)
     private String emailAddress;
 
+    @Column(name = "preferred_language", nullable = false, length = 10)
+    private String preferredLanguage = "en-US";
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "employee_roles",
         joinColumns = @JoinColumn(name = "employee_id"),
@@ -52,6 +55,7 @@ public class Employee {
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
     public String getEmailAddress() { return emailAddress; }
+    public String getPreferredLanguage() { return preferredLanguage; }
     public Set<Role> getRoles() { return Set.copyOf(roles); }
     public String getDisplayName() { return firstName + " " + lastName; }
     public boolean canCreateWorkOrder() { return roles.stream().anyMatch(Role::isCanCreateWorkOrder); }

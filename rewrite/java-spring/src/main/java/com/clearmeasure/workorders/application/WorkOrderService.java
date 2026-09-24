@@ -26,7 +26,7 @@ public class WorkOrderService {
 
     public WorkOrder create(String title, String description, String instructions, String room, Employee creator, LocalDate dueDate) {
         if (title == null || title.isBlank()) throw new IllegalArgumentException("Title is required");
-        requireMaxLength("Title", title, 240);
+        requireMaxLength("Title", title, 300);
         requireMaxLength("Description", description, 4000);
         requireMaxLength("Instructions", instructions, 4000);
         requireMaxLength("Room number", room, 900);
@@ -39,6 +39,12 @@ public class WorkOrderService {
     public List<WorkOrder> list(WorkOrderStatus status, boolean overdueOnly) {
         return repository.findMatching(status, overdueOnly, LocalDate.now(clock),
             List.of(WorkOrderStatus.DRAFT, WorkOrderStatus.ASSIGNED, WorkOrderStatus.IN_PROGRESS));
+    }
+    @Transactional(readOnly = true)
+    public List<WorkOrder> list(WorkOrderStatus status, boolean overdueOnly, String creator, String assignee) {
+        return repository.findMatching(status, overdueOnly, LocalDate.now(clock),
+            List.of(WorkOrderStatus.DRAFT, WorkOrderStatus.ASSIGNED, WorkOrderStatus.IN_PROGRESS),
+            blankToNull(creator), blankToNull(assignee));
     }
     @Transactional(readOnly = true)
     public WorkOrder get(String number) { return repository.findByNumber(number).orElseThrow(() -> new WorkOrderNotFoundException(number)); }
@@ -89,5 +95,9 @@ public class WorkOrderService {
     private static void requireMaxLength(String field, String value, int maxLength) {
         if (value != null && value.length() > maxLength)
             throw new IllegalArgumentException(field + " must be " + maxLength + " characters or fewer");
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 }
