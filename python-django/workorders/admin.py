@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import Employee, WorkOrder, WorkOrderAttachment, WorkOrderEvent
+from .models import Employee, Role, WorkOrder, WorkOrderAttachment, WorkOrderEvent
 admin.site.register(Employee)
+admin.site.register(Role)
 
 
 @admin.register(WorkOrder)

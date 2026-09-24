@@ -11,6 +11,7 @@ jobs:
     env:
       DJANGO_SECRET_KEY: ci-only-secret-key-used-by-tests
       DJANGO_DEBUG: "0"
+      DJANGO_ENABLE_DEMO_LOGIN: "1"
     steps:
       - uses: actions/checkout@v6.0.1
       - uses: actions/setup-python@v6

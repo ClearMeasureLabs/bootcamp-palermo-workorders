@@ -8,6 +8,7 @@ $py = Join-Path $venv "Scripts/python.exe"
 $env:DJANGO_DB_PATH = Join-Path $PSScriptRoot "build/private-build.sqlite3"
 if (-not $env:DJANGO_SECRET_KEY) { $env:DJANGO_SECRET_KEY = [guid]::NewGuid().ToString() + [guid]::NewGuid().ToString() }
 if (-not $env:DJANGO_DEBUG) { $env:DJANGO_DEBUG = "0" }
+if (-not $env:DJANGO_ENABLE_DEMO_LOGIN) { $env:DJANGO_ENABLE_DEMO_LOGIN = "1" }
 New-Item -ItemType Directory -Force (Split-Path $env:DJANGO_DB_PATH) | Out-Null
 Remove-Item -Force -ErrorAction SilentlyContinue $env:DJANGO_DB_PATH
 & $py manage.py check; if ($LASTEXITCODE) { throw "Django checks failed" }

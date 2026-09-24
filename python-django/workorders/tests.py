@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from datetime import date, datetime, timedelta, timezone as datetime_timezone
@@ -56,6 +56,15 @@ class WorkOrderDomainTests(TestCase):
         self.assertEqual(self.order.status, WorkOrder.Status.CANCELLED)
         self.assertIsNone(self.order.assignee)
         self.assertIsNone(self.order.assigned_at)
+
+    def test_shelving_preserves_the_original_assignment_timestamp(self):
+        transition(self.order, WorkOrder.Status.ASSIGNED, self.employee)
+        self.order.refresh_from_db()
+        original_assigned_at = self.order.assigned_at
+        transition(self.order, WorkOrder.Status.IN_PROGRESS, self.employee)
+        transition(self.order, WorkOrder.Status.ASSIGNED, self.employee)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.assigned_at, original_assigned_at)
     def test_due_date_urgency_is_read_time_and_respects_status(self):
         today = date(2026, 9, 23)
         self.order.due_date = today - timedelta(days=1)
@@ -77,6 +86,7 @@ class WorkOrderDomainTests(TestCase):
     def test_today_uses_the_chicago_calendar_boundary(self, _now):
         self.assertEqual(chicago_today(), date(2026, 9, 22))
 
+@override_settings(ENABLE_DEMO_LOGIN=True)
 class WorkOrderWebTests(TestCase):
     def setUp(self):
         self.creator = Employee.objects.create(username="creator", first_name="Homer", last_name="Simpson")
@@ -97,11 +107,23 @@ class WorkOrderWebTests(TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.json()["database"], "unavailable")
 
+    @override_settings(ENABLE_DEMO_LOGIN=False)
+    def test_demo_login_is_disabled_without_explicit_opt_in(self):
+        response = self.client.get(reverse("login"))
+        self.assertEqual(response.status_code, 503)
+        self.assertNotContains(response, "HOMER SIMPSON", status_code=503)
+
+    def test_work_order_list_and_detail_require_an_active_session(self):
+        order = WorkOrder.objects.create(title="Private order")
+        self.assertRedirects(self.client.get(reverse("work_order_list")), reverse("login"))
+        self.assertRedirects(self.client.get(reverse("work_order_detail", args=[order.pk])), reverse("login"))
+
     def test_admin_cannot_edit_lifecycle_or_mutate_history(self):
         work_order_admin = admin.site._registry[WorkOrder]
         event_admin = admin.site._registry[WorkOrderEvent]
         self.assertIn("status", work_order_admin.get_readonly_fields(None))
         self.assertIn("assignee", work_order_admin.get_readonly_fields(None))
+        self.assertIn(Role, admin.site._registry)
         self.assertFalse(event_admin.has_add_permission(None))
         self.assertFalse(event_admin.has_delete_permission(None))
         attachment_admin = admin.site._registry[WorkOrderAttachment]
@@ -120,6 +142,7 @@ class WorkOrderWebTests(TestCase):
         self.assertEqual(order.events.count(), 1)
         self.assertContains(response, f"Work order {order.number} moved to Assigned.")
     def test_list_search_matches_room_and_title(self):
+        self.login_as(self.creator)
         WorkOrder.objects.create(title="Inspect boiler", room_number="B-2")
         response = self.client.get(reverse("work_order_list"), {"q": "B-2"})
         self.assertContains(response, "Inspect boiler")
@@ -141,8 +164,8 @@ class WorkOrderWebTests(TestCase):
         self.assertContains(self.client.get(reverse("work_order_list")), "HOMER SIMPSON")
         self.assertContains(self.client.get(reverse("work_order_list")), "New work order")
         self.client.post(reverse("logout"))
-        self.assertNotContains(self.client.get(reverse("work_order_list")), "HOMER SIMPSON")
-        self.assertNotContains(self.client.get(reverse("work_order_list")), "New work order")
+        self.assertRedirects(self.client.get(reverse("work_order_list")), reverse("login"))
+        self.assertNotContains(self.client.get(reverse("login")), "New work order")
 
     def test_login_picker_formats_names_and_lovejoy_shortcut_authenticates_by_username(self):
         lovejoy = Employee.objects.create(username="tlovejoy", first_name="Timothy", last_name="Lovejoy")
@@ -221,6 +244,7 @@ class WorkOrderWebTests(TestCase):
         self.assertFalse(WorkOrderAttachment.objects.filter(work_order=order).exists())
     @patch("workorders.views.chicago_today", return_value=date(2026, 9, 23))
     def test_overdue_filter_excludes_today_and_closed_orders(self, _today):
+        self.login_as(self.creator)
         old_date = date(2026, 9, 22)
         overdue = WorkOrder.objects.create(title="Open overdue", due_date=old_date)
         today = WorkOrder.objects.create(title="Due today", due_date=date(2026, 9, 23))
@@ -232,6 +256,7 @@ class WorkOrderWebTests(TestCase):
         self.assertContains(response, 'class="due-date-overdue"')
     @patch("workorders.views.chicago_today", return_value=date(2026, 9, 23))
     def test_list_displays_today_overdue_and_on_track_badges(self, _today):
+        self.login_as(self.creator)
         WorkOrder.objects.create(title="Today", due_date=date(2026, 9, 23))
         WorkOrder.objects.create(title="Overdue", due_date=date(2026, 9, 22))
         WorkOrder.objects.create(title="Future", due_date=date(2026, 9, 24))
@@ -242,6 +267,7 @@ class WorkOrderWebTests(TestCase):
         self.assertContains(response, "due-date-today")
         self.assertContains(response, "due-date-overdue")
     def test_list_leaves_due_cell_blank_and_has_no_badge_without_date(self):
+        self.login_as(self.creator)
         order = WorkOrder.objects.create(title="No due date")
         response = self.client.get(reverse("work_order_list"))
         self.assertContains(response, f'data-testid="due-date-{order.number}" class=""></td>')

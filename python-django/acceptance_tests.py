@@ -20,6 +20,7 @@ env = os.environ.copy()
 env["DJANGO_DB_PATH"] = dbfile.name
 env.setdefault("DJANGO_SECRET_KEY", secrets.token_urlsafe(48))
 env.setdefault("DJANGO_DEBUG", "0")
+env.setdefault("DJANGO_ENABLE_DEMO_LOGIN", "1")
 env["DJANGO_ALLOWED_HOSTS"] = "127.0.0.1,localhost"
 port = os.getenv("ACCEPTANCE_PORT", "8765")
 server_log = (ARTIFACTS / "django-server.log").open("w", encoding="utf-8")
@@ -30,6 +31,7 @@ try:
     os.environ["DJANGO_DB_PATH"] = dbfile.name
     os.environ.setdefault("DJANGO_SECRET_KEY", env["DJANGO_SECRET_KEY"])
     os.environ.setdefault("DJANGO_DEBUG", env["DJANGO_DEBUG"])
+    os.environ.setdefault("DJANGO_ENABLE_DEMO_LOGIN", env["DJANGO_ENABLE_DEMO_LOGIN"])
     django.setup()
     from django.core.management import call_command
     from workorders.models import Employee, Role, WorkOrder
@@ -56,8 +58,7 @@ try:
         context = browser.new_context(record_video_dir=str(ARTIFACTS / "video"), viewport={"width": 1365, "height": 900})
         page = context.new_page()
         page.goto(f"http://127.0.0.1:{port}/")
-        page.get_by_role("heading", name="Work orders").wait_for()
-        page.get_by_role("link", name="Log in").click()
+        page.get_by_role("heading", name="Log in").wait_for()
         page.get_by_label("Select Church Member").select_option("acceptance-tech")
         page.get_by_role("button", name="Enter the Portal").click()
         page.get_by_text("CASEY TECH").wait_for()

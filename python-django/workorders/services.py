@@ -68,7 +68,7 @@ def transition(work_order: WorkOrder, target: str, actor: Employee | None, note:
             raise ValidationError("You are not allowed to perform this work order action.")
         previous = current.status
         current.status = target
-        if target == WorkOrder.Status.ASSIGNED:
+        if target == WorkOrder.Status.ASSIGNED and previous == WorkOrder.Status.DRAFT:
             current.assigned_at = timezone.now()
         if target == WorkOrder.Status.COMPLETE:
             current.completed_at = timezone.now()

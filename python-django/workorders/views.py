@@ -1,8 +1,9 @@
 from django.contrib import messages
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import connection
 from django.db.models import Count, Q
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from .forms import AttachmentMetadataForm, WorkOrderForm
@@ -20,6 +21,8 @@ def current_employee(request):
 
 
 def login(request):
+    if not settings.ENABLE_DEMO_LOGIN:
+        return HttpResponse("Passwordless demo login is disabled.", status=503)
     employees = Employee.objects.filter(active=True).order_by("last_name", "first_name")
     error = ""
     if request.method == "POST":
@@ -39,6 +42,8 @@ def logout(request):
     return redirect("login")
 def work_order_list(request):
     actor = current_employee(request)
+    if actor is None:
+        return redirect("login")
     orders = WorkOrder.objects.select_related("assignee", "creator").order_by("-created_at")
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "")
@@ -71,6 +76,8 @@ def work_order_create(request):
     return render(request, "workorders/form.html", {"form": form})
 def work_order_detail(request, pk):
     actor = current_employee(request)
+    if actor is None:
+        return redirect("login")
     order = get_object_or_404(WorkOrder.objects.select_related("creator", "assignee").prefetch_related("events"), pk=pk)
     attachments = order.attachments.select_related("uploaded_by").order_by("uploaded_date")
     return render(request, "workorders/detail.html", {"order": order, "available_transitions": available_transitions(order, actor), "attachments": attachments, "attachment_form": AttachmentMetadataForm() if actor else None})
@@ -92,9 +99,12 @@ def work_order_attachment_create(request, pk):
     return render(request, "workorders/detail.html", {"order": order, "available_transitions": available_transitions(order, actor), "attachments": attachments, "attachment_form": form})
 @require_POST
 def work_order_transition(request, pk):
+    actor = current_employee(request)
+    if actor is None:
+        return redirect("login")
     order = get_object_or_404(WorkOrder, pk=pk)
     try:
-        order = transition(order, request.POST.get("status", ""), current_employee(request), request.POST.get("note", ""))
+        order = transition(order, request.POST.get("status", ""), actor, request.POST.get("note", ""))
         messages.success(request, f"Work order {order.number} moved to {order.get_status_display()}.")
     except ValidationError as error:
         messages.error(request, " ".join(error.messages))

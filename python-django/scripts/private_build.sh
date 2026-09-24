@@ -9,6 +9,7 @@ if [[ ! -x "$VENV/bin/python" ]]; then "$PYTHON_BIN" -m venv "$VENV"; fi
 export DJANGO_DB_PATH="${DJANGO_DB_PATH:-$PWD/build/private-build.sqlite3}"
 export DJANGO_SECRET_KEY="${DJANGO_SECRET_KEY:-$($PYTHON_BIN -c 'import secrets; print(secrets.token_urlsafe(48))')}"
 export DJANGO_DEBUG="${DJANGO_DEBUG:-0}"
+export DJANGO_ENABLE_DEMO_LOGIN="${DJANGO_ENABLE_DEMO_LOGIN:-1}"
 mkdir -p "$(dirname "$DJANGO_DB_PATH")"
 rm -f "$DJANGO_DB_PATH"
 "$VENV/bin/python" manage.py check
