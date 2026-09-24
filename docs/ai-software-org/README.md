@@ -13,6 +13,8 @@
 | C: Runtime Architect | How to run it on Claude Code | [research/C-runtime.md](research/C-runtime.md) | [debate/C-debate.md](debate/C-debate.md) (v0 plan, cost model) |
 | D: Governor & Red Team | Self-steering, human gates, safety, failure modes, rollout | [research/D-governance.md](research/D-governance.md) | [debate/D-debate.md](debate/D-debate.md) (owner interface) |
 
+**Strategic decision record:** [ADR-strategy.md](ADR-strategy.md) summarizes the strategy, the options rejected, the current implementation state and the open decisions.
+
 The catalog is generated from data in [catalog-tools/](catalog-tools/). Run `python3 catalog-tools/render.py` to check its integrity and `python3 catalog-tools/build_md.py` to regenerate `research/B-tasks.md`.
 
 ---
