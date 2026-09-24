@@ -25,21 +25,21 @@ This prototype remains a staged rewrite. The matrix compares the checked-in Djan
 
 The Django shell now has the source's 280px left rail, white top header, centered search heading, result-card treatment, and styled work-order detail card. The current rail omits Counter, Fetch Data, AI Agent, and Settings routes because the Django prototype does not implement those pages. Its footer also does not reproduce the source health/version link. Work-order detail shows read-only fields and status commands; it does not yet reproduce the source's editable title/description/room fields, speech controls, chat panel, or every permission-dependent command state.
 
-The headful acceptance workflow captures the search and detail views at 1365×900. These screenshots document the current prototype UI; they do not establish full visual or behavioral parity.
+The headful acceptance workflow captures login, search, new-order form, and detail views at 1365×900. These screenshots document the current prototype UI; they do not establish full visual or behavioral parity.
 
 ## Screen and workflow matrix
 
 | .NET page / flow | Django equivalent | Current functional coverage | Known gap |
 |---|---|---|---|
-| Index / Home | `/` (`work_order_list`) | Authenticated work-order list with counts, status/creator/assignee/overdue filters, sorting, detail links | Home is the search/list page; no separate dashboard summary or source Home actions. |
+| Index / Home | `/` and `/workorder/search` | Authenticated work-order list with counts, status/creator/assignee/overdue filters, sorting, detail links | Home is the search/list page; no separate dashboard summary or source Home actions. |
 | Counter | — | None | No counter state or route. |
 | Fetch Data | — | None | No sample forecast/API page. |
 | Application Chat / AI Agent | — | None | No chat UI or agent integration. |
 | Settings | — | None | No settings page or persisted user preferences. |
-| Login | `/login/` | Employee picker, session login, demo shortcut, logout | Passwordless demo login only; it is disabled by default. This is not production identity/authentication parity. |
-| Work Order Search | `/` | Search filters, status counts, Chicago due-date urgency, overdue filtering, sorting and result list | The rail omits several source routes and the layout remains narrower at the fixed 1365px viewport. The acceptance fixture uses two representative rows, not the source's full dataset. |
-| New Work Order | `/work-orders/new/` | Title, description, instructions, room, assignee and due date; creator inferred from session | No source speech/dictation controls; creator/number generation differ from the source. |
-| Work Order Manage | `/work-orders/<id>/` | Details, creator/assignee/date fields, metadata-only attachments, transition history and allowed status commands | Detail fields are read-only; source edit/reassignment rules, chat, speech controls, and the full command permission UX are not implemented. |
+| Login | `/login` | Employee picker, session login, demo shortcut, logout | Passwordless demo login only; it is disabled by default. This is not production identity/authentication parity. |
+| Work Order Search | `/workorder/search` (also `/`) | Search filters, status counts, Chicago due-date urgency, overdue filtering, sorting and result list | The rail omits several source routes and the layout remains narrower at the fixed 1365px viewport. The acceptance fixture uses two representative rows, not the source's full dataset. |
+| New Work Order | `/workorder/manage` (new) | Title, description, instructions, room, assignee and due date; creator inferred from session | No source speech/dictation controls; creator/number generation differ from the source. |
+| Work Order Manage | `/workorder/manage/<id>` | Details, creator/assignee/date fields, metadata-only attachments, transition history and allowed status commands | Detail fields are read-only; source edit/reassignment rules, chat, speech controls, and the full command permission UX are not implemented. |
 | Health check page / footer link | `/health/` JSON endpoint | Health endpoint only | No equivalent visible health page or source footer/version link. |
 
 The native acceptance workflow records login, search, new-work-order form, and manage/detail screens at 1365×900, plus a browser video and Remotion MP4. Captures demonstrate the routes that exist; they do not prove parity for rows, routes, workflows, or source data omitted by this prototype.

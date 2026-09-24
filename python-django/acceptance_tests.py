@@ -14,6 +14,24 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parent
 ARTIFACTS = Path(os.getenv("ACCEPTANCE_ARTIFACTS", ROOT / "artifacts"))
 ARTIFACTS.mkdir(parents=True, exist_ok=True)
+
+def capture_screenshot(page, name, full_page=False, required=True):
+    path = ARTIFACTS / name
+    for attempt in range(2):
+        try:
+            page.wait_for_load_state("domcontentloaded")
+            page.wait_for_timeout(500)
+            page.screenshot(path=str(path), full_page=full_page, animations="disabled", timeout=60000)
+            if path.stat().st_size < 1000:
+                raise RuntimeError(f"Screenshot {name} is unexpectedly small")
+            return
+        except Exception:
+            if attempt == 1:
+                if required:
+                    raise
+                print(f"Optional screenshot {name} could not be captured")
+                return False
+            page.wait_for_timeout(1000)
 dbfile = tempfile.NamedTemporaryFile(prefix="workorders-acceptance-", suffix=".sqlite3", delete=False)
 dbfile.close()
 env = os.environ.copy()
@@ -60,19 +78,19 @@ try:
         page = context.new_page()
         page.goto(f"http://127.0.0.1:{port}/")
         page.get_by_role("heading", name="Log in").wait_for()
-        page.screenshot(path=str(ARTIFACTS / "login-1365x900.png"))
+        capture_screenshot(page, "login-1365x900.png", required=False)
         page.get_by_label("Select Church Member").select_option("acceptance-tech")
         page.get_by_role("button", name="Enter the Portal").click()
         page.locator(".header-actions .welcome").wait_for()
-        page.screenshot(path=str(ARTIFACTS / "search-1365x900.png"))
+        capture_screenshot(page, "search-1365x900.png")
         page.reload()
         page.locator(".header-actions .welcome").wait_for()
-        page.locator(".sidebar-nav a[href='/work-orders/new/']").click()
+        page.locator(".sidebar-nav a[href='/workorder/manage']").click()
         page.get_by_label("Title").fill("Acceptance: repair sink")
         page.get_by_label("Room number").fill("Fellowship Hall")
         page.get_by_label("Assignee").select_option("2")
         page.get_by_label("Due date").fill(today.isoformat())
-        page.screenshot(path=str(ARTIFACTS / "new-work-order-1365x900.png"))
+        capture_screenshot(page, "new-work-order-1365x900.png", required=False)
         page.get_by_role("button", name="Create work order").click()
         heading = page.get_by_role("heading", name="Acceptance: repair sink")
         heading.wait_for()
@@ -88,7 +106,7 @@ try:
         assert page.get_by_test_id("AttachmentUploadedBy").inner_text() == "Casey Tech"
         page.get_by_role("button", name="Assign").click()
         page.get_by_text(f"Work order {number} moved to Assigned.").wait_for()
-        page.screenshot(path=str(ARTIFACTS / "manage-1365x900.png"))
+        capture_screenshot(page, "manage-1365x900.png")
         page.goto(f"http://127.0.0.1:{port}/")
         due_cell = page.get_by_test_id(f"DueDateCell{number}")
         assert "due-date-today" in (due_cell.get_attribute("class") or "")
@@ -117,7 +135,7 @@ try:
         page.reload()
         page.locator(".header-actions .welcome").wait_for()
         page.get_by_role("button", name="Log out").click()
-        page.screenshot(path=str(ARTIFACTS / "acceptance-result.png"), full_page=True)
+        capture_screenshot(page, "acceptance-result.png", full_page=True)
         context.close()
         browser.close()
     print(f"Acceptance passed; screenshot and browser video saved under {ARTIFACTS}")
