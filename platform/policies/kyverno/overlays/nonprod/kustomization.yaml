@@ -1,0 +1,78 @@
+# policies/kyverno/overlays/nonprod -> Argo CD Application kyverno-policies on argocd-nonprod
+# (argocd/clusters/nonprod/addons/kyverno.yaml).
+#
+# Mode: Audit (ADR-D11). From phase 2 every policy reports to PolicyReports and never blocks;
+# failures of the engine are ignored. Phase-2 exit criterion: 14 days of audit without false
+# denies (§9). Review with:
+#   kubectl get policyreports -A
+#   kubectl get imagevalidatingpolicies,validatingpolicies -L policies.workorders/mode
+#
+# Adds the preview-pipeline attestor for <acr-name>.azurecr.io/workorders-previews/* (phase 6,
+# ADR-C4). The attestor pins the account and the pipeline name workorders/preview; the pipeline
+# ID segment is matched by pattern because §7.1 defines no placeholder for it (Codefresh pipeline
+# IDs are 24 hex characters [VERIFY]). Replace the placeholders with regex-escaped values.
+# Release images (workorders/*) still require the release signer here: a preview signature
+# never satisfies the release rule.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+labels:
+  - pairs:
+      policies.workorders/mode: Audit
+    includeSelectors: false
+patches:
+  # Baseline: report only.
+  - target:
+      group: policies.kyverno.io
+      version: v1
+      kind: ValidatingPolicy
+    patch: |-
+      - op: replace
+        path: /spec/validationActions
+        value: [Audit]
+      - op: replace
+        path: /spec/failurePolicy
+        value: Ignore
+  # Release signatures: report only, plus the preview attestor.
+  - target:
+      group: policies.kyverno.io
+      version: v1
+      kind: ImageValidatingPolicy
+      name: verify-release-signatures
+    patch: |-
+      - op: replace
+        path: /spec/validationActions
+        value: [Audit]
+      - op: replace
+        path: /spec/failurePolicy
+        value: Ignore
+      - op: replace
+        path: /spec/validationConfigurations
+        value:
+          mutateDigest: false
+          verifyDigest: false
+          required: true
+      - op: add
+        path: /spec/matchImageReferences/-
+        value:
+          glob: "<acr-name>.azurecr.io/workorders-previews/*"
+      - op: add
+        path: /spec/attestors/-
+        value:
+          name: codefreshPreview
+          cosign:
+            keyless:
+              identities:
+                - issuer: https://oidc.codefresh.io
+                  subjectRegExp: '^https://g\.codefresh\.io/<cf-account-name>/workorders/preview:<CF_ACCOUNT_ID>/[0-9a-f]{24}$'
+            ctlog:
+              url: https://rekor.sigstore.dev
+      - op: add
+        path: /spec/validations/-
+        value:
+          expression: >-
+            images.containers.filter(i, i.startsWith('<acr-name>.azurecr.io/workorders-previews/'))
+            .all(i, verifyImageSignatures(i, [attestors.codefreshPreview]) > 0)
+          message: >-
+            A preview image is not signed by the Codefresh pipeline workorders/preview.

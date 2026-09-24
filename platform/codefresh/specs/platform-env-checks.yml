@@ -1,0 +1,44 @@
+# Pipeline spec: platform-env/env-checks (contract §7.7, §6.2, ADR-D17).
+#   Register once:   codefresh create pipeline -f codefresh/specs/platform-env-checks.yml
+#   Apply a change:  codefresh replace pipeline -f codefresh/specs/platform-env-checks.yml
+# Paths are relative to the environment repo root. After the first report, add
+# codefresh/env-checks as a required status in the `main` ruleset (bootstrap).
+version: "1.0"
+kind: pipeline
+metadata:
+  name: platform-env/env-checks
+  project: platform-env
+spec:
+  triggers:
+    - type: git
+      name: env-repo-push
+      description: Every branch push of the environment repo, including Octopus pin commits on main
+      repo: clearmeasure-aisf-sample-apps/basic-environment-octopus-codefresh
+      provider: github
+      # The stored Git integration: read and trigger only.
+      context: github-aisf-sample-apps
+      events:
+        - push.heads
+      branchRegex: /.*/
+      branchRegexInput: regex
+      pullRequestAllowForkEvents: false
+      commitStatusTitle: codefresh/env-checks
+      disabled: false
+  # No contexts: the checks need no secret (§7.7).
+  contexts: []
+  # Identity of the platform-bots machine user for the bot-path audit
+  # (scripts/checks/tool-boundaries.sh --audit-bot-commits). Not a secret.
+  # [CONTRACT GAP] §7 names no value for it; set it at bootstrap (R3).
+  variables:
+    - key: PLATFORM_BOT_AUTHORS
+      value: "<platform-bots-author-regex>"
+  runtimeEnvironment:
+    name: "<cf-runtime-ci>"
+  specTemplate:
+    location: git
+    repo: clearmeasure-aisf-sample-apps/basic-environment-octopus-codefresh
+    path: ./codefresh/pipelines/env-checks.yml
+    # "" = the pushed branch; CODEOWNERS review covers codefresh/ and scripts/.
+    revision: ""
+    context: github-aisf-sample-apps
+  # No termination policy: every push to main runs the bot-path audit to the end.

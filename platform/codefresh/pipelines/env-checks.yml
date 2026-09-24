@@ -1,0 +1,136 @@
+# platform-env/env-checks: every check of the environment repo, on every branch push
+# (contract §7.7, §6.2). Its status codefresh/env-checks is required on `main`.
+#
+# Spec: codefresh/specs/platform-env-checks.yml. Git integration github-aisf-sample-apps
+# (read and trigger only); runtime <cf-runtime-ci>; no contexts; nothing is
+# published and nothing is written back.
+#
+# One step per scripts/checks/validate-all.sh sub-command, each on a pinned public
+# tool image (digests are placeholders until the first run). CI=true turns a
+# missing tool into a failure instead of a skip. The `mermaid` sub-command is
+# local only (it needs a Node validator) and is not run here.
+# On `main`, the boundaries step also runs the bot-path audit (§6.2); it needs
+# PLATFORM_BOT_AUTHORS, a pipeline variable set in the spec.
+version: "1.0"
+mode: parallel
+fail_fast: false
+
+stages:
+  - clone
+  - checks
+
+steps:
+  main_clone:
+    title: Clone the environment repo (full history for the bot-path audit)
+    type: git-clone
+    stage: clone
+    repo: clearmeasure-aisf-sample-apps/basic-environment-octopus-codefresh
+    revision: "${{CF_REVISION}}"
+    git: github-aisf-sample-apps
+
+  yaml:
+    title: yamllint (.yamllint.yaml)
+    stage: checks
+    image: "python:3.13-slim-bookworm@sha256:<python-3.13-slim-bookworm-digest>"
+    fail_fast: false
+    strict_fail_fast: true
+    when: &after_clone
+      steps:
+        - name: main_clone
+          on:
+            - success
+    environment:
+      - CI=true
+    commands:
+      - pip install --no-cache-dir --disable-pip-version-check yamllint==1.38.0
+      - bash scripts/checks/validate-all.sh yaml
+
+  kustomize:
+    title: kustomize build of every overlay
+    stage: checks
+    image: &golang_image "golang:1.26-bookworm@sha256:<golang-1.26-bookworm-digest>"
+    fail_fast: false
+    strict_fail_fast: true
+    when: *after_clone
+    environment:
+      - CI=true
+      # Each rendering step gets its own directory: the steps run in parallel.
+      - "RENDER_DIR=${{CF_VOLUME_PATH}}/platform-render/kustomize"
+      - GOBIN=/usr/local/bin
+    commands:
+      # go install verifies the module against the Go checksum database.
+      - go install sigs.k8s.io/kustomize/kustomize/v5@v5.8.1
+      - bash scripts/checks/validate-all.sh kustomize
+
+  kubeconform:
+    title: kubeconform on rendered overlays and Argo CD manifests
+    stage: checks
+    image: *golang_image
+    fail_fast: false
+    strict_fail_fast: true
+    when: *after_clone
+    environment:
+      - CI=true
+      - "RENDER_DIR=${{CF_VOLUME_PATH}}/platform-render/kubeconform"
+      - GOBIN=/usr/local/bin
+    commands:
+      - go install sigs.k8s.io/kustomize/kustomize/v5@v5.8.1
+      - go install github.com/yannh/kubeconform/cmd/kubeconform@v0.8.0
+      - bash scripts/checks/validate-all.sh kubeconform
+
+  terraform:
+    title: terraform fmt -check
+    stage: checks
+    image: "hashicorp/terraform:1.16.4@sha256:<terraform-1.16.4-digest>"
+    fail_fast: false
+    strict_fail_fast: true
+    when: *after_clone
+    environment:
+      - CI=true
+    commands:
+      # Alpine-based image: add bash and GNU find for validate-all.sh.
+      - apk add --no-cache bash findutils
+      - bash scripts/checks/validate-all.sh terraform
+
+  boundaries:
+    title: Tool boundaries (and the bot-path audit on main)
+    stage: checks
+    # Debian with git, bash and GNU grep, sed and awk.
+    image: "buildpack-deps:bookworm-scm@sha256:<buildpack-deps-bookworm-scm-digest>"
+    fail_fast: false
+    strict_fail_fast: true
+    when: *after_clone
+    environment:
+      - CI=true
+    commands:
+      - bash scripts/checks/validate-all.sh boundaries
+
+  consistency:
+    title: Consistency against contracts/platform-contracts.yaml
+    stage: checks
+    image: *golang_image
+    fail_fast: false
+    strict_fail_fast: true
+    when: *after_clone
+    environment:
+      - CI=true
+      - GOBIN=/usr/local/bin
+    commands:
+      # python3 with PyYAML (Debian packages), and kustomize for the rendered-overlay checks.
+      - apt-get update -qq
+      - apt-get install -y -qq --no-install-recommends python3 python3-yaml
+      - go install sigs.k8s.io/kustomize/kustomize/v5@v5.8.1
+      - bash scripts/checks/validate-all.sh consistency
+
+  secrets:
+    title: Gitleaks (.gitleaks.toml)
+    stage: checks
+    image: "ghcr.io/gitleaks/gitleaks:v8.28.0@sha256:<gitleaks-v8.28.0-digest>"
+    fail_fast: false
+    strict_fail_fast: true
+    when: *after_clone
+    environment:
+      - CI=true
+    commands:
+      - command -v bash >/dev/null 2>&1 || apk add --no-cache bash
+      - bash scripts/checks/validate-all.sh secrets

@@ -1,0 +1,48 @@
+# policies/kyverno/overlays/prod -> Argo CD Application kyverno-policies on argocd-prod
+# (argocd/clusters/prod/addons/kyverno.yaml).
+#
+# Mode: Enforce (ADR-D11), in place before the prod cutover (phase 4). Signature and baseline
+# policies deny and fail closed; provenance stays in Audit (base). No preview attestor: preview
+# images never run in prod.
+#
+# The base already enforces; the patches below restate it so that a change to the base cannot
+# silently relax prod. Emergency path: a PIM-gated, time-bound PolicyException
+# (docs/runbooks/break-glass.md), never an edit of this file.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+labels:
+  - pairs:
+      policies.workorders/mode: Enforce
+    includeSelectors: false
+patches:
+  - target:
+      group: policies.kyverno.io
+      version: v1
+      kind: ValidatingPolicy
+    patch: |-
+      - op: replace
+        path: /spec/validationActions
+        value: [Deny]
+      - op: replace
+        path: /spec/failurePolicy
+        value: Fail
+  - target:
+      group: policies.kyverno.io
+      version: v1
+      kind: ImageValidatingPolicy
+      name: verify-release-signatures
+    patch: |-
+      - op: replace
+        path: /spec/validationActions
+        value: [Deny]
+      - op: replace
+        path: /spec/failurePolicy
+        value: Fail
+      - op: replace
+        path: /spec/validationConfigurations
+        value:
+          mutateDigest: false
+          verifyDigest: false
+          required: true
