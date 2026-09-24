@@ -320,3 +320,8 @@ class WorkOrderWebTests(TestCase):
         response = self.client.get("/api/features/flags/")
         unchanged = self.client.get("/api/features/flags/", HTTP_IF_NONE_MATCH=response["ETag"])
         self.assertEqual(unchanged.status_code, 304)
+        strong_validator = response["ETag"].removeprefix("W/")
+        self.assertEqual(self.client.get("/api/features/flags/", HTTP_IF_NONE_MATCH=strong_validator).status_code, 304)
+        detailed = self.client.get("/api/health/detailed/")
+        unchanged_detailed = self.client.get("/api/health/detailed/", HTTP_IF_NONE_MATCH=detailed["ETag"])
+        self.assertEqual(unchanged_detailed.status_code, 304)

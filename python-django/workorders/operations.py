@@ -9,6 +9,7 @@ import json
 import os
 import platform
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,6 +20,7 @@ from django.http import HttpResponseNotAllowed, JsonResponse
 
 PROCESS_STARTED = time.monotonic()
 REQUESTS_SERVED = 0
+REQUESTS_LOCK = threading.Lock()
 REDACTED = "[REDACTED]"
 REPORTED_ENVIRONMENT_VARIABLES = (
     "ASPNETCORE_ENVIRONMENT",
@@ -39,7 +41,8 @@ class RequestMetricsMiddleware:
 
     def __call__(self, request):
         global REQUESTS_SERVED
-        REQUESTS_SERVED += 1
+        with REQUESTS_LOCK:
+            REQUESTS_SERVED += 1
         return self.get_response(request)
 
 
@@ -50,12 +53,16 @@ def _duration():
     return f"{int(hours):02}:{int(minutes):02}:{remainder:06.3f}"
 
 
-def _json(request, payload, *, conditional=True):
+def _json(request, payload, *, conditional=True, etag_payload=None):
     body = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode()
-    etag = 'W/"' + hashlib.sha256(body).hexdigest()[:24] + '"'
+    fingerprint = body if etag_payload is None else json.dumps(
+        etag_payload, sort_keys=True, separators=(",", ":"), default=str
+    ).encode()
+    etag = 'W/"' + hashlib.sha256(fingerprint).hexdigest() + '"'
     if conditional:
         supplied = request.headers.get("If-None-Match", "")
-        if supplied == "*" or etag in (part.strip() for part in supplied.split(",")):
+        candidates = (part.strip() for part in supplied.split(","))
+        if any(candidate == "*" or candidate.removeprefix("W/") == etag.removeprefix("W/") for candidate in candidates):
             response = JsonResponse({}, status=304)
             response.content = b""
             response["ETag"] = etag
@@ -146,9 +153,11 @@ def _payload(request, endpoint):
         return _echo_payload(request)
     if endpoint == "metrics/summary":
         memory = _memory_bytes()
+        with REQUESTS_LOCK:
+            requests_served = REQUESTS_SERVED
         return {
             "uptime": _duration(),
-            "totalRequestsServed": REQUESTS_SERVED,
+            "totalRequestsServed": requests_served,
             "workingSetBytes": memory,
             "managedMemoryBytes": memory,
             "gcGen0Collections": 0,
@@ -176,4 +185,10 @@ def operational_api(request, path=""):
     payload = _payload(request, endpoint)
     if payload is None:
         return JsonResponse({"detail": "Not found."}, status=404)
-    return _json(request, payload, conditional=endpoint != "echo")
+    etag_payload = None
+    if endpoint == "health/detailed":
+        etag_payload = {
+            "overallStatus": payload["overallStatus"],
+            "components": payload["components"],
+        }
+    return _json(request, payload, conditional=endpoint != "echo", etag_payload=etag_payload)
