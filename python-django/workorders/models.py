@@ -1,5 +1,6 @@
 from django.db import models, transaction
 from django.utils import timezone
+import uuid
 
 
 class Role(models.Model):
@@ -65,3 +66,19 @@ class WorkOrderEvent(models.Model):
     to_status = models.CharField(max_length=20)
     occurred_at = models.DateTimeField(default=timezone.now)
     note = models.CharField(max_length=500, blank=True)
+
+
+class WorkOrderAttachment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    work_order = models.ForeignKey(WorkOrder, related_name="attachments", on_delete=models.CASCADE)
+    file_name = models.CharField(max_length=500)
+    content_type = models.CharField(max_length=200, blank=True)
+    file_size = models.BigIntegerField()
+    uploaded_by = models.ForeignKey(Employee, related_name="uploaded_attachments", on_delete=models.PROTECT)
+    uploaded_date = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["uploaded_date"]
+
+    def __str__(self):
+        return self.file_name

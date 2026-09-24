@@ -520,6 +520,7 @@ python-django/workorders/migrations/0001_initial.py,.py,Django rewrite,python-dj
 python-django/workorders/migrations/0002_alter_workorder_room_number.py,.py,Django rewrite,python-django/workorders/migrations/0002_alter_workorder_room_number.py,implemented or rewrite tooling
 python-django/workorders/migrations/0003_role_employee_roles.py,.py,Django rewrite,python-django/workorders/migrations/0003_role_employee_roles.py,implemented or rewrite tooling
 python-django/workorders/migrations/0004_alter_workorder_number.py,.py,Django rewrite,python-django/workorders/migrations/0004_alter_workorder_number.py,implemented or rewrite tooling
+python-django/workorders/migrations/0005_workorderattachment.py,.py,Django rewrite,python-django/workorders/migrations/0005_workorderattachment.py,implemented or rewrite tooling
 python-django/workorders/migrations/__init__.py,.py,Django rewrite,python-django/workorders/migrations/__init__.py,implemented or rewrite tooling
 python-django/workorders/models.py,.py,Django rewrite,python-django/workorders/models.py,implemented or rewrite tooling
 python-django/workorders/services.py,.py,Django rewrite,python-django/workorders/services.py,implemented or rewrite tooling
@@ -1398,3 +1399,4 @@ video/src/roomNumberVideo.tsx,.tsx,video,"Documentation, experiments, or media; 
 video/src/scenes.tsx,.tsx,video,"Documentation, experiments, or media; retain in original repository",not a shipped application feature
 video/src/theme.ts,.ts,video,"Documentation, experiments, or media; retain in original repository",not a shipped application feature
 video/src/workOrderAcceptance.tsx,.tsx,video,"Documentation, experiments, or media; retain in original repository",not a shipped application feature
+video/tsconfig.json,.json,video,"Documentation, experiments, or media; retain in original repository",not a shipped application feature

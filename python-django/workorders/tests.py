@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from datetime import date, datetime, timedelta, timezone as datetime_timezone
 from unittest.mock import patch
 from django.contrib import admin
-from .models import Employee, Role, WorkOrder, WorkOrderEvent
+from .models import Employee, Role, WorkOrder, WorkOrderAttachment, WorkOrderEvent
 from .services import available_transitions, chicago_today, due_date_badge, due_date_urgency, transition
 
 class WorkOrderDomainTests(TestCase):
@@ -104,6 +104,9 @@ class WorkOrderWebTests(TestCase):
         self.assertIn("assignee", work_order_admin.get_readonly_fields(None))
         self.assertFalse(event_admin.has_add_permission(None))
         self.assertFalse(event_admin.has_delete_permission(None))
+        attachment_admin = admin.site._registry[WorkOrderAttachment]
+        self.assertFalse(attachment_admin.has_add_permission(None))
+        self.assertFalse(attachment_admin.has_delete_permission(None))
     def test_create_search_filter_detail_and_status_transition(self):
         self.login_as(self.creator)
         response = self.client.post(reverse("work_order_create"), {"title": "Replace light", "description": "Hallway", "instructions": "Use ladder", "room_number": "101", "assignee": self.assignee.pk, "due_date": ""})
@@ -184,6 +187,38 @@ class WorkOrderWebTests(TestCase):
         order.refresh_from_db()
         self.assertEqual(available_transitions(order, self.creator), [])
         self.assertEqual(available_transitions(order, self.assignee), [WorkOrder.Status.ASSIGNED, WorkOrder.Status.COMPLETE])
+
+    def test_attachment_metadata_is_saved_with_uploader_and_shown_on_detail(self):
+        self.login_as(self.creator)
+        order = WorkOrder.objects.create(title="Order with metadata", creator=self.creator)
+        response = self.client.post(reverse("work_order_attachment_create", args=[order.pk]), {
+            "file_name": "damage-photo.jpg",
+            "content_type": "image/jpeg",
+            "file_size": "2048",
+        }, follow=True)
+        attachment = WorkOrderAttachment.objects.get(work_order=order)
+        self.assertContains(response, 'data-testid="AttachmentsSection"')
+        self.assertContains(response, 'data-testid="AttachmentFileName">damage-photo.jpg')
+        self.assertContains(response, 'data-testid="AttachmentContentType">image/jpeg')
+        self.assertContains(response, 'data-testid="AttachmentFileSize">2048')
+        self.assertContains(response, 'data-testid="AttachmentUploadedBy">Homer Simpson')
+        self.assertEqual(attachment.uploaded_by, self.creator)
+        self.assertEqual(attachment.file_size, 2048)
+        self.assertEqual(
+            {field.name for field in WorkOrderAttachment._meta.fields},
+            {"id", "work_order", "file_name", "content_type", "file_size", "uploaded_by", "uploaded_date"},
+        )
+
+    def test_attachment_metadata_requires_login_and_nonblank_file_name(self):
+        order = WorkOrder.objects.create(title="Protected attachment")
+        url = reverse("work_order_attachment_create", args=[order.pk])
+        response = self.client.post(url, {"file_name": "example.pdf", "file_size": "100"})
+        self.assertEqual(response.status_code, 302)
+        self.login_as(self.creator)
+        response = self.client.post(url, {"file_name": "   ", "file_size": "100"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This field is required.")
+        self.assertFalse(WorkOrderAttachment.objects.filter(work_order=order).exists())
     @patch("workorders.views.chicago_today", return_value=date(2026, 9, 23))
     def test_overdue_filter_excludes_today_and_closed_orders(self, _today):
         old_date = date(2026, 9, 22)

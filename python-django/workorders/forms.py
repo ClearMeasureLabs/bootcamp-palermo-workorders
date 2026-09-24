@@ -9,3 +9,9 @@ class WorkOrderForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["assignee"].queryset = Employee.objects.filter(active=True).order_by("last_name", "first_name")
+
+
+class AttachmentMetadataForm(forms.Form):
+    file_name = forms.CharField(max_length=500, label="File name")
+    content_type = forms.CharField(max_length=200, required=False, label="Content type")
+    file_size = forms.IntegerField(min_value=-(2**63), max_value=2**63 - 1, label="File size (bytes)")

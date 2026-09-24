@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
-from .models import Employee, WorkOrder, WorkOrderEvent
+from .models import Employee, WorkOrder, WorkOrderAttachment, WorkOrderEvent
 TRANSITIONS = {WorkOrder.Status.DRAFT: {WorkOrder.Status.ASSIGNED, WorkOrder.Status.CANCELLED}, WorkOrder.Status.ASSIGNED: {WorkOrder.Status.IN_PROGRESS, WorkOrder.Status.CANCELLED}, WorkOrder.Status.IN_PROGRESS: {WorkOrder.Status.ASSIGNED, WorkOrder.Status.COMPLETE}, WorkOrder.Status.COMPLETE: set(), WorkOrder.Status.CANCELLED: set()}
 
 CHICAGO = ZoneInfo("America/Chicago")
@@ -78,3 +78,15 @@ def transition(work_order: WorkOrder, target: str, actor: Employee | None, note:
         current.save()
         WorkOrderEvent.objects.create(work_order=current, from_status=previous, to_status=target, note=note)
         return current
+
+
+def add_attachment_metadata(work_order: WorkOrder, actor: Employee, file_name: str, content_type: str, file_size: int) -> WorkOrderAttachment:
+    if not file_name.strip():
+        raise ValidationError("File name is required.")
+    return WorkOrderAttachment.objects.create(
+        work_order=work_order,
+        file_name=file_name,
+        content_type=content_type,
+        file_size=file_size,
+        uploaded_by=actor,
+    )

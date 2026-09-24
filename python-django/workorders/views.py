@@ -5,9 +5,9 @@ from django.db.models import Count, Q
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
-from .forms import WorkOrderForm
+from .forms import AttachmentMetadataForm, WorkOrderForm
 from .models import Employee, WorkOrder
-from .services import OPEN_STATUSES, available_transitions, chicago_today, due_date_badge, due_date_urgency, transition
+from .services import OPEN_STATUSES, add_attachment_metadata, available_transitions, chicago_today, due_date_badge, due_date_urgency, transition
 
 SESSION_EMPLOYEE_KEY = "workorders_employee_id"
 
@@ -72,7 +72,24 @@ def work_order_create(request):
 def work_order_detail(request, pk):
     actor = current_employee(request)
     order = get_object_or_404(WorkOrder.objects.select_related("creator", "assignee").prefetch_related("events"), pk=pk)
-    return render(request, "workorders/detail.html", {"order": order, "available_transitions": available_transitions(order, actor)})
+    attachments = order.attachments.select_related("uploaded_by").order_by("uploaded_date")
+    return render(request, "workorders/detail.html", {"order": order, "available_transitions": available_transitions(order, actor), "attachments": attachments, "attachment_form": AttachmentMetadataForm() if actor else None})
+
+
+@require_POST
+def work_order_attachment_create(request, pk):
+    actor = current_employee(request)
+    if actor is None:
+        return redirect("login")
+    order = get_object_or_404(WorkOrder, pk=pk)
+    form = AttachmentMetadataForm(request.POST)
+    if form.is_valid():
+        attachment = add_attachment_metadata(order, actor, **form.cleaned_data)
+        messages.success(request, f"Attachment metadata for {attachment.file_name} added.")
+        return redirect("work_order_detail", pk=order.pk)
+    order = get_object_or_404(WorkOrder.objects.select_related("creator", "assignee").prefetch_related("events"), pk=pk)
+    attachments = order.attachments.select_related("uploaded_by").order_by("uploaded_date")
+    return render(request, "workorders/detail.html", {"order": order, "available_transitions": available_transitions(order, actor), "attachments": attachments, "attachment_form": form})
 @require_POST
 def work_order_transition(request, pk):
     order = get_object_or_404(WorkOrder, pk=pk)

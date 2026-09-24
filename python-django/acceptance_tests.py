@@ -71,6 +71,15 @@ try:
         heading = page.get_by_role("heading", name="Acceptance: repair sink")
         heading.wait_for()
         number = heading.inner_text().split(" · ", 1)[0]
+        page.get_by_label("File name").fill("damage-photo.jpg")
+        page.get_by_label("Content type").fill("image/jpeg")
+        page.get_by_label("File size (bytes)").fill("2048")
+        page.get_by_role("button", name="Add attachment metadata").click()
+        page.get_by_test_id("AttachmentsSection").wait_for()
+        assert page.get_by_test_id("AttachmentFileName").inner_text() == "damage-photo.jpg"
+        assert page.get_by_test_id("AttachmentContentType").inner_text() == "image/jpeg"
+        assert page.get_by_test_id("AttachmentFileSize").inner_text() == "2048"
+        assert page.get_by_test_id("AttachmentUploadedBy").inner_text() == "Casey Tech"
         page.get_by_label("New status").select_option("Assigned")
         page.get_by_role("button", name="Update status").click()
         page.get_by_text(f"Work order {number} moved to Assigned.").wait_for()
