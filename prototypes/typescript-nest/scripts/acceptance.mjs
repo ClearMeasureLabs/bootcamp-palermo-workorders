@@ -49,6 +49,9 @@ try {
   await page.getByTestId('due-date-value').getByText('Due Today').waitFor();
   await page.getByRole('button', { name: 'Assign' }).last().click();
   await page.getByText('Work order assigned').waitFor();
+  const assignedCard = page.locator('#orders article').filter({ hasText: acceptanceTitle });
+  await assignedCard.getByRole('button', { name: 'Begin' }).waitFor();
+  await assignedCard.getByRole('button', { name: 'Shelve' }).waitFor({ state: 'detached' });
   await page.getByTestId('search-assignee').fill('demo.tech');
   await page.getByTestId('search').click();
   await page.getByText('demo.tech').last().waitFor();
