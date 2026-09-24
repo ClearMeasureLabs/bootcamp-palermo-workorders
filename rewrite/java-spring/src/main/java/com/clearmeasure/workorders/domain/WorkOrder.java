@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
+import com.clearmeasure.workorders.persistence.WorkOrderStatusConverter;
 
 @Entity
 @Table(name = "work_orders")
@@ -31,11 +32,17 @@ public class WorkOrder {
     @Column(name = "room_number", length = 900)
     private String roomNumber;
 
+    @Column(name = "creator_id", nullable = false)
+    private UUID creatorId;
+
     @Column(name = "creator_name", length = 160)
     private String creatorName;
 
     @Column(name = "creator_username", length = 100)
     private String creatorUsername;
+
+    @Column(name = "assignee_id")
+    private UUID assigneeId;
 
     @Column(name = "assignee_name", length = 160)
     private String assigneeName;
@@ -43,8 +50,8 @@ public class WorkOrder {
     @Column(name = "assignee_username", length = 100)
     private String assigneeUsername;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 24)
+    @Convert(converter = WorkOrderStatusConverter.class)
+    @Column(nullable = false, length = 3)
     private WorkOrderStatus status = WorkOrderStatus.DRAFT;
 
     @Column(name = "created_at", nullable = false)
@@ -77,6 +84,16 @@ public class WorkOrder {
 
     public WorkOrder(String number, String title, String description, String instructions, String roomNumber,
                      String creatorName, String creatorUsername, LocalDate dueDate) {
+        this(number, title, description, instructions, roomNumber, creatorName, creatorUsername, null, dueDate);
+    }
+
+    public WorkOrder(String number, String title, String description, String instructions, String roomNumber,
+                     Employee creator, LocalDate dueDate) {
+        this(number, title, description, instructions, roomNumber, creator.getDisplayName(), creator.getUsername(), creator.getId(), dueDate);
+    }
+
+    private WorkOrder(String number, String title, String description, String instructions, String roomNumber,
+                     String creatorName, String creatorUsername, UUID creatorId, LocalDate dueDate) {
         this.number = number;
         this.title = title;
         this.description = description == null ? "" : description;
@@ -84,6 +101,7 @@ public class WorkOrder {
         this.roomNumber = roomNumber;
         this.creatorName = creatorName;
         this.creatorUsername = creatorUsername;
+        this.creatorId = creatorId;
         this.dueDate = dueDate;
         this.status = WorkOrderStatus.DRAFT;
     }
@@ -102,6 +120,7 @@ public class WorkOrder {
         if (assignee == null) throw new IllegalArgumentException("Assignee is required");
         this.assigneeName = assignee.getDisplayName();
         this.assigneeUsername = assignee.getUsername();
+        this.assigneeId = assignee.getId();
         this.assignedAt = OffsetDateTime.now();
         this.status = WorkOrderStatus.ASSIGNED;
     }
@@ -139,6 +158,7 @@ public class WorkOrder {
         this.assignedAt = null;
         this.assigneeName = null;
         this.assigneeUsername = null;
+        this.assigneeId = null;
     }
 
     public void shelve(String actorUsername) {
@@ -162,6 +182,8 @@ public class WorkOrder {
     public String getDescription() { return description; }
     public String getInstructions() { return instructions; }
     public String getRoomNumber() { return roomNumber; }
+    public UUID getCreatorId() { return creatorId; }
+    public UUID getAssigneeId() { return assigneeId; }
     public String getCreatorName() { return creatorName; }
     public String getCreatorUsername() { return creatorUsername; }
     public String getAssigneeName() { return assigneeName; }

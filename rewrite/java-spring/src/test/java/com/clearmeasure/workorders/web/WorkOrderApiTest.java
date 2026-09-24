@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -17,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class WorkOrderApiTest {
     @Autowired MockMvc mvc;
     @Autowired WorkOrderRepository repository;
+    @Autowired JdbcTemplate jdbc;
     @BeforeEach void clear() { repository.deleteAll(); }
 
     private MockHttpSession loginAs(String username) throws Exception {
@@ -49,6 +51,12 @@ class WorkOrderApiTest {
             .andExpect(jsonPath("$.version").value(0))
             .andExpect(jsonPath("$.urgency").value("NONE")).andReturn().getResponse().getContentAsString();
         String number = new com.fasterxml.jackson.databind.ObjectMapper().readTree(response).get("number").asText();
+        org.junit.jupiter.api.Assertions.assertTrue(number.length() <= 7);
+        org.junit.jupiter.api.Assertions.assertEquals("DRT", jdbc.queryForObject(
+            "select status from work_orders where number = ?", String.class, number));
+        org.junit.jupiter.api.Assertions.assertEquals(jdbc.queryForObject(
+            "select id from employees where username = 'hsimpson'", java.util.UUID.class),
+            jdbc.queryForObject("select creator_id from work_orders where number = ?", java.util.UUID.class, number));
         mvc.perform(withCsrf(creator, post("/api/work-orders/{number}/assign", number).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"assignee\":\"Lee\"}")))
             .andExpect(status().isBadRequest());
@@ -56,6 +64,11 @@ class WorkOrderApiTest {
                 .content("{\"assignee\":\"tlovejoy\"}")))
             .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ASSIGNED"))
             .andExpect(jsonPath("$.version").value(1));
+        org.junit.jupiter.api.Assertions.assertEquals("ASD", jdbc.queryForObject(
+            "select status from work_orders where number = ?", String.class, number));
+        org.junit.jupiter.api.Assertions.assertEquals(jdbc.queryForObject(
+            "select id from employees where username = 'tlovejoy'", java.util.UUID.class),
+            jdbc.queryForObject("select assignee_id from work_orders where number = ?", java.util.UUID.class, number));
         mvc.perform(withCsrf(creator, post("/api/work-orders/{number}/begin", number))).andExpect(status().isForbidden());
         MockHttpSession assignee = loginAs("tlovejoy");
         mvc.perform(withCsrf(assignee, post("/api/work-orders/{number}/begin", number)))

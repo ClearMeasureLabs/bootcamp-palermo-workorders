@@ -55,7 +55,7 @@ class WorkOrderBrowserAcceptanceTest {
             page.waitForURL("**/");
             page.screenshot(new Page.ScreenshotOptions().setPath(videoDir.resolve("home-page.png")));
             page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("New Work Order")).click();
-            assertTrue(page.url().contains("/workorder/manage?mode=Create"));
+            assertTrue(page.url().contains("/workorder/manage?mode=New"));
             page.getByLabel("Title").fill("Acceptance repair");
             page.getByLabel("Room").fill("A-17");
             page.getByLabel("Instructions").fill("Bring a ladder and lockout kit");
@@ -119,18 +119,14 @@ class WorkOrderBrowserAcceptanceTest {
             page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Search")).click();
             page.waitForURL("**/workorder/search");
             orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
+            assertTrue(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Clear filters")).isDisabled());
             page.getByLabel("Assigned to me").check();
+            assertTrue(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Clear filters")).isEnabled());
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search")).click();
             assertTrue(page.url().contains("assignedToMe=true"), "The assigned-to-me search should be reflected in the URL");
             assertTrue(page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).isVisible(),
                 "Assigned-to-me should return the current employee's orders");
             page.getByLabel("Assigned to me").uncheck();
-            page.getByLabel("All assigned").check();
-            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search")).click();
-            assertTrue(page.url().contains("allAssigned=true"), "The all-assigned filter should be reflected in the URL");
-            assertTrue(page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).isVisible(),
-                "All-assigned should return orders with an assignee");
-            page.getByLabel("All assigned").uncheck();
             page.getByLabel("Creator").selectOption("hsimpson");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search")).click();
             assertTrue(page.url().contains("creator=hsimpson"), "The creator search should be reflected in the URL");

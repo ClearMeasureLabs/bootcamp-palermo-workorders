@@ -66,19 +66,19 @@ public class WorkOrderPageController {
         @RequestParam(defaultValue = "false") boolean overdueOnly,
         @RequestParam(required = false) String creator,
         @RequestParam(required = false) String assignee,
-        @RequestParam(defaultValue = "false") boolean assignedToMe,
-        @RequestParam(defaultValue = "false") boolean allAssigned, Model model, HttpSession session,
+        @RequestParam(defaultValue = "false") boolean assignedToMe, Model model, HttpSession session,
         HttpServletRequest request) {
         Employee currentUser = sessions.currentOrNull(session);
         if (currentUser == null) return "redirect:/login";
         if (assignedToMe) assignee = currentUser.getUsername();
-        model.addAttribute("orders", service.list(status, overdueOnly, creator, assignee, allAssigned));
+        model.addAttribute("orders", service.list(status, overdueOnly, creator, assignee));
         model.addAttribute("statuses", WorkOrderStatus.values());
         model.addAttribute("employees", sessions.employeeChoices());
         model.addAttribute("selectedStatus", status); model.addAttribute("overdueOnly", overdueOnly);
         model.addAttribute("selectedCreator", creator); model.addAttribute("selectedAssignee", assignee);
         model.addAttribute("assignedToMe", assignedToMe);
-        model.addAttribute("allAssigned", allAssigned);
+        model.addAttribute("hasActiveFilters", status != null || overdueOnly ||
+            (creator != null && !creator.isBlank()) || (assignee != null && !assignee.isBlank()) || assignedToMe);
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("csrfToken", request.getAttribute(CsrfProtectionFilter.REQUEST_ATTRIBUTE));
         model.addAttribute("fulfillmentEmployees", sessions.fulfillmentChoices());

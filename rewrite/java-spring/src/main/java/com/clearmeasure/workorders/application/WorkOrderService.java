@@ -34,7 +34,7 @@ public class WorkOrderService {
         if (!creator.canCreateWorkOrder()) throw new ForbiddenActionException("Your employee roles cannot create work orders");
         String number = UUID.randomUUID().toString().substring(0, 7).toUpperCase();
         return repository.save(new WorkOrder(number, title.trim(), description, instructions, room,
-            creator.getDisplayName(), creator.getUsername(), dueDate));
+            creator, dueDate));
     }
     @Transactional(readOnly = true)
     public List<WorkOrder> list(WorkOrderStatus status, boolean overdueOnly) {
@@ -47,11 +47,10 @@ public class WorkOrderService {
             .collect(java.util.stream.Collectors.toMap(status -> status, repository::countByStatus));
     }
     @Transactional(readOnly = true)
-    public List<WorkOrder> list(WorkOrderStatus status, boolean overdueOnly, String creator, String assignee,
-                                boolean allAssigned) {
+    public List<WorkOrder> list(WorkOrderStatus status, boolean overdueOnly, String creator, String assignee) {
         return repository.findMatching(status, overdueOnly, LocalDate.now(clock),
             List.of(WorkOrderStatus.DRAFT, WorkOrderStatus.ASSIGNED, WorkOrderStatus.IN_PROGRESS),
-            blankToNull(creator), blankToNull(assignee), allAssigned);
+            blankToNull(creator), blankToNull(assignee));
     }
     @Transactional(readOnly = true)
     public WorkOrder get(String number) { return repository.findByNumber(number).orElseThrow(() -> new WorkOrderNotFoundException(number)); }

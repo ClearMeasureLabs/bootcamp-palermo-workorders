@@ -25,13 +25,11 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, UUID> {
            "and (:overdueOnly = false or (w.dueDate < :today and w.status in :openStatuses)) " +
            "and (:creator is null or w.creatorUsername = :creator) " +
            "and (:assignee is null or w.assigneeUsername = :assignee) " +
-           "and (:allAssigned = false or w.assigneeUsername is not null) " +
            "order by w.createdAt desc")
     List<WorkOrder> findMatching(@Param("status") WorkOrderStatus status,
                                  @Param("overdueOnly") boolean overdueOnly,
                                  @Param("today") LocalDate today,
                                  @Param("openStatuses") List<WorkOrderStatus> openStatuses,
                                  @Param("creator") String creator,
-                                 @Param("assignee") String assignee,
-                                 @Param("allAssigned") boolean allAssigned);
+                                 @Param("assignee") String assignee);
 }
