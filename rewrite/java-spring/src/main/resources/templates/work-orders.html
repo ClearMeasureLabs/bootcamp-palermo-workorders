@@ -26,7 +26,7 @@
             <a class="active" href="/workorder/search"><span class="nav-icon">⌕</span>Search</a>
             <a href="/counter"><span class="nav-icon">▦</span>Counter</a>
             <a th:href="@{/workorder/search(creator=${currentUser.username})}"><span class="nav-icon">▤</span>My Work Orders</a>
-            <a href="/workorder/search?assignedToMe=true"><span class="nav-icon">☑</span>Assigned To Me</a>
+            <a th:href="@{/workorder/search(assignee=${currentUser.username})}"><span class="nav-icon">☑</span>Assigned To Me</a>
             <a href="/workorder/search?status=ASSIGNED"><span class="nav-icon">☷</span>All Assigned</a>
             <a href="/workorder/search?status=IN_PROGRESS"><span class="nav-icon">⚙</span>In Progress</a>
         </nav>

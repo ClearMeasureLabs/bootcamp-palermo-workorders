@@ -139,13 +139,13 @@ class WorkOrderBrowserAcceptanceTest {
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Begin")).click();
             page.waitForURL(baseUrl + "/workorder/search");
             orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
-            orderRow.getByText("IN_PROGRESS").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
+            orderRow.getByText("In Progress").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
             orderRow.getByRole(AriaRole.LINK).click();
             page.waitForURL("**/workorder/manage/*");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Complete")).click();
             page.waitForURL(baseUrl + "/workorder/search");
             orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
-            orderRow.getByText("COMPLETE").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
+            orderRow.getByText("Complete").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
             context.close(); // flushes the recorded webm to disk
             capturedVideo = video.path();
             browser.close();
