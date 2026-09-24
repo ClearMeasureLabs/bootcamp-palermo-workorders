@@ -22,8 +22,9 @@ jobs:
           cache-dependency-path: prototypes/typescript-nest/package-lock.json
       - run: cd prototypes/typescript-nest && npm install --no-audit --no-fund
       - run: cd prototypes/typescript-nest && npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install --yes xvfb
       - run: cd prototypes/typescript-nest && npm run private-build
-      - run: cd prototypes/typescript-nest && npm run acceptance
+      - run: xvfb-run -a env HEADFUL=true npm run acceptance --prefix prototypes/typescript-nest
       - run: cd prototypes/typescript-nest/remotion && npm install --no-audit --no-fund
       - run: cd prototypes/typescript-nest/remotion && npx remotion browser ensure
       - run: cd prototypes/typescript-nest/remotion && npm run render

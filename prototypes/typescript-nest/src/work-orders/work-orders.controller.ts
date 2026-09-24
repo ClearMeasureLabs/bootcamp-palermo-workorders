@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common';
+import { Transform } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
 import { CreateWorkOrder, WorkOrdersService } from './work-orders.service';
 
@@ -7,7 +8,7 @@ class CreateWorkOrderDto implements CreateWorkOrder {
   @IsString() @IsOptional() description = '';
   @IsString() @IsOptional() instructions = '';
   @IsString() @IsOptional() @MaxLength(900) roomNumber?: string;
-  @IsString() @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) dueDate?: string;
+  @Transform(({ value }) => value === '' ? undefined : value) @IsString() @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) dueDate?: string;
 }
 
 class TransitionDto {

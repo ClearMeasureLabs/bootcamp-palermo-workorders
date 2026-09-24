@@ -58,6 +58,9 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
       .send({ title: 'truncated instructions', instructions: 'I'.repeat(4001), description: 'D'.repeat(4001) }).expect(201);
     expect(saved.body.instructions).toHaveLength(4000);
     expect(saved.body.description).toHaveLength(4000);
+    const noDueDate = await request(app.getHttpServer()).post('/api/work-orders').set('authorization', creatorAuth)
+      .send({ title: 'empty due date', dueDate: '' }).expect(201);
+    expect(noDueDate.body.dueDate).toBeNull();
   });
 
   it('allows only one of two concurrent assignments to advance a draft', async () => {
@@ -67,6 +70,17 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
     expect(assignments.map(result => result.status).sort()).toEqual([201, 400]);
     const saved = await request(app.getHttpServer()).get(`/api/work-orders/${created.body.id}`).set('authorization', creatorAuth).expect(200);
     expect(['demo.tech', 'gwillie']).toContain(saved.body.assignee);
+  });
+
+  it('clears assignment fields when the creator cancels an assigned order', async () => {
+    const created = await request(app.getHttpServer()).post('/api/work-orders').set('authorization', creatorAuth).send({ title: 'cancel assigned order' }).expect(201);
+    await request(app.getHttpServer()).post(`/api/work-orders/${created.body.id}/transitions`).set('authorization', creatorAuth)
+      .send({ status: 'Assigned', assignee: 'demo.tech' }).expect(201);
+    const cancelled = await request(app.getHttpServer()).post(`/api/work-orders/${created.body.id}/transitions`).set('authorization', creatorAuth)
+      .send({ status: 'Cancelled' }).expect(201);
+    expect(cancelled.body).toMatchObject({ status: 'Cancelled', assignee: null, assignedAt: null });
+    expect((await request(app.getHttpServer()).get('/api/work-orders').set('authorization', creatorAuth).query({ assignee: 'demo.tech' }).expect(200)).body)
+      .not.toContainEqual(expect.objectContaining({ id: created.body.id }));
   });
 
   it('validates the demo employee picker, role capability, and revocable login session', async () => {

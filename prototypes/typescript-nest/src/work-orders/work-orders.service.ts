@@ -116,10 +116,10 @@ export class WorkOrdersService implements OnModuleInit {
     if (isInitialAssignment && !requestedAssignee?.canFulfill) throw new BadRequestException('Assignee must be an employee who can fulfill work orders');
     const now = new Date().toISOString();
     this.db.run(`UPDATE WorkOrder SET status=?, updatedAt=?,
-      assignee=CASE WHEN ?='Assigned' AND ?='Draft' THEN ? ELSE assignee END,
-      assignedAt=CASE WHEN ?='Assigned' AND ?='Draft' THEN ? ELSE assignedAt END,
+      assignee=CASE WHEN ?='Assigned' AND ?='Draft' THEN ? WHEN ?='Cancelled' THEN NULL ELSE assignee END,
+      assignedAt=CASE WHEN ?='Assigned' AND ?='Draft' THEN ? WHEN ?='Cancelled' THEN NULL ELSE assignedAt END,
       completedAt=CASE WHEN ?='Complete' THEN ? ELSE completedAt END WHERE id=? AND status=?`,
-      [target, now, target, order.status, assignee?.trim() ?? null, target, order.status, now, target, now, id, order.status]);
+      [target, now, target, order.status, assignee?.trim() ?? null, target, target, order.status, now, target, target, now, id, order.status]);
     if (this.db.getRowsModified() !== 1) {
       const current = await this.get(id, token);
       throw new BadRequestException(`Invalid transition ${current.status} -> ${target}`);
