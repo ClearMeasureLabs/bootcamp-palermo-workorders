@@ -1,0 +1,48 @@
+// Project `workorders`: deployment settings (config-as-code base path .octopus/workorders, platform-design §7.2).
+// Comments are authoring notes only; the Octopus serializer drops them on the next save from the UI.
+//
+// schema_version.ocl holds `version = 10`, the current OCL schema per
+//   https://github.com/OctopusDeploy/github-agent-plugin/blob/main/skills/writing-ocl/references/file-layout.md
+//   and per the live export app:.octopus/schema_version.ocl.
+//
+// Release notes and the `app-commit:` contract (§7.7):
+// - Codefresh `octopusdeploy-create-release` passes RELEASE_NOTES whose first line is `app-commit: <sha>`.
+//   Explicit notes replace this template [VERIFY]; the step `report-commit-status` reads that line.
+// - This template serves releases created in the UI (channel Hotfix). Its first line rebuilds the same
+//   `app-commit:` value from the build information that Codefresh pushes (VcsCommitNumber = app commit).
+// - Build-information variables are available in release notes only, not in steps:
+//   https://octopus.com/docs/projects/variables/system-variables and https://octopus.com/docs/releases/release-notes
+// - Four-space indentation renders as a code block in release notes, so nested bullets use two spaces.
+release_notes_template = <<-EOT
+    app-commit: #{Octopus.Release.Builds[0].VcsCommitNumber}
+    
+    Release #{Octopus.Release.Number} of #{Octopus.Project.Name}
+    
+    ## Builds
+    #{each build in Octopus.Release.Builds}
+    - [#{build.BuildNumber}](#{build.BuildUrl}) from #{build.Branch} at #{build.VcsCommitNumber}
+    #{/each}
+    
+    ## Packages and commits
+    #{each package in Octopus.Release.Package}
+    - #{package.PackageId} #{package.Version}
+    #{each commit in package.Commits}
+      - [#{commit.CommitId}](#{commit.LinkUrl}) #{commit.Comment}
+    #{/each}
+    #{/each}
+    EOT
+
+// No deployment targets: every step runs on a worker pool, the Octopus Server, or through the Argo CD gateway.
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+// Default release number = the ui-server package version (§7.5, §7.6). Channel Default always receives an
+// explicit RELEASE_NUMBER from Codefresh; for channel Hotfix a Release Manager appends `-hotfix.<n>` (§7.2).
+// Donor-package syntax: https://github.com/OctopusDeploy/github-agent-plugin/blob/main/skills/writing-ocl/references/deployment-settings.md
+versioning_strategy {
+    donor_package {
+        step = "update-argo-cd-image-tags"
+        package = "ui-server"
+    }
+}

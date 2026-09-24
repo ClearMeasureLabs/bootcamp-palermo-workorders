@@ -1,0 +1,120 @@
+# gitops/workorders/previews/kustomization.yaml
+#
+# Phase-6 PR preview overlay (ADR-C4). Rendered once per preview Application by the
+# ApplicationSet in argocd/optional/workorders-previews-appset.yaml, which supplies:
+#   - the namespace: destination workorders-pr-<number>, created by Argo CD (no `namespace:` here);
+#   - the images workorders-previews/{ui-server,worker}:pr-<number>-<head sha> (kustomize.images);
+#   - the hostname pr-<number>.<previews-hostname-suffix> on HTTPRoute ui-server.
+# Octopus never writes here and no preview is an Octopus environment (ADR-C4).
+#
+# Differences from the named environments:
+#   - No Azure at all: no Key Vault store, no workload identity (project workorders-previews).
+#   - Data: an in-namespace SQL Server (database.yaml) whose sa password comes from the ESO
+#     Password generator `mssql-sa`; Secret workorders-app carries that password and the
+#     connection string. No OpenAI key: LLM features and the LLM health check fail in previews.
+#   - Worker enabled (the SQL transport runs in-namespace).
+#
+# Writer: H (platform owners). Contracts: §7.3, §7.5, §7.8, ADR-C4.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../base
+  - database.yaml
+images:
+  # Migrator for the Sync-hook Job in database.yaml. `workorders/preview` builds no migrator
+  # image (§7.5), so this runs the scripts of a release build, not the PR's migrations: a
+  # maintainer sets the newest release version here. [VERIFY] conflict with ADR-C4, see report.
+  - name: <acr-name>.azurecr.io/workorders/db-migrator
+    newTag: "<VERSION>"
+configMapGenerator:
+  - name: workorders-config
+    literals:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+      # Read by the worker only; the short name resolves inside the preview namespace.
+      - RemotableBus__ApiUrl=http://ui-server:8080/api/blazor-wasm-single-api
+      - ApiKeyAuthentication__Enabled=false
+      # ConnectionStrings__SqlConnectionString holds the generated password, so it lives in
+      # Secret workorders-app (patch below), not here.
+patches:
+  # No Key Vault store and no ESO identity in previews.
+  - patch: |-
+      $patch: delete
+      apiVersion: external-secrets.io/v1
+      kind: SecretStore
+      metadata:
+        name: key-vault
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: workorders-eso
+  # Secret workorders-app from the Password generator. CreatedOnce: SQL Server reads the sa
+  # password only on first start, so the value must never rotate. Wave -3: before SQL (-2).
+  - target:
+      group: external-secrets.io
+      kind: ExternalSecret
+      name: workorders-app
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "-3"
+      - op: remove
+        path: /spec/secretStoreRef
+      - op: remove
+        path: /spec/data
+      - op: add
+        path: /spec/refreshPolicy
+        value: CreatedOnce
+      - op: add
+        path: /spec/target/template
+        value:
+          engineVersion: v2
+          data:
+            MSSQL_SA_PASSWORD: "{{ .password }}"
+            # Starts with `Server=` (F4). The preview SQL Server uses its self-signed certificate.
+            ConnectionStrings__SqlConnectionString: "Server=tcp:mssql,1433;Database=workorders;User Id=sa;Password={{ .password }};Encrypt=True;TrustServerCertificate=True;"
+      - op: add
+        path: /spec/dataFrom
+        value:
+          - sourceRef:
+              generatorRef:
+                apiVersion: generators.external-secrets.io/v1alpha1
+                kind: Password
+                name: mssql-sa
+  # No workload identity in previews.
+  - target:
+      kind: ServiceAccount
+      name: ui-server|worker
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/azure.workload.identity~1client-id
+  - target:
+      group: apps
+      kind: Deployment
+      name: ui-server|worker
+    patch: |-
+      - op: remove
+        path: /spec/template/metadata/labels/azure.workload.identity~1use
+  # No Octopus worker namespace for previews: ingress to ui-server comes from the Gateway and the
+  # worker pods only.
+  - target:
+      group: networking.k8s.io
+      kind: NetworkPolicy
+      name: ui-server-ingress
+    patch: |-
+      - op: test
+        path: /spec/ingress/0/from/1/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: octopus-worker-{env}
+      - op: remove
+        path: /spec/ingress/0/from/1
+  # Worker enabled in previews (ADR-C4).
+  - target:
+      group: apps
+      kind: Deployment
+      name: worker
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1

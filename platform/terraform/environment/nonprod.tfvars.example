@@ -1,0 +1,120 @@
+# Class nonprod: cluster aks-workorders-nonprod, environments tdd and uat.
+# Copy to nonprod.tfvars (untracked; the runbooks pass it with -var-file) and fill it from the
+# foundation output environment_inputs["nonprod"]. Never commit the copy: the repository is
+# public.
+#
+# Applied only by the Octopus runbooks env-plan / env-apply / env-destroy in environment
+# infra-nonprod (account #{Azure.LifecycleAccount}). Backend key: environment-nonprod.tfstate.
+# The ephemeral inputs octopus_worker_registration_token and argocd_repo_read_credential come from
+# Octopus sensitive variables on the run that needs them, never from this file.
+
+cluster         = "nonprod"
+tenant_id       = "<AZURE_TENANT_ID>"
+subscription_id = "<AZURE_SUBSCRIPTION_ID>"
+location        = "<azure-region>"
+
+# --- Foundation outputs: environment_inputs["nonprod"] ---------------------------------------------
+aks_controlplane_identity_id = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-nonprod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-aks-nonprod-controlplane"
+aks_kubelet_identity_id      = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-nonprod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-aks-nonprod-kubelet"
+aks_nodes_subnet_id          = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-nonprod/providers/Microsoft.Network/virtualNetworks/vnet-workorders-nonprod/subnets/snet-aks-nodes"
+private_endpoints_subnet_id  = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-nonprod/providers/Microsoft.Network/virtualNetworks/vnet-workorders-nonprod/subnets/snet-private-endpoints"
+private_dns_zone_ids = {
+  sql       = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-nonprod/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
+  key_vault = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-nonprod/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net"
+}
+log_analytics_workspace_id = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-shared/providers/Microsoft.OperationalInsights/workspaces/log-workorders"
+sql_admin_group = {
+  display_name = "<sql-admins-nonprod>"
+  object_id    = "00000000-0000-0000-0000-000000000000" # foundation output sql_admin_groups["nonprod"]
+}
+workload_identity_ids = {
+  tdd = {
+    app = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-tdd/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-workorders-tdd-app"
+    eso = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-tdd/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-workorders-tdd-eso"
+  }
+  uat = {
+    app = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-uat/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-workorders-uat-app"
+    eso = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-uat/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-workorders-uat-eso"
+  }
+}
+platform_identity_ids = {
+  eso     = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-nonprod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-eso-platform-nonprod"
+  kyverno = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-nonprod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-kyverno-nonprod"
+}
+
+# --- Names (§7.1) -------------------------------------------------------------------------------------
+key_vault_names = {
+  tdd = "<kv-workorders-tdd>"
+  uat = "<kv-workorders-uat>"
+}
+platform_key_vault_name = "<kv-workorders-platform-nonprod>"
+sql_server_names = {
+  tdd = "<sql-workorders-tdd>"
+  uat = "<sql-workorders-uat>"
+}
+sql_database_names = {
+  tdd = "<sqldb-workorders-tdd>"
+  uat = "<sqldb-workorders-uat>"
+}
+
+# --- Cluster --------------------------------------------------------------------------------------------
+kubernetes_version = null
+system_node_pool = {
+  vm_size   = "Standard_D4ds_v5"
+  min_count = 1
+  max_count = 2
+}
+apps_node_pool = {
+  vm_size   = "Standard_D4ds_v5"
+  min_count = 1
+  max_count = 3
+}
+cluster_network = {
+  pod_cidr       = "192.168.0.0/16"
+  service_cidr   = "172.16.0.0/16"
+  dns_service_ip = "172.16.0.10"
+}
+# Octopus Cloud dynamic-worker egress plus break-glass operator ranges (Q7).
+api_server_authorized_ip_ranges = ["<octopus-cloud-static-ips>"]
+key_vault_allowed_ip_ranges     = ["<octopus-cloud-static-ips>"]
+
+# --- SQL (Basic: 7-day point-in-time restore; no long-term retention in nonprod) ----------------------
+sql_databases = {
+  tdd = {
+    sku_name                  = "Basic"
+    pitr_days                 = 7
+    backup_storage_redundancy = "Local"
+  }
+  uat = {
+    sku_name                  = "S0"
+    pitr_days                 = 7
+    backup_storage_redundancy = "Local"
+  }
+}
+
+# --- Monitoring ---------------------------------------------------------------------------------------
+oncall_email_receivers = {
+  sre-oncall = "sre-oncall@example.com"
+}
+slo_alert_enabled = false # true from phase 3 (§9)
+
+# --- Octopus workers (octopus-worker-tdd, octopus-worker-uat) -----------------------------------------
+octopus_url                  = "<OCTOPUS_URL>"
+octopus_space                = "<octopus-space>"
+octopus_worker_chart_version = "<kubernetes-agent-chart-version>"
+
+# --- Argo CD bootstrap (argocd-nonprod) ----------------------------------------------------------------
+argocd_chart_version      = "<argo-cd-chart-version>"
+argocd_apps_chart_version = "<argocd-apps-chart-version>"
+env_repo_url              = "<ENV_REPO_URL>"
+argocd_repo_private       = true
+
+# Stored provisioner (phases 1-2) is a client-secret account: "spn". After the switch to
+# azure-oidc-env-lifecycle-nonprod: "workloadidentity" or "azurecli" (providers.tf).
+kubelogin_login_mode = "spn"
+
+tags = {
+  app        = "workorders"
+  class      = "nonprod"
+  managed-by = "terraform-environment"
+}

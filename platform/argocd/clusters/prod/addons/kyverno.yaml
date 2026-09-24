@@ -1,0 +1,109 @@
+# argocd/clusters/prod/addons/kyverno.yaml
+#
+# Two Applications (§7.3):
+#   kyverno           the engine, from the Kyverno Helm chart
+#   kyverno-policies  the policies, from policies/kyverno/overlays/prod in the environment repo.
+#                     Written and owned by sre-security (§11.4); prod runs in Enforce.
+#
+# Argo CD notes (checked 2026-09-24):
+# https://kyverno.io/docs/installation/platform-notes/#notes-for-argocd-users
+#   - Server-side apply, never Replace=true.
+#   - Server-side diff including mutation webhooks, so fields Kyverno sets do not show as drift.
+#   - config.preserve: false. The default (true) marks the ConfigMap with a Helm keep policy,
+#     which shows as out of sync under app-of-apps and blocks clean deletion.
+#   - Ignore the rules of aggregated ClusterRoles (filled by the control plane).
+#   - Annotation resource tracking avoids the app.kubernetes.io/instance label conflict; it is
+#     set in argocd/bootstrap/values-prod.yaml.
+# Kyverno report kinds are already in the argo-cd chart's default resource.exclusions.
+#
+# Writer: H (platform owners); policy content: sre-security. Contracts: §7.3, §7.8.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
+spec:
+  project: platform-addons
+  source:
+    repoURL: https://kyverno.github.io/kyverno/
+    chart: kyverno
+    targetRevision: <kyverno-chart-version>
+    helm:
+      releaseName: kyverno
+      valuesObject:
+        crds:
+          install: true
+        config:
+          preserve: false
+        admissionController:
+          # Prod enforces, so the webhook must stay available: three replicas (the chart adds a
+          # PodDisruptionBudget for more than one replica). A down webhook fails admission closed
+          # for policies that enforce. [VERIFY failurePolicy per policy with sre-security]
+          replicas: 3
+          rbac:
+            serviceAccount:
+              # Fixed name: federated credential subject
+              # system:serviceaccount:kyverno:kyverno-admission-controller -> id-kyverno-prod
+              # (§7.8), used to read signatures and attestations from <acr-name>.azurecr.io.
+              name: kyverno-admission-controller
+              annotations:
+                # Client ID of UAMI id-kyverno-prod (terraform/foundation output).
+                azure.workload.identity/client-id: <uami-client-id>
+          podLabels:
+            azure.workload.identity/use: "true"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  ignoreDifferences:
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+      jqPathExpressions:
+        - select(.aggregationRule != null) | .rules
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
+---
+# Policies. Sync wave 1 only orders creation after the engine Application; Argo CD does not wait
+# for child-Application health. Until the Kyverno CRDs exist the dry run is skipped and the
+# retry converges the sync.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno-policies
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: platform-addons
+  source:
+    repoURL: <ENV_REPO_URL>
+    targetRevision: main
+    path: policies/kyverno/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - SkipDryRunOnMissingResource=true
+      - ServerSideApply=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

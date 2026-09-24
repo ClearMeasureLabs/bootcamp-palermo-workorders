@@ -1,0 +1,119 @@
+# argocd/clusters/prod/projects.yaml
+#
+# AppProjects of argocd-prod (§7.3), synced by `platform-root` at wave -5 (after namespaces,
+# before Applications). `platform-addons` here is authoritative; the copy in
+# argocd/bootstrap/root-app-prod.yaml only exists so the root can sync the first time.
+# Prod has no previews project (ADR-C4).
+# Writer: H (platform owners; CODEOWNERS on argocd/**).
+
+# Platform add-ons and the root app. The only project allowed cluster-scoped kinds.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform-addons
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  description: Platform add-ons and the root app of argocd-prod
+  sourceRepos:
+    - <ENV_REPO_URL>
+    - https://argoproj.github.io/argo-helm
+    - https://charts.external-secrets.io
+    - https://kyverno.github.io/kyverno/
+    - registry-1.docker.io/octopusdeploy
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: argocd
+    - server: https://kubernetes.default.svc
+      namespace: external-secrets
+    - server: https://kubernetes.default.svc
+      namespace: kyverno
+    - server: https://kubernetes.default.svc
+      namespace: octopus-argocd-gateway
+    - server: https://kubernetes.default.svc
+      namespace: argo-rollouts
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+# App environment prod. Sources: the environment repo only. No cluster-scoped kinds.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: workorders-prod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  description: Work Orders prod (images pinned by Octopus, §7.6)
+  sourceRepos:
+    - <ENV_REPO_URL>
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: workorders-prod
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: batch
+      kind: Job
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+    - group: external-secrets.io
+      kind: SecretStore
+    - group: external-secrets.io
+      kind: ExternalSecret
+    - group: argoproj.io
+      kind: Rollout
+    - group: argoproj.io
+      kind: AnalysisTemplate
+  orphanedResources:
+    warn: true
+    ignore:
+      - kind: ConfigMap
+        name: kube-root-ca.crt
+      - kind: ServiceAccount
+        name: default
+  roles:
+    # Read, logs and Rollout abort only; no sync, no override, no delete (§7.3; R1-SRE §3).
+    - name: oncall
+      description: SRE on-call in prod
+      groups:
+        - <entra-group-object-id-sre-on-call>
+      policies:
+        - p, proj:workorders-prod:oncall, applications, get, workorders-prod/*, allow
+        - p, proj:workorders-prod:oncall, logs, get, workorders-prod/*, allow
+        - p, proj:workorders-prod:oncall, applications, action/argoproj.io/Rollout/abort, workorders-prod/*, allow
+---
+# Locked: every Application must name a real project (§7.3).
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  description: Locked. No sources, no destinations.
+  sourceRepos: []
+  destinations: []
+  clusterResourceWhitelist: []
+  namespaceResourceBlacklist:
+    - group: "*"
+      kind: "*"

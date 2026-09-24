@@ -1,0 +1,173 @@
+# argocd/clusters/nonprod/projects.yaml
+#
+# AppProjects of argocd-nonprod (§7.3), synced by `platform-root` at wave -5 (after namespaces,
+# before Applications). `platform-addons` here is authoritative; the copy in
+# argocd/bootstrap/root-app-nonprod.yaml only exists so the root can sync the first time.
+# Writer: H (platform owners; CODEOWNERS on argocd/**).
+
+# Platform add-ons and the root app. The only project allowed cluster-scoped kinds.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform-addons
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  description: Platform add-ons and the root app of argocd-nonprod
+  sourceRepos:
+    - <ENV_REPO_URL>
+    - https://argoproj.github.io/argo-helm
+    - https://charts.external-secrets.io
+    - https://kyverno.github.io/kyverno/
+    - registry-1.docker.io/octopusdeploy
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: argocd
+    - server: https://kubernetes.default.svc
+      namespace: external-secrets
+    - server: https://kubernetes.default.svc
+      namespace: kyverno
+    - server: https://kubernetes.default.svc
+      namespace: octopus-argocd-gateway
+    - server: https://kubernetes.default.svc
+      namespace: argo-rollouts
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+# App environments tdd and uat. Sources: the environment repo only. No cluster-scoped kinds.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: workorders-nonprod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  description: Work Orders tdd and uat (images pinned by Octopus, §7.6)
+  sourceRepos:
+    - <ENV_REPO_URL>
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: workorders-tdd
+    - server: https://kubernetes.default.svc
+      namespace: workorders-uat
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: batch
+      kind: Job
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+    - group: external-secrets.io
+      kind: SecretStore
+    - group: external-secrets.io
+      kind: ExternalSecret
+    - group: argoproj.io
+      kind: Rollout
+    - group: argoproj.io
+      kind: AnalysisTemplate
+  # Surfaces objects nobody declared (out-of-band changes). Warn only.
+  orphanedResources:
+    warn: true
+    ignore:
+      - kind: ConfigMap
+        name: kube-root-ca.crt
+      - kind: ServiceAccount
+        name: default
+  roles:
+    - name: sre-oncall
+      description: SRE on-call in tdd and uat
+      groups:
+        - <entra-group-object-id-sre-on-call>
+      policies:
+        - p, proj:workorders-nonprod:sre-oncall, applications, get, workorders-nonprod/*, allow
+        - p, proj:workorders-nonprod:sre-oncall, logs, get, workorders-nonprod/*, allow
+---
+# Phase-6 previews (ADR-C4). No Azure identity: no SecretStore kind, so nothing can point at a
+# Key Vault. Namespaced kinds only, plus the ESO Password generator for the in-namespace SQL.
+# [VERIFY] Auto-created namespaces (CreateNamespace=true) with an empty cluster whitelist; if
+# the phase-6 spike shows the project refusing the namespace, allow cluster kind Namespace here
+# and nothing else.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: workorders-previews
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  description: Work Orders pull-request previews (phase 6)
+  sourceRepos:
+    - <ENV_REPO_URL>
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: workorders-pr-*
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: ResourceQuota
+    - group: apps
+      kind: Deployment
+    - group: batch
+      kind: Job
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+    - group: external-secrets.io
+      kind: ExternalSecret
+    - group: generators.external-secrets.io
+      kind: Password
+  roles:
+    - name: developers
+      description: Read previews
+      groups:
+        - <entra-group-object-id-developers>
+      policies:
+        - p, proj:workorders-previews:developers, applications, get, workorders-previews/*, allow
+        - p, proj:workorders-previews:developers, logs, get, workorders-previews/*, allow
+---
+# Locked: every Application must name a real project (§7.3).
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  description: Locked. No sources, no destinations.
+  sourceRepos: []
+  destinations: []
+  clusterResourceWhitelist: []
+  namespaceResourceBlacklist:
+    - group: "*"
+      kind: "*"

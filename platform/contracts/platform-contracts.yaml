@@ -1,0 +1,764 @@
+# Machine-readable interface contracts: design/platform-design.md §7 (binding).
+#
+# Single source of names for scripts/checks/consistency.sh and tool-boundaries.sh.
+# Change a name here only in the same pull request that changes §7 of the design.
+#
+# Conventions
+#   - Paths are relative to the environment-repo root (staged at platform/ in the
+#     app checkout). `app:` marks paths in ClearMeasureLabs/bootcamp-palermo-workorders.
+#   - `{env}`, `{cluster}` and `{class}` are template variables that the checks
+#     expand from `expansions`. Angle-bracket values such as `<acr-name>` are §7.1
+#     placeholders and stay literal in committed files.
+#   - `[VERIFY]` marks product behaviour that the phase-2 TDD spike must prove.
+schemaVersion: 1
+design: design/platform-design.md
+
+expansions:
+  env: [tdd, uat, prod]
+  cluster: [nonprod, prod]
+  class: [nonprod, prod]
+  clusterOfEnv: {tdd: nonprod, uat: nonprod, prod: prod}
+  classOfInfraEnv: {infra-nonprod: nonprod, infra-prod: prod}
+
+# §7.1 placeholders (literal in committed files) plus the per-item placeholders
+# that other §7 tables use. consistency.sh warns on any other `<...>` token.
+placeholders:
+  - "<AZURE_TENANT_ID>"
+  - "<AZURE_SUBSCRIPTION_ID>"
+  - "<azure-region>"
+  - "<acr-name>"
+  - "<kv-workorders-{env}>"
+  - "<kv-workorders-platform-{cluster}>"
+  - "<sql-workorders-{env}>"
+  - "<sqldb-workorders-{env}>"
+  - "<tfstate-storage-account>"
+  - "<{env}-hostname>"
+  - "<gateway-name>"
+  - "<gateway-namespace>"
+  - "<gateway-class>"
+  - "<OCTOPUS_URL>"
+  - "<octopus-space>"
+  - "<octopus-space-slug>"
+  - "<octopus-space-id>"
+  - "<space-slug>"
+  - "<CF_ACCOUNT_ID>"
+  - "<cf-account-name>"
+  - "<CF_RELEASE_PIPELINE_ID>"
+  - "<cf-runtime-ci>"
+  - "<cf-runtime-release>"
+  - "<cf-git-integration-app>"
+  - "<aks-cluster-context>"
+  - "<ENV_REPO_URL>"
+  - "<ci-image-version>"
+  - "<argocd-chart-version>"
+  - "<argocd-apps-chart-version>"
+  - "<external-secrets-chart-version>"
+  - "<kyverno-chart-version>"
+  - "<kyverno-policies-chart-version>"
+  - "<octopus-argocd-gateway-chart-version>"
+  - "<kubernetes-agent-chart-version>"
+  - "<argo-rollouts-chart-version>"
+  - "<worker-tools-version>"
+  - "<ARGO_UPDATE_IMAGE_TAGS_ACTION_TYPE>"
+  - "<azure-openai-endpoint>"
+  - "<model-deployment-name>"
+  - "<uami-client-id>"
+  - "<sql-admins-{class}>"
+  - "<argocd-sso-app>"
+  - "<octopus-cloud-static-ips>"
+  - "<VERSION>"
+  - "<sha7>"
+  - "<package-version>"
+  - "<org>"
+
+# Notation the design itself uses in names and descriptions (`k8s-<env>`,
+# `MC_<rg>_<cluster>_<region>`); never a value to substitute.
+notationTokens:
+  - "<env>"
+  - "<class>"
+  - "<cluster>"
+  - "<rg>"
+  - "<region>"
+  - "<n>"
+  - "<number>"
+  - "<sha>"
+  - "<release>"
+  - "<database>"
+  - "<UTC timestamp>"
+
+# Pin placeholders for versions and digests (§7.1 `<*-chart-version>`; §11.1 file 17
+# "pinned by digest placeholder"). `*` matches one or more of [A-Za-z0-9._-].
+placeholderPatterns:
+  - "<*-chart-version>"
+  - "<*-version>"
+  - "<*-digest>"
+  - "<*-sha256>"
+
+envRepo:
+  name: clearmeasure-aisf-sample-apps/basic-environment-octopus-codefresh
+  url: https://github.com/clearmeasure-aisf-sample-apps/basic-environment-octopus-codefresh.git
+  urlPlaceholder: "<ENV_REPO_URL>"
+  defaultBranch: main
+  stagingRoot: app:platform/
+  writers:
+    human: pull request with CODEOWNERS review, merged to main
+    octopusPin: direct commit to main; only images[].newTag of gitops/workorders/envs/{env}/kustomization.yaml
+    octopusBranch: config-as-code edits on non-main branches, merged by people
+  botTeam: platform-bots
+  requiredStatus: codefresh/env-checks
+
+appRepo:
+  name: ClearMeasureLabs/bootcamp-palermo-workorders
+  url: https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders
+  defaultBranch: master
+
+environments:
+  application: [tdd, uat, prod]
+  infrastructure: [infra-nonprod, infra-prod]
+  octopusOrder: [tdd, uat, prod, infra-nonprod, infra-prod]
+
+azure:
+  resourceGroups:
+    - rg-workorders-shared
+    - rg-workorders-aks-nonprod
+    - rg-workorders-aks-prod
+    - rg-workorders-tdd
+    - rg-workorders-uat
+    - rg-workorders-prod
+  clusters: {nonprod: aks-workorders-nonprod, prod: aks-workorders-prod}
+  clusterTiers: {nonprod: Free, prod: Standard}
+  logAnalytics: log-workorders
+  appInsights: appi-workorders-{env}
+  keyVaults:
+    environment: "<kv-workorders-{env}>"
+    platform: "<kv-workorders-platform-{cluster}>"
+  sql:
+    server: "<sql-workorders-{env}>"
+    database: "<sqldb-workorders-{env}>"
+    fqdn: "<sql-workorders-{env}>.database.windows.net"
+    migratorUser: workorders_migrator
+    acceptanceUser: workorders_acceptance   # tdd only
+  uamis:
+    - id-workorders-{env}-app
+    - id-workorders-{env}-eso
+    - id-workorders-{env}-migrator
+    - id-eso-platform-{cluster}
+    - id-kyverno-{cluster}
+    - id-octopus-deploy-{env}
+    - id-env-lifecycle-{class}
+    - id-octopus-acr-pull
+    - id-aks-{class}-controlplane
+    - id-aks-{class}-kubelet
+  workloadFederatedSubjects:
+    - {subject: "system:serviceaccount:workorders-{env}:ui-server", uami: "id-workorders-{env}-app"}
+    - {subject: "system:serviceaccount:workorders-{env}:worker", uami: "id-workorders-{env}-app"}
+    - {subject: "system:serviceaccount:workorders-{env}:workorders-eso", uami: "id-workorders-{env}-eso"}
+    - {subject: "system:serviceaccount:external-secrets:external-secrets", uami: "id-eso-platform-{cluster}"}
+    - {subject: "system:serviceaccount:kyverno:kyverno-admission-controller", uami: "id-kyverno-{cluster}"}
+  federationAudience: api://AzureADTokenExchange
+  terraform:
+    foundation:
+      path: terraform/foundation
+      stateKey: foundation.tfstate
+      appliedBy: human Owner or User Access Administrator (PIM)
+    environment:
+      path: terraform/environment
+      stateKey: environment-{class}.tfstate
+      appliedBy: Octopus runbooks env-plan, env-apply, env-destroy
+      forbiddenResources:
+        - azurerm_role_assignment
+        - azurerm_role_definition
+        - azurerm_management_lock
+    stateResourceGroup: rg-workorders-shared
+    stateStorageAccount: "<tfstate-storage-account>"
+    stateContainer: tfstate
+
+octopus:
+  space: {name: "<octopus-space>", slug: "<octopus-space-slug>"}
+  projectGroup: Work Orders
+  gitCredential: GitHub clearmeasure-aisf-sample-apps
+  projects:
+    - name: workorders
+      slug: workorders
+      lifecycle: workorders-standard
+      tenanted: false
+      basePath: .octopus/workorders
+      defaultBranch: main
+      protectedBranches: [main]
+      libraryVariableSets: [WorkOrders Environment]
+      allowDeploymentsToNoTargets: true
+    - name: workorders-infrastructure
+      slug: workorders-infrastructure
+      lifecycle: workorders-infrastructure
+      runbooksOnly: true
+      basePath: .octopus/workorders-infrastructure
+      defaultBranch: main
+      protectedBranches: [main]
+      libraryVariableSets: [WorkOrders Infrastructure]
+  environments: [tdd, uat, prod, infra-nonprod, infra-prod]
+  lifecycles:
+    - name: workorders-standard
+      phases:
+        - {name: TDD, environments: [tdd], automatic: tdd_auto_deploy}
+        - {name: UAT, environments: [uat], automatic: false}
+        - {name: Prod, environments: [prod], automatic: false}
+    - name: workorders-hotfix
+      phases:
+        - {name: UAT, environments: [uat]}
+        - {name: Prod, environments: [prod]}
+    - name: workorders-infrastructure
+      phases:
+        - {name: Infra Nonprod, environments: [infra-nonprod], optional: true}
+        - {name: Infra Prod, environments: [infra-prod], optional: true}
+  terraformVariables:
+    tddAutoDeploy: tdd_auto_deploy
+  channels:
+    - name: Default
+      default: true
+      lifecycle: workorders-standard
+      gitReferenceRule: refs/heads/main
+      packageVersionTag: "^$"
+      releasesCreatedBy: svc-codefresh-release
+    - name: Hotfix
+      lifecycle: workorders-hotfix
+      gitReferenceRule: refs/heads/main
+      releaseNumberPattern: "<package-version>-hotfix.<n>"
+      releasesCreatedBy: Release Managers
+  freezes:
+    - name: prod-weekend-freeze
+      environments: [prod]
+      projects: [workorders]
+      recurrence: Saturday-Sunday   # [VERIFY recurring support]
+      overrideTeam: Release Managers
+  deploymentProcess:
+    project: workorders
+    steps:
+      - {order: 1, slug: hotfix-justification, name: Hotfix justification, type: manual-intervention, team: Release Managers, channels: [Hotfix]}
+      - {order: 2, slug: prod-go-no-go, name: Prod go/no-go, type: manual-intervention, team: Prod Approvers, environments: [prod]}
+      - {order: 3, slug: sod-guard, name: Separation-of-duties guard, type: script-bash, environments: [prod], workerPool: "#{WorkerPool}"}
+      - order: 4
+        slug: read-deployment-secrets
+        name: Read deployment secrets
+        type: azure-cli-bash
+        account: "#{Azure.DeployAccount}"
+        environments: [tdd, uat, prod]
+        workerPool: "#{WorkerPool}"
+        sensitiveOutputs: {all: [MigratorPassword], tdd: [AcceptancePassword, OpenAIKey]}
+      - {order: 5, slug: db-copy-pre-release, name: Copy prod database, type: azure-cli-bash, environments: [prod], workerPool: "#{WorkerPool}"}
+      - order: 6
+        slug: migrate-database
+        name: Migrate database (DbUp update)
+        type: script-bash
+        environments: [tdd, uat, prod]
+        workerPool: "#{WorkerPool}"
+        container: "#{StepImage.CiDotnet}"
+        packages: [ChurchBulletin.Database]
+        retries: 1
+        timeoutVariable: Migration.TimeoutSeconds
+      - order: 7
+        slug: update-argo-cd-image-tags
+        name: Update Argo CD image tags
+        type: "<ARGO_UPDATE_IMAGE_TAGS_ACTION_TYPE>"
+        environments: [tdd, uat, prod]
+        packages: [workorders/ui-server, workorders/worker]
+        feed: acr-workorders
+        commitMethod: direct
+        triggerSync: false
+        verification: Argo CD Application is healthy
+        timeoutVariable: Argo.VerificationTimeoutSeconds
+        retries: 1
+      - {order: 8, slug: verify-version, name: Verify version, type: script, environments: [tdd, uat, prod], endpoint: /_version}
+      - {order: 9, slug: smoke-test, name: Smoke test, type: script, environments: [tdd, uat, prod], endpoint: /_healthcheck}
+      - order: 10
+        slug: acceptance-tests
+        name: Acceptance tests (TDD only)
+        type: script-powershell
+        environments: [tdd]
+        workerPool: k8s-tdd
+        container: "#{StepImage.CiDotnet}"
+        packages: [ChurchBulletin.AcceptanceTests]
+        timeoutMinutes: 30
+      - {order: 11, slug: uat-signoff, name: UAT sign-off, type: manual-intervention, team: UAT Approvers, environments: [uat]}
+      - {order: 12, slug: report-commit-status, name: Report platform/tdd status, type: script, environments: [tdd], runCondition: always}
+  runbooks:
+    - {project: workorders, name: db-backup, environments: [uat, prod]}
+    - {project: workorders, name: db-restore-pitr, environments: [uat, prod]}
+    - {project: workorders, name: run-acceptance-tests, environments: [tdd]}
+    - {project: workorders-infrastructure, name: env-plan, environments: [infra-nonprod, infra-prod], terraformDirectory: terraform/environment}
+    - {project: workorders-infrastructure, name: env-apply, environments: [infra-nonprod, infra-prod], terraformDirectory: terraform/environment}
+    - {project: workorders-infrastructure, name: env-destroy, environments: [infra-nonprod], terraformDirectory: terraform/environment}
+    - {project: workorders-infrastructure, name: rotate-sql-passwords, environments: [infra-nonprod, infra-prod]}
+    - {project: workorders-infrastructure, name: provisioner-credential-check, environments: [infra-nonprod]}
+  forbiddenRunbooks:
+    - {name: env-destroy, environments: [infra-prod, prod]}
+  variables:
+    # Non-sensitive project variables stored in Git (config-as-code).
+    - {name: WorkerPool, file: .octopus/workorders/variables.ocl, type: WorkerPool, values: {tdd: k8s-tdd, uat: k8s-uat, prod: k8s-prod}}
+    - {name: Azure.DeployAccount, file: .octopus/workorders/variables.ocl, type: AzureAccount, values: {tdd: azure-oidc-deploy-tdd, uat: azure-oidc-deploy-uat, prod: azure-oidc-deploy-prod}}
+    - {name: StepImage.CiDotnet, file: .octopus/workorders/variables.ocl, type: String, value: "<acr-name>.azurecr.io/platform/ci-dotnet:<ci-image-version>"}
+    - {name: Smoke.FailOnDegraded, file: .octopus/workorders/variables.ocl, type: String, values: {tdd: "True", uat: "False", prod: "False"}}
+    - {name: Argo.VerificationTimeoutSeconds, file: .octopus/workorders/variables.ocl, type: String, value: "900"}
+    - {name: Migration.TimeoutSeconds, file: .octopus/workorders/variables.ocl, type: String, value: "900"}
+    - {name: Acceptance.AllowDestructiveReset, file: .octopus/workorders/variables.ocl, type: String, values: {tdd: "True"}}
+    - {name: GitHub.StatusEnabled, file: .octopus/workorders/variables.ocl, type: String, value: "False"}
+    - {name: GitHub.StatusContext, file: .octopus/workorders/variables.ocl, type: String, value: platform/tdd}
+    - {name: GitHub.AppRepository, file: .octopus/workorders/variables.ocl, type: String, value: ClearMeasureLabs/bootcamp-palermo-workorders}
+    - name: Azure.LifecycleAccount
+      file: .octopus/workorders-infrastructure/variables.ocl
+      type: AzureAccount
+      values:
+        infra-nonprod: azure-runtime-provisioner   # phases 1-2, then azure-oidc-env-lifecycle-nonprod
+        infra-prod: azure-oidc-env-lifecycle-prod
+    - {name: Provisioner.SecretExpiresOn, file: .octopus/workorders-infrastructure/variables.ocl, type: String}
+  promptedVariables:
+    # Prompted at run time (§7.2 runbook table).
+    - {name: RestorePointInTime, file: .octopus/workorders/variables.ocl, runbook: db-restore-pitr}
+  sensitiveVariables:
+    # Stored in the Octopus database only; never in Git.
+    - {name: GitHub.StatusToken, project: workorders}
+    - {name: Octopus.WorkerRegistrationToken, project: workorders-infrastructure}
+  libraryVariableSets:
+    new:
+      - name: WorkOrders Environment
+        managedBy: octopus/terraform
+        variables:
+          App.BaseUrl: "https://<{env}-hostname>"
+          App.InternalUrl: "http://ui-server.workorders-{env}.svc.cluster.local:8080"
+          Azure.ResourceGroup: rg-workorders-{env}
+          KeyVault.Name: "<kv-workorders-{env}>"
+          Sql.ServerName: "<sql-workorders-{env}>"
+          Sql.ServerFqdn: "<sql-workorders-{env}>.database.windows.net"
+          Sql.Database: "<sqldb-workorders-{env}>"
+          Sql.MigratorUser: workorders_migrator
+          Sql.AcceptanceUser: workorders_acceptance   # tdd only
+          AI.OpenAIUrl: "<azure-openai-endpoint>"
+          AI.OpenAIModel: "<model-deployment-name>"
+      - name: WorkOrders Infrastructure
+        managedBy: octopus/terraform
+        variables:
+          Environment.Class: "{class}"
+          Terraform.StateResourceGroup: rg-workorders-shared
+          Terraform.StateStorageAccount: "<tfstate-storage-account>"
+          Terraform.StateContainer: tfstate
+          Terraform.StateKey: environment-{class}.tfstate
+    stored:
+      # Looked up by name, never created; included in no project.
+      - Azure Runtime Provisioning
+      - GitHub AISF Sample Apps
+  workerPools:
+    kubernetes: [k8s-tdd, k8s-uat, k8s-prod]
+    dynamic: Hosted Ubuntu
+    terraformContainer: "octopusdeploy/worker-tools:<worker-tools-version>"
+    workerNamespaces: {tdd: octopus-worker-tdd, uat: octopus-worker-uat, prod: octopus-worker-prod}
+  accounts:
+    stored:
+      - {name: Azure Runtime Provisioner, slug: azure-runtime-provisioner, allowedEnvironments: [infra-nonprod]}
+    new:
+      - {name: azure-oidc-deploy-tdd, environments: [tdd], uami: id-octopus-deploy-tdd}
+      - {name: azure-oidc-deploy-uat, environments: [uat], uami: id-octopus-deploy-uat}
+      - {name: azure-oidc-deploy-prod, environments: [prod], uami: id-octopus-deploy-prod}
+      - {name: azure-oidc-env-lifecycle-nonprod, environments: [infra-nonprod], uami: id-env-lifecycle-nonprod}
+      - {name: azure-oidc-env-lifecycle-prod, environments: [infra-prod], uami: id-env-lifecycle-prod}
+    executionSubjectKeys: [space, project, environment]
+    audience: api://AzureADTokenExchange
+  feeds:
+    builtIn:
+      packages: [ChurchBulletin.Database, ChurchBulletin.AcceptanceTests]
+    acr:
+      name: acr-workorders
+      url: https://<acr-name>.azurecr.io
+      oidcIdentity: id-octopus-acr-pull
+      subjectKeys: [space, feed]
+      packages: [workorders/ui-server, workorders/worker]
+  serviceAccounts:
+    - name: svc-codefresh-release
+      team: CI Release Publishers
+      oidcIdentity:
+        name: codefresh-release-master
+        issuer: https://oidc.codefresh.io
+        subject: "account:<CF_ACCOUNT_ID>:pipeline:<CF_RELEASE_PIPELINE_ID>:*:scm_ref:master"   # [VERIFY] exact sub from a test build
+    - name: svc-argocd-gateway
+      purpose: Argo CD gateway registration
+  teams:
+    - Platform Engineers
+    - Release Managers
+    - UAT Approvers
+    - Prod Approvers
+    - SRE On-call
+    - Developers
+    - CI Release Publishers
+  userRoles:
+    - name: CI Release Publisher
+      permissions: [BuiltInFeedPush, BuildInformationPush, ReleaseCreate, ReleaseView, ProjectView, FeedView]   # [VERIFY names]
+  argoInstances:
+    - {name: argocd-nonprod, cluster: nonprod, environments: [tdd, uat]}
+    - {name: argocd-prod, cluster: prod, environments: [prod]}
+
+argocd:
+  version: {app: 3.5.3, chart: argo/argo-cd}
+  instances: {nonprod: argocd-nonprod, prod: argocd-prod}
+  rootApplication:
+    name: platform-root
+    project: platform-addons
+    valuesFile: argocd/bootstrap/root-app-{cluster}.yaml
+    path: argocd/clusters/{cluster}
+    directoryRecurse: true
+    targetRevision: main
+  bootstrapValues: argocd/bootstrap/values-{cluster}.yaml
+  appProjects:
+    nonprod: [platform-addons, workorders-nonprod, workorders-previews, default]
+    prod: [platform-addons, workorders-prod, default]
+  appProjectDetail:
+    workorders-nonprod:
+      destinations: [workorders-tdd, workorders-uat]
+      roles: [sre-oncall]
+    workorders-prod:
+      destinations: [workorders-prod]
+      roles: [oncall]
+    workorders-previews:
+      destinations: ["workorders-pr-*"]
+    default:
+      locked: true
+  namespacedKindAllowList:
+    - ConfigMap
+    - Secret
+    - Service
+    - ServiceAccount
+    - Deployment
+    - Job
+    - PodDisruptionBudget
+    - NetworkPolicy
+    - HTTPRoute
+    - SecretStore
+    - ExternalSecret
+    - Rollout
+    - AnalysisTemplate
+  applications:
+    - name: workorders-tdd
+      cluster: nonprod
+      env: tdd
+      file: argocd/clusters/nonprod/apps/workorders-tdd.yaml
+      project: workorders-nonprod
+      path: gitops/workorders/envs/tdd
+      namespace: workorders-tdd
+    - name: workorders-uat
+      cluster: nonprod
+      env: uat
+      file: argocd/clusters/nonprod/apps/workorders-uat.yaml
+      project: workorders-nonprod
+      path: gitops/workorders/envs/uat
+      namespace: workorders-uat
+    - name: workorders-prod
+      cluster: prod
+      env: prod
+      file: argocd/clusters/prod/apps/workorders-prod.yaml
+      project: workorders-prod
+      path: gitops/workorders/envs/prod
+      namespace: workorders-prod
+  applicationDefaults:
+    destinationServer: https://kubernetes.default.svc
+    targetRevision: main
+    annotations:
+      argo.octopus.com/project: workorders
+      argo.octopus.com/environment: "{env}"
+    syncPolicy:
+      automated: {prune: true, selfHeal: true}
+      syncOptions: [PruneLast=true]
+      retry: {limit: 5, backoff: {duration: 30s, factor: 2, maxDuration: 5m}}
+    finalizers: []
+  addons:
+    - {name: argocd, file: "argocd/clusters/{cluster}/addons/argocd.yaml"}
+    - {name: external-secrets, file: "argocd/clusters/{cluster}/addons/external-secrets.yaml"}
+    - {name: octopus-argocd-gateway, file: "argocd/clusters/{cluster}/addons/octopus-argocd-gateway.yaml"}
+    - {name: kyverno, file: "argocd/clusters/{cluster}/addons/kyverno.yaml"}
+    - {name: kyverno-policies, file: "argocd/clusters/{cluster}/addons/kyverno.yaml", path: "policies/kyverno/overlays/{cluster}"}
+  annotationRules:
+    allowedOnlyOn: [workorders-tdd, workorders-uat, workorders-prod]
+    forbiddenKeys: [argo.octopus.com/tenant]
+  forbidden: [syncWindows, argocd-image-updater]
+  previews:
+    applicationSet: workorders-previews
+    file: argocd/optional/workorders-previews-appset.yaml
+    project: workorders-previews
+    appName: "workorders-pr-{{.number}}"
+    path: gitops/workorders/previews
+    labels: [preview]
+    requeueAfterSeconds: 300
+    imageTag: "pr-{{.number}}-{{.head_sha}}"
+    phase: 6
+  config:
+    timeoutReconciliation: 120s
+    adminEnabled: false
+    gatewayAccount: octopus
+    gatewayPolicies:
+      - "p, octopus, applications, get, workorders-*/*, allow"
+      - "p, octopus, logs, get, workorders-*/*, allow"
+      - "p, octopus, clusters, get, *, allow"
+
+kubernetes:
+  namespaces:
+    nonprod:
+      bootstrap: [argocd]
+      addons: [external-secrets, kyverno, octopus-argocd-gateway]
+      apps: [workorders-tdd, workorders-uat]
+      terraformWorkers: [octopus-worker-tdd, octopus-worker-uat]
+      phase6: [argo-rollouts, "workorders-pr-<number>"]
+    prod:
+      bootstrap: [argocd]
+      addons: [external-secrets, kyverno, octopus-argocd-gateway]
+      apps: [workorders-prod]
+      terraformWorkers: [octopus-worker-prod]
+      phase6: [argo-rollouts]
+  appNamespaceLabels: {environment: "{env}", tier: app}
+  platformNamespaceLabels: {tier: platform}
+  workloadObjects:
+    Deployment: [ui-server, worker]
+    Service: [ui-server]
+    ServiceAccount: [ui-server, worker, workorders-eso]
+    PodDisruptionBudget: [ui-server]
+    HTTPRoute: [ui-server]
+    SecretStore: [key-vault]
+    ExternalSecret: [workorders-app]
+    ConfigMap: [workorders-config]
+  servicePort: 8080
+  labels:
+    ui-server: {app.kubernetes.io/name: ui-server, app.kubernetes.io/part-of: workorders, app.kubernetes.io/component: web}
+    worker: {app.kubernetes.io/name: worker, app.kubernetes.io/part-of: workorders, app.kubernetes.io/component: message-handler}
+  workloadIdentity:
+    serviceAccountAnnotation: azure.workload.identity/client-id
+    podLabel: {azure.workload.identity/use: "true"}
+  syncWaves: {SecretStore: "-2", ExternalSecret: "-1", workloads: "0"}
+  workerReplicasUntilEnabled: 0
+
+images:
+  registry: "<acr-name>.azurecr.io"
+  release:
+    - {repository: workorders/ui-server, kustomizeName: "<acr-name>.azurecr.io/workorders/ui-server", octopusPackageId: workorders/ui-server, pinned: true}
+    - {repository: workorders/worker, kustomizeName: "<acr-name>.azurecr.io/workorders/worker", octopusPackageId: workorders/worker, pinned: true}
+    - {repository: workorders/db-migrator, kustomizeName: "<acr-name>.azurecr.io/workorders/db-migrator", octopusPackageId: workorders/db-migrator, pinned: false, buildInformationOnly: true}
+  previews:
+    - {repository: workorders-previews/ui-server, tag: "pr-<number>-<40-hex head sha>"}
+    - {repository: workorders-previews/worker, tag: "pr-<number>-<40-hex head sha>"}
+  ciToolchain: {repository: platform/ci-dotnet, tag: "<ci-image-version>"}
+  releaseTags: ["<VERSION>", "sha-<sha7>"]
+  forbiddenTags: [latest]
+  ociLabels:
+    org.opencontainers.image.source: https://github.com/ClearMeasureLabs/bootcamp-palermo-workorders
+    org.opencontainers.image.revision: "<sha>"
+    org.opencontainers.image.version: "<VERSION>"
+
+packages:
+  octopusBuiltIn: [ChurchBulletin.Database, ChurchBulletin.AcceptanceTests]
+  notPushed: [ChurchBulletin.UI, ChurchBulletin.Script]
+  buildInformationPackageIds:
+    - workorders/ui-server
+    - workorders/worker
+    - workorders/db-migrator
+    - ChurchBulletin.Database
+    - ChurchBulletin.AcceptanceTests
+
+version:
+  master: "2.5.<first-parent height>"
+  branch: "2.5.<n>-ci.<sha7>"
+  hotfix: "<package-version>-hotfix.<n>"
+  versionFile: app:.codefresh/version.env
+  major: 2
+  minor: 5
+  producer: app:.codefresh/scripts/version.sh
+
+pins:
+  file: gitops/workorders/envs/{env}/kustomization.yaml
+  writer: update-argo-cd-image-tags
+  writableField: images[].newTag
+  bootstrapTag: 0.0.0-bootstrap
+  shape:
+    apiVersion: kustomize.config.k8s.io/v1beta1
+    kind: Kustomization
+    resources: [config]
+    images:
+      - {name: "<acr-name>.azurecr.io/workorders/ui-server", newTag: "0.0.0-bootstrap"}
+      - {name: "<acr-name>.azurecr.io/workorders/worker", newTag: "0.0.0-bootstrap"}
+  configDir: gitops/workorders/envs/{env}/config
+  configBase: ../../../base
+  baseDir: gitops/workorders/base
+  componentsDir: gitops/workorders/components
+  unreferencedComponents: [bluegreen]
+
+codefresh:
+  projects: [workorders, platform-env]
+  pipelines:
+    - name: workorders/ci
+      project: workorders
+      spec: app:.codefresh/specs/workorders-ci.yml
+      yaml: app:.codefresh/pipelines/ci.yml
+      runtime: "<cf-runtime-ci>"
+      contexts: [workorders-ci]
+      status: codefresh/ci
+    - name: workorders/release
+      project: workorders
+      spec: app:.codefresh/specs/workorders-release.yml
+      yaml: app:.codefresh/pipelines/release.yml
+      revision: master
+      runtime: "<cf-runtime-release>"
+      contexts: [workorders-ci, workorders-release]
+      registry: acr-workorders-release
+      concurrency: 1
+      status: codefresh/release
+    - name: workorders/preview
+      project: workorders
+      spec: app:.codefresh/specs/workorders-preview.yml
+      yaml: app:.codefresh/pipelines/preview.yml
+      runtime: "<cf-runtime-ci>"
+      contexts: []
+      registry: acr-workorders-preview
+      status: codefresh/preview
+      phase: 6
+    - name: workorders/ci-image
+      project: workorders
+      spec: app:.codefresh/specs/workorders-ci-image.yml
+      yaml: app:.codefresh/pipelines/ci-image.yml
+      runtime: "<cf-runtime-release>"
+      contexts: []
+      registry: acr-platform-ci
+    - name: platform-env/env-checks
+      project: platform-env
+      spec: codefresh/specs/platform-env-checks.yml
+      yaml: codefresh/pipelines/env-checks.yml
+      gitIntegration: github-aisf-sample-apps
+      runtime: "<cf-runtime-ci>"
+      contexts: []
+      status: codefresh/env-checks
+      validateAllSubcommands: [yaml, kustomize, kubeconform, terraform, boundaries, consistency, secrets]
+  contexts:
+    - name: workorders-ci
+      type: secret
+      keys: [CI_SQL_SA_PASSWORD, AI_OPENAI_APIKEY, AI_OPENAI_URL, AI_OPENAI_MODEL]
+    - name: workorders-release
+      type: config
+      keys: [OCTOPUS_URL, OCTOPUS_SPACE, OCTOPUS_PROJECT, OCTOPUS_SERVICE_ACCOUNT_ID, ACR_REGISTRY]
+      values: {OCTOPUS_PROJECT: workorders, ACR_REGISTRY: "<acr-name>.azurecr.io"}
+  unattachedStores: [azure-runtime-provisioner, github-aisf-sample-apps-token]
+  registryIntegrations: [acr-workorders-release, acr-workorders-preview, acr-platform-ci]
+  gitIntegrations:
+    app: "<cf-git-integration-app>"
+    envRepo: github-aisf-sample-apps
+  exportedVariables: [VERSION, BUILD_BUILDNUMBER, CODE_CHANGED, IS_RELEASE]
+  gateSteps: [main_clone, prepare, build_sql, build_sqlite, code_analysis, qodana, security_scan, acceptance, gate]
+  advisorySteps: [security_scan]
+  releaseOnlySteps:
+    - package
+    - stage_images
+    - ui_image
+    - worker_image
+    - migrator_image
+    - supply_chain
+    - octopus_token
+    - octopus_login
+    - octopus_packages
+    - octopus_build_info
+    - octopus_release
+  handoff:
+    - {step: obtain-oidc-id-token, version: 1.2.3, arguments: {AUDIENCE: "${{OCTOPUS_SERVICE_ACCOUNT_ID}}"}}
+    - {step: octopusdeploy-login, version: 1.0.0, arguments: [ID_TOKEN, OCTOPUS_URL, OCTOPUS_SERVICE_ACCOUNT_ID], exports: [OCTOPUS_ACCESS_TOKEN]}
+    - {step: octopusdeploy-push-package, arguments: {OVERWRITE_MODE: ignore}}
+    - {step: octopusdeploy-push-build-information, arguments: {OVERWRITE_MODE: overwrite}}
+    - step: octopusdeploy-create-release
+      version: 1.0.1
+      arguments:
+        PROJECT: workorders
+        CHANNEL: Default
+        RELEASE_NUMBER: "${{VERSION}}"
+        PACKAGE_VERSION: "${{VERSION}}"
+        GIT_REF: refs/heads/main
+        IGNORE_EXISTING: true
+      forbiddenArguments: [GIT_COMMIT]
+      releaseNotesFirstLine: "app-commit: ${{CF_REVISION}}"
+  forbiddenStepTypes: [deploy, approval, helm, launch-composition]
+
+keyVault:
+  environmentSecrets:
+    - {name: workorders-ai-openai-apikey, consumer: eso, secretKeys: [AI_OpenAI_ApiKey]}
+    - {name: workorders-api-validation-key, consumer: eso, secretKeys: [ApiKeyAuthentication__ValidationKey]}
+    - {name: workorders-appinsights-connection-string, consumer: eso, writer: terraform/environment, secretKeys: [ApplicationInsights__ConnectionString, APPLICATIONINSIGHTS_CONNECTION_STRING]}
+    - {name: workorders-sql-migrator-password, consumer: octopus read-deployment-secrets, writer: env-apply}
+  tddOnlySecrets:
+    - {name: workorders-sql-acceptance-password, consumer: octopus read-deployment-secrets}
+  platformSecrets:
+    - {name: argocd-repo-read-credential, targetSecret: argocd-repo-creds, namespace: argocd, label: "argocd.argoproj.io/secret-type: repo-creds"}
+    - {name: argocd-octopus-gateway-token, targetSecret: argocd-octopus-token, key: token, namespace: octopus-argocd-gateway}
+    - {name: octopus-gateway-registration-token, targetSecret: octopus-gateway-registration, key: token, namespace: octopus-argocd-gateway}
+    - {name: argocd-sso-client-secret, targetNamespace: argocd, onlyIfFederationUnavailable: true}
+  eso:
+    secretStore: {name: key-vault, syncWave: "-2", authType: WorkloadIdentity, serviceAccountRef: workorders-eso, vaultUrl: "https://<kv-workorders-{env}>.vault.azure.net"}
+    externalSecret: {name: workorders-app, syncWave: "-1", refreshInterval: 1h, target: workorders-app, creationPolicy: Owner}
+    clusterSecretStore: {name: platform-keyvault, namespaces: [argocd, octopus-argocd-gateway], serviceAccount: external-secrets/external-secrets}
+    previewPasswordGenerator: {kind: Password, name: mssql-sa, phase: 6}
+
+health:
+  probe: {path: /alive, port: 8080, probes: [startupProbe, livenessProbe, readinessProbe]}
+  futureReadiness: /ready   # WI-01
+  smoke: /_healthcheck      # Octopus smoke-test only; never a probe
+  version: /_version
+  metadata: /api/version
+  redirectedInUatProd: [/_healthcheck/detailed, /_demo, /_diagnostics, /mcp]
+  workerProbes: none        # until WI-04
+
+config:
+  configMap: workorders-config
+  literals:
+    ASPNETCORE_ENVIRONMENT: Production
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    # Escaped line break: the value is one line with no space at the join.
+    ConnectionStrings__SqlConnectionString: "Server=tcp:<sql-workorders-{env}>.database.windows.net,1433;Database=<sqldb-workorders-{env}>;\
+      Authentication=Active Directory Workload Identity;Encrypt=True;"
+    AI_OpenAI_Url: "<azure-openai-endpoint>"
+    AI_OpenAI_Model: "<model-deployment-name>"
+    ApiKeyAuthentication__Enabled: "false"   # until WI-10
+  workerOnly:
+    RemotableBus__ApiUrl: "http://ui-server.workorders-{env}.svc.cluster.local:8080/api/blazor-wasm-single-api"
+  secretKeys:
+    - AI_OpenAI_ApiKey
+    - ApiKeyAuthentication__ValidationKey
+    - ApplicationInsights__ConnectionString
+    - APPLICATIONINSIGHTS_CONNECTION_STRING
+  connectionStringPrefix: "Server="
+  forbiddenConnectionStringPrefix: "Data Source="
+
+kyverno:
+  imageValidatingPolicy:
+    file: policies/kyverno/base/verify-release-signatures.yaml
+    images: "<acr-name>.azurecr.io/workorders/*"
+    issuer: https://oidc.codefresh.io
+    subject: "https://g.codefresh.io/<cf-account-name>/workorders/release:<CF_ACCOUNT_ID>/<CF_RELEASE_PIPELINE_ID>"
+    mutateDigest: false
+  modes: {nonprod: Audit, prod: Enforce}
+  overlays: policies/kyverno/overlays/{cluster}
+
+statuses:
+  requiredMergeCheck: build-result          # app repo, phases 1-5
+  informational: [codefresh/ci]
+  codefresh: [codefresh/ci, codefresh/release, codefresh/preview, codefresh/env-checks]
+  octopus: [platform/tdd]                   # only if R16 is approved
+
+workItems: [WI-01, WI-02, WI-03, WI-04, WI-05, WI-06, WI-07, WI-08, WI-09, WI-10, WI-11, WI-12]
+
+# Package that owns each path root (design §11.6). Used to attribute findings.
+ownership:
+  - {root: "app:.codefresh/", package: codefresh-engineer}
+  - {root: "app:containers/", package: codefresh-engineer}
+  - {root: codefresh/, package: codefresh-engineer}
+  - {root: argocd/, package: gitops-architect}
+  - {root: gitops/, package: gitops-architect}
+  - {root: .octopus/, package: octopus-architect}
+  - {root: octopus/, package: octopus-architect}
+  - {root: terraform/, package: sre-security}
+  - {root: policies/, package: sre-security}
+  - {root: docs/runbooks/, package: sre-security}
+  - {root: .gitleaks.toml, package: sre-security}
+  - {root: design/, package: chief-architect}
+  - {root: README.md, package: pragmatist}
+  - {root: CODEOWNERS, package: pragmatist}
+  - {root: .yamllint.yaml, package: pragmatist}
+  - {root: contracts/, package: pragmatist}
+  - {root: scripts/, package: pragmatist}
+  - {root: docs/, package: pragmatist}

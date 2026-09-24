@@ -1,0 +1,177 @@
+# gitops/workorders/components/bluegreen/rollout.yaml
+#
+# Blue-green Rollout for ui-server (ADR-C3, phase 6). Objects:
+#   Rollout ui-server             workloadRef to Deployment ui-server; active Service ui-server
+#   Service ui-server-preview     the new version before promotion
+#   AnalysisTemplate smoke        Job provider: no metrics store needed
+#   NetworkPolicy ui-server-smoke-ingress   lets the analysis pods reach ui-server:8080 under
+#                                           the default-deny policy (ADR-D12)
+#
+# autoPromotionEnabled: true, because a paused Rollout reports Suspended, never Healthy, and the
+# Octopus step waits for "Argo CD Application is healthy". Pre-promotion smoke failure aborts the
+# Rollout: Degraded, the active version keeps serving, and the Octopus verification fails.
+# Post-promotion analysis runs as a dry run for the first 14 days after enablement; then a pull
+# request removes `dryRun`.
+#
+# [VERIFY] Right after a sync the Rollout may still report Healthy for the previous template
+# until the controller reacts to the Deployment change; the Octopus `verify-version` step
+# (/_version must match the release) guards against a stale result.
+#
+# Writer: H (platform owners). Contracts: §7.3, §7.9, ADR-C3, ADR-D12.
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: ui-server
+  labels:
+    app.kubernetes.io/name: ui-server
+    app.kubernetes.io/part-of: workorders
+    app.kubernetes.io/component: web
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  # Entry criterion: at least two replicas (ADR-C3).
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ui-server
+  workloadRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ui-server
+    scaleDown: never
+  strategy:
+    blueGreen:
+      activeService: ui-server
+      previewService: ui-server-preview
+      autoPromotionEnabled: true
+      prePromotionAnalysis:
+        templates:
+          - templateName: smoke
+        args:
+          - name: service
+            value: ui-server-preview
+      postPromotionAnalysis:
+        templates:
+          - templateName: smoke
+        args:
+          - name: service
+            value: ui-server
+        dryRun:
+          - metricName: smoke
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui-server-preview
+  labels:
+    app.kubernetes.io/name: ui-server
+    app.kubernetes.io/part-of: workorders
+    app.kubernetes.io/component: web
+spec:
+  type: ClusterIP
+  # The Rollout controller adds the rollouts-pod-template-hash of the new version.
+  selector:
+    app.kubernetes.io/name: ui-server
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: smoke
+  labels:
+    app.kubernetes.io/name: ui-server-smoke
+    app.kubernetes.io/part-of: workorders
+    app.kubernetes.io/component: analysis
+spec:
+  args:
+    - name: service
+      value: ui-server-preview
+  metrics:
+    - name: smoke
+      count: 1
+      failureLimit: 0
+      provider:
+        job:
+          metadata:
+            labels:
+              app.kubernetes.io/name: ui-server-smoke
+              app.kubernetes.io/part-of: workorders
+          spec:
+            backoffLimit: 0
+            activeDeadlineSeconds: 300
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/name: ui-server-smoke
+                  app.kubernetes.io/part-of: workorders
+                  app.kubernetes.io/component: analysis
+              spec:
+                restartPolicy: Never
+                automountServiceAccountToken: false
+                securityContext:
+                  runAsNonRoot: true
+                  # The .NET images define user `app` (1654).
+                  runAsUser: 1654
+                  seccompProfile:
+                    type: RuntimeDefault
+                containers:
+                  - name: smoke
+                    # CI toolchain image (§7.5): bash and curl are available [VERIFY].
+                    image: <acr-name>.azurecr.io/platform/ci-dotnet:<ci-image-version>
+                    command:
+                      - bash
+                      - -c
+                    # /alive only (the `self` check) plus /_version; never /_healthcheck, which
+                    # depends on the LLM (ADR-D12).
+                    args:
+                      - |
+                        set -euo pipefail
+                        base="http://{{args.service}}:8080"
+                        for attempt in $(seq 1 24); do
+                          if curl -fsS --max-time 5 "$base/alive"; then break; fi
+                          if [ "$attempt" -eq 24 ]; then echo "alive check failed"; exit 1; fi
+                          sleep 5
+                        done
+                        version_json="$(curl -fsS --max-time 5 "$base/_version")"
+                        echo "$version_json"
+                        [[ "$version_json" == *'"version"'* ]]
+                    resources:
+                      requests:
+                        cpu: 50m
+                        memory: 64Mi
+                      limits:
+                        memory: 256Mi
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      capabilities:
+                        drop:
+                          - ALL
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ui-server-smoke-ingress
+  labels:
+    app.kubernetes.io/name: ui-server-smoke
+    app.kubernetes.io/part-of: workorders
+    app.kubernetes.io/component: analysis
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ui-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ui-server-smoke
+      ports:
+        - protocol: TCP
+          port: 8080

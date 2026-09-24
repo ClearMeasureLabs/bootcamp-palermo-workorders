@@ -1,0 +1,40 @@
+# argocd/clusters/prod/apps/workorders-prod.yaml
+#
+# Named environment Application `workorders-prod` (§7.3). One of exactly three Applications that
+# carry the Octopus annotations; the Octopus step `update-argo-cd-image-tags` finds it by them
+# and commits the two newTag fields of gitops/workorders/envs/prod/kustomization.yaml (§7.6).
+# Octopus verifies "Argo CD Application is healthy"; Trigger sync is off, so the automated sync
+# below applies the commit (ADR-D4).
+#
+# No finalizer: deleting this Application leaves the workloads running.
+# Writer: H (platform owners). Contracts: §7.3, §7.6, §7.9.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: workorders-prod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    argo.octopus.com/project: workorders
+    argo.octopus.com/environment: prod
+spec:
+  project: workorders-prod
+  source:
+    repoURL: <ENV_REPO_URL>
+    targetRevision: main
+    path: gitops/workorders/envs/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: workorders-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

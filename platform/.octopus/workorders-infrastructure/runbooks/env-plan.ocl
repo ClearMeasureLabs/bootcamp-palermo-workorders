@@ -1,0 +1,103 @@
+// Runbook `env-plan` of project `workorders-infrastructure` (platform-design §7.2, ADR-D10).
+// Environments: infra-nonprod, infra-prod. Read-only: plans terraform/environment and saves the plan as an artifact.
+//
+// File layout confirmed (https://octopus.com/docs/runbooks/config-as-code-runbooks). Runbook-level environment
+// scope has no documented OCL attribute [VERIFY in an export]; action-level environments enforce it.
+//
+// Terraform step settings shared by env-plan, env-apply and env-destroy (keys from the OCL catalog:
+// https://github.com/OctopusDeploy/github-agent-plugin/blob/main/skills/writing-ocl/references/action-types.md):
+// - Template source: the project Git repository (Octopus.Action.GitRepository.Source = "Project"), directory
+//   terraform/environment, at the commit of the run (E29; https://octopus.com/docs/deployments/terraform/working-with-built-in-steps).
+// - Account: Azure.LifecycleAccount (ADR-C10: the stored principal in infra-nonprod for phases 1-2, OIDC otherwise).
+//   Environment variables the account integration sets for the azurerm backend and providers (ARM_* for a
+//   client secret; OIDC token variables for OIDC accounts) are [VERIFY] for OIDC.
+// - Backend: partial azurerm backend completed from library variable set `WorkOrders Infrastructure` through
+//   -backend-config; use_azuread_auth because the state account disables shared keys (§7.10).
+//   Assumes terraform/environment declares `backend "azurerm" {}` (sre-security package).
+// - Variable substitution in *.tf files is off (E29): the template is used as committed.
+// - [CONTRACT GAP] Input variables of terraform/environment have no §7 names:
+//   * VarFiles expects a committed terraform/environment/<class>.tfvars; §6.1 stages only <class>.tfvars.example.
+//   * The worker registration token (ADR-D14) reaches Terraform through EnvVariables under a TF_VAR_ name that
+//     terraform/environment must define; the placeholder <worker-registration-token-variable> marks it.
+// - Container octopusdeploy/worker-tools:<worker-tools-version> on the dynamic pool Hosted Ubuntu (§7.2).
+//   [CONTRACT GAP] §7.2 names no Docker feed and the platform space has only built-in feeds;
+//   <docker-hub-feed> marks the feed slug to be decided.
+// - Plans cannot be saved and applied later ("The plan steps do not support saving the plan to a file",
+//   https://octopus.com/docs/deployments/terraform/plan-terraform); the plan text is kept as an artifact.
+
+name = "env-plan"
+description = "Plans terraform/environment for the class of the selected environment and attaches the plan as an artifact."
+default_guided_failure_mode = "EnvironmentDefault"
+multi_tenancy_mode = "Untenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    type = "Default"
+}
+
+process {
+    step "plan-environment" {
+        name = "Plan environment"
+
+        action {
+            action_type = "Octopus.TerraformPlan"
+            is_required = true
+            worker_pool = "hosted-ubuntu"
+            environments = ["infra-nonprod", "infra-prod"]
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Azure.LifecycleAccount"
+                Octopus.Action.GitRepository.Source = "Project"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AdditionalActionParams = "-lock-timeout=300s"
+                Octopus.Action.Terraform.AdditionalInitParams = "-backend-config=resource_group_name=#{Terraform.StateResourceGroup} -backend-config=storage_account_name=#{Terraform.StateStorageAccount} -backend-config=container_name=#{Terraform.StateContainer} -backend-config=key=#{Terraform.StateKey} -backend-config=use_azuread_auth=true"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_<worker-registration-token-variable>\":\"#{if Octopus.WorkerRegistrationToken}#{Octopus.WorkerRegistrationToken}#{/if}\"}"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.PlanJsonOutput = "False"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "False"
+                Octopus.Action.Terraform.TemplateDirectory = "terraform/environment"
+                Octopus.Action.Terraform.VarFiles = "#{Environment.Class}.tfvars"
+                OctopusUseBundledTooling = "False"
+            }
+
+            container {
+                feed = "<docker-hub-feed>"
+                image = "octopusdeploy/worker-tools:<worker-tools-version>"
+            }
+        }
+    }
+
+    // Keeps the plan text as an artifact and enforces the layer boundary: the environment layer creates no
+    // role assignments, locks or resource groups (ADR-D10, §5.4).
+    step "save-and-check-plan" {
+        name = "Save and check plan"
+
+        action {
+            action_type = "Octopus.Script"
+            is_required = true
+            worker_pool = "hosted-ubuntu"
+            environments = ["infra-nonprod", "infra-prod"]
+            properties = {
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    plan_file="terraform-plan-#{Environment.Class}.txt"
+                    get_octopusvariable "Octopus.Action[Plan environment].Output.TerraformPlanOutput" > "$plan_file"
+                    [ -s "$plan_file" ] || fail_step "Plan environment produced no plan output."
+                    new_octopusartifact "$(pwd)/$plan_file" "$plan_file"
+                    # Resource change headers look like "  # azurerm_x.name will be created"; data sources are excluded.
+                    if grep -E -q '^[[:space:]]*# (module\.[^[:space:]]+\.)?azurerm_(role_assignment|management_lock|resource_group)\.' "$plan_file"; then
+                        fail_step "The plan touches role assignments, locks or resource groups; those belong to terraform/foundation (ADR-D10)."
+                    fi
+                    echo "Plan saved as artifact $plan_file; layer boundary holds."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+            }
+        }
+    }
+}

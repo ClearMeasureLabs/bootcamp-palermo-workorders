@@ -1,0 +1,21 @@
+# policies/kyverno/base
+#
+# Kyverno admission policies for the workorders platform (ADR-D11, ADR-D12). Rendered per
+# cluster by overlays/nonprod (Audit) and overlays/prod (Enforce) and delivered by the Argo CD
+# Application `kyverno-policies` (argocd/clusters/<cluster>/addons/kyverno.yaml).
+#
+# The base defaults to enforcement (Deny, fail closed), so a new overlay that forgets to choose a
+# mode enforces rather than silently audits.
+#
+# Owner: security owners (CODEOWNERS policies/**). Written by the sre-security package (§11.4).
+# Engine: Kyverno 1.19 (chart kyverno 3.9.x), policies.kyverno.io/v1.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - verify-release-signatures.yaml
+  - workload-baseline.yaml
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: workorders-platform
+      app.kubernetes.io/component: admission-policy
+    includeSelectors: false

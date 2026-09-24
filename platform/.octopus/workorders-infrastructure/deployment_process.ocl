@@ -1,0 +1,4 @@
+// Project `workorders-infrastructure`: the deployment process is intentionally empty (platform-design §7.2, §11.3).
+// All work runs as config-as-code runbooks in runbooks/:
+//   env-plan, env-apply, env-destroy (infra-nonprod only), rotate-sql-passwords, provisioner-credential-check.
+// Top-level entries of this file would be `step` blocks; there are none, so no release can deploy anything.

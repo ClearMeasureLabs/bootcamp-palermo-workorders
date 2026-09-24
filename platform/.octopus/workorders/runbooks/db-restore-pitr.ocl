@@ -1,0 +1,152 @@
+// Runbook `db-restore-pitr` of project `workorders` (platform-design §7.2). Environments: uat, prod.
+// Flow: prompted RestorePointInTime -> restore to a new database -> manual intervention -> swap names ->
+// reset connection pools through #{App.InternalUrl}/_diagnostics/reset-db-connections.
+// Human procedure: docs/runbooks/database-restore-pitr.md (sre-security package).
+//
+// File layout confirmed (https://octopus.com/docs/runbooks/config-as-code-runbooks). Runbook-level environment
+// scope has no documented OCL attribute [VERIFY in an export]; action-level environments enforce it.
+// Identity: azure-oidc-deploy-<env>. §5.2 grants SQL DB Contributor to the prod identity only; uat runs fail
+// until id-octopus-deploy-uat has it [CONTRACT GAP].
+// Four eyes: SRE On-call runs the runbook (Runbook consumer); Release Managers or Platform Engineers approve the swap.
+// Terraform (terraform/environment) addresses the database by name, so the swapped-in database keeps the same
+// resource ID; drift in restore-only properties is [VERIFY] in the environment layer.
+
+name = "db-restore-pitr"
+description = "Point-in-time restore into a new database, approval, name swap, then connection-pool reset."
+default_guided_failure_mode = "EnvironmentDefault"
+multi_tenancy_mode = "Untenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    type = "Default"
+}
+
+process {
+    step "restore-to-new-database" {
+        name = "Restore to a new database"
+
+        action {
+            action_type = "Octopus.AzurePowerShell"
+            is_required = true
+            worker_pool_variable = "WorkerPool"
+            environments = ["uat", "prod"]
+            properties = {
+                Octopus.Action.Azure.AccountId = "#{Azure.DeployAccount}"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    if [ "#{Octopus.Environment.Name}" = "prod" ] && [ "#{Octopus.RunbookRun.Git.Ref}" != "refs/heads/main" ]; then
+                        fail_step "Prod runs only from refs/heads/main (this run: '#{Octopus.RunbookRun.Git.Ref}')."
+                    fi
+                    point="#{RestorePointInTime}"
+                    case "$point" in
+                        [0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z) ;;
+                        *) fail_step "RestorePointInTime must be UTC ISO 8601 such as 2026-09-24T13:45:00Z (got '$point')." ;;
+                    esac
+                    target_epoch="$(date -u -d "$point" +%s)" || fail_step "RestorePointInTime '$point' is not a valid time."
+                    [ "$target_epoch" -lt "$(date -u +%s)" ] || fail_step "RestorePointInTime '$point' is in the future."
+                    rg="#{Azure.ResourceGroup}"
+                    server="#{Sql.ServerName}"
+                    source_db="#{Sql.Database}"
+                    restored="$source_db-pitr-$(date -u -d "$point" +%Y%m%d%H%M)"
+                    echo "Restoring $source_db at $point into $restored on $server"
+                    az sql db restore --resource-group "$rg" --server "$server" --name "$source_db" --dest-name "$restored" --time "$point" --output none
+                    set_octopusvariable "RestoredDatabase" "$restored"
+                    write_highlight "Restored $source_db at $point into $restored. Verify it before approving the swap."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+                OctopusUseBundledTooling = "False"
+            }
+        }
+    }
+
+    step "approve-swap" {
+        name = "Approve database swap"
+
+        action {
+            action_type = "Octopus.Manual"
+            is_required = true
+            environments = ["uat", "prod"]
+            properties = {
+                Octopus.Action.Manual.BlockConcurrentDeployments = "True"
+                Octopus.Action.Manual.Instructions = <<-EOT
+                    ## Approve the database swap in #{Octopus.Environment.Name}
+                    Restored copy: `#{Octopus.Action[Restore to a new database].Output.RestoredDatabase}` on `#{Sql.ServerName}`.
+                    Before proceeding:
+                    1. Query the restored copy and confirm the data at the requested time (#{RestorePointInTime}).
+                    2. Announce the write outage: the swap renames `#{Sql.Database}` to `#{Sql.Database}-replaced-<UTC timestamp>`
+                       and the restored copy to `#{Sql.Database}`.
+                    3. Hold deployments of this project to #{Octopus.Environment.Name} until the runbook finishes.
+                    
+                    Abort leaves the live database untouched; delete the restored copy afterwards.
+                    EOT
+                Octopus.Action.Manual.ResponsibleTeamIds = "release-managers,platform-engineers"
+                Octopus.Action.RunOnServer = "false"
+            }
+        }
+    }
+
+    step "swap-database-names" {
+        name = "Swap database names"
+
+        action {
+            action_type = "Octopus.AzurePowerShell"
+            is_required = true
+            worker_pool_variable = "WorkerPool"
+            environments = ["uat", "prod"]
+            properties = {
+                Octopus.Action.Azure.AccountId = "#{Azure.DeployAccount}"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    rg="#{Azure.ResourceGroup}"
+                    server="#{Sql.ServerName}"
+                    live_db="#{Sql.Database}"
+                    restored="$(get_octopusvariable "Octopus.Action[Restore to a new database].Output.RestoredDatabase")"
+                    [ -n "$restored" ] || fail_step "No restored database was recorded by the previous step."
+                    replaced="$live_db-replaced-$(date -u +%Y%m%d%H%M)"
+                    az sql db rename --resource-group "$rg" --server "$server" --name "$live_db" --new-name "$replaced" --output none
+                    if ! az sql db rename --resource-group "$rg" --server "$server" --name "$restored" --new-name "$live_db" --output none; then
+                        # Put the original back so the application keeps its database.
+                        az sql db rename --resource-group "$rg" --server "$server" --name "$replaced" --new-name "$live_db" --output none
+                        fail_step "Renaming $restored to $live_db failed; $replaced was renamed back to $live_db."
+                    fi
+                    set_octopusvariable "ReplacedDatabase" "$replaced"
+                    write_highlight "Swapped: $restored is now $live_db; the previous database is $replaced."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+                OctopusUseBundledTooling = "False"
+            }
+        }
+    }
+
+    // In-cluster call: the Gateway redirects /_diagnostics/* in uat and prod (ADR-D12), and the NetworkPolicy
+    // admits octopus-worker-<env> to ui-server:8080. The Service reaches one pod per request, so with more than
+    // one ui-server replica not every pool is reset [VERIFY]; the worker cannot list pods outside its namespace.
+    // The Worker deployment (NServiceBus) has no HTTP endpoint (F5) and reconnects on its own.
+    step "reset-connection-pools" {
+        name = "Reset connection pools"
+
+        action {
+            action_type = "Octopus.Script"
+            is_required = true
+            worker_pool_variable = "WorkerPool"
+            environments = ["uat", "prod"]
+            properties = {
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    url="#{App.InternalUrl}/_diagnostics/reset-db-connections"
+                    curl --fail --silent --show-error --max-time 30 --retry 5 --retry-delay 5 --retry-all-errors \
+                        --request POST --output /dev/null "$url"
+                    write_highlight "Connection pools reset through $url."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+            }
+        }
+    }
+}

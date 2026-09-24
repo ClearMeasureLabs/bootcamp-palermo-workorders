@@ -1,0 +1,60 @@
+// Runbook `db-backup` of project `workorders` (platform-design §7.2). Environments: uat, prod.
+//
+// File layout: one combined file per runbook (metadata plus process) under runbooks/, basename = slug.
+// Confirmed by https://octopus.com/docs/runbooks/config-as-code-runbooks and
+// https://github.com/OctopusDeploy/github-agent-plugin/blob/main/skills/writing-ocl/references/runbooks.md
+// Runbook-level environment scope (the API's EnvironmentScope) has no documented OCL attribute [VERIFY in an
+// export]; scope is enforced by the action-level environments list below.
+//
+// Identity: azure-oidc-deploy-<env> through Azure.DeployAccount. §5.2 grants SQL DB Contributor only to
+// id-octopus-deploy-prod, so a uat run fails until id-octopus-deploy-uat receives the same grant [CONTRACT GAP].
+// Prod runs must come from refs/heads/main: runbook producers can run any branch, and the script is inline.
+
+name = "db-backup"
+description = "Copies the environment database to <database>-bak-<UTC timestamp>, tagged expires-on = now + 14 days."
+default_guided_failure_mode = "EnvironmentDefault"
+multi_tenancy_mode = "Untenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    type = "Default"
+}
+
+process {
+    step "copy-database" {
+        name = "Copy database"
+
+        action {
+            action_type = "Octopus.AzurePowerShell"
+            is_required = true
+            worker_pool_variable = "WorkerPool"
+            environments = ["uat", "prod"]
+            properties = {
+                Octopus.Action.Azure.AccountId = "#{Azure.DeployAccount}"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    if [ "#{Octopus.Environment.Name}" = "prod" ] && [ "#{Octopus.RunbookRun.Git.Ref}" != "refs/heads/main" ]; then
+                        fail_step "Prod runs only from refs/heads/main (this run: '#{Octopus.RunbookRun.Git.Ref}')."
+                    fi
+                    rg="#{Azure.ResourceGroup}"
+                    server="#{Sql.ServerName}"
+                    source_db="#{Sql.Database}"
+                    copy_name="$source_db-bak-$(date -u +%Y%m%d%H%M)"
+                    expires_on="$(date -u -d '+14 days' +%Y-%m-%d)"
+                    echo "Copying $source_db to $copy_name on $server"
+                    az sql db copy --resource-group "$rg" --server "$server" --name "$source_db" --dest-name "$copy_name" --output none
+                    # az sql db copy has no tags argument; tag through the generic update [VERIFY hyphenated tag key with --set].
+                    az sql db update --resource-group "$rg" --server "$server" --name "$copy_name" --set "tags.expires-on=$expires_on" --output none
+                    set_octopusvariable "BackupDatabase" "$copy_name"
+                    write_highlight "Backup copy $copy_name created on $server (tag expires-on=$expires_on)."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+                OctopusUseBundledTooling = "False"
+            }
+        }
+    }
+}

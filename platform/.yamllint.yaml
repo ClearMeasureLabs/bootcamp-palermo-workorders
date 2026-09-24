@@ -1,0 +1,69 @@
+# yamllint configuration for the environment repo.
+# Used by `scripts/checks/validate-all.sh yaml` and by `platform-env/env-checks`.
+# Compatible with Kubernetes manifests, Kustomize files, Argo CD Applications
+# and Helm values, Kyverno policies and Codefresh pipeline YAML and specs.
+extends: default
+
+yaml-files:
+  - "*.yaml"
+  - "*.yml"
+  - ".yamllint"
+
+ignore: |
+  .git/
+  .terraform/
+  node_modules/
+
+rules:
+  # Kubernetes and Codefresh YAML routinely carry long image references,
+  # URLs, regexes and inline scripts.
+  line-length:
+    max: 200
+    level: warning
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
+  # `---` is optional: single-document files omit it, multi-document files use it.
+  document-start: disable
+  document-end: disable
+
+  # Both `key:\n  - item` and `key:\n- item` appear in generated and hand-written YAML.
+  indentation:
+    spaces: consistent
+    indent-sequences: whatever
+    check-multi-line-strings: false
+
+  # Inline comments such as `newTag: "0.0.0-bootstrap"  # written by Octopus only`.
+  comments:
+    require-starting-space: true
+    min-spaces-from-content: 1
+  comments-indentation: disable
+
+  # Codefresh `${{VAR}}` expressions and Argo CD `{{.number}}` templates are quoted
+  # scalars; flow collections such as `[preview]` stay allowed.
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # Kubernetes needs quoted "true"/"false" in labels and annotations; keys such as
+  # `on` in third-party YAML are not flagged.
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
+    level: warning
+
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 1
+
+  # Duplicate keys silently drop Kubernetes fields: always an error.
+  key-duplicates: enable
+  new-line-at-end-of-file: enable
+  trailing-spaces: enable
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: false

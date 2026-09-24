@@ -1,0 +1,60 @@
+# argocd/optional/argo-rollouts.yaml
+#
+# Phase-6 add-on (ADR-C3): Argo Rollouts app 1.10.0. Staged outside argocd/clusters/, so
+# `platform-root` does not sync it. Enable per cluster by pull request that copies this file to
+# argocd/clusters/{cluster}/addons/argo-rollouts.yaml, after the entry criteria in ADR-C3
+# (at least two ui-server replicas; WI-09 done). Only then may an overlay reference
+# gitops/workorders/components/bluegreen.
+#
+# Namespace `argo-rollouts` is created by Argo CD (§7.4); `platform-addons` already lists it as a
+# destination. Argo CD ships Rollout health checks and the abort action the prod `oncall` role
+# uses (argocd/clusters/prod/projects.yaml).
+#
+# Writer: H (platform owners). Contracts: §7.3, §7.4, ADR-C3.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-rollouts
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: platform-addons
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-rollouts
+    # argo-helm chart 2.43.2 carries appVersion v1.10.0 (checked 2026-09-24).
+    targetRevision: <argo-rollouts-chart-version>
+    helm:
+      releaseName: argo-rollouts
+      valuesObject:
+        installCRDs: true
+        # Removing the add-on must not delete the Rollout CRDs and with them every Rollout.
+        keepCRDs: true
+        controller:
+          replicas: 2
+        # No dashboard: the Argo CD UI shows Rollouts, and nothing else is exposed.
+        dashboard:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argo-rollouts
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    managedNamespaceMetadata:
+      labels:
+        tier: platform
+        pod-security.kubernetes.io/enforce: baseline
+        pod-security.kubernetes.io/warn: restricted
+    syncOptions:
+      - CreateNamespace=true
+      # The Rollout CRDs exceed the client-side apply annotation limit.
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

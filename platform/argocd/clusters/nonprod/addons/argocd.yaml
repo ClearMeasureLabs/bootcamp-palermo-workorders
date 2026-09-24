@@ -1,0 +1,48 @@
+# argocd/clusters/nonprod/addons/argocd.yaml
+#
+# Argo CD manages itself (ADR-D3). Same chart, release name (`argocd`) and namespace as the
+# Terraform bootstrap, and the same values file, read from the environment repo through a `ref`
+# source. After bootstrap, a pull request to argocd/bootstrap/values-nonprod.yaml or to the chart
+# pin below is the only way to change the instance.
+#
+# No finalizer: deleting this Application must never delete Argo CD.
+# Writer: H (platform owners). Contracts: §7.3 (add-on Applications), ADR-D3.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: platform-addons
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      # Chart 10.9.2 carries appVersion v3.5.3 (argo-helm, checked 2026-09-24). Must equal the
+      # version bootstrap.tf installs; 3.6.x waits for GA (ADR-D3).
+      targetRevision: <argo-cd-chart-version>
+      helm:
+        releaseName: argocd
+        valueFiles:
+          - $values/argocd/bootstrap/values-nonprod.yaml
+    - repoURL: <ENV_REPO_URL>
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - PruneLast=true
+      # The Argo CD CRDs are too large for client-side apply annotations.
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

@@ -1,0 +1,532 @@
+// Project `workorders`: deployment process. The twelve steps of platform-design §7.2, in order.
+// Flows (§3.2): TDD 4,6,7,8,9,10,12 | UAT 4,6,7,8,9,11 | Prod 2,3,4,5,6,7,8,9 | channel Hotfix adds 1.
+//
+// Authoring rules: https://github.com/OctopusDeploy/github-agent-plugin/tree/main/skills/writing-ocl
+// (action types, property keys, slugs, heredocs). Comments are authoring notes only; the serializer drops
+// them when a process is saved from the UI (O-branch edits, §6.1), so §7.2 stays the design record.
+//
+// Conventions
+// - `#{WorkerPool}` in §7.2 is written as worker_pool_variable = "WorkerPool" (variables.ocl: k8s-<env>).
+// - Output variables are addressed by step NAME, as documented at
+//   https://octopus.com/docs/projects/variables/output-variables (`Octopus.Action[StepName].Output.X`).
+//   §7.2 writes the slug form `Octopus.Action[prod-go-no-go]...`; sod-guard reads the name, then the slug.
+// - Team slugs derive from the §7.2 team names: release-managers, prod-approvers, uat-approvers.
+// - Script helpers (fail_step, write_warning, set_octopusvariable -sensitive, get_octopusvariable,
+//   New-OctopusArtifact, Fail-Step) are documented under https://octopus.com/docs/deployments/custom-scripts.
+// - Scripts avoid dollar-brace and percent-brace sequences (OCL template syntax) and use hash-brace only for
+//   Octopus variables.
+// - Octopus.Action.AutoRetry.* keys come from the live export app:.octopus/deployment_process.ocl; they are
+//   not in the OCL catalog. Whether MaximumCount counts retries or attempts is [VERIFY]; "1" = one retry.
+//   Retries and a 15 s default backoff: https://octopus.com/docs/projects/steps/conditions
+// - The step execution-timeout key is not in the OCL catalog, so timeouts are enforced inside the scripts
+//   with coreutils `timeout` (Migration.TimeoutSeconds; 30 min for acceptance).
+// - Every gate is is_required = true so it cannot be skipped when a deployment is created.
+// - No Kubernetes CLI, chart or Kubernetes deploy steps: Argo CD alone applies desired state (ADR-D2).
+
+// 1. Channel Hotfix only (ADR-D13): the auditable replacement for force_skip_tdd.
+step "hotfix-justification" {
+    name = "Hotfix justification"
+
+    action {
+        action_type = "Octopus.Manual"
+        is_required = true
+        channels = ["hotfix"]
+        properties = {
+            Octopus.Action.Manual.BlockConcurrentDeployments = "False"
+            Octopus.Action.Manual.Instructions = <<-EOT
+                ## Hotfix justification (channel Hotfix, lifecycle workorders-hotfix)
+                This release skips TDD and its acceptance suite. Record in **Notes**:
+                1. The incident or defect reference and the business impact.
+                2. Why the Default channel (TDD, then UAT) is too slow for this fix.
+                3. The rollback plan: redeploy the previous release of this environment.
+                
+                Confirm the release number reads `<package-version>-hotfix.<n>` and that the selected
+                ui-server and worker versions are master builds already verified in TDD or UAT.
+                EOT
+            Octopus.Action.Manual.ResponsibleTeamIds = "release-managers"
+            Octopus.Action.RunOnServer = "false"
+        }
+    }
+}
+
+// 2. Prod approval (ADR-D13). The approver must not be the deployment creator (step 3).
+step "prod-go-no-go" {
+    name = "Prod go/no-go"
+
+    action {
+        action_type = "Octopus.Manual"
+        is_required = true
+        environments = ["prod"]
+        properties = {
+            Octopus.Action.Manual.BlockConcurrentDeployments = "False"
+            Octopus.Action.Manual.Instructions = <<-EOT
+                ## Prod go/no-go for release #{Octopus.Release.Number}
+                Proceed only when all of these hold:
+                - UAT sign-off exists for this release (or the Hotfix justification is recorded).
+                - The release notes and linked commits match the change announced to users.
+                - No deployment freeze override is pending without a recorded reason.
+                - Migrations in this release follow expand/contract (rollback redeploys older images).
+                
+                The separation-of-duties guard fails the deployment when the approver also created it.
+                The next steps copy the prod database, migrate it, then commit the image tags.
+                EOT
+            Octopus.Action.Manual.ResponsibleTeamIds = "prod-approvers"
+            Octopus.Action.RunOnServer = "false"
+        }
+    }
+}
+
+// 3. Separation of duties (ADR-D13). Replaced by Octopus Approvals at GA (R20).
+step "sod-guard" {
+    name = "Separation-of-duties guard"
+
+    action {
+        action_type = "Octopus.Script"
+        is_required = true
+        worker_pool_variable = "WorkerPool"
+        environments = ["prod"]
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                set -eu
+                # Documented form: Octopus.Action[<step name>].Output.Manual.ResponsibleUser.Id
+                approver="$(get_octopusvariable "Octopus.Action[Prod go/no-go].Output.Manual.ResponsibleUser.Id")"
+                if [ -z "$approver" ]; then
+                    # §7.2 form (slug index) [VERIFY whether Octopus also indexes output variables by slug]
+                    approver="$(get_octopusvariable "Octopus.Action[prod-go-no-go].Output.Manual.ResponsibleUser.Id")"
+                fi
+                creator="$(get_octopusvariable "Octopus.Deployment.CreatedBy.Id")"
+                if [ -z "$approver" ] || [ -z "$creator" ]; then
+                    fail_step "Separation-of-duties guard cannot read the approver or the creator; failing closed."
+                fi
+                if [ "$approver" = "$creator" ]; then
+                    fail_step "Separation of duties: $approver created this deployment and approved Prod go/no-go. Another member of Prod Approvers must approve."
+                fi
+                echo "Separation of duties holds: approver $approver, creator $creator."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+        }
+    }
+}
+
+// 4. Per-environment OIDC account (§5.2 azure-oidc-deploy-<env>); secrets from §7.8. Default worker-tools container.
+step "read-deployment-secrets" {
+    name = "Read deployment secrets"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        is_required = true
+        worker_pool_variable = "WorkerPool"
+        environments = ["tdd", "uat", "prod"]
+        properties = {
+            Octopus.Action.Azure.AccountId = "#{Azure.DeployAccount}"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                set -eu
+                vault="#{KeyVault.Name}"
+                read_secret() {
+                    az keyvault secret show --vault-name "$vault" --name "$1" --query value --output tsv
+                }
+                migrator_password="$(read_secret workorders-sql-migrator-password)"
+                [ -n "$migrator_password" ] || fail_step "Secret workorders-sql-migrator-password is empty in $vault"
+                set_octopusvariable "MigratorPassword" "$migrator_password" -sensitive
+                if [ "#{Octopus.Environment.Name}" = "tdd" ]; then
+                    # TDD only: the acceptance login and the AI key used by the suite (ADR-C11, §7.8).
+                    acceptance_password="$(read_secret workorders-sql-acceptance-password)"
+                    openai_key="$(read_secret workorders-ai-openai-apikey)"
+                    [ -n "$acceptance_password" ] || fail_step "Secret workorders-sql-acceptance-password is empty in $vault"
+                    set_octopusvariable "AcceptancePassword" "$acceptance_password" -sensitive
+                    set_octopusvariable "OpenAIKey" "$openai_key" -sensitive
+                fi
+                echo "Deployment secrets read from $vault for #{Octopus.Environment.Name}."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+            OctopusUseBundledTooling = "False"
+        }
+    }
+}
+
+// 5. Prod only. Needs SQL DB Contributor on rg-workorders-prod for azure-oidc-deploy-prod (§5.2).
+step "db-copy-pre-release" {
+    name = "Copy prod database"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        is_required = true
+        worker_pool_variable = "WorkerPool"
+        environments = ["prod"]
+        properties = {
+            Octopus.Action.Azure.AccountId = "#{Azure.DeployAccount}"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                set -eu
+                rg="#{Azure.ResourceGroup}"
+                server="#{Sql.ServerName}"
+                source_db="#{Sql.Database}"
+                release_suffix="$(printf '%s' "#{Octopus.Release.Number}" | tr '.' '-')"
+                copy_name="$source_db-pre-$release_suffix"
+                expires_on="$(date -u -d '+14 days' +%Y-%m-%d)"
+                if az sql db show --resource-group "$rg" --server "$server" --name "$copy_name" --output none 2>/dev/null; then
+                    write_warning "Copy $copy_name already exists (redeployment of this release); keeping it."
+                else
+                    echo "Copying $source_db to $copy_name"
+                    az sql db copy --resource-group "$rg" --server "$server" --name "$source_db" --dest-name "$copy_name" --output none
+                fi
+                # az sql db copy has no tags argument; tag through the generic update [VERIFY hyphenated tag key with --set].
+                az sql db update --resource-group "$rg" --server "$server" --name "$copy_name" --set "tags.expires-on=$expires_on" --output none
+                set_octopusvariable "PreReleaseCopy" "$copy_name"
+                write_highlight "Pre-release copy $copy_name (tag expires-on=$expires_on)."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+            OctopusUseBundledTooling = "False"
+        }
+    }
+}
+
+// 6. DbUp before any Git commit (ADR-C2): a failed migration ends the deployment with no pin change.
+step "migrate-database" {
+    name = "Migrate database (DbUp update)"
+
+    action {
+        action_type = "Octopus.Script"
+        is_required = true
+        worker_pool_variable = "WorkerPool"
+        environments = ["tdd", "uat", "prod"]
+        properties = {
+            Octopus.Action.AutoRetry.MaximumCount = "1"
+            Octopus.Action.AutoRetry.MinimumBackoff = "15"
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                set -eu
+                package_dir="#{Octopus.Action.Package[ChurchBulletin.Database].ExtractedPath}"
+                database_dll="$(find "$package_dir" -name ClearMeasure.Bootcamp.Database.dll -print -quit)"
+                [ -n "$database_dll" ] || fail_step "ClearMeasure.Bootcamp.Database.dll not found in $package_dir"
+                scripts_dir="$package_dir/scripts"
+                [ -d "$scripts_dir/Update" ] || fail_step "scripts/Update not found in $package_dir"
+                migrator_password="$(get_octopusvariable "Octopus.Action[Read deployment secrets].Output.MigratorPassword")"
+                [ -n "$migrator_password" ] || fail_step "MigratorPassword is empty; Read deployment secrets must run first."
+                echo "DbUp update #{Octopus.Action.Package[ChurchBulletin.Database].PackageVersion}: #{Sql.ServerFqdn}/#{Sql.Database} as #{Sql.MigratorUser}"
+                # Positional arguments: update <server> <database> <script dir> <user> <password> (F9).
+                # ADR-C2 interim: the password is a process argument inside the script pod until WI-05.
+                timeout --kill-after=30 "#{Migration.TimeoutSeconds}" \
+                    dotnet "$database_dll" update "#{Sql.ServerFqdn}" "#{Sql.Database}" "$scripts_dir" "#{Sql.MigratorUser}" "$migrator_password"
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+            OctopusUseBundledTooling = "False"
+        }
+
+        // Kubernetes workers run each step in the step's container (E27). Image pulls from ACR use the
+        // node's kubelet identity; whether `image` takes the full reference or a path relative to the
+        // feed is [VERIFY].
+        container {
+            feed = "acr-workorders"
+            image = "#{StepImage.CiDotnet}"
+        }
+
+        packages "ChurchBulletin.Database" {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "ChurchBulletin.Database"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+// 7. The only writer of environment pins (ADR-D4). Direct commit, Trigger sync off, healthy verification.
+//
+// Action type: the contract value is the placeholder <ARGO_UPDATE_IMAGE_TAGS_ACTION_TYPE> (§7.2, §11.3, Q1).
+// The official OCL catalog lists "Octopus.ArgoCDUpdateImageTags":
+//   https://github.com/OctopusDeploy/github-agent-plugin/blob/main/skills/writing-ocl/references/action-types.md
+// Replace the placeholder only after an OCL export from the platform space confirms the value.
+// The catalog lists no property keys for this type. The keys below are catalogued for the sibling Argo CD
+// types (Octopus.TriggerArgoCDSync, Octopus.VerifyArgoCDApplicationHealthy,
+// Octopus.WaitForArgoCDPullRequestsMerged) and are [VERIFY] against the export, together with the
+// commit summary and description keys (left empty: Octopus fills the description).
+//
+// What the step writes (ADR-C1, §7.6): for Kustomize sources Octopus "will only update the newTag field(s)
+// found in the Kustomize file" (https://octopus.com/docs/argo-cd/steps/update-application-image-tags),
+// i.e. images[name=<acr-name>.azurecr.io/workorders/{ui-server,worker}].newTag in
+// gitops/workorders/envs/<env>/kustomization.yaml. Whether the match includes the registry host is [VERIFY].
+// Applications are selected by the annotations argo.octopus.com/project=workorders and
+// argo.octopus.com/environment=<env> (§7.3). The Git credential is chosen by repository restriction.
+// Package references follow the documented shape for image references (NotAcquired, DockerImageReference).
+step "update-argo-cd-image-tags" {
+    name = "Update Argo CD image tags"
+
+    action {
+        action_type = "<ARGO_UPDATE_IMAGE_TAGS_ACTION_TYPE>"
+        is_required = true
+        environments = ["tdd", "uat", "prod"]
+        properties = {
+            Octopus.Action.ArgoCD.CommitMethod = "DirectCommit"
+            Octopus.Action.ArgoCD.StepVerification.Method = "ArgoCDApplicationHealthy"
+            Octopus.Action.ArgoCD.StepVerification.Timeout = "#{Argo.VerificationTimeoutSeconds}"
+            Octopus.Action.ArgoCD.Sync.Mode = "Disabled"
+            Octopus.Action.AutoRetry.MaximumCount = "1"
+            Octopus.Action.AutoRetry.MinimumBackoff = "15"
+        }
+
+        packages "ui-server" {
+            acquisition_location = "NotAcquired"
+            feed = "acr-workorders"
+            package_id = "workorders/ui-server"
+            properties = {
+                Extract = "False"
+                Purpose = "DockerImageReference"
+                SelectionMode = "immediate"
+            }
+        }
+
+        packages "worker" {
+            acquisition_location = "NotAcquired"
+            feed = "acr-workorders"
+            package_id = "workorders/worker"
+            properties = {
+                Extract = "False"
+                Purpose = "DockerImageReference"
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+// 8. /_version returns {"version": "<InformationalVersion>"} (app:src/UI/Server/ServerApplication.cs).
+step "verify-version" {
+    name = "Verify version"
+
+    action {
+        action_type = "Octopus.Script"
+        is_required = true
+        worker_pool_variable = "WorkerPool"
+        environments = ["tdd", "uat", "prod"]
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                set -eu
+                # Expected = the ui-server package version in the release. Channel Default: the release number.
+                # Channel Hotfix: the release number without "-hotfix.<n>" (§7.2, §7.6).
+                expected="$(printf '%s' "#{Octopus.Release.Number}" | sed -E 's/-hotfix\.[0-9]+$//')"
+                # Cross-step package variable [UNVERIFIED name]; used only when Octopus provides it.
+                step_version="$(get_octopusvariable "Octopus.Action[Update Argo CD image tags].Package[ui-server].PackageVersion" || true)"
+                if [ -n "$step_version" ]; then expected="$step_version"; fi
+                url="#{App.BaseUrl}/_version"
+                body="$(curl --fail --silent --show-error --max-time 15 --retry 6 --retry-delay 10 --retry-all-errors "$url")"
+                if command -v jq >/dev/null 2>&1; then
+                    actual="$(printf '%s' "$body" | jq -r '.version // empty')"
+                else
+                    actual="$(printf '%s' "$body" | sed -n -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p')"
+                fi
+                # "Starts with" at a version boundary: exact, or followed by + (build metadata) or - (suffix).
+                case "$actual" in
+                    "$expected"|"$expected"+*|"$expected"-*) echo "Version OK: $url reports $actual (expected $expected)." ;;
+                    *) fail_step "Version mismatch at $url: got '$actual', expected '$expected'." ;;
+                esac
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+        }
+    }
+}
+
+// 9. /_healthcheck is the smoke target only, never a probe (ADR-D12). The default writer returns plain text.
+step "smoke-test" {
+    name = "Smoke test"
+
+    action {
+        action_type = "Octopus.Script"
+        is_required = true
+        worker_pool_variable = "WorkerPool"
+        environments = ["tdd", "uat", "prod"]
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                set -eu
+                url="#{App.BaseUrl}/_healthcheck"
+                fail_on_degraded="#{Smoke.FailOnDegraded}"
+                deadline=$(( $(date +%s) + 150 ))
+                status=""
+                while :; do
+                    status="$(curl --silent --max-time 10 "$url" || true)"
+                    case "$status" in
+                        Healthy)
+                            echo "Smoke OK: $url is Healthy."
+                            exit 0 ;;
+                        Degraded)
+                            if [ "$fail_on_degraded" != "True" ]; then
+                                write_warning "$url is Degraded; accepted because Smoke.FailOnDegraded is $fail_on_degraded (#9016)."
+                                exit 0
+                            fi ;;
+                    esac
+                    if [ "$(date +%s)" -ge "$deadline" ]; then
+                        fail_step "Smoke test failed: $url returned '$status' for 150 s (Smoke.FailOnDegraded=$fail_on_degraded)."
+                    fi
+                    sleep 10
+                done
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+        }
+    }
+}
+
+// 10. TDD only. The suite empties every [dbo] table before seeding (F8). ADR-C11 interlocks:
+//   (1) environments = ["tdd"] here and in runbook run-acceptance-tests;
+//   (2) the script refuses unless Octopus.Environment.Name is tdd and Acceptance.AllowDestructiveReset is True
+//       (that variable exists only for tdd);
+//   (3) login workorders_acceptance and its Key Vault secret exist only for TDD;
+//   (4) TDD data is declared disposable;
+//   (5) WI-08 adds AcceptanceTests:AllowDestructiveReset inside the suite; this step already sets it.
+step "acceptance-tests" {
+    name = "Acceptance tests (TDD only)"
+
+    action {
+        action_type = "Octopus.Script"
+        is_required = true
+        worker_pool = "k8s-tdd"
+        environments = ["tdd"]
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                $ErrorActionPreference = 'Stop'
+                $environmentName = $OctopusParameters['Octopus.Environment.Name']
+                $allowReset = $OctopusParameters['Acceptance.AllowDestructiveReset']
+                if ($environmentName -ne 'tdd' -or $allowReset -ne 'True') {
+                    Fail-Step "Refusing the destructive acceptance suite: environment '$environmentName', Acceptance.AllowDestructiveReset '$allowReset'."
+                }
+                
+                $packageDir = $OctopusParameters['Octopus.Action.Package[ChurchBulletin.AcceptanceTests].ExtractedPath']
+                $testDll = Get-ChildItem -Path $packageDir -Filter 'ClearMeasure.Bootcamp.AcceptanceTests.dll' -Recurse | Select-Object -First 1
+                if (-not $testDll) { Fail-Step "ClearMeasure.Bootcamp.AcceptanceTests.dll not found in $packageDir" }
+                $runSettings = Join-Path $testDll.DirectoryName 'AcceptanceTests.runsettings'
+                $playwrightDir = Join-Path $testDll.DirectoryName '.playwright'
+                if (Test-Path $playwrightDir) { & chmod -R +x $playwrightDir }
+                
+                # Connection string for login workorders_acceptance; it starts with Server= (F4).
+                $builder = [System.Data.Common.DbConnectionStringBuilder]::new()
+                $builder['Server'] = 'tcp:' + $OctopusParameters['Sql.ServerFqdn'] + ',1433'
+                $builder['Database'] = $OctopusParameters['Sql.Database']
+                $builder['User ID'] = $OctopusParameters['Sql.AcceptanceUser']
+                $builder['Password'] = $OctopusParameters['Octopus.Action[Read deployment secrets].Output.AcceptancePassword']
+                $builder['Encrypt'] = 'True'
+                
+                # Inputs from ADR-C11; names mirror the legacy TDD run in app:.github/workflows/deploy.yml.
+                $env:ConnectionStrings__SqlConnectionString = $builder.ConnectionString
+                $env:ApplicationBaseUrl = $OctopusParameters['App.BaseUrl']
+                $env:StartLocalServer = 'false'
+                $env:AcceptanceTests__AllowDestructiveReset = 'true'
+                $env:AI_OpenAI_ApiKey = $OctopusParameters['Octopus.Action[Read deployment secrets].Output.OpenAIKey']
+                $env:AI_OpenAI_Url = $OctopusParameters['AI.OpenAIUrl']
+                $env:AI_OpenAI_Model = $OctopusParameters['AI.OpenAIModel']
+                $env:TEST_INPUT_DELAY_MS = '200'
+                
+                $results = Join-Path (Get-Location) 'acceptance-results'
+                New-Item -ItemType Directory -Path $results -Force | Out-Null
+                Write-Host "Acceptance tests against $env:ApplicationBaseUrl with $($testDll.FullName)"
+                # 30-minute ceiling (§7.2) with coreutils timeout; exit code 124 means the ceiling was hit.
+                & timeout --kill-after=60 1800 dotnet test $testDll.FullName --nologo --logger trx --results-directory $results --settings $runSettings
+                $exitCode = $LASTEXITCODE
+                
+                Get-ChildItem -Path $results -Filter '*.trx' -Recurse | ForEach-Object {
+                    New-OctopusArtifact -Path $_.FullName -Name ('acceptance-tdd-' + $_.Name)
+                }
+                if ($exitCode -eq 124) { Fail-Step 'Acceptance tests exceeded the 30-minute timeout.' }
+                if ($exitCode -ne 0) { Fail-Step "Acceptance tests failed (exit code $exitCode); TRX files are attached as artifacts." }
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+
+        // Same toolchain image as CI: SDK 10, pwsh, Playwright 1.54 browsers (§7.5, R2-CE §3 C11).
+        container {
+            feed = "acr-workorders"
+            image = "#{StepImage.CiDotnet}"
+        }
+
+        packages "ChurchBulletin.AcceptanceTests" {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "ChurchBulletin.AcceptanceTests"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+// 11. UAT sign-off after the UAT deployment is verified (ADR-D13). Completing it completes the UAT phase.
+step "uat-signoff" {
+    name = "UAT sign-off"
+
+    action {
+        action_type = "Octopus.Manual"
+        is_required = true
+        environments = ["uat"]
+        properties = {
+            Octopus.Action.Manual.BlockConcurrentDeployments = "False"
+            Octopus.Action.Manual.Instructions = <<-EOT
+                ## UAT sign-off for release #{Octopus.Release.Number}
+                Version and smoke checks passed at #{App.BaseUrl}. Sign off when:
+                - The UAT test plan for this release passed.
+                - Known defects are recorded in Notes with their disposition.
+                
+                Proceeding makes this release eligible for Prod; aborting fails the UAT deployment.
+                EOT
+            Octopus.Action.Manual.ResponsibleTeamIds = "uat-approvers"
+            Octopus.Action.RunOnServer = "false"
+        }
+    }
+}
+
+// 12. TDD only; runs after failures too. Skips itself unless GitHub.StatusEnabled is True (R16).
+step "report-commit-status" {
+    name = "Report platform/tdd status"
+    condition = "Always"
+
+    action {
+        action_type = "Octopus.Script"
+        worker_pool_variable = "WorkerPool"
+        environments = ["tdd"]
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                set -eu
+                if [ "#{GitHub.StatusEnabled}" != "True" ]; then
+                    echo "Skipped: GitHub.StatusEnabled is not True (recommendation R16 undecided)."
+                    exit 0
+                fi
+                token="$(get_octopusvariable "GitHub.StatusToken")"
+                [ -n "$token" ] || fail_step "GitHub.StatusEnabled is True but the sensitive variable GitHub.StatusToken is empty."
+                notes="$(get_octopusvariable "Octopus.Release.Notes")"
+                sha="$(printf '%s\n' "$notes" | sed -n -E 's/^app-commit:[[:space:]]*([0-9a-f]{40})[[:space:]]*$/\1/p' | head -n 1)"
+                [ -n "$sha" ] || fail_step "No 'app-commit: <40-hex sha>' line in the release notes (§7.7)."
+                if [ -n "$(get_octopusvariable "Octopus.Deployment.Error")" ]; then
+                    state="failure"; description="TDD deployment or acceptance tests failed"
+                else
+                    state="success"; description="TDD deployment and acceptance tests passed"
+                fi
+                target_url="#{Octopus.Web.ServerUri}#{Octopus.Web.DeploymentLink}"
+                payload="$(jq -n --arg state "$state" --arg url "$target_url" --arg desc "$description" \
+                    --arg ctx "#{GitHub.StatusContext}" '{state: $state, target_url: $url, description: $desc, context: $ctx}')"
+                # The token goes through curl's config on stdin, not the process arguments.
+                printf 'header = "Authorization: Bearer %s"\n' "$token" | curl --config - \
+                    --fail --silent --show-error --max-time 30 --request POST \
+                    --header "Accept: application/vnd.github+json" \
+                    --header "X-GitHub-Api-Version: 2022-11-28" \
+                    --data "$payload" --output /dev/null \
+                    "https://api.github.com/repos/#{GitHub.AppRepository}/statuses/$sha"
+                echo "Posted #{GitHub.StatusContext}=$state to #{GitHub.AppRepository}@$sha."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+        }
+    }
+}

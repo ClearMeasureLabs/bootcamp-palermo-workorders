@@ -1,0 +1,32 @@
+# gitops/workorders/components/bluegreen/kustomization.yaml
+#
+# Phase-6 option (ADR-C3): blue-green for ui-server in prod, through Argo Rollouts.
+# Staged and referenced by no overlay. Entry criteria: the Argo Rollouts add-on is enabled
+# (argocd/optional/argo-rollouts.yaml), at least two replicas, and WI-09 (realtime backplane) is
+# done. Enabling it is a pull request that adds `components: [../../../components/bluegreen]` to
+# envs/prod/config/kustomization.yaml (ADR-D6).
+#
+# The pin contract is unchanged (§7.6): the Rollout uses workloadRef, so the image tag Octopus
+# writes still lands on the Deployment's pod template, and the Rollout runs that template.
+# The Worker is never a Rollout (competing consumer).
+#
+# Writer: H (platform owners). Contracts: §7.3, §7.6, ADR-C3.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - rollout.yaml
+patches:
+  # The Deployment keeps the pod template but runs no pods. Sync wave 1: Argo CD scales it down
+  # only after the Rollout (wave 0) is healthy, so the switch has no gap. Git stays the only
+  # writer of the Deployment's replicas (workloadRef.scaleDown: never).
+  - target:
+      group: apps
+      kind: Deployment
+      name: ui-server
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0
+      - op: replace
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "1"

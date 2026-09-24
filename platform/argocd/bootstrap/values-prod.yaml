@@ -1,0 +1,121 @@
+# argocd/bootstrap/values-prod.yaml
+#
+# Values for the argo/argo-cd Helm chart, instance `argocd-prod` on aks-workorders-prod.
+# App version 3.5.3 (ADR-D3, E13). Chart pin: <argo-cd-chart-version>; argo-helm chart 10.9.2
+# carries appVersion v3.5.3 (checked 2026-09-24).
+#
+# Two consumers, one file:
+#   1. terraform/environment/bootstrap.tf installs the chart once as helm_release "argocd"
+#      (repository https://argoproj.github.io/argo-helm, chart argo-cd, namespace argocd) and
+#      ignores changes afterwards (§7.10).
+#   2. argocd/clusters/prod/addons/argocd.yaml then manages the same release name and
+#      namespace with this file, so Argo CD manages itself. Change the instance only by pull
+#      request to this file; never with `helm upgrade` or kubectl.
+#
+# Differences from values-nonprod.yaml: host name, installationID, no developer access,
+# two replicas of the stateless components. An Argo CD outage pauses change only; running
+# workloads are unaffected, so the controller and Redis stay single-instance.
+#
+# Contracts: §7.3 (configuration, RBAC), §7.8 (repository credential via ESO), ADR-D3, ADR-D5.
+# Writer: H (platform owners; CODEOWNERS on argocd/**).
+
+global:
+  # Private host name for the UI and API. The server is never exposed publicly (Q5). [VERIFY]
+  domain: <argocd-prod-host>
+
+crds:
+  install: true
+  # Deleting the release must never delete Application or AppProject objects.
+  keep: true
+
+configs:
+  cm:
+    # Must match the redirect URI registered on <argocd-sso-app>: https://<argocd-prod-host>/auth/callback
+    url: https://<argocd-prod-host>
+    application.resourceTrackingMethod: annotation
+    installationID: argocd-prod
+    timeout.reconciliation: 120s
+    # Local admin is off; see values-nonprod.yaml and docs/runbooks/break-glass.md.
+    admin.enabled: false
+    accounts.octopus: apiKey
+    accounts.octopus.enabled: "true"
+    exec.enabled: false
+    # Sync impersonation (beta since 3.5.0) is decided in the phase-4 hardening (§5.1 TB8).
+    application.sync.impersonation.enabled: false
+    # Entra ID SSO with workload identity federation (Q15 default; no client secret).
+    # [VERIFY] <argocd-sso-app> needs a federated credential for
+    # system:serviceaccount:argocd:argocd-server with the prod cluster's OIDC issuer.
+    oidc.config: |
+      name: Entra ID
+      issuer: https://login.microsoftonline.com/<AZURE_TENANT_ID>/v2.0
+      # Application (client) ID of the <argocd-sso-app> registration.
+      clientID: <argocd-sso-app>
+      azure:
+        useWorkloadIdentity: true
+      requestedIDTokenClaims:
+        groups:
+          essential: true
+          value: "ApplicationGroup"
+      requestedScopes:
+        - openid
+        - profile
+        - email
+
+  rbac:
+    policy.default: ""
+    policy.matchMode: glob
+    scopes: "[groups, email]"
+    policy.csv: |
+      # Account `octopus` (Octopus Argo CD gateway) is read-only (§7.3, E7).
+      p, octopus, applications, get, workorders-*/*, allow
+      p, octopus, logs, get, workorders-*/*, allow
+      p, octopus, clusters, get, *, allow
+      # People, by Entra group object ID: the groups behind the Octopus teams Platform Engineers
+      # and SRE On-call (§7.2). Project role `oncall` (projects.yaml) adds Rollout abort.
+      # Developers have no prod access; Octopus is their view of prod (R1-P §2).
+      g, <entra-group-object-id-platform-engineers>, role:admin
+      g, <entra-group-object-id-sre-on-call>, role:readonly
+
+  # Octopus gateway chart (OCI on Docker Hub). Public; no credentials.
+  # The environment-repo credential comes from ESO (argocd/clusters/prod/platform-secrets.yaml).
+  repositories:
+    octopusdeploy-oci:
+      type: helm
+      name: octopusdeploy
+      url: registry-1.docker.io/octopusdeploy
+      enableOCI: "true"
+
+  secret:
+    createSecret: true
+
+dex:
+  enabled: false
+
+server:
+  replicas: 2
+  pdb:
+    enabled: true
+    minAvailable: 1
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+  serviceAccount:
+    annotations:
+      azure.workload.identity/client-id: <argocd-sso-app>
+  podLabels:
+    azure.workload.identity/use: "true"
+
+repoServer:
+  replicas: 2
+  pdb:
+    enabled: true
+    minAvailable: 1
+
+# Prod runs no ApplicationSet: previews are nonprod only (ADR-C4). The chart always installs the
+# ApplicationSet controller (no enable flag in argo-cd 10.x), so it runs with zero replicas.
+applicationSet:
+  replicas: 0
+
+notifications:
+  enabled: false

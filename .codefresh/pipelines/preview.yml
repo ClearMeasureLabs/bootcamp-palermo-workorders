@@ -1,0 +1,136 @@
+# workorders/preview (phase 6): pull request preview images (ADR-C4, contract §7.5, §7.7).
+#
+# Builds <acr-name>.azurecr.io/workorders-previews/{ui-server,worker} tagged
+# pr-<number>-<40-hex head sha>, pushes them with registry integration
+# acr-workorders-preview and signs them keyless. The Argo CD pull request
+# generator (gitops package) deploys them; this pipeline never deploys and never
+# talks to Octopus.
+#
+# Guard: the build exits early, successfully, unless the pull request
+#   - carries the `preview` label, and
+#   - comes from a branch of this repository (the spec also sets
+#     pullRequestAllowForkEvents: false, so fork events never trigger it).
+# No contexts are attached, and the runtime is <cf-runtime-ci> (no cloud identity).
+# No tests run here: workorders/ci already gates the same branch push.
+version: "1.0"
+mode: parallel
+fail_fast: false
+
+stages:
+  - clone
+  - guard
+  - build
+  - images
+
+steps:
+  main_clone:
+    title: Clone the pull request head
+    type: git-clone
+    stage: clone
+    repo: "${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}"
+    revision: "${{CF_REVISION}}"
+    git: "<cf-git-integration-app>"
+
+  guard:
+    title: Label and same-repository guard
+    stage: guard
+    image: &ci_dotnet "<acr-name>.azurecr.io/platform/ci-dotnet:<ci-image-version>"
+    registry_context: acr-platform-ci
+    shell: bash
+    fail_fast: false
+    strict_fail_fast: true
+    when:
+      steps:
+        - name: main_clone
+          on:
+            - success
+    commands:
+      # CF_PULL_REQUEST_LABELS: a JSON array or a comma-separated list [VERIFY format];
+      # both are accepted, and only an exact `preview` label counts.
+      - |-
+        raw="${CF_PULL_REQUEST_LABELS:-}"
+        if printf '%s' "${raw}" | jq -e 'type == "array"' >/dev/null 2>&1; then
+          labels="$(printf '%s' "${raw}" | jq -r '.[] | if type == "object" then .name else . end')"
+        else
+          labels="$(printf '%s' "${raw}" | tr ',' '\n')"
+        fi
+        has_label=false
+        while IFS= read -r label; do
+          label="$(printf '%s' "${label}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+          if [ "${label}" = "preview" ]; then has_label=true; fi
+        done <<<"${labels}"
+      # Same repository: the head branch must exist here and point at the triggering commit.
+      - |-
+        same_repo=false
+        head_branch="${CF_PULL_REQUEST_HEAD_BRANCH:-}"
+        if [ -n "${head_branch}" ] && git fetch --no-tags --quiet origin "refs/heads/${head_branch}"; then
+          if [ "$(git rev-parse FETCH_HEAD)" = "${CF_REVISION}" ]; then same_repo=true; fi
+        fi
+      - |-
+        if [ "${has_label}" = "true" ] && [ "${same_repo}" = "true" ]; then build=true; else build=false; fi
+        echo "PR #${CF_PULL_REQUEST_NUMBER}: preview label ${has_label}, same repository ${same_repo}, build ${build}"
+        VERSION="$(bash .codefresh/scripts/version.sh)"
+        cf_export PREVIEW_BUILD="${build}" VERSION="${VERSION}" BUILD_BUILDNUMBER="${VERSION}"
+
+  build:
+    title: Compile and stage preview contexts
+    stage: build
+    image: *ci_dotnet
+    registry_context: acr-platform-ci
+    shell: bash
+    fail_fast: false
+    strict_fail_fast: true
+    when:
+      steps:
+        - name: guard
+          on:
+            - success
+      condition:
+        all:
+          previewRequested: '"${{PREVIEW_BUILD}}" == "true"'
+    environment:
+      # Compile only; no database is touched, so SQLite avoids any SQL Server dependency.
+      - DATABASE_ENGINE=SQLite
+    commands:
+      - ln -sfn "${CF_VOLUME_PATH}/.nuget/packages" /tmp/nuget-packages
+      - pwsh -NoProfile -Command '. ./build.ps1; Init; Compile'
+      # No Package-Everything for previews: built/ comes from dotnet publish of the same build.
+      - bash .codefresh/scripts/stage-built.sh --version "${VERSION}" --ui-source publish --only ui,worker --out "${CF_VOLUME_PATH}/image-contexts"
+
+  ui_image:
+    title: Build, push and sign workorders-previews/ui-server
+    type: build
+    stage: images
+    working_directory: "${{CF_VOLUME_PATH}}/image-contexts/ui"
+    dockerfile: Dockerfile
+    image_name: workorders-previews/ui-server
+    tag: &preview_tag "pr-${{CF_PULL_REQUEST_NUMBER}}-${{CF_REVISION}}"
+    registry: acr-workorders-preview
+    build_arguments: &oci_build_arguments
+      - "VERSION=${{VERSION}}"
+      - "REVISION=${{CF_REVISION}}"
+    cosign:
+      sign: true
+    fail_fast: false
+    strict_fail_fast: true
+    when: &after_build
+      steps:
+        - name: build
+          on:
+            - success
+
+  worker_image:
+    title: Build, push and sign workorders-previews/worker
+    type: build
+    stage: images
+    working_directory: "${{CF_VOLUME_PATH}}/image-contexts/worker"
+    dockerfile: Dockerfile
+    image_name: workorders-previews/worker
+    tag: *preview_tag
+    registry: acr-workorders-preview
+    build_arguments: *oci_build_arguments
+    cosign:
+      sign: true
+    fail_fast: false
+    strict_fail_fast: true
+    when: *after_build

@@ -1,0 +1,96 @@
+# workorders/ci-image: builds, pushes and signs <acr-name>.azurecr.io/platform/ci-dotnet
+# from .codefresh/images/ci-dotnet/Dockerfile (contract §7.5, §7.7).
+#
+# Triggers (spec .codefresh/specs/workorders-ci-image.yml): cron 0 6 * * 1, and a
+# push to master that modifies .codefresh/images/**. The spec pins this YAML to
+# master; the clone below also builds master, because a cron build carries no
+# Git revision. Runtime <cf-runtime-release>; registry integration acr-platform-ci;
+# no contexts.
+#
+# Tag (<ci-image-version>): <UTC date>.<UTC time>-<sha7>, for example 20260928.0600-1a2b3c4,
+# unique per build so a pinned tag never moves. Adoption is a reviewed change:
+# after `smoke` passes, the new tag replaces <ci-image-version> in the Octopus
+# variable StepImage.CiDotnet (environment repo) and in the image references of
+# .codefresh/pipelines/{ci,release,preview}.yml (app repo). This pipeline is
+# the chicken-and-egg exception: it never runs on the image it builds.
+version: "1.0"
+mode: parallel
+fail_fast: false
+
+stages:
+  - clone
+  - build
+  - verify
+
+steps:
+  main_clone:
+    title: Clone master
+    type: git-clone
+    stage: clone
+    repo: ClearMeasureLabs/bootcamp-palermo-workorders
+    revision: master
+    git: "<cf-git-integration-app>"
+
+  image_version:
+    title: Date-based tag and revision
+    stage: build
+    image: "alpine/git:<alpine-git-version>@sha256:<alpine-git-digest>"
+    fail_fast: false
+    strict_fail_fast: true
+    when:
+      steps:
+        - name: main_clone
+          on:
+            - success
+    commands:
+      - REVISION="$(git rev-parse HEAD)"
+      - VERSION="$(date -u +%Y%m%d.%H%M)-$(printf '%s' "${REVISION}" | cut -c1-7)"
+      - cf_export VERSION="${VERSION}" REVISION="${REVISION}"
+      - echo "platform/ci-dotnet tag ${VERSION} from ${REVISION}"
+
+  ci_image:
+    title: Build, push and sign platform/ci-dotnet
+    type: build
+    stage: build
+    working_directory: "${{main_clone}}/.codefresh/images/ci-dotnet"
+    dockerfile: Dockerfile
+    image_name: platform/ci-dotnet
+    tag: "${{VERSION}}"
+    registry: acr-platform-ci
+    build_arguments:
+      - "VERSION=${{VERSION}}"
+      - "REVISION=${{REVISION}}"
+    cosign:
+      sign: true
+    fail_fast: false
+    strict_fail_fast: true
+    when:
+      steps:
+        - name: image_version
+          on:
+            - success
+
+  smoke:
+    title: Smoke-test the toolchain
+    stage: verify
+    image: "${{ci_image}}"
+    fail_fast: false
+    strict_fail_fast: true
+    when:
+      steps:
+        - name: ci_image
+          on:
+            - success
+    commands:
+      - dotnet --list-sdks
+      - pwsh -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
+      - sqlcmd --version
+      - az version
+      # Playwright 1.54 Chromium and its headless shell; ls fails when a glob matches nothing.
+      - ls -d /ms-playwright/chromium-* /ms-playwright/chromium_headless_shell-*
+      - jq --version
+      - gitleaks version
+      - syft version
+      - cosign version
+      - crane version
+      - echo "Smoke passed for platform/ci-dotnet ${VERSION}; adopt it by pull request."

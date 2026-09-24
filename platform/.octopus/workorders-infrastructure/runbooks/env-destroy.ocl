@@ -1,0 +1,170 @@
+// Runbook `env-destroy` of project `workorders-infrastructure` (platform-design §7.2, ADR-D10). infra-nonprod ONLY.
+// Flow: guard -> plan the destroy (for the approver) -> check scope -> manual intervention -> "Destroy Terraform resources".
+// It removes the resources in the nonprod environment state (AKS nonprod, tdd and uat SQL and Key Vaults, ...),
+// never the resource groups: terraform/foundation owns them, and CanNotDelete locks cover prod and legacy groups.
+// There is no prod destroy runbook (ADR-D10 guardrail; checked by scripts/checks/consistency.sh).
+// Shared Terraform settings and contract gaps are documented in env-plan.ocl.
+//
+// File layout confirmed (https://octopus.com/docs/runbooks/config-as-code-runbooks). Runbook-level environment
+// scope has no documented OCL attribute [VERIFY in an export]; every action is limited to infra-nonprod and the
+// guard step refuses any other environment.
+
+name = "env-destroy"
+description = "Destroys the nonprod environment layer after approval. Never runs in infra-prod; never deletes resource groups."
+default_guided_failure_mode = "EnvironmentDefault"
+multi_tenancy_mode = "Untenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    type = "Default"
+}
+
+process {
+    step "guard-nonprod-only" {
+        name = "Guard nonprod only"
+
+        action {
+            action_type = "Octopus.Script"
+            is_required = true
+            worker_pool = "hosted-ubuntu"
+            environments = ["infra-nonprod"]
+            properties = {
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    if [ "#{Octopus.Environment.Name}" != "infra-nonprod" ] || [ "#{Environment.Class}" != "nonprod" ]; then
+                        fail_step "env-destroy runs only in infra-nonprod with Environment.Class nonprod."
+                    fi
+                    if [ "#{Octopus.RunbookRun.Git.Ref}" != "refs/heads/main" ]; then
+                        write_warning "Destroying with Terraform from '#{Octopus.RunbookRun.Git.Ref}', not refs/heads/main."
+                    fi
+                    echo "Guard passed for #{Octopus.Environment.Name}."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+            }
+        }
+    }
+
+    step "plan-destroy" {
+        name = "Plan environment destroy"
+
+        action {
+            action_type = "Octopus.TerraformPlanDestroy"
+            is_required = true
+            worker_pool = "hosted-ubuntu"
+            environments = ["infra-nonprod"]
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Azure.LifecycleAccount"
+                Octopus.Action.GitRepository.Source = "Project"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AdditionalActionParams = "-lock-timeout=300s"
+                Octopus.Action.Terraform.AdditionalInitParams = "-backend-config=resource_group_name=#{Terraform.StateResourceGroup} -backend-config=storage_account_name=#{Terraform.StateStorageAccount} -backend-config=container_name=#{Terraform.StateContainer} -backend-config=key=#{Terraform.StateKey} -backend-config=use_azuread_auth=true"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_<worker-registration-token-variable>\":\"#{if Octopus.WorkerRegistrationToken}#{Octopus.WorkerRegistrationToken}#{/if}\"}"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.PlanJsonOutput = "False"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "False"
+                Octopus.Action.Terraform.TemplateDirectory = "terraform/environment"
+                Octopus.Action.Terraform.VarFiles = "#{Environment.Class}.tfvars"
+                OctopusUseBundledTooling = "False"
+            }
+
+            container {
+                feed = "<docker-hub-feed>"
+                image = "octopusdeploy/worker-tools:<worker-tools-version>"
+            }
+        }
+    }
+
+    step "check-destroy-scope" {
+        name = "Check destroy scope"
+
+        action {
+            action_type = "Octopus.Script"
+            is_required = true
+            worker_pool = "hosted-ubuntu"
+            environments = ["infra-nonprod"]
+            properties = {
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    plan_file="terraform-destroy-plan-#{Environment.Class}.txt"
+                    get_octopusvariable "Octopus.Action[Plan environment destroy].Output.TerraformPlanOutput" > "$plan_file"
+                    [ -s "$plan_file" ] || fail_step "Plan environment destroy produced no plan output."
+                    new_octopusartifact "$(pwd)/$plan_file" "$plan_file"
+                    # Resource change headers look like "  # azurerm_x.name will be destroyed"; data sources are excluded.
+                    if grep -E -q '^[[:space:]]*# (module\.[^[:space:]]+\.)?azurerm_(resource_group|management_lock|role_assignment)\.' "$plan_file"; then
+                        fail_step "The destroy plan includes resource groups, locks or role assignments; terraform/foundation owns them (ADR-D10)."
+                    fi
+                    echo "Destroy scope holds; plan attached as $plan_file."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+            }
+        }
+    }
+
+    step "approve-destroy" {
+        name = "Approve environment destroy"
+
+        action {
+            action_type = "Octopus.Manual"
+            is_required = true
+            environments = ["infra-nonprod"]
+            properties = {
+                Octopus.Action.Manual.BlockConcurrentDeployments = "True"
+                Octopus.Action.Manual.Instructions = <<-EOT
+                    ## Approve destroying the nonprod environment layer
+                    This deletes the nonprod cluster, the tdd and uat databases and Key Vaults, and the Octopus workers
+                    k8s-tdd and k8s-uat. TDD and UAT stop serving until env-apply rebuilds them.
+                    Confirm that:
+                    - the destroy is announced and no UAT cycle is open;
+                    - UAT data that must survive has a copy outside rg-workorders-uat;
+                    - the plan below lists no resource group, lock or role assignment.
+                    
+                    ```
+                    #{Octopus.Action[Plan environment destroy].Output.TerraformPlanOutput}
+                    ```
+                    EOT
+                Octopus.Action.Manual.ResponsibleTeamIds = "platform-engineers"
+                Octopus.Action.RunOnServer = "false"
+            }
+        }
+    }
+
+    step "destroy-environment" {
+        name = "Destroy environment"
+
+        action {
+            action_type = "Octopus.TerraformDestroy"
+            is_required = true
+            worker_pool = "hosted-ubuntu"
+            environments = ["infra-nonprod"]
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Azure.LifecycleAccount"
+                Octopus.Action.GitRepository.Source = "Project"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AdditionalActionParams = "-lock-timeout=300s"
+                Octopus.Action.Terraform.AdditionalInitParams = "-backend-config=resource_group_name=#{Terraform.StateResourceGroup} -backend-config=storage_account_name=#{Terraform.StateStorageAccount} -backend-config=container_name=#{Terraform.StateContainer} -backend-config=key=#{Terraform.StateKey} -backend-config=use_azuread_auth=true"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_<worker-registration-token-variable>\":\"#{if Octopus.WorkerRegistrationToken}#{Octopus.WorkerRegistrationToken}#{/if}\"}"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "False"
+                Octopus.Action.Terraform.TemplateDirectory = "terraform/environment"
+                Octopus.Action.Terraform.VarFiles = "#{Environment.Class}.tfvars"
+                OctopusUseBundledTooling = "False"
+            }
+
+            container {
+                feed = "<docker-hub-feed>"
+                image = "octopusdeploy/worker-tools:<worker-tools-version>"
+            }
+        }
+    }
+}

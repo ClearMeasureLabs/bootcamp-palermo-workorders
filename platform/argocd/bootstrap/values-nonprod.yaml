@@ -1,0 +1,124 @@
+# argocd/bootstrap/values-nonprod.yaml
+#
+# Values for the argo/argo-cd Helm chart, instance `argocd-nonprod` on aks-workorders-nonprod.
+# App version 3.5.3 (ADR-D3, E13). Chart pin: <argo-cd-chart-version>; argo-helm chart 10.9.2
+# carries appVersion v3.5.3 (checked 2026-09-24).
+#
+# Two consumers, one file:
+#   1. terraform/environment/bootstrap.tf installs the chart once as helm_release "argocd"
+#      (repository https://argoproj.github.io/argo-helm, chart argo-cd, namespace argocd) and
+#      ignores changes afterwards (§7.10).
+#   2. argocd/clusters/nonprod/addons/argocd.yaml then manages the same release name and
+#      namespace with this file, so Argo CD manages itself. Change the instance only by pull
+#      request to this file; never with `helm upgrade` or kubectl.
+#
+# Contracts: §7.3 (configuration, RBAC), §7.8 (repository credential via ESO), ADR-D3, ADR-D5.
+# Writer: H (platform owners; CODEOWNERS on argocd/**).
+
+global:
+  # Private host name for the UI and API. The server is never exposed publicly; the private
+  # ingress or DNS choice is open (Q5). [VERIFY]
+  domain: <argocd-nonprod-host>
+
+crds:
+  install: true
+  # Deleting the release must never delete Application or AppProject objects.
+  keep: true
+
+configs:
+  cm:
+    # Must match the redirect URI registered on <argocd-sso-app>: https://<argocd-nonprod-host>/auth/callback
+    url: https://<argocd-nonprod-host>
+    # Annotation tracking is the default since Argo CD 3.0; set explicitly so no chart default
+    # can change it (§7.3).
+    application.resourceTrackingMethod: annotation
+    # Marks every managed object with this instance's ID.
+    installationID: argocd-nonprod
+    timeout.reconciliation: 120s
+    # Local admin is off. Platform owners sign in through Entra and generate the `octopus`
+    # token with `argocd account generate-token --account octopus` (docs/bootstrap.md).
+    # Break-glass re-enables admin by a reviewed change (docs/runbooks/break-glass.md).
+    admin.enabled: false
+    # Gateway account: API key only, no UI login (§7.3, §5.1 TB10).
+    accounts.octopus: apiKey
+    accounts.octopus.enabled: "true"
+    exec.enabled: false
+    # Sync impersonation is beta since 3.5.0; off until the phase-4 hardening (§5.1 TB8).
+    application.sync.impersonation.enabled: false
+    # Entra ID SSO with workload identity federation (Q15 default; no client secret).
+    # Source: https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/microsoft/
+    # [VERIFY] <argocd-sso-app> needs a federated credential for
+    # system:serviceaccount:argocd:argocd-server with this cluster's OIDC issuer; an Entra
+    # administrator adds it after each cluster build (the issuer changes on rebuild).
+    oidc.config: |
+      name: Entra ID
+      issuer: https://login.microsoftonline.com/<AZURE_TENANT_ID>/v2.0
+      # Application (client) ID of the <argocd-sso-app> registration.
+      clientID: <argocd-sso-app>
+      azure:
+        useWorkloadIdentity: true
+      requestedIDTokenClaims:
+        groups:
+          essential: true
+          value: "ApplicationGroup"
+      requestedScopes:
+        - openid
+        - profile
+        - email
+
+  rbac:
+    # Signed-in users outside the groups below get nothing.
+    policy.default: ""
+    policy.matchMode: glob
+    scopes: "[groups, email]"
+    policy.csv: |
+      # Account `octopus` (Octopus Argo CD gateway) is read-only. Trigger sync is off (ADR-D4),
+      # so `applications, sync` is not granted (E7).
+      p, octopus, applications, get, workorders-*/*, allow
+      p, octopus, logs, get, workorders-*/*, allow
+      p, octopus, clusters, get, *, allow
+      # People, by Entra group object ID: the groups behind the Octopus teams Platform Engineers,
+      # SRE On-call and Developers (§7.2). Project roles in projects.yaml add on-call rights.
+      g, <entra-group-object-id-platform-engineers>, role:admin
+      g, <entra-group-object-id-sre-on-call>, role:readonly
+      g, <entra-group-object-id-developers>, role:readonly
+
+  # Helm repository for the Octopus gateway chart, an OCI artifact on Docker Hub
+  # (https://octopus.com/docs/argo-cd/instances/terraform-bootstrap). Public; no credentials.
+  # The environment-repo credential is NOT defined here: ESO writes Secret argocd-repo-creds
+  # (argocd/clusters/nonprod/platform-secrets.yaml); bootstrap.tf seeds it once (§5.2).
+  repositories:
+    octopusdeploy-oci:
+      type: helm
+      name: octopusdeploy
+      url: registry-1.docker.io/octopusdeploy
+      enableOCI: "true"
+
+  secret:
+    # argocd-secret holds only the server signing key, which Argo CD generates. No values here.
+    createSecret: true
+
+# Direct OIDC to Entra; Dex is not needed.
+dex:
+  enabled: false
+
+server:
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+  serviceAccount:
+    annotations:
+      # Workload identity federation for the SSO app registration (client ID, not a UAMI).
+      azure.workload.identity/client-id: <argocd-sso-app>
+  podLabels:
+    azure.workload.identity/use: "true"
+
+# Needed by the phase-6 previews ApplicationSet (argocd/optional/workorders-previews-appset.yaml).
+# The chart always installs the controller; prod sets zero replicas.
+applicationSet:
+  replicas: 1
+
+# No notification channel is part of the design; Octopus records deployment outcomes.
+notifications:
+  enabled: false

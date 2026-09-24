@@ -1,0 +1,91 @@
+# argocd/optional/workorders-previews-appset.yaml
+#
+# Phase-6 PR previews (ADR-C4, §7.3). Staged outside argocd/clusters/, so `platform-root` does
+# not sync it. Enable on nonprod only, by pull request that copies this file to
+# argocd/clusters/nonprod/previews-appset.yaml, once WI-07 (seed command) is done.
+#
+# One Application `workorders-pr-<number>` per open pull request on the app repo that carries the
+# `preview` label (applied by maintainers; at most three open previews by maintainer policy).
+#   - Project `workorders-previews` is fixed, never templated (E14): namespaced kinds only,
+#     destinations workorders-pr-*, no Azure identity.
+#   - Images `workorders-previews/{ui-server,worker}:pr-<number>-<40-hex head sha>` are built by
+#     the Codefresh pipeline `workorders/preview`, for same-repo branches only. A fork PR must
+#     not be labelled: its Application would reference images that do not exist.
+#   - Each push changes head_sha, so the Application syncs again and the Sync-hook Job in
+#     gitops/workorders/previews/database.yaml rebuilds and reseeds the preview database.
+#   - Closing the PR or removing the label deletes the Application; the finalizer deletes its
+#     resources and the namespace Argo CD created.
+#
+# [VERIFY] Anonymous GitHub API access works only while the app repo is public and within the
+# unauthenticated rate limit (12 polls an hour here). Otherwise add `tokenRef` (or `appSecretName`)
+# pointing at a read-only credential in namespace argocd; never the stored org-wide PAT (§5.1).
+#
+# Writer: H (platform owners). Contracts: §7.3, §7.5, ADR-C4.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: workorders-previews
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - pullRequest:
+        github:
+          owner: ClearMeasureLabs
+          repo: bootcamp-palermo-workorders
+          labels:
+            - preview
+        requeueAfterSeconds: 300
+  template:
+    metadata:
+      name: workorders-pr-{{.number}}
+      labels:
+        app.kubernetes.io/part-of: workorders
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: workorders-previews
+      source:
+        repoURL: <ENV_REPO_URL>
+        targetRevision: main
+        path: gitops/workorders/previews
+        kustomize:
+          # Base image names (§7.6) mapped to the preview repositories and the PR tag (§7.5).
+          images:
+            - <acr-name>.azurecr.io/workorders/ui-server=<acr-name>.azurecr.io/workorders-previews/ui-server:pr-{{.number}}-{{.head_sha}}
+            - <acr-name>.azurecr.io/workorders/worker=<acr-name>.azurecr.io/workorders-previews/worker:pr-{{.number}}-{{.head_sha}}
+          patches:
+            - target:
+                group: gateway.networking.k8s.io
+                kind: HTTPRoute
+                name: ui-server
+              patch: |-
+                - op: add
+                  path: /spec/hostnames
+                  value:
+                    - pr-{{.number}}.<previews-hostname-suffix>
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: workorders-pr-{{.number}}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        managedNamespaceMetadata:
+          labels:
+            environment: pr-{{.number}}
+            tier: app
+            pod-security.kubernetes.io/enforce: restricted
+            pod-security.kubernetes.io/warn: restricted
+        syncOptions:
+          # [VERIFY] The project allows no cluster-scoped kinds; confirm that CreateNamespace
+          # still creates the namespace (argocd/clusters/nonprod/projects.yaml).
+          - CreateNamespace=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m

@@ -1,0 +1,46 @@
+# Pipeline spec: workorders/ci (contract §7.7, ADR-C6, ADR-D17).
+#   Register once:   codefresh create pipeline -f .codefresh/specs/workorders-ci.yml
+#   Apply a change:  codefresh replace pipeline -f .codefresh/specs/workorders-ci.yml
+# Field names follow the Codefresh pipeline spec (CLI docs "Pipelines > Spec",
+# https://codefresh-io.github.io/cli/pipelines/spec/, and the JSON tags of
+# codefresh-io/terraform-provider-codefresh codefresh/cfclient/pipeline.go).
+version: "1.0"
+kind: pipeline
+metadata:
+  name: workorders/ci
+  project: workorders
+spec:
+  triggers:
+    - type: git
+      name: branch-push
+      description: Every same-repo branch push except master; posts codefresh/ci (informational)
+      repo: ClearMeasureLabs/bootcamp-palermo-workorders
+      provider: github
+      context: "<cf-git-integration-app>"
+      events:
+        - push.heads
+      # Negative lookahead is supported in the branch regex filter
+      # (https://codefresh.io/docs/docs/pipelines/triggers/git-triggers/).
+      branchRegex: "/^(?!master$).+/"
+      branchRegexInput: regex
+      # Fork pull requests never trigger Codefresh; build-result covers them (ADR-C6).
+      pullRequestAllowForkEvents: false
+      commitStatusTitle: codefresh/ci
+      disabled: false
+  # The YAML comes from the triggering branch, so only the CI context is attached.
+  contexts:
+    - workorders-ci
+  runtimeEnvironment:
+    name: "<cf-runtime-ci>"
+  specTemplate:
+    location: git
+    repo: ClearMeasureLabs/bootcamp-palermo-workorders
+    path: ./.codefresh/pipelines/ci.yml
+    # "" = the revision of the triggering push.
+    revision: ""
+    context: "<cf-git-integration-app>"
+  # A newer build cancels the older builds of the same branch (Terraform
+  # termination_policy.on_create_branch maps to type branch, event onCreate).
+  terminationPolicy:
+    - type: branch
+      event: onCreate

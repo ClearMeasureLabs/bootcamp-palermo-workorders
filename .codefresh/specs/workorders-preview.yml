@@ -1,0 +1,42 @@
+# Pipeline spec: workorders/preview (phase 6; contract §7.7, ADR-C4).
+#   Register in phase 6:  codefresh create pipeline -f .codefresh/specs/workorders-preview.yml
+#   Apply a change:       codefresh replace pipeline -f .codefresh/specs/workorders-preview.yml
+version: "1.0"
+kind: pipeline
+metadata:
+  name: workorders/preview
+  project: workorders
+spec:
+  triggers:
+    - type: git
+      name: pull-request
+      description: Same-repo pull requests into master; preview.yml builds only with the preview label
+      repo: ClearMeasureLabs/bootcamp-palermo-workorders
+      provider: github
+      context: "<cf-git-integration-app>"
+      # [VERIFY] the event spellings, pullrequest.labeled in particular.
+      events:
+        - pullrequest.opened
+        - pullrequest.synchronize
+        - pullrequest.labeled
+      branchRegex: /.*/
+      branchRegexInput: regex
+      pullRequestTargetBranchRegex: /^master$/
+      # Fork pull requests never trigger previews; preview.yml checks again.
+      pullRequestAllowForkEvents: false
+      commitStatusTitle: codefresh/preview
+      disabled: false
+  # No contexts: a preview build needs no secret.
+  contexts: []
+  runtimeEnvironment:
+    name: "<cf-runtime-ci>"
+  specTemplate:
+    location: git
+    repo: ClearMeasureLabs/bootcamp-palermo-workorders
+    path: ./.codefresh/pipelines/preview.yml
+    revision: ""
+    context: "<cf-git-integration-app>"
+  # A new push to the pull request supersedes the running preview build.
+  terminationPolicy:
+    - type: branch
+      event: onCreate

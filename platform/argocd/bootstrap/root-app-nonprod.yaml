@@ -1,0 +1,71 @@
+# argocd/bootstrap/root-app-nonprod.yaml
+#
+# Values for the argo/argocd-apps Helm chart (pin <argocd-apps-chart-version>; 2.0.5 on
+# argo-helm main, checked 2026-09-24). terraform/environment/bootstrap.tf installs it once,
+# right after argo-cd, as helm_release "argocd-apps" in namespace argocd, then ignores changes.
+#
+# It creates:
+#   - Application `platform-root` (§7.3): the only object Argo CD cannot create for itself.
+#     Terraform owns it; it never appears under its own source path.
+#   - A bootstrap copy of AppProject `platform-addons`. The root Application needs that project
+#     before its first sync. argocd/clusters/nonprod/projects.yaml is the authoritative
+#     definition; Argo CD adopts the object on the first sync and self-heals it from Git.
+#     Keep the two copies identical.
+#
+# Writer: H (platform owners). Contracts: §7.3, ADR-D3.
+
+projects:
+  platform-addons:
+    namespace: argocd
+    description: Platform add-ons and the root app of argocd-nonprod (bootstrap copy of projects.yaml)
+    sourceRepos:
+      - <ENV_REPO_URL>
+      - https://argoproj.github.io/argo-helm
+      - https://charts.external-secrets.io
+      - https://kyverno.github.io/kyverno/
+      - registry-1.docker.io/octopusdeploy
+    destinations:
+      - server: https://kubernetes.default.svc
+        namespace: argocd
+      - server: https://kubernetes.default.svc
+        namespace: external-secrets
+      - server: https://kubernetes.default.svc
+        namespace: kyverno
+      - server: https://kubernetes.default.svc
+        namespace: octopus-argocd-gateway
+      - server: https://kubernetes.default.svc
+        namespace: argo-rollouts
+    # The only project allowed cluster-scoped kinds (§7.3).
+    clusterResourceWhitelist:
+      - group: "*"
+        kind: "*"
+    namespaceResourceWhitelist:
+      - group: "*"
+        kind: "*"
+
+applications:
+  platform-root:
+    namespace: argocd
+    # No finalizers (§7.3): deleting the root never cascades into the platform.
+    project: platform-addons
+    source:
+      repoURL: <ENV_REPO_URL>
+      targetRevision: main
+      path: argocd/clusters/nonprod
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: argocd
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      # Objects that need add-on CRDs (platform-secrets.yaml) fail until the add-on syncs;
+      # retries converge the root without manual steps.
+      retry:
+        limit: 10
+        backoff:
+          duration: 30s
+          factor: 2
+          maxDuration: 5m

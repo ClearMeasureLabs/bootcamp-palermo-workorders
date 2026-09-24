@@ -1,0 +1,10 @@
+// Project `workorders-infrastructure`: runbooks only (platform-design §7.2, ADR-D10). No release is ever created.
+// Lifecycle workorders-infrastructure (Infra Nonprod, Infra Prod; both optional) is set by octopus/terraform.
+// Library variable set `WorkOrders Infrastructure` supplies Environment.Class and the Terraform.State* backend values.
+// schema_version.ocl holds `version = 10` (https://github.com/OctopusDeploy/github-agent-plugin/blob/main/skills/writing-ocl/references/file-layout.md).
+// Comments are authoring notes only; the Octopus serializer drops them on the next save from the UI.
+
+// Terraform steps run on the dynamic Hosted Ubuntu pool and T-SQL steps on k8s-<env>; no deployment targets.
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}

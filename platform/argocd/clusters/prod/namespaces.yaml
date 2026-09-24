@@ -1,0 +1,57 @@
+# argocd/clusters/prod/namespaces.yaml
+#
+# Namespaces that argocd-prod creates (§7.4), synced by `platform-root`.
+# Not here, by design:
+#   - argocd: created by the Terraform bootstrap.
+#   - octopus-worker-prod: created by Terraform helm_release (ADR-D14).
+#   - argo-rollouts: created by the phase-6 add-on (CreateNamespace).
+#
+# Labels (§7.9): `tier`, plus `environment` on the app namespace. Pod Security Admission labels
+# add a cluster-native floor under the Kyverno baseline (policies/kyverno/base).
+# Wave -10: namespaces exist before any Application in this root syncs into them.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-secrets
+  labels:
+    tier: platform
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kyverno
+  labels:
+    tier: platform
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: octopus-argocd-gateway
+  labels:
+    tier: platform
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: workorders-prod
+  labels:
+    environment: prod
+    tier: app
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+    # Never prune the prod namespace by accident (removing the file would delete everything in it).
+    argocd.argoproj.io/sync-options: Prune=confirm,Delete=confirm

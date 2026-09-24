@@ -1,0 +1,80 @@
+# argocd/clusters/nonprod/addons/octopus-argocd-gateway.yaml
+#
+# Octopus Argo CD gateway for argocd-nonprod (ADR-D14). Registers this instance with Octopus as
+# `argocd-nonprod` for environments `tdd` and `uat` (§7.3). Octopus then finds the Applications
+# by their `argo.octopus.com/*` annotations (apps/workorders-{tdd,uat}.yaml).
+#
+# Secrets are existing-secret references only. ESO writes both from <kv-workorders-platform-nonprod>
+# (argocd/clusters/nonprod/platform-secrets.yaml, root sync wave 10):
+#   argocd-octopus-token          key `token`: API token of Argo CD account `octopus` (read-only)
+#   octopus-gateway-registration  key `token`: Octopus token used to register the gateway
+# On the first root sync the Secrets may not exist yet; the retry below converges.
+#
+# Value names: https://octopus.com/docs/argo-cd/instances/helm-chart-values (E8).
+# Writer: H (platform owners). Contracts: §7.3 (add-on Applications), §7.8, ADR-D14.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: octopus-argocd-gateway
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: platform-addons
+  source:
+    # oci://registry-1.docker.io/octopusdeploy/octopus-argocd-gateway-chart, served through the
+    # OCI Helm repository `octopusdeploy` declared in argocd/bootstrap/values-nonprod.yaml.
+    repoURL: registry-1.docker.io/octopusdeploy
+    chart: octopus-argocd-gateway-chart
+    targetRevision: <octopus-argocd-gateway-chart-version>
+    helm:
+      releaseName: octopus-argocd-gateway
+      valuesObject:
+        gateway:
+          argocd:
+            # <release>-server.<namespace>.svc.cluster.local:443 for an in-cluster instance.
+            serverGrpcUrl: argocd-server.argocd.svc.cluster.local:443
+            # argocd-server serves its generated self-signed certificate inside the cluster.
+            # Traffic stays encrypted (plaintext: false); verification is skipped. Replace with
+            # gateway.serverCertificates if a trusted in-cluster certificate is issued. [VERIFY]
+            insecure: true
+            plaintext: false
+            authenticationTokenSecretName: argocd-octopus-token
+            authenticationTokenSecretKey: token
+          octopus:
+            # gRPC endpoint of Octopus Cloud: host of <OCTOPUS_URL>, port 8443 (not the web URL).
+            serverGrpcUrl: <OCTOPUS_HOST>:8443
+        registration:
+          # [VERIFY] How the chart runs registration under Argo CD (a Job or a Helm hook that
+          # Argo CD maps to a sync hook and reruns on syncs), and that registering again under
+          # the same name is idempotent. Confirm before phase 2.
+          register: true
+          octopus:
+            name: argocd-nonprod
+            serverApiUrl: <OCTOPUS_URL>
+            spaceId: <octopus-space-id>
+            # Environment slugs (§7.2).
+            environments:
+              - tdd
+              - uat
+            serverAccessTokenSecretName: octopus-gateway-registration
+            serverAccessTokenSecretKey: token
+          argocd:
+            webUiUrl: https://<argocd-nonprod-host>
+        # The chart's default CronJob upgrades the release with Helm, which would fight Argo CD.
+        # Chart upgrades happen by pull request to targetRevision above (ADR-D14).
+        autoUpdate:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: octopus-argocd-gateway
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

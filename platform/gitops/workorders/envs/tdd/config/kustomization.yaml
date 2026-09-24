@@ -1,0 +1,92 @@
+# gitops/workorders/envs/tdd/config/kustomization.yaml
+#
+# Configuration of environment tdd, changed by pull request only (writer H). Octopus never writes
+# here; it writes only the two newTag fields of ../kustomization.yaml (§7.6).
+# Configuration follows expand/contract: a key a release needs lands here before that release
+# reaches tdd. A change that must roll through the environments is a component under
+# ../../../components/, enabled here first, then in uat, then in prod (ADR-D6).
+#
+# Writer: H (platform owners). Contracts: §7.4, §7.8, §7.9, ADR-D6, ADR-D12, ADR-D16.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: workorders-tdd
+resources:
+  - ../../../base
+configMapGenerator:
+  - name: workorders-config
+    literals:
+      # [VERIFY] parity with the legacy environment settings (§7.9).
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+      # Must start with `Server=`: `Data Source=` makes the app select SQLite (F4).
+      - ConnectionStrings__SqlConnectionString=Server=tcp:<sql-workorders-tdd>.database.windows.net,1433;Database=<sqldb-workorders-tdd>;Authentication=Active Directory Workload Identity;Encrypt=True;
+      - AI_OpenAI_Url=<azure-openai-endpoint>
+      - AI_OpenAI_Model=<model-deployment-name>
+      # Read by the worker only.
+      - RemotableBus__ApiUrl=http://ui-server.workorders-tdd.svc.cluster.local:8080/api/blazor-wasm-single-api
+      # Until WI-10 (the worker cannot send the API key yet).
+      - ApiKeyAuthentication__Enabled=false
+patches:
+  # Workload identity (§7.8). Fill in the client IDs from the terraform/foundation outputs.
+  # ui-server and worker -> UAMI id-workorders-tdd-app.
+  - patch: |-
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: ui-server
+        annotations:
+          azure.workload.identity/client-id: <uami-client-id>
+  - patch: |-
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: worker
+        annotations:
+          azure.workload.identity/client-id: <uami-client-id>
+  # workorders-eso -> UAMI id-workorders-tdd-eso.
+  - patch: |-
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: workorders-eso
+        annotations:
+          azure.workload.identity/client-id: <uami-client-id>
+  - target:
+      group: external-secrets.io
+      kind: SecretStore
+      name: key-vault
+    patch: |-
+      - op: replace
+        path: /spec/provider/azurekv/vaultUrl
+        value: https://<kv-workorders-tdd>.vault.azure.net
+  # Public hostname. tdd keeps the diagnostic paths reachable (§7.9): no redirect rule.
+  - target:
+      group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: ui-server
+    patch: |-
+      - op: add
+        path: /spec/hostnames
+        value:
+          - <tdd-hostname>
+  # The Octopus worker namespace of this environment (ADR-D12).
+  - target:
+      group: networking.k8s.io
+      kind: NetworkPolicy
+      name: ui-server-ingress
+    patch: |-
+      - op: test
+        path: /spec/ingress/0/from/1/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: octopus-worker-{env}
+      - op: replace
+        path: /spec/ingress/0/from/1/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: octopus-worker-tdd
+  # Worker stays at 0 until enabled in tdd (phase 2, ADR-D16); enabling is a one-line pull request.
+  - target:
+      group: apps
+      kind: Deployment
+      name: worker
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0

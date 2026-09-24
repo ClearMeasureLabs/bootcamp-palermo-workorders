@@ -1,0 +1,296 @@
+# gitops/workorders/previews/database.yaml
+#
+# Preview data (ADR-C4): one SQL Server pod per preview, rebuilt and seeded on every sync.
+# Sync order inside the preview Application:
+#   -5  ResourceQuota preview
+#   -4  Password generator mssql-sa (ESO, no Azure)
+#   -3  ExternalSecret workorders-app (patched in kustomization.yaml): MSSQL_SA_PASSWORD and the
+#       connection string
+#   -2  Service and Deployment mssql; Argo CD waits until the pod is ready
+#   -1  Sync-hook Job db-migrator: `rebuild` (Create, Update, Everytime and TestData scripts),
+#       then `seed` (WI-07)
+#    0  ui-server and worker (base)
+# Data lives in an emptyDir: a restarted SQL pod starts empty until the next sync (a push to the
+# PR or a manual sync) runs the hook again.
+#
+# Writer: H (platform owners). Contracts: §7.5, §7.8, ADR-C4.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: preview
+  labels:
+    app.kubernetes.io/part-of: workorders
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  hard:
+    # SQL Server, ui-server and worker including one rolling surge pod each, plus the hook Job.
+    requests.cpu: "2"
+    requests.memory: 5Gi
+    limits.memory: 8Gi
+    pods: "8"
+    services: "4"
+    services.loadbalancers: "0"
+    services.nodeports: "0"
+    persistentvolumeclaims: "0"
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: mssql-sa
+  labels:
+    app.kubernetes.io/part-of: workorders
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  # SQL Server policy: at least three of upper case, lower case, digits and symbols. The symbol
+  # set excludes characters with meaning in connection strings (; = ' " { }).
+  length: 32
+  digits: 6
+  symbols: 4
+  symbolCharacters: "-_.+"
+  noUpper: false
+  allowRepeat: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql
+  labels:
+    app.kubernetes.io/name: mssql
+    app.kubernetes.io/part-of: workorders
+    app.kubernetes.io/component: database
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mssql
+  ports:
+    - name: tds
+      port: 1433
+      targetPort: tds
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mssql
+  labels:
+    app.kubernetes.io/name: mssql
+    app.kubernetes.io/part-of: workorders
+    app.kubernetes.io/component: database
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  replicas: 1
+  # One instance on an emptyDir: never two at once.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mssql
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mssql
+        app.kubernetes.io/part-of: workorders
+        app.kubernetes.io/component: database
+    spec:
+      automountServiceAccountToken: false
+      # [VERIFY] SQL Server 2022 as user mssql (10001) with all capabilities dropped satisfies
+      # the `restricted` Pod Security level of the preview namespace.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mssql
+          # Developer edition, non-production use only. Pin a CU tag; never a floating tag.
+          image: mcr.microsoft.com/mssql/server:<mssql-server-2022-version>
+          ports:
+            - name: tds
+              containerPort: 1433
+              protocol: TCP
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_PID
+              value: Developer
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workorders-app
+                  key: MSSQL_SA_PASSWORD
+          startupProbe:
+            tcpSocket:
+              port: tds
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            tcpSocket:
+              port: tds
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: tds
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              memory: 3Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: data
+              mountPath: /var/opt/mssql
+      volumes:
+        - name: data
+          emptyDir:
+            sizeLimit: 10Gi
+---
+# Default-deny ingress (base) also covers SQL Server: only the app and the migrator reach 1433.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mssql-ingress
+  labels:
+    app.kubernetes.io/name: mssql
+    app.kubernetes.io/part-of: workorders
+    app.kubernetes.io/component: database
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mssql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ui-server
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: worker
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: db-migrator
+      ports:
+        - protocol: TCP
+          port: 1433
+---
+# Sync hook at wave -1: runs on every sync of the preview, after SQL Server is ready and before
+# the app. The previous Job is deleted only when the next one is created, so its logs stay.
+#
+# [VERIFY] TLS: the console forces Encrypt=Mandatory and TrustServerCertificate=false unless the
+# server name contains localhost, 127.0.0.1 or localdb (app:src/Database/Console/
+# DatabaseConnectionStringBuilder.cs). Against this self-signed server the Job fails until the
+# console gains a trust option (proposed for WI-07) or the chief architect picks another route.
+# The password is a process argument until WI-05 (DB_PASSWORD environment variable).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrator
+  labels:
+    app.kubernetes.io/name: db-migrator
+    app.kubernetes.io/part-of: workorders
+    app.kubernetes.io/component: migration
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 900
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: db-migrator
+        app.kubernetes.io/part-of: workorders
+        app.kubernetes.io/component: migration
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # Positional arguments (F9): <command> <server> <database> <scriptDir> <user> <password>.
+        # /app/scripts is where app:containers/db-migrator/Dockerfile copies the scripts.
+        - name: rebuild
+          image: <acr-name>.azurecr.io/workorders/db-migrator
+          args:
+            - rebuild
+            - mssql
+            - workorders
+            - /app/scripts
+            - sa
+            - $(MSSQL_SA_PASSWORD)
+          env:
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workorders-app
+                  key: MSSQL_SA_PASSWORD
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        # [VERIFY] WI-07 defines the `seed` command; its arguments are assumed to match `rebuild`.
+        - name: seed
+          image: <acr-name>.azurecr.io/workorders/db-migrator
+          args:
+            - seed
+            - mssql
+            - workorders
+            - /app/scripts
+            - sa
+            - $(MSSQL_SA_PASSWORD)
+          env:
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workorders-app
+                  key: MSSQL_SA_PASSWORD
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

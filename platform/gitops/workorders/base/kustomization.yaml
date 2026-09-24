@@ -1,0 +1,27 @@
+# gitops/workorders/base/kustomization.yaml
+#
+# Kustomize base shared by tdd, uat and prod (and the phase-6 previews). Resources only.
+#   - No `images:` here or in envs/<env>/config: Octopus writes the tags only in
+#     envs/<env>/kustomization.yaml (§7.6). Base images carry no tag.
+#   - No namespace: each config overlay sets `workorders-{env}`.
+#   - Per-environment values (hostname, vault URL, client IDs, Worker replicas, configuration)
+#     are patched in envs/<env>/config.
+#
+# A direct change here reaches all three environments at once, outside the Octopus lifecycle.
+# Behaviour changes go through a component under ../components/ first (ADR-D6); a direct base
+# change needs the `all-environments` label and a platform-owner review (CODEOWNERS).
+#
+# Writer: H (platform owners). Contracts: §7.4, §7.6, §7.8, §7.9, ADR-D6, ADR-D12.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+labels:
+  # §7.9: on every object and pod template, never in selectors (selectors are immutable).
+  - pairs:
+      app.kubernetes.io/part-of: workorders
+    includeSelectors: false
+    includeTemplates: true
+resources:
+  - secrets.yaml
+  - ui-server.yaml
+  - worker.yaml
+  - network.yaml

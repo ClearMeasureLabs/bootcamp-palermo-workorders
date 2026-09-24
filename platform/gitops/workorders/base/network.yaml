@@ -1,0 +1,76 @@
+# gitops/workorders/base/network.yaml
+#
+# Exposure and ingress isolation (ADR-D12).
+#   - HTTPRoute ui-server attaches to the shared Gateway (Q5). The base has no hostname: each
+#     config overlay adds <{env}-hostname>, and uat and prod add the redirect rule for the
+#     diagnostic paths. The phase-6 previews ApplicationSet adds the preview hostname.
+#   - Ingress is denied by default. ui-server:8080 accepts traffic only from the Gateway's
+#     namespace, the Octopus worker namespace octopus-worker-<env> (smoke, version check and the
+#     db-restore-pitr runbook) and the worker pods. Egress is not restricted until the phase-4
+#     hardening (FQDN-capable policy engine).
+#
+# [VERIFY] Q5: if the Gateway data plane runs outside the cluster (for example Application
+# Gateway for Containers), traffic does not come from <gateway-namespace>; replace that peer with
+# an ipBlock for the Gateway's subnet.
+#
+# Writer: H (platform owners). Contracts: §7.4, §7.9, ADR-D12.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: ui-server
+  labels:
+    app.kubernetes.io/name: ui-server
+    app.kubernetes.io/component: web
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: <gateway-name>
+      namespace: <gateway-namespace>
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: ui-server
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ui-server-ingress
+  labels:
+    app.kubernetes.io/name: ui-server
+    app.kubernetes.io/component: web
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ui-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # Peer order is fixed: config overlays patch index 1 with the environment's worker
+        # namespace, and the previews overlay removes it.
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: <gateway-namespace>
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: octopus-worker-{env}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: worker
+      ports:
+        - protocol: TCP
+          port: 8080

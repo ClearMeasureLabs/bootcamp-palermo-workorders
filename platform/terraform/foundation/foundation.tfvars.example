@@ -1,0 +1,95 @@
+# Copy to foundation.tfvars (untracked) and replace every placeholder. Never commit the copy:
+# the repository is public.
+#
+#   terraform init  -backend-config=...   (see versions.tf for the bootstrap order)
+#   terraform plan  -var-file=foundation.tfvars -out=foundation.tfplan
+#   terraform apply foundation.tfplan
+#
+# Applied by a human Owner or User Access Administrator (PIM) and an Entra administrator.
+
+tenant_id       = "<AZURE_TENANT_ID>"
+subscription_id = "<AZURE_SUBSCRIPTION_ID>"
+location        = "<azure-region>"
+
+# Octopus Cloud URL with no trailing slash; the OIDC issuer of every Octopus account (E21).
+octopus_url        = "<OCTOPUS_URL>"
+octopus_space_slug = "<octopus-space-slug>"
+
+acr_name = "<acr-name>"
+acr_sku  = "Standard" # Premium only if private endpoints are required (Q6)
+
+tfstate_storage_account_name = "<tfstate-storage-account>"
+# Octopus Cloud dynamic-worker egress plus operator ranges (Q7). Empty keeps the firewall open.
+state_allowed_ip_ranges = ["<octopus-cloud-static-ips>"]
+# The people or groups who run this layer (Storage Blob Data Contributor on the container).
+state_operator_object_ids     = ["00000000-0000-0000-0000-000000000000"]
+state_path_conditions_enabled = true
+
+# Address plan; RFC 1918 examples, adjust to the tenant's IP plan.
+networks = {
+  nonprod = {
+    address_space            = ["10.40.0.0/16"]
+    aks_nodes_prefix         = "10.40.0.0/22"
+    private_endpoints_prefix = "10.40.8.0/24"
+  }
+  prod = {
+    address_space            = ["10.41.0.0/16"]
+    aks_nodes_prefix         = "10.41.0.0/22"
+    private_endpoints_prefix = "10.41.8.0/24"
+  }
+}
+
+log_retention_days = 90
+
+# Stored 'Azure Runtime Provisioner' (ADR-C10). Object ID of its service principal only; the
+# secret is never an input. Set provisioner_grants_enabled = false at the phase-2 exit (R4).
+provisioner_object_id      = "00000000-0000-0000-0000-000000000000"
+provisioner_grants_enabled = true
+
+# §5.2 grants SQL DB Contributor to prod only; add "uat" if the uat db-backup and
+# db-restore-pitr runbooks keep using azure-oidc-deploy-uat (open question for the chief architect).
+deploy_identity_sql_db_contributor_envs = ["prod"]
+
+create_migrator_identities            = false # phase 4, after WI-05
+lifecycle_node_rg_contributor_enabled = false # Q17 fallback only
+lifecycle_workspace_reader_enabled    = false # set true if the phase-2 spike needs it
+
+sql_admin_group_display_names = {
+  nonprod = "<sql-admins-nonprod>"
+  prod    = "<sql-admins-prod>"
+}
+
+argocd_sso_app_display_name = "<argocd-sso-app>"
+argocd_sso_redirect_uris = [
+  "https://<argocd-nonprod-host>/auth/callback",
+  "https://<argocd-prod-host>/auth/callback",
+]
+# Groups allowed to sign in (the groups in policy.csv of argocd/bootstrap/values-<cluster>.yaml).
+argocd_sso_group_object_ids = ["00000000-0000-0000-0000-000000000000"]
+
+# Filled after each env-apply from the environment output oidc_issuer_url; re-apply to add the
+# Argo CD SSO federated credential and pin the issuer policy to these clusters.
+aks_oidc_issuer_urls = {
+  # nonprod = "https://<azure-region>.oic.prod-aks.azure.com/<AZURE_TENANT_ID>/<cluster-issuer-id>/"
+  # prod    = "https://<azure-region>.oic.prod-aks.azure.com/<AZURE_TENANT_ID>/<cluster-issuer-id>/"
+}
+fic_issuer_policy_effect = "Audit" # Deny after the phase-2 spike
+
+# Legacy Container Apps resource groups to lock (R6), by resource ID, for example
+# "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/<legacy-resource-group>".
+legacy_resource_group_ids = []
+
+# Team SRE On-call (PIM-eligible break-glass roles). Null skips them.
+breakglass_group_object_id = "00000000-0000-0000-0000-000000000000"
+
+security_alert_email_receivers = {
+  security-owners = "security-owners@example.com"
+}
+
+# Needs an Entra role that can write tenant diagnostic settings [VERIFY].
+entra_signin_logs_enabled = false
+
+tags = {
+  app        = "workorders"
+  managed-by = "terraform-foundation"
+}

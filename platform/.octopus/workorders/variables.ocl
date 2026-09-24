@@ -1,0 +1,98 @@
+// Project `workorders`: non-sensitive project variables (platform-design §7.2).
+// Syntax: https://github.com/OctopusDeploy/github-agent-plugin/blob/main/skills/writing-ocl/references/variables.md
+//
+// Not in Git (config-as-code keeps sensitive variables in the Octopus database, E26):
+// - GitHub.StatusToken (Sensitive): only if the user supplies a credential (R16).
+// Supplied by library variable set `WorkOrders Environment` (octopus/terraform, from terraform.tfvars):
+//   App.BaseUrl, App.InternalUrl, Azure.ResourceGroup, KeyVault.Name, Sql.ServerName, Sql.ServerFqdn,
+//   Sql.Database, Sql.MigratorUser, Sql.AcceptanceUser (tdd), AI.OpenAIUrl, AI.OpenAIModel.
+// Account and pool values are slugs that octopus/terraform creates (accounts.tf, worker-pools.tf).
+
+// Per-environment Kubernetes worker pool (ADR-C2, TB11): one pool per environment, one cluster namespace each.
+variable "WorkerPool" {
+    type = "WorkerPool"
+
+    value "k8s-tdd" {
+        environment = ["tdd"]
+    }
+    value "k8s-uat" {
+        environment = ["uat"]
+    }
+    value "k8s-prod" {
+        environment = ["prod"]
+    }
+}
+
+// Per-environment Azure OIDC account (§5.2, TB12). The stored `Azure Runtime Provisioner` is never used here (ADR-C10).
+variable "Azure.DeployAccount" {
+    type = "AzureAccount"
+
+    value "azure-oidc-deploy-tdd" {
+        environment = ["tdd"]
+    }
+    value "azure-oidc-deploy-uat" {
+        environment = ["uat"]
+    }
+    value "azure-oidc-deploy-prod" {
+        environment = ["prod"]
+    }
+}
+
+// Signed CI toolchain image (§7.5): SDK 10, pwsh, Playwright 1.54 browsers, go-sqlcmd, az CLI.
+variable "StepImage.CiDotnet" {
+    value "<acr-name>.azurecr.io/platform/ci-dotnet:<ci-image-version>" {}
+}
+
+// Degraded fails only in TDD until #9016 closes (the LlmGateway check degrades uat and prod).
+variable "Smoke.FailOnDegraded" {
+    value "True" {
+        environment = ["tdd"]
+    }
+    value "False" {
+        environment = ["uat", "prod"]
+    }
+}
+
+// Seconds. The step default for Argo CD verification is 180 s (E4); cold rollouts need longer.
+variable "Argo.VerificationTimeoutSeconds" {
+    value "900" {}
+}
+
+// Seconds. Enforced inside migrate-database with coreutils timeout.
+variable "Migration.TimeoutSeconds" {
+    value "900" {}
+}
+
+// ADR-C11 interlock 2: defined for tdd only, so every other scope resolves to nothing.
+variable "Acceptance.AllowDestructiveReset" {
+    value "True" {
+        environment = ["tdd"]
+    }
+}
+
+// report-commit-status (step 12). Stays False until R16 is approved and GitHub.StatusToken exists.
+variable "GitHub.StatusEnabled" {
+    value "False" {}
+}
+
+variable "GitHub.StatusContext" {
+    value "platform/tdd" {}
+}
+
+variable "GitHub.AppRepository" {
+    value "ClearMeasureLabs/bootcamp-palermo-workorders" {}
+}
+
+// Prompted input of runbook db-restore-pitr (§7.2): UTC ISO 8601, for example 2026-09-24T13:45:00Z.
+// The runbook validates the format and rejects an empty or future value.
+variable "RestorePointInTime" {
+    value "" {
+        process = ["db-restore-pitr"]
+
+        prompt {
+            label = "Restore point in time (UTC)"
+            description = "UTC ISO 8601 timestamp inside the point-in-time retention window, for example 2026-09-24T13:45:00Z."
+            required = true
+        }
+    }
+}

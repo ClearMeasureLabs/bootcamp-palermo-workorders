@@ -1,0 +1,42 @@
+# Pipeline spec: workorders/release (contract §7.7, ADR-C6, ADR-C7, ADR-D8, ADR-D17).
+#   Register once:   codefresh create pipeline -f .codefresh/specs/workorders-release.yml
+#   Apply a change:  codefresh replace pipeline -f .codefresh/specs/workorders-release.yml
+# After the first build, copy the exact OIDC `sub` into the Octopus OIDC identity of
+# svc-codefresh-release (<CF_RELEASE_PIPELINE_ID> is this pipeline's ID).
+version: "1.0"
+kind: pipeline
+metadata:
+  name: workorders/release
+  project: workorders
+spec:
+  triggers:
+    - type: git
+      name: master-push
+      description: Pushes to master only; the build of record for the new platform
+      repo: ClearMeasureLabs/bootcamp-palermo-workorders
+      provider: github
+      context: "<cf-git-integration-app>"
+      events:
+        - push.heads
+      branchRegex: /^master$/
+      branchRegexInput: regex
+      pullRequestAllowForkEvents: false
+      commitStatusTitle: codefresh/release
+      disabled: false
+  # Release credentials live only here (ADR-D17). Registry integration
+  # acr-workorders-release is named by the build steps in release.yml.
+  contexts:
+    - workorders-ci
+    - workorders-release
+  runtimeEnvironment:
+    name: "<cf-runtime-release>"
+  specTemplate:
+    location: git
+    repo: ClearMeasureLabs/bootcamp-palermo-workorders
+    path: ./.codefresh/pipelines/release.yml
+    # Pinned: a branch can never change the YAML that runs with release credentials.
+    revision: master
+    context: "<cf-git-integration-app>"
+  # One build at a time; later builds queue and are never cancelled
+  # (no terminationPolicy), so every master commit gets its own release.
+  concurrency: 1

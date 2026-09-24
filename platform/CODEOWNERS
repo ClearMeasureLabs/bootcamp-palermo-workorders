@@ -1,0 +1,41 @@
+# CODEOWNERS for clearmeasure-aisf-sample-apps/basic-environment-octopus-codefresh
+# (staged at platform/CODEOWNERS in the app checkout; see design §6.2).
+#
+# The branch ruleset on `main` requires a pull request, code-owner approval and
+# the `codefresh/env-checks` status. Its bypass list holds only team
+# `platform-bots` (the Octopus Git credential's machine user), which may commit
+# `images[].newTag` in gitops/workorders/envs/*/kustomization.yaml and nothing
+# else. `scripts/checks/tool-boundaries.sh --audit-bot-commits` enforces that.
+#
+# `<org>` is a placeholder for the GitHub organization. Replace the two team
+# placeholders when the repo is attached (R1). The last matching pattern wins.
+# When a line lists two teams, an approval from either team satisfies it.
+
+# Default: every path has an owner, so the code-owner requirement always applies.
+*                                   @<org>/platform-owners
+
+# This file.
+/CODEOWNERS                         @<org>/platform-owners
+
+# Shared Kustomize base: a merged change reaches tdd, uat and prod at once.
+# Pull requests that change runtime behaviour here also need the
+# `all-environments` label (ADR-D6). Roll-through changes go in components/.
+/gitops/workorders/base/            @<org>/platform-owners
+
+# Environment pins. Octopus writes `newTag` directly (ruleset bypass);
+# a human pull request here is a break-glass change (docs/runbooks/break-glass.md).
+/gitops/workorders/envs/*/kustomization.yaml    @<org>/platform-owners
+
+# Argo CD bootstrap, cluster roots, AppProjects, add-ons and Applications.
+/argocd/                            @<org>/platform-owners
+
+# Admission and Octopus policies. §6.2 names platform owners; §6.1 marks the
+# tree as security-owned. Both teams are listed until the chief architect
+# settles which one alone approves (docs/consistency-notes.md).
+/policies/                          @<org>/platform-owners @<org>/security-owners
+
+# Privileged Azure foundation: every role assignment, lock and policy (ADR-D10).
+/terraform/foundation/              @<org>/security-owners
+
+# Secret-scanning configuration.
+/.gitleaks.toml                     @<org>/security-owners

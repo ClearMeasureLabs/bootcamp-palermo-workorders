@@ -1,0 +1,98 @@
+# Copy to terraform.tfvars (untracked) and replace every <placeholder>. No secrets belong in this file:
+# pass TF_VAR_octopus_access_token (preferred) or TF_VAR_octopus_api_key in the shell.
+# Client IDs come from the terraform/foundation outputs (§5.2); names follow §7.1.
+
+octopus_url        = "<OCTOPUS_URL>"
+octopus_space_id   = "<octopus-space-id>"
+octopus_space_slug = "<octopus-space-slug>"
+
+azure_tenant_id       = "<AZURE_TENANT_ID>"
+azure_subscription_id = "<AZURE_SUBSCRIPTION_ID>"
+
+deploy_identity_client_ids = {
+  tdd  = "<client-id-of-id-octopus-deploy-tdd>"
+  uat  = "<client-id-of-id-octopus-deploy-uat>"
+  prod = "<client-id-of-id-octopus-deploy-prod>"
+}
+
+lifecycle_identity_client_ids = {
+  nonprod = "<client-id-of-id-env-lifecycle-nonprod>"
+  prod    = "<client-id-of-id-env-lifecycle-prod>"
+}
+
+acr_login_server            = "<acr-name>.azurecr.io"
+acr_pull_identity_client_id = "<client-id-of-id-octopus-acr-pull>"
+
+# Defaults match §7.1 and §5.3; override only if the stored objects were renamed.
+# env_repo_url                      = "https://github.com/clearmeasure-aisf-sample-apps/basic-environment-octopus-codefresh.git"
+# stored_git_credential_name        = "GitHub clearmeasure-aisf-sample-apps"
+# stored_azure_account_name         = "Azure Runtime Provisioner"
+# stored_library_variable_set_names = ["Azure Runtime Provisioning", "GitHub AISF Sample Apps"]
+
+# Phase 1: false. Phase 2 (TDD on AKS): true (§9).
+tdd_auto_deploy = false
+
+# Second apply only: the ID of the Default channel that Octopus created with project workorders.
+# default_channel_import_id = "<default-channel-id>"
+
+# Enable after the runbook OCL files are merged to main.
+runbook_triggers_enabled = false
+runbook_trigger_timezone = "UTC"
+
+workorders_environment = {
+  tdd = {
+    app_base_url    = "https://<tdd-hostname>"
+    key_vault_name  = "<kv-workorders-tdd>"
+    sql_server_name = "<sql-workorders-tdd>"
+    sql_database    = "<sqldb-workorders-tdd>"
+    ai_openai_url   = "<azure-openai-endpoint>"
+    ai_openai_model = "<model-deployment-name>"
+  }
+  uat = {
+    app_base_url    = "https://<uat-hostname>"
+    key_vault_name  = "<kv-workorders-uat>"
+    sql_server_name = "<sql-workorders-uat>"
+    sql_database    = "<sqldb-workorders-uat>"
+    ai_openai_url   = "<azure-openai-endpoint>"
+    ai_openai_model = "<model-deployment-name>"
+  }
+  prod = {
+    app_base_url    = "https://<prod-hostname>"
+    key_vault_name  = "<kv-workorders-prod>"
+    sql_server_name = "<sql-workorders-prod>"
+    sql_database    = "<sqldb-workorders-prod>"
+    ai_openai_url   = "<azure-openai-endpoint>"
+    ai_openai_model = "<model-deployment-name>"
+  }
+}
+
+workorders_infrastructure = {
+  state_resource_group  = "rg-workorders-shared"
+  state_storage_account = "<tfstate-storage-account>"
+  state_container       = "tfstate"
+}
+
+# Membership through the identity provider (external groups) or Octopus user IDs.
+team_external_groups = {
+  "Platform Engineers" = ["<entra-group-object-id-platform-engineers>"]
+  "Release Managers"   = ["<entra-group-object-id-release-managers>"]
+  "UAT Approvers"      = ["<entra-group-object-id-uat-approvers>"]
+  "Prod Approvers"     = ["<entra-group-object-id-prod-approvers>"]
+  "SRE On-call"        = ["<entra-group-object-id-sre-on-call>"]
+  "Developers"         = ["<entra-group-object-id-developers>"]
+}
+team_member_user_ids = {}
+
+codefresh_account_id          = "<CF_ACCOUNT_ID>"
+codefresh_release_pipeline_id = "<CF_RELEASE_PIPELINE_ID>"
+# Replace with the exact sub of a test build of workorders/release on master, wildcarding only the user segment.
+# codefresh_oidc_subject = "account:<CF_ACCOUNT_ID>:pipeline:<CF_RELEASE_PIPELINE_ID>:*:scm_ref:master"
+
+# Q3: true only if lifecycle auto-deploy to TDD fails without DeploymentCreate for svc-codefresh-release.
+ci_release_publisher_tdd_deploy = false
+
+# First weekend window in the team's timezone (RFC 3339 with offset); repeats weekly.
+prod_freeze_first_window = {
+  start = "2026-10-03T00:00:00Z"
+  end   = "2026-10-05T00:00:00Z"
+}

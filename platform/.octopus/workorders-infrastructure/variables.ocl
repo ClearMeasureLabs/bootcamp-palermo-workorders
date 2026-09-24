@@ -1,0 +1,38 @@
+// Project `workorders-infrastructure`: non-sensitive project variables (platform-design §7.2).
+//
+// Not in Git (config-as-code keeps sensitive variables in the Octopus database, E26):
+// - Octopus.WorkerRegistrationToken (Sensitive): short-lived; entered before each env-apply that installs
+//   Kubernetes workers (ADR-D14). It ends up in Terraform state.
+// Supplied by library variable set `WorkOrders Infrastructure` (octopus/terraform):
+//   Environment.Class, Terraform.StateResourceGroup, Terraform.StateStorageAccount, Terraform.StateContainer,
+//   Terraform.StateKey.
+// Library variable set `Azure Runtime Provisioning` is included in no project (ADR-C10, §5.3): the built-in
+// Terraform and Azure script steps use the account directly.
+
+// ADR-C10 / R4. infra-nonprod uses the stored client-secret principal in phases 1-2 only. At the phase-2 exit,
+// a reviewed pull request changes that value to "azure-oidc-env-lifecycle-nonprod" and the secret is retired.
+// infra-prod uses OIDC from its first apply; the stored account is never valid there.
+variable "Azure.LifecycleAccount" {
+    type = "AzureAccount"
+
+    value "azure-runtime-provisioner" {
+        environment = ["infra-nonprod"]
+    }
+    value "azure-oidc-env-lifecycle-prod" {
+        environment = ["infra-prod"]
+    }
+}
+
+// Expiry date of the stored principal's client secret, entered by a person (YYYY-MM-DD) through a pull request.
+// provisioner-credential-check warns 14 days ahead and fails once it has passed; the placeholder fails the check.
+variable "Provisioner.SecretExpiresOn" {
+    value "<provisioner-secret-expires-on>" {
+        environment = ["infra-nonprod"]
+    }
+}
+
+// Same name and value as in project `workorders` (§7.2): configure-db-principals-<env> and rotate-sql-passwords
+// need az CLI and go-sqlcmd inside the cluster network.
+variable "StepImage.CiDotnet" {
+    value "<acr-name>.azurecr.io/platform/ci-dotnet:<ci-image-version>" {}
+}

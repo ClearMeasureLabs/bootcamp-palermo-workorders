@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - config
+images:
+  - name: <acr-name>.azurecr.io/workorders/ui-server
+    newTag: "0.0.0-bootstrap"   # written by Octopus only
+  - name: <acr-name>.azurecr.io/workorders/worker
+    newTag: "0.0.0-bootstrap"   # written by Octopus only

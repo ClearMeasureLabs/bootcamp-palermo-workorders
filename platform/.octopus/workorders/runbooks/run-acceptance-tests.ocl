@@ -1,0 +1,139 @@
+// Runbook `run-acceptance-tests` of project `workorders` (platform-design §7.2, ADR-C11). Environment: tdd only.
+// On-demand rerun of deployment step 10 against the release already running in TDD.
+//
+// File layout confirmed (https://octopus.com/docs/runbooks/config-as-code-runbooks). Runbook-level environment
+// scope has no documented OCL attribute [VERIFY in an export]; ADR-C11 interlock 1 is the action-level
+// environments = ["tdd"], and interlock 2 is the script check.
+// Runbook packages resolve to the latest non-prerelease version (same doc), which can be newer than the release
+// in TDD. The test step therefore refuses to run unless TDD reports the same version as the package.
+// A runbook cannot read deployment output variables, so it reads its own secrets first.
+
+name = "run-acceptance-tests"
+description = "Runs ChurchBulletin.AcceptanceTests against TDD. Destructive: the suite empties and reseeds the TDD database."
+default_guided_failure_mode = "EnvironmentDefault"
+multi_tenancy_mode = "Untenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    type = "Default"
+}
+
+process {
+    step "read-deployment-secrets" {
+        name = "Read deployment secrets"
+
+        action {
+            action_type = "Octopus.AzurePowerShell"
+            is_required = true
+            worker_pool_variable = "WorkerPool"
+            environments = ["tdd"]
+            properties = {
+                Octopus.Action.Azure.AccountId = "#{Azure.DeployAccount}"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    vault="#{KeyVault.Name}"
+                    read_secret() {
+                        az keyvault secret show --vault-name "$vault" --name "$1" --query value --output tsv
+                    }
+                    acceptance_password="$(read_secret workorders-sql-acceptance-password)"
+                    openai_key="$(read_secret workorders-ai-openai-apikey)"
+                    [ -n "$acceptance_password" ] || fail_step "Secret workorders-sql-acceptance-password is empty in $vault"
+                    set_octopusvariable "AcceptancePassword" "$acceptance_password" -sensitive
+                    set_octopusvariable "OpenAIKey" "$openai_key" -sensitive
+                    echo "Acceptance secrets read from $vault."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+                OctopusUseBundledTooling = "False"
+            }
+        }
+    }
+
+    step "acceptance-tests" {
+        name = "Acceptance tests (TDD only)"
+
+        action {
+            action_type = "Octopus.Script"
+            is_required = true
+            worker_pool = "k8s-tdd"
+            environments = ["tdd"]
+            properties = {
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    $ErrorActionPreference = 'Stop'
+                    $environmentName = $OctopusParameters['Octopus.Environment.Name']
+                    $allowReset = $OctopusParameters['Acceptance.AllowDestructiveReset']
+                    if ($environmentName -ne 'tdd' -or $allowReset -ne 'True') {
+                        Fail-Step "Refusing the destructive acceptance suite: environment '$environmentName', Acceptance.AllowDestructiveReset '$allowReset'."
+                    }
+                    
+                    # The package must match the release running in TDD.
+                    $packageVersion = $OctopusParameters['Octopus.Action.Package[ChurchBulletin.AcceptanceTests].PackageVersion']
+                    $baseUrl = $OctopusParameters['App.BaseUrl']
+                    $deployed = (Invoke-RestMethod -Uri ($baseUrl + '/_version') -TimeoutSec 15).version
+                    $versionMatches = ($deployed -eq $packageVersion) -or $deployed.StartsWith($packageVersion + '+') -or $deployed.StartsWith($packageVersion + '-')
+                    if (-not $versionMatches) {
+                        Fail-Step "TDD reports version '$deployed' but this run resolved ChurchBulletin.AcceptanceTests $packageVersion. Deploy that release to TDD first."
+                    }
+                    
+                    $packageDir = $OctopusParameters['Octopus.Action.Package[ChurchBulletin.AcceptanceTests].ExtractedPath']
+                    $testDll = Get-ChildItem -Path $packageDir -Filter 'ClearMeasure.Bootcamp.AcceptanceTests.dll' -Recurse | Select-Object -First 1
+                    if (-not $testDll) { Fail-Step "ClearMeasure.Bootcamp.AcceptanceTests.dll not found in $packageDir" }
+                    $runSettings = Join-Path $testDll.DirectoryName 'AcceptanceTests.runsettings'
+                    $playwrightDir = Join-Path $testDll.DirectoryName '.playwright'
+                    if (Test-Path $playwrightDir) { & chmod -R +x $playwrightDir }
+                    
+                    $builder = [System.Data.Common.DbConnectionStringBuilder]::new()
+                    $builder['Server'] = 'tcp:' + $OctopusParameters['Sql.ServerFqdn'] + ',1433'
+                    $builder['Database'] = $OctopusParameters['Sql.Database']
+                    $builder['User ID'] = $OctopusParameters['Sql.AcceptanceUser']
+                    $builder['Password'] = $OctopusParameters['Octopus.Action[Read deployment secrets].Output.AcceptancePassword']
+                    $builder['Encrypt'] = 'True'
+                    
+                    $env:ConnectionStrings__SqlConnectionString = $builder.ConnectionString
+                    $env:ApplicationBaseUrl = $baseUrl
+                    $env:StartLocalServer = 'false'
+                    $env:AcceptanceTests__AllowDestructiveReset = 'true'
+                    $env:AI_OpenAI_ApiKey = $OctopusParameters['Octopus.Action[Read deployment secrets].Output.OpenAIKey']
+                    $env:AI_OpenAI_Url = $OctopusParameters['AI.OpenAIUrl']
+                    $env:AI_OpenAI_Model = $OctopusParameters['AI.OpenAIModel']
+                    $env:TEST_INPUT_DELAY_MS = '200'
+                    
+                    $results = Join-Path (Get-Location) 'acceptance-results'
+                    New-Item -ItemType Directory -Path $results -Force | Out-Null
+                    Write-Host "Acceptance tests $packageVersion against $baseUrl"
+                    & timeout --kill-after=60 1800 dotnet test $testDll.FullName --nologo --logger trx --results-directory $results --settings $runSettings
+                    $exitCode = $LASTEXITCODE
+                    
+                    Get-ChildItem -Path $results -Filter '*.trx' -Recurse | ForEach-Object {
+                        New-OctopusArtifact -Path $_.FullName -Name ('acceptance-tdd-runbook-' + $_.Name)
+                    }
+                    if ($exitCode -eq 124) { Fail-Step 'Acceptance tests exceeded the 30-minute timeout.' }
+                    if ($exitCode -ne 0) { Fail-Step "Acceptance tests failed (exit code $exitCode); TRX files are attached as artifacts." }
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "PowerShell"
+                OctopusUseBundledTooling = "False"
+            }
+
+            container {
+                feed = "acr-workorders"
+                image = "#{StepImage.CiDotnet}"
+            }
+
+            packages "ChurchBulletin.AcceptanceTests" {
+                acquisition_location = "Server"
+                feed = "octopus-server-built-in"
+                package_id = "ChurchBulletin.AcceptanceTests"
+                properties = {
+                    Extract = "True"
+                    Purpose = ""
+                    SelectionMode = "immediate"
+                }
+            }
+        }
+    }
+}

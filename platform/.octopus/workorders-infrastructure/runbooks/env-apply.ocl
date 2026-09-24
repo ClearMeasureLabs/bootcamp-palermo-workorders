@@ -1,0 +1,407 @@
+// Runbook `env-apply` of project `workorders-infrastructure` (platform-design §7.2, ADR-D10, ADR-C10).
+// Environments: infra-nonprod, infra-prod.
+// Flow: guard -> plan -> save and check plan -> manual intervention (always) -> apply ->
+//       configure-db-principals-<env> on k8s-<env> (T-SQL as the lifecycle identity).
+// Shared Terraform settings, contract gaps and the plan-artifact rule are documented in env-plan.ocl.
+//
+// File layout confirmed (https://octopus.com/docs/runbooks/config-as-code-runbooks). Runbook-level environment
+// scope has no documented OCL attribute [VERIFY in an export]; action-level environments enforce it.
+//
+// configure-db-principals-<env>:
+// - Runs inside the cluster network (private endpoints) on the Kubernetes worker that this apply installs
+//   (ADR-D14). On a first apply the worker may not be registered yet; rerun env-apply (idempotent).
+// - Authenticates as Azure.LifecycleAccount, a member of the SQL Entra admin group <sql-admins-{class}> (§5.2).
+// - Finds the SQL server, the application database and the Key Vault in rg-workorders-<env> (§7.1, §7.10),
+//   excluding copies made by the workorders runbooks (-pre-, -bak-, -pitr-, -replaced-).
+// - Creates or updates: id-workorders-<env>-app (db_datareader, db_datawriter; CREATE TABLE and
+//   ALTER ON SCHEMA::nServiceBus until WI-06), workorders_migrator (db_ddladmin, db_datareader, db_datawriter)
+//   and, in TDD only, workorders_acceptance (db_datareader, db_datawriter, VIEW DEFINITION) (§5.2).
+//   Passwords come from the Key Vault secrets that this apply writes (§7.8); the SQL file is mode 600 and removed.
+// - CREATE USER ... FROM EXTERNAL PROVIDER needs the SQL server identity to resolve Entra names; otherwise
+//   use WITH OBJECT_ID [VERIFY]. sqlcmd authentication method ActiveDirectoryAzCli (go-sqlcmd) [VERIFY].
+// - id-workorders-<env>-migrator (phase 4, after WI-05) is added here when it exists.
+
+name = "env-apply"
+description = "Plans, waits for approval, applies terraform/environment, then configures database principals per environment."
+default_guided_failure_mode = "EnvironmentDefault"
+multi_tenancy_mode = "Untenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    type = "Default"
+}
+
+process {
+    // Runbook producers can run any branch; the Terraform comes from the run's commit. Prod applies only from main.
+    step "guard-run-source" {
+        name = "Guard run source"
+
+        action {
+            action_type = "Octopus.Script"
+            is_required = true
+            worker_pool = "hosted-ubuntu"
+            environments = ["infra-nonprod", "infra-prod"]
+            properties = {
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    environment="#{Octopus.Environment.Name}"
+                    class="#{Environment.Class}"
+                    ref="#{Octopus.RunbookRun.Git.Ref}"
+                    case "$environment:$class" in
+                        infra-nonprod:nonprod|infra-prod:prod) ;;
+                        *) fail_step "Environment.Class '$class' does not match environment '$environment' (library variable set WorkOrders Infrastructure)." ;;
+                    esac
+                    if [ "$ref" != "refs/heads/main" ]; then
+                        if [ "$environment" = "infra-prod" ]; then
+                            fail_step "infra-prod applies only from refs/heads/main (this run: '$ref')."
+                        fi
+                        write_warning "Applying unmerged Terraform from '$ref' to $environment."
+                    fi
+                    echo "Run source OK: $environment (class $class) from $ref."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+            }
+        }
+    }
+
+    step "plan-environment" {
+        name = "Plan environment"
+
+        action {
+            action_type = "Octopus.TerraformPlan"
+            is_required = true
+            worker_pool = "hosted-ubuntu"
+            environments = ["infra-nonprod", "infra-prod"]
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Azure.LifecycleAccount"
+                Octopus.Action.GitRepository.Source = "Project"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AdditionalActionParams = "-lock-timeout=300s"
+                Octopus.Action.Terraform.AdditionalInitParams = "-backend-config=resource_group_name=#{Terraform.StateResourceGroup} -backend-config=storage_account_name=#{Terraform.StateStorageAccount} -backend-config=container_name=#{Terraform.StateContainer} -backend-config=key=#{Terraform.StateKey} -backend-config=use_azuread_auth=true"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_<worker-registration-token-variable>\":\"#{if Octopus.WorkerRegistrationToken}#{Octopus.WorkerRegistrationToken}#{/if}\"}"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.PlanJsonOutput = "False"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "False"
+                Octopus.Action.Terraform.TemplateDirectory = "terraform/environment"
+                Octopus.Action.Terraform.VarFiles = "#{Environment.Class}.tfvars"
+                OctopusUseBundledTooling = "False"
+            }
+
+            container {
+                feed = "<docker-hub-feed>"
+                image = "octopusdeploy/worker-tools:<worker-tools-version>"
+            }
+        }
+    }
+
+    step "save-and-check-plan" {
+        name = "Save and check plan"
+
+        action {
+            action_type = "Octopus.Script"
+            is_required = true
+            worker_pool = "hosted-ubuntu"
+            environments = ["infra-nonprod", "infra-prod"]
+            properties = {
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    plan_file="terraform-plan-#{Environment.Class}.txt"
+                    get_octopusvariable "Octopus.Action[Plan environment].Output.TerraformPlanOutput" > "$plan_file"
+                    [ -s "$plan_file" ] || fail_step "Plan environment produced no plan output."
+                    new_octopusartifact "$(pwd)/$plan_file" "$plan_file"
+                    # Resource change headers look like "  # azurerm_x.name will be created"; data sources are excluded.
+                    if grep -E -q '^[[:space:]]*# (module\.[^[:space:]]+\.)?azurerm_(role_assignment|management_lock|resource_group)\.' "$plan_file"; then
+                        fail_step "The plan touches role assignments, locks or resource groups; those belong to terraform/foundation (ADR-D10)."
+                    fi
+                    echo "Plan saved as artifact $plan_file; layer boundary holds."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+            }
+        }
+    }
+
+    // Always required, in both environments (§7.2). The apply re-plans from the same commit and variables,
+    // so the approver checks that nothing changed in Azure between plan and apply.
+    step "approve-apply" {
+        name = "Approve environment apply"
+
+        action {
+            action_type = "Octopus.Manual"
+            is_required = true
+            environments = ["infra-nonprod", "infra-prod"]
+            properties = {
+                Octopus.Action.Manual.BlockConcurrentDeployments = "True"
+                Octopus.Action.Manual.Instructions = <<-EOT
+                    ## Approve terraform/environment apply: #{Octopus.Environment.Name} (class #{Environment.Class})
+                    Commit #{Octopus.RunbookRun.Git.CommitHash} on #{Octopus.RunbookRun.Git.Ref}. The plan is also attached as an artifact.
+                    Approve only if:
+                    - every destroy or replacement is expected and announced;
+                    - no identity, role assignment, lock or resource group appears (terraform/foundation owns them);
+                    - Octopus.WorkerRegistrationToken was refreshed when this apply installs or reinstalls workers.
+                    
+                    ```
+                    #{Octopus.Action[Plan environment].Output.TerraformPlanOutput}
+                    ```
+                    EOT
+                Octopus.Action.Manual.ResponsibleTeamIds = "platform-engineers"
+                Octopus.Action.RunOnServer = "false"
+            }
+        }
+    }
+
+    step "apply-environment" {
+        name = "Apply environment"
+
+        action {
+            action_type = "Octopus.TerraformApply"
+            is_required = true
+            worker_pool = "hosted-ubuntu"
+            environments = ["infra-nonprod", "infra-prod"]
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Azure.LifecycleAccount"
+                Octopus.Action.GitRepository.Source = "Project"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AdditionalActionParams = "-lock-timeout=300s"
+                Octopus.Action.Terraform.AdditionalInitParams = "-backend-config=resource_group_name=#{Terraform.StateResourceGroup} -backend-config=storage_account_name=#{Terraform.StateStorageAccount} -backend-config=container_name=#{Terraform.StateContainer} -backend-config=key=#{Terraform.StateKey} -backend-config=use_azuread_auth=true"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_<worker-registration-token-variable>\":\"#{if Octopus.WorkerRegistrationToken}#{Octopus.WorkerRegistrationToken}#{/if}\"}"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "False"
+                Octopus.Action.Terraform.TemplateDirectory = "terraform/environment"
+                Octopus.Action.Terraform.VarFiles = "#{Environment.Class}.tfvars"
+                OctopusUseBundledTooling = "False"
+            }
+
+            container {
+                feed = "<docker-hub-feed>"
+                image = "octopusdeploy/worker-tools:<worker-tools-version>"
+            }
+        }
+    }
+
+    step "configure-db-principals-tdd" {
+        name = "Configure database principals (tdd)"
+
+        action {
+            action_type = "Octopus.AzurePowerShell"
+            is_required = true
+            worker_pool = "k8s-tdd"
+            environments = ["infra-nonprod"]
+            properties = {
+                Octopus.Action.Azure.AccountId = "#{Azure.LifecycleAccount}"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    app_env="tdd"
+                    rg="rg-workorders-$app_env"
+                    
+                    server_fqdn="$(az sql server list --resource-group "$rg" --query "[].fullyQualifiedDomainName" --output tsv)"
+                    [ "$(printf '%s\n' "$server_fqdn" | grep -c .)" = "1" ] || fail_step "Expected exactly one SQL server in $rg."
+                    server_name="$(printf '%s' "$server_fqdn" | cut -d. -f1)"
+                    database="$(az sql db list --resource-group "$rg" --server "$server_name" --query "[?name!='master'].name" --output tsv | grep -v -E -- '-(pre|bak|pitr|replaced)-' || true)"
+                    [ "$(printf '%s\n' "$database" | grep -c .)" = "1" ] || fail_step "Expected exactly one application database on $server_name."
+                    vault="$(az keyvault list --resource-group "$rg" --query "[].name" --output tsv)"
+                    [ "$(printf '%s\n' "$vault" | grep -c .)" = "1" ] || fail_step "Expected exactly one Key Vault in $rg."
+                    
+                    sql_escape() { printf '%s' "$1" | sed "s/'/''/g"; }
+                    read_secret() { az keyvault secret show --vault-name "$vault" --name "$1" --query value --output tsv; }
+                    
+                    migrator_raw="$(read_secret workorders-sql-migrator-password)"
+                    [ -n "$migrator_raw" ] || fail_step "Secret workorders-sql-migrator-password is empty in $vault."
+                    migrator_pw="$(sql_escape "$migrator_raw")"
+                    app_user="id-workorders-$app_env-app"
+                    
+                    sql_file="$(mktemp)"
+                    chmod 600 "$sql_file"
+                    trap 'rm -f "$sql_file"' EXIT
+                    printf '%s\n' \
+                        "IF SCHEMA_ID(N'nServiceBus') IS NULL EXEC(N'CREATE SCHEMA [nServiceBus]');" \
+                        "IF USER_ID(N'$app_user') IS NULL CREATE USER [$app_user] FROM EXTERNAL PROVIDER;" \
+                        "ALTER ROLE db_datareader ADD MEMBER [$app_user];" \
+                        "ALTER ROLE db_datawriter ADD MEMBER [$app_user];" \
+                        "GRANT CREATE TABLE TO [$app_user];" \
+                        "GRANT ALTER ON SCHEMA::[nServiceBus] TO [$app_user];" \
+                        "IF USER_ID(N'workorders_migrator') IS NULL BEGIN CREATE USER [workorders_migrator] WITH PASSWORD = N'$migrator_pw'; END ELSE BEGIN ALTER USER [workorders_migrator] WITH PASSWORD = N'$migrator_pw'; END;" \
+                        "ALTER ROLE db_ddladmin ADD MEMBER [workorders_migrator];" \
+                        "ALTER ROLE db_datareader ADD MEMBER [workorders_migrator];" \
+                        "ALTER ROLE db_datawriter ADD MEMBER [workorders_migrator];" > "$sql_file"
+                    
+                    if [ "$app_env" = "tdd" ]; then
+                        acceptance_raw="$(read_secret workorders-sql-acceptance-password)"
+                        [ -n "$acceptance_raw" ] || fail_step "Secret workorders-sql-acceptance-password is empty in $vault."
+                        acceptance_pw="$(sql_escape "$acceptance_raw")"
+                        printf '%s\n' \
+                            "IF USER_ID(N'workorders_acceptance') IS NULL BEGIN CREATE USER [workorders_acceptance] WITH PASSWORD = N'$acceptance_pw'; END ELSE BEGIN ALTER USER [workorders_acceptance] WITH PASSWORD = N'$acceptance_pw'; END;" \
+                            "ALTER ROLE db_datareader ADD MEMBER [workorders_acceptance];" \
+                            "ALTER ROLE db_datawriter ADD MEMBER [workorders_acceptance];" \
+                            "GRANT VIEW DEFINITION TO [workorders_acceptance];" >> "$sql_file"
+                    fi
+                    
+                    sqlcmd -S "tcp:$server_fqdn,1433" -d "$database" --authentication-method ActiveDirectoryAzCli -b -i "$sql_file"
+                    write_highlight "Database principals configured in $database on $server_name ($app_env)."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+                OctopusUseBundledTooling = "False"
+            }
+
+            container {
+                feed = "acr-workorders"
+                image = "#{StepImage.CiDotnet}"
+            }
+        }
+    }
+
+    step "configure-db-principals-uat" {
+        name = "Configure database principals (uat)"
+
+        action {
+            action_type = "Octopus.AzurePowerShell"
+            is_required = true
+            worker_pool = "k8s-uat"
+            environments = ["infra-nonprod"]
+            properties = {
+                Octopus.Action.Azure.AccountId = "#{Azure.LifecycleAccount}"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    app_env="uat"
+                    rg="rg-workorders-$app_env"
+                    
+                    server_fqdn="$(az sql server list --resource-group "$rg" --query "[].fullyQualifiedDomainName" --output tsv)"
+                    [ "$(printf '%s\n' "$server_fqdn" | grep -c .)" = "1" ] || fail_step "Expected exactly one SQL server in $rg."
+                    server_name="$(printf '%s' "$server_fqdn" | cut -d. -f1)"
+                    database="$(az sql db list --resource-group "$rg" --server "$server_name" --query "[?name!='master'].name" --output tsv | grep -v -E -- '-(pre|bak|pitr|replaced)-' || true)"
+                    [ "$(printf '%s\n' "$database" | grep -c .)" = "1" ] || fail_step "Expected exactly one application database on $server_name."
+                    vault="$(az keyvault list --resource-group "$rg" --query "[].name" --output tsv)"
+                    [ "$(printf '%s\n' "$vault" | grep -c .)" = "1" ] || fail_step "Expected exactly one Key Vault in $rg."
+                    
+                    sql_escape() { printf '%s' "$1" | sed "s/'/''/g"; }
+                    read_secret() { az keyvault secret show --vault-name "$vault" --name "$1" --query value --output tsv; }
+                    
+                    migrator_raw="$(read_secret workorders-sql-migrator-password)"
+                    [ -n "$migrator_raw" ] || fail_step "Secret workorders-sql-migrator-password is empty in $vault."
+                    migrator_pw="$(sql_escape "$migrator_raw")"
+                    app_user="id-workorders-$app_env-app"
+                    
+                    sql_file="$(mktemp)"
+                    chmod 600 "$sql_file"
+                    trap 'rm -f "$sql_file"' EXIT
+                    printf '%s\n' \
+                        "IF SCHEMA_ID(N'nServiceBus') IS NULL EXEC(N'CREATE SCHEMA [nServiceBus]');" \
+                        "IF USER_ID(N'$app_user') IS NULL CREATE USER [$app_user] FROM EXTERNAL PROVIDER;" \
+                        "ALTER ROLE db_datareader ADD MEMBER [$app_user];" \
+                        "ALTER ROLE db_datawriter ADD MEMBER [$app_user];" \
+                        "GRANT CREATE TABLE TO [$app_user];" \
+                        "GRANT ALTER ON SCHEMA::[nServiceBus] TO [$app_user];" \
+                        "IF USER_ID(N'workorders_migrator') IS NULL BEGIN CREATE USER [workorders_migrator] WITH PASSWORD = N'$migrator_pw'; END ELSE BEGIN ALTER USER [workorders_migrator] WITH PASSWORD = N'$migrator_pw'; END;" \
+                        "ALTER ROLE db_ddladmin ADD MEMBER [workorders_migrator];" \
+                        "ALTER ROLE db_datareader ADD MEMBER [workorders_migrator];" \
+                        "ALTER ROLE db_datawriter ADD MEMBER [workorders_migrator];" > "$sql_file"
+                    
+                    if [ "$app_env" = "tdd" ]; then
+                        acceptance_raw="$(read_secret workorders-sql-acceptance-password)"
+                        [ -n "$acceptance_raw" ] || fail_step "Secret workorders-sql-acceptance-password is empty in $vault."
+                        acceptance_pw="$(sql_escape "$acceptance_raw")"
+                        printf '%s\n' \
+                            "IF USER_ID(N'workorders_acceptance') IS NULL BEGIN CREATE USER [workorders_acceptance] WITH PASSWORD = N'$acceptance_pw'; END ELSE BEGIN ALTER USER [workorders_acceptance] WITH PASSWORD = N'$acceptance_pw'; END;" \
+                            "ALTER ROLE db_datareader ADD MEMBER [workorders_acceptance];" \
+                            "ALTER ROLE db_datawriter ADD MEMBER [workorders_acceptance];" \
+                            "GRANT VIEW DEFINITION TO [workorders_acceptance];" >> "$sql_file"
+                    fi
+                    
+                    sqlcmd -S "tcp:$server_fqdn,1433" -d "$database" --authentication-method ActiveDirectoryAzCli -b -i "$sql_file"
+                    write_highlight "Database principals configured in $database on $server_name ($app_env)."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+                OctopusUseBundledTooling = "False"
+            }
+
+            container {
+                feed = "acr-workorders"
+                image = "#{StepImage.CiDotnet}"
+            }
+        }
+    }
+
+    step "configure-db-principals-prod" {
+        name = "Configure database principals (prod)"
+
+        action {
+            action_type = "Octopus.AzurePowerShell"
+            is_required = true
+            worker_pool = "k8s-prod"
+            environments = ["infra-prod"]
+            properties = {
+                Octopus.Action.Azure.AccountId = "#{Azure.LifecycleAccount}"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    set -eu
+                    app_env="prod"
+                    rg="rg-workorders-$app_env"
+                    
+                    server_fqdn="$(az sql server list --resource-group "$rg" --query "[].fullyQualifiedDomainName" --output tsv)"
+                    [ "$(printf '%s\n' "$server_fqdn" | grep -c .)" = "1" ] || fail_step "Expected exactly one SQL server in $rg."
+                    server_name="$(printf '%s' "$server_fqdn" | cut -d. -f1)"
+                    database="$(az sql db list --resource-group "$rg" --server "$server_name" --query "[?name!='master'].name" --output tsv | grep -v -E -- '-(pre|bak|pitr|replaced)-' || true)"
+                    [ "$(printf '%s\n' "$database" | grep -c .)" = "1" ] || fail_step "Expected exactly one application database on $server_name."
+                    vault="$(az keyvault list --resource-group "$rg" --query "[].name" --output tsv)"
+                    [ "$(printf '%s\n' "$vault" | grep -c .)" = "1" ] || fail_step "Expected exactly one Key Vault in $rg."
+                    
+                    sql_escape() { printf '%s' "$1" | sed "s/'/''/g"; }
+                    read_secret() { az keyvault secret show --vault-name "$vault" --name "$1" --query value --output tsv; }
+                    
+                    migrator_raw="$(read_secret workorders-sql-migrator-password)"
+                    [ -n "$migrator_raw" ] || fail_step "Secret workorders-sql-migrator-password is empty in $vault."
+                    migrator_pw="$(sql_escape "$migrator_raw")"
+                    app_user="id-workorders-$app_env-app"
+                    
+                    sql_file="$(mktemp)"
+                    chmod 600 "$sql_file"
+                    trap 'rm -f "$sql_file"' EXIT
+                    printf '%s\n' \
+                        "IF SCHEMA_ID(N'nServiceBus') IS NULL EXEC(N'CREATE SCHEMA [nServiceBus]');" \
+                        "IF USER_ID(N'$app_user') IS NULL CREATE USER [$app_user] FROM EXTERNAL PROVIDER;" \
+                        "ALTER ROLE db_datareader ADD MEMBER [$app_user];" \
+                        "ALTER ROLE db_datawriter ADD MEMBER [$app_user];" \
+                        "GRANT CREATE TABLE TO [$app_user];" \
+                        "GRANT ALTER ON SCHEMA::[nServiceBus] TO [$app_user];" \
+                        "IF USER_ID(N'workorders_migrator') IS NULL BEGIN CREATE USER [workorders_migrator] WITH PASSWORD = N'$migrator_pw'; END ELSE BEGIN ALTER USER [workorders_migrator] WITH PASSWORD = N'$migrator_pw'; END;" \
+                        "ALTER ROLE db_ddladmin ADD MEMBER [workorders_migrator];" \
+                        "ALTER ROLE db_datareader ADD MEMBER [workorders_migrator];" \
+                        "ALTER ROLE db_datawriter ADD MEMBER [workorders_migrator];" > "$sql_file"
+                    
+                    if [ "$app_env" = "tdd" ]; then
+                        acceptance_raw="$(read_secret workorders-sql-acceptance-password)"
+                        [ -n "$acceptance_raw" ] || fail_step "Secret workorders-sql-acceptance-password is empty in $vault."
+                        acceptance_pw="$(sql_escape "$acceptance_raw")"
+                        printf '%s\n' \
+                            "IF USER_ID(N'workorders_acceptance') IS NULL BEGIN CREATE USER [workorders_acceptance] WITH PASSWORD = N'$acceptance_pw'; END ELSE BEGIN ALTER USER [workorders_acceptance] WITH PASSWORD = N'$acceptance_pw'; END;" \
+                            "ALTER ROLE db_datareader ADD MEMBER [workorders_acceptance];" \
+                            "ALTER ROLE db_datawriter ADD MEMBER [workorders_acceptance];" \
+                            "GRANT VIEW DEFINITION TO [workorders_acceptance];" >> "$sql_file"
+                    fi
+                    
+                    sqlcmd -S "tcp:$server_fqdn,1433" -d "$database" --authentication-method ActiveDirectoryAzCli -b -i "$sql_file"
+                    write_highlight "Database principals configured in $database on $server_name ($app_env)."
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+                OctopusUseBundledTooling = "False"
+            }
+
+            container {
+                feed = "acr-workorders"
+                image = "#{StepImage.CiDotnet}"
+            }
+        }
+    }
+}

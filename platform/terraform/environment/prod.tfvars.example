@@ -1,0 +1,109 @@
+# Class prod: cluster aks-workorders-prod, environment prod.
+# Copy to prod.tfvars (untracked; the runbooks pass it with -var-file) and fill it from the
+# foundation output environment_inputs["prod"]. Never commit the copy: the repository is public.
+#
+# Applied only by env-plan / env-apply in environment infra-prod with azure-oidc-env-lifecycle-prod
+# (OIDC from the first apply; the stored provisioner is never used for prod, ADR-C10). There is no
+# env-destroy for prod (ADR-D10), and CanNotDelete locks on rg-workorders-prod and
+# rg-workorders-aks-prod block deletes. Backend key: environment-prod.tfstate.
+
+cluster         = "prod"
+tenant_id       = "<AZURE_TENANT_ID>"
+subscription_id = "<AZURE_SUBSCRIPTION_ID>"
+location        = "<azure-region>"
+
+# --- Foundation outputs: environment_inputs["prod"] -------------------------------------------------
+aks_controlplane_identity_id = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-prod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-aks-prod-controlplane"
+aks_kubelet_identity_id      = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-prod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-aks-prod-kubelet"
+aks_nodes_subnet_id          = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-prod/providers/Microsoft.Network/virtualNetworks/vnet-workorders-prod/subnets/snet-aks-nodes"
+private_endpoints_subnet_id  = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-prod/providers/Microsoft.Network/virtualNetworks/vnet-workorders-prod/subnets/snet-private-endpoints"
+private_dns_zone_ids = {
+  sql       = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-prod/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
+  key_vault = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-prod/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net"
+}
+log_analytics_workspace_id = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-shared/providers/Microsoft.OperationalInsights/workspaces/log-workorders"
+sql_admin_group = {
+  display_name = "<sql-admins-prod>"
+  object_id    = "00000000-0000-0000-0000-000000000000" # foundation output sql_admin_groups["prod"]
+}
+workload_identity_ids = {
+  prod = {
+    app = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-prod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-workorders-prod-app"
+    eso = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-prod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-workorders-prod-eso"
+  }
+}
+platform_identity_ids = {
+  eso     = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-prod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-eso-platform-prod"
+  kyverno = "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/rg-workorders-aks-prod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-kyverno-prod"
+}
+
+# --- Names (§7.1) -------------------------------------------------------------------------------------
+key_vault_names = {
+  prod = "<kv-workorders-prod>"
+}
+platform_key_vault_name = "<kv-workorders-platform-prod>"
+sql_server_names = {
+  prod = "<sql-workorders-prod>"
+}
+sql_database_names = {
+  prod = "<sqldb-workorders-prod>"
+}
+
+# --- Cluster (Standard tier, uptime SLA: ADR-D1) --------------------------------------------------------
+kubernetes_version = null
+system_node_pool = {
+  vm_size   = "Standard_D4ds_v5"
+  min_count = 2
+  max_count = 3
+}
+apps_node_pool = {
+  vm_size   = "Standard_D4ds_v5"
+  min_count = 2
+  max_count = 5
+}
+cluster_network = {
+  pod_cidr       = "192.168.0.0/16"
+  service_cidr   = "172.16.0.0/16"
+  dns_service_ip = "172.16.0.10"
+}
+api_server_authorized_ip_ranges = ["<octopus-cloud-static-ips>"]
+key_vault_allowed_ip_ranges     = ["<octopus-cloud-static-ips>"]
+
+# --- SQL (Standard: 35-day point-in-time restore; long-term retention, R18) ----------------------------
+sql_databases = {
+  prod = {
+    sku_name                  = "S1"
+    pitr_days                 = 35
+    backup_storage_redundancy = "Geo"
+    ltr_weekly                = "P4W"
+    ltr_monthly               = "P12M"
+    ltr_yearly                = "P5Y"
+    ltr_week_of_year          = 1
+  }
+}
+
+# --- Monitoring ---------------------------------------------------------------------------------------
+oncall_email_receivers = {
+  sre-oncall = "sre-oncall@example.com"
+}
+slo_alert_enabled = true
+
+# --- Octopus worker (octopus-worker-prod) ---------------------------------------------------------------
+octopus_url                  = "<OCTOPUS_URL>"
+octopus_space                = "<octopus-space>"
+octopus_worker_chart_version = "<kubernetes-agent-chart-version>"
+
+# --- Argo CD bootstrap (argocd-prod) ---------------------------------------------------------------------
+argocd_chart_version      = "<argo-cd-chart-version>"
+argocd_apps_chart_version = "<argocd-apps-chart-version>"
+env_repo_url              = "<ENV_REPO_URL>"
+argocd_repo_private       = true
+
+# OIDC account azure-oidc-env-lifecycle-prod (providers.tf).
+kubelogin_login_mode = "workloadidentity"
+
+tags = {
+  app        = "workorders"
+  class      = "prod"
+  managed-by = "terraform-environment"
+}
