@@ -3,6 +3,7 @@ package com.clearmeasure.workorders.web;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
+import com.microsoft.playwright.options.RequestOptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Real Chromium acceptance run. Video is written as a build artifact for PR review. */
@@ -83,7 +83,7 @@ class WorkOrderBrowserAcceptanceTest {
                 "Displayed upload time should be UTC");
             page.navigate(baseUrl + "/");
             assertEquals(403, page.request().post(baseUrl + "/api/work-orders/" + number + "/begin",
-                    new APIRequestContext.RequestOptions().setHeaders(Map.of("X-CSRF-Token", csrfToken))).status(),
+                    RequestOptions.create().setHeader("X-CSRF-Token", csrfToken)).status(),
                 "The creator cannot begin work assigned to another employee");
             orderRow.locator("select[name='assignee']").selectOption("tlovejoy");
             orderRow.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Assign")).click();
