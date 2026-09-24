@@ -38,7 +38,8 @@ try {
   await page.getByTestId('due-date').fill(chicagoToday);
   await page.getByTestId('save-draft').click();
   await page.getByText('Draft saved').waitFor();
-  const newOrder = page.locator('#orders article').first();
+  const newOrder = page.locator('#orders article').filter({ hasText: acceptanceTitle });
+  await newOrder.waitFor();
   await newOrder.getByTestId('attachment-file-name').fill('damage-photo.jpg');
   await newOrder.getByTestId('attachment-content-type').fill('image/jpeg');
   await newOrder.getByTestId('attachment-file-size').fill('2048');
@@ -47,7 +48,7 @@ try {
   await page.getByTestId('attachment-row').getByText('damage-photo.jpg').waitFor();
   await page.getByTestId('attachment-row').getByText('Homer Simpson').waitFor();
   await page.getByTestId('due-date-value').getByText('Due Today').waitFor();
-  await page.getByRole('button', { name: 'Assign' }).last().click();
+  await newOrder.getByRole('button', { name: 'Assign' }).click();
   await page.getByText('Work order assigned').waitFor();
   const assignedCard = page.locator('#orders article').filter({ hasText: acceptanceTitle });
   await assignedCard.getByRole('button', { name: 'Begin' }).waitFor();
@@ -59,9 +60,9 @@ try {
   await page.getByTestId('login-user').selectOption('demo.tech');
   await page.getByTestId('login').click();
   await page.getByText('Welcome demo.tech!').waitFor();
-  await page.getByRole('button', { name: 'Begin' }).last().click();
+  await newOrder.getByRole('button', { name: 'Begin' }).click();
   await page.getByText('Work order in progress').waitFor();
-  await page.getByRole('button', { name: 'Complete' }).last().click();
+  await newOrder.getByRole('button', { name: 'Complete' }).click();
   await page.getByText('Work order complete').waitFor();
   await page.getByText('Complete', { exact: true }).last().waitFor();
   await page.getByTestId('search-status').selectOption('Complete');

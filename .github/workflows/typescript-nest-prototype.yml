@@ -13,6 +13,8 @@ on:
 jobs:
   prototype:
     runs-on: ubuntu-latest
+    env:
+      DEMO_LOGIN_ENABLED: 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

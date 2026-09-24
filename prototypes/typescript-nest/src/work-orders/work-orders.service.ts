@@ -162,6 +162,7 @@ export class WorkOrdersService implements OnModuleInit {
   }
 
   login(username: string): { token: string; user: ReturnType<WorkOrdersService['profile']> } {
+    if (process.env.DEMO_LOGIN_ENABLED !== 'true') throw new ForbiddenException('Demo employee login is disabled; set DEMO_LOGIN_ENABLED=true for local demos and acceptance testing');
     const employee = this.employee(username);
     if (!employee) throw new UnauthorizedException('Select a valid employee');
     const token = crypto.randomUUID();

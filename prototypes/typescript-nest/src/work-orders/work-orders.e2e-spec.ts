@@ -15,6 +15,7 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
   let readOnlyAuth: string;
   let testDatabase: string;
   beforeAll(async () => {
+    process.env.DEMO_LOGIN_ENABLED = 'true';
     testDatabase = path.join(os.tmpdir(), `typescript-nest-test-${crypto.randomUUID()}.db`);
     process.env.DATABASE_URL = `file:${testDatabase}`;
     const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
@@ -27,6 +28,13 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
     readOnlyAuth = await login(app, 'nflanders');
   });
   afterAll(async () => { await app.close(); rmSync(testDatabase, { force: true }); });
+
+  it('keeps passwordless employee login disabled unless explicitly opted in', async () => {
+    const original = process.env.DEMO_LOGIN_ENABLED;
+    delete process.env.DEMO_LOGIN_ENABLED;
+    try { await request(app.getHttpServer()).post('/api/auth/login').send({ username: 'hsimpson' }).expect(403); }
+    finally { process.env.DEMO_LOGIN_ENABLED = original ?? 'true'; }
+  });
 
   it('creates, assigns, begins and completes a work order, rejecting invalid moves', async () => {
     const dateParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
