@@ -14,4 +14,4 @@ class WorkOrderForm(forms.ModelForm):
 class AttachmentMetadataForm(forms.Form):
     file_name = forms.CharField(max_length=500, label="File name")
     content_type = forms.CharField(max_length=200, required=False, label="Content type")
-    file_size = forms.IntegerField(min_value=-(2**63), max_value=2**63 - 1, label="File size (bytes)")
+    file_size = forms.IntegerField(min_value=0, max_value=2**63 - 1, label="File size (bytes)")

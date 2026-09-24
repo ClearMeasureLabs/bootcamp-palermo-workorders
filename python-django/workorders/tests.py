@@ -241,6 +241,9 @@ class WorkOrderWebTests(TestCase):
         response = self.client.post(url, {"file_name": "   ", "file_size": "100"})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "This field is required.")
+        response = self.client.post(url, {"file_name": "negative.pdf", "file_size": "-1"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Ensure this value is greater than or equal to 0.")
         self.assertFalse(WorkOrderAttachment.objects.filter(work_order=order).exists())
     @patch("workorders.views.chicago_today", return_value=date(2026, 9, 23))
     def test_overdue_filter_excludes_today_and_closed_orders(self, _today):
