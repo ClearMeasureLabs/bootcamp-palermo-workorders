@@ -54,7 +54,9 @@ try {
   await page.waitForURL('**/workorder/manage/*');
   const newOrder = page.locator('#manage-route');
   await newOrder.waitFor();
-  await newOrder.locator('.form-grid').getByText(acceptanceTitle, { exact: true }).waitFor();
+  const managedTitle = newOrder.locator('.form-grid input[name="title"]');
+  await managedTitle.waitFor();
+  if (await managedTitle.inputValue() !== acceptanceTitle) throw new Error('Manage route did not load the newly created work order');
   await page.screenshot({ path: path.join(artifacts, 'work-order-manage-1365x900.png') });
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.screenshot({ path: path.join(artifacts, 'work-order-manage-1920x1080.png') });
