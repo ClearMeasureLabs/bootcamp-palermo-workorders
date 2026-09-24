@@ -52,8 +52,10 @@ try {
   await page.setViewportSize({ width: 1365, height: 900 });
   await page.locator('#orders tbody tr').filter({ hasText: acceptanceTitle }).getByRole('link').click();
   await page.waitForURL('**/workorder/manage/*');
-  const newOrder = page.locator('#manage-content article').filter({ hasText: acceptanceTitle });
+  const newOrder = page.locator('#manage-route');
   await newOrder.waitFor();
+  await page.getByTestId('title').waitFor();
+  if (await page.getByTestId('title').inputValue() !== acceptanceTitle) throw new Error('Manage route did not load the newly created work order');
   await page.screenshot({ path: path.join(artifacts, 'work-order-manage-1365x900.png') });
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.screenshot({ path: path.join(artifacts, 'work-order-manage-1920x1080.png') });
@@ -67,7 +69,7 @@ try {
   await page.getByTestId('due-date-value').getByText('Due Today').waitFor();
   await newOrder.getByRole('button', { name: 'Assign' }).click();
   await page.getByText('Work order assigned').waitFor();
-  const assignedCard = page.locator('#manage-content article').filter({ hasText: acceptanceTitle });
+  const assignedCard = page.locator('#manage-route').filter({ hasText: acceptanceTitle });
   await assignedCard.getByRole('button', { name: 'Shelve' }).waitFor({ state: 'detached' });
   await assignedCard.getByRole('link', { name: /Back to Search/ }).click();
   await page.waitForURL('**/workorder/search');
@@ -77,7 +79,7 @@ try {
   await assignedResult.getByText(/Alex Technician/i).waitFor();
   await assignedResult.getByText('ASSIGNED', { exact: true }).waitFor();
   await page.locator('#orders tbody tr').filter({ hasText: acceptanceTitle }).getByRole('link').click();
-  const workerOrder = page.locator('#manage-content article').filter({ hasText: acceptanceTitle });
+  const workerOrder = page.locator('#manage-route').filter({ hasText: acceptanceTitle });
   await workerOrder.waitFor();
   await page.getByTestId('logout').click();
   await page.getByTestId('login-user').selectOption('demo.tech');
@@ -93,7 +95,7 @@ try {
   await page.getByTestId('search-status').selectOption('Complete');
   await page.getByTestId('search').click();
   await page.locator('#orders tbody tr').filter({ hasText: acceptanceTitle }).getByRole('link').click();
-  const completedCard = page.locator('#manage-content article').filter({ hasText: acceptanceTitle });
+  const completedCard = page.locator('#manage-route').filter({ hasText: acceptanceTitle });
   await completedCard.waitFor();
   await completedCard.getByRole('button', { name: 'History' }).click();
   await completedCard.getByTestId('event-history').getByText('Created').waitFor();
