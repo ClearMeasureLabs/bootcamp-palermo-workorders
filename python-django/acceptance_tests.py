@@ -85,9 +85,9 @@ try:
         page.get_by_role("button", name="Update status").click()
         page.get_by_text(f"Work order {number} moved to Assigned.").wait_for()
         page.goto(f"http://127.0.0.1:{port}/")
-        due_cell = page.get_by_test_id(f"due-date-{number}")
+        due_cell = page.get_by_test_id(f"DueDateCell{number}")
         assert "due-date-today" in (due_cell.get_attribute("class") or "")
-        assert page.get_by_test_id(f"urgency-badge-{number}").inner_text() == "Due Today"
+        assert page.get_by_test_id(f"UrgencyBadge{number}").inner_text() == "Due Today"
         page.get_by_label("Show overdue only").check()
         page.get_by_role("button", name="Search").click()
         page.get_by_text("Acceptance: open overdue").wait_for()

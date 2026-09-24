@@ -49,10 +49,27 @@ def work_order_list(request):
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "")
     overdue_only = request.GET.get("overdue") == "1"
+    creator_id = request.GET.get("creator", "")
+    assignee_id = request.GET.get("assignee", "")
+    assigned_to_me = request.GET.get("assigned_to_me") == "1"
+    sort = request.GET.get("sort", "")
     today = chicago_today()
     if query: orders = orders.filter(Q(number__icontains=query) | Q(title__icontains=query) | Q(room_number__icontains=query))
     if status in WorkOrder.Status.values: orders = orders.filter(status=status)
+    if creator_id.isdigit(): orders = orders.filter(creator_id=int(creator_id))
+    if assigned_to_me and actor:
+        orders = orders.filter(assignee=actor)
+    elif assignee_id.isdigit():
+        orders = orders.filter(assignee_id=int(assignee_id))
     if overdue_only: orders = orders.filter(due_date__lt=today, status__in=OPEN_STATUSES)
+    sort_fields = {"Status": "status", "Title": "title", "DueDate": "due_date", "Room": "room_number"}
+    if sort in sort_fields:
+        field = sort_fields[sort]
+        direction = request.GET.get("direction", "asc")
+        orders = orders.order_by(("-" if direction == "desc" else "") + field, "number")
+    else:
+        direction = "asc"
+        orders = orders.order_by("-created_at")
     orders = list(orders)
     for order in orders:
         order.due_urgency = due_date_urgency(order, today)
@@ -60,7 +77,9 @@ def work_order_list(request):
         order.due_css_class = {"DueToday": "due-date-today", "Overdue": "due-date-overdue"}.get(order.due_urgency, "")
     counts = {status: 0 for status, _ in WorkOrder.Status.choices}
     counts.update(WorkOrder.objects.values("status").annotate(total=Count("id")).values_list("status", "total"))
-    return render(request, "workorders/list.html", {"orders": orders, "query": query, "selected_status": status, "statuses": WorkOrder.Status.choices, "counts": counts, "overdue_only": overdue_only, "current_employee": actor})
+    sort_names = ("Status", "Title", "DueDate", "Room")
+    next_directions = {name: "desc" if sort == name and direction == "asc" else "asc" for name in sort_names}
+    return render(request, "workorders/list.html", {"orders": orders, "query": query, "selected_status": status, "statuses": WorkOrder.Status.choices, "counts": counts, "overdue_only": overdue_only, "current_employee": actor, "employees": Employee.objects.filter(active=True).order_by("last_name", "first_name"), "creator_id": creator_id, "assignee_id": assignee_id, "assigned_to_me": assigned_to_me, "sort": sort, "direction": direction, "next_directions": next_directions})
 def work_order_create(request):
     actor = current_employee(request)
     if actor is None:

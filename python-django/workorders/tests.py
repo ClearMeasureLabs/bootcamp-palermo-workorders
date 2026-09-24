@@ -147,6 +147,21 @@ class WorkOrderWebTests(TestCase):
         response = self.client.get(reverse("work_order_list"), {"q": "B-2"})
         self.assertContains(response, "Inspect boiler")
         self.assertNotContains(response, "Repair sink")
+    def test_search_filters_by_creator_assignee_and_assigned_to_me_and_sorts(self):
+        self.login_as(self.creator)
+        mine = WorkOrder.objects.create(title="Zeta", creator=self.assignee, assignee=self.creator)
+        other = WorkOrder.objects.create(title="Alpha", creator=self.creator, assignee=self.assignee)
+        response = self.client.get(reverse("work_order_list"), {"creator": self.assignee.pk})
+        self.assertContains(response, mine.number)
+        self.assertNotContains(response, other.number)
+        response = self.client.get(reverse("work_order_list"), {"assignee": self.assignee.pk})
+        self.assertContains(response, other.number)
+        self.assertNotContains(response, mine.number)
+        response = self.client.get(reverse("work_order_list"), {"assigned_to_me": "1"})
+        self.assertContains(response, mine.number)
+        self.assertNotContains(response, other.number)
+        response = self.client.get(reverse("work_order_list"), {"sort": "Title", "direction": "asc"})
+        self.assertLess(response.content.index(b"Alpha"), response.content.index(b"Zeta"))
     def test_room_number_accepts_900_characters_and_rejects_901(self):
         self.login_as(self.creator)
         room = "R" * 900
@@ -273,8 +288,8 @@ class WorkOrderWebTests(TestCase):
         self.login_as(self.creator)
         order = WorkOrder.objects.create(title="No due date")
         response = self.client.get(reverse("work_order_list"))
-        self.assertContains(response, f'data-testid="due-date-{order.number}" class=""></td>')
-        self.assertNotContains(response, f'urgency-badge-{order.number}')
+        self.assertContains(response, f'data-testid="DueDateCell{order.number}" class=""></span>')
+        self.assertNotContains(response, f'UrgencyBadge{order.number}')
 
     def test_operational_api_health_is_lightweight_and_versioned(self):
         with patch("workorders.operations.connection.ensure_connection", side_effect=OSError("database down")):
