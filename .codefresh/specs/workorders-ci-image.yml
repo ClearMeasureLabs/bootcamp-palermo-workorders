@@ -1,0 +1,47 @@
+# Pipeline spec: workorders/ci-image (contract §7.7).
+#   Register once:   codefresh create pipeline -f .codefresh/specs/workorders-ci-image.yml
+#   Apply a change:  codefresh replace pipeline -f .codefresh/specs/workorders-ci-image.yml
+# Run it once by hand during bootstrap to mint the first <ci-image-version>.
+version: "1.0"
+kind: pipeline
+metadata:
+  name: workorders/ci-image
+  project: workorders
+spec:
+  triggers:
+    - type: git
+      name: ci-image-change
+      description: Pushes to master that change the CI toolchain image
+      repo: ClearMeasureLabs/bootcamp-palermo-workorders
+      provider: github
+      context: "<cf-git-integration-app>"
+      events:
+        - push.heads
+      branchRegex: /^master$/
+      branchRegexInput: regex
+      # Glob relative to the repository root (Codefresh git trigger "Modified files").
+      modifiedFilesGlob: ".codefresh/images/**"
+      pullRequestAllowForkEvents: false
+      disabled: false
+  # Weekly rebuild picks up patched OS packages. Cron expressions are UTC [VERIFY].
+  cronTriggers:
+    - name: weekly-rebuild
+      type: cron
+      expression: "0 6 * * 1"
+      message: weekly rebuild of platform/ci-dotnet
+      branch: master
+      disabled: false
+  # No contexts: the image build needs no secret. Registry integration
+  # acr-platform-ci is named by the build step in ci-image.yml.
+  contexts: []
+  runtimeEnvironment:
+    name: "<cf-runtime-release>"
+  specTemplate:
+    location: git
+    repo: ClearMeasureLabs/bootcamp-palermo-workorders
+    path: ./.codefresh/pipelines/ci-image.yml
+    # Pinned like release.yml: this pipeline pushes to platform/*.
+    revision: master
+    context: "<cf-git-integration-app>"
+  # Builds queue; each produces its own unique tag.
+  concurrency: 1

@@ -1,0 +1,185 @@
+# policies/kyverno/base/verify-release-signatures.yaml
+#
+# Supply-chain admission (ADR-D11). Two ImageValidatingPolicies:
+#
+#   verify-release-signatures   every <acr-name>.azurecr.io/workorders/* image in a workorders-*
+#                               namespace must carry a keyless cosign signature from the Codefresh
+#                               pipeline workorders/release. Deny in prod, Audit in nonprod
+#                               (overlays). Nonprod adds the preview-pipeline attestor for
+#                               workorders-previews/* (phase 6).
+#   audit-release-provenance    the same images should carry the provenance attestation that
+#                               supply-chain.sh attaches. Audit everywhere: the predicate is
+#                               step-authored, SLSA level 2 at most, so it informs and never blocks.
+#
+# Signer identity (E33): Fulcio builds the certificate SAN for Codefresh from
+#   {{.platform_url}}/{{.account_name}}/{{.pipeline_name}}:{{.account_id}}/{{.pipeline_id}}
+# https://github.com/sigstore/fulcio/blob/main/config/identity/config.yaml
+# so the release pipeline signs as the exact subject below; the issuer is the Codefresh OIDC
+# issuer (E15). A signature made by any other pipeline, account or branch build fails.
+#
+# Verified against the Kyverno 1.19 documentation and CRD (checked 2026-09-24):
+# https://kyverno.io/docs/policy-types/image-validating-policy/
+#   - validationConfigurations.mutateDigest and verifyDigest DEFAULT TO TRUE. Both are set to
+#     false: a tag-to-digest rewrite would make the live object differ from Git and fight Argo CD
+#     self-heal (ADR-D11), and the manifests carry tags written by Octopus (§7.6). ACR tag locks
+#     supply immutability.
+#   - Pods and pod templates (Deployments, Jobs) have built-in image extractors; custom resources
+#     do not. The `images` extractors below cover Deployments, Jobs and Rollouts with one
+#     expression. A Rollout that uses workloadRef has no template and yields no images; its
+#     Deployment is verified instead (ADR-C3).
+#   - verifyImageSignatures returns 0 for an image outside matchImageReferences, so each
+#     validation filters to the workorders registry path before calling it.
+#
+# Scope: only requests in namespaces named workorders-* reach these policies (matchConditions),
+# so a Kyverno outage cannot block the platform namespaces.
+#
+# Break-glass: a PIM-gated, time-bound PolicyException (docs/runbooks/break-glass.md).
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: verify-release-signatures
+  annotations:
+    policies.kyverno.io/title: Verify workorders release signatures
+    policies.kyverno.io/category: Supply chain
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Images from <acr-name>.azurecr.io/workorders/ must be signed keyless by the Codefresh
+      pipeline workorders/release (ADR-D11). No digest mutation.
+spec:
+  # Enforce by default; overlays/nonprod switches to Audit.
+  validationActions: [Deny]
+  failurePolicy: Fail
+  webhookConfiguration:
+    timeoutSeconds: 15
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments]
+      - apiGroups: [batch]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [jobs]
+      # Argo Rollouts arrives in phase 6. [VERIFY] Kyverno accepts the rule before the CRD
+      # exists; if the policy reports not ready, remove this rule until phase 6.
+      - apiGroups: [argoproj.io]
+        apiVersions: [v1alpha1]
+        operations: [CREATE, UPDATE]
+        resources: [rollouts]
+  matchConditions:
+    - name: workorders-namespaces
+      expression: "object.metadata.?namespace.orValue('').startsWith('workorders-')"
+  images:
+    - name: containers
+      expression: >-
+        (object != null ? object : oldObject).spec.?template.?spec.?containers.orValue([]).map(c, c.image)
+    - name: initContainers
+      expression: >-
+        (object != null ? object : oldObject).spec.?template.?spec.?initContainers.orValue([]).map(c, c.image)
+  matchImageReferences:
+    - glob: "<acr-name>.azurecr.io/workorders/*"
+  credentials:
+    # Workload identity of the admission controller (id-kyverno-<cluster>, AcrPull; §7.8).
+    providers: [azure]
+  attestors:
+    - name: codefreshRelease
+      cosign:
+        keyless:
+          identities:
+            - issuer: https://oidc.codefresh.io
+              subject: "https://g.codefresh.io/<cf-account-name>/workorders/release:<CF_ACCOUNT_ID>/<CF_RELEASE_PIPELINE_ID>"
+        ctlog:
+          url: https://rekor.sigstore.dev
+  validationConfigurations:
+    mutateDigest: false
+    verifyDigest: false
+    required: true
+  validations:
+    - expression: >-
+        images.containers.filter(i, i.startsWith('<acr-name>.azurecr.io/workorders/'))
+        .all(i, verifyImageSignatures(i, [attestors.codefreshRelease]) > 0)
+      message: >-
+        A workorders image is not signed by the Codefresh pipeline workorders/release.
+        Deploy only releases created by that pipeline (docs/runbooks/break-glass.md for emergencies).
+    - expression: >-
+        images.initContainers.filter(i, i.startsWith('<acr-name>.azurecr.io/workorders/'))
+        .all(i, verifyImageSignatures(i, [attestors.codefreshRelease]) > 0)
+      message: >-
+        A workorders init-container image is not signed by the Codefresh pipeline workorders/release.
+---
+# Provenance: reported, never enforced (ADR-D11).
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: audit-release-provenance
+  annotations:
+    policies.kyverno.io/title: Audit workorders release provenance
+    policies.kyverno.io/category: Supply chain
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Reports workorders images without a provenance attestation signed by workorders/release.
+      The predicate is step-authored (SLSA level 2 at most), so this policy stays in Audit.
+spec:
+  validationActions: [Audit]
+  failurePolicy: Ignore
+  webhookConfiguration:
+    timeoutSeconds: 15
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments]
+      - apiGroups: [batch]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [jobs]
+      - apiGroups: [argoproj.io]
+        apiVersions: [v1alpha1]
+        operations: [CREATE, UPDATE]
+        resources: [rollouts]
+  matchConditions:
+    - name: workorders-namespaces
+      expression: "object.metadata.?namespace.orValue('').startsWith('workorders-')"
+  images:
+    - name: containers
+      expression: >-
+        (object != null ? object : oldObject).spec.?template.?spec.?containers.orValue([]).map(c, c.image)
+  matchImageReferences:
+    - glob: "<acr-name>.azurecr.io/workorders/*"
+  credentials:
+    providers: [azure]
+  attestors:
+    - name: codefreshRelease
+      cosign:
+        keyless:
+          identities:
+            - issuer: https://oidc.codefresh.io
+              subject: "https://g.codefresh.io/<cf-account-name>/workorders/release:<CF_ACCOUNT_ID>/<CF_RELEASE_PIPELINE_ID>"
+        ctlog:
+          url: https://rekor.sigstore.dev
+  attestations:
+    # app:.codefresh/scripts/supply-chain.sh runs `cosign attest --type slsaprovenance1`, which
+    # cosign maps to this URI (checked 2026-09-24:
+    # https://github.com/sigstore/cosign/blob/main/cmd/cosign/cli/options/predicate.go and
+    # https://github.com/in-toto/in-toto-golang/blob/master/in_toto/slsa_provenance/v1/provenance.go).
+    - name: provenance
+      intoto:
+        type: https://slsa.dev/provenance/v1
+  validationConfigurations:
+    mutateDigest: false
+    verifyDigest: false
+    required: false
+  validations:
+    - expression: >-
+        images.containers.filter(i, i.startsWith('<acr-name>.azurecr.io/workorders/'))
+        .all(i, verifyAttestationSignatures(i, attestations.provenance, [attestors.codefreshRelease]) > 0)
+      message: >-
+        A workorders image has no provenance attestation signed by workorders/release.
