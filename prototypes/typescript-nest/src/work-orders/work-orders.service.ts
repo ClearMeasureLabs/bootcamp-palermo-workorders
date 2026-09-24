@@ -189,7 +189,7 @@ export class WorkOrdersService implements OnModuleInit {
       FROM Employee e JOIN EmployeeRoles er ON er.EmployeeId=e.id JOIN Role r ON r.id=er.RoleId
       GROUP BY e.username,e.firstName,e.lastName ORDER BY e.lastName,e.firstName`);
     return employees.filter(employee => canFulfill === undefined || Boolean(employee.canFulfill) === canFulfill)
-      .map(employee => ({ username: employee.username, displayName: `${employee.firstName} ${employee.lastName}`.toUpperCase(), canCreate: Boolean(employee.canCreate), canFulfill: Boolean(employee.canFulfill) }));
+      .map(employee => ({ username: employee.username, displayName: `${employee.firstName} ${employee.lastName}`, canCreate: Boolean(employee.canCreate), canFulfill: Boolean(employee.canFulfill) }));
   }
 
   login(username: string): { token: string; user: ReturnType<WorkOrdersService['profile']> } {

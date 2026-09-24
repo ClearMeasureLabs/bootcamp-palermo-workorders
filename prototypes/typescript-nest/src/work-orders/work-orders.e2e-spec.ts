@@ -148,7 +148,7 @@ describe('Work order lifecycle (HTTP + SQLite)', () => {
 
   it('validates the demo employee picker, role capability, and revocable login session', async () => {
     const employees = await request(app.getHttpServer()).get('/api/employees').expect(200);
-    expect(employees.body.find((employee: { username: string }) => employee.username === 'hsimpson').displayName).toBe('HOMER SIMPSON');
+    expect(employees.body.find((employee: { username: string }) => employee.username === 'hsimpson').displayName).toBe('Homer Simpson');
     expect((await request(app.getHttpServer()).get('/api/employees').query({ canFulfill: 'true' }).expect(200)).body.map((e: { username: string }) => e.username)).toContain('demo.tech');
     await request(app.getHttpServer()).post('/api/auth/login').send({ username: 'not-an-employee' }).expect(401);
     await request(app.getHttpServer()).post('/api/work-orders').send({ title: 'no session' }).expect(401);

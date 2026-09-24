@@ -27,7 +27,7 @@ try {
   await page.getByTestId('login-user').selectOption('hsimpson');
   await page.getByTestId('login').click();
   await page.getByText('Welcome hsimpson!').waitFor();
-  await page.getByTestId('status-dashboard').getByRole('button', { name: /Draft/ }).waitFor();
+  await page.locator('#search-form').waitFor({ state: 'visible' });
   const acceptanceTitle = 'Acceptance parity sample work order';
   await page.getByRole('link', { name: 'New Work Order' }).click();
   await page.waitForURL('**/workorder/manage');
@@ -73,7 +73,9 @@ try {
   await page.waitForURL('**/workorder/search');
   await page.getByTestId('search-assignee').selectOption('demo.tech');
   await page.getByTestId('search').click();
-  await page.getByText('demo.tech').last().waitFor();
+  const assignedResult = page.locator('#orders tbody tr').filter({ hasText: acceptanceTitle });
+  await assignedResult.getByText(/Alex Technician/i).waitFor();
+  await assignedResult.getByText('ASSIGNED', { exact: true }).waitFor();
   await page.locator('#orders tbody tr').filter({ hasText: acceptanceTitle }).getByRole('link').click();
   const workerOrder = page.locator('#manage-content article').filter({ hasText: acceptanceTitle });
   await workerOrder.waitFor();
