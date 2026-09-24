@@ -34,6 +34,7 @@ public class WorkOrderManagePageController {
         WorkOrder workOrder = workOrders.get(number);
         model.addAttribute("workOrder", workOrder);
         model.addAttribute("attachments", attachments.list(number, actor));
+        model.addAttribute("fulfillmentEmployees", sessions.fulfillmentChoices());
         model.addAttribute("currentUser", actor);
         model.addAttribute("csrfToken", request.getAttribute(CsrfProtectionFilter.REQUEST_ATTRIBUTE));
         return "work-order-manage";

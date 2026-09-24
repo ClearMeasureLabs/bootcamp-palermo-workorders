@@ -89,10 +89,14 @@ class WorkOrderBrowserAcceptanceTest {
             assertEquals(403, page.request().post(baseUrl + "/api/work-orders/" + number + "/begin",
                     RequestOptions.create().setHeader("X-CSRF-Token", csrfToken)).status(),
                 "The creator cannot begin work assigned to another employee");
-            orderRow.locator("select[name='assignee']").selectOption("tlovejoy");
-            orderRow.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Assign")).click();
-            orderRow.getByText("ASSIGNED")
-                .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
+            orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
+            orderRow.getByRole(AriaRole.LINK).click();
+            page.waitForURL("**/work-orders/*/manage");
+            page.getByLabel("Assignee").selectOption("tlovejoy");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Assign")).click();
+            page.waitForURL(baseUrl + "/");
+            orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
+            orderRow.getByText("ASSIGNED").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
             page.getByTestId("logout-link").click();
             page.waitForURL("**/login");
             page.getByTestId("lovejoy-shortcut").click();
@@ -104,20 +108,28 @@ class WorkOrderBrowserAcceptanceTest {
             orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
             page.getByLabel("Assigned to me").check();
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search")).click();
-            page.waitForURL("**assignedToMe=true**");
+            assertTrue(page.url().contains("assignedToMe=true"), "The assigned-to-me search should be reflected in the URL");
             assertTrue(page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).isVisible(),
                 "Assigned-to-me should return the current employee's orders");
             page.getByLabel("Assigned to me").uncheck();
             page.getByLabel("Creator").selectOption("hsimpson");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search")).click();
-            page.waitForURL("**creator=hsimpson**");
+            assertTrue(page.url().contains("creator=hsimpson"), "The creator search should be reflected in the URL");
             assertTrue(page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair")).isVisible(),
                 "Creator filtering should match persisted creator identity");
             page.navigate(baseUrl + "/");
             orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
-            orderRow.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Begin")).click();
+            orderRow.getByRole(AriaRole.LINK).click();
+            page.waitForURL("**/work-orders/*/manage");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Begin")).click();
+            page.waitForURL(baseUrl + "/");
+            orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
             orderRow.getByText("IN_PROGRESS").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
-            orderRow.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Complete")).click();
+            orderRow.getByRole(AriaRole.LINK).click();
+            page.waitForURL("**/work-orders/*/manage");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Complete")).click();
+            page.waitForURL(baseUrl + "/");
+            orderRow = page.locator("tbody tr").filter(new Locator.FilterOptions().setHasText("Acceptance repair"));
             orderRow.getByText("COMPLETE").waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
             context.close(); // flushes the recorded webm to disk
             capturedVideo = video.path();

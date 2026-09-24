@@ -31,7 +31,7 @@ public class WorkOrderService {
         requireMaxLength("Instructions", instructions, 4000);
         requireMaxLength("Room number", room, 900);
         if (!creator.canCreateWorkOrder()) throw new ForbiddenActionException("Your employee roles cannot create work orders");
-        String number = "WO-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
+        String number = UUID.randomUUID().toString().substring(0, 7).toUpperCase();
         return repository.save(new WorkOrder(number, title.trim(), description, instructions, room,
             creator.getDisplayName(), creator.getUsername(), dueDate));
     }
