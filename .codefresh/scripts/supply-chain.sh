@@ -177,14 +177,18 @@ for ref in "${images[@]}"; do
   log "[$index/${#images[@]}] SBOM for $ref"
   syft scan "registry:${ref}" -o "spdx-json=${sbom}"
 
+  # A fresh token per attestation; assigned first so that set -e stops on failure.
   log "[$index/${#images[@]}] attesting SBOM"
+  token="$(sigstore_token)"
   cosign attest --yes --type spdxjson --predicate "$sbom" \
-    --identity-token "$(sigstore_token)" "$ref"
+    --identity-token "$token" "$ref"
 
   log "[$index/${#images[@]}] attesting step-authored provenance"
   write_provenance "$ref" "$provenance"
+  token="$(sigstore_token)"
   cosign attest --yes --type slsaprovenance1 --predicate "$provenance" \
-    --identity-token "$(sigstore_token)" "$ref"
+    --identity-token "$token" "$ref"
+  unset token
 
   if [ "$lock" = "true" ]; then
     credentials="$(registry_basic_auth)"

@@ -68,14 +68,18 @@ else
   range='HEAD'   # root commit: only itself
 fi
 
+shas_file="$(mktemp)"
 commits_file="$(mktemp)"
-trap 'rm -f "$commits_file"' EXIT
+trap 'rm -f "$shas_file" "$commits_file"' EXIT
 
+# Separate commands, so that set -e stops on any git failure instead of
+# writing build information with a silently empty commit list.
+git log --format=%H "$range" >"$shas_file"
 while IFS= read -r sha; do
   [ -n "$sha" ] || continue
-  jq -n --arg id "$sha" --arg comment "$(git log -1 --format=%B "$sha")" \
-    '{Id: $id, Comment: $comment}'
-done < <(git log --format=%H "$range") >"$commits_file"
+  comment="$(git log -1 --format=%B "$sha")"
+  jq -n --arg id "$sha" --arg comment "$comment" '{Id: $id, Comment: $comment}'
+done <"$shas_file" >"$commits_file"
 
 mkdir -p "$(dirname "$out")"
 jq -n \

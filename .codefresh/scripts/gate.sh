@@ -54,6 +54,9 @@ mkdir -p "$(dirname "$summary_file")"
 code_changed="${CODE_CHANGED:-}"
 failed=0
 
+# The single quotes are intended: Markdown backticks, and the literal text ${{
+# of a Codefresh variable that was never resolved.
+# shellcheck disable=SC2016
 {
   printf '## Codefresh gate (%s)\n\n' "${CF_PIPELINE_NAME:-local}"
   printf -- '- Version: `%s`\n' "${VERSION:-unknown}"

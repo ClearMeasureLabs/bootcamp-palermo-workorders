@@ -130,9 +130,10 @@ resource "azurerm_kubernetes_cluster_node_pool" "apps" {
 # Control-plane audit to log-workorders: who changed what in the cluster, including every
 # break-glass action (docs/runbooks/break-glass.md, audit evidence).
 resource "azurerm_monitor_diagnostic_setting" "aks" {
-  name                       = "aks-audit-to-log-workorders"
-  target_resource_id         = azurerm_kubernetes_cluster.this.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
+  name                           = "aks-audit-to-log-workorders"
+  target_resource_id             = azurerm_kubernetes_cluster.this.id
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_destination_type = "Dedicated" # resource-specific tables AKSAuditAdmin, AKSControlPlane
 
   # kube-audit-admin excludes get/list events, which keeps ingestion affordable.
   enabled_log {

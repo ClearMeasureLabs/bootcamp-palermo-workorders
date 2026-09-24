@@ -75,12 +75,14 @@ minor="$(sed -n 's/^MINOR=\([0-9][0-9]*\)[[:space:]]*$/\1/p' "$env_file")"
 [ -n "$major" ] || die "MAJOR is missing or not numeric in $env_file"
 [ -n "$minor" ] || die "MINOR is missing or not numeric in $env_file"
 
-if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+shallow="$(git rev-parse --is-shallow-repository)" || die "cannot tell whether the clone is shallow"
+if [ "$shallow" = "true" ]; then
   if [ "$fetch" = "true" ]; then
     printf 'version.sh: shallow clone; fetching the full history\n' >&2
     git fetch --unshallow --quiet || die "git fetch --unshallow failed"
+    shallow="$(git rev-parse --is-shallow-repository)" || die "cannot tell whether the clone is shallow"
   fi
-  if [ "$(git rev-parse --is-shallow-repository)" != "false" ]; then
+  if [ "$shallow" != "false" ]; then
     die "shallow clone: the first-parent count would be wrong; clone with full depth"
   fi
 fi
