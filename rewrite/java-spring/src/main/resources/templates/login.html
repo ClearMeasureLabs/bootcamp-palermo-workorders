@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Sign in · Work Orders</title>
+    <style>
+        body{font:16px system-ui,sans-serif;margin:4rem auto;max-width:520px;padding:0 1rem;color:#172033}
+        main{background:#f1f5f9;padding:2rem;border-radius:12px}label{display:grid;gap:.4rem;margin:1rem 0}
+        select,button{font:inherit;padding:.7rem;border-radius:6px}button{cursor:pointer;background:#17559a;color:#fff;border:0}
+        .error{color:#a11}.note{color:#475569;font-size:.9rem}form{margin:.8rem 0}
+    </style>
+</head>
+<body><main>
+    <h1>Choose your employee</h1>
+    <p class="note">Demo sign-in uses an employee selection and does not ask for a password.</p>
+    <p class="error" th:if="${error}" th:text="${error}"></p>
+    <form method="post" action="/login">
+        <input type="hidden" name="_csrf" th:value="${csrfToken}">
+        <label for="username">Select employee
+            <select id="username" name="username" data-testid="username-select" required>
+                <option value="">-- Select a parishioner or staff member --</option>
+                <option th:each="employee : ${employees}" th:value="${employee.username}"
+                        th:text="${#strings.toUpperCase(employee.displayName)}"></option>
+            </select>
+        </label>
+        <button type="submit" data-testid="login-button">Enter the Portal</button>
+    </form>
+    <form method="post" action="/login/lovejoy">
+        <input type="hidden" name="_csrf" th:value="${csrfToken}">
+        <button type="submit" data-testid="lovejoy-shortcut">Log in as Timothy Lovejoy</button>
+    </form>
+</main></body>
+</html>
