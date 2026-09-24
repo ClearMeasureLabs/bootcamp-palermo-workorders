@@ -27,7 +27,7 @@ public class WorkOrderManagePageController {
         this.sessions = sessions;
     }
 
-    @GetMapping("/work-orders/{number}/manage")
+    @GetMapping({"/work-orders/{number}/manage", "/workorder/manage/{number}"})
     public String manage(@PathVariable String number, Model model, HttpSession session, HttpServletRequest request) {
         Employee actor = sessions.currentOrNull(session);
         if (actor == null) return "redirect:/login";
@@ -46,6 +46,6 @@ public class WorkOrderManagePageController {
         Employee actor = sessions.currentOrNull(session);
         if (actor == null) return "redirect:/login";
         attachments.add(number, fileName, contentType, fileSize, actor);
-        return "redirect:/work-orders/" + number + "/manage";
+        return "redirect:/workorder/manage/" + number;
     }
 }

@@ -22,11 +22,12 @@
         <div class="menu-title">Menu</div>
         <nav class="nav-links" aria-label="Main menu">
             <a href="/"><span class="nav-icon">⌂</span>Home</a>
-            <a href="/work-orders/new"><span class="nav-icon">▣</span>New Work Order</a>
-            <a class="active" href="/"><span class="nav-icon">⌕</span>Search</a>
-            <a th:href="@{/(creator=${currentUser.username})}"><span class="nav-icon">▤</span>My Work Orders</a>
-            <a href="/?assignedToMe=true"><span class="nav-icon">☑</span>Assigned To Me</a>
-            <a href="/?status=IN_PROGRESS"><span class="nav-icon">⚙</span>In Progress</a>
+            <a href="/workorder/manage?mode=Create"><span class="nav-icon">▣</span>New Work Order</a>
+            <a class="active" href="/workorder/search"><span class="nav-icon">⌕</span>Search</a>
+            <a href="/counter"><span class="nav-icon">▦</span>Counter</a>
+            <a th:href="@{/workorder/search(creator=${currentUser.username})}"><span class="nav-icon">▤</span>My Work Orders</a>
+            <a href="/workorder/search?assignedToMe=true"><span class="nav-icon">☑</span>Assigned To Me</a>
+            <a href="/workorder/search?status=IN_PROGRESS"><span class="nav-icon">⚙</span>In Progress</a>
         </nav>
     </aside>
     <div class="workspace">
@@ -43,13 +44,14 @@
                 <div class="field"><label for="creator">Creator</label><select id="creator" name="creator"><option value="">All</option><option th:each="employee:${employees}" th:value="${employee.username}" th:text="${employee.displayName}" th:selected="${employee.username == selectedCreator}"></option></select></div>
                 <div class="field"><label for="assignee">Assignee</label><select id="assignee" name="assignee" th:disabled="${assignedToMe}"><option value="">All</option><option th:each="employee:${employees}" th:value="${employee.username}" th:text="${employee.displayName}" th:selected="${employee.username == selectedAssignee}"></option></select></div>
                 <div class="field"><label for="status">Status</label><select id="status" name="status"><option value="">All</option><option th:each="s:${statuses}" th:value="${s}" th:text="${s}" th:selected="${s == selectedStatus}"></option></select></div>
-                <div class="filter-actions"><button>Search</button><a href="/"><button class="secondary" type="button">Clear filters</button></a></div>
+                <div class="filter-actions"><button>Search</button><a href="/workorder/search"><button class="secondary" type="button">Clear filters</button></a></div>
                 <label class="checks"><input type="checkbox" name="assignedToMe" value="true" th:checked="${assignedToMe}">Assigned to me</label>
+                <label class="checks"><input type="checkbox" name="allAssigned" value="true" th:checked="${allAssigned}">All assigned</label>
                 <div class="field"><label class="checks"><input type="checkbox" name="overdueOnly" value="true" th:checked="${overdueOnly}">Show overdue only</label><span></span></div>
             </form></section>
             <section class="card results"><div class="results-title">☷ Search Results <span th:text="|(${#lists.size(orders)} work orders)|"></span></div><div class="table-wrap">
                 <table><thead><tr><th>WO #</th><th>Creator</th><th>Assignee</th><th>Status</th><th>Title</th><th>Due Date</th><th>Room</th></tr></thead><tbody>
-                <tr th:each="order:${orders}"><td><a th:href="@{/work-orders/{number}/manage(number=${order.number})}" th:text="${order.number}"></a></td><td th:text="${order.creatorName}"></td><td th:text="${order.assigneeName}"></td><td><span class="status" th:text="${order.status}"></span></td><td th:text="${order.title}"></td><td th:classappend="${order.dueDateCssClass}"><span th:text="${order.dueDate}"></span><span th:if="${order.dueDate != null}" class="urgency" th:classappend="${' ' + order.urgencyBadgeCssClass}" th:text="${order.urgencyBadgeText}"></span></td><td th:text="${order.roomNumber}"></td></tr>
+                <tr th:each="order:${orders}"><td><a th:href="@{/workorder/manage/{number}(number=${order.number},mode='Edit')}" th:text="${order.number}"></a></td><td th:text="${order.creatorName}"></td><td th:text="${order.assigneeName}"></td><td><span class="status" th:text="${order.status}"></span></td><td th:text="${order.title}"></td><td th:classappend="${order.dueDateCssClass}"><span th:text="${order.dueDate}"></span><span th:if="${order.dueDate != null}" class="urgency" th:classappend="${' ' + order.urgencyBadgeCssClass}" th:text="${order.urgencyBadgeText}"></span></td><td th:text="${order.roomNumber}"></td></tr>
                 <tr th:if="${#lists.isEmpty(orders)}"><td class="empty" colspan="7">No work orders found matching your search criteria.</td></tr>
                 </tbody></table>
             </div></section>

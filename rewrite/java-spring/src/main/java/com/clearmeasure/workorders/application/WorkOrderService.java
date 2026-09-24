@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -41,10 +42,16 @@ public class WorkOrderService {
             List.of(WorkOrderStatus.DRAFT, WorkOrderStatus.ASSIGNED, WorkOrderStatus.IN_PROGRESS));
     }
     @Transactional(readOnly = true)
-    public List<WorkOrder> list(WorkOrderStatus status, boolean overdueOnly, String creator, String assignee) {
+    public Map<WorkOrderStatus, Long> statusCounts() {
+        return java.util.Arrays.stream(WorkOrderStatus.values())
+            .collect(java.util.stream.Collectors.toMap(status -> status, repository::countByStatus));
+    }
+    @Transactional(readOnly = true)
+    public List<WorkOrder> list(WorkOrderStatus status, boolean overdueOnly, String creator, String assignee,
+                                boolean allAssigned) {
         return repository.findMatching(status, overdueOnly, LocalDate.now(clock),
             List.of(WorkOrderStatus.DRAFT, WorkOrderStatus.ASSIGNED, WorkOrderStatus.IN_PROGRESS),
-            blankToNull(creator), blankToNull(assignee));
+            blankToNull(creator), blankToNull(assignee), allAssigned);
     }
     @Transactional(readOnly = true)
     public WorkOrder get(String number) { return repository.findByNumber(number).orElseThrow(() -> new WorkOrderNotFoundException(number)); }
