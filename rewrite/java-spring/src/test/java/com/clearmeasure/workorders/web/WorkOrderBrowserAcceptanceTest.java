@@ -83,7 +83,7 @@ class WorkOrderBrowserAcceptanceTest {
                 "Displayed upload time should be UTC");
             page.navigate(baseUrl + "/");
             assertEquals(403, page.request().post(baseUrl + "/api/work-orders/" + number + "/begin",
-                    new APIRequestContext.PostOptions().setHeaders(Map.of("X-CSRF-Token", csrfToken))).status(),
+                    new APIRequestContext.RequestOptions().setHeaders(Map.of("X-CSRF-Token", csrfToken))).status(),
                 "The creator cannot begin work assigned to another employee");
             orderRow.locator("select[name='assignee']").selectOption("tlovejoy");
             orderRow.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Assign")).click();
