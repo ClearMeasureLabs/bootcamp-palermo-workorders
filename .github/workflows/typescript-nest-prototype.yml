@@ -31,8 +31,9 @@ jobs:
       - run: cd prototypes/typescript-nest/remotion && npx remotion browser ensure
       - run: cd prototypes/typescript-nest/remotion && npm run render
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: typescript-nest-acceptance-video
+          name: typescript-nest-visual-acceptance
           path: |
             prototypes/typescript-nest/artifacts/acceptance-video.webm
             prototypes/typescript-nest/artifacts/typescript-nest-acceptance.mp4
