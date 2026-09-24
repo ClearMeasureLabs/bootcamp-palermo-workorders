@@ -9,9 +9,9 @@ urlpatterns = [
     path("logout/", views.logout, name="logout"),
     path("workorder/manage", views.work_order_create, name="work_order_create"),
     path("work-orders/new/", views.work_order_create, name="work_order_create_legacy"),
-    path("workorder/manage/<int:pk>", views.work_order_detail, name="work_order_detail"),
-    path("work-orders/<int:pk>/", views.work_order_detail, name="work_order_detail_legacy"),
-    path("work-orders/<int:pk>/status/", views.work_order_transition, name="work_order_transition"),
-    path("work-orders/<int:pk>/attachments/", views.work_order_attachment_create, name="work_order_attachment_create"),
+    path("workorder/manage/<uuid:pk>", views.work_order_detail, name="work_order_detail"),
+    path("work-orders/<uuid:pk>/", views.work_order_detail, name="work_order_detail_legacy"),
+    path("work-orders/<uuid:pk>/status/", views.work_order_transition, name="work_order_transition"),
+    path("work-orders/<uuid:pk>/attachments/", views.work_order_attachment_create, name="work_order_attachment_create"),
     path("health/", views.health, name="health"),
 ]

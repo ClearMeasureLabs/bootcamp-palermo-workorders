@@ -4,15 +4,56 @@ from django.core.exceptions import ValidationError
 from datetime import date, datetime, timedelta, timezone as datetime_timezone
 from unittest.mock import patch
 from django.contrib import admin
+from django.db import connection
+from django.db import models
 from .models import Employee, Role, WorkOrder, WorkOrderAttachment, WorkOrderEvent
 from .services import available_transitions, chicago_today, due_date_badge, due_date_urgency, transition
 
+
+class PersistenceSchemaTests(TestCase):
+    def test_core_table_names_columns_and_composite_role_key(self):
+        tables = {table.name for table in connection.introspection.get_table_list(connection.cursor())}
+        core = {"Employee", "Role", "EmployeeRoles", "WorkOrder", "WorkOrderAttachment"}
+        self.assertTrue(core.issubset(tables))
+        self.assertIn("workorders_workorderevent", tables)  # Prototype-only transition history.
+        with connection.cursor() as cursor:
+            expected_columns = {
+                "Employee": {"Id", "UserName", "FirstName", "LastName", "EmailAddress", "PreferredLanguage"},
+                "Role": {"Id", "Name", "CanCreateWorkOrder", "CanFulfillWorkOrder"},
+                "EmployeeRoles": {"EmployeeId", "RoleId"},
+                "WorkOrder": {"Id", "Number", "Title", "Description", "Instructions", "RoomNumber", "Status", "CreatorId", "AssigneeId", "CreatedDate", "AssignedDate", "CompletedDate", "DueDate"},
+                "WorkOrderAttachment": {"Id", "WorkOrderId", "FileName", "ContentType", "FileSize", "UploadedById", "UploadedDate"},
+            }
+            for table, expected in expected_columns.items():
+                columns = {column.name for column in connection.introspection.get_table_description(cursor, table)}
+                self.assertTrue(expected.issubset(columns), f"{table} is missing {expected - columns}")
+            constraints = connection.introspection.get_constraints(cursor, "EmployeeRoles")
+            cursor.execute('PRAGMA foreign_key_list("WorkOrder")')
+            work_order_fks = {(row[2], row[3], row[6]) for row in cursor.fetchall()}
+            cursor.execute('PRAGMA foreign_key_list("WorkOrderAttachment")')
+            attachment_fks = {(row[2], row[3], row[6]) for row in cursor.fetchall()}
+        primary_key_columns = next(value["columns"] for value in constraints.values() if value["primary_key"])
+        self.assertEqual(primary_key_columns, ["EmployeeId", "RoleId"])
+        self.assertIn(("Employee", "CreatorId", "NO ACTION"), work_order_fks)
+        self.assertIn(("Employee", "AssigneeId", "NO ACTION"), work_order_fks)
+        self.assertIn(("WorkOrder", "WorkOrderId", "NO ACTION"), attachment_fks)
+        self.assertIn(("Employee", "UploadedById", "NO ACTION"), attachment_fks)
+        self.assertIs(WorkOrderAttachment._meta.get_field("work_order").remote_field.on_delete, models.CASCADE)
+        self.assertIs(WorkOrderAttachment._meta.get_field("uploaded_by").remote_field.on_delete, models.PROTECT)
+        self.assertEqual(Employee._meta.get_field("id").get_internal_type(), "UUIDField")
+        self.assertEqual(Employee._meta.get_field("last_name").max_length, 120)
+        self.assertEqual(Employee._meta.get_field("preferred_language").max_length, 10)
+        self.assertEqual(Role._meta.get_field("name").max_length, 100)
+        self.assertEqual(WorkOrder._meta.get_field("number").max_length, 7)
+        self.assertEqual(WorkOrder._meta.get_field("title").max_length, 300)
+        self.assertEqual(WorkOrder._meta.get_field("status").max_length, 3)
+
 class WorkOrderDomainTests(TestCase):
     def setUp(self):
-        self.employee = Employee.objects.create(username="maint", first_name="Morgan", last_name="Lee")
+        self.employee = Employee.objects.create(username="maint", email="maint@example.test", first_name="Morgan", last_name="Lee")
         self.order = WorkOrder.objects.create(title="Repair sink", creator=self.employee, assignee=self.employee, room_number="204")
     def test_number_is_assigned_and_status_defaults_to_draft(self):
-        self.assertRegex(self.order.number, r"^WO-\d{6}$")
+        self.assertRegex(self.order.number, r"^[0-9A-F]{7}$")
         self.assertEqual(self.order.status, WorkOrder.Status.DRAFT)
     def test_valid_lifecycle_records_events_and_timestamps(self):
         transition(self.order, WorkOrder.Status.ASSIGNED, self.employee, "Accepted")
@@ -22,7 +63,7 @@ class WorkOrderDomainTests(TestCase):
         self.assertIsNotNone(self.order.assigned_at)
         self.assertIsNotNone(self.order.completed_at)
         self.assertEqual(self.order.events.count(), 3)
-        self.assertEqual(self.order.events.first().note, "Accepted")
+        self.assertEqual(self.order.events.get(to_status=WorkOrder.Status.ASSIGNED).note, "Accepted")
     def test_invalid_lifecycle_transition_is_rejected(self):
         with self.assertRaises(ValidationError):
             transition(self.order, WorkOrder.Status.COMPLETE, self.employee)
@@ -89,9 +130,9 @@ class WorkOrderDomainTests(TestCase):
 @override_settings(ENABLE_DEMO_LOGIN=True)
 class WorkOrderWebTests(TestCase):
     def setUp(self):
-        self.creator = Employee.objects.create(username="creator", first_name="Homer", last_name="Simpson")
+        self.creator = Employee.objects.create(username="creator", email="creator@example.test", first_name="Homer", last_name="Simpson")
         self.creator.roles.add(Role.objects.create(name="Facility Lead", can_create_work_order=True))
-        self.assignee = Employee.objects.create(username="worker", first_name="Ned", last_name="Flanders")
+        self.assignee = Employee.objects.create(username="worker", email="worker@example.test", first_name="Ned", last_name="Flanders")
 
     def login_as(self, employee):
         self.client.post(reverse("login"), {"username": employee.username})
@@ -114,7 +155,7 @@ class WorkOrderWebTests(TestCase):
         self.assertNotContains(response, "HOMER SIMPSON", status_code=503)
 
     def test_work_order_list_and_detail_require_an_active_session(self):
-        order = WorkOrder.objects.create(title="Private order")
+        order = WorkOrder.objects.create(title="Private order", creator=self.creator)
         self.assertRedirects(self.client.get(reverse("work_order_list")), reverse("login"))
         self.assertRedirects(self.client.get(reverse("work_order_detail", args=[order.pk])), reverse("login"))
 
@@ -134,7 +175,7 @@ class WorkOrderWebTests(TestCase):
         response = self.client.post(reverse("work_order_create"), {"title": "Replace light", "description": "Hallway", "instructions": "Use ladder", "room_number": "101", "assignee": self.assignee.pk, "due_date": ""})
         order = WorkOrder.objects.get(title="Replace light")
         self.assertEqual(response.status_code, 302)
-        self.assertIn(order.number, self.client.get(reverse("work_order_list") + "?q=WO-").content.decode())
+        self.assertIn(order.number, self.client.get(reverse("work_order_list") + f"?q={order.number[:3]}").content.decode())
         self.assertEqual(self.client.get(reverse("work_order_detail", args=[order.pk])).status_code, 200)
         response = self.client.post(reverse("work_order_transition", args=[order.pk]), {"status": WorkOrder.Status.ASSIGNED}, follow=True)
         order.refresh_from_db()
@@ -143,7 +184,7 @@ class WorkOrderWebTests(TestCase):
         self.assertContains(response, f"Work order {order.number} moved to Assigned.")
     def test_list_search_matches_room_and_title(self):
         self.login_as(self.creator)
-        WorkOrder.objects.create(title="Inspect boiler", room_number="B-2")
+        WorkOrder.objects.create(title="Inspect boiler", room_number="B-2", creator=self.creator)
         response = self.client.get(reverse("work_order_list"), {"q": "B-2"})
         self.assertContains(response, "Inspect boiler")
         self.assertNotContains(response, "Repair sink")
@@ -183,20 +224,16 @@ class WorkOrderWebTests(TestCase):
         self.assertNotContains(self.client.get(reverse("login")), "New work order")
 
     def test_login_picker_formats_names_and_lovejoy_shortcut_authenticates_by_username(self):
-        lovejoy = Employee.objects.create(username="tlovejoy", first_name="Timothy", last_name="Lovejoy")
+        lovejoy = Employee.objects.create(username="tlovejoy", email="tlovejoy@example.test", first_name="Timothy", last_name="Lovejoy")
         response = self.client.get(reverse("login"))
         self.assertContains(response, "-- Select a parishioner or staff member --")
         self.assertContains(response, "HOMER SIMPSON")
         self.assertContains(response, "NED FLANDERS")
         response = self.client.post(reverse("login"), {"username": "tlovejoy"})
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(self.client.session["workorders_employee_id"], lovejoy.pk)
+        self.assertEqual(self.client.session["workorders_employee_id"], str(lovejoy.pk))
 
-    def test_login_rejects_unknown_and_inactive_employee(self):
-        Employee.objects.filter(pk=self.creator.pk).update(active=False)
-        response = self.client.post(reverse("login"), {"username": self.creator.username})
-        self.assertContains(response, "Select a valid employee")
-        self.assertNotIn("workorders_employee_id", self.client.session)
+    def test_login_rejects_unknown_employee(self):
         response = self.client.post(reverse("login"), {"username": "unknown"})
         self.assertContains(response, "Select a valid employee")
 
@@ -248,7 +285,7 @@ class WorkOrderWebTests(TestCase):
         )
 
     def test_attachment_metadata_requires_login_and_nonblank_file_name(self):
-        order = WorkOrder.objects.create(title="Protected attachment")
+        order = WorkOrder.objects.create(title="Protected attachment", creator=self.creator)
         url = reverse("work_order_attachment_create", args=[order.pk])
         response = self.client.post(url, {"file_name": "example.pdf", "file_size": "100"})
         self.assertEqual(response.status_code, 302)
@@ -264,9 +301,9 @@ class WorkOrderWebTests(TestCase):
     def test_overdue_filter_excludes_today_and_closed_orders(self, _today):
         self.login_as(self.creator)
         old_date = date(2026, 9, 22)
-        overdue = WorkOrder.objects.create(title="Open overdue", due_date=old_date)
-        today = WorkOrder.objects.create(title="Due today", due_date=date(2026, 9, 23))
-        completed = WorkOrder.objects.create(title="Closed overdue", due_date=old_date, status=WorkOrder.Status.COMPLETE)
+        overdue = WorkOrder.objects.create(title="Open overdue", due_date=old_date, creator=self.creator)
+        today = WorkOrder.objects.create(title="Due today", due_date=date(2026, 9, 23), creator=self.creator)
+        completed = WorkOrder.objects.create(title="Closed overdue", due_date=old_date, status=WorkOrder.Status.COMPLETE, creator=self.creator)
         response = self.client.get(reverse("work_order_list"), {"overdue": "1"})
         self.assertContains(response, overdue.title)
         self.assertNotContains(response, today.title)
@@ -275,9 +312,9 @@ class WorkOrderWebTests(TestCase):
     @patch("workorders.views.chicago_today", return_value=date(2026, 9, 23))
     def test_list_displays_today_overdue_and_on_track_badges(self, _today):
         self.login_as(self.creator)
-        WorkOrder.objects.create(title="Today", due_date=date(2026, 9, 23))
-        WorkOrder.objects.create(title="Overdue", due_date=date(2026, 9, 22))
-        WorkOrder.objects.create(title="Future", due_date=date(2026, 9, 24))
+        WorkOrder.objects.create(title="Today", due_date=date(2026, 9, 23), creator=self.creator)
+        WorkOrder.objects.create(title="Overdue", due_date=date(2026, 9, 22), creator=self.creator)
+        WorkOrder.objects.create(title="Future", due_date=date(2026, 9, 24), creator=self.creator)
         response = self.client.get(reverse("work_order_list"))
         self.assertContains(response, "Due Today")
         self.assertContains(response, "Overdue")
@@ -286,7 +323,7 @@ class WorkOrderWebTests(TestCase):
         self.assertContains(response, "due-date-overdue")
     def test_list_leaves_due_cell_blank_and_has_no_badge_without_date(self):
         self.login_as(self.creator)
-        order = WorkOrder.objects.create(title="No due date")
+        order = WorkOrder.objects.create(title="No due date", creator=self.creator)
         response = self.client.get(reverse("work_order_list"))
         self.assertContains(response, f'data-testid="DueDateCell{order.number}" class=""></span>')
         self.assertNotContains(response, f'UrgencyBadge{order.number}')

@@ -6,6 +6,7 @@ from django.db.models import Count, Q
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
+from uuid import UUID
 from .forms import AttachmentMetadataForm, WorkOrderForm
 from .models import Employee, WorkOrder
 from .services import OPEN_STATUSES, add_attachment_metadata, available_transitions, chicago_today, due_date_badge, due_date_urgency, transition
@@ -18,20 +19,20 @@ def current_employee(request):
     employee_id = request.session.get(SESSION_EMPLOYEE_KEY)
     if employee_id is None:
         return None
-    return Employee.objects.filter(pk=employee_id, active=True).first()
+    return Employee.objects.filter(pk=employee_id).first()
 
 
 def login(request):
     if not settings.ENABLE_DEMO_LOGIN:
         return HttpResponse("Passwordless demo login is disabled.", status=503)
-    employees = Employee.objects.filter(active=True).order_by("last_name", "first_name")
+    employees = Employee.objects.order_by("last_name", "first_name")
     error = ""
     if request.method == "POST":
         username = request.POST.get("username", "")
         employee = employees.filter(username=username).first()
         if employee:
             request.session.cycle_key()
-            request.session[SESSION_EMPLOYEE_KEY] = employee.pk
+            request.session[SESSION_EMPLOYEE_KEY] = str(employee.pk)
             return redirect("work_order_list")
         error = "Select a valid employee."
     return render(request, "workorders/login.html", {"employees": employees, "error": error})
@@ -56,11 +57,13 @@ def work_order_list(request):
     today = chicago_today()
     if query: orders = orders.filter(Q(number__icontains=query) | Q(title__icontains=query) | Q(room_number__icontains=query))
     if status in WorkOrder.Status.values: orders = orders.filter(status=status)
-    if creator_id.isdigit(): orders = orders.filter(creator_id=int(creator_id))
+    try: orders = orders.filter(creator_id=UUID(creator_id)) if creator_id else orders
+    except ValueError: pass
     if assigned_to_me and actor:
         orders = orders.filter(assignee=actor)
-    elif assignee_id.isdigit():
-        orders = orders.filter(assignee_id=int(assignee_id))
+    elif assignee_id:
+        try: orders = orders.filter(assignee_id=UUID(assignee_id))
+        except ValueError: pass
     if overdue_only: orders = orders.filter(due_date__lt=today, status__in=OPEN_STATUSES)
     sort_fields = {"Status": "status", "Title": "title", "DueDate": "due_date", "Room": "room_number"}
     if sort in sort_fields:
@@ -79,7 +82,7 @@ def work_order_list(request):
     counts.update(WorkOrder.objects.values("status").annotate(total=Count("id")).values_list("status", "total"))
     sort_names = ("Status", "Title", "DueDate", "Room")
     next_directions = {name: "desc" if sort == name and direction == "asc" else "asc" for name in sort_names}
-    return render(request, "workorders/list.html", {"orders": orders, "query": query, "selected_status": status, "statuses": WorkOrder.Status.choices, "counts": counts, "overdue_only": overdue_only, "current_employee": actor, "employees": Employee.objects.filter(active=True).order_by("last_name", "first_name"), "creator_id": creator_id, "assignee_id": assignee_id, "assigned_to_me": assigned_to_me, "sort": sort, "direction": direction, "next_directions": next_directions})
+    return render(request, "workorders/list.html", {"orders": orders, "query": query, "selected_status": status, "statuses": WorkOrder.Status.choices, "counts": counts, "overdue_only": overdue_only, "current_employee": actor, "employees": Employee.objects.order_by("last_name", "first_name"), "creator_id": creator_id, "assignee_id": assignee_id, "assigned_to_me": assigned_to_me, "sort": sort, "direction": direction, "next_directions": next_directions})
 def work_order_create(request):
     actor = current_employee(request)
     if actor is None:

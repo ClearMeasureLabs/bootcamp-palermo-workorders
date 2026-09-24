@@ -1,4 +1,5 @@
 from datetime import date
+import uuid
 from zoneinfo import ZoneInfo
 
 from django.core.exceptions import ValidationError
@@ -84,9 +85,11 @@ def add_attachment_metadata(work_order: WorkOrder, actor: Employee, file_name: s
     if not file_name.strip():
         raise ValidationError("File name is required.")
     return WorkOrderAttachment.objects.create(
+        id=uuid.uuid4(),
         work_order=work_order,
         file_name=file_name,
         content_type=content_type,
         file_size=file_size,
         uploaded_by=actor,
+        uploaded_date=timezone.now(),
     )
