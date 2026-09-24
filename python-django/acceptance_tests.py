@@ -38,10 +38,11 @@ try:
     call_command("migrate", verbosity=0)
     employee = Employee.objects.create(username="acceptance-tech", first_name="Casey", last_name="Tech")
     employee.roles.add(Role.objects.create(name="Acceptance Creator", can_create_work_order=True))
-    Employee.objects.create(username="tlovejoy", first_name="Timothy", last_name="Lovejoy")
+    employee.roles.add(Role.objects.create(name="Acceptance Technician", can_fulfill_work_order=True))
+    timothy = Employee.objects.create(username="tlovejoy", first_name="Timothy", last_name="Lovejoy")
     today = timezone.localdate(timezone.now(), ZoneInfo("America/Chicago"))
-    WorkOrder.objects.create(title="Acceptance: open overdue", due_date=today - timedelta(days=2))
-    WorkOrder.objects.create(title="Acceptance: closed overdue", due_date=today - timedelta(days=2), status=WorkOrder.Status.COMPLETE)
+    WorkOrder.objects.create(title="Acceptance: open overdue", due_date=today - timedelta(days=2), creator=employee, assignee=timothy)
+    WorkOrder.objects.create(title="Acceptance: closed overdue", due_date=today - timedelta(days=2), status=WorkOrder.Status.COMPLETE, creator=timothy, assignee=employee)
     for _ in range(60):
         if server.poll() is not None:
             raise RuntimeError("Django test server exited before becoming ready")
