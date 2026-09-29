@@ -32,6 +32,20 @@ public class SettingsTests
     }
 
     [Test]
+    public async Task Settings_AuthenticatedUser_ShouldRenderDisplayPreferencesSubtitle()
+    {
+        await using var ctx = CreateContext();
+        var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
+        module.Setup<string>("getTheme").SetResult("light");
+        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
+
+        var subtitle = component.Find($"[data-testid='{nameof(Settings.Elements.SettingsSubtitle)}']");
+        subtitle.TextContent.ShouldBe("Manage display preferences for this browser.");
+    }
+
+    [Test]
     public async Task Settings_ToggleDarkMode_ShouldInvokeSetThemeInteropAndUpdateServiceState()
     {
         await using var ctx = CreateContext();
