@@ -99,6 +99,41 @@ public class ToolsHashControllerTests
         payload.Sha256.ShouldBe(CafeSha256);
     }
 
+    [Test]
+    public void Post_Should_IncludeMd5_When_QueryIncludeMd5True()
+    {
+        var result = CreateController().Post(new HashRequest("abc"), includeMd5: true);
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<HashResponse>();
+        payload.Sha256.ShouldBe(AbcSha256);
+        payload.Md5.ShouldBe(AbcMd5);
+        payload.Sha1.ShouldBeNull();
+    }
+
+    [Test]
+    public void Post_Should_PreferQueryFlags_When_BothBodyAndQueryProvided()
+    {
+        var queryEnables = CreateController().Post(
+            new HashRequest("abc", IncludeMd5: false, IncludeSha1: false),
+            includeMd5: true,
+            includeSha1: true);
+        var queryDisables = CreateController().Post(
+            new HashRequest("abc", IncludeMd5: true, IncludeSha1: true),
+            includeMd5: false,
+            includeSha1: false);
+
+        var enabled = queryEnables.ShouldBeOfType<OkObjectResult>().Value.ShouldBeOfType<HashResponse>();
+        enabled.Sha256.ShouldBe(AbcSha256);
+        enabled.Md5.ShouldBe(AbcMd5);
+        enabled.Sha1.ShouldBe(AbcSha1);
+
+        var disabled = queryDisables.ShouldBeOfType<OkObjectResult>().Value.ShouldBeOfType<HashResponse>();
+        disabled.Sha256.ShouldBe(AbcSha256);
+        disabled.Md5.ShouldBeNull();
+        disabled.Sha1.ShouldBeNull();
+    }
+
     private static ToolsHashController CreateController() =>
         new()
         {
