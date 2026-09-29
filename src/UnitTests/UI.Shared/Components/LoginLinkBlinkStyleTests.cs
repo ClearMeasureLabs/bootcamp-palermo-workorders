@@ -88,8 +88,24 @@ public class LoginLinkBlinkStyleTests
             RegexOptions.Singleline);
         reducedMotion.Success.ShouldBeTrue("Expected a prefers-reduced-motion block");
         var body = reducedMotion.Groups["body"].Value;
-        body.ShouldContain("font-weight: 700");
-        body.ShouldContain("text-decoration: underline");
+
+        // Resting normal-link block only — not :hover/:focus, which can also set underline.
+        var restingBlock = Regex.Match(
+            body,
+            @"(?<selectors>(?:a\.login-link-blink|\.auth-section a\.login-link-blink)"
+            + @"(?![:\w-])(?:\s*,\s*(?:a\.login-link-blink|\.auth-section a\.login-link-blink)(?![:\w-]))*)"
+            + @"\s*\{(?<decls>[^}]*)\}",
+            RegexOptions.Singleline);
+        restingBlock.Success.ShouldBeTrue(
+            "Expected a resting a.login-link-blink / .auth-section a.login-link-blink block in reduced-motion");
+        var selectors = restingBlock.Groups["selectors"].Value;
+        selectors.ShouldNotContain(":hover");
+        selectors.ShouldNotContain(":focus");
+
+        var decls = restingBlock.Groups["decls"].Value;
+        decls.ShouldContain("animation: none");
+        decls.ShouldContain("font-weight: 700");
+        decls.ShouldContain("text-decoration: underline");
     }
 
     private static string ReadLoginLinkCss()
