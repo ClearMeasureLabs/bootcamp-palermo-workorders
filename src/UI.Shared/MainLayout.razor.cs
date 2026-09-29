@@ -14,6 +14,16 @@ public partial class MainLayout : IAsyncDisposable
     /// </summary>
     public const string NavRailBreakpointMediaQuery = "(max-width: 768px)";
 
+    /// <summary>
+    /// Accessible name when the navigation rail is visible (toggle hides it).
+    /// </summary>
+    public const string NavRailToggleTitleHide = "Hide navigation panel";
+
+    /// <summary>
+    /// Accessible name when the navigation rail is hidden (toggle shows it).
+    /// </summary>
+    public const string NavRailToggleTitleShow = "Show navigation panel";
+
     public enum Elements
     {
         NavRailToggle,
@@ -60,7 +70,7 @@ public partial class MainLayout : IAsyncDisposable
     private string SidebarClass => NavRailCss.SidebarClass(_isNarrowViewport, _navVisible);
 
     private string NavToggleTitle =>
-        _navVisible ? "Hide navigation panel" : "Show navigation panel";
+        _navVisible ? NavRailToggleTitleHide : NavRailToggleTitleShow;
 
     private string NavToggleAriaExpanded => _navVisible ? "true" : "false";
 

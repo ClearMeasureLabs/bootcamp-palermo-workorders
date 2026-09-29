@@ -32,8 +32,8 @@ public class MainLayoutTests
         var toggle = layout.Find($"[data-testid='{nameof(MainLayout.Elements.NavRailToggle)}']");
         toggle.GetAttribute("aria-expanded").ShouldBe("true");
         toggle.GetAttribute("aria-controls").ShouldBe("app-navigation-rail");
-        toggle.GetAttribute("title")!.ShouldContain("Hide");
-        toggle.GetAttribute("aria-label")!.ShouldContain("Hide");
+        toggle.GetAttribute("title").ShouldBe(MainLayout.NavRailToggleTitleHide);
+        toggle.GetAttribute("aria-label").ShouldBe(MainLayout.NavRailToggleTitleHide);
         layout.Find("#app-navigation-rail").ClassList.ShouldContain("modern-sidebar");
         layout.Find(".modern-app").ClassList.ShouldNotContain("rail-collapsed");
     }
@@ -56,14 +56,16 @@ public class MainLayoutTests
         await toggle.ClickAsync(new());
 
         toggle.GetAttribute("aria-expanded").ShouldBe("false");
-        toggle.GetAttribute("title")!.ShouldContain("Show");
+        toggle.GetAttribute("title").ShouldBe(MainLayout.NavRailToggleTitleShow);
+        toggle.GetAttribute("aria-label").ShouldBe(MainLayout.NavRailToggleTitleShow);
         layout.Find(".modern-app").ClassList.ShouldContain("rail-collapsed");
         layout.Find("#app-navigation-rail").ClassList.ShouldContain("rail-hidden");
 
         await toggle.ClickAsync(new());
 
         toggle.GetAttribute("aria-expanded").ShouldBe("true");
-        toggle.GetAttribute("title")!.ShouldContain("Hide");
+        toggle.GetAttribute("title").ShouldBe(MainLayout.NavRailToggleTitleHide);
+        toggle.GetAttribute("aria-label").ShouldBe(MainLayout.NavRailToggleTitleHide);
         layout.Find(".modern-app").ClassList.ShouldNotContain("rail-collapsed");
         layout.Find("#app-navigation-rail").ClassList.ShouldNotContain("rail-hidden");
     }

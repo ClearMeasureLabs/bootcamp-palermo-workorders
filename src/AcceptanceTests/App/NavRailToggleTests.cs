@@ -39,16 +39,20 @@ public class NavRailToggleTests : AcceptanceTestBase
 
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
         (await toggle.GetAttributeAsync("aria-expanded")).ShouldBe("true");
+        (await toggle.GetAttributeAsync("title")).ShouldBe(MainLayout.NavRailToggleTitleHide);
+        (await toggle.GetAttributeAsync("aria-label")).ShouldBe(MainLayout.NavRailToggleTitleHide);
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
 
         (await toggle.GetAttributeAsync("aria-expanded")).ShouldBe("false");
-        (await toggle.GetAttributeAsync("title"))!.ShouldContain("Show");
+        (await toggle.GetAttributeAsync("title")).ShouldBe(MainLayout.NavRailToggleTitleShow);
+        (await toggle.GetAttributeAsync("aria-label")).ShouldBe(MainLayout.NavRailToggleTitleShow);
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
 
         (await toggle.GetAttributeAsync("aria-expanded")).ShouldBe("true");
-        (await toggle.GetAttributeAsync("title"))!.ShouldContain("Hide");
+        (await toggle.GetAttributeAsync("title")).ShouldBe(MainLayout.NavRailToggleTitleHide);
+        (await toggle.GetAttributeAsync("aria-label")).ShouldBe(MainLayout.NavRailToggleTitleHide);
     }
 
     [Test, Retry(2)]
