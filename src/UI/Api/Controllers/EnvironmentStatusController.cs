@@ -46,16 +46,20 @@ public class EnvironmentStatusController : ControllerBase
 
     private static EnvironmentStatusResponse BuildResponse()
     {
-        var names = new List<string>();
-        var variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        // Collect then sort so JSON / weak ETag stay stable regardless of allow-list order.
+        var present = new List<string>();
         foreach (var name in ReportedEnvironmentVariableNames)
         {
-            if (Environment.GetEnvironmentVariable(name) is null)
+            if (Environment.GetEnvironmentVariable(name) is not null)
             {
-                continue;
+                present.Add(name);
             }
+        }
 
-            names.Add(name);
+        present.Sort(StringComparer.OrdinalIgnoreCase);
+        var variables = new Dictionary<string, string>(present.Count, StringComparer.OrdinalIgnoreCase);
+        foreach (var name in present)
+        {
             variables[name] = RedactedValue;
         }
 
@@ -74,7 +78,7 @@ public class EnvironmentStatusController : ControllerBase
             OsDescription: RuntimeInformation.OSDescription,
             ProcessorCount: Environment.ProcessorCount,
             ClrVersion: Environment.Version.ToString(),
-            EnvironmentVariableNames: names,
+            EnvironmentVariableNames: present,
             EnvironmentVariables: variables,
             Version: version,
             GitSha: gitSha,

@@ -88,6 +88,28 @@ public class EnvironmentStatusControllerTests
         payload.GitSha.ShouldNotBeEmpty();
     }
 
+    [Test]
+    public void Get_Should_ReturnEnvironmentName_ForFooterConsumers()
+    {
+        var result = CreateController().Get();
+
+        var payload = AssertOkPayload(result);
+        payload.EnvironmentName.ShouldNotBeNullOrEmpty();
+    }
+
+    [Test]
+    public void Get_Should_ReturnEnvVarNamesSortedOrdinalIgnoreCase()
+    {
+        using var probe = RedactionProbe.Install(SecretValue);
+
+        var result = CreateController().Get();
+        var payload = AssertOkPayload(result);
+
+        payload.EnvironmentVariableNames.Count.ShouldBeGreaterThan(0);
+        payload.EnvironmentVariableNames
+            .ShouldBe(payload.EnvironmentVariableNames.OrderBy(n => n, StringComparer.OrdinalIgnoreCase));
+    }
+
     private static EnvironmentStatusController CreateController() =>
         new()
         {

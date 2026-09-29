@@ -165,6 +165,7 @@ public class EnvironmentStatusEndpointIntegrationTests
         using var doc = await JsonDocument.ParseAsync(stream);
         doc.RootElement.TryGetProperty("version", out _).ShouldBeTrue();
         doc.RootElement.TryGetProperty("gitSha", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("environmentName", out _).ShouldBeTrue();
     }
 
     private static async Task AssertOkJsonShape(HttpResponseMessage response)
@@ -181,5 +182,8 @@ public class EnvironmentStatusEndpointIntegrationTests
         doc.RootElement.TryGetProperty("clrVersion", out _).ShouldBeTrue();
         doc.RootElement.TryGetProperty("environmentVariableNames", out _).ShouldBeTrue();
         doc.RootElement.TryGetProperty("environmentVariables", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("version", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("gitSha", out _).ShouldBeTrue();
+        doc.RootElement.TryGetProperty("environmentName", out _).ShouldBeTrue();
     }
 }
