@@ -154,6 +154,17 @@ Utility endpoints in `src/UI/Api/Controllers/` — all anonymous, rate-limited, 
 
 All routes also available under the versioned prefix `/api/v1.0/tools/`.
 
+## Health Endpoints
+
+Anonymous, rate-limited monitoring health APIs on UI.Server (distinct from Aspire MapHealthChecks at `/_healthcheck`):
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/health` | GET | Lightweight liveness JSON (timestamp/uptime only; no deep dependency checks) |
+| `/api/health/detailed` | GET | Component-level JSON with `overallStatus` and named `components[]` (API, DataAccess, LLM, host diagnostics, etc.) |
+
+Versioned equivalents: `/api/v1.0/health` and `/api/v1.0/health/detailed`. Implementation: `DetailedHealthController` + `DetailedHealthReportProvider` in `src/UI/Api` / `src/UI/Server`.
+
 ## Feature Flags
 
 Runtime feature flag status endpoint — read-only, no DB access, no MediatR:
