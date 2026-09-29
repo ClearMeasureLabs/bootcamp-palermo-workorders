@@ -62,6 +62,7 @@ public class CopyrightFooterTests : AcceptanceTestBase
         await footerNote.WaitForAsync();
         await Expect(footerNote).ToBeVisibleAsync();
         await Expect(footerNote).ToContainTextAsync("Submit a new work order any time");
+        await Expect(footerNote).ToContainTextAsync("Thank you for serving!");
     }
 
     [Test, Retry(2)]
