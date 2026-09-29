@@ -382,6 +382,10 @@
     .modern-sidebar.rail-hidden {
         transform: translateX(-100%);
     }
+
+    .modern-header {
+        z-index: 1001; /* above .modern-sidebar (1000) and .nav-backdrop (999) */
+    }
     
     .main-container {
         margin-left: 0;

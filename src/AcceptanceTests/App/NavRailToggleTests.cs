@@ -82,19 +82,68 @@ public class NavRailToggleTests : AcceptanceTestBase
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
+        // Hide nav while wide so _navVisible=false; sidebar gets rail-hidden class
         await Click(nameof(MainLayout.Elements.NavRailToggle));
+        var rail = Page.Locator("#app-navigation-rail");
+        await Expect(rail).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("rail-hidden"),
+            new LocatorAssertionsToHaveClassOptions { Timeout = 5_000 });
 
         await Page.SetViewportSizeAsync(375, 667);
+        // Wait for Blazor to process OnViewportChanged — narrow mode drops rail-hidden
+        await Expect(rail).Not.ToHaveClassAsync(new System.Text.RegularExpressions.Regex("rail-hidden"),
+            new LocatorAssertionsToHaveClassOptions { Timeout = 5_000 });
 
-        var rail = Page.Locator("#app-navigation-rail");
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
 
         await Click(nameof(MainLayout.Elements.NavRailToggle));
         (await rail.GetAttributeAsync("class"))!.ShouldContain("open");
 
-        await Click(nameof(MainLayout.Elements.NavRailToggle));
+        // Real pointer hit-test: EvaluateClick would bypass overlay stacking defects (AC6).
+        await toggle.ClickAsync();
         (await rail.GetAttributeAsync("class"))!.ShouldNotContain("open");
         await Expect(toggle).ToBeFocusedAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldKeepNavRailTogglePointerReachable_WhenMobileOverlayOpen()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Hide nav while wide so _navVisible=false; sidebar gets rail-hidden class
+        await Click(nameof(MainLayout.Elements.NavRailToggle));
+        var rail = Page.Locator("#app-navigation-rail");
+        await Expect(rail).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("rail-hidden"),
+            new LocatorAssertionsToHaveClassOptions { Timeout = 5_000 });
+
+        await Page.SetViewportSizeAsync(375, 667);
+        // Wait for Blazor to process OnViewportChanged — narrow mode drops rail-hidden
+        await Expect(rail).Not.ToHaveClassAsync(new System.Text.RegularExpressions.Regex("rail-hidden"),
+            new LocatorAssertionsToHaveClassOptions { Timeout = 5_000 });
+
+        await Click(nameof(MainLayout.Elements.NavRailToggle));
+        (await rail.GetAttributeAsync("class"))!.ShouldContain("open");
+
+        var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
+        var box = await toggle.BoundingBoxAsync();
+        box.ShouldNotBeNull();
+
+        var midX = box.X + box.Width / 2;
+        var midY = box.Y + box.Height / 2;
+        var hitTestId = await Page.EvaluateAsync<string?>(
+            @"([x, y]) => {
+                const el = document.elementFromPoint(x, y);
+                if (!el) return null;
+                const toggle = el.closest('[data-testid=""NavRailToggle""]');
+                return toggle ? toggle.getAttribute('data-testid') : el.getAttribute('data-testid');
+            }",
+            new object[] { midX, midY });
+        hitTestId.ShouldBe(nameof(MainLayout.Elements.NavRailToggle));
+
+        await toggle.ClickAsync();
+        (await rail.GetAttributeAsync("class"))!.ShouldNotContain("open");
     }
 
     [Test, Retry(2)]
