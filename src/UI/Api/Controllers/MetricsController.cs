@@ -6,7 +6,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
 /// Exposes a JSON summary of process runtime metrics for operators and integrations
-/// (<c>GET /api/metrics/summary</c> and versioned equivalent; issue #9158).
+/// (<c>GET /api/metrics/summary</c> and versioned equivalent; issues #9158, #9837).
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
