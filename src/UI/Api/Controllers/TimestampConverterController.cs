@@ -22,6 +22,33 @@ public class TimestampConverterController : ControllerBase
     private const string HumanOutputFormat = "dddd, dd MMMM yyyy HH:mm:ss UTC";
 
     /// <summary>
+    /// Absolute Unix-second magnitudes at or above this threshold are rejected as millisecond-scale
+    /// (13+ digit epoch values). Valid second-range max is ~2.53e11; 1e12 is safely above that.
+    /// </summary>
+    private const long MillisecondScaleThresholdSeconds = 1_000_000_000_000L;
+
+    private const string MissingParamDetail =
+        "Provide exactly one of query parameters 'unix' (epoch seconds) or 'iso' (ISO-8601).";
+
+    private const string BothParamsDetail =
+        "Provide exactly one of query parameters 'unix' (epoch seconds) or 'iso' (ISO-8601), not both.";
+
+    private const string UnixInvalidDetail =
+        "Query parameter 'unix' must be a 64-bit integer Unix timestamp in seconds (not milliseconds).";
+
+    private const string UnixMillisecondsDetail =
+        "Query parameter 'unix' must be Unix epoch seconds, not milliseconds. Received a millisecond-scale value.";
+
+    private const string UnixEmptyDetail =
+        "Query parameter 'unix' is required when present; provide epoch seconds as a 64-bit integer.";
+
+    private const string IsoInvalidDetail =
+        "Query parameter 'iso' must be a valid ISO-8601 date/time string.";
+
+    private const string IsoEmptyDetail =
+        "Query parameter 'iso' is required when present; provide a valid ISO-8601 date/time string.";
+
+    /// <summary>
     /// Returns Unix seconds, ISO-8601 UTC (second precision), and a human UTC display string
     /// for exactly one of <paramref name="unix"/> or <paramref name="iso"/>.
     /// </summary>
@@ -54,12 +81,12 @@ public class TimestampConverterController : ControllerBase
 
         if (!hasUnix && !hasIso)
         {
-            return "Provide exactly one of query parameters 'unix' or 'iso'.";
+            return MissingParamDetail;
         }
 
         if (hasUnix && hasIso)
         {
-            return "Provide exactly one of query parameters 'unix' or 'iso', not both.";
+            return BothParamsDetail;
         }
 
         return null;
@@ -69,28 +96,36 @@ public class TimestampConverterController : ControllerBase
     {
         if (hasUnix)
         {
-            return TryParseUnixSeconds(unix, out var instant)
+            return TryParseUnixSeconds(unix, out var instant, out var error)
                 ? ParseInstantResult.FromInstant(instant)
-                : ParseInstantResult.FromError(
-                    "Query parameter 'unix' must be a 64-bit integer Unix timestamp in seconds.");
+                : ParseInstantResult.FromError(error);
         }
 
-        return TryParseIso(iso, out var parsedInstant)
+        return TryParseIso(iso, out var parsedInstant, out var isoError)
             ? ParseInstantResult.FromInstant(parsedInstant)
-            : ParseInstantResult.FromError(
-                "Query parameter 'iso' must be a valid ISO-8601 date/time string.");
+            : ParseInstantResult.FromError(isoError);
     }
 
-    private static bool TryParseUnixSeconds(string? unix, out DateTimeOffset instant)
+    private static bool TryParseUnixSeconds(string? unix, out DateTimeOffset instant, out string error)
     {
         instant = default;
+        error = UnixInvalidDetail;
+
         if (string.IsNullOrWhiteSpace(unix))
         {
+            error = UnixEmptyDetail;
             return false;
         }
 
         if (!long.TryParse(unix.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds))
         {
+            error = UnixInvalidDetail;
+            return false;
+        }
+
+        if (Math.Abs(seconds) >= MillisecondScaleThresholdSeconds)
+        {
+            error = UnixMillisecondsDetail;
             return false;
         }
 
@@ -101,15 +136,19 @@ public class TimestampConverterController : ControllerBase
         }
         catch (ArgumentOutOfRangeException)
         {
+            error = UnixInvalidDetail;
             return false;
         }
     }
 
-    private static bool TryParseIso(string? iso, out DateTimeOffset instant)
+    private static bool TryParseIso(string? iso, out DateTimeOffset instant, out string error)
     {
         instant = default;
+        error = IsoInvalidDetail;
+
         if (string.IsNullOrWhiteSpace(iso))
         {
+            error = IsoEmptyDetail;
             return false;
         }
 
@@ -119,6 +158,7 @@ public class TimestampConverterController : ControllerBase
                 DateTimeStyles.RoundtripKind,
                 out instant))
         {
+            error = IsoInvalidDetail;
             return false;
         }
 

@@ -64,6 +64,17 @@ public class TimestampConverterEndpointIntegrationTests
     }
 
     [Test]
+    public async Task Should_Return400WithMillisecondDetail_When_UnixIsMillisecondScale()
+    {
+        var response = await _client!.GetAsync("/api/tools/timestamp-converter?unix=1700000000000");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.ShouldContain("millisecond-scale");
+        body.ShouldContain("seconds");
+    }
+
+    [Test]
     public async Task Should_Return200WithoutApiKey_When_MiddlewareEnabled()
     {
         await using var factory = new ApiKeyProtectedWebApplicationFactory();
