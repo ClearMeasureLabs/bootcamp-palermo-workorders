@@ -170,6 +170,21 @@ Also available as `/api/v1.0/features/flags`.
 
 Pattern: no `IBus`, no query, no handler — pure static data. API-key middleware guards automatically. Rate-limited by `ApiRateLimiting.PolicyName`.
 
+## Environment Status
+
+Runtime environment diagnostics endpoint — read-only, no DB access, no MediatR:
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/status/environment` | GET | JSON snapshot: `osDescription`, `processorCount`, `clrVersion`, allow-listed env var names with redacted values, plus `version` / `gitSha` / `environmentName` |
+
+Also available as `/api/v1.0/status/environment`.
+
+**Controller:** `src/UI/Api/Controllers/EnvironmentStatusController.cs` — `ConditionalGetEtag` weak ETag + `If-None-Match` → 304; JSON via `ConditionalGetEtag.JsonContent`.
+**Response:** `EnvironmentStatusResponse` in the same file. Env values never emitted (`RedactedValue`); allow-list only.
+
+Pattern: no `IBus`, no query, no handler — pure `RuntimeInformation` / process snapshot. API-key middleware applies (not on the public allow-list). Rate-limited by `ApiRateLimiting.PolicyName`. Footer (`MainLayout`) already consumes `environmentName` / `gitSha`.
+
 ## DI and Service Wiring
 
 Lamar container configured in `src/UI/Server/UIServiceRegistry.cs`. Assembly scanning auto-registers MediatR handlers and services. The `IBus` interface wraps MediatR's `IMediator`.
