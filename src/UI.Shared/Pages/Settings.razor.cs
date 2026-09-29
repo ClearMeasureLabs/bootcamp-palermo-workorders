@@ -13,7 +13,8 @@ public partial class Settings : AppComponentBase
 
     public enum Elements
     {
-        DarkModeSwitch
+        DarkModeSwitch,
+        SettingsSubtitle
     }
 
     protected override async Task OnInitializedAsync()
