@@ -170,6 +170,21 @@ Also available as `/api/v1.0/features/flags`.
 
 Pattern: no `IBus`, no query, no handler — pure static data. API-key middleware guards automatically. Rate-limited by `ApiRateLimiting.PolicyName`.
 
+## Application Runtime Metrics
+
+Read-only process metrics snapshot — no DB access, no MediatR:
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/metrics/summary` | GET | JSON: uptime, totalRequestsServed, workingSetBytes, managedMemoryBytes, gcGen0/1/2Collections; weak ETag / 304 |
+
+Also available as `/api/v1.0/metrics/summary`.
+
+**Controller:** `src/UI/Api/Controllers/MetricsController.cs` — dual `[Route]`, rate-limited (`ApiRateLimiting.PolicyName`), `ConditionalGetEtag`.
+**Payload/builder:** `MetricsSummaryResponse`, `MetricsSummaryBuilder`; request count via `IHttpRequestMetricsCounter` + `HttpRequestMetricsMiddleware` (UI.Server).
+
+Pattern: API-layer utility; when API-key middleware is enabled, metrics paths require the key (not on the public-path allowlist).
+
 ## DI and Service Wiring
 
 Lamar container configured in `src/UI/Server/UIServiceRegistry.cs`. Assembly scanning auto-registers MediatR handlers and services. The `IBus` interface wraps MediatR's `IMediator`.
