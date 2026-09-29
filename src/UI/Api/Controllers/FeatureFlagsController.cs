@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
-/// Exposes runtime feature flag status for operations and support tooling.
+/// Exposes runtime feature flag status for operations and support tooling (work item #9843).
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
