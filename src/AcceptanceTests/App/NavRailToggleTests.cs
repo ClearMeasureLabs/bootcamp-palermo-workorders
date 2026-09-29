@@ -127,22 +127,17 @@ public class NavRailToggleTests : AcceptanceTestBase
         (await rail.GetAttributeAsync("class"))!.ShouldContain("open");
 
         var toggle = Page.GetByTestId(nameof(MainLayout.Elements.NavRailToggle));
-        var box = await toggle.BoundingBoxAsync();
-        box.ShouldNotBeNull();
-
-        var midX = box.X + box.Width / 2;
-        var midY = box.Y + box.Height / 2;
-        double.IsFinite(midX).ShouldBeTrue();
-        double.IsFinite(midY).ShouldBeTrue();
-
-        var hitTestId = await Page.EvaluateAsync<string?>(
-            @"point => {
-                const el = document.elementFromPoint(point.x, point.y);
-                if (!el) return null;
-                const hit = el.closest('[data-testid=""NavRailToggle""]');
-                return hit ? hit.getAttribute('data-testid') : el.getAttribute('data-testid');
-            }",
-            new { x = midX, y = midY });
+        // Compute mid-point in-page so Playwright arg serialization cannot produce NaN for elementFromPoint.
+        var hitTestId = await toggle.EvaluateAsync<string?>(
+            @"el => {
+                const rect = el.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                const top = document.elementFromPoint(x, y);
+                if (!top) return null;
+                const hit = top.closest('[data-testid=""NavRailToggle""]');
+                return hit ? hit.getAttribute('data-testid') : top.getAttribute('data-testid');
+            }");
         hitTestId.ShouldBe(nameof(MainLayout.Elements.NavRailToggle));
 
         await toggle.ClickAsync();
