@@ -77,6 +77,21 @@ public class LoginLinkBlinkStyleTests
         reducedMotion.Groups["body"].Value.ShouldContain("animation: none");
     }
 
+    [Test]
+    public void ShouldEmphasizeLoginLink_WhenReducedMotionRequested()
+    {
+        var css = ReadLoginLinkCss();
+
+        var reducedMotion = Regex.Match(
+            css,
+            @"@media \(prefers-reduced-motion: reduce\) \{(?<body>.*)\}\s*$",
+            RegexOptions.Singleline);
+        reducedMotion.Success.ShouldBeTrue("Expected a prefers-reduced-motion block");
+        var body = reducedMotion.Groups["body"].Value;
+        body.ShouldContain("font-weight: 700");
+        body.ShouldContain("text-decoration: underline");
+    }
+
     private static string ReadLoginLinkCss()
     {
         var path = Path.GetFullPath(Path.Combine(
