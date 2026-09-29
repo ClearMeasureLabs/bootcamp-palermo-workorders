@@ -778,6 +778,31 @@ public class LoginPageTests
     }
 
     [Test]
+    public async Task WelcomeMessage_ShouldPreserveStoredCasing_ForMixedCaseEmployee()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
+
+        var component = ctx.Render<Login>();
+
+        var jdoeOption = component.FindAll("option").Single(o => o.GetAttribute("value") == "jdoe");
+        jdoeOption.TextContent.ShouldBe("MARY JANE SIMPSON");
+
+        var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
+        await employeeSelect.ChangeAsync(new() { Value = "jdoe" });
+
+        var welcomeMessage = component.Find("small.text-success");
+        welcomeMessage.ShouldNotBeNull();
+        welcomeMessage.TextContent.ShouldBe("Welcome back, mary jane SIMPSON!");
+    }
+
+    [Test]
     public async Task Should_ShowVersionLabel_WithEnvironmentSegment()
     {
         await using var ctx = new BunitContext();
