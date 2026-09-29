@@ -132,14 +132,17 @@ public class NavRailToggleTests : AcceptanceTestBase
 
         var midX = box.X + box.Width / 2;
         var midY = box.Y + box.Height / 2;
+        double.IsFinite(midX).ShouldBeTrue();
+        double.IsFinite(midY).ShouldBeTrue();
+
         var hitTestId = await Page.EvaluateAsync<string?>(
-            @"([x, y]) => {
-                const el = document.elementFromPoint(x, y);
+            @"point => {
+                const el = document.elementFromPoint(point.x, point.y);
                 if (!el) return null;
-                const toggle = el.closest('[data-testid=""NavRailToggle""]');
-                return toggle ? toggle.getAttribute('data-testid') : el.getAttribute('data-testid');
+                const hit = el.closest('[data-testid=""NavRailToggle""]');
+                return hit ? hit.getAttribute('data-testid') : el.getAttribute('data-testid');
             }",
-            new object[] { midX, midY });
+            new { x = midX, y = midY });
         hitTestId.ShouldBe(nameof(MainLayout.Elements.NavRailToggle));
 
         await toggle.ClickAsync();
