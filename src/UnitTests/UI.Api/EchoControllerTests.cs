@@ -60,6 +60,7 @@ public class EchoControllerTests
             }
         };
         httpContext.Request.Headers["Authorization"] = "Bearer secret-token";
+        httpContext.Request.Headers["Proxy-Authorization"] = "Basic proxy-secret";
         httpContext.Request.Headers["X-Api-Key"] = "api-key-value";
         httpContext.Request.Headers["Cookie"] = "session=abc";
         httpContext.Request.Headers["Accept"] = "application/json";
@@ -74,6 +75,7 @@ public class EchoControllerTests
         var ok = result.ShouldBeOfType<OkObjectResult>();
         var payload = ok.Value.ShouldBeOfType<EchoResponse>();
         payload.Headers["Authorization"].ShouldBe(EchoController.RedactedValue);
+        payload.Headers["Proxy-Authorization"].ShouldBe(EchoController.RedactedValue);
         payload.Headers["X-Api-Key"].ShouldBe(EchoController.RedactedValue);
         payload.Headers["Cookie"].ShouldBe(EchoController.RedactedValue);
         payload.Headers["Accept"].ShouldBe("application/json");

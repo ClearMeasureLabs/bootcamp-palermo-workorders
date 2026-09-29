@@ -160,7 +160,7 @@ Anonymous request-reflection endpoint for debugging and client diagnostics (no D
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/echo` | GET | JSON reflection of method, path, query, scheme, host, protocol, remote IP, and headers; `Authorization`, `X-Api-Key`, and `Cookie` redacted to `[REDACTED]` |
+| `/api/echo` | GET | JSON reflection of method, path, query, scheme, host, protocol, remote IP, and headers; `Authorization`, `Proxy-Authorization`, `X-Api-Key`, and `Cookie` redacted to `[REDACTED]` |
 
 Also available as `/api/v1.0/echo`. Rate-limited by `ApiRateLimiting.PolicyName`; public path (no API key). Controller: `src/UI/Api/Controllers/EchoController.cs`.
 

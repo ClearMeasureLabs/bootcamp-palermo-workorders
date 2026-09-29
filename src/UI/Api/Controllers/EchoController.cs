@@ -21,6 +21,7 @@ public class EchoController : ControllerBase
     private static readonly HashSet<string> SensitiveHeaderNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "Authorization",
+        "Proxy-Authorization",
         "X-Api-Key",
         "Cookie"
     };
