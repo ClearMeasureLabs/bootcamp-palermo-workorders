@@ -72,4 +72,15 @@ public class CounterTests : AcceptanceTestBase
 
         await Expect(Page).ToHaveTitleAsync(new System.Text.RegularExpressions.Regex("Counter.*Church Activity Tracker"));
     }
+
+    [Test, Retry(2)]
+    public async Task Should_DisplaySubtitleContainingVolunteerService_WhenOnCounterPage()
+    {
+        await LoginAsCurrentUser();
+        await Page.GotoAsync("/counter");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var subtitleLocator = Page.GetByTestId(nameof(Counter.Elements.CounterSubtitle));
+        await Expect(subtitleLocator).ToContainTextAsync("volunteer service");
+    }
 }
