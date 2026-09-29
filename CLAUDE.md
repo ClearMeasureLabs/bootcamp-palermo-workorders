@@ -154,6 +154,16 @@ Utility endpoints in `src/UI/Api/Controllers/` — all anonymous, rate-limited, 
 
 All routes also available under the versioned prefix `/api/v1.0/tools/`.
 
+## Request Echo (diagnostics)
+
+Anonymous request-reflection endpoint for debugging and client diagnostics (no DB, MediatR, or UI):
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/echo` | GET | JSON reflection of method, path, query, scheme, host, protocol, remote IP, and headers; `Authorization`, `X-Api-Key`, and `Cookie` redacted to `[REDACTED]` |
+
+Also available as `/api/v1.0/echo`. Rate-limited by `ApiRateLimiting.PolicyName`; public path (no API key). Controller: `src/UI/Api/Controllers/EchoController.cs`.
+
 ## Feature Flags
 
 Runtime feature flag status endpoint — read-only, no DB access, no MediatR:
