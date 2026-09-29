@@ -8,6 +8,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
 /// Generates one or more GUIDs for operators and integrations.
+/// Anonymous and rate-limited; dual routes under <c>api/tools</c> and the versioned API prefix.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
