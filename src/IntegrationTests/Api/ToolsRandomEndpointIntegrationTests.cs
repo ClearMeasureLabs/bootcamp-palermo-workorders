@@ -60,6 +60,11 @@ public class ToolsRandomEndpointIntegrationTests
         var response = await _client!.GetAsync(path);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.ShouldContain("number");
+        body.ShouldContain("string");
+        body.ShouldContain("uuid");
+        body.ShouldContain("color");
     }
 
     [Test]

@@ -33,6 +33,11 @@ public class ToolsRandomController : ControllerBase
         };
 
     /// <summary>
+    /// Comma-separated supported <c>type</c> values derived from <see cref="Generators"/> (DRY for 400 details).
+    /// </summary>
+    internal static string SupportedTypes { get; } = string.Join(", ", Generators.Keys);
+
+    /// <summary>
     /// Returns a random value as plain text for the requested <paramref name="type"/>.
     /// Supported types: <c>number</c>, <c>string</c>, <c>uuid</c>, <c>color</c>.
     /// </summary>
@@ -46,14 +51,14 @@ public class ToolsRandomController : ControllerBase
         if (string.IsNullOrWhiteSpace(type))
         {
             return Problem(
-                detail: "Query parameter 'type' is required. Supported values: number, string, uuid, color.",
+                detail: $"Query parameter 'type' is required. Supported values: {SupportedTypes}.",
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
         if (!Generators.TryGetValue(type.Trim(), out var generator))
         {
             return Problem(
-                detail: $"Unknown type '{type}'. Supported values: number, string, uuid, color.",
+                detail: $"Unknown type '{type}'. Supported values: {SupportedTypes}.",
                 statusCode: StatusCodes.Status400BadRequest);
         }
 

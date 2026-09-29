@@ -86,7 +86,10 @@ public class ToolsRandomControllerTests
 
         var objectResult = result.ShouldBeOfType<ObjectResult>();
         objectResult.StatusCode.ShouldBe(400);
-        objectResult.Value.ShouldBeOfType<ProblemDetails>();
+        var problem = objectResult.Value.ShouldBeOfType<ProblemDetails>();
+        problem.Detail.ShouldNotBeNull();
+        problem.Detail.ShouldContain(ToolsRandomController.SupportedTypes);
+        problem.Detail.ShouldContain("required");
     }
 
     [Test]
@@ -96,7 +99,27 @@ public class ToolsRandomControllerTests
 
         var objectResult = result.ShouldBeOfType<ObjectResult>();
         objectResult.StatusCode.ShouldBe(400);
-        objectResult.Value.ShouldBeOfType<ProblemDetails>();
+        var problem = objectResult.Value.ShouldBeOfType<ProblemDetails>();
+        problem.Detail.ShouldNotBeNull();
+        problem.Detail.ShouldContain(ToolsRandomController.SupportedTypes);
+        problem.Detail.ShouldContain("banana");
+    }
+
+    [Test]
+    public void Get_Should_TrimType_When_TypeHasSurroundingWhitespace()
+    {
+        var result = CreateController().Get("  uuid  ");
+
+        var content = result.ShouldBeOfType<ContentResult>();
+        content.StatusCode.ShouldBe(200);
+        content.Content.ShouldNotBeNull();
+        Guid.TryParseExact(content.Content, "D", out _).ShouldBeTrue();
+    }
+
+    [Test]
+    public void SupportedTypes_Should_ListAllGeneratorKeys()
+    {
+        ToolsRandomController.SupportedTypes.ShouldBe("number, string, uuid, color");
     }
 
     private static ToolsRandomController CreateController() =>
