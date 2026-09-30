@@ -42,7 +42,7 @@ public class SettingsTests
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
 
         var subtitle = component.Find($"[data-testid='{nameof(Settings.Elements.SettingsSubtitle)}']");
-        subtitle.TextContent.ShouldBe("Manage display preferences for this browser.");
+        subtitle.TextContent.ShouldBe("Manage display preferences for this browser only.");
     }
 
     [Test]
