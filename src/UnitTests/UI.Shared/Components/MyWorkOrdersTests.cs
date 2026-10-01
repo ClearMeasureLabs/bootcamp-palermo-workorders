@@ -40,6 +40,25 @@ public class MyWorkOrdersTests
     }
 
     [Test]
+    public async Task ShouldRenderTooltipWithExactTitle()
+    {
+        await using var ctx = new BunitContext();
+
+        var stubBus = new StubBusWithNoWorkOrders();
+        var stubUserSession = new StubUserSession();
+        var stubUiBus = new StubUiBus();
+
+        ctx.Services.AddSingleton<IBus>(stubBus);
+        ctx.Services.AddSingleton<IUserSession>(stubUserSession);
+        ctx.Services.AddSingleton<IUiBus>(stubUiBus);
+
+        var component = ctx.Render<MyWorkOrders>();
+
+        var tooltip = component.Find($"[data-testid='{nameof(MyWorkOrders.Elements.MyWorkOrdersTooltip)}']");
+        tooltip.GetAttribute("title")!.ShouldBe("Work orders assigned to you");
+    }
+
+    [Test]
     public async Task ShouldLoadWorkOrdersForCurrentUserOnInitialization()
     {
         await using var ctx = new BunitContext();

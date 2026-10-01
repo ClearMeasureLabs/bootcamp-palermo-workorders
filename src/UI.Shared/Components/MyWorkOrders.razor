@@ -4,12 +4,19 @@
 @inherits AppComponentBase
 @inject IUserSession UserSession
 
-My Work Orders (@Count)
+<span data-testid="@Elements.MyWorkOrdersTooltip" title="Work orders assigned to you">
+    My Work Orders (@Count)
+</span>
 
 @code {
     private Employee? _currentUser;
     private readonly HashSet<WorkOrder> _myWorkOrders = new();
     public int Count => _myWorkOrders.Count;
+
+    public enum Elements
+    {
+        MyWorkOrdersTooltip
+    }
 
     public void Handle(WorkOrderChangedEvent theEvent)
     {
