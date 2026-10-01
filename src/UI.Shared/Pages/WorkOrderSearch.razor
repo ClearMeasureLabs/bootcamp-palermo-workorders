@@ -1,7 +1,7 @@
 <div class="search-page">
     <div class="search-container">
         <div class="search-header">
-            <h2>Work Order Search</h2>
+            <h2 title="Search all work orders" data-testid="@Elements.SearchHeadingTooltip">Work Order Search</h2>
             <p data-testid="@Elements.SearchHint">Use the filters to narrow the list of work orders.</p>
             <div class="search-subtitle">Find and manage church maintenance requests</div>
         </div>
@@ -180,7 +180,8 @@
         SortByTitleButton,
         SortByRoomButton,
         AssignedToMeCheckbox,
-        SearchHint
+        SearchHint,
+        SearchHeadingTooltip
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();
