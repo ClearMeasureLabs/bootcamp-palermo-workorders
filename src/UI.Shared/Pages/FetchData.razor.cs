@@ -13,6 +13,11 @@ public partial class FetchData : AppComponentBase
 
     [Inject] public IBus? ApplicationBus { get; set; }
 
+    public enum Elements
+    {
+        ForecastSourceNote
+    }
+
     protected override async Task OnInitializedAsync()
     {
         Logger.LogInformation("FetchDataController");
