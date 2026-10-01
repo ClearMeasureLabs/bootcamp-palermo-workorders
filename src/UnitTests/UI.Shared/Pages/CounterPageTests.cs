@@ -23,4 +23,18 @@ public class CounterPageTests
             .TextContent
             .ShouldBe("Track church maintenance activities and volunteer service");
     }
+
+    [Test]
+    public async Task Should_DisplayUsageHint_WithExactClickInstruction()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+
+        component.Find($"[data-testid='{nameof(Counter.Elements.CounterHint)}']")
+            .TextContent
+            .ShouldBe("Click the button to increase the count.");
+    }
 }
