@@ -37,4 +37,17 @@ public class CounterPageTests
             .TextContent
             .ShouldBe("Click the button to increase the count.");
     }
+
+    [Test]
+    public async Task ShouldRenderTooltipWithExactTitleOnIncrementButton()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+
+        var button = component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']");
+        button.GetAttribute("title").ShouldBe("Increase the count by one");
+    }
 }
