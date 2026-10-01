@@ -31,6 +31,17 @@ public class ApplicationChatTests
     }
 
     [Test]
+    public async Task ShouldRenderUsageHintUnderHeading()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<ApplicationChat>();
+
+        component.Find($"[data-testid='{ApplicationChat.Elements.ChatHint}']")
+            .TextContent.ShouldBe("Ask a question about the application.");
+    }
+
+    [Test]
     public async Task ShouldRenderChatHistoryViewportAfterSendingMessage()
     {
         await using var ctx = CreateContext();
