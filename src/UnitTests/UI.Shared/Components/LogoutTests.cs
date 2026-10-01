@@ -58,6 +58,24 @@ public class LogoutTests
     }
 
     [Test]
+    public async Task ShouldShowSignOutTooltipOnLogoutButton()
+    {
+        await using var ctx = new BunitContext();
+
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
+
+        ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+
+        var component = ctx.Render<Logout>();
+
+        var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
+        logoutButton.GetAttribute("title").ShouldBe("Sign out of the application");
+    }
+
+    [Test]
     public async Task ShouldNotifyEventBusWithUserLoggedOutEventOnClick()
     {
         await using var ctx = new BunitContext();
