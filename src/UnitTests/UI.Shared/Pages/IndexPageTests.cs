@@ -42,4 +42,18 @@ public class IndexPageTests
         var tagline = component.Find($"[data-testid='{nameof(IndexPage.Elements.HomeTagline)}']");
         tagline.TextContent.ShouldBe("Track and manage work orders in one place.");
     }
+
+    [Test]
+    public async Task ShouldRenderTooltipWithExactTitleOnHomeHeading()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.AddAuthorization();
+
+        var component = ctx.Render<IndexPage>();
+
+        var heading = component.Find($"[data-testid='{nameof(IndexPage.Elements.HomeHeadingTooltip)}']");
+        heading.GetAttribute("title").ShouldBe("Work order home");
+    }
 }
