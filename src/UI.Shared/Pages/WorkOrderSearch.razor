@@ -2,6 +2,7 @@
     <div class="search-container">
         <div class="search-header">
             <h2>Work Order Search</h2>
+            <p data-testid="@Elements.SearchHint">Use the filters to narrow the list of work orders.</p>
             <div class="search-subtitle">Find and manage church maintenance requests</div>
         </div>
 
@@ -178,7 +179,8 @@
         SortByDueDateButton,
         SortByTitleButton,
         SortByRoomButton,
-        AssignedToMeCheckbox
+        AssignedToMeCheckbox,
+        SearchHint
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();

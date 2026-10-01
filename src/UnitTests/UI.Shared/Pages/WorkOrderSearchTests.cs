@@ -35,6 +35,17 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ShouldRenderSearchHintWithExactText()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var hint = component.Find($"[data-testid='{WorkOrderSearch.Elements.SearchHint}']");
+        hint.TextContent.ShouldBe("Use the filters to narrow the list of work orders.");
+    }
+
+    [Test]
     public async Task ShouldLoadDropDownsInitiallyOnLoad()
     {
         await using var ctx = CreateContext();
