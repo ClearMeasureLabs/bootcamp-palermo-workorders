@@ -6,6 +6,7 @@
     <div class="counter-container">
         <div class="counter-header">
             <h2>📊 Church Activity Counter</h2>
+            <p data-testid="@Elements.CounterHint">Click the button to increase the count.</p>
             <div data-testid="@Elements.CounterSubtitle" class="counter-subtitle">Track church maintenance activities and volunteer service</div>
         </div>
 
@@ -47,7 +48,8 @@
         CounterValue,
         IncrementButton,
         ResetButton,
-        CounterSubtitle
+        CounterSubtitle,
+        CounterHint
     }
 
     private int _currentCount;
