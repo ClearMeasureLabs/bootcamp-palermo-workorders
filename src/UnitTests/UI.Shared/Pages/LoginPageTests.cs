@@ -310,7 +310,7 @@ public class LoginPageTests
     }
 
     [Test]
-    public async Task ShouldDisplayChooseYourNameSubtitle()
+    public async Task ShouldDisplayLoginHint_WithExactText()
     {
         await using var ctx = new BunitContext();
 
@@ -323,8 +323,11 @@ public class LoginPageTests
 
         var component = ctx.Render<Login>();
 
-        var subtitle = component.Find("p.text-muted");
-        subtitle.TextContent.ShouldBe("Choose your name to continue");
+        var hint = component.Find($"[data-testid='{nameof(Login.Elements.LoginHint)}']");
+        hint.TagName.ShouldBe("P");
+        hint.TextContent.ShouldBe("Choose your user to sign in.");
+        hint.PreviousElementSibling!.TagName.ShouldBe("H2");
+        hint.PreviousElementSibling.TextContent.Trim().ShouldBe("Sign in");
     }
 
     [Test]
