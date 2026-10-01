@@ -28,4 +28,18 @@ public class IndexPageTests
         emoji.GetAttribute("aria-hidden").ShouldBe("true");
         emoji.TextContent.ShouldContain("⛪");
     }
+
+    [Test]
+    public async Task ShouldDisplayHomeTagline()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.AddAuthorization();
+
+        var component = ctx.Render<IndexPage>();
+
+        var tagline = component.Find($"[data-testid='{nameof(IndexPage.Elements.HomeTagline)}']");
+        tagline.TextContent.ShouldBe("Track and manage work orders in one place.");
+    }
 }
