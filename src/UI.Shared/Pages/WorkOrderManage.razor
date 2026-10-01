@@ -1,6 +1,6 @@
 <div class="work-order-container">
     <div class="work-order-header">
-        <h2>
+        <h2 title="Create or edit a work order" data-testid="@Elements.ManageHeadingTooltip">
             Work Order #<span data-testid="@Elements.WorkOrderNumber">@Model.WorkOrderNumber</span>
             (<span data-testid="@Elements.Status">@Model.Status</span>)
         </h2>
@@ -209,6 +209,7 @@
         DictateTitle,
         DictateDescription,
         DescriptionCharCount,
-        RequiredFieldsNote
+        RequiredFieldsNote,
+        ManageHeadingTooltip
     }
 }
