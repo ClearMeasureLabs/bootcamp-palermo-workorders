@@ -4,6 +4,7 @@
             Work Order #<span data-testid="@Elements.WorkOrderNumber">@Model.WorkOrderNumber</span>
             (<span data-testid="@Elements.Status">@Model.Status</span>)
         </h2>
+        <p data-testid="@Elements.RequiredFieldsNote">Fields marked with * are required.</p>
     </div>
 
     <EditForm Model="@Model" OnValidSubmit="HandleSubmit">
@@ -207,6 +208,7 @@
         SpeakDescription,
         DictateTitle,
         DictateDescription,
-        DescriptionCharCount
+        DescriptionCharCount,
+        RequiredFieldsNote
     }
 }
