@@ -28,7 +28,7 @@ public class WorkOrderChatTests
             Number = "WO-001",
             Assignee = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com")
         };
-        component.Instance.Handle(new WorkOrderSelectedEvent(workOrder));
+        await component.InvokeAsync(() => component.Instance.Handle(new WorkOrderSelectedEvent(workOrder)));
         component.Render();
 
         var panel = component.Find($"[data-testid='{nameof(WorkOrderChat.Elements.WorkOrderChatTooltip)}']");
@@ -50,7 +50,7 @@ public class WorkOrderChatTests
             Number = "WO-002",
             Assignee = null
         };
-        component.Instance.Handle(new WorkOrderSelectedEvent(workOrder));
+        await component.InvokeAsync(() => component.Instance.Handle(new WorkOrderSelectedEvent(workOrder)));
         component.Render();
 
         component.FindAll($"[data-testid='{nameof(WorkOrderChat.Elements.WorkOrderChatTooltip)}']")
