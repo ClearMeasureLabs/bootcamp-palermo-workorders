@@ -331,6 +331,24 @@ public class LoginPageTests
     }
 
     [Test]
+    public async Task ShouldRenderTooltipWithExactTitleOnLoginHeading()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
+
+        var component = ctx.Render<Login>();
+
+        var heading = component.Find($"[data-testid='{nameof(Login.Elements.LoginHeadingTooltip)}']");
+        heading.GetAttribute("title").ShouldBe("Sign in page");
+    }
+
+    [Test]
     public async Task Should_ShowHelperTextUnderMemberDropdown()
     {
         await using var ctx = new BunitContext();

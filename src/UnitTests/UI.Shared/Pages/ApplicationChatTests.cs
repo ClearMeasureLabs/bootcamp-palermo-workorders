@@ -42,6 +42,17 @@ public class ApplicationChatTests
     }
 
     [Test]
+    public async Task ShouldRenderTooltipWithExactTitleOnChatHeading()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<ApplicationChat>();
+
+        var heading = component.Find($"[data-testid='{ApplicationChat.Elements.ChatHeadingTooltip}']");
+        heading.GetAttribute("title").ShouldBe("Chat with the application assistant");
+    }
+
+    [Test]
     public async Task ShouldRenderChatHistoryViewportAfterSendingMessage()
     {
         await using var ctx = CreateContext();

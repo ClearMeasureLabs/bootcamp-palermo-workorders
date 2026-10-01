@@ -46,6 +46,17 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ShouldRenderTooltipWithExactTitleOnSearchHeading()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var heading = component.Find($"[data-testid='{WorkOrderSearch.Elements.SearchHeadingTooltip}']");
+        heading.GetAttribute("title").ShouldBe("Search all work orders");
+    }
+
+    [Test]
     public async Task ShouldLoadDropDownsInitiallyOnLoad()
     {
         await using var ctx = CreateContext();
