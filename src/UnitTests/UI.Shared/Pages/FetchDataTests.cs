@@ -81,6 +81,35 @@ public class FetchDataTests
         note.TextContent.Trim().ShouldBe("Forecast data is sample data for demonstration.");
     }
 
+    [Test]
+    public async Task ShouldRenderTooltipWithExactTitleOnForecastTable()
+    {
+        await using var ctx = new BunitContext();
+
+        var forecasts = new[]
+        {
+            new WeatherForecast
+            {
+                Date = new DateTime(2026, 8, 21),
+                TemperatureC = 28,
+                Summary = "Sunny"
+            }
+        };
+
+        ctx.Services.AddSingleton<IBus>(new StubForecastBus(forecasts));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+        ctx.Services.AddLogging();
+
+        var component = ctx.Render<FetchData>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            var element = component.Find($"[data-testid='{nameof(FetchData.Elements.ForecastTableTooltip)}']");
+            element.GetAttribute("title").ShouldBe("Five-day sample forecast");
+        });
+    }
+
     private sealed class StubForecastBus(WeatherForecast[] forecasts) : IBus
     {
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)

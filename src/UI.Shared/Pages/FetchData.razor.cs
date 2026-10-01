@@ -15,7 +15,8 @@ public partial class FetchData : AppComponentBase
 
     public enum Elements
     {
-        ForecastSourceNote
+        ForecastSourceNote,
+        ForecastTableTooltip
     }
 
     protected override async Task OnInitializedAsync()
