@@ -4,6 +4,7 @@ import {QodanaRemediationVideo, TOTAL_FRAMES} from './Video';
 import {RoomNumber900Video, ROOM_TOTAL_FRAMES} from './roomNumberVideo';
 import {InstructionsFieldVideo, INSTRUCTIONS_TOTAL_FRAMES} from './instructionsFieldVideo';
 import {FPS} from './theme';
+import {WorkOrderAcceptance} from './workOrderAcceptance';
 
 export const RemotionRoot: React.FC = () => (
   <>
@@ -27,6 +28,14 @@ export const RemotionRoot: React.FC = () => (
       id="InstructionsField"
       component={InstructionsFieldVideo}
       durationInFrames={INSTRUCTIONS_TOTAL_FRAMES}
+      fps={FPS}
+      width={1920}
+      height={1080}
+    />
+    <Composition
+      id="WorkOrderAcceptance"
+      component={WorkOrderAcceptance}
+      durationInFrames={900}
       fps={FPS}
       width={1920}
       height={1080}

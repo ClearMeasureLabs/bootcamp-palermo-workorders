@@ -1,0 +1,31 @@
+{% extends "workorders/base.html" %}
+{% block title %}{{ order.number }} · Work Orders{% endblock %}
+{% block content %}
+<div class="manage-page">
+  <div class="manage-container">
+    <div class="manage-header">
+      <h1>Work Order #{{ order.number }} <span>({{ order.get_status_display }})</span></h1>
+    </div>
+    <section class="panel manage-fields">
+      <div class="manage-field"><span class="manage-label">Creator</span><span class="manage-value">{{ order.creator.get_full_name|default:"—" }}</span></div>
+      <div class="manage-field"><span class="manage-label">Assigned To</span><span class="manage-value">{{ order.assignee.get_full_name|default:"Unassigned" }}</span></div>
+      <div class="manage-field"><span class="manage-label">Title</span><span class="manage-value">{{ order.title }}</span></div>
+      <div class="manage-field"><span class="manage-label">Description</span><span class="manage-value">{{ order.description|default:"No description"|linebreaksbr }}</span></div>
+      <div class="manage-field"><span class="manage-label">Instructions</span><span class="manage-value">{{ order.instructions|default:"No special instructions"|linebreaksbr }}</span></div>
+      <div class="manage-field"><span class="manage-label">Room</span><span class="manage-value">{{ order.room_number|default:"—" }}</span></div>
+      <div class="manage-date-grid">
+        <div><span class="manage-label">Created Date</span><span class="manage-value">{{ order.created_at|date:"N j, Y, P" }}</span></div>
+        <div><span class="manage-label">Assigned Date</span><span class="manage-value">{{ order.assigned_at|date:"N j, Y, P"|default:"—" }}</span></div>
+        <div><span class="manage-label">Completed Date</span><span class="manage-value">{{ order.completed_at|date:"N j, Y, P"|default:"—" }}</span></div>
+        <div><span class="manage-label">Due Date</span><span class="manage-value {% if order.due_urgency == 'Overdue' %}due-date-overdue{% elif order.due_urgency == 'DueToday' %}due-date-today{% endif %}">{{ order.due_date|date:"N j, Y"|default:"—" }}{% if order.due_badge %} · {{ order.due_badge }}{% endif %}</span></div>
+      </div>
+    </section>
+    {% if available_transitions %}
+    <form method="post" action="{% url 'work_order_transition' order.pk %}" class="panel command-panel">{% csrf_token %}<label for="transition-note">Transition note</label><input id="transition-note" name="note" maxlength="500"><div class="command-buttons">{% for value,label in order.Status.choices %}{% if value in available_transitions %}<button type="submit" name="status" value="{{ value }}">{% if value == 'ASD' %}Assign{% elif value == 'IPG' %}Start work{% elif value == 'CMP' %}Complete{% else %}{{ label }}{% endif %}</button>{% endif %}{% endfor %}</div></form>
+    {% endif %}
+    {% if attachments %}<section class="panel attachments-section" data-testid="AttachmentsSection"><h2>Attachments</h2><table><thead><tr><th>File Name</th><th>Content Type</th><th>Size</th><th>Uploaded By</th><th>Upload Date</th></tr></thead><tbody>{% for attachment in attachments %}<tr data-testid="AttachmentRow"><td data-testid="AttachmentFileName">{{ attachment.file_name }}</td><td data-testid="AttachmentContentType">{{ attachment.content_type }}</td><td data-testid="AttachmentFileSize">{{ attachment.file_size }}</td><td data-testid="AttachmentUploadedBy">{{ attachment.uploaded_by.get_full_name }}</td><td data-testid="AttachmentUploadedDate">{{ attachment.uploaded_date|date:"N j, Y, P" }}</td></tr>{% endfor %}</tbody></table></section>{% endif %}
+    {% if attachment_form %}<h2>Add attachment metadata</h2><form method="post" action="{% url 'work_order_attachment_create' order.pk %}" class="panel attachment-form">{% csrf_token %}{{ attachment_form.as_p }}<p class="muted">Metadata only; no file is uploaded or stored.</p><button type="submit">Add attachment metadata</button></form>{% endif %}
+    <section class="panel status-history"><h2>Status history</h2><ul>{% for event in order.events.all %}<li>{{ event.occurred_at }} · {{ event.from_status|default:"Created" }} → {{ event.get_to_status_display|default:event.to_status }}{% if event.note %} — {{ event.note }}{% endif %}</li>{% empty %}<li class="muted">No status changes recorded.</li>{% endfor %}</ul></section>
+  </div>
+</div>
+{% endblock %}
