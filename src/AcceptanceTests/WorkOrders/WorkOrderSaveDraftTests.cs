@@ -192,4 +192,17 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
             new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldDisplayFormattedCreatorOnNewWorkOrderPage()
+    {
+        await LoginAsCurrentUser();
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await WaitForNewWorkOrderFormReadyAsync();
+
+        var creatorLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Creator));
+        var expected = LoginDisplayNameFormatter.FormatForLoginDropdown(CurrentUser.GetFullName());
+        await Expect(creatorLocator).ToHaveTextAsync(expected);
+    }
 }
