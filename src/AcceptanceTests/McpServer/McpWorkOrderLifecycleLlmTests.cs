@@ -5,6 +5,7 @@ using ClearMeasure.Bootcamp.LlmGateway;
 namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
 [TestFixture]
+[Explicit(LlmTestAttribute.ExplicitReason)]
 public class McpWorkOrderLifecycleLlmTests : AcceptanceTestBase
 {
     protected override bool RequiresBrowser => false;

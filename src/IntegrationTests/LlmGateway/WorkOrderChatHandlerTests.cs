@@ -5,6 +5,7 @@ using Microsoft.Extensions.AI;
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
 [TestFixture]
+[Explicit(LlmTestAttribute.ExplicitReason)]
 public class WorkOrderChatHandlerTests : LlmTestBase
 {
     [Test]

@@ -14,6 +14,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.AIAgents;
 /// Skips when no chat client is configured.
 /// </summary>
 [TestFixture]
+[Explicit(LlmTestAttribute.ExplicitReason)]
 public class SaturdayMowSchedulingAgentTests : AcceptanceTestBase
 {
     [SetUp]

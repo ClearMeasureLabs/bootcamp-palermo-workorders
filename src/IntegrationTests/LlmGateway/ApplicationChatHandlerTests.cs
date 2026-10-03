@@ -62,6 +62,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
     [Test]
     [LlmTest]
+    [Explicit(LlmTestAttribute.ExplicitReason)]
     public async Task Handle_AskForWorkOrdersICreated_ReturnsWorkOrderData()
     {
         new ZDataLoader().LoadData();
@@ -78,6 +79,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
     [Test]
     [LlmTest]
+    [Explicit(LlmTestAttribute.ExplicitReason)]
     public async Task Handle_CreateAndAssignWorkOrder_CreatesAssignedWorkOrderForGwillie()
     {
         new ZDataLoader().LoadData();
@@ -113,6 +115,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
     [Test]
     [LlmTest]
+    [Explicit(LlmTestAttribute.ExplicitReason)]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilie()
     {
         new ZDataLoader().LoadData();
@@ -172,6 +175,7 @@ public class ApplicationChatHandlerTests : LlmTestBase
 
     [Test]
     [LlmTest]
+    [Explicit(LlmTestAttribute.ExplicitReason)]
     [Category("SqlServerOnly")]
     public async Task Handle_CreateAndAssignWorkOrder_AssignsWorkOrderForWilieAndThenShelvesIt()
     {

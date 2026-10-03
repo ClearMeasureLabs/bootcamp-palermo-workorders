@@ -2,6 +2,7 @@ using ClearMeasure.Bootcamp.UI.Shared.Components;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 
+[Explicit(LlmTestAttribute.ExplicitReason)]
 public class WorkOrderAiChatTests : AcceptanceTestBase
 {
     [SetUp]
