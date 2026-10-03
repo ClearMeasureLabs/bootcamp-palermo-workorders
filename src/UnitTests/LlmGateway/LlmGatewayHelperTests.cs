@@ -11,7 +11,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.LlmGateway;
 public class ChatClientConfigValidatorTests
 {
     [Test]
-    public void ShouldReturnUnavailable_WhenConfigMissingValues()
+    public void ShouldReturnAvailableForOllama_WhenAzureApiKeyEmpty()
     {
         var result = ChatClientConfigValidator.Validate(new ChatClientConfig
         {
@@ -20,8 +20,24 @@ public class ChatClientConfigValidatorTests
             AiOpenAiModel = ""
         });
 
+        result.IsAvailable.ShouldBeTrue();
+        result.Message.ShouldContain(OllamaChatDefaults.DefaultModelId);
+    }
+
+    [Test]
+    public void ShouldReturnUnavailable_WhenAzurePartiallyConfigured()
+    {
+        var result = ChatClientConfigValidator.Validate(new ChatClientConfig
+        {
+            AiOpenAiApiKey = "key",
+            AiOpenAiUrl = "",
+            AiOpenAiModel = ""
+        });
+
         result.IsAvailable.ShouldBeFalse();
-        result.Message.ShouldContain("AI_OpenAI_ApiKey");
+        result.Message.ShouldContain("partially configured");
+        result.Message.ShouldContain("AI_OpenAI_Url");
+        result.Message.ShouldContain("AI_OpenAI_Model");
     }
 
     [Test]
@@ -42,14 +58,14 @@ public class ChatClientConfigValidatorTests
 public class ChatClientFactoryAvailabilityTests
 {
     [Test]
-    public async Task ShouldReportMissingConfiguration_WhenEnvironmentValuesMissing()
+    public async Task ShouldReportOllamaConfigured_WhenAzureApiKeyMissing()
     {
         var factory = new ChatClientFactory(new StubBus(available: false));
 
         var result = await factory.IsChatClientAvailable();
 
-        result.IsAvailable.ShouldBeFalse();
-        result.Message.ShouldContain("AI_OpenAI_ApiKey");
+        result.IsAvailable.ShouldBeTrue();
+        result.Message.ShouldContain(OllamaChatDefaults.DefaultModelId);
     }
 
     [Test]
@@ -73,6 +89,155 @@ public class ChatClientFactoryAvailabilityTests
                     AiOpenAiApiKey = available ? "test-key" : "",
                     AiOpenAiUrl = available ? "https://test.openai.azure.com" : "",
                     AiOpenAiModel = available ? "gpt-4" : ""
+                };
+                return Task.FromResult((TResponse)(object)config);
+            }
+
+            throw new NotImplementedException($"Unhandled request type: {request.GetType().Name}");
+        }
+    }
+}
+
+[TestFixture]
+public class OllamaChatDefaultsTests
+{
+    [Test]
+    public void ShouldUseQwenGsqRcoModelAndGpuSafeNumCtx()
+    {
+        OllamaChatDefaults.DefaultModelId.ShouldBe("qwen38-27b-gsq-rco");
+        OllamaChatDefaults.MaxNumCtx.ShouldBe(49152);
+    }
+
+    [Test]
+    public void WithCappedNumCtx_ShouldSetDefaultWhenMissing()
+    {
+        var options = OllamaChatDefaults.WithCappedNumCtx(null);
+
+        options.AdditionalProperties.ShouldNotBeNull();
+        options.AdditionalProperties[OllamaChatDefaults.NumCtxPropertyName].ShouldBe(49152);
+    }
+
+    [Test]
+    public void WithCappedNumCtx_ShouldNotAcceptNumCtxAboveMax()
+    {
+        var incoming = new ChatOptions
+        {
+            AdditionalProperties = new AdditionalPropertiesDictionary
+            {
+                [OllamaChatDefaults.NumCtxPropertyName] = 65536
+            }
+        };
+
+        var options = OllamaChatDefaults.WithCappedNumCtx(incoming);
+
+        options.AdditionalProperties.ShouldNotBeNull();
+        options.AdditionalProperties[OllamaChatDefaults.NumCtxPropertyName].ShouldBe(49152);
+    }
+
+    [Test]
+    public void WithCappedNumCtx_ShouldKeepLowerRequestedNumCtx()
+    {
+        var incoming = new ChatOptions
+        {
+            AdditionalProperties = new AdditionalPropertiesDictionary
+            {
+                [OllamaChatDefaults.NumCtxPropertyName] = 8192
+            }
+        };
+
+        var options = OllamaChatDefaults.WithCappedNumCtx(incoming);
+
+        options.AdditionalProperties.ShouldNotBeNull();
+        options.AdditionalProperties[OllamaChatDefaults.NumCtxPropertyName].ShouldBe(8192);
+    }
+}
+
+[TestFixture]
+public class ChatClientFactoryProviderTests
+{
+    [Test]
+    public void BuildProviderChatClient_WhenApiKeyEmpty_UsesOllama()
+    {
+        var config = new ChatClientConfig
+        {
+            AiOpenAiApiKey = "",
+            AiOpenAiUrl = "",
+            AiOpenAiModel = ""
+        };
+
+        var client = ChatClientFactory.BuildProviderChatClient(config);
+
+        FindClientOfType<OllamaChatClient>(client).ShouldNotBeNull();
+        FindClientOfType<OllamaNumCtxChatClient>(client).ShouldNotBeNull();
+    }
+
+    [Test]
+    public async Task GetChatClient_WhenApiKeyEmpty_WrapsOllamaInTracingClient()
+    {
+        var factory = new ChatClientFactory(new EmptyAzureKeyBus());
+
+        var client = await factory.GetChatClient();
+
+        client.ShouldBeOfType<TracingChatClient>();
+        FindClientOfType<OllamaChatClient>(client).ShouldNotBeNull();
+    }
+
+    private static T? FindClientOfType<T>(IChatClient client) where T : class
+    {
+        while (true)
+        {
+            if (client is T match)
+            {
+                return match;
+            }
+
+            var inner = GetInnerClient(client);
+            if (inner is null)
+            {
+                return null;
+            }
+
+            client = inner;
+        }
+    }
+
+    private static IChatClient? GetInnerClient(IChatClient client)
+    {
+        var type = client.GetType();
+        while (type is not null)
+        {
+            var field = type.GetField("_innerClient",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            if (field?.GetValue(client) is IChatClient inner)
+            {
+                return inner;
+            }
+
+            var property = type.GetProperty("InnerClient",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic);
+            if (property?.GetValue(client) is IChatClient innerFromProperty)
+            {
+                return innerFromProperty;
+            }
+
+            type = type.BaseType;
+        }
+
+        return null;
+    }
+
+    private sealed class EmptyAzureKeyBus() : Bus(null!)
+    {
+        public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
+        {
+            if (request is ChatClientConfigQuery)
+            {
+                var config = new ChatClientConfig
+                {
+                    AiOpenAiApiKey = "",
+                    AiOpenAiUrl = "",
+                    AiOpenAiModel = ""
                 };
                 return Task.FromResult((TResponse)(object)config);
             }

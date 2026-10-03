@@ -82,7 +82,7 @@ If Docker is unavailable, set `DATABASE_ENGINE=SQLite` before running the build 
 
 ### Optional Services
 
-- **Ollama** (localhost:11434): Local LLM for AI agent features. Not required; errors in logs about Ollama connection refused are expected and harmless.
+- **Ollama** (localhost:11434): Local LLM fallback when `AI_OpenAI_ApiKey` is empty. Default model `qwen38-27b-gsq-rco` with hard `num_ctx` 49152 (GPU-safe ceiling on RTX 5070 Ti). Not required in CI; connection-refused errors are expected and harmless when Ollama is not running.
 - **Azure OpenAI**: Cloud LLM alternative. Requires `AI_OpenAI_ApiKey`, `AI_OpenAI_Url`, `AI_OpenAI_Model` env vars.
 
 ### GitHub issue updates from scripts
