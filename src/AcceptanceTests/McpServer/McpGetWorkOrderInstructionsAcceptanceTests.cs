@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.LlmGateway;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using Login = ClearMeasure.Bootcamp.UI.Shared.Pages.Login;
@@ -104,9 +105,9 @@ public class McpGetWorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
             .ToHaveValueAsync(string.Empty);
 
         var creator = RequiredString(live, "Creator");
-        var creatorGroup = Page.Locator(".form-group").Filter(new LocatorFilterOptions { HasText = "Creator:" });
-        await Expect(creatorGroup.GetByText(creator, new LocatorGetByTextOptions { Exact = true }))
-            .ToBeVisibleAsync();
+        var creatorLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Creator));
+        await Expect(creatorLocator)
+            .ToHaveTextAsync(LoginDisplayNameFormatter.FormatForLoginDropdown(creator));
 
         var createdDate = live.GetProperty("CreatedDate").GetDateTime();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))

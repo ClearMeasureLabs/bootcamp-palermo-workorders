@@ -18,6 +18,18 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldDisplayFormattedCreatorOnNewWorkOrderPage()
+    {
+        await LoginAsCurrentUser();
+        await Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder)).ClickAsync();
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await WaitForNewWorkOrderFormReadyAsync();
+
+        var creator = Page.GetByTestId(nameof(WorkOrderManage.Elements.Creator));
+        await Expect(creator).ToHaveTextAsync(LoginDisplayNameFormatter.FormatForLoginDropdown(CurrentUser.GetFullName()));
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldCreateNewWorkOrderAndVerifyOnSearchScreen()
     {
         await LoginAsCurrentUser();
