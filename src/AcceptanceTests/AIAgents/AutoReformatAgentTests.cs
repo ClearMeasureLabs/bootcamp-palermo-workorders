@@ -10,7 +10,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.AIAgents;
 /// </summary>
 public class AutoReformatAgentTests : AcceptanceTestBase
 {
-    [Test, LlmTest, Explicit]
+    [Test, LlmTest, Explicit(LlmTestAttribute.ExplicitReason)]
     public async Task ShouldReformatWorkOrderTitleAndDescription()
     {
         await LoginAsCurrentUser();

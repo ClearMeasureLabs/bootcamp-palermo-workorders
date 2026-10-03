@@ -6,6 +6,7 @@ using ClearMeasure.Bootcamp.LlmGateway;
 namespace ClearMeasure.Bootcamp.AcceptanceTests.McpServer;
 
 [TestFixture]
+[Explicit(LlmTestAttribute.ExplicitReason)]
 public class McpChatConversationTests : AcceptanceTestBase
 {
 	protected override bool RequiresBrowser => false;

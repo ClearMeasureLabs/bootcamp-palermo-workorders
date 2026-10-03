@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.UI.Shared.Pages;
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 
 [TestFixture]
+[Explicit(LlmTestAttribute.ExplicitReason)]
 public class AiAgentPageTests : AcceptanceTestBase
 {
     [SetUp]

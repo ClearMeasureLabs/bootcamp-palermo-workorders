@@ -14,6 +14,7 @@ public class CanConnectToLlmServerHealthCheckTests : LlmTestBase
 {
     [Test]
     [LlmTest]
+    [Explicit(LlmTestAttribute.ExplicitReason)]
     public async Task CheckHealthAsync_WithCurrentConfiguration_ReturnsResult()
     {
         var healthCheck = TestHost.GetRequiredService<CanConnectToLlmServerHealthCheck>();

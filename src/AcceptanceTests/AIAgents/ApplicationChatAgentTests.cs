@@ -12,6 +12,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.AIAgents;
 ///     to create and assign a work order, then verifies the database reflects the changes.
 /// </summary>
 [TestFixture]
+[Explicit(LlmTestAttribute.ExplicitReason)]
 public class ApplicationChatAgentTests : AcceptanceTestBase
 {
     [SetUp]

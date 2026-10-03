@@ -7,9 +7,18 @@ public abstract class LlmTestBase : IntegratedTestBase
 {
     private const string ClientResultExceptionFullName = "System.ClientModel.ClientResultException";
 
+    /// <summary>
+    /// Ignores a live-LLM test (one marked <see cref="LlmTestAttribute"/>) when no chat client is configured.
+    /// Stub-based tests in the same fixture always run.
+    /// </summary>
     [SetUp]
     public async Task SkipWhenChatClientUnavailable()
     {
+        if (TestContext.CurrentContext.Test.Method?.IsDefined<LlmTestAttribute>(false) != true)
+        {
+            return;
+        }
+
         var factory = TestHost.GetRequiredService<ChatClientFactory>();
         var availability = await factory.IsChatClientAvailable();
 

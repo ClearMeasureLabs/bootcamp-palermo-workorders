@@ -5,9 +5,11 @@ using Microsoft.Extensions.AI;
 namespace ClearMeasure.Bootcamp.IntegrationTests.LlmGateway;
 
 [TestFixture]
+[Explicit(LlmTestAttribute.ExplicitReason)]
 public class WorkOrderChatHandlerTests : LlmTestBase
 {
     [Test]
+    [LlmTest]
     public async Task Handle_WithValidWorkOrder_ReturnsChatResponse()
     {
         var workOrder = Faker<WorkOrder>();
@@ -41,6 +43,7 @@ public class WorkOrderChatHandlerTests : LlmTestBase
     }
 
     [Test]
+    [LlmTest]
     public async Task Handle_WithListEmployeesPrompt_ReturnsEmployeeData()
     {
         new ZDataLoader().LoadData();

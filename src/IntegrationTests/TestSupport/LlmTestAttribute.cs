@@ -10,10 +10,18 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.TestSupport;
 /// failure so that model nondeterminism does not fail the build. Passed, Ignored (for example an Azure OpenAI
 /// rate-limit skip), and Inconclusive outcomes stop the retry loop and are reported unchanged.
 /// Use together with <c>[Test]</c> in place of <c>[Retry(n)]</c>.
+/// Live-LLM tests must also be marked <c>[Explicit(LlmTestAttribute.ExplicitReason)]</c> so they never run in
+/// automated builds or deployments; run them on demand by name.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method, Inherited = false)]
 public sealed class LlmTestAttribute : NUnitAttribute, IRepeatTest
 {
+    /// <summary>
+    /// Reason used with <c>[Explicit]</c> on every test that calls the live AI model.
+    /// </summary>
+    public const string ExplicitReason =
+        "Calls the live AI model using AI_OpenAI_ApiKey; excluded from automated builds and deploys. Run on demand by name.";
+
     private const int DefaultTryCount = 3;
 
     /// <summary>
