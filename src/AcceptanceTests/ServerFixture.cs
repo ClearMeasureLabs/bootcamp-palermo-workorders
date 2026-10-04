@@ -286,6 +286,7 @@ public class ServerFixture
         process.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
         process.StartInfo.Environment["ApiKeyAuthentication__Enabled"] = "false";
         process.StartInfo.Environment["ApiKeyAuthentication__ValidationKey"] = "";
+        process.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "";
         if (useSqlite)
         {
             ApplySqliteServerEnvironment(process, connectionString);
@@ -295,7 +296,6 @@ public class ServerFixture
     private static void ApplySqliteServerEnvironment(Process process, string connectionString)
     {
         process.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
-        process.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "";
         process.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] =
             ResolveSqliteConnectionString(connectionString);
     }
