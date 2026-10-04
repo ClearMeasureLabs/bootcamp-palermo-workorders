@@ -1,6 +1,7 @@
 using Bunit;
 using System.ComponentModel.DataAnnotations;
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -799,6 +800,27 @@ public class LoginPageTests
     }
 
     [Test]
+    public async Task WelcomeMessage_ShouldIncludeMiddleName_WhenSelectedEmployeeHasOne()
+    {
+        await using var ctx = new BunitContext();
+
+        var provider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        ctx.Services.AddSingleton(provider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(provider);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBusWithMiddleNameEmployee());
+        ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment("Testing"));
+
+        var component = ctx.Render<Login>();
+
+        var employeeSelect = component.Find($"[data-testid='{Login.Elements.User}']");
+        await employeeSelect.ChangeAsync(new() { Value = "mjsimpson" });
+
+        var welcomeMessage = component.Find("small.text-success");
+        welcomeMessage.TextContent.ShouldBe("Welcome back, Mary Jo Simpson!");
+    }
+
+    [Test]
     public async Task Should_ShowVersionLabel_WithEnvironmentSegment()
     {
         await using var ctx = new BunitContext();
@@ -842,6 +864,23 @@ public class LoginPageTests
         public string ApplicationName { get; set; } = "TestApp";
         public string ContentRootPath { get; set; } = string.Empty;
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+    }
+
+    private sealed class StubBusWithMiddleNameEmployee : StubBus
+    {
+        public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
+        {
+            if (request is EmployeeGetAllQuery)
+            {
+                var employees = new[]
+                {
+                    new Employee("mjsimpson", "Mary", "Simpson", "mary@springfield.com") { MiddleName = "Jo" }
+                };
+                return Task.FromResult((TResponse)(object)employees);
+            }
+
+            return base.Send(request);
+        }
     }
 
     private sealed class GatedEmployeeStubBus : StubBus

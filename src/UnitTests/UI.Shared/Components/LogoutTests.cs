@@ -1,5 +1,7 @@
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
@@ -25,6 +27,7 @@ public class LogoutTests
         await authProvider.Login("hsimpson");
 
         ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
@@ -36,6 +39,65 @@ public class LogoutTests
     }
 
     [Test]
+    public async Task ShouldDisplayFullNameWithMiddleName_WhenCurrentUserHasMiddleName()
+    {
+        await using var ctx = new BunitContext();
+
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
+        var employee = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com") { MiddleName = "Jay" };
+
+        ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(employee));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+
+        var component = ctx.Render<Logout>();
+
+        var welcomeSpan = component.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']");
+        NormalizeWhitespace(welcomeSpan.TextContent).ShouldBe("Welcome Homer Jay Simpson!");
+    }
+
+    [Test]
+    public async Task ShouldDisplayUsername_WhenCurrentUserHasNoMiddleName()
+    {
+        await using var ctx = new BunitContext();
+
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
+        var employee = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com");
+
+        ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(employee));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+
+        var component = ctx.Render<Logout>();
+
+        var welcomeSpan = component.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']");
+        NormalizeWhitespace(welcomeSpan.TextContent).ShouldBe("Welcome hsimpson!");
+    }
+
+    [Test]
+    public async Task ShouldDisplayUsername_WhenUserLookupFails()
+    {
+        await using var ctx = new BunitContext();
+
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
+
+        ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(new StubFailingUserSession());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+
+        var component = ctx.Render<Logout>();
+
+        var welcomeSpan = component.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']");
+        NormalizeWhitespace(welcomeSpan.TextContent).ShouldBe("Welcome hsimpson!");
+    }
+
+    [Test]
     public async Task ShouldDisplayLogoutButton()
     {
         await using var ctx = new BunitContext();
@@ -44,6 +106,7 @@ public class LogoutTests
         await authProvider.Login("hsimpson");
 
         ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
@@ -66,6 +129,7 @@ public class LogoutTests
         await authProvider.Login("hsimpson");
 
         ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
@@ -85,6 +149,7 @@ public class LogoutTests
         var spyEventBus = new SpyUiBus();
 
         ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
@@ -106,6 +171,7 @@ public class LogoutTests
         await authProvider.Login("hsimpson");
 
         ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
@@ -128,6 +194,7 @@ public class LogoutTests
         await authProvider.Login("hsimpson");
 
         ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
@@ -144,6 +211,9 @@ public class LogoutTests
         authProvider.IsAuthenticated().ShouldBeFalse();
     }
 
+    private static string NormalizeWhitespace(string text) =>
+        System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ").Trim();
+
     [Test]
     public async Task ShouldNotNavigate_WhenLogoutFailsClosed()
     {
@@ -155,6 +225,7 @@ public class LogoutTests
         var spyEventBus = new SpyUiBus();
 
         ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
         ctx.Services.AddSingleton<IBus>(new Bus(null!));
 
@@ -169,6 +240,22 @@ public class LogoutTests
         authProvider.GetUsername().ShouldBe("tlovejoy");
         spyEventBus.NotifyWasCalled.ShouldBeFalse();
         navigationManager.Uri.ShouldBe(uriBefore);
+    }
+}
+
+public class StubUserSession(Employee? currentUser) : IUserSession
+{
+    public Task<Employee?> GetCurrentUserAsync()
+    {
+        return Task.FromResult(currentUser);
+    }
+}
+
+public class StubFailingUserSession : IUserSession
+{
+    public Task<Employee?> GetCurrentUserAsync()
+    {
+        throw new InvalidOperationException("lookup failed");
     }
 }
 

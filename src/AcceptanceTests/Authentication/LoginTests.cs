@@ -82,6 +82,34 @@ public class LoginTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task Should_ShowFullNameWithMiddleName_WhenEmployeeHasMiddleName()
+    {
+        var userName = $"middle_{Guid.NewGuid():N}";
+        await using (var context = TestHost.NewDbContext())
+        {
+            var employee = new Employee(userName, "First", "Last", $"{userName}@example.com")
+            {
+                MiddleName = "Middle"
+            };
+            employee.AddRole(new Role("admin", true, true));
+            context.Add(employee);
+            await context.SaveChangesAsync();
+        }
+
+        await Page.GotoAsync("/login");
+
+        var userSelect = Page.GetByTestId(nameof(Login.Elements.User));
+        await WaitForEmployeeOptionsRenderedAsync(userSelect.Locator($"option[value='{userName}']"));
+
+        await Select(nameof(Login.Elements.User), userName);
+        await Click(nameof(Login.Elements.LoginButton));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
+        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome First Middle Last!");
+    }
+
+    [Test, Retry(2)]
     public async Task Should_ShowLoginLinkWithBlinkClass_WhenAnonymous()
     {
         await EnsureAnonymousHomeAsync();

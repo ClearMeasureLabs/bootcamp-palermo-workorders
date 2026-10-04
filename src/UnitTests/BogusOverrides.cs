@@ -33,6 +33,7 @@ internal class BogusOverrides : AutoGeneratorOverride
                 query.StatusKey = context.Faker.PickRandom(WorkOrderStatus.GetAllItems()).Key;
                 break;
             case Employee employee:
+                employee.MiddleName = null;
                 employee.PreferredLanguage = context.Faker.PickRandom("en-US", "es-ES", "fr-FR", "de-DE", "pt-BR");
                 break;
         }
