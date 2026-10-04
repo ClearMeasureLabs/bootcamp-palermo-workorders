@@ -9,11 +9,14 @@ are `[Explicit]` and run only when selected by name.
 ## Smoke tests
 
 The tests marked `[Category("Smoke")]` are the smoke set: the few tests that together show that a deployment's
-connections work. Every screen a user can reach from the app opens at least once, and each kind of integration is
-touched once. A post-deployment run can select only this set instead of the full suite:
+connections work. Every screen a user can reach from the app's links opens at least once, and each integration in the
+table below is touched once; the list after the table names what the set does not cover. A post-deployment run can
+select only this set instead of the full suite (with the suite's run settings, which cap the parallel Playwright
+workers):
 
 ```bash
-dotnet test src/AcceptanceTests --configuration Release --filter "TestCategory=Smoke"
+dotnet test src/AcceptanceTests --configuration Release --settings src/AcceptanceTests/AcceptanceTests.runsettings \
+  --filter "TestCategory=Smoke"
 ```
 
 | Screen or integration | Smoke test | What it proves after a deployment |
