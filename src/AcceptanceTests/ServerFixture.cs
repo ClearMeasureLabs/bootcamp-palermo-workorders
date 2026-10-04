@@ -295,6 +295,7 @@ public class ServerFixture
     private static void ApplySqliteServerEnvironment(Process process, string connectionString)
     {
         process.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
+        process.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "";
         process.StartInfo.Environment["ConnectionStrings__SqlConnectionString"] =
             ResolveSqliteConnectionString(connectionString);
     }
@@ -401,6 +402,7 @@ public class ServerFixture
             $"{ApplicationBaseUrl}/api/blazor-wasm-single-api";
         process.StartInfo.Environment["DOTNET_ENVIRONMENT"] = "Development";
         process.StartInfo.Environment["DISABLE_AUTO_CANCEL_AGENT"] = "true";
+        process.StartInfo.Environment["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "";
         process.StartInfo.Environment["AI_OpenAI_ApiKey"] = "";
         process.StartInfo.Environment["AI_OpenAI_Url"] = "";
         process.StartInfo.Environment["AI_OpenAI_Model"] = "";

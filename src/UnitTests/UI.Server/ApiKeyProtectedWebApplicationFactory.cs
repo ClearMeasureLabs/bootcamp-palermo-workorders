@@ -24,6 +24,7 @@ public sealed class ApiKeyProtectedWebApplicationFactory : WebApplicationFactory
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
+                ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
                 ["ApiKeyAuthentication:Enabled"] = "true",
                 ["ApiKeyAuthentication:ValidationKey"] = TestApiKey
             });

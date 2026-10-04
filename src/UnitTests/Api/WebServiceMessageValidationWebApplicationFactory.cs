@@ -22,6 +22,7 @@ public sealed class WebServiceMessageValidationWebApplicationFactory : WebApplic
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
+                ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = ""
             });
         });
     }

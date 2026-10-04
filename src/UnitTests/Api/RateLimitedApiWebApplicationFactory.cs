@@ -38,6 +38,7 @@ public sealed class RateLimitedApiWebApplicationFactory : WebApplicationFactory<
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
+                ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
                 ["ApiRateLimiting:Enabled"] = "true",
                 ["ApiRateLimiting:PermitLimit"] = "1",
                 ["ApiRateLimiting:WindowSeconds"] = "60",

@@ -24,6 +24,7 @@ public sealed class WorkOrdersBulkImportWebApplicationFactory : WebApplicationFa
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
+                ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = ""
             });
         });
     }
